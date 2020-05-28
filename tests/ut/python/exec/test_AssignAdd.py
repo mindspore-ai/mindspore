@@ -16,19 +16,21 @@
 test assign add
 """
 import numpy as np
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.common.initializer import initializer
-from mindspore import Tensor, Parameter
+
 import mindspore as ms
-from ..ut_filter import non_graph_engine
-from mindspore.common.api import _executor
 import mindspore.context as context
-import pytest
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore.common.initializer import initializer
+from mindspore.ops import operations as P
+from ..ut_filter import non_graph_engine
+
 context.set_context(mode=context.GRAPH_MODE)
+
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net, self).__init__()
         self.AssignAdd = P.AssignAdd()
@@ -39,24 +41,26 @@ class Net(nn.Cell):
         out = self.AssignAdd(self.inputdata, x)
         return out
 
+
 @non_graph_engine
 def test_AssignAdd_1():
     """test AssignAdd 1"""
     import mindspore.context as context
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
-    x = Tensor(np.ones([1]).astype(np.int64)*100)
+    x = Tensor(np.ones([1]).astype(np.int64) * 100)
 
     print("MyPrintResult dataX:", x)
     result = net(x)
     print("MyPrintResult data::", result)
-    expect = np.ones([1]).astype(np.int64)*101
+    expect = np.ones([1]).astype(np.int64) * 101
     diff = result.asnumpy() - expect
 
     print("MyPrintExpect:", expect)
     print("MyPrintDiff:", diff)
     error = np.ones(shape=[1]) * 1.0e-3
     assert np.all(diff < error)
+
 
 @non_graph_engine
 def test_AssignAdd_2():
@@ -64,12 +68,12 @@ def test_AssignAdd_2():
     import mindspore.context as context
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
-    x = Tensor(np.ones([1]).astype(np.int64)*102)
+    x = Tensor(np.ones([1]).astype(np.int64) * 102)
 
     print("MyPrintResult dataX:", x)
     result = net(x)
     print("MyPrintResult data::", result.asnumpy())
-    expect = np.ones([1]).astype(np.int64)*103
+    expect = np.ones([1]).astype(np.int64) * 103
     diff = result.asnumpy() - expect
 
     print("MyPrintExpect:", expect)
@@ -77,8 +81,10 @@ def test_AssignAdd_2():
     error = np.ones(shape=[1]) * 1.0e-3
     assert np.all(diff < error)
 
+
 class AssignAddNet(nn.Cell):
     """Net definition"""
+
     def __init__(self):
         super(AssignAddNet, self).__init__()
         self.AssignAdd = P.AssignAdd()
@@ -89,9 +95,10 @@ class AssignAddNet(nn.Cell):
         z1 = self.AssignAdd(self.inputdata, self.one)
         return z1
 
+
 @non_graph_engine
 def test_assignadd_scalar_cast():
     net = AssignAddNet()
-    x = Tensor(np.ones([1]).astype(np.int64)*102)
-    #_executor.compile(net, 1)
+    x = Tensor(np.ones([1]).astype(np.int64) * 102)
+    # _executor.compile(net, 1)
     result = net(x)

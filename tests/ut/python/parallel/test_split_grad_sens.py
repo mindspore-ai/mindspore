@@ -13,15 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.common.dtype as mstype
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
-import mindspore.common.dtype as mstype
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class GradWrap(nn.Cell):
@@ -53,6 +54,11 @@ class GradWrap3(nn.Cell):
         return C.grad_all(self.network)(x, y, bias)
 
 
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
+
 def test_no_grad():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -66,7 +72,7 @@ def test_no_grad():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
     net = Net(strategy1, strategy2)
@@ -75,7 +81,7 @@ def test_no_grad():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_grad_sens_parameter_type():
@@ -91,7 +97,7 @@ def test_grad_sens_parameter_type():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
@@ -103,6 +109,7 @@ def test_grad_sens_parameter_type():
 
     sens = Tensor(np.ones([128, 64]), dtype=ms.float32)
     # net(x, y, b, sens)
+    net.set_auto_parallel()
     _executor.compile(net, x, y, b, sens)
 
 
@@ -119,7 +126,7 @@ def test_grad_sens_tensor_type():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
     net = GradWrap2(Net(strategy1, strategy2))
@@ -128,7 +135,7 @@ def test_grad_sens_tensor_type():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_grad_sens_scalar_broadcast():
@@ -140,16 +147,16 @@ def test_grad_sens_scalar_broadcast():
 
         def construct(self, x, y, bias):
             out = self.fc_nobias(x, y)
-            out = self.reduce_sum(out, (0,1))
+            out = self.reduce_sum(out, (0, 1))
             return out
 
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((4, 1), )
+    strategy1 = ((4, 1),)
     net = GradWrap3(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    compile(net, x, y, bias)

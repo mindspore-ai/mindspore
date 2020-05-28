@@ -34,7 +34,7 @@ class SliceGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -66,19 +66,12 @@ class SliceGradGpuKernel : public GpuKernel {
       size_ = GetAttr<std::vector<int>>(kernel_node, "end");
     } else {
       auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-      input_shape_.push_back(input_shape.size() < 4 ? 1 : SizeToInt(input_shape[input_shape.size() - 4]));
-      input_shape_.push_back(input_shape.size() < 3 ? 1 : SizeToInt(input_shape[input_shape.size() - 3]));
-      input_shape_.push_back(input_shape.size() < 2 ? 1 : SizeToInt(input_shape[input_shape.size() - 2]));
-      input_shape_.push_back(SizeToInt(input_shape[input_shape.size() - 1]));
+      ShapeNdTo4d(input_shape, &input_shape_);
       size_ = GetAttr<std::vector<int>>(kernel_node, "size");
     }
 
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    dy_shape_.push_back(dy_shape.size() < 4 ? 1 : SizeToInt(dy_shape[dy_shape.size() - 4]));
-    dy_shape_.push_back(dy_shape.size() < 3 ? 1 : SizeToInt(dy_shape[dy_shape.size() - 3]));
-    dy_shape_.push_back(dy_shape.size() < 2 ? 1 : SizeToInt(dy_shape[dy_shape.size() - 2]));
-    dy_shape_.push_back(SizeToInt(dy_shape[dy_shape.size() - 1]));
-
+    ShapeNdTo4d(dy_shape, &dy_shape_);
     begin_ = GetAttr<std::vector<int>>(kernel_node, "begin");
     DealParam();
     input_size_ = IntToSize(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3]) * sizeof(T);

@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-import numpy as np
-import mindspore.context as context
 
 
 class NetReciprocal(nn.Cell):
@@ -28,6 +29,7 @@ class NetReciprocal(nn.Cell):
 
     def construct(self, x):
         return self.reciprocal(x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

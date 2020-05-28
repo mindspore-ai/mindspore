@@ -13,17 +13,18 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops import composite as C
-import mindspore.nn as nn
-import mindspore.context as context
-
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
 
 class LayerNormGradNet(nn.Cell):
     def __init__(self, begin_norm_axis, begin_params_axis):
@@ -33,9 +34,10 @@ class LayerNormGradNet(nn.Cell):
     def construct(self, dy, x, var, mean, gamma):
         return self.norm(dy, x, var, mean, gamma)
 
+
 def LayerNormGradReference(x, dy, gamma, epsilon, begin_norm_axis, begin_params_axis):
-    begin_norm_axis = begin_norm_axis if begin_norm_axis >=0 else begin_norm_axis + len(x.shape)
-    begin_params_axis = begin_params_axis if begin_params_axis >=0 else begin_params_axis + len(x.shape)
+    begin_norm_axis = begin_norm_axis if begin_norm_axis >= 0 else begin_norm_axis + len(x.shape)
+    begin_params_axis = begin_params_axis if begin_params_axis >= 0 else begin_params_axis + len(x.shape)
 
     norm_axis = [i for i in range(begin_norm_axis, len(x.shape))]
     param_axis = [i for i in range(0, begin_params_axis)]
@@ -46,11 +48,12 @@ def LayerNormGradReference(x, dy, gamma, epsilon, begin_norm_axis, begin_params_
     mean = np.mean(x, axis=tuple(norm_axis), keepdims=True)
     var = np.var(x, axis=tuple(norm_axis), keepdims=True)
 
-    gamma = gamma.reshape((*((1,)*begin_params_axis), *x.shape[begin_params_axis:]))
+    gamma = gamma.reshape((*((1,) * begin_params_axis), *x.shape[begin_params_axis:]))
     dg = np.sum(dy * np.power(var + epsilon, -0.5) * (x - mean), axis=tuple(param_axis), keepdims=True)
     db = np.sum(dy, axis=tuple(param_axis), keepdims=True)
 
-    sum1 = np.sum((-0.5) * dy * gamma * (x - mean) * np.power(var + epsilon, -1.5), axis=tuple(norm_axis), keepdims=True)
+    sum1 = np.sum((-0.5) * dy * gamma * (x - mean) * np.power(var + epsilon, -1.5), axis=tuple(norm_axis),
+                  keepdims=True)
     sum2 = np.sum(dy * gamma, axis=tuple(norm_axis), keepdims=True)
     sum3 = np.sum(-2.0 * (x - mean), axis=tuple(norm_axis), keepdims=True)
 
@@ -71,7 +74,8 @@ def test_layernormgrad0():
     dy_np = np.random.randn(4096, 3072).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis, begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                                  begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -80,12 +84,11 @@ def test_layernormgrad0():
     gamma_ms = Tensor(gamma_np)
 
     net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
-    dx_ms, dg_ms, db_ms = net(dy_ms, x_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
-
 
 
 @pytest.mark.level0
@@ -98,7 +101,8 @@ def test_layernormgrad1():
     dy_np = np.random.randn(640, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis, begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                                  begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -107,7 +111,7 @@ def test_layernormgrad1():
     gamma_ms = Tensor(gamma_np)
 
     net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
-    dx_ms, dg_ms, db_ms = net(dy_ms, x_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
@@ -124,7 +128,8 @@ def test_layernormgrad2():
     dy_np = np.random.randn(32, 128, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis, begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                                  begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -133,7 +138,7 @@ def test_layernormgrad2():
     gamma_ms = Tensor(gamma_np)
 
     net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
-    dx_ms, dg_ms, db_ms = net(dy_ms, x_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)

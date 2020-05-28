@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """ test container """
-from collections import OrderedDict
 import numpy as np
 import pytest
+from collections import OrderedDict
+
 import mindspore.nn as nn
 from mindspore import Tensor
-
 
 weight = Tensor(np.ones([2, 2]))
 conv2 = nn.Conv2d(3, 64, (3, 3), stride=2, padding=0)
@@ -31,6 +31,7 @@ avg_pool = nn.AvgPool2d(kernel_size, stride)
 
 class TestSequentialCell():
     """ TestSequentialCell """
+
     def test_SequentialCell_init(self):
         m = nn.SequentialCell()
         assert type(m).__name__ == 'SequentialCell'
@@ -86,6 +87,7 @@ class TestSequentialCell():
 
 class TestCellList():
     """ TestCellList """
+
     def test_init1(self):
         cell_list = nn.CellList([conv2, avg_pool])
         assert len(cell_list) == 2
@@ -117,7 +119,6 @@ class TestCellList():
         for item in cell_list:
             cell = item
         assert type(cell).__name__ == 'AvgPool2d'
-
 
     def test_add(self):
         cell_list = nn.CellList([conv2, avg_pool])

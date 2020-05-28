@@ -13,11 +13,12 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
+from mindspore.ops import operations as P
 
 
 class NetWithLoss(nn.Cell):
@@ -51,7 +52,7 @@ def test_parameter_init():
     weight = Tensor(np.ones([64, 32]), dtype=ms.float32)
 
     net = Net(strategy1, weight)
-    net(x,)
+    net(x, )
 
 
 if __name__ == '__main__':

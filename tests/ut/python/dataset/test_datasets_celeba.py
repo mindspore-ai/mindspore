@@ -13,8 +13,8 @@
 # limitations under the License.
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
-from mindspore.dataset.transforms.vision import Inter
 from mindspore import log as logger
+from mindspore.dataset.transforms.vision import Inter
 
 DATA_DIR = "../data/dataset/testCelebAData/"
 

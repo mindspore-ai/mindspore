@@ -16,8 +16,9 @@
 import math
 import numpy as np
 import pytest
-from mindspore.nn.metrics import MAE, MSE
+
 from mindspore import Tensor
+from mindspore.nn.metrics import MAE, MSE
 
 
 def test_MAE():
@@ -27,7 +28,7 @@ def test_MAE():
     error.clear()
     error.update(x, y)
     result = error.eval()
-    assert math.isclose(result, 0.15/4)
+    assert math.isclose(result, 0.15 / 4)
 
 
 def test_input_MAE():
@@ -52,7 +53,7 @@ def test_MSE():
     error.clear()
     error.update(x, y)
     result = error.eval()
-    assert math.isclose(result, 0.0125/4)
+    assert math.isclose(result, 0.0125 / 4)
 
 
 def test_input_MSE():

@@ -22,6 +22,7 @@
 #include "dataset/engine/datasetops/take_op.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -72,6 +73,7 @@ Status TakeOp::operator()() {
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> buf;
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
 
   while (buf->eof() == false) {
     if (take_count_ == max_takes_) {
@@ -130,6 +132,12 @@ Status TakeOp::PrepareNodePostAction() {
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
   tree_->AddToRepeatStack(shared_from_this());
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status TakeOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<TakeOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

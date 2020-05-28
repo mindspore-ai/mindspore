@@ -28,7 +28,7 @@ class ShardShuffle : public ShardOperator {
 
   ~ShardShuffle() override{};
 
-  MSRStatus execute(ShardTask &tasks) override;
+  MSRStatus Execute(ShardTask &tasks) override;
 
  private:
   uint32_t shuffle_seed_;

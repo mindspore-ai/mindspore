@@ -13,15 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """ test_graph_summary """
-import os
 import logging
 import numpy as np
-import pytest
+import os
+
 import mindspore.nn as nn
-from mindspore.nn.optim import Momentum
 from mindspore import Model, context
-from mindspore.train.summary.summary_record import SummaryRecord
+from mindspore.nn.optim import Momentum
 from mindspore.train.callback import SummaryStep
+from mindspore.train.summary.summary_record import SummaryRecord
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()
@@ -105,18 +105,17 @@ def test_graph_summary_sample():
     optim = Momentum(net.trainable_params(), 0.1, 0.9)
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=model._train_network)
-    model.train(2, dataset)
-    # step 2: create the Event
-    for i in range(1, 5):
-        test_writer.record(i)
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=model._train_network) as test_writer:
+        model.train(2, dataset)
+        # step 2: create the Event
+        for i in range(1, 5):
+            test_writer.record(i)
 
-    # step 3: send the event to mq
+        # step 3: send the event to mq
 
-    # step 4: accept the event and write the file
-    test_writer.close()
+        # step 4: accept the event and write the file
 
-    log.debug("finished test_graph_summary_sample")
+        log.debug("finished test_graph_summary_sample")
 
 
 def test_graph_summary_callback():
@@ -126,9 +125,9 @@ def test_graph_summary_callback():
     optim = Momentum(net.trainable_params(), 0.1, 0.9)
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=model._train_network)
-    summary_cb = SummaryStep(test_writer, 1)
-    model.train(2, dataset, callbacks=summary_cb)
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=model._train_network) as test_writer:
+        summary_cb = SummaryStep(test_writer, 1)
+        model.train(2, dataset, callbacks=summary_cb)
 
 
 def test_graph_summary_callback2():
@@ -138,6 +137,6 @@ def test_graph_summary_callback2():
     optim = Momentum(net.trainable_params(), 0.1, 0.9)
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=net)
-    summary_cb = SummaryStep(test_writer, 1)
-    model.train(2, dataset, callbacks=summary_cb)
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=net) as test_writer:
+        summary_cb = SummaryStep(test_writer, 1)
+        model.train(2, dataset, callbacks=summary_cb)

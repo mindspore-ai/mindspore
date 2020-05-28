@@ -70,7 +70,7 @@ TEST_F(TestShardHeader, AddIndexFields) {
   int schema_id1 = header_data.AddSchema(schema1);
   int schema_id2 = header_data.AddSchema(schema2);
   ASSERT_EQ(schema_id2, -1);
-  ASSERT_EQ(header_data.get_schemas().size(), 1);
+  ASSERT_EQ(header_data.GetSchemas().size(), 1);
 
   // check out fields
   std::vector<std::pair<uint64_t, std::string>> fields;
@@ -81,35 +81,35 @@ TEST_F(TestShardHeader, AddIndexFields) {
   fields.push_back(index_field2);
   MSRStatus res = header_data.AddIndexFields(fields);
   ASSERT_EQ(res, SUCCESS);
-  ASSERT_EQ(header_data.get_fields().size(), 2);
+  ASSERT_EQ(header_data.GetFields().size(), 2);
 
   fields.clear();
   std::pair<uint64_t, std::string> index_field3(schema_id1, "name");
   fields.push_back(index_field3);
   res = header_data.AddIndexFields(fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data.get_fields().size(), 2);
+  ASSERT_EQ(header_data.GetFields().size(), 2);
 
   fields.clear();
   std::pair<uint64_t, std::string> index_field4(schema_id1, "names");
   fields.push_back(index_field4);
   res = header_data.AddIndexFields(fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data.get_fields().size(), 2);
+  ASSERT_EQ(header_data.GetFields().size(), 2);
 
   fields.clear();
   std::pair<uint64_t, std::string> index_field5(schema_id1 + 1, "name");
   fields.push_back(index_field5);
   res = header_data.AddIndexFields(fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data.get_fields().size(), 2);
+  ASSERT_EQ(header_data.GetFields().size(), 2);
 
   fields.clear();
   std::pair<uint64_t, std::string> index_field6(schema_id1, "label");
   fields.push_back(index_field6);
   res = header_data.AddIndexFields(fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data.get_fields().size(), 2);
+  ASSERT_EQ(header_data.GetFields().size(), 2);
 
   std::string desc_new = "this is a test1";
   json schemaContent_new = R"({"name": {"type": "string"},
@@ -121,7 +121,7 @@ TEST_F(TestShardHeader, AddIndexFields) {
 
   mindrecord::ShardHeader header_data_new;
   header_data_new.AddSchema(schema_new);
-  ASSERT_EQ(header_data_new.get_schemas().size(), 1);
+  ASSERT_EQ(header_data_new.GetSchemas().size(), 1);
 
   // test add fields
   std::vector<std::string> single_fields;
@@ -131,25 +131,25 @@ TEST_F(TestShardHeader, AddIndexFields) {
   single_fields.push_back("box");
   res = header_data_new.AddIndexFields(single_fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data_new.get_fields().size(), 1);
+  ASSERT_EQ(header_data_new.GetFields().size(), 1);
 
   single_fields.push_back("name");
   single_fields.push_back("box");
   res = header_data_new.AddIndexFields(single_fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data_new.get_fields().size(), 1);
+  ASSERT_EQ(header_data_new.GetFields().size(), 1);
 
   single_fields.clear();
   single_fields.push_back("names");
   res = header_data_new.AddIndexFields(single_fields);
   ASSERT_EQ(res, FAILED);
-  ASSERT_EQ(header_data_new.get_fields().size(), 1);
+  ASSERT_EQ(header_data_new.GetFields().size(), 1);
 
   single_fields.clear();
   single_fields.push_back("box");
   res = header_data_new.AddIndexFields(single_fields);
   ASSERT_EQ(res, SUCCESS);
-  ASSERT_EQ(header_data_new.get_fields().size(), 2);
+  ASSERT_EQ(header_data_new.GetFields().size(), 2);
 }
 }  // namespace mindrecord
 }  // namespace mindspore

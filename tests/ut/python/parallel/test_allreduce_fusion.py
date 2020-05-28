@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train import Model, ParallelMode
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor, context
-import mindspore as ms
 import numpy as np
+
+import mindspore as ms
 import mindspore.nn as nn
-from tests.dataset_mock import MindData
+from mindspore import Tensor, context
 from mindspore import context
 from mindspore.common.api import _executor
+from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.nn.optim.momentum import Momentum
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
 
 
 class Dataset(MindData):
@@ -86,6 +87,7 @@ class DenseNet2(nn.Cell):
         z = self.fc8(w)
         return z
 
+
 class SimpleDMLNet(nn.Cell):
     def __init__(self, net1, net2):
         super(SimpleDMLNet, self).__init__()
@@ -103,10 +105,11 @@ def train_common(net):
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
-    device_num=4
+    device_num = 4
     context.reset_auto_parallel_context()
     auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num, parameter_broadcast=False)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num,
+                                      parameter_broadcast=False)
     context.set_context(mode=context.GRAPH_MODE)
 
     predict = Tensor(np.ones([batch_size, 128]), dtype=ms.float32)
@@ -155,10 +158,12 @@ def test_allreduce_fusion_parameters():
     assert (tail_time == 0.1)
 
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.2)
-    allreduce_inherent_time = cost_model_context.get_cost_model_context('costmodel_allreduce_fusion_allreduce_inherent_time')
+    allreduce_inherent_time = cost_model_context.get_cost_model_context(
+        'costmodel_allreduce_fusion_allreduce_inherent_time')
     assert (allreduce_inherent_time == 0.2)
     cost_model_context.reset_cost_model_context()
-    allreduce_inherent_time = cost_model_context.get_cost_model_context('costmodel_allreduce_fusion_allreduce_inherent_time')
+    allreduce_inherent_time = cost_model_context.get_cost_model_context(
+        'costmodel_allreduce_fusion_allreduce_inherent_time')
     assert (allreduce_inherent_time == 0.1)
 
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_bandwidth=0.2)
@@ -169,10 +174,12 @@ def test_allreduce_fusion_parameters():
     assert (allreduce_bandwidth == 0.1)
 
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_computation_time_parameter=0.2)
-    computation_time_parameter = cost_model_context.get_cost_model_context('costmodel_allreduce_fusion_computation_time_parameter')
+    computation_time_parameter = cost_model_context.get_cost_model_context(
+        'costmodel_allreduce_fusion_computation_time_parameter')
     assert (computation_time_parameter == 0.2)
     cost_model_context.reset_cost_model_context()
-    computation_time_parameter = cost_model_context.get_cost_model_context('costmodel_allreduce_fusion_computation_time_parameter')
+    computation_time_parameter = cost_model_context.get_cost_model_context(
+        'costmodel_allreduce_fusion_computation_time_parameter')
     assert (computation_time_parameter == 0.1)
 
 
@@ -288,8 +295,7 @@ def test_allreduce_fusion5():
                    'backbone1.fc4.weight': 2,
                    'backbone1.fc3.weight': 2,
                    'backbone1.fc2.weight': 1,
-                   'backbone1.fc1.weight': 1,}
+                   'backbone1.fc1.weight': 1, }
 
     assert (allreduce_fusion_dict == expect_dict)
     cost_model_context.reset_cost_model_context()
-

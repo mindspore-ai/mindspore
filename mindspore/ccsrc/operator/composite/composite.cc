@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "pipeline/static_analysis/abstract_value.h"
 #include "pipeline/static_analysis/abstract_function.h"
 #include "pipeline/static_analysis/dshape.h"
@@ -168,13 +169,13 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
-  auto fn_rec = std::make_shared<HyperMap>(*this);
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
   for (int i = 0; i < SizeToInt(size); ++i) {
     std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(NewValueNode(fn_rec));
+    inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
       inputs2.push_back(fn_arg);
     }
@@ -207,13 +208,13 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
-  auto fn_rec = std::make_shared<HyperMap>(*this);
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
   for (int i = 0; i < SizeToInt(size); ++i) {
     std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(NewValueNode(fn_rec));
+    inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
       inputs2.push_back(fn_arg);
     }
@@ -239,11 +240,11 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
-  std::shared_ptr<mindspore::MetaFuncGraph> fn_rec = std::make_shared<HyperMap>(*this);
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   std::size_t attrSize = type->GetAttributes().size();
   for (std::size_t i = 0; i < attrSize; ++i) {
     std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(NewValueNode(fn_rec));
+    inputs2.push_back(fn_rec);
     if (fn_arg) {
       inputs2.push_back(fn_arg);
     }
@@ -334,6 +335,7 @@ ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairL
 FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
   ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ptrGraph->set_flags(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
   ptrGraph->debug_info()->set_name("hyper_map");
 
   AnfNodePtr ptrFnArg = nullptr;
@@ -1170,6 +1172,12 @@ int GenerateStridedSliceParametersFromNumber(const AbstractScalarPtr &scalar, co
   return 1;
 }
 
+FuncGraphPtr ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) {
+  auto PrimExpandDims = GetPythonOps("expand_dims", "mindspore.ops.functional");
+  ret_graph->set_output(NewCNode({NewValueNode(PrimExpandDims), tensor_node, NewValueNode(0)}, ret_graph));
+  return ret_graph;
+}
+
 FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tensor
   // args: tensor, slice or slice tuple
@@ -1227,10 +1235,24 @@ FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec
   return ret_graph;
 }
 
-FuncGraphPtr TensorSlice::ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) const {
-  auto PrimExpandDims = GetPythonOps("expand_dims", "mindspore.ops.functional");
-  ret_graph->set_output(NewCNode({NewValueNode(PrimExpandDims), tensor_node, NewValueNode(0)}, ret_graph));
-  return ret_graph;
+FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  // select indexed item
+  // args: tuple of items, index
+  const std::string op_name = std::string("TupleGetItemTensor");
+  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractTuplePtr branches_abs = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  AbstractBasePtrList branches = branches_abs->elements();
+  if (branches.size() > 0 && branches[0] != nullptr && branches[0]->isa<AbstractFunction>()) {
+    FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
+    ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+    AnfNodePtr functions = ret_graph->add_parameter();
+    auto index = ret_graph->add_parameter();
+
+    ret_graph->set_output(ret_graph->NewCNode({NewValueNode(prim::kPrimSwitchLayer), index, functions}));
+    return ret_graph;
+  }
+
+  MS_LOG(EXCEPTION) << "TupleGetItemTensor does not support to index " << branches_abs->ToString() << ".";
 }
 
 REGISTER_PYBIND_DEFINE(TupleAdd_, ([](const py::module *m) {
@@ -1245,6 +1267,12 @@ REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module *m) {
 
 REGISTER_PYBIND_DEFINE(TensorSlice_, ([](const py::module *m) {
                          (void)py::class_<TensorSlice, MetaFuncGraph, std::shared_ptr<TensorSlice>>(*m, "TensorSlice_")
+                           .def(py::init<std::string &>());
+                       }));
+
+REGISTER_PYBIND_DEFINE(TupleGetItemTensor_, ([](const py::module *m) {
+                         (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(
+                           *m, "TupleGetItemTensor_")
                            .def(py::init<std::string &>());
                        }));
 }  // namespace prim

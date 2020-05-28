@@ -15,9 +15,45 @@
  */
 #ifndef DATASET_UTIL_RANDOM_H_
 #define DATASET_UTIL_RANDOM_H_
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <stdlib.h>
+#endif
+#include <limits>
+#include <memory>
+#include <random>
+#include <string>
+
+#include "dataset/core/config_manager.h"
+#include "dataset/core/global_context.h"
+
 namespace mindspore {
 namespace dataset {
-uint32_t GetSeed();
+inline std::mt19937 GetRandomDevice() {
+#if defined(_WIN32) || defined(_WIN64)
+  unsigned int number;
+  rand_s(&number);
+  std::mt19937 random_device{static_cast<uint32_t>(number)};
+#else
+  std::mt19937 random_device{std::random_device("/dev/urandom")()};
+#endif
+  return random_device;
+}
+
+inline uint32_t GetNewSeed() {
+  std::mt19937 random_device = GetRandomDevice();
+  std::uniform_int_distribution<uint32_t> distribution(0, std::numeric_limits<uint32_t>::max());
+  return distribution(random_device);
+}
+
+inline uint32_t GetSeed() {
+  uint32_t seed = GlobalContext::config_manager()->seed();
+  if (seed == std::mt19937::default_seed) {
+    seed = GetNewSeed();
+  }
+  return seed;
+}
+
 }  // namespace dataset
 }  // namespace mindspore
 

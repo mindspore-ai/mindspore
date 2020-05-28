@@ -130,8 +130,7 @@ OUTPUT_MAP(Constant) = {{0, OUTPUT_DESC(y)}};
 // ApplyMomentum
 INPUT_MAP(ApplyMomentum) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(momentum)}};
-ATTR_MAP(ApplyMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
-                           {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+ATTR_MAP(ApplyMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyMomentum) = {{0, OUTPUT_DESC(var)}};
 
 // ScalarSummary
@@ -473,15 +472,6 @@ ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
 
-// ApplyAdamD
-INPUT_MAP(ApplyAdamD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
-                         {4, INPUT_DESC(beta1_power)}, {5, INPUT_DESC(beta2_power)}, {6, INPUT_DESC(lr)},
-                         {7, INPUT_DESC(beta1)},       {8, INPUT_DESC(beta2)},       {9, INPUT_DESC(epsilon)},
-                         {10, INPUT_DESC(grad)}};
-ATTR_MAP(ApplyAdamD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
-                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyAdamD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
-
 // Relu6
 INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
@@ -525,10 +515,20 @@ INPUT_MAP(Unpack) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unpack) = {{"axis", ATTR_DESC(axis, AnyTraits<int>())}, {"num", ATTR_DESC(num, AnyTraits<int>())}};
 DYN_OUTPUT_MAP(Unpack) = {{0, DYN_OUTPUT_DESC(y)}};
 
+// ScatterUpdate
+INPUT_MAP(ScatterUpdate) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterUpdate) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterUpdate) = {{0, OUTPUT_DESC(var)}};
+
 // ScatterNdUpdate
 INPUT_MAP(ScatterNdUpdate) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
 ATTR_MAP(ScatterNdUpdate) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ScatterNdUpdate) = {{0, OUTPUT_DESC(var)}};
+
+// ScatterMax
+INPUT_MAP(ScatterMax) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterMax) = {{0, OUTPUT_DESC(var)}};
 
 // CheckValid
 INPUT_MAP(CheckValid) = {{1, INPUT_DESC(bbox_tensor)}, {2, INPUT_DESC(img_metas)}};
@@ -894,6 +894,11 @@ INPUT_MAP(Square) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Square) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Square) = {{0, OUTPUT_DESC(y)}};
 
+// SquareSumAll
+INPUT_MAP(SquareSumAll) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(SquareSumAll) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SquareSumAll) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+
 // Tanh
 INPUT_MAP(Tanh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Tanh) = EMPTY_ATTR_MAP;
@@ -1052,6 +1057,12 @@ INPUT_MAP(UnsortedSegmentSumD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids
 INPUT_ATTR_MAP(UnsortedSegmentSumD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
 ATTR_MAP(UnsortedSegmentSumD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentSumD) = {{0, OUTPUT_DESC(y)}};
+
+// UnsortedSegmentMin
+INPUT_MAP(UnsortedSegmentMinD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
+INPUT_ATTR_MAP(UnsortedSegmentMinD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+ATTR_MAP(UnsortedSegmentMinD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UnsortedSegmentMinD) = {{0, OUTPUT_DESC(y)}};
 
 // ExpandDims
 INPUT_MAP(ExpandDims) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
@@ -1221,6 +1232,22 @@ INPUT_MAP(ApplyCenteredRMSProp) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},   
                                    {7, INPUT_DESC(rho)}, {8, INPUT_DESC(momentum)}, {9, INPUT_DESC(epsilon)}};
 ATTR_MAP(ApplyCenteredRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyCenteredRMSProp) = {{0, OUTPUT_DESC(var)}};
+
+// L2Loss
+INPUT_MAP(L2Loss) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(L2Loss) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(L2Loss) = {{0, OUTPUT_DESC(y)}};
+
+// CTCLoss
+INPUT_MAP(CTCLoss) = {{1, INPUT_DESC(inputs)},
+                      {2, INPUT_DESC(labels_indices)},
+                      {3, INPUT_DESC(labels_values)},
+                      {4, INPUT_DESC(sequence_length)}};
+ATTR_MAP(CTCLoss) = {
+  {"preprocess_collapse_repeated", ATTR_DESC(preprocess_collapse_repeated, AnyTraits<bool>())},
+  {"ctc_merge_repeated", ATTR_DESC(ctc_merge_repeated, AnyTraits<bool>())},
+  {"ignore_longer_outputs_than_inputs", ATTR_DESC(ignore_longer_outputs_than_inputs, AnyTraits<bool>())}};
+OUTPUT_MAP(CTCLoss) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(gradient)}};
 
 #ifdef ENABLE_GE
 // Print

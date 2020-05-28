@@ -16,10 +16,11 @@
 # coding: utf-8
 
 from numpy.random import normal
+
 from mindspore import Tensor
-from mindspore.ops.composite import core
-from mindspore.common.api import ms_function
 from mindspore import context
+from mindspore.common.api import ms_function
+from mindspore.ops.composite import core
 
 
 def setup_module(module):
@@ -31,6 +32,7 @@ def setup_module(module):
 # as POLY.
 def test_remove_phi_and_fv():
     """ test_remove_phi_and_fv """
+
     @ms_function
     @core(loop_can_unroll=True)
     def loop(x, input_data):
@@ -47,6 +49,7 @@ def test_remove_phi_and_fv():
     input1 = Tensor(normal(0, 0.1, (3, 3)))
     print(loop(input1, input_data))
 
+
 # Multiple phi nodes should be replaced.
 # mul Φ0 (mul, Φ0); Φ0 will be replaced by mul;
 # x   Φ1 (x, Φ1); Φ1 will be replaced by x;
@@ -55,6 +58,7 @@ def test_remove_phi_and_fv():
 # Φ0 and Φ1 in Φ2 node should be replaced with mul and x.
 def test_remove_multiple_phi():
     """ test_remove_multiple_phi """
+
     @ms_function
     @core(loop_can_unroll=True)
     def loop(x):
@@ -77,6 +81,7 @@ def test_remove_multiple_phi():
 # recursively, Φ5 also should be replaced by x.
 def test_remove_multiple_phi_recursive():
     """ test_remove_multiple_phi_recursive """
+
     @ms_function
     @core(loop_can_unroll=True)
     def loop(x):

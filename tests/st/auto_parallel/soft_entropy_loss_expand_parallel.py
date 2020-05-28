@@ -13,22 +13,23 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import os
 import pytest
-import numpy as np
-import mindspore as ms
 from numpy import allclose
-from mindspore.nn import Cell
-from mindspore import context
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.common.tensor import Tensor
+
+import mindspore as ms
 import mindspore.communication.management as distributedTool
-from mindspore.common.parameter import ParameterTuple, Parameter
-from mindspore.ops import composite as C
+from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.train import Model, ParallelMode
+from mindspore.common.parameter import ParameterTuple, Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
 from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
 from mindspore.train.callback import Callback
 
 np.set_printoptions(threshold=np.inf)
@@ -37,7 +38,7 @@ device_id = int(os.getenv('DEVICE_ID'))
 rank_id = 0
 embed = 128
 classes = 32
-batch_size = 32*2
+batch_size = 32 * 2
 MatmulParamShape = (classes, embed)
 
 
@@ -46,10 +47,7 @@ def setup_module():
     global rank_id
     np.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True,
-                        device_id=device_id)
-    context.set_context(enable_ir_fusion=True)
-    context.set_context(enable_loop_sink=False)
+    context.set_context(device_id=device_id)
     distributedTool.init()
     rank_id = distributedTool.get_rank()
     device_num = distributedTool.get_group_size()
@@ -77,20 +75,20 @@ class DataGenerator():
     def generate_data(self, shape):
         size = np.cumprod(shape)[-1]
         num_range = min(size, 1000)
-        data = (np.arange(0, size) % num_range)/num_range
+        data = (np.arange(0, size) % num_range) / num_range
         data = np.reshape(data, shape)
         return data
 
     def input_data(self, shape):
-        data = (self.generate_data(shape)*0.1).astype(np.float32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * 0.1).astype(np.float32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
 
     def label_data(self, shape, embed):
-        data = (self.generate_data(shape)*(embed-1)).astype(np.int32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * (embed - 1)).astype(np.int32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
@@ -141,7 +139,7 @@ class SoftmaxCrossEntropyExpand(Cell):
     def __init__(self, sparse=False, stra_list=[]):
         super(SoftmaxCrossEntropyExpand, self).__init__()
         if len(stra_list) < 11:
-            stra_list = [None]*11
+            stra_list = [None] * 11
         self.exp = P.Exp()
         self.reduce_sum = P.ReduceSum(keep_dims=True).set_strategy(strategy=stra_list[1])
         self.onehot = P.OneHot().set_strategy(strategy=stra_list[2])

@@ -15,8 +15,6 @@
 """train_imagenet."""
 import os
 import argparse
-import random
-import numpy as np
 from dataset import create_dataset
 from lr_generator import get_lr
 from config import config
@@ -31,12 +29,7 @@ from mindspore.train.model import Model, ParallelMode
 
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-import mindspore.dataset.engine as de
 from mindspore.communication.management import init
-
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -48,10 +41,8 @@ args_opt = parser.parse_args()
 
 device_id = int(os.getenv('DEVICE_ID'))
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
-context.set_context(enable_task_sink=True, device_id=device_id)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id,
+                    enable_auto_mixed_precision=True)
 
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:
@@ -77,7 +68,8 @@ if __name__ == '__main__':
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
 
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2",
+                      keep_batchnorm_fp32=False)
 
         time_cb = TimeMonitor(data_size=step_size)
         loss_cb = LossMonitor()

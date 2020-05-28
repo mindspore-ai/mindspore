@@ -246,12 +246,8 @@ void AnfRuntimeAlgorithm::EraseNodeAttr(const std::string &key, const AnfNodePtr
   primitive->EraseAttr(key);
 }
 
-bool AnfRuntimeAlgorithm::HasNodeAttr(const std::string &key, const AnfNodePtr &node) {
+bool AnfRuntimeAlgorithm::HasNodeAttr(const std::string &key, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(WARNING) << "Only cnode has attr, but this anf is " << node->DebugString();
-    return false;
-  }
   auto primitive = AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   return primitive->HasAttr(key);
@@ -275,7 +271,9 @@ size_t AnfRuntimeAlgorithm::GetInputTensorNum(const AnfNodePtr &node) {
 size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   TypePtr type = node->Type();
-  MS_EXCEPTION_IF_NULL(type);
+  if (type == nullptr) {
+    return 0;
+  }
   if (type->isa<Tuple>()) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
@@ -296,6 +294,9 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
                       << " is out of the node output range :" << GetOutputTensorNum(node) << " #node ["
                       << node->DebugString() << "]";
   }
+  if (!AnfAlgo::IsRealKernel(node)) {
+    return AnfAlgo::GetPrevNodeOutputFormat(node, output_idx);
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -314,6 +315,9 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
     MS_LOG(EXCEPTION) << "Input index :" << input_idx
                       << " is out of the number node Input range :" << GetInputTensorNum(node) << "#node ["
                       << node->DebugString() << "]";
+  }
+  if (!IsRealKernel(node)) {
+    GetPrevNodeOutputFormat(node, input_idx);
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -347,6 +351,11 @@ std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_n
   return AnfRuntimeAlgorithm::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
 }
 
+std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx) {
+  KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
+  return GetOutputReshapeType(kernel_with_index.first, kernel_with_index.second);
+}
+
 std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   abstract::BaseShapePtr base_shape = node->Shape();
@@ -366,8 +375,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &n
     } else if (b_shp->isa<abstract::NoShape>()) {
       return std::vector<size_t>();
     } else {
-      MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
-                        << base_shape->ToString();
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString();
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return std::vector<size_t>();
@@ -414,6 +423,9 @@ std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNode
                       << " is out of range of the node's input size : " << GetInputTensorNum(node) << "#node["
                       << node->DebugString() << "]";
   }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputReshapeType(node, input_idx);
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -429,6 +441,9 @@ std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNod
   if (output_idx > GetOutputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
                       << GetOutputTensorNum(node) << "#node[ " << node->DebugString() << "]";
+  }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputReshapeType(node, output_idx);
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -487,6 +502,9 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
                       << GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]";
   }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputDeviceDataType(node, output_idx);
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -504,6 +522,9 @@ TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_
   if (input_idx > GetInputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << input_idx << "] is out of range of the node's input size [ "
                       << GetInputTensorNum(node) << "#node [ " << node->DebugString() << "]";
+  }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputDeviceDataType(node, 0);
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -650,6 +671,16 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
 // copy an abstract of a node to another node
 void AnfRuntimeAlgorithm::CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node) {
   to_node->set_abstract(from_node->abstract());
+}
+
+kernel::OpPattern AnfRuntimeAlgorithm::GetOpPattern(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = node->kernel_info();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  // select_kernel_build_info() has checked whether return pointer is null
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  return build_info->op_pattern();
 }
 
 // get KernelBuildType of node, such as ATT,RT,FWK and so on
@@ -879,6 +910,71 @@ bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
 bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
   auto kernel_name = AnfAlgo::GetCNodeName(node);
   return kernel_name == kGetNextOpName;
+}
+
+FuncGraphPtr AnfRuntimeAlgorithm::GetValueNodeFuncGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return nullptr;
+  }
+  auto value = value_node->value();
+  if (value == nullptr) {
+    return nullptr;
+  }
+  auto func_graph = value->cast<FuncGraphPtr>();
+  return func_graph;
+}
+
+std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CNodePtr &call_node) {
+  if (!AnfAlgo::CheckPrimitiveType(call_node, std::make_shared<Primitive>("call"))) {
+    MS_LOG(EXCEPTION) << "anf node: " << call_node->DebugString() << "is not a call node.";
+  }
+  MS_EXCEPTION_IF_NULL(call_node);
+  auto input1 = call_node->input(1);
+  MS_EXCEPTION_IF_NULL(input1);
+  if (input1->isa<ValueNode>()) {
+    auto value_node = input1->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto kernel_graph = value_node->value();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    return {kernel_graph->cast<KernelGraphPtr>()};
+  } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
+    auto switch_node = input1->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_node);
+    MS_LOG(INFO) << "switch : " << switch_node->DebugString();
+    auto get_switch_kernel_graph = [&](size_t input_index) -> KernelGraphPtr {
+      auto partial = switch_node->input(input_index);
+      MS_EXCEPTION_IF_NULL(partial);
+      auto partial_cnode = partial->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(partial_cnode);
+      auto graph_node = partial_cnode->input(1);
+      MS_EXCEPTION_IF_NULL(graph_node);
+      MS_LOG(INFO) << graph_node->DebugString();
+      auto graph_value_node = graph_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(graph_value_node);
+      auto graph_value = graph_value_node->value();
+      MS_EXCEPTION_IF_NULL(graph_value);
+      auto child_graph = graph_value->cast<KernelGraphPtr>();
+      return child_graph;
+    };
+    return {get_switch_kernel_graph(2), get_switch_kernel_graph(3)};
+  }
+  return {};
+}
+
+bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
+  MS_EXCEPTION_IF_NULL(call_node);
+  if (!CheckPrimitiveType(call_node, prim::kPrimCall)) {
+    MS_LOG(EXCEPTION) << "call node should be a 'call', but is a " << call_node->DebugString();
+  }
+  auto input1 = call_node->input(1);
+  if (input1->isa<ValueNode>()) {
+    return false;
+  } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
+    return true;
+  }
+  MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString();
 }
 }  // namespace session
 }  // namespace mindspore

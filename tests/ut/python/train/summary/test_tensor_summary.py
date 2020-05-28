@@ -18,13 +18,14 @@
 @Date  : 2019-07-4
 @Desc  : test summary function
 """
-import os
 import logging
 import numpy as np
-from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
-from mindspore.common.tensor import Tensor
+import os
+
 import mindspore.nn as nn
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
@@ -78,20 +79,17 @@ def test_tensor_summary_sample():
     """ test_tensor_summary_sample """
     log.debug("begin test_tensor_summary_sample")
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_TENSOR")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_TENSOR") as test_writer:
+        # step 1: create the Event
+        for i in range(1, 100):
+            test_data = get_test_data(i)
 
-    # step 1: create the Event
-    for i in range(1, 100):
-        test_data = get_test_data(i)
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(i)
 
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(i)
+        # step 2: accept the event and write the file
 
-    # step 2: accept the event and write the file
-    test_writer.close()
-
-    log.debug("finished test_tensor_summary_sample")
-
+        log.debug("finished test_tensor_summary_sample")
 
 
 def get_test_data_check(step):
@@ -111,7 +109,8 @@ def get_test_data_check(step):
 # Test: test with ge
 class SummaryDemo(nn.Cell):
     """ SummaryDemo definition """
-    def __init__(self,):
+
+    def __init__(self, ):
         super(SummaryDemo, self).__init__()
         self.s = P.TensorSummary()
         self.add = P.TensorAdd()
@@ -123,28 +122,25 @@ class SummaryDemo(nn.Cell):
         self.s("y1", y)
         return z
 
+
 def test_tensor_summary_with_ge():
     """ test_tensor_summary_with_ge """
     log.debug("begin test_tensor_summary_with_ge")
 
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR)
+    with SummaryRecord(SUMMARY_DIR) as test_writer:
+        # step 1: create the network for summary
+        x = Tensor(np.array([1.1]).astype(np.float32))
+        y = Tensor(np.array([1.2]).astype(np.float32))
+        net = SummaryDemo()
+        net.set_train()
 
-    # step 1: create the network for summary
-    x = Tensor(np.array([1.1]).astype(np.float32))
-    y = Tensor(np.array([1.2]).astype(np.float32))
-    net = SummaryDemo()
-    net.set_train()
+        # step 2: create the Event
+        steps = 100
+        for i in range(1, steps):
+            x = Tensor(np.array([[i], [i]]).astype(np.float32))
+            y = Tensor(np.array([[i + 1], [i + 1]]).astype(np.float32))
+            net(x, y)
+            test_writer.record(i)
 
-    # step 2: create the Event
-    steps = 100
-    for i in range(1, steps):
-        x = Tensor(np.array([[i], [i]]).astype(np.float32))
-        y = Tensor(np.array([[i+1], [i+1]]).astype(np.float32))
-        net(x, y)
-        test_writer.record(i)
-
-    # step 3: close the writer
-    test_writer.close()
-
-    log.debug("finished test_tensor_summary_with_ge")
+        log.debug("finished test_tensor_summary_with_ge")

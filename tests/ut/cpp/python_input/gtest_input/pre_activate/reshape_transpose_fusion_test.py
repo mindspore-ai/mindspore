@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 Transpose = P.Transpose()
 Reshape = P.Reshape()
 ConfusionTransposeD = Primitive('ConfusionTransposeD')
 make_tuple = Primitive('make_tuple')
+
 
 class FnDict:
     def __init__(self):
@@ -36,7 +37,7 @@ def test_reshape_transpose_fusion(tag):
 
     @fns
     def before(input0):
-        reshape = Reshape(input0, (2, 4, 8, 16))
+        reshape = Reshape(input0, (2, 2, 16, 16))
         transpose = Transpose(reshape, (1, 0, 2, 3))
         return transpose
 

@@ -101,7 +101,9 @@ const char kNameReLU6[] = "ReLU6";
 const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
 const char kNameEluGrad[] = "EluGrad";
+const char kNameScatterUpdate[] = "ScatterUpdate";
 const char kNameScatterNdUpdate[] = "ScatterNdUpdate";
+const char kNameScatterMax[] = "ScatterMax";
 const char kNameNMSWithMask[] = "NMSWithMask";
 const char kNameCheckValid[] = "CheckValid";
 const char kNameSmoothL1Loss[] = "SmoothL1Loss";
@@ -195,6 +197,9 @@ const char kNameBatchToSpace[] = "BatchToSpace";
 const char kNameAtan2[] = "Atan2";
 const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
+const char kNameL2Loss[] = "L2Loss";
+const char kNameCTCLoss[] = "CTCLoss";
+const char kNameSquareSumAll[] = "SquareSumAll";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -252,7 +257,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameResizeBilinear), ADPT_DESC(ResizeBilinearV2D)},
     {string(kNameZerosLike), ADPT_DESC(ZerosLike)},
     {string(kNameOnesLike), ADPT_DESC(OnesLike)},
+    {string(kNameScatterUpdate), ADPT_DESC(ScatterUpdate)},
     {string(kNameScatterNdUpdate), ADPT_DESC(ScatterNdUpdate)},
+    {string(kNameScatterMax), ADPT_DESC(ScatterMax)},
     {string(kNameNMSWithMask), ADPT_DESC(NMSWithMask)},
     {string(kNameCheckValid), ADPT_DESC(CheckValid)},
     {string(kNameSmoothL1Loss), ADPT_DESC(SmoothL1Loss)},
@@ -336,6 +343,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimGelu->name(), ADPT_DESC(Gelu)},
     {prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad)},
     {string(kNameStridedSlice), ADPT_DESC(StridedSlice)},
+    {prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMinD)},
     {prim::kPrimUnsortedSegmentSum->name(), ADPT_DESC(UnsortedSegmentSumD)},
     {string(kNameExpandDims), ADPT_DESC(ExpandDims)},
     {prim::kPrimSqueeze->name(), ADPT_DESC(Squeeze)},
@@ -389,10 +397,13 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
     {string(kNameAtan2), ADPT_DESC(Atan2)},
     {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
-    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)}};
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
+    {string(kNameL2Loss), ADPT_DESC(L2Loss)},
+    {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
+    {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
-  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);
+  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdam);
 #endif
   return adpt_map;
 }
@@ -423,9 +434,8 @@ OpAdapterPtr DfGraphConvertor::FindAdapter(const AnfNodePtr node, bool train) {
     auto it_adpt = get_adpt_map().find(name);
     if (it_adpt != get_adpt_map().end()) {
       return it_adpt->second->Get(train);
-    } else {
-      MS_LOG(ERROR) << "Can't find OpAdapter for " << name;
     }
+    MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
   }
 
   if (node->isa<ValueNode>()) {
@@ -515,8 +525,7 @@ OpAdapterPtr DfGraphConvertor::FindAdapter(const std::string &name, bool train) 
   if (it != get_adpt_map().end()) {
     return it->second->Get(train);
   }
-  MS_LOG(ERROR) << "Can't find OpAdapter for " << name;
-  return transform::OpAdapterPtr(nullptr);
+  MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
 }
 
 void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it) {
@@ -642,7 +651,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (adpt == nullptr) continue;
     auto param_op = adpt->generate(name + "_data");
     MS_LOG(INFO) << "Add parameter " << name << " as input, index " << index << ".";
-    (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
 
     if (!training_) {
       auto adpt_const = FindAdapter(kNameConst, training_);
@@ -671,14 +679,17 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
 
     // we need three variable ops for each graph with same name
     // build init subgraph
-    auto init_var = std::make_shared<Variable>(name);
-    auto assign_op = std::make_shared<Assign>("assign_" + name);
-    (void)init_var->update_output_desc_y(*desc);
-    (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
-    init_input.push_back(*init_var);
-    init_ops_.push_back(param_op);
-    init_ops_.push_back(assign_op);
-    init_ops_.push_back(init_var);
+    if (it.second->is_init() == 0) {
+      (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
+      auto init_var = std::make_shared<Variable>(name);
+      auto assign_op = std::make_shared<Assign>("assign_" + name);
+      (void)init_var->update_output_desc_y(*desc);
+      (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
+      init_input.push_back(*init_var);
+      init_ops_.push_back(param_op);
+      init_ops_.push_back(assign_op);
+      init_ops_.push_back(init_var);
+    }
 
     auto variable = std::make_shared<Variable>(name);
     (void)variable->update_output_desc_y(*desc);

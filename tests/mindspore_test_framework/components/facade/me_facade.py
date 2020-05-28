@@ -18,8 +18,9 @@
 import numpy as np
 
 from ...components.icomponent import IFacadeComponent
-from ...utils.facade_util import get_block_config, fill_block_config
 from ...utils import keyword
+from ...utils.facade_util import get_block_config, fill_block_config
+
 
 class MeFacadeFC(IFacadeComponent):
     """
@@ -47,9 +48,10 @@ class MeFacadeFC(IFacadeComponent):
         }
     })
     """
-    def adapt(self, verification_set):
+
+    def __call__(self):
         ret = get_block_config()
-        for config in verification_set:
+        for config in self.verification_set:
             tid = config[0]
             group = 'default'
             m = config[1]

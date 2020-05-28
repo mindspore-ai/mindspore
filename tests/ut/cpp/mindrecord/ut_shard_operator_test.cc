@@ -63,7 +63,7 @@ TEST_F(TestShardOperator, TestShardSampleBasic) {
   std::vector<std::shared_ptr<ShardOperator>> ops;
   ops.push_back(std::make_shared<ShardSample>(kSampleCount));
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -89,7 +89,7 @@ TEST_F(TestShardOperator, TestShardSampleWrongNumber) {
   ops.push_back(std::make_shared<ShardSample>(kNum, kDen));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -115,7 +115,7 @@ TEST_F(TestShardOperator, TestShardSampleRatio) {
   ops.push_back(std::make_shared<ShardSample>(kNum, kDen));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -139,12 +139,12 @@ TEST_F(TestShardOperator, TestShardSamplePartition) {
   const int kPar = 2;
   std::vector<std::shared_ptr<ShardOperator>> ops;
   ops.push_back(std::make_shared<ShardSample>(kNum, kDen, kPar));
-  auto partitions = std::dynamic_pointer_cast<ShardSample>(ops[0])->get_partitions();
+  auto partitions = std::dynamic_pointer_cast<ShardSample>(ops[0])->GetPartitions();
   ASSERT_TRUE(partitions.first == 4);
   ASSERT_TRUE(partitions.second == 2);
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -168,7 +168,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerBasic) {
   ops.push_back(std::make_shared<ShardPkSample>("label", 2));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name},true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -193,7 +193,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
   ops.push_back(std::make_shared<ShardPkSample>("label", 2, 3, 0));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name},true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -223,7 +223,7 @@ TEST_F(TestShardOperator, TestShardCategory) {
   ops.push_back(std::make_shared<ShardCategory>(categories));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -254,7 +254,7 @@ TEST_F(TestShardOperator, TestShardShuffle) {
   ops.push_back(std::make_shared<ShardShuffle>(1));
 
   ShardReader dataset;
-  dataset.Open(file_name, 16, column_list, ops);
+  dataset.Open({file_name}, true, 16, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -279,7 +279,7 @@ TEST_F(TestShardOperator, TestShardSampleShuffle) {
   ops.push_back(std::make_shared<ShardShuffle>(1));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -306,7 +306,7 @@ TEST_F(TestShardOperator, TestShardShuffleSample) {
   ops.push_back(std::make_shared<ShardSample>(kSampleSize));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true,  4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -333,7 +333,7 @@ TEST_F(TestShardOperator, TestShardSampleShuffleSample) {
   ops.push_back(std::make_shared<ShardSample>(35));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -357,11 +357,11 @@ TEST_F(TestShardOperator, TestShardShuffleCompare) {
   ops.push_back(std::make_shared<ShardShuffle>(1));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true,  4, column_list, ops);
   dataset.Launch();
 
   ShardReader compare_dataset;
-  compare_dataset.Open(file_name, 4, column_list);
+  compare_dataset.Open({file_name},true, 4, column_list);
   compare_dataset.Launch();
 
   int i = 0;
@@ -396,7 +396,7 @@ TEST_F(TestShardOperator, TestShardCategoryShuffle1) {
   ops.push_back(std::make_shared<ShardShuffle>(21));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -430,7 +430,7 @@ TEST_F(TestShardOperator, TestShardCategoryShuffle2) {
   ops.push_back(std::make_shared<ShardCategory>(categories));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -464,7 +464,7 @@ TEST_F(TestShardOperator, TestShardCategorySample) {
   ops.push_back(std::make_shared<ShardCategory>(categories));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name},true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;
@@ -502,7 +502,7 @@ TEST_F(TestShardOperator, TestShardCategorySampleShuffle) {
   ops.push_back(std::make_shared<ShardShuffle>(100));
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   int i = 0;

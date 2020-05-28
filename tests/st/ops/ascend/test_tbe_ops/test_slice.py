@@ -12,34 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Slice(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(Slice, self).__init__()
 
         self.cat = P.Slice()
         self.x1 = Parameter(initializer(
-            Tensor(np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(np.float32)), [3,2,3]), name='x1')
+            Tensor(np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(
+                np.float32)), [3, 2, 3]), name='x1')
 
     @ms_function
     def construct(self):
-        return self.cat(self.x1, (0,1, 0), (2, 1, 3))
+        return self.cat(self.x1, (0, 1, 0), (2, 1, 3))
 
 
 def test_slice():
     cat = Slice()
     output = cat()
-    expect = [[[2., -2.,  2.]],
-              [[4., -4.,  4.]]]
+    expect = [[[2., -2., 2.]],
+              [[4., -4., 4.]]]
     print(output)
     assert (output.asnumpy() == expect).all()

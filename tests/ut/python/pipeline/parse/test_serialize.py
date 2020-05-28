@@ -18,8 +18,10 @@
 @Desc  :
 """
 import os
+
 from mindspore._extends.parse import dump_obj
 from mindspore._extends.parse import load_obj
+
 
 def test_load_dump():
     data = (1, 3, 2, 7, 9)

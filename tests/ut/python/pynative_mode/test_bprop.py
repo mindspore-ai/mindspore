@@ -14,19 +14,23 @@
 # ============================================================================
 """ test_bprop """
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.ops import operations as P
-from mindspore.common.parameter import Parameter
 from mindspore.common import Tensor
-from ....mindspore_test_framework.utils.bprop_util import bprop
 from mindspore.common.api import ms_function
+from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+from ....mindspore_test_framework.utils.bprop_util import bprop
+
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
+
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.matmul = P.MatMul()
@@ -38,10 +42,12 @@ class Net(nn.Cell):
         out = self.matmul(x, y)
         return x, out
 
+
 def test_bprop_no_sens():
     grads = bprop(Net(), Tensor(np.ones([2, 3]).astype(np.float32)),
                   Tensor(np.ones([3, 2]).astype(np.float32)), wrt=['inputs'])
     print(grads)
+
 
 def test_bprop_sens():
     grads = bprop(Net(), Tensor(np.ones([2, 3]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32)),
@@ -49,11 +55,13 @@ def test_bprop_sens():
                                      Tensor(np.ones([2, 2]).astype(np.float32))), wrt=['inputs'])
     print(grads)
 
+
 def test_bprop_first_only():
     grads = bprop(Net(), Tensor(np.ones([2, 3]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32)),
                   grads_wrt_outputs=(Tensor(np.ones([2, 3]).astype(np.float32)),
                                      Tensor(np.ones([2, 2]).astype(np.float32))))
     print(grads)
+
 
 def test_bprop_wrt_params():
     net = Net()
@@ -64,12 +72,14 @@ def test_bprop_wrt_params():
                   params=net.trainable_params())
     print(grads)
 
+
 def test_bprop_wrt_params_no_sens():
     net = Net()
     grads = bprop(net, Tensor(np.ones([2, 3]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32)),
                   wrt=['params'],
                   params=net.trainable_params())
     print(grads)
+
 
 def test_bprop_wrt_inputs_and_params():
     net = Net()

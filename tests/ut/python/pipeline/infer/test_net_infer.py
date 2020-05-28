@@ -21,6 +21,7 @@ from mindspore import Tensor
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')

@@ -19,12 +19,13 @@ Usage:
     python test_predict_save_model.py --path ./
 """
 
-import os
 import argparse
 import numpy as np
+import os
+
+import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
@@ -64,7 +65,6 @@ parser.add_argument('--path', default='./lenet_model.ms', type=str, help='model 
 
 if __name__ == '__main__':
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True)
 
     print("test lenet predict start")
     seed = 0

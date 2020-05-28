@@ -33,7 +33,10 @@ class Conv2dGradFilterCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Conv2DBackpropFilter, Conv2dGradFilterCPUKernel);
+MS_REG_CPU_KERNEL(
+  Conv2DBackpropFilter,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  Conv2dGradFilterCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

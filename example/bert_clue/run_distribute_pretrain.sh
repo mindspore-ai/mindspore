@@ -26,12 +26,16 @@ DATA_DIR=$3
 SCHEMA_DIR=$4
 
 export MINDSPORE_HCCL_CONFIG_PATH=$5
+export RANK_TABLE_FILE=$5
 export RANK_SIZE=$1
 
 for((i=0;i<RANK_SIZE;i++))
 do
-    export DEVICE_ID=$i
     start=`expr $i \* 12`
+    export DEVICE_ID=$i
+    export RANK_ID=$i
+    export DEPLOY_MODE=0
+    export GE_USE_STATIC_MEMORY=1
     end=`expr $start \+ 11`
     cmdopt=$start"-"$end
 
@@ -39,7 +43,6 @@ do
     mkdir ./LOG$i
     cp  *.py ./LOG$i
     cd ./LOG$i || exit
-    export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
     taskset -c $cmdopt python ../run_pretrain.py  \
@@ -47,16 +50,13 @@ do
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
     --device_num=$RANK_SIZE \
-    --enable_task_sink="true" \
-    --enable_loop_sink="true" \
-    --enable_mem_reuse="true" \
     --enable_save_ckpt="true" \
     --enable_lossscale="true" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
     --data_sink_steps=1 \
     --checkpoint_path="" \
-    --save_checkpoint_steps=1000 \
+    --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
     --data_dir=$DATA_DIR \
     --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &

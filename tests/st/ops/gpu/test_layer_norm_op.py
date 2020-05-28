@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-import mindspore.context as context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -31,16 +32,17 @@ class LayerNormNet(nn.Cell):
     def construct(self, x, gamma, beta):
         return self.norm(x, gamma, beta)
 
+
 def LayerNormReference(begin_norm_axis, begin_params_axis, x, gamma, beta):
-    begin_norm_axis = begin_norm_axis if begin_norm_axis >=0 else begin_norm_axis + len(x.shape)
-    begin_params_axis = begin_params_axis if begin_params_axis >=0 else begin_params_axis + len(x.shape)
+    begin_norm_axis = begin_norm_axis if begin_norm_axis >= 0 else begin_norm_axis + len(x.shape)
+    begin_params_axis = begin_params_axis if begin_params_axis >= 0 else begin_params_axis + len(x.shape)
 
     axis = [i for i in range(begin_norm_axis, len(x.shape))]
     mean = np.mean(x, axis=tuple(axis), keepdims=True)
-    var  = np.var(x, axis=tuple(axis), keepdims=True)
+    var = np.var(x, axis=tuple(axis), keepdims=True)
 
-    gamma = gamma.reshape((*((1,)*begin_params_axis), *x.shape[begin_params_axis:]))
-    beta = beta.reshape((*((1,)*begin_params_axis), *x.shape[begin_params_axis:]))
+    gamma = gamma.reshape((*((1,) * begin_params_axis), *x.shape[begin_params_axis:]))
+    beta = beta.reshape((*((1,) * begin_params_axis), *x.shape[begin_params_axis:]))
     y = np.subtract(x, mean) / np.sqrt(var + 1e-12) * gamma + beta
     return y, mean, var
 
@@ -83,7 +85,6 @@ def test_layernorm1():
     beta_ms = Tensor(beta_np)
     net = LayerNormNet(begin_norm_axis, begin_params_axis)
     y_ms, mean_ms, var_ms = net(x_ms, gamma_ms, beta_ms)
-
 
     assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-6)

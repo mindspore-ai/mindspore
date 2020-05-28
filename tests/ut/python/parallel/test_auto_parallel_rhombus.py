@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -32,6 +34,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, b)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -39,6 +42,12 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
+
+
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
 
 def test_rhombus1():
     class Net(nn.Cell):
@@ -63,7 +72,8 @@ def test_rhombus1():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_rhombus2():
     class Net(nn.Cell):
@@ -93,7 +103,8 @@ def test_rhombus2():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_rhombus3():
     class Net(nn.Cell):
@@ -123,4 +134,4 @@ def test_rhombus3():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z)
+    compile(net, x, y, z)

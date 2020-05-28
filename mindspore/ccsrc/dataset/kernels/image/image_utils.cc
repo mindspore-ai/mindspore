@@ -64,7 +64,7 @@ Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int 
 
   std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
   RETURN_UNEXPECTED_IF_NULL(output_cv);
-  (void)output_cv->StartAddr();
+  (void)output_cv->GetMutableBuffer();
   if (input_cv->mat().data) {
     try {
       cv::flip(input_cv->mat(), output_cv->mat(), flip_code);
@@ -125,10 +125,10 @@ bool HasJpegMagic(const unsigned char *data, size_t data_size) {
 }
 
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  if (input->StartAddr() == nullptr) {
+  if (input->GetMutableBuffer() == nullptr) {
     RETURN_STATUS_UNEXPECTED("Tensor is nullptr");
   }
-  if (HasJpegMagic(input->StartAddr(), input->SizeInBytes())) {
+  if (HasJpegMagic(input->GetMutableBuffer(), input->SizeInBytes())) {
     return JpegCropAndDecode(input, output);
   } else {
     return DecodeCv(input, output);
@@ -282,7 +282,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
     jpeg_create_decompress(&cinfo);
-    JpegSetSource(&cinfo, input->StartAddr(), input->SizeInBytes());
+    JpegSetSource(&cinfo, input->GetMutableBuffer(), input->SizeInBytes());
     (void)jpeg_read_header(&cinfo, TRUE);
     RETURN_IF_NOT_OK(JpegSetColorSpace(&cinfo));
     jpeg_calc_output_dimensions(&cinfo);
@@ -311,7 +311,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   TensorShape ts = TensorShape({crop_h, crop_w, kOutNumComponents});
   auto output_tensor = std::make_shared<Tensor>(ts, DataType(DataType::DE_UINT8));
   const int buffer_size = output_tensor->SizeInBytes();
-  JSAMPLE *buffer = static_cast<JSAMPLE *>(output_tensor->StartAddr());
+  JSAMPLE *buffer = static_cast<JSAMPLE *>(output_tensor->GetMutableBuffer());
   const int max_scanlines_to_read = skipped_scanlines + crop_h;
   // stride refers to output tensor, which has 3 components at most
   const int stride = crop_w * kOutNumComponents;
@@ -370,6 +370,11 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
+    if (input_cv->Rank() == 2) {
+      // If input tensor is 2D, we assume we have hw dimensions
+      *output = input;
+      return Status::OK();
+    }
     if (input_cv->shape().Size() != 3 && input_cv->shape()[2] != 3) {
       RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels is not equal 3");
     }
@@ -395,9 +400,6 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
-    if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
-    }
     if (input_cv->shape().Size() != 3 && input_cv->shape()[2] != 3) {
       RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels is not equal 3");
     }
@@ -714,7 +716,10 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     }
     std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(out_image);
     RETURN_UNEXPECTED_IF_NULL(output_cv);
+    // pad the dimension if shape information is only 2 dimensional, this is grayscale
+    if (input_cv->Rank() == 3 && input_cv->shape()[2] == 1 && output_cv->Rank() == 2) output_cv->ExpandDim(2);
     *output = std::static_pointer_cast<Tensor>(output_cv);
+
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Unexpected error in pad");

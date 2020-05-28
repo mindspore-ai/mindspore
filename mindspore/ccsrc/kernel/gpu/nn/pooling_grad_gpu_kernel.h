@@ -61,7 +61,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -85,7 +85,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
                              padded_descriptor_, padded, &beta, padded_descriptor_, padded_dx),
         "cudnnPoolingBackward failed");
 
-      CalPadGrad(padded_size_ / sizeof(T), padded_dx, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
+      CalPadGrad(output_size_ / sizeof(T), padded_dx, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
                  old_width_ + pad_width_, pad_top_, pad_left_, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -101,8 +101,8 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto window = GetAttr<std::vector<int>>(kernel_node, "ksize");
-    int window_height = window[3];
-    int window_width = window[2];
+    int window_height = window[2];
+    int window_width = window[3];
     SetPoolingMode(kernel_node);
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto input_mask = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);

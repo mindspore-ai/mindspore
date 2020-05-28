@@ -15,28 +15,28 @@
 """ test ops """
 import functools
 import numpy as np
+
+import mindspore.nn as nn
+import mindspore.ops.composite as C
+from mindspore import Tensor
 from mindspore import ops
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-import mindspore.ops.composite as C
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.common.parameter import Parameter
 from ..ut_filter import non_graph_engine
-from mindspore.common.api import _executor
-
 from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward\
+from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import (pipeline_for_compile_forward_ge_graph_for_case_by_case_config,
             pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient\
+from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
 
 class AssignAddNet(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(AssignAddNet, self).__init__()
         self.op = P.AssignAdd()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_add1")
@@ -47,7 +47,7 @@ class AssignAddNet(nn.Cell):
 
 
 class AssignSubNet(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(AssignSubNet, self).__init__()
         self.op = P.AssignSub()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_sub1")
@@ -87,11 +87,6 @@ class CumSumNet(nn.Cell):
 
 
 raise_set = [
-    # one input is scalar, and another is Tensor(float32)
-    ('TensorAdd0', {
-        'block': (P.TensorAdd(), {'exception': TypeError, 'error_keywords': ['TensorAdd']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('TensorAdd1', {
         'block': (P.TensorAdd(), {'exception': TypeError, 'error_keywords': ['TensorAdd']}),
@@ -118,164 +113,159 @@ raise_set = [
     # type of axis is float, not int
     ('ReduceMean1', {
         'block': (ReduceNet(P.ReduceMean, keep_dims=True, axis=5.0),
-        {'exception': TypeError, 'error_keywords': ['ReduceMean']}),
+                  {'exception': TypeError, 'error_keywords': ['ReduceMean']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
     # axis is out of range
     ('ReduceMean2', {
         'block': (ReduceNet(P.ReduceMean, keep_dims=True, axis=5),
-         {'exception': ValueError, 'error_keywords': ['ReduceMean']}),
+                  {'exception': ValueError, 'error_keywords': ['ReduceMean']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
 
     # type of axis is float, not int
     ('ReduceSum1', {
         'block': (ReduceNet(P.ReduceSum, keep_dims=True, axis=5.0),
-        {'exception': TypeError, 'error_keywords': ['ReduceSum']}),
+                  {'exception': TypeError, 'error_keywords': ['ReduceSum']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
     # axis is out of range
     ('ReduceSum2', {
         'block': (ReduceNet(P.ReduceSum, keep_dims=True, axis=5),
-         {'exception': ValueError, 'error_keywords': ['ReduceSum']}),
+                  {'exception': ValueError, 'error_keywords': ['ReduceSum']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
 
     # type of axis is float, not int
     ('ReduceAll1', {
         'block': (ReduceNet(P.ReduceAll, keep_dims=True, axis=5.0),
-        {'exception': TypeError, 'error_keywords': ['ReduceAll']}),
+                  {'exception': TypeError, 'error_keywords': ['ReduceAll']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.bool_))],
         'skip': ['backward']}),
     # axis is out of range
     ('ReduceAll2', {
         'block': (ReduceNet(P.ReduceAll, keep_dims=True, axis=5),
-         {'exception': ValueError, 'error_keywords': ['ReduceAll']}),
+                  {'exception': ValueError, 'error_keywords': ['ReduceAll']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.bool_))],
         'skip': ['backward']}),
 
     # type of axis is float, not int
     ('ReduceMax1', {
         'block': (ReduceNet(P.ReduceMax, keep_dims=True, axis=5.0),
-        {'exception': TypeError, 'error_keywords': ['ReduceMax']}),
+                  {'exception': TypeError, 'error_keywords': ['ReduceMax']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
     # axis is out of range
     ('ReduceMax2', {
         'block': (ReduceNet(P.ReduceMax, keep_dims=True, axis=5),
-         {'exception': ValueError, 'error_keywords': ['ReduceMax']}),
+                  {'exception': ValueError, 'error_keywords': ['ReduceMax']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
 
     # type of axis is float, not int
     ('ReduceMin1', {
         'block': (ReduceNet(P.ReduceMin, keep_dims=True, axis=5.0),
-        {'exception': TypeError, 'error_keywords': ['ReduceMin']}),
+                  {'exception': TypeError, 'error_keywords': ['ReduceMin']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
     # axis is out of range
     ('ReduceMin2', {
         'block': (ReduceNet(P.ReduceMin, keep_dims=True, axis=5),
-         {'exception': ValueError, 'error_keywords': ['ReduceMin']}),
+                  {'exception': ValueError, 'error_keywords': ['ReduceMin']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
 
     # type of axis is float, not int
     ('ReduceProd1', {
         'block': (ReduceNet(P.ReduceProd, keep_dims=True, axis=5.0),
-        {'exception': TypeError, 'error_keywords': ['ReduceProd']}),
+                  {'exception': TypeError, 'error_keywords': ['ReduceProd']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
     # axis is out of range
     ('ReduceProd2', {
         'block': (ReduceNet(P.ReduceProd, keep_dims=True, axis=5),
-         {'exception': ValueError, 'error_keywords': ['ReduceProd']}),
+                  {'exception': ValueError, 'error_keywords': ['ReduceProd']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32))],
         'skip': ['backward']}),
 
     # type of x is Tensor(bool)
     ('CumProd1', {
         'block': (CumProdNet(),
-        {'exception': TypeError, 'error_keywords': ['CumProd']}),
+                  {'exception': TypeError, 'error_keywords': ['CumProd']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.bool)), 1],
         'skip': ['backward']}),
     # type of axis in float, not int
     ('CumProd2', {
         'block': (CumProdNet(),
-        {'exception': TypeError, 'error_keywords': ['CumProd']}),
+                  {'exception': TypeError, 'error_keywords': ['CumProd']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.float32)), 5.0],
         'skip': ['backward']}),
 
     # type of x and y are Tensor(uint32)
     ('MatMul1', {
         'block': (P.MatMul(),
-        {'exception': TypeError, 'error_keywords': ['MatMul']}),
+                  {'exception': TypeError, 'error_keywords': ['MatMul']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.uint32)), Tensor(np.ones([3, 2]).astype(np.uint32))],
         'skip': ['backward']}),
     # type of x and y not match
     ('MatMul2', {
         'block': (P.MatMul(),
-        {'exception': TypeError, 'error_keywords': ['MatMul']}),
+                  {'exception': TypeError, 'error_keywords': ['MatMul']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.int32))],
         'skip': ['backward']}),
     # shape of x and y not match
     ('MatMul3', {
         'block': (P.MatMul(),
-        {'exception': ValueError, 'error_keywords': ['MatMul']}),
+                  {'exception': ValueError, 'error_keywords': ['MatMul']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.float32)), Tensor(np.ones([2, 3]).astype(np.float32))],
         'skip': ['backward']}),
 
     # dims of x and y are less than 3
     ('BatchMatMul1', {
         'block': (P.BatchMatMul(),
-        {'exception': ValueError, 'error_keywords': ['BatchMatMul']}),
+                  {'exception': ValueError, 'error_keywords': ['BatchMatMul']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.int32)), Tensor(np.ones([3, 2]).astype(np.int32))],
         'skip': ['backward']}),
 
     # type of x is Tensor(bool)
     ('CumSum1', {
         'block': (CumSumNet(axis=1),
-        {'exception': TypeError, 'error_keywords': ['CumSum']}),
+                  {'exception': TypeError, 'error_keywords': ['CumSum']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.bool))],
         'skip': ['backward']}),
     # type of axis in float, not int
     ('CumSum2', {
         'block': (CumSumNet(axis=1.0),
-        {'exception': TypeError, 'error_keywords': ['CumSum']}),
+                  {'exception': TypeError, 'error_keywords': ['CumSum']}),
         'desc_inputs': [Tensor(np.ones([2, 3, 5]).astype(np.bool))],
         'skip': ['backward']}),
 
     # intput is not tuple or list
     ('AddN1', {
         'block': (P.AddN(),
-        {'exception': TypeError, 'error_keywords': ['AddN']}),
+                  {'exception': TypeError, 'error_keywords': ['AddN']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.uint32))],
         'skip': ['backward']}),
     # type not match
     ('AddN2', {
         'block': (P.AddN(),
-        {'exception': TypeError, 'error_keywords': ['AddN']}),
+                  {'exception': TypeError, 'error_keywords': ['AddN']}),
         'desc_inputs': [(Tensor(np.ones([2, 3]).astype(np.uint32)), Tensor(np.ones([3, 2]).astype(np.int32)))],
         'skip': ['backward']}),
     # shape not match
     ('AddN3', {
         'block': (P.AddN(),
-        {'exception': ValueError, 'error_keywords': ['AddN']}),
+                  {'exception': ValueError, 'error_keywords': ['AddN']}),
         'desc_inputs': [(Tensor(np.ones([2, 3]).astype(np.int32)), Tensor(np.ones([3, 2]).astype(np.int32)))],
         'skip': ['backward']}),
 
     # input is Tensor(bool)
     ('Neg1', {
         'block': (P.Neg(),
-        {'exception': TypeError, 'error_keywords': ['Neg']}),
+                  {'exception': TypeError, 'error_keywords': ['Neg']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('Sub0', {
-        'block': (P.Sub(), {'exception': TypeError, 'error_keywords': ['Sub']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('Sub1', {
         'block': (P.Sub(), {'exception': TypeError, 'error_keywords': ['Sub']}),
@@ -287,11 +277,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('Mul0', {
-        'block': (P.Mul(), {'exception': TypeError, 'error_keywords': ['Mul']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('Mul1', {
         'block': (P.Mul(), {'exception': TypeError, 'error_keywords': ['Mul']}),
@@ -306,57 +291,52 @@ raise_set = [
     # input is Tensor(bool)
     ('Square1', {
         'block': (P.Square(),
-        {'exception': TypeError, 'error_keywords': ['Square']}),
+                  {'exception': TypeError, 'error_keywords': ['Square']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
     # input is Tensor(bool)
     ('Rsqrt1', {
         'block': (P.Rsqrt(),
-        {'exception': TypeError, 'error_keywords': ['Rsqrt']}),
+                  {'exception': TypeError, 'error_keywords': ['Rsqrt']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
     # input is Tensor(bool)
     ('Sqrt1', {
         'block': (P.Sqrt(),
-        {'exception': TypeError, 'error_keywords': ['Sqrt']}),
+                  {'exception': TypeError, 'error_keywords': ['Sqrt']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
     # input is not Tensor
     ('Reciprocal1', {
         'block': (P.Reciprocal(),
-        {'exception': TypeError, 'error_keywords': ['Reciprocal']}),
+                  {'exception': TypeError, 'error_keywords': ['Reciprocal']}),
         'desc_inputs': [5.0],
         'skip': ['backward']}),
 
     # input x is Tensor(bool)
     ('Pow1', {
         'block': (P.Pow(),
-        {'exception': TypeError, 'error_keywords': ['Pow']}),
+                  {'exception': TypeError, 'error_keywords': ['Pow']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_)), 2.0],
         'skip': ['backward']}),
 
     # input is not Tensor
     ('Exp1', {
         'block': (P.Exp(),
-        {'exception': TypeError, 'error_keywords': ['Exp']}),
+                  {'exception': TypeError, 'error_keywords': ['Exp']}),
         'desc_inputs': [5.0],
         'skip': ['backward']}),
 
     # input is not Tensor
     ('Log1', {
         'block': (P.Log(),
-        {'exception': TypeError, 'error_keywords': ['Log']}),
+                  {'exception': TypeError, 'error_keywords': ['Log']}),
         'desc_inputs': [5.0],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('Minimum0', {
-        'block': (P.Minimum(), {'exception': TypeError, 'error_keywords': ['Minimum']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('Minimum1', {
         'block': (P.Minimum(), {'exception': TypeError, 'error_keywords': ['Minimum']}),
@@ -368,11 +348,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('Maximum0', {
-        'block': (P.Maximum(), {'exception': TypeError, 'error_keywords': ['Maximum']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('Maximum1', {
         'block': (P.Maximum(), {'exception': TypeError, 'error_keywords': ['Maximum']}),
@@ -384,11 +359,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('RealDiv0', {
-        'block': (P.RealDiv(), {'exception': TypeError, 'error_keywords': ['RealDiv']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('RealDiv1', {
         'block': (P.RealDiv(), {'exception': TypeError, 'error_keywords': ['RealDiv']}),
@@ -400,11 +370,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('Div0', {
-        'block': (P.Div(), {'exception': TypeError, 'error_keywords': ['Div']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('Div1', {
         'block': (P.Div(), {'exception': TypeError, 'error_keywords': ['Div']}),
@@ -416,11 +381,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('FloorDiv0', {
-        'block': (P.FloorDiv(), {'exception': TypeError, 'error_keywords': ['FloorDiv']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('FloorDiv1', {
         'block': (P.FloorDiv(), {'exception': TypeError, 'error_keywords': ['FloorDiv']}),
@@ -435,15 +395,10 @@ raise_set = [
     # input x is Tensor(int32), not Tensor(float)
     ('Floor1', {
         'block': (P.Floor(),
-        {'exception': TypeError, 'error_keywords': ['Floor']}),
+                  {'exception': TypeError, 'error_keywords': ['Floor']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.int32))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('FloorMod0', {
-        'block': (P.FloorMod(), {'exception': TypeError, 'error_keywords': ['FloorMod']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('FloorMod1', {
         'block': (P.FloorMod(), {'exception': TypeError, 'error_keywords': ['FloorMod']}),
@@ -458,15 +413,10 @@ raise_set = [
     # input x is Tensor(int32), not Tensor(float)
     ('Acosh1', {
         'block': (P.Acosh(),
-        {'exception': TypeError, 'error_keywords': ['Acosh']}),
+                  {'exception': TypeError, 'error_keywords': ['Acosh']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
-    # input is not tensor
-    ('Equal0', {
-        'block': (P.Equal(), {'exception': TypeError, 'error_keywords': ['Equal']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # type of x and y not match
     ('Equal1', {
         'block': (P.Equal(), {'exception': TypeError, 'error_keywords': ['Equal']}),
@@ -490,11 +440,6 @@ raise_set = [
         'skip': ['backward']}),
     # shape of x and y not match
 
-    # input is not tensor
-    ('NotEqual0', {
-        'block': (P.NotEqual(), {'exception': TypeError, 'error_keywords': ['NotEqual']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # type of x and y not match
     ('NotEqual1', {
         'block': (P.NotEqual(), {'exception': TypeError, 'error_keywords': ['NotEqual']}),
@@ -506,11 +451,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input is not tensor
-    ('Greater0', {
-        'block': (P.Greater(), {'exception': TypeError, 'error_keywords': ['Greater']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # type of x and y not match
     ('Greater1', {
         'block': (P.Greater(), {'exception': TypeError, 'error_keywords': ['Greater']}),
@@ -522,11 +462,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input is not tensor
-    ('GreaterEqual0', {
-        'block': (P.GreaterEqual(), {'exception': TypeError, 'error_keywords': ['GreaterEqual']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # type of x and y not match
     ('GreaterEqual1', {
         'block': (P.GreaterEqual(), {'exception': TypeError, 'error_keywords': ['GreaterEqual']}),
@@ -538,11 +473,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input is not tensor
-    ('Less0', {
-        'block': (P.Less(), {'exception': TypeError, 'error_keywords': ['Less']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # type of x and y not match
     ('Less1', {
         'block': (P.Less(), {'exception': TypeError, 'error_keywords': ['Less']}),
@@ -554,11 +484,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input is not tensor
-    ('LessEqual0', {
-        'block': (P.LessEqual(), {'exception': TypeError, 'error_keywords': ['LessEqual']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # type of x and y not match
     ('LessEqual1', {
         'block': (P.LessEqual(), {'exception': TypeError, 'error_keywords': ['LessEqual']}),
@@ -573,7 +498,7 @@ raise_set = [
     # input x is not Tensor(bool)
     ('LogicalNot1', {
         'block': (P.LogicalNot(),
-        {'exception': TypeError, 'error_keywords': ['LogicalNot']}),
+                  {'exception': TypeError, 'error_keywords': ['LogicalNot']}),
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.int32))],
         'skip': ['backward']}),
 
@@ -728,11 +653,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.bool_))],
         'skip': ['backward']}),
 
-    # one input is scalar, and another is Tensor(float32)
-    ('Atan20', {
-        'block': (P.Atan2(), {'exception': TypeError, 'error_keywords': ['Atan2']}),
-        'desc_inputs': [5.0, Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('Atan21', {
         'block': (P.Atan2(), {'exception': TypeError, 'error_keywords': ['Atan2']}),

@@ -51,18 +51,22 @@ struct Cost {
     communication_with_partial_para_ = 0.0;
     communication_redis_forward_ = 0.0;
     communication_redis_backward_ = 0.0;
+    communication_forward_ = 0.0;
   }
-  // 'memory_with_reuse_' calculates the peak memory usage in a training phase
+  // 'memory_with_reuse_' calculates the peak memory usage in a training (or inference) phase
   double memory_with_reuse_;
-  // 'computation_cost_'  models the training time of an iteration in a training phase
+  // 'computation_cost_'  models the training time of an iteration in a training phase. Currently, this is calculated
+  // by ONLY forward phase
   double computation_cost_;
-  // 'communication_cost_' includes communications from operators (forward and backward) and edges
+  // 'communication_cost_' includes communications from operators (forward and backward) and edges (redistribution)
   double communication_cost_;
   // communication_without_parameter_ = communication_cost_ - (backward communication from operators)
   double communication_without_parameter_;
   // communication_with_partial_para_ =
   // communication_without_parameter_ + COST_MODEL_GAMMA * (communication_cost_ - communication_without_parameter_ )
   double communication_with_partial_para_;
+  // communication_forward_ = communication cost from operators (only forward phase) and forward redistribution.
+  double communication_forward_;
   double communication_redis_forward_;
   double communication_redis_backward_;
   std::shared_ptr<Decision> decision_ptr_;
@@ -296,7 +300,8 @@ using FinalDecisionPtr = std::shared_ptr<FinalDecision>;
 using FinalSingleDecisionPtr = std::shared_ptr<FinalSingleDecision>;
 
 void Simplify(CostPtrList *clist);
-void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList *clist);
+void SimplifyForDecreasingCommunicationForward(CostPtrList *clist);
+void SimplifyForDecreasingCommunicationWithPartialPara(CostPtrList *clist);
 void RefineForPracticalCost(const CostPtr &, bool is_redistribution);
 }  // namespace parallel
 }  // namespace mindspore

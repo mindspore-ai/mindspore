@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 add = P.TensorAdd()
 mul = P.Mul()
@@ -37,9 +37,15 @@ def test_mul_add_fusion(tag):
     fns = FnDict()
 
     @fns
-    def before(x, y, z):
+    def before1(x, y, z):
         res = mul(x, y)
         res = add(res, z)
+        return res
+
+    @fns
+    def before2(x, y, z):
+        res = mul(x, y)
+        res = add(z, res)
         return res
 
     @fns

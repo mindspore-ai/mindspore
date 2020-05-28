@@ -153,7 +153,7 @@ bool AnalysisContext::operator==(const AnalysisContext &other) const {
 // free values. In order to decrease the number of cloned graphs, we add this `SpecializeKey` method to control what
 // graph can be reused.
 // The graph called with different SymbolicKey will be reused. The abstract of SymbolicKey parameter will be joined
-// and stored in the intermediate_abstract. The joined SymbolicKey would cause Poly Code in infer, thus the reused
+// and stored in the intermediate_abstract. The joined SymbolicKey would cause Poly Code in eval, thus the reused
 // graph with SymbolicKey parameter should be inlined in `opt` pipeline before the next renormalize.
 // The graph called with different shape should not be reused, because the combination of `shape` and `Fill` relies
 // on correct shape to specialize a tensor constant.
@@ -166,7 +166,6 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
                            if (val->isa<SymbolicKeyInstance>()) {
                              auto scalar_spec = dyn_cast<AbstractScalar>(arg);
                              auto ret_spec = scalar_spec->Broaden();
-                             ret_spec->set_value(kAnyValue);
                              return ret_spec;
                            }
                          }

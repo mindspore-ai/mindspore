@@ -16,8 +16,9 @@
 """Component that verify if the model can converge to expected loss."""
 
 from ...components.icomponent import IExectorComponent
-from ...utils.model_util import Model
 from ...utils import keyword
+from ...utils.model_util import Model
+
 
 class LossVerifierEC(IExectorComponent):
     """
@@ -32,13 +33,14 @@ class LossVerifierEC(IExectorComponent):
             'loss_upper_bound': 0.03,
         }
     """
-    def run_function(self, function, inputs, verification_set):
-        model = function[keyword.block][keyword.model]
-        loss = function[keyword.block][keyword.loss]
-        opt = function[keyword.block][keyword.opt]
-        num_epochs = function[keyword.block][keyword.num_epochs]
-        loss_upper_bound = function[keyword.block][keyword.loss_upper_bound]
-        train_dataset = inputs[keyword.desc_inputs]
+
+    def __call__(self):
+        model = self.function[keyword.block][keyword.model]
+        loss = self.function[keyword.block][keyword.loss]
+        opt = self.function[keyword.block][keyword.opt]
+        num_epochs = self.function[keyword.block][keyword.num_epochs]
+        loss_upper_bound = self.function[keyword.block][keyword.loss_upper_bound]
+        train_dataset = self.inputs[keyword.desc_inputs]
         model = Model(model, loss, opt)
         loss = model.train(num_epochs, train_dataset)
         assert loss.asnumpy().mean() <= loss_upper_bound

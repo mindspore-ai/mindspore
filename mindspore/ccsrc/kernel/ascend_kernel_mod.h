@@ -29,6 +29,12 @@ class AscendKernelMod : public KernelMod {
  public:
   virtual std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
+  uint32_t block_dim() { return block_dim_; }
+  uint32_t stream_id() { return stream_id_; }
+
+ protected:
+  uint32_t block_dim_{1};
+  uint32_t stream_id_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

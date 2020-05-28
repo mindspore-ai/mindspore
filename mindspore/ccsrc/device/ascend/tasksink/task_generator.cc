@@ -45,7 +45,8 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
   if (anf_node_ptr->inputs().size() != 2) {
     MS_LOG(EXCEPTION) << "atomic Addr clean Node Input nodes not equal 2.";
   }
-  auto pre_node = anf_node_ptr->inputs()[1];
+  MS_EXCEPTION_IF_NULL(anf_node_ptr->inputs()[1]);
+  auto pre_node = (anf_node_ptr->inputs()[1])->cast<CNodePtr>();
   // set clean output addr
   if (AnfAlgo::HasNodeAttr(kAttrAutomicOutputIndexs, pre_node)) {
     auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAutomicOutputIndexs);
@@ -83,7 +84,6 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
 
 bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_id,
                                  std::vector<TaskInfoPtr> *task_info_list) {
-  MS_LOG(INFO) << "LaunchKernel start...";
   MS_EXCEPTION_IF_NULL(task_info_list);
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
   AddressPtrList kernel_inputs;
@@ -132,22 +132,29 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
 bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
                                     std::vector<TaskInfoPtr> *task_info_list, uint32_t graph_id) {
   uint32_t current_op_index = 0;
+  std::vector<CNodePtr> profiling_cnode_list;
   std::vector<std::string> kernel_name_list;
   for (const auto &anf_node_ptr : anf_node_list) {
     size_t old_size = task_info_list->size();
     uint32_t stream_id = AnfAlgo::GetStreamId(anf_node_ptr);
+    MS_EXCEPTION_IF_NULL(anf_node_ptr);
     MS_LOG(INFO) << "Task gen launch begin, current_op_idx:" << current_op_index
-                 << " type:" << (AnfAlgo::GetCNodeName(anf_node_ptr)) << ", stream id:" << stream_id;
+                 << " name:" << anf_node_ptr->fullname_with_scope() << ", stream id:" << stream_id;
     if (!LaunchKernel(anf_node_ptr, stream_id, task_info_list)) {
       MS_LOG(ERROR) << "LaunchKernel failed.";
       return false;
     }
     for (size_t i = old_size; i < task_info_list->size(); ++i) {
+      profiling_cnode_list.emplace_back(anf_node_ptr);
       kernel_name_list.emplace_back(anf_node_ptr->fullname_with_scope());
     }
     current_op_index++;
   }
+
   ProfilingUtils::SetGraphKernelName(graph_id, kernel_name_list);
+  if (ProfilingManager::GetInstance().IsProfiling()) {
+    ProfilingUtils::SetGraphProfilingCNode(graph_id, profiling_cnode_list);
+  }
   return true;
 }
 }  // namespace tasksink

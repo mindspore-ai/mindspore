@@ -25,10 +25,12 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from mindspore.common.api import ms_function
+from mindspore import context
 from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
 
+__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold']
 
 class Dropout(Cell):
     r"""
@@ -76,7 +78,7 @@ class Dropout(Cell):
         if keep_prob <= 0 or keep_prob > 1:
             raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
         validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
-        self.keep_prob = Tensor(keep_prob)
+        self.keep_prob = keep_prob
         self.seed0 = seed0
         self.seed1 = seed1
         self.dtype = dtype
@@ -84,8 +86,19 @@ class Dropout(Cell):
         self.dropout_gen_mask = P.DropoutGenMask(Seed0=seed0, Seed1=seed1)
         self.dropout_do_mask = P.DropoutDoMask()
         self.cast = P.Cast()
+        self.is_gpu = context.get_context('device_target') in ["GPU"]
+
+        if self.is_gpu:
+            self.dropout = P.Dropout(keep_prob)
 
     def construct(self, x):
+        if not self.training:
+            return x
+
+        if self.is_gpu:
+            out, _ = self.dropout(x)
+            return out
+
         shape = self.get_shape(x)
         dtype = P.DType()(x)
         keep_prob = self.cast(self.keep_prob, dtype)
@@ -385,22 +398,22 @@ class Pad(Cell):
             paddings are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
             extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
             be extended behind of the `D` th dimension of the input tensor.
-        mode (string): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
+        mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
 
     Inputs:
-        - ** input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor, the tensor after padding.
 
-        - If `mode` is "CONSTANT", it fill the edge with 0, regardless of the values of the `input_x`.
+        - If `mode` is "CONSTANT", it fills the edge with 0, regardless of the values of the `input_x`.
           If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
           Outputs is [[0,0,0,0,0,0,0],[0,0,1,2,3,0,0],[0,0,4,5,6,0,0],[0,0,7,8,9,0,0],[0,0,0,0,0,0,0]].
-        - If 'mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in,
-          symmetry. If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+        - If `mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in.
+          If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
           Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
-        - If 'mode' is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+        - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
           [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].

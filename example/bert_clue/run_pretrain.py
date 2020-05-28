@@ -25,6 +25,7 @@ from mindspore.train.model import Model
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import Callback, ModelCheckpoint, CheckpointConfig
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.model_zoo.Bert_NEZHA import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecayDynamicLR
 from dataset import create_bert_dataset
@@ -59,9 +60,6 @@ def run_pretrain():
     parser.add_argument("--epoch_size", type=int, default="1", help="Epoch size, default is 1.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-    parser.add_argument("--enable_task_sink", type=str, default="true", help="Enable task sink, default is true.")
-    parser.add_argument("--enable_loop_sink", type=str, default="true", help="Enable loop sink, default is true.")
-    parser.add_argument("--enable_mem_reuse", type=str, default="true", help="Enable mem reuse, default is true.")
     parser.add_argument("--enable_save_ckpt", type=str, default="true", help="Enable save checkpoint, default is true.")
     parser.add_argument("--enable_lossscale", type=str, default="true", help="Use lossscale or not, default is not.")
     parser.add_argument("--do_shuffle", type=str, default="true", help="Enable shuffle for dataset, default is true.")
@@ -76,21 +74,16 @@ def run_pretrain():
 
     args_opt = parser.parse_args()
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-    context.set_context(enable_task_sink=(args_opt.enable_task_sink == "true"),
-                        enable_loop_sink=(args_opt.enable_loop_sink == "true"),
-                        enable_mem_reuse=(args_opt.enable_mem_reuse == "true"))
     context.set_context(reserve_class_name_in_scope=False)
 
     if args_opt.distribute == "true":
         device_num = args_opt.device_num
         context.reset_auto_parallel_context()
-        context.set_context(enable_hccl=True)
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                           device_num=device_num)
         D.init()
         rank = args_opt.device_id % device_num
     else:
-        context.set_context(enable_hccl=False)
         rank = 0
         device_num = 1
 
@@ -103,7 +96,7 @@ def run_pretrain():
         optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size() * ds.get_repeat_count(),
                          start_learning_rate=cfg.Lamb.start_learning_rate, end_learning_rate=cfg.Lamb.end_learning_rate,
                          power=cfg.Lamb.power, warmup_steps=cfg.Lamb.warmup_steps, weight_decay=cfg.Lamb.weight_decay,
-                         eps=cfg.Lamb.eps, decay_filter=cfg.Lamb.decay_filter)
+                         eps=cfg.Lamb.eps)
     elif cfg.optimizer == 'Momentum':
         optimizer = Momentum(netwithloss.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
                              momentum=cfg.Momentum.momentum)
@@ -114,7 +107,8 @@ def run_pretrain():
                                              end_learning_rate=cfg.AdamWeightDecayDynamicLR.end_learning_rate,
                                              power=cfg.AdamWeightDecayDynamicLR.power,
                                              weight_decay=cfg.AdamWeightDecayDynamicLR.weight_decay,
-                                             eps=cfg.AdamWeightDecayDynamicLR.eps)
+                                             eps=cfg.AdamWeightDecayDynamicLR.eps,
+                                             warmup_steps=cfg.AdamWeightDecayDynamicLR.warmup_steps)
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecayDynamicLR]".
                          format(cfg.optimizer))

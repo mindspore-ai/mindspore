@@ -4,9 +4,8 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download the zhwiki dataset from <https://dumps.wikimedia.org/zhwiki> for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wil
-kiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
-- Download the CLUE dataset from <https://www.cluebenchmarks.com> for fine-tuning and evaluation.
+- Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
+- Download the CLUE dataset for fine-tuning and evaluation.
 >  Notes:
    If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
 
@@ -17,21 +16,21 @@ kiextractor). Convert the dataset to TFRecord format and move the files to a spe
 - Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model.
 
     ``` bash   
-    sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_PATH
+    sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
     ```
 - Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model.
 
     ``` bash   
-    sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH MINDSPORE_PATH
+    sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH
     ```  
 
 ### Fine-Tuning
-- Set options in `finetune_config.py`. Make sure the 'data_file', 'schema_file' and 'ckpt_file' are set to your own path, set the 'pre_training_ckpt' to save the checkpoint files generated.
+- Set options in `finetune_config.py`. Make sure the 'data_file', 'schema_file' and 'pre_training_file' are set to your own path. Set the 'pre_training_ckpt' to a saved checkpoint file generated after pre-training.
 
 - Run `finetune.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
     ```bash
-    python finetune.py --backend=ms
+    python finetune.py
     ```
 
 ### Evaluation
@@ -40,15 +39,14 @@ kiextractor). Convert the dataset to TFRecord format and move the files to a spe
 - Run `evaluation.py` for evaluation of BERT-base and BERT-NEZHA model.
 
     ```bash
-    python evaluation.py --backend=ms
+    python evaluation.py
     ```
 
 ## Usage
 ### Pre-Training
 ``` 
 usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
-                        [--enable_task_sink ENABLE_TASK_SINK] [--enable_loop_sink ENABLE_LOOP_SINK]
-                        [--enable_mem_reuse ENABLE_MEM_REUSE] [--enable_save_ckpt ENABLE_SAVE_CKPT]
+                        [--enable_save_ckpt ENABLE_SAVE_CKPT]
                         [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
                         [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] [--checkpoint_path CHECKPOINT_PATH]
                         [--save_checkpoint_steps N] [--save_checkpoint_num N] 
@@ -59,9 +57,6 @@ options:
     --epoch_size               epoch size: N, default is 1
     --device_num               number of used devices: N, default is 1
     --device_id                device id: N, default is 0
-    --enable_task_sink         enable task sink: "true" | "false", default is "true"
-    --enable_loop_sink         enable loop sink: "true" | "false", default is "true"
-    --enable_mem_reuse         enable memory reuse: "true" | "false", default is "true"
     --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"
     --enable_lossscale         enable lossscale: "true" | "false", default is "true"
     --do_shuffle               enable shuffle: "true" | "false", default is "true"
@@ -77,28 +72,33 @@ options:
 It contains of parameters of BERT model and options for training, which is set in file `config.py`, `finetune_config.py` and `evaluation_config.py` respectively.
 ### Options:
 ```
-Pre-Training:
+config.py:
     bert_network                    version of BERT model: base | nezha, default is base
     loss_scale_value                initial value of loss scale: N, default is 2^32
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 1000   
     optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
-Fine-Tuning:
-    task                            task type: NER | XNLI | LCQMC | SENTI
-    data_file                       dataset file to load: PATH, default is "/your/path/cn-wiki-128"
-    schema_file                     dataset schema file to load: PATH, default is "/your/path/datasetSchema.json"
-    epoch_num                       repeat counts of training: N, default is 40
+finetune_config.py:
+    task                            task type: NER | XNLI | LCQMC | SENTIi | OTHERS
+    num_labels                      number of labels to do classification
+    data_file                       dataset file to load: PATH, default is "/your/path/train.tfrecord"
+    schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"
+    epoch_num                       repeat counts of training: N, default is 5
     ckpt_prefix                     prefix used to save checkpoint files: PREFIX, default is "bert"
     ckpt_dir                        path to save checkpoint files: PATH, default is None
     pre_training_ckpt               checkpoint file to load: PATH, default is "/your/path/pre_training.ckpt"
-    optimizer                       optimizer used in the network: AdamWeigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
+    use_crf                         whether to use crf for evaluation. use_crf takes effect only when task type is NER, default is False
+    optimizer                       optimizer used in fine-tune network: AdamWeigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
-Evaluation:
-    task                            task type: NER | XNLI | LCQMC | SENTI
+evaluation_config.py:
+    task                            task type: NER | XNLI | LCQMC | SENTI | OTHERS
+    num_labels                      number of labels to do classsification
     data_file                       dataset file to load: PATH, default is "/your/path/evaluation.tfrecord"
     schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"
     finetune_ckpt                   checkpoint file to load: PATH, default is "/your/path/your.ckpt"
+    use_crf                         whether to use crf for evaluation. use_crf takes effect only when task type is NER, default is False
+    clue_benchmark                  whether to use clue benchmark. clue_benchmark takes effect only when task type is NER, default is False
 ```
 
 ### Parameters:
@@ -125,25 +125,24 @@ Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
 
 Parameters for optimizer:
     AdamWeightDecayDynamicLR:
-    decay_steps                     steps of the learning rate decay: N, default is 12276*3
-    learning_rate                   value of learning rate: Q, default is 1e-5
-    end_learning_rate               value of end learning rate: Q, default is 0.0
-    power                           power: Q, default is 10.0
-    warmup_steps                    steps of the learning rate warm up: N, default is 2100
-    weight_decay                    weight decay: Q, default is 1e-5
-    eps                             term added to the denominator to improve numerical stability: Q, default is 1e-6
+    decay_steps                     steps of the learning rate decay: N
+    learning_rate                   value of learning rate: Q
+    end_learning_rate               value of end learning rate: Q, must be positive
+    power                           power: Q
+    warmup_steps                    steps of the learning rate warm up: N
+    weight_decay                    weight decay: Q
+    eps                             term added to the denominator to improve numerical stability: Q
 
     Lamb:
-    decay_steps                     steps of the learning rate decay: N, default is 12276*3
-    learning_rate                   value of learning rate: Q, default is 1e-5
-    end_learning_rate               value of end learning rate: Q, default is 0.0
-    power                           power: Q, default is 5.0
-    warmup_steps                    steps of the learning rate warm up: N, default is 2100
-    weight_decay                    weight decay: Q, default is 1e-5
-    decay_filter                    function to determine whether to apply weight decay on parameters: FUNCTION, default is lambda x: False
+    decay_steps                     steps of the learning rate decay: N
+    learning_rate                   value of learning rate: Q
+    end_learning_rate               value of end learning rate: Q
+    power                           power: Q
+    warmup_steps                    steps of the learning rate warm up: N
+    weight_decay                    weight decay: Q
 
     Momentum:
-    learning_rate                   value of learning rate: Q, default is 2e-5
-    momentum                        momentum for the moving average: Q, default is 0.9
+    learning_rate                   value of learning rate: Q
+    momentum                        momentum for the moving average: Q
 ```
 

@@ -29,16 +29,13 @@ python run_pretrain.py  \
     --distribute="false" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
-    --enable_task_sink="true" \
-    --enable_loop_sink="true" \
-    --enable_mem_reuse="true" \
     --enable_save_ckpt="true" \
     --enable_lossscale="true" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
     --data_sink_steps=1 \
     --checkpoint_path="" \
-    --save_checkpoint_steps=1000 \
+    --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
     --data_dir=$DATA_DIR \
     --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &

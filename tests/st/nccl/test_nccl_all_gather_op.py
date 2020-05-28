@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -50,4 +51,4 @@ def test_AllGather():
     diff = output.asnumpy() - expect
     error = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < error)
-    assert (output.shape() == expect.shape)
+    assert output.shape() == expect.shape

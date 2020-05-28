@@ -40,6 +40,7 @@ constexpr auto kParallelCompileModule = "mindspore._extends.parallel_compile.tbe
 constexpr auto kCreateParallelCompiler = "create_tbe_parallel_compiler";
 constexpr auto kStartCompileOp = "start_compile_op";
 constexpr auto kWaitOne = "wait_one";
+constexpr auto kResetTaskInfo = "reset_task_info";
 
 bool TbeOpParallelBuild(std::vector<AnfNodePtr> anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
@@ -95,6 +96,8 @@ bool TbeOpParallelBuild(std::vector<AnfNodePtr> anf_nodes) {
 }
 
 ParallelBuildManager::ParallelBuildManager() { tbe_parallel_compiler_ = TbePythonFuncs::TbeParallelCompiler(); }
+
+ParallelBuildManager::~ParallelBuildManager() { ResetTaskInfo(); }
 
 int32_t ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) const {
   PyObject *pRes = nullptr;
@@ -233,6 +236,19 @@ KernelModPtr ParallelBuildManager::GenKernelMod(const string &json_name, const s
   kernel_mod_ptr->SetOutputSizeList(output_size_list);
   kernel_mod_ptr->SetWorkspaceSizeList(kernel_json_info.workspaces);
   return kernel_mod_ptr;
+}
+
+void ParallelBuildManager::ResetTaskInfo() {
+  if (task_map_.empty()) {
+    MS_LOG(INFO) << "All tasks are compiled success.";
+    return;
+  }
+  task_map_.clear();
+  same_op_list_.clear();
+  if (tbe_parallel_compiler_ != nullptr) {
+    PyObject *pArg = Py_BuildValue("()");
+    (void)PyObject_CallMethod(tbe_parallel_compiler_, kResetTaskInfo, "O", pArg);
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore

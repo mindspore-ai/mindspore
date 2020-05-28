@@ -13,27 +13,26 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
+import os
 import pytest
+
+import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.common.dtype as mstype
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.common.initializer import One
-from mindspore.train.model import Model, ParallelMode
-from mindspore.communication.management import init
 import mindspore.ops.functional as F
+from mindspore import Tensor
+from mindspore.common.initializer import One
+from mindspore.communication.management import init
 from mindspore.nn.loss.loss import _Loss
-from mindspore.train.callback import Callback
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
+from mindspore.train.callback import Callback
+from mindspore.train.model import Model, ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_task_sink=True, device_id=int(os.getenv('DEVICE_ID')))
-context.set_context(enable_ir_fusion=True)
-context.set_context(enable_loop_sink=False)
+context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 init()
 context.set_auto_parallel_context(mirror_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL)
 
@@ -316,14 +315,14 @@ class DataGenerator():
 
     def input_data(self, shape):
         data = (self.generate_data(shape)).astype(np.float32)
-        stra = [1]*len(shape)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
 
     def label_data(self, shape):
-        data = (self.generate_data(shape)*1000/np.prod(shape)).astype(np.int32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * 1000 / np.prod(shape)).astype(np.int32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
@@ -378,8 +377,8 @@ def test_train_feed(num_classes=8192):
     set_algo_parameters(elementwise_op_strategy_follow=True)
     parallel_callback = ModelCallback()
     dataGen = DataGenerator()
-    input_full, input_part = dataGen.input_data((32*2, 3, 224, 224))
-    label_full, label_part = dataGen.label_data((32*2,))
+    input_full, input_part = dataGen.input_data((32 * 2, 3, 224, 224))
+    label_full, label_part = dataGen.label_data((32 * 2,))
     dataset = Dataset(input_part, label_part)
     net = resnet50(num_classes)
     loss = SoftmaxCrossEntropyExpand(sparse=True)
@@ -398,8 +397,8 @@ def test_train_feed2(num_classes=1001):
     set_algo_parameters(elementwise_op_strategy_follow=True)
     parallel_callback = ModelCallback()
     dataGen = DataGenerator()
-    input_full, input_part = dataGen.input_data((32*2, 3, 224, 224))
-    label_full, label_part = dataGen.label_data((32*2,))
+    input_full, input_part = dataGen.input_data((32 * 2, 3, 224, 224))
+    label_full, label_part = dataGen.label_data((32 * 2,))
     dataset = Dataset(input_part, label_part)
     net = resnet50(num_classes)
     loss = SoftmaxCrossEntropyExpand(sparse=True)

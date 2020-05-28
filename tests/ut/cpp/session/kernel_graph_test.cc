@@ -15,6 +15,7 @@
  */
 
 #include "common/common_test.h"
+#include "ir/param_value_py.h"
 #include "operator/ops.h"
 #include "session/kernel_graph.h"
 #include "session/anf_runtime_algorithm.h"
@@ -82,7 +83,8 @@ TEST_F(KernelGraphTest, NewParameter) {
   auto weight_parameter_node = anf_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(weight_parameter_node);
   py::object obj;
-  weight_parameter_node->set_default_param(obj);
+  auto param_value_new = std::make_shared<ParamValuePy>(obj);
+  weight_parameter_node->set_default_param(param_value_new);
   weight_parameter_node->set_abstract(x_abstract);
   auto new_weight_parameter_node = kernel_graph->NewParameter(weight_parameter_node);
   EXPECT_NE(new_weight_parameter_node, nullptr);

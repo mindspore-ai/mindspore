@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """ test_for_stmt """
-from dataclasses import dataclass
 import numpy as np
-from mindspore.nn import ReLU
-from mindspore.nn import Cell
+from dataclasses import dataclass
+
 from mindspore import Tensor, Model, context
+from mindspore.nn import Cell
+from mindspore.nn import ReLU
 from ...ut_filter import non_graph_engine
 
 
@@ -34,6 +35,7 @@ class Access:
 
 class access2_net(Cell):
     """ access2_net definition """
+
     def __init__(self, number, loop_count=1):
         super().__init__()
         self.number = number

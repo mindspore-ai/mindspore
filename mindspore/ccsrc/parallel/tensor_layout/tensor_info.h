@@ -46,6 +46,17 @@ class TensorInfo {
   Shape shape() const { return shape_; }
   void set_reduce_dim(const std::vector<int32_t> &dim) { reduce_dim_ = dim; }
   std::vector<int32_t> reduce_dim() const { return reduce_dim_; }
+  Dimensions InferStrategy() const {
+    Dimensions stra;
+    for (size_t i = 0; i < shape_.size(); ++i) {
+      if ((slice_shape_[i] == 0) || (shape_[i] % slice_shape_[i] != 0)) {
+        return stra;
+      }
+      int32_t dim = (int32_t)(shape_[i] / slice_shape_[i]);
+      stra.push_back(dim);
+    }
+    return stra;
+  }
 
  private:
   TensorLayout tensor_layout_;

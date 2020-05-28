@@ -21,35 +21,56 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
+
 #include "common/utils.h"
 #include "kernel/cpu/cpu_kernel.h"
+#include "device/cpu/kernel_select_cpu.h"
+
 namespace mindspore {
 namespace kernel {
+using mindspore::device::cpu::KernelAttr;
 using CPUKernelCreator = std::function<std::shared_ptr<CPUKernel>()>;
 class CPUKernelFactory {
  public:
-  static CPUKernelFactory &Get();
-  void Register(const std::string &kernel_name, CPUKernelCreator &&kernel_creator);
+  static CPUKernelFactory &GetInstance();
+  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, CPUKernelCreator &&kernel_creator);
   std::shared_ptr<CPUKernel> Create(const std::string &kernel_name);
+  std::shared_ptr<CPUKernel> Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
+  std::vector<KernelAttr> GetSupportedKernelAttrList(const std::string &kernel_name);
 
  private:
   CPUKernelFactory() = default;
   ~CPUKernelFactory() = default;
   DISABLE_COPY_AND_ASSIGN(CPUKernelFactory)
-  std::map<std::string, CPUKernelCreator> kernel_creators_;
+  std::pair<bool, size_t> CPUKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo *kernel_info);
+  std::map<std::string, std::vector<std::pair<KernelAttr, CPUKernelCreator>>> name_to_attr_creator_;
 };
 
 class CPUKernelRegistrar {
  public:
-  CPUKernelRegistrar(const std::string &kernel_name, CPUKernelCreator &&kernel_creator) {
-    CPUKernelFactory::Get().Register(kernel_name, std::move(kernel_creator));
+  CPUKernelRegistrar(const std::string &kernel_name, const KernelAttr &kernel_attr, CPUKernelCreator &&kernel_creator) {
+    CPUKernelFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(kernel_creator));
   }
   ~CPUKernelRegistrar() = default;
 };
 
-#define MS_REG_CPU_KERNEL(KERNEL_NAME, KERNEL_CLASS)                             \
-  static const CPUKernelRegistrar g_cpu_kernel_##KERNEL_NAME##_reg(#KERNEL_NAME, \
-                                                                   []() { return std::make_shared<KERNEL_CLASS>(); });
+#define MS_REG_CPU_KERNEL(OPNAME, ATTR, OPCLASS) MS_REG_CPU_KERNEL_(__COUNTER__, OPNAME, ATTR, OPCLASS)
+#define MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS) _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)
+#define _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)                                  \
+  static_assert(std::is_base_of<CPUKernel, OPCLASS>::value, " must be base of CPUKernel"); \
+  static const CPUKernelRegistrar g_cpu_kernel_##COUNT##_reg(#OPNAME, ATTR,                \
+                                                             []() { return std::make_shared<OPCLASS>(); });
+
+#define MS_REG_CPU_KERNEL_T(OPNAME, ATTR, OPCLASS, T)                                         \
+  static_assert(std::is_base_of<CPUKernel, OPCLASS<T>>::value, " must be base of CPUKernel"); \
+  static const CPUKernelRegistrar g_cpu_kernel_##OPNAME##_##T##_reg(#OPNAME, ATTR,            \
+                                                                    []() { return std::make_shared<OPCLASS<T>>(); });
+
+#define MS_REG_CPU_KERNEL_T_S(OPNAME, ATTR, OPCLASS, T, S)                                       \
+  static_assert(std::is_base_of<CPUKernel, OPCLASS<T, S>>::value, " must be base of CPUKernel"); \
+  static const CPUKernelRegistrar g_cpu_kernel_##OPNAME##_##T##_##S##_reg(                       \
+    #OPNAME, ATTR, []() { return std::make_shared<OPCLASS<T, S>>(); });
 }  // namespace kernel
 }  // namespace mindspore
 

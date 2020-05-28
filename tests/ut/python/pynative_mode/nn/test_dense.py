@@ -18,6 +18,8 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
+
+
 # pylint: disable=E1123
 
 
@@ -27,7 +29,7 @@ def test_dense_defaultbias_noactivation():
     assert dense.activation is None
 
     input_data = Tensor(np.random.randint(0, 255, [1, 3]).astype(np.float32))
-    output = dense.construct(input_data)
+    output = dense(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0], (np.float32, np.float64))
 
@@ -35,9 +37,9 @@ def test_dense_defaultbias_noactivation():
 def test_dense_defaultweight():
     bias = Tensor(np.array([0.5, 0.3], dtype=np.float32))
     dense = nn.Dense(3, 2, bias_init=bias)
-    #batch_size 1 && 3-channel RGB
+    # batch_size 1 && 3-channel RGB
     input_data = Tensor(np.random.randint(0, 255, [1, 3]).astype(np.float32))
-    output = dense.construct(input_data)
+    output = dense(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0], (np.float32, np.float64))
 
@@ -48,7 +50,7 @@ def test_dense_bias():
     dense = nn.Dense(3, 2, weight, bias)
 
     input_data = Tensor(np.random.randint(0, 255, [2, 3]).astype(np.float32))
-    output = dense.construct(input_data)
+    output = dense(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0], (np.float32, np.float64))
 
@@ -58,7 +60,7 @@ def test_dense_nobias():
     dense = nn.Dense(3, 2, weight, has_bias=False)
 
     input_data = Tensor(np.random.randint(0, 255, [2, 3]).astype(np.float32))
-    output = dense.construct(input_data)
+    output = dense(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0], (np.float32, np.float64))
 
@@ -73,7 +75,7 @@ def test_dense_str_activation():
     assert isinstance(dense.activation, nn.ReLU)
 
     input_data = Tensor(np.random.randint(0, 255, [1, 1]).astype(np.float32))
-    output = dense.construct(input_data)
+    output = dense(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0], np.float32)
 

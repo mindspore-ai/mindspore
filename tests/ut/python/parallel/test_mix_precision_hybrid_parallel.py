@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -76,10 +77,11 @@ def test_two_matmul():
     strategy4 = ((2, 4), (4, 1))
     net = GradWrap(NetWithLoss(Net2(strategy1, strategy2, strategy3, strategy4).add_flags_recursive(fp16=True)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net.set_auto_parallel()
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
     z = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    
+
     _executor.compile(net, x, y, b, z)

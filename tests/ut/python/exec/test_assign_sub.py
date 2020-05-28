@@ -16,14 +16,16 @@
 test assign sub
 """
 import numpy as np
+
+import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore import Tensor
-import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE)
+
 
 class Net(nn.Cell):
     def __init__(self):

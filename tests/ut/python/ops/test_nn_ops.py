@@ -15,18 +15,17 @@
 """ test nn ops """
 import functools
 import numpy as np
+
 import mindspore
-
-import mindspore.nn as nn
 import mindspore.context as context
-
+import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -195,6 +194,18 @@ class ScalarSummaryNet(nn.Cell):
     def construct(self, scalar):
         string_in = "bias_value"
         out = self.summary(string_in, scalar)
+        return out
+
+
+class L2NormalizeNet(nn.Cell):
+    """ L2NormalizeNet definition """
+
+    def __init__(self):
+        super(L2NormalizeNet, self).__init__()
+        self.l2_normalize = P.L2Normalize()
+
+    def construct(self, x):
+        out = self.l2_normalize(x)
         return out
 
 
@@ -435,6 +446,39 @@ class UnfoldNetSame(nn.Cell):
         return self.unfold(x)
 
 
+class FlattenNet(nn.Cell):
+    """ FlattenNet definition """
+
+    def __init__(self):
+        super(FlattenNet, self).__init__()
+        self.flatten = P.Flatten()
+
+    def construct(self, x):
+        return self.flatten(x)
+
+
+class PReLUNet(nn.Cell):
+    """ PReLUNet definition """
+
+    def __init__(self):
+        super(PReLUNet, self).__init__()
+        self.prelu = P.PReLU()
+        self.w = Tensor(np.ones(3, np.float32))
+
+    def construct(self, x):
+        return self.prelu(x, self.w)
+
+
+class PReLUGradNet(nn.Cell):
+    """ PReLUGradNet definition """
+
+    def __init__(self):
+        super(PReLUGradNet, self).__init__()
+        self.prelu_grad = G.PReLUGrad()
+
+    def construct(self, dout, x, w):
+        return self.prelu_grad(dout, x, w)
+
 test_cases = [
     ('SoftMaxGrad', {
         'block': SoftMaxGrad(VirtualNetWithLoss(P.Softmax())),
@@ -450,9 +494,13 @@ test_cases = [
         'block': ScalarSummaryNet(),
         'desc_inputs': [2.2],
     }),
+    ('L2Normalize', {
+        'block': L2NormalizeNet(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
+    }),
     ('HistogramSummary', {
         'block': HistogramSummaryNet(),
-        'desc_inputs': [[1,2,3]],
+        'desc_inputs': [[1, 2, 3]],
     }),
     ('FusedBatchNormGrad', {
         'block': FusedBatchNormGrad(nn.BatchNorm2d(num_features=512, eps=1e-5, momentum=0.1)),
@@ -506,6 +554,30 @@ test_cases = [
         'desc_inputs': [Tensor(np.ones([1, 1, 3, 3], np.float32))],
         'desc_bprop': [Tensor(np.ones([1, 4, 2, 2], np.float32))],
         'skip': ['backward']}),
+    ('LogSigmoid', {
+        'block': nn.LogSigmoid(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('ReduceLogSumExp', {
+        'block': nn.ReduceLogSumExp((0,), False),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('FlattenNet', {
+        'block': FlattenNet(),
+        'desc_inputs': [Tensor(np.ones([1, 2, 3, 4], np.float32))],
+    }),
+    ('PReLUNet', {
+        'block': PReLUNet(),
+        'desc_inputs': [Tensor(np.ones([1, 3, 4, 4], np.float32))],
+    }),
+    ('PReLUGradNet', {
+        'block': PReLUGradNet(),
+        'desc_inputs': [Tensor(np.ones([1, 3, 4, 4], np.float32)),
+                        Tensor(np.ones([1, 3, 4, 4], np.float32)),
+                        Tensor(np.ones(3, np.float32))],
+    }),
 ]
 
 test_cases_for_verify_exception = [
@@ -604,6 +676,20 @@ test_cases_for_verify_exception = [
             {'exception': TypeError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
+    }),
+    ('ReduceLogsumexp_TypeError_1', {
+        'block': (
+            lambda _: nn.ReduceLogSumExp(axis=(0,), keep_dims=2),
+            {'exception': TypeError},
+        ),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
+    }),
+    ('ReduceLogsumexp_TypeError_2', {
+        'block': (
+            lambda _: nn.ReduceLogSumExp(axis=1.2, keep_dims=True),
+            {'exception': TypeError},
+        ),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
     }),
 ]
 

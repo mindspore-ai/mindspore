@@ -16,19 +16,19 @@
 import functools
 import numpy as np
 
-from mindspore.ops import operations as P
 import mindspore.nn as nn
-from ....ops_common import convert
-
+from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward\
-import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient\
-import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ....mindspore_test_framework.pipeline.forward.compile_forward \
+    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
+from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
+    import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ....ops_common import convert
 
 
 class SeqConvBnRelu(nn.Cell):
     """ SeqConvBnRelu definition """
+
     def __init__(self, in_ch, out_ch):
         super(SeqConvBnRelu, self).__init__()
         self.conv = nn.Conv2d(in_ch, out_ch, 3)
@@ -45,13 +45,13 @@ test_case_reid_ops = [
         'desc_const': [(1,)],
         'desc_inputs': [convert([32, 32], np.float16)],
         'desc_bprop': [convert([32], np.float16)],
-        'skip':[]}),
+        'skip': []}),
     ('ReduceMin', {
         'block': P.ReduceMin(),
         'desc_const': [(1,)],
         'desc_inputs': [[32, 32]],
         'desc_bprop': [[32]],
-        'skip':[]}),
+        'skip': []}),
     ('ReduceMean', {
         'block': P.ReduceMean(keep_dims=True),
         'desc_const': [(1, 2)],
@@ -61,12 +61,12 @@ test_case_reid_ops = [
         'block': P.Log(),
         'desc_inputs': [[4, 128, 1024]],
         'desc_bprop': [[4, 128, 1024]],
-        'skip':['backward']}),  # check backward error
+        'skip': ['backward']}),  # check backward error
     ('Reciprocal', {
         'block': P.Reciprocal(),
         'desc_inputs': [[4, 128, 1024]],
         'desc_bprop': [[4, 128, 1024]],
-        'skip':['backward']}),
+        'skip': ['backward']}),
     ('FloorDiv', {
         'block': P.FloorDiv(),
         'desc_inputs': [[4, 128, 1024], [4, 128, 1024]],
@@ -79,12 +79,12 @@ test_case_reid_ops = [
         'block': P.Softmax(),
         'desc_inputs': [[1, 16]],
         'desc_bprop': [[1, 16]],
-        'skip':['backward']}),  # check backward error
+        'skip': ['backward']}),  # check backward error
     ('Softmax', {
         'block': P.Softmax(axis=(0, 1)),
         'desc_inputs': [[1, 16]],
         'desc_bprop': [[1, 16]],
-        'skip':['backward']}),
+        'skip': ['backward']}),
     ('L2Normalize', {
         'block': P.L2Normalize(),
         'desc_inputs': [[4, 128, 1024]],
@@ -103,7 +103,7 @@ test_case_reid_ops = [
         'desc_bprop': [[128, 64, 112, 112]]}),
     ('PRelu', {
         'block': P.PReLU(),
-        'desc_inputs': [[128, 64, 112, 112], [64,]],
+        'desc_inputs': [[128, 64, 112, 112], [64, ]],
         'desc_bprop': [[128, 64, 112, 112]]}),
     ('Cos', {
         'block': P.Cos(),
@@ -137,7 +137,7 @@ test_case_reid_ops = [
     ('Dropout', {
         'block': nn.Dropout(),
         'desc_inputs': [[1, 512, 7, 7]],
-        'desc_bprop': [[1, 512, 7, 7]]}), # 输入有标量插件产生了段错误。
+        'desc_bprop': [[1, 512, 7, 7]]}),  # 输入有标量插件产生了段错误。
     ('MatMul', {
         'block': P.MatMul(),
         'desc_inputs': [[64, 512], [512, 64]],  # fp16不行。很有问题。
@@ -155,15 +155,17 @@ test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 test_exec_case = filter(lambda x: 'skip' not in x[1] or
-                        'exec' not in x[1]['skip'], test_case)
+                                  'exec' not in x[1]['skip'], test_case)
 
 test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                 'backward' not in x[1]['skip'] and 'backward_exec'
-                                 not in x[1]['skip'], test_case)
+                                           'backward' not in x[1]['skip'] and 'backward_exec'
+                                           not in x[1]['skip'], test_case)
+
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
 def test_exec():
     return test_exec_case
+
 
 @mindspore_test(pipeline_for_compile_grad_ge_graph_for_case_by_case_config)
 def test_backward_exec():

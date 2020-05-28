@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
+import numpy as np
+import time
+
 import mindspore.dataset as ds
 from mindspore import log as logger
-import time
-import numpy as np
 
 
 def gen():
@@ -27,10 +28,10 @@ def gen():
 class Augment:
     def __init__(self, loss):
         self.loss = loss
-    
+
     def preprocess(self, input):
         return input
-        
+
     def update(self, data):
         self.loss = data["loss"]
 
@@ -75,7 +76,7 @@ def test_simple_shuffle_sync():
     count = 0
     for data in dataset.create_dict_iterator():
         count += 1
-        #time.sleep(0.5)
+        # time.sleep(0.5)
         data = {"loss": count}
         dataset.sync_update(condition_name="policy", data=data)
 
@@ -94,9 +95,9 @@ def test_two_sync():
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
 
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
-    
+
     dataset = dataset.sync_wait(num_batch=2, condition_name="every 2 batches")
-    
+
     dataset = dataset.batch(batch_size)
 
     count = 0
@@ -131,7 +132,7 @@ def test_sync_epoch():
             dataset.sync_update(condition_name="policy", data=data)
 
 
-def test_multiple_iterators(): 
+def test_multiple_iterators():
     """
     Test sync wait with multiple iterators: will start multiple 
     """
@@ -152,7 +153,7 @@ def test_multiple_iterators():
     dataset2 = dataset2.batch(batch_size, drop_remainder=True)
 
     for item1, item2 in zip(dataset.create_dict_iterator(), dataset2.create_dict_iterator()):
-        assert (item1["input"][0] == item2["input"][0]) 
+        assert (item1["input"][0] == item2["input"][0])
         data1 = {"loss": item1["input"][0]}
         data2 = {"loss": item2["input"][0]}
         dataset.sync_update(condition_name="policy", data=data1)
@@ -192,16 +193,16 @@ def test_sync_exception_02():
     aug = Augment(0)
     # notice that with our design, we need to have step_size = shuffle size
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
-    
+
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
-    
+
     try:
         dataset = dataset.sync_wait(num_batch=2, condition_name="every batch")
     except BaseException as e:
         assert "name" in str(e)
     dataset = dataset.batch(batch_size)
-    
-    
+
+
 if __name__ == "__main__":
     test_simple_sync_wait()
     test_simple_shuffle_sync()

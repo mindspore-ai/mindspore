@@ -16,8 +16,9 @@
 """Component that comparing forward result with baseline functions."""
 
 from ...components.icomponent import IVerifierComponent
-from ...utils.compare_util import compare
 from ...utils import keyword
+from ...utils.compare_util import compare
+
 
 class CompareWithVC(IVerifierComponent):
     """
@@ -41,5 +42,6 @@ class CompareWithVC(IVerifierComponent):
         'max_error': 1e-3
     }
     """
-    def verify(self, expect, func_result, verification_set):
-        compare(expect, func_result, baseline=keyword.compare_with)
+
+    def __call__(self):
+        compare(self.expect, self.func_result, baseline=keyword.compare_with)

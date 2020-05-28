@@ -46,11 +46,10 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
         pad_left_(0),
         n_(0),
         c_(0),
-        stride_(1),
-        dilation_(0),
         group_(1),
         is_null_input_(false),
         input_size_(0),
+        dy_size_(0),
         output_size_(0),
         padded_size_(0),
         workspace_size_(0),
@@ -62,7 +61,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -128,8 +127,8 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
         pad_width_ = 0;
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnSetConvolution2dDescriptor(conv_desc_, pad_height_, pad_width_, stride_, stride_, dilation_, dilation_,
-                                        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+        cudnnSetConvolution2dDescriptor(conv_desc_, pad_height_, pad_width_, stride_[0], stride_[1], dilation_[2],
+                                        dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
         "GetConvolution2dDescriptor failed");
       x_desc_real = x_desc_;
     }
@@ -154,22 +153,16 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   }
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dy_desc_, reinterpret_cast<size_t *>(&input_size_)),
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dy_desc_, reinterpret_cast<size_t *>(&dy_size_)),
                                   "cudnnGetTensorSizeInBytes failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetFilterSizeInBytes(dw_desc_, reinterpret_cast<size_t *>(&output_size_)),
-                                  "cudnnGetFilterSizeInBytes failed");
-    }
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-
-    if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(x_desc_, reinterpret_cast<size_t *>(&input_size_)),
                                   "cudnnGetTensorSizeInBytes failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetFilterSizeInBytes(dw_desc_, reinterpret_cast<size_t *>(&output_size_)),
                                   "cudnnGetFilterSizeInBytes failed");
     }
+    input_size_list_.push_back(dy_size_);
     input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(output_size_);
+    output_size_list_.push_back(output_size_);
 
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_ && !is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -229,10 +222,10 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(padded_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, n_,
                                                            c_, old_height_ + pad_height_, old_width_ + pad_width_),
                                 "cudnnSetTensor4dDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetConvolution2dDescriptor(conv_desc_, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_, stride_,
-                                      dilation_, dilation_, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-      "cudnnSetConvolution2dDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolution2dDescriptor(
+                                  conv_desc_, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_[0], stride_[1],
+                                  dilation_[2], dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+                                "cudnnSetConvolution2dDescriptor failed");
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
     if (group_ > 1 || CUDNN_MAJOR < 7) {
@@ -277,19 +270,17 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       "SetTensor4dDescriptor failed");
   }
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
-    auto stride_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "stride");
-    auto dilation_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "dilation");
-    if (stride_ori.size() != 2 || stride_ori[0] != stride_ori[1]) {
-      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel only support equal stride, and stride must be 2d!";
+    stride_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "stride");
+    dilation_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "dilation");
+    if (stride_.size() != 2) {
+      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel's stride must be 2d!";
     }
-    if (dilation_ori.size() != 4 || dilation_ori[2] != dilation_ori[3]) {
-      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel only support equal dilation, and dilation must be 4d!";
+    if (dilation_.size() != 4) {
+      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel's dilation must be 4d!";
     }
-    if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
+    if (dilation_[0] != 1 || dilation_[1] != 1) {
       MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel dilation only support 1 in N axis and C axis!";
     }
-    stride_ = stride_ori[0];
-    dilation_ = dilation_ori[2];
   }
   cudnnHandle_t cudnn_handle_;
   cudnnFilterDescriptor_t dw_desc_;
@@ -312,11 +303,12 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   int pad_left_;
   int n_;
   int c_;
-  int stride_;
-  int dilation_;
+  std::vector<int> stride_;
+  std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
   size_t input_size_;
+  size_t dy_size_;
   size_t output_size_;
   size_t padded_size_;
   size_t workspace_size_;

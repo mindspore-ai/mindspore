@@ -1,3 +1,5 @@
+file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 add_library(engine-datasetops-source-sampler OBJECT
     distributed_sampler.cc
     pk_sampler.cc
@@ -6,5 +8,6 @@ add_library(engine-datasetops-source-sampler OBJECT
     sampler.cc
     sequential_sampler.cc
     subset_random_sampler.cc
+    subset_sampler.cc
     weighted_random_sampler.cc
     )

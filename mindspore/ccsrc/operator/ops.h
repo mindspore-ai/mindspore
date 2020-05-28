@@ -65,11 +65,13 @@ extern const PrimitivePtr kPrimHasType;
 
 // Statements
 extern const PrimitivePtr kPrimSwitch;
+extern const PrimitivePtr kPrimSwitchLayer;
 extern const PrimitivePtr kPrimReturn;
 extern const PrimitivePtr kPrimAssign;
 extern const PrimitivePtr kPrimAssignAdd;
 extern const PrimitivePtr kPrimAssignSub;
 extern const PrimitivePtr kPrimSelect;
+extern const PrimitivePtr kPrimCall;
 
 extern const PrimitivePtr kPrimDistribute;
 extern const PrimitivePtr kPrimDot;
@@ -82,6 +84,10 @@ extern const PrimitivePtr kPrimResolve;
 extern const PrimitivePtr kPrimEmbed;
 extern const PrimitivePtr kPrimRefToEmbed;
 extern const PrimitivePtr kPrimCreateInstance;
+
+extern const PrimitivePtr kPrimLabelGoto;
+extern const PrimitivePtr kPrimLabelSwitch;
+extern const PrimitivePtr kPrimLabelSet;
 
 // Structure
 extern const PrimitivePtr kPrimStringEqual;
@@ -138,6 +144,7 @@ extern const PrimitivePtr kPrimSize;
 extern const PrimitivePtr kPrimArgMax;
 extern const PrimitivePtr kPrimPack;
 extern const PrimitivePtr kPrimUnpack;
+extern const PrimitivePtr kPrimUnsortedSegmentMin;
 extern const PrimitivePtr kPrimUnsortedSegmentSum;
 extern const PrimitivePtr kPrimConcatOffset;
 extern const PrimitivePtr kPrimReshape;
@@ -165,6 +172,7 @@ extern const PrimitivePtr kPrimSquare;
 extern const PrimitivePtr kPrimEqual;
 extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
+extern const PrimitivePtr kPrimCumSum;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
@@ -203,6 +211,7 @@ extern const PrimitivePtr kPrimOneHot;
 extern const PrimitivePtr kPrimGelu;
 extern const PrimitivePtr kPrimGeluGrad;
 extern const PrimitivePtr kPrimRelu;
+extern const PrimitivePtr kPrimReluV2;
 extern const PrimitivePtr kPrimActivation;
 extern const PrimitivePtr kPrimZerosLikeTensor;
 extern const PrimitivePtr kPrimFakeBprop;
@@ -238,6 +247,7 @@ extern const PrimitivePtr kPrimInDict;
 extern const PrimitivePtr kPrimNotInDict;
 
 // Comm ops
+extern const PrimitivePtr kPrimAllReduce;
 extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;

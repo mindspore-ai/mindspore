@@ -11,21 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from mindspore.nn.loss.loss import _Loss
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore import Tensor, Parameter
-from mindspore.common import dtype as mstype
-from mindspore.common.initializer import initializer
-import mindspore.nn as nn
 import math
 import numpy as np
 import os
-from tests.ut.python.ops.test_math_ops import VirtualLoss
-from mindspore.ops import composite as C
-from mindspore import context
-from mindspore.common.api import _executor
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.common.initializer import initializer
+from mindspore.nn.loss.loss import _Loss
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -36,6 +38,7 @@ class NetWithLoss(nn.Cell):
     def construct(self, x, y):
         predict = self.network(x, y)
         return self.loss(predict)
+
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
@@ -79,10 +82,11 @@ class MarginCE(_Loss):
 
 def test_marin_loss():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     x = Tensor(np.ones([512, 512]), dtype=ms.float32)
     y = Tensor(np.ones([512, 512]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(MarginCE()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     _executor.compile(net, x, y)

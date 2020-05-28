@@ -15,23 +15,23 @@
 """ test ops """
 import functools
 import numpy as np
+
+import mindspore.nn as nn
+import mindspore.ops.composite as C
+from mindspore import Tensor
 from mindspore import ops
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-import mindspore.ops.composite as C
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.common.parameter import Parameter
 from ..ut_filter import non_graph_engine
-from mindspore.common.api import _executor
-
 from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward\
+from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import (pipeline_for_compile_forward_ge_graph_for_case_by_case_config,
             pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient\
+from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
 
@@ -141,12 +141,12 @@ raise_set = [
         'block': (P.Reshape(), {'exception': TypeError, 'error_keywords': ['Reshape']}),
         'desc_inputs': [5.0, (1, 2)],
         'skip': ['backward']}),
-   # input shape is var
+    # input shape is var
     ('Reshape1', {
         'block': (P.Reshape(), {'exception': TypeError, 'error_keywords': ['Reshape']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), (2, 3, 2)],
         'skip': ['backward']}),
-   # element of shape is not int
+    # element of shape is not int
     ('Reshape3', {
         'block': (ReshapeNet((2, 3.0, 2)), {'exception': TypeError, 'error_keywords': ['Reshape']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32))],

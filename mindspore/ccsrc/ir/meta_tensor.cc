@@ -102,6 +102,26 @@ int MetaTensor::DimensionSize(const size_t index) const {
   return dim_size;
 }
 
+abstract::AbstractBasePtr MetaTensor::ToAbstract() {
+  auto tens = shared_from_base<MetaTensor>();
+  auto dtype = tens->Dtype();
+  if (!IsSubType(dtype, kNumber)) {
+    MS_LOG(EXCEPTION) << "Expect MetaTensor type kNumber but got: " << dtype->ToString() << ".";
+  }
+  auto tensor_shape = tens->shape();
+  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
+  abs_tensor->set_value(shared_from_base<MetaTensor>());
+  return abs_tensor;
+}
+
+py::tuple MetaTensor::GetPyTupleShape() const {
+  py::tuple dims(shape_.size());
+  for (size_t i = 0; i < dims.size(); ++i) {
+    dims[i] = py::int_(shape_[i]);
+  }
+  return dims;
+}
+
 int MetaTensor::ElementsNum() const {
   return std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int>());
 }
@@ -196,14 +216,6 @@ bool Tensor::ValueEqual(const Tensor &other) const {
 int Tensor::DataDim() const { return static_cast<int>(data_.ndim()); }
 
 int Tensor::DataSize() const { return static_cast<int>(data_.size()); }
-
-py::tuple Tensor::GetPyTupleShape() const {
-  py::tuple dims(shape_.size());
-  for (size_t i = 0; i < dims.size(); ++i) {
-    dims[i] = py::int_(shape_[i]);
-  }
-  return dims;
-}
 
 py::array Tensor::data() const { return data_; }
 
@@ -362,6 +374,10 @@ TypeId Tensor::set_data_type(const TypeId data_type) {
   return data_type_;
 }
 
+bool Tensor::is_init() { return init_flag_; }
+
+void Tensor::set_init_flag(bool flag) { init_flag_ = flag; }
+
 bool Tensor::convert_data(const py::array &in, const TypeId in_data_type, py::array *const out,
                           const TypeId out_data_type) {
   if (out == nullptr) {
@@ -487,6 +503,24 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.size()
                                  6
                              )mydelimiter")
+                           .def("is_init", &Tensor::is_init, R"mydelimiter(
+                             Get tensor init_flag.
+
+                             Returns:
+                                 bool, whether the tensor init.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
+                                 >>> data.is_init()
+                                 False
+                             )mydelimiter")
+                           .def("set_init_flag", &Tensor::set_init_flag, R"mydelimiter(
+                             Set tensor init_flag.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
+                                 >>> data.set_init_flag(True)
+                             )mydelimiter")
                            .def("dim", &Tensor::DataDim, R"mydelimiter(
                              Get tensor's data dimension.
 
@@ -547,7 +581,10 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                return tensor;
                              }));
                          (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
-                           .def(py::init<TypePtr, py::tuple>(), py::arg("dtype"), py::arg("shape"));
+                           .def(py::init<TypePtr, py::tuple>(), py::arg("dtype"), py::arg("shape"))
+                           .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
+                           .def("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
+                           .def("shape", &MetaTensor::GetPyTupleShape, "Get the MetaTensor's shape.");
                        }));
 
 }  // namespace tensor

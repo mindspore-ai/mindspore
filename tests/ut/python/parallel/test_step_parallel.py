@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
+
 import mindspore as ms
-from mindspore import context
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -71,5 +72,5 @@ def test_two_matmul():
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     b = Tensor(np.ones([128, 128]), dtype=ms.float32)
     a = Tensor(np.ones([128, 128]), dtype=ms.float32)
-    
+    net.set_auto_parallel()
     _executor.compile(net, x, y, b, a)

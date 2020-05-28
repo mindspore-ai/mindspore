@@ -16,8 +16,9 @@
 import math
 import numpy as np
 import pytest
-from mindspore.nn.metrics import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
+
 from mindspore import Tensor
+from mindspore.nn.metrics import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
 
 
 def test_type_topk():
@@ -54,8 +55,8 @@ def test_topk():
     topk.update(x, y)
     result = topk.eval()
     result2 = topk(x, y2)
-    assert math.isclose(result, 2/3)
-    assert math.isclose(result2, 2/3)
+    assert math.isclose(result, 2 / 3)
+    assert math.isclose(result2, 2 / 3)
 
 
 def test_zero_topk():
@@ -79,8 +80,8 @@ def test_top1():
     topk.update(x, y)
     result = topk.eval()
     result2 = topk(x, y2)
-    assert math.isclose(result, 1/3)
-    assert math.isclose(result2, 1/3)
+    assert math.isclose(result, 1 / 3)
+    assert math.isclose(result2, 1 / 3)
 
 
 def test_top5():
@@ -97,5 +98,5 @@ def test_top5():
     topk.update(x, y)
     result = topk.eval()
     result2 = topk(x, y2)
-    assert math.isclose(result, 2/3)
-    assert math.isclose(result2, 2/3)
+    assert math.isclose(result, 2 / 3)
+    assert math.isclose(result2, 2 / 3)

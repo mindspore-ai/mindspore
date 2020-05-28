@@ -13,28 +13,31 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
+
 class NetSoftmax(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(NetSoftmax, self).__init__()
         self.softmax = P.Softmax()
         x = Tensor(np.array([[0.1, 0.3, 0.6],
                              [0.2, -0.6, 0.8],
                              [0.6, 1, 0.4]]).astype(np.float32))
-        self.x = Parameter(initializer(x, x.shape()), name ='x')
+        self.x = Parameter(initializer(x, x.shape()), name='x')
 
     def construct(self):
         return self.softmax(self.x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -49,4 +52,3 @@ def test_softmax():
     diff = np.abs(outputSum - expect)
     print(diff)
     assert np.all(diff < error)
-

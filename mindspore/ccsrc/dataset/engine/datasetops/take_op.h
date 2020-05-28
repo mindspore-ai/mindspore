@@ -84,6 +84,12 @@ class TakeOp : public PipelineOp {
   // before providing their own implementations.
   Status PrepareNodePostAction() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   int32_t max_takes_;   // The number of takes that the user requested
   int32_t take_count_;  // A counter for the current number of executed takes

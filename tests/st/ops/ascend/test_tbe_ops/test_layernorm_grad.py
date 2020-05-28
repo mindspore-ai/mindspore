@@ -13,13 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.nn import LayerNorm
+
+from mindspore import context
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
+from mindspore.nn import LayerNorm
 from mindspore.ops.composite import GradOperation
-from mindspore import log as logger
-from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Grad(Cell):
     def __init__(self, network):
@@ -27,9 +30,10 @@ class Grad(Cell):
         self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
         self.network = network
 
-    def construct(self, input, output_grad,):
+    def construct(self, input, output_grad, ):
         gout = self.grad(self.network)(input, output_grad)
         return gout
+
 
 class Net(Cell):
     def __init__(self, input_shape, begin_norm_axis, begin_params_axis, gamma, beta):
@@ -39,6 +43,7 @@ class Net(Cell):
     def construct(self, input):
         x = self.layernorm(input)
         return x
+
 
 def py_me_layernorm_grad(input_data, normalized_shape, gamma, beta, axis, gradients):
     input_me = Tensor(input_data)
@@ -51,6 +56,7 @@ def py_me_layernorm_grad(input_data, normalized_shape, gamma, beta, axis, gradie
     out_grad = net_me(input_me, out_pool_grad_me)
     logger.info("Check me result:")
     logger.info(out_grad.asnumpy())
+
 
 def test_normal_layernorm_grad_normalize_2d():
     """

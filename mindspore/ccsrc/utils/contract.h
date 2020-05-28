@@ -56,19 +56,18 @@ class Ensures : public EnsuresAccess<T, R> {
     if (!R::Check(value_)) {
       LogStream contract_stream;
       contract_stream << "contract error: " << signatory.extra_info << R::Desc();
-      LogWriter(signatory.location_info, EXCEPTION, ArgumentError) ^ contract_stream;
+      LogWriter(signatory.location_info, EXCEPTION, SUBMODULE_ID, ArgumentError) ^ contract_stream;
     }
   }
   template <class O, typename = std::enable_if_t<std::is_convertible_v<O, T>>>
   Ensures(const Ensures<O, R> &other) : value_(other.get()) {}
   ~Ensures() = default;
 
-  T get() const { return value_; }
+  const T get() const { return value_; }
   T &get() { return value_; }
 
-  operator T() const { return value_; }
+  operator const T() const { return value_; }
 
- private:
   T value_;
 };
 

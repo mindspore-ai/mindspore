@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
 from mindspore.common.api import _Executor
-from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn import TrainOneStepCell
+from mindspore.nn.optim import AdamWeightDecay
+from mindspore.ops import operations as P
 
 
 class NetWithLoss(nn.Cell):
@@ -32,6 +33,11 @@ class NetWithLoss(nn.Cell):
     def construct(self, x, b):
         predict = self.network(x)
         return self.loss(predict, b)[0]
+
+
+def compile(net, x, b):
+    net.set_auto_parallel()
+    _Executor().compile(net, x, b)
 
 
 def test_optimizer_clone_weight():
@@ -48,9 +54,9 @@ def test_optimizer_clone_weight():
             return out
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -66,7 +72,7 @@ def test_optimizer_clone_weight():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _Executor().compile(train_net, x,  b)
+    compile(train_net, x, b)
 
 
 def test_optimizer_clone_weight2():
@@ -83,9 +89,9 @@ def test_optimizer_clone_weight2():
             return out
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -101,4 +107,4 @@ def test_optimizer_clone_weight2():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _Executor().compile(train_net, x,  b)
+    compile(train_net, x, b)

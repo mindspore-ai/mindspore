@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.common.api import ms_function
 import numpy as np
+
 from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
 

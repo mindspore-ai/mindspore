@@ -18,6 +18,9 @@
 #include <string>
 #include <unordered_set>
 #include <algorithm>
+#include <map>
+#include <set>
+#include <deque>
 #include "utils/utils.h"
 #include "utils/base_ref.h"
 #include "session/anf_runtime_algorithm.h"
@@ -33,6 +36,56 @@ std::vector<int> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
   return result;
+}
+
+bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodePtr &node2) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node1);
+  MS_EXCEPTION_IF_NULL(node2);
+  std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
+  std::map<AnfNodePtr, std::set<AnfNodePtr>> control_depend_map;
+  for (auto &nd : node_list) {
+    if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
+      auto control_depend = nd->cast<CNodePtr>();
+      auto prior_node = control_depend->input(kControlDependPriorIndex);
+      auto behind_node = control_depend->input(kControlDependBehindIndex);
+      auto it = control_depend_map.find(behind_node);
+      if (it == control_depend_map.end()) {
+        control_depend_map[behind_node] = std::set<AnfNodePtr>{prior_node};
+      } else {
+        it->second.insert(prior_node);
+      }
+    }
+  }
+
+  FuncGraphManagerPtr manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  std::unordered_set<AnfNodePtr> seen_node;
+  std::deque<AnfNodePtr> todo{node1};
+  while (!todo.empty()) {
+    AnfNodePtr node = todo.front();
+    todo.pop_front();
+    if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
+      continue;
+    }
+    (void)seen_node.insert(node);
+
+    if (node == node2) {
+      return true;
+    }
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto inputs = cnode->inputs();
+      (void)todo.insert(todo.end(), inputs.begin(), inputs.end());
+    }
+    auto it = control_depend_map.find(node);
+    if (it != control_depend_map.end()) {
+      (void)todo.insert(todo.end(), it->second.begin(), it->second.end());
+    }
+  }
+  return false;
 }
 
 bool UnVisited(const BaseRef &n) {
@@ -328,7 +381,7 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
 bool IsNopNode(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->device_target() != kAscendDevice) {
+  if (context_ptr->device_target() != kAscendDevice && context_ptr->device_target() != kGPUDevice) {
     return false;
   }
   static std::unordered_set<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
@@ -344,7 +397,7 @@ bool IsNopNode(const AnfNodePtr &node) {
   return true;
 }
 
-bool IsAllNopNode(session::KernelGraph *const graph) {
+bool IsAllNopNode(const session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto execution_order = graph->execution_order();
   for (auto &cnode : execution_order) {
@@ -485,6 +538,170 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
     // Update cnode's input_names attr
     primitive->set_attr(kAttrInputNames, MakeValue(new_input_names));
   }
+}
+
+bool AnfEqual(const BaseRef &a, const BaseRef &b) {
+  if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
+    auto a_node = utils::cast<AnfNodePtr>(a);
+    auto b_node = utils::cast<AnfNodePtr>(b);
+    if (IsValueNode<Primitive>(a_node) && IsValueNode<Primitive>(b_node)) {
+      auto a_value_node = a_node->cast<ValueNodePtr>();
+      auto a_value = a_value_node->value();
+      auto a_prim = a_value->cast<PrimitivePtr>();
+
+      auto b_value_node = b_node->cast<ValueNodePtr>();
+      auto b_value = b_value_node->value();
+      auto b_prim = b_value->cast<PrimitivePtr>();
+
+      return a_prim->name() == b_prim->name();
+    } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
+      auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
+      if (a_value_node_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "cast value node ptr fail";
+      }
+      auto a_value_ptr = a_value_node_ptr->value();
+      if (a_value_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "value ptr is nullptr";
+      }
+
+      auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
+      if (b_value_node_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "cast value node ptr fail";
+      }
+      auto b_value_ptr = b_value_node_ptr->value();
+      if (b_value_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "value ptr is nullptr";
+      }
+
+      return (*a_value_ptr) == (*b_value_ptr);
+    }
+    MS_LOG(DEBUG) << "check AnfNodePtr equal";
+  }
+  if (utils::isa<FuncGraphPtr>(a) && utils::isa<FuncGraphPtr>(b)) {
+    MS_LOG(DEBUG) << "check GraphPtr equal";
+  }
+  return a == b;
+}
+
+bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b) {
+  // To matchCNode and Kernel's type
+  if (utils::isa<CNode>(a) && utils::isa<CNode>(b)) {
+    return true;
+  }
+  return a.type() == b.type();
+}
+
+namespace {
+ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
+  if (utils::isa<int>(sexp)) {
+    return NewValueNode(utils::cast<int>(sexp));
+  }
+  if (utils::isa<float>(sexp)) {
+    return NewValueNode(utils::cast<float>(sexp));
+  }
+  if (utils::isa<bool>(sexp)) {
+    return NewValueNode(utils::cast<bool>(sexp));
+  }
+  if (utils::isa<ValuePtr>(sexp)) {
+    return NewValueNode(utils::cast<ValuePtr>(sexp));
+  }
+  return nullptr;
+}
+
+CNodePtr CreateCNodeWithGraph(const std::vector<AnfNodePtr> &input_nodes, const BaseRef &graph) {
+  if (utils::isa<FuncGraphPtr>(graph)) {
+    return std::make_shared<CNode>(input_nodes, utils::cast<FuncGraphPtr>(graph));
+  }
+  if (utils::isa<VarPtr>(graph)) {
+    return std::make_shared<CNode>(input_nodes, utils::cast<VarPtr>(graph));
+  }
+  return nullptr;
+}
+
+VarNodePtr CreateVarNodeWithSexp(const BaseRef &sexp, const BaseRef &graph) {
+  if (utils::isa<VarPtr>(graph)) {
+    MS_LOG(DEBUG) << "make VarPtr " + graph.ToString();
+    return std::make_shared<VarNode>(utils::cast<VarPtr>(sexp), nullptr);
+  }
+  if (utils::isa<FuncGraphPtr>(graph)) {
+    MS_LOG(DEBUG) << "VarNode, should input a Var in graph. It's GraphPtr: " + graph.ToString();
+    return std::make_shared<VarNode>(utils::cast<VarPtr>(sexp), utils::cast<FuncGraphPtr>(graph));
+  }
+  MS_LOG(ERROR) << "VarNode, should input a Var in graph. It's " + graph.ToString();
+  return nullptr;
+}
+
+AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                            bool multigraph) {
+  MS_LOG(DEBUG) << "HandleSexpVector sexp: " + sexp.ToString() + ", graph " + graph.ToString();
+  std::vector<AnfNodePtr> input_nodes;
+  const auto &tuple = utils::cast<VectorRef>(sexp);
+  if (multigraph && utils::isa<VarPtr>(graph)) {
+    for (auto &x : tuple) {
+      AnfNodePtr node = SexpToNode(x, std::make_shared<Var>("G"), primitive_vars, true);
+      input_nodes.push_back(node);
+    }
+    VarPtr var_ptr = utils::cast<VarPtr>(graph);
+    return std::make_shared<CNode>(input_nodes, var_ptr);
+  }
+
+  for (auto &x : tuple) {
+    AnfNodePtr node = SexpToNode(x, graph, primitive_vars, multigraph);
+    input_nodes.push_back(node);
+  }
+  return CreateCNodeWithGraph(input_nodes, graph);
+}
+}  // namespace
+
+AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars, bool multigraph) {
+  MS_LOG(DEBUG) << "SexpToNode sexp: " + sexp.ToString() + ", graph " + graph.ToString();
+  MS_EXCEPTION_IF_NULL(primitive_vars);
+  if (utils::isa<VectorRef>(sexp)) {
+    return HandleSexpVector(sexp, graph, primitive_vars, multigraph);
+  }
+  if (utils::isa<VarPtr>(sexp)) {
+    auto var_ptr = utils::cast<VarPtr>(sexp);
+    MS_EXCEPTION_IF_NULL(var_ptr);
+    if (var_ptr->primitive()) {
+      (*primitive_vars)[var_ptr->primitive()] = var_ptr;
+      return NewValueNode(var_ptr->primitive());
+    }
+    return CreateVarNodeWithSexp(sexp, graph);
+  }
+  if (utils::isa<AnfNodePtr>(sexp)) {
+    return utils::cast<AnfNodePtr>(sexp);
+  }
+  auto value_node = CreateValueNodeWithSexp(sexp);
+  if (value_node == nullptr) {
+    MS_LOG(EXCEPTION) << "sexp cannot converted. sexp: " + sexp.ToString();
+  }
+  return value_node;
+}
+
+bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &var_node) {
+  MS_EXCEPTION_IF_NULL(equiv1);
+  MS_EXCEPTION_IF_NULL(equiv2);
+  MS_EXCEPTION_IF_NULL(var_node);
+  auto equiv1_node = GetAnfNodeByVar(equiv1, var_node);
+  MS_EXCEPTION_IF_NULL(equiv1_node);
+  auto equiv2_node = GetAnfNodeByVar(equiv2, var_node);
+  MS_EXCEPTION_IF_NULL(equiv2_node);
+  return equiv1_node == equiv2_node;
+}
+
+AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
+  MS_EXCEPTION_IF_NULL(equiv);
+  MS_EXCEPTION_IF_NULL(var_node);
+  auto iter = (*equiv).find(var_node);
+  if (iter == (*equiv).end()) {
+    MS_LOG(INFO) << "The equiv map doesn't contain the var_node after matched.";
+    return nullptr;
+  }
+  auto res = utils::cast<AnfNodePtr>(iter->second);
+  if (res == nullptr) {
+    MS_LOG(EXCEPTION) << "Cast fail! Maybe var is not a anf node";
+  }
+  return res;
 }
 }  // namespace opt
 }  // namespace mindspore

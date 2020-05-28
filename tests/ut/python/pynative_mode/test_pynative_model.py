@@ -17,11 +17,11 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple, Tensor
+from mindspore import context
+from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.nn.optim import Momentum
 from ..ut_filter import non_graph_engine
-from mindspore import context
 
 
 def setup_module(module):
@@ -30,6 +30,7 @@ def setup_module(module):
 
 class GradWrap(nn.Cell):
     """ GradWrap definition """
+
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
@@ -43,8 +44,10 @@ class GradWrap(nn.Cell):
 @non_graph_engine
 def test_softmaxloss_grad():
     """ test_softmaxloss_grad """
+
     class NetWithLossClass(nn.Cell):
         """ NetWithLossClass definition """
+
         def __init__(self, network):
             super(NetWithLossClass, self).__init__()
             self.loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -56,6 +59,7 @@ def test_softmaxloss_grad():
 
     class Net(nn.Cell):
         """ Net definition """
+
         def __init__(self):
             super(Net, self).__init__()
             self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
@@ -80,8 +84,10 @@ def test_softmaxloss_grad():
 @non_graph_engine
 def test_lenet_grad():
     """ test_lenet_grad """
+
     class NetWithLossClass(nn.Cell):
         """ NetWithLossClass definition """
+
         def __init__(self, network):
             super(NetWithLossClass, self).__init__()
             self.loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -93,6 +99,7 @@ def test_lenet_grad():
 
     class LeNet5(nn.Cell):
         """ LeNet5 definition """
+
         def __init__(self):
             super(LeNet5, self).__init__()
             self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
@@ -133,6 +140,6 @@ def test_lenet_grad():
             print("fail to run optimizer")
         # verification
         if i == verification_step:
-            fw_output = net.construct(input_data)
-            loss_output = loss.construct(fw_output, label)
+            fw_output = net(input_data)
+            loss_output = loss(fw_output, label)
             print("The loss of %s-th iteration is %s" % (i, loss_output.asnumpy()))

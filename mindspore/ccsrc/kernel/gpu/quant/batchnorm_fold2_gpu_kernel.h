@@ -45,7 +45,7 @@ class BatchNormFold2GpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -114,8 +114,7 @@ class BatchNormFold2GpuKernel : public GpuKernel {
 
     output_size_list_.push_back(input_size);
 
-    size_t workspace_size = 0;
-    workspace_size_list_.push_back(workspace_size);
+    workspace_size_list_.push_back(sizeof(int32_t));
   }
 
  private:

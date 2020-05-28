@@ -12,20 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
-import numpy as np
 import time
-import math
+import numpy as np
+import pytest
+
 import mindspore.nn as nn
 from mindspore import context, Tensor, ParameterTuple
-from mindspore.ops import operations as P
-from mindspore.common.initializer import TruncatedNormal
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
-
-from mindspore.nn.wrap.cell_wrapper import WithLossCell
+from mindspore.common.initializer import TruncatedNormal
 from mindspore.nn.optim import Momentum
+from mindspore.nn.wrap.cell_wrapper import WithLossCell
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 np.random.seed(1)
 
@@ -152,10 +151,10 @@ def test_ascend_pynative_lenet():
         fw_output = net(inputs)
         loss_output = criterion(fw_output, labels)
         grads = train_network(inputs, labels)
-        success = optimizer(grads)
+        optimizer(grads)
         end_time = time.time()
         cost_time = end_time - start_time
         total_time = total_time + cost_time
 
         print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
-    assert(loss_output.asnumpy() < 0.1)
+    assert loss_output.asnumpy() < 0.1

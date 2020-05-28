@@ -31,6 +31,7 @@ def test_tensor_add():
     z = tensor_add(x, y)
     assert np.all(z.asnumpy() - (x.asnumpy() + y.asnumpy()) < 0.0001)
 
+
 def test_tensor_orign_ops():
     x = Tensor(np.ones([1, 3, 4, 4]).astype(np.float32))
     y = Tensor(np.ones([1, 3, 4, 4]).astype(np.float32))
@@ -38,5 +39,5 @@ def test_tensor_orign_ops():
     assert np.all(z.asnumpy() - (x.asnumpy() + y.asnumpy()) < 0.0001)
     z = x * y
     assert np.all(z.asnumpy() - (x.asnumpy() * y.asnumpy()) < 0.0001)
-    assert (x == y)
-    assert (x != 'zero')
+    assert x == y
+    assert x != 'zero'

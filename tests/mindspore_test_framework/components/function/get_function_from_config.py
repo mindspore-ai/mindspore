@@ -18,6 +18,7 @@
 from ...components.icomponent import IBuilderComponent
 from ...utils import keyword
 
+
 class IdentityBC(IBuilderComponent):
     """
     Return function.
@@ -25,5 +26,6 @@ class IdentityBC(IBuilderComponent):
     Examples:
         'function': Add
     """
-    def build_sut(self, verification_set):
-        return verification_set[keyword.function]
+
+    def __call__(self):
+        return self.verification_set[keyword.function]

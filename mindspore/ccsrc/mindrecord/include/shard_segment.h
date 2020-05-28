@@ -81,7 +81,7 @@ class ShardSegment : public ShardReader {
   std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>> ReadAtPageByNamePy(
     std::string category_name, int64_t page_no, int64_t n_rows_of_page);
 
-  std::pair<ShardType, std::vector<std::string>> get_blob_fields();
+  std::pair<ShardType, std::vector<std::string>> GetBlobFields();
 
  private:
   std::pair<MSRStatus, std::vector<std::tuple<int, std::string, int>>> WrapCategoryInfo();
@@ -89,8 +89,6 @@ class ShardSegment : public ShardReader {
   std::string ToJsonForCategory(const std::vector<std::tuple<int, std::string, int>> &tri_vec);
 
   std::string CleanUp(std::string fieldName);
-
-  std::tuple<std::vector<uint8_t>, json> GetImageLabel(std::vector<uint8_t> images, json label);
 
   std::pair<MSRStatus, std::vector<uint8_t>> PackImages(int group_id, int shard_id, std::vector<uint64_t> offset);
 

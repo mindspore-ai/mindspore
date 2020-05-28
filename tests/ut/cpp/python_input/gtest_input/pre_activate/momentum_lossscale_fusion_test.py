@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
-from mindspore.ops import Primitive
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 Mul = P.Mul()
 ApplyMomentum = P.ApplyMomentum()
@@ -23,6 +23,7 @@ FusedMulApplyMomentum = Primitive('FusedMulApplyMomentum')
 tuple_getitem = Primitive('tuple_getitem')
 make_tuple = Primitive('make_tuple')
 constant = Tensor(1.0, mstype.float32)
+
 
 class FnDict:
     def __init__(self):
@@ -46,6 +47,6 @@ def test_momentum_lossscale_fusion(tag):
 
     @fns
     def after(input0, input1, input2, input3, input4):
-        return make_tuple(FusedMulApplyMomentum(input0, input1, input2, input3, input4, constant))
+        return make_tuple(tuple_getitem(FusedMulApplyMomentum(input0, input1, input2, input3, input4, constant), 0))
 
     return fns[tag]

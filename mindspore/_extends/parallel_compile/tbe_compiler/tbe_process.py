@@ -161,5 +161,12 @@ class CompilerPool:
                 ret = task_id, "Exception: Not support return type:" + str(ret_type)
         return ret
 
+    def reset_task_info(self):
+        """
+        reset task info when task compile error
+        """
+        if self.__running_tasks:
+            self.__running_tasks.clear()
+
 
 compile_pool = CompilerPool()

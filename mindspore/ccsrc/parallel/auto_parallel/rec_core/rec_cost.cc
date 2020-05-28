@@ -146,7 +146,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   std::vector<double> cost_op;
   std::vector<std::vector<float>> mode;
 
-  if (edge_i < 2) {
+  if (edge_i < 2 || edge_i % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrConcatDimI(edge_j, edge_k) + CostRedis(node, node_name_to_strategy,
@@ -154,7 +154,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
                                                                 graph));
   }
 
-  if (edge_j < 2) {
+  if (edge_j < 2 || edge_j % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrConcatDimJ(edge_i, edge_k) + CostRedis(node, node_name_to_strategy,
@@ -162,7 +162,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
                                                                 graph));
   }
 
-  if (edge_k < 2) {
+  if (edge_k < 2 || edge_k % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrReduceDimK(edge_i, edge_j) + CostRedis(node, node_name_to_strategy,
@@ -226,7 +226,7 @@ StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec
 // Get optimal strategy for Conv
 StrategyRec CostConvolution::GetOptimalStr(
   const Graph::NodeType &node, const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-  const Graph &graph) {
+  const Graph &graph, bool channel_partition) {
   const OperatorRec &op = node.apply;
 
   int input_tensor_h = static_cast<int>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h);
@@ -254,7 +254,7 @@ StrategyRec CostConvolution::GetOptimalStr(
   cost_op.reserve(7);
   std::vector<std::vector<float>> mode;
 
-  if (input_tensor_n < 2) {
+  if (input_tensor_n < 2 || input_tensor_n % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrDimB(tensor_filter) + CostRedis(node, node_name_to_strategy,
@@ -264,7 +264,7 @@ StrategyRec CostConvolution::GetOptimalStr(
   cost_op.push_back(DOUBLE_MAX);
   cost_op.push_back(DOUBLE_MAX);
 
-  if (tensor_filter < 2) {
+  if (channel_partition == false || tensor_filter < 2 || tensor_filter % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrDimK(tensor_in) + CostRedis(node, node_name_to_strategy,
@@ -274,7 +274,7 @@ StrategyRec CostConvolution::GetOptimalStr(
   cost_op.push_back(DOUBLE_MAX);
   cost_op.push_back(DOUBLE_MAX);
 
-  if (tensor_filter_c < 2) {
+  if (channel_partition == false || tensor_filter_c < 2 || tensor_filter_c % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrDimQ(tensor_out) + CostRedis(node, node_name_to_strategy,
@@ -384,14 +384,14 @@ StrategyRec CostPooling::GetOptimalStr(const Graph::NodeType &node,
   std::vector<double> cost_op;
   std::vector<std::vector<float>> mode;
 
-  if (tensor_n < 2) {
+  if (tensor_n < 2 || tensor_n % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
                                            mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}}, graph));
   }
 
-  if (tensor_c < 2) {
+  if (tensor_c < 2 || tensor_c % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
@@ -507,7 +507,6 @@ StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRe
   switch (min_position) {
     case 0:
       str.inputTensor[0].str_n /= 2.0;
-      str.inputTensor[1].str_n /= 2.0;
       str.outputTensor.str_n /= 2.0;
       str.cut_counter += 1;
       str.cost = str.cost + cost_in_;
@@ -515,7 +514,6 @@ StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRe
 
     case 1:
       str.inputTensor[0].str_c /= 2.0;
-      str.inputTensor[1].str_c /= 2.0;
       str.outputTensor.str_c /= 2.0;
       str.cut_counter += 1;
       str.cost = str.cost + cost_in_;
@@ -523,7 +521,6 @@ StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRe
 
     case 2:
       str.inputTensor[0].str_h /= 2.0;
-      str.inputTensor[1].str_h /= 2.0;
       str.outputTensor.str_h /= 2.0;
       str.cut_counter += 1;
       str.cost = str.cost + cost_in_;
@@ -547,36 +544,37 @@ StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRe
 StrategyRec CostCommon::GetOptimalStr(const Graph::NodeType &node,
                                       const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                                       const Graph &graph) {
-  int tensor_n = static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n);
-  int tensor_c = static_cast<int>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
-  int tensor_h = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h);
-  int tensor_w = static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w);
+  const OperatorRec &op = node.apply;
+  int tensor_n = static_cast<int>(op.arguments[0].tensor_shape.shape_n * op.arguments[0].tensor_str.str_n);
+  int tensor_c = static_cast<int>(op.arguments[0].tensor_shape.shape_c * op.arguments[0].tensor_str.str_c);
+  int tensor_h = static_cast<int>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h);
+  int tensor_w = static_cast<int>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w);
 
   std::vector<double> cost_op;
   std::vector<std::vector<float>> mode;
 
-  if (tensor_n < 2) {
+  if (tensor_n < 2 || tensor_n % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
                                            mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}}, graph));
   }
 
-  if (tensor_c < 2) {
+  if (tensor_c < 2 || tensor_c % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
                                            mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}}, graph));
   }
 
-  if (tensor_h < 2) {
+  if (tensor_h < 2 || tensor_h % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
                                            mode = {{1, 1, 0.5, 1}, {1, 1, 0.5, 1}, {1, 1, 0.5, 1}}, graph));
   }
 
-  if (tensor_w < 2) {
+  if (tensor_w < 2 || tensor_w % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
@@ -660,33 +658,27 @@ StrategyRec CostBatchNorm::GetOptimalStr(const Graph::NodeType &node,
   int output_tensor_h = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h);
   int output_tensor_w = static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w);
   int output_tensor_n = static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n);
-  int output_tensor_c = static_cast<int>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
 
   std::vector<double> cost_op;
   std::vector<std::vector<float>> mode;
 
-  if (output_tensor_n < 2) {
+  if (output_tensor_n < 2 || output_tensor_n % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrDimB(tensor_filter) + CostRedis(node, node_name_to_strategy,
                                                          mode = {{0.5, 1, 1, 1}, {1, 1, 1, 1}, {0.5, 1, 1, 1}}, graph));
   }
 
-  if (output_tensor_c < 2 || tensor_filter_c < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(StrDimC() + CostRedis(node, node_name_to_strategy,
-                                            mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}}, graph));
-  }
+  cost_op.push_back(DOUBLE_MAX);
 
-  if (output_tensor_h < 2) {
+  if (output_tensor_h < 2 || output_tensor_h % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrDimH(tensor_filter) + CostRedis(node, node_name_to_strategy,
                                                          mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}}, graph));
   }
 
-  if (output_tensor_w < 2) {
+  if (output_tensor_w < 2 || output_tensor_w % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     cost_op.push_back(StrDimW(tensor_filter) + CostRedis(node, node_name_to_strategy,

@@ -48,6 +48,8 @@ class DistributedSampler : public Sampler {
   // @return - The error code return
   Status Reset() override;
 
+  void Print(std::ostream &out, bool show_all) const override;
+
  private:
   int64_t cnt_;  // number of samples that have already been filled in to buffer
   uint32_t seed_;

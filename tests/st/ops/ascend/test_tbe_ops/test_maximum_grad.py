@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -21,6 +22,7 @@ from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
 grad = C.GradOperation('get_all', get_all=True, sens_param=True)
+
 
 class MaxNetMe(Cell):
     def __init__(self):
@@ -31,6 +33,7 @@ class MaxNetMe(Cell):
         x = self.max(inputA, inputB)
         return x
 
+
 class GradWrap(Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -39,6 +42,7 @@ class GradWrap(Cell):
     def construct(self, inputA, inputB, sens):
         gout = grad(self.network)(inputA, inputB, sens)
         return gout
+
 
 def gen_data(inputA_np, inputB_np, grad=None):
     inputA_me = inputA_np
@@ -60,6 +64,7 @@ def gen_data(inputA_np, inputB_np, grad=None):
     print("---me---")
     print(output[0].asnumpy())
     print(output[1].asnumpy())
+
 
 def test_net():
     inputA_np = np.random.randn(1, 3, 2, 2).astype(np.float32)

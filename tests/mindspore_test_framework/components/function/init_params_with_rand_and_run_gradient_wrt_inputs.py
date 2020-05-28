@@ -19,7 +19,8 @@ from mindspore.ops.composite import GradOperation
 from ...components.icomponent import IBuilderComponent
 from ...utils.block_util import run_block, gen_grad_net, create_funcs, get_uniform_with_shape
 
+
 class RunBackwardBlockWrtInputsWithRandParamBC(IBuilderComponent):
-    def build_sut(self, verification_set):
+    def __call__(self):
         grad_op = GradOperation('grad', get_all=True, sens_param=True)
-        return create_funcs(verification_set, gen_grad_net, run_block, grad_op, get_uniform_with_shape)
+        return create_funcs(self.verification_set, gen_grad_net, run_block, grad_op, get_uniform_with_shape)

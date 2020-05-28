@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter 
+
 import mindspore as ms
 import mindspore.common.api as me
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
+from mindspore.ops import operations as P
 
 
 def test_get_parameter_layout():
@@ -38,22 +39,22 @@ def test_get_parameter_layout():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 1), (4, 1))
-    strategy2 = ((2, 4), )
+    strategy2 = ((2, 4),)
     context.set_context(mode=context.GRAPH_MODE)
 
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     weight = Tensor(np.ones([64, 32]), dtype=ms.float32)
 
     net = Net(strategy1, strategy2, weight)
+    net.set_auto_parallel()
     exe = me._executor
-    exe.compile(net, x)
-    x_layout = ([2, 4], [1, -1])  # device_arrangement = [2, 4], tensor_map = [1, -1]
-    weight_layout = ([2, 4], [0, -1])  # device_arrangement = [2, 4], tensor_map = [0, -1]
+    exe.compile(net, x, phase='train', auto_parallel_mode=True)
+    x_layout = [[2, 4], [1, -1], [16, 32]]  # device_arrangement = [2, 4], tensor_map = [1, -1]
+    weight_layout = [[2, 4], [0, -1], [16, 32]]  # device_arrangement = [2, 4], tensor_map = [0, -1]
     expect_dict = {'x': x_layout, 'w1': weight_layout}
     # to be resovled: static local variable count_p is used in step_parallel.cc, it needs to be reset between each ut 
-    assert (net._parameter_layout_dict == expect_dict)
+    assert (net.parameter_layout_dict == expect_dict)
 
 
 if __name__ == '__main__':
     test_get_parameter_layout()
-

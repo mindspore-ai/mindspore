@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import re
-from mindspore.train import Model, ParallelMode
+
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common.api import _executor
+from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor
-import mindspore as ms
-import numpy as np
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
-from tests.dataset_mock import MindData
-from mindspore import context
 from mindspore.parallel._utils import _reset_op_id
-from mindspore.common.api import _executor
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -84,7 +85,7 @@ def all_to_all_common():
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
 
-    model.train(epoch_size, dataset,dataset_sink_mode=False)
+    model.train(epoch_size, dataset, dataset_sink_mode=False)
     strategys = _executor._get_strategy(model._train_network)
     return strategys
 
@@ -99,4 +100,3 @@ def test_one_dev():
             assert v == [[1, 1]]
         elif re.search('MatMul-op', k) is not None:
             assert v == [[1, 1], [1, 1]]
-

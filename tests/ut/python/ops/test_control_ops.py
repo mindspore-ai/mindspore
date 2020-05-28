@@ -13,11 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """ test control ops """
+import pytest
 import numpy as np
+
 import mindspore as ms
-from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
+from mindspore import nn
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -30,7 +35,7 @@ def cond_data_test(x_init, y_init):
             super(Net, self).__init__()
             self.square = P.Square()
             self.add = P.TensorAdd()
-            self.value = Tensor(np.full((1), 3, dtype=np.float32))
+            self.value = Tensor(3, dtype=ms.float32)
             self.switch = P.GeSwitch()
             self.merge = P.Merge()
             self.less = P.Less()
@@ -56,9 +61,11 @@ def test_cond_data_true():
     output = cond_data_test(3, 8)
     print("test_cond_data_true:", output)
 
+
 def test_cond_data_false():
     output = cond_data_test(8, 3)
     print("test_cond_data_false:", output)
+
 
 def if_compile_test(x_init, y_init):
     class Net(nn.Cell):
@@ -358,3 +365,81 @@ def test_if_compile_true():
 def test_if_compile_false():
     output = if_compile_test(8, 3)
     print("test_if_compile_false:", output)
+
+
+def test_switch_layer():
+    class Layer1(nn.Cell):
+        def __init__(self):
+            super(Layer1, self).__init__()
+            self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+
+        def construct(self, x):
+            return x * self.z1
+
+    class Layer2(nn.Cell):
+        def __init__(self):
+            super(Layer2, self).__init__()
+            self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+
+        def construct(self, x):
+            return x * self.z2
+
+    class SwitchLayerCell(nn.Cell):
+        def __init__(self):
+            super(SwitchLayerCell, self).__init__()
+            self.layers = (Layer1(), Layer2())
+            self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+
+        def construct(self, index, x):
+            ret = F.switch_layer(index, self.layers)(x) * self.z3
+            return ret
+
+    index = Tensor(0)
+    net = SwitchLayerCell()
+    net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+
+
+def test_index_to_switch_layer():
+    class Layer1(nn.Cell):
+        def __init__(self):
+            super(Layer1, self).__init__()
+            self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+
+        def construct(self, x):
+            return x * self.z1
+
+    class Layer2(nn.Cell):
+        def __init__(self):
+            super(Layer2, self).__init__()
+            self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+
+        def construct(self, x):
+            return x * self.z2
+
+    class SwitchLayerCell(nn.Cell):
+        def __init__(self):
+            super(SwitchLayerCell, self).__init__()
+            self.layers = (Layer1(), Layer2())
+            self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+
+        def construct(self, index, x):
+            ret = self.layers[index](x) * self.z3
+            return ret
+
+    index = Tensor(0)
+    net = SwitchLayerCell()
+    net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+
+def test_control_depend_check():
+    with pytest.raises(TypeError) as e:
+        depend = P.ControlDepend(0.0)
+    with pytest.raises(ValueError) as e:
+        depend = P.ControlDepend(2)
+    with pytest.raises(TypeError) as e:
+        depend = P.ControlDepend((2,))

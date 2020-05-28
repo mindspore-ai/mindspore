@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 import numpy as np
 import pytest
-import copy
+
 import mindspore.dataset as ds
 from mindspore.dataset.engine.iterators import ITERATORS_LIST, _cleanup
 

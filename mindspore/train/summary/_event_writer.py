@@ -14,91 +14,75 @@
 # ============================================================================
 """Writes events to disk in a logdir."""
 import os
-import time
 import stat
-from mindspore import log as logger
+from collections import deque
+from multiprocessing import Pool, Process, Queue, cpu_count
+
 from ..._c_expression import EventWriter_
-from ._summary_adapter import package_init_event
+from ._summary_adapter import package_summary_event
 
 
-class _WrapEventWriter(EventWriter_):
+def _pack(result, step):
+    summary_event = package_summary_event(result, step)
+    return summary_event.SerializeToString()
+
+
+class EventWriter(Process):
     """
-    Wrap the c++ EventWriter object.
+    Creates a `EventWriter` and write event to file.
 
     Args:
-        full_file_name (str): Include directory and file name.
+        filepath (str): Summary event file path and file name.
+        flush_interval (int): The flush seconds to flush the pending events to disk. Default: 120.
     """
-    def __init__(self, full_file_name):
-        if full_file_name is not None:
-            EventWriter_.__init__(self, full_file_name)
 
+    def __init__(self, filepath: str, flush_interval: int) -> None:
+        super().__init__()
+        _ = flush_interval
+        with open(filepath, 'w'):
+            os.chmod(filepath, stat.S_IWUSR | stat.S_IRUSR)
+        self._writer = EventWriter_(filepath)
+        self._queue = Queue(cpu_count() * 2)
+        self.start()
 
-class EventRecord:
-    """
-    Creates a `EventFileWriter` and write event to file.
+    def run(self):
 
-    Args:
-        full_file_name (str): Summary event file path and file name.
-        flush_time (int): The flush seconds to flush the pending events to disk. Default: 120.
-    """
-    def __init__(self, full_file_name: str, flush_time: int = 120):
-        self.full_file_name = full_file_name
+        with Pool() as pool:
+            deq = deque()
+            while True:
+                while deq and deq[0].ready():
+                    self._writer.Write(deq.popleft().get())
 
-        # The first event will be flushed immediately.
-        self.flush_time = flush_time
-        self.next_flush_time = 0
+                if not self._queue.empty():
+                    action, data = self._queue.get()
+                    if action == 'WRITE':
+                        if not isinstance(data, (str, bytes)):
+                            deq.append(pool.apply_async(_pack, data))
+                        else:
+                            self._writer.Write(data)
+                    elif action == 'FLUSH':
+                        self._writer.Flush()
+                    elif action == 'END':
+                        break
+            for res in deq:
+                self._writer.Write(res.get())
 
-        # create event write object
-        self.event_writer = self._create_event_file()
-        self._init_event_file()
+            self._writer.Shut()
 
-        # count the events
-        self.event_count = 0
+    def write(self, data) -> None:
+        """
+        Write the event to file.
 
-    def _create_event_file(self):
-        """Create the event write file."""
-        with open(self.full_file_name, 'w'):
-            os.chmod(self.full_file_name, stat.S_IWUSR | stat.S_IRUSR)
-
-        # create c++ event write object
-        event_writer = _WrapEventWriter(self.full_file_name)
-        return event_writer
-
-    def _init_event_file(self):
-        """Send the init event to file."""
-        self.event_writer.Write((package_init_event()).SerializeToString())
-        self.flush()
-        return True
-
-    def write_event_to_file(self, event_str):
-        """Write the event to file."""
-        self.event_writer.Write(event_str)
-
-    def get_data_count(self):
-        """Return the event count."""
-        return self.event_count
-
-    def flush_cycle(self):
-        """Flush file by timer."""
-        self.event_count = self.event_count + 1
-        # Flush the event writer every so often.
-        now = int(time.time())
-        if now > self.next_flush_time:
-            self.flush()
-            # update the flush time
-            self.next_flush_time = now + self.flush_time
-
-    def count_event(self):
-        """Count event."""
-        logger.debug("Write the event count is %r", self.event_count)
-        self.event_count = self.event_count + 1
-        return self.event_count
+        Args:
+            data (Optional[str, Tuple[list, int]]): The data to write.
+        """
+        self._queue.put(('WRITE', data))
 
     def flush(self):
-        """Flush the event file to disk."""
-        self.event_writer.Flush()
+        """Flush the writer."""
+        self._queue.put(('FLUSH', None))
 
-    def close(self):
-        """Flush the event file to disk and close the file."""
-        self.flush()
-        self.event_writer.Shut()
+    def close(self) -> None:
+        """Close the writer."""
+        self._queue.put(('END', None))
+        self.join()

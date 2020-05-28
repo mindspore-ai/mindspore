@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
@@ -29,11 +31,12 @@ class Net(nn.Cell):
         self.scatternd = P.ScatterNd()
 
     def construct(self, indices, update):
-        return self.scatternd(indices, update, (3,3))
+        return self.scatternd(indices, update, (3, 3))
 
 
 indices = np.array([[0, 1], [1, 1]]).astype(np.int32)
 update = np.array([3.2, 1.1]).astype(np.float32)
+
 
 def test_net():
     scatternd = Net()

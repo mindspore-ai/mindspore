@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-import numpy as np
-import mindspore.context as context
 
 
 class Net(nn.Cell):
@@ -30,8 +31,10 @@ class Net(nn.Cell):
     def construct(self, value):
         return self.assign(self.var, value)
 
+
 x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

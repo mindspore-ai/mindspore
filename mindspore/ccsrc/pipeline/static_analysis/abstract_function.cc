@@ -177,8 +177,8 @@ std::size_t FuncGraphAbstractClosure::hash() const {
 
 std::string FuncGraphAbstractClosure::ToString() const {
   std::stringstream ss;
-  ss << "FuncGraphAbstractClosure: " << this << "FuncGraph: " << func_graph_.get() << ", " << func_graph_->ToString()
-     << "; Context: " << context_.get() << context_->ToString();
+  ss << "FuncGraphAbstractClosure: "
+     << "FuncGraph: " << func_graph_->ToString() << "; Context: " << context_->ToString();
   return ss.str();
 }
 

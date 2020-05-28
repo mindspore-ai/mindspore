@@ -45,7 +45,7 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -70,9 +70,12 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
 
     int32_t current_step_host[1];
     size_t x_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(d_x, dout, x_size, cudaMemcpyDeviceToDevice), "Failed to copy gpu memory.");
+    CHECK_CUDA_RET_WITH_ERROR(
+      cudaMemcpyAsync(d_x, dout, x_size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Failed to copy gpu memory.");
 
     BatchNormFold2GradReduce(dout, x, d_beta, tmp, reduce_x, tmp2, tmp_x, batch_size_, channel_, height_, width_,
                              reinterpret_cast<cudaStream_t>(stream_ptr));

@@ -20,16 +20,16 @@
 """
 import logging
 import numpy as np
-import mindspore.nn as nn
+import pytest
 from dataclasses import dataclass
+
+import mindspore.nn as nn
+from mindspore import context
+from mindspore._extends.parse.standard_method import ms_len
 from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import core
-from mindspore._extends.parse.standard_method import ms_len
 from ..ut_filter import non_graph_engine
-import pytest
-
-from mindspore import context
 
 
 def setup_module(module):
@@ -90,6 +90,7 @@ def test_var_parameter_case1():
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self, value1):
         super(Net, self).__init__()
         self.relu = nn.ReLU()
@@ -110,6 +111,7 @@ class Net(nn.Cell):
 
 class ClassTest:
     """ ClassTest definition """
+
     def __init__(self, name, value1):
         self.name = name
         self.value = value1
@@ -147,6 +149,7 @@ def test_call_method_on_construct():
 # Test: call method on parse graph code
 class Net1(nn.Cell):
     """ Net1 definition """
+
     def __init__(self, v1, v2):
         super(Net1, self).__init__()
         self.relu = nn.ReLU()
@@ -188,6 +191,7 @@ TC = ClassTest("test_class", value)
 
 class Net2(nn.Cell):
     """ Net2 definition """
+
     def __init__(self, value1):
         super(Net2, self).__init__()
         self.value = value1
@@ -237,9 +241,11 @@ def vararg1(x, y):
 
 def varargs_main(fn):
     """ varargs_main """
+
     @ms_function
     def t1(*args):
         return fn(*args)
+
     return t1
 
 
@@ -282,6 +288,7 @@ class Access:
         if self.a > self.b:
             return self.a
         return self.b
+
 
 @ms_function
 def invoke_dataclass(x, y):

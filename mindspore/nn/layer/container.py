@@ -15,9 +15,9 @@
 """container"""
 from collections import OrderedDict
 from abc import abstractmethod, ABCMeta
-
 from ..cell import Cell
 
+__all__ = ['SequentialCell', 'CellList']
 
 def _valid_index(cell_num, index):
     if not isinstance(index, int):

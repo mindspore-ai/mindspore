@@ -87,8 +87,12 @@ TensorShape::TensorShape(const TensorShape &shape) : raw_shape_(*GlobalContext::
 
 TensorShape::TensorShape(py::list l) : raw_shape_(*GlobalContext::Instance()->int_allocator()) {
   std::vector<dsize_t> list_c;
-  for (auto i : l) {
-    list_c.push_back(i.cast<int>());
+  for (auto &i : l) {
+    if (!i.is_none()) {
+      list_c.push_back(i.cast<int>());
+    } else {
+      list_c.push_back(TensorShape::kDimUnknown);
+    }
   }
   AddListToShape(list_c);
 }
@@ -210,6 +214,18 @@ TensorShape TensorShape::Squeeze() const {
     }
   }
   return TensorShape(new_shape);
+}
+std::vector<dsize_t> TensorShape::Strides() {
+  std::vector<dsize_t> strides(Rank());
+  dsize_t count = NumOfElements();
+  for (dsize_t i = 0; i < Rank(); i++) {
+    if (raw_shape_[i] != 0)
+      count /= raw_shape_[i];
+    else
+      count = 0;
+    strides[i] = count;
+  }
+  return strides;
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -17,8 +17,6 @@ eval.
 """
 import os
 import argparse
-import random
-import numpy as np
 from dataset import create_dataset
 from config import config
 from mindspore import context
@@ -27,12 +25,7 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine as de
 from mindspore.communication.management import init
-
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -46,9 +39,7 @@ args_opt = parser.parse_args()
 device_id = int(os.getenv('DEVICE_ID'))
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
-context.set_context(enable_task_sink=True, device_id=device_id)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
+context.set_context(device_id=device_id)
 
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:

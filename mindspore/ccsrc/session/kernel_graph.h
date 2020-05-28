@@ -23,6 +23,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <set>
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "ir/anf.h"
@@ -99,6 +100,31 @@ class KernelGraph : public FuncGraph {
   uint32_t stream_distinction_label() { return stream_distinction_label_; }
   // refresh execute kernel stream label
   void UpdateExecuteKernelStreamLabel();
+  // calculate the leaf graph order of root graph
+  std::vector<std::shared_ptr<KernelGraph>> GetLeafGraphOrder();
+  // update the child graph order of graph
+  void UpdateChildGraphOrder();
+  // get the child graph of current graph
+  std::vector<std::shared_ptr<KernelGraph>> child_graph_order() const { return child_graph_order_; }
+  // checkout whether current graph is leaf graph
+  bool IsLeafGraph() const;
+  // set input_tensors pointer of control parameter
+  void set_input_ctrl_tensors(const std::shared_ptr<std::vector<tensor::TensorPtr>> &input_tensors_ptr) {
+    input_ctrl_tensors_ = input_tensors_ptr;
+  }
+  // get input_tensors pointer of control parameter
+  std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors() const { return input_ctrl_tensors_; }
+  // get parent kernel graph
+  std::shared_ptr<KernelGraph> parent_graph() const { return parent_graph_; }
+  // set parent kernel graph
+  void set_parent_graph(const std::shared_ptr<KernelGraph> &parent_graph) { parent_graph_ = parent_graph; }
+  // find anf node in graph
+  std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
+  // get real inputs
+  std::set<AnfNodePtr> GetRealInput(const AnfNodePtr &parameter);
+  void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
+  // used to dump ir
+  std::string ToString() const override;
 
  private:
   // remove value node form graph
@@ -136,6 +162,18 @@ class KernelGraph : public FuncGraph {
   bool executable_;
   // valid inputs
   std::vector<bool> valid_inputs_;
+
+  // new members for control sink process
+  // all child grahs refers to partial node
+  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> node_to_child_graphs_;
+  // child graph execute order in root graph
+  std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
+  // input_tensors of control parameter
+  std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors_;
+  // parameter graph
+  std::shared_ptr<KernelGraph> parent_graph_;
+  // record real parameters,inputs_ is the formal parameters
+  std::map<AnfNodePtr, std::set<AnfNodePtr>> real_inputs_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

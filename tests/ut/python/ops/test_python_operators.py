@@ -15,12 +15,13 @@
 """ test control ops """
 import functools
 import numpy as np
+
 import mindspore as ms
-from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.ops import operations as P
+from mindspore import nn
 from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
@@ -75,7 +76,7 @@ class ScalarCompareNet(nn.Cell):
         else:
             t = t + x
         a = 32.0 * 12
-        b = 12/3.0
+        b = 12 / 3.0
         if a > b:
             t = t * x
         else:

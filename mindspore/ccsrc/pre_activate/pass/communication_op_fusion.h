@@ -46,7 +46,7 @@ class CommunicationOpFusion : public Pass {
                                         const CommunicationOpInfo &communication_op_info, size_t start_index,
                                         size_t end_index) const;
   bool GetSplitSegments(const CommunicationOpInfo &communication_op_info, size_t *segment_num,
-                        std::vector<size_t> *segment_index) const;
+                        std::vector<size_t> *segment_index, const std::string &group) const;
   std::string op_name_;
   size_t groups_ = 1;
 };
@@ -61,6 +61,19 @@ class AllGatherFusion : public CommunicationOpFusion {
  public:
   explicit AllGatherFusion(size_t groups = 1) : CommunicationOpFusion("all_gather_fusion", kAllGatherOpName, groups) {}
   ~AllGatherFusion() override = default;
+};
+
+class BroadcastFusion : public CommunicationOpFusion {
+ public:
+  explicit BroadcastFusion(size_t groups = 1) : CommunicationOpFusion("broadcast_fusion", kBroadcastOpName, groups) {}
+  ~BroadcastFusion() override = default;
+};
+
+class ReduceScatterFusion : public CommunicationOpFusion {
+ public:
+  explicit ReduceScatterFusion(size_t groups = 1)
+      : CommunicationOpFusion("reduce_scatter_fusion", kReduceScatterOpName, groups) {}
+  ~ReduceScatterFusion() override = default;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -17,13 +17,11 @@
 #define DATASET_ENGINE_DATASETOPS_SOURCE_RANDOM_DATA_OP_
 
 #include <atomic>
-#include <map>
 #include <memory>
 #include <mutex>
 #include <random>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 #include "dataset/util/status.h"
 #include "dataset/core/tensor.h"
@@ -45,7 +43,6 @@ class RandomDataOp : public ParallelOp {
   static constexpr int32_t kMaxNumColumns = 4;
   static constexpr int32_t kMaxRank = 4;
   static constexpr int32_t kMaxDimValue = 2048;
-  static constexpr int32_t kMaxDataType = (DataType::DE_UNKNOWN - 1);
   static constexpr int32_t kMaxTotalRows = 1024;
 
   // A nested builder class to aid in the construction of a RandomDataOp
@@ -259,7 +256,6 @@ class RandomDataOp : public ParallelOp {
   std::unique_ptr<DataSchema> data_schema_;
   std::vector<int64_t> worker_max_rows_;
   std::vector<int64_t> worker_rows_packed_;
-  std::unordered_map<std::string, int32_t> column_name_map_;
   std::mt19937 rand_gen_;
   WaitPost epoch_sync_wait_post_;
   WaitPost all_out_;

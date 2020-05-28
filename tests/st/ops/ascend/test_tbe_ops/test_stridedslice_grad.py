@@ -13,13 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn import Cell
-from mindspore.ops.composite import GradOperation
-from mindspore import context
 import pytest
+
+from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
+from mindspore.ops.composite import GradOperation
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Grad(Cell):
     def __init__(self, network):
@@ -30,6 +33,7 @@ class Grad(Cell):
     def construct(self, input, output_grad):
         gout = self.grad(self.network)(input, output_grad)
         return gout
+
 
 class Net(Cell):
     def __init__(self, begin, end, stride):
@@ -43,6 +47,7 @@ class Net(Cell):
         x = self.stridedslice(input, self.begin, self.end, self.stride)
         return x
 
+
 def me_stridedslice(input, begin, end, stride, gradients):
     input_me = Tensor(input)
     out_grad_me = Tensor(gradients)
@@ -50,6 +55,7 @@ def me_stridedslice(input, begin, end, stride, gradients):
     net_me.set_train()
     out_grad = net_me(input_me, out_grad_me)
     print(out_grad.asnumpy())
+
 
 def test_grad_stridedslice_1d():
     input = np.random.randn(2).astype(np.float32)

@@ -28,7 +28,7 @@ using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace mindrecord {
-ShardSegment::ShardSegment() { set_all_in_index(false); }
+ShardSegment::ShardSegment() { SetAllInIndex(false); }
 
 std::pair<MSRStatus, vector<std::string>> ShardSegment::GetCategoryFields() {
   // Skip if already populated
@@ -211,7 +211,7 @@ std::pair<MSRStatus, std::vector<uint8_t>> ShardSegment::PackImages(int group_id
 
   // Pack image list
   std::vector<uint8_t> images(offset[1] - offset[0]);
-  auto file_offset = header_size_ + page_size_ * (blob_page->get_page_id()) + offset[0];
+  auto file_offset = header_size_ + page_size_ * (blob_page->GetPageID()) + offset[0];
   auto &io_seekg = file_streams_random_[0][shard_id]->seekg(file_offset, std::ios::beg);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     MS_LOG(ERROR) << "File seekg failed";
@@ -296,8 +296,7 @@ std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, json>>> ShardS
         if (SUCCESS != ret1.first) {
           return {FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>{}};
         }
-        auto imageLabel = GetImageLabel(ret1.second, labels[i]);
-        page.emplace_back(std::move(std::get<0>(imageLabel)), std::move(std::get<1>(imageLabel)));
+        page.emplace_back(std::move(ret1.second), std::move(labels[i]));
       }
     }
   }
@@ -363,43 +362,15 @@ std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::obje
   return {SUCCESS, std::move(json_data)};
 }
 
-std::pair<ShardType, std::vector<std::string>> ShardSegment::get_blob_fields() {
+std::pair<ShardType, std::vector<std::string>> ShardSegment::GetBlobFields() {
   std::vector<std::string> blob_fields;
-  for (auto &p : get_shard_header()->get_schemas()) {
+  for (auto &p : GetShardHeader()->GetSchemas()) {
     // assume one schema
-    const auto &fields = p->get_blob_fields();
+    const auto &fields = p->GetBlobFields();
     blob_fields.assign(fields.begin(), fields.end());
     break;
   }
-  return std::make_pair(get_nlp_flag() ? kNLP : kCV, blob_fields);
-}
-
-std::tuple<std::vector<uint8_t>, json> ShardSegment::GetImageLabel(std::vector<uint8_t> images, json label) {
-  if (get_nlp_flag()) {
-    vector<std::string> columns;
-    for (auto &p : get_shard_header()->get_schemas()) {
-      auto schema = p->GetSchema()["schema"];  // make sure schema is not reference since error occurred in arm.
-      auto schema_items = schema.items();
-      using it_type = decltype(schema_items.begin());
-      std::transform(schema_items.begin(), schema_items.end(), std::back_inserter(columns),
-                     [](it_type item) { return item.key(); });
-    }
-
-    json blob_fields = json::from_msgpack(images);
-    json merge;
-    if (columns.size() > 0) {
-      for (auto &col : columns) {
-        if (blob_fields.find(col) != blob_fields.end()) {
-          merge[col] = blob_fields[col];
-        }
-      }
-    } else {
-      merge = blob_fields;
-    }
-    merge.update(label);
-    return std::make_tuple(std::vector<uint8_t>{}, merge);
-  }
-  return std::make_tuple(images, label);
+  return std::make_pair(kCV, blob_fields);
 }
 
 std::string ShardSegment::CleanUp(std::string field_name) {

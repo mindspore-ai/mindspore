@@ -25,39 +25,70 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef MulAddFusion::DefinePattern() const {
-  VarPtr mul_x_ = std::make_shared<Var>();
-  VarPtr mul_y_ = std::make_shared<Var>();
-  VarPtr add_y_ = std::make_shared<Var>();
+namespace {
+bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_t *mul_index) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(add);
 
-  VectorRef mul({prim::kPrimMul, mul_x_, mul_y_});
-  VectorRef add({prim::kPrimTensorAdd, mul, add_y_});
-  return add;
+  for (size_t index = 1; index < add->size(); ++index) {
+    auto input = add->input(index);
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<CNode>()) {
+      auto cnode = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimMul->name()) {
+        if (!opt::IsUsedByOthers(graph, cnode)) {
+          auto full_name = cnode->fullname_with_scope();
+          // exclude lamb and adam, and only work in bert
+          if (std::string::npos != full_name.find("adam") || std::string::npos != full_name.find("lamb") ||
+              std::string::npos == full_name.find("bert")) {
+            MS_LOG(INFO) << "Mul is in adam or lamb or not a bert network, quit fusion";
+            return false;
+          }
+
+          *mul = cnode;
+          *mul_index = index;
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+}  // namespace
+const BaseRef MulAddFusion::DefinePattern() const {
+  VarPtr x = std::make_shared<Var>();
+  VarPtr y = std::make_shared<Var>();
+  VectorRef pattern({prim::kPrimTensorAdd, x, y});
+  return pattern;
 }
 
-const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const {
-  if (graph == nullptr || node == nullptr || equiv == nullptr) {
+const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+  if (graph == nullptr || node == nullptr) {
     return nullptr;
   }
   auto add = node->cast<CNodePtr>();
   if (add == nullptr || add->inputs().size() != kAddInputNum) {
     return nullptr;
   }
-  auto mul_anf = add->input(1);
-  if (mul_anf == nullptr) {
-    return nullptr;
-  }
-  auto mul = mul_anf->cast<CNodePtr>();
-  if (mul == nullptr || mul->inputs().size() != kMulInputNum) {
-    return nullptr;
-  }
-  if (IsUsedByOthers(graph, mul)) {
-    MS_LOG(DEBUG) << "Mul is used by more then two nodes, cannot fuse";
+  CNodePtr mul = nullptr;
+  size_t mul_index = 0;
+  if (!GetMul(graph, add, &mul, &mul_index) || mul == nullptr || mul_index == 0) {
+    MS_LOG(DEBUG) << "Cannot find used-by-only-one-op Mul in Add's inputs";
     return nullptr;
   }
 
   auto prim = std::make_shared<Primitive>(kFusedMulAddOpName);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), mul->input(1), mul->input(2), add->input(2)};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
+  for (size_t index = 1; index < mul->size(); ++index) {
+    inputs.push_back(mul->input(index));
+  }
+  auto another_input_node = add->input(add->size() - mul_index);
+  if (IsUsedByOthers(graph, another_input_node)) {
+    MS_LOG(INFO) << "Add's another input node is used by others, do not fuse";
+    return nullptr;
+  }
+  inputs.push_back(another_input_node);
   auto fusion_node = graph->NewCNode(inputs);
   fusion_node->set_scope(add->scope());
   fusion_node->set_abstract(add->abstract());

@@ -94,6 +94,7 @@ class Optimizer(Cell):
         validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, None)
 
         self.is_group = False
+        self.is_group_lr = False
         self.loss_scale = loss_scale
         if isinstance(learning_rate, float):
             self.dynamic_lr = False
@@ -116,14 +117,17 @@ class Optimizer(Cell):
             self.group_weight_decay = []
             self._init_group_params(parameters, learning_rate, weight_decay)
 
-        if self.is_group:
+        if self.is_group_lr:
             self.learning_rate = ParameterTuple(self.group_lr)
+        else:
+            self.learning_rate = Parameter(learning_rate, name="learning_rate")
+
+        if self.is_group:
             self.parameters = ParameterTuple(self.params)
             self.weight_decay = tuple(self.group_weight_decay)
             decay_filter = lambda x: x > 0
             self.decay_flags = tuple(decay_filter(x) for x in self.weight_decay)
         else:
-            self.learning_rate = Parameter(learning_rate, name="learning_rate")
             self.parameters = ParameterTuple(parameters)
             self.weight_decay = weight_decay * loss_scale
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
@@ -207,6 +211,7 @@ class Optimizer(Cell):
         for group_param in parameters:
             lr_length = dynamic_lr_length
             if 'lr' in group_param.keys():
+                self.is_group_lr = True
                 self._get_single_lr(group_param['lr'])
                 if isinstance(group_param['lr'], Iterable):
                     lr_length = len(group_param['lr'])
@@ -247,7 +252,12 @@ class Optimizer(Cell):
             else:
                 weight_decay_ = weight_decay * self.loss_scale
 
+            for key in group_param.keys():
+                if key not in ('params', 'lr', 'weight_decay'):
+                    logger.warning(f"The optimizer cannot parse '{key}' when setting parameter groups.")
+
             for param in group_param['params']:
+                validator.check_value_type("parameter", param, [Parameter], self.cls_name)
                 if param in params_store:
                     raise RuntimeError(f"The {param.name} parameter has appeared in parameter groups.")
                 params_store.append(param)
@@ -261,7 +271,7 @@ class Optimizer(Cell):
         Returns:
             float, the learning rate of current step.
         """
-        if self.is_group:
+        if self.is_group_lr:
             lr = self.learning_rate
             if self.dynamic_lr:
                 lr = ()
@@ -269,12 +279,41 @@ class Optimizer(Cell):
                     current_dynamic_lr = self.gather(self.learning_rate[i], self.global_step, 0)
                     lr += (current_dynamic_lr,)
                 F.control_depend(lr, self.assignadd(self.global_step, 1))
-
         else:
             lr = self.learning_rate
             if self.dynamic_lr:
                 lr = self.gather(self.learning_rate, self.global_step, 0)
                 F.control_depend(lr, self.assignadd(self.global_step, 1))
+        return lr
+
+    def get_lr_parameter(self, param):
+        """
+        Get the learning rate of parameter.
+
+        Args:
+            param (Union[Parameter, list[Parameter]]): The `Parameter` or list of `Parameter`.
+
+        Returns:
+            Parameter, single `Parameter` or `list[Parameter]` according to the input type.
+        """
+        if not isinstance(param, (Parameter, list)):
+            raise TypeError(f"The 'param' only support 'Parameter' or 'list' type.")
+
+        if isinstance(param, list):
+            lr = []
+            for p in param:
+                validator.check_value_type("parameter", p, [Parameter], self.cls_name)
+                if self.is_group_lr:
+                    index = self.parameters.index(p)
+                    lr.append(self.learning_rate[index])
+                else:
+                    lr.append(self.learning_rate)
+        else:
+            if self.is_group_lr:
+                index = self.parameters.index(param)
+                lr = self.learning_rate[index]
+            else:
+                lr = self.learning_rate
         return lr
 
     def construct(self, *hyper_params):

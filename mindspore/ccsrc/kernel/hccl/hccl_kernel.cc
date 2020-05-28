@@ -90,6 +90,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
       return false;
     }
   }
+  HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
   anf_node_ = anf_node;
   return true;
 }
@@ -124,11 +125,13 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
 
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "inputs or outputs is empty";
   }
+  stream_id_ = stream_id;
   std::string hccl_type = AnfAlgo::GetCNodeName(anf_node_);
   MS_EXCEPTION_IF_NULL(inputs.at(0));
   auto input_data_addr = inputs.at(0)->addr;
@@ -145,7 +148,7 @@ vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs, c
 
   HcclTaskInfoPtr task_info_ptr = std::make_shared<HcclTaskInfo>(
     stream_id, hccl_type, input_data_addr, output_data_addr, workspace_address, workspace_num, 0, private_def, nullptr,
-    hccl_count_, root_id_, op_type_, data_type, RuntimeUtils::HcomBindModel, RuntimeUtils::HcomUnbindModel,
+    hccl_count_, root_id_, op_type_, data_type, group_, RuntimeUtils::HcomBindModel, RuntimeUtils::HcomUnbindModel,
     RuntimeUtils::HcomDistribute);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};

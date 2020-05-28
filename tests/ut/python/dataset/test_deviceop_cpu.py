@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset.transforms.vision.c_transforms as vision
-
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 TF_FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 TF_SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
+
 
 def test_case_0():
     """

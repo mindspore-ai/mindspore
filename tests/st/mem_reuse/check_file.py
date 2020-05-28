@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import filecmp
+import os
 
 curr_path = os.path.abspath(os.curdir)
 file_memreuse = curr_path + "/mem_reuse_check/memreuse.ir"
 file_normal = curr_path + "/mem_reuse_check/normal_mem.ir"
 checker = os.path.exists(file_memreuse)
-assert (checker, True)
+assert checker == True
 checker = os.path.exists(file_normal)
-assert (checker, True)
+assert checker == True
 checker = filecmp.cmp(file_memreuse, file_normal)
-assert (checker, True)
+assert checker == True

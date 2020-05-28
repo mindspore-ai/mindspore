@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore import Tensor
-import mindspore as ms
 import numpy as np
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
-from tests.dataset_mock import MindData
-from mindspore import context
-from mindspore.train import Model, ParallelMode
-from mindspore.nn.optim import Momentum
 
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common.parameter import Parameter
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -52,8 +52,8 @@ class CommonNet(nn.Cell):
     def __init__(self):
         super(CommonNet, self).__init__()
         self.weight = Parameter(Tensor(np.ones([256, 64]), dtype=ms.float32), name="mul_weight")
-        self.logicalnot = P.LogicalNot().set_strategy(((4,2),))
-        self.equal = P.Equal().set_strategy(((4,2),(4,2)))
+        self.logicalnot = P.LogicalNot().set_strategy(((4, 2),))
+        self.equal = P.Equal().set_strategy(((4, 2), (4, 2)))
 
     def construct(self, x, label):
         x = self.equal(x, self.weight)
@@ -65,7 +65,7 @@ def common_net():
     epoch_size = 1
 
     context.reset_auto_parallel_context()
-    
+
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8)
     predict = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
@@ -79,4 +79,3 @@ def common_net():
 
 def test_bool_grad():
     common_net()
-

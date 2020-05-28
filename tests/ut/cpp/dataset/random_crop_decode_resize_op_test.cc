@@ -57,8 +57,8 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   for (int i = 0; i < 100; i++) {
     (void)crop_and_decode.Compute(raw_input_tensor_, &crop_and_decode_output);
     (void)decode_and_crop.Compute(input_tensor_, &decode_and_crop_output);
-    cv::Mat output1(target_height, target_width, CV_8UC3, crop_and_decode_output->StartAddr());
-    cv::Mat output2(target_height, target_width, CV_8UC3, decode_and_crop_output->StartAddr());
+    cv::Mat output1(target_height, target_width, CV_8UC3, crop_and_decode_output->GetMutableBuffer());
+    cv::Mat output2(target_height, target_width, CV_8UC3, decode_and_crop_output->GetMutableBuffer());
     long int mse_sum = 0;
     long int count = 0;
     int a, b;
@@ -133,8 +133,8 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
     crop_and_decode_status = Crop(decoded, &decoded_and_cropped, x, y, crop_width, crop_height);
     decode_and_crop_status = JpegCropAndDecode(raw_input_tensor_, &cropped_and_decoded, x, y, crop_width, crop_height);
     {
-      cv::Mat M1(crop_height, crop_width, CV_8UC3, decoded_and_cropped->StartAddr());
-      cv::Mat M2(crop_height, crop_width, CV_8UC3, cropped_and_decoded->StartAddr());
+      cv::Mat M1(crop_height, crop_width, CV_8UC3, decoded_and_cropped->GetMutableBuffer());
+      cv::Mat M2(crop_height, crop_width, CV_8UC3, cropped_and_decoded->GetMutableBuffer());
       for (int i = 0; i < crop_height; ++i) {
         for (int j = 0; j < crop_width; ++j) {
           m1 = M1.at<cv::Vec3b>(i, j)[1];

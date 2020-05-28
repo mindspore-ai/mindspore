@@ -28,6 +28,7 @@
 #include "ir/meta_tensor.h"
 #include "utils/any.h"
 #include "utils/base_ref.h"
+#include "utils/contract.h"
 #include "pynative/pynative_execute.h"
 #include "device/kernel_info.h"
 
@@ -35,6 +36,7 @@ namespace mindspore {
 using GraphId = uint32_t;
 using GraphInfo = std::string;
 namespace session {
+void ClearPythonParasMap();
 using CallBackFunc = uint32_t (*)(uint32_t graph_id,
                                   const std::map<std::string, mindspore::tensor::TensorPtr> &params_list);
 using AnyList = std::vector<Any>;
@@ -56,13 +58,14 @@ class SessionBasic {
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
   virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
+  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
   // build graph, used to handle multiple child graphs
   virtual void BuildGraph(GraphId) {}
 
   virtual void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) = 0;
 
   virtual void BuildOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
-                       const std::vector<bool> &tensors_mask) {}
+                       const std::vector<int> &tensors_mask) {}
 
   virtual py::tuple RunOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors) {
     return py::tuple();
@@ -71,9 +74,11 @@ class SessionBasic {
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph);
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
   // set parameters of final graph
   virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
@@ -101,14 +106,19 @@ class SessionBasic {
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
-                                                      const std::vector<bool> &tensors_mask);
+                                                      const std::vector<int> &tensors_mask);
   // trans BaseRef list to py::tuple
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
+  ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
+  ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
+  AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
+  std::unordered_map<FuncGraphPtr, KernelGraphPtr> front_backend_graph_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;

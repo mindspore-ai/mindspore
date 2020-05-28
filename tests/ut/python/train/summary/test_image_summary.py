@@ -18,16 +18,17 @@
 @Date  : 2019-07-4
 @Desc  : test summary function
 """
-import os
 import logging
 import numpy as np
+import os
+
 import mindspore.nn as nn
-from mindspore.train.summary.summary_record import SummaryRecord, \
-    _cache_summary_tensor_data
+from mindspore import Model, context
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore import Model, context
 from mindspore.train.callback import SummaryStep
+from mindspore.train.summary.summary_record import SummaryRecord, \
+    _cache_summary_tensor_data
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()
@@ -72,23 +73,20 @@ def test_image_summary_sample():
     """ test_image_summary_sample """
     log.debug("begin test_image_summary_sample")
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
+        # step 1: create the test data for summary
 
-    # step 1: create the test data for summary
+        # step 2: create the Event
+        for i in range(1, 5):
+            test_data = get_test_data(i)
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(i)
+            test_writer.flush()
 
-    # step 2: create the Event
-    for i in range(1, 5):
-        test_data = get_test_data(i)
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(i)
-        test_writer.flush()
+        # step 3: send the event to mq
 
-    # step 3: send the event to mq
-
-    # step 4: accept the event and write the file
-    test_writer.close()
-
-    log.debug("finished test_image_summary_sample")
+        # step 4: accept the event and write the file
+        log.debug("finished test_image_summary_sample")
 
 
 class Net(nn.Cell):
@@ -172,23 +170,20 @@ def test_image_summary_train():
 
     log.debug("begin test_image_summary_sample")
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
+        # step 1: create the test data for summary
 
-    # step 1: create the test data for summary
+        # step 2: create the Event
 
-    # step 2: create the Event
+        model = get_model()
+        fn = ImageSummaryCallback(test_writer)
+        summary_recode = SummaryStep(fn, 1)
+        model.train(2, dataset, callbacks=summary_recode)
 
-    model = get_model()
-    fn = ImageSummaryCallback(test_writer)
-    summary_recode = SummaryStep(fn, 1)
-    model.train(2, dataset, callbacks=summary_recode)
+        # step 3: send the event to mq
 
-    # step 3: send the event to mq
-
-    # step 4: accept the event and write the file
-    test_writer.close()
-
-    log.debug("finished test_image_summary_sample")
+        # step 4: accept the event and write the file
+        log.debug("finished test_image_summary_sample")
 
 
 def test_image_summary_data():
@@ -207,18 +202,11 @@ def test_image_summary_data():
 
     log.debug("begin test_image_summary_sample")
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
+        # step 1: create the test data for summary
 
-    # step 1: create the test data for summary
+        # step 2: create the Event
+        _cache_summary_tensor_data(test_data_list)
+        test_writer.record(1)
 
-    # step 2: create the Event
-    _cache_summary_tensor_data(test_data_list)
-    test_writer.record(1)
-    test_writer.flush()
-
-    # step 3: send the event to mq
-
-    # step 4: accept the event and write the file
-    test_writer.close()
-
-    log.debug("finished test_image_summary_sample")
+        log.debug("finished test_image_summary_sample")

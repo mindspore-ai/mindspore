@@ -74,7 +74,7 @@ Status Create1DTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements,
   RETURN_IF_NOT_OK(
     Tensor::CreateTensor(sample_ids, TensorImpl::kFlexible, shape, DataType(data_type), data));
   if (data == nullptr) {
-    (*sample_ids)->StartAddr();  // allocate memory in case user forgets!
+    (*sample_ids)->GetMutableBuffer();  // allocate memory in case user forgets!
   }
   return Status::OK();
 }
@@ -138,7 +138,7 @@ TEST_F(MindDataTestImageFolderSampler, TestRandomImageFolder) {
 TEST_F(MindDataTestImageFolderSampler, TestRandomSamplerImageFolder) {
   int32_t original_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(0);
-  std::unique_ptr<Sampler> sampler = std::make_unique<RandomSampler>(true, 12);
+  std::unique_ptr<Sampler> sampler = std::make_unique<RandomSampler>(true, true, 12);
   int32_t res[] = {2, 2, 2, 3, 2, 3, 2, 3, 1, 2, 2, 1};  // ground truth label
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler))});

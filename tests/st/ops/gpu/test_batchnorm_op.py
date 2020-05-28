@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
-from mindspore.nn import Cell
-from mindspore.nn import BatchNorm2d
-from mindspore.common.tensor import Tensor
-from mindspore.ops import composite as C
+import pytest
+
 import mindspore.context as context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import BatchNorm2d
+from mindspore.nn import Cell
+from mindspore.ops import composite as C
 
 
 class Batchnorm_Net(Cell):
@@ -95,6 +96,7 @@ def test_train_forward():
     bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train(False)
     output = bn_net(Tensor(x))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

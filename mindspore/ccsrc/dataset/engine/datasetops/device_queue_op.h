@@ -134,6 +134,12 @@ class DeviceQueueOp : public PipelineOp {
 
   Status operator()() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   //  Name: checkExceptions(DataBuffer);
   //  Description: Check whether the dataBuffer meets the condition for performing DeviceQueueOp
@@ -145,9 +151,8 @@ class DeviceQueueOp : public PipelineOp {
 
 #ifdef ENABLE_GPUQUE
   Status SendDataToGPU();
-  Status RetryPushGPUData(uint32_t feature_size, uint32_t label_size, const TensorRow &curr_row, uint32_t handle);
-  Status MallocForGPUData(unsigned char **feature_addr, uint32_t feature_size, unsigned char **label_addr,
-                          uint32_t label_size, const TensorRow &curr_row);
+  Status RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row, uint32_t handle);
+  Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row);
 #endif
 
   Status SendDataToCPU();

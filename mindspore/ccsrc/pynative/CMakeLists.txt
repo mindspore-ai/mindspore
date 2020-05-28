@@ -5,4 +5,5 @@ if (ENABLE_GE)
     list(APPEND _PYNATIVE_SRC_LIST ${_GE_SRC_LIST})
 endif ()
 
+set_property(SOURCE ${_PYNATIVE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PYNATIVE)
 add_library(_mindspore_pynative_obj OBJECT ${_PYNATIVE_SRC_LIST})

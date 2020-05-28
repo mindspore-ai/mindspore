@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 #include "mindrecord/include/common/shard_utils.h"
+#include "mindrecord/include/shard_column.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_header.h"
 #include "mindrecord/include/shard_index.h"
@@ -69,12 +70,12 @@ class ShardWriter {
   /// \brief Set file size
   /// \param[in] header_size the size of header, only (1<<N) is accepted
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus set_header_size(const uint64_t &header_size);
+  MSRStatus SetHeaderSize(const uint64_t &header_size);
 
   /// \brief Set page size
   /// \param[in] page_size the size of page, only (1<<N) is accepted
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus set_page_size(const uint64_t &page_size);
+  MSRStatus SetPageSize(const uint64_t &page_size);
 
   /// \brief Set shard header
   /// \param[in] header_data the info of header
@@ -242,7 +243,8 @@ class ShardWriter {
 
   std::vector<std::string> file_paths_;                      // file paths
   std::vector<std::shared_ptr<std::fstream>> file_streams_;  // file handles
-  std::shared_ptr<ShardHeader> shard_header_;                // shard headers
+  std::shared_ptr<ShardHeader> shard_header_;                // shard header
+  std::shared_ptr<ShardColumn> shard_column_;                // shard columns
 
   std::map<uint64_t, std::map<int, std::string>> err_mg_;  // used for storing error raw_data info
 

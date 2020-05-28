@@ -31,7 +31,7 @@ enum OperatorType {
   kRecMatMul,
   kRecConvolution,
   kRecPooling,
-  kRecTensorAdd,
+  kRecElmWiseOp,
   kRecReLU,
   kRecBatchNorm,
   kRecReshape,
@@ -46,7 +46,8 @@ enum OperatorType {
   kRecMul,
   kRecDiv,
   kRecSqueeze,
-  kRecCast
+  kRecCast,
+  kRecReduce
 };
 
 enum InfoType { kApplication, kConstant };

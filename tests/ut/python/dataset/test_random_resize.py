@@ -16,7 +16,6 @@
 Testing the resize op in DE
 """
 import matplotlib.pyplot as plt
-import mindspore.dataset.transforms.vision.c_transforms as vision
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision

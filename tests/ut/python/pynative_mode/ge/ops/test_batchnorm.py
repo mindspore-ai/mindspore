@@ -23,10 +23,10 @@ from ....ut_filter import non_graph_engine
 @non_graph_engine
 def test_bn2d():
     """ut of nn.BatchNorm2d"""
-    gamma = Tensor(np.random.randn(64).astype(np.float32)*0.01)
-    beta = Tensor(np.random.randn(64).astype(np.float32)*0.01)
-    moving_mean = Tensor(np.random.randn(64).astype(np.float32)*0.01)
-    moving_var = Tensor(np.random.randn(64).astype(np.float32)*0.01)
+    gamma = Tensor(np.random.randn(64).astype(np.float32) * 0.01)
+    beta = Tensor(np.random.randn(64).astype(np.float32) * 0.01)
+    moving_mean = Tensor(np.random.randn(64).astype(np.float32) * 0.01)
+    moving_var = Tensor(np.random.randn(64).astype(np.float32) * 0.01)
 
     bn = nn.BatchNorm2d(num_features=64,
                         eps=1e-5,
@@ -36,7 +36,7 @@ def test_bn2d():
                         moving_mean_init=moving_mean,
                         moving_var_init=moving_var)
 
-    #3-channel RGB
+    # 3-channel RGB
     input_data = Tensor(np.random.randint(0, 10, [1, 64, 56, 56]).astype(np.float32))
     # for test in infer lib
     output = bn.construct(input_data)

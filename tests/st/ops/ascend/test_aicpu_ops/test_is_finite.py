@@ -12,103 +12,117 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
-import mindspore.context as context
-context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-class Net(nn.Cell):
-  def __init__(self):
-    super(Net, self).__init__()
-    self.isfinite = P.IsFinite()
 
-  def construct(self, tensor):
-    return self.isfinite(tensor)
+import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
+from mindspore.ops import operations as P
+
+context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.isfinite = P.IsFinite()
+
+    def construct(self, tensor):
+        return self.isfinite(tensor)
 
 
 def test_net_bool():
-  x = np.random.randn(1, 16, 1, 1).astype(np.bool)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.bool)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_int8():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int8)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
-  
+    x = np.random.randn(1, 16, 1, 1).astype(np.int8)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
+
 def test_net_uint8():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint8)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint8)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_int16():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int16)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.int16)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_uint16():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint16)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint16)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_int32():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int32)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_uint32():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint32)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint32)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_int64():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int64)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.int64)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_uint64():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint64)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint64)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_float16():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float16)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.float16)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_float32():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float32)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.float32)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))
+
 
 def test_net_float64():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float64)
-  net = Net()
-  output = net(Tensor(x))
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.isfinite(x)))
-  
+    x = np.random.randn(1, 16, 1, 1).astype(np.float64)
+    net = Net()
+    output = net(Tensor(x))
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.isfinite(x)))

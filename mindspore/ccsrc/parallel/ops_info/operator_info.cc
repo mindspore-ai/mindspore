@@ -1049,6 +1049,7 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   BreakingTiesForPerferringDataParallel(strategy, result);
   // refine communication cost calculation for practice
   RefineForPracticalCost(result, false);
+  result->communication_forward_ = result->communication_without_parameter_;
 
   std::shared_ptr<StrategyWithCost> swc =
     std::make_shared<StrategyWithCost>(strategy, inputs_tensor_info_, outputs_tensor_info_);
@@ -1113,6 +1114,21 @@ Status OperatorInfo::CalculateMemoryCost() {
   // Set the memory cost in the 'strategy_cost_'
   for (auto &swc : strategy_cost_) {
     auto mem_cost = operator_cost()->GetMemoryCost(swc->inputs_ptr, swc->outputs_ptr);
+    swc->cost_list[0]->memory_with_reuse_ = mem_cost;
+  }
+  return SUCCESS;
+}
+
+Status OperatorInfo::CalculateMemoryCostForInference() {
+  // First, set the 'is_outputs_critical_' flag into OperatorCost.
+  if (is_output_critical_ == -1) {
+    MS_LOG(EXCEPTION) << "The critical flag is not set.";
+    return FAILED;
+  }
+  operator_cost()->set_output_critical(is_output_critical_);
+  // Set the memory cost in the 'strategy_cost_'
+  for (auto &swc : strategy_cost_) {
+    auto mem_cost = operator_cost()->GetMemoryCostForInference(swc->inputs_ptr, swc->outputs_ptr);
     swc->cost_list[0]->memory_with_reuse_ = mem_cost;
   }
   return SUCCESS;
@@ -1227,6 +1243,25 @@ Status OperatorInfo::SetInputAndOutputTypeLength(const std::vector<size_t> &inpu
   outputs_type_lengths_ = output_lengths;
   operator_cost()->SetInputAndOutputTypeLength(input_lengths, output_lengths);
   return SUCCESS;
+}
+
+double OperatorInfo::GetOutputsTotalSize() {
+  if (is_calculated_outputs_size_) {
+    return outputs_total_size_;
+  }
+  if (outputs_type_lengths_.size() != outputs_shape_.size()) {
+    MS_LOG(EXCEPTION) << "Output_lengths: " << outputs_type_lengths_.size()
+                      << " do not have the same number of outputs shape: " << outputs_shape_.size();
+  }
+  double sum = 0.0;
+  for (size_t i = 0; i < outputs_type_lengths_.size(); ++i) {
+    auto size = std::accumulate(outputs_shape_[i].begin(), outputs_shape_[i].end(), static_cast<double>(1.0),
+                                std::multiplies<double>());
+    sum += size * static_cast<double>(outputs_type_lengths_[i]);
+  }
+  is_calculated_outputs_size_ = true;
+  outputs_total_size_ = sum;
+  return outputs_total_size_;
 }
 
 Status OperatorInfo::set_outputs_type(const std::vector<TypePtr> &outputs_type) {

@@ -72,7 +72,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_mem_reuse_ = true;
   enable_gpu_summary_ = true;
   precompile_only_ = false;
-  auto_mixed_precision_flag_ = true;
+  auto_mixed_precision_flag_ = false;
   enable_pynative_infer_ = false;
   enable_dynamic_mem_pool_ = true;
   graph_memory_max_size_ = "0";
@@ -135,7 +135,6 @@ bool MsContext::set_device_target(const std::string &target) {
   } else {
     device_target_ = target;
   }
-  enable_loop_sink_ = device_target_ == kAscendDevice;
   MS_LOG(INFO) << "ms set context device target:" << target;
   return true;
 }
@@ -281,10 +280,13 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
   (*ge_options)["device_id"] = "0";
   (*ge_options)["ge.exec.enableDump"] = std::to_string(enable_dump_);
   (*ge_options)["ge.exec.dumpPath"] = save_dump_path_;
+  MS_LOG(INFO) << "The enable dump state is " << std::to_string(enable_dump_) << " and save dump path is "
+               << save_dump_path_ << ".";
   (*ge_options)["ge.exec.profilingMode"] = std::to_string(profiling_mode_);
   if (profiling_mode_) {
     (*ge_options)["ge.exec.profilingOptions"] = profiling_options_;
   }
+
   // only not supported in ge
   auto tbe_plugin_path = common::GetEnv("ME_TBE_PLUGIN_PATH");
   if (!tbe_plugin_path.empty()) {

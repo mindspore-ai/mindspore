@@ -14,11 +14,12 @@
 # ============================================================================
 """test eval"""
 import numpy as np
+
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor
 from mindspore import context
+from mindspore.common.api import _executor
 from ..ut_filter import non_graph_engine
 
 

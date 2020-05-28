@@ -26,8 +26,8 @@ using TbeTaskInfoPtr = std::shared_ptr<ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
 bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inputs,
                           const std::vector<mindspore::kernel::AddressPtr> &workspace,
-                          const std::vector<mindspore::kernel::AddressPtr> &outputs, uintptr_t stream_ptr) {
-  if (stream_ptr == 0) {
+                          const std::vector<mindspore::kernel::AddressPtr> &outputs, void *stream_ptr) {
+  if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
@@ -55,10 +55,9 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
                          [](const AddressPtr &addr) -> void * { return addr->addr; });
   }
   rtL2Ctrl_t *l2ctrl = nullptr;
-  auto *stream = reinterpret_cast<rtStream_t *>(stream_ptr);
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
-  if (RT_ERROR_NONE != rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream)) {
+  if (RT_ERROR_NONE != rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_ptr)) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
     return false;
   }
@@ -66,9 +65,9 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   return true;
 }
 
-vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspaces,
-                                          const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
+                                               const std::vector<AddressPtr> &workspaces,
+                                               const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (kernel_pack_ == nullptr) {
     MS_EXCEPTION(ArgumentError) << "kernel pack should not be nullptr.";
   }
@@ -90,19 +89,19 @@ vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
                          [](const AddressPtr &workspace) -> void * { return workspace->addr; });
   }
 
-  uint32_t block_dim = 1;  // default blockdim equal to 1.
-  auto funcstub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
+  stream_id_ = stream_id;
+  auto funcstub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_);
   if (funcstub == 0) {
     MS_EXCEPTION(ArgumentError) << "GenFuncStub failed.";
   }
 
   std::string stub_func = KernelManager::GetStubFuncName(kernel_pack_);
 
-  MS_LOG(INFO) << "block_dim is:" << block_dim;
+  MS_LOG(INFO) << "block_dim is:" << block_dim_;
 
   TbeTaskInfoPtr task_info_ptr =
-    make_shared<ge::model_runner::TbeTaskInfo>(stream_id, stub_func, block_dim, args, 0, sm_desc, nullptr, 0, meta_data,
-                                               input_data_addrs, output_data_addrs, workspace_addrs);
+    make_shared<ge::model_runner::TbeTaskInfo>(stream_id, stub_func, block_dim_, args, 0, sm_desc, nullptr, 0,
+                                               meta_data, input_data_addrs, output_data_addrs, workspace_addrs);
   return {task_info_ptr};
 }
 

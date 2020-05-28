@@ -14,15 +14,17 @@
 # ============================================================================
 """ test_operator """
 import numpy as np
-from mindspore.ops import operations as P
-from mindspore.nn import ReLU
-from mindspore.nn import Cell
+
 from mindspore import Tensor, Model, context
+from mindspore.nn import Cell
+from mindspore.nn import ReLU
+from mindspore.ops import operations as P
 from ...ut_filter import non_graph_engine
 
 
 class arithmetic_Net(Cell):
     """ arithmetic_Net definition """
+
     def __init__(self, symbol, loop_count=(1, 3)):
         super().__init__()
         self.symbol = symbol
@@ -68,6 +70,7 @@ class arithmetic_Net(Cell):
 
 class logical_Net(Cell):
     """ logical_Net definition """
+
     def __init__(self, symbol, loop_count=(1, 3)):
         super().__init__()
         self.symbol = symbol
@@ -200,6 +203,3 @@ def test_in_dict():
     z = Tensor(np.random.randint(low=20, high=30, size=(2, 3, 4), dtype=np.int32))
     context.set_context(mode=context.GRAPH_MODE)
     net(x, y, z)
-
-
-

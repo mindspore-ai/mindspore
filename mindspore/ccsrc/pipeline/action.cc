@@ -24,7 +24,9 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
+#include "ir/param_value_py.h"
 #include "parallel/costmodel_context.h"
+#include "parallel/context.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
@@ -32,6 +34,7 @@
 #include "pipeline/static_analysis/static_analysis.h"
 #include "pipeline/static_analysis/program_specialize.h"
 #include "pipeline/resource.h"
+#include "utils/context/ms_context.h"
 #include "pipeline/remove_value_node_dup.h"
 #include "optimizer/optimizer.h"
 #include "vm/transform.h"
@@ -216,14 +219,19 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   abstract::AbstractBasePtrList args_spec = res->args_spec();
 
+  parallel::ParallelParameterContextInit(func_graph);
+
   // suppose that there is not KeywordArgument for the top graph
   // get the hyper parameter
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      AbstractBasePtr ptr =
-        abstract::FromValue(parse::data_converter::PyDataToValue(param_node->default_param()), true);
+      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
+      AbstractBasePtr ptr = abstract::FromValue(parse::data_converter::PyDataToValue(param_value->value()), true);
+
+      parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
       args_spec.push_back(ptr);
+      parallel::ParallelParameterContextCkptInTraining(func_graph, param_node, ptr);
     }
   }
   // Analyze
@@ -240,13 +248,23 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
 }
 
 bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes) {
+  size_t counter = 0;
   for (auto &pass : passes) {
-    WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &res]() {
+    WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &res, &counter]() {
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
       auto result = pass.second(res);
       if (!result) {
         MS_LOG(EXCEPTION) << "Pass running to end, failed in pass:" << pass.first;
       }
+      if (MsContext::GetInstance()->save_graphs_flag() && res->func_graph() != nullptr) {
+        auto fg_name = "opt_pass_" + std::to_string(counter) + "_" + pass.first;
+        auto func_graph = res->func_graph();
+        MS_EXCEPTION_IF_NULL(func_graph);
+        func_graph->DumpFuncGraph(fg_name);
+        DumpIR(fg_name + ".ir", func_graph);
+        MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";
+      }
+      counter++;
       MS_LOG(DEBUG) << "Pass " << pass.first << " end.";
     };
   }
@@ -258,13 +276,41 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 
 bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
 
+static bool IsCtrlSink() {
+  auto ms_ctx = MsContext::GetInstance();
+  std::string device_target = ms_ctx->device_target();
+  if (device_target != kAscendDevice) {
+    return false;
+  }
+
+  if (!ms_ctx->enable_task_sink()) {
+    return false;
+  }
+
+  const char *enable_ctrl_sink = std::getenv("ENABLE_CTRL_SINK");
+  if (enable_ctrl_sink == nullptr) {
+    return false;
+  }
+  std::string enable_ctrl_sink_str(enable_ctrl_sink);
+  if (enable_ctrl_sink_str == "0") {
+    return false;
+  }
+
+  return true;
+}
+
 bool TaskEmitAction(const ResourcePtr &res) {
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
   FuncGraphPtr func_graph = res->func_graph();
-
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
+
+  if (IsCtrlSink()) {
+    res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
+    return true;
+  }
+
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
   if (bc_ptr->name() == kMsConvert) {
     cut_list = compile::GetMsNonlinearOps();
@@ -275,10 +321,31 @@ bool TaskEmitAction(const ResourcePtr &res) {
 }
 
 bool ExecuteAction(const ResourcePtr &res) {
-  if (res->results().count(kOutput) == 0 || !res->results()[kOutput].is<compile::FinalVMPtr>()) {
+  if (res->results().count(kOutput) == 0) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
 
+  if (IsCtrlSink()) {
+    if (!res->results()[kOutput].is<GraphId>()) {
+      MS_LOG(EXCEPTION) << "Execute args error";
+    }
+
+    auto graph_id = res->results()[kOutput].cast<GraphId>();
+    auto bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::MsBackend>>();
+    compile::VmEvalFuncPtr run =
+      std::make_shared<compile::VmEvalFunc>([&bc_ptr, graph_id](const VectorRef &args) -> BaseRef {
+        MS_LOG(INFO) << "Execute args size" << args.size();
+        auto outs = bc_ptr->RunGraph(graph_id, args);
+        MS_LOG(DEBUG) << "out size" << outs.size();
+        return outs[0];
+      });
+    res->results()[kOutput] = run;
+    return true;
+  }
+
+  if (!res->results()[kOutput].is<compile::FinalVMPtr>()) {
+    MS_LOG(EXCEPTION) << "Execute args error";
+  }
   compile::FinalVMPtr vm = res->results()[kOutput].cast<compile::FinalVMPtr>();
   if (vm == nullptr) {
     MS_LOG(INFO) << "Call GE to Run the func_graph instead of VM";

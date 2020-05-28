@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 from mindspore import log as logger
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -33,7 +36,7 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(2,5,8).astype(np.float32)
+    x = np.random.randn(2, 5, 8).astype(np.float32)
     mask = np.random.randn(16).astype(np.uint8)
     keep_prob = 1
 
@@ -48,4 +51,3 @@ def test_net():
 
     logger.info("***********output y*********")
     logger.info(output.asnumpy())
-

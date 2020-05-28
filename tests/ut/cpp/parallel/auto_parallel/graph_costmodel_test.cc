@@ -371,7 +371,7 @@ TEST_F(TestCostGraph, test_CreateFinalCostList_AND_Select) {
   ASSERT_EQ(edge_m1_m2->InitEdgeCost(), SUCCESS);
   cost_graph.AddEdge(matmul1, matmul2, edge_m1_m2);
   auto cost_list = cost_graph.CreateFinalCostList(matmul1, edge_m1_m2, matmul2);
-  cost_graph.SelectCostWithMemoryConstraint(cost_list, cost_graph.GetDeviceMemory());
+  cost_graph.SelectCostWithMinInferenceTime(cost_list, cost_graph.GetDeviceMemory());
 }
 
 TEST_F(TestCostGraph, test_EliminationOp) {

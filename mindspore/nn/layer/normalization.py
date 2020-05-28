@@ -29,6 +29,8 @@ from mindspore._checkparam import check_int_positive
 from ..cell import Cell
 
 
+__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm']
+
 class _BatchNorm(Cell):
     """Batch Normalization base class."""
     @cell_attr_register
@@ -82,6 +84,7 @@ class _BatchNorm(Cell):
         self.dtype = P.DType()
         self.reshape = P.Reshape()
         self.is_ascend = context.get_context("device_target") == "Ascend"
+        self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
 
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
@@ -89,7 +92,7 @@ class _BatchNorm(Cell):
         else:
             self.is_ge_backend = False
             self.momentum = 1.0 - momentum
-        if self.is_ge_backend or self.is_ascend:
+        if self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
             self.bn_train = P.BatchNorm(is_training=True,
                                         epsilon=self.eps)
         else:
@@ -138,8 +141,9 @@ class _BatchNorm(Cell):
         tmp_mean = self.mul_mean(mean_sub, self.cast(self.momentum, self.dtype(mean_sub)))
         mean_sub2 = self.sub_var(self.reshape(self.moving_mean, re_shape), global_var)
         tmp_variance = self.mul_var(mean_sub2, self.cast(self.momentum, self.dtype(mean_sub2)))
-        y = F.depend(y, self.assign_sub_mean(self.reshape(self.moving_mean, re_shape), tmp_mean))
-        y = F.depend(y, self.assign_sub_var(self.reshape(self.moving_variance, re_shape), tmp_variance))
+        y = F.depend(y, self.assign_sub_mean(self.moving_mean, self.reshape(tmp_mean, self.shape(self.moving_mean))))
+        y = F.depend(y, self.assign_sub_var(self.moving_variance,
+                                            self.reshape(tmp_variance, self.shape(self.moving_variance))))
         return y
 
     def construct(self, x):
@@ -147,7 +151,7 @@ class _BatchNorm(Cell):
             if self.is_ge_backend and self.is_global:
                 axes, re_shape = _shape_infer(F.shape(x), self.num_features)
                 y = self._global_sync(x, axes, re_shape)
-            elif self.is_ge_backend or self.is_ascend:
+            elif self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
                 y, batch_mean, batch_var, _, _ = \
                     self.bn_train(x,
                                   self.gamma,
@@ -184,6 +188,10 @@ def _channel_check(channel, num_channel):
     if channel != num_channel:
         raise ValueError("the input channel is not equal with num_channel")
 
+@constexpr
+def _shape_check(in_shape):
+    if len(in_shape) != 4:
+        raise ValueError("The input must has 4 dims")
 @constexpr
 def _shape_infer(x_shape, num_feature):
     """global batch normalization shape and axes infer"""
@@ -350,6 +358,9 @@ class GlobalBatchNorm(_BatchNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    Note:
+        Currently, GlobalBatchNorm only supports 2D and 4D inputs.
+
     Args:
         num_features (int): `C` from an expected input of size (N, C, H, W).
         device_num_each_group (int): The number of devices in each group.
@@ -460,6 +471,9 @@ class LayerNorm(Cell):
                  beta_init='zeros',
                  ):
         super(LayerNorm, self).__init__()
+        if not isinstance(normalized_shape, (tuple, list)):
+            raise TypeError("The type of 'normalized_shape' should be tuple[int] or list[int], but '{}' type is {}."
+                            .format(normalized_shape, type(normalized_shape)))
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis
@@ -539,7 +553,8 @@ class GroupNorm(Cell):
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.sqrt = P.Sqrt()
 
-    def construct(self, x):
+    def _cal_output(self, x):
+        """calculate groupnorm output"""
         batch, channel, height, width = self.shape(x)
         _channel_check(channel, self.num_channels)
         x = self.reshape(x, (batch, self.num_groups, channel*height*width/self.num_groups))
@@ -549,6 +564,11 @@ class GroupNorm(Cell):
         x = (x - mean) / std
         x = self.reshape(x, (batch, channel, height, width))
         output = x * self.gamma + self.beta
+        return output
+
+    def construct(self, x):
+        _shape_check(self.shape(x))
+        output = self._cal_output(x)
         return output
 
     def extend_repr(self):

@@ -13,15 +13,16 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import os
 import pytest
-import numpy as np
+
 import mindspore as ms
+import mindspore.communication.management as distributedTool
+import mindspore.context as context
+from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
-import mindspore.context as context
-import mindspore.communication.management as distributedTool
 
 device_num = 2
 device_id = int(os.getenv('DEVICE_ID'))
@@ -33,10 +34,7 @@ def setup_module():
     global rank_id
     np.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True,
-                        device_id=device_id)
-    context.set_context(enable_ir_fusion=True)
-    context.set_context(enable_loop_sink=False)
+    context.set_context(device_id=device_id)
     distributedTool.init()
     device_num = distributedTool.get_group_size()
     rank_id = distributedTool.get_rank()
@@ -86,15 +84,15 @@ class DataGenerator():
         return data
 
     def input_data(self, shape):
-        data = (self.generate_data(shape)*2).astype(np.float32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * 2).astype(np.float32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
 
     def label_data(self, shape, classes):
-        data = (self.generate_data(shape)*(classes-1)).astype(np.int32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * (classes - 1)).astype(np.int32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])

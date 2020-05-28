@@ -43,6 +43,7 @@
 #include <vector>
 #include "mindrecord/include/common/shard_utils.h"
 #include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_column.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_index_generator.h"
 #include "mindrecord/include/shard_operator.h"
@@ -68,23 +69,25 @@ class ShardReader {
   virtual ~ShardReader();
 
   /// \brief open files and initialize reader, c++ API
-  /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
+  /// \param[in] load_dataset load dataset from single file or not
   /// \param[in] n_consumer number of threads when reading
   /// \param[in] selected_columns column list to be populated
   /// \param[in] operators operators applied to data, operator type is shuffle, sample or category
   /// \param[in] block_reader block-reader mode if true, otherwise row-reader mode
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus Open(const std::string &file_path, int n_consumer = 4,
+  MSRStatus Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer = 4,
                  const std::vector<std::string> &selected_columns = {},
                  const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const bool &block_reader = false);
 
   /// \brief open files and initialize reader, python API
-  /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
+  /// \param[in] load_dataset load dataset from single file or not
   /// \param[in] n_consumer number of threads when reading
   /// \param[in] selected_columns column list to be populated
   /// \param[in] operators operators applied to data, operator type is shuffle, sample or category
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus OpenPy(const std::string &file_path, const int &n_consumer = 4,
+  MSRStatus OpenPy(const std::vector<std::string> &file_paths, bool load_dataset, const int &n_consumer = 4,
                    const std::vector<std::string> &selected_columns = {},
                    const std::vector<std::shared_ptr<ShardOperator>> &operators = {});
 
@@ -107,18 +110,24 @@ class ShardReader {
 
   /// \brief aim to get the meta data
   /// \return the metadata
-  std::shared_ptr<ShardHeader> get_shard_header() const;
+  std::shared_ptr<ShardHeader> GetShardHeader() const;
+
+  /// \brief aim to get columns context
+  /// \return the columns
+  std::shared_ptr<ShardColumn> get_shard_column() const;
 
   /// \brief get the number of shards
   /// \return # of shards
-  int get_shard_count() const;
+  int GetShardCount() const;
 
   /// \brief get the number of rows in database
-  /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
+  /// \param[in] load_dataset load dataset from single file or not
   /// \param[in] op smart pointer refer to ShardCategory or ShardSample object
   /// \param[out] count # of rows
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus CountTotalRows(const std::string &file_path, const std::shared_ptr<ShardOperator> &op, int64_t *count);
+  MSRStatus CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
+                           const std::shared_ptr<ShardOperator> &op, int64_t *count);
 
   /// \brief shuffle task with incremental seed
   /// \return void
@@ -126,7 +135,7 @@ class ShardReader {
 
   /// \brief get the number of rows in database
   /// \return # of rows
-  int get_num_rows() const;
+  int GetNumRows() const;
 
   /// \brief Read the summary of row groups
   /// \return the tuple of 4 elements
@@ -181,11 +190,11 @@ class ShardReader {
 
   /// \brief return a batch, given that one is ready, python API
   /// \return a batch of images and image data
-  std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>> GetNextPy();
+  std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> GetNextPy();
 
   /// \brief  get blob filed list
   /// \return blob field list
-  std::pair<ShardType, std::vector<std::string>> get_blob_fields();
+  std::pair<ShardType, std::vector<std::string>> GetBlobFields();
 
   /// \brief reset reader
   /// \return null
@@ -193,10 +202,10 @@ class ShardReader {
 
   /// \brief set flag of all-in-index
   /// \return null
-  void set_all_in_index(bool all_in_index) { all_in_index_ = all_in_index; }
+  void SetAllInIndex(bool all_in_index) { all_in_index_ = all_in_index; }
 
   /// \brief get NLP flag
-  bool get_nlp_flag();
+  bool GetNlpFlag();
 
   /// \brief get all classes
   MSRStatus GetAllClasses(const std::string &category_field, std::set<std::string> &categories);
@@ -220,7 +229,7 @@ class ShardReader {
                                std::vector<std::vector<json>> &column_values);
 
   /// \brief initialize reader
-  MSRStatus Init(const std::string &file_path);
+  MSRStatus Init(const std::vector<std::string> &file_paths, bool load_dataset);
 
   /// \brief validate column list
   MSRStatus CheckColumnList(const std::vector<std::string> &selected_columns);
@@ -276,9 +285,6 @@ class ShardReader {
   /// \brief read one row by one task
   TASK_RETURN_CONTENT ConsumerOneTask(int task_id, uint32_t consumer_id);
 
-  /// \brief get all the column names by schema
-  vector<std::string> GetAllColumns();
-
   /// \brief get one row from buffer in block-reader mode
   std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>> GetRowFromBuffer(int bufId, int rowId);
 
@@ -292,14 +298,20 @@ class ShardReader {
   void GetClassesInShard(sqlite3 *db, int shard_id, const std::string sql, std::set<std::string> &categories);
 
   /// \brief get number of classes
-  int64_t GetNumClasses(const std::string &file_path, const std::string &category_field);
+  int64_t GetNumClasses(const std::string &category_field);
+
+  /// \brief get meta of header
+  std::pair<MSRStatus, std::vector<std::string>> GetMeta(const std::string &file_path, json &meta_data);
+
+  /// \brief extract uncompressed data based on column list
+  std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> UnCompressBlob(const std::vector<uint8_t> &raw_blob_data);
 
  protected:
   uint64_t header_size_;                       // header size
   uint64_t page_size_;                         // page size
   int shard_count_;                            // number of shards
   std::shared_ptr<ShardHeader> shard_header_;  // shard header
-  bool nlp_ = false;                           // NLP data
+  std::shared_ptr<ShardColumn> shard_column_;  // shard column
 
   std::vector<sqlite3 *> database_paths_;                                        // sqlite handle list
   std::vector<string> file_paths_;                                               // file paths

@@ -42,6 +42,7 @@ using CNodeIndexCounterMap = OrderedMap<CNodeIndexPairPtr, int, CNodeIndexHasher
 const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_CORE[] = "core";
+const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
 
 // ANF transform class
 // either a primitive or a func_graph

@@ -13,11 +13,12 @@
 # limitations under the License.
 
 import numpy as np
+
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
+from mindspore.common.api import _executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
-from mindspore.common.api import _executor
 
 
 class Net(Cell):
@@ -43,7 +44,8 @@ _b = Tensor(np.ones([128, 64, 16]), dtype=ms.float32)
 def compile(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_net, _x,  _b)
+    train_net.set_auto_parallel()
+    _executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
 
 

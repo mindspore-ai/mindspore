@@ -13,20 +13,21 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.ops import composite as C
-from mindspore.common.parameter import ParameterTuple
-from mindspore.nn.optim import Momentum
-from mindspore.communication.management import init
-from mindspore.train import Model, ParallelMode
+
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.nn.loss.loss import _Loss
 from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.nn import Dense, Cell
 from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import ParameterTuple
+from mindspore.communication.management import init
+from mindspore.nn import Dense, Cell
+from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.optim import Momentum
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE)
 device_number = 32
@@ -69,12 +70,12 @@ class GatherV2(_Loss):
             emb1_list = emb_list[0::2]
             emb2_list = emb_list[1::2]
         if index_dim == 2:
-            emb_list = np.arange(index_size*16)
-            emb1_list = np.reshape(emb_list[0::2], (int(index_size/2), 16))
-            emb2_list = np.reshape(emb_list[1::2], (int(index_size/2), 16))
+            emb_list = np.arange(index_size * 16)
+            emb1_list = np.reshape(emb_list[0::2], (int(index_size / 2), 16))
+            emb2_list = np.reshape(emb_list[1::2], (int(index_size / 2), 16))
         self.emb1_param = Tensor(emb1_list, dtype=mstype.int32)
         self.emb2_param = Tensor(emb2_list, dtype=mstype.int32)
-        self.gatherv2 = P.GatherV2().set_strategy(strategy)
+        self.gatherv2 = P.GatherV2().set_strategy(strategy).add_prim_attr("data_parallel", True)
 
     def construct(self, nembeddings):
         emb1 = self.gatherv2(nembeddings, self.emb1_param, 0)
@@ -199,9 +200,9 @@ class GatherV2Axis1(_Loss):
             emb1_list = emb_list[0::2]
             emb2_list = emb_list[1::2]
         if index_dim == 2:
-            emb_list = np.arange(index_size*index_size)
-            emb1_list = np.reshape(emb_list[0::2], (int(index_size/2), index_size))
-            emb2_list = np.reshape(emb_list[1::2], (int(index_size/2), index_size))
+            emb_list = np.arange(index_size * index_size)
+            emb1_list = np.reshape(emb_list[0::2], (int(index_size / 2), index_size))
+            emb2_list = np.reshape(emb_list[1::2], (int(index_size / 2), index_size))
         self.emb1_param = Tensor(emb1_list, dtype=mstype.int32)
         self.emb2_param = Tensor(emb2_list, dtype=mstype.int32)
         self.gatherv2 = P.GatherV2().set_strategy(strategy)
@@ -231,4 +232,3 @@ def test_axis1_strategy1():
     rank = 17
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
     net_trains(gather_v2_strategy, criterion, rank)
-

@@ -13,11 +13,12 @@
 # limitations under the License.
 
 import numpy as np
-import mindspore.nn as nn
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.ops import operations as P
 from mindspore.communication.management import init
+from mindspore.ops import operations as P
 
 
 class DataParallelNet(nn.Cell):

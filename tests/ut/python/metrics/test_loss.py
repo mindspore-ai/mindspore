@@ -15,8 +15,9 @@
 """test loss"""
 import numpy as np
 import pytest
-from mindspore.nn.metrics import Loss
+
 from mindspore import Tensor
+from mindspore.nn.metrics import Loss
 
 
 def test_loss_inputs_error():

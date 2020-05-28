@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
-from mindspore.ops import Primitive
 import mindspore as ms
-
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 addn = P.AddN()
 add = P.TensorAdd()
@@ -24,14 +23,16 @@ cast = P.Cast()
 tuple_getitem = Primitive('tuple_getitem')
 max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 
+
 def test_addn_cast(x, y, z):
-    sum = addn((x, y))
-    res = cast(sum, ms.float16)
+    mysum = addn((x, y))
+    res = cast(mysum, ms.float16)
     return res
 
+
 def test_addn_with_max_pool(x, y):
-    sum = addn((x, y))
-    output = max_pool(sum)
+    mysum = addn((x, y))
+    output = max_pool(mysum)
     res = tuple_getitem(output, 0)
     return res
 
@@ -43,6 +44,6 @@ def test_shape_add(x1, x2, y1, y2, z1, z2):
     reshape_sum1 = reshape(sum1, (2, 2, 3, 1))
     reshape_sum2 = reshape(sum2, (2, 2, 3, 1))
     reshape_sum3 = reshape(sum3, (2, 2, 3, 1))
-    sum = add(reshape_sum1, reshape_sum2)
-    sum = add(sum, reshape_sum3)
-    return sum
+    mysum = add(reshape_sum1, reshape_sum2)
+    mysum = add(mysum, reshape_sum3)
+    return mysum

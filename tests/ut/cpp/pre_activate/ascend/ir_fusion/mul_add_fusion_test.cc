@@ -28,8 +28,8 @@ class TestHWMulAddFusion : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWMulAddFusion, test_mul_add_fusion) {
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_mul_add_fusion", "before");
+TEST_F(TestHWMulAddFusion, test_mul_add_fusion1) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_mul_add_fusion", "before1");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
@@ -37,6 +37,34 @@ TEST_F(TestHWMulAddFusion, test_mul_add_fusion) {
     args_spec_list.push_back(x_abstract);
   }
   auto fg = GetKernelGraph(g, args_spec_list);
+  auto scope = std::make_shared<Scope>("bert");
+  for (auto nd : fg->execution_order()) {
+    nd->set_scope(scope);
+  }
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::MulAddFusion>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(fg);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_mul_add_fusion", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWMulAddFusion, test_mul_add_fusion2) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_mul_add_fusion", "before2");
+  std::vector<int> shp{2, 32, 224, 224};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
+  AbstractBasePtrList args_spec_list;
+  for (size_t i = 0; i < 3; ++i) {
+    args_spec_list.push_back(x_abstract);
+  }
+  auto fg = GetKernelGraph(g, args_spec_list);
+  auto scope = std::make_shared<Scope>("bert");
+  for (auto nd : fg->execution_order()) {
+    nd->set_scope(scope);
+  }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();

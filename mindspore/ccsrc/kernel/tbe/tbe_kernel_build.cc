@@ -174,7 +174,7 @@ bool TbeKernelJsonCreator::GenInputList(const shared_ptr<AnfNode> &anf_node, siz
         input_list->emplace_back(input_desc_json);
         continue;
       }
-      MS_LOG(ERROR) << "input num" << *real_input_index << "is not match op inputs";
+      MS_LOG(ERROR) << "input num: " << *real_input_index << " is not match op inputs";
       return false;
     }
     if (op_name == "BatchNorm") {
@@ -428,6 +428,18 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
       attr_value.push_back(data);
     } else {
       attr_value = GetValue<std::vector<int>>(value);
+    }
+    (*attr_obj)["value"] = attr_value;
+  } else if (type == "listFloat") {
+    std::vector<float> attr_value;
+    auto value_type = value->type();
+    MS_EXCEPTION_IF_NULL(value_type);
+    auto value_type_str = value_type->ToString();
+    if (value_type_str == "float") {
+      auto data = GetValue<float>(value);
+      attr_value.push_back(data);
+    } else {
+      attr_value = GetValue<std::vector<float>>(value);
     }
     (*attr_obj)["value"] = attr_value;
   } else if (type == "listListInt") {
@@ -721,6 +733,17 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
   return (op_info->inputs_ptr().size() + 1 - cnode->inputs().size());
 }
 
+std::string TbeKernelBuild::GetRealOpType(const std::string &origin_type) {
+  static std::map<std::string, std::string> buffer_fussion_op_map = {{"DepthwiseConv2dNative", "DepthwiseConv2D"},
+                                                                     {"TensorAdd", "Add"}};
+  string result = origin_type;
+  auto iter = buffer_fussion_op_map.find(origin_type);
+  if (iter != buffer_fussion_op_map.end()) {
+    result = iter->second;
+  }
+  return result;
+}
+
 bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
                                                std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
                                                std::vector<nlohmann::json> *input_desc_list, size_t *index) {
@@ -824,10 +847,9 @@ bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_n
   }
   (*compute_op_str)["output_desc"] = output_desc_list;
   // gen others
-  auto type = AnfAlgo::GetCNodeName(cnode);
-  if (type == "TensorAdd") {
-    type = "Add";
-  }
+  auto origin_type = AnfAlgo::GetCNodeName(cnode);
+  // replace special op type for buffer fusion op
+  auto type = GetRealOpType(origin_type);
   (*compute_op_str)["type"] = type;
   tbe::TbeAdapter::NormalizeFuncName(&type);
   (*compute_op_str)["func_name"] = type;

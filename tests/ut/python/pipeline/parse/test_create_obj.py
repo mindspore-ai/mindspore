@@ -23,11 +23,12 @@
 """
 import logging
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.ops import operations as P
 from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
+from mindspore.ops import operations as P
 from ...ut_filter import non_graph_engine
 
 log = logging.getLogger("test")
@@ -36,6 +37,7 @@ log.setLevel(level=logging.ERROR)
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.softmax = nn.Softmax(0)
@@ -66,6 +68,7 @@ def test_create_cell_object_on_construct():
 # Test: creat CELL OR Primitive instance on construct
 class Net1(nn.Cell):
     """ Net1 definition """
+
     def __init__(self):
         super(Net1, self).__init__()
         self.add = P.TensorAdd()
@@ -92,6 +95,7 @@ def test_create_primitive_object_on_construct():
 # Test: creat CELL OR Primitive instance on construct use many parameter
 class NetM(nn.Cell):
     """ NetM definition """
+
     def __init__(self, name, axis):
         super(NetM, self).__init__()
         # self.relu = nn.ReLU()
@@ -106,6 +110,7 @@ class NetM(nn.Cell):
 
 class NetC(nn.Cell):
     """ NetC definition """
+
     def __init__(self, tensor):
         super(NetC, self).__init__()
         self.tensor = tensor

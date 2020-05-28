@@ -37,6 +37,7 @@
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/jagged_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/util/path.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/random.h"
@@ -189,6 +190,11 @@ void TFReaderOp::Print(std::ostream &out, bool show_all) const {
 Status TFReaderOp::Init() {
   if (data_schema_->Empty()) {
     RETURN_IF_NOT_OK(CreateSchema(dataset_files_list_[0], columns_to_load_));
+  }
+
+  // Construct the column name map for this operator (base class field)
+  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
 
   if (total_rows_ == 0) {
@@ -350,7 +356,7 @@ Status TFReaderOp::WorkerEntry(int32_t worker_id) {
         int64_t start_offset = io_block->GetStartOffset();
         int64_t end_offset = io_block->GetEndOffset();
         RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
-        MS_LOG(INFO) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
+        MS_LOG(DEBUG) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
       }
     } else {
       std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
@@ -571,11 +577,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
   int64_t rows_read = 0;
   int64_t rows_total = 0;
   std::unique_ptr<DataBuffer> current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  std::unordered_map<std::string, int32_t> column_name_map;
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_map[data_schema_->column(i).name()] = i;
-  }
-  current_buffer->set_column_name_map(column_name_map);
   std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
 
   while (reader.peek() != EOF) {
@@ -613,7 +614,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(current_buffer)));
 
       current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      current_buffer->set_column_name_map(column_name_map);
       new_tensor_table = std::make_unique<TensorQTable>();
       rows_read = 0;
     }
@@ -760,7 +760,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
 
   // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  unsigned char *current_tensor_addr = (*tensor)->StartAddr();
+  unsigned char *current_tensor_addr = (*tensor)->GetMutableBuffer();
   int64_t tensor_bytes_remaining = (*num_elements) * pad_size;
 
   if (current_tensor_addr == nullptr) {
@@ -879,7 +879,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
 
   // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  (void)(*tensor)->StartAddr();
+  (void)(*tensor)->GetMutableBuffer();
 
   int64_t i = 0;
   auto it = (*tensor)->begin<T>();
@@ -919,6 +919,9 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, const std::vector<std
                          [](const auto &it) -> std::string { return it.first; });
   for (const auto &curr_col_name : columns) {
     auto it = feature_map.find(curr_col_name);
+    if (it == feature_map.end()) {
+      RETURN_STATUS_UNEXPECTED("Failed to find column " + curr_col_name);
+    }
     std::string column_name = it->first;
 
     std::string column_type;
@@ -1034,6 +1037,12 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
   }
 
   return rows_read;
+}
+
+// Visitor accept method for NodePass
+Status TFReaderOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<TFReaderOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

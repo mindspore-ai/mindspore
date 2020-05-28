@@ -34,8 +34,8 @@
  * @param channel_num
  * @return
  */
-__global__ void NudgeMinMaxPerChannel(const float* input_min, const float* input_max, const float quant_min,
-                                      const float quant_max, float* nudge_min, float* nudge_max, float* scale,
+__global__ void NudgeMinMaxPerChannel(const float *input_min, const float *input_max, const float quant_min,
+                                      const float quant_max, float *nudge_min, float *nudge_max, float *scale,
                                       int channel_num) {
   float zp_from_min = 0.f;
   float nudge_zp = 0.f;
@@ -62,8 +62,8 @@ __global__ void NudgeMinMaxPerChannel(const float* input_min, const float* input
   }
 }
 
-void CalNudgePerChannel(const float* input_min, const float* input_max, const float quant_min, const float quant_max,
-                        float* nudge_min, float* nudge_max, float* scale, const int channel_num,
+void CalNudgePerChannel(const float *input_min, const float *input_max, const float quant_min, const float quant_max,
+                        float *nudge_min, float *nudge_max, float *scale, const int channel_num,
                         cudaStream_t cuda_stream) {
   NudgeMinMaxPerChannel<<<GET_BLOCKS(channel_num), GET_THREADS, 0, cuda_stream>>>(
     input_min, input_max, quant_min, quant_max, nudge_min, nudge_max, scale, channel_num);
@@ -80,8 +80,8 @@ void CalNudgePerChannel(const float* input_min, const float* input_max, const fl
  * @param scale - array
  * @return
  */
-__global__ void FakeQuantizePerChannel(const float* input, float* output, const int total_size, const int channel_size,
-                                       const float* nudge_min, const float* nudge_max, const float* scale,
+__global__ void FakeQuantizePerChannel(const float *input, float *output, const int total_size, const int channel_size,
+                                       const float *nudge_min, const float *nudge_max, const float *scale,
                                        bool symmetric) {
   float input_x = 0.f;
   int nudge_input = 0;
@@ -106,8 +106,8 @@ __global__ void FakeQuantizePerChannel(const float* input, float* output, const 
   }
 }
 
-void CalFakeQuantizePerChannel(const float* input, float* output, const int total_size, const int channel_size,
-                               const float* nudge_min, const float* nudge_max, const float* scale, bool symmetric,
+void CalFakeQuantizePerChannel(const float *input, float *output, const int total_size, const int channel_size,
+                               const float *nudge_min, const float *nudge_max, const float *scale, bool symmetric,
                                cudaStream_t cuda_stream) {
   FakeQuantizePerChannel<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(
     input, output, total_size, channel_size, nudge_min, nudge_max, scale, symmetric);
@@ -121,10 +121,10 @@ void CalFakeQuantizePerChannel(const float* input, float* output, const int tota
  * @param max
  * @return
  */
-__global__ void UpdateInputMinMaxPerChannel(float* input_min, float* input_max, float* input, int channels,
+__global__ void UpdateInputMinMaxPerChannel(float *input_min, float *input_max, float *input, int channels,
                                             int per_channel_nums, bool ema, float ema_decay) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channels; i += blockDim.x * gridDim.x) {
-    thrust::pair<float*, float*> sum =
+    thrust::pair<float *, float *> sum =
       thrust::minmax_element(thrust::device, input + i * per_channel_nums, input + per_channel_nums * (i + 1));
     if (ema) {
       input_min[i] = ema_decay * sum.first[0] + (1 - ema_decay) * input_min[i];
@@ -133,25 +133,27 @@ __global__ void UpdateInputMinMaxPerChannel(float* input_min, float* input_max, 
       input_min[i] = sum.first[0];
       input_max[i] = sum.second[0];
     }
+    input_min[i] = input_min[i] > 0 ? 0 : input_min[i];
+    input_max[i] = input_max[i] < 0 ? 0 : input_max[i];
   }
 }
 
-__global__ void UpdateInputMinMaxPerChannelWithEMA(float* input_min, float* input_max, float min, float max,
+__global__ void UpdateInputMinMaxPerChannelWithEMA(float *input_min, float *input_max, float min, float max,
                                                    const float decay) {
   *input_min = decay * (min) + (1 - decay) * (*input_min);
   *input_max = decay * (max) + (1 - decay) * (*input_max);
 }
 
-void CalMinMaxPerChannel(float* input, float* input_min, float* input_max, const int total_size, const int channel_size,
+void CalMinMaxPerChannel(float *input, float *input_min, float *input_max, const int total_size, const int channel_size,
                          const float ema_decay, const bool ema, cudaStream_t cuda_stream) {
   int per_channel_num = total_size / channel_size;
   UpdateInputMinMaxPerChannel<<<GET_BLOCKS(channel_size), GET_THREADS, 0, cuda_stream>>>(
     input_min, input_max, input, channel_size, per_channel_num, ema, ema_decay);
 }
 
-__global__ void FakeQuantizePerChannelGrad(const float* input, const float* gradient, float* output,
-                                           const int total_size, const int channel_size, const float* nudge_min,
-                                           const float* nudge_max) {
+__global__ void FakeQuantizePerChannelGrad(const float *input, const float *gradient, float *output,
+                                           const int total_size, const int channel_size, const float *nudge_min,
+                                           const float *nudge_max) {
   int channel_idx = 0;
   int per_channel_num = total_size / channel_size;
 
@@ -165,10 +167,9 @@ __global__ void FakeQuantizePerChannelGrad(const float* input, const float* grad
   }
 }
 
-void CalFakeQuantizePerChannelGrad(const float* input, const float* gradient, float* output, const int total_num,
-                                   const int channel_num, const float* nudge_min, const float* nudge_max,
+void CalFakeQuantizePerChannelGrad(const float *input, const float *gradient, float *output, const int total_num,
+                                   const int channel_num, const float *nudge_min, const float *nudge_max,
                                    cudaStream_t cuda_stream) {
   FakeQuantizePerChannelGrad<<<GET_BLOCKS(channel_num), GET_THREADS, 0, cuda_stream>>>(
     input, gradient, output, total_num, channel_num, nudge_min, nudge_max);
 }
-

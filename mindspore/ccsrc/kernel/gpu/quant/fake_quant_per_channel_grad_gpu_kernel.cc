@@ -97,18 +97,23 @@ void FakeQuantPerChannelGradGpuKernel::InitSizeLists() {
   input_size_list_.push_back(min_size_);    // min
   input_size_list_.push_back(max_size_);    // max
   output_size_list_.push_back(output_size_);
-  workspace_size_list_.push_back(workspace_size_);
+  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // scale in channel
+  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // min in channel
+  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // max in channel
 }
 
 bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   (void)workspace;
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *gradient = GetDeviceAddress<float>(inputs, 0);
   float *input = GetDeviceAddress<float>(inputs, 1);
   float *input_min = GetDeviceAddress<float>(inputs, 2);
   float *input_max = GetDeviceAddress<float>(inputs, 3);
+  float *d_scale = GetDeviceAddress<float>(workspace, 0);
+  float *d_nudge_min = GetDeviceAddress<float>(workspace, 1);
+  float *d_nudge_max = GetDeviceAddress<float>(workspace, 2);
 
   if (gradient == nullptr) {
     MS_LOG(EXCEPTION) << "FakeQuantPerChannelGradGpuKernel gradient is null";
@@ -125,28 +130,13 @@ bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inp
 
   int total_size = input_size_ / sizeof(float);
   if (global_step_ >= quant_delay_) {
-    float *d_scale = nullptr;
-    float *d_nudge_min = nullptr;
-    float *d_nudge_max = nullptr;
-    // Allocate space for device copies
-    CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_scale), channel_out_ * sizeof(float)),
-                              "Malloc gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_nudge_min), channel_out_ * sizeof(float)),
-                              "Malloc gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_nudge_max), channel_out_ * sizeof(float)),
-                              "Malloc gpu memory failed");
-
     CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, d_nudge_min, d_nudge_max, d_scale, channel_out_,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
     CalFakeQuantizePerChannelGrad(input, gradient, output, total_size, channel_out_, d_nudge_min, d_nudge_max,
                                   reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    // Cleanup
-    CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_scale), "Free gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_min), "Free gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_max), "Free gpu memory failed");
   } else {
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(output, gradient, input_size_, cudaMemcpyDeviceToDevice),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memory failed.");
   }
   global_step_++;

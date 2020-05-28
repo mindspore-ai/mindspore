@@ -46,6 +46,8 @@ const char IS_GRAD[] = "is_grad";
 const char TRANSPOSE_NO = 'N';
 const char TRANSPOSE_YES = 'T';
 const char AXIS[] = "axis";
+const char BEGIN[] = "begin";
+const char SIZE[] = "size";
 
 class CPUKernel : public kernel::KernelMod {
  public:
@@ -54,7 +56,7 @@ class CPUKernel : public kernel::KernelMod {
   void Init(const CNodePtr &kernel_node);
   virtual void InitKernel(const CNodePtr &kernel_node) = 0;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t /*stream_ptr*/) override {
+              const std::vector<AddressPtr> &outputs, void * /*stream_ptr*/) override {
     return Launch(inputs, workspace, outputs);
   };
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -68,6 +70,13 @@ class CPUKernel : public kernel::KernelMod {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+};
+
+class CPUKernelUtils {
+ public:
+  static void ExpandDimsTo4(std::vector<size_t> *shape);
+  static size_t CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3);
+  static size_t GetElementNumOnAxis(const std::vector<size_t> &shape, int axis);
 };
 }  // namespace kernel
 }  // namespace mindspore

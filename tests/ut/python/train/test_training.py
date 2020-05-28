@@ -16,10 +16,11 @@
 import logging
 import numpy as np
 import pytest
+
 import mindspore.nn as nn
+from mindspore import Model, context
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore import Model, context
 from mindspore.train.callback import SummaryStep
 from ..ut_filter import non_graph_engine
 from ....dataset_mock import MindData
@@ -67,12 +68,12 @@ class LossNet(nn.Cell):
         return out
 
 
-def get_model():
+def get_model(metrics=None):
     """ get_model """
     net = Net()
     loss = nn.SoftmaxCrossEntropyWithLogits()
     optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+    model = Model(net, loss_fn=loss, optimizer=optim, metrics=metrics)
     return model
 
 
@@ -214,8 +215,27 @@ def test_model_build_abnormal_string():
         assert err
 
 
-def test_model_init_error():
+def test_model_init():
     """ test_model_init_error """
+    train_dataset = get_dataset()
+    eval_dataset = get_dataset()
+
+    with pytest.raises(RuntimeError):
+        context.set_context(mode=context.PYNATIVE_MODE)
+        get_model().init(train_dataset)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    get_model().init(train_dataset)
+    get_model(metrics={'acc'}).init(eval_dataset)
+
+    with pytest.raises(RuntimeError):
+        get_model().init(train_dataset, eval_dataset)
+    with pytest.raises(ValueError):
+        get_model().init()
+
+
+def test_init_model_error():
+    """ test_init_model_error """
     net = nn.ReLU()
     loss = nn.SoftmaxCrossEntropyWithLogits()
     with pytest.raises(KeyError):

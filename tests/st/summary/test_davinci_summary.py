@@ -15,17 +15,14 @@
 """ test model train """
 import os
 import numpy as np
-
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.common.initializer import initializer
-from mindspore import Tensor, Parameter, Model
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim import Momentum
-from mindspore.common.api import ms_function
-import mindspore.nn as wrap
-import mindspore.context as context
 from apply_momentum import ApplyMomentum
+import mindspore.context as context
+import mindspore.nn as nn
+import mindspore.nn as wrap
+from mindspore import Tensor, Model
+from mindspore.common.api import ms_function
+from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.ops import operations as P
 from mindspore.train.summary.summary_record import SummaryRecord
 
 CUR_DIR = os.getcwd()
@@ -53,14 +50,13 @@ def me_train_tensor(net, input_np, label_np, epoch_size=2):
     _network = wrap.WithLossCell(net, loss)
     _train_net = MsWrapper(wrap.TrainOneStepCell(_network, opt))
     _train_net.set_train()
-    summary_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=_train_net)
-    for epoch in range(0, epoch_size):
-        print(f"epoch %d" % (epoch))
-        output = _train_net(Tensor(input_np), Tensor(label_np))
-        summary_writer.record(i)
-        print("********output***********")
-        print(output.asnumpy())
-    summary_writer.close()
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=_train_net) as summary_writer:
+        for epoch in range(0, epoch_size):
+            print(f"epoch %d" % (epoch))
+            output = _train_net(Tensor(input_np), Tensor(label_np))
+            summary_writer.record(i)
+            print("********output***********")
+            print(output.asnumpy())
 
 
 def me_infer_tensor(net, input_np):
@@ -100,4 +96,4 @@ def test_net():
     input_np = np.ones([32, 2048, 14, 14]).astype(np.float32) * 0.01
     label_np = np.ones([32]).astype(np.int32)
     me_train_tensor(net, input_np, label_np)
-    #me_infer_tensor(net, input_np)
+    # me_infer_tensor(net, input_np)

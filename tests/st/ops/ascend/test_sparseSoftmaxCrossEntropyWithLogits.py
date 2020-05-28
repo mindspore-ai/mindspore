@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
+from mindspore.ops import operations as P
+
 context.set_context(device_target="Ascend")
 
 
@@ -30,9 +32,10 @@ class Net(nn.Cell):
     def construct(self, features, labels):
         return self.SparseSoftmaxCrossEntropyWithLogits(features, labels)
 
+
 def np_sparse_softmax_cross_entropy_with_logits(labels_shape, logits_shape, logits_dtype):
     num_class = logits_shape[1]
-    labels =  np.random.randint(low=0, high=num_class - 1, size=labels_shape).astype(np.int32)
+    labels = np.random.randint(low=0, high=num_class - 1, size=labels_shape).astype(np.int32)
     logits = np.random.rand(*logits_shape).astype(logits_dtype)
     features = logits
     features_reshape = np.reshape(features, [-1, num_class])
@@ -48,7 +51,7 @@ def np_sparse_softmax_cross_entropy_with_logits(labels_shape, logits_shape, logi
     loss = -np.sum(labels_mat * np.log(probs + 1.0e-20), axis=1)
     bp_res = np.reshape(bp, features.shape)
     loss_res = np.reshape(loss, labels.shape)
-    loss_res = np.sum(loss_res, axis=0)/loss_res.shape[0]
+    loss_res = np.sum(loss_res, axis=0) / loss_res.shape[0]
     return labels, logits, loss_res, bp_res
 
 
@@ -65,4 +68,6 @@ def test_net():
     print(loss_me.asnumpy().flatten())
     print("-------------------------")
     print(expect)
+
+
 test_net()

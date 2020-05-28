@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 add = P.TensorAdd()
 sub = P.Sub()
@@ -23,6 +23,7 @@ five2four = Primitive('Five2Four')
 transdata = Primitive("TransData")
 cast = Primitive('Cast')
 depend = Primitive('depend')
+
 
 class FnDict:
     def __init__(self):
@@ -40,8 +41,8 @@ def test_eliminate_5to4_4to5(tag):
 
     @fns
     def before(x, y):
-        sum = add(x, y)
-        res = sub(sum, y)
+        sum_add = add(x, y)
+        res = sub(sum_add, y)
         output = make_tuple(res)
         return output
 
@@ -50,8 +51,8 @@ def test_eliminate_5to4_4to5(tag):
         new_x_sum = transdata(x)
         new_y_sum = transdata(y)
         new_y_sum2 = transdata(y)
-        sum = add(new_x_sum, new_y_sum)
-        sum_5to4 = transdata(sum)
+        sum_add = add(new_x_sum, new_y_sum)
+        sum_5to4 = transdata(sum_add)
         sum_4to5 = transdata(sum_5to4)
         res = sub(sum_4to5, new_y_sum2)
         output = transdata(res)
@@ -64,8 +65,8 @@ def test_eliminate_5to4_4to5(tag):
         new_x_sum = transdata(x)
         new_y_sum = transdata(y)
         new_y_diff = transdata(y)
-        sum = add(new_x_sum, new_y_sum)
-        res = sub(sum, new_y_diff)
+        sum_add = add(new_x_sum, new_y_sum)
+        res = sub(sum_add, new_y_diff)
         output = transdata(res)
         new_output = make_tuple(output)
         ret = make_tuple(new_output)
@@ -79,8 +80,8 @@ def test_eliminate_cast(tag):
 
     @fns
     def before(x, y):
-        sum = add(x, y)
-        res = sub(sum, y)
+        sum_add = add(x, y)
+        res = sub(sum_add, y)
         output = make_tuple(res)
         return output
 
@@ -89,8 +90,8 @@ def test_eliminate_cast(tag):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
         new_y_sum2 = cast(y)
-        sum = add(new_x_sum, new_y_sum)
-        sum_cast1 = cast(sum)
+        sum_add = add(new_x_sum, new_y_sum)
+        sum_cast1 = cast(sum_add)
         sum_cast2 = cast(sum_cast1)
         res = sub(sum_cast2, new_y_sum2)
         output = cast(res)
@@ -103,8 +104,8 @@ def test_eliminate_cast(tag):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
         new_y_diff = cast(y)
-        sum = add(new_x_sum, new_y_sum)
-        res = sub(sum, new_y_diff)
+        sum_add = add(new_x_sum, new_y_sum)
+        res = sub(sum_add, new_y_diff)
         output = cast(res)
         new_output = make_tuple(output)
         ret = make_tuple(new_output)
@@ -118,8 +119,8 @@ def test_eliminate_5to4_depend_4to5(tag):
 
     @fns
     def before(x, y):
-        sum = add(x, y)
-        sum_depend = depend(sum, x)
+        sum_add = add(x, y)
+        sum_depend = depend(sum_add, x)
         res = sub(sum_depend, y)
         output = make_tuple(res)
         return output
@@ -128,8 +129,8 @@ def test_eliminate_5to4_depend_4to5(tag):
     def after1(x, y):
         new_x_sum = transdata(x)
         new_y_sum = transdata(y)
-        sum = add(new_x_sum, new_y_sum)
-        sum_trans = transdata(sum)
+        sum_add = add(new_x_sum, new_y_sum)
+        sum_trans = transdata(sum_add)
         depend_between_trans = depend(sum_trans, x)
         depend_trans = transdata(depend_between_trans)
         new_y_diff = transdata(y)
@@ -143,8 +144,8 @@ def test_eliminate_5to4_depend_4to5(tag):
     def after2(x, y):
         new_x_sum = transdata(x)
         new_y_sum = transdata(y)
-        sum = add(new_x_sum, new_y_sum)
-        depend_op = depend(sum, x)
+        sum_add = add(new_x_sum, new_y_sum)
+        depend_op = depend(sum_add, x)
         new_y_diff = transdata(y)
         res = sub(depend_op, new_y_diff)
         output = transdata(res)
@@ -160,8 +161,8 @@ def test_eliminate_cast_depend_cast(tag):
 
     @fns
     def before(x, y):
-        sum = add(x, y)
-        sum_depend = depend(sum, x)
+        sum_add = add(x, y)
+        sum_depend = depend(sum_add, x)
         sum_depend2 = depend(sum_depend, x)
         sum_depend3 = depend(sum_depend2, x)
         res = sub(sum_depend3, y)
@@ -172,8 +173,8 @@ def test_eliminate_cast_depend_cast(tag):
     def after1(x, y):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
-        sum = add(new_x_sum, new_y_sum)
-        sum_cast = cast(sum)
+        sum_add = add(new_x_sum, new_y_sum)
+        sum_cast = cast(sum_add)
         depend_between_cast = depend(sum_cast, x)
         depend_between_cast2 = depend(depend_between_cast, x)
         depend_between_cast3 = depend(depend_between_cast2, x)
@@ -189,8 +190,8 @@ def test_eliminate_cast_depend_cast(tag):
     def after2(x, y):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
-        sum = add(new_x_sum, new_y_sum)
-        depend_op = depend(sum, x)
+        sum_add = add(new_x_sum, new_y_sum)
+        depend_op = depend(sum_add, x)
         depend_op2 = depend(depend_op, x)
         depend_op3 = depend(depend_op2, x)
         new_y_diff = cast(y)
@@ -201,4 +202,3 @@ def test_eliminate_cast_depend_cast(tag):
         return ret
 
     return fns[tag]
-

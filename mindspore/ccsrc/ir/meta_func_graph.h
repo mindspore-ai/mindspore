@@ -31,6 +31,7 @@
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/signature.h"
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace py = pybind11;
@@ -57,28 +58,7 @@ class MetaFuncGraph : public FuncGraphBase {
   const std::vector<Signature> &signatures() const { return signatures_; }
   void set_signatures(const std::vector<Signature> &signatures) { signatures_ = signatures; }
   // Generate a Graph for the given abstract arguments.
-  virtual FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list) {
-    TypePtrList types;
-    (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
-                         [](const AbstractBasePtr &arg) -> TypePtr {
-                           MS_EXCEPTION_IF_NULL(arg);
-                           return arg->BuildType();
-                         });
-    // filter unsafe characters in log print since name_ is from outside
-    auto iter = cache_.find(types);
-    if (iter == cache_.end()) {
-      FuncGraphPtr fg = GenerateFromTypes(types);
-      MS_EXCEPTION_IF_NULL(fg);
-      MS_LOG(INFO) << "MetaFuncgraph: cache miss for types: " << mindspore::ToString(args_spec_list)
-                   << ", g: " << fg->ToString();
-      cache_[types] = fg;
-      return fg;
-    } else {
-      MS_LOG(DEBUG) << "MetaFuncgraph: cache hit for types: " << mindspore::ToString(args_spec_list)
-                    << ", g: " << iter->second->ToString();
-      return iter->second;
-    }
-  }
+  virtual FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list);
 
   // Generate a Graph for this type signature.
   virtual FuncGraphPtr GenerateFromTypes(const TypePtrList &) {

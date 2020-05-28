@@ -18,14 +18,16 @@
 # pylint: disable=missing-docstring, unused-argument
 
 import logging
+
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 
 logging.basicConfig(level=logging.DEBUG, format=
-                    '[%(levelname)s] %(asctime)s %(pathname)s:%(lineno)d %(message)s')
+'[%(levelname)s] %(asctime)s %(pathname)s:%(lineno)d %(message)s')
 logger = logging.getLogger(__name__)
+
 
 class PrintShapeType(PrimitiveWithInfer):
     """
@@ -78,14 +80,17 @@ class PrintShapeType(PrimitiveWithInfer):
 @bprop_getters.register(PrintShapeType)
 def get_bprop_print_shape_type(self):
     """Generate bprop for PrintShapeType"""
+
     def bprop(x, out, dout):
         return (dout,)
+
     return bprop
 
 
 class PrintShapeTypeCell(nn.Cell):
     def __init__(self):
         super(PrintShapeTypeCell, self).__init__()
+
     def construct(self, msg, x):
         PrintShapeType(msg)(x)
         return x

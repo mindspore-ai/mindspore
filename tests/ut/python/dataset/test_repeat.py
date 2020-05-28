@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import numpy as np
 from util import save_and_check
 
 import mindspore.dataset as ds
-import numpy as np
+import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR_TF = ["../data/dataset/testTFTestAllTypes/test.data"]
@@ -25,13 +25,6 @@ COLUMNS_TF = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
               "col_sint16", "col_sint32", "col_sint64"]
 GENERATE_GOLDEN = False
 
-# Data for CIFAR and MNIST are not part of build tree
-# They need to be downloaded directly
-# prep_data.py can be exuted or code below
-# import sys
-# sys.path.insert(0,"../../data")
-# import prep_data
-# prep_data.download_all_for_test("../../data")
 IMG_DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 IMG_SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
@@ -41,7 +34,7 @@ SCHEMA_DIR_TF2 = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_tf_repeat_01():
     """
-    a simple repeat operation.
+    Test a simple repeat operation.
     """
     logger.info("Test Simple Repeat")
     # define parameters
@@ -58,7 +51,7 @@ def test_tf_repeat_01():
 
 def test_tf_repeat_02():
     """
-    a simple repeat operation to tes infinite
+    Test Infinite Repeat.
     """
     logger.info("Test Infinite Repeat")
     # define parameters
@@ -77,7 +70,10 @@ def test_tf_repeat_02():
 
 
 def test_tf_repeat_03():
-    '''repeat and batch '''
+    """
+    Test Repeat then Batch.
+    """
+    logger.info("Test Repeat then Batch")
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
 
     batch_size = 32
@@ -90,15 +86,32 @@ def test_tf_repeat_03():
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num_iter += 1
     logger.info("Number of tf data in data1: {}".format(num_iter))
     assert num_iter == 2
 
 
+def test_tf_repeat_04():
+    """
+    Test a simple repeat operation with column list.
+    """
+    logger.info("Test Simple Repeat Column List")
+    # define parameters
+    repeat_count = 2
+    parameters = {"params": {'repeat_count': repeat_count}}
+    columns_list = ["col_sint64", "col_sint32"]
+    # apply dataset operations
+    data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, columns_list=columns_list, shuffle=False)
+    data1 = data1.repeat(repeat_count)
+
+    filename = "repeat_list_result.npz"
+    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+
+
 def generator():
     for i in range(3):
-        yield np.array([i]),
+        (yield np.array([i]),)
 
 
 def test_nested_repeat1():
@@ -151,7 +164,7 @@ def test_nested_repeat5():
     data = data.repeat(2)
     data = data.repeat(3)
 
-    for i, d in enumerate(data):
+    for _, d in enumerate(data):
         assert np.array_equal(d[0], np.asarray([[0], [1], [2]]))
 
     assert sum([1 for _ in data]) == 6
@@ -163,7 +176,7 @@ def test_nested_repeat6():
     data = data.batch(3)
     data = data.repeat(3)
 
-    for i, d in enumerate(data):
+    for _, d in enumerate(data):
         assert np.array_equal(d[0], np.asarray([[0], [1], [2]]))
 
     assert sum([1 for _ in data]) == 6
@@ -175,7 +188,7 @@ def test_nested_repeat7():
     data = data.repeat(3)
     data = data.batch(3)
 
-    for i, d in enumerate(data):
+    for _, d in enumerate(data):
         assert np.array_equal(d[0], np.asarray([[0], [1], [2]]))
 
     assert sum([1 for _ in data]) == 6
@@ -232,11 +245,18 @@ def test_nested_repeat11():
 
 
 if __name__ == "__main__":
-    logger.info("--------test tf repeat 01---------")
-    # test_repeat_01()
-
-    logger.info("--------test tf repeat 02---------")
-    # test_repeat_02()
-
-    logger.info("--------test tf repeat 03---------")
+    test_tf_repeat_01()
+    test_tf_repeat_02()
     test_tf_repeat_03()
+    test_tf_repeat_04()
+    test_nested_repeat1()
+    test_nested_repeat2()
+    test_nested_repeat3()
+    test_nested_repeat4()
+    test_nested_repeat5()
+    test_nested_repeat6()
+    test_nested_repeat7()
+    test_nested_repeat8()
+    test_nested_repeat9()
+    test_nested_repeat10()
+    test_nested_repeat11()

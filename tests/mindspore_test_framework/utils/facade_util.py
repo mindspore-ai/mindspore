@@ -18,6 +18,7 @@
 from . import keyword
 from .config_util import get_function_config
 
+
 def get_block_config():
     """
     Get Empty function config.
@@ -27,6 +28,7 @@ def get_block_config():
     ret[keyword.inputs] = []
     ret[keyword.expect] = []
     return ret
+
 
 def fill_block_config(ret, block_config, tid, group, desc_inputs, desc_bprop, expect,
                       desc_const, const_first, add_fake_input, fake_input_type):
@@ -95,7 +97,7 @@ def fill_block_config(ret, block_config, tid, group, desc_inputs, desc_bprop, ex
 
     if expect:
         expect_list.append({
-            keyword.id: tid+'-'+tid,
-            keyword.group: group+'-'+group,
+            keyword.id: tid + '-' + tid,
+            keyword.group: group + '-' + group,
             keyword.desc_expect: expect
         })

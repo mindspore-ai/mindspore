@@ -15,15 +15,17 @@
 """ test_momentum """
 import functools
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
 from mindspore import Parameter, ParameterTuple, Tensor
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
+
 # pylint: disable=W0613
 # W0613: unused-argument
 
@@ -38,13 +40,14 @@ def tensor_run_opt(opt, iters, learning_rate, momentum,
                    gradient, variable, moment):
     """ tensor_run_opt """
     success = True
-    new_weight = opt(variable, moment, learning_rate, gradient, momentum)[0]
+    new_weight = opt(variable, moment, learning_rate, gradient, momentum)
     success = F.depend(success, F.assign(variable, new_weight))
     return success
 
 
 class OptimizerByMomentum(nn.Cell):
     """ OptimizerByMomentum definition """
+
     def __init__(self, weights):
         super(OptimizerByMomentum, self).__init__()
         self.learning_rate = Parameter(0.1, name="learning_rate")
@@ -69,6 +72,7 @@ class OptimizerByMomentum(nn.Cell):
 
 class TrainStepWrap(nn.Cell):
     """ TrainStepWrap definition """
+
     def __init__(self, network):
         super(TrainStepWrap, self).__init__()
         self.network = network
@@ -84,6 +88,7 @@ class TrainStepWrap(nn.Cell):
 
 class NetWithLossClass(nn.Cell):
     """ NetWithLossClass definition """
+
     def __init__(self, network):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
         self.loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -96,6 +101,7 @@ class NetWithLossClass(nn.Cell):
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
@@ -121,6 +127,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 import mindspore.context as context
+
 
 @non_graph_engine
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)

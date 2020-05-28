@@ -64,14 +64,10 @@ if __name__ == '__main__':
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(device_id=args_opt.device_id)
-    context.set_context(enable_task_sink=True)
-    context.set_context(enable_loop_sink=True)
-    context.set_context(enable_mem_reuse=True)
 
     device_num = int(os.environ.get("DEVICE_NUM", 1))
     if device_num > 1:
         context.reset_auto_parallel_context()
-        context.set_context(enable_hccl=True)
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           mirror_mean=True)
         init()

@@ -18,4 +18,16 @@ set -e
 
 # Usage : get_shape_from_ir.sh ir_file
 
-cat "$1" | perl -p -e 's/\n/NEWLINE/' | sed 's/NEWLINE      :/:/g' | sed 's/Tensor NEWLINEshape//g' | perl -p -e 's/NEWLINE/\n/g' | perl -p -e 's/<Array\[([\d\w]+)\]x\[[\w ]+\](\[[\d, ]*\])>/\2/g' | perl -p -e 's/<Tuple\[([\[\]\d\w\.\*]*)\]>/Tuple/g' | perl -p -e 's/ \%(\d+)\(.*= /\1\t/g' | perl -p -e 's/\(.*\)( \{.*\})*:/\t\1\t/g' | tr -d '()' | awk '/subgraph/{p=1;next}{if(p){print}}'| awk '/return/{p=1;next}{if(!p){print}}' | sed '/^$/d' | awk -F'\t' '{print $1"\t"$2"\t"$4"\t"$3}'
+cat "$1" | perl -p -e 's/\n/NEWLINE/' \
+         | sed 's/NEWLINE      :/:/g' \
+         | sed 's/Tensor NEWLINEshape//g' \
+         | perl -p -e 's/NEWLINE/\n/g' \
+         | perl -p -e 's/<Array\[([\d\w]+)\]x\[[\w ]+\](\[[\d, ]*\])>/\2/g' \
+         | perl -p -e 's/<Tuple\[([\[\]\d\w\.\*]*)\]>/Tuple/g' \
+         | perl -p -e 's/ \%(\d+)\(.*= /\1\t/g' \
+         | perl -p -e 's/\(.*\)( \{.*\})*:/\t\1\t/g' \
+         | tr -d '()' \
+         | awk '/subgraph/{p=1;next}{if(p){print}}'\
+         | awk '/return/{p=1;next}{if(!p){print}}' \
+         | sed '/^$/d' \
+         | awk -F'\t' '{print $1"\t"$2"\t"$4}'

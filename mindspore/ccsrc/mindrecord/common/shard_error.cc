@@ -170,6 +170,9 @@ std::string ErrnoToMessage(MSRStatus status) {
     case IO_FAILED:
       return "io operate failed";
       break;
+    case MATCH_HEADER_FAILED:
+      return "match header failed";
+      break;
     default:
       return "invalid error no";
   }

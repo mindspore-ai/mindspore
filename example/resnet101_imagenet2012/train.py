@@ -28,6 +28,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
 from mindspore.communication.management import init
 import mindspore.nn as nn
@@ -44,14 +45,13 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--do_train', type=bool, default=True, help='Do train or not.')
 parser.add_argument('--do_eval', type=bool, default=False, help='Do eval or not.')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 args_opt = parser.parse_args()
 
 device_id = int(os.getenv('DEVICE_ID'))
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
-context.set_context(enable_task_sink=True)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id,
+                    enable_auto_mixed_precision=True)
 
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:
@@ -67,11 +67,11 @@ if __name__ == '__main__':
         if isinstance(cell, nn.Conv2d):
             cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
                                                                 cell.weight.default_input.shape(),
-                                                                cell.weight.default_input.dtype())
+                                                                cell.weight.default_input.dtype()).to_tensor()
         if isinstance(cell, nn.Dense):
             cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
                                                                 cell.weight.default_input.shape(),
-                                                                cell.weight.default_input.dtype())
+                                                                cell.weight.default_input.dtype()).to_tensor()
     if not config.label_smooth:
         config.label_smooth_factor = 0.0
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
@@ -80,9 +80,13 @@ if __name__ == '__main__':
                                  repeat_num=epoch_size, batch_size=config.batch_size)
         step_size = dataset.get_dataset_size()
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+        if args_opt.pre_trained:
+            param_dict = load_checkpoint(args_opt.pre_trained)
+            load_param_into_net(net, param_dict)
 
         # learning rate strategy with cosine
-        lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size))
+        lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, 120,
+                                               config.pretrain_epoch_size*step_size))
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
         model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', keep_batchnorm_fp32=False,

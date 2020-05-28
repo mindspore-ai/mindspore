@@ -116,6 +116,7 @@ foreach (_comp ${SUB_COMP})
     endif ()
 endforeach ()
 
+set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 target_link_libraries(mindspore proto_input)
 target_link_libraries(mindspore securec mindspore::flatbuffers)
@@ -171,6 +172,7 @@ endif()
 
 # set c_expression building
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set_property(SOURCE "pipeline/init.cc" PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)
 pybind11_add_module(_c_expression "pipeline/init.cc")
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")

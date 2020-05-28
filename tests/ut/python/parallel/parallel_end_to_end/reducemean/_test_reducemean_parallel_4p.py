@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import os
 import pytest
-import numpy as np
+from numpy import allclose as allclose_nparray
+
 import mindspore as ms
 import mindspore.communication.management as distributedTool
-from mindspore.nn import Cell
 from mindspore import context
-from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
-from numpy import allclose as allclose_nparray
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
 from mindspore.ops.composite import grad_all_with_sens
 
 device_num = 4
@@ -176,6 +177,7 @@ class ReduceMeanFactory:
         y1 = Tensor(inputs_y[self.y_id])
         net = ReduceMean(keep_dims=self.keep_dims, axis=self.axis, strategy0=self.strategy0, strategy1=self.strategy1)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         out = net(x, y, parallel_inputs_compile=[x, y], parallel_inputs_run=[x1, y1])
         return out.asnumpy()
 
@@ -202,6 +204,7 @@ class ReduceMeanFactory:
         net = ReduceMean(keep_dims=self.keep_dims, axis=self.axis, strategy0=self.strategy0, strategy1=self.strategy1)
         grad_net = Grad(net)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        grad_net.set_auto_parallel()
         grad_net.set_train()
         input_grad = grad_net(x, y, output_grad, parallel_inputs_compile=[x, y, output_grad1],
                               parallel_inputs_run=[x1, y1, output_grad1])

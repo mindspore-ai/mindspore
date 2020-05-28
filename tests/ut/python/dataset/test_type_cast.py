@@ -13,16 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomRotation op in DE
+Testing TypeCast op in DE
 """
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
-import mindspore.dataset.transforms.c_transforms as data_util
-
 import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as data_util
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -31,9 +30,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_type_cast():
     """
-    Test type_cast_op
+    Test TypeCast op
     """
-    logger.info("test_type_cast_op")
+    logger.info("test_type_cast")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -71,15 +70,15 @@ def test_type_cast():
 
 def test_type_cast_string():
     """
-    Test type_cast_op
+    Test TypeCast op
     """
-    logger.info("test_type_cast_op")
+    logger.info("test_type_cast_string")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    type_cast_op = data_util.TypeCast(mstype.float16 )
+    type_cast_op = data_util.TypeCast(mstype.float16)
 
     ctrans = [decode_op,
               type_cast_op

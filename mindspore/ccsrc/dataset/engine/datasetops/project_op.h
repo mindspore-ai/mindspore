@@ -101,8 +101,15 @@ class ProjectOp : public PipelineOp {
   // @return Status - The error code returned.
   Status EofReceived(int32_t worker_id) override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   std::vector<std::string> columns_to_project_;
+  std::vector<int32_t> projected_column_indices_;
 
   Status Project(std::unique_ptr<DataBuffer> *data_buffer);
 };

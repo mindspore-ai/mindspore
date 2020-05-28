@@ -13,13 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
+
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor, Parameter
+from mindspore import context
+from mindspore.common.api import _executor
+from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
-from mindspore.ops import composite as C
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -31,6 +33,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -38,6 +41,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x):
         return C.grad_all(self.network)(x)
+
 
 class CustomDense(nn.Cell):
     def __init__(self, row, column):
@@ -79,6 +83,7 @@ class DenseMutMulNet(nn.Cell):
         s = self.fc4(s)
         return s
 
+
 class MultiTransformer(nn.Cell):
     def __init__(self, layer_nums=1):
         super(MultiTransformer, self).__init__()
@@ -95,11 +100,13 @@ class MultiTransformer(nn.Cell):
         out = self.layer(x)
         return out
 
+
 def test_dmnet_train_step():
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    
+
     input = Tensor(np.ones([4096, 4096]).astype(np.float32) * 0.01)
     net = GradWrap(NetWithLoss(MultiTransformer()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     _executor.compile(net, input)

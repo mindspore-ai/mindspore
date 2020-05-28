@@ -14,15 +14,15 @@
 # ============================================================================
 """ test_grad """
 import numpy as np
+
 import mindspore as ms
-from mindspore.common.api import ms_function
-from mindspore import Tensor
-from mindspore.ops import composite as C
-from mindspore.ops.composite import grad_all_with_sens
-from mindspore.common.dtype import get_py_obj_dtype
-import mindspore.nn as nn
 import mindspore.ops.operations as P
+from mindspore import Tensor
+from mindspore.common.api import ms_function
+from mindspore.common.dtype import get_py_obj_dtype
+from mindspore.ops import composite as C
 from mindspore.ops import functional as F
+from mindspore.ops.composite import grad_all_with_sens
 from ...ut_filter import non_graph_engine
 
 
@@ -174,7 +174,7 @@ def test_select_grad():
     assert np.all(gout[0].asnumpy() == expect_cond)
     assert np.all(gout[1].asnumpy() == expect_x)
     assert np.all(gout[2].asnumpy() == expect_y)
-    
+
 
 def test_SubGrad():
     """ test_SubGrad """
@@ -201,10 +201,10 @@ def test_MulGrad():
     """ test_MulGrad """
     input_x = Tensor(np.array([[2, 2], [2, 2]], np.float32))
     input_y = Tensor(np.array([[3, 3], [3, 3]], np.float32))
-    mul = P.Mul()
+    mymul = P.Mul()
 
     def fn(x, y):
-        output = mul(x, y)
+        output = mymul(x, y)
         return output
 
     out = fn(input_x, input_y)

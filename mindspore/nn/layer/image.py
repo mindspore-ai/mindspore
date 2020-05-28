@@ -23,6 +23,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ..cell import Cell
 
+__all__ = ['ImageGradients', 'SSIM', 'PSNR']
 
 class ImageGradients(Cell):
     r"""
@@ -58,7 +59,8 @@ class ImageGradients(Cell):
         super(ImageGradients, self).__init__()
 
     def construct(self, images):
-        _check_input_4d(F.shape(images), "images", self.cls_name)
+        check = _check_input_4d(F.shape(images), "images", self.cls_name)
+        images = F.depend(images, check)
         batch_size, depth, height, width = P.Shape()(images)
         dy = images[:, :, 1:, :] - images[:, :, :height - 1, :]
         dy_last = P.Fill()(P.DType()(images), (batch_size, depth, 1, width), 0)

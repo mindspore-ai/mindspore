@@ -24,6 +24,7 @@ from mindspore.model_zoo.mobilenet import mobilenet_v2
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.common import dtype as mstype
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -33,13 +34,14 @@ args_opt = parser.parse_args()
 device_id = int(os.getenv('DEVICE_ID'))
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id, save_graphs=False)
-context.set_context(enable_task_sink=True)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
 
 if __name__ == '__main__':
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
-    net = mobilenet_v2()
+    net = mobilenet_v2(num_classes=config.num_classes)
+    net.to_float(mstype.float16)
+    for _, cell in net.cells_and_names():
+        if isinstance(cell, nn.Dense):
+            cell.add_flags_recursive(fp32=True)
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()

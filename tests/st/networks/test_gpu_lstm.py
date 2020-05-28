@@ -13,18 +13,18 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.nn.optim import Momentum
-from mindspore.ops import operations as P
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn import Dense
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-
+from mindspore.nn import Dense
+from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -104,6 +104,8 @@ class SentimentNet(nn.Cell):
 
 
 batch_size = 64
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -117,9 +119,9 @@ def test_LSTM():
     vocab_size = 252193
     max_len = 500
 
-    weight = np.ones((vocab_size+1, embed_size)).astype(np.float32)
+    weight = np.ones((vocab_size + 1, embed_size)).astype(np.float32)
 
-    net = SentimentNet(vocab_size=(vocab_size+1), embed_size=embed_size,
+    net = SentimentNet(vocab_size=(vocab_size + 1), embed_size=embed_size,
                        num_hiddens=num_hiddens, num_layers=num_layers,
                        bidirectional=bidirectional, weight=weight,
                        labels=labels, batch_size=batch_size)
@@ -140,4 +142,4 @@ def test_LSTM():
         loss = train_network(train_features, train_labels)
         losses.append(loss)
         print("loss:", loss.asnumpy())
-    assert(losses[-1].asnumpy() < 0.01)
+    assert (losses[-1].asnumpy() < 0.01)

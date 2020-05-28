@@ -23,21 +23,11 @@
 #include <vector>
 #include <unordered_map>
 
-#include "ir/visitor.h"
-#include "pipeline/static_analysis/static_analysis.h"
-#include "operator/ops.h"
-#include "parallel/ops_info/ops_utils.h"
+#include "ir/func_graph.h"
+#include "ir/primitive.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
-// Methods of AnfNode
-TypePtr AnfNode::Type() const { return (abstract_ == nullptr) ? nullptr : abstract_->BuildType(); }
-BaseShapePtr AnfNode::Shape() const { return (abstract_ == nullptr) ? nullptr : abstract_->BuildShape(); }
-
-std::string AnfNode::ToString() const {
-  return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->shared_from_base<AnfNode>()->debug_info());
-}
-
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph), inputs_(inputs), stop_gradient_(false) {}
 
@@ -85,66 +75,6 @@ std::string CNode::DebugString(int recursive_level) const {
   return buffer.str();
 }
 
-OperatorInfoPtr CNode::set_operator_info(const OperatorInfoPtr &operator_info) {
-  if (operator_info_ != nullptr) {
-    MS_LOG(WARNING) << "The CNode: " << ToString() << " has already been set OperatorInfo: " << operator_info_->name()
-                    << ", using the new one: " << operator_info->name();
-    auto old_ptr = operator_info_;
-    operator_info_ = operator_info;
-    return old_ptr;
-  }
-  operator_info_ = operator_info;
-  return nullptr;
-}
-
-std::string CNode::fullname_with_scope() {
-  // if full name is set, return its name immediately
-  if (!fullname_with_scope_.empty()) {
-    return fullname_with_scope_;
-  }
-
-  if (IsApply(prim::kPrimScalarSummary) || IsApply(prim::kPrimTensorSummary) || IsApply(prim::kPrimImageSummary) ||
-      IsApply(prim::kPrimHistogramSummary)) {
-    std::string tag = GetValue<std::string>(GetValueNode(input(1)));
-    if (tag == "") {
-      MS_LOG(EXCEPTION) << "The tag name is null, should be valid string";
-    }
-    std::string name;
-    if (IsApply(prim::kPrimScalarSummary)) {
-      name = tag + "[:Scalar]";
-    } else if (IsApply(prim::kPrimImageSummary)) {
-      name = tag + "[:Image]";
-    } else if (IsApply(prim::kPrimHistogramSummary)) {
-      name = tag + "[:Histogram]";
-    } else {
-      name = tag + "[:Tensor]";
-    }
-    fullname_with_scope_ = name;
-  } else {
-    // cnode input 0 should be primitive ptr
-    auto value_ptr = input(0)->cast<ValueNodePtr>();
-    if (value_ptr == nullptr) {
-      MS_LOG(WARNING) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
-      fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
-      return fullname_with_scope_;
-    }
-    auto input_value = value_ptr->value();
-    if (input_value == nullptr) {
-      MS_LOG(WARNING) << "Value of input 0 of cnode is nullptr.";
-      fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
-      return fullname_with_scope_;
-    }
-
-    PrimitivePtr prim = GetValue<PrimitivePtr>(input_value);
-    MS_EXCEPTION_IF_NULL(scope());
-    MS_EXCEPTION_IF_NULL(prim);
-    fullname_with_scope_ =
-      scope()->name() + "/" + prim->name() + "-op" + id_generator::get_id(shared_from_base<CNode>());
-  }
-
-  return fullname_with_scope_;
-}
-
 std::string ValueNode::ToString() const {
   MS_EXCEPTION_IF_NULL(value_);
   if (value_->isa<FuncGraph>()) {
@@ -172,10 +102,6 @@ std::string ValueNode::fullname_with_scope() {
   fullname_with_scope_ = scope()->name() + "/" + "data-" + id_generator::get_id(shared_from_base<ValueNode>());
   return fullname_with_scope_;
 }
-
-void CNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<CNode>()); }
-void ValueNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<ValueNode>()); }
-void Parameter::accept(AnfVisitor *v) { v->Visit(shared_from_base<Parameter>()); }
 
 bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
   MS_EXCEPTION_IF_NULL(node);
@@ -227,6 +153,12 @@ bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value) {
   }
   return false;
 }
+
+size_t NewSeenGeneration() {
+  static size_t seen_generation = 0;
+  return ++seen_generation;
+}
+
 namespace id_generator {
 static std::unordered_map<std::string, int> node_ids;
 std::string get_id(const AnfNodePtr &node) {

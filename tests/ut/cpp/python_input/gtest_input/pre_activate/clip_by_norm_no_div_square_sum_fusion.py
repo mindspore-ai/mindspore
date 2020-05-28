@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 select = P.Select()
 maximum = P.Maximum()
@@ -40,17 +40,17 @@ def test_clip_by_norm_no_div_square_sum_fusion(tag):
     fns = FnDict()
 
     @fns
-    def before(input, constant_select, constant_greater, constant_maximum):
-        greater_output = greater(input, constant_greater)
-        res = select(greater_output, input, constant_select)
+    def before(x, constant_select, constant_greater, constant_maximum):
+        greater_output = greater(x, constant_greater)
+        res = select(greater_output, x, constant_select)
         res = sqrt(res)
-        res = select(greater_output, res, input)
+        res = select(greater_output, res, x)
         res = maximum(res, constant_maximum)
         return res
 
     @fns
-    def after(input, constant_select, constant_greater, constant_maximum):
-        res = clip_by_norm_no_div_square_sum(input, constant_select, constant_greater, constant_maximum)
+    def after(x, constant_select, constant_greater, constant_maximum):
+        res = clip_by_norm_no_div_square_sum(x, constant_select, constant_greater, constant_maximum)
         return make_tuple(res)
 
     return fns[tag]

@@ -14,6 +14,7 @@
 # ============================================================================
 """test_dataset_utils"""
 import pytest
+
 import mindspore as ms
 from mindspore.train._utils import _construct_tensor_list
 

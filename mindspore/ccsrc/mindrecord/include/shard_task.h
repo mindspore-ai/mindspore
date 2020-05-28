@@ -39,9 +39,9 @@ class ShardTask {
 
   uint32_t SizeOfRows() const;
 
-  std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &get_task_by_id(size_t id);
+  std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &GetTaskByID(size_t id);
 
-  std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &get_random_task();
+  std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &GetRandomTask();
 
   static ShardTask Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements);
 

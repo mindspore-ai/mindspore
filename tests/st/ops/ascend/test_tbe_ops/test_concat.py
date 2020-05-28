@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(Net, self).__init__()
 
         self.cat = P.Concat(axis=1)
@@ -46,4 +48,4 @@ def test_net():
     print(np.arange(2 * 2).reshape(2, 2))
     print(np.arange(2 * 3).reshape(2, 3))
     print(output)
-    assert(output.asnumpy() == expect).all()
+    assert (output.asnumpy() == expect).all()

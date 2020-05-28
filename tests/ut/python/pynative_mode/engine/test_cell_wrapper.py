@@ -14,16 +14,18 @@
 # ============================================================================
 """ test_cell_wrapper """
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore import Parameter, Tensor
-from mindspore.nn import WithLossCell
 import mindspore.ops.operations as P
+from mindspore import Parameter, Tensor
 from mindspore.nn import SoftmaxCrossEntropyWithLogits
+from mindspore.nn import WithLossCell
 from ...ut_filter import non_graph_engine
 
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")

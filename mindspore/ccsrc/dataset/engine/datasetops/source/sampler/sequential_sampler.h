@@ -45,6 +45,8 @@ class SequentialSampler : public Sampler {
   // @return - The error code return
   Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
 
+  void Print(std::ostream &out, bool show_all) const override;
+
  private:
   int64_t next_id_;
 };

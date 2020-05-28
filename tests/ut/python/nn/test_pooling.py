@@ -16,9 +16,10 @@
 test pooling api
 """
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor
+from mindspore.common.api import _executor
 
 
 class AvgNet(nn.Cell):
@@ -40,6 +41,7 @@ def test_compile_avg():
 
 class MaxNet(nn.Cell):
     """ MaxNet definition """
+
     def __init__(self,
                  kernel_size,
                  stride=None,
@@ -68,7 +70,8 @@ class Avg1dNet(nn.Cell):
     def construct(self, x):
         return self.avg1d(x)
 
+
 def test_avg1d():
-    net = Avg1dNet(3, 1)
-    input = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]).astype(np.float32))
+    net = Avg1dNet(6, 1)
+    input = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
     _executor.compile(net, input)

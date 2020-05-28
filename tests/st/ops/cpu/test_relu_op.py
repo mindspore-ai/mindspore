@@ -13,16 +13,18 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
 
 class NetRelu(nn.Cell):
     def __init__(self):
@@ -31,8 +33,10 @@ class NetRelu(nn.Cell):
         self.x = Parameter(initializer(Tensor(np.array([[[[-1, 1, 10],
                                                           [1, -1, 1],
                                                           [10, 1, -1]]]]).astype(np.float32)), [1, 1, 3, 3]), name='x')
+
     def construct(self):
         return self.relu(self.x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -40,8 +44,8 @@ class NetRelu(nn.Cell):
 def test_relu():
     relu = NetRelu()
     output = relu()
-    expect = np.array([[[ [0, 1, 10,],
-        [1, 0, 1,],
-        [10, 1, 0.]]]]).astype(np.float32)
+    expect = np.array([[[[0, 1, 10, ],
+                         [1, 0, 1, ],
+                         [10, 1, 0.]]]]).astype(np.float32)
     print(output)
     assert (output.asnumpy() == expect).all()

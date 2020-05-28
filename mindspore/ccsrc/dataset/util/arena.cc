@@ -38,7 +38,7 @@ Status Arena::Init() {
   RETURN_IF_NOT_OK(DeMalloc(size_in_MB_ * 1048576L, &ptr_, false));
   // Divide the memory into blocks. Ignore the last partial block.
   uint64_t num_blks = size_in_bytes_ / ARENA_BLK_SZ;
-  MS_LOG(INFO) << "Size of memory pool is " << num_blks << ", number of blocks of size is " << ARENA_BLK_SZ << ".";
+  MS_LOG(DEBUG) << "Size of memory pool is " << num_blks << ", number of blocks of size is " << ARENA_BLK_SZ << ".";
   tr_.Insert(0, num_blks);
   return Status::OK();
 }
@@ -52,7 +52,7 @@ Status Arena::Allocate(size_t n, void **p) {
   // Round up n to 1K block
   uint64_t req_size = static_cast<uint64_t>(n) + ARENA_WALL_OVERHEAD_SZ;
   if (req_size > this->get_max_size()) {
-    RETURN_STATUS_UNEXPECTED("Request size too big : " + std::to_string(n));
+    return Status(StatusCode::kOutOfMemory);
   }
   uint64_t reqBlk = SizeToBlk(req_size);
   // Do a first fit search

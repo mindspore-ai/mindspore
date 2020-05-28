@@ -25,7 +25,6 @@ from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend
 from ..ops.primitive import Primitive
 from ..parallel._tensor import _load_tensor_by_layout
-from ..parallel._utils import _get_parallel_mode
 from ..common.tensor import Tensor
 
 
@@ -61,6 +60,7 @@ class Cell:
         self._cells = OrderedDict()
         self.training = False
         self.pynative = False
+        self._param_prefix = ''
         self._auto_prefix = auto_prefix
         self._scope = None
         self._phase = 'train'
@@ -71,8 +71,7 @@ class Cell:
         gc.collect()
         self._construct_inputs_num = 0
         self._construct_inputs_names = []
-        if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
-            self._get_construct_inputs_number_and_name()
+        self._auto_parallel_mode = False
         self._parallel_inputs_run = None
         if flags:
             self.add_flags(**flags)
@@ -84,6 +83,24 @@ class Cell:
     @property
     def cell_init_args(self):
         return self._cell_init_args
+
+    @property
+    def param_prefix(self):
+        """
+        Param prefix is the prefix of current cell's direct child parameter.
+        """
+        return self._param_prefix
+
+    def update_cell_prefix(self):
+        """
+        Update the all child cells' self.param_prefix.
+
+        After invoked, can get all the cell's children's name prefix by '_param_prefix'.
+        """
+        cells_name = self.cells_and_names()
+
+        for cell_name, cell in cells_name:
+            cell._param_prefix = cell_name
 
     @cell_init_args.setter
     def cell_init_args(self, value):
@@ -146,6 +163,7 @@ class Cell:
         if context.get_context("mode") == context.GRAPH_MODE:
             out = self.compile_and_run(*inputs)
             return out
+        self.init_parameters_data()
         output = self.construct(*inputs)
         if isinstance(output, Parameter):
             output = output.data
@@ -225,12 +243,14 @@ class Cell:
         Args:
             params (dict): The parameters dictionary used for init data graph.
         """
-
         if params is None:
             for key in self.parameters_dict():
                 tensor = self.parameters_dict()[key].data
                 if key not in self.parameter_layout_dict:
                     logger.info("layout dict does not contain the key %s", key)
+                    continue
+                if self.parameters_dict()[key].sliced:
+                    logger.info("Param %s is from initializer, already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -240,6 +260,9 @@ class Cell:
                 tensor = params[key].data
                 if key not in self.parameter_layout_dict:
                     logger.info("layout dict does not contain the key %s", key)
+                    continue
+                if params[key].sliced:
+                    logger.info("Param %s is from initializer, already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -255,7 +278,6 @@ class Cell:
         Args:
             inputs (Function or Cell): inputs of construct method.
         """
-
         parallel_inputs_run = []
         if len(inputs) > self._construct_inputs_num:
             raise ValueError('Len of inputs: {} is bigger than self._construct_inputs_num: {}.'.
@@ -271,6 +293,15 @@ class Cell:
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 parallel_inputs_run.append(new_tensor)
         return tuple(parallel_inputs_run)
+
+    def set_parallel_input_with_inputs(self, *inputs):
+        """
+        Slice inputs tensors by parallel strategies, and set the sliced inputs to `_parallel_input_run`
+
+        Args:
+            inputs (tuple): inputs of construct method.
+        """
+        self._parallel_inputs_run = self._load_inputs(*inputs)
 
     def _get_construct_inputs_number_and_name(self):
         """Compute self._construct_inputs_names and self._construct_inputs_num"""
@@ -288,6 +319,15 @@ class Cell:
         self._construct_inputs_names = self._construct_inputs_names[1:self._construct_inputs_num]
         self._construct_inputs_num = self._construct_inputs_num - 1
 
+    def compile(self, *inputs):
+        """
+        Compiles cell.
+
+        Args:
+            inputs (tuple): Input parameters.
+        """
+        _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+
     def compile_and_run(self, *inputs):
         """
         Compiles and runs cell.
@@ -298,12 +338,14 @@ class Cell:
         Returns:
             Object, the result of executing.
         """
-        _, compile_flag = _executor.compile(self, *inputs, phase=self.phase)
+        _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
 
-        if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
-            if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag and (not compile_flag):
+        if self._auto_parallel_mode:
+            if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag:
+                # get parallel inputs in sink mode, parallel inputs set in _executor.compile
                 parallel_inputs_run = self._parallel_inputs_run
             else:
+                # set parallel inputs in normal mode
                 self._parallel_inputs_run = self._load_inputs(*inputs)
                 parallel_inputs_run = self._parallel_inputs_run
             return _executor(self, *parallel_inputs_run, phase=self.phase)
@@ -378,6 +420,15 @@ class Cell:
             Tensor, returns the computed result.
         """
         raise NotImplementedError
+
+    def init_parameters_data(self, recurse=True):
+        for param in self.get_parameters(expand=recurse):
+            if param.name not in self.parameter_layout_dict:
+                logger.info("Layout dict does not contain the key %s.", param.name)
+                param.init_data()
+            else:
+                layout = self.parameter_layout_dict[param.name]
+                param.init_data(layout)
 
     def parameters_dict(self, recurse=True):
         """
@@ -665,3 +716,15 @@ class Cell:
         """
         self.add_flags_recursive(broadcast_flag=mode)
         return self
+
+    def set_auto_parallel(self):
+        """
+        Set the cell to auto parallel mode.
+
+        Note:
+            If a cell needs to use auto parallel or semi auto parallel mode for training, evaluation or prediction,
+            this interface needs to be called for the cell.
+        """
+        self._auto_parallel_mode = True
+        self.add_flags(auto_parallel=True)
+        self._get_construct_inputs_number_and_name()

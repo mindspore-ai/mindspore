@@ -15,6 +15,7 @@
  */
 #include "dataset/core/tensor.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -60,7 +61,7 @@ Tensor::Tensor(const TensorShape &shape, const DataType &type, const unsigned ch
   if (data != nullptr) {
     // Given the shape/type of this tensor, compute the data size and copy in the input bytes.
     int64_t byte_size = this->SizeInBytes();
-    static_cast<void>(this->StartAddr());  // Allocates data_ inside itself
+    static_cast<void>(this->GetMutableBuffer());  // Allocates data_ inside itself
     if (data_ != nullptr) {
       int ret_code = memcpy_s(data_, byte_size, data, byte_size);
       if (ret_code != 0) {
@@ -75,7 +76,7 @@ Tensor::Tensor(const TensorShape &shape, const DataType &type, const unsigned ch
 Tensor::Tensor(Tensor &&other) noexcept
     : shape_(other.shape()),
       type_(other.type()),
-      data_(other.StartAddr()),
+      data_(other.GetMutableBuffer()),
       data_allocator_(std::move(other.data_allocator_)) {
   other.Invalidate();
 }
@@ -84,12 +85,43 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
   if (&other != this) {
     shape_ = other.shape();
     type_ = other.type();
-    data_ = other.StartAddr();
+    data_ = other.GetMutableBuffer();
     data_end_ = other.data_end_;
     data_allocator_ = std::move(other.data_allocator_);
     other.Invalidate();
   }
   return *this;
+}
+
+Tensor::Tensor(const std::vector<std::string> &strings, const TensorShape &shape)
+    : Tensor(TensorShape({static_cast<dsize_t>(strings.size())}), DataType(DataType::DE_STRING)) {
+  auto length_sum = [](dsize_t sum, const std::string &s) { return s.length() + sum; };
+  dsize_t total_length = std::accumulate(strings.begin(), strings.end(), 0, length_sum);
+
+  dsize_t num_bytes = (kOffsetSize + 1) * shape_.NumOfElements() + total_length;
+
+  data_ = data_allocator_->allocate(num_bytes);
+
+  auto offset_arr = reinterpret_cast<offset_t *>(data_);
+  uchar *buf = GetStringsBuffer();
+
+  offset_t offset = -1;
+  uint32_t i = 0;
+  for (const auto &str : strings) {
+    //  insert the end index of the string
+    //  end index of a string is the end index of previous string +  the length (including \0)
+    offset = offset + str.length() + 1;
+    offset_arr[i++] = offset;
+    // total bytes are reduced by kOffsetSize
+    num_bytes -= kOffsetSize;
+    // insert actual string
+    memcpy_s(buf, num_bytes, str.c_str(), str.length() + 1);
+    buf += str.length() + 1;
+    num_bytes -= str.length() + 1;
+  }
+  this->data_end_ = buf;
+  DS_ASSERT(num_bytes == 0);
+  if (shape.known()) Tensor::Reshape(shape);
 }
 
 Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl, const TensorShape &shape,
@@ -120,8 +152,28 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl
   }
   return Status::OK();  // returns base-class shared_ptr
 }
+std::string to(std::string x) { return x; }
+Status Tensor::CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::array arr) {
+  std::vector<dsize_t> shape;
+  for (dsize_t i = 0; i < arr.ndim(); i++) {
+    shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
+  }
+  arr.resize({arr.size()});
+  auto itr = arr.begin();
+  std::vector<std::string> strings;
+  for (; itr != arr.end(); itr++) {
+    std::string s = to(py::cast<py::bytes>(*itr));
+    strings.push_back(s);
+  }
+  arr.resize(shape);
+
+  return CreateTensor(ptr, strings, TensorShape{shape});
+}
 
 Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
+  if (DataType::FromNpArray(arr) == DataType::DE_STRING) {
+    return CreateTensorFromNumpyString(ptr, arr);
+  }
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *ptr = std::allocate_shared<Tensor>(*alloc, TensorShape({}), DataType(DataType::DE_UNKNOWN));
 
@@ -138,7 +190,7 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
 
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
   (*ptr)->data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
-  static_cast<void>((*ptr)->StartAddr());
+  static_cast<void>((*ptr)->GetMutableBuffer());
   int64_t byte_size = (*ptr)->SizeInBytes();
   unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
   if ((*ptr)->data_ == nullptr) {
@@ -171,6 +223,13 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
   }
 
   return Status::OK();  // returns base-class shared_ptr
+}
+
+Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const std::vector<std::string> &strings,
+                            const TensorShape &shape) {
+  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
+  *ptr = std::allocate_shared<Tensor>(*alloc, strings, shape);
+  return Status::OK();
 }
 
 // Memcpy the given strided array's used part to consecutive memory
@@ -264,6 +323,12 @@ void Tensor::PrintItemAt(const std::vector<dsize_t> &index, std::ostream &out) c
 
     CASE_PRINT(DataType::DE_FLOAT64, double);
 
+    case DataType::DE_STRING: {
+      std::string_view o{""};
+      GetItemAt(&o, index);
+      out << "\"" << o << "\"";
+      break;
+    }
     default: {
       out << "?";
       break;
@@ -324,12 +389,12 @@ Status Tensor::ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_inde
   return Status::OK();
 }
 
-const unsigned char *Tensor::StartAddr() const {
+const unsigned char *Tensor::GetBuffer() const {
   // This version cannot modify anything.  data_ could possibly be null.
   return data_;
 }
 
-unsigned char *Tensor::StartAddr() {
+unsigned char *Tensor::GetMutableBuffer() {
   if (!shape_.known() || type_ == DataType::DE_UNKNOWN) {
     return nullptr;
   }
@@ -381,6 +446,25 @@ Status Tensor::GetItemPtr(T **ptr, const std::vector<dsize_t> &index) const {
     dsize_t flat_idx;
     RETURN_IF_NOT_OK(ToFlatIndex(index, &flat_idx));
     *ptr = reinterpret_cast<T *>(data_ + flat_idx * type_.SizeInBytes());
+
+    return Status::OK();
+  } else {
+    std::string err = "data type not compatible";
+    RETURN_STATUS_UNEXPECTED(err);
+  }
+}
+
+Status Tensor::GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset_t *length) const {
+  if (type_ == DataType::DE_STRING) {
+    if (data_ == nullptr) {
+      std::string err = "Data is not allocated yet";
+      RETURN_STATUS_UNEXPECTED(err);
+    }
+    dsize_t flat_idx;
+    RETURN_IF_NOT_OK(ToFlatIndex(index, &flat_idx));
+    offset_t length_temp = 0;
+    RETURN_IF_NOT_OK(GetStringAt(flat_idx, ptr, &length_temp));
+    if (length != nullptr) *length = length_temp;
     return Status::OK();
   } else {
     std::string err = "data type not compatible";
@@ -389,23 +473,27 @@ Status Tensor::GetItemPtr(T **ptr, const std::vector<dsize_t> &index) const {
 }
 
 Status Tensor::StartAddrOfIndex(std::vector<dsize_t> ind, uchar **start_addr_of_index, TensorShape *remaining) {
+  if (type() == DataType::DE_STRING) {
+    RETURN_STATUS_UNEXPECTED("StartAddrOfIndex does not support string tensors yet.");
+  }
   dsize_t flat_ind;
   std::vector<dsize_t> t_shape = shape().AsVector();
   std::vector<dsize_t> r(t_shape.begin() + ind.size(), t_shape.end());
   *remaining = TensorShape(r);
   ind.resize(this->Rank(), 0);  //  same as -> while (ind.size() < this->Rank()) ind.push_back(0);
   RETURN_IF_NOT_OK(ToFlatIndex(ind, &flat_ind));
-  // check if StartAddr() returns null, we should flag this as an error, this sanity check will only
+  // check if GetBuffer() returns null, we should flag this as an error, this sanity check will only
   // be true is the tensor failed to allocate memory.
-  if (StartAddr() == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid StartAddr in Tensor, got nullptr");
+  if (GetMutableBuffer() == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Invalid GetBuffer in Tensor, got nullptr");
   }
-  *start_addr_of_index = StartAddr() + flat_ind * this->type().SizeInBytes();
+  *start_addr_of_index = GetMutableBuffer() + flat_ind * this->type().SizeInBytes();
   return Status::OK();
 }
 
 Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_ptr<Tensor> &tensor) {
   std::string err_msg;
+  err_msg += (this->type() == DataType::DE_STRING) ? "[Tensor] Cannot batch tensors of type string\n" : "";
   err_msg += (!this->shape().known() || !tensor->shape().known()) ? "[Tensor] unknown shape\n" : "";
   err_msg += (ind.size() + tensor->Rank() != this->Rank()) ? "[Tensor] incorrect index\n" : "";
   err_msg += tensor->type().SizeInBytes() != this->type().SizeInBytes() ? "[Tensor] incorrect datatype\n" : "";
@@ -414,16 +502,17 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
   err_msg += (!StartAddrOfIndex(ind, &start_addr_of_ind, &remaining_shape).IsOk()) ? "[Tensor] incorrect index\n" : "";
   err_msg += !(remaining_shape == tensor->shape()) ? "[Tensor] memory error\n" : "";
   if (!err_msg.empty()) {
-    MS_LOG(INFO) << "Insert tensor message: " << err_msg;
+    MS_LOG(DEBUG) << "Insert tensor message: " << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   } else {
     if (start_addr_of_ind != nullptr) {
-      int ret_code = memcpy_s(start_addr_of_ind, tensor->SizeInBytes(), tensor->StartAddr(), tensor->SizeInBytes());
+      int ret_code =
+        memcpy_s(start_addr_of_ind, tensor->SizeInBytes(), tensor->GetMutableBuffer(), tensor->SizeInBytes());
       if (ret_code == 0) {
         return Status::OK();
       } else {
         err_msg += "[Tensor] error in memcpy_s when inserting tensor\n";
-        MS_LOG(INFO) << "Tensor message: " << err_msg;
+        MS_LOG(DEBUG) << "Tensor message: " << err_msg;
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
     } else {
@@ -446,21 +535,20 @@ Status Tensor::ExpandDim(const dsize_t &axis) {
 }
 
 std::vector<dsize_t> Tensor::Strides() {
-  std::vector<dsize_t> strides(Rank());
-  dsize_t count = shape_.NumOfElements();
-  for (dsize_t i = 0; i < Rank(); i++) {
-    count /= shape_[i];
-    strides[i] = type_.SizeInBytes() * count;
-  }
+  std::vector<dsize_t> strides = shape_.Strides();
+  uint8_t size = type_.SizeInBytes();
+  std::transform(strides.begin(), strides.end(), strides.begin(), [&size](const auto &c) { return c * size; });
   return strides;
 }
 
 Status Tensor::GetBufferInfo(Tensor &t, py::buffer_info *out) {
+  CHECK_FAIL_RETURN_UNEXPECTED(t.type().IsNumeric(), "Cannot use GetBufferInfo on tensor of strings.");
+
   std::string format_desc = t.type().GetPybindFormat();
   if (format_desc.empty()) {
     RETURN_STATUS_UNEXPECTED("Cannot convert DE type tp pybind format");
   }
-  *out = py::buffer_info(t.StartAddr(),          /* Pointer to buffer */
+  *out = py::buffer_info(t.GetMutableBuffer(),   /* Pointer to buffer */
                          t.type().SizeInBytes(), /* Size of one scalar */
                          format_desc,            /* Python struct-style format descriptor */
                          t.Rank(),               /* Number of dimensions */
@@ -495,6 +583,18 @@ Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {
   return Status::OK();
 }
 
+Status Tensor::GetItemAt(std::string_view *o, const std::vector<dsize_t> &index) const {
+  RETURN_UNEXPECTED_IF_NULL(data_);
+  RETURN_UNEXPECTED_IF_NULL(o);
+  CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Type is not DE_STRING");
+
+  uchar *buf = nullptr;
+  offset_t length = 0;
+  RETURN_IF_NOT_OK(GetItemPtr(&buf, index, &length));
+  std::string_view sv{reinterpret_cast<const char *>(buf), length};
+  o->swap(sv);
+  return Status::OK();
+}
 // return data as numpy, should return status
 Status Tensor::GetDataAsNumpy(py::array *data) {
   RETURN_UNEXPECTED_IF_NULL(data_);
@@ -523,9 +623,34 @@ Status Tensor::GetDataAsNumpy(py::array *data) {
     *data = py::array_t<float>(shape_.AsVector(), reinterpret_cast<float *>(data_));
   } else if (type_ == DataType::DE_FLOAT64) {
     *data = py::array_t<double>(shape_.AsVector(), reinterpret_cast<double *>(data_));
+  } else if (type_ == DataType::DE_STRING) {
+    GetDataAsNumpyStrings(data);
   } else {
     RETURN_STATUS_UNEXPECTED("Got unexpected type when returning numpy");
   }
+  return Status::OK();
+}
+Status Tensor::GetDataAsNumpyStrings(py::array *data) {
+  auto itr = begin<std::string_view>();
+  uint64_t max = 0;
+  for (; itr != end<std::string_view>(); itr++) {
+    max = std::max((*itr).length(), max);
+  }
+  uint64_t total_size = shape_.NumOfElements() * max;
+  char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
+  if (tmp_data == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
+  memset(tmp_data, 0, total_size);
+
+  itr = begin<std::string_view>();
+  uint64_t i = 0;
+  for (; itr != end<std::string_view>(); itr++) {
+    (void)memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
+    i++;
+  }
+  auto strides = shape_.Strides();
+  std::transform(strides.begin(), strides.end(), strides.begin(), [&max](const auto &s) { return s * max; });
+  *data = py::array(py::dtype("S" + std::to_string(max)), shape_.AsVector(), strides, tmp_data);
+  data_allocator_->deallocate(reinterpret_cast<uchar *>(tmp_data));
   return Status::OK();
 }
 
@@ -645,6 +770,20 @@ Status Tensor::GetFloatAt(T *o, const std::vector<dsize_t> &index) const {
       std::string err = "Tensor Type is not a float/double";
       RETURN_STATUS_UNEXPECTED(err);
   }
+  return Status::OK();
+}
+Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const {
+  CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Type is not string");
+  RETURN_UNEXPECTED_IF_NULL(data_);
+  RETURN_UNEXPECTED_IF_NULL(string_start);
+  RETURN_UNEXPECTED_IF_NULL(length);
+  auto *offset_ptr = reinterpret_cast<offset_t *>(data_);  // offsets starts here
+  offset_t end = offset_ptr[index];
+  offset_t start = 0;
+  if (index != 0) start = offset_ptr[index - 1] + 1;  // string starts at where the previous string ends + 1
+  uchar *buf = GetStringsBuffer();                    // string data starts here
+  *string_start = buf + start;
+  *length = end - start;
   return Status::OK();
 }
 }  // namespace dataset

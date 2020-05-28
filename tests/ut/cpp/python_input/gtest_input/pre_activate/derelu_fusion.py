@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 relu = P.ReLU()
 relu_grad = Primitive('ReluGrad')
@@ -21,6 +21,7 @@ relu_v2 = Primitive('ReLUV2')
 relu_grad_v2 = Primitive('ReluGradV2')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
+
 
 class FnDict:
     def __init__(self):
@@ -31,6 +32,7 @@ class FnDict:
 
     def __getitem__(self, name):
         return self.fnDict[name]
+
 
 def test_derelu_fusion(tag):
     fns = FnDict()

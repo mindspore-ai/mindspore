@@ -13,25 +13,26 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model
-from mindspore import context
-import mindspore.common.dtype as mstype
 import os
+import random
+import time
+import pytest
 import numpy as np
-import mindspore.ops.functional as F
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from resnet import resnet50
+
+import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
-from resnet import resnet50
-import random
-import time
+import mindspore.nn as nn
+import mindspore.ops.functional as F
+from mindspore import Tensor
+from mindspore import context
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
+from mindspore.train.model import Model
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 random.seed(1)
 np.random.seed(1)
@@ -133,14 +134,8 @@ class LossGet(Callback):
         return self._loss
 
 
-def train_process(device_id, epoch_size, num_classes, device_num, batch_size):
-    os.system("mkdir " + str(device_id))
-    os.chdir(str(device_id))
+def train_process(epoch_size, num_classes, batch_size):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True, device_id=device_id)
-    context.set_context(enable_loop_sink=True)
-    context.set_context(enable_mem_reuse=True)
-    context.set_context(mode=context.GRAPH_MODE)
     net = resnet50(batch_size, num_classes)
     loss = CrossEntropyLoss()
     opt = Momentum(filter(lambda x: x.requires_grad,
@@ -149,50 +144,24 @@ def train_process(device_id, epoch_size, num_classes, device_num, batch_size):
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
     dataset = create_dataset(epoch_size, training=True, batch_size=batch_size)
-    batch_num = dataset.get_dataset_size()
-    config_ck = CheckpointConfig(save_checkpoint_steps=batch_num, keep_checkpoint_max=1)
-    ckpoint_cb = ModelCheckpoint(prefix="train_resnet_cifar10_device_id_" + str(device_id), directory="./",
-                                 config=config_ck)
     loss_cb = LossGet()
-    model.train(epoch_size, dataset, callbacks=[ckpoint_cb, loss_cb])
+    model.train(epoch_size, dataset, callbacks=[loss_cb])
 
-
-def eval(batch_size, num_classes):
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True, device_id=0)
-    context.set_context(enable_loop_sink=True)
-    context.set_context(enable_mem_reuse=True)
-
-    net = resnet50(batch_size, num_classes)
-    loss = CrossEntropyLoss()
-    opt = Momentum(filter(lambda x: x.requires_grad,
-                          net.get_parameters()), 0.01, 0.9)
-
-    model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
-    checkpoint_path = "./train_resnet_cifar10_device_id_0-1_1562.ckpt"
-    param_dict = load_checkpoint(checkpoint_path)
-    load_param_into_net(net, param_dict)
     net.set_train(False)
     eval_dataset = create_dataset(1, training=False)
     res = model.eval(eval_dataset)
     print("result: ", res)
     return res
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_resnet_cifar_1p():
-    device_num = 1
     epoch_size = 1
     num_classes = 10
     batch_size = 32
-    device_id = 0
-    train_process(device_id, epoch_size, num_classes, device_num, batch_size)
-    time.sleep(3)
-    acc = eval(batch_size, num_classes)
-    os.chdir("../")
-    os.system("rm -rf " + str(device_id))
+    acc = train_process(epoch_size, num_classes, batch_size)
+    os.system("rm -rf kernel_meta")
     print("End training...")
-    assert (acc['acc'] > 0.35)
+    assert acc['acc'] > 0.35

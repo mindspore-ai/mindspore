@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-import numpy as np
-import mindspore.context as context
+
 
 class AssignAdd(nn.Cell):
     def __init__(self, value):
@@ -30,21 +32,22 @@ class AssignAdd(nn.Cell):
         res = self.add(self.var, y)
         return res
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_add():
-    expect1 = np.array([[[[ 0,  2,  4.],
-                         [ 6,  8, 10.],
-                         [12, 14, 16.]],
-                        [[18, 20, 22.],
-                         [24, 26, 28.],
-                         [30, 32, 34.]],
-                        [[36, 38, 40.],
-                         [42, 44, 46.],
-                         [48, 50, 52.]]]])
-    expect2 = np.array([[[[ 0, 3, 6],
-                          [ 9, 12, 15],
+    expect1 = np.array([[[[0, 2, 4.],
+                          [6, 8, 10.],
+                          [12, 14, 16.]],
+                         [[18, 20, 22.],
+                          [24, 26, 28.],
+                          [30, 32, 34.]],
+                         [[36, 38, 40.],
+                          [42, 44, 46.],
+                          [48, 50, 52.]]]])
+    expect2 = np.array([[[[0, 3, 6],
+                          [9, 12, 15],
                           [18, 21, 24]],
                          [[27, 30, 33],
                           [36, 39, 42],

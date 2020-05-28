@@ -14,17 +14,16 @@
 # ============================================================================
 """ test_multigraph_sink """
 import pytest
-import numpy as np
-import mindspore.nn as nn
+
 import mindspore.context as context
-from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common import ms_function
-from mindspore.ops import operations as P
+from mindspore.common.tensor import Tensor
 
 
 def setup_module(module):
-    context.set_context(mode = context.PYNATIVE_MODE, device_target = "Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+
 
 c1 = Tensor([2], mstype.int32)
 c2 = Tensor([14], mstype.int32)
@@ -149,6 +148,10 @@ def test_if_by_if():
     assert output == expect
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_if_in_if():
     output = if_in_if(c1, c2, c3)
     expect = Tensor([7], mstype.int32)
@@ -194,6 +197,7 @@ def test_while_by_while_in_while():
     expect = Tensor([350], mstype.int32)
     assert output == expect
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -202,4 +206,3 @@ def test_while_in_while_in_while():
     output = while_in_while_in_while(c1, c2, c3)
     expect = Tensor([2534], mstype.int32)
     assert output == expect
-

@@ -15,12 +15,15 @@
  */
 
 #include <map>
+#include "device/ascend/profiling/reporter/graph_desc_reporter.h"
 #include "device/ascend/profiling/profiling_utils.h"
 #include "kernel/kernel.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "session/anf_runtime_algorithm.h"
 #include "common/utils.h"
 #include "utils/utils.h"
+#include "device/ascend/profiling/reporter/task_desc_reporter.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -30,6 +33,7 @@ constexpr char kCustomNode[] = "PROFILING_CUSTOM_";
 constexpr char kFpStartNode[] = "PROFILING_FP_START";
 constexpr char kBpEndNode[] = "PROFILING_BP_END";
 constexpr char kIterEndNode[] = "PROFILING_ITER_END";
+std::unordered_map<uint32_t, std::vector<CNodePtr>> ProfilingUtils::graph_profiling_cnode_;
 std::unordered_map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
 uint32_t ProfilingUtils::custom_node_index_ = 1;
 
@@ -77,7 +81,7 @@ std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exe
     return std::string(trace_begin);
   }
 
-  std::string fp_start_str = "";
+  std::string fp_start_str;
   std::set<std::string> getnext_outputs;
   GetCNodeOutputRealNode(kGetNextOpName, cnode_exec_order, NOT_NULL(&getnext_outputs));
   if (getnext_outputs.empty()) {
@@ -97,8 +101,8 @@ std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exe
 
 void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
                                             NotNull<std::set<std::string> *> getnext_outputs) {
-  for (auto cnode : cnode_exec_order) {
-    for (auto input : cnode->inputs()) {
+  for (const auto &cnode : cnode_exec_order) {
+    for (const auto &input : cnode->inputs()) {
       auto prev_cnode = AnfAlgo::VisitKernel(input, 0);
       if (!prev_cnode.first->isa<CNode>()) {
         continue;
@@ -120,7 +124,7 @@ std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exe
   if (trace_bp_end != nullptr) {
     return std::string(trace_bp_end);
   }
-  std::string bp_end_str = "";
+  std::string bp_end_str;
   // Contain hccl kernel
   auto iter = cnode_exec_order.rbegin();
   while (iter != cnode_exec_order.rend()) {
@@ -154,7 +158,7 @@ std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exe
 }
 
 std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order) {
-  std::string last_tbe_kernel_name = "";
+  std::string last_tbe_kernel_name;
   // find last tbe_kernel
   for (auto iter = cnode_exec_order.rbegin(); iter != cnode_exec_order.rend(); ++iter) {
     if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL) {
@@ -276,40 +280,50 @@ void ProfilingUtils::ProfilingTraceEnd(const AnfNodePtr &anf_node, const Profili
 }
 
 void ProfilingUtils::SetGraphKernelName(uint32_t graph_id, const std::vector<std::string> &kernel_names) {
-  auto iter = graph_kernel_name_.find(graph_id);
-  if (iter == graph_kernel_name_.end()) {
-    graph_kernel_name_[graph_id] = kernel_names;
-  } else {
-    MS_LOG(ERROR) << "[profiling]graph kernel names already exist";
+  auto ret = graph_kernel_name_.try_emplace(graph_id, kernel_names);
+  if (!ret.second) {
+    MS_LOG(ERROR) << "[profiling]graph " << graph_id << " kernel names already exist";
   }
 }
 
-void ProfilingUtils::ReportProfilingData(uint32_t graph_id, const std::vector<uint32_t> &task_ids) {
-  auto iter = graph_kernel_name_.find(graph_id);
-  if (iter == graph_kernel_name_.end()) {
-    MS_LOG(ERROR) << "[profiling]graph id " << graph_id << " not in graph_kernel_name_";
-    return;
+void ProfilingUtils::SetGraphProfilingCNode(uint32_t graph_id, const std::vector<CNodePtr> &profiling_cnode_list) {
+  auto ret = graph_profiling_cnode_.try_emplace(graph_id, profiling_cnode_list);
+  if (!ret.second) {
+    MS_LOG(ERROR) << "[profiling]graph " << graph_id << " profiling cnode list already exist";
   }
-  auto &kernel_names = iter->second;
+}
 
-  MS_LOG(INFO) << "kernel_names size:" << kernel_names.size() << ", task_ids size:" << task_ids.size();
-  if (kernel_names.size() != task_ids.size()) {
-    MS_LOG(ERROR) << "[profiling]kernel name and task id not match";
+bool ProfilingUtils::ValidComputeGraph(NotNull<const session::KernelGraph *> graph_ptr) {
+  for (const auto &node : graph_ptr->execution_order()) {
+    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
+                                         NotNull<const session::KernelGraph *> graph) {
+  if (!ValidComputeGraph(graph)) {
+    MS_LOG(WARNING) << "Not a valid compute graph:" << graph->graph_id();
     return;
   }
-  std::map<uint32_t, std::string> op_task_id_map;
-  size_t size = kernel_names.size();
-  for (size_t i = 0; i < size; ++i) {
-    auto it = op_task_id_map.find(task_ids[i]);
-    if (it != op_task_id_map.end()) {
-      MS_LOG(WARNING) << "task_id " << task_ids[i] << " exist, " << kernel_names[i];
-      continue;
-    }
-    op_task_id_map[task_ids[i]] = kernel_names[i];
+
+  auto ret = graph_profiling_cnode_.find(graph->graph_id());
+  if (ret == graph_profiling_cnode_.end()) {
+    MS_LOG(ERROR) << "Graph id not found";
+    return;
   }
-  if (!ProfilingManager::GetInstance().ReportProfilingData(op_task_id_map)) {
-    MS_LOG(ERROR) << "ReportProfilingData failed";
-  }
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  TaskDescReporter task_reporter(context->device_id(), "vm.task_desc_info", ret->second);
+  task_reporter.set_task_ids(task_ids);
+  task_reporter.ReportData();
+
+  GraphDescReporter graph_reporter(context->device_id(), "vm.graph_desc_info", ret->second);
+  graph_profiling_cnode_.erase(ret);
+  graph_reporter.ReportData();
 }
 }  // namespace ascend
 }  // namespace device

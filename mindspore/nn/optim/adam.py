@@ -243,7 +243,7 @@ class Adam(Optimizer):
         self.beta1_power = beta1_power
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
-        if self.is_group:
+        if self.is_group_lr:
             success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
                                                self.beta2, self.eps),
                                      lr, gradients, params, moment1, moment2)
@@ -360,7 +360,8 @@ class AdamWeightDecayDynamicLR(Optimizer):
                  beta2=0.999,
                  eps=1e-6,
                  weight_decay=0.0,
-                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
+                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name,
+                 warmup_steps=0):
         super(AdamWeightDecayDynamicLR, self).__init__(learning_rate, params)
         if self.is_group:
             raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
@@ -368,6 +369,10 @@ class AdamWeightDecayDynamicLR(Optimizer):
         _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, self.cls_name)
         # turn them to scalar when me support scalar/tensor mix operations
         self.global_step = Parameter(initializer(0, [1]), name="global_step")
+        self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
+        self.warmup_flag = False
+        if warmup_steps > 0:
+            self.warmup_flag = True
         self.decay_steps = Tensor(np.array([decay_steps]).astype(np.float32))
         self.end_learning_rate = Tensor(np.array([end_learning_rate]).astype(np.float32))
         self.diff_learning_rate = Tensor(np.array([learning_rate - end_learning_rate]).astype(np.float32))
@@ -383,12 +388,20 @@ class AdamWeightDecayDynamicLR(Optimizer):
         self.hyper_map = C.HyperMap()
         self.min = P.Minimum()
         self.pow = P.Pow()
+        self.greater = P.Greater()
         self.one = Tensor(np.array([1.0]).astype(np.float32))
+        self.cast = P.Cast()
+        self.start_learning_rate = Tensor(np.array([learning_rate]).astype(np.float32))
 
     def construct(self, gradients):
         step = self.min(self.global_step, self.decay_steps)
         p = step / self.decay_steps
         lr = self.diff_learning_rate * self.pow(self.one - p, self.power) + self.end_learning_rate
+        if self.warmup_flag:
+            warmup_percent = self.global_step / self.warmup_steps
+            warmup_lr = self.start_learning_rate * warmup_percent
+            is_warmup = self.cast(self.greater(self.warmup_steps, self.global_step), mstype.float32)
+            lr = (self.one - is_warmup) * lr + is_warmup * warmup_lr
         updated_velocity = self.hyper_map(F.partial(adam_opt, self.beta1, self.beta2, self.eps, lr,
                                                     self.weight_decay_tensor),
                                           self.params, self.moments1, self.moments2, gradients, self.decay_flag)

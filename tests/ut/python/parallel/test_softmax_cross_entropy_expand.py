@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.nn.loss.loss import SoftmaxCrossEntropyExpand
+import numpy as np
+
 from mindspore import Tensor
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
-from mindspore import context
-import numpy as np
+from mindspore.nn.loss.loss import SoftmaxCrossEntropyExpand
+
 
 def test_SoftmaxCrossEntropy():
     net = SoftmaxCrossEntropyExpand(sparse=True)
@@ -25,5 +27,5 @@ def test_SoftmaxCrossEntropy():
     logit = Tensor(np.ones([64, 512]), dtype=mstype.float32)
     label = Tensor(np.ones([64]), dtype=mstype.int32)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+    net.set_auto_parallel()
     _executor.compile(net, logit, label)

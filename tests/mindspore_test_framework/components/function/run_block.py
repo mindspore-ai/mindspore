@@ -18,6 +18,7 @@
 from ...components.icomponent import IBuilderComponent
 from ...utils.block_util import run_block, gen_net, create_funcs
 
+
 class RunBlockBC(IBuilderComponent):
     """
     Build a function that run mindspore pipeline.
@@ -42,5 +43,6 @@ class RunBlockBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
-    def build_sut(self, verification_set):
-        return create_funcs(verification_set, gen_net, run_block)
+
+    def __call__(self):
+        return create_funcs(self.verification_set, gen_net, run_block)

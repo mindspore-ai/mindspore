@@ -396,9 +396,9 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
 }
 
 
-class TestInferOnePrim : public UT::Common {
+class TestEvalOnePrim : public UT::Common {
  public:
-  TestInferOnePrim() : getPyFun("gtest_input.pipeline.infer.infer_test", true), engine_(nullptr) {}
+  TestEvalOnePrim() : getPyFun("gtest_input.pipeline.infer.infer_test", true), engine_(nullptr) {}
   void SetUp();
   void TearDown();
 
@@ -406,37 +406,37 @@ class TestInferOnePrim : public UT::Common {
   AnalysisEnginePtr engine_;
 };
 
-void TestInferOnePrim::SetUp() { engine_ = SetupAnalysisEngineStub(); }
+void TestEvalOnePrim::SetUp() { engine_ = SetupAnalysisEngineStub(); }
 
-void TestInferOnePrim::TearDown() {
+void TestEvalOnePrim::TearDown() {
   // destroy resource
 }
-TEST_F(TestInferOnePrim, test_scalar_add) {
+TEST_F(TestEvalOnePrim, test_scalar_add) {
   double x1 = 1.1;
   double x2 = 1.1;
   double x3 = 2.2;
   AbstractBasePtr base1 = FromValue(x1, false);
   AbstractBasePtr base2 = FromValue(x2, false);
   AbstractBasePtrList base_list = {base1, base2};
-  auto res = InferOnePrim(std::make_shared<Primitive>("scalar_add"), base_list);
+  auto res = EvalOnePrim(std::make_shared<Primitive>("scalar_add"), base_list);
   MS_LOG(INFO) << "result spec: " << res->ToString();
   AbstractBasePtr exp = FromValue(x3, false);
   MS_LOG(INFO) << "result exp: " << exp->ToString();
   ASSERT_EQ(*res, *exp);
 }
 
-class TestGraphInfer : public UT::Common {
+class TestGraphEval : public UT::Common {
  public:
-  TestGraphInfer() : getPyFun("gtest_input.pipeline.infer.infer_test", true){};
+  TestGraphEval() : getPyFun("gtest_input.pipeline.infer.infer_test", true){}; 
   void SetUp();
   void TearDown();
   AnalysisEnginePtr engine_;
   UT::PyFuncGraphFetcher getPyFun;
 };
 
-void TestGraphInfer::SetUp() { engine_ = SetupAnalysisEngine(); }
+void TestGraphEval::SetUp() { engine_ = SetupAnalysisEngine(); }  
 
-void TestGraphInfer::TearDown() {
+void TestGraphEval::TearDown() {
   // destroy resource
   engine_->ClearEvaluatorCache();
   parse::data_converter::ClearObjectCache();

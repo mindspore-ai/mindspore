@@ -20,7 +20,6 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "dataset/core/data_type.h"
@@ -122,6 +121,12 @@ class GeneratorOp : public PipelineOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;
@@ -130,7 +135,6 @@ class GeneratorOp : public PipelineOp {
   int32_t buffer_size_;
 
   py::object generator_;
-  std::unordered_map<std::string, int32_t> column_names_map_;
   int32_t buffer_id_;
 
   WaitPost wp_;

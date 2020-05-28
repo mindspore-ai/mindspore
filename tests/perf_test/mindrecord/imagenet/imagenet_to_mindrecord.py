@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """use ImageNetToMR tool generate mindrecord"""
-import os
 from mindspore.mindrecord import ImageNetToMR
 
 IMAGENET_MAP_FILE = "../../../ut/data/mindrecord/testImageNetDataWhole/labels_map.txt"
@@ -21,12 +20,14 @@ IMAGENET_IMAGE_DIR = "../../../ut/data/mindrecord/testImageNetDataWhole/images"
 MINDRECORD_FILE = "./imagenet.mindrecord"
 PARTITION_NUMBER = 16
 
+
 def imagenet_to_mindrecord():
     imagenet_transformer = ImageNetToMR(IMAGENET_MAP_FILE,
                                         IMAGENET_IMAGE_DIR,
                                         MINDRECORD_FILE,
                                         PARTITION_NUMBER)
     imagenet_transformer.transform()
+
 
 if __name__ == '__main__':
     imagenet_to_mindrecord()

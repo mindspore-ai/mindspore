@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
+#include "ir/primitive.h"
 #include "ir/meta_func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
@@ -30,6 +31,7 @@
 #include "operator/ops.h"
 #include "operator/composite/composite.h"
 #include "utils/symbolic.h"
+#include "utils/primitive_utils.h"
 #include "debug/info.h"
 #include "debug/trace.h"
 
@@ -49,7 +51,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
   auto scope = std::make_shared<Scope>(gradients_scope + ScopeManager::GetInstance().GetCurrentScope()->name() +
                                        grad_op_child_scope_prefix + prim->name());
   ScopeGuard scope_guard(scope);
-  py::function fn = prim->GetBpropFunction();
+  py::function fn = prim->is_base() ? GetBpropFunction(prim->name()) : prim->cast<PrimitivePyPtr>()->GetBpropFunction();
   if (fn == nullptr || py::isinstance<py::none>(fn)) {
     MS_LOG(DEBUG) << "Fail to find bprop function for " << prim->name() << ".";
     return nullptr;
@@ -60,6 +62,15 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
     return nullptr;
   }
   return func_graph;
+}
+
+FuncGraphPtr KPrim::GetFprop(const PrimitivePtr &prim) {
+  static const std::string ad_module = "mindspore.ops._grad.grad_implementations";
+  std::string func_name = "_fprop_" + prim->name();
+  py::function fn = parse::python_adapter::GetPyFn(ad_module, func_name);
+  auto func_graph = parse::ParsePythonCode(fn);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  return BasicClone(func_graph);
 }
 
 MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
@@ -90,6 +101,13 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
   auto iter = bprop_registry_.find(prim);
   if (iter != bprop_registry_.end()) {
     return iter->second;
+  }
+
+  if (prim->Hash() == prim::kPrimSwitchLayer->Hash() && prim->name() == "switch_layer") {
+    auto fprop = GetFprop(prim);
+    fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
+    bprop_registry_[prim::kPrimSwitchLayer] = fprop;
+    return fprop;
   }
 
   if (prim->name() == "make_tuple") {

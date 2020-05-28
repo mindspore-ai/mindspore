@@ -21,6 +21,7 @@ from mindspore._checkparam import check_bool, twice, check_int_positive, check_i
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
+__all__ = ['Conv2d', 'Conv2dTranspose']
 
 class _Conv(Cell):
     """
@@ -37,7 +38,8 @@ class _Conv(Cell):
                  group,
                  has_bias,
                  weight_init,
-                 bias_init):
+                 bias_init,
+                 transposed=False):
         super(_Conv, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
@@ -65,9 +67,11 @@ class _Conv(Cell):
         if out_channels % group != 0:
             raise ValueError("Attr 'out_channels' of 'Conv2D' Op must be divisible by "
                              "attr 'group' of 'Conv2D' Op.")
-
-        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels // group, *kernel_size]),
-                                name='weight')
+        if transposed:
+            shape = [in_channels, out_channels // group, *kernel_size]
+        else:
+            shape = [out_channels, in_channels // group, *kernel_size]
+        self.weight = Parameter(initializer(weight_init, shape), name='weight')
 
         if check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
@@ -270,7 +274,7 @@ class Conv2dTranspose(_Conv):
                                       be greater or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
         group (int): Split filter into groups, `in_channels` and `out_channels` should be
-            divisible by the number of groups. Default: 1.
+            divisible by the number of groups. This is not support for Davinci devices when group > 1. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
@@ -312,8 +316,8 @@ class Conv2dTranspose(_Conv):
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
         super(Conv2dTranspose, self).__init__(
-            out_channels,
             in_channels,
+            out_channels,
             kernel_size,
             stride,
             pad_mode,
@@ -322,10 +326,11 @@ class Conv2dTranspose(_Conv):
             group,
             has_bias,
             weight_init,
-            bias_init)
+            bias_init,
+            transposed=True)
 
-        self.out_channels = out_channels
         self.in_channels = in_channels
+        self.out_channels = out_channels
         self.shape = P.Shape()
         if pad_mode not in ('valid', 'same', 'pad'):
             raise ValueError('Attr \'pad_mode\' of \'Conv2dTranspose\' Op passed '
@@ -354,6 +359,7 @@ class Conv2dTranspose(_Conv):
     def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size):
         """Calculate the width and height of output."""
         length = 0
+        filter_size = filter_size + (filter_size - 1) * (dilation_size - 1)
         if self.is_valid:
             if filter_size - stride_size > 0:
                 length = input_length * stride_size + filter_size - stride_size
@@ -362,8 +368,7 @@ class Conv2dTranspose(_Conv):
         elif self.is_same:
             length = input_length * stride_size
         elif self.is_pad:
-            length = input_length * stride_size - 2 * self.padding + filter_size + \
-                     (filter_size - 1) * (dilation_size - 1) - stride_size
+            length = input_length * stride_size - 2 * self.padding + filter_size - stride_size
 
         return length
 

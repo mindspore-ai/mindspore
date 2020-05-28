@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #endif
 #include <unistd.h>
-#include <random>
 #include "dataset/util/circular_pool.h"
+#include "dataset/util/random.h"
 #include "dataset/util/task_manager.h"
 
 #define SLOT_TASK_MGR 0
@@ -50,14 +50,8 @@ int Services::GetLWP() { return syscall(SYS_gettid); }
 
 std::string Services::GetUniqueID() {
   const std::string kStr = "abcdefghijklmnopqrstuvwxyz0123456789";
-#if defined(_WIN32) || defined(_WIN64)
-  unsigned int number;
-  rand_s(&number);
-  std::mt19937 gen{static_cast<uint32_t>(number)};
-#else
-  std::mt19937 gen{std::random_device{"/dev/urandom"}()};
-#endif
-  std::uniform_int_distribution<> dist(0, kStr.size() - 1);
+  std::mt19937 gen = GetRandomDevice();
+  std::uniform_int_distribution<uint32_t> dist(0, kStr.size() - 1);
   char buffer[UNIQUEID_LEN];
   for (int i = 0; i < UNIQUEID_LEN; i++) {
     buffer[i] = kStr[dist(gen)];

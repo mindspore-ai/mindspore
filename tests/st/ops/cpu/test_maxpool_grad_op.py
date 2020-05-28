@@ -13,17 +13,19 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
 
 class Net_Pool_Grad(nn.Cell):
     def __init__(self):
@@ -56,7 +58,6 @@ class Net_Pool_Grad(nn.Cell):
                 [31, 33, 35]
             ]]]).astype(np.float32)), [1, 1, 3, 3]), name='d')
 
-
     def construct(self):
         return self.maxpool_grad_fun(self.x, self.a, self.d)
 
@@ -78,4 +79,3 @@ def test_maxpool2d_grad():
         [0, 31, 0, 33, 0, 35]
     ]]]))
     assert (output.asnumpy() == expect_result).all()
-

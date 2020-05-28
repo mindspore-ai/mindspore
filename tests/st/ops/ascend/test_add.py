@@ -12,26 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import numpy as np
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
-import numpy as np
-import mindspore.context as context
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_task_sink=True)
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.add = P.TensorAdd()
-        
+
     def construct(self, x, y):
         return self.add(x, y)
 
-x = np.ones([1,3,3,4]).astype(np.float32)
-y = np.ones([1,3,3,4]).astype(np.float32)
+
+x = np.ones([1, 3, 3, 4]).astype(np.float32)
+y = np.ones([1, 3, 3, 4]).astype(np.float32)
+
 
 def test_net():
     add = Net()

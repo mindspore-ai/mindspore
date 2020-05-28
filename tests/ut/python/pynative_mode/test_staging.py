@@ -15,17 +15,18 @@
 """ test_staging """
 import numpy as np
 import pytest
+
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.api import ms_function
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common import MetaTensor
 from mindspore.common import dtype
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
+from mindspore.common.api import ms_function
 from mindspore.common.dtype import get_py_obj_dtype
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
-from mindspore import context
 
 
 def setup_module(module):
@@ -37,6 +38,7 @@ def tensor_add_func_inner(x, y):
     """ tensor_add_func_inner """
     z = F.tensor_add(x, y)
     return z
+
 
 @ms_function
 def tensor_add_func(x, y):
@@ -79,6 +81,7 @@ def tensor_add_test(x, y):
 
 class TensorAddMulNet(nn.Cell):
     """ TensorAddMulNet definition """
+
     def __init__(self):
         super(TensorAddMulNet, self).__init__()
         self.add = P.TensorAdd()
@@ -105,6 +108,7 @@ class TensorAddMulNet(nn.Cell):
 
 class TensorAddNet(nn.Cell):
     """ TensorAddNet definition """
+
     def __init__(self):
         super(TensorAddNet, self).__init__()
         self.add = P.TensorAdd()
@@ -176,6 +180,7 @@ def test_input_signature():
     y3 = Tensor(np.ones([1, 1, 4, 4], dtype=np.float64))
     with pytest.raises(ValueError):
         tensor_add_test(x3, y3)
+
 
 def test_scalar_cast():
     """ test_scalar_cast """

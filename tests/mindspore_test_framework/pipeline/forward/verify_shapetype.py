@@ -15,13 +15,13 @@
 
 """Pipelines for shape and type checking."""
 
-from ...components.inputs.get_inputs_from_config import IdentityDC
-from ...components.function.get_function_from_config import IdentityBC
 from ...components.executor.exec_forward import IdentityEC
 from ...components.expect_result_policy.cartesian_product_on_group_for_expect_result \
     import GroupCartesianProductERPC
+from ...components.function.get_function_from_config import IdentityBC
 from ...components.function_inputs_policy.cartesian_product_on_group_for_function_inputs \
     import GroupCartesianProductFIPC
+from ...components.inputs.get_inputs_from_config import IdentityDC
 from ...components.verifier.verify_shapetype import ShapeTypeVC
 
 # pylint: disable=W0105

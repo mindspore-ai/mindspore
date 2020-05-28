@@ -46,9 +46,6 @@ args_opt = parser.parse_args()
 device_id = int(os.getenv('DEVICE_ID'))
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
-context.set_context(enable_task_sink=True)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
 
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:

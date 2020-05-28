@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
-import numpy as np
 
 
 # In generator dataset: Number of rows is 3, its value is 0, 1, 2
@@ -126,7 +127,7 @@ def test_take_06():
     """
     logger.info("test_take_06")
     data1 = ds.GeneratorDataset(generator, ["data"])
-    
+
     data1 = data1.repeat(2)
     data1 = data1.take(4)
 
@@ -143,7 +144,7 @@ def test_take_07():
     """
     logger.info("test_take_07")
     data1 = ds.GeneratorDataset(generator, ["data"])
-    
+
     data1 = data1.take(2)
     data1 = data1.batch(2)
     assert sum([1 for _ in data1]) == 1
@@ -167,7 +168,7 @@ def test_take_09():
     """
     logger.info("test_take_09")
     data1 = ds.GeneratorDataset(generator, ["data"])
-    
+
     data1 = data1.repeat(2)
     data1 = data1.take(-1)
 

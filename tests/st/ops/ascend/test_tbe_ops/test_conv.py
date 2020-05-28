@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -27,25 +29,23 @@ class Net(nn.Cell):
         out_channel = 64
         kernel_size = 7
         self.conv = P.Conv2D(out_channel,
-                                 kernel_size,
-                                 mode=1,
-                                 pad_mode="valid",
-                                 pad=0,
-                                 stride=1,
-                                 dilation=1,
-                                 group=1)
+                             kernel_size,
+                             mode=1,
+                             pad_mode="valid",
+                             pad=0,
+                             stride=1,
+                             dilation=1,
+                             group=1)
         self.w = Parameter(initializer(
-                                'normal', [64, 3, 7, 7]), name='w')
-
+            'normal', [64, 3, 7, 7]), name='w')
 
     @ms_function
     def construct(self, x):
         return self.conv(x, self.w)
 
 
-
 def test_net():
-    x = np.random.randn(32,3,224,224).astype(np.float32)
+    x = np.random.randn(32, 3, 224, 224).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     conv = Net()
     output = conv(Tensor(x))

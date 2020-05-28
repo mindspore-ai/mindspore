@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset.transforms.vision.c_transforms as vision
-import mindspore.dataset.transforms.c_transforms as data_trans
 import pytest
 
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as data_trans
+import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -204,5 +204,3 @@ if __name__ == '__main__':
     logger.info('Map then Shuffle')
     test_case_3()
     logger.info('\n')
-
-

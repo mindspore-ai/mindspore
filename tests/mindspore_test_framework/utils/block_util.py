@@ -19,29 +19,34 @@
 
 import numpy as np
 
+from mindspore import ParameterTuple
+from mindspore import nn, context
 from mindspore.common.api import _executor, ms_function
 from mindspore.common.tensor import Tensor
-from mindspore import nn, context
-from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore import ParameterTuple
+from mindspore.ops.composite import GradOperation
 from . import keyword
+
 
 def get_uniform_with_shape(shape):
     np.random.seed(1)
     return np.random.uniform(-0.1, 0.1, size=shape).astype(np.float32)
 
+
 def set_block_param_with_rand(net, rand_func=None):
     if not isinstance(net, nn.Cell) or rand_func is None:
         return
+    net.init_parameters_data()
     for param in net.trainable_params():
         param.default_input = Tensor(rand_func(param.default_input.asnumpy().shape))
+
 
 def compile_block(net, *inputs, rand_func=None, training=True):
     set_block_training(net, training)
     set_block_param_with_rand(net, rand_func)
     return _executor.compile(net, *inputs)
+
 
 def run_block(net, *inputs, rand_func=None, training=True):
     set_block_training(net, training)
@@ -51,9 +56,12 @@ def run_block(net, *inputs, rand_func=None, training=True):
             @ms_function
             def _func_pynative(*inputs):
                 return net(*inputs)
+
             return _func_pynative(*inputs)
+
         return func_pynative(*inputs)
     return net(*inputs)
+
 
 class IthOutputCell(nn.Cell):
     def __init__(self, network, output_index):
@@ -68,11 +76,13 @@ class IthOutputCell(nn.Cell):
         predict = self.network(*inputs)[self.output_index]
         return predict
 
+
 def get_output_cell(network, num_input, output_index, training=True):
     _ = num_input
     net = IthOutputCell(network, output_index)
     set_block_training(net, training)
     return net
+
 
 class OutputReduceSumCell(nn.Cell):
     def __init__(self, network, output_num):
@@ -91,10 +101,12 @@ class OutputReduceSumCell(nn.Cell):
             ret = ret + F.make_tuple(predict_reduce)
         return ret
 
+
 def get_output_reduce_cell(network, output_num, training=True):
     net = OutputReduceSumCell(network, output_num)
     set_block_training(net, training)
     return net
+
 
 class InputOpNet(nn.Cell):
     def __init__(self, op, c1=None, c2=None, c3=None, c4=None):
@@ -111,6 +123,7 @@ class InputOpNet(nn.Cell):
     def construct0_c0_fake(self, data):
         x = self.op() + data
         return x
+
     def construct0_c1_fake(self, data):
         x = self.op(self.c1) + data
         return x
@@ -187,6 +200,10 @@ class InputOpNet(nn.Cell):
         x = self.op(x1, x2, x3, x4, self.c1)
         return x
 
+    def construct4_c2(self, x1, x2, x3, x4):
+        x = self.op(x1, x2, x3, x4, self.c1, self.c2)
+        return x
+
     def construct4_c4(self, x1, x2, x3, x4):
         x = self.op(x1, x2, x3, x4, self.c1, self.c2, self.c3, self.c4)
         return x
@@ -207,6 +224,7 @@ class InputOpNet(nn.Cell):
         x = self.op(x1, x2, x3, x4, x5, self.c1, self.c2, self.c3, self.c4)
         return x
 
+
 def gen_net(op, input_num, training=True, desc_const=(), const_first=False, add_fake_input=False):
     if isinstance(op, nn.Cell):
         return op
@@ -222,6 +240,7 @@ def gen_net(op, input_num, training=True, desc_const=(), const_first=False, add_
     set_block_training(net, training)
     return net
 
+
 class OperationBackward(nn.Cell):
     def __init__(self, network, grad_op, sens):
         if isinstance(network, nn.Cell):
@@ -235,6 +254,7 @@ class OperationBackward(nn.Cell):
     def construct(self, *inputs):
         return self.grad(self.network)(*inputs, self.sens)
 
+
 class OperationBackwardWithNoSens(nn.Cell):
     def __init__(self, network, grad_op):
         if isinstance(network, nn.Cell):
@@ -246,6 +266,7 @@ class OperationBackwardWithNoSens(nn.Cell):
 
     def construct(self, *inputs):
         return self.grad(self.network)(*inputs)
+
 
 class NNBackward(nn.Cell):
     def __init__(self, network, grad_op, sens):
@@ -261,6 +282,7 @@ class NNBackward(nn.Cell):
     def construct(self, *inputs):
         return self.grad(self.network, self.params)(*inputs, self.sens)
 
+
 class NNBackwardWithNoSens(nn.Cell):
     def __init__(self, network, grad_op):
         if isinstance(network, nn.Cell):
@@ -273,6 +295,7 @@ class NNBackwardWithNoSens(nn.Cell):
 
     def construct(self, *inputs):
         return self.grad(self.network, self.params)(*inputs)
+
 
 def gen_grad_net(net, grad_op, input_num, sens=None, training=True, desc_const=(),
                  const_first=False, add_fake_input=False):
@@ -291,13 +314,16 @@ def gen_grad_net(net, grad_op, input_num, sens=None, training=True, desc_const=(
     set_block_training(net, training)
     return net
 
+
 def set_block_training(net, training=True):
     if isinstance(net, nn.Cell):
         net.set_train(training)
 
+
 def set_block_phase(net, phase='train'):
     if isinstance(net, nn.Cell):
         net.phase = phase
+
 
 def create_funcs(verification_set, block_generator, block_runner, grad_op=None, default_rand_func=None):
     def create_func(block, num_outputs, rand_func, desc_const, const_first, add_fake_input, split_outputs):
@@ -342,6 +368,7 @@ def create_funcs(verification_set, block_generator, block_runner, grad_op=None, 
             b = block_generator(block, inputs_num, desc_const=desc_const, const_first=const_first,
                                 add_fake_input=add_fake_input)
             return block_runner(b, *inputs, rand_func=rand_func)
+
         return function
 
     bc_configs = verification_set[keyword.function]

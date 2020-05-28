@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train import Model, ParallelMode
+import numpy as np
+
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, context
+from mindspore import context
+from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor, context
-import mindspore as ms
-import numpy as np
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
+from mindspore.train import Model, ParallelMode
 from tests.dataset_mock import MindData
-from mindspore import context
-
 
 
 class Dataset(MindData):
@@ -73,7 +73,8 @@ def transpose_common(strategy1, strategy2):
     epoch_size = 2
 
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8, parameter_broadcast=False)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8,
+                                      parameter_broadcast=False)
 
     predict = Tensor(np.ones([32, 128]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
@@ -90,18 +91,17 @@ def transpose_common(strategy1, strategy2):
 
 
 def test_transpose1():
-    strategy1 = ((1, 8), )
-    strategy2 = ((1, 8), )
+    strategy1 = ((1, 8),)
+    strategy2 = ((1, 8),)
     transpose_common(strategy1, strategy2)
 
 
 def test_transpose2():
-    strategy1=((1, 4), )
-    strategy2=((1, 8), )
+    strategy1 = ((1, 4),)
+    strategy2 = ((1, 8),)
     transpose_common(strategy1, strategy2)
 
 
 if __name__ == '__main__':
     test_transpose1()
     test_transpose2()
-

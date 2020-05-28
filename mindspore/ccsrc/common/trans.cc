@@ -63,8 +63,27 @@ const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberType
                                            {kNumberTypeUInt32, 4},  {kNumberTypeUInt64, 8},  {kNumberTypeFloat, 4},
                                            {kNumberTypeFloat16, 2}, {kNumberTypeFloat32, 4}, {kNumberTypeFloat64, 8}};
 
+inline void SetData(size_t size, bool pad_zero, size_t src_idx, size_t dst_idx, const FormatArgs &args, void *result) {
+  switch (size) {
+    case 1:
+      static_cast<uint8_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint8_t *>(args.data)[src_idx];
+      break;
+    case 2:
+      static_cast<uint16_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint16_t *>(args.data)[src_idx];
+      break;
+    case 4:
+      static_cast<uint32_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint32_t *>(args.data)[src_idx];
+      break;
+    case 8:
+      static_cast<uint64_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint64_t *>(args.data)[src_idx];
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Trans data not support size " << size;
+  }
+}
+
 template <typename T>
-T Ceil(T n1, T n2) {
+T DivCeil(T n1, T n2) {
   return (n2 != 0) ? (n1 - 1) / n2 + 1 : 0;
 }
 
@@ -73,33 +92,53 @@ enum DataTypeTransMode {
   FROM_FLOAT_TO_INT32,
   FROM_FLOAT16_TO_FLOAT,
   FROM_FLOAT16_TO_INT32,
+  FROM_FLOAT16_TO_UINT8,
   FROM_INT32_TO_FLOAT,
   FROM_INT32_TO_FLOAT16,
   FROM_INT32_TO_UINT8,
   FROM_INT32_TO_INT8,
+  FROM_INT32_TO_BOOL,
   FROM_UINT8_TO_FLOAT,
   FROM_UINT8_TO_INT32,
+  FROM_UINT8_TO_FLOAT16,
   FROM_INT8_TO_FLOAT,
+  FROM_INT8_TO_FLOAT16,
   FROM_INT8_TO_INT32,
   FROM_INT64_TO_INT32,
   FROM_UINT16_TO_INT32,
+  FROM_BOOL_TO_FLOAT,
+  FROM_BOOL_TO_INT32,
+  FROM_BOOL_TO_UINT8,
+  FROM_BOOL_TO_FLOAT16,
+  FROM_FLOAT64_TO_FLOAT32,
+  FROM_FLOAT32_TO_FLOAT64
 };
 
 const std::map<std::pair<TypeId, TypeId>, DataTypeTransMode> mode_map{
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat64, kNumberTypeFloat32), FROM_FLOAT64_TO_FLOAT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat64), FROM_FLOAT32_TO_FLOAT64},
   {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat16), FROM_FLOAT_TO_FLOAT16},
   {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeInt32), FROM_FLOAT_TO_INT32},
   {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeFloat32), FROM_FLOAT16_TO_FLOAT},
   {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeInt32), FROM_FLOAT16_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeUInt8), FROM_FLOAT16_TO_UINT8},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat32), FROM_INT32_TO_FLOAT},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat16), FROM_INT32_TO_FLOAT16},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeUInt8), FROM_INT32_TO_UINT8},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt8), FROM_INT32_TO_INT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeBool), FROM_INT32_TO_BOOL},
   {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat32), FROM_UINT8_TO_FLOAT},
   {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeInt32), FROM_UINT8_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat16), FROM_UINT8_TO_FLOAT16},
   {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeFloat32), FROM_INT8_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeFloat16), FROM_INT8_TO_FLOAT16},
   {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeInt32), FROM_INT8_TO_INT32},
   {std::pair<TypeId, TypeId>(kNumberTypeInt64, kNumberTypeInt32), FROM_INT64_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeUInt16, kNumberTypeInt32), FROM_UINT16_TO_INT32}};
+  {std::pair<TypeId, TypeId>(kNumberTypeUInt16, kNumberTypeInt32), FROM_UINT16_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeInt32), FROM_BOOL_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat), FROM_BOOL_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeUInt8), FROM_BOOL_TO_UINT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat16), FROM_BOOL_TO_FLOAT16}};
 
 void CheckMemSize(const TypeIdArgs &args) {
   auto src_type_size = TypeIdSize(args.host_data_type);
@@ -132,54 +171,46 @@ void TransDataSrc2Fp16(const TypeIdArgs &args, void *dst, const size_t data_size
 }
 
 bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const DataTypeTransMode mode) {
-  switch (mode) {
-    case FROM_FLOAT_TO_FLOAT16:
-      device::FloatToHalf(dst, args.data, data_size);
-      break;
-    case FROM_INT32_TO_FLOAT16:
-      TransDataSrc2Fp16<int32_t>(args, dst, data_size);
-      break;
-    case FROM_FLOAT16_TO_FLOAT:
-      device::HalfToFloat(dst, args.data, data_size);
-      break;
-    case FROM_FLOAT_TO_INT32:
-      TransDataSrc2Dst<float, int32_t>(args, dst, data_size);
-      break;
-    case FROM_FLOAT16_TO_INT32:
-      TransDataSrc2Dst<float16, int32_t>(args, dst, data_size);
-      break;
-    case FROM_INT32_TO_FLOAT:
-      TransDataSrc2Dst<int32_t, float>(args, dst, data_size);
-      break;
-    case FROM_INT32_TO_INT8:
-      TransDataSrc2Dst<int32_t, int8_t>(args, dst, data_size);
-      break;
-    case FROM_INT32_TO_UINT8:
-      TransDataSrc2Dst<int32_t, uint8_t>(args, dst, data_size);
-      break;
-    case FROM_UINT8_TO_INT32:
-      TransDataSrc2Dst<uint8_t, int32_t>(args, dst, data_size);
-      break;
-    case FROM_UINT8_TO_FLOAT:
-      TransDataSrc2Dst<uint8_t, float>(args, dst, data_size);
-      break;
-    case FROM_INT8_TO_FLOAT:
-      TransDataSrc2Dst<int8_t, float>(args, dst, data_size);
-      break;
-    case FROM_INT8_TO_INT32:
-      TransDataSrc2Dst<int8_t, int32_t>(args, dst, data_size);
-      break;
-    case FROM_INT64_TO_INT32:
-      TransDataSrc2Dst<int64_t, int32_t>(args, dst, data_size);
-      break;
-    case FROM_UINT16_TO_INT32:
-      TransDataSrc2Dst<uint16_t, int32_t>(args, dst, data_size);
-      break;
-    default:
-      MS_LOG(ERROR) << "Unsupported datatype trans";
-      return false;
+  using DtypeKernel = std::function<void(const TypeIdArgs &, void *, const size_t)>;
+  const std::map<DataTypeTransMode, DtypeKernel> cast_kernel_map{
+    {FROM_FLOAT_TO_INT32, TransDataSrc2Dst<float, int32_t>},
+    {FROM_FLOAT64_TO_FLOAT32, TransDataSrc2Dst<double, float>},
+    {FROM_FLOAT32_TO_FLOAT64, TransDataSrc2Dst<float, double>},
+    {FROM_FLOAT16_TO_INT32, TransDataSrc2Dst<float16, int32_t>},
+    {FROM_FLOAT16_TO_UINT8, TransDataSrc2Dst<float16, uint8_t>},
+    {FROM_INT32_TO_FLOAT, TransDataSrc2Dst<int32_t, float>},
+    {FROM_INT32_TO_INT8, TransDataSrc2Dst<int32_t, int8_t>},
+    {FROM_INT32_TO_UINT8, TransDataSrc2Dst<int32_t, uint8_t>},
+    {FROM_INT32_TO_BOOL, TransDataSrc2Dst<int32_t, int8_t>},
+    {FROM_INT32_TO_FLOAT16, TransDataSrc2Fp16<int32_t>},
+    {FROM_UINT8_TO_FLOAT, TransDataSrc2Dst<uint8_t, float>},
+    {FROM_UINT8_TO_INT32, TransDataSrc2Dst<uint8_t, int32_t>},
+    {FROM_UINT8_TO_FLOAT16, TransDataSrc2Fp16<uint8_t>},
+    {FROM_INT8_TO_FLOAT, TransDataSrc2Dst<int8_t, float>},
+    {FROM_INT8_TO_FLOAT16, TransDataSrc2Fp16<int8_t>},
+    {FROM_INT8_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
+    {FROM_INT64_TO_INT32, TransDataSrc2Dst<int64_t, int32_t>},
+    {FROM_UINT16_TO_INT32, TransDataSrc2Dst<uint16_t, int32_t>},
+    {FROM_BOOL_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
+    {FROM_BOOL_TO_FLOAT, TransDataSrc2Dst<int8_t, float>},
+    {FROM_BOOL_TO_UINT8, TransDataSrc2Dst<int8_t, uint8_t>},
+    {FROM_BOOL_TO_FLOAT16, TransDataSrc2Fp16<int8_t>}};
+
+  if (mode == FROM_FLOAT_TO_FLOAT16) {
+    device::FloatToHalf(dst, args.data, data_size);
+    return true;
+  } else if (mode == FROM_FLOAT16_TO_FLOAT) {
+    device::HalfToFloat(dst, args.data, data_size);
+    return true;
   }
-  return true;
+  auto iter = cast_kernel_map.find(mode);
+  if (iter != cast_kernel_map.end()) {
+    iter->second(args, dst, data_size);
+    return true;
+  } else {
+    MS_LOG(ERROR) << "Unsupported datatype trans";
+    return false;
+  }
 }
 
 size_t CubeSizeByType(const TypeId data_type) {
@@ -338,15 +369,56 @@ std::vector<size_t> C1hwncoc0DeviceShape(const std::vector<size_t> &shape) {
   device_shape.push_back(kCubeSize);
   return device_shape;
 }
+
+std::vector<size_t> FracZc04DeviceShape(const std::vector<size_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<size_t> device_shape;
+  size_t c0 = 4;
+  auto first_dim = DivCeil(c0 * shape.at(2) * shape.at(3), kCubeSize);
+  auto no = DivCeil(shape.at(0), kCubeSize);
+  device_shape.push_back(first_dim);
+  device_shape.push_back(no);
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
+std::vector<size_t> Nc1hwc04DeviceShape(const std::vector<size_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<size_t> device_shape;
+  size_t C1 = 1;
+  size_t C0 = 4;
+  device_shape.push_back(shape[0]);
+  device_shape.push_back(C1);
+  device_shape.push_back(shape[2]);
+  device_shape.push_back(shape[3]);
+  device_shape.push_back(C0);
+  return device_shape;
+}
+
+std::vector<size_t> NdhwcDeviceShape(const std::vector<size_t> &shape) {
+  if (shape.size() < 5) {
+    MS_LOG(EXCEPTION) << "Shape dims must be 5 when format is ndhwc.";
+  }
+  return shape;
+}
 }  // namespace
 
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format) {
   using DeviceShapeTransfer = std::function<std::vector<size_t>(const std::vector<size_t> &)>;
-  const std::map<std::string, DeviceShapeTransfer> device_shape_map{
-    {kOpFormat_NCHW, NchwDeviceShape},       {kOpFormat_NHWC, NhwcDeviceShape},
-    {kOpFormat_HWCN, HwchDeviceShape},       {kOpFormat_FRAC_Z, FracZDeviceShape},
-    {kOpFormat_NC1HWC0, Nc1hwc0DeviceShape}, {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceShape},
-  };
+  const std::map<std::string, DeviceShapeTransfer> device_shape_map{{kOpFormat_NCHW, NchwDeviceShape},
+                                                                    {kOpFormat_NHWC, NhwcDeviceShape},
+                                                                    {kOpFormat_HWCN, HwchDeviceShape},
+                                                                    {kOpFormat_FRAC_Z, FracZDeviceShape},
+                                                                    {kOpFormat_NC1HWC0, Nc1hwc0DeviceShape},
+                                                                    {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceShape},
+                                                                    {kOpFormat_FRACTAL_Z_C04, FracZc04DeviceShape},
+                                                                    {kOpFormat_NC1HWC0_C04, Nc1hwc04DeviceShape},
+                                                                    {kOpFormat_NDHWC, NdhwcDeviceShape}};
 
   if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
     return shape;
@@ -372,10 +444,10 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     temp_shape = PaddingShapeTo4dByDefault(shape);
   }
   auto iter = device_shape_map.find(format);
-  if (iter != device_shape_map.end()) {
-    return iter->second(temp_shape);
+  if (iter == device_shape_map.end()) {
+    MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
   }
-  MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
+  return iter->second(temp_shape);
 }
 
 bool CheckArgs(const FormatArgs &args, size_t *size, size_t *total_size) {
@@ -416,37 +488,109 @@ bool TransDataType(const TypeIdArgs &args, void *result) {
 }
 
 bool TransFormat(const FormatArgs &args, void *result) {
+  using FormatTransfer = std::function<bool(const FormatArgs &, void *)>;
+  const std::map<std::string, FormatTransfer> format_trans_map{
+    {kOpFormat_FRAC_Z, NchwToFracZ},           {kOpFormat_FRAC_NZ, NchwToFracNz},
+    {kOpFormat_NC1HWC0, NchwToNc1hwc0},        {kOpFormat_C1HWNCoC0, NchwToC1hwncoc0},
+    {kOpFormat_FRACTAL_Z_C04, NchwToFracZc04}, {kOpFormat_NC1HWC0_C04, NchwToNc1hwc04}};
   MS_LOG(DEBUG) << "Start trans format.";
   if (TypeIdSize(args.src_data_type) < 1) {
     MS_LOG(ERROR) << "Invalid datatype..";
     return false;
   }
-  if (args.device_format == kOpFormat_FRAC_Z) {
-    return NchwToFracZ(args, result);
-  } else if (args.device_format == kOpFormat_FRAC_NZ) {
-    return NchwToFracNz(args, result);
-  } else if (args.device_format == kOpFormat_NC1HWC0) {
-    return NchwToNc1hwc0(args, result);
-  } else if (args.device_format == kOpFormat_C1HWNCoC0) {
-    return NchwToC1hwncoc0(args, result);
+  if (args.device_format == kOpFormat_HWCN || args.device_format == kOpFormat_NHWC) {
+    return NchwTo4D(args, result);
+  }
+  auto iter = format_trans_map.find(args.device_format);
+  if (iter == format_trans_map.end()) {
+    MS_LOG(EXCEPTION) << "Unexpected format[" << args.device_format << "]";
+  }
+  return iter->second(args, result);
+}
+
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result) {
+  using FormatTransfer = std::function<bool(const FormatArgs &, void *)>;
+  const std::map<std::string, FormatTransfer> format_trans_map{{kOpFormat_FRAC_Z, FracZToNchw},
+                                                               {kOpFormat_FRAC_NZ, FracNzToNchw},
+                                                               {kOpFormat_NC1HWC0, Nc1hwc0ToNchw},
+                                                               {kOpFormat_C1HWNCoC0, C1hwncoc0ToNchw},
+                                                               {kOpFormat_NC1HWC0_C04, Nc1hwc04ToNchw}};
+  MS_LOG(DEBUG) << "Start trans format.";
+  if (TypeIdSize(args.src_data_type) < 1) {
+    MS_LOG(ERROR) << "Invalid datatype..";
+    return false;
+  }
+  if (args.device_format == kOpFormat_HWCN || args.device_format == kOpFormat_NHWC) {
+    return ToNchw(args, result);
+  }
+  auto iter = format_trans_map.find(args.device_format);
+  if (iter == format_trans_map.end()) {
+    MS_LOG(EXCEPTION) << "Unexpected format[" << args.device_format << "]";
+  }
+  return iter->second(args, result);
+}
+
+bool NchwTo4D(const FormatArgs &args, void *result) {
+  // trans nchw to 4d
+  MS_LOG(DEBUG) << "Trans format from nchw to 4d.";
+  MS_EXCEPTION_IF_NULL(result);
+  size_t size = 0;
+  size_t total_size = 0;
+  if (!CheckArgs(args, &size, &total_size)) {
+    MS_LOG(ERROR) << "Check args failed.";
+    return false;
+  }
+  size_t n = args.host_shape[0];
+  size_t c = args.host_shape[1];
+  size_t h = args.host_shape[2];
+  size_t w = args.host_shape[3];
+  for (size_t ni = 0; ni < n; ni++) {
+    for (size_t ci = 0; ci < c; ci++) {
+      for (size_t hi = 0; hi < h; hi++) {
+        for (size_t wi = 0; wi < w; wi++) {
+          auto src_idx = ni * c * h * w + ci * h * w + hi * w + wi;
+          auto dst_idx = 0;
+          if (args.device_format == kOpFormat_NHWC) {
+            dst_idx = ni * h * w * c + hi * w * c + wi * c + ci;
+          } else if (args.device_format == kOpFormat_HWCN) {
+            dst_idx = hi * w * c * n + wi * c * n + ci * n + ni;
+          }
+          SetData(size, false, src_idx, dst_idx, args, result);
+        }
+      }
+    }
   }
   return true;
 }
 
-bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result) {
-  MS_LOG(DEBUG) << "Start trans format.";
-  if (TypeIdSize(args.src_data_type) < 1) {
-    MS_LOG(ERROR) << "Invalid datatype..";
+bool ToNchw(const FormatArgs &args, void *result) {
+  MS_LOG(DEBUG) << "Trans format to nchw from 4d.";
+  MS_EXCEPTION_IF_NULL(result);
+  size_t size = 0;
+  size_t total_size = 0;
+  if (!CheckArgs(args, &size, &total_size)) {
+    MS_LOG(ERROR) << "Check args failed.";
     return false;
   }
-  if (args.device_format == kOpFormat_FRAC_Z) {
-    return FracZToNchw(args, result);
-  } else if (args.device_format == kOpFormat_FRAC_NZ) {
-    return FracNzToNchw(args, result);
-  } else if (args.device_format == kOpFormat_NC1HWC0) {
-    return Nc1hwc0ToNchw(args, result);
-  } else if (args.device_format == kOpFormat_C1HWNCoC0) {
-    return C1hwncoc0ToNchw(args, result);
+  size_t n = args.host_shape[0];
+  size_t c = args.host_shape[1];
+  size_t h = args.host_shape[2];
+  size_t w = args.host_shape[3];
+  for (size_t ni = 0; ni < n; ni++) {
+    for (size_t ci = 0; ci < c; ci++) {
+      for (size_t hi = 0; hi < h; hi++) {
+        for (size_t wi = 0; wi < w; wi++) {
+          auto dst_idx = ni * c * h * w + ci * h * w + hi * w + wi;
+          auto src_idx = 0;
+          if (args.device_format == kOpFormat_NHWC) {
+            src_idx = ni * h * w * c + hi * w * c + wi * c + ci;
+          } else if (args.device_format == kOpFormat_HWCN) {
+            src_idx = hi * w * c * n + wi * c * n + ci * n + ni;
+          }
+          SetData(size, false, src_idx, dst_idx, args, result);
+        }
+      }
+    }
   }
   return true;
 }
@@ -473,23 +617,23 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  size_t c1 = Ceil(c, c0);
+  size_t c1 = DivCeil(c, c0);
   size_t hw = h * w;
   size_t chw = c * hw;
   size_t hwc0 = hw * c0;
   size_t nchw = n * chw;
 
-  size_t hf_cnt = Ceil(n, kCubeSize);
+  size_t hf_cnt = DivCeil(n, kCubeSize);
   size_t vf_cnt = c1 * hw;
   size_t fractal_ele_cnt = c0 * kCubeSize;
   size_t total_ele_cnt = hf_cnt * vf_cnt * fractal_ele_cnt;
-
   size_t dst_size = total_ele_cnt * size;
   if (dst_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size."
                   << "dst size is :" << dst_size << "device size is :" << args.device_size;
     return false;
   }
+
   for (size_t vfi = 0; vfi < vf_cnt; vfi++) {
     auto vf_base_i = vfi * hf_cnt;  // vertical fractal matrix base index
     for (size_t hfi = 0; hfi < hf_cnt; hfi++) {
@@ -501,25 +645,10 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
         auto src_row_offset = src_f_offset + row * hw;
         for (size_t col = 0; col < kCubeSize; col++) {
           auto src_ni = hfi * kCubeSize + col;
-          auto src_offset = src_row_offset + chw * col;
-
-          auto need_pad_zero = src_ni >= n || src_offset >= nchw || src_ci >= c;
-          auto idx = gfi * fractal_ele_cnt + col * c0 + row;
-          auto offset = idx * size;
-          auto protected_size = dst_size - offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                  ? dst_size - offset
-                                  : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          errno_t ret;
-          if (need_pad_zero) {
-            ret = memset_s(static_cast<uint8_t *>(result) + offset, protected_size, 0, size);
-          } else {
-            ret = memcpy_s(static_cast<uint8_t *>(result) + offset, protected_size,
-                           static_cast<uint8_t const *>(args.data) + src_offset * size, size);
-          }
-          if (ret != 0) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-            return false;
-          }
+          auto src_idx = src_row_offset + chw * col;
+          auto dst_idx = gfi * fractal_ele_cnt + col * c0 + row;
+          auto pad_zero = (src_ni >= n || src_idx >= nchw || src_ci >= c) ? true : false;
+          SetData(size, pad_zero, src_idx, dst_idx, args, result);
         }
       }
     }
@@ -573,22 +702,71 @@ bool FracZToNchw(const FormatArgs &args, void *result) {
           size_t c0_idx = c_idx % c0;
           size_t nc_idx = n_idx;
           size_t src_idx = c1_idx * hwncc0 + h_idx * wncc0 + w_idx * ncc0 + nc_idx * c0 + c0_idx;
-          auto src_offset = src_idx * size;
-          auto dst_offset = dst_idx * size;
-          auto protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                  ? total_size - dst_offset
-                                  : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                              static_cast<uint8_t const *>(args.data) + src_offset, size);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-            return false;
-          }
+          SetData(size, false, src_idx, dst_idx, args, result);
         }
       }
     }
   }
   return true;
+}
+
+bool NchwToFracZc04(const FormatArgs &args, void *result) {
+  // trans nchw to FracZc04
+  MS_LOG(DEBUG) << "Trans format from nchw to FracZc04.";
+  MS_EXCEPTION_IF_NULL(result);
+  size_t size = 0;
+  size_t total_size = 0;
+  if (!CheckArgs(args, &size, &total_size)) {
+    MS_LOG(ERROR) << "Check args failed.";
+    return false;
+  }
+  size_t cube = kCubeSize;
+  size_t n = args.host_shape[0];
+  size_t c = args.host_shape[1];
+  size_t h = args.host_shape[2];
+  size_t w = args.host_shape[3];
+
+  size_t c0 = 4;
+  size_t c1 = DivCeil(c, c0);
+  size_t hwc0 = h * w * c0;
+  size_t hwc = h * w * c;
+  size_t nhwc = n * h * w * c;
+
+  size_t n_cnt = DivCeil(n, cube);
+  size_t v_cnt = DivCeil(h * w * c0 * c1, cube);
+  size_t dst_idx = 0;
+
+  for (size_t vi = 0; vi < v_cnt; vi++) {
+    for (size_t ni = 0; ni < n_cnt; ni++) {
+      for (size_t col = 0; col < cube; col++) {
+        for (size_t row = 0; row < cube; row++) {
+          size_t cur_cube_n = cube * ni + col;
+          size_t cur_cube_c1hwc0 = cube * vi + row;
+          auto desc_g = cur_cube_n / n;
+          auto desc_n = cur_cube_n % n;
+          auto desc_c1 = cur_cube_c1hwc0 / hwc0;
+          auto desc_c0 = cur_cube_c1hwc0 % c0;
+          auto desc_h = (cur_cube_c1hwc0 - hwc0 * desc_c1) / (w * c0);
+          auto desc_w = (cur_cube_c1hwc0 - hwc0 * desc_c1 - w * c0 * desc_h) / c0;
+          auto c_idx = desc_c1 * c0 + desc_c0;
+          auto src_idx = desc_g * nhwc + desc_n * hwc + c_idx * h * w + desc_h * w + desc_w;
+          auto pad_zero = desc_g >= 1 || desc_n >= n || c_idx >= c;
+          SetData(size, pad_zero, src_idx, dst_idx, args, result);
+          dst_idx++;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool NchwToNc1hwc04(const FormatArgs &args, void *result) {
+  MS_LOG(DEBUG) << "Trans format from nchw to Nc1hwc04.";
+  return NchwToNc1hwc0(args, result);
+}
+bool Nc1hwc04ToNchw(const FormatArgs &args, void *result) {
+  MS_LOG(DEBUG) << "Trans format from Nc1hwc04 to nchw.";
+  return Nc1hwc0ToNchw(args, result);
 }
 
 bool TransShapeToNz(const std::vector<size_t> &host_shape, std::vector<size_t> *hw_shape) {
@@ -664,32 +842,18 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
       auto h1h0_head = times_head + h1h0_idx * w0;
       auto src_h_head = src_times_head + h1h0_idx * w;
       for (size_t w1_idx = 0; w1_idx < num_w1; w1_idx++) {
-        size_t dst_offset = (h1h0_head + w1_idx * h1h0w0) * size;
-        size_t src_offset = (src_h_head + w1_idx * w0) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size * w0);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory, error-code " << cp_ret;
-          return false;
+        for (size_t i = 0; i < w0; ++i) {
+          size_t src_idx = src_h_head + w1_idx * w0 + i;
+          size_t dst_idx = h1h0_head + w1_idx * h1h0w0 + i;
+          SetData(size, false, src_idx, dst_idx, args, result);
         }
       }
       auto w1_head = num_w1 * w0;
       for (size_t w0_idx = 0; w1_head + w0_idx < w; w0_idx++) {
         auto src_w_idx = w1_head + w0_idx;
-        size_t dst_offset = (h1h0_head + num_w1 * h1h0w0 + w0_idx) * size;
-        size_t src_offset = (src_h_head + src_w_idx) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << cp_ret;
-          return false;
-        }
+        size_t dst_idx = h1h0_head + num_w1 * h1h0w0 + w0_idx;
+        size_t src_idx = src_h_head + src_w_idx;
+        SetData(size, false, src_idx, dst_idx, args, result);
       }
     }
   }
@@ -740,32 +904,18 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
       auto h1h0_head = times_head + h1h0_idx * w0;
       auto src_h_head = src_times_head + h1h0_idx * w;
       for (size_t w1_idx = 0; w1_idx < num_w1; w1_idx++) {
-        size_t src_offset = (h1h0_head + w1_idx * h1h0w0) * size;
-        size_t dst_offset = (src_h_head + w1_idx * w0) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size * w0);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory, error-code " << cp_ret;
-          return false;
+        for (size_t i = 0; i < w0; ++i) {
+          size_t src_idx = h1h0_head + w1_idx * h1h0w0 + i;
+          size_t dst_idx = src_h_head + w1_idx * w0 + i;
+          SetData(size, false, src_idx, dst_idx, args, result);
         }
       }
       auto w1_head = num_w1 * w0;
       for (size_t w0_idx = 0; w1_head + w0_idx < w; w0_idx++) {
         auto src_w_idx = w1_head + w0_idx;
-        size_t src_offset = (h1h0_head + num_w1 * h1h0w0 + w0_idx) * size;
-        size_t dst_offset = (src_h_head + src_w_idx) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << cp_ret;
-          return false;
-        }
+        size_t src_idx = h1h0_head + num_w1 * h1h0w0 + w0_idx;
+        size_t dst_idx = src_h_head + src_w_idx;
+        SetData(size, false, src_idx, dst_idx, args, result);
       }
     }
   }
@@ -799,7 +949,7 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  size_t c1 = Ceil(c, c0);
+  size_t c1 = DivCeil(c, c0);
   size_t hw = h * w;
   size_t chw = c * hw;
   size_t c1hwc0 = c1 * hw * c0;
@@ -814,29 +964,11 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
         for (size_t w_idx = 0; w_idx < w; w_idx++) {
           size_t w_head_addr = h_head_addr + w_idx * c0;
           for (size_t c0_idx = 0; c0_idx < c0; c0_idx++) {
-            size_t dst_index = c0_idx + w_head_addr;
-            size_t dst_offset = dst_index * size;
-            auto protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                    ? total_size - dst_offset
-                                    : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
+            size_t dst_idx = c0_idx + w_head_addr;
             size_t c_idx = c0_idx + c1_idx * c0;
             size_t src_idx = n_idx * chw + c_idx * hw + h_idx * w + w_idx;
-            auto src_offset = src_idx * size;
-
-            if (c_idx < c) {
-              auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                                  static_cast<uint8_t const *>(args.data) + src_offset, size);
-              if (ret != EOK) {
-                MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-                return false;
-              }
-            } else {
-              auto ret = memset_s(static_cast<uint8_t *>(result) + dst_offset, protected_size, 0, size);
-              if (ret != EOK) {
-                MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-                return false;
-              }
-            }
+            auto pad_zero = (c_idx < c) ? false : true;
+            SetData(size, pad_zero, src_idx, dst_idx, args, result);
           }
         }
       }
@@ -887,17 +1019,7 @@ bool Nc1hwc0ToNchw(const FormatArgs &args, void *result) {
           size_t c1_idx = c_idx / c0;
           size_t c0_idx = c_idx % c0;
           size_t src_idx = n_idx * c1hwc0 + c1_idx * hwc0 + h_idx * wc0 + w_idx * c0 + c0_idx;
-          auto src_offset = src_idx * size;
-          auto dst_offset = dst_idx * size;
-          auto protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                  ? total_size - dst_offset
-                                  : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                              static_cast<uint8_t const *>(args.data) + src_offset, size);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-            return false;
-          }
+          SetData(size, false, src_idx, dst_idx, args, result);
         }
       }
     }
@@ -922,31 +1044,19 @@ bool NchwToC1hwncoc0(const FormatArgs &args, void *result) {
   auto c1 = args.device_shape[0];
   auto co = args.device_shape[4];
   auto c0 = args.device_shape[5];
+
   for (size_t c1_i = 0; c1_i < c1; c1_i++) {
     for (size_t h_i = 0; h_i < h; h_i++) {
       for (size_t w_i = 0; w_i < w; w_i++) {
         for (size_t n_i = 0; n_i < n; n_i++) {
           for (size_t co_i = 0; co_i < co; co_i++) {
             for (size_t c0_i = 0; c0_i < c0; c0_i++) {
-              size_t dst_offset = (c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 +
-                                   n_i * co * c0 + co_i * c0 + c0_i) *
-                                  size;
-              size_t protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                        ? total_size - dst_offset
-                                        : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
+              size_t dst_idx = c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 + n_i * co * c0 +
+                               co_i * c0 + c0_i;
               size_t c_i = c0_i + c1_i * c0;
-              size_t src_offset = (n_i * c * h * w + c_i * h * w + h_i * w + w_i) * size;
-              errno_t ret;
-              if (c_i < c && c0_i == co_i) {
-                ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size);
-              } else {
-                ret = memset_s(static_cast<uint8_t *>(result) + dst_offset, protected_size, 0, size);
-              }
-              if (ret != EOK) {
-                MS_LOG(ERROR) << "Failed to operate the dst memory, error-code:" << ret;
-                return false;
-              }
+              size_t src_idx = n_i * c * h * w + c_i * h * w + h_i * w + w_i;
+              auto pad_zero = (c_i < c && c0_i == co_i) ? false : true;
+              SetData(size, pad_zero, src_idx, dst_idx, args, result);
             }
           }
         }
@@ -976,22 +1086,13 @@ bool C1hwncoc0ToNchw(const FormatArgs &args, void *result) {
     for (size_t c_i = 0; c_i < c; c_i++) {
       for (size_t h_i = 0; h_i < h; h_i++) {
         for (size_t w_i = 0; w_i < w; w_i++) {
-          size_t dst_offset = (n_i * c * h * w + c_i * h * w + h_i * w + w_i) * size;
+          size_t dst_idx = n_i * c * h * w + c_i * h * w + h_i * w + w_i;
           size_t c1_i = c_i / kCubeSize;
           size_t c0_i = c_i % kCubeSize;
           size_t co_i = c0_i;
-          size_t src_offset = (c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 + n_i * co * c0 +
-                               co_i * c0 + c0_i) *
-                              size;
-          size_t protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                    ? total_size - dst_offset
-                                    : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                              static_cast<uint8_t const *>(args.data) + src_offset, size);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory, error-code:" << ret;
-            return false;
-          }
+          size_t src_idx =
+            c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 + n_i * co * c0 + co_i * c0 + c0_i;
+          SetData(size, false, src_idx, dst_idx, args, result);
         }
       }
     }

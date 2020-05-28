@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomRotation op in DE
+Testing RandomErasing op in DE
 """
 import matplotlib.pyplot as plt
 import numpy as np

@@ -60,7 +60,7 @@ bool FakeQuantGpuKernel::Init(const CNodePtr &kernel_node) {
 
   num_bits_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("num_bits"));
   ema_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema"));
-  ema_decay_ = 1.0 - GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema_decay"));
+  ema_decay_ = GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema_decay"));
   training_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("training"));
 
   if (num_bits_ <= 2 || num_bits_ >= 16) {
@@ -114,8 +114,7 @@ void FakeQuantGpuKernel::InitSizeLists() {
 }
 
 bool FakeQuantGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  (void)workspace;
+                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *input = GetDeviceAddress<float>(inputs, 0);
   float *input_min = GetDeviceAddress<float>(inputs, 1);
@@ -151,7 +150,8 @@ bool FakeQuantGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std
       CalFakeQuantize(input, output, quant_num_, d_nudge_min, d_nudge_max, d_scale, symmetric_,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(output, input, input_size_, cudaMemcpyDeviceToDevice),
+      CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
+                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "Copy gpu memory failed");
     }
     global_step_++;

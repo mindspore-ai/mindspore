@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
-from mindspore.ops import Primitive
-import mindspore as ms
-import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
 import numpy as np
+
+from mindspore.common.tensor import Tensor
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 make_tuple = Primitive('make_tuple')
 concat = P.Concat()
@@ -51,7 +50,7 @@ def test_convert_tuple_input_to_dynamic_input(tag):
     def after(x):
         res = concat(t1, t2)
         res = add(x, res)
-        res = make_tuple(res);
+        res = make_tuple(res)
         return res
 
     return fns[tag]

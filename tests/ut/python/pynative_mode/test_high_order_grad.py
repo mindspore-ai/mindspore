@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test_high_order_grad """
+from mindspore import context
 from mindspore.common.api import ms_function
 from mindspore.ops.composite import grad, grad_all, grad_all_with_sens
-from mindspore import context
 
 
 def setup_module(module):
@@ -93,7 +93,7 @@ def if_test(x):
     """ if_test """
     if x > 10:
         return x * x
-    return x * x  * x
+    return x * x * x
 
 
 def first_derivative_if(x):
@@ -116,10 +116,12 @@ def test_high_order_grad_1():
     # 18 * x
     assert second_derivative_all(3) == 54
 
+
 def test_high_order_grad_2():
     """ test_high_order_grad_2 """
     # 2
     assert second_derivative_if(12) == 2
+
 
 def test_high_order_grad_3():
     """ test_high_order_grad_2 """

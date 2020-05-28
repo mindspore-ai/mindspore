@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 mul = P.Mul()
 reduce_sum = P.ReduceSum()
@@ -21,6 +21,7 @@ confusion_mul_grad = Primitive('ConfusionMulGrad')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
 axis = 2
+
 
 class FnDict:
     def __init__(self):
@@ -31,6 +32,7 @@ class FnDict:
 
     def __getitem__(self, name):
         return self.fnDict[name]
+
 
 def test_confusion_mul_grad_fusion(tag):
     fns = FnDict()

@@ -21,6 +21,8 @@ import numpy as np
 
 from ..mindspore_test import mindspore_test
 from ..pipeline.forward.verify_shapetype import pipeline_for_verify_shapetype_for_group_by_group_config
+
+
 # from ...vm_impl import *
 
 # functions could be operations or NN cell

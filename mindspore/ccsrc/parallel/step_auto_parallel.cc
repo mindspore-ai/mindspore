@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "ir/anf.h"
+#include "ir/param_value_py.h"
 #include "ir/meta_tensor.h"
 #include "optimizer/opt.h"
 #include "optimizer/optimizer.h"
@@ -39,6 +40,7 @@
 #include "parallel/auto_parallel/rec_core/rec_partition.h"
 #include "parallel/context.h"
 #include "parallel/ops_info/tmp_identity_info.h"
+#include "parallel/ops_info/reshape_info.h"
 #include "parallel/step_parallel.h"
 #include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "pipeline/parse/python_adapter.h"
@@ -121,7 +123,8 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if ((parallel_mode != AUTO_PARALLEL) || root->flags()[AUTO_PARALLEL_RUN_ONCE_ONLY]) {
+  if (!root->has_flag(AUTO_PARALLEL) || (parallel_mode != AUTO_PARALLEL) ||
+      root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
     return changes;
   }
   // check whether strategy_search_mode is valid
@@ -188,8 +191,8 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        bool require_grad =
-          py::cast<bool>(parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), "requires_grad"));
+        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(input_parameter->default_param());
+        bool require_grad = py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "requires_grad"));
         is_parameter.push_back(require_grad);
       } else {
         is_parameter.push_back(false);
@@ -607,7 +610,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
           EdgePtr edge_ptr;
           MS_LOG(INFO) << "Creating edge: " << edge_name;
 
-          bool follow_strategy = ELEMENTWISE_OP_STRA_FOLLOW && IsElementWiseOperator(prev_prim->name());
+          bool follow_strategy = (prim->name() == RESHAPE) || (prev_prim->name() == RESHAPE) ||
+                                 (ELEMENTWISE_OP_STRA_FOLLOW && IsElementWiseOperator(prev_prim->name()));
           if (follow_strategy) {
             // Redistribution in not allowed on the edge.
             // Elementwise operators have the same strategy as their previous operators.
@@ -832,8 +836,8 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       auto casted_target_parameter = target_parameter->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(casted_target_parameter);
       if (casted_target_parameter->has_default()) {
-        bool require_grad = py::cast<bool>(
-          parse::python_adapter::GetPyObjAttr(casted_target_parameter->default_param(), "requires_grad"));
+        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(casted_target_parameter->default_param());
+        bool require_grad = py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "requires_grad"));
         is_parameter.push_back(require_grad);
       } else {
         is_parameter.push_back(false);
@@ -892,11 +896,169 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
+bool FindReshape(const CNodePtr &cnode) {
+  if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
+    return false;
+  }
+  ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
+  if (!IsParallelCareNode(cnode) || (cnode->operator_info() == nullptr)) {
+    return false;
+  }
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  OperatorInfoPtr operator_info = cnode->operator_info();
+  if (operator_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Failure:Primitive " << prim->ToString() << " OperatorInstance is nullptr";
+  }
+  if (prim->name() != RESHAPE) {
+    return false;
+  }
+  return true;
+}
+
+// find previous node, then obtain its strategy_cost_ vector to get its layout vector.
+bool FindPreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int32_t *out_index) {
+  // if previous node is a parameter, handle it in the outsize.
+  if (node->isa<Parameter>()) {
+    return false;
+  }
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  CNodePtr cnode = node->cast<CNodePtr>();
+  if (!IsValueNode<Primitive>(cnode->input(0))) {
+    return false;
+  }
+  if (IsParallelCareNode(cnode) && (cnode->operator_info() != nullptr)) {
+    *pre_operator_info = cnode->operator_info();
+    *out_index = 0;
+    return true;
+  }
+  ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
+  PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
+  if (prim->name() == TUPLE_GETITEM) {
+    *out_index = GetTupleGetItemIndex(cnode);
+    // find tuple_get_item's previous node
+    auto pre_node = cnode->input(1);
+    if (!pre_node->isa<CNode>()) {
+      MS_LOG(EXCEPTION) << "tuple get item's second input is not a cnode";
+    }
+    CNodePtr pre_cnode = pre_node->cast<CNodePtr>();
+    if (IsParallelCareNode(pre_cnode) && (pre_cnode->operator_info() != nullptr)) {
+      *pre_operator_info = pre_cnode->operator_info();
+      return true;
+    }
+    return false;
+  }
+  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+    if (prim->name() == DEPEND && index != 1) {
+      continue;
+    }
+    if (!FindPreNodeStraCosts(cnode->inputs()[index], pre_operator_info, out_index)) {
+      continue;
+    }
+    return true;
+  }
+  MS_LOG(WARNING) << "FindPreNodeStraCosts failed, if reshape is not the first primitive, there must be some error";
+  return false;
+}
+
+// find next node, then obtain its strategy_cost_ vector to get its layout vector.
+// if reshape's output connect to several primitive, return the first layout found
+bool FindNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int32_t *in_index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(cnode->func_graph());
+  FuncGraphManagerPtr manager = cnode->func_graph()->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  AnfNodeIndexSet node_set = manager->node_users()[cnode];
+  for (auto &node_pair : node_set) {
+    CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
+    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+      continue;
+    }
+    ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(prim_anf_node);
+    PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
+    MS_EXCEPTION_IF_NULL(node_prim);
+    MS_LOG(INFO) << "FindNextLayout prim " << node_prim->name();
+    if (node_prim->name() == DEPEND && node_pair.second != 1) {
+      continue;
+    }
+    if (IsParallelCareNode(use_apply) && (use_apply->operator_info() != nullptr)) {
+      MS_LOG(INFO) << "FindNextNodeStraCosts success prim " << node_prim->name();
+      *next_operator_info = use_apply->operator_info();
+      *in_index = node_pair.second - 1;
+      return true;
+    }
+    MS_LOG(DEBUG) << "FindNextNodeStraCosts failed prim " << node_prim->name() << "  " << IsParallelCareNode(use_apply)
+                  << "   " << (use_apply->operator_info() != nullptr);
+
+    if (FindNextNodeStraCosts(use_apply, next_operator_info, in_index)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto node : all_nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    if (!FindReshape(cnode)) {
+      continue;
+    }
+    MS_ASSERT(cnode->inputs().size() == 3);
+    // get previous node's strategy_cost_
+    auto pre_node = cnode->input(1);
+    int32_t out_index = 0;
+    OperatorInfoPtr pre_operator_info;
+    std::vector<std::shared_ptr<StrategyWithCost>> pre_stra_costs;
+    if (pre_node->isa<Parameter>()) {
+      OperatorInfoPtr operator_info = cnode->operator_info();
+      auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
+      reshape_info->SetCostForReshapeWithParameter();
+      pre_operator_info = reshape_info;
+      pre_stra_costs = reshape_info->strategy_cost();
+    } else {
+      if (!FindPreNodeStraCosts(pre_node, &pre_operator_info, &out_index)) {
+        MS_LOG(EXCEPTION) << "FindPreNodeStraCosts for reshape failed";
+      }
+      pre_stra_costs = pre_operator_info->strategy_cost();
+    }
+    // get next node's strategy_cost_
+    int32_t in_index = 0;
+    OperatorInfoPtr next_operator_info;
+    std::vector<std::shared_ptr<StrategyWithCost>> next_stra_costs;
+    bool find_next_node = FindNextNodeStraCosts(cnode, &next_operator_info, &in_index);
+    if (!find_next_node) {
+      MS_LOG(INFO) << "FindNextNodeStraCosts for reshape failed";
+    }
+    // set input_layout and output_layout for reshape.
+    // init reshape and set cost for each input_layout and output_layout.
+    OperatorInfoPtr operator_info = cnode->operator_info();
+    auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
+    reshape_info->set_pre_operator_name(pre_operator_info->name());
+    reshape_info->set_pre_operator_index(out_index);
+    if (find_next_node) {
+      next_stra_costs = next_operator_info->strategy_cost();
+      reshape_info->set_next_operator_name(next_operator_info->name());
+      reshape_info->set_next_operator_index(in_index);
+    }
+    bool is_prev_param = pre_node->isa<Parameter>();
+    if (reshape_info->GenetateStrategyCosts(pre_stra_costs, next_stra_costs, out_index, in_index, is_prev_param) !=
+        SUCCESS) {
+      MS_LOG(EXCEPTION) << "reshape genetate strategy_costs failed!";
+    }
+  }
+}
+
 Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   // There are 4 meta-steps to determine the parallelization strategy for the ANF graph.
   // Step 1: Traverse the ANF graph, and create NODEs for costgraph:
   //      create the OperatorInfo object for each primitive, and enumerate the parallelization strategies
   //      for each OperatorInfo;
+  // Step 1.1: Deal with 'Reshape':
+  //      For 'Reshape', it takes its previous operator's layout as its input layout, and takes its next operator's
+  //      layout as its output layout.
   // Step 2: Traverse the ANF graph, and create EDGES for costgraph:
   //      create the Edge object for each pair of OperatorInfo, and enumerate the parallelization strategies
   //      for each edge, based on the strategies of two OperatorInfos;
@@ -904,7 +1066,8 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   //      taking care for the case of a single Parameter being used by multiple operators. Create a TmpIdentity
   //      operator for this Parameter, and add an edge for the use of this Parameter by each
   //      subsequent operator;
-  // Step 3.1: Calculate memory usage
+  // Step 3.1: Calculate memory usage:
+  //      note the memory usage calculation is different in training phase and inference phase.
   // Step 4: Run the Dynamic Programming algorithm:
   //      in this process, cost is calculated based on not only the operators, but also the edges. Here, the edge
   //      cost is caused by the redistribution of a operator's output tensor layout to the next operator's input
@@ -929,33 +1092,21 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
       MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
     }
   }
-
+  // Step 1.1
+  ReshapeCostCompute(all_nodes);
   // Step 2
   ConstructCostGraphEdges(all_nodes);
   MS_LOG(INFO) << "Constructing edges for cost graph succeeded. There are " << entire_costgraph->GetOperators().size()
-               << " operators, and " << entire_costgraph->GetNumPairs() << " edges.",
+               << " operators, and " << entire_costgraph->GetNumEdges() << " edges.";
 
-    // Step 3: Augment the costgraph.
-    AugmentCostGraph(all_nodes);
+  // Step 3: Augment the costgraph.
+  AugmentCostGraph(all_nodes);
   MS_LOG(INFO) << "After the augmenting procedure, there are " << entire_costgraph->GetOperators().size()
-               << " operators, and " << entire_costgraph->GetNumPairs() << " edges.";
+               << " operators, and " << entire_costgraph->GetNumEdges() << " edges.";
 
   // Step 3.1: Calculate the memory usage
-  if (entire_costgraph->ComputeOpsAndEdgesParameterInvolved() == SUCCESS) {
-    // Calculate operators' memory usage
-    if (entire_costgraph->CalculateOpsMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Calculating operators' cost for memory cost failed.";
-    }
-    // Calculate edges' memory usage
-    if (entire_costgraph->CalculateEdgesMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Calculating edges' cost for memory cost failed.";
-    }
-    // Correct memory usage caused by TmpIdentity
-    if (entire_costgraph->CorrectOpsMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Correcting operators' cost for memory cost failed.";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Computing operators' parameter_involved failed.";
+  if (entire_costgraph->CalculateMemoryCost() != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Calculating memory cost failed.";
   }
 
   // Step 4: run DP algorithm on the costgraph.
@@ -1008,10 +1159,11 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   for (auto it = tuple_getitem_list.begin(); it != tuple_getitem_list.end();) {
     input_tensor_names = RecInputTensorNames(it++, input_tensor_names);
   }
-
-  std::shared_ptr<std::vector<size_t>> ops_nodes_list(new std::vector<size_t>);
-
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
+
+  std::shared_ptr<std::vector<std::vector<size_t>>> eli_list(new std::vector<std::vector<size_t>>);
+  std::shared_ptr<std::vector<size_t>> index_list(new std::vector<size_t>);
+  graph = EliminateGraph(graph, eli_list, index_list);
 
   size_t num_device = g_device_manager->DeviceNum();
   double device_memory = entire_costgraph->GetDeviceMemory();
@@ -1022,8 +1174,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     return FAILED;
   }
 
-  bool mask_special_ops = true;
-  GenerateStrategy(graph, mask_special_ops, ops);
+  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";

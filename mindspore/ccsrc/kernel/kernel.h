@@ -47,6 +47,13 @@ enum FusionType {
   OPAQUE,
   UNKNOWN_FUSION_TYPE = -1,
 };
+enum OpPattern {
+  kCommonPattern = 0,
+  kFormatAgnosticPattern = 1,
+  kBroadcastPattern = 2,
+  kReducePattern = 3,
+  kDynamicFormatPattern = 4,
+};
 
 // Backend processor
 enum Processor {
@@ -117,7 +124,7 @@ class KernelMod {
   virtual const std::vector<size_t> &GetOutputSizeList() const = 0;
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const = 0;
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) = 0;
+                      const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual std::vector<size_t> GenParameters() { return {}; }
 
   virtual ~KernelMod() = default;

@@ -20,7 +20,6 @@ from collections import OrderedDict
 from functools import wraps
 from mindspore import context
 from mindspore import log as logger
-from mindspore.parallel._utils import _get_parallel_mode
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
@@ -83,14 +82,15 @@ def _wrap_func(fn):
 def _exec_init_graph(obj, init_phase):
     """Execute the parameter initializer graph."""
     inst_executor = Executor_.get_instance()
-    exec_init_graph = False
-    for param in obj.get_parameters():
+    param_dict = OrderedDict()
+    for name, param in obj.parameters_dict().items():
         if not param.is_init:
+            param_dict[name] = param
             param.is_init = True
-            exec_init_graph = True
+            param.data.init_flag = True
 
-    if exec_init_graph:
-        inst_executor.run_init_graph(obj.parameters_dict(), init_phase)
+    if param_dict:
+        inst_executor.run_init_graph(param_dict, init_phase)
 
 
 class _MindSporeFunction:
@@ -327,7 +327,18 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def compile(self, obj, *args, phase='predict', params=None, do_convert=True):
+    def _params_init_data(self, obj, params):
+        if params is not None:
+            for key, param in params.items():
+                if key not in obj.parameter_layout_dict:
+                    logger.info("Layout dict does not contain the key %s.", key)
+                    param.init_data()
+                else:
+                    layout = obj.parameter_layout_dict[key]
+                    param.init_data(layout)
+        obj.init_parameters_data()
+
+    def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
         """
         Compiles graph.
 
@@ -337,6 +348,7 @@ class _Executor:
             phase (str): The name of compile phase. Default: 'predict'.
             params (OrderedDict): The parameters dictionary used for init data graph. Default: None.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
+            auto_parallel_mode: When set to True, use auto parallel mode to compile graph.
 
         Return:
             Str, the full phase of the cell.
@@ -370,10 +382,17 @@ class _Executor:
             logger.error("%r graph compile failed.", phase)
         if not do_convert:
             return phase, True
+
+        if auto_parallel_mode and "train" in phase:
+            obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
+        self._params_init_data(obj, params)
         if not enable_debug_runtime or enable_ge:
-            if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
-                obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
+            if auto_parallel_mode and "train" in phase:
                 obj.load_parameter_slice(params)
+
+        # set parallel inputs in sink mode
+        if auto_parallel_mode and (args and isinstance(args[0], Tensor) and args[0].virtual_flag):
+            obj.set_parallel_input_with_inputs(*args)
 
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:

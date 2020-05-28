@@ -16,8 +16,8 @@
 Testing Decode op in DE
 """
 import cv2
-import mindspore.dataset.transforms.vision.c_transforms as vision
 import numpy as np
+from util import diff_mse
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -25,11 +25,6 @@ from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
-
-
-def diff_mse(in1, in2):
-    mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
-    return mse * 100
 
 
 def test_decode_op():

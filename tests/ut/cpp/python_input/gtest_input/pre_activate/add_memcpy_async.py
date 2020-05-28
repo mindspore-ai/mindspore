@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 all_reduce = P.AllReduce()
 memcpy_async = Primitive('memcpy_async')

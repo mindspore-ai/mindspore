@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 tuple_getitem = Primitive('tuple_getitem')
 depend = Primitive('depend')
@@ -127,14 +127,14 @@ def test_eliminate_depend_input2(tag):
     def before(x, y, z):
         new_z = four2five(z)
         depend_intput = depend(y, new_z)
-        sum = add(x, depend_intput)
-        return sum
+        sum_add = add(x, depend_intput)
+        return sum_add
 
     @fns
     def after(x, y, z):
         depend_intput = depend(y, z)
-        sum = add(x, depend_intput)
-        return sum
+        sum_add = add(x, depend_intput)
+        return sum_add
 
     return fns[tag]
 
@@ -144,8 +144,8 @@ def test_opt_match(tag):
 
     @fns
     def graph1(x, y):
-        sum = add(x, y)
-        output = make_tuple(sum)
+        sum_add = add(x, y)
+        output = make_tuple(sum_add)
         return output
 
     @fns
@@ -178,4 +178,3 @@ def test_func_graph_cse(tag):
         return d
 
     return fns[tag]
-

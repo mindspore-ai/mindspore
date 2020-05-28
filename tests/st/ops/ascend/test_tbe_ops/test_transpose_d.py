@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import mindspore.nn as nn
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.train.model import Model
 from mindspore.ops import operations as P
+from mindspore.train.model import Model
 
 context.set_context(device_target="Ascend")
+
 
 class Net(nn.Cell):
     def __init__(self, perm_in):
@@ -31,6 +33,7 @@ class Net(nn.Cell):
         x = self.transpose(input, self.perm)
         return x
 
+
 def ms_transpose(input, perm_in):
     context.set_context(mode=context.GRAPH_MODE)
     input_me = Tensor(input)
@@ -41,6 +44,7 @@ def ms_transpose(input, perm_in):
     print("-------------ms------------------")
     print(output.asnumpy().dtype)
     print(output.asnumpy())
+
 
 def test_net():
     input = np.random.randn(8, 24, 1, 1).astype(np.float16)

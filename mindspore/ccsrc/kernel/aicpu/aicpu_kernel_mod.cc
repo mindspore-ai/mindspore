@@ -103,20 +103,22 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
 }
 
 bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  if (stream_ptr == 0) {
+                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
 
   CreateCpuKernelInfo(inputs, outputs);
-  auto *stream = reinterpret_cast<rtStream_t *>(stream_ptr);
+  if (node_name_ == "TopK") {
+    node_name_ = "TopKV2";
+  }
   MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                << ", args_size:" << args_.length();
   if (rtCpuKernelLaunch(reinterpret_cast<const void *>(node_so_.c_str()),
                         reinterpret_cast<const void *>(node_name_.c_str()), 1,
                         reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()), nullptr,
-                        stream) != RT_ERROR_NONE) {
+                        stream_ptr) != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed!";
 
     return false;
@@ -124,10 +126,12 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   return true;
 }
 
-vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
+                                                   const std::vector<AddressPtr> &,
+                                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask start";
 
+  stream_id_ = stream_id;
   node_so_ = AICPU_OPS_SO_NAME;
   std::vector<void *> input_data_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
@@ -137,6 +141,9 @@ vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inp
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
                        [](const AddressPtr &output) -> void * { return output->addr; });
 
+  if (node_name_ == "TopK") {
+    node_name_ = "TopKV2";
+  }
   AicpuTaskInfoPtr task_info_ptr = make_shared<ge::model_runner::AicpuTaskInfo>(
     stream_id, node_so_, node_name_, node_def_str_, input_data_addrs, output_data_addrs);
 

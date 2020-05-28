@@ -16,8 +16,9 @@
 import os
 import sys
 import json
+import subprocess
+import shutil
 from argparse import ArgumentParser
-
 
 def parse_args():
     """
@@ -124,19 +125,38 @@ def main():
     sys.stdout.flush()
 
     # spawn the processes
+    processes = []
+    cmds = []
+    log_files = []
+    env = os.environ.copy()
+    env['RANK_SIZE'] = str(args.nproc_per_node)
+    cur_path = os.getcwd()
     for rank_id in range(0, args.nproc_per_node):
+        os.chdir(cur_path)
         device_id = visible_devices[rank_id]
-        device_dir = os.path.join(os.getcwd(), 'device{}'.format(rank_id))
-        rank_process = 'export RANK_SIZE={} && export RANK_ID={} && export DEVICE_ID={} && '.format(args.nproc_per_node,
-                                                                                                    rank_id, device_id)
+        device_dir = os.path.join(cur_path, 'device{}'.format(rank_id))
+        env['RANK_ID'] = str(rank_id)
+        env['DEVICE_ID'] = str(device_id)
         if args.nproc_per_node > 1:
-            rank_process += 'export MINDSPORE_HCCL_CONFIG_PATH={} && '.format(table_fn)
-            rank_process += 'export RANK_TABLE_FILE={} && '.format(table_fn)
-        rank_process += 'rm -rf {dir} && mkdir {dir} && cd {dir} && python {script} '.format(dir=device_dir,
-                                                                                             script=args.training_script
-                                                                                             )
-        rank_process += ' '.join(args.training_script_args) + ' > log{}.log 2>&1 &'.format(rank_id)
-        os.system(rank_process)
+            env['MINDSPORE_HCCL_CONFIG_PATH'] = table_fn
+            env['RANK_TABLE_FILE'] = table_fn
+        if os.path.exists(device_dir):
+            shutil.rmtree(device_dir)
+        os.mkdir(device_dir)
+        os.chdir(device_dir)
+        cmd = [sys.executable, '-u']
+        cmd.append(args.training_script)
+        cmd.extend(args.training_script_args)
+        log_file = open('{dir}/log{id}.log'.format(dir=device_dir, id=rank_id), 'w')
+        process = subprocess.Popen(cmd, stdout=log_file, stderr=log_file, env=env)
+        processes.append(process)
+        cmds.append(cmd)
+        log_files.append(log_file)
+    for process, cmd, log_file in zip(processes, cmds, log_files):
+        process.wait()
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(returncode=process, cmd=cmd)
+        log_file.close()
 
 
 if __name__ == "__main__":

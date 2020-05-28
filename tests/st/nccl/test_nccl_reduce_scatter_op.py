@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 init('nccl')
@@ -52,23 +54,23 @@ def test_ReduceScatter():
     reduce_scatter = Net()
     output = reduce_scatter()
 
-    sum = np.ones([size, 1, 3, 3]).astype(np.float32) * 0
+    sum_ones = np.ones([size, 1, 3, 3]).astype(np.float32) * 0
     for i in range(size):
-        sum += np.ones([size, 1, 3, 3]).astype(np.float32) * 0.01 * (i + 1)
-    expect0 = sum[rank: rank + 1]
+        sum_ones += np.ones([size, 1, 3, 3]).astype(np.float32) * 0.01 * (i + 1)
+    expect0 = sum_ones[rank: rank + 1]
     diff0 = output[0].asnumpy() - expect0
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
-    assert (output[0].shape() == expect0.shape)
+    assert output[0].shape() == expect0.shape
 
     expect1 = np.ones([1, 1, 3, 3]).astype(np.float32) * 0.01 * size
     diff1 = output[1].asnumpy() - expect1
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
-    assert (output[1].shape() == expect1.shape)
+    assert output[1].shape() == expect1.shape
 
     expect2 = np.ones([1, 1, 3, 3]).astype(np.float32) * 0.01 * 1
     diff2 = output[2].asnumpy() - expect2
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
-    assert (output[2].shape() == expect2.shape)
+    assert output[2].shape() == expect2.shape

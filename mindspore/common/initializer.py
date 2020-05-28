@@ -39,6 +39,9 @@ class Initializer:
     """
     def __init__(self, **kwargs):
         self._kwargs = kwargs
+        self.shape = None
+        self.dtype = None
+        self._seed = None
 
     def _initialize(self, *kwargs):
         raise NotImplementedError('Must be overridden!')
@@ -46,6 +49,45 @@ class Initializer:
     def __call__(self, arr):
         return self._initialize(arr)
 
+    @property
+    def seed(self):
+        return self._seed
+
+    @seed.setter
+    def seed(self, seed_):
+        """set the random seed."""
+        self._seed = seed_
+
+    @property
+    def shape(self):
+        return self._shape
+
+    @shape.setter
+    def shape(self, shape):
+        self._shape = shape
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @dtype.setter
+    def dtype(self, dtype):
+        self._dtype = dtype
+
+    def to_tensor(self):
+        """Get the tensor format data of this Initializer."""
+        arr = None
+        try:
+            arr = np.ndarray(self.shape)
+        except ValueError:
+            msg = "Error shape={}".format(self.shape)
+            logger.error(msg)
+            raise ValueError(msg)
+        if self._seed is not None:
+            np.random.seed(self.seed)
+        self.__call__(arr)
+        self._seed = None
+        return Tensor(arr, dtype=self.dtype)
 
 def _register(*aliases):
     """Return the alias register."""
@@ -279,13 +321,14 @@ def initializer(init, shape=None, dtype=mstype.float32):
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
-        Tensor, initialized tensor.
+        Union[Tensor, Initialized], When `init` is Tensor, the return is Tensor object,
+            otherwise the return is Initialize object.
 
     Examples:
         >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
-        raise TypeError('Unsupported init type.')
+        raise TypeError("Unsupported init type '{}'.".format(type(init)))
 
     if isinstance(init, Tensor):
         init_shape = init.shape()
@@ -295,23 +338,32 @@ def initializer(init, shape=None, dtype=mstype.float32):
                              "the variable shape {}.".format(list(init.shape()), shape))
         return init
 
+    if isinstance(init, str):
+        init_obj = _INITIALIZER_ALIAS[init.lower()]()
+        if init_obj is None:
+            raise ValueError("The class corresponding to '{}' was not found.".format(init))
+        init = init_obj
+
+    if isinstance(shape, list):
+        shape = tuple(shape)
+    elif isinstance(shape, numbers.Number):
+        shape = (shape,)
     try:
-        arr = np.ndarray(shape)
+        np.ndarray(shape)
     except ValueError:
-        msg = "Error shape={}".format(shape)
-        logger.error(msg)
-        raise ValueError(msg)
+        raise ValueError("Error shape={}".format(shape))
+
+    if isinstance(init, Initializer):
+        init.shape = shape
+        init.dtype = dtype
+        return init
 
     if isinstance(init, numbers.Number):
         init_obj = Constant(init)
-    elif isinstance(init, str):
-        init_obj = _INITIALIZER_ALIAS[init.lower()]()
-    else:
-        init_obj = init
-
-    init_obj(arr)
-    return Tensor(arr, dtype=dtype)
-
+        init_obj.shape = shape
+        init_obj.dtype = dtype
+        return init_obj
+    raise TypeError("Unsupported init type '{}'.".format(type(init)))
 
 __all__ = [
     'Initializer',

@@ -30,10 +30,6 @@ class KernelSelect {
   KernelSelect() = default;
   virtual ~KernelSelect() = default;
   virtual void SelectKernel(const CNodePtr &cnode) { device::ascend::SelectKernelInfo(cnode); }
-  virtual bool CheckKernelAccuracySupported(const CNodePtr &kernel_node,
-                                            const kernel::KernelBuildInfoPtr &new_kernel_build_info) {
-    return device::ascend::CheckKernelAccuracySupported(kernel_node, new_kernel_build_info);
-  }
 };
 using KernelSelectPtr = std::shared_ptr<KernelSelect>;
 
@@ -41,8 +37,13 @@ class SupportedChecker {
  public:
   SupportedChecker() = default;
   virtual ~SupportedChecker() = default;
-  virtual bool CheckSupported(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
-    return kernel::CheckSupported(anf_node, select_kernel_build_info);
+  virtual bool CheckAiCoreSupported(const AnfNodePtr &anf_node,
+                                    const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
+    return kernel::IsSupportedByAICore(anf_node, select_kernel_build_info);
+  }
+  virtual bool CheckAiCpuSupported(const AnfNodePtr &anf_node,
+                                   const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
+    return kernel::IsSupportedByAICPU(anf_node, select_kernel_build_info);
   }
 };
 using SupportedCheckerPtr = std::shared_ptr<SupportedChecker>;

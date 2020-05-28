@@ -92,15 +92,22 @@ def populate_data(raw, blob, columns, blob_fields, schema):
     if raw:
         # remove dummy fileds
         raw = {k: v for k, v in raw.items() if k in schema}
+    else:
+        raw = {}
     if not blob_fields:
         return raw
-    blob_bytes = bytes(blob)
+
+    loaded_columns = []
+    if columns:
+        for column in columns:
+            if column in blob_fields:
+                loaded_columns.append(column)
+    else:
+        loaded_columns = blob_fields
 
     def _render_raw(field, blob_data):
         data_type = schema[field]['type']
         data_shape = schema[field]['shape'] if 'shape' in schema[field] else []
-        if columns and field not in columns:
-            return
         if data_shape:
             try:
                 raw[field] = np.reshape(np.frombuffer(blob_data, dtype=data_type), data_shape)
@@ -109,22 +116,6 @@ def populate_data(raw, blob, columns, blob_fields, schema):
         else:
             raw[field] = blob_data
 
-    if len(blob_fields) == 1:
-        _render_raw(blob_fields[0], blob_bytes)
-        return raw
-
-    def _int_from_bytes(xbytes: bytes) -> int:
-        return int.from_bytes(xbytes, 'big')
-
-    def _blob_at_position(pos):
-        start = 0
-        for _ in range(pos):
-            n_bytes = _int_from_bytes(blob_bytes[start : start + 8])
-            start += 8 + n_bytes
-        n_bytes = _int_from_bytes(blob_bytes[start : start + 8])
-        start += 8
-        return blob_bytes[start : start + n_bytes]
-
-    for i, blob_field in enumerate(blob_fields):
-        _render_raw(blob_field, _blob_at_position(i))
+    for i, blob_field in enumerate(loaded_columns):
+        _render_raw(blob_field, bytes(blob[i]))
     return raw

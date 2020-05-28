@@ -26,9 +26,9 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.train.model import Model
 
-
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -43,7 +43,9 @@ class Net(nn.Cell):
         out = self.flatten(x)
         return out
 
+
 loss = nn.MSELoss()
+
 
 def test_build():
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]))

@@ -14,7 +14,7 @@
 # ============================================================================
 """ Test Dynamic Learning Rate """
 import pytest
-import mindspore
+
 from mindspore.nn import dynamic_lr as dr
 
 milestone = [10, 20, 30]
@@ -29,8 +29,9 @@ min_lr = 0.01
 max_lr = 0.1
 power = 0.5
 
+
 class TestInputs:
-    def test_milestone1(self):        
+    def test_milestone1(self):
         milestone1 = 1
         with pytest.raises(TypeError):
             dr.piecewise_constant_lr(milestone1, learning_rates)
@@ -58,7 +59,7 @@ class TestInputs:
         lr = True
         with pytest.raises(TypeError):
             dr.exponential_decay_lr(lr, decay_rate, total_step, step_per_epoch, decay_epoch)
-        
+
         with pytest.raises(TypeError):
             dr.polynomial_decay_lr(lr, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
 
@@ -71,7 +72,7 @@ class TestInputs:
             dr.polynomial_decay_lr(lr, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
 
     def test_end_learning_rate_type(self):
-        lr = True        
+        lr = True
         with pytest.raises(TypeError):
             dr.polynomial_decay_lr(learning_rate, lr, total_step, step_per_epoch, decay_epoch, power)
 
@@ -127,7 +128,7 @@ class TestInputs:
         step_per_epoch1 = -1
         with pytest.raises(ValueError):
             dr.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch1, decay_epoch)
-        
+
         with pytest.raises(ValueError):
             dr.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch1, decay_epoch)
 
@@ -226,9 +227,10 @@ def test_cosine_decay():
     lr = dr.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
     assert len(lr) == total_step
 
+
 def test_polynomial_decay():
     lr1 = dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
     assert len(lr1) == total_step
     lr2 = dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power,
-                                True)
+                                 True)
     assert len(lr2) == total_step

@@ -21,11 +21,23 @@
 
 namespace mindspore {
 namespace dataset {
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::Iterator &BPlusTree<K, V, C, T>::Iterator::operator++() {
+template <typename K, typename V, typename A, typename C, typename T>
+BPlusTree<K, V, A, C, T>::Iterator::~Iterator() {
+  if (locked_) {
+    cur_->rw_lock_.Unlock();
+    locked_ = false;
+  }
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator &BPlusTree<K, V, A, C, T>::Iterator::operator++() {
   if (slot_ + 1u < cur_->slotuse_) {
     ++slot_;
   } else if (cur_->link_.next) {
+    if (locked_) {
+      cur_->link_.next->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.next;
     slot_ = 0;
   } else {
@@ -34,12 +46,16 @@ typename BPlusTree<K, V, C, T>::Iterator &BPlusTree<K, V, C, T>::Iterator::opera
   return *this;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::Iterator BPlusTree<K, V, C, T>::Iterator::operator++(int) {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::Iterator::operator++(int) {
   Iterator tmp = *this;
   if (slot_ + 1u < cur_->slotuse_) {
     ++slot_;
   } else if (cur_->link_.next) {
+    if (locked_) {
+      cur_->link_.next->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.next;
     slot_ = 0;
   } else {
@@ -48,11 +64,15 @@ typename BPlusTree<K, V, C, T>::Iterator BPlusTree<K, V, C, T>::Iterator::operat
   return tmp;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::Iterator &BPlusTree<K, V, C, T>::Iterator::operator--() {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator &BPlusTree<K, V, A, C, T>::Iterator::operator--() {
   if (slot_ > 0) {
     --slot_;
   } else if (cur_->link_.prev) {
+    if (locked_) {
+      cur_->link_.prev->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.prev;
     slot_ = cur_->slotuse_ - 1;
   } else {
@@ -61,12 +81,16 @@ typename BPlusTree<K, V, C, T>::Iterator &BPlusTree<K, V, C, T>::Iterator::opera
   return *this;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::Iterator BPlusTree<K, V, C, T>::Iterator::operator--(int) {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::Iterator::operator--(int) {
   Iterator tmp = *this;
   if (slot_ > 0) {
     --slot_;
   } else if (cur_->link_.prev) {
+    if (locked_) {
+      cur_->link_.prev->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.prev;
     slot_ = cur_->slotuse_ - 1;
   } else {
@@ -75,11 +99,77 @@ typename BPlusTree<K, V, C, T>::Iterator BPlusTree<K, V, C, T>::Iterator::operat
   return tmp;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator &BPlusTree<K, V, C, T>::ConstIterator::operator++() {
+template <typename K, typename V, typename A, typename C, typename T>
+BPlusTree<K, V, A, C, T>::Iterator::Iterator(const BPlusTree<K, V, A, C, T>::Iterator &lhs) {
+  this->cur_ = lhs.cur_;
+  this->slot_ = lhs.slot_;
+  this->locked_ = lhs.locked_;
+  if (this->locked_) {
+    this->cur_->rw_lock_.LockShared();
+  }
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+BPlusTree<K, V, A, C, T>::Iterator::Iterator(BPlusTree<K, V, A, C, T>::Iterator &&lhs) {
+  this->cur_ = lhs.cur_;
+  this->slot_ = lhs.slot_;
+  this->locked_ = lhs.locked_;
+  lhs.locked_ = false;
+  lhs.slot_ = 0;
+  lhs.cur_ = nullptr;
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator &BPlusTree<K, V, A, C, T>::Iterator::operator=(
+  const BPlusTree<K, V, A, C, T>::Iterator &lhs) {
+  if (*this != lhs) {
+    if (this->locked_) {
+      this->cur_->rw_lock_.Unlock();
+    }
+    this->cur_ = lhs.cur_;
+    this->slot_ = lhs.slot_;
+    this->locked_ = lhs.locked_;
+    if (this->locked_) {
+      this->cur_->rw_lock_.LockShared();
+    }
+  }
+  return *this;
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator &BPlusTree<K, V, A, C, T>::Iterator::operator=(
+  BPlusTree<K, V, A, C, T>::Iterator &&lhs) {
+  if (*this != lhs) {
+    if (this->locked_) {
+      this->cur_->rw_lock_.Unlock();
+    }
+    this->cur_ = lhs.cur_;
+    this->slot_ = lhs.slot_;
+    this->locked_ = lhs.locked_;
+    lhs.locked_ = false;
+    lhs.slot_ = 0;
+    lhs.cur_ = nullptr;
+  }
+  return *this;
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+BPlusTree<K, V, A, C, T>::ConstIterator::~ConstIterator() {
+  if (locked_) {
+    cur_->rw_lock_.Unlock();
+    locked_ = false;
+  }
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator &BPlusTree<K, V, A, C, T>::ConstIterator::operator++() {
   if (slot_ + 1u < cur_->slotuse_) {
     ++slot_;
   } else if (cur_->link_.next) {
+    if (locked_) {
+      cur_->link_.next->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.next;
     slot_ = 0;
   } else {
@@ -88,12 +178,16 @@ typename BPlusTree<K, V, C, T>::ConstIterator &BPlusTree<K, V, C, T>::ConstItera
   return *this;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::ConstIterator::operator++(int) {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::ConstIterator::operator++(int) {
   Iterator tmp = *this;
   if (slot_ + 1u < cur_->slotuse_) {
     ++slot_;
   } else if (cur_->link_.next) {
+    if (locked_) {
+      cur_->link_.next->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.next;
     slot_ = 0;
   } else {
@@ -102,11 +196,15 @@ typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::ConstIterat
   return tmp;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator &BPlusTree<K, V, C, T>::ConstIterator::operator--() {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator &BPlusTree<K, V, A, C, T>::ConstIterator::operator--() {
   if (slot_ > 0) {
     --slot_;
   } else if (cur_->link_.prev) {
+    if (locked_) {
+      cur_->link_.prev->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.prev;
     slot_ = cur_->slotuse_ - 1;
   } else {
@@ -115,12 +213,16 @@ typename BPlusTree<K, V, C, T>::ConstIterator &BPlusTree<K, V, C, T>::ConstItera
   return *this;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::ConstIterator::operator--(int) {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::ConstIterator::operator--(int) {
   Iterator tmp = *this;
   if (slot_ > 0) {
     --slot_;
   } else if (cur_->link_.prev) {
+    if (locked_) {
+      cur_->link_.prev->rw_lock_.LockShared();
+      cur_->rw_lock_.Unlock();
+    }
     cur_ = cur_->link_.prev;
     slot_ = cur_->slotuse_ - 1;
   } else {
@@ -129,16 +231,97 @@ typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::ConstIterat
   return tmp;
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::Search(const key_type &key) const {
+template <typename K, typename V, typename A, typename C, typename T>
+BPlusTree<K, V, A, C, T>::ConstIterator::ConstIterator(const BPlusTree<K, V, A, C, T>::ConstIterator &lhs) {
+  this->cur_ = lhs.cur_;
+  this->slot_ = lhs.slot_;
+  this->locked_ = lhs.locked_;
+  if (this->locked_) {
+    this->cur_->rw_lock_.LockShared();
+  }
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+BPlusTree<K, V, A, C, T>::ConstIterator::ConstIterator(BPlusTree<K, V, A, C, T>::ConstIterator &&lhs) {
+  this->cur_ = lhs.cur_;
+  this->slot_ = lhs.slot_;
+  this->locked_ = lhs.locked_;
+  lhs.locked_ = false;
+  lhs.slot_ = 0;
+  lhs.cur_ = nullptr;
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator &BPlusTree<K, V, A, C, T>::ConstIterator::operator=(
+  const BPlusTree<K, V, A, C, T>::ConstIterator &lhs) {
+  if (*this != lhs) {
+    if (this->locked_) {
+      this->cur_->rw_lock_.Unlock();
+    }
+    this->cur_ = lhs.cur_;
+    this->slot_ = lhs.slot_;
+    this->locked_ = lhs.locked_;
+    if (this->locked_) {
+      this->cur_->rw_lock_.LockShared();
+    }
+  }
+  return *this;
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator &BPlusTree<K, V, A, C, T>::ConstIterator::operator=(
+  BPlusTree<K, V, A, C, T>::ConstIterator &&lhs) {
+  if (*this != lhs) {
+    if (this->locked_) {
+      this->cur_->rw_lock_.Unlock();
+    }
+    this->cur_ = lhs.cur_;
+    this->slot_ = lhs.slot_;
+    this->locked_ = lhs.locked_;
+    lhs.locked_ = false;
+    lhs.slot_ = 0;
+    lhs.cur_ = nullptr;
+  }
+  return *this;
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::Search(const key_type &key) const {
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
     slot_type slot;
-    IndexRc rc = Locate(root_, key, &leaf, &slot);
+    RWLock *myLock = &this->rw_lock_;
+    // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
+    myLock->LockShared();
+    IndexRc rc = Locate(myLock, false, root_, key, &leaf, &slot);
     if (rc == IndexRc::kOk) {
-      return ConstIterator(leaf, slot);
+      // All locks from the tree to the parent of leaf are all gone. We still have a S lock
+      // on the leaf. The unlock will be handled by the iterator when it goes out of scope.
+      return ConstIterator(leaf, slot, true);
     } else {
-      MS_LOG(INFO) << "Key not found. rc = " << static_cast<int>(rc) << ".";
+      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
+      return cend();
+    }
+  } else {
+    return cend();
+  }
+}
+
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::Search(const key_type &key) {
+  if (root_ != nullptr) {
+    LeafNode *leaf = nullptr;
+    slot_type slot;
+    RWLock *myLock = &this->rw_lock_;
+    // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
+    myLock->LockShared();
+    IndexRc rc = Locate(myLock, false, root_, key, &leaf, &slot);
+    if (rc == IndexRc::kOk) {
+      // All locks from the tree to the parent of leaf are all gone. We still have a S lock
+      // on the leaf. The unlock will be handled by the iterator when it goes out of scope.
+      return Iterator(leaf, slot, true);
+    } else {
+      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
       return end();
     }
   } else {
@@ -146,39 +329,39 @@ typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::Search(cons
   }
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::value_type BPlusTree<K, V, C, T>::operator[](key_type key) {
-  ConstIterator it = Search(key);
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::value_type BPlusTree<K, V, A, C, T>::operator[](key_type key) {
+  Iterator it = Search(key);
   return it.value();
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::Iterator BPlusTree<K, V, C, T>::begin() {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::begin() {
   return Iterator(this);
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::Iterator BPlusTree<K, V, C, T>::end() {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::end() {
   return Iterator(this->leaf_nodes_.tail, this->leaf_nodes_.tail ? this->leaf_nodes_.tail->slotuse_ : 0);
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::begin() const {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::begin() const {
   return ConstIterator(this);
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::end() const {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::end() const {
   return ConstIterator(this->leaf_nodes_.tail, this->leaf_nodes_.tail ? this->leaf_nodes_.tail->slotuse_ : 0);
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::cbegin() const {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::cbegin() const {
   return ConstIterator(this);
 }
 
-template <typename K, typename V, typename C, typename T>
-typename BPlusTree<K, V, C, T>::ConstIterator BPlusTree<K, V, C, T>::cend() const {
+template <typename K, typename V, typename A, typename C, typename T>
+typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::cend() const {
   return ConstIterator(this->leaf_nodes_.tail, this->leaf_nodes_.tail ? this->leaf_nodes_.tail->slotuse_ : 0);
 }
 }  // namespace dataset

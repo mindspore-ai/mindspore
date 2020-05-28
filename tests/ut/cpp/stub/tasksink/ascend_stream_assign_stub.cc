@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 #include "device/ascend/ascend_stream_assign.h"
+#include "device/ascend/ascend_label_assign.h"
 #include "device/ascend/tasksink/task_generator.h"
 #include "device/kernel_adjust.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
+
+void AscendLabelAssign::AssignLabel(NotNull<const std::shared_ptr<session::KernelGraph> &>) {}
+
 void AscendStreamAssign::AssignStreamNew(const KernelGraphPtr &graph) { return; }
 
 uint32_t AscendStreamAssign::GetTotalStreamNum() const { return 1; }
@@ -35,8 +39,7 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
 }  // namespace ascend
 void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
-bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::Context> &context,
-                                      const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   return true;
 }
 bool KernelAdjust::NeedInsertSwitch() { return true; }

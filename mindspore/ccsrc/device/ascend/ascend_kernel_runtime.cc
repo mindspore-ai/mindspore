@@ -333,12 +333,11 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   bool status = ge::model_runner::ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first,
                                                                            model_iter->second, listener);
   if (!status) {
-    MS_LOG(ERROR) << "load task failed";
-    return false;
+    MS_LOG(EXCEPTION) << "Load Task Failed";
   }
   if (ProfilingManager::GetInstance().IsProfiling()) {
-    std::vector<uint32_t> task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(graph->graph_id(), task_ids);
+    auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
+    ProfilingUtils::ReportProfilingData(task_ids, NOT_NULL(graph));
   }
   return true;
 }

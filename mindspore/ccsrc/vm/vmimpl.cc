@@ -31,6 +31,7 @@
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/convert_utils.h"
+#include "utils/primitive_utils.h"
 #include "debug/draw.h"
 
 namespace mindspore {
@@ -443,7 +444,7 @@ BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
   PrimitivePyPtr operation = dyn_cast<PrimitivePy>(prim);
 
   MS_LOG(DEBUG) << "operation start " << prim->name();
-  auto func = operation != nullptr ? operation->GetComputeFunction() : prim->GetComputeFunction();
+  auto func = operation != nullptr ? operation->GetComputeFunction() : GetComputeFunction(prim->name());
   if (py::isinstance<py::none>(func)) {
     MS_LOG(EXCEPTION) << prim->name() << " 's compute function is not implemented";
   }

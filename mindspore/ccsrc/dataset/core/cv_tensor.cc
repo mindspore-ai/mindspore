@@ -24,15 +24,15 @@
 namespace mindspore {
 namespace dataset {
 CVTensor::CVTensor(const TensorShape &shape, const DataType &type) : Tensor(shape, type) {
-  (void)this->MatInit(StartAddr(), shape_, type_, &mat_);
+  (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
 }
 
 CVTensor::CVTensor(const TensorShape &shape, const DataType &type, const uchar *data) : Tensor(shape, type, data) {
-  (void)this->MatInit(StartAddr(), shape_, type_, &mat_);
+  (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
 }
 
 CVTensor::CVTensor(std::shared_ptr<Tensor> tensor) : Tensor(std::move(*tensor)) {
-  (void)this->MatInit(StartAddr(), shape_, type_, &mat_);
+  (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
 }
 
 std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &shape, const DataType &type) {
@@ -83,19 +83,19 @@ Status CVTensor::MatInit(uchar *data, const TensorShape &shape, const DataType &
 
 Status CVTensor::Reshape(const TensorShape &shape) {
   RETURN_IF_NOT_OK(Tensor::Reshape(shape));
-  RETURN_IF_NOT_OK(this->MatInit(StartAddr(), shape_, type_, &mat_));
+  RETURN_IF_NOT_OK(this->MatInit(GetMutableBuffer(), shape_, type_, &mat_));
   return Status::OK();
 }
 
 Status CVTensor::ExpandDim(const dsize_t &axis) {
   RETURN_IF_NOT_OK(Tensor::ExpandDim(axis));
-  RETURN_IF_NOT_OK(this->MatInit(StartAddr(), shape_, type_, &mat_));
+  RETURN_IF_NOT_OK(this->MatInit(GetMutableBuffer(), shape_, type_, &mat_));
   return Status::OK();
 }
 
 void CVTensor::Squeeze() {
   Tensor::Squeeze();
-  (void)this->MatInit(StartAddr(), shape_, type_, &mat_);
+  (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
 }
 }  // namespace dataset
 }  // namespace mindspore

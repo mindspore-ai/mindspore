@@ -14,9 +14,10 @@
 # ============================================================================
 """Generate vm_impl function for nn ops"""
 import numpy as np
+
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.common.tensor import Tensor
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
 

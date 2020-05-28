@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -176,7 +175,7 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   Status GetNumRowsInDataset(int64_t *num) const override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
-  // @param (std::unordered_map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
+  // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
@@ -248,7 +247,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   int64_t buf_cnt_;
 
   WaitPost wp_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::map<std::string, int32_t> label_index_;
   std::vector<std::pair<std::string, std::vector<std::string>>> image_labelname_;

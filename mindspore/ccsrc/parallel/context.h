@@ -19,12 +19,16 @@
 
 #include <cstdint>
 #include <memory>
+#include <map>
 #include <string>
 #include <vector>
 
 #include "parallel/ops_info/ops_utils.h"
 #include "parallel/status.h"
 #include "utils/convert_utils.h"
+#include "ir/anf.h"
+#include "ir/func_graph.h"
+#include "debug/info.h"
 
 namespace mindspore {
 namespace parallel {
@@ -36,6 +40,8 @@ constexpr char SEMI_AUTO_PARALLEL[] = "semi_auto_parallel";
 
 constexpr char DYNAMIC_PROGRAMMING[] = "dynamic_programming";
 constexpr char RECURSIVE_PROGRAMMING[] = "recursive_programming";
+
+constexpr char TRAINING[] = "training";
 
 class ParallelContext {
  public:
@@ -76,10 +82,10 @@ class ParallelContext {
   bool global_rank_is_set() const { return global_rank_is_set_; }
   bool parameter_broadcast_is_set() const { return parameter_broadcast_is_set_; }
 
-  void set_all_reduce_fusion_split_indices(const std::vector<uint32_t> indices);
-  const std::vector<uint32_t> all_reduce_fusion_split_indices() const;
-  void set_all_reduce_fusion_split_sizes(const std::vector<uint32_t> sizes);
-  const std::vector<uint32_t> all_reduce_fusion_split_sizes() const;
+  void SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group);
+  const std::vector<uint32_t> GetAllReduceFusionSplitIndices(const std::string &group) const;
+  void SetAllReduceFusionSplitSizes(const std::vector<uint32_t> sizes, const std::string &group);
+  const std::vector<uint32_t> GetAllReduceFusionSplitSizes(const std::string &group) const;
   void set_enable_all_reduce_fusion(bool enable_all_reduce_fusion) {
     enable_all_reduce_fusion_ = enable_all_reduce_fusion;
   }
@@ -108,11 +114,17 @@ class ParallelContext {
   bool global_rank_is_set_;
   bool parameter_broadcast_is_set_;
   bool enable_all_reduce_fusion_;
-  std::vector<uint32_t> all_reduce_fusion_split_indices_;
-  std::vector<uint32_t> all_reduce_fusion_split_sizes_;
+  std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_indices_;
+  std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
   std::string strategy_ckpt_load_file_;
   std::string strategy_ckpt_save_file_;
 };
+
+void ParallelParameterContextInit(const FuncGraphPtr &func_graph);
+void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
+                                                 AbstractBasePtr ptr);
+void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
+                                            const AbstractBasePtr &ptr);
 }  // namespace parallel
 }  // namespace mindspore
 

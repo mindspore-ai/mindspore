@@ -8,9 +8,9 @@ This is an example of training ResNet101 with ImageNet dataset in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset [ImageNet](http://image-net.org/download).
+- Download the dataset ImageNet2012.
  
-> Unzip the ImageNet dataset to any path you want, the folder should include train and eval dataset as follows:
+> Unzip the ImageNet2012 dataset to any path you want, the folder should include train and eval dataset as follows:
  
 ```
 .
@@ -46,6 +46,7 @@ Parameters for both training and evaluating can be set in config.py.
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay
 "epoch_size": 120,                # epoch sizes for training
+"pretrain_epoch_size": 0,         # epoch size of pretrain checkpoint
 "buffer_size": 1000,              # number of queue size in data preprocessing
 "image_height": 224,              # image height
 "image_width": 224,               # image width
@@ -68,10 +69,10 @@ Parameters for both training and evaluating can be set in config.py.
 
 ```
 # distributed training
-sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
+sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [PRETRAINED_PATH](optional)
  
 # standalone training
-sh run_standalone_train.sh [DATASET_PATH]
+sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_PATH](optional)
 ```
  
 #### Launch
@@ -79,9 +80,15 @@ sh run_standalone_train.sh [DATASET_PATH]
 ```bash
 # distributed training example(8p)
 sh run_distribute_train.sh rank_table_8p.json dataset/ilsvrc
- 
+
+If you want to load pretrained ckpt file, 
+sh run_distribute_train.sh rank_table_8p.json dataset/ilsvrc ./ckpt/pretrained.ckpt
+
 # standalone training example（1p）
 sh run_standalone_train.sh dataset/ilsvrc
+
+If you want to load pretrained ckpt file,
+sh run_standalone_train.sh dataset/ilsvrc ./ckpt/pretrained.ckpt
 ```
  
 > About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).

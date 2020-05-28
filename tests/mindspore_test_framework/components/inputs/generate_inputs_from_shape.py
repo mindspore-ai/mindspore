@@ -16,12 +16,13 @@
 """Component that generate inputs for specified shape type."""
 
 import numpy as np
-from mindspore.common.tensor import Tensor
 
+from mindspore.common.tensor import Tensor
 from ...components.icomponent import IDataComponent
-from ...utils.other_util import shape2tensor
-from ...utils.config_util import get_input_config
 from ...utils import keyword
+from ...utils.config_util import get_input_config
+from ...utils.other_util import shape2tensor
+
 
 class GenerateFromShapeDC(IDataComponent):
     """
@@ -41,9 +42,10 @@ class GenerateFromShapeDC(IDataComponent):
             ([1, 16, 128, 64], np.float32, 6), # (inputs, dtype, scale)
         ]
     """
-    def create_inputs(self, verification_set):
+
+    def __call__(self):
         result = []
-        for config in verification_set[keyword.inputs]:
+        for config in self.verification_set[keyword.inputs]:
             desc_inputs = config[keyword.desc_inputs]
             add_fake_input = config.get(keyword.add_fake_input, False)
             fake_input_type = config.get(keyword.fake_input_type, np.float32)

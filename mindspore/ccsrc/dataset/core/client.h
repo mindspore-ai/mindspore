@@ -42,6 +42,7 @@
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/datasetops/take_op.h"
 #include "dataset/engine/datasetops/zip_op.h"
+#include "dataset/engine/datasetops/concat_op.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/util/status.h"
 

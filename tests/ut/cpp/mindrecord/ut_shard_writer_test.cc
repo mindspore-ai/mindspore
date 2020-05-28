@@ -60,7 +60,7 @@ TEST_F(TestShardWriter, TestShardWriterOneSample) {
   std::string filename = "./OneSample.shard01";
 
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4);
+  MSRStatus ret = dataset.Open({filename}, true, 4);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -194,8 +194,8 @@ TEST_F(TestShardWriter, TestShardWriterShiftRawPage) {
     fw.Open(file_names);
     uint64_t header_size = 1 << 14;
     uint64_t page_size = 1 << 15;
-    fw.set_header_size(header_size);
-    fw.set_page_size(page_size);
+    fw.SetHeaderSize(header_size);
+    fw.SetPageSize(page_size);
 
     // set shardHeader
     fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -331,8 +331,8 @@ TEST_F(TestShardWriter, TestShardWriterTrial) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -466,8 +466,8 @@ TEST_F(TestShardWriter, TestShardWriterTrialNoFields) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -567,8 +567,8 @@ TEST_F(TestShardWriter, DataCheck) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -668,8 +668,8 @@ TEST_F(TestShardWriter, AllRawDataWrong) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -756,7 +756,7 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberColumnInIndex) {
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "file_name", "data"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4, column_list);
+  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -842,7 +842,7 @@ TEST_F(TestShardWriter, TestShardNoBlob) {
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "file_name"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4, column_list);
+  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -936,7 +936,7 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberNotColumnInIndex) {
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "data"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4, column_list);
+  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -1043,7 +1043,7 @@ TEST_F(TestShardWriter, TestShardWriter10Sample40Shard) {
 
   filename = "./TenSampleFortyShard.shard01";
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4);
+  MSRStatus ret = dataset.Open({filename}, true, 4);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 

@@ -13,32 +13,32 @@
 # limitations under the License.
 
 import numpy as np
-import mindspore.nn as nn
+import re
+
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
+import mindspore.ops.functional as F
 from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim.momentum import Momentum
+from mindspore import context
+from mindspore.common.api import _executor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
-from mindspore.train.model import Model, ParallelMode
-from mindspore import context
-import os
-import re
-import mindspore.ops.functional as F
 from mindspore.nn.loss.loss import _Loss
-from mindspore.parallel._utils import _reset_op_id as resset_op_id
-from mindspore.common.api import _executor
-from mindspore.parallel import set_algo_parameters
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
 from mindspore.parallel import _cost_model_context as cost_model_context
+from mindspore.parallel import set_algo_parameters
+from mindspore.parallel._utils import _reset_op_id as resset_op_id
+from mindspore.train.model import Model, ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_task_sink=True, device_id= 0)
-context.set_context(enable_ir_fusion=True)
-context.set_context(enable_loop_sink=False)
+context.set_context(device_id=0)
 init()
+
 
 def weight_variable(shape, factor=0.1):
     return TruncatedNormal(0.02)
+
 
 def _conv3x3(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     """Get a conv2d layer with 3x3 kernel size."""
@@ -46,11 +46,13 @@ def _conv3x3(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=3, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
+
 def _conv1x1(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     """Get a conv2d layer with 1x1 kernel size."""
     init_value = weight_variable((out_channels, in_channels, 1, 1))
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=1, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
+
 
 def _conv7x7(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     """Get a conv2d layer with 7x7 kernel size."""
@@ -58,11 +60,13 @@ def _conv7x7(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=7, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
+
 def _fused_bn(channels, momentum=0.9):
     """Get a fused batchnorm"""
     init_weight = weight_variable((channels,))
     init_bias = weight_variable((channels,))
     return nn.BatchNorm2d(channels, momentum=momentum)
+
 
 class ResidualBlock(nn.Cell):
     expansion = 4
@@ -128,7 +132,7 @@ class ResNet(nn.Cell):
                  layer_nums,
                  in_channels,
                  out_channels,
-                 strides=[1,2,2,2],
+                 strides=[1, 2, 2, 2],
                  num_classes=100):
         super(ResNet, self).__init__()
 
@@ -210,6 +214,7 @@ def resnet50(class_num=10):
                   [256, 512, 1024, 2048],
                   [2, 2, 2, 1],
                   class_num)
+
 
 class SoftmaxCrossEntropyExpand(_Loss):
     def __init__(self, sparse=False):
@@ -304,7 +309,7 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
     return allreduce_fusion_dict
 
 
-def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768):  # 1048576 #131072 #32768 #8192
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
@@ -476,7 +481,7 @@ def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #10485
     cost_model_context.reset_cost_model_context()
 
 
-def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768):  # 1048576 #131072 #32768 #8192
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_time=0.1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.05)
@@ -649,7 +654,7 @@ def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #10485
     cost_model_context.reset_cost_model_context()
 
 
-def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536): #1048576 #131072 #32768 #8192
+def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536):  # 1048576 #131072 #32768 #8192
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
@@ -668,7 +673,7 @@ def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536): #1048576 
     model.train(5, dataset, dataset_sink_mode=False)
     strategies = _executor._get_strategy(model._train_network)
     for (k, v) in strategies.items():
-        if re.search('Conv2D-op', k ) is not None:
+        if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
         elif re.search('MatMul-op', k) is not None:
             assert v == [[1, 1], [dev_num, 1]]

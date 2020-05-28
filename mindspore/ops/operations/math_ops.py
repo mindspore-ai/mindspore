@@ -16,6 +16,7 @@
 """Operators for math."""
 
 import numpy as np
+from ... import context
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
@@ -23,7 +24,7 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
-from .._utils import _get_broadcast_shape
+from .._utils import get_broadcast_shape
 from ..primitive import PrimitiveWithInfer, prim_attr_register, _run_op
 
 
@@ -74,7 +75,7 @@ class _BinaryOp(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
-        return _get_broadcast_shape(x_shape, y_shape, self.name)
+        return get_broadcast_shape(x_shape, y_shape, self.name)
 
 
 class _MathBinaryOp(_BinaryOp):
@@ -712,6 +713,12 @@ class Neg(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as input.
+
+    Examples:
+        >>> neg = P.Neg()
+        >>> input_x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+        >>> result = neg(input_x)
+        [-1.  -2.   1.  -2.   0.   3.5]
     """
 
     @prim_attr_register
@@ -1007,6 +1014,35 @@ class Log(PrimitiveWithInfer):
         return x
 
 
+class Log1p(PrimitiveWithInfer):
+    """
+    Returns the natural logarithm of one plus the input tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> log1p = P.Log1p()
+        >>> log1p(input_x)
+        [0.6931472, 1.0986123, 1.609438]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_subclass("x", x, mstype.tensor, self.name)
+        return x
+
+
 class Erf(PrimitiveWithInfer):
     r"""
     Computes the Gauss error function of `input_x` element-wise.
@@ -1027,6 +1063,36 @@ class Erf(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Erf"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({"x": x_type}, [mstype.float16, mstype.float32], self.name)
+        return x_type
+
+
+class Erfc(PrimitiveWithInfer):
+    r"""
+    Computes the complementary error function of `input_x` element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+        >>> erfc = P.Erfc()
+        >>> erfc(input_x)
+        [1.8427168, 0., 0.1572832, 0.00469124, 0.00002235]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Erfc"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -1593,6 +1659,7 @@ class LogicalOr(_LogicBinaryOp):
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.name)
 
+
 class IsNan(PrimitiveWithInfer):
     """
     Judging which elements are nan for each position
@@ -1602,6 +1669,11 @@ class IsNan(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Examples:
+        >>> is_nan = P.IsNan()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = is_nan(input_x)
     """
 
     @prim_attr_register
@@ -1615,6 +1687,7 @@ class IsNan(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         return mstype.bool_
 
+
 class IsInf(PrimitiveWithInfer):
     """
     Judging which elements are inf or -inf for each position
@@ -1624,6 +1697,11 @@ class IsInf(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Examples:
+        >>> is_inf = P.IsInf()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = is_inf(input_x)
     """
 
     @prim_attr_register
@@ -1637,6 +1715,7 @@ class IsInf(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         return mstype.bool_
 
+
 class IsFinite(PrimitiveWithInfer):
     """
     Judging which elements are finite for each position
@@ -1646,6 +1725,12 @@ class IsFinite(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Examples:
+        >>> is_finite = P.IsFinite()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = is_finite(input_x)
+        [False   True   False]
     """
 
     @prim_attr_register
@@ -1661,6 +1746,7 @@ class IsFinite(PrimitiveWithInfer):
         validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type + (mstype.bool_,), self.name)
         return mstype.bool_
 
+
 class FloatStatus(PrimitiveWithInfer):
     """
     Determine if the elements contains nan, inf or -inf. `0` for normal, `1` for overflow.
@@ -1671,6 +1757,11 @@ class FloatStatus(PrimitiveWithInfer):
     Outputs:
         Tensor, has the shape of `(1,)`, and has the same dtype of input `mindspore.dtype.float32` or
         `mindspore.dtype.float16`.
+
+    Examples:
+        >>> float_status = P.FloatStatus()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = float_status(input_x)
     """
 
     @prim_attr_register
@@ -1682,7 +1773,9 @@ class FloatStatus(PrimitiveWithInfer):
         return [1]
 
     def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float32, mstype.float16], self.name)
         return x_dtype
+
 
 class NPUAllocFloatStatus(PrimitiveWithInfer):
     """
@@ -1921,12 +2014,16 @@ class NMSWithMask(PrimitiveWithInfer):
         """Init NMSWithMask"""
         validator.check_value_type("iou_threshold", iou_threshold, [float], self.name)
         self.init_prim_io_names(inputs=['bboxes'], outputs=['selected_boxes', 'selected_idx', 'selected_mask'])
+        self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, bboxes_shape):
         cls_name = self.name
         validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
         validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
-        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
+        if not self.is_ge:
+            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 8, Rel.EQ, cls_name)
+        else:
+            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 
@@ -2056,3 +2153,38 @@ class Atan2(_MathBinaryOp):
          >>> atan2(input_x, input_y)
          [[0. 0.7853982]]
     """
+
+
+class SquareSumAll(PrimitiveWithInfer):
+    """
+    Returns square sum all of a tensor element-wise
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor.
+        - **input_x2** (Tensor) - The input tensor same type and shape as the `input_x1`.
+
+    Note:
+        SquareSumAll only supports float16 and float32 data type.
+
+    Outputs:
+        - **output_y1** (Tensor) - The same type as the `input_x1`.
+        - **output_y2** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
+         >>> input_x2 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
+         >>> square_sum_all = P.SquareSumAll()
+         >>> square_sum_all(input_x1, input_x2)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init SquareSumAll"""
+    def infer_shape(self, x_shape, y_shape):
+        validator.check("x1_shape", x_shape, "x2_shape", y_shape, Rel.EQ, self.name)
+        return [], []
+
+    def infer_dtype(self, x_type, y_type):
+        validator.check_tensor_type_same({'x1_type': x_type}, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_type_same({'x2_type': y_type}, [mstype.float16, mstype.float32], self.name)
+        return x_type, y_type

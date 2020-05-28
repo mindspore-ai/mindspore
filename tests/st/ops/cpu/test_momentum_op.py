@@ -13,17 +13,19 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+
+import mindspore.context as context
 import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.nn import Dense
+from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn import Dense
-from mindspore import Tensor
-import mindspore.context as context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
 
 class MomentumNet(nn.Cell):
     def __init__(self):
@@ -39,6 +41,7 @@ class MomentumNet(nn.Cell):
         output = self.fc1(output)
         return output
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -46,7 +49,7 @@ def test_momentum():
     epoch = 13
     net = MomentumNet()
     learning_rate = 0.1
-    momentum = 0.9 
+    momentum = 0.9
 
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
     criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
@@ -55,11 +58,11 @@ def test_momentum():
     train_network.set_train()
     losses = []
     for i in range(epoch):
-        data = Tensor(np.arange(0, 16).reshape(1, 1, 4, 4).astype(np.float32)*0.01)
+        data = Tensor(np.arange(0, 16).reshape(1, 1, 4, 4).astype(np.float32) * 0.01)
         label = Tensor(np.array([0]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    
+
     print("================================")
     print(losses)
     """

@@ -52,17 +52,12 @@ class SoftmaxGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *transpose_input_addr = GetDeviceAddress<T>(workspace, 0);
-    T *transpose_output_addr = GetDeviceAddress<T>(workspace, 1);
-    int *input_shape = GetDeviceAddress<int>(workspace, 2);
-    int *transpose_shape = GetDeviceAddress<int>(workspace, 3);
-    int *transpose_axis = GetDeviceAddress<int>(workspace, 4);
     const float alpha = 1;
     const float beta = 0;
 
@@ -71,6 +66,11 @@ class SoftmaxGpuKernel : public GpuKernel {
                                                       input_addr, &beta, output_descriptor_, output_addr),
                                   "cudnnSoftmaxForward failed");
     } else {
+      T *transpose_input_addr = GetDeviceAddress<T>(workspace, 0);
+      T *transpose_output_addr = GetDeviceAddress<T>(workspace, 1);
+      int *input_shape = GetDeviceAddress<int>(workspace, 2);
+      int *transpose_shape = GetDeviceAddress<int>(workspace, 3);
+      int *transpose_axis = GetDeviceAddress<int>(workspace, 4);
       CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_shape failed");
@@ -114,12 +114,16 @@ class SoftmaxGpuKernel : public GpuKernel {
       return true;
     }
     shape_size_ = SizeToInt(input_shape.size());
-    if (shape_size_ != 2) {
-      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but softmax only supports 2-D inputs.";
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    if (kernel_name == "LogSoftmax") {
+      algo_ = CUDNN_SOFTMAX_LOG;
+      auto axis = GetAttr<int>(kernel_node, "axis");
+      InitSizeByAxis(input_shape, axis);
+    } else {
+      algo_ = CUDNN_SOFTMAX_ACCURATE;
+      auto axis = GetAttr<std::vector<int>>(kernel_node, "axis");
+      InitSizeByAxis(input_shape, axis[0]);
     }
-
-    auto axis = GetAttr<std::vector<int>>(kernel_node, "axis");
-    InitSizeByAxis(input_shape, axis[0]);
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetTensor4dDescriptor(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
                                  SizeToInt(channel_size_), SizeToInt(height_), SizeToInt(width_)),
@@ -156,7 +160,15 @@ class SoftmaxGpuKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_descriptor_), "destroy input_descriptor failed");
   }
 
-  void InitSizeByAxis(const std::vector<size_t> input_shape, const int axis) {
+  void InitSizeByAxis(const std::vector<size_t> &input_shape, const int &axis) {
+    if (input_shape.size() == 2) {
+      InitSizeByAxis2D(input_shape, axis);
+    } else {
+      InitSizeByAxisLastDim(input_shape, axis);
+    }
+  }
+
+  void InitSizeByAxis2D(const std::vector<size_t> &input_shape, const int &axis) {
     axis_ = axis;
     if (axis_ < 0) {
       axis_ += shape_size_;
@@ -182,6 +194,31 @@ class SoftmaxGpuKernel : public GpuKernel {
     input_size_ = sizeof(T) * batch_size_ * channel_size_ * height_ * width_;
     output_size_ = input_size_;
     workspace_size_ = IntToSize(shape_size_) * sizeof(int);
+  }
+
+  void InitSizeByAxisLastDim(const std::vector<size_t> &input_shape, const int &axis) {
+    int axis_pos = axis;
+    if (axis_pos < 0) {
+      axis_pos += input_shape.size();
+    }
+    // axis should be -1 with ND
+    if (axis_pos != SizeToInt(input_shape.size() - 1)) {
+      MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but axis(" << axis << ") is invalid.";
+    }
+    // squeeze to 2d, then invoke cudnn
+    size_t n = 1;
+    for (size_t i = 0; i < input_shape.size() - 1; i++) {
+      n *= input_shape[i];
+    }
+    axis_ = 1;
+    batch_size_ = n;
+    channel_size_ = input_shape[axis_pos];
+    height_ = 1;
+    width_ = 1;
+    input_size_ = sizeof(T) * batch_size_ * channel_size_ * height_ * width_;
+    output_size_ = input_size_;
+    input_shape_.push_back(batch_size_);
+    input_shape_.push_back(channel_size_);
   }
 
   cudnnHandle_t cudnn_handle_;

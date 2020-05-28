@@ -35,12 +35,12 @@ std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLi
 std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
                          SourceLineTip tip = kSourceLineTipNextLine);
 DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
-void TraceGraphInfer();
-void GetInferStackInfo(std::ostringstream &oss);
-void TraceGraphInferEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node);
-void TraceGraphInferLeave(const abstract::EvaluatorPtr &eval);
-void TraceInferCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
-void TraceInferCNodeLeave();
+void TraceGraphEval();
+void GetEvalStackInfo(std::ostringstream &oss);
+void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node);
+void TraceGraphEvalLeave(const abstract::EvaluatorPtr &eval);
+void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
+void TraceEvalCNodeLeave();
 std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack();
 std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphInferStack();
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);

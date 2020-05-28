@@ -12,27 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train import Model, ParallelMode
+import numpy as np
+
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import ParameterTuple
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor
-import mindspore as ms
-import numpy as np
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
-from tests.dataset_mock import MindData
-from mindspore import context
-from tests.ut.python.ops.test_math_ops import VirtualLoss
-from mindspore.common.api import _executor
 from mindspore.ops import composite as C
-from mindspore.ops.operations.comm_ops import _VirtualDataset
 from mindspore.ops import functional as F
-from mindspore.common.parameter import ParameterTuple
-from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
+from mindspore.ops.operations.comm_ops import _VirtualDataset
 from mindspore.parallel import set_algo_parameters
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 context.set_context(mode=context.GRAPH_MODE)
 context.reset_auto_parallel_context()
+
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3, input_num=2):
@@ -93,14 +96,14 @@ def reshape_common(parallel_mode, strategy0, strategy1, strategy2, strategy_loss
 
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     loss.softmax_cross_entropy.set_strategy(strategy_loss)
-    loss.one_hot.set_strategy(((8,1), (), ()))
+    loss.one_hot.set_strategy(((8, 1), (), ()))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
 
 def test_reshape1():
-    strategy0 = ((8, 1, 1, 1), )
+    strategy0 = ((8, 1, 1, 1),)
     strategy1 = None
     strategy2 = ((8, 1), (1, 1))
     strategy_loss = ((8, 1), (8, 1))
@@ -108,8 +111,8 @@ def test_reshape1():
 
 
 def test_reshape1_strategy_1():
-    strategy0 = ((8, 1, 1, 1), )
-    strategy1 = ((8, 1, 1, 1), )
+    strategy0 = ((8, 1, 1, 1),)
+    strategy1 = ((8, 1, 1, 1),)
     strategy2 = ((8, 1), (1, 1))
     strategy_loss = ((8, 1), (8, 1))
     try:
@@ -119,8 +122,8 @@ def test_reshape1_strategy_1():
 
 
 def test_reshape1_strategy_2():
-    strategy0 = ((8, 1, 1, 1), )
-    strategy1 = ((8, 1, 1, 1), )
+    strategy0 = ((8, 1, 1, 1),)
+    strategy1 = ((8, 1, 1, 1),)
     strategy2 = ((8, 1), (1, 1))
     strategy_loss = ((8, 1), (8, 1))
     try:
@@ -130,7 +133,7 @@ def test_reshape1_strategy_2():
 
 
 def test_reshape2():
-    strategy0 = ((8, 1, 1, 1), )
+    strategy0 = ((8, 1, 1, 1),)
     strategy1 = None
     strategy2 = ((8, 1), (1, 1))
     strategy_loss = ((8, 1), (8, 1))
@@ -138,7 +141,7 @@ def test_reshape2():
 
 
 def test_reshape3():
-    strategy0 = ((2, 1, 1, 1), )
+    strategy0 = ((2, 1, 1, 1),)
     strategy1 = None
     strategy2 = ((8, 1), (1, 1))
     strategy_loss = ((8, 1), (8, 1))
@@ -146,7 +149,7 @@ def test_reshape3():
 
 
 def test_reshape4():
-    strategy0 = ((1, 1, 1, 1), )
+    strategy0 = ((1, 1, 1, 1),)
     strategy1 = None
     strategy2 = ((8, 1), (1, 1))
     strategy_loss = ((8, 1), (8, 1))
@@ -154,7 +157,7 @@ def test_reshape4():
 
 
 def test_reshape5():
-    strategy0 = ((2, 1, 1, 1), )
+    strategy0 = ((2, 1, 1, 1),)
     strategy1 = None
     strategy2 = ((1, 8), (8, 1))
     strategy_loss = ((8, 1), (8, 1))
@@ -303,6 +306,11 @@ class ReshapeNet6(nn.Cell):
         return matmul2_o
 
 
+def compile(net, input):
+    net.set_auto_parallel()
+    _executor.compile(net, input)
+
+
 def reshape_net2(backbone):
     batch_size = 16
     device_num = 16
@@ -311,8 +319,8 @@ def reshape_net2(backbone):
 
     net = GradWrap(NetWithLoss(backbone))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
-    _executor.compile(net, input)
+
+    compile(net, input)
 
 
 def test_reshape_net1_1():
@@ -388,6 +396,7 @@ class TrainOneStepCell(nn.Cell):
         >>> loss_net = WithLossCell(net, loss_fn)
         >>> train_net = TrainOneStepCell(loss_net, optim)
     """
+
     def __init__(self, network, optimizer, sens=1.0):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -474,8 +483,8 @@ def test_batchnorm_reshape_train():
     input = Tensor(np.ones([batch_size * device_num, 512]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(BatchNormReshapeNet()))
-    
-    _executor.compile(net, input)
+
+    compile(net, input)
 
 
 def bn_with_initialize(out_channels):
@@ -498,7 +507,7 @@ class BNReshapeDenseBNNet(nn.Cell):
 
     def construct(self, x):
         x = self.batch_norm(x)
-        x = self.reshape(x, (16, 2*32*32))
+        x = self.reshape(x, (16, 2 * 32 * 32))
         x = self.fc(x)
         x = self.batch_norm2(x)
         return x
@@ -512,8 +521,8 @@ def test_bn_reshape_dense_bn_train():
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
-    _executor.compile(net, input)
+
+    compile(net, input)
 
 
 class ParallelReduceMeanNet(nn.Cell):
@@ -521,8 +530,8 @@ class ParallelReduceMeanNet(nn.Cell):
                  reducemean_keep_dims=False, reducemean_axis=-1, strategy=None):
         super().__init__()
         self.conv = nn.Conv2d(in_channels=conv_in_channel, out_channels=conv_out_channel,
-                           kernel_size=1, stride=1, pad_mode='valid', has_bias=True,
-                           weight_init='ones', bias_init='ones')
+                              kernel_size=1, stride=1, pad_mode='valid', has_bias=True,
+                              weight_init='ones', bias_init='ones')
         self.reduce_mean = P.ReduceMean(keep_dims=reducemean_keep_dims)
         self.flat = nn.Flatten()
         self.reducemean_axis = reducemean_axis
@@ -558,14 +567,15 @@ def test_flatten_reshape(parallel_mode="auto_parallel"):
     epoch_size = 2
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
-    net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_axis=(2, 3), strategy=((4, 2, 1, 1),))
+    net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_axis=(2, 3),
+                                strategy=((4, 2, 1, 1),))
     loss = CrossEntropyLoss()
     predict = Tensor(np.ones([batch_size, 3, 32, 32]), dtype=ms.float32)
     label = Tensor(np.ones([batch_size, 64]), dtype=ms.float32)
     dataset = Dataset(predict, label, 2, input_num=2)
 
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
-    model = Model(net, loss_fn = loss, optimizer=opt)
+    model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
 
@@ -577,14 +587,15 @@ def test_flatten_reshape2(parallel_mode="auto_parallel"):
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
     set_algo_parameters(fully_use_devices=False)
-    net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_axis=(2, 3), strategy=((4, 1, 1, 1),))
+    net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_axis=(2, 3),
+                                strategy=((4, 1, 1, 1),))
     loss = CrossEntropyLoss()
     predict = Tensor(np.ones([batch_size, 3, 32, 32]), dtype=ms.float32)
     label = Tensor(np.ones([batch_size, 64]), dtype=ms.float32)
     dataset = Dataset(predict, label, 2, input_num=2)
 
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
-    model = Model(net, loss_fn = loss, optimizer=opt)
+    model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
 
@@ -625,7 +636,7 @@ def test_flatten_reshape3(parallel_mode="auto_parallel"):
     dataset = Dataset(predict, label, 2, input_num=2)
 
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
-    model = Model(net, loss_fn = loss, optimizer=opt)
+    model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
 
@@ -647,7 +658,8 @@ def test_flatten_reshape4(parallel_mode="semi_auto_parallel"):
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
     set_algo_parameters(fully_use_devices=False)
-    net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_keep_dims=True, strategy=((4, 1, 1, 1),))
+    net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_keep_dims=True,
+                                strategy=((4, 1, 1, 1),))
     loss = CrossEntropyLoss2()
     predict = Tensor(np.ones([batch_size, 3, 32, 32]), dtype=ms.float32)
     label = Tensor(np.ones([batch_size, 2048]), dtype=ms.float32)

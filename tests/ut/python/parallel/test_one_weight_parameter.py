@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter, ParameterTuple
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter, ParameterTuple
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
@@ -32,16 +34,18 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict, b)[0]
 
+
 class OneStepCell(nn.Cell):
     def __init__(self, network):
         super(OneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.weights = ParameterTuple(network.network.trainable_params())
 
-    def construct(self, data,  label):
+    def construct(self, data, label):
         weights = self.weights
         grads = C.grad_by_list(self.network, weights)(data, label)
         return grads
+
 
 def test_one_weight_parameter():
     class Net(nn.Cell):
@@ -63,11 +67,11 @@ def test_one_weight_parameter():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
     net = Net(strategy1, weight)
-    print ("======================================dict", net.__dict__)
 
     net_with_loss = NetWithLoss(net, strategy3)
 
     train_net = OneStepCell(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    train_net.set_auto_parallel()
 
     _executor.compile(train_net, x, b)

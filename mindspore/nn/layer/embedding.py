@@ -21,6 +21,7 @@ from mindspore.common.initializer import initializer
 from ..cell import Cell
 from ..._checkparam import Validator as validator
 
+__all__ = ['Embedding']
 
 class Embedding(Cell):
     r"""

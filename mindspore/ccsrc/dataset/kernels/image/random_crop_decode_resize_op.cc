@@ -31,7 +31,7 @@ Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, s
   if (input == nullptr) {
     RETURN_STATUS_UNEXPECTED("input tensor is null");
   }
-  if (!HasJpegMagic(input->StartAddr(), input->SizeInBytes())) {
+  if (!HasJpegMagic(input->GetMutableBuffer(), input->SizeInBytes())) {
     DecodeOp op(true);
     std::shared_ptr<Tensor> decoded;
     RETURN_IF_NOT_OK(op.Compute(input, &decoded));
@@ -43,7 +43,7 @@ Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, s
     jerr.pub.error_exit = JpegErrorExitCustom;
     try {
       jpeg_create_decompress(&cinfo);
-      JpegSetSource(&cinfo, input->StartAddr(), input->SizeInBytes());
+      JpegSetSource(&cinfo, input->GetMutableBuffer(), input->SizeInBytes());
       (void)jpeg_read_header(&cinfo, TRUE);
       jpeg_calc_output_dimensions(&cinfo);
     } catch (std::runtime_error &e) {

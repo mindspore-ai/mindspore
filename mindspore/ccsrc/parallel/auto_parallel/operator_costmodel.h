@@ -27,6 +27,10 @@ namespace parallel {
 #define MAXIMUM_INPUT_NUMBER 100
 #define DEFAULT_DATA_TYPE_LENGTH 4
 #define DROPOUT_COST_RATE 1.125  // the DropoutGenMask need 12.5% memory
+#define GATHERV2_COST_WEIGHT0 3
+#define GATHERV2_COST_WEIGHT1 7
+#define GATHERV2_COST_WEIGHT2 2
+#define GATHERV2_COST_WEIGHT3 6
 
 class OperatorCost;
 using OperatorCostPtr = std::shared_ptr<OperatorCost>;
@@ -66,6 +70,7 @@ class OperatorCost {
   void set_is_parameter(const std::vector<bool> &is_parameter);
   void set_is_parameter_involve(const std::vector<bool> &);
   void set_output_parameter_involve(int);
+  void set_output_critical(int);
   void SetInputAndOutputTypeLength(const std::vector<size_t> &input_lengths, const std::vector<size_t> &output_lengths);
   std::vector<size_t> inputs_type_lengths() const { return inputs_type_lengths_; }
   std::vector<size_t> outputs_type_lengths() const { return outputs_type_lengths_; }
@@ -88,6 +93,8 @@ class OperatorCost {
   // Typically, the PEAK memory cost contributed by an operator is its output (if the output is parameter-invovled),
   // plus necessary inputs.
   virtual double GetMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const;
+  // per device memory cost in a inference phase
+  double GetMemoryCostForInference(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &) const;
 
  protected:
   // For each input in 'inputs_', a bool variable is true if the corresponding one is a parameter or a output of
@@ -102,6 +109,9 @@ class OperatorCost {
   // for each input and output, the followings record the number of bytes of each element
   std::vector<size_t> inputs_type_lengths_;
   std::vector<size_t> outputs_type_lengths_;
+  // Whether the output is critical, which means that this output is included in calculating peak memory cost
+  // in the inference phase.
+  int is_outputs_critical_ = -1;
 };
 
 using OperatorCostPtr = std::shared_ptr<OperatorCost>;
@@ -609,6 +619,38 @@ class GatherV2Cost : public OperatorCost {
 };
 
 using GatherV2CostPtr = std::shared_ptr<GatherV2Cost>;
+
+class GatherV2PCost : public OperatorCost {
+ public:
+  explicit GatherV2PCost(bool is_inputs_related) : OperatorCost(is_inputs_related), axis_(0) {}
+  GatherV2PCost() : OperatorCost(true), axis_(0) {}
+  ~GatherV2PCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int32_t stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int32_t stage_id) const override;
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int32_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int32_t) const override;
+  void set_axis(int32_t axis) { axis_ = axis; }
+  void set_strategy(const Shape &strategy) { strategy_ = strategy; }
+
+ protected:
+  int32_t axis_;
+  Shape strategy_;
+};
+
+using GatherV2PCostPtr = std::shared_ptr<GatherV2PCost>;
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_

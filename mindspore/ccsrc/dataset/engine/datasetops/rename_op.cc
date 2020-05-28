@@ -24,6 +24,7 @@
 #include "dataset/core/global_context.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -51,12 +52,7 @@ Status RenameOp::Builder::Build(std::shared_ptr<RenameOp> *ptr) {
 //  constructor
 RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
                    int32_t op_connector_size)
-    : PipelineOp(op_connector_size), in_columns_(in_col_names), out_columns_(out_col_names) {
-  // check input & output sizes
-  if (in_columns_.size() != out_columns_.size()) {
-    MS_LOG(ERROR) << "Rename operator number of in columns != number of out columns.";
-  }
-}
+    : PipelineOp(op_connector_size), in_columns_(in_col_names), out_columns_(out_col_names) {}
 
 // destructor
 RenameOp::~RenameOp() {}
@@ -72,10 +68,15 @@ Status RenameOp::operator()() {
     // if 1st eoe or eof, pass it on then return
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+
+  // First, populate the column map from the input child.
+  // This will not be the final map for output from this op.
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
+  // core rename functionality only needs to happen once, to identify the new column names/indexes
+  RETURN_IF_NOT_OK(RenameColumns());
+
   while (curr_buffer->eof() == false) {
     while (curr_buffer->eoe() == false) {
-      // core rename functionality
-      RETURN_IF_NOT_OK(RenameBuffer(&curr_buffer));
       // push the renamed input buffer
       MS_LOG(DEBUG) << "Rename operator pushing next buffer.";
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
@@ -83,28 +84,27 @@ Status RenameOp::operator()() {
     }  // end of while eoe loop
 
     // we got eoe, now try again until we get eof
-    MS_LOG(INFO) << "Rename operator EOE Received.";
+    MS_LOG(DEBUG) << "Rename operator EOE Received.";
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
     MS_LOG(DEBUG) << "Rename operator fetching buffer after EOE.";
     RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
   }  // end of while eof loop
 
-  MS_LOG(INFO) << "Rename opeerator EOF Received.";
+  MS_LOG(DEBUG) << "Rename opeerator EOF Received.";
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
 
-// renames buffer
-Status RenameOp::RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer) {
+// renames the columns
+Status RenameOp::RenameColumns() {
   // iterate over my index in input vector, find the corresponding position
-  const std::unordered_map<std::string, int32_t> col_name_id_map = (*input_buffer)->column_name_map();
   std::unordered_map<std::string, int32_t> new_col_name_id_map = {};
   // parameter for input check
   size_t found = 0;
 
   // iterate over all the pairs and if there is a name match with rename, rename the column and add it to new map
   // by doing it this way we recreate a new ColNameIdMap and allow for switching
-  for (const auto &pair : col_name_id_map) {
+  for (const auto &pair : column_name_id_map_) {
     std::string name = pair.first;
     int32_t id = pair.second;
     // find name
@@ -116,22 +116,24 @@ Status RenameOp::RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer) {
       // found
       found += 1;
       int index = std::distance(in_columns_.begin(), it);
-      MS_LOG(INFO) << "Rename operator index found " << index << " value " << id << ".";
+      MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
 
       new_col_name_id_map[out_columns_[index]] = id;
     } else {
       // not found
-      MS_LOG(INFO) << "Rename operator index not found: " << id << " is the column id.";
+      MS_LOG(DEBUG) << "Rename operator index not found: " << id << " is the column id.";
       new_col_name_id_map[name] = id;
     }
   }
   // only checks number of renamed columns have been found, this input check doesn't check everything
   if (found != in_columns_.size()) {
-    MS_LOG(INFO) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
+    MS_LOG(DEBUG) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
     std::string err_msg = "Renamed column doesn't exist in dataset";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  (*input_buffer)->set_column_name_map(new_col_name_id_map);
+
+  // Now, overwrite our column map with the new renamed columns/id's
+  column_name_id_map_ = new_col_name_id_map;
   return Status::OK();
 }
 
@@ -161,13 +163,19 @@ void RenameOp::Print(std::ostream &out,      // In: The output stream to print t
 }
 
 Status RenameOp::EofReceived(int32_t) {
-  MS_LOG(INFO) << "Rename operator EOF received, do nothing now.";
+  MS_LOG(DEBUG) << "Rename operator EOF received, do nothing now.";
   return Status::OK();
 }
 
 Status RenameOp::EoeReceived(int32_t) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status RenameOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<RenameOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

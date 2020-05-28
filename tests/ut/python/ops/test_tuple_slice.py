@@ -16,10 +16,9 @@
 import numpy as np
 import pytest
 
+import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore.nn import Cell
-import mindspore.ops.operations as P
-
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
@@ -29,6 +28,7 @@ from ....mindspore_test_framework.pipeline.forward.verify_exception \
 
 class NetWork_1(Cell):
     """ NetWork_1 definition """
+
     def __init__(self):
         super(NetWork_1, self).__init__()
         self.addN = P.AddN()
@@ -48,6 +48,7 @@ class NetWork_1(Cell):
 
 class NetWork_2(Cell):
     """ NetWork_2 definition """
+
     def __init__(self):
         super(NetWork_2, self).__init__()
         self.addN = P.AddN()
@@ -69,6 +70,7 @@ class NetWork_2(Cell):
 
 class NetWork_3(Cell):
     """ NetWork_3 definition """
+
     def __init__(self):
         super(NetWork_3, self).__init__()
         self.addN = P.AddN()
@@ -100,19 +102,18 @@ test_cases = [
     }),
 ]
 
-
 test_cases_for_verify_exception = [
     ('SliceStartCross', {
         'block': (NetWork_3(), {'exception': RuntimeError}),
         'desc_inputs': [*(Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.zeros([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)))],
+                          Tensor(np.zeros([2, 3, 4], np.int32)),
+                          Tensor(np.ones([2, 3, 4], np.int32)))],
     }),
     ('SliceStepZero', {
         'block': (NetWork_3(), {'exception': RuntimeError}),
         'desc_inputs': [*(Tensor(np.ones([2, 3, 4], np.int32)),
-                         Tensor(np.zeros([2, 3, 4], np.int32)),
-                         Tensor(np.ones([2, 3, 4], np.int32)))],
+                          Tensor(np.zeros([2, 3, 4], np.int32)),
+                          Tensor(np.ones([2, 3, 4], np.int32)))],
     }),
 ]
 

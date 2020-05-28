@@ -53,8 +53,7 @@ class KernelAdjust {
   }
   void Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  bool StepLoadCtrlInputs(const std::shared_ptr<session::Context> &context,
-                          const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  bool StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
   static bool NeedInsertSwitch();
   CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);

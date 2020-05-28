@@ -13,29 +13,27 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
-from mindspore import context
-import mindspore.common.dtype as mstype
 import os
+import random
 import numpy as np
-import mindspore.ops.functional as F
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+import pytest
+from multiprocessing import Process, Queue
+from resnet import resnet50
+
+import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.nn as nn
+import mindspore.ops.functional as F
+from mindspore import Tensor
+from mindspore import context
 from mindspore.communication.management import init
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from resnet import resnet50
-import random
-from multiprocessing import Process, Queue
-from multiprocessing import Pool
-import time
+from mindspore.train.callback import Callback
+from mindspore.train.model import Model, ParallelMode
 
 random.seed(1)
 np.random.seed(1)
@@ -150,9 +148,7 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
     os.chdir(str(device_id))
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend", save_graphs=False)
-    context.set_context(enable_task_sink=True, device_id=device_id)
-    context.set_context(enable_loop_sink=True)
-    context.set_context(enable_mem_reuse=True)
+    context.set_context(device_id=device_id)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH
     os.environ['RANK_ID'] = str(device_id)
     os.environ['RANK_SIZE'] = str(device_num)
@@ -172,7 +168,7 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
     dataset = create_dataset(epoch_size, training=True,
                              batch_size=batch_size, rank_id=device_id, rank_size=device_num,
                              enable_hccl=enable_hccl)
-    batch_num = dataset.get_dataset_size()
+
     loss_cb = LossGet()
     model.train(epoch_size, dataset, callbacks=[loss_cb])
     q.put(loss_cb.get_loss())
@@ -206,9 +202,9 @@ def test_resnet_cifar_8p():
     loss = 0.0
     for i in range(device_num):
         loss += q.get()
-    loss = loss/device_num
+    loss = loss / device_num
 
     for i in range(device_num):
         os.system("rm -rf " + str(i))
     print("End training...")
-    assert(loss < 2.0)
+    assert loss < 2.0

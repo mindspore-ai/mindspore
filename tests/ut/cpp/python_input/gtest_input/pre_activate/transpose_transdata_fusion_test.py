@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 tuple_getitem = Primitive('tuple_getitem')
 add = P.TensorAdd()
@@ -21,6 +21,7 @@ max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 make_tuple = Primitive('make_tuple')
 transdata = Primitive("TransData")
 Transpose = P.Transpose()
+
 
 class FnDict:
     def __init__(self):
@@ -37,13 +38,13 @@ def test_transpose_transdata_fusion(tag):
     fns = FnDict()
 
     @fns
-    def before(input):
-        res = Transpose(input, (1, 0, 2, 3))
+    def before(x):
+        res = Transpose(x, (1, 0, 2, 3))
         return res
 
     @fns
-    def after(input):
-        output = transdata(input)
+    def after(x):
+        output = transdata(x)
         res = make_tuple(output)
         return res
 

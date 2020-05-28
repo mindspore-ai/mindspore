@@ -98,7 +98,17 @@ class FakeQuantWithMinMax(PrimitiveWithInfer):
 
 
 class FakeQuantWithMinMaxGrad(PrimitiveWithInfer):
-    """Performs grad of FakeQuantWithMinMax operation."""
+    r"""
+    Performs grad of FakeQuantWithMinMax operation.
+
+    Examples:
+        >>> fake_min_max_grad = P.FakeQuantWithMinMaxGrad()
+        >>> dout = Tensor(np.array([[-2.3, 1.2], [5.7, 0.2]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[18, -23], [0.2, 6]]), mindspore.float32)
+        >>> _min = Tensor(np.array([-4]), mindspore.float32)
+        >>> _max = Tensor(np.array([2]), mindspore.float32)
+        >>> result = fake_min_max_grad(dout, input_x, _min, _max)
+    """
     support_quant_bit = [4, 8]
 
     @prim_attr_register
@@ -149,10 +159,11 @@ class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
         - Tensor, has the same type as input.
 
     Examples:
-        >>> input_tensor = Tensor(np.random.rand(3,4,5,5), mstype.float32)
-        >>> min_tensor = Tensor(np.array([-6.0, -6.5, -4.0, -5.0]), mstype.float32)
-        >>> max_tensor = Tensor(np.array([6.0, 6.5, 4.0, 5.0]), mstype.float32)
-        >>> output_tensor = P.FakeQuantWithMinMax(num_bits=8)(input_tensor, min_tensor, max_tensor)
+        >>> fake_quant = P.FakeQuantWithMinMaxPerChannel()
+        >>> input_x = Tensor(np.array([3, 4, 5, -2, -3, -1]).reshape(3, 2), mindspore.float32)
+        >>> _min = Tensor(np.linspace(-2, 2, 12).reshape(3, 2, 2), mindspore.float32)
+        >>> _max = Tensor(np.linspace(8, 12, 12).reshape(3, 2, 2), mindspore.float32)
+        >>> result = fake_quant(input_x, _min, _max)
     """
     support_quant_bit = [4, 8]
     channel_idx = 0
@@ -190,7 +201,17 @@ class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
 
 
 class FakeQuantWithMinMaxPerChannelGrad(PrimitiveWithInfer):
-    """Performs grad of FakeQuantWithMinMaxPerChannel operation."""
+    r"""
+    Performs grad of FakeQuantWithMinMaxPerChannel operation.
+
+    Examples:
+        >>> fqmmpc_grad = P.FakeQuantWithMinMaxPerChannelGrad()
+        >>> input_x = Tensor(np.random.randint(-4, 4, (2, 3, 4)), mindspore.float32)
+        >>> dout = Tensor(np.random.randint(-2, 2, (2, 3, 4)), mindspore.float32)
+        >>> _min = Tensor(np.random.randint(-8, 2, (2, 3, 4)), mindspore.float32)
+        >>> _max = Tensor(np.random.randint(-2, 8, (2, 3, 4)), mindspore.float32)
+        >>> result = fqmmpc_grad(dout, input_x, _min, _max)
+    """
     support_quant_bit = [4, 8]
 
     @prim_attr_register
@@ -223,8 +244,8 @@ class BatchNormFold(PrimitiveWithInfer):
 
     Args:
         momentum (float): Momentum value should be [0, 1]. Default: 0.1.
-        epsilon (float): A small float number to avoid dividing by 0. 1e-12 if dtype in
-            float32 else 1e-3. Default: 1e-12.
+        epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
+            float32 else 1e-3. Default: 1e-5.
         is_training (bool): In training mode set True, else set False. Default: True.
         freeze_bn (int): Delay in steps at which computation switches from regular batch
             norm to frozen mean and std. Default: 0.
@@ -243,11 +264,18 @@ class BatchNormFold(PrimitiveWithInfer):
         - **running_mean** (Tensor) - Tensor of shape :math:`(C,)`.
         - **running_std** (Tensor) - Tensor of shape :math:`(C,)`.
 
+    Examples:
+        >>> batch_norm_fold = P.BatchNormFold()
+        >>> input_x = Tensor(np.array([1, 2, -1, -2, -2, 1]).reshape(2, 3), mindspore.float32)
+        >>> mean = Tensor(np.array([0.5, -1, 1,]), mindspore.float32)
+        >>> variance = Tensor(np.array([0.36, 0.4, 0.49]), mindspore.float32)
+        >>> global_step = Tensor(np.arange(6), mindspore.int32)
+        >>> batch_mean, batch_std, running_mean, running_std = batch_norm_fold(input_x, mean, variance, global_step)
     """
     channel = 1
 
     @prim_attr_register
-    def __init__(self, momentum=0.1, epsilon=1e-12, is_training=True, freeze_bn=0):
+    def __init__(self, momentum=0.1, epsilon=1e-5, is_training=True, freeze_bn=0):
         """init batch norm fold layer"""
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
@@ -273,11 +301,23 @@ class BatchNormFold(PrimitiveWithInfer):
 
 
 class BatchNormFoldGrad(PrimitiveWithInfer):
-    """Performs grad of BatchNormFold operation."""
+    r"""
+    Performs grad of BatchNormFold operation.
+
+    Examples:
+        >>> batch_norm_fold_grad = P.BatchNormFoldGrad()
+        >>> d_batch_mean = Tensor(np.random.randint(-2., 2., (1, 2, 2, 3)), mindspore.float32)
+        >>> d_batch_std = Tensor(np.random.randn(1, 2, 2, 3), mindspore.float32)
+        >>> input_x = Tensor(np.random.randint(0, 256, (4, 1, 4, 6)), mindspore.float32)
+        >>> batch_mean = Tensor(np.random.randint(-8., 8., (1, 2, 2, 3)), mindspore.float32)
+        >>> batch_std = Tensor(np.random.randint(0, 12, (1, 2, 2, 3)), mindspore.float32)
+        >>> global_step = Tensor([2], mindspore.int32)
+        >>> result = batch_norm_fold_grad(d_batch_mean, d_batch_std, input_x, batch_mean, batch_std, global_step)
+    """
     channel = 1
 
     @prim_attr_register
-    def __init__(self, epsilon=1e-12, is_training=True, freeze_bn=0):
+    def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
         """init BatchNormGrad layer"""
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
@@ -321,6 +361,12 @@ class CorrectionMul(PrimitiveWithInfer):
     Outputs:
         - **out** (Tensor) - Tensor has the same shape as x.
 
+    Examples:
+        >>> correction_mul = P.CorrectionMul()
+        >>> input_x = Tensor(np.random.randint(-8, 12, (3, 4)), mindspore.float32)
+        >>> batch_std = Tensor(np.array([1.5, 3, 2]), mindspore.float32)
+        >>> running_std = Tensor(np.array([2, 1.2, 0.5]), mindspore.float32)
+        >>> out = correction_mul(input_x, batch_std, running_std)
     """
     channel = 0
 
@@ -343,7 +389,17 @@ class CorrectionMul(PrimitiveWithInfer):
 
 
 class CorrectionMulGrad(PrimitiveWithInfer):
-    """Performs grad of CorrectionMul operation."""
+    r"""
+    Performs grad of CorrectionMul operation.
+
+    Examples:
+        >>> correction_mul_grad = P.CorrectionMulGrad()
+        >>> dout = Tensor(np.array([1.5, -2.2, 0.7, -3, 1.6, 2.8]).reshape(2, 1, 1, 3), mindspore.float32)
+        >>> input_x = Tensor(np.random.randint(0, 256, (2, 1, 1, 3)), mindspore.float32)
+        >>> gamma = Tensor(np.array([0.2, -0.2, 2.5, -1.]).reshape(2, 1, 2), mindspore.float32)
+        >>> running_std = Tensor(np.array([1.2, 0.1, 0.7, 2.3]).reshape(2, 1, 2), mindspore.float32)
+        >>> result = correction_mul_grad(dout, input_x, gamma, running_std)
+    """
     channel = 0
 
     @prim_attr_register
@@ -385,6 +441,18 @@ class BatchNormFold2(PrimitiveWithInfer):
     Outputs:
         - **y** (Tensor) - Tensor has the same shape as x.
 
+    Examples:
+        >>> batch_norm_fold2 = P.BatchNormFold2()
+        >>> input_x = Tensor(np.random.randint(-6, 6, (4, 3)), mindspore.float32)
+        >>> beta = Tensor(np.array([0.2, -0.1, 0.25]), mindspore.float32)
+        >>> gamma = Tensor(np.array([-0.1, -0.25, 0.1]), mindspore.float32)
+        >>> batch_std = Tensor(np.array([0.1, 0.2, 0.1]), mindspore.float32)
+        >>> batch_mean = Tensor(np.array([0, 0.05, 0.2]), mindspore.float32)
+        >>> running_std = Tensor(np.array([0.1, 0.1, 0.3]), mindspore.float32)
+        >>> running_mean = Tensor(np.array([-0.1, 0, -0.1]), mindspore.float32)
+        >>> global_step = Tensor(np.random.randint(1, 8, (8, )), mindspore.int32)
+        >>> result = batch_norm_fold2(input_x, beta, gamma, batch_std, batch_mean,
+        >>>                           running_std, running_mean, global_step)
     """
     channel = 1
 
@@ -418,7 +486,21 @@ class BatchNormFold2(PrimitiveWithInfer):
 
 
 class BatchNormFold2Grad(PrimitiveWithInfer):
-    """Performs grad of CorrectionAddGrad operation."""
+    r"""
+    Performs grad of CorrectionAddGrad operation.
+
+    Examples:
+        >>> bnf2_grad = P.BatchNormFold2Grad()
+        >>> input_x = Tensor(np.arange(3*3*12*12).reshape(6, 3, 6, 12), mindspore.float32)
+        >>> dout = Tensor(np.random.randint(-32, 32, (6, 3, 6, 12)), mindspore.float32)
+        >>> gamma = Tensor(np.random.randint(-4, 4, (3, 1, 1, 2)), mindspore.float32)
+        >>> batch_std = Tensor(np.random.randint(0, 8, (3, 1, 1, 2)), mindspore.float32)
+        >>> batch_mean = Tensor(np.random.randint(-6, 6, (3, 1, 1, 2)), mindspore.float32)
+        >>> running_std = Tensor(np.linspace(0, 2, 6).reshape(3, 1, 1, 2), mindspore.float32)
+        >>> running_mean = Tensor(np.random.randint(-3, 3, (3, 1, 1, 2)), mindspore.float32)
+        >>> global_step = Tensor(np.array([-2]), mindspore.int32)
+        >>> result = bnf2_grad(dout, input_x, gamma, batch_std, batch_mean, running_std, running_mean, global_step)
+    """
     channel = 1
 
     @prim_attr_register

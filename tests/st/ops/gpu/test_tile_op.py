@@ -13,15 +13,16 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import pytest
-from mindspore.ops.operations import Tile
-from mindspore.nn import Cell
-from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+
 import mindspore.context as context
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-import numpy as np
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops.operations import Tile
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

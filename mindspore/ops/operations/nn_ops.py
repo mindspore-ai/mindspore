@@ -183,6 +183,41 @@ class LogSoftmax(PrimitiveWithInfer):
         return logits
 
 
+class Softplus(PrimitiveWithInfer):
+    r"""
+    Softplus activation function.
+
+    Softplus is a smooth approximation to the ReLU function.
+    The function is shown as follows:
+
+    .. math::
+        \text{output} = \log(1 + \exp(\text{input_x})),
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor whose data type should be float.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> softplus = P.Softplus()
+        >>> softplus(input_x)
+        [1.3132615, 2.126928, 3.0485873, 4.01815, 5.0067153]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init Softplus"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, input_x):
+        return input_x
+
+    def infer_dtype(self, input_x):
+        validator.check_tensor_type_same({'input_x': input_x}, mstype.float_type, self.name)
+        return input_x
+
+
 class ReLU(PrimitiveWithInfer):
     r"""
     Computes ReLU(Rectified Linear Unit) of input tensor element-wise.
@@ -358,6 +393,10 @@ class HSwish(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> hswish = P.HSwish()
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> result = hswish(input_x)
     """
     @prim_attr_register
     def __init__(self):
@@ -369,7 +408,6 @@ class HSwish(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
         return x_dtype
-
 
 
 class Sigmoid(PrimitiveWithInfer):
@@ -427,6 +465,10 @@ class HSigmoid(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> hsigmoid = P.HSigmoid()
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> result = hsigmoid(input_x)
     """
 
     @prim_attr_register
@@ -827,6 +869,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.channel_multiplier = validator.check_integer("channel_multiplier", channel_multiplier, 0, Rel.GT,
                                                           self.name)
         self.group = validator.check_integer("group", group, 0, Rel.GT, self.name)
+        self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape):
         validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
@@ -847,7 +890,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             h_out = math.ceil(x_shape[2] / stride_h)
             w_out = math.ceil(x_shape[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * stride_h+ dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
@@ -1102,6 +1145,33 @@ class AvgPool(_Pool):
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.avgpool_op = P.AvgPool(padding="VALID", ksize=2, strides=1)
+        >>>
+        >>>     def construct(self, x):
+        >>>         result = self.avgpool_op(x)
+        >>>         return result
+        >>>
+        >>> input_x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
+        >>> net = Net()
+        >>> result = net(input_x)
+        [[[[ 2.5   3.5   4.5]
+           [ 6.5   7.5   8.5]]
+
+          [[ 14.5  15.5  16.5]
+           [ 18.5  19.5  20.5]]
+
+          [[ 26.5  27.5  28.5]
+           [ 30.5  31.5  32.5]]]]
     """
 
     @prim_attr_register
@@ -1186,16 +1256,18 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         kernel_w = self.kernel_size[1]
         stride_h = self.stride[0]
         stride_w = self.stride[1]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
         # default pad mode is valid
         pad_list = (0, 0, 0, 0)
         if self.pad_list:
             pad_list = tuple(self.pad_list)
         elif self.pad_mode == "SAME":
-            pad_needed_h = max(0, (dout_shape[2] - 1) * stride_h + kernel_h - x_size_v[2])
+            pad_needed_h = max(0, (dout_shape[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (dout_shape[3] - 1) * stride_w + kernel_w - x_size_v[3])
+            pad_needed_w = max(0, (dout_shape[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
             pad_list = (pad_top, pad_bottom, pad_left, pad_right)
@@ -1214,7 +1286,7 @@ class BiasAdd(PrimitiveWithInfer):
     r"""
     Returns sum of input and bias tensor.
 
-    Adds the 1-D bias tensor to the input tensor, and boardcasts the shape on all axis
+    Adds the 1-D bias tensor to the input tensor, and broadcasts the shape on all axis
     except for the channel axis.
 
     Inputs:
@@ -1427,11 +1499,8 @@ class ApplyMomentum(PrimitiveWithInfer):
     def __init__(self, use_nesterov=False, use_locking=False, gradient_scale=1.0):
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
-        self.is_tbe = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, v_shape, a_shape, l_shape, g_shape, m_shape):
-        if self.is_tbe:
-            return v_shape, v_shape
         return v_shape
 
     def infer_dtype(self, v_dtype, a_dtype, l_dtype, g_dtype, m_dtype):
@@ -1442,8 +1511,6 @@ class ApplyMomentum(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_type_same({"l_dtype": l_dtype}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"g_dtype": g_dtype}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"m_dtype": m_dtype}, valid_types, self.name)
-        if self.is_tbe:
-            return g_dtype, g_dtype
         return g_dtype
 
 
@@ -1527,7 +1594,7 @@ class L2Loss(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type):
         validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
-        valid_types = [mstype.float16, mstype.float32, mstype.double]
+        valid_types = [mstype.float16, mstype.float32]
         validator.check_tensor_type_same({'x_type': x_type}, valid_types, self.name)
         return x_type
 
@@ -1557,6 +1624,16 @@ class SGD(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be updated.
+
+    Examples:
+        >>> sgd = P.SGD()
+        >>> parameters = Tensor(np.array([2, -0.5, 1.7, 4]), mindspore.float32)
+        >>> gradient = Tensor(np.array([1, -1, 0.5, 2]), mindspore.float32)
+        >>> learning_rate = Tensor(0.01, mindspore.float32)
+        >>> accum = Tensor(np.array([0.1, 0.3, -0.2, -0.1]), mindspore.float32)
+        >>> momentum = Tensor(0.1, mindspore.float32)
+        >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
+        >>> result = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
     """
 
     @prim_attr_register
@@ -1586,6 +1663,7 @@ class SGD(PrimitiveWithInfer):
         validator.check_tensor_type_same({"momentum": momentum_dtype}, valid_types, self.name)
         validator.check_tensor_type_same({"stat": stat_dtype}, valid_types, self.name)
         return parameters_dtype
+
 
 class ApplyRMSProp(PrimitiveWithInfer):
     """
@@ -1626,6 +1704,18 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
+
+    Examples:
+        >>> apply_rms = P.ApplyRMSProp()
+        >>> input_x = Tensor(np.random.randint(0, 256, (3, 3)),mindspore.float32)
+        >>> mean_square = Tensor(np.random.randint(0, 256, (3, 3)), mindspore.float32)
+        >>> moment = Tensor(np.random.randn(3, 3), mindspore.float32)
+        >>> grad = Tensor(np.random.randint(-32, 16, (3, 3)), mindspore.float32 )
+        >>> learning_rate = 0.9
+        >>> decay = 0.0
+        >>> momentum = 1e-10
+        >>> epsilon = 0.001
+        >>> result = apply_rms(input_x, mean_square, moment, grad, learning_rate, decay, momentum, epsilon)
     """
 
     @prim_attr_register
@@ -1696,6 +1786,20 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
+
+    Examples:
+        >>> centered_rms_prop = P.ApplyCenteredRMSProp()
+        >>> input_x = Tensor(np.random.randint(0, 256, (3, 3)),mindspore.float32)
+        >>> mean_grad = Tensor(np.random.randint(-8, 8, (3, 3)), mindspore.float32)
+        >>> mean_square = Tensor(np.random.randint(0, 256, (3, 3)), mindspore.float32)
+        >>> moment = Tensor(np.random.randn(3, 3), mindspore.float32)
+        >>> grad = Tensor(np.random.randint(-32, 16, (3, 3)), mindspore.float32 )
+        >>> learning_rate = 0.9
+        >>> decay = 0.0
+        >>> momentum = 1e-10
+        >>> epsilon = 0.001
+        >>> result = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
+        >>>                    learning_rate, decay, momentum, epsilon)
     """
 
     @prim_attr_register
@@ -1732,7 +1836,7 @@ class LayerNorm(Primitive):
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
 
     .. math::
-        y = \frac{x - mean]}{\sqrt{variance + \epsilon}} * \gamma + \beta
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
 
@@ -1755,8 +1859,8 @@ class LayerNorm(Primitive):
 
         - **output_x** (Tensor) - The normalized input, has the same type and shape as the `input_x`.
           The shape is :math:`(N, C)`.
-        - **updated_gamma** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **updated_beta** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
@@ -1794,6 +1898,18 @@ class L2Normalize(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input.
+
+    Examples:
+        >>> l2_normalize = P.L2Normalize()
+        >>> input_x = Tensor(np.random.randint(-256, 256, (2, 3, 4)), mindspore.float32)
+        >>> result = l2_normalize(input_x)
+        [[[-0.47247353   -0.30934513   -0.4991462   0.8185567 ]
+          [-0.08070751   -0.9961299    -0.5741758   0.09262337]
+          [-0.9916556    -0.3049123     0.5730487  -0.40579924]
+
+         [[-0.88134485    0.9509498    -0.86651784  0.57442576]
+          [ 0.99673784    0.08789381   -0.8187321   0.9957012 ]
+          [ 0.12891524   -0.9523804    -0.81952125  0.91396334]]]
     """
 
     @prim_attr_register
@@ -1839,6 +1955,7 @@ class DropoutGenMask(Primitive):
         self.init_prim_io_names(inputs=['shape', 'keep_prob'], outputs=['output'])
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
+        self.add_prim_attr("_random_effect", True)
 
 
 class DropoutDoMask(PrimitiveWithInfer):
@@ -1992,7 +2109,7 @@ class OneHot(PrimitiveWithInfer):
         depth_val = depth['value']
         validator.check_integer("depth", depth_val, 0, Rel.GE, self.name)
         # create new dimension at end if self.axis is -1
-        indices_shp.insert(self.axis, depth_val) if self.axis >= 0 else indices_shp.append(depth_val)
+        _ = indices_shp.insert(self.axis, depth_val) if self.axis >= 0 else indices_shp.append(depth_val)
 
         return {'shape': indices_shp,
                 'dtype': on_value['dtype'],
@@ -2046,7 +2163,7 @@ class GetNext(PrimitiveWithInfer):
     Note:
         GetNext op needs to be associated with network and also depends on the init_dataset interface,
         it can't be used directly as a single op.
-        For details, please refer to `nn.cell_wrapper.DataWrapper` source code.
+        For details, please refer to `nn.DataWrapper` source code.
 
     Args:
         types (list[:class:`mindspore.dtype`]): The type of the outputs.
@@ -2104,6 +2221,32 @@ class PReLU(PrimitiveWithInfer):
         Tensor, with the same type as `input_x`.
 
     Detailed information, please refer to `nn.PReLU`.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.prelu = P.PReLU()
+        >>>     def construct(self, input_x, weight):
+        >>>         result = self.prelu(input_x, weight)
+        >>>         return result
+        >>>
+        >>> input_x = Tensor(np.random.randint(-3, 3, (2, 3, 2)), mindspore.float32)
+        >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
+        >>> net = Net()
+        >>> result = net(input_x, weight)
+        [[[-0.1      1.        ]
+          [ 0.       2.        ]
+          [0.        0.        ]]
+
+         [[-0.2     -0.1      ]
+          [2.       -1.8000001]
+          [0.6       0.6       ]]]
     """
 
     @prim_attr_register
@@ -2157,8 +2300,9 @@ class LSTM(PrimitiveWithInfer):
             self.num_directions = 1
 
     def infer_shape(self, x_shape, h_shape, c_shape, w_shape):
-        # (batch, seq, feature)
+        # (seq, batch_size, feature)
         validator.check_integer("x rank", len(x_shape), 3, Rel.EQ, self.name)
+        validator.check_integer("x[2]", x_shape[2], self.input_size, Rel.EQ, self.name)
 
         # h and c should be same shape
         validator.check_integer("h rank", len(h_shape), 3, Rel.EQ, self.name)
@@ -2282,24 +2426,24 @@ class MirrorPad(PrimitiveWithInfer):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (string): Specifies padding mode. The optional values are "REFLECT", "SYMMETRIC".
+        mode (str): Specifies padding mode. The optional values are "REFLECT", "SYMMETRIC".
             Default: "REFLECT".
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
         - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
-            and its shape is (N, 2). N is the rank of input data. All elements of paddings
-            are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
-            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
-            how many sizes to be extended behind of the `D` th dimension of the input tensor.
+          and its shape is (N, 2). N is the rank of input data. All elements of paddings
+          are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+          extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
+          how many sizes to be extended behind of the `D` th dimension of the input tensor.
 
     Outputs:
         Tensor, the tensor after padding.
 
-        - If 'mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in,
-          symmetry. If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+        - If `mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in.
+          If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
           Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
-        - If 'mode' is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+        - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
           [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
@@ -2512,6 +2656,27 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
         Otherwise it is a scalar.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.binary_cross_entropy = P.BinaryCrossEntropy()
+        >>>     def construct(self, x, y, weight):
+        >>>         result = self.binary_cross_entropy(x, y, weight)
+        >>>         return result
+        >>>
+        >>> net = Net()
+        >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> result = net(input_x, input_y, weight)
+        0.38240486
     """
 
     @prim_attr_register
@@ -2583,13 +2748,13 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
         validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        return var_shape, accum_shape
+        return var_shape
 
     def infer_dtype(self, var_type, accum_type, grad_type, indices_type):
         args = {'var': var_type, 'accum': accum_type, 'grad': grad_type}
         validator.check_tensor_type_same(args, (mstype.float32,), self.name)
         validator.check_tensor_type_same({'indices': indices_type}, [mstype.int32], self.name)
-        return var_type, accum_type
+        return var_type
 
 
 class LARSUpdate(PrimitiveWithInfer):
@@ -2691,6 +2856,37 @@ class ApplyFtrl(PrimitiveWithInfer):
 
     Outputs:
         Tensor, representing the updated var.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class ApplyFtrlNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(ApplyFtrlNet, self).__init__()
+        >>>         self.apply_ftrl = P.ApplyFtrl()
+        >>>         self.lr = 0.001
+        >>>         self.l1 = 0.0
+        >>>         self.l2 = 0.0
+        >>>         self.lr_power = -0.5
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>>         self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+        >>>
+        >>>     def construct(self, grad):
+        >>>         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2,
+        >>>                               self.lr_power)
+        >>>         return out
+        >>>
+        >>> net = ApplyFtrlNet()
+        >>> input_x = Tensor(np.random.randint(-4, 4, (3, 3)), mindspore.float32)
+        >>> result = net(input_x)
+        [[0.67455846   0.14630564   0.160499  ]
+         [0.16329421   0.00415689   0.05202988]
+         [0.18672481   0.17418946   0.36420345]]
     """
 
     @prim_attr_register
@@ -2745,6 +2941,18 @@ class ConfusionMulGrad(PrimitiveWithInfer):
               the shape of output is :math:`(x_1,x_3,...,x_R)`.
             - If axis is tuple(int), set as (2,3), and keep_dims is false,
               the shape of output is :math:`(x_1,x_4,...x_R)`.
+
+    Examples:
+        >>> confusion_mul_grad = P.ConfusionMulGrad()
+        >>> input_0 = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
+        >>> input_1 = Tensor(np.random.randint(0, 4, (2, 3)), mindspore.float32)
+        >>> input_2 = Tensor(np.random.randint(-4, 0, (2, 3)), mindspore.float32)
+        >>> output_0, output_1 = confusion_mul_grad(input_0, input_1, input_2)
+        output_0:
+            [[ 3.   1.   0.]
+             [-6.   2.  -2.]]
+        output_1:
+            -3.0
     """
 
     @prim_attr_register
@@ -2763,3 +2971,143 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         validator.check_subclass("input1_dtype", input1_dtype, mstype.tensor, self.name)
         validator.check_subclass("input2_dtype", input2_dtype, mstype.tensor, self.name)
         return input0_dtype, input1_dtype
+
+
+class Dropout(PrimitiveWithInfer):
+    """
+    During training, randomly zeroes some of the elements of the input tensor with probability.
+
+    Args:
+        drop_prob (float): probability of an element to be zeroed. Default: 0.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of target mask.
+
+    Outputs:
+        Tensor, the value of generated mask for input shape.
+
+    Examples:
+        >>> dropout = P.Dropout(drop_prob=0.5)
+        >>> in = Tensor((20, 16, 50, 50))
+        >>> out = dropout(in)
+    """
+    @prim_attr_register
+    def __init__(self, drop_prob=0):
+        self.drop_prob = validator.check_number_range("drop_prob", drop_prob, 0, 1, Rel.INC_BOTH, self.name)
+
+    def infer_shape(self, x_shape):
+        validator.check_integer("x_shape", len(x_shape), 1, Rel.GE, self.name)
+        mask_shape = x_shape
+        return x_shape, mask_shape
+
+    def infer_dtype(self, x_dtype):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({"x_dtype": x_dtype}, valid_types, self.name)
+        return x_dtype, x_dtype
+
+
+class DropoutGrad(PrimitiveWithInfer):
+    """
+    The gradient of Dropout. During training, randomly zeroes some of the elements
+    of the input tensor with probability.
+
+    Args:
+        drop_prob (float): probability of an element to be zeroed. Default: 0.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of target mask.
+
+    Outputs:
+        Tensor, the value of generated mask for input shape.
+
+    Examples:
+        >>> dropout_grad = P.DropoutGrad(drop_prob=0.5)
+        >>> in = Tensor((20, 16, 50, 50))
+        >>> out = dropout_grad(in)
+    """
+    @prim_attr_register
+    def __init__(self, drop_prob=0):
+        self.drop_prob = validator.check_number_range("drop_prob", drop_prob, 0, 1, Rel.INC_BOTH, self.name)
+
+    def infer_shape(self, dy_shape, mask_shape):
+        return dy_shape
+
+    def infer_dtype(self, dy_dtype, mask_dtype):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({"dy_dtype": dy_dtype}, valid_types, self.name)
+        return dy_dtype
+
+
+class CTCLoss(PrimitiveWithInfer):
+    """
+    Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
+
+    Args:
+        preprocess_collapse_repeated (bool): If True, repeated labels are collapsed prior to the CTC calculation.
+                                             Default: False.
+        ctc_merge_repeated (bool): If False, during CTC calculation, repeated non-blank labels will not be merged
+                                   and are interpreted as individual labels. This is a simplfied version if CTC.
+                                   Default: True.
+        ignore_longer_outputs_than_inputs (bool): If True, sequences with longer outputs than inputs will be ignored.
+                                                  Default: False.
+
+    Inputs:
+        - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
+          :math:`(max_time, batch_size, num_class)`. `num_class` should be `num_labels + 1` classes, `num_labels`
+          indicates the number of actual labels. Blank labels are reserved.
+        - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
+          stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
+        - **labels_values** (Tensor) - A `1-D` input tensor. The values associated with the given batch and time. The
+          type must be int32. `labels_values[i]` must in the range of `[0, num_class)`.
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
+          The type must be int32. Each value in the tensor should not greater than `max_time`.
+
+    Outputs:
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. Has the same
+          type with `inputs`.
+        - **gradient** (Tensor) - The gradient of `loss`. Has the same type and shape with `inputs`.
+
+    Examples:
+        >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
+        >>> labels_indices = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int64)
+        >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> ctc_loss = P.CTCloss()
+        >>> output = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
+    """
+    @prim_attr_register
+    def __init__(self, preprocess_collapse_repeated=False, ctc_merge_repeated=False,
+                 ignore_longer_outputs_than_inputs=False):
+        self.init_prim_io_names(inputs=["inputs", "labels_indices", "labels_values", "sequence_length"],
+                                outputs=["loss", "gradient"])
+        validator.check_value_type("preprocess_collapse_repeated", preprocess_collapse_repeated, [bool], self.name)
+        self.preprocess_collapse_repeated_ = preprocess_collapse_repeated
+        self.ctc_merge_repeated_ = validator.check_value_type("ctc_merge_repeated", ctc_merge_repeated,
+                                                              [bool], self.name)
+        validator.check_value_type("ignore_longer_outputs_than_inputs",
+                                   ignore_longer_outputs_than_inputs, [bool], self.name)
+        self.ignore_longer_outputs_than_inputs_ = ignore_longer_outputs_than_inputs
+
+    def infer_shape(self, inputs, labels_indices, labels_values, sequence_length):
+        validator.check_integer("inputs rank", len(inputs), 3, Rel.EQ, self.name)
+        validator.check_integer("labels_indices rank", len(labels_indices), 2, Rel.EQ, self.name)
+        validator.check_integer("labels_values rank", len(labels_values), 1, Rel.EQ, self.name)
+        validator.check_integer("sequence_length rank", len(sequence_length), 1, Rel.EQ, self.name)
+        validator.check('labels_indices size', labels_indices[0], 'labels_values size',
+                        labels_values[0], Rel.EQ, self.name)
+        validator.check('inputs batch_size', inputs[1], 'sequence_length batch_size',
+                        sequence_length[0], Rel.EQ, self.name)
+        batch_size = []
+        batch_size.append(inputs[1])
+        return batch_size, inputs
+
+    def infer_dtype(self, inputs, labels_indices, labels_values, sequence_length):
+        validator.check_subclass("inputs_dtype", inputs, mstype.tensor, self.name)
+        validator.check_subclass("labels_indices_dtype", labels_indices, mstype.tensor, self.name)
+        validator.check_subclass("labels_values_dtype", labels_values, mstype.tensor, self.name)
+        validator.check_subclass("sequence_length_dtype", sequence_length, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"inputs_dtype": inputs}, [mstype.float32, mstype.double], self.name)
+        validator.check_tensor_type_same({"labels_indices_dtype": labels_indices}, [mstype.int64], self.name)
+        validator.check_tensor_type_same({"labels_values_dtype": labels_values}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"sequence_length_dtype": sequence_length}, [mstype.int32], self.name)
+        return inputs, inputs

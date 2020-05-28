@@ -67,16 +67,7 @@ std::string AbstractBase::ToString() const {
   return buffer.str();
 }
 
-AbstractBasePtr AbstractScalar::Broaden() const {
-  AbstractBasePtr clone = Clone();
-  MS_EXCEPTION_IF_NULL(clone);
-  auto value_track = clone->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_track);
-  if (value_track->isa<SymbolicKeyInstance>()) {
-    return clone;
-  }
-  return AbstractBase::Broaden();
-}
+AbstractBasePtr AbstractScalar::Broaden() const { return AbstractBase::Broaden(); }
 
 AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);

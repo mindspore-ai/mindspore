@@ -1,0 +1,127 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "pre_activate/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
+#include <memory>
+#include <vector>
+#include "session/anf_runtime_algorithm.h"
+#include "ir/primitive.h"
+#include "utils/utils.h"
+#include "operator/ops.h"
+#include "pipeline/static_analysis/abstract_value.h"
+#include "pre_activate/common/helper.h"
+
+namespace mindspore {
+namespace opt {
+namespace {
+CNodePtr CreateBNInferGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(batchnormgrad);
+  auto prim = std::make_shared<Primitive>(kBNInferGradOpName);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
+  inputs.push_back(batchnormgrad->input(1));
+  inputs.push_back(batchnormgrad->input(3));
+  inputs.push_back(batchnormgrad->input(5));
+  auto new_node = graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_scope(batchnormgrad->scope());
+  new_node->set_abstract(node->abstract());
+  AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnormgrad, new_node);
+  AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnormgrad, new_node);
+  return new_node;
+}
+
+bool CheckIndex(const AnfNodePtr &index_node) {
+  MS_EXCEPTION_IF_NULL(index_node);
+  if (!IsValueNode<Int32Imm>(index_node)) {
+    return false;
+  }
+  ValueNodePtr value_node = index_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  int index = GetValue<int>(value_node->value());
+  if (index != 0) {
+    MS_LOG(DEBUG) << "tuple_getitem must be 0th output of BatchNormGrad";
+    return false;
+  }
+  return true;
+}
+
+bool CheckBatchNormGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(batchnormgrad);
+  if (batchnormgrad->size() < kBatchNormInputNum + 1) {
+    MS_LOG(DEBUG) << "BatchNormGrad's input less than " << kBatchNormInputNum;
+    return false;
+  }
+  if (!AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnormgrad)) {
+    return false;
+  }
+  auto is_training = AnfAlgo::GetNodeAttr<bool>(batchnormgrad, kAttrIsTraining);
+  if (is_training) {
+    MS_LOG(DEBUG) << "is_training is true, no need do fusion";
+    return false;
+  }
+
+  if (IsUsedByOthers(graph, batchnormgrad)) {
+    MS_LOG(DEBUG) << "Only the 0th output of BatchNormGrad is used, then do fusion";
+    return false;
+  }
+  return true;
+}
+
+bool NeedFusion(const FuncGraphPtr &graph, const AnfNodePtr &node, CNodePtr *batchnormgrad) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto tuple_getitem = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_getitem);
+  CheckCNodeInputSize(tuple_getitem, kTupleGetItemInputSize);
+  AnfNodePtr index_node = tuple_getitem->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(index_node);
+  if (!CheckIndex(index_node)) {
+    return false;
+  }
+
+  AnfNodePtr batchnormgrad_anf = tuple_getitem->input(kRealInputNodeIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(batchnormgrad_anf);
+  MS_EXCEPTION_IF_NULL(batchnormgrad);
+  *batchnormgrad = batchnormgrad_anf->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(*batchnormgrad);
+  return CheckBatchNormGrad(graph, *batchnormgrad);
+}
+}  // namespace
+
+const BaseRef BatchNormGrad2BNInferGrad::DefinePattern() const {
+  VarPtr Xs = std::make_shared<SeqVar>();
+  VarPtr Y = std::make_shared<Var>();
+  MS_EXCEPTION_IF_NULL(Xs);
+  MS_EXCEPTION_IF_NULL(Y);
+  VectorRef batchnormgrad({prim::kPrimBatchNormGrad, Xs});
+  VectorRef pattern({prim::kPrimTupleGetItem, batchnormgrad, Y});
+  return pattern;
+}
+
+const AnfNodePtr BatchNormGrad2BNInferGrad::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                    const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+
+  CNodePtr batchnormgrad = nullptr;
+  if (!NeedFusion(graph, node, &batchnormgrad)) {
+    return nullptr;
+  }
+  return CreateBNInferGrad(graph, batchnormgrad, node);
+}
+}  // namespace opt
+}  // namespace mindspore

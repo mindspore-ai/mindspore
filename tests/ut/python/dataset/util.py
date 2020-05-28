@@ -13,17 +13,22 @@
 # limitations under the License.
 # ==============================================================================
 
+import hashlib
 import json
-import os
+import matplotlib.pyplot as plt
 import numpy as np
-#import jsbeautifier
+import os
+
+# import jsbeautifier
 from mindspore import log as logger
 
+# These are the column names defined in the testTFTestAllTypes dataset
 COLUMNS = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
            "col_sint16", "col_sint32", "col_sint64"]
+SAVE_JSON = False
 
 
-def save_golden(cur_dir, golden_ref_dir, result_dict):
+def _save_golden(cur_dir, golden_ref_dir, result_dict):
     """
     Save the dictionary values as the golden result in .npz file
     """
@@ -32,7 +37,7 @@ def save_golden(cur_dir, golden_ref_dir, result_dict):
     np.savez(golden_ref_dir, np.array(list(result_dict.values())))
 
 
-def save_golden_dict(cur_dir, golden_ref_dir, result_dict):
+def _save_golden_dict(cur_dir, golden_ref_dir, result_dict):
     """
     Save the dictionary (both keys and values) as the golden result in .npz file
     """
@@ -41,7 +46,7 @@ def save_golden_dict(cur_dir, golden_ref_dir, result_dict):
     np.savez(golden_ref_dir, np.array(list(result_dict.items())))
 
 
-def compare_to_golden(golden_ref_dir, result_dict):
+def _compare_to_golden(golden_ref_dir, result_dict):
     """
     Compare as numpy arrays the test result to the golden result
     """
@@ -50,15 +55,15 @@ def compare_to_golden(golden_ref_dir, result_dict):
     assert np.array_equal(test_array, golden_array)
 
 
-def compare_to_golden_dict(golden_ref_dir, result_dict):
+def _compare_to_golden_dict(golden_ref_dir, result_dict):
     """
     Compare as dictionaries the test result to the golden result
     """
     golden_array = np.load(golden_ref_dir, allow_pickle=True)['arr_0']
-    assert result_dict == dict(golden_array)
+    np.testing.assert_equal(result_dict, dict(golden_array))
 
 
-def save_json(filename, parameters, result_dict):
+def _save_json(filename, parameters, result_dict):
     """
     Save the result dictionary in json file
     """
@@ -70,11 +75,11 @@ def save_json(filename, parameters, result_dict):
     fout.write(jsbeautifier.beautify(json.dumps(out_dict), options))
 
 
-
 def save_and_check(data, parameters, filename, generate_golden=False):
     """
     Save the dataset dictionary and compare (as numpy array) with golden file.
     Use create_dict_iterator to access the dataset.
+    Note: save_and_check() is deprecated; use save_and_check_dict().
     """
     num_iter = 0
     result_dict = {}
@@ -94,15 +99,16 @@ def save_and_check(data, parameters, filename, generate_golden=False):
     golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
     if generate_golden:
         # Save as the golden result
-        save_golden(cur_dir, golden_ref_dir, result_dict)
+        _save_golden(cur_dir, golden_ref_dir, result_dict)
 
-    compare_to_golden(golden_ref_dir, result_dict)
+    _compare_to_golden(golden_ref_dir, result_dict)
 
-    # Save to a json file for inspection
-    # save_json(filename, parameters, result_dict)
+    if SAVE_JSON:
+        # Save result to a json file for inspection
+        _save_json(filename, parameters, result_dict)
 
 
-def save_and_check_dict(data, parameters, filename, generate_golden=False):
+def save_and_check_dict(data, filename, generate_golden=False):
     """
     Save the dataset dictionary and compare (as dictionary) with golden file.
     Use create_dict_iterator to access the dataset.
@@ -123,25 +129,53 @@ def save_and_check_dict(data, parameters, filename, generate_golden=False):
     golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
     if generate_golden:
         # Save as the golden result
-        save_golden_dict(cur_dir, golden_ref_dir, result_dict)
+        _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
 
-    compare_to_golden_dict(golden_ref_dir, result_dict)
+    _compare_to_golden_dict(golden_ref_dir, result_dict)
 
-    # Save to a json file for inspection
-    # save_json(filename, parameters, result_dict)
+    if SAVE_JSON:
+        # Save result to a json file for inspection
+        parameters = {"params": {}}
+        _save_json(filename, parameters, result_dict)
 
 
-def ordered_save_and_check(data, parameters, filename, generate_golden=False):
+def save_and_check_md5(data, filename, generate_golden=False):
+    """
+    Save the dataset dictionary and compare (as dictionary) with golden file (md5).
+    Use create_dict_iterator to access the dataset.
+    """
+    num_iter = 0
+    result_dict = {}
+
+    for item in data.create_dict_iterator():  # each data is a dictionary
+        for data_key in list(item.keys()):
+            if data_key not in result_dict:
+                result_dict[data_key] = []
+            # save the md5 as numpy array
+            result_dict[data_key].append(np.frombuffer(hashlib.md5(item[data_key]).digest(), dtype='<f4'))
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {}".format(num_iter))
+
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
+    if generate_golden:
+        # Save as the golden result
+        _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
+
+    _compare_to_golden_dict(golden_ref_dir, result_dict)
+
+
+def save_and_check_tuple(data, parameters, filename, generate_golden=False):
     """
     Save the dataset dictionary and compare (as numpy array) with golden file.
     Use create_tuple_iterator to access the dataset.
     """
     num_iter = 0
-
     result_dict = {}
 
     for item in data.create_tuple_iterator():  # each data is a dictionary
-        for data_key in range(0, len(item)):
+        for data_key, _ in enumerate(item):
             if data_key not in result_dict:
                 result_dict[data_key] = []
             result_dict[data_key].append(item[data_key].tolist())
@@ -153,12 +187,13 @@ def ordered_save_and_check(data, parameters, filename, generate_golden=False):
     golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
     if generate_golden:
         # Save as the golden result
-        save_golden(cur_dir, golden_ref_dir, result_dict)
+        _save_golden(cur_dir, golden_ref_dir, result_dict)
 
-    compare_to_golden(golden_ref_dir, result_dict)
+    _compare_to_golden(golden_ref_dir, result_dict)
 
-    # Save to a json file for inspection
-    # save_json(filename, parameters, result_dict)
+    if SAVE_JSON:
+        # Save result to a json file for inspection
+        _save_json(filename, parameters, result_dict)
 
 
 def diff_mse(in1, in2):
@@ -171,7 +206,18 @@ def diff_me(in1, in2):
     return mse / 255 * 100
 
 
-def diff_ssim(in1, in2):
-    from skimage.measure import compare_ssim as ssim
-    val = ssim(in1, in2, multichannel=True)
-    return (1 - val) * 100
+def visualize(image_original, image_transformed):
+    """
+    visualizes the image using DE op and Numpy op
+    """
+    num = len(image_transformed)
+    for i in range(num):
+        plt.subplot(2, num, i + 1)
+        plt.imshow(image_original[i])
+        plt.title("Original image")
+
+        plt.subplot(2, num, i + num + 1)
+        plt.imshow(image_transformed[i])
+        plt.title("Transformed image")
+
+    plt.show()

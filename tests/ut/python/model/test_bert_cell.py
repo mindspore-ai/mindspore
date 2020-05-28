@@ -15,25 +15,29 @@
 """ test bert of graph compile """
 import functools
 import numpy as np
+
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
+import mindspore.ops.composite as C
+from mindspore.ops import functional as F
+from mindspore.common.initializer import TruncatedNormal
+from mindspore.common.parameter import ParameterTuple
 from mindspore.common.tensor import Tensor
+from mindspore.model_zoo.Bert_NEZHA import BertPretrainingLoss, GetNextSentenceOutput
+from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import clip_grad
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertConfig, \
     EmbeddingLookup, EmbeddingPostprocessor, BertOutput, RelaPosMatrixGenerator, \
     RelaPosEmbeddingsGenerator, SaturateCast, BertAttention, BertSelfAttention, \
     BertEncoderCell, BertTransformer, CreateAttentionMaskFromInputMask, BertModel
 from mindspore.nn.layer.basic import Norm
-from mindspore.model_zoo.Bert_NEZHA import BertPretrainingLoss, GetNextSentenceOutput
-import mindspore.nn as nn
-from mindspore.common.initializer import TruncatedNormal
-from mindspore.common.parameter import ParameterTuple
 from mindspore.nn.optim import AdamWeightDecay, AdamWeightDecayDynamicLR
-from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import ClipGradients
-import mindspore.ops.composite as C
-from mindspore.ops import functional as F
-from ....ops_common import convert
 from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ....mindspore_test_framework.pipeline.forward.compile_forward import \
+    pipeline_for_compile_forward_ge_graph_for_case_by_case_config
+from ....mindspore_test_framework.pipeline.gradient.compile_gradient import \
+    pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ....ops_common import convert
+
 
 def bert_trans():
     """bert_trans"""
@@ -53,9 +57,11 @@ def bert_trans():
     net.set_train()
     return net
 
+
 def set_train(net):
     net.set_train()
     return net
+
 
 class NetForAdam(nn.Cell):
     def __init__(self):
@@ -66,23 +72,27 @@ class NetForAdam(nn.Cell):
         x = self.dense(x)
         return x
 
+
 class TrainStepWrapForAdam(nn.Cell):
     """TrainStepWrapForAdam definition"""
+
     def __init__(self, network):
         super(TrainStepWrapForAdam, self).__init__()
         self.network = network
         self.weights = ParameterTuple(network.get_parameters())
         self.optimizer = AdamWeightDecay(self.weights)
-        self.clip_gradients = ClipGradients()
+        self.hyper_map = C.HyperMap()
 
     def construct(self, x, sens):
         weights = self.weights
         grads = C.grad_by_list_with_sens(self.network, weights)(x, sens)
-        grads = self.clip_gradients(grads, 1, 1.0)
+        grads = self.hyper_map(F.partial(clip_grad, 1, 1.0), grads)
         return self.optimizer(grads)
+
 
 class TrainStepWrapForAdamDynamicLr(nn.Cell):
     """TrainStepWrapForAdamDynamicLr definition"""
+
     def __init__(self, network):
         super(TrainStepWrapForAdamDynamicLr, self).__init__()
         self.network = network
@@ -95,15 +105,19 @@ class TrainStepWrapForAdamDynamicLr(nn.Cell):
         grads = C.grad_by_list_with_sens(self.network, weights)(x, self.sens)
         return self.optimizer(grads)
 
+
 class TempC2Wrap(nn.Cell):
-    def __init__(self, op, c1=None, c2=None,):
+    def __init__(self, op, c1=None, c2=None, ):
         super(TempC2Wrap, self).__init__()
         self.op = op
         self.c1 = c1
         self.c2 = c2
+        self.hyper_map = C.HyperMap()
+
     def construct(self, x1):
-        x = self.op(x1, self.c1, self.c2)
+        x = self.hyper_map(F.partial(self.op, self.c1, self.c2), x1)
         return x
+
 
 test_case_cell_ops = [
     ('Norm_keepdims', {
@@ -373,7 +387,7 @@ test_case_cell_ops = [
         'block': set_train(nn.Dense(in_channels=768,
                                     out_channels=3072,
                                     activation='gelu',
-                                    weight_init=TruncatedNormal(0.02),)),
+                                    weight_init=TruncatedNormal(0.02), )),
         'desc_inputs': [[3, 768]],
         'desc_bprop': [[3, 3072]]}),
     ('GetNextSentenceOutput', {
@@ -393,28 +407,30 @@ test_case_cell_ops = [
         'desc_inputs': [[1, 64]],
         'skip': ['backward']}),
     ('ClipGradients', {
-        'block': TempC2Wrap(ClipGradients(), 1, 1.0),
+        'block': TempC2Wrap(clip_grad, 1, 1.0),
         'desc_inputs': [tuple(convert(shp) for shp in [[1], [1], [1]])],
         'skip': ['backward', 'exec']}),
-    ]
+]
 
-test_case = functools.reduce(lambda x, y: x+y, [test_case_cell_ops])
+test_case = functools.reduce(lambda x, y: x + y, [test_case_cell_ops])
 # use -k to select certain testcast
 # pytest  tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
 
 test_exec_case = filter(lambda x: 'skip' not in x[1] or
-                        'exec' not in x[1]['skip'], test_case)
+                                  'exec' not in x[1]['skip'], test_case)
 test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                 'backward' not in x[1]['skip'] and 'backward_exec'
-                                 not in x[1]['skip'], test_case)
+                                           'backward' not in x[1]['skip'] and 'backward_exec'
+                                           not in x[1]['skip'], test_case)
 test_check_gradient_case = filter(lambda x: 'skip' not in x[1] or
-                                  'backward' not in x[1]['skip'] and 'backward_exec'
-                                  not in x[1]['skip'], test_case)
+                                            'backward' not in x[1]['skip'] and 'backward_exec'
+                                            not in x[1]['skip'], test_case)
+
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
 def test_exec():
     return test_exec_case
+
 
 @mindspore_test(pipeline_for_compile_grad_ge_graph_for_case_by_case_config)
 def test_backward_exec():

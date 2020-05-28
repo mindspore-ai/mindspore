@@ -111,6 +111,7 @@ class Primitive(Primitive_):
 
         Note:
             Valid only in semi auto parallel or auto parallel mode.
+            In other parallel modes, strategies will be ignored if set.
 
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
@@ -283,7 +284,8 @@ def prim_attr_register(fn):
 
 def constexpr(fn=None, get_instance=True, name=None):
     """
-    Makes a PrimitiveWithInfer operator, which infer the value while compiling.
+    Makes a PrimitiveWithInfer operator, which infer the value while compiling. We can define a function
+    to compute between constant variable and used in constructß.
 
     Args:
         fn (function): A `fn` use as the infer_value of the output operator.

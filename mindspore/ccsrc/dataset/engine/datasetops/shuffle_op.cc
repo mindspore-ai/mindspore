@@ -30,6 +30,7 @@
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
 
@@ -81,25 +82,15 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
 // Private function to re-init the shuffle op for another epoch.  Shuffle op calls this by
 // itself rather than waiting for the reset driven from operators above it in the pipeline.
 Status ShuffleOp::SelfReset() {
-  MS_LOG(INFO) << "Shuffle operator performing a self-reset.";
+  MS_LOG(DEBUG) << "Shuffle operator performing a self-reset.";
   // If ReshuffleEachEpoch is false, then we always use the same seed for every
   // epoch.
   // If ReshuffleEachEpoch is true, then the first epoch uses the given seed,
   // and all subsequent epochs will then reset the seed based on random device.
-  if (!reshuffle_each_epoch_) {
-    rng_ = std::mt19937_64(shuffle_seed_);
-  } else {
-#if defined(_WIN32) || defined(_WIN64)
-    unsigned int number;
-    rand_s(&number);
-    std::mt19937 random_device{static_cast<uint32_t>(number)};
-#else
-    std::random_device random_device("/dev/urandom");
-#endif
-    std::uniform_int_distribution<int32_t> distribution(0, std::numeric_limits<int32_t>::max());
-    shuffle_seed_ = distribution(random_device);
-    rng_ = std::mt19937_64(shuffle_seed_);
+  if (reshuffle_each_epoch_) {
+    shuffle_seed_ = GetNewSeed();
   }
+  rng_ = std::mt19937_64(shuffle_seed_);
   shuffle_buffer_ = std::make_unique<TensorTable>();
   buffer_counter_ = 0;
   shuffle_last_row_idx_ = 0;
@@ -195,7 +186,6 @@ Status ShuffleOp::operator()() {
       if (new_buffer_table->size() == rows_per_buffer_ || shuffle_last_row_idx_ == 0) {
         auto new_buffer = std::make_unique<DataBuffer>(buffer_counter_, DataBuffer::kDeBFlagNone);
         new_buffer->set_tensor_table(std::move(new_buffer_table));
-        new_buffer->set_column_name_map(column_name_map_);
         buffer_counter_++;
         MS_LOG(DEBUG) << "Shuffle operator sending a buffer to output.";
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(new_buffer)));
@@ -234,7 +224,7 @@ Status ShuffleOp::operator()() {
 
     // Since we overloaded eoeReceived function, we are responsible to flow the EOE up the
     // pipepline manually now that we are done draining the shuffle buffer
-    MS_LOG(INFO) << "Shuffle operator sending EOE.";
+    MS_LOG(DEBUG) << "Shuffle operator sending EOE.";
     auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
@@ -249,7 +239,7 @@ Status ShuffleOp::operator()() {
 // Private function populate the shuffle buffer initially by fetching from the child output
 // connector until the shuffle buffer is full (or there is no more data coming).
 Status ShuffleOp::InitShuffleBuffer() {
-  MS_LOG(INFO) << "Shuffle operator initializing the shuffle buffer.";
+  MS_LOG(DEBUG) << "Shuffle operator initializing the shuffle buffer.";
 
   // The first phase of this operator is to read incoming buffers and then drain those
   // rows from the buffers, putting them into our own local table of tensors (the shuffle
@@ -268,7 +258,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
   if (child_iterator_->eof_handled()) {
-    MS_LOG(INFO) << "Shuffle operator init picked up EOF. No more epochs.";
+    MS_LOG(DEBUG) << "Shuffle operator init picked up EOF. No more epochs.";
     return Status::OK();
   }
 
@@ -276,8 +266,8 @@ Status ShuffleOp::InitShuffleBuffer() {
     RETURN_STATUS_UNEXPECTED("Unable to fetch a single row for shuffle buffer.");
   }
 
-  // Take a copy of the column name mapping.  We'll use this when constructing output buffers later.
-  column_name_map_ = child_iterator_->col_name_id_map();
+  // Now that a first fetch is done, assign the column map for this operator
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
 
   // Now fill the rest of the shuffle buffer until we are unable to get the next row or we reached
   // the desired shuffle buffer size.
@@ -299,13 +289,19 @@ Status ShuffleOp::InitShuffleBuffer() {
     shuffle_buffer_state_ = kShuffleStateDrain;
   }
 
-  MS_LOG(INFO) << "Shuffle operator finished intializing the shuffle buffer.";
+  MS_LOG(DEBUG) << "Shuffle operator finished intializing the shuffle buffer.";
   return Status::OK();
 }
 
 Status ShuffleOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ShuffleOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ShuffleOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

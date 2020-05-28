@@ -37,7 +37,7 @@ class ShardPkSample : public ShardCategory {
 
   ~ShardPkSample() override{};
 
-  MSRStatus suf_execute(ShardTask &tasks) override;
+  MSRStatus SufExecute(ShardTask &tasks) override;
 
  private:
   bool shuffle_;

@@ -39,18 +39,18 @@ namespace mindrecord {
 void BindSchema(py::module *m) {
   (void)py::class_<Schema, std::shared_ptr<Schema>>(*m, "Schema", py::module_local())
     .def_static("build", (std::shared_ptr<Schema>(*)(std::string, py::handle)) & Schema::Build)
-    .def("get_desc", &Schema::get_desc)
+    .def("get_desc", &Schema::GetDesc)
     .def("get_schema_content", (py::object(Schema::*)()) & Schema::GetSchemaForPython)
-    .def("get_blob_fields", &Schema::get_blob_fields)
-    .def("get_schema_id", &Schema::get_schema_id);
+    .def("get_blob_fields", &Schema::GetBlobFields)
+    .def("get_schema_id", &Schema::GetSchemaID);
 }
 
 void BindStatistics(const py::module *m) {
   (void)py::class_<Statistics, std::shared_ptr<Statistics>>(*m, "Statistics", py::module_local())
     .def_static("build", (std::shared_ptr<Statistics>(*)(std::string, py::handle)) & Statistics::Build)
-    .def("get_desc", &Statistics::get_desc)
+    .def("get_desc", &Statistics::GetDesc)
     .def("get_statistics", (py::object(Statistics::*)()) & Statistics::GetStatisticsForPython)
-    .def("get_statistics_id", &Statistics::get_statistics_id);
+    .def("get_statistics_id", &Statistics::GetStatisticsID);
 }
 
 void BindShardHeader(const py::module *m) {
@@ -60,9 +60,9 @@ void BindShardHeader(const py::module *m) {
     .def("add_statistics", &ShardHeader::AddStatistic)
     .def("add_index_fields",
          (MSRStatus(ShardHeader::*)(const std::vector<std::string> &)) & ShardHeader::AddIndexFields)
-    .def("get_meta", &ShardHeader::get_schemas)
-    .def("get_statistics", &ShardHeader::get_statistics)
-    .def("get_fields", &ShardHeader::get_fields)
+    .def("get_meta", &ShardHeader::GetSchemas)
+    .def("get_statistics", &ShardHeader::GetStatistics)
+    .def("get_fields", &ShardHeader::GetFields)
     .def("get_schema_by_id", &ShardHeader::GetSchemaByID)
     .def("get_statistic_by_id", &ShardHeader::GetStatisticByID);
 }
@@ -72,8 +72,8 @@ void BindShardWriter(py::module *m) {
     .def(py::init<>())
     .def("open", &ShardWriter::Open)
     .def("open_for_append", &ShardWriter::OpenForAppend)
-    .def("set_header_size", &ShardWriter::set_header_size)
-    .def("set_page_size", &ShardWriter::set_page_size)
+    .def("set_header_size", &ShardWriter::SetHeaderSize)
+    .def("set_page_size", &ShardWriter::SetPageSize)
     .def("set_shard_header", &ShardWriter::SetShardHeader)
     .def("write_raw_data", (MSRStatus(ShardWriter::*)(std::map<uint64_t, std::vector<py::handle>> &,
                                                       vector<vector<uint8_t>> &, bool, bool)) &
@@ -84,14 +84,15 @@ void BindShardWriter(py::module *m) {
 void BindShardReader(const py::module *m) {
   (void)py::class_<ShardReader, std::shared_ptr<ShardReader>>(*m, "ShardReader", py::module_local())
     .def(py::init<>())
-    .def("open", (MSRStatus(ShardReader::*)(const std::string &, const int &, const std::vector<std::string> &,
+    .def("open", (MSRStatus(ShardReader::*)(const std::vector<std::string> &, bool, const int &,
+                                            const std::vector<std::string> &,
                                             const std::vector<std::shared_ptr<ShardOperator>> &)) &
                    ShardReader::OpenPy)
     .def("launch", &ShardReader::Launch)
-    .def("get_header", &ShardReader::get_shard_header)
-    .def("get_blob_fields", &ShardReader::get_blob_fields)
-    .def("get_next",
-         (std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>(ShardReader::*)()) & ShardReader::GetNextPy)
+    .def("get_header", &ShardReader::GetShardHeader)
+    .def("get_blob_fields", &ShardReader::GetBlobFields)
+    .def("get_next", (std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>>(ShardReader::*)()) &
+                       ShardReader::GetNextPy)
     .def("finish", &ShardReader::Finish)
     .def("close", &ShardReader::Close);
 }
@@ -106,7 +107,8 @@ void BindShardIndexGenerator(const py::module *m) {
 void BindShardSegment(py::module *m) {
   (void)py::class_<ShardSegment>(*m, "ShardSegment", py::module_local())
     .def(py::init<>())
-    .def("open", (MSRStatus(ShardSegment::*)(const std::string &, const int &, const std::vector<std::string> &,
+    .def("open", (MSRStatus(ShardSegment::*)(const std::vector<std::string> &, bool, const int &,
+                                             const std::vector<std::string> &,
                                              const std::vector<std::shared_ptr<ShardOperator>> &)) &
                    ShardSegment::OpenPy)
     .def("get_category_fields",
@@ -119,9 +121,9 @@ void BindShardSegment(py::module *m) {
     .def("read_at_page_by_name", (std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>>(
                                    ShardSegment::*)(std::string, int64_t, int64_t)) &
                                    ShardSegment::ReadAtPageByNamePy)
-    .def("get_header", &ShardSegment::get_shard_header)
+    .def("get_header", &ShardSegment::GetShardHeader)
     .def("get_blob_fields",
-         (std::pair<ShardType, std::vector<std::string>>(ShardSegment::*)()) & ShardSegment::get_blob_fields);
+         (std::pair<ShardType, std::vector<std::string>>(ShardSegment::*)()) & ShardSegment::GetBlobFields);
 }
 
 void BindGlobalParams(py::module *m) {

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 2 ] && [ $# != 3 ]
 then 
-    echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]"
+    echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [PRETRAINED_PATH](optional)"
 exit 1
 fi
 
@@ -31,6 +31,11 @@ PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
 echo $PATH1
 echo $PATH2
+if [ $# == 3 ]
+then 
+    PATH3=$(get_real_path $3)
+    echo $PATH3
+fi
 
 if [ ! -f $PATH1 ]
 then 
@@ -43,6 +48,12 @@ then
     echo "error: DATASET_PATH=$PATH2 is not a directory"
 exit 1
 fi 
+
+if [ $# == 3 ] && [ ! -f $PATH3 ]
+then
+    echo "error: PRETRAINED_PATH=$PATH3 is not a file"
+exit 1
+fi
 
 ulimit -u unlimited
 export DEVICE_NUM=8
@@ -61,6 +72,15 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
+    if [ $# == 2 ]
+    then	    
+        python train.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
+    fi
+    
+    if [ $# == 3 ]
+    then
+        python train.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log &
+    fi
+
     cd ..
 done

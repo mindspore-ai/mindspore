@@ -285,9 +285,9 @@ def create_node(node):
 
     elif dataset_op == 'VOCDataset':
         sampler = construct_sampler(node.get('sampler'))
-        pyobj = pyclass(node['dataset_dir'], node.get('num_samples'), node.get('num_parallel_workers'),
-                        node.get('shuffle'), node.get('decode'), sampler, node.get('num_shards'),
-                        node.get('shard_id'))
+        pyobj = pyclass(node['dataset_dir'], node.get('task'), node.get('mode'), node.get('class_indexing'),
+                        node.get('num_samples'), node.get('num_parallel_workers'), node.get('shuffle'),
+                        node.get('decode'), sampler, node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'CelebADataset':
         sampler = construct_sampler(node.get('sampler'))
@@ -334,6 +334,10 @@ def create_node(node):
     elif dataset_op == 'ZipDataset':
         # Create ZipDataset instance, giving dummy input dataset that will be overrided in the caller.
         pyobj = de.ZipDataset((de.Dataset(), de.Dataset()))
+
+    elif dataset_op == 'ConcatDataset':
+        # Create ConcatDataset instance, giving dummy input dataset that will be overrided in the caller.
+        pyobj = de.ConcatDataset((de.Dataset(), de.Dataset()))
 
     elif dataset_op == 'RenameDataset':
         pyobj = de.Dataset().rename(node['input_columns'], node['output_columns'])

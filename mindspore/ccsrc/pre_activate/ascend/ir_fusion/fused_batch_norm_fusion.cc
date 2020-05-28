@@ -90,9 +90,19 @@ ValuePtr FusedBatchNormFusion::GetFactor(const EquivPtr &equiv) const {
   }
   auto tensor_ptr = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  auto *tensor_data = static_cast<float *>(tensor_ptr->data_c());
-  MS_EXCEPTION_IF_NULL(tensor_data);
-  return MakeValue(tensor_data[0]);
+  if (tensor_ptr->data_type() == kNumberTypeFloat16) {
+    auto *half_data = static_cast<const Eigen::half *>(tensor_ptr->data_c());
+    MS_EXCEPTION_IF_NULL(half_data);
+    float float_data = Eigen::half_impl::half_to_float(half_data[0]);
+    return MakeValue(float_data);
+  } else if (tensor_ptr->data_type() == kNumberTypeFloat32) {
+    auto *tensor_data = static_cast<const float *>(tensor_ptr->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    return MakeValue(tensor_data[0]);
+  } else {
+    MS_LOG(WARNING) << "The factor data type of value node " << value_node->DebugString() << " is not fp16 or fp32";
+    return nullptr;
+  }
 }
 
 AnfNodePtr FusedBatchNormFusion::CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -264,6 +274,9 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(manager);
   for (const auto &output : bn_outputs) {
     MS_EXCEPTION_IF_NULL(output);
+    if (!IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
+      continue;
+    }
     auto tuple_getitem_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_getitem_cnode);
     AnfNodePtr index_node = tuple_getitem_cnode->input(kInputNodeOutputIndexInTupleGetItem);
@@ -276,6 +289,29 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
     }
   }
   return bn_training_update_outputs[0];
+}
+
+const BaseRef FusedBatchNormMixPrecisionFusion::DefinePattern() const {
+  std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
+  VarPtr index0 = std::make_shared<CondVar>(IsC);
+  VarPtr index1 = std::make_shared<CondVar>(IsC);
+  VarPtr index2 = std::make_shared<CondVar>(IsC);
+  VectorRef batch_norm = VectorRef({batch_norm_var_, data_input0_var_, data_input1_var_, data_input2_var_, Xs});
+  VectorRef tuple_getitem0 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index0});
+  VectorRef tuple_getitem1 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index1});
+  VectorRef tuple_getitem2 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index2});
+  VectorRef cast_variable_input0 = VectorRef({prim::kPrimCast, variable_input0_var_});
+  VectorRef cast_variable_input1 = VectorRef({prim::kPrimCast, variable_input1_var_});
+  VectorRef sub0 = VectorRef({prim::kPrimSub, cast_variable_input0, tuple_getitem1});
+  VectorRef sub1 = VectorRef({prim::kPrimSub, cast_variable_input1, tuple_getitem2});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, sub0, constant_input0_var_});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, sub1, constant_input1_var_});
+  VectorRef cast2 = VectorRef({prim::kPrimCast, mul0});
+  VectorRef cast3 = VectorRef({prim::kPrimCast, mul1});
+  VectorRef assign_sub0 = VectorRef({prim::kPrimAssignSub, variable_input0_var_, cast2});
+  VectorRef assign_sub1 = VectorRef({prim::kPrimAssignSub, variable_input1_var_, cast3});
+  VectorRef depend0 = VectorRef({prim::kPrimDepend, tuple_getitem0, assign_sub0});
+  return VectorRef({prim::kPrimDepend, depend0, assign_sub1});
 }
 }  // namespace opt
 }  // namespace mindspore

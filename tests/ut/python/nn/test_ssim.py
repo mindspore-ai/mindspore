@@ -17,10 +17,11 @@ test ssim
 """
 import numpy as np
 import pytest
-import mindspore.nn as nn
+
 import mindspore.common.dtype as mstype
-from mindspore.common.api import _executor
+import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common.api import _executor
 
 
 class SSIMNet(nn.Cell):
@@ -38,43 +39,52 @@ def test_compile():
     img2 = Tensor(np.random.random((8, 3, 16, 16)))
     _executor.compile(net, img1, img2)
 
+
 def test_compile_grayscale():
     max_val = 255
-    net = SSIMNet(max_val = max_val)
+    net = SSIMNet(max_val=max_val)
     img1 = Tensor(np.random.randint(0, 256, (8, 1, 16, 16), np.uint8))
     img2 = Tensor(np.random.randint(0, 256, (8, 1, 16, 16), np.uint8))
     _executor.compile(net, img1, img2)
+
 
 def test_ssim_max_val_negative():
     max_val = -1
     with pytest.raises(ValueError):
         net = SSIMNet(max_val)
 
+
 def test_ssim_max_val_bool():
     max_val = True
     with pytest.raises(TypeError):
         net = SSIMNet(max_val)
+
 
 def test_ssim_max_val_zero():
     max_val = 0
     with pytest.raises(ValueError):
         net = SSIMNet(max_val)
 
+
 def test_ssim_filter_size_float():
     with pytest.raises(TypeError):
         net = SSIMNet(filter_size=1.1)
+
 
 def test_ssim_filter_size_zero():
     with pytest.raises(ValueError):
         net = SSIMNet(filter_size=0)
 
+
 def test_ssim_filter_sigma_zero():
     with pytest.raises(ValueError):
         net = SSIMNet(filter_sigma=0.0)
 
+
 def test_ssim_filter_sigma_negative():
     with pytest.raises(ValueError):
         net = SSIMNet(filter_sigma=-0.1)
+
 
 def test_ssim_k1_k2_wrong_value():
     with pytest.raises(ValueError):
@@ -95,6 +105,7 @@ def test_ssim_k1_k2_wrong_value():
     with pytest.raises(ValueError):
         net = SSIMNet(k2=-1.0)
 
+
 def test_ssim_different_shape():
     shape_1 = (8, 3, 16, 16)
     shape_2 = (8, 3, 8, 8)
@@ -104,6 +115,7 @@ def test_ssim_different_shape():
     with pytest.raises(ValueError):
         _executor.compile(net, img1, img2)
 
+
 def test_ssim_different_dtype():
     dtype_1 = mstype.float32
     dtype_2 = mstype.float16
@@ -112,6 +124,7 @@ def test_ssim_different_dtype():
     net = SSIMNet()
     with pytest.raises(TypeError):
         _executor.compile(net, img1, img2)
+
 
 def test_ssim_invalid_5d_input():
     shape_1 = (8, 3, 16, 16)

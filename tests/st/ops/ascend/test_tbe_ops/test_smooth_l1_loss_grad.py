@@ -14,11 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import mindspore.nn as nn
+
 import mindspore.context as context
-from mindspore.ops.composite import GradOperation
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -30,6 +31,7 @@ class Net(nn.Cell):
 
     def construct(self, pred, gt):
         return self.SmoothL1Loss(pred, gt)
+
 
 class Grad(nn.Cell):
     def __init__(self, network):

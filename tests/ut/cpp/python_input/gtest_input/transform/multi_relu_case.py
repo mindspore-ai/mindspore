@@ -14,11 +14,16 @@
 # ============================================================================
 """ multi_relu_case """
 from mindspore.ops import Primitive
+
+
 # Test user define ops
 def get_test_ops_fn():
     return test_ops_f
 
+
 scalar_mul = Primitive('scalar_mul')
+
+
 def test_ops_f(x, y):
     z = scalar_mul(x, y)
     return z

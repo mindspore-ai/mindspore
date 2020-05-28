@@ -19,7 +19,7 @@ from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
-from .._utils import _get_concat_offset
+from .._utils import get_concat_offset
 from ...common import dtype as mstype
 
 
@@ -136,7 +136,7 @@ class ConcatOffset(PrimitiveWithInfer):
         axis = self.axis
         x_shp = input_x['shape']
         x_type = input_x['dtype']
-        offset, _, axis = _get_concat_offset(x_shp, x_type, axis, self.name)
+        offset, _, axis = get_concat_offset(x_shp, x_type, axis, self.name)
         self.add_prim_attr('T', x_type[0].element_type())
         offset_values = []
         for i in range(len(x_shp)):
@@ -972,6 +972,23 @@ class StridedSliceGrad(PrimitiveWithInfer):
         return {'shape': shapex['value'],
                 'dtype': dy['dtype'],
                 'value': None}
+
+
+class SoftplusGrad(PrimitiveWithInfer):
+    """Computes gradient for the Log Softmax activation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['dout', 'x'], outputs=['output'])
+
+    def infer_shape(self, dout_shape, x_shape):
+        validator.check("x_shape", x_shape, "dout_shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, dout_dtype, x_dtype):
+        args = {"x_dtype": x_dtype, "dout_dtype": dout_dtype}
+        validator.check_tensor_type_same(args, mstype.float_type, self.name)
+        return x_dtype
 
 
 class TanhGrad(PrimitiveWithInfer):

@@ -17,6 +17,9 @@
 #define DATASET_ENGINE_DATASETOPS_DATASET_OP_H_
 
 #include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include "dataset/core/constants.h"
 #include "dataset/engine/db_connector.h"
@@ -28,6 +31,8 @@ namespace dataset {
 class ExecutionTree;
 
 class DataBuffer;
+
+class NodePass;
 
 // The base class DatasetOp is the main tree node.  It is an abstract class, so
 // the actual implementation of the operators will be derived from here.
@@ -59,7 +64,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @param child - shared pointer to the child to add.
   Status AddChild(std::shared_ptr<DatasetOp> child);
 
-  // Getter function to get a shared pointer to our childAdds a operator to become our child.
+  // Getter function to get a shared pointer to our child
   // @param child_index - An operator can have n children. Indicates choose which child to return.
   std::shared_ptr<DatasetOp> child(int32_t child_index) const;
 
@@ -194,20 +199,51 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return Status
   virtual Status RegisterWorkerConnectors() { return Status::OK(); }
 
+  // Getter for the column name mapping
+  // @return The returned map
+  std::unordered_map<std::string, int32_t> column_name_id_map() const { return column_name_id_map_; }
+
+  // Checks if the column name map has been set up yet for this op
+  // @return - T/F if the operator has the map set up
+  bool HasColumnNameMap() const { return (column_name_id_map_.empty()); }
+
+  // gives a string output for the column map for handy debug printing
+  // @return - the column name map as a string
+  std::string ColumnNameMapAsString() const;
+
+  // Children Getter
+  // @return Vector or Children
+  std::vector<std::shared_ptr<DatasetOp>> Children() const { return child_; }
+
+  // Base method for NodePass visit.
+  // Subclass needs to override this if it requires special node visit access.
+  // Check "dataset/engine/opt/pass.h" for more details.
+  // @return Statue of the node visit
+  virtual Status Accept(NodePass *p, bool *modified);
+
  protected:
   // Adds a parent operator to this operator
   // @notes External callers do not have access to this function.
   // @param parent - The parent node to add
   void AddParent(const DatasetOp *parent);
 
-  std::vector<std::shared_ptr<DatasetOp>> child_;  // Child nodes
-  std::vector<const DatasetOp *> parent_;          // Parent nodes. No ownership and read-only
-  int32_t oc_queue_size_;                          // Capacity for each out_connector_
-  int32_t operator_id_;                            // Generated id for the node
-  ExecutionTree *tree_;                            // Back pointer to our tree.
-  OpState state_;                                  // The state of the operator, Running, Idle, Terminated
-  uint32_t op_ctrl_flags_;                         // Flags for the operator
-  std::unique_ptr<DbConnector> out_connector_;     // Output Connector
+  // A helper function for providing an assignment of the column name map.
+  // This grabs the map from child 0 and assigns it into this op.
+  // Can only be used if number of children is 1.
+  // @return - Status
+  Status AssignColMapFromChild();
+
+  std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
+  std::vector<const DatasetOp *> parent_;                        // Parent nodes. No ownership and read-only
+  int32_t oc_queue_size_;                                        // Capacity for each out_connector_
+  int32_t operator_id_;                                          // Generated id for the node
+  ExecutionTree *tree_;                                          // Back pointer to our tree.
+  OpState state_;                                                // The state of the operator, Running, Idle, Terminated
+  uint32_t op_ctrl_flags_;                                       // Flags for the operator
+  std::unique_ptr<DbConnector> out_connector_;                   // Output Connector
+  std::unordered_map<std::string, int32_t> column_name_id_map_;  // Mapping between col index and col name
+  bool first_fetch_;                                             // For use when setting column map
+  std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map
 
  private:
   // Sets the operator id.

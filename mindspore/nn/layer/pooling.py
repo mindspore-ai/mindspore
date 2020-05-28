@@ -16,10 +16,12 @@
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator as validator
+from mindspore.ops.primitive import constexpr
 from ... import context
 from ..cell import Cell
 from ..._checkparam import Rel
 
+__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d']
 
 class _PoolNd(Cell):
     """N-D  AvgPool"""
@@ -52,7 +54,10 @@ class _PoolNd(Cell):
 
     def extend_repr(self):
         return 'kernel_size={kernel_size}, stride={stride}, pad_mode={pad_mode}'.format(**self.__dict__)
-
+@constexpr
+def _shape_check(in_shape):
+    if len(in_shape) != 3:
+        raise ValueError("The input must has 3 dim")
 
 class MaxPool2d(_PoolNd):
     r"""
@@ -218,13 +223,13 @@ class AvgPool1d(_PoolNd):
 
     Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool1d outputs
-    regional average in the :math:`(W_{in})`-dimension. Given kernel size
-    :math:`ks = w_{ker}` and stride :math:`s = s_0`, the operation is as follows.
+    Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, AvgPool1d outputs
+    regional average in the :math:`(L_{in})`-dimension. Given kernel size
+    :math:`ks = l_{ker}` and stride :math:`s = s_0`, the operation is as follows.
 
     .. math::
-        \text{output}(N_i, C_j, h_k, w) = \frac{1}{w_{ker}} \sum_{n=0}^{w_{ker}-1}
-        \text{input}(N_i, C_j, h_k, s_0 \times w + n)
+        \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times l + n)
 
     Note:
         pad_mode for training only supports "same" and "valid".
@@ -246,17 +251,17 @@ class AvgPool1d(_PoolNd):
 
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
     Examples:
-        >>> pool = nn.AvgPool1d(kernel_size=3, strides=1)
-        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
+        >>> pool = nn.AvgPool1d(kernel_size=6, strides=1)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = pool(x)
         >>> output.shape()
-        (1, 2, 4, 2)
+        (1, 3, 1)
     """
 
     def __init__(self,
@@ -277,14 +282,17 @@ class AvgPool1d(_PoolNd):
         self.shape = F.shape
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.slice = P.Slice()
+        self.expand = P.ExpandDims()
 
     def construct(self, x):
-        batch, channel, high, width = self.shape(x)
+        _shape_check(self.shape(x))
+        batch, channel, width = self.shape(x)
         if width == self.kernel_size[1]:
-            x = self.reduce_mean(x, 3)
+            x = self.reduce_mean(x, 2)
         elif width - self.kernel_size[1] < self.stride[1]:
-            x = self.slice(x, (0, 0, 0, 0), (batch, channel, high, self.kernel_size[1]))
-            x = self.reduce_mean(x, 3)
+            x = self.slice(x, (0, 0, 0), (batch, channel, self.kernel_size[1]))
+            x = self.reduce_mean(x, 2)
         else:
+            x = self.expand(x, 2)
             x = self.avg_pool(x)
         return x

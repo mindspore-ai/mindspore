@@ -25,6 +25,7 @@
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -73,35 +74,40 @@ void ProjectOp::Print(std::ostream &out, bool show_all) const {
 Status ProjectOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(p_buffer, worker_id, retry_if_eoe));
   if (!((*p_buffer)->eoe()) && !((*p_buffer)->eof())) {
+    // Only for the first buffer fetched, get the column map of the incoming data and save it
+    // into our own column name map after making the appropriate mods
+    // We cannot use the super class AssignColMapFromChild here because we're making a modification of the
+    // map from the child map.
+    if (first_fetch_) {
+      std::unordered_map<std::string, int32_t> child_column_name_mapping = child_[0]->column_name_id_map();
+      for (size_t i = 0; i < columns_to_project_.size(); i++) {
+        std::string &current_column = columns_to_project_[i];
+        if (child_column_name_mapping.find(current_column) == child_column_name_mapping.end()) {
+          std::string err_msg = "ProjectOp: column " + current_column + " does not exist in child operator.";
+          RETURN_STATUS_UNEXPECTED(err_msg);
+        }
+        // Setup the new column name mapping for ourself (base class field)
+        column_name_id_map_[current_column] = i;
+        projected_column_indices_.push_back(child_column_name_mapping[current_column]);
+      }
+      first_fetch_ = false;  // we only need to do this path once
+    }
     RETURN_IF_NOT_OK(Project(p_buffer));
   }
   return Status::OK();
 }
 
 Status ProjectOp::Project(std::unique_ptr<DataBuffer> *data_buffer) {
-  std::unordered_map<std::string, int32_t> column_name_mapping = (*data_buffer)->column_name_map();
-  std::unordered_map<std::string, int32_t> new_column_name_mapping;
-  std::vector<int32_t> projected_column_indices;
-  for (size_t i = 0; i < columns_to_project_.size(); i++) {
-    std::string &current_column = columns_to_project_[i];
-    if (column_name_mapping.find(current_column) == column_name_mapping.end()) {
-      std::string err_msg = "ProjectOp: column " + current_column + " does not exist in this buffer.";
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-    new_column_name_mapping[current_column] = i;
-    projected_column_indices.push_back(column_name_mapping[current_column]);
-  }
   std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
   while ((*data_buffer)->NumRows() > 0) {
     TensorRow current_row;
     RETURN_IF_NOT_OK((*data_buffer)->PopRow(&current_row));
     TensorRow new_row;
-    (void)std::transform(projected_column_indices.begin(), projected_column_indices.end(), std::back_inserter(new_row),
-                         [&current_row](uint32_t x) { return current_row[x]; });
+    (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(),
+                         std::back_inserter(new_row), [&current_row](uint32_t x) { return current_row[x]; });
     new_tensor_table->push_back(new_row);
   }
   (*data_buffer)->set_tensor_table(std::move(new_tensor_table));
-  (*data_buffer)->set_column_name_map(new_column_name_mapping);
   return Status::OK();
 }
 
@@ -114,10 +120,10 @@ Status ProjectOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. ProjectO
 
 int32_t ProjectOp::num_consumers() const {
   if (parent_.empty()) {
-    MS_LOG(INFO) << "Project operator, no parent node, assuming it's the root and returning 1.";
+    MS_LOG(DEBUG) << "Project operator, no parent node, assuming it's the root and returning 1.";
     return 1;
   } else if (parent_[0] == nullptr) {
-    MS_LOG(INFO) << "Project operator, pointer to the first parent is null. Returning 0.";
+    MS_LOG(DEBUG) << "Project operator, pointer to the first parent is null. Returning 0.";
     return 0;
   } else {
     return parent_[0]->num_consumers();
@@ -126,7 +132,7 @@ int32_t ProjectOp::num_consumers() const {
 
 int32_t ProjectOp::num_producers() const {
   if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(INFO) << "Project operator, pointer to child node is null. Returning 0.";
+    MS_LOG(DEBUG) << "Project operator, pointer to child node is null. Returning 0.";
     return 0;
   } else {
     return child_[0]->num_producers();
@@ -139,5 +145,11 @@ Status ProjectOp::EoeReceived(int32_t worker_id) {
 }
 
 Status ProjectOp::EofReceived(int32_t worker_id) { return Status::OK(); }
+
+// Visitor accept method for NodePass
+Status ProjectOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ProjectOp>(shared_from_this()), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

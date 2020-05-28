@@ -35,7 +35,7 @@ class CorrectionMulGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto *d_out = GetDeviceAddress<T>(inputs, 0);
     auto *weight = GetDeviceAddress<T>(inputs, 1);
     auto *gamma = GetDeviceAddress<T>(inputs, 2);

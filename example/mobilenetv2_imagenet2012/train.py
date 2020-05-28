@@ -37,6 +37,7 @@ from mindspore.train.model import Model, ParallelMode
 
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
 from mindspore.communication.management import init
 
@@ -46,6 +47,7 @@ de.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 args_opt = parser.parse_args()
 
 device_id = int(os.getenv('DEVICE_ID'))
@@ -54,9 +56,6 @@ rank_size = int(os.getenv('RANK_SIZE'))
 run_distribute = rank_size > 1
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id, save_graphs=False)
-context.set_context(enable_task_sink=True)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
 
 class CrossEntropyWithLabelSmooth(_Loss):
     """
@@ -119,7 +118,7 @@ class Monitor(Callback):
         print("epoch time: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}".format(epoch_mseconds,
                                                                                       per_step_mseconds,
                                                                                       np.mean(self.losses)
-                                                                                      ), flush=True)
+                                                                                      ))
 
     def step_begin(self, run_context):
         self.step_time = time.time()
@@ -139,7 +138,7 @@ class Monitor(Callback):
 
         print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.3f}]".format(
             cb_params.cur_epoch_num - 1, cb_params.epoch_num, cur_step_in_epoch, cb_params.batch_num, step_loss,
-            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]), flush=True)
+            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
 
 if __name__ == '__main__':
@@ -151,7 +150,7 @@ if __name__ == '__main__':
 
     epoch_size = config.epoch_size
     net = mobilenet_v2(num_classes=config.num_classes)
-    net.add_flags_recursive(fp16=True)
+    net.to_float(mstype.float16)
     for _, cell in net.cells_and_names():
         if isinstance(cell, nn.Dense):
             cell.add_flags_recursive(fp32=True)
@@ -166,6 +165,9 @@ if __name__ == '__main__':
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
                              repeat_num=epoch_size, batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()
+    if args_opt.pre_trained:
+        param_dict = load_checkpoint(args_opt.pre_trained)
+        load_param_into_net(net, param_dict)
 
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
     lr = Tensor(get_lr(global_step=0, lr_init=0, lr_end=0, lr_max=config.lr,

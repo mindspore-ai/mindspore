@@ -14,45 +14,60 @@
 # ============================================================================
 """ Test for manager """
 
+
 def ir_get_fn(x, y):
     return x - y
+
 
 def test_flat(x):
     return x
 
+
 def test_nested(x):
     def g():
         return x
+
     return g
+
 
 def test_fake_nested(x):
     return x
 
+
 def test_recurse(x):
     def g():
         return g() + x
+
     return g
+
 
 def test_calls(x):
     a = x + x
+
     def h():
         return a
+
     def g():
         return h()
+
     return g()
+
 
 # pylint: disable=unused-argument
 def test_unused_param(x, y):
     return x * x
-    
+
 
 def test_cannot_replace_return(x):
     return x * x
+
 
 # custom test function
 def test_custom(x, y, z):
     def g(x1, y1):
         def h(x2):
             return x2 + y1 + z
+
         return h(x1)
+
     return g(x, y)

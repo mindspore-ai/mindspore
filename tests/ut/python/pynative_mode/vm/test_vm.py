@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_vm """
 import numpy as np
+
 from .....vm_impl import vm
 
 
@@ -245,7 +246,7 @@ def test_relu():
 
 def test_softmax():
     """ test_softmax """
-    logits = 2.84806275*np.ones([1, 10]).astype(np.float32)
+    logits = 2.84806275 * np.ones([1, 10]).astype(np.float32)
     y = vm.softmax(logits)
     assert np.allclose([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], y)
     assert np.float32 == y.dtype

@@ -138,7 +138,7 @@ class GetSetitemEliminater : public AnfVisitor {
       if (key1_ == key2_) {
         return last_;
       }
-      return fg->NewCNode({op_, tuple_, c2_});
+      return fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), tuple_, c2_});
     }
     return nullptr;
   }
@@ -148,7 +148,7 @@ class GetSetitemEliminater : public AnfVisitor {
       if (cnode->size() < 4) {
         return;
       }
-      op_ = cnode->input(0);
+
       tuple_ = cnode->input(1);
       last_ = cnode->input(3);
 
@@ -174,7 +174,6 @@ class GetSetitemEliminater : public AnfVisitor {
   void Reset() {
     key1_ = -1;
     key2_ = -1;
-    op_ = nullptr;
     c2_ = nullptr;
     last_ = nullptr;
     tuple_ = nullptr;
@@ -184,7 +183,7 @@ class GetSetitemEliminater : public AnfVisitor {
  private:
   bool is_in_set_{false};
   int key1_{-1}, key2_{-1};
-  AnfNodePtr op_{nullptr}, tuple_{nullptr}, last_{nullptr}, c2_{nullptr};
+  AnfNodePtr tuple_{nullptr}, last_{nullptr}, c2_{nullptr};
 };
 
 // {prim::kPrimTupleGetItem, {prim::kPrimDepend, X, Y}, C} ->

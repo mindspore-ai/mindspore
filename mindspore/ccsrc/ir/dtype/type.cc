@@ -21,9 +21,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
-#include "pipeline/static_analysis/abstract_value.h"
-#include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
+#include "ir/dtype/number.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 TypeId IntBitsToTypeId(const int nbits) {
@@ -225,11 +224,6 @@ bool Type::operator==(const Value &other) const {
   } else {
     return false;
   }
-}
-
-abstract::AbstractBasePtr Type::ToAbstract() {
-  abstract::AbstractBasePtr ptr = std::make_shared<abstract::AbstractType>(shared_from_base<Type>());
-  return ptr;
 }
 
 std::ostream &operator<<(std::ostream &os, const Type &type) {

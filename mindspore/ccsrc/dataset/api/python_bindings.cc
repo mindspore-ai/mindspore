@@ -19,9 +19,6 @@
 #include "dataset/kernels/no_op.h"
 #include "dataset/kernels/data/one_hot_op.h"
 #include "dataset/kernels/image/center_crop_op.h"
-#if !defined(_WIN32) && !defined(_WIN64)
-#include "dataset/kernels/image/change_mode_op.h"
-#endif
 #include "dataset/kernels/image/cut_out_op.h"
 #include "dataset/kernels/image/decode_op.h"
 #include "dataset/kernels/image/hwc_to_chw_op.h"
@@ -41,6 +38,10 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
+#include "dataset/kernels/text/jieba_tokenizer_op.h"
+#include "dataset/kernels/text/unicode_char_tokenizer_op.h"
+#include "dataset/nlp/vocab.h"
+#include "dataset/nlp/kernels/lookup_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -52,12 +53,14 @@
 #include "dataset/engine/datasetops/source/sampler/pk_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "dataset/engine/datasetops/source/sampler/subset_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/python_sampler.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/source/voc_op.h"
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
@@ -154,16 +157,17 @@ void bindDatasetOps(py::module *m) {
     });
 
   (void)py::class_<MindRecordOp, DatasetOp, std::shared_ptr<MindRecordOp>>(*m, "MindRecordOp")
-    .def_static("get_num_rows", [](const std::string &path, const py::object &sampler) {
-      int64_t count = 0;
-      std::shared_ptr<mindrecord::ShardOperator> op;
-      if (py::hasattr(sampler, "_create_for_minddataset")) {
-        auto create = sampler.attr("_create_for_minddataset");
-        op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
-      }
-      THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, op, &count));
-      return count;
-    });
+    .def_static("get_num_rows",
+                [](const std::vector<std::string> &paths, bool load_dataset, const py::object &sampler) {
+                  int64_t count = 0;
+                  std::shared_ptr<mindrecord::ShardOperator> op;
+                  if (py::hasattr(sampler, "_create_for_minddataset")) {
+                    auto create = sampler.attr("_create_for_minddataset");
+                    op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+                  }
+                  THROW_IF_ERROR(MindRecordOp::CountTotalRows(paths, load_dataset, op, &count));
+                  return count;
+                });
 
   (void)py::class_<ManifestOp, DatasetOp, std::shared_ptr<ManifestOp>>(*m, "ManifestOp")
     .def_static("get_num_rows_and_classes",
@@ -195,6 +199,13 @@ void bindDatasetOps(py::module *m) {
       }
       THROW_IF_ERROR(TextFileOp::CountAllFileRows(filenames, &count));
       return count;
+    });
+  (void)py::class_<VOCOp, DatasetOp, std::shared_ptr<VOCOp>>(*m, "VOCOp")
+    .def_static("get_class_indexing", [](const std::string &dir, const std::string &task_type,
+                                         const std::string &task_mode, const py::dict &dict, int64_t numSamples) {
+      std::map<std::string, int32_t> output_class_indexing;
+      THROW_IF_ERROR(VOCOp::GetClassIndexing(dir, task_type, task_mode, dict, numSamples, &output_class_indexing));
+      return output_class_indexing;
     });
 }
 void bindTensor(py::module *m) {
@@ -231,6 +242,11 @@ void bindTensor(py::module *m) {
     .def("type", &Tensor::type)
     .def("as_array", [](py::object &t) {
       auto &tensor = py::cast<Tensor &>(t);
+      if (tensor.type() == DataType::DE_STRING) {
+        py::array res;
+        tensor.GetDataAsNumpyStrings(&res);
+        return res;
+      }
       py::buffer_info info;
       THROW_IF_ERROR(Tensor::GetBufferInfo(tensor, &info));
       return py::array(pybind11::dtype(info), info.shape, info.strides, info.ptr, t);
@@ -306,12 +322,6 @@ void bindTensorOps2(py::module *m) {
          py::arg("padIfNeeded") = RandomCropOp::kDefPadIfNeeded, py::arg("fillR") = RandomCropOp::kDefFillR,
          py::arg("fillG") = RandomCropOp::kDefFillG, py::arg("fillB") = RandomCropOp::kDefFillB);
   (void)py::class_<HwcToChwOp, TensorOp, std::shared_ptr<HwcToChwOp>>(*m, "ChannelSwapOp").def(py::init<>());
-
-#if !defined(_WIN32) && !defined(_WIN64)
-  (void)py::class_<ChangeModeOp, TensorOp, std::shared_ptr<ChangeModeOp>>(
-    *m, "ChangeModeOp", "Tensor operation to change colors from BGR to RGB")
-    .def(py::init<>());
-#endif
 
   (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
     *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")
@@ -401,16 +411,34 @@ void bindTensorOps4(py::module *m) {
          py::arg("fillR") = PadOp::kDefFillR, py::arg("fillG") = PadOp::kDefFillG, py::arg("fillB") = PadOp::kDefFillB);
 }
 
+void bindTensorOps5(py::module *m) {
+  (void)py::class_<JiebaTokenizerOp, TensorOp, std::shared_ptr<JiebaTokenizerOp>>(*m, "JiebaTokenizerOp", "")
+    .def(py::init<const std::string, std::string, JiebaMode>(), py::arg("hmm_path"), py::arg("mp_path"),
+         py::arg("mode") = JiebaMode::kMix)
+    .def("add_word",
+         [](JiebaTokenizerOp &self, const std::string word, int freq) { THROW_IF_ERROR(self.AddWord(word, freq)); });
+  (void)py::class_<UnicodeCharTokenizerOp, TensorOp, std::shared_ptr<UnicodeCharTokenizerOp>>(
+    *m, "UnicodeCharTokenizerOp", "Tokenize a scalar tensor of UTF-8 string to Unicode characters.")
+    .def(py::init<>());
+  (void)py::class_<LookupOp, TensorOp, std::shared_ptr<LookupOp>>(*m, "LookupOp",
+                                                                  "Tensor operation to LookUp each word")
+    .def(py::init<std::shared_ptr<Vocab>, WordIdType>(), py::arg("vocab"), py::arg("unknown"))
+    .def(py::init<std::shared_ptr<Vocab>>(), py::arg("vocab"));
+}
+
 void bindSamplerOps(py::module *m) {
   (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler")
     .def("set_num_rows", [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
     .def("set_num_samples", [](Sampler &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
     .def("initialize", [](Sampler &self) { THROW_IF_ERROR(self.InitSampler()); })
-    .def("get_indices", [](Sampler &self) {
-      py::array ret;
-      THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
-      return ret;
-    });
+    .def("get_indices",
+         [](Sampler &self) {
+           py::array ret;
+           THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
+           return ret;
+         })
+    .def("add_child",
+         [](std::shared_ptr<Sampler> self, std::shared_ptr<Sampler> child) { THROW_IF_ERROR(self->AddChild(child)); });
 
   (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator");
 
@@ -422,11 +450,15 @@ void bindSamplerOps(py::module *m) {
     .def(py::init<int64_t, bool>(), py::arg("kVal"), py::arg("shuffle"));
 
   (void)py::class_<RandomSampler, Sampler, std::shared_ptr<RandomSampler>>(*m, "RandomSampler")
-    .def(py::init<bool, int64_t>(), py::arg("replacement"), py::arg("numSamples"))
-    .def(py::init<bool>(), py::arg("replacement"));
+    .def(py::init<bool, bool, int64_t>(), py::arg("replacement"), py::arg("reshuffle_each_epoch"),
+         py::arg("num_samples"))
+    .def(py::init<bool, bool>(), py::arg("replacement"), py::arg("reshuffle_each_epoch"));
 
   (void)py::class_<SequentialSampler, Sampler, std::shared_ptr<SequentialSampler>>(*m, "SequentialSampler")
     .def(py::init<>());
+
+  (void)py::class_<SubsetSampler, Sampler, std::shared_ptr<SubsetSampler>>(*m, "SubsetSampler")
+    .def(py::init<int64_t, int64_t>(), py::arg("start_index"), py::arg("subset_size"));
 
   (void)py::class_<SubsetRandomSampler, Sampler, std::shared_ptr<SubsetRandomSampler>>(*m, "SubsetRandomSampler")
     .def(py::init<std::vector<int64_t>>(), py::arg("indices"));
@@ -460,6 +492,27 @@ void bindInfoObjects(py::module *m) {
     .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
 }
 
+void bindVocabObjects(py::module *m) {
+  (void)py::class_<Vocab, std::shared_ptr<Vocab>>(*m, "Vocab")
+    .def_static("from_list",
+                [](const py::list &words) {
+                  std::shared_ptr<Vocab> v;
+                  THROW_IF_ERROR(Vocab::BuildFromPyList(words, &v));
+                  return v;
+                })
+    .def_static("from_file",
+                [](const std::string &path, const std::string &dlm, int32_t vocab_size) {
+                  std::shared_ptr<Vocab> v;
+                  THROW_IF_ERROR(Vocab::BuildFromFile(path, dlm, vocab_size, &v));
+                  return v;
+                })
+    .def_static("from_dict", [](const py::dict &words) {
+      std::shared_ptr<Vocab> v;
+      THROW_IF_ERROR(Vocab::BuildFromPyDict(words, &v));
+      return v;
+    });
+}
+
 // This is where we externalize the C logic as python modules
 PYBIND11_MODULE(_c_dataengine, m) {
   m.doc() = "pybind11 for _c_dataengine";
@@ -476,6 +529,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("SKIP", OpName::kSkip)
     .value("TAKE", OpName::kTake)
     .value("ZIP", OpName::kZip)
+    .value("CONCAT", OpName::kConcat)
     .value("MAP", OpName::kMap)
     .value("FILTER", OpName::kFilter)
     .value("DEVICEQUEUE", OpName::kDeviceQueue)
@@ -493,6 +547,12 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("RANDOMDATA", OpName::kRandomData)
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile);
+
+  (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
+    .value("DE_INTER_JIEBA_MIX", JiebaMode::kMix)
+    .value("DE_INTER_JIEBA_MP", JiebaMode::kMp)
+    .value("DE_INTER_JIEBA_HMM", JiebaMode::kHmm)
+    .export_values();
 
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())
     .value("DE_INTER_LINEAR", InterpolationMode::kLinear)
@@ -513,9 +573,11 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindTensorOps2(&m);
   bindTensorOps3(&m);
   bindTensorOps4(&m);
+  bindTensorOps5(&m);
   bindSamplerOps(&m);
   bindDatasetOps(&m);
   bindInfoObjects(&m);
+  bindVocabObjects(&m);
 }
 }  // namespace dataset
 }  // namespace mindspore

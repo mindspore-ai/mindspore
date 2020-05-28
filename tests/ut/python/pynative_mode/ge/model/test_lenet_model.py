@@ -17,14 +17,15 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim import Momentum
 from mindspore.nn import WithGradCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
 from ....ut_filter import non_graph_engine
 
 
 class LeNet5(nn.Cell):
     """ LeNet5 definition """
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import mindspore.common.dtype as mstype
+from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops import Primitive
-import mindspore.common.dtype as mstype
 
 Conv = P.Conv2D(out_channel=64, kernel_size=7, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1)
 Relu = P.ReLU()
@@ -24,10 +24,12 @@ Reduce = P.ReduceOp()
 Biasadd = P.BiasAdd()
 Biasaddgrad = G.BiasAddGrad()
 Cast = P.Cast()
+MatMul = P.MatMul()
 
 Fusion_relu_relu = Primitive('FusionOp_ReLU_ReLU')
 Fusion_biasadd = Primitive('FusionOp_ReLU_ReLU_ReLU_BiasAdd_ReLU_ReLU_ReLU')
 Fusion_biasaddgrad = Primitive('FusionOp_ReLU_ReLU_ReLU_BiasAddGrad_ReLU_ReLU_ReLU')
+Fusion_matmul_relu = Primitive('FusionOp_MatMul_ReLU')
 
 Add = P.TensorAdd()
 Sub = P.Sub()
@@ -59,8 +61,8 @@ def test_tbe_eltwise_fusion_1(tag):
     def after(x):
         fusion = Fusion_relu_relu(x)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -84,8 +86,8 @@ def test_tbe_eltwise_fusion_2(tag):
     def after(x, y):
         fusion = Fusion_biasadd(x, y)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -109,8 +111,8 @@ def test_tbe_reduce_eltwise_fusion(tag):
     def after(x):
         fusion = Fusion_biasaddgrad(x)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -129,7 +131,27 @@ def test_conv_singlein_fusion(tag):
     def after(x, y):
         fusion = Fusion(x, y)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
+
+    return fns[tag]
+
+
+def test_tbe_matmul_eltwise_fusion(tag):
+    fns = FnDict()
+
+    @fns
+    def before(x, y):
+        matmul = MatMul(x, y)
+        relu = Relu(matmul)
+        res = Cast(relu, mstype.float16)
+        return res
+
+    @fns
+    def after(x, y):
+        fusion = Fusion_matmul_relu(x, y)
+        res = Cast(fusion)
+        output = make_tuple(res)
+        return output
 
     return fns[tag]

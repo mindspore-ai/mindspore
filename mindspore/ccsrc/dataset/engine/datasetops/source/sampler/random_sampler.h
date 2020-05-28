@@ -30,7 +30,8 @@ class RandomSampler : public Sampler {
   // @param bool replacement - put he id back / or not after a sample
   // @param int64_t numSamples - number samples to draw
   // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit RandomSampler(bool replacement = false, int64_t num_samples = std::numeric_limits<int64_t>::max(),
+  explicit RandomSampler(bool replacement = false, bool reshuffle_each_epoch = true,
+                         int64_t num_samples = std::numeric_limits<int64_t>::max(),
                          int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
@@ -49,6 +50,8 @@ class RandomSampler : public Sampler {
   // @return - The error code return
   Status Reset() override;
 
+  virtual void Print(std::ostream &out, bool show_all) const;
+
  private:
   uint32_t seed_;
   bool replacement_;
@@ -57,6 +60,7 @@ class RandomSampler : public Sampler {
   int64_t next_id_;
   std::mt19937 rnd_;
   std::unique_ptr<std::uniform_int_distribution<int64_t>> dist;
+  bool reshuffle_each_epoch_;
 };
 }  // namespace dataset
 }  // namespace mindspore

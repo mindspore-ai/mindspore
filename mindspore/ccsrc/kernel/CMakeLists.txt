@@ -11,7 +11,7 @@ if (ENABLE_D)
 		"kernel_fusion.cc"
 		"tbe/*.cc"
 		"aicpu/*.cc"
-		"mng/*.cc"
+		"rts/*.cc"
 		"hccl/*.cc"
 	)
 	add_compile_definitions(ENABLE_D)
@@ -43,4 +43,6 @@ if (ENABLE_GPU)
 	# add_library(_mindspore_kernel_cuda_obj OBJECT ${CUDA_SRC_LIST})
 endif()
 
+set_property(SOURCE ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST}
+    PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 add_library(_mindspore_kernel_obj OBJECT ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST})

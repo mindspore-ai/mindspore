@@ -80,12 +80,14 @@ class ProfilingUtils {
                                   NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
 
   // Mapping graph id and the kernels' name in the graph
+  static void SetGraphProfilingCNode(uint32_t graph_id, const std::vector<CNodePtr> &profiling_cnode_list);
+
   static void SetGraphKernelName(uint32_t graph_id, const std::vector<std::string> &kernel_names);
 
   // Mapping task_id and kernel name for device to generate the time cost of specific kernel.
   // Device calculate the time cost of the task which is marked by task id.
   // But we need data of (kernel name , time cost)
-  static void ReportProfilingData(uint32_t graph_id, const std::vector<uint32_t> &task_ids);
+  static void ReportProfilingData(const std::vector<uint32_t> &task_ids, NotNull<const session::KernelGraph *> graph);
 
   // Get profiling trace point from envs.
   // export PROFILING_FP_START='full name of the first cnode to execute'
@@ -122,7 +124,10 @@ class ProfilingUtils {
   static void GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
                                      NotNull<std::set<std::string> *> getnext_outputs);
 
+  static bool ValidComputeGraph(NotNull<const session::KernelGraph *> graph_ptr);
+
   // graph id --> (kernel name list)
+  static std::unordered_map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
   static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name_;
   static uint32_t custom_node_index_;
 };

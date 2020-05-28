@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -41,6 +42,12 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
+
+
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
 
 # model_parallel test
 def test_sum_mul():
@@ -64,7 +71,8 @@ def test_sum_mul():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_sum_mul2():
     class Net(nn.Cell):
@@ -87,7 +95,8 @@ def test_sum_mul2():
     x = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_sum_mul3():
     class Net(nn.Cell):
@@ -110,4 +119,4 @@ def test_sum_mul3():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)

@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -32,6 +34,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, z, w, b)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -40,7 +43,14 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, z, w, b):
         return C.grad_all(self.network)(x, y, z, w, b)
 
+
+def compile(net, x, y, z, w, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, z, w, b)
+
     # model_parallel test
+
+
 def test_four_matmul_linear():
     class Net(nn.Cell):
         def __init__(self):
@@ -67,7 +77,7 @@ def test_four_matmul_linear():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z, w, b)
+    compile(net, x, y, z, w, b)
 
 
 def test_four_matmul1():
@@ -93,7 +103,7 @@ def test_four_matmul1():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z, w, b)
+    compile(net, x, y, z, w, b)
 
 
 def test_four_matmul2():
@@ -111,7 +121,7 @@ def test_four_matmul2():
 
     size = 16
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    
+
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     z = Tensor(np.ones([128, 64]), dtype=ms.float32)
@@ -120,4 +130,4 @@ def test_four_matmul2():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z, w, b)
+    compile(net, x, y, z, w, b)

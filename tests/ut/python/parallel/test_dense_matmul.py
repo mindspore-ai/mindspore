@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor, context
+from mindspore.common.api import _executor
 from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp
 

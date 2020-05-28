@@ -43,7 +43,13 @@ class PoolingGradCPUKernel : public MKLCPUKernel {
   std::vector<size_t> dst_shape_;
 };
 
-MS_REG_CPU_KERNEL(MaxPoolGrad, PoolingGradCPUKernel);
+MS_REG_CPU_KERNEL(MaxPoolGrad,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  PoolingGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

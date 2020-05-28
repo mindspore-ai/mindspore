@@ -111,17 +111,17 @@ TEST_F(MindDataTestTensorDE, CopyTensor) {
   int16_t o;
   t->GetItemAt<int16_t>(&o, {});
   ASSERT_EQ(o, -66);
-  unsigned char *addr = t->StartAddr();
+  unsigned char *addr = t->GetMutableBuffer();
   auto t2 = std::make_shared<Tensor>(std::move(*t));
   ASSERT_EQ(t2->shape(), TensorShape({}));
   ASSERT_EQ(t2->type(), DataType::DE_INT16);
   t2->GetItemAt<int16_t>(&o, {});
   ASSERT_EQ(o, -66);
-  unsigned char *new_addr = t2->StartAddr();
+  unsigned char *new_addr = t2->GetMutableBuffer();
   ASSERT_EQ(addr, new_addr);
   ASSERT_EQ(t->shape(), TensorShape::CreateUnknownRankShape());
   ASSERT_EQ(t->type(), DataType::DE_UNKNOWN);
-  ASSERT_EQ(t->StartAddr(), nullptr);
+  ASSERT_EQ(t->GetMutableBuffer(), nullptr);
   Status rc = t->GetItemAt<int16_t>(&o, {});
   ASSERT_TRUE(rc.IsError());
 }
@@ -237,7 +237,7 @@ TEST_F(MindDataTestTensorDE, Strides) {
 void checkCvMat(TensorShape shape, DataType type) {
   std::shared_ptr<CVTensor> t = std::make_shared<CVTensor>(shape, type);
   cv::Mat m = t->mat();
-  ASSERT_EQ(m.data, t->StartAddr());
+  ASSERT_EQ(m.data, t->GetMutableBuffer());
   ASSERT_EQ(static_cast<uchar>(m.type()) & static_cast<uchar>(CV_MAT_DEPTH_MASK), type.AsCVType());
   if (shape.Rank() < 4) {
     if (shape.Rank() > 1) {
@@ -311,15 +311,15 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
 TEST_F(MindDataTestTensorDE, CVTensorAs) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64));
   t->Fill<double>(2.2);
-  unsigned char *addr = t->StartAddr();
+  unsigned char *addr = t->GetMutableBuffer();
   std::shared_ptr<Tensor> t2 = std::make_shared<Tensor>(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64));
   t2->Fill<double>(4.4);
   std::shared_ptr<CVTensor> ctv = CVTensor::AsCVTensor(t);
-  ASSERT_EQ(t->StartAddr(), nullptr);
-  ASSERT_EQ(ctv->StartAddr(), addr);
+  ASSERT_EQ(t->GetMutableBuffer(), nullptr);
+  ASSERT_EQ(ctv->GetMutableBuffer(), addr);
   cv::Mat m = ctv->mat();
   m = 2 * m;
-  ASSERT_EQ(ctv->StartAddr(), addr);
+  ASSERT_EQ(ctv->GetMutableBuffer(), addr);
   ASSERT_TRUE(*t2 == *ctv);
   MS_LOG(DEBUG) << *t2 << std::endl << *ctv;
 }

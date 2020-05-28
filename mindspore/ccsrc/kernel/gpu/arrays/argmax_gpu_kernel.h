@@ -35,7 +35,7 @@ class ArgmaxGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     int *output = GetDeviceAddress<int>(outputs, 0);
     CalArgmax(input, SizeToInt(batch_size_), SizeToInt(channel_size_), axis_, output,

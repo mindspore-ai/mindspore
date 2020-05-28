@@ -65,6 +65,10 @@ class TensorShape {
   // @param shape
   TensorShape(const TensorShape &shape);
 
+  // construct a TensorShape via a python list
+  // @param py::list l - a list object from python
+  explicit TensorShape(py::list l);
+
   ~TensorShape() = default;
 
   // Create a scalar Shape (i.e., empty shape with mKnown = true)
@@ -142,8 +146,6 @@ class TensorShape {
     return out;
   }
 
-  explicit TensorShape(py::list l);
-
   py::list AsPyList();
 
   // Checks if the given index is a valid index for this tensor.
@@ -153,6 +155,8 @@ class TensorShape {
   bool IsValidIndex(const std::vector<dsize_t> &index) const;
 
   TensorShape Squeeze() const;
+
+  std::vector<dsize_t> Strides();
 
  private:
   // True if known and valid shape, false otherwise

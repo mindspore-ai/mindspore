@@ -32,6 +32,7 @@
 #include "dataset/engine/datasetops/source/io_block.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/status.h"
+#include "mindrecord/include/shard_column.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_reader.h"
 #include "mindrecord/include/common/shard_utils.h"
@@ -78,8 +79,8 @@ class MindRecordOp : public ParallelOp {
       return *this;
     }
 
-    Builder &SetDatasetFile(const std::string &file) {
-      build_dataset_file_ = file;
+    Builder &SetDatasetFile(const std::vector<std::string> &files) {
+      build_dataset_file_ = files;
       return *this;
     }
 
@@ -98,6 +99,11 @@ class MindRecordOp : public ParallelOp {
       return *this;
     }
 
+    Builder &SetLoadDataset(bool load_dataset) {
+      build_load_dataset_ = load_dataset;
+      return *this;
+    }
+
     Status SanityCheck() const;
 
     static int32_t num_mind_record_workers() { return kDefaultMindRecordWorkers; }
@@ -110,7 +116,8 @@ class MindRecordOp : public ParallelOp {
     int32_t builder_num_workers_;
     int32_t build_rows_per_buffer_;
     int32_t build_op_connector_queue_size_;
-    std::string build_dataset_file_;
+    std::vector<std::string> build_dataset_file_;
+    bool build_load_dataset_;
     std::vector<std::string> build_columns_to_load_;
     std::vector<std::shared_ptr<ShardOperator>> build_operators_;
     bool build_block_reader_;
@@ -120,12 +127,12 @@ class MindRecordOp : public ParallelOp {
   // @note The builder class should be used to call it
   // @param num_mind_record_workers - The number of workers for the op (run by ShardReader)
   // @param rows_per_buffer - The requested number of rows per buffer
-  // @param dataset_file - A shard file
+  // @param dataset_file - dataset files
   // @param op_connector_queue_size - The output connector queue size
   // @param columns_to_load - The list of columns to use (column name)
   // @param operators - ShardOperators for Shuffle, Category, Sample
-  MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::string dataset_file,
-               int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
+  MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::vector<std::string> dataset_file,
+               bool load_dataset, int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader);
 
   // Destructor
@@ -170,84 +177,45 @@ class MindRecordOp : public ParallelOp {
   // Getter method
   int32_t num_rows() const { return num_rows_; }
 
-  // Getter method
-  static Status CountTotalRows(const std::string dataset_path, const std::shared_ptr<ShardOperator> &op,
-                               int64_t *count);
+  static Status CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
+                               const std::shared_ptr<ShardOperator> &op, int64_t *count);
 
   // Getter method
   int32_t rows_per_buffer() const { return rows_per_buffer_; }
 
   // Getter method
-  std::string dataset_file() const { return dataset_file_; }
+  std::vector<std::string> dataset_file() const { return dataset_file_; }
 
   // Getter method
   std::vector<std::string> columns_to_load() const { return columns_to_load_; }
 
   bool block_reader() const { return block_reader_; }
 
+  bool load_dataset() const { return load_dataset_; }
+
   Status Init();
 
-  Status SetColumnsBlob();
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
 
  private:
   Status GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_buffer, int64_t buffer_id, int32_t worker_id);
 
   // Parses a single cell and puts the data into a tensor
-  // @param tensor - the tensor to put the parsed data in
-  // @param i_col - the id of column to parse
+  // @param tensor_row - the tensor row to put the parsed data in
   // @param columns_blob - the blob data received from the reader
   // @param columns_json - the data for fields received from the reader
-  template <typename T>
-  Status LoadFeature(std::shared_ptr<Tensor> *tensor, int32_t i_col, const std::vector<uint8_t> &columns_blob,
-                     const mindrecord::json &columns_json) const;
-
-  Status SwitchLoadFeature(const DataType &type, std::shared_ptr<Tensor> *tensor, int32_t i_col,
-                           const std::vector<uint8_t> &columns_blob, const mindrecord::json &columns_json) const;
-
-  static Status LoadBlob(TensorShape *new_shape, const unsigned char **data, const std::vector<uint8_t> &columns_blob,
-                         const int32_t pos, const ColDescriptor &column);
-
-  // Get shape and data (scalar or array) for tensor to be created (for floats and doubles)
-  // @param new_shape - the shape of tensor to be created.
-  // @param array_data - the array where data should be put in
-  // @param column_name - name of current column to be processed
-  // @param columns_json - the data for fields received from the reader
-  // @param column - description of current column from schema
-  // @param use_double - boolean to choose between float32 and float64
-  template <typename T>
-  static Status LoadFloat(TensorShape *new_shape, std::unique_ptr<T[]> *array_data, const std::string &column_name,
-                          const mindrecord::json &columns_json, const ColDescriptor &column, bool use_double);
-
-  // Get shape and data (scalar or array) for tensor to be created (for integers)
-  // @param new_shape - the shape of tensor to be created.
-  // @param array_data - the array where data should be put in
-  // @param column_name - name of current column to be processed
-  // @param columns_json - the data for fields received from the reader
-  // @param column - description of current column from schema
-  template <typename T>
-  static Status LoadInt(TensorShape *new_shape, std::unique_ptr<T[]> *array_data, const std::string &column_name,
-                        const mindrecord::json &columns_json, const ColDescriptor &column);
-
-  static Status LoadByte(TensorShape *new_shape, std::string *string_data, const std::string &column_name,
-                         const mindrecord::json &columns_json);
-
-  // Get a single float value from the given json
-  // @param value - the float to put the value in
-  // @param arrayData - the given json containing the float
-  // @param use_double - boolean to choose between float32 and float64
-  template <typename T>
-  static Status GetFloat(T *value, const mindrecord::json &data, bool use_double);
-
-  // Get a single integer value from the given json
-  // @param value - the integer to put the value in
-  // @param arrayData - the given json containing the integer
-  template <typename T>
-  static Status GetInt(T *value, const mindrecord::json &data);
+  Status LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
+                       const mindrecord::json &columns_json);
 
   Status FetchBlockBuffer(const int32_t &buffer_id);
 
   int32_t rows_per_buffer_;                                // The number of requested rows per buffer.
-  std::string dataset_file_;                               // A dataset file
+  std::vector<std::string> dataset_file_;                  // dataset files
+  bool load_dataset_;                                      // load dataset from single file or not
   std::vector<std::string> columns_to_load_;               // Columns to load from dataset
   std::vector<std::shared_ptr<ShardOperator>> operators_;  // ShardOperators to use
   int32_t num_mind_record_workers_;                        // number of workers to be spawned by ShardReader
@@ -262,7 +230,6 @@ class MindRecordOp : public ParallelOp {
   std::vector<std::string> columns_blob_;    // Blob Columns to load from dataset
   std::vector<int32_t> columns_blob_index_;  // Blob Columns to load from dataset
 
-  std::unordered_map<std::string, int32_t> column_name_mapping_;
   std::unique_ptr<ShardReader> shard_reader_;
   WaitPost shard_reader_wait_post_;
   QueueList<std::unique_ptr<IOBlock>> io_blk_queues_;

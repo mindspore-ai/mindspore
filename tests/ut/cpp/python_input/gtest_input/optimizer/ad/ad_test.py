@@ -13,78 +13,99 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+from dataclasses import dataclass
 
 import mindspore as ms
-from dataclasses import dataclass
 from mindspore.common.tensor import Tensor
-from mindspore.ops import Primitive
 from mindspore.model_zoo.resnet import resnet50
+from mindspore.ops import Primitive
+
 scala_add = Primitive('scalar_add')
+
 
 @dataclass
 class Point:
     x: float
     y: float
+
     def abs(self):
         return (self.x ** 2 + self.y ** 2) ** 0.5
+
 
 def scalar_add(x, y):
     """Implement `scalar_add`."""
     return x + y
 
+
 def scalar_mul(x, y):
     """Implement `scalar_mul`."""
     return x * y
+
 
 # Test:common function
 def test_null(x, y):
     return scala_add(10.0, 28.0 / 43.0)
 
+
 def test_grad_add(x, y):
     return scala_add(x, y)
 
+
 def test_grad_expr(x, y):
-    return x**3.0 * y**4.0
+    return x ** 3.0 * y ** 4.0
+
 
 def test_constant(x):
     return 18.0 * x
+
 
 def test_dup_args_in_call(x):
     """The naive gradient update rule fails when a function's arguments
     contain the same variable more than once."""
     return x * x
 
+
 def test_quadruple_args_in_call(x):
     """Test that duplicated arguments still cause no problem even if
     there are four of them."""
+
     def g(a, b, c, d):
         return a * b * c * d
+
     return g(x, x, x, x)
+
 
 def test_tuples(x, y):
     tup = scala_add(x, y), x * y
     z = scala_add(tup[0], tup[1])
     return z
 
+
 def test_dataclass(x, y):
     pt = Point(x, y)
     return pt.x * pt.y
+
 
 def test_dataclass_2(x, y):
     pt = Point(x, y)
     return pt.abs()
 
+
 def test_hof(a, b):
     """Test higher order functions."""
+
     def f(g, x):
         return g(x) * g(scala_add(x, 10.0))
+
     def g(x):
         return x * b
+
     return scala_add(f(g, a), f(g, b))
 
 
 def test_hof_tup(a, b):
     """Test higher order functions."""
+
     def f(gh, x, y):
         g, h = gh
         return scalar_mul(g(x, y), h(x, y))
@@ -94,51 +115,59 @@ def test_hof_tup(a, b):
 
 def test_simple_closure(a, b):
     """Test some trivial closures."""
+
     def f():
         return a + 1.0
 
     def g():
         return b + 2.0
+
     return f() * g()
+
 
 def test_closure(a):
     """This is the closure test in the paper."""
-    def x1(b):
 
+    def x1(b):
         def x4(c):
-            return b
+            return c * b
+
         return x4
+
     x2 = x1(a)
     x3 = x2(1.0)
     return x3
+
 
 def test_if(a, b):
     # This is max, but what this is really testing is the most basic
     # if statement, so I prefer to name the test 'test_if'
     if a > b:
         return a
-    else:
-        return b
+    return b
+
 
 def test_if2(a, b):
     if a > b:
         return a * a
-    else:
-        return b + b
+    return b + b
+
 
 def test_fact(x):
     def fact(n):
         if n <= 1:
             return 1
-        else:
-            return n * fact(n - 1)
+        return n * fact(n - 1)
+
     return fact(x)
+
 
 def test_while(x):
     rval = x
     while rval < 100:
         rval = rval * rval
     return rval
+
 
 def test_while_2(x, y, z):
     rval = 0
@@ -147,6 +176,7 @@ def test_while_2(x, y, z):
         rval = rval + y
         x = x - z
     return rval
+
 
 def test_pow10(x):
     v = x
@@ -159,6 +189,7 @@ def test_pow10(x):
         j = j + 1
     return v
 
+
 def test_nested_closure(x):
     a = x * x
     b = x + 5
@@ -169,13 +200,17 @@ def test_nested_closure(x):
 
         def h():
             return a * b
+
         return g if x < 0 else h
+
     return f()()
+
 
 def test_functions_in_tuples(x, y):
     tup = scalar_add, scalar_mul
     f, g = tup
     return f(x, y) + g(x, y)
+
 
 def test_closures_in_tuples(x, y):
     def f():
@@ -188,16 +223,19 @@ def test_closures_in_tuples(x, y):
     ff, gg = tup
     return scala_add(ff(), gg())
 
+
 # tensor test
 def test_tensor_add(x, y):
     t1 = Tensor(np.ones(x))
     t2 = Tensor(np.zeros(y), ms.float32)
     return t1 + t2
 
+
 def test_tensor_set_type(x):
     t = Tensor(x)
     t.set_dtype(ms.float32)
     return t
+
 
 def test_tensor_mul(x, y):
     x = Tensor(x)
@@ -206,17 +244,22 @@ def test_tensor_mul(x, y):
 
     return z
 
+
 def test_tensor_sub(x, y):
     x = Tensor(x)
     y = Tensor(y)
     z = x - y
     return z
 
+
 relu = Primitive('relu')
+
+
 # Extension test
 def test_ops_fn(x):
     foo = relu(x)
     return foo
+
 
 def test_clone_simple(x, y):
     a = x * x
@@ -224,18 +267,23 @@ def test_clone_simple(x, y):
     c = a + b
     return c
 
+
 def test_more_closure(a, b):
     """Test some trivial closures."""
     z = 1
+
     def f():
         return a + z
 
     def g():
         return b + 2.0
+
     return f() * g()
+
 
 def test_more_hof(a, b):
     """Test higher order functions."""
+
     def f(g, h, x):
         return g(x) * h(x) * g(x + 10.0)
 
@@ -246,6 +294,7 @@ def test_more_hof(a, b):
         return x * a
 
     return scala_add(f(g, h, a), f(g, h, b))
+
 
 def test_constant_output(x, y):
     return 1

@@ -17,15 +17,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common.initializer import initializer
+from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.common.initializer import initializer
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -42,7 +43,7 @@ class AlexNet(nn.Cell):
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="valid")
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Dense(6*6*256, 4096)
+        self.fc1 = nn.Dense(6 * 6 * 256, 4096)
         self.fc2 = nn.Dense(4096, 4096)
         self.fc3 = nn.Dense(4096, num_classes)
 
@@ -87,4 +88,4 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    assert(losses[-1].asnumpy() < 0.01)
+    assert (losses[-1].asnumpy() < 0.01)

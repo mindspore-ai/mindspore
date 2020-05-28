@@ -15,15 +15,17 @@
 
 """Other utils."""
 
+import mindspore._c_expression as _c_expression
 import numpy as np
 
-import mindspore._c_expression as _c_expression
 from mindspore.common.tensor import Tensor
+
 
 def wrap(x):
     if isinstance(x, (tuple, list)):
         return x
     return (x,)
+
 
 def to_numpy_list(tl):
     tl = wrap(tl)
@@ -35,10 +37,12 @@ def to_numpy_list(tl):
             ret.append(x)
     return ret
 
+
 def to_numpy(x):
     if isinstance(x, (Tensor, _c_expression.Tensor)):
         return x.asnumpy()
     return x
+
 
 def shape2tensor(shp, dtype=np.float32, scale=6):
     if isinstance(shp, list):
@@ -47,11 +51,12 @@ def shape2tensor(shp, dtype=np.float32, scale=6):
         return Tensor((np.random.rand(*shp) * scale).astype(dtype))
     return shp
 
+
 def select_from_config_tuple(t, index, default):
     if not isinstance(t, tuple):
         return default
     if not isinstance(t[-1], dict):
         return default
-    if index > len(t)-1:
+    if index > len(t) - 1:
         return default
     return t[index]

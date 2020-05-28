@@ -28,6 +28,7 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/manager.h"
 
 namespace mindspore {
 class Cloner;
@@ -66,6 +67,7 @@ class Cloner {
   const ScopePtr scope() const { return scope_; }
 
   std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node_;
+  std::unordered_map<FuncGraphPtr, FuncGraphPtr> repl_func_graph_;
 
  private:
   void CloneNodes();
@@ -112,7 +114,6 @@ class Cloner {
   std::list<CloneInfo> todo_;
   std::list<std::pair<CNodePtr, CNodePtr>> nodes_;
   std::unordered_map<FuncGraphPtr, bool> status_;
-  std::unordered_map<FuncGraphPtr, FuncGraphPtr> repl_func_graph_;
   std::unordered_map<FuncGraphPtr, std::unordered_map<AnfNodePtr, AnfNodePtr>> repl_map_node_;
   std::unordered_map<FuncGraphPtr, std::unordered_map<FuncGraphPtr, AnfNodePtr>> repl_map_func_graph_;
   std::unordered_map<FuncGraphPtr, AnfNodePtrList> repl_func_graph_params_;

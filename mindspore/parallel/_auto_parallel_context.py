@@ -19,6 +19,8 @@ from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx,
 from mindspore._c_expression import AutoParallelContext
 from mindspore._checkparam import args_type_check
 
+_MAX_GROUP_NAME_LEN = 127
+
 
 class _AutoParallelContext:
     """
@@ -243,51 +245,117 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_parameter_broadcast_is_set()
 
-    def set_all_reduce_fusion_split_indices(self, indices):
+    def set_all_reduce_fusion_split_indices(self, indices, group="hccl_world_groupsum1"):
         """
         Set allreduce fusion strategy by parameters indices.
 
         Args:
             indices (list): Indices list.
+            group (str): The hccl communication group.
 
         Raises:
             TypeError: If type of indices item is not int.
+            TypeError: If group is not a python str.
         """
         self.check_context_handle()
-        for index in indices:
-            if not isinstance(index, int):
-                raise TypeError('indices has invalid value')
-        self._context_handle.set_all_reduce_fusion_split_indices(indices)
+        if isinstance(indices, (list)):
+            for index in indices:
+                if not isinstance(index, int):
+                    raise TypeError('indices has invalid value')
+        else:
+            raise TypeError('indices must be a python list')
+
+        if isinstance(group, (str)):
+            group_len = len(group)
+            if group_len > _MAX_GROUP_NAME_LEN:
+                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
+        else:
+            raise TypeError('Group must be a python str')
+
+        self._context_handle.set_all_reduce_fusion_split_indices(indices, group)
         if context.get_context("device_target") == "Ascend":
-            _set_fusion_strategy_by_idx(indices)
+            if group == "":
+                _set_fusion_strategy_by_idx(indices)
+            else:
+                _set_fusion_strategy_by_idx(indices, group)
 
-    def get_all_reduce_fusion_split_indices(self):
-        """Get allreduce fusion split indices."""
+    def get_all_reduce_fusion_split_indices(self, group="hccl_world_groupsum1"):
+        """
+        Get allreduce fusion split indices.
+
+        Args:
+            group (str): The hccl communication group.
+
+        Returns:
+            Return split sizes list according to the group.
+
+        Raises:
+            TypeError: If group is not a python str.
+        """
         self.check_context_handle()
-        return self._context_handle.get_all_reduce_fusion_split_indices()
+        if isinstance(group, (str)):
+            group_len = len(group)
+            if group_len > _MAX_GROUP_NAME_LEN:
+                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
+        else:
+            raise TypeError('Group must be a python str')
+        return self._context_handle.get_all_reduce_fusion_split_indices(group)
 
-    def set_all_reduce_fusion_split_sizes(self, sizes):
+    def set_all_reduce_fusion_split_sizes(self, sizes, group="hccl_world_groupsum1"):
         """
         Set allreduce fusion strategy by parameters data sizes.
 
         Args:
             sizes (list): Sizes list.
+            group (str): The hccl communication group.
 
         Raises:
             TypeError: If type of sizes item is not int.
+            TypeError: If group is not a python str.
         """
         self.check_context_handle()
-        for size in sizes:
-            if not isinstance(size, int):
-                raise TypeError('sizes has invalid value')
-        self._context_handle.set_all_reduce_fusion_split_sizes(sizes)
-        if context.get_context("device_target") == "Ascend":
-            _set_fusion_strategy_by_size(sizes)
+        if isinstance(sizes, (list)):
+            for size in sizes:
+                if not isinstance(size, int):
+                    raise TypeError('sizes has invalid value')
+        else:
+            raise TypeError('sizes must be a python list')
 
-    def get_all_reduce_fusion_split_sizes(self):
-        """Get allreduce fusion split sizes."""
+        if isinstance(group, (str)):
+            group_len = len(group)
+            if group_len > _MAX_GROUP_NAME_LEN:
+                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
+        else:
+            raise TypeError('Group must be a python str')
+
+        self._context_handle.set_all_reduce_fusion_split_sizes(sizes, group)
+        if context.get_context("device_target") == "Ascend":
+            if group == "":
+                _set_fusion_strategy_by_size(sizes)
+            else:
+                _set_fusion_strategy_by_size(sizes, group)
+
+    def get_all_reduce_fusion_split_sizes(self, group="hccl_world_groupsum1"):
+        """
+        Get allreduce fusion split sizes.
+
+        Args:
+            group (str): The hccl communication group.
+
+        Returns:
+            Return split sizes list according to the group.
+
+        Raises:
+            TypeError: If group is not a python str.
+        """
         self.check_context_handle()
-        return self._context_handle.get_all_reduce_fusion_split_sizes()
+        if isinstance(group, (str)):
+            group_len = len(group)
+            if group_len > _MAX_GROUP_NAME_LEN:
+                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
+        else:
+            raise TypeError('Group must be a python str')
+        return self._context_handle.get_all_reduce_fusion_split_sizes(group)
 
     def set_enable_all_reduce_fusion(self, enable_all_reduce_fusion):
         """

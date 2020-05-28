@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train import Model, ParallelMode
+import numpy as np
+
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor
-import mindspore as ms
-import numpy as np
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
-from tests.dataset_mock import MindData
-from mindspore import context
 from mindspore.ops import functional as F
-from mindspore.common.initializer import initializer
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -66,11 +68,11 @@ class PReLU(nn.Cell):
         if not isinstance(w, Tensor):
             raise TypeError("w only support np.float32, float or Tensor type.")
 
-        self.w = Parameter(initializer(w, [channel,]), name='a')
+        self.w = Parameter(initializer(w, [channel, ]), name='a')
         self.prelu = P.PReLU()
-        self.relu = P.ReLU().set_strategy(((1, ), ))
-        self.sub = P.Sub().set_strategy(((1, ), (1, )))
-        self.assign_sub = P.AssignSub().set_strategy(((1, ), (1, )))
+        self.relu = P.ReLU().set_strategy(((1,),))
+        self.sub = P.Sub().set_strategy(((1,), (1,)))
+        self.assign_sub = P.AssignSub().set_strategy(((1,), (1,)))
 
     def construct(self, x):
         u = self.relu(self.w)

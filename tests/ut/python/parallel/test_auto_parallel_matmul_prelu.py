@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+import re
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -34,6 +36,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, b)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -43,6 +46,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
     # model_parallel test
+
+
 def test_matmul_prelu():
     class Net(nn.Cell):
         def __init__(self):
@@ -63,6 +68,7 @@ def test_matmul_prelu():
 
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     reset_op_id()
 
     _executor.compile(net, x, y, b, phase='train')
@@ -72,5 +78,3 @@ def test_matmul_prelu():
             assert v == [[16, 1, 1, 1], [1]]
         elif re.search('Mul-op', k) is not None:
             assert v == [[16, 1, 1, 1], [16, 1, 1, 1]]
-
-

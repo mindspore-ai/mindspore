@@ -14,6 +14,7 @@
 # ============================================================================
 """test conv"""
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine
@@ -25,6 +26,7 @@ out_channels = 64
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self,
                  cin,
                  cout,
@@ -69,6 +71,7 @@ def test_compile2():
     input_data = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     output = net(input_data)
     print(output.asnumpy())
+
 
 @non_graph_engine
 def test_compile3():

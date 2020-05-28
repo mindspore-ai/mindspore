@@ -15,9 +15,10 @@
 """ test optimizer """
 import numpy as np
 import pytest
+
 from mindspore import Tensor
-from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay, AdamWeightDecayDynamicLR
 from mindspore.common.parameter import Parameter
+from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay, AdamWeightDecayDynamicLR
 
 
 class IterableObjc:
@@ -29,6 +30,7 @@ class IterableObjc:
 
 
 params = IterableObjc()
+
 
 class TestOptimizer():
     def test_init(self):
@@ -44,6 +46,7 @@ class TestOptimizer():
 
 class TestAdam():
     """ TestAdam definition """
+
     def test_init(self):
         Adam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
              use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
@@ -58,6 +61,7 @@ class TestAdam():
 
 class TestSGD():
     """ TestSGD definition """
+
     def test_init(self):
         with pytest.raises(ValueError):
             SGD(params, learning_rate=0.1, momentum=-0.1, dampening=0, weight_decay=0, nesterov=False)
@@ -68,6 +72,7 @@ class TestSGD():
 
 class TestNullParam():
     """ TestNullParam definition """
+
     def test_optim_init(self):
         with pytest.raises(ValueError):
             Optimizer(0.1, None)
@@ -84,8 +89,10 @@ class TestNullParam():
         with pytest.raises(ValueError):
             SGD(None)
 
+
 class TestUnsupportParam():
     """ TestUnsupportParam definition """
+
     def test_optim_init(self):
         with pytest.raises(ValueError):
             Optimizer(0.1, (1, 2, 3))

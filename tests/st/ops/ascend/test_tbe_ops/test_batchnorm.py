@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -35,7 +37,7 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(1,64,112,112).astype(np.float32)
+    x = np.random.randn(1, 64, 112, 112).astype(np.float32)
     # mean = np.random.randn(1,16,1,1).astype(np.float32)
     # variance = np.random.randn(1,16,1,1).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -55,4 +57,3 @@ def test_net():
 
     print("***********output y*********")
     print(output.asnumpy())
-

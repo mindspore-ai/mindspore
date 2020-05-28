@@ -15,27 +15,29 @@
 """
 file: parser_integrate.py
 """
+import mindspore._c_expression as me
 import numpy as np
 
-import mindspore._c_expression as me
 import mindspore.nn as nn
-from mindspore.common.api import ms_function, _executor
 from mindspore.common import dtype
-from mindspore.common.tensor import Tensor
+from mindspore.common.api import ms_function, _executor
 from mindspore.common.parameter import Parameter
-from mindspore.ops import functional as F
+from mindspore.common.tensor import Tensor
 from mindspore.model_zoo.resnet import resnet50
+from mindspore.ops import functional as F
 from mindspore.train.model import Model
 
 
 def test_high_order_function(a):
     def f(g, x):
         return scalar_mul(g(x, x), g(x, x))
+
     return f(scalar_add, a)
 
 
 def test_hof_tup(a, b):
     """Test higher order functions."""
+
     def f(gh, x, y):
         g, h = gh
         return scalar_mul(g(x, y), h(x, y))
@@ -47,9 +49,11 @@ def scalar_mul(x, y):
     """Implement `scalar_mul`."""
     return x * y
 
+
 def scalar_add(x, y):
     """implement scalar_add"""
     return x + y
+
 
 def test_while_2(x, y, z):
     rval = 0
@@ -58,6 +62,7 @@ def test_while_2(x, y, z):
         rval = rval + y
         x = x - z
     return rval
+
 
 def test_nested_closure(x):
     a = x * x
@@ -69,13 +74,17 @@ def test_nested_closure(x):
 
         def h():
             return a * b
+
         return g if x < 0 else h
+
     return f()()
+
 
 def test_functions_in_tuples(x, y):
     tup = scalar_add, scalar_mul
     f, g = tup
     return f(x, y) + g(x, y)
+
 
 def test_closures_in_tuples(x, y):
     def f():
@@ -88,9 +97,11 @@ def test_closures_in_tuples(x, y):
     ff, gg = tup
     return ff() + gg()
 
+
 @ms_function
 def add(x, y):
     return x + y
+
 
 def test_tensor_add():
     X = me.tensor()
@@ -103,11 +114,14 @@ def test_tensor_add():
     print("test tensor add")
     return sum
 
+
 def loss_func(x, y):
     return x - y
 
+
 def optimizer(x):
     return x
+
 
 def test_resetnet50_build():
     X = me.tensor()
@@ -117,40 +131,50 @@ def test_resetnet50_build():
     network = resnet50()
     model = Model(network=network, loss_fn=loss_func, optimizer=optimizer)
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.conv = nn.Conv2d(3, 64, 3, bias_init='zeros')
+
     def construct(self, input):
         return self.conv(input)
+
 
 class TestNet(nn.Cell):
     def __init__(self):
         super(TestNet, self).__init__()
         self.param = Parameter(Tensor([1, 3, 16, 50]), "param")
+
     def construct(self, input):
         self.param = self.param + input
         return self.param
+
 
 def test_compile_conv2d():
     net = Net()
     input = Tensor(np.ones([1, 3, 16, 50]).astype(np.float32))
     _executor.compile(net, input)
 
+
 def test_none(x, y):
     def func(x, y):
         if y == None:
             return x
         return x + y
+
     return func(x, y)
 
+
 def test_get_attr(x):
-    a = F.scalar_mul(x ,x)
+    a = F.scalar_mul(x, x)
     return a
+
 
 @ms_function
 def known():
     return unknown()
+
 
 def test_undefined_symbol():
     known()

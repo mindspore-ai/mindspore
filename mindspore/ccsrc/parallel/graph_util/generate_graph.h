@@ -41,6 +41,7 @@ ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name
 AnfNodePtr CreatTypeInt(int32_t value);
 AnfNodePtr CreatInt32Imm(int32_t value);
 AnfNodePtr CreateInt32Tensor(int32_t value);
+AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);
 std::string HashInstanceName(const std::string &name);
 
 class GenerateGraph {

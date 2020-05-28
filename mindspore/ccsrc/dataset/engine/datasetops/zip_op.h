@@ -104,6 +104,12 @@ class ZipOp : public PipelineOp {
   // @return Status - The error code return
   Status operator()() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // Handles preprocessing of the main loop, used when starting new epoch
   Status prepare(TensorQTable *const table);
@@ -136,7 +142,6 @@ class ZipOp : public PipelineOp {
   int32_t buffer_id_;
   bool draining_;
   bool eof_;
-  std::unordered_map<std::string, int32_t> col_name_id_map_;
   std::vector<std::unique_ptr<ChildIterator>> child_iterators_;
 };
 }  // namespace dataset

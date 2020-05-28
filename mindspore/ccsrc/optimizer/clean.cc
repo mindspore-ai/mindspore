@@ -139,6 +139,47 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, idx_c});
 }
 
+AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  // Inputs should be [dict_setitem, dict, item, value]
+  const auto &inputs = node->inputs();
+  MS_ASSERT(inputs.size() == 4 && "DictSetItem should have three inputs.");
+
+  AnfNodePtr data = inputs[1];
+  AnfNodePtr cons = inputs[2];
+  AnfNodePtr item_value = inputs[3];
+  MS_EXCEPTION_IF_NULL(data);
+  MS_EXCEPTION_IF_NULL(cons);
+
+  auto dt = data->abstract();
+  MS_EXCEPTION_IF_NULL(dt);
+  if (!dt->isa<abstract::AbstractDictionary>()) {
+    MS_LOG(EXCEPTION) << "first parameter of dict_setitem is not AbstractDictionary, but " << dt->type_name();
+  }
+  auto cons_is_str = IsValueNode<StringImm>(cons);
+  auto cons_str = cons_is_str ? GetValue<std::string>(GetValueNode(cons)) : "";
+
+  auto ct = dyn_cast<abstract::AbstractDictionary>(dt);
+  const auto &cmap = ct->elements();
+  int count = 0;
+  for (auto &item : cmap) {
+    if (cons_is_str && item.first == cons_str) {
+      break;
+    }
+    count++;
+  }
+  if (IntToSize(count) >= cmap.size()) {
+    MS_LOG(EXCEPTION) << "dictionary assignment key " << cons_str
+                      << " does not exist, can not create new dictionary item for now.";
+  }
+  auto idx_c = NewValueNode(count);
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(count));
+  idx_c->set_abstract(aptr);
+  return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, idx_c, item_value});
+}
+
 AnfNodePtr ConvertMakeRecordToMakeTuple(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
@@ -278,9 +319,11 @@ AnfNodePtr ConvertValueListNodeToValueTupleNode(const ValueNodePtr &node) {
 // Convert class to Tuple
 // Convert getattr to getitem
 // Convert make_record to make_tuple
-void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
+
+  bool changed = false;
 
   // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
   AnfNodeSet all_node = manager->all_nodes();
@@ -298,6 +341,8 @@ void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
       new_node = ErasePartialNode(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
       new_node = ConvertDictGetItemToTupleGetItem(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimDictSetItem)) {
+      new_node = ConvertDictSetItemToTupleSetItem(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimMakeDict)) {
       new_node = EraseMakeDictNode(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimMakeKeywordArg)) {
@@ -316,7 +361,9 @@ void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
 
     if (new_node != nullptr) {
       new_node->set_abstract(node->abstract());
+      MS_LOG(DEBUG) << "Replace node: " << node->DebugString() << " with new_node: " << new_node->DebugString();
       (void)manager->Replace(node, new_node);
+      changed = true;
     }
   }
 
@@ -324,6 +371,7 @@ void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
     auto ret = Reabs(node->abstract());
     node->set_abstract(ret);
   }
+  return changed;
 }
 
 // expand tuples in graph parameters

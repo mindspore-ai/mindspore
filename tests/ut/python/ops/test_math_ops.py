@@ -15,23 +15,24 @@
 """ test math ops """
 import functools
 import numpy as np
+import pytest
+
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore.common.api import _executor
-from mindspore.common import dtype as mstype
-from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore import Tensor
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
-import pytest
 
 
 # pylint: disable=W0613
@@ -341,6 +342,7 @@ class SignNet(nn.Cell):
     def construct(self, x):
         return self.sign(x)
 
+
 class AssignAdd(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -350,6 +352,34 @@ class AssignAdd(nn.Cell):
     def construct(self, input_):
         self.inputdata = input_
         return self.op(self.inputdata, input_)
+
+
+class FloorNet(nn.Cell):
+    def __init__(self):
+        super(FloorNet, self).__init__()
+        self.floor = P.Floor()
+
+    def construct(self, x):
+        return self.floor(x)
+
+
+class Log1pNet(nn.Cell):
+    def __init__(self):
+        super(Log1pNet, self).__init__()
+        self.log1p = P.Log1p()
+
+    def construct(self, x):
+        return self.log1p(x)
+
+
+class ErfcNet(nn.Cell):
+    def __init__(self):
+        super(ErfcNet, self).__init__()
+        self.erfc = P.Erfc()
+
+    def construct(self, x):
+        return self.erfc(x)
+
 
 test_case_math_ops = [
     ('MatMulGrad', {
@@ -391,6 +421,21 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'skip': ['backward']}),
+    ('Floor', {
+        'block': FloorNet(),
+        'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
+        'skip': ['backward']}),
+    ('Log1p', {
+        'block': Log1pNet(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'skip': ['backward']}),
+    ('Erfc', {
+        'block': ErfcNet(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+    }),
 ]
 
 test_case_lists = [test_case_math_ops]

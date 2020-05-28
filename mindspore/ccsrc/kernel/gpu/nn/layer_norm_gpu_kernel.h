@@ -35,7 +35,7 @@ class LayerNormGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto x = GetDeviceAddress<T>(inputs, 0);
     auto gamma = GetDeviceAddress<T>(inputs, 1);
     auto beta = GetDeviceAddress<T>(inputs, 2);
@@ -43,7 +43,7 @@ class LayerNormGpuKernel : public GpuKernel {
     auto mean = GetDeviceAddress<T>(outputs, 1);
     auto variance = GetDeviceAddress<T>(outputs, 2);
 
-    T epsilon = 10e-12;
+    const T epsilon = 10e-12;
     LayerNorm(input_row_, input_col_, param_dim_, epsilon, x, gamma, beta, y, mean, variance,
               reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;

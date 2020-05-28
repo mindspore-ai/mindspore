@@ -38,14 +38,17 @@ class MatMulGpuKernel : public GpuKernel {
         transpose_x1_(CUBLAS_OP_N),
         transpose_x2_(CUBLAS_OP_N),
         handle_(nullptr),
-        cudaDataType_(CUDA_R_32F) {}
+        dtype_a_(CUDA_R_32F),
+        dtype_b_(CUDA_R_32F),
+        dtype_c_(CUDA_R_32F),
+        algo_(CUBLAS_GEMM_DEFAULT_TENSOR_OP) {}
   ~MatMulGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     VARIABLE_NOT_USED(workspace);
     VARIABLE_NOT_USED(stream_ptr);
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
@@ -54,24 +57,30 @@ class MatMulGpuKernel : public GpuKernel {
 
     const float alpha = 1;
     const float beta = 0;
-    const int lda = (transpose_x2_ == CUBLAS_OP_T) ? SizeToInt(k_) : SizeToInt(n_);
-    const int ldb = (transpose_x1_ == CUBLAS_OP_T) ? SizeToInt(m_) : SizeToInt(k_);
+    const int lda = (transpose_x1_ == CUBLAS_OP_T) ? SizeToInt(m_) : SizeToInt(k_);
+    const int ldb = (transpose_x2_ == CUBLAS_OP_T) ? SizeToInt(k_) : SizeToInt(n_);
+    const int ldc = n_;
 
-    for (size_t i = 0; i < batch_; i++) {
-      auto input1_slice = input1_addr + i * m_ * k_;
-      auto input2_slice = input2_addr + i * k_ * n_;
-      auto output_slice = output_addr + i * m_ * n_;
+    auto stride_a = SizeToInt(m_ * k_);
+    auto stride_b = SizeToInt(k_ * n_);
+    auto stride_c = SizeToInt(m_ * n_);
 
-      CHECK_CUBLAS_RET_WITH_EXCEPT(cublasSgemmEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_),
-                                                 SizeToInt(k_), &alpha, input2_slice, cudaDataType_, lda, input1_slice,
-                                                 cudaDataType_, ldb, &beta, output_slice, cudaDataType_, SizeToInt(n_)),
-                                   "cublasSgemm Call Fail");
+    try {
+      CHECK_CUBLAS_RET_WITH_EXCEPT(
+        cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
+                                   &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr, dtype_a_, lda, stride_a,
+                                   &beta, output_addr, dtype_c_, ldc, stride_c, batch_, CUDA_R_32F, algo_),
+        "cublasSgemm Call Fail");
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << " when invoke cublas cublasGemmStridedBatchedEx";
     }
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    cudaDataType_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    dtype_a_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    dtype_b_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1))];
+    dtype_c_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0))];
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     auto dims = output_shape.size();
     if (dims < 2) {
@@ -119,9 +128,12 @@ class MatMulGpuKernel : public GpuKernel {
 
   cublasOperation_t transpose_x1_;
   cublasOperation_t transpose_x2_;
-
   cublasHandle_t handle_;
-  cudaDataType_t cudaDataType_;
+  cudaDataType_t dtype_a_;
+  cudaDataType_t dtype_b_;
+  cudaDataType_t dtype_c_;
+  cublasGemmAlgo_t algo_;
+
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

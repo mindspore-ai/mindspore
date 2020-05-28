@@ -326,6 +326,18 @@ def get_bprop_log_softmax(self):
     return bprop
 
 
+@bprop_getters.register(P.Softplus)
+def get_bprop_softplus(self):
+    """Grad definition for `Softplus` operation."""
+    softplus_grad = G.SoftplusGrad()
+
+    def bprop(x, out, dout):
+        dx = softplus_grad(dout, x)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Tanh)
 def get_bprop_tanh(self):
     """Grad definition for `Tanh` operation."""
@@ -627,7 +639,7 @@ def get_bprop_conv2d_backprop_input(self):
     def bprop(x, w, f_sizes, out, dout):
         dx = input_grad(dout, w)
         dw = filter_grad(x, dout, F.shape(w))
-        return dx, dw
+        return dx, dw, zeros_like(f_sizes)
 
     return bprop
 
@@ -640,5 +652,32 @@ def get_bprop_binary_cross_entropy(self):
     def bprop(x, y, weight, out, dout):
         dx = grad(x, y, dout, weight)
         return dx, zeros_like(y), zeros_like(weight)
+
+    return bprop
+
+
+@bprop_getters.register(P.Dropout)
+def get_bprop_dropout(self):
+    """Grad definition for `Dropout` operation."""
+    grad = P.DropoutGrad(self.drop_prob)
+
+    def bprop(x, out, dout):
+        _, mask = out
+        dy, _ = dout
+        dx = grad(dy, mask)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.CTCLoss)
+def get_bprop_ctc_loss(self):
+    """Grad definition for `CTCLoss` operation"""
+    expand = P.ExpandDims()
+
+    def bprop(inputs, labels_indices, labels_values, sequence_length, out, dout):
+        grad_loss = out[1]
+        grad = grad_loss * expand(dout[0], -1)
+        return grad, zeros_like(labels_indices), zeros_like(labels_values), zeros_like(sequence_length)
 
     return bprop

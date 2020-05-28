@@ -76,6 +76,7 @@ Status Edge::InitEdgeCost() {
                       << ", communication_with_partial_para_: " << cost->communication_with_partial_para_ << ".";
         // refine communication cost calculation for practice
         RefineForPracticalCost(cost, true);
+        cost->communication_forward_ = cost->communication_redis_forward_;
         CostPtrKey ck = {target_output_str, target_input_str};
         CostPtrList cl;
         cl.push_back(cost);
@@ -160,8 +161,9 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr
   (void)std::transform(edges.begin(), edges.end(), all_cost_list.begin(), LocalGetCostList);
 
   CostPtrList selected_cost_list(all_cost_list.size(), nullptr);
-  std::function<void(size_t, double, double, double, double)> recursive =
-    [&](size_t k, double computation, double memory, double communication, double communication_without_para) {
+  std::function<void(size_t, double, double, double, double, double)> recursive =
+    [&](size_t k, double computation, double memory, double communication, double communication_without_para,
+        double communication_forward) {
       if (k == edges.size()) {
         auto decision = std::make_shared<EdgeEliminationDecision>(selected_cost_list);
         CostPtr new_cost = std::make_shared<Cost>(computation, communication);
@@ -170,6 +172,7 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr
         new_cost->communication_with_partial_para_ =
           communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
         new_cost->memory_with_reuse_ = memory;
+        new_cost->communication_forward_ = communication_forward;
         new_cost->decision_ptr_ = decision;
         result.push_back(new_cost);
         return;
@@ -179,11 +182,12 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr
         selected_cost_list[k] = c;
         recursive(k + 1, computation + c->computation_cost_, memory + c->memory_with_reuse_,
                   communication + c->communication_cost_,
-                  communication_without_para + c->communication_without_parameter_);
+                  communication_without_para + c->communication_without_parameter_,
+                  communication_forward + c->communication_forward_);
       }
     };
-  recursive(0, 0.0, 0.0, 0.0, 0.0);
-  SimplifyForDreasingCommunicationWithPartialPara(&result);
+  recursive(0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  Simplify(&result);
   return result;
 }
 
@@ -219,6 +223,8 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
           left_cost->computation_cost_ + middle_cost->computation_cost_ + right_cost->computation_cost_;
         double communication =
           left_cost->communication_cost_ + middle_cost->communication_cost_ + right_cost->communication_cost_;
+        double communication_forward =
+          left_cost->communication_forward_ + middle_cost->communication_forward_ + right_cost->communication_forward_;
         double communication_without_para = left_cost->communication_without_parameter_ +
                                             middle_cost->communication_without_parameter_ +
                                             right_cost->communication_without_parameter_;
@@ -232,6 +238,7 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
         cost->communication_with_partial_para_ =
           communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
         cost->memory_with_reuse_ = memory_cost;
+        cost->communication_forward_ = communication_forward;
         ret_cost_list->emplace_back(std::move(cost));
       }
     }
@@ -251,7 +258,7 @@ CostPtrList Edge::CreateOpEliminationCostList(const EdgePtr &e1, const StrategyP
     CreateOpEliminationSubCostList(middle_strategy, e1->GetCostList(output_st_ptr, middle_strategy),
                                    op_strategy->cost_list, e2->GetCostList(middle_strategy, input_st_ptr), &result);
   }
-  SimplifyForDreasingCommunicationWithPartialPara(&result);
+  Simplify(&result);
   return result;
 }
 
@@ -291,6 +298,21 @@ Status Edge::CalculateMemoryCost() {
     }
   }
 
+  return SUCCESS;
+}
+
+Status Edge::CalculateMemoryCostForInference() {
+  // Currently, memory cost is NOT calculated for redistribution
+  if ((is_output_critical_ != 0) && (is_output_critical_ != 1)) {
+    MS_LOG(ERROR) << "Failure: unexpected output critical flag value: " << is_output_critical_;
+    return FAILED;
+  }
+  for (auto &cost_kv : cost_map_) {
+    auto &cost_v = cost_kv.second;
+    if (!cost_v.empty()) {
+      cost_v[0]->memory_with_reuse_ = 0;
+    }
+  }
   return SUCCESS;
 }
 }  // namespace parallel

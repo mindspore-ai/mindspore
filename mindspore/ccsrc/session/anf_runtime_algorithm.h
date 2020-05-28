@@ -32,6 +32,7 @@
 #include "kernel/kernel_build_info.h"
 #include "operator/ops.h"
 #include "utils/contract.h"
+#include "session/kernel_graph.h"
 
 namespace mindspore {
 namespace session {
@@ -80,7 +81,7 @@ class AnfRuntimeAlgorithm {
   // set all attrs from 'from' node to 'to' node
   static void CopyNodeAttrs(const AnfNodePtr &from, const AnfNodePtr &to);
   // check whether a cnode has the specified attr.
-  static bool HasNodeAttr(const std::string &key, const AnfNodePtr &node);
+  static bool HasNodeAttr(const std::string &key, const CNodePtr &node);
   // delete attr of anf node
   static void EraseNodeAttr(const std::string &key, AnfNodePtr node);
   // get the num of input real_kernel(which can be build and run in device)
@@ -95,6 +96,8 @@ class AnfRuntimeAlgorithm {
   static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx);
   // get output format from prev node,input_index is the input index of current node related to prev node
   static std::string GetPrevNodeOutputFormat(const AnfNodePtr &node, size_t input_idx);
+  // get reshape_type of from the output of input node.
+  static std::vector<kernel::Axis> GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // get output shapes inferred by ME from input nodes.
   static std::vector<size_t> GetOutputInferShape(const AnfNodePtr &node, size_t output_idx);
   // get input shapes inferred by ME from input nodes.
@@ -136,6 +139,8 @@ class AnfRuntimeAlgorithm {
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                          const std::vector<std::vector<size_t>> &shapes, AnfNode *node);
   static void CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node);
+  // get op pattern of the node
+  static kernel::OpPattern GetOpPattern(const AnfNodePtr &node);
   // get KernelBuildType of node ,such as ATT,RT,FWK and so on
   static KernelType GetKernelType(const AnfNodePtr &node);
   // get processor type:AICORE,AICPU...
@@ -177,6 +182,9 @@ class AnfRuntimeAlgorithm {
   static size_t GetRealInputIndex(const AnfNodePtr &anf_node, const size_t cur_index);
   static bool IsCommunicationOp(const AnfNodePtr &node);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
+  static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
+  static std::vector<KernelGraphPtr> GetCallNodeKernelGraph(const CNodePtr &call_node);
+  static bool IsSwitchCall(const CNodePtr &call_node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

@@ -21,6 +21,7 @@
 
 #include "ir/anf.h"
 #include "pre_activate/common/pass.h"
+#include "pre_activate/common/fusion_id_allocator.h"
 #include "device/kernel_info.h"
 #include "kernel/kernel.h"
 #include "session/kernel_graph.h"
@@ -43,12 +44,28 @@ class BufferFusion : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
+  void SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record);
+  void MatchConvBnreduce(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
+                         FusedNodeRecord *candidate_fusion);
+  void MatchBnupdateRelu(const CNodePtr &cnode, const AnfNodePtr &relu_input, const session::KernelGraph &kernel_graph,
+                         FusedNodeRecord *candidate_fusion);
+  void MatchBnupdateAddRelu(const CNodePtr &cnode, const AnfNodePtr &relu_input,
+                            const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
+  void MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
+                              FusedNodeRecord *candidate_fusion, bool is_order);
+  void MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input, const session::KernelGraph &kernel_graph,
+                          FusedNodeRecord *candidate_fusion);
+  void MatchOpNamePattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
+  void MatchFusionTypePattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
+
   void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
                            std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) const;
   bool ReplaceFusionOp(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos, int32_t fusion_id,
                        const kernel::KernelModPtr &kernel_ptr, session::KernelGraph *kernel_graph) const;
-  bool MatchBufferFusionPattern(const session::KernelGraph &kernel_graph) const;
+  bool MatchBufferFusionPattern(const session::KernelGraph &kernel_graph);
   bool FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const;
+
+  FusionIdAllocator fusion_id_allocator;
 };
 }  // namespace opt
 }  // namespace mindspore

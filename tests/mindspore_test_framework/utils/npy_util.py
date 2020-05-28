@@ -18,9 +18,9 @@
 import numpy as np
 
 from mindspore.common.tensor import Tensor
-
-from .other_util import shape2tensor
 from .config_util import get_expect_config
+from .other_util import shape2tensor
+
 
 def load_npy(p):
     s, dtype, scale, max_error, check_tolerance, relative_tolerance, absolute_tolerance = get_expect_config(p)
@@ -32,6 +32,7 @@ def load_npy(p):
     else:
         ret = shape2tensor(s, dtype, scale)
     return ret, max_error, check_tolerance, relative_tolerance, absolute_tolerance
+
 
 def load_data_from_npy_or_shape(dpaths, skip_expect_config=True):
     ret = []

@@ -36,7 +36,7 @@ class ShardCategory : public ShardOperator {
 
   ~ShardCategory() override{};
 
-  const std::vector<std::pair<std::string, std::string>> &get_categories() const { return categories_; }
+  const std::vector<std::pair<std::string, std::string>> &GetCategories() const { return categories_; }
 
   const std::string GetCategoryField() const { return category_field_; }
 
@@ -46,7 +46,7 @@ class ShardCategory : public ShardOperator {
 
   bool GetReplacement() const { return replacement_; }
 
-  MSRStatus execute(ShardTask &tasks) override;
+  MSRStatus Execute(ShardTask &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 

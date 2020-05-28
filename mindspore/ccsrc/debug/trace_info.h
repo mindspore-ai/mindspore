@@ -24,12 +24,9 @@
 #include <utility>
 #include <vector>
 
-#include "pybind11/pybind11.h"
 #include "ir/base.h"
 
 namespace mindspore {
-namespace py = pybind11;
-
 class TraceInfo;
 using TraceInfoPtr = std::shared_ptr<TraceInfo>;
 class Location;
@@ -191,6 +188,14 @@ class TraceForAfter : public TraceInfo {
   MS_DECLARE_PARENT(TraceForAfter, TraceInfo);
   ~TraceForAfter() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceForAfter>(*shared_from_base<TraceForAfter>()); }
+};
+
+class TraceLoopEnd : public TraceInfo {
+ public:
+  explicit TraceLoopEnd(const DebugInfoPtr &info) : TraceInfo(info, "loop_end", "↓↓") {}
+  MS_DECLARE_PARENT(TraceLoopEnd, TraceInfo);
+  ~TraceLoopEnd() override = default;
+  TraceInfoPtr clone() override { return std::make_shared<TraceLoopEnd>(*shared_from_base<TraceLoopEnd>()); }
 };
 
 class TraceEquiv : public TraceInfo {

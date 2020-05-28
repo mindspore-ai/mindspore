@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class GradWrap(nn.Cell):
@@ -30,6 +31,12 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, bias):
         return C.grad_all(self.network)(x, y, bias)
+
+
+def compile(net, x, y, bias):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, bias)
+
 
 def test_sum_as_loss():
     class Net(nn.Cell):
@@ -43,17 +50,16 @@ def test_sum_as_loss():
             out = self.reduce_sum(out, (0, 1))
             return out
 
-    
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((4, 1), )
+    strategy1 = ((4, 1),)
     net = GradWrap(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    compile(net, x, y, bias)
 
 
 def test_sum_as_loss2():
@@ -68,14 +74,13 @@ def test_sum_as_loss2():
             out = self.reduce_sum(out, (0, 1))
             return out
 
-    
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((1, 1), )
+    strategy1 = ((1, 1),)
     net = GradWrap(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    compile(net, x, y, bias)

@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+import numpy as np
+
 import mindspore as ms
 from mindspore import Tensor, Parameter, ParameterTuple, context
 from mindspore import nn
 from mindspore.common.api import _executor
 from mindspore.nn.optim import Adam, FTRL
-from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-import numpy as np
+from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):
@@ -74,7 +75,7 @@ class TrainStepWrap(nn.Cell):
         for params in self.trainable_params:
             weights_w.append(params)
             weights_d.append(params)
-        
+
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
         self.optimizer_w = FTRL(learning_rate=1e-2, params=self.weights_w,
@@ -105,4 +106,5 @@ def test_two_subgraphs():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     net = TrainStepWrap(NetWithLoss(Net()))
     input_x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
+    net.set_auto_parallel()
     _executor.compile(net, input_x)

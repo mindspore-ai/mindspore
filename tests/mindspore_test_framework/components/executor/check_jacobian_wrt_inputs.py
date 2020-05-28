@@ -19,6 +19,7 @@ from ...components.icomponent import IExectorComponent
 from ...utils.check_gradient import check_jacobian, OperationGradChecker
 from ...utils.config_util import get_grad_checking_options
 
+
 class CheckJacobianWrtInputsEC(IExectorComponent):
     """
     Check jacobian against numeric with respect to inputs, execute and verify.
@@ -35,8 +36,9 @@ class CheckJacobianWrtInputsEC(IExectorComponent):
                                           key_act=None,
                                           initializer_range=0.02)
     """
-    def run_function(self, function, inputs, verification_set):
+
+    def __call__(self):
         f, args, delta, max_error, input_selector, output_selector, _, _ = \
-            get_grad_checking_options(function, inputs)
+            get_grad_checking_options(self.function, self.inputs)
         check_jacobian(f, *args, delta=delta, max_error=max_error, grad_checker_class=OperationGradChecker,
                        input_selector=input_selector, output_selector=output_selector)

@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_dense """
 import numpy as np
+
 from mindspore import Tensor
 from mindspore.nn import Dense
 from ....ut_filter import non_graph_engine

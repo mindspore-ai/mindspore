@@ -92,20 +92,21 @@ class TestTensor : public UT::Common {
   TestTensor() {}
   virtual void SetUp() {
     UT::InitPythonPath();
-    // Init tensor data by py::array_t<float>
-    input_ = py::array_t<float, py::array::c_style>({2, 3});
-    auto array = input_.mutable_unchecked();
-    float start = 0;
-    for (int i = 0; i < array.shape(0); i++) {
-      for (int j = 0; j < array.shape(1); j++) {
-        array(i, j) = start++;
-      }
+  }
+};
+
+py::array_t<float, py::array::c_style> BuildInputTensor() {
+  // Init tensor data by py::array_t<float>
+  py::array_t<float, py::array::c_style> input = py::array_t<float, py::array::c_style>({2, 3});
+  auto array = input.mutable_unchecked();
+  float start = 0;
+  for (int i = 0; i < array.shape(0); i++) {
+    for (int j = 0; j < array.shape(1); j++) {
+      array(i, j) = start++;
     }
   }
-
- protected:
-  py::array_t<float, py::array::c_style> input_;
-};
+  return input;
+}
 
 TEST_F(TestTensor, PyArrayScalarTest) {
   std::vector<int> dimensions;
@@ -246,7 +247,7 @@ TEST_F(TestTensor, PyArrayTest) {
 
 TEST_F(TestTensor, InitByFloatArrayDataCTest) {
   // Init tensor data by py::array_t<float>
-  TensorPtr tensor = std::make_shared<Tensor>(input_);
+  auto tensor = std::make_shared<Tensor>(BuildInputTensor());
 
   // Print some information of the tensor
   std::cout << "Datatype: " << tensor->data_type() << std::endl;
@@ -268,7 +269,7 @@ TEST_F(TestTensor, InitByFloatArrayDataCTest) {
 
 TEST_F(TestTensor, InitByFloatArrayDataTest) {
   // Init tensor data by py::array_t<float>
-  TensorPtr tensor = std::make_shared<Tensor>(input_);
+  TensorPtr tensor = std::make_shared<Tensor>(BuildInputTensor());
 
   // Print some information of the tensor
   std::cout << "Datatype: " << tensor->data_type() << std::endl;

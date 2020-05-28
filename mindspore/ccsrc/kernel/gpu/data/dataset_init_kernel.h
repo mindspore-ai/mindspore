@@ -33,18 +33,16 @@ class DatasetInitKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
 
  protected:
   void InitSizeLists() override;
 
  private:
-  size_t TensorSize(std::vector<int> &) const;
-
   std::string queue_name_;
-  size_t feature_size_;
-  size_t label_size_;
+  std::vector<size_t> shapes_;
+  size_t total_bytes_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

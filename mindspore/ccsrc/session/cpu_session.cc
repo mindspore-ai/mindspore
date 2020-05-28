@@ -24,6 +24,7 @@
 #include "device/kernel_runtime.h"
 #include "predict/predict.h"
 #include "kernel/cpu/cpu_kernel_factory.h"
+#include "device/cpu/kernel_select_cpu.h"
 
 namespace mindspore {
 namespace session {
@@ -63,43 +64,7 @@ void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {
   auto &kernel_nodes = kernel_graph->execution_order();
   for (const auto &kernel_node : kernel_nodes) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      auto input_kernel_node = kernel_node->input(input_index + 1);
-      MS_EXCEPTION_IF_NULL(input_kernel_node);
-      if (!input_kernel_node->isa<Parameter>()) {
-        continue;
-      }
-      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-      MS_EXCEPTION_IF_NULL(builder);
-      std::vector<std::string> output_formats = {kOpFormat_DEFAULT};
-      builder->SetOutputsFormat(output_formats);
-      std::vector<TypeId> output_types{kNumberTypeFloat32};
-      builder->SetOutputsDeviceType(output_types);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
-    }
-
-    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    MS_EXCEPTION_IF_NULL(builder);
-    std::vector<std::string> input_formats;
-    std::vector<TypeId> input_types;
-    std::vector<std::string> output_formats;
-    std::vector<TypeId> output_types;
-
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      input_formats.emplace_back(kOpFormat_DEFAULT);
-      input_types.emplace_back(kNumberTypeFloat32);
-    }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      output_formats.emplace_back(kOpFormat_DEFAULT);
-      output_types.emplace_back(kNumberTypeFloat32);
-    }
-    builder->SetInputsFormat(input_formats);
-    builder->SetInputsDeviceType(input_types);
-    builder->SetOutputsFormat(output_formats);
-    builder->SetOutputsDeviceType(output_types);
-    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+    device::cpu::SetKernelInfo(kernel_node);
   }
 }
 
@@ -110,7 +75,8 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
     MS_EXCEPTION_IF_NULL(kernel_node);
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_LOG(INFO) << "Cpu building operator[" << kernel_name << "].";
-    std::shared_ptr<kernel::CPUKernel> cpu_kernel = kernel::CPUKernelFactory::Get().Create(kernel_name);
+    std::shared_ptr<kernel::CPUKernel> cpu_kernel =
+      kernel::CPUKernelFactory::GetInstance().Create(kernel_name, kernel_node);
     if (cpu_kernel == nullptr) {
       MS_LOG(EXCEPTION) << "Operator[" << kernel_name << "] is not support.";
     }

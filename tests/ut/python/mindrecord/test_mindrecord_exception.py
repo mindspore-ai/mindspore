@@ -15,45 +15,81 @@
 """test mindrecord exception"""
 import os
 import pytest
+from utils import get_data
+
+from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
 from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError, MRMGetMetaError, \
-                                 MRMFetchDataError
-from mindspore import log as logger
-from utils import get_data
+    MRMFetchDataError
 
 CV_FILE_NAME = "./imagenet.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"
 FILES_NUM = 4
+
+def remove_one_file(x):
+    if os.path.exists(x):
+        os.remove(x)
+
+def remove_file(file_name):
+    x = file_name
+    remove_one_file(x)
+    x = file_name + ".db"
+    remove_one_file(x)
+    for i in range(FILES_NUM):
+        x = file_name + str(i)
+        remove_one_file(x)
+        x = file_name + str(i) + ".db"
+        remove_one_file(x)
+
+@pytest.fixture
+def fixture_cv_file():
+    """add/remove file"""
+    remove_file(CV_FILE_NAME)
+    yield "yield_fixture_data"
+    remove_file(CV_FILE_NAME)
+
+@pytest.fixture
+def fixture_nlp_file():
+    """add/remove file"""
+    remove_file(NLP_FILE_NAME)
+    yield "yield_fixture_data"
+    remove_file(NLP_FILE_NAME)
 
 def test_cv_file_writer_shard_num_none():
     """test cv file writer when shard num is None."""
     with pytest.raises(Exception, match="Shard num is illegal."):
         FileWriter("/tmp/123454321", None)
 
+
 def test_cv_file_writer_shard_num_str():
     """test cv file writer when shard num is string."""
     with pytest.raises(Exception, match="Shard num is illegal."):
         FileWriter("/tmp/123454321", "20")
+
 
 def test_cv_page_reader_consumer_num_none():
     """test cv page reader when consumer number is None."""
     with pytest.raises(Exception, match="Consumer number is illegal."):
         MindPage(CV_FILE_NAME + "0", None)
 
+
 def test_cv_page_reader_consumer_num_str():
     """test cv page reader when consumer number is string."""
     with pytest.raises(Exception, match="Consumer number is illegal."):
         MindPage(CV_FILE_NAME + "0", "2")
+
 
 def test_nlp_file_reader_consumer_num_none():
     """test nlp file reader when consumer number is None."""
     with pytest.raises(Exception, match="Consumer number is illegal."):
         FileReader(NLP_FILE_NAME + "0", None)
 
+
 def test_nlp_file_reader_consumer_num_str():
     """test nlp file reader when consumer number is string."""
     with pytest.raises(Exception, match="Consumer number is illegal."):
         FileReader(NLP_FILE_NAME + "0", "4")
+
 
 def create_cv_mindrecord(files_num):
     writer = FileWriter(CV_FILE_NAME, files_num)
@@ -65,16 +101,17 @@ def create_cv_mindrecord(files_num):
     writer.write_raw_data(data)
     writer.commit()
 
+
 def test_lack_partition_and_db():
     """test file reader when mindrecord file does not exist."""
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader('dummy.mindrecord')
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
 
-def test_lack_db():
+def test_lack_db(fixture_cv_file):
     """test file reader when db file does not exist."""
     create_cv_mindrecord(1)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -82,11 +119,10 @@ def test_lack_db():
         reader = FileReader(CV_FILE_NAME)
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    os.remove(CV_FILE_NAME)
 
-def test_lack_some_partition_and_db():
+def test_lack_some_partition_and_db(fixture_cv_file):
     """test file reader when some partition and db do not exist."""
     create_cv_mindrecord(4)
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
@@ -97,17 +133,10 @@ def test_lack_some_partition_and_db():
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
-             for x in range(FILES_NUM)]
-    for x in paths:
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
 
-def test_lack_some_partition_first():
+def test_lack_some_partition_first(fixture_cv_file):
     """test file reader when first partition does not exist."""
     create_cv_mindrecord(4)
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
@@ -117,15 +146,10 @@ def test_lack_some_partition_first():
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    for x in paths:
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
 
-def test_lack_some_partition_middle():
+def test_lack_some_partition_middle(fixture_cv_file):
     """test file reader when some partition does not exist."""
     create_cv_mindrecord(4)
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
@@ -135,15 +159,10 @@ def test_lack_some_partition_middle():
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    for x in paths:
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
 
-def test_lack_some_partition_last():
+def test_lack_some_partition_last(fixture_cv_file):
     """test file reader when last partition does not exist."""
     create_cv_mindrecord(4)
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
@@ -153,15 +172,10 @@ def test_lack_some_partition_last():
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    for x in paths:
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
 
-def test_mindpage_lack_some_partition():
+def test_mindpage_lack_some_partition(fixture_cv_file):
     """test page reader when some partition does not exist."""
     create_cv_mindrecord(4)
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
@@ -170,15 +184,10 @@ def test_mindpage_lack_some_partition():
     with pytest.raises(MRMOpenError) as err:
         MindPage(CV_FILE_NAME + "0")
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    for x in paths:
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
 
-def test_lack_some_db():
+def test_lack_some_db(fixture_cv_file):
     """test file reader when some db does not exist."""
     create_cv_mindrecord(4)
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
@@ -188,13 +197,9 @@ def test_lack_some_db():
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    for x in paths:
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
+
 
 def test_invalid_mindrecord():
     """test file reader when the content of mindrecord is illegal."""
@@ -204,11 +209,11 @@ def test_invalid_mindrecord():
     with pytest.raises(MRMOpenError) as err:
         FileReader(CV_FILE_NAME)
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
     os.remove(CV_FILE_NAME)
 
-def test_invalid_db():
+def test_invalid_db(fixture_cv_file):
     """test file reader when the content of db is illegal."""
     create_cv_mindrecord(1)
     os.remove("imagenet.mindrecord.db")
@@ -217,23 +222,20 @@ def test_invalid_db():
     with pytest.raises(MRMOpenError) as err:
         FileReader('imagenet.mindrecord')
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    os.remove("imagenet.mindrecord")
-    os.remove("imagenet.mindrecord.db")
 
-def test_overwrite_invalid_mindrecord():
+def test_overwrite_invalid_mindrecord(fixture_cv_file):
     """test file writer when overwrite invalid mindreocrd file."""
     with open(CV_FILE_NAME, 'w') as f:
         f.write('just for test')
     with pytest.raises(MRMOpenError) as err:
         create_cv_mindrecord(1)
     assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.'\
+           'error_msg: MindRecord File could not open successfully.' \
            in str(err.value)
-    os.remove(CV_FILE_NAME)
 
-def test_overwrite_invalid_db():
+def test_overwrite_invalid_db(fixture_cv_file):
     """test file writer when overwrite invalid db file."""
     with open('imagenet.mindrecord.db', 'w') as f:
         f.write('just for test')
@@ -241,10 +243,8 @@ def test_overwrite_invalid_db():
         create_cv_mindrecord(1)
     assert '[MRMGenerateIndexError]: error_code: 1347690612, ' \
            'error_msg: Failed to generate index.' in str(err.value)
-    os.remove("imagenet.mindrecord")
-    os.remove("imagenet.mindrecord.db")
 
-def test_read_after_close():
+def test_read_after_close(fixture_cv_file):
     """test file reader when close read."""
     create_cv_mindrecord(1)
     reader = FileReader(CV_FILE_NAME)
@@ -254,10 +254,8 @@ def test_read_after_close():
         count = count + 1
         logger.info("#item{}: {}".format(index, x))
     assert count == 0
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
 
-def test_file_read_after_read():
+def test_file_read_after_read(fixture_cv_file):
     """test file reader when finish read."""
     create_cv_mindrecord(1)
     reader = FileReader(CV_FILE_NAME)
@@ -273,8 +271,7 @@ def test_file_read_after_read():
         cnt = cnt + 1
         logger.info("#item{}: {}".format(index, x))
     assert cnt == 0
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+
 
 def test_cv_file_writer_shard_num_greater_than_1000():
     """test cv file writer shard number greater than 1000."""
@@ -282,18 +279,19 @@ def test_cv_file_writer_shard_num_greater_than_1000():
         FileWriter(CV_FILE_NAME, 1001)
     assert 'Shard number should between' in str(err.value)
 
+
 def test_add_index_without_add_schema():
     with pytest.raises(MRMGetMetaError) as err:
         fw = FileWriter(CV_FILE_NAME)
         fw.add_index(["label"])
     assert 'Failed to get meta info' in str(err.value)
 
-def test_mindpage_pageno_pagesize_not_int():
+def test_mindpage_pageno_pagesize_not_int(fixture_cv_file):
     """test page reader when some partition does not exist."""
     create_cv_mindrecord(4)
     reader = MindPage(CV_FILE_NAME + "0")
     fields = reader.get_category_fields()
-    assert fields == ['file_name', 'label'],\
+    assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
     ret = reader.set_category_field("label")
@@ -317,18 +315,13 @@ def test_mindpage_pageno_pagesize_not_int():
     with pytest.raises(MRMFetchDataError, match="Failed to fetch data by category."):
         reader.read_at_page_by_id(99999, 0, 1)
 
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
-             for x in range(FILES_NUM)]
-    for x in paths:
-        os.remove("{}".format(x))
-        os.remove("{}.db".format(x))
 
-def test_mindpage_filename_not_exist():
+def test_mindpage_filename_not_exist(fixture_cv_file):
     """test page reader when some partition does not exist."""
     create_cv_mindrecord(4)
     reader = MindPage(CV_FILE_NAME + "0")
     fields = reader.get_category_fields()
-    assert fields == ['file_name', 'label'],\
+    assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
     ret = reader.set_category_field("file_name")
@@ -348,6 +341,3 @@ def test_mindpage_filename_not_exist():
 
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
-    for x in paths:
-        os.remove("{}".format(x))
-        os.remove("{}.db".format(x))

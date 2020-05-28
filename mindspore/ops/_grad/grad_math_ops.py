@@ -331,6 +331,19 @@ def get_bprop_log(self):
     return bprop
 
 
+@bprop_getters.register(P.Log1p)
+def get_bprop_log1p(self):
+    """Grad definition for `Log1p` operation."""
+    reciprocal = P.Reciprocal()
+
+    def bprop(x, out, dout):
+        x_1p = x + 1
+        g = reciprocal(x_1p)
+        dx = g * dout
+        return dx, 0
+    return bprop
+
+
 @bprop_getters.register(P.Erf)
 def get_bprop_erf(self):
     """Grad definition for `Erf` operation."""
@@ -344,6 +357,23 @@ def get_bprop_erf(self):
         half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
         x_square = square(x)
         dx = dout * half_root_pi * exp(-x_square)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Erfc)
+def get_bprop_erfc(self):
+    """Grad definition for `Erfc` operation."""
+    exp = P.Exp()
+    square = P.Square()
+    sqrt = P.Sqrt()
+    cast = P.Cast()
+    dtype = P.DType()
+
+    def bprop(x, out, dout):
+        half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
+        x_square = square(x)
+        dx = dout * (-half_root_pi * exp(-x_square))
         return (dx,)
     return bprop
 

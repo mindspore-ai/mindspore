@@ -126,6 +126,35 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
   MS_LOG(EXCEPTION) << "Invalid condition value for switch " << cond->ToString();
 }
 
+AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  // Inputs: index, branch
+  const std::string op_name = primitive->name();
+  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  (void)CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
+  AbstractBasePtrList branches = branches_abs->elements();
+  const size_t maximum_layer_num = 1000;
+  if (branches.size() < 0 || branches.size() > maximum_layer_num) {
+    MS_EXCEPTION(ValueError) << op_name << " support at least 1 and at most " << maximum_layer_num << " but got "
+                             << branches.size() << " branches.";
+  }
+
+  for (size_t i = 0; i < branches.size(); i++) {
+    MS_EXCEPTION_IF_NULL(branches[i]);
+    if (!branches[i]->isa<AbstractFunction>()) {
+      MS_LOG(EXCEPTION) << op_name << " requires that the 2th arg be tuple of functions, but got "
+                        << branches[i]->ToString() << " as the " << i << "th element.";
+    }
+  }
+
+  auto b = branches[0];
+  for (size_t i = 1; i < branches.size(); i++) {
+    b = b->Join(branches[i]);
+  }
+  return b;
+}
+
 std::vector<ValuePtr> GetSupportedTargetValue() {
   std::vector<ValuePtr> list = {kNone, MakeValue(false), MakeValue(true)};
   return list;

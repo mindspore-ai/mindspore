@@ -168,6 +168,21 @@ def _chunk_tensor_by_strategy(np_tensor, strategy):
         raise ValueError("The length of np_tensor does not match the length of strategy!")
     return _chunk_tensor(np_tensor, strategy, len(strategy))
 
+def _get_seed(dev_mat, tensor_map):
+    """
+    Get the random seed for current slice.
+
+    Args:
+        dev_mat (list): The device matrix of devices.
+        tensor_map (list): The split strategy of tensor.
+
+    Returns:
+        Integer, the local random seed for this device.
+    """
+    rank = get_rank()
+    tensor_strategy = _get_tensor_strategy(dev_mat, tensor_map)
+    tensor_slice_seed = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
+    return tensor_slice_seed
 
 def _load_tensor(tensor, dev_mat, tensor_map):
     """
@@ -203,19 +218,19 @@ def _load_tensor_by_layout(tensor, layout):
 
     Args:
         tensor (Tensor): The input tensor.
-        layout (tuple): The tensor layout in auto parallel.
+        layout (list): The tensor layout in auto parallel.
 
     Returns:
-        Tensor, the sliced tensor..
+        Tensor, the sliced tensor.
 
     Raises:
-        TypeError: If layout is not tuple.
-        ValueError: If the length of layout is not 2.
+        TypeError: If layout is not list.
+        ValueError: If the length of layout is not 3.
     """
-    if not isinstance(layout, tuple):
-        raise TypeError("layout should be tuple! layout is {}".format(layout))
-    if len(layout) != 2:
-        raise ValueError("The length of layout must be 2! layout is {}".format(layout))
+    if not isinstance(layout, list):
+        raise TypeError("The layout should be list! layout is {}".format(layout))
+    if len(layout) != 3:
+        raise ValueError("The length of layout must be 3! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
     if tensor.size() == 1:

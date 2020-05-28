@@ -102,12 +102,14 @@ TaskManager::TaskManager() try : global_interrupt_(0),
   master_->running_ = true;
   master_->is_master_ = true;
   gMyTask = master_.get();
+#if !defined(_WIN32) && !defined(_WIN64)
   // Initialize the semaphore for the watchdog
   errno_t rc = sem_init(&sem_, 0, 0);
   if (rc == -1) {
-    MS_LOG(INFO) << "Unable to initialize a semaphore. Errno = " << rc << ".";
+    MS_LOG(ERROR) << "Unable to initialize a semaphore. Errno = " << rc << ".";
     std::terminate();
   }
+#endif
 } catch (const std::exception &e) {
   MS_LOG(ERROR) << "MindData initialization failed: " << e.what() << ".";
   std::terminate();
@@ -116,17 +118,20 @@ TaskManager::TaskManager() try : global_interrupt_(0),
 TaskManager::~TaskManager() {
   if (watchdog_) {
     WakeUpWatchDog();
-    watchdog_->thrd_.join();
+    watchdog_->Join();
     // watchdog_grp_ and watchdog_ pointers come from Services::GetInstance().GetServiceMemPool() which we will free it
     // on shutdown. So no need to free these pointers one by one.
     watchdog_grp_ = nullptr;
     watchdog_ = nullptr;
   }
+#if !defined(_WIN32) && !defined(_WIN64)
   (void)sem_destroy(&sem_);
+#endif
 }
 
 Status TaskManager::DoServiceStart() {
   MS_LOG(INFO) << "Starting Task Manager.";
+#if !defined(_WIN32) && !defined(_WIN64)
   // Create a watchdog for control-c
   std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
   // A dummy group just for the watchdog. We aren't really using it. But most code assumes a thread must
@@ -143,6 +148,7 @@ Status TaskManager::DoServiceStart() {
   }
   grp_list_.erase(watchdog_grp_);
   lru_.Remove(watchdog_);
+#endif
   return Status::OK();
 }
 
@@ -154,6 +160,7 @@ Status TaskManager::DoServiceStop() {
 
 Status TaskManager::WatchDog() {
   TaskManager::FindMe()->Post();
+#if !defined(_WIN32) && !defined(_WIN64)
   errno_t err = sem_wait(&sem_);
   if (err == -1) {
     RETURN_STATUS_UNEXPECTED("Errno = " + std::to_string(errno));
@@ -162,6 +169,7 @@ Status TaskManager::WatchDog() {
   // In addition, we also want to prevent new thread from creating. This can be done
   // easily by calling the parent function.
   RETURN_IF_NOT_OK(ServiceStop());
+#endif
   return Status::OK();
 }
 

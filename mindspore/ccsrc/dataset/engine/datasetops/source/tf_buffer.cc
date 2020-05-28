@@ -35,13 +35,7 @@ TFBuffer::TFBuffer(
   uint32_t id,                                           // In: The id for this buffer
   BufferFlags flags,                                     // In: The flags for this buffer
   const std::shared_ptr<StorageClient> &storage_client)  // In: Storage client that is related to this buffer type
-    : DataBuffer(id, flags), storage_client_(storage_client) {
-  // Initializing mColumnNameMap from the schema file
-  const DataSchema *the_schema = storage_client_->schema();
-  for (int32_t i = 0; i < the_schema->NumColumns(); ++i) {
-    column_name_map_[the_schema->column(i).name()] = i;
-  }
-}
+    : DataBuffer(id, flags), storage_client_(storage_client) {}
 
 // destructor
 TFBuffer::~TFBuffer() {}
@@ -118,7 +112,7 @@ Status TFBuffer::ParseSingleExample(dataengine::Example *ptr) {
     cur_reader_.open(cur_f_info_.fileName);
     // Seek to the offset
     (void)cur_reader_.seekg(static_cast<std::streamsize>(cur_f_info_.startOffset));
-    MS_LOG(INFO) << "got new file " << cur_f_info_.fileName << ".";
+    MS_LOG(DEBUG) << "got new file " << cur_f_info_.fileName << ".";
   }
 
   // one record in tf_file looks like:

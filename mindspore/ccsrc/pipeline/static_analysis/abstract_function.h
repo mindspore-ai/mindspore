@@ -166,8 +166,9 @@ class PartialAbstractClosure : public AbstractFuncAtom {
  public:
   // Represents a partial application.
   // args_spec_list: The first few arguments of that function
-  PartialAbstractClosure(const AbstractFuncAtomPtr &fn, const AbstractBasePtrList &args_spec_list)
-      : fn_(fn), args_spec_list_(args_spec_list) {}
+  PartialAbstractClosure(const AbstractFuncAtomPtr &fn, const AbstractBasePtrList &args_spec_list,
+                         const AnfNodePtr &node = nullptr)
+      : fn_(fn), args_spec_list_(args_spec_list), node_(AnfNodePtr(node)) {}
   ~PartialAbstractClosure() override = default;
   MS_DECLARE_PARENT(PartialAbstractClosure, AbstractFuncAtom)
 
@@ -175,7 +176,11 @@ class PartialAbstractClosure : public AbstractFuncAtom {
 
   AbstractFunctionPtr fn() { return fn_; }
   AbstractBasePtrList args() { return args_spec_list_; }
-  AbstractFunctionPtr Copy() const override { return std::make_shared<PartialAbstractClosure>(fn_, args_spec_list_); }
+  AnfNodePtr node() { return node_.lock(); }
+  void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
+  AbstractFunctionPtr Copy() const override {
+    return std::make_shared<PartialAbstractClosure>(fn_, args_spec_list_, node_.lock());
+  }
   bool operator==(const AbstractFunction &other) const override;
   std::size_t hash() const override;
 
@@ -184,6 +189,8 @@ class PartialAbstractClosure : public AbstractFuncAtom {
  private:
   AbstractFuncAtomPtr fn_;
   AbstractBasePtrList args_spec_list_;
+  // The CNode which this PartialAbstractClosure evaluated from.
+  AnfNodeWeakPtr node_;
 };
 
 class JTransformedAbstractClosure : public AbstractFuncAtom {

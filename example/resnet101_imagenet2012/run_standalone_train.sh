@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 1 ] && [ $# != 2 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [DATASET_PATH]"
+    echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_PATH](optional)"
 exit 1
 fi
 
@@ -29,12 +29,23 @@ get_real_path(){
 }
 PATH1=$(get_real_path $1)
 echo $PATH1
+if [ $# == 2 ]
+then
+    PATH2=$(get_real_path $2)
+    echo $PATH2
+fi
 
 if [ ! -d $PATH1 ]
 then 
     echo "error: DATASET_PATH=$PATH1 is not a directory"
 exit 1
-fi 
+fi
+
+if [ $# == 2 ] && [ ! -f $PATH2 ]
+then
+    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+exit 1
+fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
@@ -52,5 +63,13 @@ cp *.sh ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --do_train=True --dataset_path=$PATH1 &> log &
+if [ $# == 1 ]
+then
+    python train.py --do_train=True --dataset_path=$PATH1 &> log &
+fi
+
+if [ $# == 2 ]
+then
+    python train.py --do_train=True --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+fi
 cd ..

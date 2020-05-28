@@ -155,6 +155,12 @@ class ShuffleOp : public PipelineOp {
   // @return Status - The error code return
   Status EoeReceived(int32_t worker_id) override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // Private function to add a new row to the shuffle buffer.
   // @return Status - The error code return
@@ -185,7 +191,6 @@ class ShuffleOp : public PipelineOp {
   std::unique_ptr<TensorTable> shuffle_buffer_;
   int32_t shuffle_last_row_idx_;  // Internal tracking of the last slot of our shuffle buffer
   int32_t shuffle_buffer_state_;  // State tracking for the shuffle buffer phases of work
-  std::unordered_map<std::string, int32_t> column_name_map_;  // A mapping between column index to column name.
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
 };

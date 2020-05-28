@@ -16,8 +16,9 @@
 import math
 import numpy as np
 import pytest
-from mindspore.nn.metrics import Recall
+
 from mindspore import Tensor
+from mindspore.nn.metrics import Recall
 
 
 def test_classification_recall():
@@ -43,7 +44,7 @@ def test_multilabel_recall():
     metric.update(x, y)
     recall = metric.eval()
 
-    assert np.equal(recall, np.array([2/3, 2/3, 1])).all()
+    assert np.equal(recall, np.array([2 / 3, 2 / 3, 1])).all()
 
 
 def test_average_recall():
@@ -54,7 +55,7 @@ def test_average_recall():
     metric.update(x, y)
     recall = metric.eval(True)
 
-    assert math.isclose(recall, (2/3 + 2/3 + 1) / 3)
+    assert math.isclose(recall, (2 / 3 + 2 / 3 + 1) / 3)
 
 
 def test_num_recall():

@@ -48,6 +48,7 @@ constexpr double INF = 1e20;
 
 constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
 constexpr char SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY[] = "semi_auto_parallel_run_once_only";
+constexpr char CHECK_SET_STRATEGY_VALID_ONCE_ONLY[] = "check_set_strategy_valid_once_only";
 constexpr char STRATEGY[] = "strategy";
 constexpr char GEN_STRATEGY[] = "gen_strategy";
 constexpr char REDUCE_OP_SUM[] = "sum";
@@ -114,7 +115,7 @@ constexpr char BE_CLONED_INDEX[] = "be_cloned_index";
 constexpr char GROUP_RANKS[] = "group_ranks";
 constexpr char IS_IN_FORWARD[] = "is_in_forward";
 constexpr char DEFAULT_INPUT[] = "default_input";
-constexpr char DTYPE[] = "dtype";
+constexpr char DTYPE[] = "DType";
 constexpr char DEV_NUM[] = "dev_num";
 constexpr char MEAN_FLAG[] = "mean_flag";
 constexpr char TYPES[] = "types";
@@ -124,6 +125,7 @@ constexpr char SHARED_NAME[] = "shared_name";
 constexpr char MIRROR_OP[] = "mirror_op";
 constexpr char FORWARD_OP[] = "forward_op";
 constexpr char REDISTRIBUTION_OP[] = "redistribution_op";
+constexpr char DARA_PARALLEL[] = "data_parallel";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

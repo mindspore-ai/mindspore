@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 tuple_getitem = Primitive('tuple_getitem')
 depend = Primitive('depend')
@@ -82,8 +82,8 @@ def test_eliminate_cast_op(tag):
 
     @fns
     def before(x, y):
-        sum = addn((x, y))
-        sum_depend = depend(sum, addn((x, y)))
+        sum_add = addn((x, y))
+        sum_depend = depend(sum_add, addn((x, y)))
         diff = sub(x, y)
         res = mul(sum_depend, diff)
         return res
@@ -92,8 +92,8 @@ def test_eliminate_cast_op(tag):
     def after1(x, y):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
-        sum = addn(new_x_sum, new_y_sum)
-        sum_cast = cast(sum)
+        sum_add = addn(new_x_sum, new_y_sum)
+        sum_cast = cast(sum_add)
         new_x_depend = cast(x)
         new_y_depend = cast(y)
         sum_depend = addn(new_x_depend, new_y_depend)
@@ -114,12 +114,12 @@ def test_eliminate_cast_op(tag):
     def after2(x, y):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
-        sum = addn(new_x_sum, new_y_sum)
+        sum_add = addn(new_x_sum, new_y_sum)
         new_x_depend = cast(x)
         new_y_depend = cast(y)
         sum_depend = addn(new_x_depend, new_y_depend)
         sum_depend_cast = cast(sum_depend)
-        depend_between_cast = depend(sum, sum_depend_cast)
+        depend_between_cast = depend(sum_add, sum_depend_cast)
         new_x_diff = cast(x)
         new_y_diff = cast(y)
         diff = sub(new_x_diff, new_y_diff)
@@ -156,8 +156,8 @@ def test_eliminate_cast_new(tag):
 
     @fns
     def before(x, y):
-        sum = add(x, y)
-        res = sub(sum, y)
+        sum_add = add(x, y)
+        res = sub(sum_add, y)
         output = make_tuple(res)
         return output
 
@@ -166,8 +166,8 @@ def test_eliminate_cast_new(tag):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
         new_y_sum2 = cast(y)
-        sum = add(new_x_sum, new_y_sum)
-        sum_5to4 = cast(sum)
+        sum_add = add(new_x_sum, new_y_sum)
+        sum_5to4 = cast(sum_add)
         sum_4to5 = cast(sum_5to4)
         res = sub(sum_4to5, new_y_sum2)
         output = cast(res)
@@ -179,11 +179,10 @@ def test_eliminate_cast_new(tag):
         new_x_sum = cast(x)
         new_y_sum = cast(y)
         new_y_diff = cast(y)
-        sum = add(new_x_sum, new_y_sum)
-        res = sub(sum, new_y_diff)
+        sum_add = add(new_x_sum, new_y_sum)
+        res = sub(sum_add, new_y_diff)
         output = cast(res)
         new_output = make_tuple(output)
         return new_output
 
     return fns[tag]
-

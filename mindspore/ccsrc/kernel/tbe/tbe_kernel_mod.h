@@ -39,9 +39,9 @@ class TbeKernelMod : public AscendKernelMod {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
-  vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
   std::vector<size_t> GenParameters() override;
 
  private:

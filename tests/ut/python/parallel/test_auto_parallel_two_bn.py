@@ -1,14 +1,16 @@
 import numpy as np
-from mindspore import context
+import re
+
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
-import re
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -20,6 +22,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict)
 
+
 class Blockcell(nn.Cell):
     def __init__(self):
         super(Blockcell, self).__init__()
@@ -29,8 +32,10 @@ class Blockcell(nn.Cell):
         out = self.bn(x)
         return out
 
+
 def getBlock():
     return Blockcell()
+
 
 def test_two_bn():
     class Net(nn.Cell):
@@ -54,6 +59,7 @@ def test_two_bn():
     context.set_context(save_graphs=True)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     set_algo_parameters(elementwise_op_strategy_follow=True)
     reset_op_id()
 

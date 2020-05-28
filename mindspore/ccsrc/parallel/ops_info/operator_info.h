@@ -48,7 +48,7 @@ using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int32_t>::difference_type;
 using PrimitiveAttrs = std::unordered_map<std::string, ValuePtr>;
 using Strategys = std::vector<Dimensions>;
-using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>>;
+using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>;
 
 class Edge;
 
@@ -72,6 +72,7 @@ class OperatorInfo {
   Status set_is_parameter(const std::vector<bool> &is_parameter);
   Status SetInputAndOutputTypeLength(const std::vector<size_t> &input_lengths,
                                      const std::vector<size_t> &output_lengths);
+  double GetOutputsTotalSize();
   // Set outputs dtype.
   // If only one output, outputs_type.size() is 1.
   // If output is tuple, outputs_type.size() is greater than 1.
@@ -96,9 +97,13 @@ class OperatorInfo {
   // is checked
   Status SetCostUnderStrategyBase(const StrategyPtr &strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
-  // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
-  // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
+  // In the training phase, when the input of a operator contains WEIGHT or a output from other operators involving
+  // WEIGHT, then these input should stay in memory until it is used in the backward phase, which is kept in memory
+  // at the end of forward phase.
   Status CalculateMemoryCost();
+  // In the inference phase, the memory cost is incurred only when the operator is critical. The size is calculated
+  // by the output
+  Status CalculateMemoryCostForInference();
   int ComputeOpAndPrevEdgeParameterInvolved();
 
   ForwardOp forward_op() const { return forward_op_; }
@@ -111,6 +116,7 @@ class OperatorInfo {
   Shape dev_matrix_shape() const { return dev_matrix_shape_; }
   std::vector<TensorInfo> inputs_tensor_info() const { return inputs_tensor_info_; }
   std::vector<TensorInfo> outputs_tensor_info() const { return outputs_tensor_info_; }
+  std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost() const { return strategy_cost_; }
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
   RankList global_device_list() const { return global_device_list_; }
@@ -134,6 +140,7 @@ class OperatorInfo {
   CostPtr selected_cost() const { return selected_cost_; }
   Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy); }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
+  const std::vector<ValuePtr> &input_value() const { return input_value_; }
   void set_outputs_dtype(const TypePtr &dtype) { outputs_dtype_ = dtype; }
   void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
   bool is_alive() const { return is_alive_; }
@@ -146,6 +153,9 @@ class OperatorInfo {
   // multiple times. This method is to correct this, and makes the cost is calulated only once.
   Status CorrectMemoryCost(size_t input_index);
   int is_output_parameter_involve() const { return is_output_parameter_involve_; }
+  int is_output_critical() const { return is_output_critical_; }
+  void mark_output_critical() { is_output_critical_ = 1; }
+  void mark_output_not_critical() { is_output_critical_ = 0; }
   int used_devices() const { return used_devices_; }
   // needed by rec_parser
   void set_type(const std::string &type) { type_ = type; }
@@ -219,7 +229,16 @@ class OperatorInfo {
   // For each input in 'inputs_', a bool variable is true if the corresponding one is a parameter or a output of
   // pre-operator that has parameters as input.
   std::vector<bool> is_parameter_involve_;
-  int is_output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
+  // If any input is parameter-involved, the output is parameter-involved. This variable is used in calculating
+  // peak memory cost in the training phase.
+  // -1: unset; 0: not parameter_involved; 1: parameter_involved
+  int is_output_parameter_involve_ = -1;
+  // Whether this output is critical, which means that this output is included in calculating peak memory cost
+  // in the inference phase.
+  // -1 : unset; 0: not critical; 1: critical
+  int is_output_critical_ = -1;
+  double outputs_total_size_ = 0.0;
+  bool is_calculated_outputs_size_ = false;
   // for each input and output, the followings record the number of bytes of each element
   std::vector<size_t> inputs_type_lengths_;
   std::vector<size_t> outputs_type_lengths_;

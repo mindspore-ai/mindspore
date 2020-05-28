@@ -116,6 +116,8 @@ def save_checkpoint(parameter_list, ckpoint_file_name):
             param_value = checkpoint_list.value.add()
             param_value.tag = param["name"]
             param_tensor = param_value.tensor
+            if isinstance(param["data"], Parameter):
+                param["data"].init_data()
             param_data = param["data"].asnumpy().reshape(-1)
             param_tensor.tensor_content = param_data.tostring()
             param_tensor.tensor_type = str(param["data"].dtype())
@@ -230,6 +232,7 @@ def load_param_into_net(net, parameter_dict):
         raise TypeError(msg)
 
     logger.info("Execute load parameter into net process.")
+    net.init_parameters_data()
     param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
@@ -238,6 +241,7 @@ def load_param_into_net(net, parameter_dict):
                 logger.error("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
                 raise TypeError(msg)
+            param.init_data()
             _update_param(param, new_param)
         else:
             param_not_load.append(param.name)
@@ -311,6 +315,7 @@ def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True
     param_list = []
     for (key, value) in param_dict.items():
         each_param = {"name": key}
+        value.init_data()
         if isinstance(value.data, Tensor):
             param_data = value.data
         else:
@@ -371,6 +376,8 @@ def _fill_param_into_net(net, parameter_list):
     parameter_dict = {}
     for each_param in parameter_list:
         param_name = each_param["name"]
+        if isinstance(each_param["data"], Parameter):
+            each_param["data"].init_data()
         np_val = each_param["data"].asnumpy()
         if np_val.shape == (1,):
             parameter_dict[param_name] = Parameter(np_val, name=param_name)

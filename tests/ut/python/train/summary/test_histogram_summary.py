@@ -15,14 +15,13 @@
 """Test histogram summary."""
 
 import logging
+import numpy as np
 import os
 import tempfile
 
-import numpy as np
-
 from mindspore.common.tensor import Tensor
-from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 from mindspore.train.summary._summary_adapter import _calc_histogram_bins
+from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 from .summary_reader import SummaryReader
 
 CUR_DIR = os.getcwd()
@@ -52,12 +51,10 @@ def _wrap_test_data(input_data: Tensor):
 def test_histogram_summary():
     """Test histogram summary."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
-
-        test_data = _wrap_test_data(Tensor([[1, 2, 3], [4, 5, 6]]))
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            test_data = _wrap_test_data(Tensor([[1, 2, 3], [4, 5, 6]]))
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -68,20 +65,18 @@ def test_histogram_summary():
 def test_histogram_multi_summary():
     """Test histogram multiple step."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
 
-        rng = np.random.RandomState(10)
-        size = 50
-        num_step = 5
+            rng = np.random.RandomState(10)
+            size = 50
+            num_step = 5
 
-        for i in range(num_step):
-            arr = rng.normal(size=size)
+            for i in range(num_step):
+                arr = rng.normal(size=size)
 
-            test_data = _wrap_test_data(Tensor(arr))
-            _cache_summary_tensor_data(test_data)
-            test_writer.record(step=i)
-
-        test_writer.close()
+                test_data = _wrap_test_data(Tensor(arr))
+                _cache_summary_tensor_data(test_data)
+                test_writer.record(step=i)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -93,12 +88,10 @@ def test_histogram_multi_summary():
 def test_histogram_summary_scalar_tensor():
     """Test histogram summary, input is a scalar tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
-
-        test_data = _wrap_test_data(Tensor(1))
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            test_data = _wrap_test_data(Tensor(1))
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -109,12 +102,10 @@ def test_histogram_summary_scalar_tensor():
 def test_histogram_summary_empty_tensor():
     """Test histogram summary, input is an empty tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
-
-        test_data = _wrap_test_data(Tensor([]))
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            test_data = _wrap_test_data(Tensor([]))
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -125,15 +116,13 @@ def test_histogram_summary_empty_tensor():
 def test_histogram_summary_same_value():
     """Test histogram summary, input is an ones tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            dim1 = 100
+            dim2 = 100
 
-        dim1 = 100
-        dim2 = 100
-
-        test_data = _wrap_test_data(Tensor(np.ones([dim1, dim2])))
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+            test_data = _wrap_test_data(Tensor(np.ones([dim1, dim2])))
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -146,15 +135,14 @@ def test_histogram_summary_same_value():
 def test_histogram_summary_high_dims():
     """Test histogram summary, input is a 4-dimension tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
-        dim = 10
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            dim = 10
 
-        rng = np.random.RandomState(0)
-        tensor_data = rng.normal(size=[dim, dim, dim, dim])
-        test_data = _wrap_test_data(Tensor(tensor_data))
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+            rng = np.random.RandomState(0)
+            tensor_data = rng.normal(size=[dim, dim, dim, dim])
+            test_data = _wrap_test_data(Tensor(tensor_data))
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -167,20 +155,18 @@ def test_histogram_summary_high_dims():
 def test_histogram_summary_nan_inf():
     """Test histogram summary, input tensor has nan."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            dim1 = 100
+            dim2 = 100
 
-        dim1 = 100
-        dim2 = 100
+            arr = np.ones([dim1, dim2])
+            arr[0][0] = np.nan
+            arr[0][1] = np.inf
+            arr[0][2] = -np.inf
+            test_data = _wrap_test_data(Tensor(arr))
 
-        arr = np.ones([dim1, dim2])
-        arr[0][0] = np.nan
-        arr[0][1] = np.inf
-        arr[0][2] = -np.inf
-        test_data = _wrap_test_data(Tensor(arr))
-
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)
@@ -193,12 +179,10 @@ def test_histogram_summary_nan_inf():
 def test_histogram_summary_all_nan_inf():
     """Test histogram summary, input tensor has no valid number."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        test_writer = SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM")
-
-        test_data = _wrap_test_data(Tensor(np.array([np.nan, np.nan, np.nan, np.inf, -np.inf])))
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(step=1)
-        test_writer.close()
+        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
+            test_data = _wrap_test_data(Tensor(np.array([np.nan, np.nan, np.nan, np.inf, -np.inf])))
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(step=1)
 
         file_name = os.path.join(tmp_dir, test_writer.event_file_name)
         reader = SummaryReader(file_name)

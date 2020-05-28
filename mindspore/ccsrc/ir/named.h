@@ -21,7 +21,6 @@
 #include <memory>
 #include <functional>
 
-#include "ir/base.h"
 #include "ir/anf.h"
 
 namespace mindspore {

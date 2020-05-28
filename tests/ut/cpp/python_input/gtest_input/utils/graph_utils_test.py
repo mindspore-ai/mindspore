@@ -13,11 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """ graph_utils_test """
+
+
 def test_graph_utils_isomorphic_1(a, b):
     return a + b
 
+
 def test_graph_utils_isomorphic_2(x, y):
     return x + y
+
 
 def test_graph_utils_isomorphic_3(x, y):
     return x * y

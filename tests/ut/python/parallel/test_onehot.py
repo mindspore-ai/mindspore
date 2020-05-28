@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.ops.operations.comm_ops import _VirtualDataset
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -64,6 +66,7 @@ class Net(nn.Cell):
 
 def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot_axis=-1):
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2), strategy3, strategy4, axis=onthot_axis))
+    net.set_auto_parallel()
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel")
     else:
@@ -78,7 +81,7 @@ def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot
 def test_onehot_model_parallel():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((1, 16), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -87,7 +90,7 @@ def test_onehot_model_parallel():
 def test_onehot_batch_parallel():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((16, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -96,8 +99,8 @@ def test_onehot_batch_parallel():
 def test_onehot_batch_parallel_invalid_strategy():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
-    strategy3 = ((16, ), (), ())
+    strategy2 = ((2, 8),)
+    strategy3 = ((16,), (), ())
     strategy4 = ((16, 1), (16, 1))
     try:
         compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -108,7 +111,7 @@ def test_onehot_batch_parallel_invalid_strategy():
 def test_onehot_repeated_calculation():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((4, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -126,7 +129,7 @@ def test_onehot_auto():
 def test_onehot_model_parallel():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((1, 16), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -135,7 +138,7 @@ def test_onehot_model_parallel():
 def test_onehot_batch_parallel_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((16, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4, onthot_axis=0)
@@ -145,7 +148,7 @@ def test_onehot_batch_parallel_axis0():
 def test_onehot_batch_parallel_invalid_strategy_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = None
     strategy4 = ((16, 1), (16, 1))
     try:
@@ -157,7 +160,7 @@ def test_onehot_batch_parallel_invalid_strategy_axis0():
 def test_onehot_repeated_calculation_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((4, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4, onthot_axis=0)

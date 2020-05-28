@@ -12,17 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
+import mindspore as ms
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-import mindspore as ms
+from mindspore.ops import operations as P
 from mindspore.train.model import Model
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Min(nn.Cell):
     def __init__(self, dtype):
         super(Min, self).__init__()
@@ -46,7 +50,8 @@ def me_min(inputa, inputb, dtype=ms.float32):
     print(out)
     return out.asnumpy()
 
-def cmp_min(a,b):
+
+def cmp_min(a, b):
     print(a)
     print(b)
 
@@ -55,8 +60,8 @@ def cmp_min(a,b):
     out_me = me_min(a, b)
     print(out_me)
 
+
 def test_minimum_2_2():
     a = np.random.randn(2, 2, 1, 1).astype(np.float32)
     b = np.random.randn(2, 2, 1, 1).astype(np.float32)
-    cmp_min(a,b)
-
+    cmp_min(a, b)

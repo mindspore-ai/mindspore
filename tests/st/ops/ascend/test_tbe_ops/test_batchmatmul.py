@@ -13,13 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn import Cell
-from mindspore.train.model import Model
 import pytest
+
 from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
+from mindspore.train.model import Model
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Net(Cell):
     def __init__(self):
@@ -30,16 +33,19 @@ class Net(Cell):
         x = self.batchmatmul(inputa, inputb)
         return x
 
+
 def tf_me_batchmatmul(inputa, inputb):
     net = Net()
     net.set_train()
     model = Model(net)
     out_me = model.predict(Tensor(inputa), Tensor(inputb))
 
+
 def test_batchmatmul_normal_shape1():
     inputa = np.random.randn(128, 16, 128).astype(np.float32)
     inputb = np.random.randn(128, 128, 64).astype(np.float32)
     tf_me_batchmatmul(Tensor(inputa), Tensor(inputb))
+
 
 def test_batchmatmul_normal_shape2():
     inputa = np.random.randn(1, 16, 128, 128).astype(np.float32)

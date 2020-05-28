@@ -80,8 +80,9 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
       num_rows_exact_(0),
       num_samples_(num_samples),
       dataset_type_(dataset_type) {
+  // Set the column name map (base class field)
   for (int32_t index = 0; index < data_schema_->NumColumns(); index++) {
-    col_name_map_[data_schema_->column(index).name()] = index;
+    column_name_id_map_[data_schema_->column(index).name()] = index;
   }
 
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
@@ -215,8 +216,8 @@ Status CelebAOp::ParseImageAttrInfo() {
       Path path(folder_path_);
       Path file_path = path / split[0];
       if (!extensions_.empty() && extensions_.find(file_path.Extension()) == extensions_.end()) {
-        MS_LOG(INFO) << "Unsupported file found at " << file_path.toString().c_str() << ", its extension is "
-                     << file_path.Extension().c_str() << ".";
+        MS_LOG(WARNING) << "Unsupported file found at " << file_path.toString().c_str() << ", its extension is "
+                        << file_path.Extension().c_str() << ".";
         continue;
       }
       image_labels.first = split[0];
@@ -385,7 +386,6 @@ Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Da
   }
 
   (*db)->set_tensor_table(std::move(deq));
-  (*db)->set_column_name_map(col_name_map_);
   return Status::OK();
 }
 
@@ -407,7 +407,7 @@ Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
                                         TensorShape(std::vector<dsize_t>(1, num_elements)),
                                         data_schema_->column(0).type()));
-  (void)handle.read(reinterpret_cast<char *>(image->StartAddr()), num_elements);
+  (void)handle.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {

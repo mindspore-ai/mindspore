@@ -13,16 +13,17 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore.context import set_auto_parallel_context
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
-from mindspore.common.api import _executor
-from mindspore.ops import composite as C
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common.api import _executor
+from mindspore.context import set_auto_parallel_context
+from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -45,6 +46,11 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y)
 
 
+def compile(net, x, y):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y)
+
+
 # model_parallel test
 def test_two_matmul():
     class Net(nn.Cell):
@@ -57,7 +63,7 @@ def test_two_matmul():
             self.fill = P.Fill()
 
         def construct(self, x, y):
-            fill = self.diag(self.fill(mstype.float32, (128, ), 1.0))
+            fill = self.diag(self.fill(mstype.float32, (128,), 1.0))
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(y, fill)
             out = self.matmul3(out1, out2)
@@ -72,8 +78,8 @@ def test_two_matmul():
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
-    
-    _executor.compile(net, x, y)
+
+    compile(net, x, y)
 
 
 def test_matmul_mul_broadcast2():
@@ -97,8 +103,8 @@ def test_matmul_mul_broadcast2():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
-    
-    _executor.compile(net, x, y)
+    compile(net, x, y)
+
 
 def test_two_matmul1():
     class Net(nn.Cell):
@@ -111,7 +117,7 @@ def test_two_matmul1():
             self.fill = P.Fill()
 
         def construct(self, x, y):
-            fill = self.diag(self.fill(mstype.float32, (128, ), 1.0))
+            fill = self.diag(self.fill(mstype.float32, (128,), 1.0))
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(fill, y)
             out = self.matmul3(out1, out2)
@@ -126,8 +132,9 @@ def test_two_matmul1():
 
     x = Tensor(np.ones([128, 128]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128]), dtype=ms.float32)
-    
-    _executor.compile(net, x, y)
+
+    compile(net, x, y)
+
 
 def test_matmul_add_tensor():
     class Net(nn.Cell):
@@ -150,5 +157,5 @@ def test_matmul_add_tensor():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    
-    _executor.compile(net, x, y)
+
+    compile(net, x, y)

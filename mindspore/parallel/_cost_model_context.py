@@ -239,6 +239,33 @@ class _CostModelContext:
             raise ValueError("Context handle is none in context!!!")
         return self._context_handle.get_multi_subgraphs()
 
+    def set_run_phase(self, phase):
+        """
+        Set the flag of running phase: training (0) or inference (1)
+
+        Args:
+            phase (int): A parameter indicating which phase is running.
+
+        Raises:
+            ValueError: If context handle is none, or phase is not in {0, 1}.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        if phase not in (0, 1):
+            raise ValueError("The argument of set_run_phase() must be '0' or '1', but got {}".format(phase))
+        self._context_handle.set_run_phase(phase)
+
+    def get_run_phase(self):
+        """
+        Get the flag of running phase.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        return self._context_handle.get_run_phase()
+
     def set_costmodel_allreduce_fusion_algorithm(self, algorithm):
         """
         Set costmodel allreduce fusion algorithm.
@@ -453,6 +480,7 @@ set_cost_model_context_func_map = {
     "costmodel_communi_const": cost_model_context().set_costmodel_communi_const,
     "costmodel_communi_bias": cost_model_context().set_costmodel_communi_bias,
     "multi_subgraphs": cost_model_context().set_multi_subgraphs,
+    "run_phase": cost_model_context().set_run_phase,
     "costmodel_allreduce_fusion_algorithm": cost_model_context().set_costmodel_allreduce_fusion_algorithm,
     "costmodel_allreduce_fusion_times": cost_model_context().set_costmodel_allreduce_fusion_times,
     "costmodel_allreduce_fusion_tail_percent": cost_model_context().set_costmodel_allreduce_fusion_tail_percent,
@@ -473,7 +501,8 @@ get_cost_model_context_func_map = {
     "costmodel_communi_threshold": cost_model_context().get_costmodel_communi_threshold,
     "costmodel_communi_const": cost_model_context().get_costmodel_communi_const,
     "costmodel_communi_bias": cost_model_context().get_costmodel_communi_bias,
-    "multi_subgraphs": cost_model_context().get_multi_subgraphs(),
+    "multi_subgraphs": cost_model_context().get_multi_subgraphs,
+    "run_phase": cost_model_context().get_run_phase,
     "costmodel_allreduce_fusion_algorithm": cost_model_context().get_costmodel_allreduce_fusion_algorithm,
     "costmodel_allreduce_fusion_times": cost_model_context().get_costmodel_allreduce_fusion_times,
     "costmodel_allreduce_fusion_tail_percent": cost_model_context().get_costmodel_allreduce_fusion_tail_percent,
@@ -488,7 +517,7 @@ get_cost_model_context_func_map = {
 
 @args_type_check(device_memory_capacity=float, costmodel_alpha=float, costmodel_beta=float, costmodel_gamma=float,
                  costmodel_communi_threshold=float, costmodel_communi_const=float, costmodel_communi_bias=float,
-                 multi_subgraphs=bool,
+                 multi_subgraphs=bool, run_phase=int,
                  costmodel_allreduce_fusion_algorithm=int, costmodel_allreduce_fusion_times=int,
                  costmodel_allreduce_fusion_tail_percent=float, costmodel_allreduce_fusion_tail_time=float,
                  costmodel_allreduce_fusion_allreduce_inherent_time=float,
@@ -510,6 +539,7 @@ def set_cost_model_context(**kwargs):
         costmodel_communi_const (float): A parameter used in adjusting communication calculation for practice.
         costmodel_communi_bias (float): A parameter used in adjusting communication calculation for practice.
         multi_subgraphs (bool): A parameter used in marking the flag of ANF graph containing multiple subgraphs.
+        run_phase (int): A parameter indicating which phase is running: training (0) or inference (1). Default: 0.
         costmodel_allreduce_fusion_algorithm (int): The allreduce fusion algorithm.
             0: bypass allreduce fusion;
             1: only use backward computation time to group allreduce;

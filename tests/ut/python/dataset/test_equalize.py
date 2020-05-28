@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
 import matplotlib.pyplot as plt
-from mindspore import log as logger
+import numpy as np
+
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
+from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
@@ -37,65 +38,64 @@ def visualize(image_original, image_equalize):
         plt.title("DE Color Equalized image")
 
     plt.show()
-    
+
 
 def test_equalize(plot=False):
     """
     Test Equalize
     """
     logger.info("Test Equalize")
-    
+
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224,224)),
-                                       F.ToTensor()])    
-    
+                                       F.Resize((224, 224)),
+                                       F.ToTensor()])
+
     ds_original = ds.map(input_columns="image",
                          operations=transforms_original())
-    
+
     ds_original = ds_original.batch(512)
-            
-    for idx, (image,label) in enumerate(ds_original):
+
+    for idx, (image, label) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2,3,1))
+            images_original = np.transpose(image, (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2,3,1)),
-                                        axis=0)    
+                                        np.transpose(image, (0, 2, 3, 1)),
+                                        axis=0)
 
-    # Color Equalized Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+            # Color Equalized Images
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_equalize = F.ComposeOp([F.Decode(),
-                                       F.Resize((224,224)),
+                                       F.Resize((224, 224)),
                                        F.Equalize(),
-                                       F.ToTensor()])    
-    
+                                       F.ToTensor()])
+
     ds_equalize = ds.map(input_columns="image",
-                                 operations=transforms_equalize())
-    
-    ds_equalize = ds_equalize.batch(512)    
-      
-    for idx, (image,label) in enumerate(ds_equalize):
+                         operations=transforms_equalize())
+
+    ds_equalize = ds_equalize.batch(512)
+
+    for idx, (image, label) in enumerate(ds_equalize):
         if idx == 0:
-            images_equalize = np.transpose(image, (0, 2,3,1))
+            images_equalize = np.transpose(image, (0, 2, 3, 1))
         else:
             images_equalize = np.append(images_equalize,
-                                      np.transpose(image, (0, 2,3,1)),
-                                      axis=0)
-    
+                                        np.transpose(image, (0, 2, 3, 1)),
+                                        axis=0)
+
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_equalize[i]-images_original[i])**2)
+        mse[i] = np.mean((images_equalize[i] - images_original[i]) ** 2)
     logger.info("MSE= {}".format(str(np.mean(mse))))
-    
+
     if plot:
         visualize(images_original, images_equalize)
-        
+
 
 if __name__ == "__main__":
     test_equalize(plot=True)
-    

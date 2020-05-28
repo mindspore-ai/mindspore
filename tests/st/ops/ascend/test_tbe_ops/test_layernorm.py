@@ -13,14 +13,17 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.nn import LayerNorm
+import pytest
+
+from mindspore import context
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
+from mindspore.nn import LayerNorm
 from mindspore.train.model import Model
-from mindspore import log as logger
-import pytest
-from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Net(Cell):
     def __init__(self, input_shape, begin_norm_axis, begin_params_axis, gamma, beta):
@@ -30,6 +33,7 @@ class Net(Cell):
     def construct(self, input):
         x = self.layernorm(input)
         return x
+
 
 def pt_me_layernorm(input_data, normalized_shape, gamma, beta, axis):
     net = Net(normalized_shape, begin_norm_axis=axis,
@@ -42,6 +46,7 @@ def pt_me_layernorm(input_data, normalized_shape, gamma, beta, axis):
     logger.info("Check me result:")
     logger.info(out_me.asnumpy())
 
+
 @pytest.mark.lower_bs
 def test_normal_layernorm_1_128_1024_axis_2():
     """
@@ -52,4 +57,4 @@ def test_normal_layernorm_1_128_1024_axis_2():
     gamma.fill(1.1)
     beta = np.random.randn(1024).astype(np.float32)
     beta.fill(0.1)
-    pt_me_layernorm(input_data, (1024, ), gamma, beta, 2)
+    pt_me_layernorm(input_data, (1024,), gamma, beta, 2)

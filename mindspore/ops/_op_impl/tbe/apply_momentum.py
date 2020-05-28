@@ -30,23 +30,22 @@ apply_momentum_op_info = TBERegOp("ApplyMomentum") \
     .input(3, "grad", False, "required", "all") \
     .input(4, "momentum", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
-    .output(1, "accum", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+                  DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_Default, DataType.F16_5HD,
-                  DataType.F16_Default, DataType.F16_5HD, DataType.F16_5HD) \
+                  DataType.F16_Default, DataType.F16_5HD) \
     .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_Default, DataType.F16_C1HWNCoC0,
-                  DataType.F16_Default, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0) \
+                  DataType.F16_Default, DataType.F16_C1HWNCoC0) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_Default, DataType.F16_FracZ,
-                  DataType.F16_Default, DataType.F16_FracZ, DataType.F16_FracZ) \
+                  DataType.F16_Default, DataType.F16_FracZ) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+                  DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_Default, DataType.F32_5HD,
-                  DataType.F32_Default, DataType.F32_5HD, DataType.F32_5HD) \
+                  DataType.F32_Default, DataType.F32_5HD) \
     .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_Default, DataType.F32_C1HWNCoC0,
-                  DataType.F32_Default, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0) \
+                  DataType.F32_Default, DataType.F32_C1HWNCoC0) \
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_Default, DataType.F32_FracZ,
-                  DataType.F32_Default, DataType.F32_FracZ, DataType.F32_FracZ) \
+                  DataType.F32_Default, DataType.F32_FracZ) \
     .get_op_info()
 
 

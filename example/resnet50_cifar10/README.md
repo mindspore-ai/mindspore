@@ -8,9 +8,9 @@ This is an example of training ResNet-50 with CIFAR-10 dataset in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset [CIFAR-10](http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz).
+- Download the dataset CIFAR-10
 
-> Unzip the CIFAR-10 dataset to any path you want and the folder structure should be as follows:
+> Unzip the CIFAR-10 dataset to any path you want and the folder structure should include train and eval dataset as follows:
 > ```
 > .  
 > ├── cifar-10-batches-bin  # train dataset
@@ -26,9 +26,9 @@ This is an example of training ResNet-50 with CIFAR-10 dataset in MindSpore.
 ├── dataset.py                      # data preprocessing
 ├── eval.py                         # infer script
 ├── lr_generator.py                 # generate learning rate for each step
-├── run_distribute_train.sh         # launch distributed training
+├── run_distribute_train.sh         # launch distributed training(8 pcs)
 ├── run_infer.sh                    # launch infering
-├── run_standalone_train.sh         # launch standalone training 
+├── run_standalone_train.sh         # launch standalone training(1 pcs)
 └── train.py                        # train script
 ```
 
@@ -51,11 +51,11 @@ Parameters for both training and inference can be set in config.py.
 "save_checkpoint_steps": 195,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint
+"warmup_epochs": 5,               # number of warmup epoch
+"lr_decay_mode": "poly"           # decay mode can be selected in steps, ploy and default
 "lr_init": 0.01,                  # initial learning rate
 "lr_end": 0.00001,                # final learning rate
 "lr_max": 0.1,                    # maximum learning rate
-"warmup_epochs": 5,               # number of warmup epoch
-"lr_decay_mode": "poly"           # decay mode can be selected in steps, ploy and default
 ```
 
 ## Running the example
@@ -65,7 +65,7 @@ Parameters for both training and inference can be set in config.py.
 #### Usage
 
 ```
-# distribute training
+# distributed training
 Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
 
 # standalone training
@@ -90,7 +90,7 @@ sh run_standalone_train.sh ~/cifar-10-batches-bin
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the followings in log.
 
 ```
-# distribute training result(8p)
+# distribute training result(8 pcs)
 epoch: 1 step: 195, loss is 1.9601055
 epoch: 2 step: 195, loss is 1.8555021
 epoch: 3 step: 195, loss is 1.6707983

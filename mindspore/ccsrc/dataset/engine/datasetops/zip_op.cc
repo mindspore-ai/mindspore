@@ -19,6 +19,7 @@
 #include "dataset/core/constants.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/core/config_manager.h"
 #include "dataset/core/global_context.h"
 #include "utils/log_adapter.h"
@@ -92,9 +93,8 @@ Status ZipOp::operator()() {
       if (!curr_table->empty()) {
         std::unique_ptr<DataBuffer> curr_buffer = std::make_unique<DataBuffer>(buffer_id_, DataBuffer::kDeBFlagNone);
         curr_buffer->set_tensor_table(std::move(curr_table));
-        curr_buffer->set_column_name_map(col_name_id_map_);
         MS_LOG(DEBUG) << "Zip operator finished one buffer, pushing, rows " << curr_buffer->NumRows() << ", cols "
-                      << curr_buffer->NumCols() << ", map " << col_name_id_map_.size() << ".";
+                      << curr_buffer->NumCols() << ", map " << column_name_id_map_.size() << ".";
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
         buffer_id_++;
       }
@@ -111,7 +111,7 @@ Status ZipOp::operator()() {
 
   // 5 handle eof
   // propagate eof here.
-  MS_LOG(INFO) << "Zip operator got EOF, propagating.";
+  MS_LOG(DEBUG) << "Zip operator got EOF, propagating.";
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
@@ -141,20 +141,20 @@ Status ZipOp::prepare(TensorQTable *const table) {
 
   // At this point we have at least 1 row produced, so all child iterators have their column names such that we
   // can produce our column name map now.
-  col_name_id_map_ = {};
+  column_name_id_map_ = {};
   for (int32_t i = 0; i < children_num_; ++i) {
     // Initializing col_name_id_map_ from the first data buffer.
-    const std::unordered_map<std::string, int32_t> col_name_id_map = child_iterators_[i]->col_name_id_map();
-    int32_t colsCurrent = col_name_id_map_.size();
+    const std::unordered_map<std::string, int32_t> col_name_id_map = child_iterators_[i]->GetColumnNameMap();
+    int32_t colsCurrent = column_name_id_map_.size();
     // the update code below shouldn't do anything bad if the column name already exists.
     for (const auto &pair : col_name_id_map) {
       std::string name = pair.first;
       int32_t old_id = pair.second;
       // check if name already exists in column name descriptor
-      if (col_name_id_map_.count(name) == 1) {
+      if (column_name_id_map_.count(name) == 1) {
         RETURN_STATUS_UNEXPECTED("key already exists when zipping datasets");
       }
-      col_name_id_map_[name] = old_id + colsCurrent;
+      column_name_id_map_[name] = old_id + colsCurrent;
     }
   }
   return Status::OK();
@@ -188,12 +188,12 @@ Status ZipOp::getNextTensorRow(TensorRow *const new_zip_row) {
     if (new_row.empty()) {
       // If we did not get a row from any of the children, then it's the end of an epoch and we can move
       // to drain state.
-      MS_LOG(INFO) << "Zip operator child iterator produced empty row.";
+      MS_LOG(DEBUG) << "Zip operator child iterator produced empty row.";
       draining_ = true;
       new_zip_row->clear();
       // If we picked up an eof here, then we are completely done.
       if ((child_iterators_[i])->eof_handled()) {
-        MS_LOG(INFO) << "Zip operator iterator got EOF.";
+        MS_LOG(DEBUG) << "Zip operator iterator got EOF.";
         eof_ = true;
       }
       return Status::OK();
@@ -250,6 +250,12 @@ Status ZipOp::EofReceived(int32_t) {
 Status ZipOp::EoeReceived(int32_t) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ZipOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ZipOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

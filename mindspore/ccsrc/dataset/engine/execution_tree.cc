@@ -20,6 +20,8 @@
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/util/task_manager.h"
 
+#include "dataset/engine/opt/util/printer_pass.h"
+
 namespace mindspore {
 namespace dataset {
 // Constructor
@@ -118,7 +120,7 @@ Status ExecutionTree::Launch() {
   }
   std::ostringstream ss;
   ss << *this;
-  MS_LOG(INFO) << "Printing the tree before launch tasks:\n" << ss.str();
+  MS_LOG(DEBUG) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
     // require a thread to execute.  Instead, the work of this operator is executed inlined
@@ -161,10 +163,54 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
   return Status::OK();
 }
 
+// The driver of the prepare phase of the execution tree.
+// Prepare phase consists of three sub phases
+//
+// 1. PrepareTreePreAction()
+//    Compulsory transformation/action pre optimization.
+//    For example, CacheOp Insertion
+//
+// 2. Optimize()
+//    Optimization transformation/action, optional
+//    For example, MapOp Fusion
+//
+// 3. PrepareTreePostAction()
+//    Compulsory transformation/action post optimization.
+//    For example, repeatOp inlining
+//
+// @return Status - The error code return
+Status ExecutionTree::Prepare() {
+  // Pre optimization compulsory transformation
+  RETURN_IF_NOT_OK(this->PrepareTreePreAction());
+
+  // Optimization transformation
+  RETURN_IF_NOT_OK(this->Optimize());
+
+  // Post optimization compulsory transformation
+  RETURN_IF_NOT_OK(this->PrepareTreePostAction());
+
+  // Existing transformation implementation, will be removed later
+  RETURN_IF_NOT_OK(this->PrepareDeprecated());
+  return Status::OK();
+}
+
+Status ExecutionTree::PrepareTreePreAction() { return Status::OK(); }
+
+Status ExecutionTree::PrepareTreePostAction() { return Status::OK(); }
+
+Status ExecutionTree::Optimize() {
+  //  auto pp = new PrinterPass();
+  //  bool modified = false;
+  //  pp->Run(this, &modified);
+  return Status::OK();
+}
+
 // The driver of the prepare phase of the execution tree. The prepare phase will recursively
 // walk the tree to perform modifications to the tree or specific nodes within the tree to get
 // it ready for execution.
-Status ExecutionTree::Prepare() {
+//
+// This driver is deprecated.
+Status ExecutionTree::PrepareDeprecated() {
   // Tree must be in pending prepare state before we can assign root to it
   if (tree_state_ != kDeTStatePrepare) {
     std::string err_msg =

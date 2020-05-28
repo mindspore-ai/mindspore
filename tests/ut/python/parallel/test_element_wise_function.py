@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
+
 import mindspore as ms
-from mindspore import context
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -41,6 +42,11 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
+
+
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
 
 
 def test_matmul_pow():
@@ -66,7 +72,7 @@ def test_matmul_pow():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_matmul_exp():
@@ -85,14 +91,14 @@ def test_matmul_exp():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), )
+    strategy2 = ((4, 2),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_matmul_log():
@@ -111,14 +117,14 @@ def test_matmul_log():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), )
+    strategy2 = ((4, 2),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_matmul_logical_not():
@@ -137,7 +143,7 @@ def test_matmul_logical_not():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), )
+    strategy2 = ((4, 2),)
     strategy3 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -145,7 +151,8 @@ def test_matmul_logical_not():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_matmul_cast():
     class Net(nn.Cell):
@@ -163,7 +170,7 @@ def test_matmul_cast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), )
+    strategy2 = ((4, 2),)
     strategy3 = ((1, 4), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -171,7 +178,7 @@ def test_matmul_cast():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.int32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_cast_before_mirror():
@@ -191,11 +198,11 @@ def test_cast_before_mirror():
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
+
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float16)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_cast_before_mirror1():
@@ -215,11 +222,11 @@ def test_cast_before_mirror1():
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
+
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
     y = Tensor(np.ones([32, 64]), dtype=ms.float16)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_cast_before_mirror2():
@@ -239,11 +246,11 @@ def test_cast_before_mirror2():
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
+
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
     y = Tensor(np.ones([32, 64]), dtype=ms.float16)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_cast_before_mirror3():
@@ -263,11 +270,11 @@ def test_cast_before_mirror3():
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
+
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
     y = Tensor(np.ones([32, 64]), dtype=ms.float16)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_mul_two_cast():
@@ -289,11 +296,11 @@ def test_mul_two_cast():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((8, 1), (8, 1))
-    strategy3 = ((8, 1), )
+    strategy3 = ((8, 1),)
     net = GradWrap(Net(strategy1, strategy2, strategy3))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)

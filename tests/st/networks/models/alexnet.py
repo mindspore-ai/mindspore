@@ -14,7 +14,6 @@
 # ============================================================================
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.nn import Dense
 
 
 class AlexNet(nn.Cell):

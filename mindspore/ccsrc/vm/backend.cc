@@ -327,5 +327,9 @@ MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_
   sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 }
 
+GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return sess_->CompileGraph(fg); }
+
+VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
+
 }  // namespace compile
 }  // namespace mindspore

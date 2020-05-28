@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
+
 import mindspore.dataset as ds
 from mindspore import log as logger
-import numpy as np
 
 
 def test_batch_corner_cases():
@@ -77,7 +78,8 @@ def test_variable_size_batch():
         return ([np.copy(arr) for arr in colList],)
 
     def test_repeat_batch(gen_num, r, drop, func, res):
-        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).repeat(r).batch(batch_size=func, drop_remainder=drop)
+        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).repeat(r).batch(batch_size=func,
+                                                                                     drop_remainder=drop)
         for item in data1.create_dict_iterator():
             res.append(item["num"])
 
@@ -91,7 +93,8 @@ def test_variable_size_batch():
         return res
 
     def test_batch_repeat(gen_num, r, drop, func, res):
-        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size=func, drop_remainder=drop).repeat(r)
+        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size=func, drop_remainder=drop).repeat(
+            r)
         for item in data1.create_dict_iterator():
             res.append(item["num"])
 

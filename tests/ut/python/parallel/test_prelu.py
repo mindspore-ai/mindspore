@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -43,6 +44,11 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y)
 
 
+def compile(net, x, y):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y)
+
+
 def test_prelu_single_success1():
     class Net(nn.Cell):
         def __init__(self):
@@ -57,7 +63,8 @@ def test_prelu_single_success1():
     net = GradWrap(NetWithLoss(Net()))
     x = Tensor(np.random.rand(1, 33, 4, 4), ms.float32)
     w = Tensor(np.random.rand(33), ms.float32)
-    _executor.compile(net, x, w)
+    compile(net, x, w)
+
 
 def test_prelu_single_success2():
     class Net(nn.Cell):
@@ -73,41 +80,48 @@ def test_prelu_single_success2():
     net = GradWrap(NetWithLoss(Net()))
     x = Tensor(np.random.rand(1, 33, 4, 4), ms.float32)
     w = Tensor([0.1], ms.float32)
-    _executor.compile(net, x, w)
+    compile(net, x, w)
+
 
 def test_prelu_parallel_success1():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
             self.prelu = P.PReLU().set_strategy(strategy)
+
         def construct(self, x, y):
             out = self.prelu(x, y)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    strategy = ((1, 1, 1, 1), (1, ))
-    x = Tensor(np.random.rand(4, 4, 32, 64),dtype=ms.float32)
-    w = Tensor(np.random.rand(4),dtype=ms.float32)
+    strategy = ((1, 1, 1, 1), (1,))
+    x = Tensor(np.random.rand(4, 4, 32, 64), dtype=ms.float32)
+    w = Tensor(np.random.rand(4), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net(strategy)))
-    _executor.compile(net, x, w)
+    compile(net, x, w)
+
 
 def test_prelu_parallel_success2():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
             self.prelu = P.PReLU().set_strategy(strategy)
+
         def construct(self, x, y):
             out = self.prelu(x, y)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=64, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    strategy = ((2, 1, 4, 8), (1, ))
-    x = Tensor(np.random.rand(4, 4, 32, 64),dtype=ms.float32)
-    w = Tensor(np.random.rand(4),dtype=ms.float32)
+    strategy = ((2, 1, 4, 8), (1,))
+    x = Tensor(np.random.rand(4, 4, 32, 64), dtype=ms.float32)
+    w = Tensor(np.random.rand(4), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net(strategy)))
-    _executor.compile(net, x, w)
+    compile(net, x, w)
+
 
 def test_prelu_parallel_success3():
     class NetWithLoss(nn.Cell):
@@ -119,7 +133,6 @@ def test_prelu_parallel_success3():
         def construct(self, x, y, w):
             predict = self.network(x, y, w)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -134,6 +147,7 @@ def test_prelu_parallel_success3():
             super().__init__()
             self.matmul = P.MatMul().set_strategy(strategy1)
             self.prelu = P.PReLU().set_strategy(strategy2)
+
         def construct(self, x, y, w):
             out = self.matmul(x, y)
             out = self.prelu(out, w)
@@ -143,44 +157,50 @@ def test_prelu_parallel_success3():
     context.set_auto_parallel_context(device_num=64, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((32, 1), (1, ))
-    x = Tensor(np.random.rand(128, 64),dtype=ms.float32)
-    y = Tensor(np.random.rand(64, 16),dtype=ms.float32)
-    w = Tensor(np.random.rand(16),dtype=ms.float32)
+    strategy2 = ((32, 1), (1,))
+    x = Tensor(np.random.rand(128, 64), dtype=ms.float32)
+    y = Tensor(np.random.rand(64, 16), dtype=ms.float32)
+    w = Tensor(np.random.rand(16), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    net.set_auto_parallel()
     _executor.compile(net, x, y, w)
+
 
 def test_prelu_parallel_success4():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
             self.prelu = P.PReLU().set_strategy(strategy)
+
         def construct(self, x, y):
             out = self.prelu(x, y)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=64, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    strategy = ((2, 4, 4, 2), (4, ))
-    x = Tensor(np.random.rand(4, 16, 32, 64),dtype=ms.float32)
-    w = Tensor(np.random.rand(16),dtype=ms.float32)
+    strategy = ((2, 4, 4, 2), (4,))
+    x = Tensor(np.random.rand(4, 16, 32, 64), dtype=ms.float32)
+    w = Tensor(np.random.rand(16), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net(strategy)))
-    _executor.compile(net, x, w)
+    compile(net, x, w)
+
 
 def test_prelu_parallel_success5():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
             self.prelu = P.PReLU().set_strategy(strategy)
+
         def construct(self, x, y):
             out = self.prelu(x, y)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=64, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    strategy = ((2, 4, 4, 2), (1, ))
-    x = Tensor(np.random.rand(4, 16, 32, 64),dtype=ms.float32)
-    w = Tensor(np.random.rand(1),dtype=ms.float32)
+    strategy = ((2, 4, 4, 2), (1,))
+    x = Tensor(np.random.rand(4, 16, 32, 64), dtype=ms.float32)
+    w = Tensor(np.random.rand(1), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net(strategy)))
-    _executor.compile(net, x, w)
-
+    compile(net, x, w)

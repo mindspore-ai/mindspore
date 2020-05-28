@@ -14,8 +14,8 @@
 # ==============================================================================
 import numpy as np
 
-import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR_TF2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -46,7 +46,7 @@ def generator_md():
     create a dataset with [0, 1, 2, 3, 4]
     """
     for i in range(5):
-        yield (np.array([i]), )
+        yield (np.array([i]),)
 
 
 def test_generator_skip():
@@ -138,6 +138,7 @@ def test_skip_repeat_3():
     assert len(buf) == 6
     assert buf == [3, 4, 3, 4, 3, 4]
 
+
 def test_skip_take_1():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
@@ -152,6 +153,7 @@ def test_skip_take_1():
         buf.append(data[0][0])
     assert len(buf) == 2
     assert buf == [2, 3]
+
 
 def test_skip_take_2():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
@@ -171,7 +173,8 @@ def test_skip_take_2():
 
 def generator_1d():
     for i in range(64):
-        yield (np.array([i]), )
+        yield (np.array([i]),)
+
 
 def test_skip_filter_1():
     dataset = ds.GeneratorDataset(generator_1d, ['data'])
@@ -182,6 +185,7 @@ def test_skip_filter_1():
     for item in dataset:
         buf.append(item[0][0])
     assert buf == [5, 6, 7, 8, 9, 10]
+
 
 def test_skip_filter_2():
     dataset = ds.GeneratorDataset(generator_1d, ['data'])

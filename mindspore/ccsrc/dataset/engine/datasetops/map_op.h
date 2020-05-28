@@ -171,6 +171,12 @@ class MapOp : public ParallelOp {
   // @return the number of threads consuming data from previous op's output Connector.
   int32_t num_consumers() const override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // Local queues where worker threads can pop from.
   // Popping directly from the Connector can block if the previous designated threads haven't pop.
@@ -185,6 +191,12 @@ class MapOp : public ParallelOp {
 
   // Variable to store the column name that the tensorOps are producing
   std::vector<std::string> out_columns_;
+
+  // Boolean mapping, true means to keep the column.
+  std::vector<bool> keep_input_columns_;
+
+  // Indices of the columns to process.
+  std::vector<size_t> to_process_indices_;
 
   // Performance mode is when the main thread creates local queues, pulls databuffers from the previous
   // op's Connector and distributes them to the local queues. Workers pull from the local queues.
@@ -201,51 +213,40 @@ class MapOp : public ParallelOp {
   // @return Status The error code return
   Status WorkerEntry(int32_t worker_id) override;  //  In: workerId assigned by tree_
 
+  // Private helper function for getting the next buffer
+  // When PerformanceMode is enabled, workers pop from the local queue.
+  // Otherwise, workers pop from the first child output Connector.
+  // @param p_buffer - the buffer to return
+  // @return Status return code
+  Status FetchNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id) {
+    if (perf_mode_) {
+      RETURN_IF_NOT_OK(local_queues_[worker_id]->PopFront(p_buffer));
+    } else {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(p_buffer, worker_id));
+    }
+    return Status::OK();
+  }
+
   // Private function for worker thread to perform TensorOp's compute function and get the result.
   // @param in_buffer A raw pointer to the DataBuffer. A raw pointer is fine because this function doesn't manage memory
   //     and is not shared with other threads.
-  // @param to_process_indices Indices of columns to be processed by the TensorOp.
   // @param[out] new_tensor_table A new Tensor Table to be populated in this function.
-  // @param keep_input_columns Keeping track of which columns to keep (not used by TensorOp).
-  // @param input_columns The vector of input column names used in the current thread.
-  // @param output_columns The vector of output column names used in the current thread.
-  Status WorkerCompute(DataBuffer *in_buffer, const std::vector<size_t> &to_process_indices,
-                       TensorQTable *new_tensor_table, const std::vector<bool> &keep_input_columns,
-                       std::vector<std::string> *input_columns, std::vector<std::string> *output_columns);
-
-  // Private function for validating if each of the user specified input column names
-  // exist in the DataBuffer.
-  // @param col_name_id_map The column name to index mapping obtained from DataBuffer.
-  // @param input_columns The vector of input column names used in the current thread.
-  // @return Status The error code return
-  Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
-                           std::vector<std::string> *input_columns);
+  Status WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_table);
 
   // Private function that create the final column name to index mapping and
   // get indices of the columns this mapop does not use.
-  // @param col_name_id_map The column name to index mapping obtained from DataBuffer.
-  // @param keep_input_columns To mark which columns are to be kept (not used in mapOp).
-  // @param input_columns The vector of input column names used in the current thread.
-  // @param output_columns The vector of output column names used in the current thread.
-  // @return finalColNameIdMap The final column name to index mapping.
-  std::unordered_map<std::string, int32_t> CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name_id_map,
-                                                             const std::vector<bool> &keep_input_columns,
-                                                             std::vector<std::string> *input_columns,
-                                                             std::vector<std::string> *output_columns);
+  // @param col_name_id_map The column name to index mapping obtained from child operator
+  void CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name_id_map);
 
   // Private function that initialize some internal data structure used by WorkerEntry()
   // @param in_buf A raw pointer to the DataBuffer. A raw pointer is fine because this function does not manage memory
   //     and is not shared with other threads.
-  // @param[out] keep_input_columns Keeping track of which columns to keep (not used by TensorOp)
-  // @param[out] to_process_indices Indices of columns to be processed by the TensorOp
-  // @param[out] final_col_name_id_map Create the final column name id map. This final mapping will replace the old one
-  //     if the TensorOp Compute() is successful.
-  // @param input_columns The vector of input column names used in the current thread.
-  // @param output_columns The vector of output column names used in the current thread.
-  Status WorkerEntryInit(const DataBuffer *in_buf, std::vector<bool> *keep_input_columns,
-                         std::vector<size_t> *to_process_indices,
-                         std::unordered_map<std::string, int32_t> *final_col_name_id_map,
-                         std::vector<std::string> *input_columns, std::vector<std::string> *output_columns);
+  Status WorkerEntryInit(const DataBuffer *in_buf);
+
+  // Validating if each of the input_columns exists in the DataBuffer.
+  // @param - the column map to check
+  // @return - status return code
+  Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map);
 };
 }  // namespace dataset
 }  // namespace mindspore

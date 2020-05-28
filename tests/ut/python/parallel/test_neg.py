@@ -13,11 +13,12 @@
 # limitations under the License.
 
 import numpy as np
+
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
+from mindspore.common.api import _executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
-from mindspore.common.api import _executor
 
 
 class Net(Cell):
@@ -41,14 +42,15 @@ _b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
 def compile(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
-    _executor.compile(train_net, _x,  _b)
+    train_net.set_auto_parallel()
+    _executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
 
 
 def test_neg_data_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((16, 1, 1), (16, 1, 1))
-    strategy2 = ((16, 1, 1), )
+    strategy2 = ((16, 1, 1),)
     net = Net(_w1, strategy1, strategy2)
     compile(net)
 
@@ -56,7 +58,7 @@ def test_neg_data_parallel():
 def test_neg_model_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((1, 1, 16), (1, 1, 16))
-    strategy2 = ((1, 1, 16), )
+    strategy2 = ((1, 1, 16),)
     net = Net(_w1, strategy1, strategy2)
     compile(net)
 
@@ -64,7 +66,7 @@ def test_neg_model_parallel():
 def test_neg_hybrid_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((2, 2, 4), )
+    strategy2 = ((2, 2, 4),)
     net = Net(_w1, strategy1, strategy2)
     compile(net)
 
@@ -78,7 +80,6 @@ def test_neg_auto_parallel():
 def test_neg_repeat_calc():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((1, 2, 2), )
+    strategy2 = ((1, 2, 2),)
     net = Net(_w1, strategy1, strategy2)
     compile(net)
-

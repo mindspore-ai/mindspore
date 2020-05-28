@@ -59,7 +59,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     if (is_null_input_) {
       return true;
     }
@@ -107,8 +107,8 @@ class PoolingGpuFwdKernel : public GpuKernel {
                                  SizeToInt(output_shape[1]), SizeToInt(output_shape[2]), SizeToInt(output_shape[3])),
       "cudnnSetTensor4dDescriptor failed");
     auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
-    int window_height = window[3];
-    int window_width = window[2];
+    int window_height = window[2];
+    int window_width = window[3];
     stride_ = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
     SetPoolingMode(kernel_node);
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {

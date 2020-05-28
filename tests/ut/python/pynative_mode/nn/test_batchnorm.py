@@ -57,9 +57,9 @@ def test_bn2d():
                         moving_mean_init=moving_mean,
                         moving_var_init=moving_var)
 
-    #3-channel RGB
+    # 3-channel RGB
     input_data = Tensor(np.random.randint(0, 1, [1, 3, 224, 224]).astype(np.float32))
-    output = bn.construct(input_data)
+    output = bn(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0][0][0], (np.float32, np.float64))
 
@@ -68,7 +68,7 @@ def test_bn1d():
     """ut of nn.BatchNorm1d"""
     bn = nn.BatchNorm1d(3)
     input_data = Tensor(np.random.randint(0, 1, [1, 3, 100, 100]).astype(np.float32))
-    output = bn.construct(input_data)
+    output = bn(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0][0][0], (np.float32, np.float64))
 

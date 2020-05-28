@@ -278,6 +278,36 @@ class _VirtualDatasetCell(Cell):
         return self._backbone(data_, label_)
 
 
+class VirtualDatasetCellTriple(Cell):
+    """
+    Wrap the network with virtual dataset to convert data parallel layout to model parallel layout.
+
+    VirtualDatasetCellTriple is a virtual Primitive, it does not exist in the final executing graph. Inputs and outputs
+    of VirtualDatasetCellTriple are distributed in data parallel pattern, tensor redistribution Primitives is inserted
+    dynamically during the graph compile process.
+
+    Note:
+        Only used in semi auto parallel and auto parallel mode. There are three inputs, as contrary to two inputs in
+        _VirtualDatasetCell.
+
+    Args:
+        backbone (Cell): The target network to wrap.
+
+    Examples:
+        >>> net = Net()
+        >>> net = VirtualDatasetCellTriple(net)
+    """
+
+    def __init__(self, backbone):
+        super(VirtualDatasetCellTriple, self).__init__(auto_prefix=False)
+        self._backbone = backbone
+        self._virtual_dataset = _VirtualDataset()
+
+    def construct(self, a, b, c):
+        a_, b_, c_ = self._virtual_dataset(a, b, c)
+        return self._backbone(a_, b_, c_)
+
+
 class WithEvalCell(Cell):
     r"""
     Cell that returns loss, output and label for evaluation.

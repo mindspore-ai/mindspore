@@ -44,15 +44,18 @@ class DatasetHelper:
     def __init__(self, dataset, dataset_sink_mode=True):
         check_bool(dataset_sink_mode)
 
-        iterclass = _DatasetIterGE
-        if not dataset_sink_mode:
-            iterclass = _DatasetIterFeed
-        elif not context.get_context("enable_ge"):
-            if context.get_context("enable_loop_sink"):
-                iterclass = _DatasetIterMSLoopSink
+        if dataset_sink_mode:
+            if context.get_context("enable_ge"):
+                iterclass = _DatasetIterGE
             else:
-                iterclass = _DatasetIterMS
-
+                if context.get_context("device_target") == "Ascend":
+                    iterclass = _DatasetIterMSLoopSink
+                elif context.get_context("device_target") == "GPU":
+                    iterclass = _DatasetIterMS
+                elif context.get_context("device_target") == "CPU":
+                    raise RuntimeError("Currently dataset sink mode is not supported when the device target is CPU.")
+        else:
+            iterclass = _DatasetIterFeed
         self.iter = iterclass(dataset)
 
     def __iter__(self):
@@ -83,12 +86,6 @@ class _DatasetIter:
         self.dataset = dataset
         dataset_types, dataset_shapes = _get_types_and_shapes(dataset)
         self.dataset_types, self.dataset_shapes = dataset_types, dataset_shapes
-        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
-        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
-        # times the batch dimension of tensors for run
-        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            device_num = _get_device_num()
-            self.dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
     def __iter__(self):
         self.ind = 0
@@ -110,23 +107,30 @@ class _DatasetIter:
             if dataset.get_dataset_size() % loop_size != 0:
                 raise ValueError(f'Dataset size {dataset.get_dataset_size()} and '
                                  f'loop_size {loop_size} are not matched.')
-            loop_count = int(dataset.get_dataset_size()/loop_size)
+            loop_count = int(dataset.get_dataset_size() / loop_size)
         return loop_count
 
 
 class _DatasetIterMSLoopSink(_DatasetIter):
-    """Iter for context (enable_loop_sink=True)"""
+    """Iter for context (device_target=Ascend)"""
     def __init__(self, dataset):
         super(_DatasetIterMSLoopSink, self).__init__(dataset)
         self.loop_count = self.get_loop_count(dataset)
+        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
+        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
+        # times the batch dimension of tensors for run. Now only support LoopSink.
+        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            device_num = _get_device_num()
+            self.dataset_shapes = _to_full_shapes(self.dataset_shapes, device_num)
 
         def op():
             return tuple()
+
         self.op = op
 
 
 class _DatasetIterMS(_DatasetIter):
-    """Iter for context (enable_loop_sink=False)"""
+    """Iter for context (device_target=GPU)"""
     def __init__(self, dataset):
         super(_DatasetIterMS, self).__init__(dataset)
         self.loop_count = dataset.get_dataset_size()
@@ -149,11 +153,12 @@ class _DatasetIterGE(_DatasetIter):
 
         def op():
             return tensor_list_run
+
         self.op = op
 
 
 class _DatasetIterFeed:
-    """Iter for feed data"""
+    """Iter for normal(non sink) mode, feed the data from host."""
     def __init__(self, dataset):
         self.dataset = dataset
         self.device_num = _get_device_num()

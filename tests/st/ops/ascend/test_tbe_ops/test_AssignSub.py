@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net, self).__init__()
         self.AssignSub = P.AssignSub()
@@ -39,7 +42,7 @@ class Net(nn.Cell):
 def test_net():
     """test AssignSub"""
     net = Net()
-    x = Tensor(np.ones([1]).astype(np.int32)*100)
+    x = Tensor(np.ones([1]).astype(np.int32) * 100)
 
     print("MyPrintResult dataX:", x)
     result = net(x)

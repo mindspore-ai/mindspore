@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "ir/value.h"
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
@@ -160,6 +161,79 @@ size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &i
   }
   MS_LOG(INFO) << "Get index failed, using SIZE_MAX insted";
   return SIZE_MAX;
+}
+
+void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
+                   const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list) {
+  std::vector<size_t> eli;
+  eli.push_back(node_index);
+  for (size_t i = 0; i < (size_t)graph->nodes[node_index].node_out.size(); i++) {
+    eli.push_back(graph->nodes[node_index].node_out[i]);
+  }
+  eli_list->push_back(eli);
+  for (auto input_index : graph->nodes[node_index].node_in) {
+    auto it = find(graph->nodes[input_index].node_out.begin(), graph->nodes[input_index].node_out.end(), node_index);
+    if (it != graph->nodes[input_index].node_out.end()) {
+      graph->nodes[input_index].node_out.erase(it);
+      for (auto output_index : graph->nodes[node_index].node_out) {
+        graph->nodes[input_index].node_out.push_back(output_index);
+      }
+    }
+  }
+  for (auto output_index : graph->nodes[node_index].node_out) {
+    auto it = find(graph->nodes[output_index].node_in.begin(), graph->nodes[output_index].node_in.end(), node_index);
+    if (it != graph->nodes[output_index].node_in.end()) {
+      graph->nodes[output_index].node_in.erase(it);
+      for (auto input_index : graph->nodes[node_index].node_in) {
+        graph->nodes[output_index].node_in.push_back(input_index);
+      }
+    }
+  }
+}
+
+std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
+                                      const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
+                                      const std::shared_ptr<std::vector<size_t>> index_list) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const std::set<OperatorType> type_list = {
+    OperatorType::kRecOneHot, OperatorType::kRecReLU,      OperatorType::kRecLog,     OperatorType::kRecExp,
+    OperatorType::kRecAdd,    OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd, OperatorType::kRecSub,
+    OperatorType::kRecMul,    OperatorType::kRecDiv,       OperatorType::kRecSqueeze, OperatorType::kRecReduce,
+    OperatorType::kRecCast};
+  for (size_t node_index = 0; node_index < (size_t)graph->nodes.size(); node_index++) {
+    auto type = graph->nodes[node_index].apply.op_type;
+    if (type_list.find(type) != type_list.end()) {
+      Eliminate_Aux(node_index, graph, eli_list);
+    }
+  }
+  index_list->reserve(graph->nodes.size());
+  for (size_t i = 0; i < (size_t)graph->nodes.size(); i++) {
+    index_list->push_back(i);
+  }
+  for (size_t i = 0; i < (size_t)eli_list->size(); i++) {
+    if (eli_list->at(i)[0] >= index_list->size()) {
+      MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
+    }
+    index_list->at(eli_list->at(i)[0]) = SIZE_MAX;
+    for (size_t j = eli_list->at(i)[0] + 1; j < (size_t)index_list->size(); j++) {
+      index_list->at(j)--;
+    }
+  }
+  std::shared_ptr<Graph> new_graph(new Graph);
+  for (size_t i = 0; i < graph->nodes.size(); i++) {
+    if (index_list->at(i) > SIZE_MAX / 2) {
+      continue;
+    }
+
+    new_graph->nodes.push_back(graph->nodes[i]);
+    for (size_t j = 0; j < new_graph->nodes[index_list->at(i)].node_in.size(); j++) {
+      new_graph->nodes[index_list->at(i)].node_in[j] = index_list->at(new_graph->nodes[index_list->at(i)].node_in[j]);
+    }
+    for (size_t j = 0; j < new_graph->nodes[index_list->at(i)].node_out.size(); j++) {
+      new_graph->nodes[index_list->at(i)].node_out[j] = index_list->at(new_graph->nodes[index_list->at(i)].node_out[j]);
+    }
+  }
+  return new_graph;
 }
 }  // namespace parallel
 }  // namespace mindspore

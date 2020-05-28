@@ -21,7 +21,7 @@ def linear_warmup_lr(current_step, warmup_steps, base_lr, init_lr):
     lr = float(init_lr) + lr_inc * current_step
     return lr
 
-def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch):
+def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch=120, global_step=0):
     """
     generate learning rate array with cosine
 
@@ -30,6 +30,7 @@ def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch):
        steps_per_epoch(int): steps size of one epoch
        warmup_epochs(int): number of warmup epochs
        max_epoch(int): total epochs of training
+       global_step(int): the current start index of lr array
     Returns:
        np.array, learning rate array
     """
@@ -49,4 +50,7 @@ def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch):
             decayed = linear_decay * cosine_decay + 0.00001
             lr = base_lr * decayed
         lr_each_step.append(lr)
-    return np.array(lr_each_step).astype(np.float32)
+
+    lr_each_step = np.array(lr_each_step).astype(np.float32)
+    learning_rate = lr_each_step[global_step:]
+    return learning_rate

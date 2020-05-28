@@ -156,6 +156,8 @@ class Iterator:
             op_type = OpName.BARRIER
         elif isinstance(dataset, de.ZipDataset):
             op_type = OpName.ZIP
+        elif isinstance(dataset, de.ConcatDataset):
+            op_type = OpName.CONCAT
         elif isinstance(dataset, de.MapDataset):
             op_type = OpName.MAP
         elif isinstance(dataset, de.FilterDataset):

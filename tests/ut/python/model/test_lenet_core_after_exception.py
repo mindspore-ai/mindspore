@@ -14,8 +14,8 @@
 # ============================================================================
 """test_lenet_core_after_exception"""
 import numpy as np
-
 import pytest
+
 import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore.common.tensor import Tensor
@@ -25,6 +25,7 @@ from ....train_step_wrap import train_step_with_loss_warp
 
 class LeNet5(nn.Cell):
     """LeNet5 definition"""
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5, pad_mode="valid")

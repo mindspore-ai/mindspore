@@ -34,16 +34,17 @@ import copy
 import numpy as np
 
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, TextFileOp, CBatchInfo
+    MindRecordOp, TextFileOp, VOCOp, CBatchInfo
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, check_rename, \
+from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
+    check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset
+    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, check_split
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -146,6 +147,9 @@ class Dataset:
         self._repeat_count = None
         self._sync = False
 
+    def __add__(self, datasets):
+        return self.concat(datasets)
+
     def get_args(self):
         """
         Returns attributes (member variables) related to the current class.
@@ -163,7 +167,7 @@ class Dataset:
 
     @check_batch
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
-              input_columns=None):
+              input_columns=None, pad_info=None):
         """
         Combines batch_size number of consecutive rows into batches.
 
@@ -181,7 +185,7 @@ class Dataset:
             drop_remainder (bool, optional): Determines whether or not to drop the last
                 possibly incomplete batch (default=False). If True, and if there are less
                 than batch_size rows available to make the last batch, then those rows will
-                be dropped and not propogated to the child node.
+                be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
             per_batch_map (callable, optional): Per batch map callable. A callable which takes
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
@@ -189,6 +193,8 @@ class Dataset:
                 last parameter of the callable should always be a BatchInfo object.
             input_columns (list of string, optional): List of names of the input columns. The size of the list should
                 match with signature of per_batch_map callable.
+            pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
+                would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
 
         Returns:
             BatchDataset, dataset batched.
@@ -200,17 +206,18 @@ class Dataset:
             >>> # and drops the last incomplete batch if there is one.
             >>> data = data.batch(100, True)
         """
-        return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns)
+        return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
+                            pad_info)
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
         '''
-        Add a blocking condition to the input Dataset
+        Add a blocking condition to the input Dataset.
 
         Args:
-            num_batch (int): the number of batches without blocking at the start of each epoch
-            condition_name (str): The condition name that is used to toggle sending next row
-            callback (function): The callback funciton that will be invoked when sync_update is called
+            num_batch (int): the number of batches without blocking at the start of each epoch.
+            condition_name (str): The condition name that is used to toggle sending next row.
+            callback (function): The callback funciton that will be invoked when sync_update is called.
 
         Raises:
             RuntimeError: If condition name already exists.
@@ -260,6 +267,50 @@ class Dataset:
             >>> data = data.shuffle(4)
         """
         return ShuffleDataset(self, buffer_size)
+
+    def flat_map(self, func):
+        """
+        Maps `func` to each row in dataset and flatten the result.
+
+        The specified `func` is a function that must take one 'Ndarray' as input
+        and return a 'Dataset'.
+
+        Args:
+            func (function): A function that must take one 'Ndarray' as an argument and
+                return a 'Dataset'.
+
+        Returns:
+            Dataset, applied by the function.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.transforms.text.utils as text
+            >>> # declare a function which returns a Dataset object
+            >>> def flat_map_func(x):
+            >>>     data_dir = text.as_text(x[0])
+            >>>     d = ds.ImageFolderDatasetV2(data_dir)
+            >>>     return d
+            >>> # data is a Dataset object
+            >>> data = ds.TextFileDataset(DATA_FILE)
+            >>> data = data.flat_map(flat_map_func)
+
+        Raises:
+            TypeError: If `func` is not a function.
+            TypeError: If `func` doesn't return a Dataset.
+        """
+        dataset = None
+        if not hasattr(func, '__call__'):
+            raise TypeError("func must be a function.")
+
+        for row_data in self:
+            if dataset is None:
+                dataset = func(row_data)
+            else:
+                dataset += func(row_data)
+
+        if not isinstance(dataset, Dataset):
+            raise TypeError("flat_map must return a Dataset object.")
+        return dataset
 
     @check_map
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
@@ -530,6 +581,117 @@ class Dataset:
             return self
         return TakeDataset(self, count)
 
+    def _get_absolute_split_sizes(self, sizes):
+        """
+        Internal method called by split to calculate absolute split sizes and to
+        do some error checking after calculating absolute split sizes.
+        """
+        # call get_dataset_size here and check input here because
+        # dont want to call this once in check_split and another time in
+        # here again
+        dataset_size = self.get_dataset_size()
+
+        if(dataset_size is None or dataset_size <= 0):
+            raise RuntimeError("dataset size unknown, unable to split.")
+
+        all_int = all(isinstance(item, int) for item in sizes)
+        if all_int:
+            sizes_sum = sum(sizes)
+            if sizes_sum != dataset_size:
+                raise RuntimeError("sum of split sizes {} is not equal to dataset size {}."
+                                   .format(sizes_sum, dataset_size))
+            return sizes
+
+        absolute_sizes = []
+        for item in sizes:
+            absolute_size = int(round(item * dataset_size))
+            if absolute_size == 0:
+                raise RuntimeError("split percentage {} is too small.".format(item))
+            absolute_sizes.append(absolute_size)
+
+        absolute_sizes_sum = sum(absolute_sizes)
+        if absolute_sizes_sum != dataset_size:
+            raise RuntimeError("sum of calculated split sizes {} is not equal to dataset size {}."
+                               .format(absolute_sizes_sum, dataset_size))
+
+        return absolute_sizes
+
+    @check_split
+    def split(self, sizes, randomize=True):
+        """
+        Splits the dataset into smaller, non-overlapping datasets.
+
+        This is a general purpose split function which can be called from any operator in the pipeline.
+        There is another, optimized split function, which will be called automatically if ds.split is
+        called where ds is a MappableDataset.
+
+        Args:
+            sizes (list of int or list of float): If a list of integers [s1, s2, …, sn] is
+                provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
+                respectively. If the sum of all sizes does not equal the original dataset size, an
+                an error will occur.
+                If a list of floats [f1, f2, …, fn] is provided, the dataset will be split into n
+                Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
+                of the original dataset. If after rounding, any size equals 0, an error will occur.
+                All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
+            randomize (bool): determines whether or not to split the data randomly. If true, the data
+                will be randomly split. Otherwise, each split will be created with consecutive rows
+                from the dataset.
+
+        Note:
+            1. Dataset cannot be sharded if split is going to be called.
+            2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
+            Shuffling the dataset may not be deterministic, which means the data in each split
+            will be different in each epoch.
+
+        Raises:
+            RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
+            RuntimeError: If sizes is list of integers and sum of all elements in sizes does not
+                equal the dataset size.
+            RuntimeError: If sizes is list of float and there is a split with size 0 after calculations.
+            RuntimeError: If the dataset is sharded prior to calling split.
+            ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
+                floats don’t sum to 1.
+
+        Returns
+            tuple(Dataset), a tuple of datasets that have been split.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_dir = "/path/to/text_file.txt"
+            >>>
+            >>> # TextFileDataset is not a mappable dataset, so this non optimized split will be called.
+            >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> data = ds.TextFileDataset(dataset_dir, shuffle=False)
+            >>> train, test = data.split([0.9, 0.1])
+        """
+        if self.is_shuffled():
+            logger.warning("dataset is shuffled before split.")
+
+        if self.is_sharded():
+            raise RuntimeError("dataset should not be sharded before split.")
+
+        absolute_sizes = self._get_absolute_split_sizes(sizes)
+        splits = []
+        rows_to_skip = 0
+        for size in absolute_sizes:
+            ds = copy.deepcopy(self)
+            if randomize:
+                # want to shuffle the same way every epoch before split
+                ds = ds.shuffle()
+                ds.reshuffle_each_epoch = False
+
+            if rows_to_skip > 0:
+                ds = ds.skip(rows_to_skip)
+
+            ds = ds.take(size)
+            splits.append(ds)
+
+            rows_to_skip += size
+
+        return tuple(splits)
+
     @check_zip_dataset
     def zip(self, datasets):
         """
@@ -555,6 +717,37 @@ class Dataset:
         else:
             raise TypeError("The zip function %s type error!" % (datasets))
         return ZipDataset(datasets)
+
+    @check_concat
+    def concat(self, datasets):
+        """
+        Concat the datasets in the input list of datasets, supported using "+" to reload concat operation.
+
+        Note:
+            The column name，column data type and rank of column data should be the same in input datasets.
+
+        Args:
+            datasets (list or class Dataset): A list of datasets or a single class Dataset
+                to be concatenated together with this dataset.
+
+        Returns:
+            ConcatDataset, dataset concatenated.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # ds1 and ds2 are instances of Dataset object
+            >>> # creates a dataset by concating ds1 and ds2 with "+" operation
+            >>> data1 = ds1 + ds2
+            >>> # creates a dataset by concating ds1 and ds2 with concat operation
+            >>> data1 = ds1.concat(ds2)
+        """
+        if isinstance(datasets, Dataset):
+            datasets = [self] + [datasets]
+        elif isinstance(datasets, list):
+            datasets = [self] + datasets
+        else:
+            raise TypeError("The concat_dataset function %s type error!" % (datasets))
+        return ConcatDataset(datasets)
 
     @check_rename
     def rename(self, input_columns, output_columns):
@@ -920,13 +1113,13 @@ class Dataset:
 
     def sync_update(self, condition_name, num_batch=None, data=None):
         """
-        Release a blocking condition and triger callback with given data
+        Release a blocking condition and triger callback with given data.
 
         Args:
-            condition_name (str): The condition name that is used to toggle sending next row
-            num_batch (int or None): The number of batches(rows) that are released
-                When num_batch is None, it will default to the number specified by the sync_wait operator
-            data (dict or None): The data passed to the callback
+            condition_name (str): The condition name that is used to toggle sending next row.
+            num_batch (int or None): The number of batches(rows) that are released.
+                When num_batch is None, it will default to the number specified by the sync_wait operator.
+            data (dict or None): The data passed to the callback.
         """
         notifiers_dict = self.get_sync_notifiers()
         if condition_name not in notifiers_dict:
@@ -948,7 +1141,7 @@ class Dataset:
 
     def get_repeat_count(self):
         """
-        Get the replication times in RepeatDataset else 1
+        Get the replication times in RepeatDataset else 1.
 
         Return:
             Number, the count of repeat.
@@ -969,12 +1162,26 @@ class Dataset:
         raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
 
     def reset(self):
-        """Reset the dataset for next epoch"""
+        """Reset the dataset for next epoch."""
+
+    def is_shuffled(self):
+        for input_dataset in self.input:
+            if input_dataset.is_shuffled():
+                return True
+
+        return False
+
+    def is_sharded(self):
+        for input_dataset in self.input:
+            if input_dataset.is_sharded():
+                return True
+
+        return False
 
 
 class SourceDataset(Dataset):
     """
-    Abstract class to represent a source dataset  which produces content to the data pipeline.
+    Abstract class to represent a source dataset which produces content to the data pipeline.
     """
 
     # No need for __init__ since it is the same as the super's init
@@ -1011,6 +1218,150 @@ class SourceDataset(Dataset):
             return file_list
         raise ValueError("The list of path names matching the patterns is empty.")
 
+    def is_shuffled(self):
+        raise NotImplementedError("SourceDataset must implement is_shuffled.")
+
+    def is_sharded(self):
+        raise NotImplementedError("SourceDataset must implement is_sharded.")
+
+class MappableDataset(SourceDataset):
+    """
+    Abstract class to represent a source dataset which supports use of samplers.
+    """
+
+    def __init__(self, num_parallel_workers=None):
+        # check if all subclasses use this name
+        super().__init__(num_parallel_workers)
+        self.sampler = None
+
+    def add_sampler(self, new_sampler):
+        # note: by adding a sampler, we mean that the sampled ids will flow to new_sampler
+        # after first passing through the current samplers attached to this dataset.
+        new_sampler.add_child(self.sampler)
+        self.sampler = new_sampler
+
+    def use_sampler(self, new_sampler):
+        """
+        Will make the current dataset use the new_sampler provided.
+
+        Args:
+            new_sampler (Sampler): the sampler to use for the current dataset.
+
+        Returns:
+            Dataset, that uses new_sampler.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_dir = "/path/to/imagefolder_directory"
+            >>> # a SequentialSampler is created by default
+            >>> data = ds.ImageFolderDatasetV2(dataset_dir)
+            >>>
+            >>> # use a DistributedSampler instead of the SequentialSampler
+            >>> new_sampler = ds.DistributedSampler(10, 2)
+            >>> data.use_sampler(new_sampler)
+        """
+        self.sampler = self.sampler.child_sampler
+        self.add_sampler(new_sampler)
+
+    def is_shuffled(self):
+        raise NotImplementedError("MappableDataset must implement is_shuffled.")
+
+    def is_sharded(self):
+        raise NotImplementedError("MappableDataset must implement is_sharded.")
+
+
+    @check_split
+    def split(self, sizes, randomize=True):
+        """
+        Splits the dataset into smaller, non-overlapping datasets.
+
+        There is the optimized split function, which will be called automatically when the dataset
+        that calls this function is a MappableDataset.
+
+        Args:
+            sizes (list of int or list of float): If a list of integers [s1, s2, …, sn] is
+                provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
+                respectively. If the sum of all sizes does not equal the original dataset size, an
+                an error will occur.
+                If a list of floats [f1, f2, …, fn] is provided, the dataset will be split into n
+                Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
+                of the original dataset. If after rounding, any size equals 0, an error will occur.
+                All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
+            randomize (bool): determines whether or not to split the data randomly. If true, the data
+                will be randomly split. Otherwise, each split will be created with consecutive rows
+                from the dataset.
+
+        Note:
+            1. Dataset should not be sharded if split is going to be called. Instead, create a
+            DistributedSampler and specify a split to shard after splitting. If dataset is
+            sharded after a split, it is strongly recommended to set the same seed in each instance
+            of execution, otherwise each shard may not be part of the same split (see Examples)
+            2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
+            Shuffling the dataset may not be deterministic, which means the data in each split
+            will be different in each epoch. Furthermore, if sharding occurs after split, each
+            shard may not be part of the same split.
+
+        Raises:
+            RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
+            RuntimeError: If sizes is list of integers and sum of all elements in sizes does not
+                equal the dataset size.
+            RuntimeError: If sizes is list of float and there is a split with size 0 after calculations.
+            RuntimeError: If the dataset is sharded prior to calling split.
+            ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
+                floats don’t sum to 1.
+
+        Returns
+            tuple(Dataset), a tuple of datasets that have been split.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_dir = "/path/to/imagefolder_directory"
+            >>>
+            >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> data = ds.ImageFolderDatasetV2(dataset_dir, shuffle=False)
+            >>>
+            >>> # sets the seed, and tells split to use this seed when randomizing. This
+            >>> # is needed because we are sharding later
+            >>> ds.config.set_seed(58)
+            >>> train, test = data.split([0.9, 0.1])
+            >>>
+            >>> # if we want to shard the train dataset, we can use a DistributedSampler
+            >>> train_sampler = ds.DistributedSampler(10, 2)
+            >>> train.use_sampler(train_sampler)
+        """
+        if self.is_shuffled():
+            logger.warning("dataset is shuffled before split.")
+
+        if self.is_sharded():
+            raise RuntimeError("dataset should not be sharded before split.")
+
+        absolute_sizes = self._get_absolute_split_sizes(sizes)
+        splits = []
+        current_split_start_index = 0
+        for size in absolute_sizes:
+            ds = copy.deepcopy(self)
+            if randomize:
+                # want to shuffle the same way every epoch before split, we are assuming
+                # that the user will call set_seed
+                random_sampler = samplers.RandomSampler()
+                random_sampler.reshuffle_each_epoch = False
+                ds.add_sampler(random_sampler)
+
+            subset_sampler = samplers.SubsetSampler(current_split_start_index, size)
+            ds.add_sampler(subset_sampler)
+
+            # add sequential sampler, so that if user calls use_sampler, we will
+            # get rid of the sequential sampler instead of something we need
+            ds.add_sampler(samplers.SequentialSampler())
+
+            splits.append(ds)
+
+            current_split_start_index += size
+
+        return tuple(splits)
+
 
 class DatasetOp(Dataset):
     """
@@ -1026,13 +1377,26 @@ class BatchDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be batched.
-        batch_size (int): The size of the batch.
-        drop_remainder (bool, optional): Whether drop the remainder batch of data (drop_remainder=False).
-            If True, the last incomplete batch will be dropped.
+        batch_size (int or function): The number of rows each batch is created with. An
+            int or callable which takes exactly 1 parameter, BatchInfo.
+        drop_remainder (bool, optional): Determines whether or not to drop the last
+            possibly incomplete batch (default=False). If True, and if there are less
+            than batch_size rows available to make the last batch, then those rows will
+            be dropped and not propagated to the child node.
+        num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
+        per_batch_map (callable, optional): Per batch map callable. A callable which takes
+            (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
+            Tensors on a given column. The number of lists should match with number of entries in input_columns. The
+            last parameter of the callable should always be a BatchInfo object.
+        input_columns (list of string, optional): List of names of the input columns. The size of the list should
+            match with signature of per_batch_map callable.
+        pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
+            would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
+
     """
 
     def __init__(self, input_dataset, batch_size, drop_remainder=False, num_parallel_workers=None,
-                 per_batch_map=None, input_columns=None):
+                 per_batch_map=None, input_columns=None, pad_info=None):
         super().__init__(num_parallel_workers)
 
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
@@ -1044,6 +1408,7 @@ class BatchDataset(DatasetOp):
         self.drop_remainder = drop_remainder
         self.per_batch_map = per_batch_map
         self.input_columns = input_columns
+        self.pad_info = pad_info
         self.input.append(input_dataset)
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
@@ -1054,6 +1419,7 @@ class BatchDataset(DatasetOp):
         args["drop_remainder"] = self.drop_remainder
         args["per_batch_map"] = self.per_batch_map
         args["input_columns"] = self.input_columns
+        args["pad_info"] = self.pad_info
         return args
 
     def get_dataset_size(self):
@@ -1085,9 +1451,9 @@ class BatchDataset(DatasetOp):
         Utility function to find the case where repeat is used before batch.
 
         Args:
-             dataset (Dataset): dataset to be checked
+             dataset (Dataset): dataset to be checked.
         Return:
-            True or False
+            True or False.
         """
         if isinstance(dataset, RepeatDataset):
             return True
@@ -1102,8 +1468,8 @@ class BatchDataset(DatasetOp):
         Utility function to notify batch size to sync_wait.
 
         Args:
-             dataset (Dataset): dataset to be checked
-             batchsize (int): batch size to notify
+             dataset (Dataset): dataset to be checked.
+             batchsize (int): batch size to notify.
         """
         if isinstance(dataset, SyncWaitDataset):
             dataset.update_sync_batch_size(batch_size)
@@ -1136,11 +1502,11 @@ class BatchInfo(CBatchInfo):
 
 class BlockReleasePair:
     """
-    The blocking condition class used by SyncWaitDataset
+    The blocking condition class used by SyncWaitDataset.
 
     Args:
-        init_release_rows (int): Number of lines to allow through the pipeline
-        callback (function): The callback funciton that will be called when release is called
+        init_release_rows (int): Number of lines to allow through the pipeline.
+        callback (function): The callback funciton that will be called when release is called.
     """
     def __init__(self, init_release_rows, callback=None):
         self.row_count = -init_release_rows
@@ -1183,13 +1549,13 @@ class BlockReleasePair:
 
 class SyncWaitDataset(DatasetOp):
     """
-    The result of adding a blocking condition to the input Dataset
+    The result of adding a blocking condition to the input Dataset.
 
     Args:
-        input_dataset (Dataset): Input dataset to apply flow control
-        num_batch (int): the number of batches without blocking at the start of each epoch
-        condition_name (str): The condition name that is used to toggle sending next row
-        callback (function): The callback funciton that will be invoked when sync_update is called
+        input_dataset (Dataset): Input dataset to apply flow control.
+        num_batch (int): the number of batches without blocking at the start of each epoch.
+        condition_name (str): The condition name that is used to toggle sending next row.
+        callback (function): The callback funciton that will be invoked when sync_update is called.
 
     Raises:
         RuntimeError: If condition name already exists.
@@ -1204,6 +1570,8 @@ class SyncWaitDataset(DatasetOp):
         self._pair = BlockReleasePair(num_batch, callback)
         if self._condition_name in self.input[0].get_sync_notifiers():
             raise RuntimeError("Condition name is already in use")
+        logger.warning("Please remember to add dataset.sync_update(condition=%s), otherwise will result in hanging",
+                       condition_name)
 
     def get_sync_notifiers(self):
         return {**self.input[0].get_sync_notifiers(), **{self._condition_name: self._pair.release_func}}
@@ -1226,9 +1594,9 @@ class SyncWaitDataset(DatasetOp):
         Utility function to find the case where sync_wait is used before batch.
 
         Args:
-             dataset (Dataset): dataset to be checked
+             dataset (Dataset): dataset to be checked.
         Return:
-            True or False
+            True or False.
         """
         if isinstance(dataset, BatchDataset):
             return True
@@ -1236,6 +1604,7 @@ class SyncWaitDataset(DatasetOp):
         for input_dataset in dataset.input:
             flag = flag | SyncWaitDataset._is_ancestor_of_batch(input_dataset)
         return flag
+
 
 class ShuffleDataset(DatasetOp):
     """
@@ -1253,6 +1622,7 @@ class ShuffleDataset(DatasetOp):
         super().__init__()
         self.buffer_size = buffer_size
         self.input.append(input_dataset)
+        self.reshuffle_each_epoch = None
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
         if self.is_sync():
@@ -1261,7 +1631,13 @@ class ShuffleDataset(DatasetOp):
     def get_args(self):
         args = super().get_args()
         args["buffer_size"] = self.buffer_size
+        if self.reshuffle_each_epoch is not None:
+            args["reshuffle_each_epoch"] = self.reshuffle_each_epoch
+
         return args
+
+    def is_shuffled(self):
+        return True
 
 
 # Pyfunc collection for multiprocess pyfunc
@@ -1289,7 +1665,7 @@ def _pyfunc_worker_exec(index, *args):
 # PythonCallable wrapper for multiprocess pyfunc
 class _PythonCallable:
     """
-    Internal python function wrapper for multiprocessing pyfunc
+    Internal python function wrapper for multiprocessing pyfunc.
     """
     def __init__(self, py_callable, idx, pool=None):
         # Original python callable from user.
@@ -1431,6 +1807,10 @@ class MapDataset(DatasetOp):
                         iter_specific_operations.append(op)
                 self.operations = iter_specific_operations
 
+    def __del__(self):
+        if hasattr(self, 'process_pool') and self.process_pool is not None:
+            self.process_pool.terminate()
+
 
 class FilterDataset(DatasetOp):
     """
@@ -1463,7 +1843,7 @@ class FilterDataset(DatasetOp):
     def get_dataset_size(self):
         """
         Get the number of batches in an epoch.
-        the size cannot be determined before we run the pipeline
+        the size cannot be determined before we run the pipeline.
         Return:
             0
         """
@@ -1635,6 +2015,39 @@ class ZipDataset(DatasetOp):
         return args
 
 
+class ConcatDataset(DatasetOp):
+    """
+    The result of applying concat dataset operator to the input Dataset.
+
+    Args:
+        datasets (list): A list of datasets to be concatenated together.
+
+    Raises:
+        TypeError: If dataset is not an instance of Dataset.
+    """
+
+    def __init__(self, datasets):
+        super().__init__()
+        for dataset in datasets:
+            if not isinstance(dataset, Dataset):
+                raise TypeError("The parameter %s of concat has type error!" % (dataset))
+        self.datasets = datasets
+        for data in datasets:
+            self.input.append(data)
+            data.output.append(self)
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        children_sizes = [c.get_dataset_size() for c in self.input]
+        dataset_size = np.sum(children_sizes)
+        return dataset_size
+
+
 class RenameDataset(DatasetOp):
     """
     The result of applying Rename operator to the input Dataset.
@@ -1755,7 +2168,7 @@ class StorageDataset(SourceDataset):
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
         num_parallel_workers (int, optional): Number of parallel working threads (default=None).
         deterministic_output (bool, optional): Whether the result of this dataset can be reproduced
-                or not (default=True). If True, performance might be affected.
+            or not (default=True). If True, performance might be affected.
         prefetch_size (int, optional): Prefetch number of records ahead of the user's request (default=None).
 
     Raises:
@@ -1855,8 +2268,14 @@ class StorageDataset(SourceDataset):
             self._get_pipeline_info()
         return self._num_classes
 
+    def is_shuffled(self):
+        return False
 
-class RangeDataset(SourceDataset):
+    def is_sharded(self):
+        return False
+
+
+class RangeDataset(MappableDataset):
     """
     A source dataset that reads and parses datasets stored on disk in a range.
 
@@ -1879,17 +2298,23 @@ class RangeDataset(SourceDataset):
         args["step"] = self.step
         return args
 
+    def is_shuffled(self):
+        return False
+
+    def is_sharded(self):
+        return False
+
 
 def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
     """
     Create sampler based on user input.
 
     Args:
-        num_samples (int): Number of samples
-        input_sampler (Iterable / Sampler): Sampler from user
-        shuffle (bool): Shuffle
-        num_shards (int): Number of shard for sharding
-        shard_id (int): Shard ID
+        num_samples (int): Number of samples.
+        input_sampler (Iterable / Sampler): Sampler from user.
+        shuffle (bool): Shuffle.
+        num_shards (int): Number of shard for sharding.
+        shard_id (int): Shard ID.
     """
     if shuffle is None:
         if input_sampler is not None:
@@ -1918,7 +2343,7 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
     return samplers.SequentialSampler()
 
 
-class ImageFolderDatasetV2(SourceDataset):
+class ImageFolderDatasetV2(MappableDataset):
     """
     A source dataset that reads images from a tree of directories.
 
@@ -2056,8 +2481,20 @@ class ImageFolderDatasetV2(SourceDataset):
             num_samples = self.num_samples
         return ImageFolderOp.get_num_rows_and_classes(self.dataset_dir, num_samples)[1]
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class MnistDataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class MnistDataset(MappableDataset):
     """
     A source dataset for reading and parsing the Mnist dataset.
 
@@ -2160,13 +2597,25 @@ class MnistDataset(SourceDataset):
 
         return get_num_rows(num_rows, self.num_shards)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
 
 class MindDataset(SourceDataset):
     """
     A source dataset that reads from shard files and database.
 
     Args:
-        dataset_file (str): one of file names in dataset.
+        dataset_file (str, list[str]): One of file names or file list in dataset.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
@@ -2191,6 +2640,10 @@ class MindDataset(SourceDataset):
                  shuffle=None, num_shards=None, shard_id=None,
                  block_reader=False, sampler=None):
         super().__init__(num_parallel_workers)
+        if isinstance(dataset_file, list):
+            self.load_dataset = False
+        else:
+            self.load_dataset = True
         self.dataset_file = dataset_file
         self.columns_list = columns_list
         self.global_shuffle = shuffle
@@ -2220,8 +2673,8 @@ class MindDataset(SourceDataset):
         if block_reader is True and sampler is not None:
             raise ValueError("block reader not allowed true when use sampler")
 
-        if shuffle is True and sampler is not None:
-            raise ValueError("shuffle not allowed true when use sampler")
+        if shuffle is not None and sampler is not None:
+            raise ValueError("shuffle not allowed when use sampler")
 
         if block_reader is False and sampler is None:
             self.global_shuffle = not bool(shuffle is False)
@@ -2233,6 +2686,7 @@ class MindDataset(SourceDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_file"] = self.dataset_file
+        args["load_dataset"] = self.load_dataset
         args["columns_list"] = self.columns_list
         args["global_shuffle"] = self.global_shuffle
         args["partitions"] = self.partitions
@@ -2249,8 +2703,11 @@ class MindDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
-
-        num_rows = MindRecordOp.get_num_rows(self.dataset_file, self.sampler)
+        if self.load_dataset:
+            dataset_file = [self.dataset_file]
+        else:
+            dataset_file = self.dataset_file
+        num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler)
         if self.partitions is not None and self.partitions[0] > 0:
             if num_rows % self.partitions[0] == 0:
                 num_rows = num_rows // self.partitions[0]
@@ -2258,10 +2715,22 @@ class MindDataset(SourceDataset):
                 num_rows = num_rows // self.partitions[0] + 1
         return num_rows
 
+    def is_shuffled(self):
+        if self.global_shuffle is None:
+            return True
+
+        return self.global_shuffle or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
 
 def _iter_fn(dataset, num_samples):
     """
-    Generator function wrapper for iterable dataset
+    Generator function wrapper for iterable dataset.
     """
     if num_samples is not None:
         ds_iter = iter(dataset)
@@ -2271,16 +2740,16 @@ def _iter_fn(dataset, num_samples):
             except StopIteration:
                 return
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
     else:
         for val in dataset:
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
 
 
 def _generator_fn(generator, num_samples):
     """
-    Generator function wrapper for generator function dataset
+    Generator function wrapper for generator function dataset.
     """
     if num_samples is not None:
         gen_iter = generator()
@@ -2298,7 +2767,7 @@ def _generator_fn(generator, num_samples):
 
 def _py_sampler_fn(sampler, num_samples, dataset):
     """
-    Generator function wrapper for mappable dataset with python sampler
+    Generator function wrapper for mappable dataset with python sampler.
     """
     if num_samples is not None:
         sampler_iter = iter(sampler)
@@ -2309,28 +2778,28 @@ def _py_sampler_fn(sampler, num_samples, dataset):
                 return
             val = dataset[idx]
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
     else:
         for i in sampler:
             val = dataset[i]
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
 
 
 def _cpp_sampler_fn(sampler, dataset):
     """
-    Generator function wrapper for mappable dataset with cpp sampler
+    Generator function wrapper for mappable dataset with cpp sampler.
     """
     indices = sampler.get_indices()
     for i in indices:
         val = dataset[i]
         # convert output tensors to ndarrays
-        yield tuple([np.array(x) for x in val])
+        yield tuple([np.array(x, copy=False) for x in val])
 
 
 def _cpp_sampler_fn_mp(sampler, dataset, num_worker):
     """
-    Multiprocessing generator function wrapper for mappable dataset with cpp sampler
+    Multiprocessing generator function wrapper for mappable dataset with cpp sampler.
     """
     indices = sampler.get_indices()
     return _sampler_fn_mp(indices, dataset, num_worker)
@@ -2338,7 +2807,7 @@ def _cpp_sampler_fn_mp(sampler, dataset, num_worker):
 
 def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker):
     """
-    Multiprocessing generator function wrapper for mappable dataset with python sampler
+    Multiprocessing generator function wrapper for mappable dataset with python sampler.
     """
     indices = _fetch_py_sampler_indices(sampler, num_samples)
     return _sampler_fn_mp(indices, dataset, num_worker)
@@ -2346,7 +2815,7 @@ def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker):
 
 def _fetch_py_sampler_indices(sampler, num_samples):
     """
-    Indices fetcher for python sampler
+    Indices fetcher for python sampler.
     """
     if num_samples is not None:
         sampler_iter = iter(sampler)
@@ -2363,7 +2832,7 @@ def _fetch_py_sampler_indices(sampler, num_samples):
 
 def _fill_worker_indices(workers, indices, idx):
     """
-    Worker index queue filler, fill worker index queue in round robin order
+    Worker index queue filler, fill worker index queue in round robin order.
     """
     num_worker = len(workers)
     while idx < len(indices):
@@ -2377,7 +2846,7 @@ def _fill_worker_indices(workers, indices, idx):
 
 def _sampler_fn_mp(indices, dataset, num_worker):
     """
-    Multiprocessing generator function wrapper master process
+    Multiprocessing generator function wrapper master process.
     """
     workers = []
     # Event for end of epoch
@@ -2414,12 +2883,12 @@ def _sampler_fn_mp(indices, dataset, num_worker):
         # Set eoe event once all indices are sent
         if idx_cursor == len(indices) and not eoe.is_set():
             eoe.set()
-        yield tuple([np.array(x) for x in result])
+        yield tuple([np.array(x, copy=False) for x in result])
 
 
 def _generator_worker_loop(dataset, idx_queue, result_queue, eoe):
     """
-    Multiprocessing generator worker process loop
+    Multiprocessing generator worker process loop.
     """
     while True:
         # Fetch index, block
@@ -2444,7 +2913,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eoe):
 
 class _GeneratorWorker(multiprocessing.Process):
     """
-    Worker process for multiprocess Generator
+    Worker process for multiprocess Generator.
     """
     def __init__(self, dataset, eoe):
         self.idx_queue = multiprocessing.Queue(16)
@@ -2463,8 +2932,11 @@ class _GeneratorWorker(multiprocessing.Process):
         """
         return self.res_queue.get(timeout=5)
 
+    def __del__(self):
+        self.terminate()
 
-class GeneratorDataset(SourceDataset):
+
+class GeneratorDataset(MappableDataset):
     """
     A source dataset that generate data from python by invoking python data source each epoch.
 
@@ -2523,35 +2995,35 @@ class GeneratorDataset(SourceDataset):
             when num_shards is also specified. Random accessible input is required.
 
     Examples:
-        >>> import mindspore.dataengine as de
+        >>> import mindspore.dataset as ds
         >>> # 1) Multidimensional generator function as callable input
         >>> def generator_md():
         >>>     for i in range(64):
         >>>         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
         >>> # create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
-        >>> multi_dimension_generator_dataset = de.GeneratorDataset(generator_md, ["multi_dimensional_data"])
+        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(generator_md, ["multi_dimensional_data"])
         >>> # 2) Multi-column generator function as callable input
         >>> def generator_mc(maxid = 64):
         >>>     for i in range(maxid):
         >>>         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
         >>> # create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = de.GeneratorDataset(generator_mc, ["col1", "col2"])
+        >>> multi_column_generator_dataset = ds.GeneratorDataset(generator_mc, ["col1", "col2"])
         >>> # 3) Iterable dataset as iterable input
         >>> class MyIterable():
         >>>     def __iter__(self):
         >>>         return # User implementation
         >>> # create iterable_generator_dataset with MyIterable object
-        >>> iterable_generator_dataset = de.GeneratorDataset(MyIterable(), ["col1"])
+        >>> iterable_generator_dataset = ds.GeneratorDataset(MyIterable(), ["col1"])
         >>> # 4) Random accessible dataset as Random accessible input
         >>> class MyRA():
         >>>     def __getitem__(self, index):
         >>>         return # User implementation
         >>> # create ra_generator_dataset with MyRA object
-        >>> ra_generator_dataset = de.GeneratorDataset(MyRA(), ["col1"])
+        >>> ra_generator_dataset = ds.GeneratorDataset(MyRA(), ["col1"])
         >>> # List/Dict/Tuple is also random accessible
-        >>> list_generator = de.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
+        >>> list_generator = ds.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
         >>> # 5) Built-in Sampler
-        >>> my_generator = de.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
+        >>> my_generator = ds.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
         >>>
     """
 
@@ -2649,6 +3121,12 @@ class GeneratorDataset(SourceDataset):
 
         return new_op
 
+    def is_shuffled(self):
+        return self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        return self.sampler.is_sharded()
+
 
 class TFRecordDataset(SourceDataset):
     """
@@ -2695,6 +3173,7 @@ class TFRecordDataset(SourceDataset):
         >>> # 3) get all rows from dataset_files with schema file "./schema.json":
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
     """
+
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False):
@@ -2774,8 +3253,17 @@ class TFRecordDataset(SourceDataset):
         else:
             raise ValueError('set dataset_size with negative value {}'.format(value))
 
+    def is_shuffled(self):
+        return self.shuffle_files
 
-class ManifestDataset(SourceDataset):
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return False
+
+
+class ManifestDataset(MappableDataset):
     """
     A source dataset that reads images from a manifest file.
 
@@ -2925,7 +3413,7 @@ class ManifestDataset(SourceDataset):
 
     def get_class_indexing(self):
         """
-        Get the class index
+        Get the class index.
 
         Return:
             Dict, A str-to-int mapping from label name to index.
@@ -2942,8 +3430,20 @@ class ManifestDataset(SourceDataset):
 
         return ManifestOp.get_class_indexing(self.dataset_file, num_samples, class_indexing, self.usage)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class Cifar10Dataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class Cifar10Dataset(MappableDataset):
     """
     A source dataset that reads cifar10 data.
 
@@ -3051,8 +3551,20 @@ class Cifar10Dataset(SourceDataset):
 
         return get_num_rows(num_rows, self.num_shards)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class Cifar100Dataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class Cifar100Dataset(MappableDataset):
     """
     A source dataset that reads cifar100 data.
 
@@ -3158,6 +3670,18 @@ class Cifar100Dataset(SourceDataset):
 
         return get_num_rows(num_rows, self.num_shards)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
 
 class RandomDataset(SourceDataset):
     """
@@ -3209,6 +3733,11 @@ class RandomDataset(SourceDataset):
         """
         return num_samples
 
+    def is_shuffled(self):
+        return True
+
+    def is_sharded(self):
+        return False
 
 class Schema:
     """
@@ -3388,7 +3917,7 @@ class Schema:
         return self.to_json()
 
 
-class VOCDataset(SourceDataset):
+class VOCDataset(MappableDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
@@ -3427,6 +3956,12 @@ class VOCDataset(SourceDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
+            (default="Segmentation")
+        mode(str): Set the data list txt file to be readed (default="train")
+        class_indexing (dict, optional): A str-to-int mapping from label name to index
+            (default=None, the folder names will be sorted alphabetically and each
+            class will be given a unique index starting from 0).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -3442,27 +3977,41 @@ class VOCDataset(SourceDataset):
             argument should be specified only when num_shards is also specified.
 
     Raises:
+        RuntimeError: If xml of Annotations is a invalid format
+        RuntimeError: If xml of Annotations loss attribution of "object"
+        RuntimeError: If xml of Annotations loss attribution of "bndbox"
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If task is not equal 'Segmentation' or 'Detection'.
+        ValueError: If task equal 'Segmentation' but class_indexing is not None.
+        ValueError: If txt related to mode is not exist.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> import mindspore.dataset as ds
         >>> dataset_dir = "/path/to/voc_dataset_directory"
-        >>> # 1) read all VOC dataset samples in dataset_dir with 8 threads in random order:
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, num_parallel_workers=8)
-        >>> # 2) read then decode all VOC dataset samples in dataset_dir in sequence:
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, decode=True, shuffle=False)
-        >>> # in VOC dataset, each dictionary has keys "image" and "target"
+        >>> # 1) read VOC data for segmenatation train
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Segmentation", mode="train")
+        >>> # 2) read VOC data for detection train
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train")
+        >>> # 3) read all VOC dataset samples in dataset_dir with 8 threads in random order:
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train", num_parallel_workers=8)
+        >>> # 4) read then decode all VOC dataset samples in dataset_dir in sequence:
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train", decode=True, shuffle=False)
+        >>> # in VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
+        >>> # in VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
     """
 
     @check_vocdataset
-    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
-                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+    def __init__(self, dataset_dir, task="Segmentation", mode="train", class_indexing=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
+        self.task = task
+        self.mode = mode
+        self.class_indexing = class_indexing
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.decode = decode
@@ -3473,6 +4022,9 @@ class VOCDataset(SourceDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_dir"] = self.dataset_dir
+        args["task"] = self.task
+        args["mode"] = self.mode
+        args["class_indexing"] = self.class_indexing
         args["num_samples"] = self.num_samples
         args["sampler"] = self.sampler
         args["decode"] = self.decode
@@ -3490,10 +4042,44 @@ class VOCDataset(SourceDataset):
         """
         return self.num_samples
 
+    def get_class_indexing(self):
+        """
+        Get the class index.
 
-class CelebADataset(SourceDataset):
+        Return:
+            Dict, A str-to-int mapping from label name to index.
+        """
+        if self.task != "Detection":
+            raise NotImplementedError()
+
+        if self.num_samples is None:
+            num_samples = 0
+        else:
+            num_samples = self.num_samples
+
+        if self.class_indexing is None:
+            class_indexing = dict()
+        else:
+            class_indexing = self.class_indexing
+
+        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing, num_samples)
+
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class CelebADataset(MappableDataset):
     """
-    A source dataset for reading and parsing CelebA dataset.Only support list_attr_celeba.txt currently
+    A source dataset for reading and parsing CelebA dataset.Only support list_attr_celeba.txt currently.
 
     Note:
         The generated dataset has two columns ['image', 'attr'].
@@ -3543,6 +4129,19 @@ class CelebADataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args
+
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
 
 class TextFileDataset(SourceDataset):
     """
@@ -3622,3 +4221,12 @@ class TextFileDataset(SourceDataset):
                 return num_rows
             return min(self.num_samples, num_rows)
         return self._dataset_size
+
+    def is_shuffled(self):
+        return self.shuffle_files
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return False

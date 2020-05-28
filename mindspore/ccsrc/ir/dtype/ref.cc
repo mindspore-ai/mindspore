@@ -19,9 +19,6 @@
 #include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
-#include "pipeline/static_analysis/abstract_value.h"
-#include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
 
 namespace mindspore {
 TypePtr RefType::DeepCopy() const {

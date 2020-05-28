@@ -16,11 +16,13 @@
 """Component that comparing results with expectation serialized as npy file."""
 
 import numpy as np
+
 from ...components.icomponent import IVerifierComponent
-from ...utils.other_util import to_numpy_list, to_numpy
-from ...utils.npy_util import load_data_from_npy_or_shape
-from ...utils.verifier_util import tolerance_assert
 from ...utils import keyword
+from ...utils.npy_util import load_data_from_npy_or_shape
+from ...utils.other_util import to_numpy_list, to_numpy
+from ...utils.verifier_util import tolerance_assert
+
 
 class LoadFromNpyVC(IVerifierComponent):
     """
@@ -37,10 +39,11 @@ class LoadFromNpyVC(IVerifierComponent):
             ([2, 2], np.float32, 6, 1e-3) # (shape, dtype, scale, max_error)
         ]
     """
-    def verify(self, expect, func_result, verification_set):
-        dpaths = expect.get(keyword.desc_expect)
+
+    def __call__(self):
+        dpaths = self.expect.get(keyword.desc_expect)
         expects = load_data_from_npy_or_shape(dpaths, False)
-        results = func_result[keyword.result]
+        results = self.func_result[keyword.result]
         if results:
             results = to_numpy_list(results)
             for i, e in enumerate(expects):

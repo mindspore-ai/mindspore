@@ -41,26 +41,25 @@ from config import ConfigYOLOV3ResNet18
 def get_lr(learning_rate, start_step, global_step, decay_step, decay_rate, steps=False):
     """Set learning rate."""
     lr_each_step = []
-    lr = learning_rate
     for i in range(global_step):
         if steps:
-            lr_each_step.append(lr * (decay_rate ** (i // decay_step)))
+            lr_each_step.append(learning_rate * (decay_rate ** (i // decay_step)))
         else:
-            lr_each_step.append(lr * (decay_rate ** (i / decay_step)))
+            lr_each_step.append(learning_rate * (decay_rate ** (i / decay_step)))
     lr_each_step = np.array(lr_each_step).astype(np.float32)
     lr_each_step = lr_each_step[start_step:]
     return lr_each_step
 
 
-def init_net_param(net, init='ones'):
-    """Init the parameters in net."""
-    params = net.trainable_params()
+def init_net_param(network, init_value='ones'):
+    """Init:wq the parameters in network."""
+    params = network.trainable_params()
     for p in params:
         if isinstance(p.data, Tensor) and 'beta' not in p.name and 'gamma' not in p.name and 'bias' not in p.name:
-            p.set_parameter_data(initializer(init, p.data.shape(), p.data.dtype()))
+            p.set_parameter_data(initializer(init_value, p.data.shape(), p.data.dtype()))
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description="YOLOv3 train")
     parser.add_argument("--only_create_dataset", type=bool, default=False, help="If set it true, only create "
                                                                                 "Mindrecord, default is false.")
@@ -71,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink")
     parser.add_argument("--epoch_size", type=int, default=10, help="Epoch size, default is 10")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
-    parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")
+    parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained checkpoint file path")
     parser.add_argument("--save_checkpoint_epochs", type=int, default=5, help="Save checkpoint epochs, default is 5.")
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
     parser.add_argument("--mindrecord_dir", type=str, default="./Mindrecord_train",
@@ -85,8 +84,6 @@ if __name__ == '__main__':
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-    context.set_context(enable_task_sink=True, enable_loop_sink=True, enable_mem_reuse=True,
-                        enable_auto_mixed_precision=False)
     if args_opt.distribute:
         device_num = args_opt.device_num
         context.reset_auto_parallel_context()
@@ -141,8 +138,8 @@ if __name__ == '__main__':
         opt = nn.Adam(filter(lambda x: x.requires_grad, net.get_parameters()), lr, loss_scale=loss_scale)
         net = TrainingWrapper(net, opt, loss_scale)
 
-        if args_opt.checkpoint_path != "":
-            param_dict = load_checkpoint(args_opt.checkpoint_path)
+        if args_opt.pre_trained:
+            param_dict = load_checkpoint(args_opt.pre_trained)
             load_param_into_net(net, param_dict)
 
         callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
@@ -154,3 +151,6 @@ if __name__ == '__main__':
             dataset_sink_mode = True
         print("Start train YOLOv3, the first epoch will be slower because of the graph compilation.")
         model.train(args_opt.epoch_size, dataset, callbacks=callback, dataset_sink_mode=dataset_sink_mode)
+
+if __name__ == '__main__':
+    main()

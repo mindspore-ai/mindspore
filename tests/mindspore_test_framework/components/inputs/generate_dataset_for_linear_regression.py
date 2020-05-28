@@ -16,8 +16,9 @@
 """Component that generate dataset for linear regression."""
 
 from ...components.icomponent import IDataComponent
-from ...utils.dataset_util import generate_dataset_for_linear_regression
 from ...utils import keyword
+from ...utils.dataset_util import generate_dataset_for_linear_regression
+
 
 class GenerateDataSetForLRDC(IDataComponent):
     """
@@ -30,9 +31,10 @@ class GenerateDataSetForLRDC(IDataComponent):
             'batch_size': 20,
         }
     """
-    def create_inputs(self, verification_set):
+
+    def __call__(self):
         result = []
-        for config in verification_set[keyword.inputs]:
+        for config in self.verification_set[keyword.inputs]:
             desc_inputs = config[keyword.desc_inputs]
             config[keyword.desc_inputs] = generate_dataset_for_linear_regression(desc_inputs[keyword.true_params][0],
                                                                                  desc_inputs[keyword.true_params][1],

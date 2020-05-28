@@ -242,3 +242,9 @@ def bprop_switch(cond, tb, fb, out, dout):
     """Backpropagator for primitive `switch`."""
     return C.zeros_like(cond), F.switch(cond, dout, C.zeros_like(tb)), \
             F.switch(cond, C.zeros_like(fb), dout)
+
+def _fprop_switch_layer(index, layers):
+    """Backpropagator for primitive `switch_layer`."""
+    def _bprop_switch_layer(dout):
+        return dout, C.zeros_like(index), ()
+    return F.switch_layer(index, layers), _bprop_switch_layer

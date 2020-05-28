@@ -22,6 +22,7 @@ namespace mindspore {
 extern const char PYTHON_PRIMITIVE_FLAG[];
 extern const char PYTHON_METAFUNCGRAPH_FLAG[];
 extern const char PYTHON_TENSOR_FLAG[];
+extern const char PYTHON_META_TENSOR_FLAG[];
 extern const char PYTHON_ENVINSTANCE_FLAG[];
 extern const char PYTHON_DTYPE_FLAG[];
 extern const char PYTHON_CELL_AS_LIST[];
@@ -32,6 +33,7 @@ extern const char GRAPH_FLAG_MIX_PRECISION_FP32[];
 extern const char GRAPH_FLAG_LOOP_CAN_UNROLL[];
 extern const char GRAPH_FLAG_HAS_EFFECT[];
 extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
+extern const char GRAPH_FLAG_RANDOM_EFFECT[];
 
 }  // namespace mindspore
 

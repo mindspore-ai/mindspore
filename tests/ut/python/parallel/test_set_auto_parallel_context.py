@@ -13,9 +13,11 @@
 # limitations under the License.
 
 import pytest
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
+
 from mindspore import context
 from mindspore.parallel import set_algo_parameters
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
+
 
 def test_set_auto_parallel_context():
     context.set_auto_parallel_context(device_num=4, global_rank=3, mirror_mean=True, cast_before_mirror=False,

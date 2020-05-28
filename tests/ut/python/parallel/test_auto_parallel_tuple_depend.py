@@ -13,15 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.ops.operations.comm_ops import _VirtualDataset
-from mindspore import context
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -43,9 +44,11 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
 
+
 def bn_with_initialize(out_channels):
     bn = nn.BatchNorm2d(out_channels, momentum=0.1, eps=1e-5)
     return bn
+
 
 # model_parallel test
 def test_virtual_dataset_3_input():
@@ -65,10 +68,10 @@ def test_virtual_dataset_3_input():
             out = self.matmul2(out, b)
             return out
 
-
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    net.set_auto_parallel()
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 2048]), dtype=ms.float32)

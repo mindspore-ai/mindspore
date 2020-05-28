@@ -24,17 +24,17 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs,
+                                    const std::vector<AddressPtr> & /*workspace*/,
+                                    const std::vector<AddressPtr> & /*outputs*/, void *stream_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->enable_task_sink()) {
     return true;
   }
   const char *tag = "Hccl-BroadCast";
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
   hcclResult_t ret =
-    hcom_broadcast(tag, inputs[0]->addr, hccl_count_, hccl_data_type_list_[0], root_id_, nullptr, stream);
+    hcom_broadcast(tag, inputs[0]->addr, hccl_count_, hccl_data_type_list_[0], root_id_, nullptr, stream_ptr);
   if (ret != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast fail, return: " << static_cast<int>(ret);
     return false;

@@ -110,10 +110,15 @@ class RenameOp : public PipelineOp {
   // @return Status - The error code return
   Status operator()() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  protected:
   // Rename core functionality
-  // @param input_buffer buffer to run rename on
-  Status RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer);
+  Status RenameColumns();
 
   // Variable to store the input column names
   std::vector<std::string> in_columns_;

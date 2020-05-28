@@ -62,7 +62,6 @@ class MsContext {
   bool enable_pynative_infer() const { return enable_pynative_infer_; }
   void set_enable_pynative_infer(bool enable_pynative_infer) { enable_pynative_infer_ = enable_pynative_infer; }
 
-  void set_enable_task_sink(bool enable_task_sink) { enable_task_sink_ = enable_task_sink; }
   bool enable_task_sink() const { return enable_task_sink_; }
 
   void set_precompile_only(bool precompile_only) { precompile_only_ = precompile_only; }
@@ -90,10 +89,8 @@ class MsContext {
   bool enable_hccl() const { return enable_hccl_; }
   bool PynativeInitGe();
 
-  void set_ir_fusion_flag(bool ir_fusion_flag) { ir_fusion_flag_ = ir_fusion_flag; }
   bool ir_fusion_flag() const { return ir_fusion_flag_; }
 
-  void set_loop_sink_flag(bool loop_sink_flag) { enable_loop_sink_ = loop_sink_flag; }
   bool loop_sink_flag() const { return enable_loop_sink_; }
 
   void set_enable_mem_reuse(bool enable_mem_reuse) { enable_mem_reuse_ = enable_mem_reuse; }

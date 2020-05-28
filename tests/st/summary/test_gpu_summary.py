@@ -12,21 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import os
-import time
-import shutil
 import random
+import shutil
+import pytest
 import numpy as np
-import mindspore.nn as nn
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.train.summary.summary_record import SummaryRecord
 
-
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR_ME = CUR_DIR + "/test_me_summary_event_file/"
@@ -77,7 +75,7 @@ class SummaryNet(nn.Cell):
         return z
 
 
-def train_summary_record_scalar_for_1(test_writer, steps, fwd_x, fwd_y):
+def train_summary_record_scalar_for_1(test_writer, steps):
     net = SummaryNet()
     out_me_dict = {}
     for i in range(0, steps):
@@ -90,16 +88,11 @@ def train_summary_record_scalar_for_1(test_writer, steps, fwd_x, fwd_y):
     return out_me_dict
 
 
-def me_scalar_summary(steps, tag=None, value=None):
-    test_writer = SummaryRecord(SUMMARY_DIR_ME_TEMP)
+def me_scalar_summary(steps):
+    with SummaryRecord(SUMMARY_DIR_ME_TEMP) as test_writer:
+        out_me_dict = train_summary_record_scalar_for_1(test_writer, steps)
 
-    x = Tensor(np.array([1.1]).astype(np.float32))
-    y = Tensor(np.array([1.2]).astype(np.float32))
-
-    out_me_dict = train_summary_record_scalar_for_1(test_writer, steps, x, y)
-
-    test_writer.close()
-    return out_me_dict
+        return out_me_dict
 
 
 @pytest.mark.level0

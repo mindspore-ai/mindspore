@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-import mindspore.nn as nn
-import mindspore.context as context
+
 
 class NetEqualCount(nn.Cell):
     def __init__(self):
@@ -27,6 +29,7 @@ class NetEqualCount(nn.Cell):
 
     def construct(self, x, y):
         return self.equalcount(x, y)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

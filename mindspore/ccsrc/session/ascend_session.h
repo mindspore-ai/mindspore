@@ -42,10 +42,11 @@ class AscendSession : public SessionBasic {
     context_ = std::make_shared<Context>(kAscendDevice, device_id);
   }
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildGraph(GraphId) override;
   void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<bool> &tensors_mask) override;
+               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
   py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                   const std::vector<tensor::TensorPtr> &input_tensors) override;
 
@@ -73,6 +74,7 @@ class AscendSession : public SessionBasic {
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+  void AssignLabel(NotNull<const KernelGraphPtr &> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
@@ -80,6 +82,7 @@ class AscendSession : public SessionBasic {
   void LoadTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void ExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+  void ExportChildGraphs(const GraphId graph_id);
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
   void RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -87,6 +90,21 @@ class AscendSession : public SessionBasic {
   size_t SetChildGraphInput(const KernelGraphPtr &graph, const AnfNodePtr &node, size_t input_index);
   size_t SetChildGraphInput(const KernelGraphPtr &graph, const ValuePtr &value, size_t input_index);
   size_t SetChildGraphInput(const KernelGraphPtr &graph, const VectorRef &vec_args, size_t input_index);
+
+  void SetFinalGraphOutput(const AnfNodePtr &node);
+  void SetFinalGraphOutput(const ValuePtr &value);
+  void SetFinalGraphOutput(const VectorRef &vec_output);
+
+  void SplitGraph(const KernelGraphPtr &graph);
+  void LinkChildGraphs(KernelGraph *graph) {}
+  void IRFusion(const KernelGraphPtr &graph) {}
+  void SelectKernelGraphKernel(const KernelGraph &graph) {}
+  void ConvertPredictModel(const KernelGraphPtr graph) {}
+  void HardwareOptimizeGraphs(const KernelGraphPtr graph) {}
+  void RootGraphExecutorValidate(KernelGraph *graph) {}
+  void RecurseUpdateAllChildGraohOrder(KernelGraph *root_graph);
+  KernelGraphPtr SplitKernelGraph(const KernelGraphPtr &new_kernel_graph, const std::vector<CNodePtr> &list);
+  void ChildGraphCommunicationDecrease(std::vector<std::vector<AnfNodePtr>> *anf_node_lists);
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
@@ -140,7 +158,7 @@ class AscendSession : public SessionBasic {
   std::unordered_map<GraphId, std::pair<GraphId, GraphId>> switches_;
   std::unordered_map<GraphId, AnfNodePtr> condition_output_;
   // share parameters
-  std::set<std::tuple<AnfNodePtr, GraphId, size_t>> assigns_;
+  std::vector<std::tuple<AnfNodePtr, GraphId, size_t>> assigns_;
   // initial tensors, these tensor will sync data to device before run graph
   std::map<std::pair<GraphId, size_t>, tensor::TensorPtr> initial_tenosrs_;
   // final_graph_id is used in every root graph has it's own session situation

@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from .primitive_test import *
 from .infer_test import *
+from .primitive_test import *

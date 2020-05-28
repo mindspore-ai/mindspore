@@ -27,6 +27,7 @@
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/kernels/tensor_op.h"
 #include "utils/log_adapter.h"
 #include "dataset/util/task_manager.h"
@@ -61,11 +62,12 @@ FilterOp::FilterOp(const std::vector<std::string> &in_col_names, int32_t num_wor
 Status FilterOp::operator()() {
   // The operator class just starts off threads by calling the tree_ function.
   RETURN_UNEXPECTED_IF_NULL(tree_);
-  // Synchronize with TaskManager.
-  TaskManager::FindMe()->Post();
   filter_queues_.Init(num_workers_, oc_queue_size_);
   RETURN_IF_NOT_OK(filter_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1)));
+  Status rc = tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1));
+  // Synchronize with TaskManager.
+  TaskManager::FindMe()->Post();
+  RETURN_IF_NOT_OK(rc);
   RETURN_IF_NOT_OK(Collector());
   return Status::OK();
 }
@@ -75,10 +77,9 @@ Status FilterOp::EofReceived(int32_t) { return Status::OK(); }
 Status FilterOp::EoeReceived(int32_t) { return Status::OK(); }
 
 // Validating if each of the input_columns exists in the DataBuffer.
-Status FilterOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
-                                   const std::vector<std::string> *input_columns) {
+Status FilterOp::ValidateInColumns(const std::vector<std::string> *input_columns) {
   for (const auto &inCol : *input_columns) {
-    bool found = col_name_id_map.find(inCol) != col_name_id_map.end() ? true : false;
+    bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
     if (!found) {
       std::string err_msg = "input column name: " + inCol + " doesn't exist in the dataset columns.";
       RETURN_STATUS_UNEXPECTED(err_msg);
@@ -125,6 +126,9 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
       continue;
     }
 
+    // Now that the first fetch is in, use the helper function to assign the column name map to this op.
+    RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
+
     RETURN_IF_NOT_OK(CheckColumns(in_buffer.get(), &in_columns_));
 
     // if the databuffer was all filtered, it is marked as kFilterEmpty.
@@ -161,10 +165,9 @@ Status FilterOp::WorkerCompute(DataBuffer *in_buffer, std::unique_ptr<TensorQTab
       MS_LOG(INFO) << "Input columns in filter operator is empty, will apply to the all column in the current table.";
       to_process = cur_row;
     } else {
-      std::unordered_map<std::string, int32_t> col_map = in_buffer->column_name_map();
       (void)std::transform(
         in_columns_.begin(), in_columns_.end(), std::back_inserter(to_process),
-        [&cur_row, &col_map](const auto &it) -> std::shared_ptr<Tensor> { return cur_row[col_map[it]]; });
+        [&cur_row, this](const auto &it) -> std::shared_ptr<Tensor> { return cur_row[column_name_id_map_[it]]; });
     }
     bool predicate = true;
     RETURN_IF_NOT_OK(InvokePredicateFunc(to_process, &predicate));
@@ -217,9 +220,8 @@ Status FilterOp::CheckColumns(const DataBuffer *in_buf, const std::vector<std::s
   if (num_rows == 0 || num_cols == 0) {
     RETURN_STATUS_UNEXPECTED("FilterOp is getting an empty DataBuffer.");
   }
-  std::unordered_map<std::string, int32_t> col_name_id_map = in_buf->column_name_map();
   // Check if there is invalid column name in the inColumns.
-  RETURN_IF_NOT_OK(ValidateInColumns(col_name_id_map, input_columns));
+  RETURN_IF_NOT_OK(ValidateInColumns(input_columns));
   return Status::OK();
 }
 
@@ -257,6 +259,12 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
     return Status(StatusCode::kPyFuncException, ss.str());
   }
   return Status(StatusCode::kOK, "FilterOp predicate func call succeed");
+}
+
+// Visitor accept method for NodePass
+Status FilterOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<FilterOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

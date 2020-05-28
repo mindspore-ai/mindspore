@@ -54,8 +54,7 @@ Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
   }
 
   // Extract the column name mapping from the schema and save it in the class.
-  // This will be needed when constructing buffers.
-  RETURN_IF_NOT_OK((*out_op)->data_schema_->GetColumnNameMap(&((*out_op)->column_name_map_)));
+  RETURN_IF_NOT_OK((*out_op)->data_schema_->GetColumnNameMap(&((*out_op)->column_name_id_map_)));
 
   return Status::OK();
 }
@@ -128,7 +127,7 @@ Status RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(0, kMaxDataType));
+    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(0, DataType::NUM_OF_TYPES - 2));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {
@@ -320,7 +319,6 @@ Status RandomDataOp::WorkerEntry(int32_t worker_id) {
 Status RandomDataOp::PackAndSend(int32_t worker_id, std::unique_ptr<TensorQTable> in_table) {
   auto new_buffer = std::make_unique<DataBuffer>(GetNextBufferId(), DataBuffer::kDeBFlagNone);
   new_buffer->set_tensor_table(std::move(in_table));
-  new_buffer->set_column_name_map(column_name_map_);
   RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(new_buffer)));
   return Status::OK();
 }

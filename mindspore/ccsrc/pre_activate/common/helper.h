@@ -23,6 +23,7 @@
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
 #include "common/utils.h"
+#include "pre_activate/common/pattern_engine.h"
 
 namespace mindspore {
 namespace opt {
@@ -47,6 +48,8 @@ constexpr size_t kBn2ReluOutputNum = 4;
 
 constexpr size_t kBnInputNum = 6;
 constexpr size_t kBnOutputNum = 5;
+constexpr size_t kBatchNormInputNum = 5;
+constexpr size_t kBatchNormOutputNum = 5;
 
 constexpr size_t kBN1OutputNum = 2;
 constexpr size_t kBN2OutputNum = 3;
@@ -61,6 +64,7 @@ constexpr size_t kBNGrad3OutputNum = 1;
 
 constexpr size_t kBNTrainingReduceOutputNum = 2;
 constexpr size_t kBNTrainingUpdateOutputNum = 5;
+constexpr size_t kBNTrainingUpdateV2OutputNum = 3;
 constexpr size_t kBNTrainingUpdateGradOutputNum = 2;
 
 constexpr size_t kSingleOutputNum = 1;
@@ -88,6 +92,8 @@ constexpr size_t kBackendTransDataInputNum = 2;
 constexpr size_t kApplyMomentumInputNum = 6;
 constexpr size_t kBiasAddInputNum = 3;
 constexpr size_t kTopkInputNum = 3;
+constexpr size_t kLarsV2InputNum = 5;
+constexpr size_t kFusedMulApplyMomentumOutputNum = 2;
 
 enum FusedBatchNormInput {
   kX = 1,
@@ -107,6 +113,9 @@ enum ConvBn1Output {
 };
 
 std::vector<int> Convert2Int(const std::vector<size_t> &v);
+
+// check whether node1 depends on node2 or not
+bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodePtr &node2);
 
 bool UnVisited(const BaseRef &n);
 
@@ -154,6 +163,19 @@ AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePt
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs);
+
+bool AnfEqual(const BaseRef &a, const BaseRef &b);
+
+bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b);
+
+AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                      bool multigraph = false);
+
+// Check var_node in two equivs is the same node
+bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &var_node);
+
+// Get anf_node from equiv by var_node
+AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_

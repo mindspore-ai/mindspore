@@ -21,13 +21,15 @@
 from dataclasses import dataclass
 
 
-#Test_Erase_class
+# Test_Erase_class
 @dataclass
 class Point:
     x: float
     y: float
+
     def product(self):
         return self.x * self.y
+
 
 def test_erase_class_fn(p_in):
     p = Point(p_in)

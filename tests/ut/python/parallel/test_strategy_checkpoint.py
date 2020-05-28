@@ -13,15 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-from mindspore.context import set_auto_parallel_context, reset_auto_parallel_context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
 from mindspore.common.api import _executor
+from mindspore.context import set_auto_parallel_context, reset_auto_parallel_context
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 # model_parallel test
@@ -35,7 +36,6 @@ def test_six_matmul_save():
         def construct(self, x1, x6):
             predict = self.network(x1, x6)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -81,10 +81,11 @@ def test_six_matmul_save():
     strategy6 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3, strategy4, strategy5, strategy6)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-
+    net.set_auto_parallel()
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     _executor.compile(net, x1, x6)
+
 
 # remove matmul2, add matmul7
 def test_six_matmul_load():
@@ -97,7 +98,6 @@ def test_six_matmul_load():
         def construct(self, x1, x6, x7):
             predict = self.network(x1, x6, x7)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -142,11 +142,12 @@ def test_six_matmul_load():
     strategy7 = ((8, 1), (1, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy3, strategy4, strategy5, strategy6, strategy7)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-
+    net.set_auto_parallel()
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     _executor.compile(net, x1, x6, x7)
+
 
 # model_parallel test
 def test_six_matmul_save_auto():
@@ -159,7 +160,6 @@ def test_six_matmul_save_auto():
         def construct(self, x1, x6):
             predict = self.network(x1, x6)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -199,10 +199,11 @@ def test_six_matmul_save_auto():
     set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_save_file="./strategy_stage1_auto.ckpt")
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-
+    net.set_auto_parallel()
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     _executor.compile(net, x1, x6)
+
 
 # remove matmul2, add matmul7
 def test_six_matmul_load_auto():
@@ -215,7 +216,6 @@ def test_six_matmul_load_auto():
         def construct(self, x1, x6, x7):
             predict = self.network(x1, x6, x7)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -258,7 +258,7 @@ def test_six_matmul_load_auto():
     strategy5 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy3, strategy4, strategy5)))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-
+    net.set_auto_parallel()
     x1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)

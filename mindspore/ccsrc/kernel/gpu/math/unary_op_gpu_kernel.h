@@ -34,6 +34,8 @@ enum UnaryOptype {
   UNARY_OP_RECIPROCAL,
   UNARY_OP_ZEROSLIKE,
   UNARY_OP_SQUARE,
+  UNARY_OP_SQRT,
+  UNARY_OP_RSQRT,
   UNARY_OP_INVALID_TYPE = 255
 };
 static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
@@ -41,12 +43,18 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY
                                                                    {"Neg", UNARY_OP_NEG},
                                                                    {"Reciprocal", UNARY_OP_RECIPROCAL},
                                                                    {"ZerosLike", UNARY_OP_ZEROSLIKE},
-                                                                   {"Square", UNARY_OP_SQUARE}};
+                                                                   {"Square", UNARY_OP_SQUARE},
+                                                                   {"Sqrt", UNARY_OP_SQRT},
+                                                                   {"Rsqrt", UNARY_OP_RSQRT}};
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
   UnaryOpGpuKernel()
-      : unary_op_type_(UNARY_OP_INVALID_TYPE), input_size_(sizeof(T)), output_size_(sizeof(T)), workspace_size_(0) {}
+      : unary_op_type_(UNARY_OP_INVALID_TYPE),
+        input_size_(sizeof(T)),
+        output_size_(sizeof(T)),
+        workspace_size_(0),
+        is_null_input_(false) {}
   ~UnaryOpGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -54,7 +62,7 @@ class UnaryOpGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     VARIABLE_NOT_USED(workspace);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -78,6 +86,14 @@ class UnaryOpGpuKernel : public GpuKernel {
       }
       case UNARY_OP_SQUARE: {
         Square(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_SQRT: {
+        Sqrt(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_RSQRT: {
+        Rsqrt(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_ZEROSLIKE: {
@@ -109,6 +125,12 @@ class UnaryOpGpuKernel : public GpuKernel {
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "UnaryOpGpuKernel input is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
@@ -128,6 +150,7 @@ class UnaryOpGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

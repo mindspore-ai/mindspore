@@ -121,8 +121,9 @@ Status TextFileOp::Init() {
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(text_files_list_.size() / num_workers_) + 1);
   io_block_queues_.Init(num_workers_, safe_queue_size);
 
+  // Set the column name mapping (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    col_name_map_[data_schema_->column(i).name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
@@ -145,10 +146,7 @@ Status TextFileOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTa
   (*tensor_table)->push_back(std::move(tRow));
 
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(
-    Tensor::CreateTensor(&tensor, data_schema_->column(0).tensorImpl(),
-                         TensorShape(std::vector<dsize_t>(1, line.size())), data_schema_->column(0).type(),
-                         const_cast<unsigned char *>(reinterpret_cast<const unsigned char *>(common::SafeCStr(line)))));
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {line}, TensorShape::CreateScalar()));
   (**tensor_table)[row][0] = std::move(tensor);
   return Status::OK();
 }
@@ -164,7 +162,6 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
   int64_t rows_total = 0;
   std::string line;
   std::unique_ptr<DataBuffer> cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  cur_buffer->set_column_name_map(col_name_map_);
   std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
 
   while (getline(handle, line)) {
@@ -189,7 +186,6 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(cur_buffer)));
 
       cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      cur_buffer->set_column_name_map(col_name_map_);
       tensor_table = std::make_unique<TensorQTable>();
       rows_each_buffer = 0;
     }

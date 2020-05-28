@@ -13,17 +13,21 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
-from mindspore import context
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 context.set_context(mode=context.GRAPH_MODE)
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -42,6 +46,12 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
+
+
+def compile(net, x, y, b, phase):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b, phase=phase)
+
 
 def test_auto_parallel_arithmetic():
     class Net(nn.Cell):
@@ -63,11 +73,12 @@ def test_auto_parallel_arithmetic():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     b = Tensor(np.ones([64, 128]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase='train')
+    compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[2, 4], [2, 4]],
-                     'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
+                           'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
     assert strategies == expected_strategies
+
 
 def test_auto_parallel_arithmetic_broadcast_both():
     class Net(nn.Cell):
@@ -89,7 +100,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase='train')
+    compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[8, 1], [1, 1]],
                            'Default/network-Net/MatMul-op1': [[8, 1], [1, 1]]}
@@ -116,7 +127,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase='train')
+    compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [2]],
                            'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}
@@ -143,7 +154,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase="train")
+    compile(net, x, y, b, phase="train")
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [1, 4, 2]],
                            'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}

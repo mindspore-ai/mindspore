@@ -22,6 +22,22 @@ from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
+__all__ = ['Softmax',
+           'LogSoftmax',
+           'ReLU',
+           'ReLU6',
+           'Tanh',
+           'GELU',
+           'Sigmoid',
+           'PReLU',
+           'get_activation',
+           'LeakyReLU',
+           'HSigmoid',
+           'HSwish',
+           'ELU',
+           'LogSigmoid',
+           ]
+
 
 class Softmax(Cell):
     r"""
@@ -48,7 +64,13 @@ class Softmax(Cell):
     Outputs:
         Tensor, which has the same type and shape as `x` with values in the range[0,1].
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> softmax = nn.Softmax()
+        >>> softmax(input_x)
+        [0.03168  0.01166  0.0861  0.636  0.2341]
     """
+
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
         self.softmax = P.Softmax(axis)
@@ -78,6 +100,12 @@ class LogSoftmax(Cell):
     Outputs:
         Tensor, which has the same type and shape as the input as `x` with values in the range[-inf,0).
 
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> log_softmax = nn.LogSoftmax()
+        >>> log_softmax(input_x)
+        [[-5.00672150e+00 -6.72150636e-03 -1.20067215e+01]
+         [-7.00091219e+00 -1.40009127e+01 -9.12250078e-04]]
     """
 
     def __init__(self, axis=-1):
@@ -111,7 +139,13 @@ class ELU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> elu = nn.ELU()
+        >>> elu(input_x)
+
     """
+
     def __init__(self, alpha=1.0):
         super(ELU, self).__init__()
         self.elu = P.Elu(alpha)
@@ -134,7 +168,13 @@ class ReLU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> relu = nn.ReLU()
+        >>> relu(input_x)
+        [0.  2.  0.  2.  0.]
     """
+
     def __init__(self):
         super(ReLU, self).__init__()
         self.relu = P.ReLU()
@@ -157,7 +197,13 @@ class ReLU6(Cell):
     Outputs:
         Tensor, which has the same type with `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> relu6 = nn.ReLU6()
+        >>> relu6(input_x)
+        [0.  0.  0.  2.  1.]
     """
+
     def __init__(self):
         super(ReLU6, self).__init__()
         self.relu6 = P.ReLU6()
@@ -188,7 +234,14 @@ class LeakyReLU(Cell):
     Outputs:
         Tensor, has the same type and shape with the `input_x`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> leaky_relu = nn.LeakyReLU()
+        >>> leaky_relu(input_x)
+        [[-0.2  4.  -1.6]
+         [ 2   -1.   9.]]
     """
+
     def __init__(self, alpha=0.2):
         super(LeakyReLU, self).__init__()
         self.greater_equal = P.GreaterEqual()
@@ -224,7 +277,13 @@ class Tanh(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
+        >>> tanh = nn.Tanh()
+        >>> tanh(input_x)
+        [0.7617  0.964  0.995  0.964 0.7617]
     """
+
     def __init__(self):
         super(Tanh, self).__init__()
         self.tanh = P.Tanh()
@@ -249,7 +308,14 @@ class GELU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> gelu = nn.GELU()
+        >>> gelu(input_x)
+        [[-1.5880802e-01  3.9999299e+00 -3.1077917e-21]
+         [ 1.9545976e+00 -2.2918017e-07  9.0000000e+00]]
     """
+
     def __init__(self):
         super(GELU, self).__init__()
         self.gelu = P.Gelu()
@@ -273,7 +339,13 @@ class Sigmoid(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> sigmoid = nn.Sigmoid()
+        >>> sigmoid(input_x)
+        [0.2688  0.11914  0.5  0.881  0.7305]
     """
+
     def __init__(self):
         super(Sigmoid, self).__init__()
         self.sigmoid = P.Sigmoid()
@@ -300,10 +372,15 @@ class PReLU(Cell):
         w (float): The initial value of w. Default: 0.25.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Tanh.
+        - **input_data** (Tensor) - The input of PReLU.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> prelu = nn.PReLU()
+        >>> prelu(input_x)
 
     """
     @cell_attr_register(attrs="")
@@ -351,7 +428,13 @@ class HSwish(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hswish = nn.HSwish()
+        >>> hswish(input_x)
+
     """
+
     def __init__(self):
         super(HSwish, self).__init__()
         self.hswish = P.HSwish()
@@ -379,13 +462,62 @@ class HSigmoid(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hsigmoid = nn.HSigmoid()
+        >>> hsigmoid(input_x)
+
     """
+
     def __init__(self):
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()
 
     def construct(self, x):
         return self.hsigmoid(x)
+
+
+class LogSigmoid(Cell):
+    r"""
+    Logsigmoid activation function.
+
+    Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Logsigmoid is defined as:
+
+    .. math::
+        \text{logsigmoid}(x_{i}) = log(\frac{1}{1 + \exp(-x_i)}),
+
+    where :math:`x_{i}` is the element of the input.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of LogSigmoid.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    Examples:
+        >>> net = nn.LogSigmoid()
+        >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> logsigmoid = net(input_x)
+        [-3.1326166e-01, -1.2692806e-01, -4.8587345e-02]
+
+    """
+    def __init__(self):
+        super(LogSigmoid, self).__init__()
+        self.mul = P.Mul()
+        self.exp = P.Exp()
+        self.add = P.TensorAdd()
+        self.rec = P.Reciprocal()
+        self.log = P.Log()
+
+    def construct(self, input_x):
+        neg_input = self.mul(input_x, -1)
+        exp_neg_input = self.exp(neg_input)
+        exp_neg_input_1 = self.add(exp_neg_input, 1)
+        rec_exp_neg_input_1 = self.rec(exp_neg_input_1)
+        ret = self.log(rec_exp_neg_input_1)
+        return ret
 
 
 _activation = {
@@ -400,6 +532,7 @@ _activation = {
     'leakyrelu': LeakyReLU,
     'hswish': HSwish,
     'hsigmoid': HSigmoid,
+    'logsigmoid': LogSigmoid,
 }
 
 

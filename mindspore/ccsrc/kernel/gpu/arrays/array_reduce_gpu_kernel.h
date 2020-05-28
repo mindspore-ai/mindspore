@@ -43,7 +43,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
         inputA_descriptor_(nullptr),
         outputC_descriptor_(nullptr),
         keep_dims_(false),
-        is_reduce_dim_one_(true),
+        all_match_(false),
         is_null_input_(false),
         input_size_(0),
         output_size_(0),
@@ -55,7 +55,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -65,7 +65,9 @@ class ArrayReduceGpuKernel : public GpuKernel {
 
     const float alpha = 1;
     const float beta = 0;
-    if (is_reduce_dim_one_) {
+    if (all_match_) {
+      MS_LOG(WARNING)
+        << "The corresponding dimensions of the input and output tensors all match. No need to call cuDNN kernel.";
       CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync failed in ArrayReduceGpuKernel::Launch.");
@@ -176,50 +178,35 @@ class ArrayReduceGpuKernel : public GpuKernel {
     return;
   }
   void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
-    std::vector<size_t> inputA_shape = input_shape;
+    std::vector<int> inputA;
     std::vector<size_t> outputC_shape = output_shape;
-    int shapeA_n, shapeA_c, shapeA_h, shapeA_w;
-    shapeA_n = inputA_shape.size() < 4 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 4]);
-    shapeA_c = inputA_shape.size() < 3 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 3]);
-    shapeA_h = inputA_shape.size() < 2 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 2]);
-    shapeA_w = inputA_shape.size() == 0 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 1]);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, shapeA_n,
-                                                           shapeA_c, shapeA_h, shapeA_w),
+    ShapeNdTo4d(input_shape, &inputA);
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, inputA[0],
+                                                           inputA[1], inputA[2], inputA[3]),
                                 "cudnnSetTensor4dDescriptor failed");
 
-    int shapeC_n, shapeC_c, shapeC_h, shapeC_w;
     if (axis_[0] == -1) {
-      shapeC_n = 1;
-      shapeC_c = 1;
-      shapeC_h = 1;
-      shapeC_w = 1;
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
-                                                             shapeC_n, shapeC_c, shapeC_h, shapeC_w),
-                                  "cudnnSetTensor4dDescriptor failed");
-      is_reduce_dim_one_ = false;
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
+        "cudnnSetTensor4dDescriptor failed");
+      if (inputA[0] == 1 && inputA[1] == 1 && inputA[2] == 1 && inputA[3] == 1) {
+        all_match_ = true;
+      }
       return;
     }
-
     if (!keep_dims_) {
       for (auto i : axis_) {
         (void)(outputC_shape.insert(outputC_shape.begin() + i, 1));
       }
     }
-    for (auto i : axis_) {
-      if (inputA_shape[IntToSize(i)] != 1) {
-        // To avoid cudnnReduceTensor bug when the dimension which needs to be
-        // reduced is already 1.
-        is_reduce_dim_one_ = false;
-      }
-    }
-
-    shapeC_n = outputC_shape.size() < 4 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 4]);
-    shapeC_c = outputC_shape.size() < 3 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 3]);
-    shapeC_h = outputC_shape.size() < 2 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 2]);
-    shapeC_w = SizeToInt(outputC_shape[outputC_shape.size() - 1]);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, shapeC_n,
-                                                           shapeC_c, shapeC_h, shapeC_w),
+    std::vector<int> outputC;
+    ShapeNdTo4d(outputC_shape, &outputC);
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
+                                                           outputC[0], outputC[1], outputC[2], outputC[3]),
                                 "cudnnSetTensor4dDescriptor failed");
+    if (inputA == outputC) {
+      all_match_ = true;
+    }
     return;
   }
 
@@ -234,7 +221,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
 
   std::vector<int> axis_;
   bool keep_dims_;
-  bool is_reduce_dim_one_;
+  bool all_match_;
   bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

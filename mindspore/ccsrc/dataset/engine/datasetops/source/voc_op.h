@@ -16,9 +16,9 @@
 #ifndef DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
 #define DATASET_ENGINE_DATASETOPS_SOURCE_VOC_OP_H_
 
+#include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -40,8 +40,12 @@ namespace dataset {
 template <typename T>
 class Queue;
 
+using Bbox = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
+
 class VOCOp : public ParallelOp, public RandomAccessOp {
  public:
+  enum class TaskType { Segmentation = 0, Detection = 1 };
+
   class Builder {
    public:
     // Constructor for Builder class of ImageFolderOp
@@ -57,6 +61,34 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
     // @return Builder setter method returns reference to the builder.
     Builder &SetDir(const std::string &build_dir) {
       builder_dir_ = build_dir;
+      return *this;
+    }
+
+    // Setter method.
+    // @param const std::map<std::string, int32_t> &map - a class name to label map
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetClassIndex(const std::map<std::string, int32_t> &map) {
+      builder_labels_to_read_ = map;
+      return *this;
+    }
+
+    // Setter method.
+    // @param const std::string & task_type
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetTask(const std::string &task_type) {
+      if (task_type == "Segmentation") {
+        builder_task_type_ = TaskType::Segmentation;
+      } else if (task_type == "Detection") {
+        builder_task_type_ = TaskType::Detection;
+      }
+      return *this;
+    }
+
+    // Setter method.
+    // @param const std::string & task_mode
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetMode(const std::string &task_mode) {
+      builder_task_mode_ = task_mode;
       return *this;
     }
 
@@ -120,25 +152,33 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
    private:
     bool builder_decode_;
     std::string builder_dir_;
+    TaskType builder_task_type_;
+    std::string builder_task_mode_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int32_t builder_rows_per_buffer_;
     int64_t builder_num_samples_;
     std::shared_ptr<Sampler> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
+    std::map<std::string, int32_t> builder_labels_to_read_;
   };
 
   // Constructor
+  // @param TaskType task_type - task type of VOC
+  // @param std::string task_mode - task mode of VOC
+  // @param std::string folder_path - dir directory of VOC
+  // @param std::map<std::string, int32_t> class_index - input class-to-index of annotation
   // @param int32_t num_workers - number of workers reading images in parallel
   // @param int32_t rows_per_buffer - number of images (rows) in each buffer
-  // @param std::string folder_path - dir directory of VOC
   // @param int32_t queue_size - connector queue size
   // @param int64_t num_samples - number of samples to read
   // @param bool decode - whether to decode images
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the VOC dataset
   // @param std::shared_ptr<Sampler> sampler - sampler tells VOCOp what to read
-  VOCOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &folder_path, int32_t queue_size,
-        int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+  VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
+        const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
+        int32_t queue_size, int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema,
+        std::shared_ptr<Sampler> sampler);
 
   // Destructor
   ~VOCOp() = default;
@@ -168,6 +208,16 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
+  // @param const std::string &dir - VOC dir path
+  // @param const std::string &task_type - task type of reading voc job
+  // @param const std::string &task_mode - task mode of reading voc job
+  // @param const py::dict &dict - input dict of class index
+  // @param int64_t numSamples - samples number of VOCDataset
+  // @param std::map<std::string, int32_t> *output_class_indexing - output class index of VOCDataset
+  static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
+                                 const py::dict &dict, int64_t numSamples,
+                                 std::map<std::string, int32_t> *output_class_indexing);
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return
@@ -185,19 +235,40 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor);
 
+  // @param const std::string &path - path to the image file
+  // @param const ColDescriptor &col - contains tensor implementation and datatype
+  // @param std::shared_ptr<Tensor> tensor - return
+  // @return Status - The error code return
+  Status ReadAnnotationToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor);
+
   // @param const std::vector<uint64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db
   // @return Status - The error code return
   Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 
+  // Read image list from ImageSets
+  // @return Status - The error code return
   Status ParseImageIds();
 
+  // Read annotation from Annotation folder
+  // @return Status - The error code return
+  Status ParseAnnotationIds();
+
+  // @param const std::string &path - path to annotation xml
+  // @return Status - The error code return
+  Status ParseAnnotationBbox(const std::string &path);
+
+  // @param const std::shared_ptr<Tensor> &sample_ids - sample ids of tensor
+  // @param std::vector<int64_t> *keys - image id
+  // @return Status - The error code return
   Status TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys);
 
   // Called first when function is called
   // @return Status - The error code return
   Status LaunchThreadsAndInitOp();
 
+  // Reset dataset state
+  // @return Status - The error code return
   Status Reset() override;
 
   bool decode_;
@@ -206,14 +277,18 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   int64_t num_rows_;
   int64_t num_samples_;
   std::string folder_path_;
+  TaskType task_type_;
+  std::string task_mode_;
   int32_t rows_per_buffer_;
   std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
 
   WaitPost wp_;
   std::vector<std::string> image_ids_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
+  std::map<std::string, int32_t> class_index_;
+  std::map<std::string, int32_t> label_index_;
+  std::map<std::string, Bbox> label_map_;
 };
 }  // namespace dataset
 }  // namespace mindspore

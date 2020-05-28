@@ -22,6 +22,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -78,8 +79,9 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
       buf_cnt_(0),
       sampler_ind_(0),
       dirname_offset_(0) {
+  // Set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    col_name_map_[data_schema_->column(i).name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
   folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
   image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
@@ -215,7 +217,7 @@ Status ImageFolderOp::LoadTensorRow(ImageLabelPair pairPtr, TensorRow *trow) {
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
                                         TensorShape(std::vector<dsize_t>(1, num_elements)),
                                         data_schema_->column(0).type(), nullptr));
-  (void)fs.read(reinterpret_cast<char *>(image->StartAddr()), num_elements);
+  (void)fs.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
   fs.close();
   if (decode_ == true) {
     Status rc = Decode(image, &image);
@@ -237,7 +239,6 @@ Status ImageFolderOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_p
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
-  (*db)->set_column_name_map(col_name_map_);
   return Status::OK();
 }
 
@@ -332,8 +333,8 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
       if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
         (void)imgs.insert(file.toString().substr(dirname_offset_));
       } else {
-        MS_LOG(INFO) << "Image folder operator unsupported file found: " << file.toString()
-                     << ", extension: " << file.Extension() << ".";
+        MS_LOG(WARNING) << "Image folder operator unsupported file found: " << file.toString()
+                        << ", extension: " << file.Extension() << ".";
       }
     }
     FolderImagesPair p = std::make_shared<std::pair<std::string, std::queue<ImageLabelPair>>>();
@@ -450,6 +451,12 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const int64_t
   }
   (*num_rows) = (row_cnt / num_dev) + (row_cnt % num_dev == 0 ? 0 : 1);
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ImageFolderOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ImageFolderOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

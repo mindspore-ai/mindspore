@@ -47,20 +47,55 @@ ShardReader::ShardReader() {
   block_reader_ = false;
 }
 
-MSRStatus ShardReader::Init(const std::string &file_path) {
+std::pair<MSRStatus, std::vector<std::string>> ShardReader::GetMeta(const std::string &file_path, json &meta_data) {
   if (!IsLegalFile(file_path)) {
-    return FAILED;
+    return {FAILED, {}};
   }
-  ShardHeader sh = ShardHeader();
-  if (sh.Build(file_path) == FAILED) {
-    return FAILED;
+  auto ret = ShardHeader::BuildSingleHeader(file_path);
+  if (ret.first != SUCCESS) {
+    return {FAILED, {}};
   }
-  shard_header_ = std::make_shared<ShardHeader>(sh);
-  header_size_ = shard_header_->get_header_size();
-  page_size_ = shard_header_->get_page_size();
-  file_paths_ = shard_header_->get_shard_addresses();
+  auto header = ret.second;
+  meta_data = {{"header_size", header["header_size"]}, {"page_size", header["page_size"]},
+               {"version", header["version"]},         {"index_fields", header["index_fields"]},
+               {"schema", header["schema"]},           {"blob_fields", header["blob_fields"]}};
+  return {SUCCESS, header["shard_addresses"]};
+}
 
+MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool load_dataset) {
+  std::string file_path = file_paths[0];
+  json first_meta_data = json();
+  auto ret = GetMeta(file_path, first_meta_data);
+  if (ret.first != SUCCESS) {
+    return FAILED;
+  }
+  if (file_paths.size() == 1 && load_dataset == true) {
+    auto ret2 = GetParentDir(file_path);
+    if (SUCCESS != ret2.first) {
+      return FAILED;
+    }
+    std::vector<std::string> real_addresses;
+    for (const auto &path : ret.second) {
+      std::string abs_path = ret2.second + string(path);
+      real_addresses.emplace_back(abs_path);
+    }
+    file_paths_ = real_addresses;
+  } else if (file_paths.size() >= 1 && load_dataset == false) {
+    file_paths_ = file_paths;
+  } else {
+    MS_LOG(ERROR) << "Error in parameter file_path or load_dataset.";
+    return FAILED;
+  }
   for (const auto &file : file_paths_) {
+    json meta_data = json();
+    auto ret1 = GetMeta(file, meta_data);
+    if (ret1.first != SUCCESS) {
+      return FAILED;
+    }
+    if (meta_data != first_meta_data) {
+      MS_LOG(ERROR) << "Mindrecord files meta information is different.";
+      return FAILED;
+    }
     sqlite3 *db = nullptr;
     // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
     int rc = sqlite3_open_v2(common::SafeCStr(file + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
@@ -91,7 +126,19 @@ MSRStatus ShardReader::Init(const std::string &file_path) {
     }
     database_paths_.push_back(db);
   }
-
+  ShardHeader sh = ShardHeader();
+  if (sh.BuildDataset(file_paths_, load_dataset) == FAILED) {
+    return FAILED;
+  }
+  shard_header_ = std::make_shared<ShardHeader>(sh);
+  header_size_ = shard_header_->GetHeaderSize();
+  page_size_ = shard_header_->GetPageSize();
+  // version < 3.0
+  if (first_meta_data["version"] < kVersion) {
+    shard_column_ = std::make_shared<ShardColumn>(shard_header_, false);
+  } else {
+    shard_column_ = std::make_shared<ShardColumn>(shard_header_, true);
+  }
   num_rows_ = 0;
   auto row_group_summary = ReadRowGroupSummary();
   for (const auto &rg : row_group_summary) {
@@ -105,7 +152,7 @@ MSRStatus ShardReader::Init(const std::string &file_path) {
 
 MSRStatus ShardReader::CheckColumnList(const std::vector<std::string> &selected_columns) {
   vector<int> inSchema(selected_columns.size(), 0);
-  for (auto &p : get_shard_header()->get_schemas()) {
+  for (auto &p : GetShardHeader()->GetSchemas()) {
     auto schema = p->GetSchema()["schema"];
     for (unsigned int i = 0; i < selected_columns.size(); ++i) {
       if (schema.find(selected_columns[i]) != schema.end()) {
@@ -183,15 +230,17 @@ void ShardReader::Close() {
   FileStreamsOperator();
 }
 
-std::shared_ptr<ShardHeader> ShardReader::get_shard_header() const { return shard_header_; }
+std::shared_ptr<ShardHeader> ShardReader::GetShardHeader() const { return shard_header_; }
 
-int ShardReader::get_shard_count() const { return shard_header_->get_shard_count(); }
+std::shared_ptr<ShardColumn> ShardReader::get_shard_column() const { return shard_column_; }
 
-int ShardReader::get_num_rows() const { return num_rows_; }
+int ShardReader::GetShardCount() const { return shard_header_->GetShardCount(); }
+
+int ShardReader::GetNumRows() const { return num_rows_; }
 
 std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummary() {
   std::vector<std::tuple<int, int, int, uint64_t>> row_group_summary;
-  int shard_count = shard_header_->get_shard_count();
+  int shard_count = shard_header_->GetShardCount();
   if (shard_count <= 0) {
     return row_group_summary;
   }
@@ -205,13 +254,13 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
       for (uint64_t page_id = 0; page_id <= last_page_id; ++page_id) {
         const auto &page_t = shard_header_->GetPage(shard_id, page_id);
         const auto &page = page_t.first;
-        if (page->get_page_type() != kPageTypeBlob) continue;
-        uint64_t start_row_id = page->get_start_row_id();
-        if (start_row_id > page->get_end_row_id()) {
+        if (page->GetPageType() != kPageTypeBlob) continue;
+        uint64_t start_row_id = page->GetStartRowID();
+        if (start_row_id > page->GetEndRowID()) {
           return std::vector<std::tuple<int, int, int, uint64_t>>();
         }
-        uint64_t number_of_rows = page->get_end_row_id() - start_row_id;
-        row_group_summary.emplace_back(shard_id, page->get_page_type_id(), start_row_id, number_of_rows);
+        uint64_t number_of_rows = page->GetEndRowID() - start_row_id;
+        row_group_summary.emplace_back(shard_id, page->GetPageTypeID(), start_row_id, number_of_rows);
       }
     }
   }
@@ -248,7 +297,6 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
         fs->close();
         return FAILED;
       }
-
       json label_json = json::from_msgpack(label_raw);
       json tmp;
       if (!columns.empty()) {
@@ -265,7 +313,7 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
       json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
         // construct json "f1": value
-        auto schema = shard_header_->get_schemas()[0]->GetSchema()["schema"];
+        auto schema = shard_header_->GetSchemas()[0]->GetSchema()["schema"];
 
         // convert the string to base type by schema
         if (schema[columns[j]]["type"] == "int32") {
@@ -316,11 +364,15 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
 }
 
 MSRStatus ShardReader::GetAllClasses(const std::string &category_field, std::set<std::string> &categories) {
-  if (column_schema_id_.find(category_field) == column_schema_id_.end()) {
-    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+  std::map<std::string, uint64_t> index_columns;
+  for (auto &field : GetShardHeader()->GetFields()) {
+    index_columns[field.second] = field.first;
+  }
+  if (index_columns.find(category_field) == index_columns.end()) {
+    MS_LOG(ERROR) << "Index field " << category_field << " does not exist.";
     return FAILED;
   }
-  auto ret = ShardIndexGenerator::GenerateFieldName(std::make_pair(column_schema_id_[category_field], category_field));
+  auto ret = ShardIndexGenerator::GenerateFieldName(std::make_pair(index_columns[category_field], category_field));
   if (SUCCESS != ret.first) {
     return FAILED;
   }
@@ -389,18 +441,17 @@ ROW_GROUPS ShardReader::ReadAllRowGroup(std::vector<std::string> &columns) {
 }
 
 ROW_GROUP_BRIEF ShardReader::ReadRowGroupBrief(int group_id, int shard_id, const std::vector<std::string> &columns) {
-  std::lock_guard<std::mutex> lck(shard_locker_);
   const auto &ret = shard_header_->GetPageByGroupId(group_id, shard_id);
   if (SUCCESS != ret.first) {
     return std::make_tuple(FAILED, "", 0, 0, std::vector<std::vector<uint64_t>>(), std::vector<json>());
   }
   const std::shared_ptr<Page> &page = ret.second;
   std::string file_name = file_paths_[shard_id];
-  uint64_t page_length = page->get_page_size();
-  uint64_t page_offset = page_size_ * page->get_page_id() + header_size_;
-  std::vector<std::vector<uint64_t>> image_offset = GetImageOffset(page->get_page_id(), shard_id);
+  uint64_t page_length = page->GetPageSize();
+  uint64_t page_offset = page_size_ * page->GetPageID() + header_size_;
+  std::vector<std::vector<uint64_t>> image_offset = GetImageOffset(page->GetPageID(), shard_id);
 
-  auto status_labels = GetLabels(page->get_page_id(), shard_id, columns);
+  auto status_labels = GetLabels(page->GetPageID(), shard_id, columns);
   if (status_labels.first != SUCCESS) {
     return std::make_tuple(FAILED, "", 0, 0, std::vector<std::vector<uint64_t>>(), std::vector<json>());
   }
@@ -411,7 +462,6 @@ ROW_GROUP_BRIEF ShardReader::ReadRowGroupBrief(int group_id, int shard_id, const
 ROW_GROUP_BRIEF ShardReader::ReadRowGroupCriteria(int group_id, int shard_id,
                                                   const std::pair<std::string, std::string> &criteria,
                                                   const std::vector<std::string> &columns) {
-  std::lock_guard<std::mutex> lck(shard_locker_);
   const auto &ret = shard_header_->GetPageByGroupId(group_id, shard_id);
   if (SUCCESS != ret.first) {
     return std::make_tuple(FAILED, "", 0, 0, std::vector<std::vector<uint64_t>>(), std::vector<json>());
@@ -422,11 +472,11 @@ ROW_GROUP_BRIEF ShardReader::ReadRowGroupCriteria(int group_id, int shard_id,
   }
   const std::shared_ptr<Page> &page = ret.second;
   std::string file_name = file_paths_[shard_id];
-  uint64_t page_length = page->get_page_size();
-  uint64_t page_offset = page_size_ * page->get_page_id() + header_size_;
-  std::vector<std::vector<uint64_t>> image_offset = GetImageOffset(page->get_page_id(), shard_id, criteria);
+  uint64_t page_length = page->GetPageSize();
+  uint64_t page_offset = page_size_ * page->GetPageID() + header_size_;
+  std::vector<std::vector<uint64_t>> image_offset = GetImageOffset(page->GetPageID(), shard_id, criteria);
 
-  auto status_labels = GetLabels(page->get_page_id(), shard_id, columns, criteria);
+  auto status_labels = GetLabels(page->GetPageID(), shard_id, columns, criteria);
   if (status_labels.first != SUCCESS) {
     return std::make_tuple(FAILED, "", 0, 0, std::vector<std::vector<uint64_t>>(), std::vector<json>());
   }
@@ -454,7 +504,7 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
 
   // whether use index search
   if (!criteria.first.empty()) {
-    auto schema = shard_header_->get_schemas()[0]->GetSchema();
+    auto schema = shard_header_->GetSchemas()[0]->GetSchema();
 
     // not number field should add '' in sql
     if (kNumberFieldTypeSet.find(schema["schema"][criteria.first]["type"]) != kNumberFieldTypeSet.end()) {
@@ -488,22 +538,15 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
   return res;
 }
 
-void ShardReader::CheckNlp() {
-  nlp_ = false;
-  return;
-}
-
-bool ShardReader::get_nlp_flag() { return nlp_; }
-
-std::pair<ShardType, std::vector<std::string>> ShardReader::get_blob_fields() {
+std::pair<ShardType, std::vector<std::string>> ShardReader::GetBlobFields() {
   std::vector<std::string> blob_fields;
-  for (auto &p : get_shard_header()->get_schemas()) {
+  for (auto &p : GetShardHeader()->GetSchemas()) {
     // assume one schema
-    const auto &fields = p->get_blob_fields();
+    const auto &fields = p->GetBlobFields();
     blob_fields.assign(fields.begin(), fields.end());
     break;
   }
-  return std::make_pair(nlp_ ? kNLP : kCV, blob_fields);
+  return std::make_pair(kCV, blob_fields);
 }
 
 void ShardReader::CheckIfColumnInIndex(const std::vector<std::string> &columns) {
@@ -512,7 +555,7 @@ void ShardReader::CheckIfColumnInIndex(const std::vector<std::string> &columns) 
     all_in_index_ = false;
     return;
   }
-  for (auto &field : get_shard_header()->get_fields()) {
+  for (auto &field : GetShardHeader()->GetFields()) {
     column_schema_id_[field.second] = field.first;
   }
   for (auto &col : columns) {
@@ -667,7 +710,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
       json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
         // construct json "f1": value
-        auto schema = shard_header_->get_schemas()[0]->GetSchema()["schema"];
+        auto schema = shard_header_->GetSchemas()[0]->GetSchema()["schema"];
 
         // convert the string to base type by schema
         if (schema[columns[j]]["type"] == "int32") {
@@ -709,15 +752,9 @@ MSRStatus ShardReader::Finish() {
   return SUCCESS;
 }
 
-int64_t ShardReader::GetNumClasses(const std::string &file_path, const std::string &category_field) {
-  ShardHeader sh = ShardHeader();
-  if (sh.Build(file_path) == FAILED) {
-    return -1;
-  }
-  auto header = std::make_shared<ShardHeader>(sh);
-  auto file_paths = header->get_shard_addresses();
-  auto shard_count = file_paths.size();
-  auto index_fields = header->get_fields();
+int64_t ShardReader::GetNumClasses(const std::string &category_field) {
+  auto shard_count = file_paths_.size();
+  auto index_fields = shard_header_->GetFields();
 
   std::map<std::string, int64_t> map_schema_id_fields;
   for (auto &field : index_fields) {
@@ -738,7 +775,7 @@ int64_t ShardReader::GetNumClasses(const std::string &file_path, const std::stri
   std::set<std::string> categories;
   for (int x = 0; x < shard_count; x++) {
     sqlite3 *db = nullptr;
-    int rc = sqlite3_open_v2(common::SafeCStr(file_paths[x] + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
+    int rc = sqlite3_open_v2(common::SafeCStr(file_paths_[x] + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
     if (SQLITE_OK != rc) {
       MS_LOG(ERROR) << "Can't open database, error: " << sqlite3_errmsg(db);
       return -1;
@@ -752,16 +789,16 @@ int64_t ShardReader::GetNumClasses(const std::string &file_path, const std::stri
   return categories.size();
 }
 
-MSRStatus ShardReader::CountTotalRows(const std::string &file_path, const std::shared_ptr<ShardOperator> &op,
-                                      int64_t *count) {
-  if (Init(file_path) == FAILED) {
+MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
+                                      const std::shared_ptr<ShardOperator> &op, int64_t *count) {
+  if (SUCCESS != Init(file_paths, load_dataset)) {
     return FAILED;
   }
   int64_t num_samples = num_rows_;
   if (std::dynamic_pointer_cast<ShardCategory>(op)) {
     auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
     std::string category_field = category_op->GetCategoryField();
-    auto num_classes = GetNumClasses(file_path, category_field);
+    auto num_classes = GetNumClasses(category_field);
     num_samples = category_op->GetNumSamples(num_rows_, num_classes);
   } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
     num_samples = op->GetNumSamples(num_rows_, 0);
@@ -775,12 +812,13 @@ MSRStatus ShardReader::CountTotalRows(const std::string &file_path, const std::s
   return SUCCESS;
 }
 
-MSRStatus ShardReader::Open(const std::string &file_path, int n_consumer,
+MSRStatus ShardReader::Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer,
                             const std::vector<std::string> &selected_columns,
                             const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader) {
   // Open file and set header by ShardReader
-  if (Init(file_path) == FAILED) {
-    return FAILED;
+  auto ret = Init(file_paths, load_dataset);
+  if (SUCCESS != ret) {
+    return ret;
   }
   auto thread_limit = GetMaxThreadNum();
   if (n_consumer > thread_limit) {
@@ -789,18 +827,14 @@ MSRStatus ShardReader::Open(const std::string &file_path, int n_consumer,
   if (n_consumer < kMinConsumerCount) {
     n_consumer = kMinConsumerCount;
   }
-  CheckNlp();
-  if (nlp_) {
-    selected_columns_ = selected_columns;
-  } else {
-    vector<std::string> blob_fields = get_blob_fields().second;
-    for (unsigned int i = 0; i < selected_columns.size(); ++i) {
-      if (!std::any_of(blob_fields.begin(), blob_fields.end(),
-                       [&selected_columns, i](std::string item) { return selected_columns[i] == item; })) {
-        selected_columns_.push_back(selected_columns[i]);
-      }
+  vector<std::string> blob_fields = GetBlobFields().second;
+  for (unsigned int i = 0; i < selected_columns.size(); ++i) {
+    if (!std::any_of(blob_fields.begin(), blob_fields.end(),
+                     [&selected_columns, i](std::string item) { return selected_columns[i] == item; })) {
+      selected_columns_.push_back(selected_columns[i]);
     }
   }
+  selected_columns_ = selected_columns;
 
   if (CheckColumnList(selected_columns_) == FAILED) {
     MS_LOG(ERROR) << "Illegal column list";
@@ -830,16 +864,16 @@ MSRStatus ShardReader::Open(const std::string &file_path, int n_consumer,
   return SUCCESS;
 }
 
-MSRStatus ShardReader::OpenPy(const std::string &file_path, const int &n_consumer,
+MSRStatus ShardReader::OpenPy(const std::vector<std::string> &file_paths, bool load_dataset, const int &n_consumer,
                               const std::vector<std::string> &selected_columns,
                               const std::vector<std::shared_ptr<ShardOperator>> &operators) {
   // Open file and set header by ShardReader
-  if (Init(file_path) == FAILED) {
+  if (SUCCESS != Init(file_paths, load_dataset)) {
     return FAILED;
   }
   // should remove blob field from selected_columns when call from python
   std::vector<std::string> columns(selected_columns);
-  auto blob_fields = get_blob_fields().second;
+  auto blob_fields = GetBlobFields().second;
   for (auto &blob_field : blob_fields) {
     auto it = std::find(selected_columns.begin(), selected_columns.end(), blob_field);
     if (it != selected_columns.end()) {
@@ -853,7 +887,6 @@ MSRStatus ShardReader::OpenPy(const std::string &file_path, const int &n_consume
   if (Open(n_consumer) == FAILED) {
     return FAILED;
   }
-  CheckNlp();
   // Initialize argument
   shard_count_ = static_cast<int>(file_paths_.size());
   n_consumer_ = n_consumer;
@@ -876,10 +909,7 @@ MSRStatus ShardReader::Launch(bool isSimpleReader) {
     interrupt_ = true;
     return FAILED;
   }
-  MS_LOG(INFO) << "Launching read threads.";
-
   if (isSimpleReader) return SUCCESS;
-
   // Start provider consumer threads
   thread_set_ = std::vector<std::thread>(n_consumer_);
   if (n_consumer_ <= 0 || n_consumer_ > kMaxConsumerCount) {
@@ -898,29 +928,9 @@ MSRStatus ShardReader::Launch(bool isSimpleReader) {
   return SUCCESS;
 }
 
-vector<std::string> ShardReader::GetAllColumns() {
-  vector<std::string> columns;
-  if (nlp_) {
-    for (auto &c : selected_columns_) {
-      for (auto &p : get_shard_header()->get_schemas()) {
-        auto schema = p->GetSchema()["schema"];  // make sure schema is not reference since error occurred in arm.
-        for (auto it = schema.begin(); it != schema.end(); ++it) {
-          if (it.key() == c) {
-            columns.push_back(c);
-          }
-        }
-      }
-    }
-  } else {
-    columns = selected_columns_;
-  }
-  return columns;
-}
-
 MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                           const std::vector<std::shared_ptr<ShardOperator>> &operators) {
-  vector<std::string> columns = GetAllColumns();
-  CheckIfColumnInIndex(columns);
+  CheckIfColumnInIndex(selected_columns_);
   for (const auto &rg : row_group_summary) {
     auto shard_id = std::get<0>(rg);
     auto group_id = std::get<1>(rg);
@@ -932,11 +942,9 @@ MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int,
 
 MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                              const std::shared_ptr<ShardOperator> &op) {
-  vector<std::string> columns = GetAllColumns();
-  CheckIfColumnInIndex(columns);
-
+  CheckIfColumnInIndex(selected_columns_);
   auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
-  auto categories = category_op->get_categories();
+  auto categories = category_op->GetCategories();
   int64_t num_elements = category_op->GetNumElements();
   if (num_elements <= 0) {
     MS_LOG(ERROR) << "Parameter num_element is not positive";
@@ -969,7 +977,7 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, i
       auto shard_id = std::get<0>(rg);
       auto group_id = std::get<1>(rg);
 
-      auto details = ReadRowGroupCriteria(group_id, shard_id, categories[categoryNo], columns);
+      auto details = ReadRowGroupCriteria(group_id, shard_id, categories[categoryNo], selected_columns_);
       if (SUCCESS != std::get<0>(details)) {
         return FAILED;
       }
@@ -995,10 +1003,9 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, i
 
 MSRStatus ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                         const std::vector<std::shared_ptr<ShardOperator>> &operators) {
-  vector<std::string> columns = GetAllColumns();
-  CheckIfColumnInIndex(columns);
+  CheckIfColumnInIndex(selected_columns_);
 
-  auto ret = ReadAllRowGroup(columns);
+  auto ret = ReadAllRowGroup(selected_columns_);
   if (std::get<0>(ret) != SUCCESS) {
     return FAILED;
   }
@@ -1067,7 +1074,7 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
   }
 
   // Pick up task from task list
-  auto task = tasks_.get_task_by_id(tasks_.permutation_[task_id]);
+  auto task = tasks_.GetTaskByID(tasks_.permutation_[task_id]);
 
   auto shard_id = std::get<0>(std::get<0>(task));
   auto group_id = std::get<1>(std::get<0>(task));
@@ -1077,9 +1084,10 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
     return std::make_pair(FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>());
   }
   const std::shared_ptr<Page> &page = ret.second;
+
   // Pack image list
   std::vector<uint8_t> images(addr[1] - addr[0]);
-  auto file_offset = header_size_ + page_size_ * (page->get_page_id()) + addr[0];
+  auto file_offset = header_size_ + page_size_ * (page->GetPageID()) + addr[0];
 
   auto &io_seekg = file_streams_random_[consumer_id][shard_id]->seekg(file_offset, std::ios::beg);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
@@ -1098,27 +1106,8 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
 
   // Deliver batch data to output map
   std::vector<std::tuple<std::vector<uint8_t>, json>> batch;
-  if (nlp_) {
-    json blob_fields = json::from_msgpack(images);
+  batch.emplace_back(std::move(images), std::move(std::get<2>(task)));
 
-    json merge;
-    if (selected_columns_.size() > 0) {
-      for (auto &col : selected_columns_) {
-        if (blob_fields.find(col) != blob_fields.end()) {
-          merge[col] = blob_fields[col];
-        }
-      }
-    } else {
-      merge = blob_fields;
-    }
-    auto label_json = std::get<2>(task);
-    if (label_json != nullptr) {
-      merge.update(label_json);
-    }
-    batch.emplace_back(std::vector<uint8_t>{}, std::move(merge));
-  } else {
-    batch.emplace_back(std::move(images), std::move(std::get<2>(task)));
-  }
   return std::make_pair(SUCCESS, std::move(batch));
 }
 
@@ -1202,7 +1191,7 @@ MSRStatus ShardReader::ConsumerByBlock(int consumer_id) {
     }
 
     // Pick up task from task list
-    auto task = tasks_.get_task_by_id(tasks_.permutation_[task_id]);
+    auto task = tasks_.GetTaskByID(tasks_.permutation_[task_id]);
 
     auto shard_id = std::get<0>(std::get<0>(task));
     auto group_id = std::get<1>(std::get<0>(task));
@@ -1328,16 +1317,41 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNextById(con
   return std::move(ret.second);
 }
 
-std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>> ShardReader::GetNextPy() {
+std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> ShardReader::UnCompressBlob(
+  const std::vector<uint8_t> &raw_blob_data) {
+  auto loaded_columns = selected_columns_.size() == 0 ? shard_column_->GetColumnName() : selected_columns_;
+  auto blob_fields = GetBlobFields().second;
+  std::vector<std::vector<uint8_t>> blob_data;
+  for (uint32_t i_col = 0; i_col < loaded_columns.size(); ++i_col) {
+    if (std::find(blob_fields.begin(), blob_fields.end(), loaded_columns[i_col]) == blob_fields.end()) continue;
+    const unsigned char *data = nullptr;
+    std::unique_ptr<unsigned char[]> data_ptr;
+    uint64_t n_bytes = 0;
+    auto ret = shard_column_->GetColumnFromBlob(loaded_columns[i_col], raw_blob_data, &data, &data_ptr, &n_bytes);
+    if (ret != SUCCESS) {
+      MS_LOG(ERROR) << "Error when get data from blob, column name is " << loaded_columns[i_col] << ".";
+      return {FAILED, std::vector<std::vector<uint8_t>>(blob_fields.size(), std::vector<uint8_t>())};
+    }
+    if (data == nullptr) {
+      data = reinterpret_cast<const unsigned char *>(data_ptr.get());
+    }
+    std::vector<uint8_t> column(data, data + (n_bytes / sizeof(unsigned char)));
+    blob_data.push_back(column);
+  }
+  return {SUCCESS, blob_data};
+}
+
+std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> ShardReader::GetNextPy() {
   auto res = GetNext();
-  vector<std::tuple<std::vector<uint8_t>, pybind11::object>> jsonData;
-  std::transform(res.begin(), res.end(), std::back_inserter(jsonData),
-                 [](const std::tuple<std::vector<uint8_t>, json> &item) {
+  vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> data;
+  std::transform(res.begin(), res.end(), std::back_inserter(data),
+                 [this](const std::tuple<std::vector<uint8_t>, json> &item) {
                    auto &j = std::get<1>(item);
                    pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
-                   return std::make_tuple(std::get<0>(item), std::move(obj));
+                   auto ret = UnCompressBlob(std::get<0>(item));
+                   return std::make_tuple(ret.second, std::move(obj));
                  });
-  return jsonData;
+  return data;
 }
 
 void ShardReader::Reset() {

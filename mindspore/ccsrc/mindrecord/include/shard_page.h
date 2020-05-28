@@ -53,29 +53,29 @@ class Page {
   /// \return the json format of the page and its description
   json GetPage() const;
 
-  int get_page_id() const { return page_id_; }
+  int GetPageID() const { return page_id_; }
 
-  int get_shard_id() const { return shard_id_; }
+  int GetShardID() const { return shard_id_; }
 
-  int get_page_type_id() const { return page_type_id_; }
+  int GetPageTypeID() const { return page_type_id_; }
 
-  std::string get_page_type() const { return page_type_; }
+  std::string GetPageType() const { return page_type_; }
 
-  uint64_t get_page_size() const { return page_size_; }
+  uint64_t GetPageSize() const { return page_size_; }
 
-  uint64_t get_start_row_id() const { return start_row_id_; }
+  uint64_t GetStartRowID() const { return start_row_id_; }
 
-  uint64_t get_end_row_id() const { return end_row_id_; }
+  uint64_t GetEndRowID() const { return end_row_id_; }
 
-  void set_end_row_id(const uint64_t &end_row_id) { end_row_id_ = end_row_id; }
+  void SetEndRowID(const uint64_t &end_row_id) { end_row_id_ = end_row_id; }
 
-  void set_page_size(const uint64_t &page_size) { page_size_ = page_size; }
+  void SetPageSize(const uint64_t &page_size) { page_size_ = page_size; }
 
-  std::pair<int, uint64_t> get_last_row_group_id() const { return row_group_ids_.back(); }
+  std::pair<int, uint64_t> GetLastRowGroupID() const { return row_group_ids_.back(); }
 
-  std::vector<std::pair<int, uint64_t>> get_row_group_ids() const { return row_group_ids_; }
+  std::vector<std::pair<int, uint64_t>> GetRowGroupIds() const { return row_group_ids_; }
 
-  void set_row_group_ids(const std::vector<std::pair<int, uint64_t>> &last_row_group_ids) {
+  void SetRowGroupIds(const std::vector<std::pair<int, uint64_t>> &last_row_group_ids) {
     row_group_ids_ = last_row_group_ids;
   }
 

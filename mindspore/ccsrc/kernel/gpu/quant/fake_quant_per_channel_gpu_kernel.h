@@ -32,7 +32,7 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel) override;
 
  protected:
@@ -40,9 +40,9 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
 
  private:
   void CalFakeQuantizeForTraining(float *input, float *output, float *input_min, float *input_max, float *d_nudge_min,
-                                  float *d_nudge_max, float *d_scale, uintptr_t stream_ptr);
+                                  float *d_nudge_max, float *d_scale, void *stream_ptr);
   void CalFakeQuantizeForInfer(float *input, float *output, float *input_min, float *input_max, float *d_nudge_min,
-                               float *d_nudge_max, float *d_scale, uintptr_t stream_ptr);
+                               float *d_nudge_max, float *d_scale, void *stream_ptr);
 
   size_t input_size_;
   size_t min_size_;

@@ -28,6 +28,7 @@
 #include <utility>
 
 #include "ir/meta_tensor.h"
+#include "ir/param_value_py.h"
 #include "operator/ops.h"
 #include "optimizer/optimizer.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
@@ -333,6 +334,28 @@ bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs) {
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
+bool HasStrategy(const FuncGraphPtr &root) {
+  AnfNodePtr ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+
+  for (auto &node : all_nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
+      continue;
+    }
+
+    ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
+    PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+    auto attrs = prim->attrs();
+    if (StrategyFound(attrs)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool IsCommunicationOp(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
@@ -605,8 +628,7 @@ bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   return (prim->name() == name);
 }
 
-void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>> &replace_graph,
-                      const CNodePtr &node) {
+void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(replace_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(replace_graph->second);
@@ -616,32 +638,14 @@ void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, A
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
   }
-  if (!IsSomePrimitive(node, ONEHOT)) {
-    MS_LOG(EXCEPTION) << "Failure:Only OneHot Primitive will enter StepReplaceGraph!";
-  }
-  if (node->inputs().size() != 5) {
-    MS_LOG(EXCEPTION) << "Failure:There is 5 inputs for the CNode corresponding to OneHot Primitive!";
-  }
-  auto pre_node = node->input(1);
-  if (replace_graph->first.size() != 2) {
-    MS_LOG(EXCEPTION) << "Failure:replace_graph->first.size() must be 2 for OneHot Primitive!";
-  }
   for (auto &replace_input : replace_graph->first) {
-    MS_EXCEPTION_IF_NULL(replace_input);
-    manager->SetEdge(replace_input, 1, pre_node);
-    CNodePtr replace_input_cnode = replace_input->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(replace_input_cnode);
-    (void)replace_input_cnode->set_operator_info(node->operator_info());
-    replace_input_cnode->set_in_forward_flag(true);  // mark this new cnode is forward node
+    auto pre_node = node->input(IntToSize(replace_input.second));
+    manager->SetEdge(replace_input.first, 1, pre_node);
   }
   //  "(void)manager->Replace(replace_graph->first, pre_node);" can not be called
   auto replace_output = replace_graph->second;
   MS_EXCEPTION_IF_NULL(replace_output);
   (void)manager->Replace(node, replace_output);
-  CNodePtr replace_output_cnode = replace_graph->second->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(replace_output_cnode);
-  (void)replace_output_cnode->set_operator_info(node->operator_info());
-  replace_output_cnode->set_in_forward_flag(true);  // mark this new cnode is forward node
 }
 
 int32_t GetTupleGetItemIndex(const CNodePtr &cnode) {
@@ -943,6 +947,20 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
     MS_LOG(EXCEPTION) << "Length of name is zero!";
   }
   std::string distribute_opname = GetDisOpName(name);
+  if (name == GATHERV2) {
+    distribute_opname = name + "PInfo";
+    auto data_parallel_iter = attrs.find(DATA_PARALLEL);
+    if (data_parallel_iter != attrs.end()) {
+      MS_EXCEPTION_IF_NULL(data_parallel_iter->second);
+      if (!data_parallel_iter->second->isa<BoolImm>()) {
+        MS_LOG(EXCEPTION) << ": data_parallel flag's type is not a bool.";
+      }
+      bool data_parallel = data_parallel_iter->second->cast<BoolImmPtr>()->value();
+      if (data_parallel) {
+        distribute_opname = name + "Info";
+      }
+    }
+  }
   OperatorInfoPtr operator_ =
     (OperatorInfoPtr)DynCreator::Instance().Creat(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
   if (operator_ == nullptr) {
@@ -1275,7 +1293,8 @@ bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_nod
     return false;
   }
 
-  py::object clone_info = parse::python_adapter::GetPyObjAttr(cloned_parameter->default_param(), CLONE_INFO);
+  auto param_value = std::dynamic_pointer_cast<ParamValuePy>(cloned_parameter->default_param());
+  py::object clone_info = parse::python_adapter::GetPyObjAttr(param_value->value(), CLONE_INFO);
   bool cloned = py::cast<bool>(parse::python_adapter::GetPyObjAttr(clone_info, CLONED));
   if (!cloned) {
     return false;
@@ -1297,7 +1316,8 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
     }
 
     // get the cloned index
-    py::object cloned_info = parse::python_adapter::GetPyObjAttr(cloned_parameter->default_param(), CLONE_INFO);
+    auto param_value = std::dynamic_pointer_cast<ParamValuePy>(cloned_parameter->default_param());
+    py::object cloned_info = parse::python_adapter::GetPyObjAttr(param_value->value(), CLONE_INFO);
     int32_t cloned_index = py::cast<int32_t>(parse::python_adapter::GetPyObjAttr(cloned_info, CLONED_INDEX));
 
     // find the be cloned parameter
@@ -1312,7 +1332,8 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
         continue;
       }
 
-      py::object be_cloned_info = parse::python_adapter::GetPyObjAttr(be_cloned_parameter->default_param(), CLONE_INFO);
+      auto param_value_cloned = std::dynamic_pointer_cast<ParamValuePy>(be_cloned_parameter->default_param());
+      py::object be_cloned_info = parse::python_adapter::GetPyObjAttr(param_value_cloned->value(), CLONE_INFO);
       if (!py::cast<bool>(parse::python_adapter::GetPyObjAttr(be_cloned_info, BE_CLONED))) {
         continue;
       }
@@ -1991,12 +2012,25 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
         BackwardCommunication(distribute_operator, cnode, sens_loss_pairs);
       }
 
-      // StepReplace
-      StepReplace(distribute_operator, cnode);
-
       HandleSpecialNode(distribute_operator, cnode);
     } else if (IsValueNode<Tensor>(node)) {
       StepSplitTensor(node, manager);
+    }
+  }
+
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      if (!IsValueNode<Primitive>(cnode->input(0))) {
+        continue;
+      }
+      OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
+      if (distribute_operator == nullptr) {
+        continue;
+      }
+      // StepReplace
+      StepReplace(distribute_operator, cnode);
     }
   }
 }
@@ -2042,9 +2076,9 @@ std::string NodeParameterName(const CNodePtr &node) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        if (py::cast<bool>(parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), REQUIRES_GRAD))) {
-          return py::cast<std::string>(
-            parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), PARAM_NAME));
+        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(input_parameter->default_param());
+        if (py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), REQUIRES_GRAD))) {
+          return py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), PARAM_NAME));
         }
       }
     }
@@ -2220,8 +2254,16 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
+  if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
       (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
+    if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
+      if (HasStrategy(root)) {
+        MS_LOG(INFO) << "strategies ignored in " << parallel_mode
+                     << ", set_strategy() only valid in [semi_]auto_parallel.";
+      }
+      root->flags()[CHECK_SET_STRATEGY_VALID_ONCE_ONLY] = true;
+    }
+
     return changes;
   }
 
@@ -2278,6 +2320,9 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // step parallel only run once
   root->flags()[SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY] = true;
   res->results()[pipeline::kStepParallelGraph] = root;
+
+  // in auto parallel mode, no need to check if stategies set
+  root->flags()[CHECK_SET_STRATEGY_VALID_ONCE_ONLY] = true;
 
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);

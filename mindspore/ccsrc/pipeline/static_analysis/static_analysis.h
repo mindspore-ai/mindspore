@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+#include <map>
 
 #ifdef DEBUG
 #include <stack>
@@ -164,7 +165,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf);
-  AbstractBasePtr InferCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
+  AbstractBasePtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
   AbstractBasePtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
   void Clear();
@@ -206,6 +207,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>> eval_trace_;
+  std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);
@@ -242,7 +244,7 @@ AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);
 }
 
-AbstractBasePtr InferOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
+AbstractBasePtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
 }  // namespace abstract
 }  // namespace mindspore
 

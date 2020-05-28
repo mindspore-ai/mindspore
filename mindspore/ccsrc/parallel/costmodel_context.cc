@@ -47,6 +47,7 @@ void CostModelContext::ResetCostModel() {
   costmodel_communi_const_ = DEFAULT_COST_MODEL_COMMUNI_CONST;
   costmodel_communi_bias_ = DEFAULT_COST_MODEL_COMMUNI_BIAS;
   is_multi_subgraphs_ = DEFAULT_IS_MULTI_SUBGRAPHS;
+  run_phase_ = DEFAULT_RUN_PHASE;
   costmodel_allreduce_fusion_algorithm_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM;
   costmodel_allreduce_fusion_times_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES;
   costmodel_allreduce_fusion_tail_percent_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_PERCENT;
@@ -125,5 +126,7 @@ void CostModelContext::set_fully_use_device(bool fully_use) { fully_use_device_ 
 void CostModelContext::set_elementwise_stra_follow(bool elementwise_follow) {
   elementwise_stra_follow_ = elementwise_follow;
 }
+
+void CostModelContext::set_run_phase(int32_t phase) { run_phase_ = phase; }
 }  // namespace parallel
 }  // namespace mindspore

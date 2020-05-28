@@ -48,7 +48,7 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostPooling>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecTensorAdd) {
+  } else if (op.op_type == OperatorType::kRecElmWiseOp) {
     // For TensorAdd
     auto cost_ptr = std::make_shared<CostTensorAdd>();
 
@@ -124,6 +124,7 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> graph) {
 StrategyRec PartitionNode(const Graph::NodeType &node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                           std::shared_ptr<Graph> graph) {
+  bool enable_conv_chw_partition = false;
   MS_EXCEPTION_IF_NULL(graph);
 
   if (node.apply.op_type == OperatorType::kRecMatMul) {
@@ -135,13 +136,13 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
+    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, enable_conv_chw_partition);
   } else if (node.apply.op_type == OperatorType::kRecPooling) {
     // For Pooling
     auto cost_ptr = std::make_shared<CostPooling>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecTensorAdd) {
+  } else if (node.apply.op_type == OperatorType::kRecElmWiseOp) {
     // For TensorAdd
     auto cost_ptr = std::make_shared<CostTensorAdd>();
 
@@ -231,7 +232,7 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
     }
   }
 
-  if (DevicesMemoryControl(device_memory, graph) != SUCCESS) {
+  if (DevicesMemoryControl(num_device, device_memory, graph) != SUCCESS) {
     return FAILED;
   } else {
     return SUCCESS;
@@ -256,7 +257,7 @@ Graph::NodeType ApplyStrToTensor(Graph::NodeType Node) {
   return Node;
 }
 
-Status DevicesMemoryControl(const double device_memory, std::shared_ptr<Graph> graph) {
+Status DevicesMemoryControl(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
   uint64_t iter_nodes = graph->nodes.size();
@@ -265,7 +266,6 @@ Status DevicesMemoryControl(const double device_memory, std::shared_ptr<Graph> g
   for (uint64_t i_node = 0; i_node < iter_nodes; i_node++) {
     if (graph->nodes[i_node].info == 0) {
       Graph::NodeType &Node = graph->nodes[i_node];
-
       for (int index = 0; index < 2; index++) {
         used_memory += Node.apply.arguments[index].tensor_str.str_n * Node.apply.arguments[index].tensor_shape.shape_n *
                        Node.apply.arguments[index].tensor_str.str_c * Node.apply.arguments[index].tensor_shape.shape_c *
@@ -273,20 +273,15 @@ Status DevicesMemoryControl(const double device_memory, std::shared_ptr<Graph> g
                        Node.apply.arguments[index].tensor_str.str_w * Node.apply.arguments[index].tensor_shape.shape_w *
                        GetDataTypeSize(Node.apply.arguments[index].tensor_type);
       }
-
-      used_memory += Node.tensor_parm.tensor_str.str_n * Node.tensor_parm.tensor_shape.shape_n *
-                     Node.tensor_parm.tensor_str.str_c * Node.tensor_parm.tensor_shape.shape_c *
-                     Node.tensor_parm.tensor_str.str_h * Node.tensor_parm.tensor_shape.shape_h *
-                     Node.tensor_parm.tensor_str.str_w * Node.tensor_parm.tensor_shape.shape_w *
-                     GetDataTypeSize(Node.tensor_parm.tensor_type);
     }
   }
-  if (device_memory < used_memory) {
+
+  if (device_memory < (used_memory / num_device)) {
     MS_LOG(EXCEPTION) << "Failure: Out of memory!";
     return FAILED;
+  } else {
+    return SUCCESS;
   }
-
-  return SUCCESS;
 }
 
 size_t GetDataTypeSize(const TensorType &type) {

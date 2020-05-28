@@ -27,6 +27,10 @@ Status PythonSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   if (need_to_reset_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
+    if (HasChildSampler()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+    }
+
     std::shared_ptr<Tensor> sample_ids;
     {
       py::gil_scoped_acquire gil_acquire;
@@ -38,6 +42,14 @@ Status PythonSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
         py::object py_ret = py_sampler_instance.attr("_get_indices")();
         py::array np_sample_ids = py_ret.cast<py::array>();
         Tensor::CreateTensor(&sample_ids, np_sample_ids);  // copy numpy to tensor
+
+        if (HasChildSampler()) {
+          for (auto it = sample_ids->begin<int64_t>(); it != sample_ids->end<int64_t>(); ++it) {
+            int64_t associated_child_id = 0;
+            RETURN_IF_NOT_OK(GetAssociatedChildId(&associated_child_id, associated_child_id));
+            *it = associated_child_id;
+          }
+        }
       } catch (const py::error_already_set &e) {
         return Status(StatusCode::kPyFuncException, e.what());
       } catch (const py::cast_error &e) {
@@ -79,6 +91,11 @@ Status PythonSampler::Reset() {
   } catch (const py::error_already_set &e) {
     return Status(StatusCode::kPyFuncException, e.what());
   }
+
+  if (HasChildSampler()) {
+    RETURN_IF_NOT_OK(child_[0]->Reset());
+  }
+
   return Status::OK();
 }
 }  // namespace dataset

@@ -69,6 +69,8 @@ class ControlDepend(Primitive):
     @prim_attr_register
     def __init__(self, depend_mode=0):
         """init"""
+        validator.check_int_range(
+            "depend_mode", depend_mode, 0, 1, Rel.INC_BOTH, self.name)
 
     def __call__(self, src, dst):
         return src
@@ -128,7 +130,10 @@ class GeSwitch(PrimitiveWithInfer):
         return (data, data)
 
     def infer_dtype(self, data_type, pred_type):
-        validator.check_tensor_type_same({"pred": pred_type}, [mstype.bool_], self.name)
+        validator.check_subclass(
+            "data", data_type, (mstype.tensor,) + mstype.number_type, self.name)
+        validator.check_tensor_type_same(
+            {"pred": pred_type}, [mstype.bool_], self.name)
         return (data_type, data_type)
 
 
@@ -139,10 +144,16 @@ class Merge(PrimitiveWithInfer):
     One and only one of the inputs should be selected as the output
 
     Inputs:
-        - **inputs** (Tuple) - The data to be merged. All tuple elements should have same shape.
+        - **inputs** (Tuple) - The data to be merged.
 
     Outputs:
         tuple. Output is tuple(`data`, `output_index`). The `data` has the same shape of `inputs` element.
+
+    Examples:
+        >>> merge = P.Merge()
+        >>> input_x = Tensor(np.linspace(0, 8, 8).reshape(2, 4), mindspore.float32)
+        >>> input_y = Tensor(np.random.randint(-4, 4, (2, 4)), mindspore.float32)
+        >>> result = merge((input_x, input_y))
     """
 
     @prim_attr_register
@@ -156,4 +167,10 @@ class Merge(PrimitiveWithInfer):
         return (inputs[0], [1])
 
     def infer_dtype(self, inputs):
+        args = {}
+        for i, item in enumerate(inputs):
+            args['inputs[%d]' % i] = item
+
+        validator.check_tensor_type_same(
+            args, (mstype.bool_,) + mstype.number_type, self.name)
         return (inputs[0], mstype.int32)

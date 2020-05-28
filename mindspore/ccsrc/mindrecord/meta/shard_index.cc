@@ -28,6 +28,6 @@ void Index::AddIndexField(const int64_t &schemaId, const std::string &field) {
 }
 
 // Get attribute list
-std::vector<std::pair<uint64_t, std::string>> Index::get_fields() { return fields_; }
+std::vector<std::pair<uint64_t, std::string>> Index::GetFields() { return fields_; }
 }  // namespace mindrecord
 }  // namespace mindspore

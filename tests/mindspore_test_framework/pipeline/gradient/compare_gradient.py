@@ -15,20 +15,20 @@
 
 """Pipelines for gradients comparison."""
 
-from ...components.expect_result_policy.cartesian_product_on_id_for_expect_result import IdCartesianProductERPC
-from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
-from ...components.executor.exec_gradient import IdentityBackwardEC
-from ...components.function.run_gradient_wrt_inputs import RunBackwardBlockWrtInputsBC
-from ...components.function.run_gradient_wrt_params import RunBackwardBlockWrtParamsBC
-from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
-from ...components.verifier.compare_gradient import CompareGradientWithVC
-from ...components.facade.me_facade import MeFacadeFC
-from ...components.inputs.load_inputs_from_npy import LoadFromNpyDC
-from ...components.verifier.verify_expect_from_npy import LoadFromNpyVC
-from ...components.function.get_function_from_config import IdentityBC
 from ...components.executor.check_gradient_wrt_inputs import CheckGradientWrtInputsEC
 from ...components.executor.check_gradient_wrt_params import CheckGradientWrtParamsEC
 from ...components.executor.check_jacobian_wrt_inputs import CheckJacobianWrtInputsEC
+from ...components.executor.exec_gradient import IdentityBackwardEC
+from ...components.expect_result_policy.cartesian_product_on_id_for_expect_result import IdCartesianProductERPC
+from ...components.facade.me_facade import MeFacadeFC
+from ...components.function.get_function_from_config import IdentityBC
+from ...components.function.run_gradient_wrt_inputs import RunBackwardBlockWrtInputsBC
+from ...components.function.run_gradient_wrt_params import RunBackwardBlockWrtParamsBC
+from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
+from ...components.inputs.load_inputs_from_npy import LoadFromNpyDC
+from ...components.verifier.compare_gradient import CompareGradientWithVC
+from ...components.verifier.verify_expect_from_npy import LoadFromNpyVC
 
 # pylint: disable=W0105
 """
@@ -49,7 +49,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_inputs_grad_with_user_defined_for_case_by_case_config =\
+pipeline_for_compare_inputs_grad_with_user_defined_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC,
      RunBackwardBlockWrtInputsBC, IdCartesianProductFIPC,
      IdentityBackwardEC, IdCartesianProductERPC,
@@ -89,7 +89,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_inputs_grad_with_npy_for_case_by_case_config =\
+pipeline_for_compare_inputs_grad_with_npy_for_case_by_case_config = \
     [MeFacadeFC, LoadFromNpyDC, RunBackwardBlockWrtInputsBC,
      IdCartesianProductFIPC, IdentityBackwardEC,
      IdCartesianProductERPC, LoadFromNpyVC]
@@ -128,7 +128,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_params_grad_with_npy_for_case_by_case_config =\
+pipeline_for_compare_params_grad_with_npy_for_case_by_case_config = \
     [MeFacadeFC, LoadFromNpyDC, RunBackwardBlockWrtParamsBC,
      IdCartesianProductFIPC, IdentityBackwardEC,
      IdCartesianProductERPC, LoadFromNpyVC]
@@ -146,7 +146,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_inputs_grad_with_numerical_diff_for_case_by_case_config =\
+pipeline_for_compare_inputs_grad_with_numerical_diff_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC, IdentityBC,
      IdCartesianProductFIPC,
      CheckGradientWrtInputsEC]
@@ -244,7 +244,7 @@ Example:
         }),
     ]
 """
-pipeline_for_compare_inputs_jacobian_with_numerical_diff_for_case_by_case_config =\
+pipeline_for_compare_inputs_jacobian_with_numerical_diff_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC, IdentityBC,
      IdCartesianProductFIPC,
      CheckJacobianWrtInputsEC]

@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "ir/param_value_py.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/data_converter.h"
 #include "optimizer/ad/dfunctor.h"
@@ -244,13 +245,13 @@ void ExecutorPy::DelNetRes(const std::string &id) {
     auto tmp_info = info_;
     for (auto &item : tmp_info) {
       if (item.first.find(id) != string::npos) {
-        MS_LOG(INFO) << "Delete network res:" << item.first;
+        MS_LOG(DEBUG) << "Delete network res:" << item.first;
         (void)info_.erase(item.first);
         flag = true;
       }
     }
 
-    MS_LOG(INFO) << "Delete flag:" << flag;
+    MS_LOG(DEBUG) << "Delete flag:" << flag;
 #ifdef ENABLE_GE
     if (flag && info_.size() == 0) {
       // because Ge only support one Session exist at the same time ,so we delete the old one
@@ -281,7 +282,7 @@ void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
 
   MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
   info_[phase_s]->func_graph = func_graph;
-  if ((func_graph != nullptr) &&
+  if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
     func_graph = info_[phase_s]->resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
@@ -430,8 +431,8 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::error_already_set &ex) {
     // print function call stack info before release
     std::ostringstream oss;
-    trace::TraceGraphInfer();
-    trace::GetInferStackInfo(oss);
+    trace::TraceGraphEval();
+    trace::GetEvalStackInfo(oss);
     // call py::print to output function call stack to STDOUT, in case of output the log to file, the user can see
     // these info from screen, no need to open log file to find these info
     py::print(oss.str());
@@ -601,7 +602,12 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
     if (ms_context->backend_policy() == kMsConvert && py::isinstance<py::array>(arg)) {
       MS_LOG(EXCEPTION) << "Args[" << i << "] is numpy array, not tensor";
     }
-    arg_list->push_back(arg);
+    ValuePtr converted = nullptr;
+    bool succ = parse::ConvertData(arg, &converted);
+    if (!succ) {
+      MS_LOG(EXCEPTION) << "Args convert error";
+    }
+    arg_list->push_back(converted);
   }
 
   ResourcePtr res = GetResource(phase);
@@ -614,7 +620,12 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
     // maybe some default parameter
     for (std::size_t i = (*arg_list).size(); i < graph_params_size; i++) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
-      py::object obj = dyn_cast<Parameter>(graph_params[i])->default_param();
+      auto param_ptr = (graph_params[i])->cast<ParameterPtr>();
+      if (!param_ptr->has_default()) {
+        MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
+      }
+      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_ptr->default_param());
+      py::object obj = param_value->value();
       py::object p_value = py::cast<py::object>(parse::python_adapter::GetPyObjAttr(obj, "default_input"));
       (*arg_list).push_back(p_value);
     }
@@ -683,7 +694,7 @@ void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &ph
 
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                     const std::vector<int64_t> &input_indexes, const std::string &phase) {
+                     const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run) {
   std::string name = MsContext::GetInstance()->backend_policy();
 #ifndef NO_DLIB
   auto ms_context = MsContext::GetInstance();
@@ -693,7 +704,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   }
 #endif
   if (name == kMsConvert || name == kMsVm) {
-    return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes);
+    return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
   }
 #if ENABLE_GE
   return InitExecDatasetGe(queue_name, iter_num, batch_size, types, shapes, input_indexes, phase);
@@ -708,7 +719,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                       const std::vector<int64_t> &input_indexes) {
+                       const std::vector<int64_t> &input_indexes, bool need_run) {
   MS_LOG(INFO) << "Start InitDataSet Entry";
   std::vector<int> int_input_indexes;
   (void)std::transform(input_indexes.begin(), input_indexes.end(), std::back_inserter(int_input_indexes),
@@ -761,7 +772,9 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // launch init dataset runner without inputs and outputs
   VectorRef args;
   auto fn = runner.run;
-  (void)(*fn)(args);
+  if (need_run) {
+    (void)(*fn)(args);
+  }
   MS_LOG(DEBUG) << "InitDataSetVm End.";
   return true;
 }
@@ -835,6 +848,7 @@ void FinalizeBackend() {
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   pynative::ClearPyNativeSession();
+  session::ClearPythonParasMap();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 
   ad::g_k_prims.clear();

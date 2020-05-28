@@ -118,6 +118,12 @@ class RepeatOp : public PipelineOp {
   // @param workerId - The worker id
   int32_t num_producers() const override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   int32_t max_repeats_;                              // The number of repeats that the user requested
   int32_t repeat_count_;                             // A counter for the current number of executed repeats

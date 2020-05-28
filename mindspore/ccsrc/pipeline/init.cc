@@ -95,7 +95,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("verify_inputs_signature", &mindspore::pipeline::VerifyInputSignature, "Verify input signature.");
   (void)m.def("init_exec_dataset", &mindspore::pipeline::InitExecDataset, py::arg("queue_name"), py::arg("size"),
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),
-              py::arg("phase") = py::str("dataset"), "Init and exec dataset.");
+              py::arg("phase") = py::str("dataset"), py::arg("need_run") = py::bool_(true), "Init and exec dataset.");
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
   (void)m.def("init_backend", &mindspore::pipeline::InitBackend, "Init Backend.");
 
@@ -115,12 +115,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
     .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
-    .def("set_task_sink_flag", &mindspore::MsContext::set_enable_task_sink, "Set enable task sink.")
-    .def("get_task_sink_flag", &mindspore::MsContext::enable_task_sink, "Get whether to enable task sink.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
     .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
-    .def("get_ir_fusion_flag", &mindspore::MsContext::ir_fusion_flag, "Get whether to enable ir fusion.")
-    .def("set_ir_fusion_flag", &mindspore::MsContext::set_ir_fusion_flag, "Set whether to enable ir fusion.")
     .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,
          "Get whether to enable auto mixed precision.")
     .def("set_auto_mixed_precision_flag", &mindspore::MsContext::set_auto_mixed_precision_flag,
@@ -131,24 +127,14 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set whether to enable reduce precision.")
     .def("get_save_graphs_path", &mindspore::MsContext::save_graphs_path, "Get save graphs path.")
     .def("set_save_graphs_path", &mindspore::MsContext::set_save_graphs_path, "Set save graphs path.")
-    .def("get_loop_sink_flag", &mindspore::MsContext::loop_sink_flag, "Get whether to enable loop sink.")
-    .def("set_loop_sink_flag", &mindspore::MsContext::set_loop_sink_flag, "Set whether to enable loop sink.")
-    .def("get_enable_mem_reuse", &mindspore::MsContext::enable_mem_reuse, "Get whether to enable mem reuse.")
-    .def("set_enable_mem_reuse", &mindspore::MsContext::set_enable_mem_reuse, "Set whether to enable mem reuse.")
     .def("get_save_ms_model_flag", &mindspore::MsContext::save_ms_model_flag, "Get whether to save ms model.")
     .def("set_save_ms_model_flag", &mindspore::MsContext::set_save_ms_model_flag, "Set whether to save ms model.")
     .def("get_save_ms_model_path", &mindspore::MsContext::save_ms_model_path, "Get path to save ms model.")
     .def("set_save_ms_model_path", &mindspore::MsContext::set_save_ms_model_path, "Set path to save ms model")
-    .def("get_enable_gpu_summary", &mindspore::MsContext::enable_gpu_summary, "Get whether to enable gpu summary.")
-    .def("set_enable_gpu_summary", &mindspore::MsContext::set_enable_gpu_summary, "Set whether to enable gpu summary.")
     .def("get_enable_dump", &mindspore::MsContext::enable_dump, "Get whether to enable dump.")
     .def("set_enable_dump", &mindspore::MsContext::set_enable_dump, "Set whether to enable dump.")
     .def("get_save_dump_path", &mindspore::MsContext::save_dump_path, "Get path to dump.")
     .def("set_save_dump_path", &mindspore::MsContext::set_save_dump_path, "Set path to dump.")
-    .def("get_enable_dynamic_mem_pool", &mindspore::MsContext::enable_dynamic_mem_pool,
-         "Get whether to enable dynamic mem pool.")
-    .def("set_enable_dynamic_mem_pool", &mindspore::MsContext::set_enable_dynamic_mem_pool,
-         "Set whether to enable dynamic mem pool.")
     .def("set_graph_memory_max_size", &mindspore::MsContext::set_graph_memory_max_size, "set graph memory max size.")
     .def("set_variable_memory_max_size", &mindspore::MsContext::set_variable_memory_max_size,
          "set variable memory max size")
@@ -177,13 +163,13 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_parallel_mode", &ParallelContext::set_parallel_mode, "Set parallel mode.")
     .def("get_strategy_search_mode", &ParallelContext::strategy_search_mode, "Get strategy search mode.")
     .def("set_strategy_search_mode", &ParallelContext::set_strategy_search_mode, "Set strategy search mode.")
-    .def("set_all_reduce_fusion_split_indices", &ParallelContext::set_all_reduce_fusion_split_indices,
+    .def("set_all_reduce_fusion_split_indices", &ParallelContext::SetAllReduceFusionSplitIndices,
          "Set all reduce fusion split indices.")
-    .def("get_all_reduce_fusion_split_indices", &ParallelContext::all_reduce_fusion_split_indices,
+    .def("get_all_reduce_fusion_split_indices", &ParallelContext::GetAllReduceFusionSplitIndices,
          "Get all reduce fusion split indices.")
-    .def("set_all_reduce_fusion_split_sizes", &ParallelContext::set_all_reduce_fusion_split_sizes,
+    .def("set_all_reduce_fusion_split_sizes", &ParallelContext::SetAllReduceFusionSplitSizes,
          "Set all reduce fusion split sizes.")
-    .def("get_all_reduce_fusion_split_sizes", &ParallelContext::all_reduce_fusion_split_sizes,
+    .def("get_all_reduce_fusion_split_sizes", &ParallelContext::GetAllReduceFusionSplitSizes,
          "Get all reduce fusion split sizes.")
     .def("set_enable_all_reduce_fusion", &ParallelContext::set_enable_all_reduce_fusion,
          "Set enable/disable all reduce fusion.")
@@ -232,6 +218,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the parameter cost_model_communi_bias of the DP algorithm.")
     .def("set_multi_subgraphs", &CostModelContext::set_multi_subgraphs, "Set the parameter is_multi_subgraphs.")
     .def("get_multi_subgraphs", &CostModelContext::is_multi_subgraphs, "Get the parameter is_multi_subgraphs.")
+    .def("set_run_phase", &CostModelContext::set_run_phase, "Set the flag run_phase.")
+    .def("get_run_phase", &CostModelContext::run_phase, "Get the flag run_phase.")
     .def("set_costmodel_allreduce_fusion_algorithm", &CostModelContext::set_costmodel_allreduce_fusion_algorithm,
          "Set the parameter gradient AllReduce fusion algorithm.")
     .def("get_costmodel_allreduce_fusion_algorithm", &CostModelContext::costmodel_allreduce_fusion_algorithm,

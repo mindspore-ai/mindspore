@@ -15,7 +15,8 @@
 """
 The configuration manager.
 """
-
+import random
+import numpy
 import mindspore._c_dataengine as cde
 
 INT32_MAX = 2147483647
@@ -32,6 +33,12 @@ class ConfigurationManager:
         """
         Set the seed to be used in any random generator. This is used to produce deterministic results.
 
+        Note:
+            This set_seed function sets the seed in the python random library and numpy.random library
+            for deterministic python augmentations using randomness. This set_seed function should
+            be called with every iterator created to reset the random seed. In our pipeline this
+            does not guarantee deterministic results with num_parallel_workers > 1.
+
         Args:
             seed(int): seed to be set
 
@@ -47,6 +54,9 @@ class ConfigurationManager:
         if seed < 0 or seed > UINT32_MAX:
             raise ValueError("Seed given is not within the required range")
         self.config.set_seed(seed)
+        random.seed(seed)
+        # numpy.random isn't thread safe
+        numpy.random.seed(seed)
 
     def get_seed(self):
         """

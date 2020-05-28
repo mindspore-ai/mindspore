@@ -13,14 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
 import matplotlib.pyplot as plt
-from mindspore import log as logger
+import numpy as np
+
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.py_transforms as F
 import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.transforms.vision.py_transforms as F
+from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
+
 
 def visualize(image_original, image_ua):
     """
@@ -37,71 +39,72 @@ def visualize(image_original, image_ua):
         plt.title("DE UniformAugment image")
 
     plt.show()
-    
+
 
 def test_uniform_augment(plot=False, num_ops=2):
     """
     Test UniformAugment
     """
     logger.info("Test UniformAugment")
-    
+
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224,224)),
-                                       F.ToTensor()])    
-    
+                                       F.Resize((224, 224)),
+                                       F.ToTensor()])
+
     ds_original = ds.map(input_columns="image",
                          operations=transforms_original())
-    
+
     ds_original = ds_original.batch(512)
-            
-    for idx, (image,label) in enumerate(ds_original):
+
+    for idx, (image, label) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2,3,1))
+            images_original = np.transpose(image, (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2,3,1)),
-                                        axis=0)    
+                                        np.transpose(image, (0, 2, 3, 1)),
+                                        axis=0)
 
-    # UniformAugment Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+            # UniformAugment Images
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transform_list = [F.RandomRotation(45),
                       F.RandomColor(),
                       F.RandomSharpness(),
                       F.Invert(),
                       F.AutoContrast(),
                       F.Equalize()]
-    
+
     transforms_ua = F.ComposeOp([F.Decode(),
-                                 F.Resize((224,224)),
+                                 F.Resize((224, 224)),
                                  F.UniformAugment(transforms=transform_list, num_ops=num_ops),
-                                 F.ToTensor()])    
-    
+                                 F.ToTensor()])
+
     ds_ua = ds.map(input_columns="image",
                    operations=transforms_ua())
-    
-    ds_ua = ds_ua.batch(512)    
-      
-    for idx, (image,label) in enumerate(ds_ua):
+
+    ds_ua = ds_ua.batch(512)
+
+    for idx, (image, label) in enumerate(ds_ua):
         if idx == 0:
-            images_ua = np.transpose(image, (0, 2,3,1))
+            images_ua = np.transpose(image, (0, 2, 3, 1))
         else:
             images_ua = np.append(images_ua,
-                                  np.transpose(image, (0, 2,3,1)),
+                                  np.transpose(image, (0, 2, 3, 1)),
                                   axis=0)
-    
+
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_ua[i]-images_original[i])**2)
+        mse[i] = np.mean((images_ua[i] - images_original[i]) ** 2)
     logger.info("MSE= {}".format(str(np.mean(mse))))
-    
+
     if plot:
         visualize(images_original, images_ua)
-        
+
+
 def test_cpp_uniform_augment(plot=False, num_ops=2):
     """
     Test UniformAugment
@@ -119,14 +122,13 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image,label) in enumerate(ds_original):
+    for idx, (image, label) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
                                         np.transpose(image, (0, 2, 3, 1)),
                                         axis=0)
-
 
     # UniformAugment Images
     ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
@@ -147,7 +149,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
     ds_ua = ds_ua.batch(512)
 
-    for idx, (image,label) in enumerate(ds_ua):
+    for idx, (image, label) in enumerate(ds_ua):
         if idx == 0:
             images_ua = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -162,6 +164,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
     for i in range(num_samples):
         mse[i] = np.mean((images_ua[i] - images_original[i]) ** 2)
     logger.info("MSE= {}".format(str(np.mean(mse))))
+
 
 def test_cpp_uniform_augment_exception_pyops(num_ops=2):
     """
@@ -183,6 +186,7 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "operations" in str(e)
 
+
 def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
     """
     Test UniformAugment invalid large number of ops
@@ -201,6 +205,7 @@ def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
     except BaseException as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_ops" in str(e)
+
 
 def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
     """
@@ -221,10 +226,32 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_ops" in str(e)
 
+def test_cpp_uniform_augment_random_crop_ut():
+    batch_size=2
+    cifar10_dir = "../data/dataset/testCifar10Data"
+    ds1 = de.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
+
+    transforms_ua = [
+        C.RandomCrop(size=[224, 224]),
+        C.RandomHorizontalFlip()
+    ]
+    uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=1)
+    ds1 = ds1.map(input_columns="image", operations=uni_aug)
+
+    # apply DatasetOps
+    ds1 = ds1.batch(batch_size, drop_remainder=True, num_parallel_workers=1)
+    num_batches = 0
+    try:
+        for data in ds1.create_dict_iterator():
+            num_batches += 1
+    except BaseException as e:
+        assert "Crop size" in str(e)
+
+
 if __name__ == "__main__":
     test_uniform_augment(num_ops=1)
     test_cpp_uniform_augment(num_ops=1)
     test_cpp_uniform_augment_exception_pyops(num_ops=1)
     test_cpp_uniform_augment_exception_large_numops(num_ops=6)
     test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)
-
+    test_cpp_uniform_augment_random_crop_ut()

@@ -45,6 +45,9 @@ namespace parallel {
 #define DEFAULT_FULLY_USE_DEVICES true
 #define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
 #define DEFAULT_IS_MULTI_SUBGRAPHS false
+#define DEFAULT_RUN_PHASE 0
+#define TRAINING_PHASE 0
+#define INFERENCE_PHASE 1
 
 class CostGraph;
 using CostGraphPtr = std::shared_ptr<CostGraph>;
@@ -60,6 +63,8 @@ extern bool TENSOR_SLICE_ALIGNMENT_ENABLE;
 extern size_t TENSOR_SLICE_ALIGNMENT_SIZE;
 extern bool FULLY_USE_DEVICES;
 extern bool ELEMENTWISE_OP_STRA_FOLLOW;
+extern bool MULTI_SUBGRAPHS;
+extern int32_t RUN_PHASE;
 
 class CostGraph {
   // 'CostGraph' consists of Operators and edges between them. An edge is created between two Operators if they have
@@ -82,11 +87,9 @@ class CostGraph {
   void RemoveOperator(const OperatorInfoPtr &op);
   bool IsOperatorInCostGraph(const OperatorInfoPtr &op);
   // the edge is in the form: u --> v
-  void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge) {
-    std::vector<EdgePtr> curr_edges(edges_[{u_node, v_node}]);
-    curr_edges.push_back(edge);
-    edges_[{u_node, v_node}] = curr_edges;
-  }
+  void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge);
+  std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(OperatorInfoPtr v_node) { return in_edges_[v_node]; }
+  std::vector<std::shared_ptr<Edge>> GetOriginalNextEdges(OperatorInfoPtr u_node) { return out_edges_[u_node]; }
   // An edge is uniquely identified by its name, and its output index and input index.
   bool IsEdgeInCostGraph(const std::string &, size_t, size_t);
 
@@ -98,7 +101,7 @@ class CostGraph {
 
   CostPtrList CreateFinalCostList(const OperatorInfoPtr &u, const EdgePtr &e, const OperatorInfoPtr &v);
   CostPtrList CreateFinalSingleCostList(const OperatorInfoPtr &u);
-  CostPtr SelectCostWithMemoryConstraint(const CostPtrList &cost_list, double memory);
+  CostPtr SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory);
   CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory);
   CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist, double memory);
   Status SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr> &);
@@ -176,16 +179,24 @@ class CostGraph {
   void CreateStarEliminationSubCostList(const StrategyPtr &, const CostPtrList &, const CostPtrList &,
                                         const StrategyPtr &, const CostPtrList &, std::vector<StrategyPtr>,
                                         CostPtrList &, CostPtrList &, CostPtrList *);
+  // Calculate memory cost for training phase or inference phase.
+  Status CalculateMemoryCost();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
-  // the memory cost can be resused.
+  // the memory cost can be resused. This is used to calculate memory in the training phase.
   Status CalculateOpsMemoryCost();
   // When the input of the edge is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
-  // the memory cost can be resused.
+  // the memory cost can be reused. This is used to calculate memory in the training phase.
   Status CalculateEdgesMemoryCost();
+  // Calculate memory cost of operators in the inference phase.
+  Status CalculateOpsMemoryCostForInference();
+  // Calculate memory cost of edges in the inference phase.
+  Status CalculateEdgesMemoryCostForInference();
   Status ComputeOpsAndEdgesParameterInvolved();
+  // Compute for each operator whether the output is critical.
+  Status ComputeOpsAndEdgesOutputCritical();
 
   std::vector<OperatorInfoPtr> GetOperators() const { return ops_; }
-  size_t GetNumPairs() const { return edges_.size(); }
+  size_t GetNumEdges() const;
   Status InitSelectedStrategy();
   OperatorInfoPtr FindTmpIdentityByParameterName(std::string &) const;
   // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
@@ -205,6 +216,10 @@ class CostGraph {
   const std::map<std::string, std::string> get_tuple_getitem_list() const { return tuple_getitem_list_; }
 
  private:
+  void TopologyOrder(std::vector<OperatorInfoPtr> *);
+  void DFSForTopoOrder(const OperatorInfoPtr &, std::map<OperatorInfoPtr, bool> *, std::vector<OperatorInfoPtr> *);
+  Status DetermineCriticalOps(const std::vector<OperatorInfoPtr> &);
+  void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int> &);
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
   std::map<std::string, std::string> tuple_getitem_list_;
@@ -214,6 +229,8 @@ class CostGraph {
   std::vector<OperatorInfoPtr> ops_;
   std::map<std::pair<OperatorInfoPtr, OperatorInfoPtr>, std::vector<EdgePtr>> edges_;
   std::vector<std::shared_ptr<CostGraph>> connected_compoents_;
+  std::map<OperatorInfoPtr, std::vector<EdgePtr>> out_edges_;
+  std::map<OperatorInfoPtr, std::vector<EdgePtr>> in_edges_;
 };
 }  // namespace parallel
 }  // namespace mindspore

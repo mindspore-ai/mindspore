@@ -12,31 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
-  def __init__(self):
-    super(Net, self).__init__()
-    self.bias_add_grad = G.BiasAddGrad()
-    #self.dout = Parameter(initializer(
-                #'normal', [2, 3, 3, 4]), name='dout')
+    def __init__(self):
+        super(Net, self).__init__()
+        self.bias_add_grad = G.BiasAddGrad()
+        # self.dout = Parameter(initializer(
+        # 'normal', [2, 3, 3, 4]), name='dout')
+
+    @ms_function
+    def construct(self, dout):
+        return self.bias_add_grad(dout)
 
 
-  @ms_function
-  def construct(self, dout):
-    return self.bias_add_grad(dout)
-
-dout = np.ones([2,3,4,4]).astype(np.float32)
+dout = np.ones([2, 3, 4, 4]).astype(np.float32)
 bias_add_grad = Net()
 output = bias_add_grad(Tensor(dout))
-expect_output = np.array([32.,32.,32.]).astype(np.float32)
-assert np.all(output.asnumpy()==expect_output), "bias_add_grad execute failed, please check current code commit"
+expect_output = np.array([32., 32., 32.]).astype(np.float32)
+assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 print(output.asnumpy())

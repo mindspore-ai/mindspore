@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3=None):
@@ -42,6 +44,11 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
 
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
+
 def test_softmax_cross_entropy_loss():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -56,7 +63,7 @@ def test_softmax_cross_entropy_loss():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((4, 1), (2, 1))
-    strategy2 = ((4, 2), )
+    strategy2 = ((4, 2),)
     strategy3 = ((8, 1), (8, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2), strategy3))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -64,7 +71,7 @@ def test_softmax_cross_entropy_loss():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_softmax_cross_entropy_loss_repeated_calculation():
@@ -81,7 +88,7 @@ def test_softmax_cross_entropy_loss_repeated_calculation():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((4, 1), (2, 1))
-    strategy2 = ((4, 2), )
+    strategy2 = ((4, 2),)
     strategy3 = ((2, 1), (2, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2), strategy3))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -89,7 +96,7 @@ def test_softmax_cross_entropy_loss_repeated_calculation():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_softmax_cross_entropy_loss_auto_batch_parallel():
@@ -111,4 +118,4 @@ def test_softmax_cross_entropy_loss_auto_batch_parallel():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)

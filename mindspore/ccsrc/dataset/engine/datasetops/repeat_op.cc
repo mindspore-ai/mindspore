@@ -21,6 +21,7 @@
 #include "dataset/engine/datasetops/repeat_op.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 
 #include "utils/log_adapter.h"
 
@@ -122,6 +123,8 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   if (buf->eof()) {
     RETURN_IF_NOT_OK(EofReceived(worker_id));
   }
+  // Update the column name map if needed
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
   *p_buffer = std::move(buf);
   return Status::OK();
 }
@@ -129,7 +132,7 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 // Base-class override for handling cases when an eoe is received.
 Status RepeatOp::EoeReceived(int32_t worker_id) {
   repeat_count_++;
-  MS_LOG(INFO) << "Repeat operator end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
+  MS_LOG(DEBUG) << "Repeat operator end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
   bool repeated = BitTest(op_ctrl_flags_, kDeOpRepeated);
   bool last_repeat = BitTest(op_ctrl_flags_, kDeOpLastRepeat);
   // If we've reached the requested repeat count, then flag the eoe nodes
@@ -161,16 +164,16 @@ Status RepeatOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. RepeatOp 
 
 // Base-class override for handling cases when an eof is received.
 Status RepeatOp::EofReceived(int32_t worker_id) {
-  MS_LOG(INFO) << "Repeat operator EOF received, do nothing now.";
+  MS_LOG(DEBUG) << "Repeat operator EOF received, do nothing now.";
   return Status::OK();
 }
 
 int32_t RepeatOp::num_consumers() const {
   if (parent_.empty()) {
-    MS_LOG(INFO) << "Repeat operator, no parent node, assuming it's root and returning 1.";
+    MS_LOG(DEBUG) << "Repeat operator, no parent node, assuming it's root and returning 1.";
     return 1;
   } else if (parent_[0] == nullptr) {
-    MS_LOG(INFO) << "Repeat operator, pointer to the first parent is null. Returning 0.";
+    MS_LOG(DEBUG) << "Repeat operator, pointer to the first parent is null. Returning 0.";
     return 0;
   } else {
     return parent_[0]->num_consumers();
@@ -179,11 +182,17 @@ int32_t RepeatOp::num_consumers() const {
 
 int32_t RepeatOp::num_producers() const {
   if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(INFO) << "Repeat operator, pointer to child node is null. Returning 0.";
+    MS_LOG(DEBUG) << "Repeat operator, pointer to child node is null. Returning 0.";
     return 0;
   } else {
     return child_[0]->num_producers();
   }
+}
+
+// Visitor accept method for NodePass
+Status RepeatOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<RepeatOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

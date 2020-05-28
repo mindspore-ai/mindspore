@@ -35,9 +35,9 @@ class LayerNormGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
-    auto dy = GetDeviceAddress<T>(inputs, 0);
-    auto x = GetDeviceAddress<T>(inputs, 1);
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    auto x = GetDeviceAddress<T>(inputs, 0);
+    auto dy = GetDeviceAddress<T>(inputs, 1);
     auto var = GetDeviceAddress<T>(inputs, 2);
     auto mean = GetDeviceAddress<T>(inputs, 3);
     auto gamma = GetDeviceAddress<T>(inputs, 4);
@@ -45,7 +45,7 @@ class LayerNormGradGpuKernel : public GpuKernel {
     auto dg = GetDeviceAddress<T>(outputs, 1);
     auto db = GetDeviceAddress<T>(outputs, 2);
 
-    T epsilon = 10e-12;
+    const T epsilon = 10e-12;
     LayerNormGrad(input_row_, input_col_, param_dim_, epsilon, dy, x, mean, var, gamma, dx, dg, db,
                   reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;

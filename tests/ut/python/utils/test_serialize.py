@@ -13,32 +13,32 @@
 # limitations under the License.
 # ============================================================================
 """ut for model serialize(save/load)"""
+import numpy as np
 import os
+import pytest
 import stat
 import time
-import numpy as np
-import pytest
 
-import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
-from mindspore.nn import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.nn import WithLossCell, TrainOneStepCell
-from mindspore.train.callback import _CheckpointManager
-from mindspore.train.serialization import save_checkpoint, load_checkpoint,load_param_into_net, \
-                                          _exec_save_checkpoint, export, _save_graph
-from ..ut_filter import run_on_onnxruntime, non_graph_engine
+import mindspore.nn as nn
 from mindspore import context
-
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.nn import SoftmaxCrossEntropyWithLogits
+from mindspore.nn import WithLossCell, TrainOneStepCell
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
+from mindspore.train.callback import _CheckpointManager
+from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
+    _exec_save_checkpoint, export, _save_graph
+from ..ut_filter import run_on_onnxruntime, non_graph_engine
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):
     """Net definition."""
+
     def __init__(self, num_classes=10):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
@@ -46,7 +46,7 @@ class Net(nn.Cell):
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2)
         self.flatten = nn.Flatten()
-        self.fc = nn.Dense(int(224*224*64/16), num_classes)
+        self.fc = nn.Dense(int(224 * 224 * 64 / 16), num_classes)
 
     def construct(self, x):
         x = self.conv1(x)
@@ -197,6 +197,7 @@ def test_load_param_into_net_error_dict():
 
 def test_load_param_into_net_erro_dict_param():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -209,6 +210,7 @@ def test_load_param_into_net_erro_dict_param():
 def test_load_param_into_net_has_more_param():
     """ test_load_param_into_net_has_more_param """
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -224,6 +226,7 @@ def test_load_param_into_net_has_more_param():
 
 def test_load_param_into_net_param_type_and_shape_error():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -235,6 +238,7 @@ def test_load_param_into_net_param_type_and_shape_error():
 
 def test_load_param_into_net_param_type_error():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -247,6 +251,7 @@ def test_load_param_into_net_param_type_error():
 
 def test_load_param_into_net_param_shape_error():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -259,6 +264,7 @@ def test_load_param_into_net_param_shape_error():
 
 def test_load_param_into_net():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -289,13 +295,14 @@ def test_load_checkpoint_empty_file():
 
 class MYNET(nn.Cell):
     """ NET definition """
+
     def __init__(self):
         super(MYNET, self).__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal', pad_mode='valid')
         self.bn = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.fc = nn.Dense(64*222*222, 3)  # padding=0
+        self.fc = nn.Dense(64 * 222 * 222, 3)  # padding=0
 
     def construct(self, x):
         x = self.conv(x)
@@ -310,119 +317,11 @@ class MYNET(nn.Cell):
 def test_export():
     net = MYNET()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
-    export(net, input_data,  file_name="./me_export.pb", file_format="GEIR")
-
-
-class BatchNormTester(nn.Cell):
-    "used to test exporting network in training mode in onnx format"
-    def __init__(self, num_features):
-        super(BatchNormTester, self).__init__()
-        self.bn = nn.BatchNorm2d(num_features)
-
-    def construct(self, x):
-        return self.bn(x)
-
-
-def test_batchnorm_train_onnx_export():
-    input = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
-    net = BatchNormTester(3)
-    net.set_train()
-    if not net.training:
-        raise ValueError('netowrk is not in training mode')
-    export(net, input, file_name='batch_norm.onnx', file_format='ONNX')
-    if not net.training:
-        raise ValueError('netowrk is not in training mode')
-
-
-class LeNet5(nn.Cell):
-    """LeNet5 definition"""
-    def __init__(self):
-        super(LeNet5, self).__init__()
-        self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-        self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
-        self.fc1 = nn.Dense(16 * 5 * 5, 120)
-        self.fc2 = nn.Dense(120, 84)
-        self.fc3 = nn.Dense(84, 10)
-        self.relu = nn.ReLU()
-        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.flatten = P.Flatten()
-
-    def construct(self, x):
-        x = self.max_pool2d(self.relu(self.conv1(x)))
-        x = self.max_pool2d(self.relu(self.conv2(x)))
-        x = self.flatten(x)
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
-def test_lenet5_onnx_export():
-    input = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
-    net = LeNet5()
-    export(net, input, file_name='lenet5.onnx', file_format='ONNX')
-
-class DefinedNet(nn.Cell):
-    """simple Net definition with maxpoolwithargmax."""
-    def __init__(self, num_classes=10):
-        super(DefinedNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
-        self.bn1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU()
-        self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=2, strides=2)
-        self.flatten = nn.Flatten()
-        self.fc = nn.Dense(int(56*56*64), num_classes)
-
-    def construct(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x, argmax = self.maxpool(x)
-        x = self.flatten(x)
-        x = self.fc(x)
-        return x
-
-def test_net_onnx_maxpoolwithargmax_export():
-    input = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
-    net = DefinedNet()
-    export(net, input, file_name='definedNet.onnx', file_format='ONNX')
-
-
-@run_on_onnxruntime
-def test_lenet5_onnx_load_run():
-    onnx_file = 'lenet5.onnx'
-
-    input = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
-    net = LeNet5()
-    export(net, input, file_name=onnx_file, file_format='ONNX')
-
-    import onnx
-    import onnxruntime as ort
-
-    print('--------------------- onnx load ---------------------')
-    # Load the ONNX model
-    model = onnx.load(onnx_file)
-    # Check that the IR is well formed
-    onnx.checker.check_model(model)
-    # Print a human readable representation of the graph
-    g = onnx.helper.printable_graph(model.graph)
-    print(g)
-
-    print('------------------ onnxruntime run ------------------')
-    ort_session = ort.InferenceSession(onnx_file)
-    input_map = {'x' : input.asnumpy()}
-    # provide only input x to run model
-    outputs = ort_session.run(None, input_map)
-    print(outputs[0])
-    # overwrite default weight to run model
-    for item in net.trainable_params():
-        input_map[item.name] = np.ones(item.default_input.asnumpy().shape, dtype=np.float32)
-    outputs = ort_session.run(None, input_map)
-    print(outputs[0])
+    export(net, input_data, file_name="./me_export.pb", file_format="GEIR")
 
 
 def teardown_module():
-    files = ['parameters.ckpt', 'new_ckpt.ckpt', 'lenet5.onnx', 'batch_norm.onnx', 'empty.ckpt']
+    files = ['parameters.ckpt', 'new_ckpt.ckpt', 'empty.ckpt']
     for item in files:
         file_name = './' + item
         if not os.path.exists(file_name):

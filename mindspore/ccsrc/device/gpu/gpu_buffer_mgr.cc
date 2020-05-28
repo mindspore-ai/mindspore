@@ -45,14 +45,14 @@ GpuBufferMgr &GpuBufferMgr::GetInstance() noexcept {
 }
 
 BlockQueueStatus_T GpuBufferMgr::Create(unsigned int device_id, const std::string &channel_name, void *addr,
-                                        const size_t &feature_len, const size_t &label_size, const size_t &capacity) {
+                                        const std::vector<size_t> &shape, const size_t &capacity) {
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (name_queue_map_.count(name)) {
     MS_LOG(ERROR) << "Queue not exist " << name;
     return QUEUE_NOT_EXIST;
   }
   std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
-  BlockQueueStatus_T rt = queue->Create(addr, feature_len, label_size, capacity);
+  BlockQueueStatus_T rt = queue->Create(addr, shape, capacity);
   if (rt != SUCCESS) {
     return rt;
   }
@@ -61,8 +61,8 @@ BlockQueueStatus_T GpuBufferMgr::Create(unsigned int device_id, const std::strin
   return SUCCESS;
 }
 
-unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name, const size_t &, const size_t &,
-                                const std::function<void(void *)> func) {
+unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name,
+                                const std::vector<size_t> &shape, const std::function<void(void *)> func) {
   set_device();
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (!name_queue_map_.count(name)) {
@@ -80,8 +80,8 @@ unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &chann
   return handle;
 }
 
-unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name, const size_t &,
-                                const size_t &) {
+unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name,
+                                const std::vector<size_t> &shape) {
   set_device();
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (!name_queue_map_.count(name)) {
@@ -106,22 +106,21 @@ void GpuBufferMgr::set_device() const {
   }
 }
 
-BlockQueueStatus_T GpuBufferMgr::Push(unsigned int handle, void *feature_addr, size_t feature_size, void *label_addr,
-                                      size_t label_size, unsigned int timeout_in_sec) {
+BlockQueueStatus_T GpuBufferMgr::Push(unsigned int handle, const std::vector<DataItemGpu> &data,
+                                      unsigned int timeout_in_sec) {
   auto iter = handle_queue_map_.find(handle);
   if (iter == handle_queue_map_.end()) {
     return HANDLE_NOT_EXIST;
   }
-  return iter->second->Push(feature_addr, feature_size, label_addr, label_size, timeout_in_sec);
+  return iter->second->Push(data, timeout_in_sec);
 }
 
-BlockQueueStatus_T GpuBufferMgr::Front(unsigned int handle, void **feature_addr, size_t *feature_size,
-                                       void **label_addr, size_t *label_size) {
+BlockQueueStatus_T GpuBufferMgr::Front(unsigned int handle, void **addr, size_t *len) {
   auto iter = handle_queue_map_.find(handle);
   if (iter == handle_queue_map_.end()) {
     return HANDLE_NOT_EXIST;
   }
-  return iter->second->Front(feature_addr, feature_size, label_addr, label_size);
+  return iter->second->Front(addr, len);
 }
 
 BlockQueueStatus_T GpuBufferMgr::Pop(unsigned int handle) {

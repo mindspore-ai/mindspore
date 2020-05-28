@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops import Primitive
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 
 make_tuple = Primitive('make_tuple')
 reshape = P.Reshape()
@@ -37,6 +37,7 @@ off_value = Tensor(0.0, mstype.float32)
 depth = Tensor(2, mstype.int32)
 shape = (2, 4, 2, 2)
 dropout_gen_mask = P.DropoutGenMask()
+
 
 class FnDict:
     def __init__(self):
@@ -114,7 +115,7 @@ def test_convert_strided_slice_grad_input_to_attr(tag):
 
     @fns
     def before(x):
-        return stridedslicegrad(x, (16, 128, 1024), (0, 0 , 0), (16, 1, 1024), (1, 1,1))
+        return stridedslicegrad(x, (16, 128, 1024), (0, 0, 0), (16, 1, 1024), (1, 1, 1))
 
     @fns
     def after(x):

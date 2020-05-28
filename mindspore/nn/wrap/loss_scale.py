@@ -187,7 +187,7 @@ class TrainOneStepWithLossScaleCell(Cell):
     Examples:
         >>> net_with_loss = Net()
         >>> optimizer = nn.Momentum(net_with_loss.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> manager = nn.DynamicLossScaleUpdateCell(init_loss_scale=2**12, scale_factor=2, scale_window=1000)
+        >>> manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
@@ -249,7 +249,9 @@ class TrainOneStepWithLossScaleCell(Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-        grads = self.grad(self.network, weights)(data, label, F.cast(scaling_sens, F.dtype(loss)))
+
+        scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
+        grads = self.grad(self.network, weights)(data, label, scaling_sens_filled)
         grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)

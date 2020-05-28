@@ -13,14 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import mindspore.nn as nn
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.train.model import Model
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.train.model import Model
 
 context.set_context(device_target="Ascend")
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -30,9 +32,12 @@ class Net(nn.Cell):
     def construct(self, y, dy):
         return self.tanh_grad(y, dy)
 
+
 input_shape = [1]
 input_np = np.random.randn(*input_shape).astype(np.float32)
 input_me = Tensor(input_np)
+
+
 def test_net():
     context.set_context(mode=context.GRAPH_MODE)
     tanh_grad = Net()

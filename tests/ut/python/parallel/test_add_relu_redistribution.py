@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 
 class AddRelu(nn.Cell):
     def __init__(self, strategy0=None, strategy1=None):
@@ -31,6 +33,7 @@ class AddRelu(nn.Cell):
         out = self.add(x, z)
         return self.relu(out)
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -41,6 +44,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, z)
         return self.loss(predict)
 
+
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
@@ -49,26 +53,33 @@ class Grad(nn.Cell):
     def construct(self, x, y):
         return C.grad_all(self.network)(x, y)
 
+
+def compile(net, x, y):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y)
+
+
 def test_add_relu_stride_slice():
     context.set_auto_parallel_context(device_num=8, global_rank=7)
-    
+
     strategy0 = ((1, 1), (1, 1))
-    strategy1 = ((8, 1), )
+    strategy1 = ((8, 1),)
     net = Grad(NetWithLoss(AddRelu(strategy0, strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y)
+    compile(net, x, y)
+
 
 def test_add_relu_all_gather():
     context.set_auto_parallel_context(device_num=8, global_rank=7)
-    
+
     strategy0 = ((8, 1), (8, 1))
-    strategy1 = ((1, 1), )
+    strategy1 = ((1, 1),)
     net = Grad(NetWithLoss(AddRelu(strategy0, strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y)
+    compile(net, x, y)

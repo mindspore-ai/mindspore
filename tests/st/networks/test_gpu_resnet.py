@@ -17,22 +17,25 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import amp
+from mindspore.nn import Dense
+from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.cell import Cell
-from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.basic import Flatten
+from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.normalization import BatchNorm2d
 from mindspore.nn.layer.pooling import MaxPool2d
-from mindspore.ops.operations import TensorAdd
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn import Dense
-from mindspore import amp
+from mindspore.ops.operations import TensorAdd
+
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 def random_normal_init(shape, mean=0.0, stddev=0.01, seed=None):
@@ -324,7 +327,6 @@ def resnet50(num_classes):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = resnet50(num_classes)
     lr = 0.1
     momentum = 0.9
@@ -339,14 +341,13 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    assert(losses[-1].asnumpy() < 1)
+    assert (losses[-1].asnumpy() < 1)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_mem_reuse=False,
-                        enable_dynamic_memory=False)
     net = resnet50(num_classes)
     lr = 0.1
     momentum = 0.9
@@ -360,6 +361,6 @@ def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    assert(losses[-1][0].asnumpy() < 1)
-    assert(losses[-1][1].asnumpy() == False)
-    assert(losses[-1][2].asnumpy() > 1)
+    assert (losses[-1][0].asnumpy() < 1)
+    assert (losses[-1][1].asnumpy() == False)
+    assert (losses[-1][2].asnumpy() > 1)
