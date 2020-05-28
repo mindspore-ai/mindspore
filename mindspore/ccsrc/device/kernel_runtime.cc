@@ -680,6 +680,10 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
   return true;
 }
 
+void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
+  MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
+}
+
 #ifdef ENABLE_DUMP_E2E
 bool KernelRuntime::SetDumpConf() {
   dump_conf_ptr_ = std::make_shared<Dump>();
