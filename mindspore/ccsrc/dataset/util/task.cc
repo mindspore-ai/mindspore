@@ -24,7 +24,9 @@ namespace dataset {
 thread_local Task *gMyTask = nullptr;
 
 void Task::operator()() {
+#if !defined(_WIN32) && !defined(_WIN64)
   gMyTask = this;
+#endif
   id_ = this_thread::get_id();
   std::stringstream ss;
   ss << id_;
