@@ -907,3 +907,25 @@ def check_positive_degrees(method):
         return method(self, **kwargs)
 
     return new_method
+
+
+def check_compose_list(method):
+    """Wrapper method to check the transform list of ComposeOp."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        transforms = (list(args) + [None])[0]
+        if "transforms" in kwargs:
+            transforms = kwargs.get("transforms")
+        if transforms is None:
+            raise ValueError("transforms is not provided.")
+        if not transforms:
+            raise ValueError("transforms list is empty.")
+        if not isinstance(transforms, list):
+            raise TypeError("transforms is not a python list")
+
+        kwargs["transforms"] = transforms
+
+        return method(self, **kwargs)
+
+    return new_method
