@@ -202,6 +202,13 @@ void bindDatasetOps(py::module *m) {
       return count;
     });
   (void)py::class_<VOCOp, DatasetOp, std::shared_ptr<VOCOp>>(*m, "VOCOp")
+    .def_static("get_num_rows",
+                [](const std::string &dir, const std::string &task_type, const std::string &task_mode,
+                   const py::dict &dict, int64_t numSamples) {
+                  int64_t count = 0;
+                  THROW_IF_ERROR(VOCOp::CountTotalRows(dir, task_type, task_mode, dict, numSamples, &count));
+                  return count;
+                })
     .def_static("get_class_indexing", [](const std::string &dir, const std::string &task_type,
                                          const std::string &task_mode, const py::dict &dict, int64_t numSamples) {
       std::map<std::string, int32_t> output_class_indexing;
