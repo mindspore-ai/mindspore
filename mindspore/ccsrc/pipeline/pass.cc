@@ -82,7 +82,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     // Arithmetic simplifications
     irpass.arithmetic_simplify_,
     irpass.addn_zero_filter_,
-    irpass.adjust_all_reduce_mul_add_,
 
     // Miscellaneous
     irpass.item_tuple_eliminate_,
