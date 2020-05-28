@@ -60,12 +60,10 @@ class AscendControlParser {
   static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start);
 
   // root graph order
-  static std::tuple<std::map<uint32_t, CNodePtr>, std::map<CNodePtr, std::vector<uint32_t>>> GetLabelNode(
-    const std::vector<CNodePtr> &nodes);
+  static std::vector<uint32_t> GetLabelSwitchList(const CNodePtr &node);
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);
-  static std::vector<CNodePtr> RecurseGraph(const CNodePtr &cur_label_goto, const CNodePtr &end_label_goto,
-                                            NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
+  static std::vector<CNodePtr> RecurseGraph(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
 };
 }  // namespace session
 }  // namespace mindspore
