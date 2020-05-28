@@ -95,6 +95,11 @@ Status Edge::InitEdgeCost() {
                         << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "
                            "Try to set 'elementwise_op_strategy_follow' false.";
     }
+    if (edge_name_.find(RESHAPE) != std::string::npos) {
+      MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
+                        << " failed, it may be caused by setting different strategies for operators following Reshape. "
+                           "Try to fix that.";
+    }
     MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_ << " failed.";
   }
   return Status::SUCCESS;
