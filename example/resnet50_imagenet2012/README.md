@@ -133,3 +133,18 @@ Inference result will be stored in the example path, whose folder name is "infer
 ```
 result: {'acc': 0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 ```
+
+### Running on GPU
+```
+# distributed training example
+mpirun -n 8 python train.py --dataset_path=dataset/ilsvrc/train --device_target="GPU" --run_distribute=True
+
+# standalone training example
+python train.py --dataset_path=dataset/ilsvrc/train --device_target="GPU"
+
+# standalone training example with pretrained checkpoint
+python train.py --dataset_path=dataset/ilsvrc/train --device_target="GPU" --pre_trained=pretrained.ckpt
+
+# infer example
+python eval.py --dataset_path=dataset/ilsvrc/val --device_target="GPU" --checkpoint_path=resnet-90_5004ss.ckpt
+```

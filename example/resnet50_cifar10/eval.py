@@ -25,7 +25,7 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -34,26 +34,32 @@ parser.add_argument('--do_train', type=bool, default=False, help='Do train or no
 parser.add_argument('--do_eval', type=bool, default=True, help='Do eval or not.')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 args_opt = parser.parse_args()
 
-device_id = int(os.getenv('DEVICE_ID'))
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
-context.set_context(device_id=device_id)
-
 if __name__ == '__main__':
+    target = args_opt.device_target
+    context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
     if not args_opt.do_eval and args_opt.run_distribute:
-        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-        init()
+        if target == "Ascend":
+            device_id = int(os.getenv('DEVICE_ID'))
+            context.set_context(device_id=device_id)
+            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
+            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
+            init()
+        elif target == "GPU":
+            init("nccl")
+            context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
 
     epoch_size = config.epoch_size
     net = resnet50(class_num=config.class_num)
     loss = SoftmaxCrossEntropyWithLogits(sparse=True)
 
     if args_opt.do_eval:
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
+                                 target=target)
         step_size = dataset.get_dataset_size()
 
         if args_opt.checkpoint_path:
