@@ -16,7 +16,7 @@
 
 if [ $# != 2 ] && [ $# != 3 ]
 then 
-	echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
 
@@ -32,7 +32,7 @@ PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
 if [ $# == 3 ]
 then
-  PATH3=$(get_real_path $3)
+    PATH3=$(get_real_path $3)
 fi
 
 if [ ! -f "$PATH1" ]
@@ -47,11 +47,11 @@ then
 exit 1
 fi 
 
-if [ ! -f "$PATH3" ]
-then 
+if [ $# == 3 ] && [ ! -f "$PATH3" ]
+then
     echo "error: PRETRAINED_CKPT_PATH=$PATH3 is not a file"
 exit 1
-fi 
+fi
 
 ulimit -u unlimited
 export DEVICE_NUM=8
