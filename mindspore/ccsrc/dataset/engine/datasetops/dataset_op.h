@@ -51,7 +51,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   };
 
   // Flags that control operator runtime behaviours
-  enum OpState { kDeOpRunning = 0, kDeOpIdle = 1 };
+  enum OpState { kDeOpRunning = 0, kDeOpIdle = 1, kDeOpTerminated };
 
   // Constructor
   // @param op_connector_size - The size for the output connector of this operator.
@@ -213,11 +213,23 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   // Getter function
   // @return connector size of current op
-  virtual int32_t ConnectorSize() const { return out_connector_->size(); }
+  int32_t ConnectorSize() const {
+    if (!inlined()) {
+      return out_connector_->size();
+    }
+    // Return -1 for inlined op
+    return -1;
+  }
 
   // Getter function
   // @return connector size of current op
-  virtual int32_t ConnectorCapacity() const { return out_connector_->capacity(); }
+  int32_t ConnectorCapacity() const {
+    if (!inlined()) {
+      return out_connector_->size();
+    }
+    // Return -1 for inlined op
+    return -1;
+  }
 
   // Getter function
   // @return connector size of child op
@@ -228,7 +240,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   int32_t ChildOpConnectorCapacity(int32_t child_index = 0) const { return child_[child_index]->ConnectorCapacity(); }
 
   // Children Getter
-  // @return Vector or Children
+  // @return Vector of Children
   std::vector<std::shared_ptr<DatasetOp>> Children() const { return child_; }
 
   // Base method for NodePass visit.
@@ -236,6 +248,14 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Check "dataset/engine/opt/pass.h" for more details.
   // @return Statue of the node visit
   virtual Status Accept(NodePass *p, bool *modified);
+
+  // Op name getter
+  // @return Name of the current Op
+  virtual std::string Name() const { return "DatasetOp"; }
+
+  // Execution Tree getter
+  // @return Pointer to the ExecutionTree the current op belongs to, no ownership
+  ExecutionTree *Tree() { return tree_; }
 
  protected:
   // Adds a parent operator to this operator

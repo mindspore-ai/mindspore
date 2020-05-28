@@ -19,9 +19,8 @@
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/util/task_manager.h"
-#include "dataset/util/profiling.h"
-
-#include "dataset/engine/opt/util/printer_pass.h"
+#include "dataset/engine/perf/profiling.h"
+#include "dataset/engine/perf/monitor.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,6 +29,8 @@ ExecutionTree::ExecutionTree() : id_count_(0) {
   tg_ = std::make_unique<TaskGroup>();
   tree_state_ = kDeTStateInit;
   prepare_flags_ = kDePrepNone;
+  perf_monitor_ = std::make_unique<Monitor>(this);
+  profiling_manager_ = std::make_unique<ProfilingManager>(this);
 }
 
 // Destructor
@@ -121,6 +122,15 @@ Status ExecutionTree::Launch() {
   }
   std::ostringstream ss;
   ss << *this;
+
+  // Profiling infrastructures need to be initialized before Op launching
+  if (profiling_manager_->IsProfilingEnable()) {
+    // Setup profiling manager
+    RETURN_IF_NOT_OK(profiling_manager_->Initialize());
+    // Launch Monitor Thread
+    RETURN_IF_NOT_OK(tg_->CreateAsyncTask("Monitor Thread launched", std::ref(*perf_monitor_)));
+  }
+
   MS_LOG(DEBUG) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
@@ -133,7 +143,9 @@ Status ExecutionTree::Launch() {
       // Set the state of the Operator as running. This only matters in Leaf ops, CacheOp and TakeOp
     }
   }
+
   tree_state_ = kDeTStateExecuting;
+
   return Status::OK();
 }
 

@@ -205,6 +205,10 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                  const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing);
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "VOCOp"; }
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

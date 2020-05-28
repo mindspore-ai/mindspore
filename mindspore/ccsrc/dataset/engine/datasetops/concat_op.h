@@ -81,6 +81,10 @@ class ConcatOp : public PipelineOp {
   // before providing their own implementations.
   Status PrepareNodePostAction() override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ConcatOp"; }
+
  private:
   Status Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf);
 

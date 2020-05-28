@@ -38,6 +38,7 @@ DatasetOp::DatasetOp(int32_t op_connector_size)
       tree_(nullptr),
       state_(OpState::kDeOpIdle),
       op_ctrl_flags_(kDeOpNone),
+      out_connector_(nullptr),
       first_fetch_(true) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.

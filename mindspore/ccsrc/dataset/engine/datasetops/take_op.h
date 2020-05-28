@@ -90,6 +90,10 @@ class TakeOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "TakeOp"; }
+
  private:
   int32_t max_takes_;   // The number of takes that the user requested
   int32_t take_count_;  // A counter for the current number of executed takes

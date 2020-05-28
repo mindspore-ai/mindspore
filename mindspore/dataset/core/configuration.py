@@ -125,6 +125,35 @@ class ConfigurationManager:
         """
         return self.config.get_num_parallel_workers()
 
+    def set_monitor_sampling_interval(self, interval):
+        """
+        Set the default interval(ms) of monitor sampling.
+
+        Args:
+            interval: interval(ms) to be used to performance monitor sampling.
+
+        Raises:
+            ValueError: If interval is invalid (<= 0 or > MAX_INT_32).
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> con = ds.engine.ConfigurationManager()
+            >>> # sets the new interval value.
+            >>> con.set_monitor_sampling_interval(100)
+        """
+        if interval <= 0 or interval > INT32_MAX:
+            raise ValueError("Interval given is not within the required range")
+        self.config.set_monitor_sampling_interval(interval)
+
+    def get_monitor_sampling_interval(self):
+        """
+        Get the default interval of performance monitor sampling.
+
+        Returns:
+            Interval: interval(ms) of performance monitor sampling.
+        """
+        return self.config.get_monitor_sampling_interval()
+
     def __str__(self):
         """
         String representation of the configurations.

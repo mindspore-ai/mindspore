@@ -24,6 +24,7 @@
 #include "dataset/core/tensor.h"
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/perf/dataset_iterator_tracing.h"
 
 namespace mindspore {
 namespace dataset {
@@ -109,6 +110,10 @@ class DatasetIterator : public IteratorBase {
  private:
   std::shared_ptr<DatasetOp> root_;  // saves the root of the executionTree
   TensorRow device_queue_row_;
+  std::shared_ptr<DatasetIteratorTracing> tracing_;  // trace profiling data
+  int32_t cur_batch_num_;                            // current batch number,used for profiling
+  int32_t cur_connector_size_;                       // current connector size of root op,used for profiling
+  int32_t cur_connector_capacity_;                   // current connector capacity of root op, used for profiling
 };
 
 // The ChildIterator derived class is for fetching rows from intermediate nodes of execution tree.

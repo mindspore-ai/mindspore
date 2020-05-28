@@ -155,6 +155,10 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   // @return
   static Status CountTotalRows(const std::string &dir, bool isCIFAR10, int64_t *count);
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "CifarOp"; }
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

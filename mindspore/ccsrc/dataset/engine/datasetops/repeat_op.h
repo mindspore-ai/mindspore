@@ -124,9 +124,9 @@ class RepeatOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
-  virtual int32_t ConnectorSize() const { return child_[0]->ConnectorSize(); }
-
-  virtual int32_t ConnectorCapacity() const { return child_[0]->ConnectorCapacity(); }
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "RepeatOp"; }
 
  private:
   int32_t max_repeats_;                              // The number of repeats that the user requested

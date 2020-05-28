@@ -161,6 +161,10 @@ class ShuffleOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ShuffleOp"; }
+
  private:
   // Private function to add a new row to the shuffle buffer.
   // @return Status - The error code return

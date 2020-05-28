@@ -111,12 +111,21 @@ class ConfigManager {
   // @param seed - The default seed to use
   void set_seed(uint32_t seed);
 
+  // setter function
+  // @param interval - The setting to apply to the config
+  void set_monitor_sampling_interval(uint32_t interval);
+
+  // getter function
+  // @return The iterval of monitor sampling
+  int32_t monitor_sampling_interval() const { return monitor_sampling_interval_; }
+
  private:
   int32_t rows_per_buffer_{kCfgRowsPerBuffer};
   int32_t num_parallel_workers_{kCfgParallelWorkers};
   int32_t worker_connector_size_{kCfgWorkerConnectorSize};
   int32_t op_connector_size_{kCfgOpConnectorSize};
   uint32_t seed_{kCfgDefaultSeed};
+  uint32_t monitor_sampling_interval_{kCfgMonitorSamplingInterval};
 
   // Private helper function that taks a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info

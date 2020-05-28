@@ -172,6 +172,10 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   static Status GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
                                  std::map<std::string, int32_t> *output_class_indexing);
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ManifestOp"; }
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

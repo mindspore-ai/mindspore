@@ -169,6 +169,10 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // @return Status - The error code return
   Status AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer);
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const { return "CelebAOp"; }
+
  private:
   // Called first when function is called
   // @return

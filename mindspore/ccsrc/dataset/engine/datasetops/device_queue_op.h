@@ -140,6 +140,10 @@ class DeviceQueueOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "DeviceQueueOp"; }
+
  private:
   //  Name: checkExceptions(DataBuffer);
   //  Description: Check whether the dataBuffer meets the condition for performing DeviceQueueOp

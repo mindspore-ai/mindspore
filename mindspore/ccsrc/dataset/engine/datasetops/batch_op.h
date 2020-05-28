@@ -189,6 +189,10 @@ class BatchOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "BatchOp"; }
+
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId

@@ -210,6 +210,10 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ImageFolderOp"; }
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

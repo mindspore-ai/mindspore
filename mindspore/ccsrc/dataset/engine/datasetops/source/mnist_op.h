@@ -152,6 +152,10 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @return
   static Status CountTotalRows(const std::string &dir, int64_t *count);
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "MnistOp"; }
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

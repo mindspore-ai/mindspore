@@ -228,6 +228,10 @@ class TFReaderOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "TFReaderOp"; }
+
  private:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.
