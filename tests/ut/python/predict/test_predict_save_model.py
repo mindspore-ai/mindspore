@@ -69,7 +69,7 @@ if __name__ == '__main__':
     print("test lenet predict start")
     seed = 0
     np.random.seed(seed)
-    batch = 1
+    batch = 32
     channel = 1
     input_h = 32
     input_w = 32

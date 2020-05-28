@@ -436,28 +436,7 @@ void MemReuseChecker::SetAddNewMembuInfos(const KernelDef *op_def, const std::ve
   add_new_stream_ids_.push_back(op_def->stream_id());
 }
 
-void MemReuseChecker::ExportMembufInfoIR() {
-  std::string ir_file_name = "./mem_buf_info.ir";
-  std::ofstream ofs(ir_file_name);
-  int64_t total_reuse_size = 0;
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file [" << ir_file_name << "] failed!";
-  }
-  ofs << "Total static size:\t" << total_ori_static_size_ << "\n";
-  ofs << "Graph inputs size:\t" << total_ori_input_size_ << "\n";
-  ofs << "Value nodes size:\t" << total_ori_value_size_ << "\n";
-  ofs << "Total dynamic size:\t" << total_ori_dy_size_ << "\n";
-  ofs << "Total workspace size:\t" << total_ori_wkspace_size_ << "\n";
-  // get last membuf_list
-  if (membuf_all_infos_.empty()) {
-    return;
-  }
-  auto last_membuf_list = membuf_all_infos_.back();
-  for (const auto &membuf : last_membuf_list) {
-    auto checker_size = SizeToLong(membuf->size_);
-    total_reuse_size += checker_size;
-  }
-  ofs << "After reuse size:\t" << total_reuse_size << "\n\n";
+void MemReuseChecker::ExportEachMembufInfo(std::ofstream &ofs) {
   size_t i = 0;
   std::vector<size_t> each_node_used_size;
   std::vector<size_t> each_node_allocated_size;
@@ -496,6 +475,8 @@ void MemReuseChecker::ExportMembufInfoIR() {
     ofs << "curr allocated size: \t" << curr_allocated << "\n";
     ofs << "\n\n";
   }
+  auto optimal_iter = std::max_element(each_node_used_size.begin(), each_node_used_size.end());
+  ofs << "theoretical optimal size: " << *optimal_iter << "\n";
   ofs << "each node used size: \n";
   for (auto size : each_node_used_size) {
     ofs << size << "\t";
@@ -506,6 +487,31 @@ void MemReuseChecker::ExportMembufInfoIR() {
     ofs << size << "\t";
   }
   ofs << "\n\n";
+}
+
+void MemReuseChecker::ExportMembufInfoIR() {
+  std::string ir_file_name = "./mem_buf_info.ir";
+  std::ofstream ofs(ir_file_name);
+  int64_t total_reuse_size = 0;
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file [" << ir_file_name << "] failed!";
+  }
+  ofs << "Total static size:\t" << total_ori_static_size_ << "\n";
+  ofs << "Graph inputs size:\t" << total_ori_input_size_ << "\n";
+  ofs << "Value nodes size:\t" << total_ori_value_size_ << "\n";
+  ofs << "Total dynamic size:\t" << total_ori_dy_size_ << "\n";
+  ofs << "Total workspace size:\t" << total_ori_wkspace_size_ << "\n";
+  // get last membuf_list
+  if (membuf_all_infos_.empty()) {
+    return;
+  }
+  auto last_membuf_list = membuf_all_infos_.back();
+  for (const auto &membuf : last_membuf_list) {
+    auto checker_size = SizeToLong(membuf->size_);
+    total_reuse_size += checker_size;
+  }
+  ofs << "After reuse size:\t" << total_reuse_size << "\n\n";
+  ExportEachMembufInfo(ofs);
   ofs.close();
 }
 
