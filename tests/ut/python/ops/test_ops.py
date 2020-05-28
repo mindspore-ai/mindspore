@@ -695,7 +695,7 @@ test_case_nn_ops = [
     ('Flatten', {
         'block': P.Flatten(),
         'desc_inputs': [[128, 32, 32, 64]],
-        'desc_bprop': [[128 * 32 * 8 * 16]]}),
+        'desc_bprop': [[128, 65536]]}),
     ('LogSoftmax', {
         'block': P.LogSoftmax(),
         'desc_inputs': [[64, 2]],

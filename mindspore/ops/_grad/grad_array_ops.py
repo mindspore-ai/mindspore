@@ -127,10 +127,9 @@ def get_bprop_squeeze(self):
 @bprop_getters.register(P.Flatten)
 def get_bprop_flatten(self):
     """Generate bprop for Flatten"""
-    flatten_grad = G.FlattenGrad()
 
     def bprop(x, out, dout):
-        dx = flatten_grad(dout, shape_op(x))
+        dx = reshape(dout, shape_op(x))
         return (dx,)
     return bprop
 
