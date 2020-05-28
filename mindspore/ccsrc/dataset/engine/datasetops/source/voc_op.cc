@@ -442,6 +442,32 @@ Status VOCOp::GetNumRowsInDataset(int64_t *num) const {
   return Status::OK();
 }
 
+Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
+                             const py::dict &dict, int64_t numSamples, int64_t *count) {
+  if (task_type == "Detection") {
+    std::map<std::string, int32_t> input_class_indexing;
+    for (auto p : dict) {
+      (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
+                                                                        py::reinterpret_borrow<py::int_>(p.second)));
+    }
+
+    std::shared_ptr<VOCOp> op;
+    RETURN_IF_NOT_OK(
+      Builder().SetDir(dir).SetTask(task_type).SetMode(task_mode).SetClassIndex(input_class_indexing).Build(&op));
+    RETURN_IF_NOT_OK(op->ParseImageIds());
+    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
+    *count = static_cast<int64_t>(op->image_ids_.size());
+  } else if (task_type == "Segmentation") {
+    std::shared_ptr<VOCOp> op;
+    RETURN_IF_NOT_OK(Builder().SetDir(dir).SetTask(task_type).SetMode(task_mode).Build(&op));
+    RETURN_IF_NOT_OK(op->ParseImageIds());
+    *count = static_cast<int64_t>(op->image_ids_.size());
+  }
+  *count = (numSamples == 0 || *count < numSamples) ? *count : numSamples;
+
+  return Status::OK();
+}
+
 Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                const py::dict &dict, int64_t numSamples,
                                std::map<std::string, int32_t> *output_class_indexing) {

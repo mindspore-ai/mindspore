@@ -213,6 +213,15 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param const std::string &task_mode - task mode of reading voc job
   // @param const py::dict &dict - input dict of class index
   // @param int64_t numSamples - samples number of VOCDataset
+  // @param int64_t *count - output rows number of VOCDataset
+  static Status CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
+                               const py::dict &dict, int64_t numSamples, int64_t *count);
+
+  // @param const std::string &dir - VOC dir path
+  // @param const std::string &task_type - task type of reading voc job
+  // @param const std::string &task_mode - task mode of reading voc job
+  // @param const py::dict &dict - input dict of class index
+  // @param int64_t numSamples - samples number of VOCDataset
   // @param std::map<std::string, int32_t> *output_class_indexing - output class index of VOCDataset
   static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                  const py::dict &dict, int64_t numSamples,
