@@ -70,13 +70,15 @@ x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
 def test_status():
     ms_status = Net();
     output1 = ms_status(Tensor(x1))
-    output2 = ms_status(Tensor(x2))
-    output3 = ms_status(Tensor(x3))
     expect1 = 1
-    expect2 = 1
-    expect3 = 0
     assert output1.asnumpy()[0] == expect1
+
+    output2 = ms_status(Tensor(x2))
+    expect2 = 1
     assert output2.asnumpy()[0] == expect2
+
+    output3 = ms_status(Tensor(x3))
+    expect3 = 0
     assert output3.asnumpy()[0] == expect3
 
 
@@ -86,13 +88,15 @@ def test_status():
 def test_nan():
     ms_isnan = Netnan();
     output1 = ms_isnan(Tensor(x1))
-    output2 = ms_isnan(Tensor(x2))
-    output3 = ms_isnan(Tensor(x3))
     expect1 = [[False, False, True, False]]
-    expect2 = [[False, False, False, False]]
-    expect3 = [[False, False], [False, False], [False, False]]
     assert (output1.asnumpy() == expect1).all()
+
+    output2 = ms_isnan(Tensor(x2))
+    expect2 = [[False, False, False, False]]
     assert (output2.asnumpy() == expect2).all()
+
+    output3 = ms_isnan(Tensor(x3))
+    expect3 = [[False, False], [False, False], [False, False]]
     assert (output3.asnumpy() == expect3).all()
 
 
@@ -102,13 +106,15 @@ def test_nan():
 def test_inf():
     ms_isinf = Netinf();
     output1 = ms_isinf(Tensor(x1))
-    output2 = ms_isinf(Tensor(x2))
-    output3 = ms_isinf(Tensor(x3))
     expect1 = [[False, False, False, False]]
-    expect2 = [[True, False, False, False]]
-    expect3 = [[False, False], [False, False], [False, False]]
     assert (output1.asnumpy() == expect1).all()
+
+    output2 = ms_isinf(Tensor(x2))
+    expect2 = [[True, False, False, False]]
     assert (output2.asnumpy() == expect2).all()
+
+    output3 = ms_isinf(Tensor(x3))
+    expect3 = [[False, False], [False, False], [False, False]]
     assert (output3.asnumpy() == expect3).all()
 
 
@@ -118,11 +124,13 @@ def test_inf():
 def test_finite():
     ms_isfinite = Netfinite();
     output1 = ms_isfinite(Tensor(x1))
-    output2 = ms_isfinite(Tensor(x2))
-    output3 = ms_isfinite(Tensor(x3))
     expect1 = [[True, True, False, True]]
-    expect2 = [[False, True, True, True]]
-    expect3 = [[True, True], [True, True], [True, True]]
     assert (output1.asnumpy() == expect1).all()
+
+    output2 = ms_isfinite(Tensor(x2))
+    expect2 = [[False, True, True, True]]
     assert (output2.asnumpy() == expect2).all()
+
+    output3 = ms_isfinite(Tensor(x3))
+    expect3 = [[True, True], [True, True], [True, True]]
     assert (output3.asnumpy() == expect3).all()
