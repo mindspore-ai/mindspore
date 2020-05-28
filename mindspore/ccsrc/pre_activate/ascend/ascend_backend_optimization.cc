@@ -244,8 +244,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir ";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
 }
