@@ -34,13 +34,13 @@ PATH2=$(get_real_path $2)
 
 if [ ! -d $PATH1 ]
 then 
-    echo "error: DATASET_PATH=$1 is not a directory"
+    echo "error: DATASET_PATH=$PATH1 is not a directory"
 exit 1
 fi 
 
 if [ ! -f $PATH2 ]
 then 
-    echo "error: CHECKPOINT_PATH=$2 is not a file"
+    echo "error: CHECKPOINT_PATH=$PATH2 is not a file"
 exit 1
 fi 
 
