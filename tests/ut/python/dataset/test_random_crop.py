@@ -200,7 +200,7 @@ def test_random_crop_04_c():
         for item in data.create_dict_iterator():
             image = item["image"]
             image_list.append(image.shape)
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 def test_random_crop_04_py():
@@ -227,7 +227,7 @@ def test_random_crop_04_py():
         for item in data.create_dict_iterator():
             image = (item["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
             image_list.append(image.shape)
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 def test_random_crop_05_c():
@@ -439,7 +439,7 @@ def test_random_crop_09():
         for item in data.create_dict_iterator():
             image = item["image"]
             image_list.append(image.shape)
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should be PIL Image" in str(e)
 

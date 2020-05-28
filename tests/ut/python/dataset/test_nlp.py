@@ -39,7 +39,7 @@ def test_on_tokenized_line():
     res = np.array([[10, 1, 11, 1, 12, 1, 15, 1, 13, 1, 14],
                     [11, 1, 12, 1, 10, 1, 14, 1, 13, 1, 15]], dtype=np.int32)
     for i, d in enumerate(data.create_dict_iterator()):
-        np.testing.assert_array_equal(d["text"], res[i]), i
+        _ = (np.testing.assert_array_equal(d["text"], res[i]), i)
 
 
 if __name__ == '__main__':

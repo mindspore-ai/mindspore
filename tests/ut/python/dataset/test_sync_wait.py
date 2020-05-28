@@ -28,8 +28,8 @@ class Augment:
     def __init__(self, loss):
         self.loss = loss
 
-    def preprocess(self, input):
-        return input
+    def preprocess(self, input_):
+        return input_
 
     def update(self, data):
         self.loss = data["loss"]
@@ -143,7 +143,7 @@ def test_multiple_iterators():
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
     dataset = dataset.batch(batch_size, drop_remainder=True)
-    # 2nd dataset 
+    # 2nd dataset
     dataset2 = ds.GeneratorDataset(gen, column_names=["input"])
 
     aug = Augment(0)
@@ -175,7 +175,7 @@ def test_sync_exception_01():
 
     try:
         dataset = dataset.shuffle(shuffle_size)
-    except BaseException as e:
+    except Exception as e:
         assert "shuffle" in str(e)
     dataset = dataset.batch(batch_size)
 
@@ -197,7 +197,7 @@ def test_sync_exception_02():
 
     try:
         dataset = dataset.sync_wait(num_batch=2, condition_name="every batch")
-    except BaseException as e:
+    except Exception as e:
         assert "name" in str(e)
     dataset = dataset.batch(batch_size)
 

@@ -60,7 +60,7 @@ def test_random_resize_op():
 
     num_iter = 0
     for item in data1.create_dict_iterator():
-        image_de_resized = item["image"]
+        _ = item["image"]
         # Uncomment below line if you want to visualize images
         # visualize(image_de_resized, image_np_resized, mse)
         num_iter += 1

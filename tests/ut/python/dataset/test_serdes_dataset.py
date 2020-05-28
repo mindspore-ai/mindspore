@@ -18,15 +18,16 @@ Testing dataset serialize and deserialize in DE
 import filecmp
 import glob
 import json
-import numpy as np
 import os
-import pytest
+import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 from mindspore.dataset.transforms.vision import Inter
+
+from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
 
 
 def test_imagefolder(remove_json_files=True):
@@ -186,7 +187,7 @@ def test_random_crop():
     # Serializing into python dictionary
     ds1_dict = ds.serialize(data1)
     # Serializing into json object
-    ds1_json = json.dumps(ds1_dict, indent=2)
+    _ = json.dumps(ds1_dict, indent=2)
 
     # Reconstruct dataset pipeline from its serialized form
     data1_1 = ds.deserialize(input_dict=ds1_dict)
@@ -198,7 +199,7 @@ def test_random_crop():
     for item1, item1_1, item2 in zip(data1.create_dict_iterator(), data1_1.create_dict_iterator(),
                                      data2.create_dict_iterator()):
         assert np.array_equal(item1['image'], item1_1['image'])
-        image2 = item2["image"]
+        _ = item2["image"]
 
 
 def validate_jsonfile(filepath):
@@ -221,10 +222,6 @@ def delete_json_files():
 
 
 # Test save load minddataset
-from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME, FILES_NUM, \
-    FileWriter, Inter
-
-
 def test_minddataset(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -247,7 +244,7 @@ def test_minddataset(add_and_remove_cv_file):
 
     assert ds1_json == ds2_json
 
-    data = get_data(CV_DIR_NAME)
+    _ = get_data(CV_DIR_NAME)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
     for _ in data_set.create_dict_iterator():

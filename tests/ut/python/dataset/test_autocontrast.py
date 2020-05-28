@@ -58,7 +58,7 @@ def test_auto_contrast(plot=False):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, label) in enumerate(ds_original):
+    for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -79,7 +79,7 @@ def test_auto_contrast(plot=False):
 
     ds_auto_contrast = ds_auto_contrast.batch(512)
 
-    for idx, (image, label) in enumerate(ds_auto_contrast):
+    for idx, (image, _) in enumerate(ds_auto_contrast):
         if idx == 0:
             images_auto_contrast = np.transpose(image, (0, 2, 3, 1))
         else:

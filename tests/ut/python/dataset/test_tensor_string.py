@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore._c_dataengine as cde
-import numpy as np
 import pytest
-
-from mindspore.dataset.text import to_str, to_bytes
+import numpy as np
 
 import mindspore.dataset as ds
+import mindspore._c_dataengine as cde
 import mindspore.common.dtype as mstype
-
+from mindspore.dataset.text import to_str
 
 # pylint: disable=comparison-with-itself
 def test_basic():
@@ -34,7 +32,7 @@ def compare(strings):
     arr = np.array(strings, dtype='S')
 
     def gen():
-        yield arr,
+        (yield arr,)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
@@ -50,7 +48,7 @@ def test_generator():
 
 def test_batching_strings():
     def gen():
-        yield np.array(["ab", "cde", "121"], dtype='S'),
+        yield (np.array(["ab", "cde", "121"], dtype='S'),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"]).batch(10)
 
@@ -62,7 +60,7 @@ def test_batching_strings():
 
 def test_map():
     def gen():
-        yield np.array(["ab cde 121"], dtype='S'),
+        yield (np.array(["ab cde 121"], dtype='S'),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
@@ -79,7 +77,7 @@ def test_map():
 
 def test_map2():
     def gen():
-        yield np.array(["ab cde 121"], dtype='S'),
+        yield (np.array(["ab cde 121"], dtype='S'),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
 

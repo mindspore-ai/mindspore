@@ -143,7 +143,7 @@ def test_zip_exception_01():
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
@@ -164,7 +164,7 @@ def test_zip_exception_02():
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
@@ -185,7 +185,7 @@ def test_zip_exception_03():
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
@@ -205,7 +205,7 @@ def test_zip_exception_04():
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
@@ -226,7 +226,7 @@ def test_zip_exception_05():
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
@@ -246,7 +246,7 @@ def test_zip_exception_06():
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
