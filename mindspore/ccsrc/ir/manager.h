@@ -515,6 +515,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   std::shared_ptr<FuncGraphJTotalComputer> j_total_;
 
   bool is_manage_;
+  std::function<IncludeType(AnfNodePtr)> limit_;
 };
 
 class FuncGraphTransaction {

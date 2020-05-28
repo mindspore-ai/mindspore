@@ -87,6 +87,8 @@ void FuncGraphManager::Reset() {
   func_graphs_used_total_ = std::make_shared<FuncGraphsUsedTotalComputer>(this);
   recursive_ = std::make_shared<RecursiveComputer>(this);
   j_total_ = std::make_shared<FuncGraphJTotalComputer>(this);
+
+  limit_ = std::bind(&FuncGraphManager::Limit, this, std::placeholders::_1);
 }
 
 void FuncGraphManager::Init() {
@@ -359,9 +361,7 @@ IncludeType FuncGraphManager::Limit(const AnfNodePtr &node) {
 void FuncGraphManager::AcquireNodes(const std::vector<AnfNodePtr> &nodes) {
   AnfNodeSet acq;
   for (auto &node : nodes) {
-    std::function<IncludeType(AnfNodePtr)> limit = std::bind(&FuncGraphManager::Limit, this, std::placeholders::_1);
-
-    AnfNodeSet new_nodes = AnfNodeSet(DeepScopedGraphSearch(node, limit));
+    AnfNodeSet new_nodes = AnfNodeSet(DeepScopedGraphSearch(node, limit_));
 
     all_nodes_.update(new_nodes);
     acq.update(new_nodes);
