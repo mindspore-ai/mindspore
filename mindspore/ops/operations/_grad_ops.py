@@ -107,6 +107,7 @@ class BiasAddGrad(Primitive):
 
 class BinaryCrossEntropyGrad(PrimitiveWithInfer):
     """Computes gradients for `BinaryCrossEntropy` operation."""
+
     @prim_attr_register
     def __init__(self, reduction='mean'):
         self.reduction = validator.check_string('reduction', reduction, ['none', 'mean', 'sum'], self.name)
@@ -665,6 +666,62 @@ class LSTMGradWeight(PrimitiveWithInfer):
         return hx_dtype
 
 
+class LSTMGrad(PrimitiveWithInfer):
+    """Computes the data and weight gradients of LSTM."""
+
+    @prim_attr_register
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+        self.input_size = validator.check_integer('input_size', input_size, 0, Rel.GT, self.name)
+        self.hidden_size = validator.check_integer('hidden_size', hidden_size, 0, Rel.GT, self.name)
+        self.num_layers = validator.check_integer('num_layers', num_layers, 0, Rel.GT, self.name)
+        self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
+        self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
+        self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
+        self.dropout = validator.check_number_range('dropout', dropout, 0, 1, Rel.INC_BOTH, self.name)
+
+        if bidirectional:
+            self.num_directions = 2
+        else:
+            self.num_directions = 1
+
+    def infer_shape(self, x_shape, hx_shape, cx_shape, w_shape, y_shape, hy_shape, cy_shape, dy_shape, dhy_shape,
+                    dcy_shape, reserve_shape):
+        # dhy and dcy should be same shape
+        validator.check_integer("h_shape", len(dhy_shape), 3, Rel.EQ, self.name)
+        validator.check_integer("h_shape", len(dhy_shape), len(dcy_shape), Rel.EQ, self.name)
+        validator.check_integer("h_shape[0]", dhy_shape[0], dcy_shape[0], Rel.EQ, self.name)
+        validator.check_integer("h_shape[1]", dhy_shape[1], dcy_shape[1], Rel.EQ, self.name)
+        validator.check_integer("h_shape[2]", dhy_shape[2], dcy_shape[2], Rel.EQ, self.name)
+
+        validator.check_integer("h_shape[0]", dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, self.name)
+        validator.check_integer("h_shape[2]", dhy_shape[2], self.hidden_size, Rel.EQ, self.name)
+
+        # dy: (seq_len, batch_size, hidden_size * num_directions)
+        validator.check_integer("dy_shape", len(dy_shape), 3, Rel.EQ, self.name)
+        validator.check_integer("dy[1]", dy_shape[1], dhy_shape[1], Rel.EQ, self.name)
+        validator.check_integer("dy[2]", dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, self.name)
+
+        # (seq_len, batch_size, input_size)
+        dx_shape = (y_shape[0], y_shape[1], self.input_size)
+        dhx_shape = dhy_shape
+        dcx_shape = dcy_shape
+        weight_size = 0
+        gate_size = 4 * self.hidden_size
+        for layer in range(self.num_layers):
+            for _ in range(self.num_directions):
+                input_layer_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
+                weight_size += gate_size * input_layer_size
+                weight_size += gate_size * self.hidden_size
+                if self.has_bias:
+                    weight_size += gate_size
+
+        return (dx_shape, dhx_shape, dcx_shape, (weight_size, 1, 1))
+
+    def infer_dtype(self, x_dtype, hx_dtype, cx_dtype, w_dtype, y_dtype, hy_dtype, cy_dtype, dy_dtype, dhy_dtype,
+                    dcy_dtype, reserve_dtype):
+        return (dy_dtype, dy_dtype, dy_dtype, hx_dtype)
+
+
 class PReLUGrad(PrimitiveWithInfer):
     r"""
     Gradients of PReLU operation.
@@ -1051,6 +1108,7 @@ class RefToEmbed(Primitive):
     __mindspore_signature__ = (
         ('variable', sig_rw.RW_REF, sig_kind.KIND_POSITIONAL_KEYWORD),
     )
+
     @prim_attr_register
     def __init__(self):
         pass

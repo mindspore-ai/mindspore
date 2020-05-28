@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ class MKLCPUKernel : public CPUKernel {
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
   dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape);
   void ExecutePrimitive();
+  void write_to_dnnl_memory(void *handle, const dnnl::memory &mem);
+  void read_from_dnnl_memory(void *handle, const dnnl::memory &mem);
   std::unordered_map<int, dnnl::memory> arguments_;
   std::shared_ptr<dnnl::primitive> primitive_{nullptr};
 };
