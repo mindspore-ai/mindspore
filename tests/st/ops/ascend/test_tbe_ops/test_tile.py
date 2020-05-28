@@ -31,11 +31,11 @@ class Net(nn.Cell):
         return self.tile(x, (1, 4))
 
 
-x = np.array([[0], [1], [2], [3]]).astype(np.int32)
+arr_x = np.array([[0], [1], [2], [3]]).astype(np.int32)
 
 
 def test_net():
     tile = Net()
-    print(x)
-    output = tile(Tensor(x))
+    print(arr_x)
+    output = tile(Tensor(arr_x))
     print(output.asnumpy())

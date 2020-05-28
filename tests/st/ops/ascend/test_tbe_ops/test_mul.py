@@ -33,13 +33,13 @@ class Net(nn.Cell):
         return self.mul(x1, x2)
 
 
-x1 = np.random.randn(3, 4).astype(np.float32)
-x2 = np.random.randn(3, 4).astype(np.float32)
+arr_x1 = np.random.randn(3, 4).astype(np.float32)
+arr_x2 = np.random.randn(3, 4).astype(np.float32)
 
 
 def test_net():
     mul = Net()
-    output = mul(Tensor(x1), Tensor(x2))
-    print(x1)
-    print(x2)
+    output = mul(Tensor(arr_x1), Tensor(arr_x2))
+    print(arr_x1)
+    print(arr_x2)
     print(output.asnumpy())
