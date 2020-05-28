@@ -53,6 +53,7 @@ class KernelRuntime {
   virtual bool GenTask(const session::KernelGraph *graph);
   bool LaunchKernel(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
+  virtual void ClearGraphRuntimeResource(uint32_t graph_id);
 
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr GetDumpConf();

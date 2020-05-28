@@ -40,6 +40,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GenTask(const session::KernelGraph *graph) override;
   bool RunTask(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph) override;
+  void ClearGraphRuntimeResource(uint32_t graph_id) override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
