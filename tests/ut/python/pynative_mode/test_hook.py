@@ -30,13 +30,13 @@ def weight_variable():
 
 def cell_hook_function(cell_id, grad_input, grad_output):
     print(cell_id)
-    assert(grad_output.asnumpy().shape == (32, 6, 14, 14))
-    assert(grad_input.asnumpy().shape == (32, 16, 10, 10))
+    assert(grad_output[0].asnumpy().shape == (32, 6, 14, 14))
+    assert(grad_input[0].asnumpy().shape == (32, 16, 10, 10))
 
 
 def var_hook_function(grad_out):
     print("grad:", grad_out)
-    assert(grad_out.asnumpy().shape == (32, 120))
+    assert(grad_out[0].asnumpy().shape == (32, 120))
 
 
 class LeNet5(nn.Cell):
