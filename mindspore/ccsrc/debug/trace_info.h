@@ -45,7 +45,7 @@ class TraceInfo : public Base {
   }
   TraceInfo(const TraceInfo &info)
       : Base(), debug_info_(info.debug_info_), symbol_(info.symbol_), full_name_(info.full_name_), name_(info.name_) {}
-  virtual ~TraceInfo() = default;
+  ~TraceInfo() override = default;
   MS_DECLARE_PARENT(TraceInfo, Base);
   virtual std::string name() { return name_; }
   virtual std::string symbol() { return symbol_; }
