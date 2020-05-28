@@ -16,7 +16,7 @@
  
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR MINDSPORE_HCCL_CONFIG_PATH"
+echo "bash run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_DIR MINDSPORE_HCCL_CONFIG_PATH"
 echo "for example: bash run_distribute_train.sh 8 40 /path/zh-wiki/ /path/hccl.json"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
