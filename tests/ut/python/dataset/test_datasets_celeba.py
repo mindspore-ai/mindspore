@@ -85,9 +85,14 @@ def test_celeba_dataset_distribute():
         count = count + 1
     assert (count == 1)
 
+def test_celeba_get_dataset_size():
+    data = ds.CelebADataset(DATA_DIR, decode=True, shuffle=False)
+    size = data.get_dataset_size()
+    assert size == 2
 
 if __name__ == '__main__':
     test_celeba_dataset_label()
     test_celeba_dataset_op()
     test_celeba_dataset_ext()
     test_celeba_dataset_distribute()
+    test_celeba_get_dataset_size()
