@@ -1,0 +1,3 @@
+{"sentence1": "你应该给这件衣服定一个价格。", "sentence2": "不同的衣服有不同的价格。", "label": "neutral"}
+{"sentence1": "我怎么知道他要说什么", "sentence2": "他说什么我并不知道。", "label": "entailment"}
+{"sentence1": "向左。", "sentence2": "向右。", "label": "contradiction"}

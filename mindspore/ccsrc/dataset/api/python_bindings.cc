@@ -55,6 +55,7 @@
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/source/clue_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
 #include "dataset/engine/datasetops/source/coco_op.h"
 #include "dataset/engine/gnn/graph.h"
@@ -201,6 +202,18 @@ void bindDatasetOps(py::module *m) {
       THROW_IF_ERROR(TextFileOp::CountAllFileRows(filenames, &count));
       return count;
     });
+
+  (void)py::class_<ClueOp, DatasetOp, std::shared_ptr<ClueOp>>(*m, "ClueOp")
+    .def_static("get_num_rows", [](const py::list &files) {
+      int64_t count = 0;
+      std::vector<std::string> filenames;
+      for (auto file : files) {
+        file.is_none() ? (void)filenames.emplace_back("") : filenames.push_back(py::str(file));
+      }
+      THROW_IF_ERROR(ClueOp::CountAllFileRows(filenames, &count));
+      return count;
+    });
+
   (void)py::class_<VOCOp, DatasetOp, std::shared_ptr<VOCOp>>(*m, "VOCOp")
     .def_static("get_num_rows",
                 [](const std::string &dir, const std::string &task_type, const std::string &task_mode,
@@ -629,7 +642,8 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("RANDOMDATA", OpName::kRandomData)
     .value("BUILDVOCAB", OpName::kBuildVocab)
     .value("CELEBA", OpName::kCelebA)
-    .value("TEXTFILE", OpName::kTextFile);
+    .value("TEXTFILE", OpName::kTextFile)
+    .value("CLUE", OpName::kClue);
 
   (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
     .value("DE_JIEBA_MIX", JiebaMode::kMix)

@@ -50,7 +50,8 @@ def alter_tree(node):
 
 def _alter_node(node):
     """Performing some alteration to a dataset node. A common alteration is to insert a node."""
-    if isinstance(node, (de.TFRecordDataset, de.TextFileDataset)) and node.shuffle_level == de.Shuffle.GLOBAL:
+    if isinstance(node, (de.TFRecordDataset, de.TextFileDataset, de.CLUEDataset)) \
+        and node.shuffle_level == de.Shuffle.GLOBAL:
         # Remove the connection between the parent's node to the current node because we are inserting a node.
         if node.output:
             node.output.pop()
@@ -179,6 +180,8 @@ class Iterator:
             op_type = OpName.TEXTFILE
         elif isinstance(dataset, de.BuildVocabDataset):
             op_type = OpName.BUILDVOCAB
+        elif isinstance(dataset, de.CLUEDataset):
+            op_type = OpName.CLUE
         else:
             raise ValueError("Unsupported DatasetOp")
 

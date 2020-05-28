@@ -1,0 +1,3 @@
+{"sentence1": "你有花呗吗", "sentence2": "我的花呗没额度了", "label": "0"}
+{"sentence1": "吃饭能用花呗吗", "sentence2": "花呗太方便了", "label": "0"}
+{"sentence1": "蚂蚁花呗支付金额有什么限制", "sentence2": "我到实体店消费用花呗支付受金额限制", "label": "1"}

@@ -43,7 +43,7 @@ TextFileOp::Builder::Builder()
 
 Status TextFileOp::Builder::ValidateInputs() const {
   std::string err_msg;
-  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers should be greate than 0\n" : "";
+  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers should be greater than 0\n" : "";
   err_msg += builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1 ? "Wrong sharding configs\n" : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }

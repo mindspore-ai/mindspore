@@ -1075,6 +1075,41 @@ def check_add_column(method):
     return new_method
 
 
+def check_cluedataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(CLUEDataset)."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+
+        # check dataset_files; required argument
+        dataset_files = param_dict.get('dataset_files')
+        if dataset_files is None:
+            raise ValueError("dataset_files is not provided.")
+        if not isinstance(dataset_files, (str, list)):
+            raise TypeError("dataset_files should be of type str or a list of strings.")
+
+        # check task
+        task_param = param_dict.get('task')
+        if task_param not in ['AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC', 'CSL']:
+            raise ValueError("task should be AFQMC, TNEWS, IFLYTEK, CMNLI, WSC or CSL")
+
+        # check usage
+        usage_param = param_dict.get('usage')
+        if usage_param not in ['train', 'test', 'eval']:
+            raise ValueError("usage should be train, test or eval")
+
+        check_param_type(nreq_param_int, param_dict, int)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_textfiledataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(TextFileDataset)."""
 

@@ -19,4 +19,5 @@ add_library(engine-datasetops-source OBJECT
     random_data_op.cc
     celeba_op.cc
     text_file_op.cc
+    clue_op.cc
     )
