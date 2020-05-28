@@ -14,6 +14,8 @@
 # ==============================================================================
 import mindspore.dataset as ds
 from mindspore import log as logger
+from util import config_get_set_num_parallel_workers
+
 
 DATA_FILE = "../data/dataset/testTextFileDataset/1.txt"
 DATA_ALL_FILE = "../data/dataset/testTextFileDataset/*"
@@ -38,7 +40,7 @@ def test_textline_dataset_all_file():
 
 
 def test_textline_dataset_totext():
-    ds.config.set_num_parallel_workers(4)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
     count = 0
     line = ["This is a text file.", "Another file.",
@@ -48,6 +50,8 @@ def test_textline_dataset_totext():
         assert (str == line[count])
         count += 1
     assert (count == 5)
+    # Restore configuration num_parallel_workers
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def test_textline_dataset_num_samples():

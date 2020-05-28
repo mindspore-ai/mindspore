@@ -70,21 +70,26 @@ Status RandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
 }
 
 Status RandomSampler::InitSampler() {
-  num_samples_ = (user_num_samples_ < num_samples_) ? user_num_samples_ : num_samples_;
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && num_rows_ > 0, "both num_samples & num_rows need to be positive");
-  samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows needs to be positive.");
 
   rnd_.seed(seed_);
 
   if (replacement_ == false) {
+    num_samples_ = std::min(num_samples_, num_rows_);
+
     shuffled_ids_.reserve(num_rows_);
     for (int64_t i = 0; i < num_rows_; i++) {
       shuffled_ids_.push_back(i);
     }
     std::shuffle(shuffled_ids_.begin(), shuffled_ids_.end(), rnd_);
   } else {
+    num_samples_ = std::min(num_samples_, user_num_samples_);
     dist = std::make_unique<std::uniform_int_distribution<int64_t>>(0, num_rows_ - 1);
   }
+
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_samples needs to be positive.");
+  samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
+
   return Status::OK();
 }
 

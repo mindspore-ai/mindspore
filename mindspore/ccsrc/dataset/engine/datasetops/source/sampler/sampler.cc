@@ -32,9 +32,7 @@ Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
     }
 
     // Handshake and init child first.
-    if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
-    }
+    RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp is nullptr\n");
