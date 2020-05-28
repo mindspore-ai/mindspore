@@ -29,8 +29,8 @@ class Net(nn.Cell):
         self.less = P.Less()
 
     @ms_function
-    def construct(self, x1, x2):
-        return self.less(x1, x2)
+    def construct(self, x1_, x2_):
+        return self.less(x1_, x2_)
 
 
 x1 = np.random.randn(3, 4).astype(np.float16)

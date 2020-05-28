@@ -103,7 +103,7 @@ test_case_reid_ops = [
         'desc_bprop': [[128, 64, 112, 112]]}),
     ('PRelu', {
         'block': P.PReLU(),
-        'desc_inputs': [[128, 64, 112, 112], [64, ]],
+        'desc_inputs': [[128, 64, 112, 112], [64,]],
         'desc_bprop': [[128, 64, 112, 112]]}),
     ('Cos', {
         'block': P.Cos(),
@@ -155,11 +155,11 @@ test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 test_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                  'exec' not in x[1]['skip'], test_case)
+                        'exec' not in x[1]['skip'], test_case)
 
 test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                           'backward' not in x[1]['skip'] and 'backward_exec'
-                                           not in x[1]['skip'], test_case)
+                                 'backward' not in x[1]['skip'] and 'backward_exec'
+                                 not in x[1]['skip'], test_case)
 
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)

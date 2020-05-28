@@ -26,7 +26,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 
 
 class AssignAddNet(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(AssignAddNet, self).__init__()
         self.op = P.AssignAdd()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_add1")
@@ -37,7 +37,7 @@ class AssignAddNet(nn.Cell):
 
 
 class AssignSubNet(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(AssignSubNet, self).__init__()
         self.op = P.AssignSub()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_sub1")

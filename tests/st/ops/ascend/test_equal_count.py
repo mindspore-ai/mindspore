@@ -27,8 +27,8 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.equal_count = P.EqualCount()
 
-    def construct(self, x, y):
-        return self.equal_count(x, y)
+    def construct(self, x_, y_):
+        return self.equal_count(x_, y_)
 
 
 x = np.random.randn(32).astype(np.int32)

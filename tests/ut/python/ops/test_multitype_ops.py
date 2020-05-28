@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """multitype_ops directory test case"""
-import numpy as np
 from functools import partial, reduce
+import numpy as np
 
 import mindspore.nn as nn
 import mindspore.context as context

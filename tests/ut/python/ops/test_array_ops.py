@@ -315,16 +315,16 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4]]).astype(np.float16))]}),
     ('SpaceToDepthNet', {
         'block': SpaceToDepthNet(),
-        'desc_inputs': [Tensor(np.random.rand(1,3,2,2).astype(np.float16))]}),
+        'desc_inputs': [Tensor(np.random.rand(1, 3, 2, 2).astype(np.float16))]}),
     ('DepthToSpaceNet', {
         'block': DepthToSpaceNet(),
-        'desc_inputs': [Tensor(np.random.rand(1,12,1,1).astype(np.float16))]}),
+        'desc_inputs': [Tensor(np.random.rand(1, 12, 1, 1).astype(np.float16))]}),
     ('SpaceToBatchNDNet', {
         'block': SpaceToBatchNDNet(),
-        'desc_inputs': [Tensor(np.random.rand(1,1,2,2).astype(np.float16))]}),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2).astype(np.float16))]}),
     ('BatchToSpaceNDNet', {
         'block': BatchToSpaceNDNet(),
-        'desc_inputs': [Tensor(np.random.rand(4,1,1,1).astype(np.float16))]}),
+        'desc_inputs': [Tensor(np.random.rand(4, 1, 1, 1).astype(np.float16))]}),
 ]
 
 test_case_lists = [test_case_array_ops]

@@ -44,7 +44,7 @@ class GradWrap(Cell):
         return gout
 
 
-def gen_data(inputA_np, inputB_np, grad=None):
+def gen_data(inputA_np, inputB_np, grad_=None):
     inputA_me = inputA_np
     if isinstance(inputA_np, np.ndarray):
         inputA_me = Tensor(inputA_me)
@@ -53,12 +53,12 @@ def gen_data(inputA_np, inputB_np, grad=None):
     if isinstance(inputB_np, np.ndarray):
         inputB_me = Tensor(inputB_np)
 
-    if grad is None:
-        grad = np.random.randn(1, 3, 2, 2).astype(np.float32)
+    if grad_ is None:
+        grad_ = np.random.randn(1, 3, 2, 2).astype(np.float32)
 
     print(inputA_np)
     print(inputB_np)
-    print(grad)
+    print(grad_)
 
     net_me = GradWrap(MinNetMe())
     net_me.set_train()

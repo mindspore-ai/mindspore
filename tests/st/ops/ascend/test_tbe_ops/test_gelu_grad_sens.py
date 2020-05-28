@@ -59,7 +59,7 @@ def gelu_backward_cmp(input_shape):
 
 class MEGeluLargeIn(Cell):
     def __init__(self):
-        super(GELU, self).__init__()
+        super(MEGeluLargeIn, self).__init__()
         self.matmul = P.MatMul()
         self.gelu = P.Gelu()
 
@@ -79,7 +79,7 @@ class GradLargeIn(Cell):
 
 
 def gelu_backward_me_large_in_impl(x1, x2, output_grad):
-    n = GradLargeIn()
+    n = GELU()
     grad_with_sense = GradLargeIn(n)
     grad_with_sense.set_train()
     input_grad = grad_with_sense(x1, x2, output_grad)

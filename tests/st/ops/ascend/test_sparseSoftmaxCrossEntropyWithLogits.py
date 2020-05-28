@@ -63,7 +63,7 @@ def test_net():
     expect = loss_np
     SparseSoftmaxCrossEntropyWithLogits = Net()
     loss_me = SparseSoftmaxCrossEntropyWithLogits(Tensor(logits), Tensor(labels))
-    '''assert'''
+#   assert
     assert np.allclose(expect.flatten(), loss_me.asnumpy().flatten(), 0.01, 0.01)
     print(loss_me.asnumpy().flatten())
     print("-------------------------")
