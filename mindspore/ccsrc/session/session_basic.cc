@@ -375,7 +375,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
         cnode_inputs.emplace_back(new_value_node);
       }
       continue;
-    } else if (anf->isa<Parameter>()) {
+    } else if (anf->isa<Parameter>() && AnfAlgo::GetOutputTensorNum(anf) == 1) {
       auto new_parameter = CreateNewParameterFromParameter(anf, valid_input, graph);
       cnode_inputs.push_back(new_parameter);
       if (GetGraphIdByNode(anf) == kInvalidGraphId) {
@@ -384,7 +384,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
         (*other_graph_cnode)[anf] = new_parameter;
       }
       continue;
-    } else if (anf->isa<CNode>()) {
+    } else if (anf->isa<AnfNode>()) {
       *from_other_graph = true;
       // the input node is a cnode from other graph
       auto parameter_from_cnode = CreateNewParameterFromCNode(anf, valid_input, graph);
