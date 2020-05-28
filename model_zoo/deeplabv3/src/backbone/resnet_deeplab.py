@@ -532,3 +532,6 @@ class RootBlockBeta(nn.Cell):
         x = self.conv2(x)
         x = self.conv3(x)
         return x
+        
+class resnet50_dl(fine_tune_batch_norm=False):
+    return ResNetV1(fine_tune_batch_norm)

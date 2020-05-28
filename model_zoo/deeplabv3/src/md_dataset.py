@@ -17,7 +17,7 @@ from PIL import Image
 import mindspore.dataset as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 
-from .ei_dataset import HwVocManifestDataset, HwVocRawDataset
+from .ei_dataset import HwVocRawDataset
 from .utils import custom_transforms as tr
 
 
@@ -77,10 +77,7 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train"):
         Dataset.
     """
     # create iter dataset
-    if data_url.endswith(".manifest"):
-        dataset = HwVocManifestDataset(data_url, usage=usage)
-    else:
-        dataset = HwVocRawDataset(data_url, usage=usage)
+    dataset = HwVocRawDataset(data_url, usage=usage)
     dataset_len = len(dataset)
 
     # wrapped with GeneratorDataset
@@ -100,5 +97,4 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train"):
     dataset = dataset.repeat(count=epoch_num)
     dataset.map_model = 4
 
-    dataset.__loop_size__ = 1
     return dataset

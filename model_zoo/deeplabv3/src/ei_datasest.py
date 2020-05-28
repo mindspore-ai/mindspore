@@ -17,7 +17,7 @@ import abc
 import os
 import time
 
-from .utils.adapter import get_manifest_samples, get_raw_samples, read_image
+from .utils.adapter import get_raw_samples, read_image
 
 
 class BaseDataset(object):
@@ -60,29 +60,6 @@ class BaseDataset(object):
     @abc.abstractmethod
     def _load_samples(self):
         pass
-
-
-class HwVocManifestDataset(BaseDataset):
-    """
-    Create dataset with manifest data.
-
-    Args:
-        data_url (str): The path of data.
-        usage (str): Whether to use train or eval (default='train').
-
-    Returns:
-        Dataset.
-    """
-
-    def __init__(self, data_url, usage="train"):
-        super().__init__(data_url, usage)
-
-    def _load_samples(self):
-        try:
-            self.samples = get_manifest_samples(self.data_url, self.usage)
-        except Exception as e:
-            print("load HwVocManifestDataset samples failed!!!")
-            raise e
 
 
 class HwVocRawDataset(BaseDataset):
