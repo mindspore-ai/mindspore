@@ -21,33 +21,54 @@ namespace mindspore {
 namespace kernel {
 void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
+  output_dx_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  input_dy_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   begin_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, BEGIN);
-  size_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, SIZE);
-
-  input_dy_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_dy_shape_.size() < 4) {
-    for (size_t i = 0; i < 4 - input_dy_shape_.size(); ++i) {
-      input_dy_shape_.insert(input_dy_shape_.begin(), 1);
-      begin_.insert(begin_.begin(), 0);
-      size_.insert(size_.begin(), 1);
-    }
-  }
-
-  input_x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_dx_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  CPUKernelUtils::ExpandDimsTo4(&input_x_shape_);
-  CPUKernelUtils::ExpandDimsTo4(&output_dx_shape_);
-
   for (size_t i = 0; i < begin_.size(); i++) {
     if (begin_[i] < 0) {
-      begin_[i] = begin_[i] + input_x_shape_[i];
+      begin_[i] = begin_[i] + output_dx_shape_[i];
     }
   }
 
-  for (size_t i = 0; i < size_.size(); i++) {
-    if (size_[i] < 0) {
-      size_[i] = (size_[i] + input_x_shape_[i]) > 0 ? (size_[i] + input_x_shape_[i]) : 0;
+  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto strides = prim->GetAttr(STRIDES);
+  if (strides != nullptr) {
+    strides_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
+    end_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, END);
+    if (strides_.size() != end_.size() || strides_.size() != output_dx_shape_.size()) {
+      MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
+    }
+    for (size_t i = 0; i < strides_.size(); ++i) {
+      if (strides_[i] < 0) {
+        strides_[i] = (strides_[i] + output_dx_shape_[i]) > 0 ? (strides_[i] + output_dx_shape_[i]) : 0;
+      }
+      if (end_[i] < 0) {
+        end_[i] = (end_[i] + output_dx_shape_[i]) > 0 ? (end_[i] + output_dx_shape_[i]) : 0;
+      }
+    }
+  } else {
+    auto sizes = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, SIZE);
+    if (sizes.size() != output_dx_shape_.size() || begin_.size() != output_dx_shape_.size()) {
+      MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
+    }
+    for (size_t i = 0; i < sizes.size(); ++i) {
+      if (sizes[i] < 0) {
+        sizes[i] = (sizes[i] + output_dx_shape_[i]) > 0 ? (sizes[i] + output_dx_shape_[i]) : 0;
+      }
+      strides_.emplace_back(1);
+      end_.emplace_back(begin_[i] + sizes[i]);
+    }
+  }
+  CPUKernelUtils::ExpandDimsTo4(&output_dx_shape_);
+  auto input_len = input_dy_shape_.size();
+  if (input_len < 4) {
+    for (size_t i = 0; i < 4 - input_len; ++i) {
+      input_dy_shape_.insert(input_dy_shape_.begin(), 1);
+      begin_.insert(begin_.begin(), 0);
+      strides_.insert(strides_.begin(), 1);
+      end_.insert(end_.begin(), 1);
     }
   }
 }
@@ -65,10 +86,10 @@ bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     return false;
   }
 
-  for (int i = begin_[0]; i < begin_[0] + size_[0]; ++i) {
-    for (int j = begin_[1]; j < begin_[1] + size_[1]; ++j) {
-      for (int k = begin_[2]; k < begin_[2] + size_[2]; ++k) {
-        for (int m = begin_[3]; m < begin_[3] + size_[3]; ++m) {
+  for (int i = begin_[0]; i < end_[0]; i += strides_[0]) {
+    for (int j = begin_[1]; j < end_[1]; j += strides_[1]) {
+      for (int k = begin_[2]; k < end_[2]; k += strides_[2]) {
+        for (int m = begin_[3]; m < end_[3]; m += strides_[3]) {
           auto offset = CPUKernelUtils::CalcOffset(output_dx_shape_, i, j, k, m);
           output_dx_addr[offset] = *input_dy_addr++;
         }

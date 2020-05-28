@@ -35,9 +35,9 @@ class SliceGradCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<int> begin_;
-  std::vector<int> size_;
+  std::vector<int> end_;
+  std::vector<int> strides_;
   std::vector<size_t> input_dy_shape_;
-  std::vector<size_t> input_x_shape_;
   std::vector<size_t> output_dx_shape_;
 };
 
@@ -45,6 +45,8 @@ MS_REG_CPU_KERNEL(
   SliceGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   SliceGradCPUKernel);
+MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  SliceGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
