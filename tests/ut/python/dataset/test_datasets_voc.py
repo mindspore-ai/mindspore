@@ -115,6 +115,23 @@ def test_case_1():
     assert (num == 18)
 
 
+def test_case_2():
+    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True)
+    sizes = [0.5, 0.5]
+    randomize = False
+    dataset1, dataset2 = data1.split(sizes=sizes, randomize=randomize)
+
+    num_iter = 0
+    for _ in dataset1.create_dict_iterator():
+        num_iter += 1
+    assert (num_iter == 5)
+
+    num_iter = 0
+    for _ in dataset2.create_dict_iterator():
+        num_iter += 1
+    assert (num_iter == 5)
+
+
 def test_voc_exception():
     try:
         data1 = ds.VOCDataset(DATA_DIR, task="InvalidTask", mode="train", decode=True)
@@ -172,4 +189,5 @@ if __name__ == '__main__':
     test_voc_get_class_indexing()
     test_case_0()
     test_case_1()
+    test_case_2()
     test_voc_exception()
