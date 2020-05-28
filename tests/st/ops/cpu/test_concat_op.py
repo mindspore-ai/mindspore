@@ -71,13 +71,13 @@ def test_in2_axis1():
     assert np.all(diff < error)
     assert np.all(-diff < error)
 
-class Concat_Axis2(nn.Cell):
+class Concat_in3_Axis2(nn.Cell):
     def __init__(self):
-        super(Concat_Axis2, self).__init__()
+        super(Concat_in3_Axis2, self).__init__()
         self.cat = P.Concat(axis=-1)
 
-    def construct(self, x1, x2):
-        return self.cat((x1, x2))
+    def construct(self, x1, x2, x3):
+        return self.cat((x1, x2, x3))
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -86,10 +86,10 @@ def test_in3_axis2():
     x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1), mstype.float32)
     x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2), mstype.float32)
     x3 = Tensor(np.arange(2 * 2 * 3).reshape(2, 2, 3), mstype.float32)
-    cat = Concat_Axis2()
-    output_ms = cat(x1, x2)
+    cat = Concat_in3_Axis2()
+    output_ms = cat(x1, x2, x3)
     print("output:\n", output_ms)
-    output_np = np.concatenate((x1.asnumpy(), x2.asnumpy()), axis=-1)
+    output_np = np.concatenate((x1.asnumpy(), x2.asnumpy(), x3.asnumpy()), axis=-1)
 
     error = np.ones(shape=output_np.shape) * 10e-6
     diff = output_ms.asnumpy() - output_np
