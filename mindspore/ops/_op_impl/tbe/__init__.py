@@ -205,3 +205,6 @@ from .space_to_batch_nd import _space_to_batch_nd_tbe
 from .bitwise_and import bitwise_and_op_info
 from .bitwise_or import bitwise_or_op_info
 from .bitwise_xor import bitwise_xor_op_info
+from .reduce_all import _reduce_all_tbe
+from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
+from .unsorted_segment_min import _unsorted_segment_min_tbe

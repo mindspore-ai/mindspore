@@ -651,6 +651,11 @@ test_case_math_ops = [
         'block': P.Cos(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('ReduceAll', {
+        'block': P.ReduceAll(),
+        'desc_const': [1],
+        'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
+        'desc_bprop': []}),
 ]
 
 test_case_nn_ops = [
@@ -1059,6 +1064,13 @@ test_case_nn_ops = [
                         Tensor([[-1.4, -0.7], [0.9, 0.7]], mstype.float16)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('SparseApplyAdagrad', {
+        'block': P.SparseApplyAdagrad(0.5),
+        'desc_inputs': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32),
+                        Tensor([[0.2, 0.2], [0.1, 0.4]], mstype.float32),
+                        Tensor([[0.5, 0.4], [0.6, 0.1]], mstype.float32), Tensor([1, 1], mstype.int32)],
+        'desc_bprop': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32)],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [
@@ -1266,6 +1278,12 @@ test_case_array_ops = [
         'desc_inputs': [[4, 3, 1, 1]],
         'desc_bprop': [[1, 3, 2, 1]],
     }),
+    ('UnsortedSegmentMin_1', {
+        'block': P.UnsortedSegmentMin(),
+        'desc_const': [2],
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32)),
+                        Tensor(np.array([0, 1, 1]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 3], [4, 2, 1]]).astype(np.float32))]}),
 ]
 
 test_case_other_ops = [
