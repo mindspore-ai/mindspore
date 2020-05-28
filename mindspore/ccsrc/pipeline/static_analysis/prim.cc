@@ -346,7 +346,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     if ((*value == *kAnyValue)) {
       auto value_desc = abs_base->value_desc();
       MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
-                              << " for python primitive.";
+                              << " for python primitive." << abs_base->ToString();
     }
     MS_EXCEPTION(TypeError) << "Unsupported parameter type for python primitive, the parameter value is "
                             << value->ToString();

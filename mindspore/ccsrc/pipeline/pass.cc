@@ -162,7 +162,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
 }
 
 OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig control_group = opt::OptPassConfig({irpass.convert_switch_replacement_});
+  opt::OptPassConfig control_group = opt::OptPassConfig({irpass.convert_switch_replacement_}, true);
   OptPassGroupMap map({
     {"control_group", control_group},
     {"renormalize", opt::OptPassConfig::Renormalize()},
