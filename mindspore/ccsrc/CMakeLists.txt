@@ -126,7 +126,7 @@ endif()
 
 if (ENABLE_GE)
     if(ENABLE_TRAIN)
-        target_link_libraries(mindspore ge_client_train hccl)
+        target_link_libraries(mindspore ge_runner hccl)
     else ()
         target_link_libraries(mindspore ge_client)
     endif ()

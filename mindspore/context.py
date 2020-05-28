@@ -453,11 +453,13 @@ def reset_auto_parallel_context():
     _reset_auto_parallel_context()
 
 
-@args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
-                 save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
-                 save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
-                 enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
-                 check_bprop=bool)
+@args_type_check(mode=int, precompile_only=bool, device_target=str,
+                 device_id=int, enable_ir_fusion=bool, save_graphs=bool,
+                 enable_task_sink=bool, save_graphs_path=str, enable_loop_sink=bool,
+                 enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str, enable_gpu_summary=bool,
+                 enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
+                 enable_reduce_precision=bool, enable_dynamic_memory=bool, graph_memory_max_size=str,
+                 variable_memory_max_size=str, enable_profiling=bool, profiling_options=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.
