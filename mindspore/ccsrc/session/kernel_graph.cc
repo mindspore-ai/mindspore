@@ -23,6 +23,7 @@
 #include "session/anf_runtime_algorithm.h"
 #include "device/kernel_info.h"
 #include "kernel/kernel_build_info.h"
+#include "device/kernel_runtime_manager.h"
 
 namespace mindspore {
 namespace session {
@@ -710,5 +711,7 @@ void KernelGraph::UpdateCallRealInput() {
 }
 
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
+
+KernelGraph::~KernelGraph() { device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_); }
 }  // namespace session
 }  // namespace mindspore
