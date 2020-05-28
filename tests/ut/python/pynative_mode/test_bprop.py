@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from ....mindspore_test_framework.utils.bprop_util import bprop
 
 
-def setup_module(module):
+def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE)
 
 
