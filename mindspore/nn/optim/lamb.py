@@ -180,7 +180,7 @@ class Lamb(Optimizer):
                  beta2=0.999,
                  eps=1e-6,
                  weight_decay=0.0,
-                 decay_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name):
+                 decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()):
 
         super(Lamb, self).__init__(start_learning_rate, params)
         if self.is_group:

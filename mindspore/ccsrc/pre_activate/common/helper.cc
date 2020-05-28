@@ -687,7 +687,7 @@ bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &va
   MS_EXCEPTION_IF_NULL(equiv1_node);
   auto equiv2_node = GetAnfNodeByVar(equiv2, var_node);
   MS_EXCEPTION_IF_NULL(equiv2_node);
-  return equiv1_node == equiv2_node;
+  return *equiv1_node == *equiv2_node;
 }
 
 AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
