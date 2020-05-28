@@ -86,7 +86,10 @@ class ConfigManager {
 
   DatasetMode dataset_mode() const { return dataset_mode_; }
   void set_dataset_mode(DatasetMode mode) { dataset_mode_ = mode; }
-  int64_t iter_num() const { return iter_num_; }
+  int64_t iter_num() const {
+    if (dataset_mode_ == DS_NORMAL_MODE) return 1;
+    return iter_num_;
+  }
   void set_iter_num(const int64_t num) { iter_num_ = num; }
 
   std::string dataset_phase() const { return dataset_phase_; }
