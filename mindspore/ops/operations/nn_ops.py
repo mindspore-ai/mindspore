@@ -620,7 +620,6 @@ class BatchNorm(PrimitiveWithInfer):
         - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **reserve_space_3** (Tensor) - Tensor of shape :math:`(C,)`.
 
     Examples:
         >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)

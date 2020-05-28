@@ -1105,9 +1105,11 @@ class ArgMaxWithValue(PrimitiveWithInfer):
           :math:`(x_1, x_2, ..., x_N)`.
 
     Outputs:
-        Tensor, corresponding index and maximum value of input tensor. If `keep_dims` is true, the output tensors shape
+        tuple(Tensor), tuple of 2 tensors, corresponding index and maximum value of input tensor.
+        - index (Tensor) - The index for maximum value of input tensor. If `keep_dims` is true, the output tensors shape
         is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Else, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+        - output_x (Tensor) - The maximum value of input tensor, the shape same as index.
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5))
@@ -2161,7 +2163,7 @@ class ScatterMax(PrimitiveWithInfer):
         Tensor, has the same shape and data type as `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
         >>> scatter_max = P.ScatterMax()
