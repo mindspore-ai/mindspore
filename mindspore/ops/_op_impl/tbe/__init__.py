@@ -208,3 +208,7 @@ from .bitwise_xor import bitwise_xor_op_info
 from .reduce_all import _reduce_all_tbe
 from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
 from .unsorted_segment_min import _unsorted_segment_min_tbe
+from .asin import _asin_tbe
+from .asin_grad import _asin_grad_tbe
+from .asinh import _asinh_tbe
+from .asinh_grad import _asinh_grad_tbe

@@ -1336,8 +1336,7 @@ class Acosh(PrimitiveWithInfer):
     Compute inverse hyperbolic cosine of x element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
-          and the data type of 'input_x' is number, the element in 'input_x' should be greater than or equal to 1.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -1352,12 +1351,42 @@ class Acosh(PrimitiveWithInfer):
     def __init__(self):
         """init Acosh"""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
+class Asinh(PrimitiveWithInfer):
+    """
+    Compute inverse hyperbolic cosine of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> asinh = P.Asinh()
+        >>> input_x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
+        >>> output = asinh(input_x)
+        [-2.3212, 1.1976, 1.8184, 5.2983]
+    """
+
+
+    @prim_attr_register
+    def __init__(self):
+        """init Asinh"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class _LogicBinaryOp(_BinaryOp):
@@ -1927,12 +1956,12 @@ class Cos(PrimitiveWithInfer):
     def __init__(self):
         """init Cos"""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class ACos(PrimitiveWithInfer):
@@ -1955,12 +1984,12 @@ class ACos(PrimitiveWithInfer):
     def __init__(self):
         """init ACos"""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class Sin(PrimitiveWithInfer):
@@ -1983,12 +2012,41 @@ class Sin(PrimitiveWithInfer):
     def __init__(self):
         """Init Sin."""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
+class Asin(PrimitiveWithInfer):
+    """
+    Computes arccosine of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> asin = P.Asin()
+        >>> input_x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+        >>> output = asin(input_x)
+        [0.8331, 0.0400, 0.3047, 0.5944]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Asin"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class NMSWithMask(PrimitiveWithInfer):
