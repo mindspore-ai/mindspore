@@ -14,10 +14,10 @@
 # ============================================================================
 
 import pytest
+import numpy as np
 from mindspore import Tensor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
-import numpy as np
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 

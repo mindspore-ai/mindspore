@@ -28,8 +28,8 @@ class Net(nn.Cell):
         self.logical_not = P.LogicalNot()
 
     @ms_function
-    def construct(self, x1):
-        return self.logical_not(x1)
+    def construct(self, x):
+        return self.logical_not(x)
 
 
 x1 = [True, True, False, False, True, True, False, False]

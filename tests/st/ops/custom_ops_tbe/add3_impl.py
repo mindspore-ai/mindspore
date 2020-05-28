@@ -13,17 +13,17 @@
 # limitations under the License.
 # ============================================================================
 from __future__ import absolute_import
-from te import tvm
-from topi import generic
 import te.lang.cce
-from topi.cce import util
+from te import tvm
 from te.platform.fusion_manager import fusion_manager
+from topi import generic
+from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 @fusion_manager.register("add3")
 def add3_compute(input1, input2, const_bias):
     sum2 = te.lang.cce.vadd(input1, input2)
-    sum3 = te.lang.cce.vadds(sum2, tvm.const(const_bias, dtype = input1.dtype))
+    sum3 = te.lang.cce.vadds(sum2, tvm.const(const_bias, dtype=input1.dtype))
     return sum3
 
 
@@ -44,7 +44,7 @@ cus_add3_op_info = TBERegOp("CusAdd3") \
 
 
 @op_info_register(cus_add3_op_info)
-def CusAdd3Impl(input1, inptu2, sum, const_bias, kernel_name="CusAdd3Impl"):
+def CusAdd3Impl(input1, inptu2, sum1, const_bias, kernel_name="CusAdd3Impl"):
     shape = input1.get("shape")
     shape = util.shape_refine(shape)
     dtype = input1.get("dtype").lower()

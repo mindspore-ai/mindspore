@@ -28,8 +28,8 @@ class Net(nn.Cell):
         self.logical_or = P.LogicalOr()
 
     @ms_function
-    def construct(self, x1, x2):
-        return self.logical_or(x1, x2)
+    def construct(self, x1_, x2_):
+        return self.logical_or(x1_, x2_)
 
 
 x1 = [True, True, False, False, True, True, False, False]

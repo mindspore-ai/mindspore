@@ -27,8 +27,8 @@ class Net(nn.Cell):
         self.matmul = P.MatMul()
 
     @ms_function
-    def construct(self, x1, x2):
-        return self.matmul(x1, x2)
+    def construct(self, x1_, x2_):
+        return self.matmul(x1_, x2_)
 
 
 x1 = np.random.randn(1, 3).astype(np.float32)

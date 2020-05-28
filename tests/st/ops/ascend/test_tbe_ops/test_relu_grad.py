@@ -31,8 +31,8 @@ class Grad(nn.Cell):
         self.network = network
 
     @ms_function
-    def construct(self, input, output_grad):
-        return self.grad(self.network)(input, output_grad)
+    def construct(self, inputValue, output_grad):
+        return self.grad(self.network)(inputValue, output_grad)
 
 
 class Net(nn.Cell):

@@ -231,7 +231,7 @@ class ApplyRMSNet(nn.Cell):
         self.apply_rms = P.ApplyRMSProp()
         self.lr = 0.001
         self.rho = 0.0
-        self.momentum= 0.0
+        self.momentum = 0.0
         self.epsilon = 1e-10
         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
         self.ms = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="ms")
@@ -574,7 +574,8 @@ test_case_math_ops = [
     ('CumSum', {
         'block': CumSumNet(),
         'desc_inputs': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))],
-        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))]}),
+        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7],
+                                        [1, 3, 7, 9]]).astype(np.float32))]}),
     ('ReduceSum_3', {
         'block': P.ReduceSum(),
         'desc_const': [0],

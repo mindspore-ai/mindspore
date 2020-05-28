@@ -29,9 +29,9 @@ class Net(nn.Cell):
         self.mask = P.DropoutGenMask(10, 28)
         self.shape = P.Shape()
 
-    def construct(self, x, y):
-        shape_x = self.shape(x)
-        return self.mask(shape_x, y)
+    def construct(self, x_, y_):
+        shape_x = self.shape(x_)
+        return self.mask(shape_x, y_)
 
 
 x = np.ones([2, 4, 2, 2]).astype(np.int32)

@@ -41,8 +41,8 @@ def test_slice():
     expect = [[[2., -2., 2.]],
               [[4., -4., 4.]]]
 
-    slice = Slice()
-    output = slice(x)
+    slice_op = Slice()
+    output = slice_op(x)
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 

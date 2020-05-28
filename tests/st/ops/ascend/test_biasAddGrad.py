@@ -31,8 +31,8 @@ class Net(nn.Cell):
         # 'normal', [2, 3, 3, 4]), name='dout')
 
     @ms_function
-    def construct(self, dout):
-        return self.bias_add_grad(dout)
+    def construct(self, dout_):
+        return self.bias_add_grad(dout_)
 
 
 dout = np.ones([2, 3, 4, 4]).astype(np.float32)
