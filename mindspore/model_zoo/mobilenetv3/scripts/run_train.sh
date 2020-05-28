@@ -31,17 +31,17 @@ run_ascend()
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     if [ -d "train" ];
     then
-        rm -rf ./train
+        rm -rf ../train
     fi
-    mkdir ./train
-    cd ./train || exit
-    python ${BASEPATH}/launch.py \
+    mkdir ../train
+    cd ../train || exit
+    python ${BASEPATH}/../src/launch.py \
             --nproc_per_node=$2 \
             --visible_devices=$4 \
             --server_id=$3 \
-            --training_script=${BASEPATH}/train.py \
+            --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
-            --platform=$1 &> train.log &  # dataset train folder
+            --platform=$1 &> ../train.log &  # dataset train folder
 }
 
 run_gpu()
@@ -62,17 +62,17 @@ run_gpu()
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     if [ -d "train" ];
     then
-        rm -rf ./train
+        rm -rf ../train
     fi
-    mkdir ./train
-    cd ./train || exit
+    mkdir ../train
+    cd ../train || exit
 
     export CUDA_VISIBLE_DEVICES="$3"
     mpirun -n $2 --allow-run-as-root \
-    python ${BASEPATH}/train.py \
+    python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
         --platform=$1 \
-        &> train.log &  # dataset train folder
+        &> ../train.log &  # dataset train folder
 }
 
 if [ $# -gt 5 ] || [ $# -lt 4 ]

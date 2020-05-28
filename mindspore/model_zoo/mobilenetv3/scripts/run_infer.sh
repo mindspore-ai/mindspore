@@ -42,14 +42,14 @@ export RANK_ID=0
 export RANK_SIZE=1
 if [ -d "eval" ];
 then
-    rm -rf ./eval
+    rm -rf ../eval
 fi
-mkdir ./eval
-cd ./eval || exit
+mkdir ../eval
+cd ../eval || exit
 
 # luanch
-python ${BASEPATH}/eval.py \
+python ${BASEPATH}/../eval.py \
         --platform=$1 \
         --dataset_path=$2 \
         --checkpoint_path=$3 \
-        &> infer.log &  # dataset val folder path
+        &> ../infer.log &  # dataset val folder path
