@@ -52,7 +52,6 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kScatterNdOpName, {2});
   Register(kStridedSliceAssignOpName, {1, 2, 3});
   Register(kStridedSliceOpName, {1, 2, 3});
-  Register(kStridedSliceGradOpName, {1, 2, 3, 4});
   Register(kFlattenGradOpName, {1});
   Register(kExpandDimsOpName, {1});
   Register(kSplitOpName, {0});

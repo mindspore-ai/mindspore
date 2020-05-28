@@ -110,21 +110,6 @@ def test_convert_onehot_input_to_attr(tag):
     return fns[tag]
 
 
-def test_convert_strided_slice_grad_input_to_attr(tag):
-    fns = FnDict()
-
-    @fns
-    def before(x):
-        return stridedslicegrad(x, (16, 128, 1024), (0, 0, 0), (16, 1, 1024), (1, 1, 1))
-
-    @fns
-    def after(x):
-        res = backend_stridedslicegrad(x)
-        return make_tuple(res)
-
-    return fns[tag]
-
-
 def test_convert_onehot_input_to_tensor1(tag):
     fns = FnDict()
 
