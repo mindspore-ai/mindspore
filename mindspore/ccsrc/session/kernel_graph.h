@@ -42,7 +42,7 @@ class KernelGraph : public FuncGraph {
     executable_ = true;
     stream_distinction_label_ = kInvalidDistincLabel;
   }
-  ~KernelGraph() override = default;
+  ~KernelGraph() override;
 
   MS_DECLARE_PARENT(KernelGraph, FuncGraph);
 

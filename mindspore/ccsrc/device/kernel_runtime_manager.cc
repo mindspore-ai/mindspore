@@ -29,6 +29,18 @@ void KernelRuntimeManager::ClearRuntimeResource() {
   runtime_map_.clear();
 }
 
+void KernelRuntimeManager::ClearGraphResource(uint32_t graph_id) {
+  std::lock_guard<std::mutex> guard(lock_);
+  for (auto &iter : runtime_map_) {
+    MS_LOG(INFO) << "Clear device " << iter.first << " graph " << graph_id << " runtime resource";
+    if (!iter.second) {
+      MS_LOG(ERROR) << "Kernel runtime is nullptr";
+      continue;
+    }
+    iter.second->ClearGraphRuntimeResource(graph_id);
+  }
+}
+
 void KernelRuntimeManager::Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator) {
   if (runtime_creators_.find(device_name) == runtime_creators_.end()) {
     (void)runtime_creators_.emplace(device_name, runtime_creator);
