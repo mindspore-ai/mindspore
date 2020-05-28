@@ -25,7 +25,6 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function, _executor
-from mindspore.ops.composite import core
 from mindspore.ops.functional import tensor_add
 from ...ut_filter import non_graph_engine
 

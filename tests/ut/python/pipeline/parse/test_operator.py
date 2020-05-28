@@ -163,7 +163,7 @@ def test_ops():
             ret_floor = p // q + q // p
             ret = ret_pow + ret_mod + ret_floor
             if self.int > self.float:
-                if [1, 2, 3] != None:
+                if [1, 2, 3] is not None:
                     if self.str_a + self.str_b == "helloworld":
                         if q == 86:
                             print("hello world")

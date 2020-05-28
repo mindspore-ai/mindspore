@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ test_for_stmt """
-import numpy as np
 from dataclasses import dataclass
+import numpy as np
 
 from mindspore import Tensor, Model, context
 from mindspore.nn import Cell

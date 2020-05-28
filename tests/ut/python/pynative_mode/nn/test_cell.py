@@ -305,4 +305,4 @@ def test_net_call():
         net = ConvNet()
         input_x = Tensor(
             np.random.randint(0, 255, [1, 3, net.image_h, net.image_w]).astype(np.float32))
-        output = net.construct(input_x)
+        net.construct(input_x)

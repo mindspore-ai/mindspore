@@ -136,8 +136,8 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.conv = nn.Conv2d(3, 64, 3, bias_init='zeros')
 
-    def construct(self, input):
-        return self.conv(input)
+    def construct(self, inputs):
+        return self.conv(inputs)
 
 
 class TestNet(nn.Cell):
