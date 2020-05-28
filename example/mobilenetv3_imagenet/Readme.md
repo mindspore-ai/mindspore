@@ -13,7 +13,7 @@ The overall network architecture of MobileNetV3 is show below:
 
 # Dataset
 
-Dataset used: [imagenet](http://www.image-net.org/)
+Dataset used: imagenet
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
 	- Train: 120G, 1.2W images
@@ -67,8 +67,8 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ``` 
 # training example
-  Ascend: sh run_train.sh Ascend 8 192.168.0.1 0,1,2,3,4,5,6,7 ~/imagenet/train/
-  GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
+  Ascend: sh run_train.sh Ascend 8 192.168.0.1 0,1,2,3,4,5,6,7 ~/imagenet/train/ mobilenet_199.ckpt
+  GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/ mobilenet_199.ckpt
 ```
 
 ### Result

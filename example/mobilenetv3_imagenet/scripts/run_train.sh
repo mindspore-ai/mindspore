@@ -41,6 +41,7 @@ run_ascend()
             --server_id=$3 \
             --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
+            --pre_trained=$6 \
             --platform=$1 &> ../train.log &  # dataset train folder
 }
 
@@ -72,14 +73,15 @@ run_gpu()
     python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
         --platform=$1 \
+        --pre_trained=$5 \
         &> ../train.log &  # dataset train folder
 }
 
-if [ $# -gt 5 ] || [ $# -lt 4 ]
+if [ $# -gt 6 ] || [ $# -lt 4 ]
 then
     echo "Usage:\n \
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
+          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
+          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
           "
 exit 1
 fi
