@@ -23,7 +23,7 @@
 #include <algorithm>
 
 #include "debug/anf_ir_dump.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "transform/convert.h"
 #include "transform/df_graph_manager.h"
 #include "transform/graph_builder.h"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include <mutex>
 #include "debug/draw.h"
 #include "ir/anf.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "pipeline/action.h"
 #include "vm/segment_runner.h"
 #include "vm/transform.h"

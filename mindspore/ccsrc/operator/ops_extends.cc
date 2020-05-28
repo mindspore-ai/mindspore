@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
-#define MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
 
-#include <map>
-#include <vector>
-#include <string>
+#include "operator/ops.h"
 #include <memory>
-#include "transform/types.h"
-#include "transform/util.h"
-#include "ir/tensor.h"
+#include <string>
+#include "pipeline/parse/python_adapter.h"
+#include "pipeline/parse/data_converter.h"
 
 namespace mindspore {
-namespace callbacks {
-using mindspore::tensor::TensorPtr;
-
-uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-}  // namespace callbacks
+// namespace to support primitive operators
+namespace prim {
+ValuePtr GetPythonOps(const std::string &op_name, const std::string &module_name) {
+  py::object obj = parse::python_adapter::GetPyFn(module_name, op_name);
+  ValuePtr node = nullptr;
+  bool succ = parse::ConvertData(obj, &node);
+  if (!succ) {
+    MS_LOG(EXCEPTION) << "get Python op " << op_name << " from " << module_name << " fail";
+  }
+  return node;
+}
+}  // namespace prim
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_

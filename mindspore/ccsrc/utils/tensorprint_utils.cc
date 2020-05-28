@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "device/convert_tensor_utils.h"
 #include "./securec.h"
 #ifndef NO_DLIB

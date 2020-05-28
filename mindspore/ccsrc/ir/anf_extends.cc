@@ -25,6 +25,7 @@
 #include "pipeline/static_analysis/static_analysis.h"
 #include "operator/ops.h"
 #include "parallel/ops_info/ops_utils.h"
+#include "debug/label.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition

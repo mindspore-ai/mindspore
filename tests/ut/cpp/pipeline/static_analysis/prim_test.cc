@@ -25,7 +25,7 @@
 #include "pipeline/static_analysis/helper.h"
 #include "operator/ops.h"
 #include "debug/draw.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "utils/symbolic.h"
 #include "./common.h"
 

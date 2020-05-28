@@ -27,7 +27,7 @@
 #include "operator/ops.h"
 #include "vm/segment_runner.h"
 #include "vm/transform.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 

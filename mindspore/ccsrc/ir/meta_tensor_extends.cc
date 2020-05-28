@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
-#define MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
 
-#include <map>
+#include "ir/meta_tensor.h"
+
+#include <functional>
+#include <numeric>
 #include <vector>
+#include <sstream>
 #include <string>
-#include <memory>
-#include "transform/types.h"
-#include "transform/util.h"
-#include "ir/tensor.h"
+
+#include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
-namespace callbacks {
-using mindspore::tensor::TensorPtr;
-
-uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-}  // namespace callbacks
+namespace tensor {
+abstract::AbstractBasePtr MetaTensor::ToAbstract() {
+  auto tens = shared_from_base<MetaTensor>();
+  auto dtype = tens->Dtype();
+  if (!IsSubType(dtype, kNumber)) {
+    MS_LOG(EXCEPTION) << "Expect MetaTensor type kNumber but got: " << dtype->ToString() << ".";
+  }
+  auto tensor_shape = tens->shape();
+  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
+  abs_tensor->set_value(shared_from_base<MetaTensor>());
+  return abs_tensor;
+}
+}  // namespace tensor
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_

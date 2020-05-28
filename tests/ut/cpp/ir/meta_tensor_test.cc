@@ -21,7 +21,7 @@
 #include "common/py_func_graph_fetcher.h"
 
 #include "securec/include/securec.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace tensor {

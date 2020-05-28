@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "ir/value.h"
 #include "parallel/auto_parallel/costmodel.h"
 #include "parallel/device_matrix.h"

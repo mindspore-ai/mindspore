@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 #include "operator/ops.h"
 #include <memory>
 #include <string>
-#include "pipeline/parse/python_adapter.h"
-#include "pipeline/parse/data_converter.h"
 
 namespace mindspore {
 // namespace to support primitive operators
@@ -255,15 +253,5 @@ const PrimitivePtr kPrimScalarSummary = std::make_shared<Primitive>("ScalarSumma
 const PrimitivePtr kPrimImageSummary = std::make_shared<Primitive>("ImageSummary");
 const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("TensorSummary");
 const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
-
-ValuePtr GetPythonOps(const std::string &op_name, const std::string &module_name) {
-  py::object obj = parse::python_adapter::GetPyFn(module_name, op_name);
-  ValuePtr node = nullptr;
-  bool succ = parse::ConvertData(obj, &node);
-  if (!succ) {
-    MS_LOG(EXCEPTION) << "get Python op " << op_name << " from " << module_name << " fail";
-  }
-  return node;
-}
 }  // namespace prim
 }  // namespace mindspore

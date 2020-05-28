@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
-#define MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_
 
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
-#include "transform/types.h"
-#include "transform/util.h"
-#include "ir/tensor.h"
+#include "minnie/tensor_minnie.h"
 
 namespace mindspore {
-namespace callbacks {
-using mindspore::tensor::TensorPtr;
+namespace tensor {
+TensorMinnie &TensorMinnie::operator=(const TensorMinnie &tensor) {
+  if (&tensor == this) {
+    return *this;
+  }
+  this->tensor_addr_ = tensor.tensor_addr();
+  this->tensor_size_ = tensor.tensor_size();
+  return *this;
+}
 
-uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-}  // namespace callbacks
+bool TensorMinnie::operator==(const TensorMinnie &tensor) {
+  return tensor_addr_ == tensor.tensor_addr() && tensor_size_ == tensor.tensor_size();
+}
+}  // namespace tensor
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_UTILS_CALLBACKS_GE_H_

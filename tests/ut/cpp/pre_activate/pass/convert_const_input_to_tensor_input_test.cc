@@ -15,7 +15,7 @@
  */
 #include "common/backend_common_test.h"
 #include "ir/anf.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
 #include "session/anf_runtime_algorithm.h"
