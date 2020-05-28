@@ -259,6 +259,9 @@ Graph::NodeType ApplyStrToTensor(Graph::NodeType Node) {
 
 Status DevicesMemoryControl(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (num_device == 0) {
+    MS_LOG(EXCEPTION) << "Failure: device number is 0.";
+  }
 
   uint64_t iter_nodes = graph->nodes.size();
   double used_memory = 0.0;

@@ -611,6 +611,5 @@ void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_pt
     ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
   }
 }
-
 }  // namespace parallel
 }  // namespace mindspore
