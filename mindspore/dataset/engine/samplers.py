@@ -483,7 +483,7 @@ class SubsetRandomSampler(BuiltinSampler):
 
 
     def get_dataset_size(self):
-        return len(indices)
+        return len(self.indices)
 
 
 class WeightedRandomSampler(BuiltinSampler):
