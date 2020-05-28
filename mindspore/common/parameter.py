@@ -16,6 +16,7 @@
 """Parameter for cell."""
 import numbers
 from copy import copy, deepcopy
+from . import dtype as mstype
 from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
@@ -199,6 +200,10 @@ class Parameter:
         elif isinstance(data, Initializer):
             self.init_mode = data
             data = MetaTensor(self.init_mode.dtype, self.init_mode.shape)
+        elif isinstance(data, int):
+            data = Tensor(data, dtype=mstype.int32)
+        elif isinstance(data, float):
+            data = Tensor(data, dtype=mstype.float32)
         else:
             data = Tensor(data)
             data.init_flag = False
