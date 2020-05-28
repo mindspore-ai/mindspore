@@ -208,7 +208,7 @@ class _DepthwiseConv2dNative(nn.Cell):
         self.padding = padding
         self.dilation = dilation
         self.group = group
-		if not (isinstance(in_channels, int) and in_channels > 0):
+        if not (isinstance(in_channels, int) and in_channels > 0):
             raise ValueError('Attr \'in_channels\' of \'DepthwiseConv2D\' Op passed '
                              + str(in_channels) + ', should be a int and greater than 0.')
         if (not isinstance(kernel_size, tuple)) or len(kernel_size) != 2 or \
@@ -526,12 +526,12 @@ class RootBlockBeta(nn.Cell):
         super(RootBlockBeta, self).__init__()
         self.conv1 = _conv_bn_relu(3, 64, ksize=3, stride=2, padding=0, pad_mode="valid", use_batch_statistics=fine_tune_batch_norm)
         self.conv2 = _conv_bn_relu(64, 64, ksize=3, stride=1, padding=0, pad_mode="same", use_batch_statistics=fine_tune_batch_norm)
-        self.conv3 = _conv_bn_relu(64, 128, ksize=3, stride=1, padding=0, pad_mode="same", use_batch_statistics=fine_tune_batch_norm)
+        self.conv3 = _conv_bn_relu(64, 128, ksize=3, stride=1, padding=0, pad_m ode="same", use_batch_statistics=fine_tune_batch_norm)
     def construct(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
         return x
         
-class resnet50_dl(fine_tune_batch_norm=False):
+def resnet50_dl(fine_tune_batch_norm=False):
     return ResNetV1(fine_tune_batch_norm)
