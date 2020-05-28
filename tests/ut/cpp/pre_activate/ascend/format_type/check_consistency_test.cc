@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include "pipeline/resource.h"
 #include "pipeline/action.h"
 #include "operator/ops.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "ir/manager.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/utils.h"

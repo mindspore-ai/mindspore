@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "ir/manager.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/parse/parse_base.h"
+#include "pipeline/static_analysis/abstract_value.h"
 #include "utils/log_adapter.h"
 
 // forward declaration of ResourceBase

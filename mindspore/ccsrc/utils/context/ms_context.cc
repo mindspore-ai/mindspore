@@ -29,7 +29,7 @@
 #ifdef ENABLE_GE
 #include "transform/df_graph_manager.h"
 #endif
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 #ifdef ENABLE_GE

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <string>
 #include <fstream>
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "session/anf_runtime_algorithm.h"
 #include "predict/schema/inner/ms_generated.h"
 

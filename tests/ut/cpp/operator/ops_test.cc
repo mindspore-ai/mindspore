@@ -19,6 +19,7 @@
 
 #include "common/common_test.h"
 #include "ir/value.h"
+#include "ir/primitive.h"
 #include "operator/ops.h"
 #include "./common.h"
 

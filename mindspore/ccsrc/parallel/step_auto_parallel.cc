@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 #include "ir/anf.h"
 #include "ir/param_value_py.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "optimizer/opt.h"
 #include "optimizer/optimizer.h"
 #include "parallel/auto_parallel/dp_algo_costmodel.h"
