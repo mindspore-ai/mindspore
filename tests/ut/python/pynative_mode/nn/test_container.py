@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test_container """
+from collections import OrderedDict
 import numpy as np
 import pytest
-from collections import OrderedDict
 
 import mindspore.nn as nn
 from mindspore import Tensor

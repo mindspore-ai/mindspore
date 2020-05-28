@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 from dataclasses import dataclass
+import numpy as np
 
 import mindspore as ms
 from mindspore.common.tensor import Tensor

@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.ops import Primitive, PrimitiveWithInfer
+from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
