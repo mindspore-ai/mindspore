@@ -304,7 +304,7 @@ class HostReduceScatter(PrimitiveWithInfer):
                   like sum, max, avg. Default: ReduceOp.SUM.
         group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on.
 
-    Raise:
+    Raises:
         TypeError: If op is not a string and group is not a list nor tuple,
                    or elements of group are not int.
         ValueError: If the first dimension of input can not be divided by rank size,
