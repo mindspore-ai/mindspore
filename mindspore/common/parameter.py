@@ -99,6 +99,10 @@ class Parameter:
         """Get slice status of the parameter."""
         return self._sliced
 
+    @sliced.setter
+    def sliced(self, sliced_):
+        self._sliced = sliced_
+
     @property
     def is_init(self):
         """Get init status of the parameter."""
@@ -211,15 +215,18 @@ class Parameter:
         self.default_input = data
 
 
-    def init_data(self, layout=None):
+    def init_data(self, layout=None, set_sliced=False):
         """
         Init data of the parameter.
 
         Args:
-            layout (list[list[int]]): parameter slice layout [dev_mat, tensor_map, slice_shape].
-                dev_mat (list[int]): device matrix.
-                tensor_map (list[int]): tensor map.
-                slice_shape (list[int]): shape of slice.
+            layout (list[list[int]]): Parameter slice layout [dev_mat, tensor_map, slice_shape].
+
+                - dev_mat (list[int]): Device matrix.
+                - tensor_map (list[int]): Tensor map.
+                - slice_shape (list[int]): Shape of slice.
+            set_sliced (bool): True if should set parameter sliced after init the data of initializer.
+                Default: False.
         """
         if not isinstance(self.default_input, MetaTensor):
             return
@@ -235,7 +242,8 @@ class Parameter:
 
         self.default_input = self.init_mode.to_tensor()
         self.init_mode = None
-        self._sliced = True
+        if set_sliced:
+            self.sliced = True
 
 
 class ParameterTuple(tuple):

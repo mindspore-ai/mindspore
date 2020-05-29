@@ -327,16 +327,19 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def _params_init_data(self, obj, params):
+    def _params_init_data(self, obj, params, auto_parallel_mode=False):
+        """Init parameters' data."""
         if params is not None:
             for key, param in params.items():
-                if key not in obj.parameter_layout_dict:
-                    logger.info("Layout dict does not contain the key %s.", key)
+                if not auto_parallel_mode:
                     param.init_data()
+                elif key not in obj.parameter_layout_dict:
+                    logger.info("Layout dict does not contain the key %s.", key)
+                    param.init_data(set_sliced=True)
                 else:
                     layout = obj.parameter_layout_dict[key]
-                    param.init_data(layout)
-        obj.init_parameters_data()
+                    param.init_data(layout, set_sliced=True)
+        obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
 
     def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
         """
@@ -383,11 +386,11 @@ class _Executor:
         if not do_convert:
             return phase, True
 
-        if auto_parallel_mode and "train" in phase:
+        if auto_parallel_mode:
             obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
-        self._params_init_data(obj, params)
+        self._params_init_data(obj, params, auto_parallel_mode)
         if not enable_debug_runtime or enable_ge:
-            if auto_parallel_mode and "train" in phase:
+            if auto_parallel_mode:
                 obj.load_parameter_slice(params)
 
         # set parallel inputs in sink mode
