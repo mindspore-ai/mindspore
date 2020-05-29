@@ -1,39 +1,42 @@
-Deeplab-V3 Example
+# Deeplab-V3 Example
 
-Description
+## Description
 This is an example of training DeepLabv3 with PASCAL VOC 2012 dataset in MindSpore.
 Paper Rethinking Atrous Convolution for Semantic Image Segmentation
 Liang-Chieh Chen, George Papandreou, Florian Schroff, Hartwig Adam
 
 
-Requirements
-Install MindSpore.
-Download the VOC 2012 dataset for training.
-For more information, please check the resources below： 
-MindSpore tutorials
-MindSpore API
+## Requirements
+- Install [MindSpore](https://www.mindspore.cn/install/en).
+- Download the VOC 2012 dataset for training.
 
-Notes: If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
+> Notes: 
+  If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
 
 
-Running the Example
-
-Training
-Set options in config.py.
-Run run_standalone_train.sh for non-distributed training.
-sh scripts/run_standalone_train.sh DEVICE_ID EPOCH_SIZE DATA_DIR
-Run run_distribute_train.sh for distributed training.
-sh scripts/run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_DIR MINDSPORE_HCCL_CONFIG_PATH
-
-Evaluation
+## Running the Example
+### Training
+- Set options in config.py.
+- Run `run_standalone_train.sh` for non-distributed training.
+	``` bash 
+	sh scripts/run_standalone_train.sh DEVICE_ID EPOCH_SIZE DATA_DIR
+	```
+- Run `run_distribute_train.sh` for distributed training.
+	``` bash
+	sh scripts/run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_DIR MINDSPORE_HCCL_CONFIG_PATH
+	```
+### Evaluation
 Set options in evaluation_config.py. Make sure the 'data_file' and 'finetune_ckpt' are set to your own path.
-Run run_eval.sh for evaluation.
-sh scripts/run_eval.sh DEVICE_ID DATA_DIR
+- Run run_eval.sh for evaluation.
+	``` bash
+	sh scripts/run_eval.sh DEVICE_ID DATA_DIR
+	```
 
-Options and Parameters
+## Options and Parameters
 It contains of parameters of Deeplab-V3 model and options for training, which is set in file config.py.
 
-Options:
+### Options:
+```
 config.py:
     learning_rate                   Learning rate, default is 0.0014.
     weight_decay                	Weight decay, default is 5e-5.
@@ -49,10 +52,11 @@ config.py:
 	decoder_output_stride			The ratio of input to output spatial resolution when employing decoder
 									to refine segmentation results, default is None.
 	image_pyramid					Input scales for multi-scale feature extraction, default is None.
-	
+```	
 
 
-Parameters:
+### Parameters:
+```
 Parameters for dataset and network:
     distribute						Run distribute, default is false.
 	epoch_size						Epoch size, default is 6.
@@ -62,3 +66,4 @@ Parameters for dataset and network:
 	enable_save_ckpt				Enable save checkpoint, default is true.
 	save_checkpoint_steps			Save checkpoint steps, default is 1000.
 	save_checkpoint_num				Save checkpoint numbers, default is 1.
+```
