@@ -42,7 +42,7 @@ std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_na
   MS_EXCEPTION_IF_NULL(kernel_info);
   const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(kernel_build_Info);
-  std::pair<bool, size_t> ret_pair = CPUKernelAttrCheck(kernel_name, kernel_build_Info);
+  std::pair<bool, size_t> ret_pair = CPUKernelAttrCheck(kernel_name, *kernel_build_Info);
   if (ret_pair.first) {
     return (name_to_attr_creator_.find(kernel_name)->second)[ret_pair.second].second();
   }
@@ -50,7 +50,7 @@ std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_na
 }
 
 std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &kernel_name,
-                                                             const KernelBuildInfo *kernel_info) {
+                                                             const KernelBuildInfo &kernel_info) {
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
     MS_LOG(INFO) << "Not registered CPU kernel: op[" << kernel_name << "]!";
@@ -59,25 +59,31 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
   auto creators = iter->second;
   for (size_t index = 0; index < creators.size(); ++index) {
     auto attr_creator = creators[index];
-    for (size_t i = 0; i < kernel_info->GetInputNum(); ++i) {
-      if (kernel_info->GetInputDeviceType(i) != attr_creator.first.GetInputAttr(i).first) {
-        MS_LOG(WARNING) << "cpu kernel attr check failed. input index: " << i << ".";
-        MS_LOG(WARNING) << "kernel info type:" << kernel_info->GetInputDeviceType(i) << ", "
-                        << "register type:" << attr_creator.first.GetInputAttr(i).first;
-        return std::make_pair(false, 0);
-      }
+    if (CPUKernelSingleAttrCheck(attr_creator.first, kernel_info)) {
+      return std::make_pair(true, index);
     }
-    for (size_t i = 0; i < kernel_info->GetOutputNum(); ++i) {
-      if (kernel_info->GetOutputDeviceType(i) != attr_creator.first.GetOutputAttr(i).first) {
-        MS_LOG(WARNING) << "cpu kernel attr check failed. output index: " << i << ".";
-        MS_LOG(WARNING) << "kernel info type:" << kernel_info->GetOutputDeviceType(i) << ", "
-                        << "register type:" << attr_creator.first.GetOutputAttr(i).first;
-        return std::make_pair(false, 0);
-      }
-    }
-    return std::make_pair(true, index);
   }
   return std::make_pair(false, 0);
+}
+
+bool CPUKernelFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr, const KernelBuildInfo &kernel_info) {
+  for (size_t i = 0; i < kernel_info.GetInputNum(); ++i) {
+    auto dtype = kernel_attr.GetAllSame() ? kernel_attr.GetInputAttr(0).first : kernel_attr.GetInputAttr(i).first;
+    if (kernel_info.GetInputDeviceType(i) != dtype) {
+      MS_LOG(DEBUG) << "input index:" << i << ", kernel info type:" << kernel_info.GetInputDeviceType(i)
+                    << ", register type:" << dtype;
+      return false;
+    }
+  }
+  for (size_t i = 0; i < kernel_info.GetOutputNum(); ++i) {
+    auto dtype = kernel_attr.GetAllSame() ? kernel_attr.GetOutputAttr(0).first : kernel_attr.GetOutputAttr(i).first;
+    if (kernel_info.GetOutputDeviceType(i) != dtype) {
+      MS_LOG(DEBUG) << "output index:" << i << ", kernel info type:" << kernel_info.GetOutputDeviceType(i)
+                    << ", register type:" << dtype;
+      return false;
+    }
+  }
+  return true;
 }
 
 std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::string &kernel_name) {

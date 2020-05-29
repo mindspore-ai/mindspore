@@ -40,7 +40,7 @@ bool GatherV2CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                const std::vector<kernel::AddressPtr> & /*workspace*/,
                                const std::vector<kernel::AddressPtr> &outputs) {
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-
+  auto buff_size = outputs[0]->size;
   size_t dim0 = input_shape_[0];
   size_t dim1 = input_shape_[1];
   size_t dim2 = input_shape_[2];
@@ -49,29 +49,29 @@ bool GatherV2CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     for (size_t i = 0; i < dim0; ++i) {
       for (size_t j = 0; j < dim1; ++j) {
         for (size_t k = 0; k < dim2; ++k) {
-          CopyDataToOutput(inputs, i, j, k, &output_addr);
+          CopyDataToOutput(inputs, i, j, k, &output_addr, &buff_size);
         }
       }
     }
   } else if (axis_ == 2) {
     for (size_t i = 0; i < dim0; ++i) {
       for (size_t j = 0; j < dim1; ++j) {
-        CopyDataToOutput(inputs, i, j, 0, &output_addr);
+        CopyDataToOutput(inputs, i, j, 0, &output_addr, &buff_size);
       }
     }
   } else if (axis_ == 1) {
     for (size_t i = 0; i < dim0; ++i) {
-      CopyDataToOutput(inputs, i, 0, 0, &output_addr);
+      CopyDataToOutput(inputs, i, 0, 0, &output_addr, &buff_size);
     }
   } else if (axis_ == 0) {
-    CopyDataToOutput(inputs, 0, 0, 0, &output_addr);
+    CopyDataToOutput(inputs, 0, 0, 0, &output_addr, &buff_size);
   }
 
   return true;
 }
 
 void GatherV2CPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1,
-                                         size_t dim2, float **output_addr) {
+                                         size_t dim2, float **output_addr, size_t *buff_size) {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
 
@@ -88,11 +88,12 @@ void GatherV2CPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &
       pos = CPUKernelUtils::CalcOffset(input_shape_, index, 0, 0, 0);
     }
     size_t num = CPUKernelUtils::GetElementNumOnAxis(input_shape_, axis_);
-    auto ret = memcpy_s(*output_addr, num * sizeof(float), input_addr + pos, num * sizeof(float));
+    auto ret = memcpy_s(*output_addr, *buff_size, input_addr + pos, num * sizeof(float));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy failed.";
     }
     *output_addr += num;
+    *buff_size -= num * sizeof(float);
   }
 }
 
