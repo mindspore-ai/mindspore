@@ -1705,8 +1705,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         - **var** (Tensor) - Weights to be update.
         - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
         - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
-        - **grad** (Tensor) - Gradients, must have the same type as `var`.
         - **learning_rate** (Union[Number, Tensor]) - Learning rate.
+        - **grad** (Tensor) - Gradients, must have the same type as `var`.
         - **decay** (float) - Decay rate.
         - **momentum** (float) - Momentum.
         - **epsilon** (float) - Ridge term.
