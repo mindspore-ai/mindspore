@@ -97,8 +97,8 @@ def test_all_to_all():
     print(strategys)
     expect_dict = {'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
                    '/SoftmaxCrossEntropyWithLogits-op3': [[8, 1], [8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/OneHot-op4': [
-                       [8, 1], [], []],
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/'
+                   'OneHot-op4': [[8, 1], [], []],
                    'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op1': [
                        [8, 1]],
                    'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0': [

@@ -280,4 +280,4 @@ def test_mixed_precision_const_parameter():
     x = Tensor(np.ones((1, 3, 28, 28), np.float32))
     y = Tensor(np.ones((1, 3, 14, 14), np.float32))
     z = Tensor(np.ones((1, 3, 28, 28), np.float32))
-    out = net(x, y, z)
+    _ = net(x, y, z)

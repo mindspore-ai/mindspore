@@ -14,9 +14,8 @@
 # ============================================================================
 
 """Other utils."""
-
-import mindspore._c_expression as _c_expression
 import numpy as np
+import mindspore._c_expression as _c_expression
 
 from mindspore.common.tensor import Tensor
 

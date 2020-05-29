@@ -151,7 +151,7 @@ def test_eval():
     with pytest.raises(ValueError):
         model2.eval(dataset)
 
-    net3 = LossNet()
+    _ = LossNet()
     model3 = Model(net2, eval_network=net2, metrics={"loss"})
     with pytest.raises(ValueError):
         model3.eval(dataset)

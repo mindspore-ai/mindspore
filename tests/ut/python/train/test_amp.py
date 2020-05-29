@@ -25,6 +25,7 @@ from ....dataset_mock import MindData
 
 
 def setup_module(module):
+    _ = module
     context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -56,7 +57,7 @@ def test_amp_o0():
 
     optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = amp.build_train_network(net, optimizer, level="O0")
-    output = train_network(inputs, label)
+    _ = train_network(inputs, label)
 
 
 def test_amp_o2():
@@ -66,7 +67,7 @@ def test_amp_o2():
 
     optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = amp.build_train_network(net, optimizer, level="O2")
-    output = train_network(inputs, label)
+    _ = train_network(inputs, label)
 
 
 def test_amp_o2_loss():
@@ -76,7 +77,7 @@ def test_amp_o2_loss():
     loss = nn.MSELoss()
     optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = amp.build_train_network(net, optimizer, loss, level="O2")
-    output = train_network(inputs, label)
+    _ = train_network(inputs, label)
 
 
 def test_amp_o0_loss():
@@ -86,7 +87,7 @@ def test_amp_o0_loss():
     loss = nn.MSELoss()
     optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = amp.build_train_network(net, optimizer, loss)
-    output = train_network(inputs, label)
+    _ = train_network(inputs, label)
 
 
 class MindDataSet(MindData):
@@ -100,10 +101,10 @@ class MindDataSet(MindData):
         if self._size < self._iter_num:
             raise StopIteration
         self._iter_num += 1
-        next = []
-        for shape, type in zip(self._output_shapes, self._np_types):
-            next.append(Tensor(np.ones(shape).astype(type)))
-        return tuple(next)
+        lst = []
+        for shape_, type_ in zip(self._output_shapes, self._np_types):
+            lst.append(Tensor(np.ones(shape_).astype(type_)))
+        return tuple(lst)
 
 
 def test_compile_model_train_O0():

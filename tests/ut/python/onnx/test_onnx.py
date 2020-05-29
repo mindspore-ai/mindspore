@@ -64,13 +64,13 @@ class BatchNormTester(nn.Cell):
 
 def test_batchnorm_train_onnx_export():
     "test onnx export interface does not modify trainable flag of a network"
-    input = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     net = BatchNormTester(3)
     net.set_train()
     if not net.training:
         raise ValueError('netowrk is not in training mode')
     onnx_file = 'batch_norm.onnx'
-    export(net, input, file_name=onnx_file, file_format='ONNX')
+    export(net, input_, file_name=onnx_file, file_format='ONNX')
 
     if not net.training:
         raise ValueError('netowrk is not in training mode')
@@ -172,6 +172,7 @@ net_cfgs = [
 
 
 def get_id(cfg):
+    _ = cfg
     return list(map(lambda x: x[0], net_cfgs))
 
 

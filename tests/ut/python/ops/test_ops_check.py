@@ -32,6 +32,7 @@ from ....mindspore_test_framework.pipeline.forward.verify_exception \
 logging.basicConfig(level=logging.WARNING)
 
 
+# pylint: disable=abstract-method
 class NetMissConstruct(nn.Cell):
     """ NetMissConstruct definition """
 
@@ -46,7 +47,6 @@ class NetMissConstruct(nn.Cell):
         self.max_pool2d = nn.MaxPool2d(kernel_size=2)
         self.flatten = P.Flatten()
 
-    # pylint: disable=abstract-method
     # TestCase: Mis-spelled 'construct' to 'construtc'
     def construtc(self, x):
         x = self.max_pool2d(self.relu(self.conv1(x)))

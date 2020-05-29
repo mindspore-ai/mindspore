@@ -81,31 +81,3 @@ def test_hypermap_func_const():
 
     net = NetMap()
     assert net() == (8, 12, 16)
-
-
-"""
-def test_hypermap_func_variable():
-    class NetMap(Cell):
-        def __init__(self):
-            super(NetMap, self).__init__()
-
-        def double(self, x):
-            return 2 * x
-
-        def triple(self, x):
-            return 3 * x
-
-        def square(self, x):
-            return x * x
-
-        def construct(self, x):
-            _list = [self.double, self.triple, self.square]
-            return map(lambda f: f(x), _list)
-
-    x = Tensor(np.ones([3, 2, 3], np.float32))
-    net = NetMap()
-
-    with pytest.raises(RuntimeError) as ex:
-        net(x)
-    assert "HyperMap don't support Closure with free variable yet" in str(ex.value)
-"""

@@ -15,14 +15,15 @@
 
 """Test bert submodules."""
 
-import numpy as np
 import os
 
-from mindspore import Tensor
-from mindspore import nn, context
+import numpy as np
 from mindspore.model_zoo.Bert_NEZHA import EmbeddingLookup, GetMaskedLMOutput, \
     BertConfig, BertPreTraining, BertNetworkWithLoss
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertModel
+
+from mindspore import Tensor
+from mindspore import nn, context
 from ..mindspore_test import mindspore_test
 from ..pipeline.forward.compile_forward import pipeline_for_compile_forward_anf_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config

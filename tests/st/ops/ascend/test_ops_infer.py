@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
@@ -29,14 +30,16 @@ def test_cast_op_attr():
         def __init__(self):
             super(CastNet, self).__init__()
             self.cast = P.Cast()
+
         def construct(self, x, t):
             return self.cast(x, t)
- 
+
     class CastTypeTest(nn.Cell):
         def __init__(self, net):
             super(CastTypeTest, self).__init__()
             self.net = net
             self.cast = P.Cast()
+
         def construct(self, x, y, z):
             cast_op = self.cast
             t1 = cast_op(x, mstype.float32)
@@ -46,6 +49,7 @@ def test_cast_op_attr():
             t4 = cast_net(y, mstype.int32)
             t5 = cast_net(z, mstype.float16)
             return (t1, t2, t3, t4, t5)
+
     net = CastTypeTest(CastNet())
     t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.int32))
     t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))

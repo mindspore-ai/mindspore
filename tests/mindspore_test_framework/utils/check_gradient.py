@@ -16,9 +16,10 @@
 """Implementation of Numerical gradients checking."""
 # pylint: disable=missing-docstring
 
+from typing import Callable, List, Any
+
 import mindspore._c_expression as _c_expression
 import numpy as np
-from typing import Callable, List, Any
 
 from mindspore import ParameterTuple
 from mindspore import Tensor

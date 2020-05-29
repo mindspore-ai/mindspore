@@ -46,6 +46,7 @@ class MaxNet(nn.Cell):
                  kernel_size,
                  stride=None,
                  padding=0):
+        _ = padding
         super(MaxNet, self).__init__()
         self.maxpool = nn.MaxPool2d(kernel_size,
                                     stride)
@@ -73,5 +74,5 @@ class Avg1dNet(nn.Cell):
 
 def test_avg1d():
     net = Avg1dNet(6, 1)
-    input = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
-    _executor.compile(net, input)
+    input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
+    _executor.compile(net, input_)

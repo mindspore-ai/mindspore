@@ -1043,6 +1043,7 @@ def test_print_tuple_wrapper(tag):
     return fns[tag]
 
 
+# pylint: disable=unnecessary-semicolon
 def test_constant_duplicate_mul(tag):
     fns = FnDict()
     Mul = Primitive('Mul');

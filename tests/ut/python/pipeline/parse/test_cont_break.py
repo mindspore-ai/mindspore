@@ -84,7 +84,7 @@ class for_loop_with_cont_break(Cell):
             if i > 5:
                 x *= 3
                 break
-                x *= 2
+                # x *= 2
             x = x * 2
             pass
         return x

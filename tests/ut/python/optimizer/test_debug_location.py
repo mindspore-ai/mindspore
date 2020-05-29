@@ -44,7 +44,7 @@ class MockNeg(PrimitiveWithInfer):
 
     def infer_dtype(self, input_x):
         raise TypeError("InferError")
-        return input_x
+        # return input_x
 
 
 class MockSub(PrimitiveWithInfer):
@@ -79,8 +79,8 @@ class Net(nn.Cell):
         self.matmul = P.MatMul()
         self.add = P.TensorAdd()
 
-    def construct(self, input):
-        output = self.add(self.matmul(input, self.weight), self.bias)
+    def construct(self, input_):
+        output = self.add(self.matmul(input_, self.weight), self.bias)
         return output
 
 
@@ -93,9 +93,9 @@ class NetFP16(nn.Cell):
         self.add = P.TensorAdd()
         self.cast = P.Cast()
 
-    def construct(self, input):
+    def construct(self, input_):
         output = self.cast(
-            self.add(self.matmul(self.cast(input, mstype.float16), self.cast(self.weight, mstype.float16)),
+            self.add(self.matmul(self.cast(input_, mstype.float16), self.cast(self.weight, mstype.float16)),
                      self.cast(self.bias, mstype.float16)), mstype.float32)
         return output
 

@@ -23,35 +23,41 @@ from mindspore.ops import functional as F, composite as C
 import mindspore.context as context
 import pytest
 
+
 class TensorIntAutoCast(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(TensorIntAutoCast, self).__init__()
         self.i = 2
+
     def construct(self, t):
         z = F.tensor_mul(t, self.i)
         return z
 
 
 class TensorFPAutoCast(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(TensorFPAutoCast, self).__init__()
         self.f = 1.2
+
     def construct(self, t):
         z = F.tensor_mul(t, self.f)
         return z
 
 
 class TensorBoolAutoCast(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(TensorBoolAutoCast, self).__init__()
         self.f = True
+
     def construct(self, t):
         z = F.tensor_mul(t, self.f)
         return z
 
+
 class TensorAutoCast(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(TensorAutoCast, self).__init__()
+
     def construct(self, t1, t2):
         z = F.tensor_mul(t1, t2)
         return z
@@ -68,7 +74,7 @@ def test_tensor_auto_cast():
     t_fp16 = Tensor(np.ones([2, 1, 2, 2]), mstype.float16)
     t_fp32 = Tensor(np.ones([2, 1, 2, 2]), mstype.float32)
     t_fp64 = Tensor(np.ones([2, 1, 2, 2]), mstype.float64)
-    net = TensorAutoCast() 
+    net = TensorAutoCast()
     rs = net(t_uint8, t_int8)
     assert rs.dtype() == mstype.int16
     rs = net(t_uint8, t_int16)
@@ -96,7 +102,7 @@ def test_tensor_auto_cast():
     assert rs.dtype() == mstype.float64
     rs = net(t_fp32, t_fp64)
     assert rs.dtype() == mstype.float64
-    
+
     rs = net(t_uint8, t_fp16)
     assert rs.dtype() == mstype.float16
     rs = net(t_uint8, t_fp32)
@@ -209,7 +215,6 @@ def test_tensor_auto_cast():
         net(t_uint64, t_fp32)
     with pytest.raises(TypeError):
         net(t_uint64, t_fp64)
-
 
     with pytest.raises(TypeError):
         tfp(t_uint16)

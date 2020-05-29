@@ -51,59 +51,59 @@ def test_compile_grayscale():
 def test_ssim_max_val_negative():
     max_val = -1
     with pytest.raises(ValueError):
-        net = SSIMNet(max_val)
+        _ = SSIMNet(max_val)
 
 
 def test_ssim_max_val_bool():
     max_val = True
     with pytest.raises(TypeError):
-        net = SSIMNet(max_val)
+        _ = SSIMNet(max_val)
 
 
 def test_ssim_max_val_zero():
     max_val = 0
     with pytest.raises(ValueError):
-        net = SSIMNet(max_val)
+        _ = SSIMNet(max_val)
 
 
 def test_ssim_filter_size_float():
     with pytest.raises(TypeError):
-        net = SSIMNet(filter_size=1.1)
+        _ = SSIMNet(filter_size=1.1)
 
 
 def test_ssim_filter_size_zero():
     with pytest.raises(ValueError):
-        net = SSIMNet(filter_size=0)
+        _ = SSIMNet(filter_size=0)
 
 
 def test_ssim_filter_sigma_zero():
     with pytest.raises(ValueError):
-        net = SSIMNet(filter_sigma=0.0)
+        _ = SSIMNet(filter_sigma=0.0)
 
 
 def test_ssim_filter_sigma_negative():
     with pytest.raises(ValueError):
-        net = SSIMNet(filter_sigma=-0.1)
+        _ = SSIMNet(filter_sigma=-0.1)
 
 
 def test_ssim_k1_k2_wrong_value():
     with pytest.raises(ValueError):
-        net = SSIMNet(k1=1.1)
+        _ = SSIMNet(k1=1.1)
     with pytest.raises(ValueError):
-        net = SSIMNet(k1=1.0)
+        _ = SSIMNet(k1=1.0)
     with pytest.raises(ValueError):
-        net = SSIMNet(k1=0.0)
+        _ = SSIMNet(k1=0.0)
     with pytest.raises(ValueError):
-        net = SSIMNet(k1=-1.0)
+        _ = SSIMNet(k1=-1.0)
 
     with pytest.raises(ValueError):
-        net = SSIMNet(k2=1.1)
+        _ = SSIMNet(k2=1.1)
     with pytest.raises(ValueError):
-        net = SSIMNet(k2=1.0)
+        _ = SSIMNet(k2=1.0)
     with pytest.raises(ValueError):
-        net = SSIMNet(k2=0.0)
+        _ = SSIMNet(k2=0.0)
     with pytest.raises(ValueError):
-        net = SSIMNet(k2=-1.0)
+        _ = SSIMNet(k2=-1.0)
 
 
 def test_ssim_different_shape():

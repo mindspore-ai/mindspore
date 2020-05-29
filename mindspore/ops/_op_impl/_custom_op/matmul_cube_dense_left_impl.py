@@ -244,8 +244,8 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
 
     return True
 
-
-# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements
+# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements,
+# pylint: disable=inconsistent-return-statements
 # @util.check_input_type(dict, dict, (dict, NoneType), dict, bool, bool, str)
 @op_info_register(matmul_cube_dense_left_op_info)
 def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False,
