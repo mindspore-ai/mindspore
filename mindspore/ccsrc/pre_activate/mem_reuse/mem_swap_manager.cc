@@ -65,6 +65,7 @@ void MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph) {
 void MemSwapManager::SaveUserKernelTopoOrder(const mindspore::session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   FuncGraphManagerPtr manager = kernel_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   NodeUsersMap user_map = manager->node_users();
   for (const auto &kernel : execution_order_) {
     auto iter = user_map.find(kernel);
