@@ -22,8 +22,8 @@ import os
 import argparse
 from dataset import create_dataset
 from config import mnist_cfg as cfg
+from lenet import LeNet5
 import mindspore.nn as nn
-from mindspore.model_zoo.lenet import LeNet5
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig

@@ -23,7 +23,7 @@ import mindspore.dataset.transforms.vision.c_transforms as CV
 from mindspore.common import dtype as mstype
 
 
-def create_dataset(data_path, batch_size=32, repeat_size=1, status="train"):
+def create_dataset_mnist(data_path, batch_size=32, repeat_size=1, status="train"):
     """
     create dataset for train or test
     """

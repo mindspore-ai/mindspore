@@ -22,8 +22,8 @@ import os
 import argparse
 from config import mnist_cfg as cfg
 from dataset import create_dataset
+from lenet import LeNet5
 import mindspore.nn as nn
-from mindspore.model_zoo.lenet import LeNet5
 from mindspore import context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train import Model
@@ -36,7 +36,7 @@ if __name__ == "__main__":
                         help='device where the code will be implemented (default: Ascend)')
     parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                         help='path where the dataset is saved')
-    parser.add_argument('--dataset_sink_mode', type=bool, default=False, help='dataset_sink_mode is False or True')
+    parser.add_argument('--dataset_sink_mode', type=bool, default=True, help='dataset_sink_mode is False or True')
 
     args = parser.parse_args()
 

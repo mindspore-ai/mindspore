@@ -20,10 +20,10 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 
 import argparse
 from config import alexnet_cfg as cfg
-from dataset import create_dataset
+from dataset import create_dataset_mnist
+from alexnet import AlexNet
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.model_zoo.alexnet import AlexNet
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
@@ -50,9 +50,8 @@ if __name__ == "__main__":
     print("============== Starting Testing ==============")
     param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
-    ds_eval = create_dataset(args.data_path,
-                             cfg.batch_size,
-                             1,
-                             "test")
+    ds_eval = create_dataset_mnist(args.data_path,
+                                   cfg.batch_size,
+                                   status="test")
     acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
     print("============== Accuracy:{} ==============".format(acc))
