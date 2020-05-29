@@ -1,8 +1,8 @@
 # Deeplab-V3 Example
 
 ## Description
-This is an example of training DeepLabv3 with PASCAL VOC 2012 dataset in MindSpore.
-Paper Rethinking Atrous Convolution for Semantic Image Segmentation
+- This is an example of training DeepLabv3 with PASCAL VOC 2012 dataset in MindSpore.
+- Paper Rethinking Atrous Convolution for Semantic Image Segmentation
 Liang-Chieh Chen, George Papandreou, Florian Schroff, Hartwig Adam
 
 
