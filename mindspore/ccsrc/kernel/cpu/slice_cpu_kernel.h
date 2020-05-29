@@ -35,12 +35,15 @@ class SliceCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<int> begin_;
-  std::vector<int> size_;
+  std::vector<int> end_;
+  std::vector<int> strides_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
 };
 
 MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  SliceCPUKernel);
+MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   SliceCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

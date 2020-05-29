@@ -47,6 +47,7 @@ const char TRANSPOSE_NO = 'N';
 const char TRANSPOSE_YES = 'T';
 const char AXIS[] = "axis";
 const char BEGIN[] = "begin";
+const char END[] = "end";
 const char SIZE[] = "size";
 
 class CPUKernel : public kernel::KernelMod {
