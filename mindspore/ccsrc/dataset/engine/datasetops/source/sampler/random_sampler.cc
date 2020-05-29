@@ -76,6 +76,7 @@ Status RandomSampler::InitSampler() {
 
   if (replacement_ == false) {
     num_samples_ = std::min(num_samples_, num_rows_);
+    num_samples_ = std::min(num_samples_, user_num_samples_);
 
     shuffled_ids_.reserve(num_rows_);
     for (int64_t i = 0; i < num_rows_; i++) {
