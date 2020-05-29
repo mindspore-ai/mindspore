@@ -128,7 +128,7 @@ class NetForFlattenComposed(nn.Cell):
         self.flatten = P.Flatten()
 
     def construct(self, x, y):
-        return self.flatten(x+x) + y
+        return self.flatten(x + x) + y
 
 
 class ArgmaxNet(nn.Cell):
@@ -280,6 +280,7 @@ class ApplyRMSNet(nn.Cell):
     def construct(self, grad):
         out = self.apply_rms(self.var, self.ms, self.moment, self.lr, grad, self.rho, self.momentum, self.epsilon)
         return out
+
 
 test_case_math_ops = [
     ('BitwiseAnd', {
@@ -732,6 +733,14 @@ test_case_math_ops = [
         'block': P.Atanh(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Cosh', {
+        'block': P.Cosh(),
+        'desc_inputs': [[3, 4, 5]],
+        'desc_bprop': [[3, 4, 5]]}),
+    ('Sinh', {
+        'block': P.Sinh(),
+        'desc_inputs': [[3, 4, 5]],
+        'desc_bprop': [[3, 4, 5]]}),
 ]
 
 test_case_nn_ops = [
@@ -1301,7 +1310,7 @@ test_case_array_ops = [
         'desc_inputs': [(Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
-        'desc_bprop': [[3,]]}),
+        'desc_bprop': [[3, ]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -1464,7 +1473,7 @@ test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 test_exec_case = test_case
 
 test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                 'backward' not in x[1]['skip'], test_case)
+                                           'backward' not in x[1]['skip'], test_case)
 
 
 @non_graph_engine

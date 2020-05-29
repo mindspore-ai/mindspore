@@ -1359,6 +1359,35 @@ class Acosh(PrimitiveWithInfer):
         return x_dtype
 
 
+class Cosh(PrimitiveWithInfer):
+    """
+    Computes hyperbolic cosine of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> cosh = P.Cosh()
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = cosh(input_x)
+        [1.0289385 1.364684 1.048436 1.4228927]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Cosh"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
 class Asinh(PrimitiveWithInfer):
     """
     Compute inverse hyperbolic cosine of x element-wise.
@@ -1376,10 +1405,38 @@ class Asinh(PrimitiveWithInfer):
         [-2.3212, 1.1976, 1.8184, 5.2983]
     """
 
-
     @prim_attr_register
     def __init__(self):
         """init Asinh"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
+class Sinh(PrimitiveWithInfer):
+    """
+    Computes hyperbolic sine of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> sinh = P.Sinh()
+        >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = sinh(input_x)
+        [0.6604918 0.28367308 0.44337422 0.6604918]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Sinh"""
 
     def infer_shape(self, x_shape):
         return x_shape

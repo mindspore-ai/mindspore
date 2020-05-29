@@ -40,7 +40,8 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 
-from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
+from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr,
+                       BitwiseXor,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, Equal, EqualCount, Exp, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -50,7 +51,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh)
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh)
+
 from .random_ops import (RandomChoiceWithMask)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
@@ -245,6 +247,7 @@ __all__ = [
     'Asinh',
     "PReLU",
     "Cos",
+    "Cosh",
     "ACos",
     "Diag",
     "DiagPart",
@@ -253,6 +256,7 @@ __all__ = [
     'AssignAdd',
     'AssignSub',
     "Sin",
+    "Sinh",
     "Asin",
     "LSTM",
     "Abs",

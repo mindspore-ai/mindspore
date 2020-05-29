@@ -793,6 +793,18 @@ def get_bprop_asinh(self):
     return bprop
 
 
+@bprop_getters.register(P.Sinh)
+def get_bprop_sinh(self):
+    """Grad definition for `Sinh` operation."""
+    cosh = P.Cosh()
+
+    def bprop(x, out, dout):
+        dx = cosh(x) * dout
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Cos)
 def get_bprop_cos(self):
     """Grad definition for `Cos` operation."""
@@ -825,6 +837,18 @@ def get_bprop_acosh(self):
 
     def bprop(x, out, dout):
         dx = input_grad(out, dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Cosh)
+def get_bprop_cosh(self):
+    """Grad definition for `Cosh` operation."""
+    sinh = P.Sinh()
+
+    def bprop(x, out, dout):
+        dx = sinh(x) * dout
         return (dx,)
 
     return bprop
