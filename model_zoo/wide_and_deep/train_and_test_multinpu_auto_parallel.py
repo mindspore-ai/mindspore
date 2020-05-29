@@ -17,6 +17,7 @@
 
 import os
 import sys
+import mindspore.dataset.engine as de
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train import ParallelMode
@@ -79,10 +80,18 @@ def test_train_eval():
     batch_size = config.batch_size
     epochs = config.epochs
     print("epochs is {}".format(epochs))
-    ds_train = create_dataset(data_path, train_mode=True, epochs=epochs,
-                              batch_size=batch_size, rank_id=get_rank(), rank_size=get_group_size())
-    ds_eval = create_dataset(data_path, train_mode=False, epochs=epochs + 1,
-                             batch_size=batch_size, rank_id=get_rank(), rank_size=get_group_size())
+    if config.full_batch:
+        context.set_auto_parallel_context(full_batch=True)
+        de.config.set_seed(1)
+        ds_train = create_dataset(data_path, train_mode=True, epochs=epochs,
+                                  batch_size=batch_size*get_group_size())
+        ds_eval = create_dataset(data_path, train_mode=False, epochs=epochs + 1,
+                                 batch_size=batch_size*get_group_size())
+    else:
+        ds_train = create_dataset(data_path, train_mode=True, epochs=epochs,
+                                  batch_size=batch_size, rank_id=get_rank(), rank_size=get_group_size())
+        ds_eval = create_dataset(data_path, train_mode=False, epochs=epochs + 1,
+                                 batch_size=batch_size, rank_id=get_rank(), rank_size=get_group_size())
     print("ds_train.size: {}".format(ds_train.get_dataset_size()))
     print("ds_eval.size: {}".format(ds_eval.get_dataset_size()))
 

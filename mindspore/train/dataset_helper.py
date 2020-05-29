@@ -17,11 +17,10 @@ import math
 
 from mindspore._checkparam import check_bool
 from .. import context
-from .parallel_utils import ParallelMode
 from ._utils import _exec_datagraph, _get_types_and_shapes, _to_tensor, \
     _construct_tensor_list, _to_full_shapes, _to_full_tensor
 from ..nn.wrap import GetNextSingleOp
-from ..parallel._utils import _get_device_num, _get_global_rank, _get_parallel_mode
+from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full
 
 
 class DatasetHelper:
@@ -118,10 +117,10 @@ class _DatasetIterMSLoopSink(_DatasetIter):
     def __init__(self, dataset):
         super(_DatasetIterMSLoopSink, self).__init__(dataset)
         self.loop_count = self.get_loop_count(dataset)
-        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
-        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
-        # times the batch dimension of tensors for run. Now only support LoopSink.
-        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, and not using full_batch,
+        # use a complete tensor to compile, and slice tensor to run. The batch dimension of tensors for
+        # compile is device_number times the batch dimension of tensors for run. Now only support LoopSink.
+        if _need_to_full():
             device_num = _get_device_num()
             self.dataset_shapes = _to_full_shapes(self.dataset_shapes, device_num)
 
@@ -146,10 +145,8 @@ class _DatasetIterGE(_DatasetIter):
     def __init__(self, dataset):
         super(_DatasetIterGE, self).__init__(dataset)
         self.loop_count = self.get_loop_count(dataset)
-        parallel_mode = _get_parallel_mode()
-        self.need_to_full = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         batch_expand_num = 1
-        if self.need_to_full:
+        if _need_to_full():
             batch_expand_num = _get_device_num()
         tensor_list_run = _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num)
 
@@ -170,9 +167,6 @@ class _DatasetIterFeed:
         self.loop_count = dataset.get_dataset_size()
         self.ind = 0
 
-        parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        self.need_to_full = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-
     def __iter__(self):
         if self.repeat_ind % self.repeat_count == 0:
             self.iter = self.dataset.__iter__()
@@ -186,6 +180,6 @@ class _DatasetIterFeed:
             raise StopIteration()
         self.ind += 1
         data = self.iter.__next__()
-        if self.need_to_full:
+        if _need_to_full():
             return _to_full_tensor(data, self.device_num, self.global_rank)
         return _to_tensor(data)

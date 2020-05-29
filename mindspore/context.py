@@ -367,7 +367,8 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
-                 parameter_broadcast=bool, strategy_ckpt_load_file=str, strategy_ckpt_save_file=str)
+                 parameter_broadcast=bool, strategy_ckpt_load_file=str, strategy_ckpt_save_file=str,
+                 full_batch=bool)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -404,6 +405,7 @@ def set_auto_parallel_context(**kwargs):
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
+        full_batch (bool): Whether to load the whole batch on each device. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

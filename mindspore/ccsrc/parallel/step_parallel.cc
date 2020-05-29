@@ -1375,11 +1375,19 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
 
 void SetVirtualDatasetStrategy(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == VIRTUAL_DATA_SET) {
     CheckGlobalDeviceManager();
-    int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+    int32_t dev_num;
+    if (full_batch) {
+      dev_num = 1;
+    } else {
+      dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+    }
     auto attrs_temp = prim->attrs();
     std::vector<Shapes> shape_list = ExtractShape(node);
     if (shape_list.empty()) {

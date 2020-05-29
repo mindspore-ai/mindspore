@@ -187,6 +187,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set strategy checkpoint save file.")
     .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
     .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
+    .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
+    .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
