@@ -81,6 +81,11 @@ def run_pretrain():
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                           device_num=device_num)
+        from mindspore.parallel._auto_parallel_context import auto_parallel_context
+        if bert_net_cfg.num_hidden_layers == 12:
+            auto_parallel_context().set_all_reduce_fusion_split_indices([28, 55, 82, 109, 136, 163, 190, 205])
+        elif bert_net_cfg.num_hidden_layers == 24:
+            auto_parallel_context().set_all_reduce_fusion_split_indices([38, 93, 148, 203, 258, 313, 368, 397])
         D.init()
         rank = args_opt.device_id % device_num
     else:
