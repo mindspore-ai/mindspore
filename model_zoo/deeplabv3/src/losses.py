@@ -50,7 +50,7 @@ class OhemLoss(nn.Cell):
         losses = self.cross_entropy(logits, one_hot_labels)[0]
         weights = self.cast(self.not_equal(labels, self.ignore_label), mstype.float32) * self.loss_weight
         weighted_losses = self.mul(losses, weights)
-        loss = self.reduce_sum(weighted_losses,(0,))
+        loss = self.reduce_sum(weighted_losses, (0,))
         zeros = self.fill(mstype.float32, self.shape(weights), 0.0)
         ones = self.fill(mstype.float32, self.shape(weights), 1.0)
         present = self.select(self.equal(weights, zeros), zeros, ones)
