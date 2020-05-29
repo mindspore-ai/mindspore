@@ -560,9 +560,9 @@ class Dataset:
 
         Note:
             1. If count is greater than the number of element in dataset or equal to -1,
-                all the element in dataset will be taken.
+               all the element in dataset will be taken.
             2. The order of using take and batch effects. If take before batch operation,
-                then taken given number of rows, otherwise take given number of batches.
+               then taken given number of rows, otherwise take given number of batches.
 
         Args:
             count (int, optional): Number of elements to be taken from the dataset (default=-1).
@@ -640,8 +640,8 @@ class Dataset:
         Note:
             1. Dataset cannot be sharded if split is going to be called.
             2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
-                Shuffling the dataset may not be deterministic, which means the data in each split
-                will be different in each epoch.
+               Shuffling the dataset may not be deterministic, which means the data in each split
+               will be different in each epoch.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -1254,13 +1254,13 @@ class MappableDataset(SourceDataset):
 
         Note:
             1. Dataset should not be sharded if split is going to be called. Instead, create a
-                DistributedSampler and specify a split to shard after splitting. If dataset is
-                sharded after a split, it is strongly recommended to set the same seed in each instance
-                of execution, otherwise each shard may not be part of the same split (see Examples)
+               DistributedSampler and specify a split to shard after splitting. If dataset is
+               sharded after a split, it is strongly recommended to set the same seed in each instance
+               of execution, otherwise each shard may not be part of the same split (see Examples).
             2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
-                Shuffling the dataset may not be deterministic, which means the data in each split
-                will be different in each epoch. Furthermore, if sharding occurs after split, each
-                shard may not be part of the same split.
+               Shuffling the dataset may not be deterministic, which means the data in each split
+               will be different in each epoch. Furthermore, if sharding occurs after split, each
+               shard may not be part of the same split.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
