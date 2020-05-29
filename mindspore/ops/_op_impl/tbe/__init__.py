@@ -194,6 +194,7 @@ from .sgd import _sgd_tbe
 from .lars_update import _lars_update_tbe
 from .arg_min import _arg_min_tbe
 from .bn_training_update_v2 import _bn_training_update_v2_tbe
+from .bn_training_update_v3 import _bn_training_update_v3_tbe
 from .square_sum_all import _square_sum_all_tbe
 from .pack import _pack_tbe
 from .unpack import _unpack_tbe

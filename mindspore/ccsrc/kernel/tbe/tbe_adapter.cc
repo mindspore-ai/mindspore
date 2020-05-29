@@ -55,6 +55,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"b_n_training_reduce", "bn_training_reduce"},
   {"b_n_training_update", "bn_training_update"},
   {"b_n_training_update_v2", "bn_training_update_v2"},
+  {"b_n_training_update_v3", "bn_training_update_v3"},
   {"b_n_training_reduce_grad", "bn_training_reduce_grad"},
   {"b_n_training_update_grad", "bn_training_update_grad"},
   {"b_n_infer", "bn_infer"},
