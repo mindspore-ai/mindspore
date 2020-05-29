@@ -263,6 +263,7 @@ Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy);
 Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape, bool);
 Operator CreateVirtualDivOp(int32_t div_num);
 Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &group);
+Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
