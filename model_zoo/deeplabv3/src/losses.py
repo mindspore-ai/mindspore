@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +15,12 @@
 """OhemLoss."""
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
- 
+
+
 class OhemLoss(nn.Cell):
+    """Ohem loss cell."""
     def __init__(self, num, ignore_label):
         super(OhemLoss, self).__init__()
         self.mul = P.Mul()
@@ -40,30 +40,24 @@ class OhemLoss(nn.Cell):
         self.transpose = P.Transpose()
         self.ignore_label = ignore_label
         self.loss_weight = 1.0
- 
+
     def construct(self, logits, labels):
-        logits = self.transpose(logits,(0,2,3,1))
-        logits = self.reshape(logits, (-1,self.num))
-        labels = F.cast(labels,mstype.int32)
+        logits = self.transpose(logits, (0, 2, 3, 1))
+        logits = self.reshape(logits, (-1, self.num))
+        labels = F.cast(labels, mstype.int32)
         labels = self.reshape(labels, (-1,))
         one_hot_labels = self.one_hot(labels)
         losses = self.cross_entropy(logits, one_hot_labels)[0]
-        weights = self.cast(self.not_equal(labels,self.ignore_label),mstype.float32) * self.loss_weight
+        weights = self.cast(self.not_equal(labels, self.ignore_label), mstype.float32) * self.loss_weight
         weighted_losses = self.mul(losses, weights)
         loss = self.reduce_sum(weighted_losses,(0,))
         zeros = self.fill(mstype.float32, self.shape(weights), 0.0)
         ones = self.fill(mstype.float32, self.shape(weights), 1.0)
-        present = self.select(
-          self.equal(weights, zeros),
-          zeros,
-          ones)
-        present = self.reduce_sum(present,(0,))
- 
+        present = self.select(self.equal(weights, zeros), zeros, ones)
+        present = self.reduce_sum(present, (0,))
+
         zeros = self.fill(mstype.float32, self.shape(present), 0.0)
         min_control = self.fill(mstype.float32, self.shape(present), 1.0)
-        present = self.select(
-          self.equal(present, zeros),
-          min_control,
-          present)
+        present = self.select(self.equal(present, zeros), min_control, present)
         loss = loss / present
         return loss
