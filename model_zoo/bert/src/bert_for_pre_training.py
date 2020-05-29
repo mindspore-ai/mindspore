@@ -32,7 +32,6 @@ from .bert_model import BertModel
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
 
-_nn_clip_by_norm = nn.ClipByNorm()
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 
 
@@ -57,7 +56,7 @@ def _clip_grad(clip_type, clip_value, grad):
         new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
                                    F.cast(F.tuple_to_array((clip_value,)), dt))
     else:
-        new_grad = _nn_clip_by_norm(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
 
 

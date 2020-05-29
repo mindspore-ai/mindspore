@@ -588,7 +588,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   graph->set_output_null(is_trace_back);
   AddParameterToGraphInputs(func_graph->parameters(), graph.get());
   MS_EXCEPTION_IF_NULL(context_);
-  FuncGraphManagerPtr manager = context_->manager();
+  FuncGraphManagerPtr manager = MakeManager({graph});
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
