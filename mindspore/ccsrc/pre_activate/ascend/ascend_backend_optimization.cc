@@ -98,6 +98,7 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond1>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond2>());
@@ -110,8 +111,15 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond4Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond1>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond2>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond3>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond4>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond5>());
   ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());

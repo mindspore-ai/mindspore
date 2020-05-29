@@ -18,14 +18,15 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "pre_activate/common/optimizer.h"
 #include "utils/utils.h"
 namespace mindspore {
 namespace opt {
 class AdamApplyOneWithDecayRule : public PatternProcessPass {
  public:
-  explicit AdamApplyOneWithDecayRule(bool multigraph = true)
-      : PatternProcessPass("adam_apply_one_with_decay_rule", multigraph) {
+  explicit AdamApplyOneWithDecayRule(const std::string &name = "adam_apply_one_with_decay_rule", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {
     input0_ = std::make_shared<Var>();
     input1_ = std::make_shared<Var>();
     input2_ = std::make_shared<Var>();
@@ -41,10 +42,10 @@ class AdamApplyOneWithDecayRule : public PatternProcessPass {
     add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
   }
   ~AdamApplyOneWithDecayRule() override = default;
-  const BaseRef DefinePattern() const override;
+  const BaseRef DefinePattern() const override = 0;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
- private:
+ protected:
   std::vector<AnfNodePtr> GetFusionNodeInputs(const EquivPtr &equiv) const;
   VarPtr input0_;
   VarPtr input1_;
@@ -59,6 +60,51 @@ class AdamApplyOneWithDecayRule : public PatternProcessPass {
   VarPtr add2_y_;
   VarPtr add0_var_;
   VarPtr add1_var_;
+};
+
+class AdamApplyOneWithDecayRuleCond1 : public AdamApplyOneWithDecayRule {
+ public:
+  explicit AdamApplyOneWithDecayRuleCond1(bool multigraph = true)
+      : AdamApplyOneWithDecayRule("adam_apply_one_with_decay_rule_cond1", multigraph) {}
+
+  ~AdamApplyOneWithDecayRuleCond1() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneWithDecayRuleCond2 : public AdamApplyOneWithDecayRule {
+ public:
+  explicit AdamApplyOneWithDecayRuleCond2(bool multigraph = true)
+      : AdamApplyOneWithDecayRule("adam_apply_one_with_decay_rule_cond2", multigraph) {}
+
+  ~AdamApplyOneWithDecayRuleCond2() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneWithDecayRuleCond3 : public AdamApplyOneWithDecayRule {
+ public:
+  explicit AdamApplyOneWithDecayRuleCond3(bool multigraph = true)
+      : AdamApplyOneWithDecayRule("adam_apply_one_with_decay_rule_cond3", multigraph) {}
+
+  ~AdamApplyOneWithDecayRuleCond3() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneWithDecayRuleCond4 : public AdamApplyOneWithDecayRule {
+ public:
+  explicit AdamApplyOneWithDecayRuleCond4(bool multigraph = true)
+      : AdamApplyOneWithDecayRule("adam_apply_one_with_decay_rule_cond4", multigraph) {}
+
+  ~AdamApplyOneWithDecayRuleCond4() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneWithDecayRuleCond5 : public AdamApplyOneWithDecayRule {
+ public:
+  explicit AdamApplyOneWithDecayRuleCond5(bool multigraph = true)
+      : AdamApplyOneWithDecayRule("adam_apply_one_with_decay_rule_cond5", multigraph) {}
+
+  ~AdamApplyOneWithDecayRuleCond5() override = default;
+  const BaseRef DefinePattern() const override;
 };
 }  // namespace opt
 }  // namespace mindspore
