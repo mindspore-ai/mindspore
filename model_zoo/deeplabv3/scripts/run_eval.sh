@@ -27,5 +27,5 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python evaluation.py  \
     --device_id=$DEVICE_ID \
-    --checkpoint_url="/store1/deeplabv3/deeplabv3_split_url/train/checkpoint/CKP-12_732.ckpt" \
+    --checkpoint_url="" \
     --data_url=$DATA_DIR > log.txt 2>&1 &

@@ -58,7 +58,7 @@ do
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
     --enable_save_ckpt="true" \
-    --checkpoint_url="/store1/deeplabv3/deeplabv3_split_url/train/checkpoint/CKP-12_732.ckpt" \
+    --checkpoint_url="" \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
     --data_url=$DATA_DIR > log.txt 2>&1 &
