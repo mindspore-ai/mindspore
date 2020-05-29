@@ -30,8 +30,8 @@ class TestHWOptimizeAdamApplyOneWithDecayRule : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_rule) {
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule", "before");
+TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_rule_cond1) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond1", "before");
 
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
@@ -43,16 +43,16 @@ TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_r
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRule>());
+  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRuleCond1>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond1", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_no_match) {
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule", "no_match");
+TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_rule_cond2) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond2", "before");
 
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
@@ -61,15 +61,78 @@ TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_no_match) {
     args_spec_list.push_back(x_abstract);
   }
   auto fg = GetKernelGraph(g, args_spec_list);
-  auto origin_graph = std::make_shared<session::KernelGraph>(*fg);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRule>());
+  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRuleCond2>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
-  EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond2", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_rule_cond3) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond3", "before");
+
+  std::vector<int> shp{2, 32, 224, 224};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
+  AbstractBasePtrList args_spec_list;
+  for (size_t i = 0; i < 11; ++i) {
+    args_spec_list.push_back(x_abstract);
+  }
+  auto fg = GetKernelGraph(g, args_spec_list);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRuleCond3>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(fg);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond3", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_rule_cond4) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond4", "before");
+
+  std::vector<int> shp{2, 32, 224, 224};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
+  AbstractBasePtrList args_spec_list;
+  for (size_t i = 0; i < 11; ++i) {
+    args_spec_list.push_back(x_abstract);
+  }
+  auto fg = GetKernelGraph(g, args_spec_list);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRuleCond4>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(fg);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond4", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWOptimizeAdamApplyOneWithDecayRule, test_adam_apply_one_with_decay_rule_cond5) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond5", "before");
+
+  std::vector<int> shp{2, 32, 224, 224};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
+  AbstractBasePtrList args_spec_list;
+  for (size_t i = 0; i < 11; ++i) {
+    args_spec_list.push_back(x_abstract);
+  }
+  auto fg = GetKernelGraph(g, args_spec_list);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AdamApplyOneWithDecayRuleCond5>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(fg);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_adam_apply_one_with_decay_rule_cond5", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt
 }  // namespace mindspore
