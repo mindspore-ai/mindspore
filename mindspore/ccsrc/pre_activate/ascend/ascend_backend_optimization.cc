@@ -52,6 +52,7 @@
 #include "pre_activate/ascend/ir_fusion/batchnorm_to_bninfer.h"
 #include "pre_activate/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "pre_activate/ascend/ir_fusion/confusion_mul_grad_fusion.h"
+#include "pre_activate/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -114,7 +115,10 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond4Fusion>());
   ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
