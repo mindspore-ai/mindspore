@@ -87,7 +87,27 @@ void TaskManager::interrupt_all() noexcept {
   master_->Interrupt();
 }
 
-Task *TaskManager::FindMe() { return gMyTask; }
+Task *TaskManager::FindMe() {
+#if !defined(_WIN32) && !defined(_WIN64)
+  return gMyTask;
+#else
+  TaskManager &tm = TaskManager::GetInstance();
+  SharedLock lock(&tm.lru_lock_);
+  auto id = this_thread::get_id();
+  auto tk = std::find_if(tm.lru_.begin(), tm.lru_.end(), [id](const Task &tk) { return tk.id_ == id; });
+  if (tk != tm.lru_.end()) {
+    return &(*tk);
+  }
+  // If we get here, either I am the watchdog or the master thread.
+  if (tm.master_->id_ == id) {
+    return tm.master_.get();
+  } else if (tm.watchdog_ != nullptr && tm.watchdog_->id_ == id) {
+    return tm.watchdog_;
+  }
+  MS_LOG(ERROR) << "Task not found.";
+  return nullptr;
+#endif
+}
 
 TaskManager::TaskManager() try : global_interrupt_(0),
                                  lru_(&Task::node),
@@ -100,8 +120,8 @@ TaskManager::TaskManager() try : global_interrupt_(0),
   master_->id_ = this_thread::get_id();
   master_->running_ = true;
   master_->is_master_ = true;
-  gMyTask = master_.get();
 #if !defined(_WIN32) && !defined(_WIN64)
+  gMyTask = master_.get();
   // Initialize the semaphore for the watchdog
   errno_t rc = sem_init(&sem_, 0, 0);
   if (rc == -1) {
