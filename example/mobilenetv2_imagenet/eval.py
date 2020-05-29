@@ -22,9 +22,9 @@ from mindspore import nn
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
+from mindspore.model_zoo.mobilenetV2 import mobilenet_v2
 from src.dataset import create_dataset
 from src.config import config_ascend, config_gpu
-from src.mobilenetV2 import mobilenet_v2
 
 
 parser = argparse.ArgumentParser(description='Image classification')
