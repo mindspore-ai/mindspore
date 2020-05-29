@@ -17,11 +17,11 @@ import os
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 
-from wide_deep.models.WideDeep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
-from wide_deep.utils.callbacks import LossCallBack, EvalCallBack
-from wide_deep.data.datasets import create_dataset
-from wide_deep.utils.metrics import AUCMetric
-from tools.config import Config_WideDeep
+from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
+from src.callbacks import LossCallBack, EvalCallBack
+from src.datasets import create_dataset
+from src.metrics import AUCMetric
+from src.config import WideDeepConfig
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Davinci")
 
@@ -81,7 +81,7 @@ def test_train_eval(config):
 
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
-    callback = LossCallBack()
+    callback = LossCallBack(config=config)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train', directory=config.ckpt_path, config=ckptconfig)
 
@@ -91,7 +91,7 @@ def test_train_eval(config):
 
 
 if __name__ == "__main__":
-    wide_deep_config = Config_WideDeep()
+    wide_deep_config = WideDeepConfig()
     wide_deep_config.argparse_init()
 
     test_train_eval(wide_deep_config)

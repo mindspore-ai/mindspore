@@ -38,9 +38,9 @@ def argparse_init():
     return parser
 
 
-class Config_WideDeep():
+class WideDeepConfig():
     """
-    Config_WideDeep
+    WideDeepConfig
     """
     def __init__(self):
         self.data_path = "./test_raw_data/"
@@ -70,6 +70,7 @@ class Config_WideDeep():
         """
         parser = argparse_init()
         args, _ = parser.parse_known_args()
+        self.data_path = args.data_path
         self.epochs = args.epochs
         self.batch_size = args.batch_size
         self.eval_batch_size = args.eval_batch_size

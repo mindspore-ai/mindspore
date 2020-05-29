@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""train_imagenet."""
+"""train_multinpu."""
 
 
 import os
@@ -27,7 +27,7 @@ from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClas
 from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset
 from src.metrics import AUCMetric
-from src.config import Config_WideDeep
+from src.config import WideDeepConfig
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 context.set_context(mode=GRAPH_MODE, device_target="Davinci", save_graph=True)
@@ -71,7 +71,7 @@ def test_train_eval():
     test_train_eval
     """
     np.random.seed(1000)
-    config = Config_WideDeep
+    config = WideDeepConfig
     data_path = Config.data_path
     batch_size = config.batch_size
     epochs = config.epochs
@@ -93,7 +93,7 @@ def test_train_eval():
 
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
-    callback = LossCallBack(config)
+    callback = LossCallBack(config=config)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path, config=ckptconfig)

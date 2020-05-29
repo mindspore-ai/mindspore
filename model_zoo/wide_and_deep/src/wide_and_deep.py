@@ -135,8 +135,8 @@ class WideDeepModel(nn.Cell):
         self.field_size = config.field_size
         self.vocab_size = config.vocab_size
         self.emb_dim = config.emb_dim
-        self.deep_layer_args = config.deep_layer_args
-        self.deep_layer_dims_list, self.deep_layer_act = self.deep_layer_args
+        self.deep_layer_dims_list = config.deep_layer_dim
+        self.deep_layer_act = config.deep_layer_act
         self.init_args = config.init_args
         self.weight_init, self.bias_init = config.weight_bias_init
         self.weight_bias_init = config.weight_bias_init
