@@ -24,7 +24,7 @@ def confuse_matrix(target, pred, n):
 
 def iou(hist):
     denominator = hist.sum(1) + hist.sum(0) - np.diag(hist)
-    res = np.diag(hist) / np.where(denominator > 0, denominator, 1) 
+    res = np.diag(hist) / np.where(denominator > 0, denominator, 1)
     res = np.sum(res) / np.count_nonzero(denominator)
     return res
 
@@ -62,7 +62,7 @@ class MiouPrecision(Metric):
         self._hist = confuse_matrix(label.flatten(), pred.flatten(), self._num_class)
         mIoUs = iou(self._hist)
         self._mIoU.append(mIoUs)
-       
+
     def eval(self):
         """
         Computes the mIoU categorical accuracy.
