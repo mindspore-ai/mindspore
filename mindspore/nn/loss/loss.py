@@ -198,14 +198,12 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     Scores Tensor :math:`x` is of shape :math:`(N, C)` and target Tensor :math:`t` is a
     Tensor of shape :math:`(N, C)` which contains one-hot labels of length :math:`C`.
 
-    For each batch :math:`N_i`, the loss is given as:
+    For each instance :math:`N_i`, the loss is given as:
 
     .. math::
-        \ell(x_i, t_i) = -w_{t_i} \log\left(\frac{\exp(x_{t_i})}{\sum_j \exp(x_j)}\right)
-        = w_{t_i} \left(-x_{t_i} + \log\left(\sum_j \exp(x_i)\right)\right),
-    where :math:`x_i` is a 1D score Tensor, :math:`t_i` is the target class and
-    :math:`w` is a weight Tensor to generate weighted loss for each class. When not specified,
-    weight Tensor is set to be None and weight is the same (:math:`1`) for all class.
+        \ell(x_i, t_i) = - \log\left(\frac{\exp(x_{t_i})}{\sum_j \exp(x_j)}\right)
+        =  -x_{t_i} + \log\left(\sum_j \exp(x_i)\right),
+    where :math:`x_i` is a 1D score Tensor, :math:`t_i` is a scalar.
 
     Note:
         While the target classes are mutually exclusive, i.e., only one class is positive in the target, the predicted
@@ -221,8 +219,8 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         num_classes (int): The number of classes in the task. It is a optional input Default: 2.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
-        - **labels** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`. If `sparse` is True, The type of
+        - **logits** (Tensor) - Tensor of shape (N, C).
+        - **labels** (Tensor) - Tensor of shape (N, ). If `sparse` is True, The type of
           `labels` is mindspore.int32. If `sparse` is False, the type of `labels` is same as the type of `logits`.
 
     Outputs:

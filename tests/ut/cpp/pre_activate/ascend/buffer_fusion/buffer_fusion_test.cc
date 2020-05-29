@@ -21,7 +21,19 @@
 #include "device/kernel_info.h"
 #include "pre_activate/common/optimizer.h"
 #include "session/anf_runtime_algorithm.h"
-#include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
+#include "pre_activate/ascend/buffer_fusion/ub_pattern_fusion.h"
+#include "pre_activate/ascend/buffer_fusion/eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv_bnreduce_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/reduce_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 
 namespace mindspore {
 namespace opt {
@@ -79,10 +91,13 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_1) {
   cast->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), cast.get());
 
+  auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
+  MS_EXCEPTION_IF_NULL(fusion_id_allocator);
+  fusion_id_allocator->Init();
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto buffer_fusion_pass = std::make_shared<opt::BufferFusion>();
-  pm->AddPass(buffer_fusion_pass);
+  pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator));
+  pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
@@ -168,10 +183,13 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
   biasadd->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder2.Build(), biasadd.get());
 
+  auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
+  MS_EXCEPTION_IF_NULL(fusion_id_allocator);
+  fusion_id_allocator->Init();
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto buffer_fusion_pass = std::make_shared<opt::BufferFusion>();
-  pm->AddPass(buffer_fusion_pass);
+  pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator));
+  pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
@@ -255,10 +273,13 @@ TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
   biasaddgrad->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder2.Build(), biasaddgrad.get());
 
+  auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
+  MS_EXCEPTION_IF_NULL(fusion_id_allocator);
+  fusion_id_allocator->Init();
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto buffer_fusion_pass = std::make_shared<opt::BufferFusion>();
-  pm->AddPass(buffer_fusion_pass);
+  pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator));
+  pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
@@ -321,10 +342,13 @@ TEST_F(TestHWBufferFusion, test_tbe_matmul_eltwise_fusion) {
   cast->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), cast.get());
 
+  auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
+  MS_EXCEPTION_IF_NULL(fusion_id_allocator);
+  fusion_id_allocator->Init();
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto buffer_fusion_pass = std::make_shared<opt::BufferFusion>();
-  pm->AddPass(buffer_fusion_pass);
+  pm->AddPass(std::make_shared<MatmulEltwiseFusionPass>(fusion_id_allocator));
+  pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 

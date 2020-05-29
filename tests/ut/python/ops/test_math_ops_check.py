@@ -13,30 +13,20 @@
 # limitations under the License.
 # ============================================================================
 """ test ops """
-import functools
 import numpy as np
 
 import mindspore.nn as nn
-import mindspore.ops.composite as C
 from mindspore import Tensor
-from mindspore import ops
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
 from mindspore.common.parameter import Parameter
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
-from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
-    import (pipeline_for_compile_forward_ge_graph_for_case_by_case_config,
-            pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
-    import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
 
 class AssignAddNet(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(AssignAddNet, self).__init__()
         self.op = P.AssignAdd()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_add1")
@@ -47,7 +37,7 @@ class AssignAddNet(nn.Cell):
 
 
 class AssignSubNet(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(AssignSubNet, self).__init__()
         self.op = P.AssignSub()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_sub1")

@@ -47,6 +47,7 @@ FuncGraph::FuncGraph()
     : flags_(),
       transforms_(),
       parameter_default_value_(),
+      seen_(0),
       parameters_(),
       has_vararg_(false),
       has_kwarg_(false),
@@ -195,25 +196,93 @@ GraphDebugInfoPtr FuncGraph::debug_info() {
   return this->debug_info_;
 }
 
-const AnfNodeSet &FuncGraph::nodes() {
-  auto mng = manager_.lock();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto &nodes = mng->nodes();
-  return nodes[shared_from_base<FuncGraph>()];
+const AnfNodeSet &FuncGraph::nodes() { return nodes_; }
+
+void FuncGraph::CopyNodes(const FuncGraphPtr &source) { nodes_ = source->nodes(); }
+
+void FuncGraph::ClearNodes() { nodes_.clear(); }
+
+void FuncGraph::AddNode(AnfNodePtr node) { nodes_.add(node); }
+
+void FuncGraph::DropNode(AnfNodePtr node) {
+  nodes_.erase(node);
+  auto graph = node->func_graph();
+  // Remove the node from order list.
+  if (graph) {
+    graph->EraseUnusedNodeInOrder(node);
+  }
 }
 
-const AnfNodeCounterMap &FuncGraph::value_nodes() {
-  auto mng = manager_.lock();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto &cts = mng->valuenodes();
-  return cts[shared_from_base<FuncGraph>()];
+const AnfNodeCounterMap &FuncGraph::value_nodes() { return value_nodes_; }
+
+void FuncGraph::CopyValueNodes(const FuncGraphPtr &source) {
+  auto &others = source->value_nodes();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    AddValueNode(it->first, it->second);
+  }
 }
 
-const AnfNodeCounterMap &FuncGraph::free_variables_direct() {
-  auto mng = manager_.lock();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto &fv_direct = mng->free_variables_direct();
-  return fv_direct[shared_from_base<FuncGraph>()];
+void FuncGraph::ClearValueNodes() { value_nodes_.clear(); }
+
+void FuncGraph::AddValueNode(AnfNodePtr node, int count) {
+  if (value_nodes_.count(node) == 0) {
+    value_nodes_[node] = count;
+  } else {
+    value_nodes_[node] += count;
+  }
+}
+
+void FuncGraph::DropValueNode(AnfNodePtr node) {
+  if (value_nodes_.count(node) != 0) {
+    if (value_nodes_[node] == 1) {
+      (void)value_nodes_.erase(node);
+    } else {
+      value_nodes_[node]--;
+      if (value_nodes_[node] < 0) {
+        MS_LOG(EXCEPTION) << "Count of ValueNode '" << node
+                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+      }
+    }
+  }
+}
+
+const AnfNodeCounterMap &FuncGraph::free_variables() { return free_variables_; }
+
+void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
+  auto &others = source->free_variables();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    if (it->first->func_graph().get() != this) {
+      (void)AddFreeVariable(it->first, it->second);
+    }
+  }
+}
+
+void FuncGraph::ClearFreeVariables() { free_variables_.clear(); }
+
+bool FuncGraph::AddFreeVariable(AnfNodePtr node, int count) {
+  if (free_variables_.count(node) == 0) {
+    free_variables_[node] = count;
+    return true;
+  } else {
+    free_variables_[node] += count;
+    return false;
+  }
+}
+
+bool FuncGraph::DropFreeVariable(AnfNodePtr node) {
+  if (free_variables_.count(node) != 0) {
+    if (free_variables_[node] == 1) {
+      (void)free_variables_.erase(node);
+      return true;
+    } else {
+      free_variables_[node]--;
+      if (free_variables_[node] < 0) {
+        MS_LOG(EXCEPTION) << "Count of free variable '" << node
+                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+      }
+    }
+  }
+  return false;
 }
 
 const BaseRefCounterMap &FuncGraph::free_variables_total() {
@@ -249,11 +318,42 @@ std::vector<FuncGraphPtr> FuncGraph::free_variables_func_graphs() {
   return func_graphs;
 }
 
-const FuncGraphCounterMap &FuncGraph::func_graphs_used() {
-  auto mng = manager_.lock();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto &used = mng->func_graphs_used();
-  return used[shared_from_base<FuncGraph>()];
+const FuncGraphCounterMap &FuncGraph::func_graphs_used() { return func_graphs_used_; }
+
+void FuncGraph::CopyFuncGraphsUsed(const FuncGraphPtr &source) {
+  auto &others = source->func_graphs_used();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    (void)AddFuncGraphUsed(it->first, it->second);
+  }
+  func_graphs_used_.erase(source);
+}
+
+void FuncGraph::ClearFuncGraphsUsed() { func_graphs_used_.clear(); }
+
+bool FuncGraph::AddFuncGraphUsed(FuncGraphPtr fg, int count) {
+  if (func_graphs_used_.count(fg) == 0) {
+    func_graphs_used_[fg] = count;
+    return true;
+  } else {
+    func_graphs_used_[fg] += count;
+    return false;
+  }
+}
+
+bool FuncGraph::DropFuncGraphUsed(FuncGraphPtr fg) {
+  if (func_graphs_used_.count(fg) != 0) {
+    if (func_graphs_used_[fg] == 1) {
+      (void)func_graphs_used_.erase(fg);
+      return true;
+    } else {
+      func_graphs_used_[fg]--;
+      if (func_graphs_used_[fg] < 0) {
+        MS_LOG(EXCEPTION) << "Count of FuncGraph '" << fg
+                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+      }
+    }
+  }
+  return false;
 }
 
 const FuncGraphSet &FuncGraph::func_graphs_used_total() {
@@ -263,15 +363,75 @@ const FuncGraphSet &FuncGraph::func_graphs_used_total() {
   return used;
 }
 
-const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() {
-  auto mng = manager_.lock();
-  if (mng == nullptr) {
-    MS_LOG(EXCEPTION) << "BUG: no manager for this func graph: " << ToString()
-                      << " NodeInfo: " << trace::GetDebugInfo(debug_info());
+const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() { return func_graph_cnodes_index_; }
+
+void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
+  auto &others = source->func_graph_cnodes_index();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    // Ignore the user graph who may own itself.
+    auto fg = it->first->first->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (fg.get() != this) {
+      AddFuncGraphCNodeIndex(it->first, it->second);
+    }
   }
-  MS_EXCEPTION_IF_NULL(mng);
-  auto &cnode = mng->func_graph_cnodes_index();
-  return cnode[shared_from_base<FuncGraph>()];
+}
+
+void FuncGraph::ClearFuncGraphCNodesIndex() { func_graph_cnodes_index_.clear(); }
+
+void FuncGraph::AddFuncGraphCNodeIndex(CNodeIndexPairPtr pair, int count) {
+  if (func_graph_cnodes_index_.count(pair) == 0) {
+    func_graph_cnodes_index_[pair] = count;
+  } else {
+    func_graph_cnodes_index_[pair] += count;
+  }
+}
+
+void FuncGraph::DropFuncGraphCNodeIndex(CNodeIndexPairPtr pair) {
+  if (func_graph_cnodes_index_.count(pair) != 0) {
+    if (func_graph_cnodes_index_[pair] == 1) {
+      (void)func_graph_cnodes_index_.erase(pair);
+    } else {
+      func_graph_cnodes_index_[pair]--;
+      if (func_graph_cnodes_index_[pair] < 0) {
+        MS_LOG(EXCEPTION) << "Count of CNode/Index '" << pair->first << "/" << pair->second
+                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+      }
+    }
+  }
+}
+
+const FuncGraphCounterMap &FuncGraph::j_func_graphs() { return j_func_graphs_; }
+
+void FuncGraph::CopyJFuncGraphs(const FuncGraphPtr &source) {
+  auto &others = source->j_func_graphs();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    AddJFuncGraph(it->first, it->second);
+  }
+}
+
+void FuncGraph::ClearJFuncGraphs() { j_func_graphs_.clear(); }
+
+void FuncGraph::AddJFuncGraph(FuncGraphPtr fg, int count) {
+  if (j_func_graphs_.count(fg) == 0) {
+    j_func_graphs_[fg] = count;
+  } else {
+    j_func_graphs_[fg] += count;
+  }
+}
+
+void FuncGraph::DropJFuncGraph(FuncGraphPtr fg) {
+  if (j_func_graphs_.count(fg) != 0) {
+    if (j_func_graphs_[fg] == 1) {
+      (void)j_func_graphs_.erase(fg);
+    } else {
+      j_func_graphs_[fg]--;
+      if (j_func_graphs_[fg] < 0) {
+        MS_LOG(EXCEPTION) << "Count of J FuncGraph '" << fg
+                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+      }
+    }
+  }
 }
 
 FuncGraphPtr FuncGraph::parent() {
@@ -662,10 +822,10 @@ void FuncGraph::EraseUnusedNodeInOrder() {
   if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
     auto mng = manager_.lock();
     if (mng) {
-      auto nodes = mng->nodes()[shared_from_base<FuncGraph>()];
+      auto &all_nodes = nodes();
       // Erase unused cnode.
       for (auto it = order_.begin(); it != order_.end();) {
-        if (nodes.count(*it)) {
+        if (all_nodes.count(*it)) {
           (void)it++;
         } else {
           MS_LOG(DEBUG) << "Remove node " << (*it)->ToString() << " in graph " << ToString() << " order.";
@@ -702,11 +862,11 @@ void FuncGraph::CheckOrder() {
     }
     auto mng = manager_.lock();
     if (mng != nullptr) {
-      const auto &nodes = mng->nodes()[shared_from_base<FuncGraph>()];
-      if (nodes.size() != (order_.size() + parameters_.size())) {
+      const auto &all_nodes = nodes();
+      if (all_nodes.size() != (order_.size() + parameters_.size())) {
         DumpCNodeList();
         MS_LOG(EXCEPTION) << "CNode order size " << order_.size() << " is not equal to managed node size "
-                          << nodes.size() - parameters_.size() << ".";
+                          << all_nodes.size() - parameters_.size() << ".";
       }
     }
     MS_LOG(DEBUG) << "Check order okay.";
@@ -838,6 +998,11 @@ void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr> &depend_inputs) {
   } else {
     return_->set_input(1, new_ret);
   }
+}
+
+size_t NewFgSeenGeneration() {
+  static size_t fg_seen_generation = 0;
+  return ++fg_seen_generation;
 }
 
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");

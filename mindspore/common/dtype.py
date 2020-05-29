@@ -95,6 +95,8 @@ string = typing.String()
 type_refkey = typing.RefKeyType()
 tensor_type = typing.TensorType
 anything_type = typing.TypeAnything
+slice_type = typing.Slice
+ellipsis_type = typing.Ellipsis
 
 number_type = (int8,
                int16,
@@ -109,6 +111,7 @@ number_type = (int8,
                float64,)
 
 int_type = (int8, int16, int32, int64,)
+uint_type = (uint8, uint16, uint32, uint64)
 float_type = (float16, float32, float64,)
 
 _simple_types = {

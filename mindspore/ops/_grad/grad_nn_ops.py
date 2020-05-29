@@ -21,6 +21,7 @@ from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from .grad_base import bprop_getters
+from ... import context
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -308,7 +309,7 @@ def get_bprop_softmax(self):
     axis = self.axis
 
     def bprop(x, out, dout):
-        dx = mul(sub(dout, sum_func(mul(dout, out), axis)), out)
+        dx = mul(out, sub(dout, sum_func(mul(out, dout), axis)))
         return (dx,)
 
     return bprop
@@ -502,7 +503,8 @@ def get_bprop_smooth_l1_loss(self):
 
     def bprop(prediction, target, out, dout):
         dx = grad(prediction, target, dout)
-        return dx, zeros_like(target)
+        dy = grad(target, prediction, dout)
+        return dx, dy
 
     return bprop
 
@@ -550,6 +552,14 @@ def get_bprop_lstm(self):
         bidirectional=self.bidirectional,
         dropout=self.dropout
     )
+    lstm_grad = G.LSTMGrad(
+        input_size=self.input_size,
+        hidden_size=self.hidden_size,
+        num_layers=self.num_layers,
+        has_bias=self.has_bias,
+        bidirectional=self.bidirectional,
+        dropout=self.dropout
+    )
 
     def bprop(x, hx, cx, w, out, dout):
         y, _, _, reserve, state = out
@@ -557,6 +567,16 @@ def get_bprop_lstm(self):
         dx, dhx, dcx = lstm_grad_data(y, dy, dhy, dcy, w, hx, cx, reserve, state)
         dw = lstm_grad_weight(F.depend(x, dx), hx, y, reserve, state)
         return dx, dhx, dcx, dw
+
+    #
+    def bprop_cpu(x, hx, cx, w, out, dout):
+        y, hy, cy, reserve, _ = out
+        dy, dhy, dcy, _, _ = dout
+        dx, dhx, dcx, dw = lstm_grad(x, hx, cx, w, y, hy, cy, dy, dhy, dcy, reserve)
+        return dx, dhx, dcx, dw
+
+    if context.get_context('device_target') == "CPU":
+        return bprop_cpu
 
     return bprop
 

@@ -47,9 +47,8 @@ class Dataset(MindData):
             raise StopIteration
         self.index += 1
         if self.input_num == 2:
-            return self.predict, self.label
-        else:
-            return self.predict,
+            return (self.predict, self.label)
+        return (self.predict,)
 
     def reset(self):
         self.index = 0
@@ -68,7 +67,7 @@ class PReLU(nn.Cell):
         if not isinstance(w, Tensor):
             raise TypeError("w only support np.float32, float or Tensor type.")
 
-        self.w = Parameter(initializer(w, [channel, ]), name='a')
+        self.w = Parameter(initializer(w, [channel,]), name='a')
         self.prelu = P.PReLU()
         self.relu = P.ReLU().set_strategy(((1,),))
         self.sub = P.Sub().set_strategy(((1,), (1,)))
@@ -97,7 +96,6 @@ def prelu_net():
 
 
 def reshape_common(parallel_mode):
-    batch_size = 32
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2

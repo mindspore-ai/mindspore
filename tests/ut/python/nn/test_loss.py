@@ -60,5 +60,5 @@ def test_SoftmaxCrossEntropyExpand():
     loss = nn.SoftmaxCrossEntropyExpand()
 
     logits = Tensor(np.random.randint(0, 9, [100, 10]).astype(np.float32))
-    labels = Tensor(np.random.randint(0, 9, [10, ]).astype(np.float32))
+    labels = Tensor(np.random.randint(0, 9, [10,]).astype(np.float32))
     _executor.compile(loss, logits, labels)

@@ -82,6 +82,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"argmax", "arg_max_d"},
   {"space_to_batch", "space_to_batch_d"},
   {"batch_to_space", "batch_to_space_d"},
+  {"space_to_batch_nd", "space_to_batch_nd_d"},
+  {"batch_to_space_nd", "batch_to_space_nd_d"},
   {"resize_bilinear", "resize_bilinear_v2_d"},
   {"resize_bilinear_grad", "resize_bilinear_v2_grad"},
   {"adam", "apply_adam"},
@@ -92,7 +94,10 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"l_ars_update", "lars_v2_update"},
   {"n_ms_with_mask", "nms_with_mask"},
   {"square_sum_all", "square_sum_all"},
-  {"cum_sum", "cumsum_d"}};
+  {"cum_sum", "cumsum_d"},
+  {"apply_rms_prop", "apply_rms_prop_d"},
+  {"cum_prod", "cumprod_d"},
+  {"reduce_prod", "reduce_prod_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {

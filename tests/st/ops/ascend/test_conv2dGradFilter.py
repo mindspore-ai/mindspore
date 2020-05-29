@@ -18,7 +18,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
@@ -35,8 +34,8 @@ class Net(nn.Cell):
         self.get_shape = P.Shape()
 
     @ms_function
-    def construct(self, x, out):
-        return self.conv2d_grad(out, x, self.get_shape(self.y))
+    def construct(self, x_, out_):
+        return self.conv2d_grad(out_, x_, self.get_shape(self.y))
 
 
 x = Tensor(np.array([[[

@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """multitype_ops directory test case"""
-import numpy as np
 from functools import partial, reduce
+import numpy as np
 
 import mindspore.nn as nn
+import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import functional as F, composite as C
 from ..ut_filter import non_graph_engine
@@ -28,7 +29,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 class ScalarAddScalar(nn.Cell):
     """ ScalarAddScalar definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarAddScalar, self).__init__()
         self.n1 = 1.2
         self.n2 = 1.3
@@ -40,7 +41,7 @@ class ScalarAddScalar(nn.Cell):
 class ScalarAddTensor1(nn.Cell):
     """ ScalarAddTensor1 definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarAddTensor1, self).__init__()
         self.t1 = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.n1 = 1.2
@@ -53,7 +54,7 @@ class ScalarAddTensor1(nn.Cell):
 class ScalarAddTensor2(nn.Cell):
     """ ScalarAddTensor2 definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarAddTensor2, self).__init__()
         self.t1 = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.n1 = 1.2
@@ -66,7 +67,7 @@ class ScalarAddTensor2(nn.Cell):
 class TensorAddScalar(nn.Cell):
     """ TensorAddScalar definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(TensorAddScalar, self).__init__()
         self.t1 = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.n1 = 1.2
@@ -78,7 +79,7 @@ class TensorAddScalar(nn.Cell):
 class ScalarTensorSub(nn.Cell):
     """ ScalarTensorSub definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarTensorSub, self).__init__()
         self.t1 = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.n1 = 2.1
@@ -94,7 +95,7 @@ class ScalarTensorSub(nn.Cell):
 class ScalarTensorMul(nn.Cell):
     """ ScalarTensorMul definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarTensorMul, self).__init__()
         self.t1 = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.n1 = 2.1
@@ -110,7 +111,7 @@ class ScalarTensorMul(nn.Cell):
 class ScalarTensorDiv(nn.Cell):
     """ ScalarTensorDiv definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarTensorDiv, self).__init__()
         self.t1 = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.n1 = 2.1
@@ -132,8 +133,7 @@ class EqualClass(nn.Cell):
     def construct(self):
         if self.n1 == self.n2:
             return self.n1
-        else:
-            return self.n2
+        return self.n2
 
 
 grad_scale = C.MultitypeFuncGraph("grad_scale")
@@ -151,7 +151,7 @@ class MapPartialNet(nn.Cell):
     def __init__(self):
         super(MapPartialNet, self).__init__()
         self.reciprocal_scale = 1.2
-        self.x1 = Tensor(np.ones([2, 1, 2, ], np.float32))
+        self.x1 = Tensor(np.ones([2, 1, 2,], np.float32))
         self.x2 = Tensor(np.ones([2, 1, 2, 2], np.float32))
 
     def construct(self, x, y):
@@ -188,7 +188,7 @@ class UnZipNet(nn.Cell):
 
 
 class ScalarTensorOp2Cast(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(ScalarTensorOp2Cast, self).__init__()
         self.f = 1.2
         self.t = Tensor(np.ones([2, 1, 2, 2], np.float16))
@@ -284,8 +284,6 @@ test_exec_case = reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
-
-import mindspore.context as context
 
 
 @non_graph_engine

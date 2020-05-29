@@ -37,5 +37,5 @@ def test_net():
     features = np.random.randn(32, 1001).astype(np.float16)
     labels = np.random.randn(32, 1001).astype(np.float16)
     SoftmaxCrossEntropyWithLogits = Net()
-    output = SoftmaxCrossEntropyWithLogits(Tensor(features), Tensor(labels))
+    SoftmaxCrossEntropyWithLogits(Tensor(features), Tensor(labels))
     # print(output.asnumpy())

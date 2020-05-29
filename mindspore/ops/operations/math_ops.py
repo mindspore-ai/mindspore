@@ -71,7 +71,7 @@ class _BinaryOp(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init _MathBinaryOp"""
+        """init _BinaryOp"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
@@ -91,6 +91,27 @@ class _MathBinaryOp(_BinaryOp):
 
     def infer_dtype(self, x_dtype, y_dtype):
         return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type, self.name)
+
+
+class _BitwiseBinaryOp(_MathBinaryOp):
+    """
+    Define bitwise binary operators.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init _BitwiseBinaryOp"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+
+    @staticmethod
+    def _check_bitwise_op_input_type(x1_type, x2_type, prim):
+        args = {'x1': x1_type, 'x2': x2_type}
+        valid_types = mstype.int_type + mstype.uint_type
+        validator.check_tensor_type_same(args, valid_types, prim)
+        return x1_type
+
+    def infer_dtype(self, x1_type, x2_type):
+        return _BitwiseBinaryOp._check_bitwise_op_input_type(x1_type, x2_type, self.name)
 
 
 class TensorAdd(_MathBinaryOp):
@@ -475,6 +496,7 @@ class CumProd(PrimitiveWithInfer):
         cls_name = self.name
         self.exclusive = validator.check_value_type("exclusive", exclusive, [bool], cls_name)
         self.reverse = validator.check_value_type("reverse", reverse, [bool], cls_name)
+        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
 
     def infer_shape(self, x_shape, axis_shape):
         return x_shape
@@ -515,7 +537,6 @@ class MatMul(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        self.__setattr_flag__ = True
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
@@ -595,7 +616,6 @@ class BatchMatMul(MatMul):
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        self.__setattr_flag__ = True
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
@@ -681,7 +701,6 @@ class AddN(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
     def infer_shape(self, inputs):
@@ -1396,14 +1415,14 @@ class EqualCount(PrimitiveWithInfer):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have same shape.
+    The two input tensors should have same data type.
 
     Inputs:
         - **input_x** (Tensor) - The first input tensor.
         - **input_y** (Tensor) - The second input tensor.
 
     Outputs:
-        Tensor, with the type as `mindspore.int32` and size as (1,).
+        Tensor, with the type same as input tensor and size as (1,).
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2020,10 +2039,7 @@ class NMSWithMask(PrimitiveWithInfer):
         cls_name = self.name
         validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
         validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
-        if not self.is_ge:
-            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 8, Rel.EQ, cls_name)
-        else:
-            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
+        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 
@@ -2171,8 +2187,8 @@ class SquareSumAll(PrimitiveWithInfer):
         - **output_y2** (Tensor) - The same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
-         >>> input_x2 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
+         >>> input_x1 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
+         >>> input_x2 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
          >>> square_sum_all = P.SquareSumAll()
          >>> square_sum_all(input_x1, input_x2)
     """
@@ -2188,3 +2204,63 @@ class SquareSumAll(PrimitiveWithInfer):
         validator.check_tensor_type_same({'x1_type': x_type}, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({'x2_type': y_type}, [mstype.float16, mstype.float32], self.name)
         return x_type, y_type
+
+
+class BitwiseAnd(_BitwiseBinaryOp):
+    """
+    Returns bitwise `and` of two tensors element-wise.
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
+
+    Outputs:
+        - **y** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
+         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
+         >>> bitwise_and = P.BitwiseAnd()
+         >>> bitwise_and(input_x1, input_x2)
+         [0, 0, 1, -1, 1, 0, 1]
+    """
+
+
+class BitwiseOr(_BitwiseBinaryOp):
+    """
+    Returns bitwise `or` of two tensors element-wise.
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
+
+    Outputs:
+        - **y** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
+         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
+         >>> bitwise_or = P.BitwiseOr()
+         >>> bitwise_or(input_x1, input_x2)
+         [0, 1, 1, -1, -1, 3, 3]
+    """
+
+
+class BitwiseXor(_BitwiseBinaryOp):
+    """
+    Returns bitwise `xor` of two tensors element-wise.
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
+
+    Outputs:
+        - **y** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
+         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
+         >>> bitwise_xor = P.BitwiseXor()
+         >>> bitwise_xor(input_x1, input_x2)
+         [0, 1, 0, 0, -2, 3, 2]
+    """

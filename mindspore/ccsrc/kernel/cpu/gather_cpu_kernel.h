@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 class GatherV2CPUKernel : public CPUKernel {
  public:
-  GatherV2CPUKernel() = default;
+  GatherV2CPUKernel() : axis_(0) {}
   ~GatherV2CPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -34,7 +34,7 @@ class GatherV2CPUKernel : public CPUKernel {
 
  private:
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
-                        float **output_addr);
+                        float **output_addr, size_t *buff_size);
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> input_shape_;
   std::vector<size_t> indices_shape_;

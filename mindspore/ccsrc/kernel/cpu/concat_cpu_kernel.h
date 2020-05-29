@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 class ConcatCPUKernel : public CPUKernel {
  public:
-  ConcatCPUKernel() = default;
+  ConcatCPUKernel() : axis_(0) {}
   ~ConcatCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -35,16 +35,15 @@ class ConcatCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
-                        float **output_addr);
+                        float **output_addr, size_t *buff_size);
   int axis_;
   std::vector<std::vector<size_t>> input_shape_list_;
   std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(
-  Concat,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConcatCPUKernel);
+MS_REG_CPU_KERNEL(Concat,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ConcatCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

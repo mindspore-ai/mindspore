@@ -942,7 +942,6 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CN
   } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
     auto switch_node = input1->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(switch_node);
-    MS_LOG(INFO) << "switch : " << switch_node->DebugString();
     auto get_switch_kernel_graph = [&](size_t input_index) -> KernelGraphPtr {
       auto partial = switch_node->input(input_index);
       MS_EXCEPTION_IF_NULL(partial);
@@ -950,7 +949,6 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CN
       MS_EXCEPTION_IF_NULL(partial_cnode);
       auto graph_node = partial_cnode->input(1);
       MS_EXCEPTION_IF_NULL(graph_node);
-      MS_LOG(INFO) << graph_node->DebugString();
       auto graph_value_node = graph_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(graph_value_node);
       auto graph_value = graph_value_node->value();
@@ -976,5 +974,17 @@ bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
   }
   MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString();
 }
+
+bool AnfRuntimeAlgorithm::IsWhileTrueGraph(const KernelGraphPtr &child_graph) {
+  auto call_nodes = child_graph->FindNodeByPrimitive(prim::kPrimCall);
+  for (const auto &call_node : call_nodes) {
+    auto graphs = GetCallNodeKernelGraph(call_node);
+    if (graphs.size() == 1 && graphs[0] == child_graph->parent_graph()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace session
 }  // namespace mindspore

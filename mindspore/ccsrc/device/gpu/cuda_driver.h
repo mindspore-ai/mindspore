@@ -33,8 +33,16 @@ class CudaDriver {
   // such as malloc/free and memory copy from host to device and reverse.
   static size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr);
   static bool FreeDeviceMem(const DeviceMemPtr &addr);
+  static size_t AllocHostPinnedMem(size_t size, void **addr);
+  static void FreeHostPinnedMem(void *addr);
+
   static bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size);
   static bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size);
+
+  static bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, DeviceStream stream = 0);
+  static bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
+                                       DeviceStream stream = 0);
+
   static size_t total_mem_size();
   static size_t free_mem_size();
 
@@ -43,6 +51,12 @@ class CudaDriver {
   static bool CreateStream(DeviceStream *stream);
   static bool DestroyStream(const DeviceStream &stream);
   static bool SyncStream(const DeviceStream &stream);
+
+  static bool CreateEvent(DeviceEvent *event, unsigned int flag = cudaEventDefault);
+  static bool DestroyEvent(const DeviceEvent &event);
+  static bool RecordEvent(DeviceEvent event, DeviceStream stream = 0);
+  static bool SyncEvent(const DeviceEvent &event);
+  static bool QueryEvent(const DeviceEvent &event);
 
   // Encapsulate the cuda APIs associated with device management.
   static int device_count();

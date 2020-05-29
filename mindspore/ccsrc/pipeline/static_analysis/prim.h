@@ -45,7 +45,7 @@ class StandardPrimEvaluator : public TrivialPrimEvaluator {
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
   ~StandardPrimEvaluator() override = default;
   MS_DECLARE_PARENT(StandardPrimEvaluator, TrivialPrimEvaluator);
-  AbstractBasePtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
   PrimitivePtr prim() { return prim_; }
 
   std::string ToString() const override { return identifier_ + prim_->name(); }
@@ -63,7 +63,7 @@ class PythonPrimEvaluator : public TrivialPrimEvaluator {
       : TrivialPrimEvaluator("PythonPrimEvaluator"), prim_py_(primitive) {}
   ~PythonPrimEvaluator() override = default;
   MS_DECLARE_PARENT(PythonPrimEvaluator, TrivialPrimEvaluator);
-  AbstractBasePtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
   PrimitivePtr prim() { return dyn_cast<Primitive>(prim_py_); }
 
   std::string ToString() const override { return identifier_ + prim_py_->name(); }
@@ -76,10 +76,10 @@ class DoSignatureEvaluator : public Evaluator {
  public:
   explicit DoSignatureEvaluator(const PrimitivePtr primitive) : Evaluator("DoSignatureEvaluator"), prim_(primitive) {}
   ~DoSignatureEvaluator() override = default;
-  AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                      AnfNodeConfigPtr out_config = nullptr) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
+                    AnfNodeConfigPtr out_config = nullptr) override;
 
-  AbstractBasePtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
@@ -91,10 +91,10 @@ class UnpackGraphEvaluator : public Evaluator {
  public:
   explicit UnpackGraphEvaluator(const PrimitivePtr primitive) : Evaluator("UnpackGraphEvaluator"), prim_(primitive) {}
   ~UnpackGraphEvaluator() override = default;
-  AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                      AnfNodeConfigPtr out_config = nullptr) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
+                    AnfNodeConfigPtr out_config = nullptr) override;
 
-  AbstractBasePtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
@@ -131,7 +131,7 @@ class UniformPrimEvaluator : public TrivialPrimEvaluator {
   ~UniformPrimEvaluator() override = default;
   MS_DECLARE_PARENT(UniformPrimEvaluator, TrivialPrimEvaluator);
 
-  AbstractBasePtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
   ValuePtr RunImpl(const ValuePtrList &args) const;
 
   // If eval_value_ is False, return broadened arguments.
@@ -210,6 +210,8 @@ AbstractBasePtr InferImplZerosLikeTensor(const AnalysisEnginePtr &, const Primit
                                          const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplLayerNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplLayerNormGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -325,11 +327,6 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
 AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list);
-
-AbstractBasePtr InferImplScalarSummary(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list);
-AbstractBasePtr InferImplTensorSummary(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list);
 }  // namespace abstract
 }  // namespace mindspore

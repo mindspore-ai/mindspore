@@ -32,7 +32,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_transforms_list, check_random_apply, check_ten_crop, check_num_channels, check_pad, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
-    check_mix_up
+    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_compose_list
 from .utils import Inter, Border
 
 DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
@@ -75,6 +75,7 @@ class ComposeOp:
         >>> dataset = dataset.map(input_columns="image", operations=transform())
     """
 
+    @check_compose_list
     def __init__(self, transforms):
         self.transforms = transforms
 
@@ -1325,10 +1326,11 @@ class RandomColor:
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomColor(0.5,1.5),
+        >>>                          py_transforms.RandomColor((0.5,1.5)),
         >>>                          py_transforms.ToTensor()])
     """
 
+    @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
 
@@ -1345,6 +1347,7 @@ class RandomColor:
 
         return util.random_color(img, self.degrees)
 
+
 class RandomSharpness:
     """
     Adjust the sharpness of the input PIL image by a random degree.
@@ -1355,11 +1358,12 @@ class RandomSharpness:
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomSharpness(0.5,1.5),
+        >>>                          py_transforms.RandomSharpness((0.5,1.5)),
         >>>                          py_transforms.ToTensor()])
 
     """
 
+    @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
 
@@ -1457,6 +1461,7 @@ class UniformAugment:
     Uniformly select and apply a number of transforms sequentially from
     a list of transforms. Randomly assigns a probability to each transform for
     each image to decide whether apply it or not.
+    All the transforms in transform list must have the same input/output data type.
 
     Args:
          transforms (list): List of transformations to be chosen from to apply.
@@ -1472,6 +1477,7 @@ class UniformAugment:
         >>>                          py_transforms.ToTensor()])
     """
 
+    @check_uniform_augment_py
     def __init__(self, transforms, num_ops=2):
         self.transforms = transforms
         self.num_ops = num_ops

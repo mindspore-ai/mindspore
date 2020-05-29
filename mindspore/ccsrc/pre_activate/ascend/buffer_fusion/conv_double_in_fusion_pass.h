@@ -33,7 +33,7 @@ using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
 class ConvDoubleInFusionPass : public FusionBasePass {
  public:
-  explicit ConvDoubleInFusionPass(FusionIdAllocator *idAllocator)
+  explicit ConvDoubleInFusionPass(FusionIdAllocatorPtr idAllocator)
       : FusionBasePass("ConvDoubleInFusionPass", idAllocator) {}
   ~ConvDoubleInFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
@@ -41,7 +41,6 @@ class ConvDoubleInFusionPass : public FusionBasePass {
  private:
   void MatchConvDoubleInEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
                                 FusedNodeRecord *candidate_fusion);
-  bool CheckDoubleInEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node);
 };
 }  // namespace opt
 }  // namespace mindspore

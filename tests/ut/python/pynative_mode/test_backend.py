@@ -24,7 +24,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 
 
-def setup_module(module):
+def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE)
 
 

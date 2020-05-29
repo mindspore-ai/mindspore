@@ -26,7 +26,8 @@ from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import prim_attr_register
-from mindspore.ops.primitive import Primitive, PrimitiveWithInfer
+from mindspore.ops.primitive import PrimitiveWithInfer
+import mindspore.context as context
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -263,6 +264,27 @@ class DepthToSpaceNet(Cell):
         return self.depth_to_space(x)
 
 
+class BatchToSpaceNDNet(Cell):
+    def __init__(self):
+        super(BatchToSpaceNDNet, self).__init__()
+        block_shape = [2, 2]
+        crops = [[0, 0], [0, 0]]
+        self.batch_to_space_nd = P.BatchToSpaceND(block_shape, crops)
+
+    def construct(self, x):
+        return self.batch_to_space_nd(x)
+
+
+class SpaceToBatchNDNet(Cell):
+    def __init__(self):
+        super(SpaceToBatchNDNet, self).__init__()
+        block_shape = [2, 2]
+        paddings = [[0, 0], [0, 0]]
+        self.space_to_batch_nd = P.SpaceToBatchND(block_shape, paddings)
+
+    def construct(self, x):
+        return self.space_to_batch_nd(x)
+
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -293,10 +315,16 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4]]).astype(np.float16))]}),
     ('SpaceToDepthNet', {
         'block': SpaceToDepthNet(),
-        'desc_inputs': [Tensor(np.random.rand(1,3,2,2).astype(np.float16))]}),
+        'desc_inputs': [Tensor(np.random.rand(1, 3, 2, 2).astype(np.float16))]}),
     ('DepthToSpaceNet', {
         'block': DepthToSpaceNet(),
-        'desc_inputs': [Tensor(np.random.rand(1,12,1,1).astype(np.float16))]}),
+        'desc_inputs': [Tensor(np.random.rand(1, 12, 1, 1).astype(np.float16))]}),
+    ('SpaceToBatchNDNet', {
+        'block': SpaceToBatchNDNet(),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2).astype(np.float16))]}),
+    ('BatchToSpaceNDNet', {
+        'block': BatchToSpaceNDNet(),
+        'desc_inputs': [Tensor(np.random.rand(4, 1, 1, 1).astype(np.float16))]}),
 ]
 
 test_case_lists = [test_case_array_ops]
@@ -304,8 +332,6 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
-
-import mindspore.context as context
 
 
 @non_graph_engine

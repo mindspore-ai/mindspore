@@ -14,9 +14,9 @@
 # ============================================================================
 """ test_initializer """
 import math
+from functools import reduce
 import numpy as np
 import pytest as py
-from functools import reduce
 from scipy import stats
 
 import mindspore as ms

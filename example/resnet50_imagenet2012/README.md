@@ -45,6 +45,7 @@ Parameters for both training and inference can be set in config.py.
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
+"pretrained_epoch_size": 1,       # epoch size that model has been trained before load pretrained checkpoint
 "buffer_size": 1000,              # number of queue size in data preprocessing
 "image_height": 224,              # image height
 "image_width": 224,               # image width
@@ -68,10 +69,11 @@ Parameters for both training and inference can be set in config.py.
 
 ```
 # distributed training
-Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH]
+Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training
-Usage: sh run_standalone_train.sh [DATASET_PATH]
+Usage: sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
 ```
 
 
@@ -81,8 +83,14 @@ Usage: sh run_standalone_train.sh [DATASET_PATH]
 # distributed training example(8 pcs)
 sh run_distribute_train.sh rank_table_8p.json dataset/ilsvrc
 
+# If you want to load pretrained ckpt file
+sh run_distribute_train.sh rank_table_8p.json dataset/ilsvrc ./pretrained.ckpt
+
 # standalone training example(1 pcs)
 sh run_standalone_train.sh dataset/ilsvrc
+
+# If you want to load pretrained ckpt file
+sh run_standalone_train.sh dataset/ilsvrc ./pretrained.ckpt
 ```
 
 > About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
@@ -124,4 +132,19 @@ Inference result will be stored in the example path, whose folder name is "infer
 
 ```
 result: {'acc': 0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
+```
+
+### Running on GPU
+```
+# distributed training example
+mpirun -n 8 python train.py --dataset_path=dataset/ilsvrc/train --device_target="GPU" --run_distribute=True
+
+# standalone training example
+python train.py --dataset_path=dataset/ilsvrc/train --device_target="GPU"
+
+# standalone training example with pretrained checkpoint
+python train.py --dataset_path=dataset/ilsvrc/train --device_target="GPU" --pre_trained=pretrained.ckpt
+
+# infer example
+python eval.py --dataset_path=dataset/ilsvrc/val --device_target="GPU" --checkpoint_path=resnet-90_5004ss.ckpt
 ```

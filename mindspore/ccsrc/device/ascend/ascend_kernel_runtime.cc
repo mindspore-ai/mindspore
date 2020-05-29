@@ -29,6 +29,7 @@
 #include "hccl/hcom.h"
 #include "common/trans.h"
 #include "runtime/context.h"
+#include "device/ascend/ascend_label_assign.h"
 #include "device/ascend/ascend_stream_assign.h"
 #include "device/ascend/ascend_memory_pool.h"
 #include "framework/ge_runtime/model_runner.h"
@@ -281,21 +282,24 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     return true;
   }
 
-  AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
+  AscendStreamAssign &stream_assign_instance = AscendStreamAssign::GetInstance();
+  AscendLabelAssign &label_assign_instance = AscendLabelAssign::GetInstance();
   // the streams' flag not HEAD_STREAM
   std::vector<uint32_t> wait_active_stream_list;
-  assign_instance.GetWaitStreams(&wait_active_stream_list);
-  auto force_copy_stream_list = assign_instance.hcom_streams();
+  stream_assign_instance.GetWaitStreams(&wait_active_stream_list);
+  auto force_copy_stream_list = stream_assign_instance.hcom_streams();
 
-  MS_LOG(INFO) << "call DavinciModel total stream num:" << assign_instance.GetTotalStreamNum()
-               << ", total event num:" << assign_instance.total_event_num()
+  MS_LOG(INFO) << "call DavinciModel total stream num:" << stream_assign_instance.GetTotalStreamNum()
+               << ", total event num:" << stream_assign_instance.total_event_num()
+               << ", total label num:" << label_assign_instance.GetLabelNum(NOT_NULL(graph))
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
 
   std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
   std::shared_ptr<ge::model_runner::DavinciModel> model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
-    0, 0, 0, 0, 0, assign_instance.GetTotalStreamNum(), 1, assign_instance.total_event_num(), 0);
+    0, 0, 0, 0, 0, stream_assign_instance.GetTotalStreamNum(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
+    stream_assign_instance.total_event_num(), 0);
 
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {
@@ -469,9 +473,12 @@ bool AscendKernelRuntime::HcclInit() {
   }
 
   MS_LOG(INFO) << "do hcom init";
-  const char *config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
+  auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
-    MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH";
+    config_path_str = std::getenv("RANK_TABLE_FILE");
+    if (config_path_str == nullptr) {
+      MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+    }
     return false;
   }
   auto full_path = realpath(config_path_str, nullptr);

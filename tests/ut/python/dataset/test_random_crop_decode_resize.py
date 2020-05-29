@@ -15,9 +15,9 @@
 """
 Testing RandomCropDecodeResize op in DE
 """
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import cv2
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision

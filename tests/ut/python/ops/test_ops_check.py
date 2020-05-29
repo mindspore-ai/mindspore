@@ -16,8 +16,8 @@
 import functools
 import logging
 import numpy as np
-import pytest
 
+import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
 from mindspore.common.api import _executor
@@ -219,8 +219,6 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
-
-import mindspore.context as context
 
 
 @non_graph_engine

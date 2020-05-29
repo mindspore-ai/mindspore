@@ -24,6 +24,7 @@ from .._checkparam import _check_str_by_regular
 from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend
 from ..ops.primitive import Primitive
+from ..ops.operations import HookBackward
 from ..parallel._tensor import _load_tensor_by_layout
 from ..common.tensor import Tensor
 
@@ -75,6 +76,9 @@ class Cell:
         self._parallel_inputs_run = None
         if flags:
             self.add_flags(**flags)
+        self._backward_hook = None
+        self._enable_hook = False
+        self._bprop_debug = False
 
     @property
     def create_time(self):
@@ -90,6 +94,16 @@ class Cell:
         Param prefix is the prefix of current cell's direct child parameter.
         """
         return self._param_prefix
+
+    @property
+    def bprop_debug(self):
+        return self._bprop_debug
+
+    @bprop_debug.setter
+    def bprop_debug(self, value):
+        if not isinstance(value, bool):
+            raise TypeError("'bprop debug' value must be bool type.")
+        self._bprop_debug = value
 
     def update_cell_prefix(self):
         """
@@ -728,3 +742,25 @@ class Cell:
         self._auto_parallel_mode = True
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
+
+    def _hook_construct(self, inputs):
+        """Hook construct method to replace original construct method when hook function enabled."""
+        inputs = self._backward_hook(inputs)
+        inputs = self.construct(inputs)
+        outputs = self._backward_hook(inputs)
+        return outputs
+
+    @property
+    def enable_hook(self):
+        """Whether the cell register hook function"""
+        return self._enable_hook
+
+    def register_backward_hook(self, fn):
+        """
+        Set the cell backward hook function.
+
+        Args:
+            fn (function): Specifies the hook function with grad as input.
+        """
+        self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
+        self._enable_hook = True

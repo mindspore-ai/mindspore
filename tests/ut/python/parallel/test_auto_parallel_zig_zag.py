@@ -58,7 +58,7 @@ def test_zig_zag_graph():
         def construct(self, x, y, z, w, a):
             m1_result = self.matmul1(x, y)
             m2_result = self.matmul2(z, w)
-            m3_result = self.matmul3(m2_result, m1_result)
+            _ = self.matmul3(m2_result, m1_result)
             out = self.matmul4(m2_result, a)
 
             return out

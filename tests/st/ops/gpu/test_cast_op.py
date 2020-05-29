@@ -47,9 +47,9 @@ def test_cast():
     net = Net()
     output = net(x0, t0, x1, t1)
     type0 = output[0].asnumpy().dtype
-    assert (type0 == 'float16')
+    assert type0 == 'float16'
     type1 = output[1].asnumpy().dtype
-    assert (type1 == 'float32')
+    assert type1 == 'float32'
 
 
 @pytest.mark.level0
@@ -65,6 +65,6 @@ def test_cast1():
     net = Net()
     output = net(x0, t0, x1, t1)
     type0 = output[0].asnumpy().dtype
-    assert (type0 == 'float32')
+    assert type0 == 'float32'
     type1 = output[1].asnumpy().dtype
-    assert (type1 == 'float32')
+    assert type1 == 'float32'

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as data_trans
 import mindspore.dataset.transforms.vision.c_transforms as vision

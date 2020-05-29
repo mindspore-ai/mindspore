@@ -51,7 +51,9 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
   if (AnfAlgo::GetKernelType(eltwise_input) == KernelType::TBE_KERNEL &&
       AnfAlgo::GetFusionType(eltwise_input) == kernel::FusionType::SEGMENT) {
     (void)record.insert(eltwise_input);
-    auto previous_eltwise_input = cnode->input(1);
+    auto previous_input_cnode = eltwise_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(previous_input_cnode);
+    auto previous_eltwise_input = previous_input_cnode->input(1);
     auto previous_size = record.size();
     while (CheckEltWiseNode(manager.get(), previous_eltwise_input)) {
       (void)record.insert(previous_eltwise_input);

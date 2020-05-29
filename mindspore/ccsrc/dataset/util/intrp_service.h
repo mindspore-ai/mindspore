@@ -47,7 +47,7 @@ class IntrpService : public Service {
 
   Status Deregister(const std::string &name) noexcept;
 
-  Status InterruptAll() noexcept;
+  void InterruptAll() noexcept;
 
   Status DoServiceStart() override { return Status::OK(); }
 

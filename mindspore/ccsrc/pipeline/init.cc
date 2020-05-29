@@ -141,7 +141,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_enable_profiling", &mindspore::MsContext::enable_profiling, "Get whether to open profiling.")
     .def("set_enable_profiling", &mindspore::MsContext::set_enable_profiling, "Set whether to open profiling.")
     .def("get_profiling_options", &mindspore::MsContext::profiling_options, "Get options to profiling.")
-    .def("set_profiling_options", &mindspore::MsContext::set_profiling_options, "Set options to profiling.");
+    .def("set_profiling_options", &mindspore::MsContext::set_profiling_options, "Set options to profiling.")
+    .def("get_check_bprop_flag", &mindspore::MsContext::check_bprop_flag, "Get whether to check bprop.")
+    .def("set_check_bprop_flag", &mindspore::MsContext::set_check_bprop_flag, "Set whether to check bprop.");
 
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")

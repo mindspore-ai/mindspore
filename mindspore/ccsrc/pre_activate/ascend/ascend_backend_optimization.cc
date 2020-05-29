@@ -62,9 +62,10 @@
 #include "pre_activate/pass/common_subexpression_elimination.h"
 #include "pre_activate/ascend/format_type/merge_cast_to_op.h"
 #include "pre_activate/ascend/format_type/check_consistency.h"
-#include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
 #include "pre_activate/ascend/buffer_fusion/ub_pattern_fusion.h"
 #include "pre_activate/ascend/buffer_fusion/eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
@@ -76,6 +77,7 @@
 #include "pre_activate/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "pre_activate/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "pre_activate/ascend/enhancer/add_memcpy_async.h"
+#include "pre_activate/ascend/enhancer/insert_pad_for_nms_with_mask.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
@@ -97,11 +99,14 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
-  ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond1>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond2>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond3>());
-  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond4>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond1>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond2>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond3>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
   ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
@@ -225,6 +230,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion>());
   }
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   if (context_ptr->ir_fusion_flag()) {
     AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
   }
@@ -310,14 +316,14 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+  // buffer fusion
+  AscendBackendUBFusionOptimization(kernel_graph);
   if (save_graphs) {
     std::string file_path =
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
-  // buffer fusion
-  AscendBackendUBFusionOptimization(kernel_graph);
 }
 
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -341,16 +347,18 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   fusion_id_allocator->Init();
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ub_fusion_pm = std::make_shared<PassManager>("ub_fusion_pm");
-  ub_fusion_pm->AddPass(std::make_shared<ConvDoubleInFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<ConvSingleInFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<MatmulEltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseEltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<ConvBnReduceFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<SegmentEltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<Conv2DBackpropEltwiseEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<Conv2DBackpropEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<ConvBnReduceFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<ConvSingleInFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<MatmulEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<ConvDoubleInFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<SegmentEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(ub_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

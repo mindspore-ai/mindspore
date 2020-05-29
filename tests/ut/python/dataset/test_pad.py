@@ -15,7 +15,6 @@
 """
 Testing Pad op in DE
 """
-import matplotlib.pyplot as plt
 import numpy as np
 from util import diff_mse
 
@@ -70,6 +69,7 @@ def test_pad_op():
         assert mse < 0.01
 
 
+# pylint: disable=unnecessary-lambda
 def test_pad_grayscale():
     """
     Tests that the pad works for grayscale images 
@@ -117,7 +117,7 @@ def test_pad_grayscale():
     for shape1, shape2 in zip(dataset_shape_1, dataset_shape_2):
         # validate that the first two dimensions are the same
         # we have a little inconsistency here because the third dimension is 1 after py_vision.Grayscale
-        assert (shape1[0:1] == shape2[0:1])
+        assert shape1[0:1] == shape2[0:1]
 
 
 if __name__ == "__main__":

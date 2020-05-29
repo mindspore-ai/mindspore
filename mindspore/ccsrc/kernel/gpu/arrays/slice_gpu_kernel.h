@@ -79,6 +79,9 @@ class SliceGpuFwdKernel : public GpuKernel {
       if (size_[i] < 0) {
         size_[i] = (size_[i] + input_shape_[i]) > 0 ? (size_[i] + input_shape_[i]) : 0;
       }
+      if (size_[i] == 0) {
+        size_[i] = begin_[i] + 1;
+      }
     }
 
     input_size_ = IntToSize(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3]) * sizeof(T);

@@ -13,23 +13,21 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
-import pytest
+import numpy as np
 from numpy import allclose
 
 import mindspore as ms
 import mindspore.communication.management as distributedTool
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.parameter import ParameterTuple, Parameter
+from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
 from mindspore.train.callback import Callback
 
 np.set_printoptions(threshold=np.inf)
@@ -65,7 +63,7 @@ class DataGenerator():
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks) > 0:
+            while blocks:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
@@ -86,8 +84,8 @@ class DataGenerator():
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
 
-    def label_data(self, shape, embed):
-        data = (self.generate_data(shape) * (embed - 1)).astype(np.int32)
+    def label_data(self, shape, embed_):
+        data = (self.generate_data(shape) * (embed_ - 1)).astype(np.int32)
         stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
@@ -110,9 +108,8 @@ class Dataset():
             raise StopIteration
         self.index += 1
         if self.input_num == 2:
-            return self.predict, self.label
-        else:
-            return self.predict,
+            return (self.predict, self.label)
+        return (self.predict,)
 
     def reset(self):
         self.index = 0
@@ -129,15 +126,17 @@ class ModelCallback(Callback):
         super(ModelCallback, self).__init__()
         self.loss_list = []
 
-    def epoch_end(self, run_context, *args):
+    def epoch_end(self, run_context):
         cb_params = run_context.original_args()
         result = cb_params.net_outputs
         self.loss_list.append(result.asnumpy().mean())
 
 
 class SoftmaxCrossEntropyExpand(Cell):
-    def __init__(self, sparse=False, stra_list=[]):
+    def __init__(self, sparse=False, stra_list=None):
         super(SoftmaxCrossEntropyExpand, self).__init__()
+        if stra_list is None:
+            stra_list = []
         if len(stra_list) < 11:
             stra_list = [None] * 11
         self.exp = P.Exp()
@@ -171,8 +170,10 @@ class SoftmaxCrossEntropyExpand(Cell):
 
 
 class MatmulNet(Cell):
-    def __init__(self, matmul_stra=None, loss_stra_list=[]):
+    def __init__(self, matmul_stra=None, loss_stra_list=None):
         super(MatmulNet, self).__init__()
+        if loss_stra_list is None:
+            loss_stra_list = []
         self.matmul = P.MatMul(transpose_b=True).set_strategy(strategy=matmul_stra)
         self.loss = SoftmaxCrossEntropyExpand(sparse=True, stra_list=loss_stra_list)
         self.weight = Parameter(Tensor(np.ones(MatmulParamShape), dtype=ms.float32), name="weight")
@@ -185,9 +186,9 @@ class MatmulNet(Cell):
 
 class LossFactory():
     def __init__(self):
-        dataGen = DataGenerator()
-        self.input_full, self.input_part = dataGen.input_data((batch_size, embed))
-        self.label_full, self.label_part = dataGen.label_data((batch_size,), embed)
+        data_gen = DataGenerator()
+        self.input_full, self.input_part = data_gen.input_data((batch_size, embed))
+        self.label_full, self.label_part = data_gen.label_data((batch_size,), embed)
 
     def single_matmul_trains(self):
         single_callback = ModelCallback()

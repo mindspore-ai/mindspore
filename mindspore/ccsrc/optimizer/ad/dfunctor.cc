@@ -32,6 +32,7 @@
 #include "operator/ops.h"
 #include "operator/composite/composite.h"
 #include "utils/symbolic.h"
+#include "utils/context/ms_context.h"
 #include "./common.h"
 
 namespace mindspore {
@@ -491,7 +492,7 @@ void DFunctor::MapParamObject() {
 void DFunctor::MapValueObject() {
   // Map ValueNode.
   auto manager = resources_->manager();
-  auto &value_nodes = manager->valuenodes()[primal_graph_];
+  auto &value_nodes = primal_graph_->value_nodes();
   for (const auto &value_pair : value_nodes) {
     auto node = value_pair.first;
     auto parent_adjoint = FindAdjoint(node);

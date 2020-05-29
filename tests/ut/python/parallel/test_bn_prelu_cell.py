@@ -171,7 +171,7 @@ class PReLU(nn.Cell):
 
         if not isinstance(w, Tensor):
             w = Tensor(w)
-        self.w = Parameter(initializer(w, [channel, ]), name='a')
+        self.w = Parameter(initializer(w, [channel,]), name='a')
         self.prelu = P.PReLU()
         self.relu = P.ReLU().set_strategy(((1)))
 
@@ -181,7 +181,7 @@ class PReLU(nn.Cell):
 
 
 class BNNet(nn.Cell):
-    def __init__(self, strategy0, strategy1, strategy2):
+    def __init__(self):
         super(BNNet, self).__init__()
         self.bn = FusedBatchNorm(512)
         self.prelu = PReLU(512)
@@ -192,13 +192,12 @@ class BNNet(nn.Cell):
         return x
 
 
-def bn_net(strategy0, strategy1, strategy2):
-    return BNNet(strategy0=strategy0, strategy1=strategy1, strategy2=strategy2)
+def bn_net():
+    return BNNet()
 
 
-def bn_common(parallel_mode, train_flag, strategy0=None, strategy1=None, strategy2=None, strategy_loss=None):
+def bn_common(parallel_mode, train_flag, strategy_loss=None):
     context.set_context(mode=context.GRAPH_MODE)
-    batch_size = 32
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
@@ -207,7 +206,7 @@ def bn_common(parallel_mode, train_flag, strategy0=None, strategy1=None, strateg
     predict = Tensor(np.ones([32, 512]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)
-    net = bn_net(strategy0, strategy1, strategy2)
+    net = bn_net()
 
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     loss.softmax_cross_entropy.set_strategy(strategy_loss)

@@ -28,6 +28,7 @@
 #include "session/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "session/session_factory.h"
+#include "session/ascend_control_parser.h"
 
 namespace mindspore {
 namespace session {
@@ -66,6 +67,8 @@ class AscendSession : public SessionBasic {
   void SetActive(GraphId, GraphId) override;
   // compile child graph when session have multiple child graphs
   void CompileChildGraph(const KernelGraphPtr &child_graph);
+  void GetSummaryNodes(const KernelGraph *graph,
+                       std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) override;
 
  private:
   void InitRuntimeResource();
@@ -74,7 +77,7 @@ class AscendSession : public SessionBasic {
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void AssignLabel(NotNull<const KernelGraphPtr &> kernel_graph) const;
+  void AssignLabel(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
@@ -96,15 +99,17 @@ class AscendSession : public SessionBasic {
   void SetFinalGraphOutput(const VectorRef &vec_output);
 
   void SplitGraph(const KernelGraphPtr &graph);
-  void LinkChildGraphs(KernelGraph *graph) {}
+  // split graphs with recurse from root graph
+  void SplitGraphs(const KernelGraphPtr &root_graph);
+  void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
   void IRFusion(const KernelGraphPtr &graph) {}
   void SelectKernelGraphKernel(const KernelGraph &graph) {}
   void ConvertPredictModel(const KernelGraphPtr graph) {}
   void HardwareOptimizeGraphs(const KernelGraphPtr graph) {}
-  void RootGraphExecutorValidate(KernelGraph *graph) {}
-  void RecurseUpdateAllChildGraohOrder(KernelGraph *root_graph);
-  KernelGraphPtr SplitKernelGraph(const KernelGraphPtr &new_kernel_graph, const std::vector<CNodePtr> &list);
-  void ChildGraphCommunicationDecrease(std::vector<std::vector<AnfNodePtr>> *anf_node_lists);
+  void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
+  std::vector<AnfNodePtr> ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
+                                                const std::vector<CNodePtr> &list);
+  void RecurseCompileGraph(const KernelGraphPtr &graph);
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();

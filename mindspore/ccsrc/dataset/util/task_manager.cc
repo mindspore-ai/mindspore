@@ -84,7 +84,7 @@ void TaskManager::interrupt_all() noexcept {
       svc->InterruptAll();
     }
   }
-  (void)master_->Interrupt();
+  master_->Interrupt();
 }
 
 Task *TaskManager::FindMe() { return gMyTask; }
@@ -94,8 +94,7 @@ TaskManager::TaskManager() try : global_interrupt_(0),
                                  free_lst_(&Task::free),
                                  watchdog_grp_(nullptr),
                                  watchdog_(nullptr) {
-  std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
-  Allocator<Task> alloc(mp);
+  auto alloc = Services::GetAllocator<Task>();
   // Create a dummy Task for the master thread (this thread)
   master_ = std::allocate_shared<Task>(alloc, "master", []() -> Status { return Status::OK(); });
   master_->id_ = this_thread::get_id();
@@ -185,7 +184,7 @@ void TaskManager::InterruptMaster(const Status &rc) {
   TaskManager &tm = TaskManager::GetInstance();
   std::shared_ptr<Task> master = tm.master_;
   std::lock_guard<std::mutex> lck(master->mux_);
-  (void)master->Interrupt();
+  master->Interrupt();
   if (rc.IsError() && master->rc_.IsOk()) {
     master->rc_ = rc;
     master->caught_severe_exception_ = true;
@@ -277,14 +276,14 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
   return Status::OK();
 }
 
-void TaskGroup::interrupt_all() noexcept { (void)intrp_svc_->InterruptAll(); }
+void TaskGroup::interrupt_all() noexcept { intrp_svc_->InterruptAll(); }
 
-Status TaskGroup::join_all() {
+Status TaskGroup::join_all(Task::WaitFlag wf) {
   Status rc;
   Status rc2;
   SharedLock lck(&rw_lock_);
   for (Task &tk : grp_list_) {
-    rc = tk.Join();
+    rc = tk.Join(wf);
     if (rc.IsError()) {
       rc2 = rc;
     }
@@ -295,12 +294,11 @@ Status TaskGroup::join_all() {
 Status TaskGroup::DoServiceStop() {
   intrp_svc_->ServiceStop();
   interrupt_all();
-  return (join_all());
+  return (join_all(Task::WaitFlag::kNonBlocking));
 }
 
 TaskGroup::TaskGroup() : grp_list_(&Task::group), intrp_svc_(nullptr) {
-  std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
-  Allocator<IntrpService> alloc(mp);
+  auto alloc = Services::GetAllocator<IntrpService>();
   intrp_svc_ = std::allocate_shared<IntrpService>(alloc);
   (void)Service::ServiceStart();
 }

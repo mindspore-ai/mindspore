@@ -230,11 +230,11 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
   auto ctx = node_cfg_->context();
   auto engine = node_cfg_->engine();
   auto cfg = engine->MakeConfig(node, ctx);
-  auto abs = engine->cache().GetValue(cfg);
-  if (abs == nullptr) {
+  auto eval_result = engine->cache().GetValue(cfg);
+  if (eval_result == nullptr || eval_result->abstract() == nullptr) {
     return "Undefined";
   }
-
+  auto abs = eval_result->abstract();
   auto dtype = abs->BuildType();
   auto shape = abs->BuildShape();
   std::ostringstream oss;

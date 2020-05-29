@@ -324,6 +324,13 @@ class _Context:
         thread_info = self._thread_local_info
         thread_info.debug_runtime = enable
 
+    @property
+    def check_bprop(self):
+        return self._context_handle.get_check_bprop_flag()
+
+    @check_bprop.setter
+    def check_bprop(self, check_bprop_flag):
+        self._context_handle.set_check_bprop_flag(check_bprop_flag)
 
 def check_input_format(x):
     import re
@@ -503,6 +510,7 @@ def set_context(**kwargs):
             The profiling can choose training_trace, task_trace, training_trace and task_trace combination and
             separated by colons; single operator can choose op_trace, op_trace cannot be combined with
             training_trace and task_trace. Default: "training_trace".
+        check_bprop (bool): Whether to check bprop. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.

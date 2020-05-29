@@ -15,6 +15,8 @@
  */
 
 #include <vector>
+#include <string>
+#include <set>
 #include "device/ascend/ascend_label_assign.h"
 #include "session/anf_runtime_algorithm.h"
 
@@ -26,6 +28,9 @@ namespace device {
 namespace ascend {
 
 static void UpdateLabelGoto(NotNull<CNodePtr> node) {
+  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
+    return;
+  }
   if (node->size() <= kLabelGotoLabelId) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " has invalid input size " << node->size();
   }
@@ -36,9 +41,13 @@ static void UpdateLabelGoto(NotNull<CNodePtr> node) {
   uint32_t goto_label_id = GetValue<uint32_t>(value);
   AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(goto_label_id), node.get());
   MS_LOG(INFO) << "Node " << node->DebugString() << " goto label id " << goto_label_id;
+  node->set_inputs({node->input(0)});
 }
 
 static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
+  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
+    return;
+  }
   if (node->size() <= kLabelGotoLabelId) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " has invalid input size " << node->size();
   }
@@ -58,29 +67,102 @@ static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
     MS_LOG(INFO) << "Switch " << node->DebugString() << " case " << i - kLabelSwitchLabelId << ": id " << goto_label_id;
   }
   AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue<std::vector<uint32_t>>(label_list), node.get());
+  node->set_inputs({node->input(0), node->input(1)});
 }
 
-void AscendLabelAssign::AssignLabel(NotNull<const std::shared_ptr<session::KernelGraph> &> graph) {
-  auto cnode_list = graph->execution_order();
-  // 1 assign label id to label_set
-  uint32_t cur_label_id = 0;
-  for (auto &node : cnode_list) {
-    if (AnfAlgo::GetCNodeName(node) == kLabelSetOpName) {
-      AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(cur_label_id), node);
-      MS_LOG(INFO) << "Node " << node->DebugString() << " assign label id " << cur_label_id;
-      ++cur_label_id;
-    }
+static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>> graph, NotNull<uint32_t *> label_id,
+                                   NotNull<std::set<std::shared_ptr<session::KernelGraph>> *> memo) {
+  if (memo->find(graph.get()) != memo->end()) {
+    return;
   }
-  // 2 update label_switch / label_goto
-  for (auto &node : cnode_list) {
-    if (AnfAlgo::GetCNodeName(node) == kLabelGotoOpName) {
-      UpdateLabelGoto(NOT_NULL(node));
+  memo->insert(graph.get());
+
+  MS_LOG(INFO) << "Assign label for " << graph->ToString();
+  graph->SetExecOrderByDefault();
+  auto nodes = graph->execution_order();
+
+  for (auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
     }
 
-    if (AnfAlgo::GetCNodeName(node) == kLabelSwitchOpName) {
-      UpdateLabelSwitch(NOT_NULL(node));
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::string node_name = AnfAlgo::GetCNodeName(node);
+    if (node_name == kLabelSetOpName && !AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
+      AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(*label_id), node);
+      MS_LOG(INFO) << "Node " << node->DebugString() << " assign label id " << *label_id;
+      ++(*label_id);
     }
   }
+
+  for (auto &cg : graph->child_graph_order()) {
+    AssignLabelForLabelSet(NOT_NULL(cg), label_id, memo);
+  }
+}
+
+static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGraph>> graph,
+                                     NotNull<std::set<std::shared_ptr<session::KernelGraph>> *> memo) {
+  if (memo->find(graph.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  MS_LOG(INFO) << "Process label goto/switch for " << graph->ToString();
+  graph->SetExecOrderByDefault();
+  auto nodes = graph->execution_order();
+  auto end_goto = graph->get_end_goto();
+  if (end_goto != nullptr) {
+    nodes.push_back(end_goto);
+  }
+  for (auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::string node_name = AnfAlgo::GetCNodeName(node);
+    if (node_name == kLabelGotoOpName) {
+      UpdateLabelGoto(NOT_NULL(cnode));
+      cnode->set_abstract(nullptr);
+    }
+
+    if (node_name == kLabelSwitchOpName) {
+      UpdateLabelSwitch(NOT_NULL(cnode));
+    }
+  }
+  for (auto &cg : graph->child_graph_order()) {
+    AssignLabelForGotoSwitch(NOT_NULL(cg), memo);
+  }
+}
+
+void AscendLabelAssign::AssignLabel(NotNull<std::shared_ptr<session::KernelGraph>> graph) {
+  MS_LOG(INFO) << "Assign label start.";
+  std::set<std::shared_ptr<session::KernelGraph>> memo;
+  uint32_t label_id = 0;
+  AssignLabelForLabelSet(graph, NOT_NULL(&label_id), NOT_NULL(&memo));
+  memo.clear();
+  {
+    std::lock_guard<std::mutex> lock(label_num_mutex_);
+    label_num_[graph.get().get()] = label_id;
+  }
+  AssignLabelForGotoSwitch(graph, NOT_NULL(&memo));
+  MS_LOG(INFO) << "Assign label end.";
+}
+
+uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> graph) {
+  std::lock_guard<std::mutex> lock(label_num_mutex_);
+  auto iter = label_num_.find(graph.get());
+  if (iter == label_num_.end()) {
+    MS_LOG(WARNING) << "Graph " << graph->ToString() << " has not assigned label.";
+    return 1;
+  }
+  return iter->second;
+}
+
+uint32_t AscendLabelAssign::GetLabelNum(NotNull<std::shared_ptr<session::KernelGraph>> graph) {
+  return GetLabelNum(NOT_NULL(graph.get().get()));
 }
 
 }  // namespace ascend

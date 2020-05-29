@@ -159,7 +159,7 @@ def test_rgb_hsv_pipeline():
         ori_img = data1["image"]
         cvt_img = data2["image"]
         assert_allclose(ori_img.flatten(), cvt_img.flatten(), rtol=1e-5, atol=0)
-        assert (ori_img.shape == cvt_img.shape)
+        assert ori_img.shape == cvt_img.shape
 
 
 if __name__ == "__main__":

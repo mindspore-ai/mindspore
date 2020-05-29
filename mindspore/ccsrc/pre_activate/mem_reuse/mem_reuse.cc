@@ -245,6 +245,34 @@ void MemReuseUtil::SetKernelDefMap() {
     kernel_def_ptr->set_input_refs(kernel_def_ptr->inputs_[key]);
     kernel_def_ptr->set_output_refs(kernel_def_ptr->outputs_[key]);
     kernel_def_ptr_list_.push_back(kernel_def_ptr);
+    kernel_map_[key] = kernel_def_ptr;
+  }
+  SetKernelDefInputs();
+}
+
+void MemReuseUtil::SetKernelDefInputs() {
+  for (const auto &kernel : graph_->execution_order()) {
+    auto key = kernel.get();
+    // find kernel_def according to cnode addr
+    auto iter = kernel_map_.find(key);
+    if (iter == kernel_map_.end()) {
+      MS_LOG(EXCEPTION) << "kernel [" << kernel->fullname_with_scope() << "] is not init.";
+    }
+    auto kernel_def = iter->second;
+    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+      auto ref_ptr = GetKernelInputRef(kernel, i);
+      if (ref_ptr != nullptr) {
+        // set the inputs of this kernel_def
+        auto input_node = AnfAlgo::GetInputNode(kernel, i);
+        auto input = AnfAlgo::VisitKernel(input_node, 0);
+        auto input_key = (input.first).get();
+        auto input_iter = kernel_map_.find(input_key);
+        if (input_iter == kernel_map_.end()) {
+          MS_LOG(EXCEPTION) << "kernel [" << (input.first)->fullname_with_scope() << "] is not init.";
+        }
+        kernel_def->InsertInputKernel(input_iter->second);
+      }
+    }
   }
 }
 

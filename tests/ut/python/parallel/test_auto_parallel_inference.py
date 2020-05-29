@@ -36,4 +36,4 @@ def test_inference_phase():
     train_network.set_train()
     train_network.set_auto_parallel()
 
-    output = train_network(predict, label)
+    _ = train_network(predict, label)

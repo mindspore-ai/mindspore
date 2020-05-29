@@ -57,18 +57,40 @@ Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), 
 }
 
 Tensor::Tensor(const TensorShape &shape, const DataType &type, const unsigned char *data) : Tensor(shape, type) {
+  if (type.IsNumeric()) {
+    // If the data pointer was given, then we can also populate the tensor with data
+    if (data != nullptr) {
+      // Given the shape/type of this tensor, compute the data size and copy in the input bytes.
+      int64_t byte_size = this->SizeInBytes();
+      Status s = this->AllocateBuffer(byte_size);  // Allocates data_ inside itself
+      if (s.IsOk() && data_ != nullptr) {
+        int ret_code = memcpy_s(data_, byte_size, data, byte_size);
+        if (ret_code != 0) {
+          MS_LOG(ERROR) << "Failed to copy data into Tensor!";
+        }
+      } else {
+        MS_LOG(ERROR) << "Failed to create memory for Tensor!";
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "Type should be numeric to use this constructor.";
+  }
+}
+
+Tensor::Tensor(const TensorShape &shape, const DataType &type, const unsigned char *data, const dsize_t &length)
+    : Tensor(shape, type) {
   // If the data pointer was given, then we can also populate the tensor with data
   if (data != nullptr) {
-    // Given the shape/type of this tensor, compute the data size and copy in the input bytes.
-    int64_t byte_size = this->SizeInBytes();
-    static_cast<void>(this->GetMutableBuffer());  // Allocates data_ inside itself
+    // Allocates data_ inside itself
+    Status s = AllocateBuffer(length);
+    if (s.IsError()) {
+      MS_LOG(ERROR) << "Failed to create memory for Tensor!";
+    }
     if (data_ != nullptr) {
-      int ret_code = memcpy_s(data_, byte_size, data, byte_size);
+      int ret_code = memcpy_s(data_, length, data, length);
       if (ret_code != 0) {
         MS_LOG(ERROR) << "Failed to copy data into Tensor!";
       }
-    } else {
-      MS_LOG(ERROR) << "Failed to create memory for Tensor!";
     }
   }
 }
@@ -98,32 +120,79 @@ Tensor::Tensor(const std::vector<std::string> &strings, const TensorShape &shape
   auto length_sum = [](dsize_t sum, const std::string &s) { return s.length() + sum; };
   dsize_t total_length = std::accumulate(strings.begin(), strings.end(), 0, length_sum);
 
-  dsize_t num_bytes = (kOffsetSize + 1) * shape_.NumOfElements() + total_length;
+  // total bytes needed = offset array + strings
+  // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
+  // strings will be null-terminated --> need 1 extra byte per element
+  dsize_t num_bytes = (kOffsetSize + 1) * shape_.NumOfElements() + kOffsetSize + total_length;
 
   data_ = data_allocator_->allocate(num_bytes);
 
   auto offset_arr = reinterpret_cast<offset_t *>(data_);
   uchar *buf = GetStringsBuffer();
 
-  offset_t offset = -1;
+  offset_t offset = buf - data_;  // the first string will start here
   uint32_t i = 0;
   for (const auto &str : strings) {
-    //  insert the end index of the string
-    //  end index of a string is the end index of previous string +  the length (including \0)
-    offset = offset + str.length() + 1;
+    //  insert the start index of the string.
     offset_arr[i++] = offset;
     // total bytes are reduced by kOffsetSize
     num_bytes -= kOffsetSize;
     // insert actual string
-    memcpy_s(buf, num_bytes, str.c_str(), str.length() + 1);
-    buf += str.length() + 1;
+    int ret_code = memcpy_s(data_ + offset, num_bytes, common::SafeCStr(str), str.length() + 1);
+    if (ret_code != 0) MS_LOG(ERROR) << "Cannot copy string into Tensor";
+    //  next string will be stored right after the current one.
+    offset = offset + str.length() + 1;
+    // total bytes are reduced by the length of the string
     num_bytes -= str.length() + 1;
   }
-  this->data_end_ = buf;
+  // store one more offset value so we can get the length of the last string
+  // length[last_element] = offset_arr[last_element + 1] - offset_arr[last_element]
+  offset_arr[i] = offset;
+
+  this->data_end_ = data_ + offset_arr[i];
+
   DS_ASSERT(num_bytes == 0);
   if (shape.known()) Tensor::Reshape(shape);
 }
+Tensor::Tensor(const dataengine::BytesList &bytes_list, const TensorShape &shape)
+    : Tensor(TensorShape({static_cast<dsize_t>(bytes_list.value_size())}), DataType(DataType::DE_STRING)) {
+  // total bytes needed = offset array + strings
+  // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
+  // strings will be null-terminated --> need 1 extra byte per element
+  dsize_t num_bytes = (kOffsetSize)*shape_.NumOfElements() + kOffsetSize + bytes_list.ByteSizeLong();
 
+  data_ = data_allocator_->allocate(num_bytes);
+
+  auto offset_arr = reinterpret_cast<offset_t *>(data_);
+  uchar *buf = GetStringsBuffer();
+
+  offset_t offset = buf - data_;  // the first string will start here
+  uint32_t i = 0;
+  for (; i < bytes_list.value_size(); i++) {
+    const std::string &str = bytes_list.value(i);
+    //  insert the start index of the string.
+    offset_arr[i] = offset;
+    // total bytes are reduced by kOffsetSize
+    num_bytes -= kOffsetSize;
+    // insert actual string
+    int ret_code = memcpy_s(data_ + offset, num_bytes, common::SafeCStr(str), str.length() + 1);
+    if (ret_code != 0) {
+      MS_LOG(ERROR) << "Cannot copy string into Tensor";
+    }
+    //  next string will be stored right after the current one.
+    offset = offset + str.length() + 1;
+    // total bytes are reduced by the length of the string
+    num_bytes -= str.length() + 1;
+  }
+  // store one more offset value so we can get the length of the last string
+  // length[last_element] = offset_arr[last_element + 1] - offset_arr[last_element]
+  offset_arr[i] = offset;
+
+  data_end_ = data_ + offset_arr[i];
+
+  DS_ASSERT(num_bytes == 0);
+  if (shape.known()) Tensor::Reshape(shape);
+}
 Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl, const TensorShape &shape,
                             DataType type, const unsigned char *data) {
   if (!shape.known()) {
@@ -152,20 +221,17 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl
   }
   return Status::OK();  // returns base-class shared_ptr
 }
-std::string to(std::string x) { return x; }
+
 Status Tensor::CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::array arr) {
   std::vector<dsize_t> shape;
   for (dsize_t i = 0; i < arr.ndim(); i++) {
     shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
   }
-  arr.resize({arr.size()});
-  auto itr = arr.begin();
+  arr.resize({arr.size()});  // flatten the py::array so we can iterate once
   std::vector<std::string> strings;
-  for (; itr != arr.end(); itr++) {
-    std::string s = to(py::cast<py::bytes>(*itr));
-    strings.push_back(s);
-  }
-  arr.resize(shape);
+  std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::bytes>(s)); });
+
+  arr.resize(shape);  // resize arr back to the original shape
 
   return CreateTensor(ptr, strings, TensorShape{shape});
 }
@@ -190,8 +256,9 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
 
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
   (*ptr)->data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
-  static_cast<void>((*ptr)->GetMutableBuffer());
   int64_t byte_size = (*ptr)->SizeInBytes();
+  RETURN_IF_NOT_OK((*ptr)->AllocateBuffer(byte_size));
+
   unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
   if ((*ptr)->data_ == nullptr) {
     RETURN_STATUS_UNEXPECTED("Failed to create memory for Tensor.");
@@ -229,6 +296,13 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const std::vector<std:
                             const TensorShape &shape) {
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *ptr = std::allocate_shared<Tensor>(*alloc, strings, shape);
+  return Status::OK();
+}
+
+Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::BytesList &bytes_list,
+                            const TensorShape &shape) {
+  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
+  *ptr = std::allocate_shared<Tensor>(*alloc, bytes_list, shape);
   return Status::OK();
 }
 
@@ -370,25 +444,20 @@ void Tensor::Print(std::ostream &out) const {
     out << "[Data area is null]";
   }
 }
-
-// Name: ToFlatIndex()
-// Description: convert a vector style index to number, used to access memory internal use only
-Status Tensor::ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const {
-  if (!shape_.IsValidIndex(index)) {
-    std::string err = "Not a valid index";
-    RETURN_STATUS_UNEXPECTED(err);
-  }
-  *flat_index = 0;
-  for (size_t k = 0; k < index.size(); k++) {
-    dsize_t product = 1;
-    for (size_t l = k + 1; l < index.size(); l++) {
-      product *= shape_[l];
+Status Tensor::AllocateBuffer(const dsize_t &length) {
+  if (data_ == nullptr) {
+    if (data_allocator_ != nullptr) {
+      data_ = data_allocator_->allocate(length);
+      RETURN_UNEXPECTED_IF_NULL(data_);
+      data_end_ = data_ + length;
+    } else {
+      data_ = static_cast<unsigned char *>(malloc(length));
+      data_end_ = data_ + length;
+      RETURN_UNEXPECTED_IF_NULL(data_);
     }
-    *flat_index += index[k] * product;
   }
   return Status::OK();
 }
-
 const unsigned char *Tensor::GetBuffer() const {
   // This version cannot modify anything.  data_ could possibly be null.
   return data_;
@@ -404,17 +473,11 @@ unsigned char *Tensor::GetMutableBuffer() {
   } else {
     // If the data area is not created, then identify the memory size based
     // on the shape and type and allocate it.
-    if (data_allocator_ != nullptr) {
-      data_ = data_allocator_->allocate(this->SizeInBytes());
-      data_end_ = data_ + SizeInBytes();
+    if (this->AllocateBuffer(this->SizeInBytes()).IsOk()) {
+      return data_;
     } else {
-      data_ = static_cast<unsigned char *>(malloc(this->SizeInBytes()));
-      data_end_ = data_ + SizeInBytes();
-      if (data_ == nullptr) {
-        return nullptr;
-      }
+      return nullptr;
     }
-    return data_;
   }
 }
 
@@ -444,7 +507,7 @@ Status Tensor::GetItemPtr(T **ptr, const std::vector<dsize_t> &index) const {
       RETURN_STATUS_UNEXPECTED(err);
     }
     dsize_t flat_idx;
-    RETURN_IF_NOT_OK(ToFlatIndex(index, &flat_idx));
+    RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &flat_idx));
     *ptr = reinterpret_cast<T *>(data_ + flat_idx * type_.SizeInBytes());
 
     return Status::OK();
@@ -461,7 +524,7 @@ Status Tensor::GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset
       RETURN_STATUS_UNEXPECTED(err);
     }
     dsize_t flat_idx;
-    RETURN_IF_NOT_OK(ToFlatIndex(index, &flat_idx));
+    RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &flat_idx));
     offset_t length_temp = 0;
     RETURN_IF_NOT_OK(GetStringAt(flat_idx, ptr, &length_temp));
     if (length != nullptr) *length = length_temp;
@@ -481,7 +544,7 @@ Status Tensor::StartAddrOfIndex(std::vector<dsize_t> ind, uchar **start_addr_of_
   std::vector<dsize_t> r(t_shape.begin() + ind.size(), t_shape.end());
   *remaining = TensorShape(r);
   ind.resize(this->Rank(), 0);  //  same as -> while (ind.size() < this->Rank()) ind.push_back(0);
-  RETURN_IF_NOT_OK(ToFlatIndex(ind, &flat_ind));
+  RETURN_IF_NOT_OK(shape_.ToFlatIndex(ind, &flat_ind));
   // check if GetBuffer() returns null, we should flag this as an error, this sanity check will only
   // be true is the tensor failed to allocate memory.
   if (GetMutableBuffer() == nullptr) {
@@ -588,10 +651,10 @@ Status Tensor::GetItemAt(std::string_view *o, const std::vector<dsize_t> &index)
   RETURN_UNEXPECTED_IF_NULL(o);
   CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Type is not DE_STRING");
 
-  uchar *buf = nullptr;
+  uchar *start = nullptr;
   offset_t length = 0;
-  RETURN_IF_NOT_OK(GetItemPtr(&buf, index, &length));
-  std::string_view sv{reinterpret_cast<const char *>(buf), length};
+  RETURN_IF_NOT_OK(GetItemPtr(&start, index, &length));
+  std::string_view sv{reinterpret_cast<const char *>(start)};
   o->swap(sv);
   return Status::OK();
 }
@@ -639,13 +702,14 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   uint64_t total_size = shape_.NumOfElements() * max;
   char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
   if (tmp_data == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
-  memset(tmp_data, 0, total_size);
+  int ret_code = memset_s(tmp_data, total_size, 0, total_size);
+  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to initialize temp memory");
 
   itr = begin<std::string_view>();
   uint64_t i = 0;
-  for (; itr != end<std::string_view>(); itr++) {
-    (void)memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
-    i++;
+  for (; itr != end<std::string_view>(); itr++, i++) {
+    ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
   }
   auto strides = shape_.Strides();
   std::transform(strides.begin(), strides.end(), strides.begin(), [&max](const auto &s) { return s * max; });
@@ -778,13 +842,11 @@ Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length
   RETURN_UNEXPECTED_IF_NULL(string_start);
   RETURN_UNEXPECTED_IF_NULL(length);
   auto *offset_ptr = reinterpret_cast<offset_t *>(data_);  // offsets starts here
-  offset_t end = offset_ptr[index];
-  offset_t start = 0;
-  if (index != 0) start = offset_ptr[index - 1] + 1;  // string starts at where the previous string ends + 1
-  uchar *buf = GetStringsBuffer();                    // string data starts here
-  *string_start = buf + start;
-  *length = end - start;
+  offset_t start = offset_ptr[index];
+  *string_start = data_ + start;
+  *length = offset_ptr[index + 1] - start - 1;  // -1 to skip the \0 from the string length
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

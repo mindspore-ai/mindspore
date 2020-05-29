@@ -503,6 +503,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
 
 KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel::KernelQuery(kernel_node, &kernel_info_list);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
@@ -510,16 +511,26 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
   if (select_status == kNoMatched) {
     MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
                     << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
-    kernel::AICPUQuery(kernel_node, &kernel_info_list);
-    select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
+    kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
+    select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
   }
   // The kernel info not finded both in the aicpu kernel list & aicore kernel list
   if (select_status == kNoMatched) {
     std::ostringstream buffer;
     PrintInputAndOutputInferType(buffer, kernel_node);
+    MS_LOG(WARNING) << ">>> candidates kernel info list:";
+    for (size_t index = 0; index < kernel_info_list.size(); ++index) {
+      MS_LOG(WARNING) << "kernel [" << index << "] :" << kernel_info_list[index]->ToString();
+    }
+    for (size_t index = 0; index < aicpu_kernel_info_list.size(); ++index) {
+      MS_LOG(WARNING) << "kernel [" << (kernel_info_list.size() + index)
+                      << "] :" << aicpu_kernel_info_list[index]->ToString();
+    }
+    MS_LOG(WARNING) << " <<<";
     MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
-                            << "] cannot find valid kernel info, not supported the type " << buffer.str();
+                            << "] cannot find valid kernel info, not supported the type:" << buffer.str()
+                            << ", please refer to the supported dtypes in candidates kernel info list";
   }
   return select_status;
 }

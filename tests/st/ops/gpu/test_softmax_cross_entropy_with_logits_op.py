@@ -19,9 +19,6 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 
 
 class NetSoftmaxCrossEntropyWithLogits(nn.Cell):

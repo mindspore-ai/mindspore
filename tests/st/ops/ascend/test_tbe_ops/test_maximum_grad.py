@@ -44,15 +44,15 @@ class GradWrap(Cell):
         return gout
 
 
-def gen_data(inputA_np, inputB_np, grad=None):
+def gen_data(inputA_np, inputB_np, grad_=None):
     inputA_me = inputA_np
-    if isinstance(inputA_np, np.ndarray) == True:
+    if isinstance(inputA_np, np.ndarray):
         inputA_me = Tensor(inputA_me)
     inputB_me = inputB_np
-    if isinstance(inputB_np, np.ndarray) == True:
+    if isinstance(inputB_np, np.ndarray):
         inputB_me = Tensor(inputB_np)
-    if grad == None:
-        grad = np.random.randn(2).astype(np.float32)
+    if grad_ is None:
+        grad_ = np.random.randn(2).astype(np.float32)
     print("----inputA---")
     print(inputA_np)
     print("----inputB---")
@@ -60,7 +60,7 @@ def gen_data(inputA_np, inputB_np, grad=None):
 
     net_me = GradWrap(MaxNetMe())
     net_me.set_train()
-    output = net_me(inputA_me, inputB_me, Tensor(grad))
+    output = net_me(inputA_me, inputB_me, Tensor(grad_))
     print("---me---")
     print(output[0].asnumpy())
     print(output[1].asnumpy())

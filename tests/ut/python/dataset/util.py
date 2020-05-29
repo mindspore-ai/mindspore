@@ -15,11 +15,11 @@
 
 import hashlib
 import json
+import os
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-
 # import jsbeautifier
+import mindspore.dataset as ds
 from mindspore import log as logger
 
 # These are the column names defined in the testTFTestAllTypes dataset
@@ -221,3 +221,26 @@ def visualize(image_original, image_transformed):
         plt.title("Transformed image")
 
     plt.show()
+
+
+def config_get_set_seed(seed_new):
+    """
+    Get and return the original configuration seed value.
+    Set the new configuration seed value.
+    """
+    seed_original = ds.config.get_seed()
+    ds.config.set_seed(seed_new)
+    logger.info("seed: original = {}  new = {} ".format(seed_original, seed_new))
+    return seed_original
+
+
+def config_get_set_num_parallel_workers(num_parallel_workers_new):
+    """
+    Get and return the original configuration num_parallel_workers value.
+    Set the new configuration num_parallel_workers value.
+    """
+    num_parallel_workers_original = ds.config.get_num_parallel_workers()
+    ds.config.set_num_parallel_workers(num_parallel_workers_new)
+    logger.info("num_parallel_workers: original = {}  new = {} ".format(num_parallel_workers_original,
+                                                                        num_parallel_workers_new))
+    return num_parallel_workers_original

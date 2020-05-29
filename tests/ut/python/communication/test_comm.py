@@ -25,8 +25,8 @@ from mindspore.nn import Dense
 from mindspore.nn import Momentum
 from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.ops.operations import Split
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
+from mindspore.ops.operations.comm_ops import HostAllGather, HostReduceScatter
 from mindspore.ops.operations.comm_ops import Broadcast
 
 # pylint: disable=W0212
@@ -87,6 +87,21 @@ class AllGatherNet(nn.Cell):
         return self.relu(x)
 
 
+class HostAllGatherNet(nn.Cell):
+    """HostAllGatherNet definition"""
+
+    def __init__(self, input_channel, output_channel):
+        super(HostAllGatherNet, self).__init__()
+        self.dense = Dense(input_channel, output_channel)
+        self.hostallgather = HostAllGather((0, 1))
+        self.relu = ReLU()
+
+    def construct(self, x):
+        x = self.dense(x)
+        x = self.hostallgather(x)
+        return self.relu(x)
+
+
 class ReduceScatterNet(nn.Cell):
     """ReduceScatterNet definition"""
 
@@ -99,6 +114,21 @@ class ReduceScatterNet(nn.Cell):
     def construct(self, x):
         x = self.dense(x)
         x = self.reducescatter(x)
+        return self.relu(x)
+
+
+class HostReduceScatterNet(nn.Cell):
+    """HostReduceScatterNet definition"""
+
+    def __init__(self, input_channel, out_channel, op):
+        super(HostReduceScatterNet, self).__init__()
+        self.dense = Dense(input_channel, out_channel)
+        self.hostreducescatter = HostReduceScatter(op, (0, 1))
+        self.relu = ReLU()
+
+    def construct(self, x):
+        x = self.dense(x)
+        x = self.hostreducescatter(x)
         return self.relu(x)
 
 
@@ -155,6 +185,21 @@ def test_allgather():
     _executor.compile(network, input_tensor, label_tensor)
 
 
+def test_hostallgather():
+    """test_hostallgather"""
+    context.set_context(mode=context.GRAPH_MODE)
+    input_tensor = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
+    label_tensor = Tensor(np.array([[1.2], [2.2], [3.2], [4.2]], dtype=np.float32))
+    network = HostAllGatherNet(2, 1)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+    optimizer = Momentum(filter(lambda x: x.requires_grad, network.get_parameters()),
+                         learning_rate=0.1,
+                         momentum=0.9)
+    network = WithLossCell(network, loss_fn)
+    network = TrainOneStepCell(network, optimizer)
+    _executor.compile(network, input_tensor, label_tensor)
+
+
 def run_reducescatter(op):
     """run_reducescatter"""
     context.set_context(mode=context.GRAPH_MODE)
@@ -174,6 +219,21 @@ def test_reducescatter():
     """test_reducescatter"""
     context.set_context(mode=context.GRAPH_MODE)
     run_reducescatter(ReduceOp.SUM)
+
+
+def test_hostreducescatter():
+    """test_hostreducescatter"""
+    context.set_context(mode=context.GRAPH_MODE)
+    input_tensor = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
+    label_tensor = Tensor(np.array([[1.2]], dtype=np.float32))
+    network = HostReduceScatterNet(2, 1, ReduceOp.SUM)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+    optimizer = Momentum(filter(lambda x: x.requires_grad, network.get_parameters()),
+                         learning_rate=0.1,
+                         momentum=0.9)
+    network = WithLossCell(network, loss_fn)
+    network = TrainOneStepCell(network, optimizer)
+    _executor.compile(network, input_tensor, label_tensor)
 
 
 def test_broadcast():

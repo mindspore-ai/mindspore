@@ -106,21 +106,25 @@ class SGD(Optimizer):
 
         super(SGD, self).__init__(learning_rate, params, weight_decay, loss_scale)
 
+        if isinstance(momentum, int):
+            momentum = float(momentum)
         if not isinstance(momentum, float):
             raise TypeError("momentum should be float number!")
 
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
 
-        if not isinstance(dampening, float):
-            raise TypeError("dampening should be float number")
-
         if isinstance(dampening, int):
             dampening = float(dampening)
+        if not isinstance(dampening, float):
+            raise TypeError("dampening should be float number")
 
         if dampening < 0.0:
             raise ValueError("dampening should be at least 0.0, but got dampening {}".format(dampening))
         self.dampening = dampening
+
+        if isinstance(weight_decay, int):
+            weight_decay = float(weight_decay)
 
         validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
         self.nesterov = nesterov

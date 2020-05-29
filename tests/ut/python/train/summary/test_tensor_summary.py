@@ -19,8 +19,8 @@
 @Desc  : test summary function
 """
 import logging
-import numpy as np
 import os
+import numpy as np
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -110,7 +110,7 @@ def get_test_data_check(step):
 class SummaryDemo(nn.Cell):
     """ SummaryDemo definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(SummaryDemo, self).__init__()
         self.s = P.TensorSummary()
         self.add = P.TensorAdd()

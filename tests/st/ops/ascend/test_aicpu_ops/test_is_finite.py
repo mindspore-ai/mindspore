@@ -17,7 +17,6 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -37,7 +36,7 @@ def test_net_bool():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_int8():
@@ -45,7 +44,7 @@ def test_net_int8():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_uint8():
@@ -53,7 +52,7 @@ def test_net_uint8():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_int16():
@@ -61,7 +60,7 @@ def test_net_int16():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_uint16():
@@ -69,7 +68,7 @@ def test_net_uint16():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_int32():
@@ -77,7 +76,7 @@ def test_net_int32():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_uint32():
@@ -85,7 +84,7 @@ def test_net_uint32():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_int64():
@@ -93,7 +92,7 @@ def test_net_int64():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_uint64():
@@ -101,7 +100,7 @@ def test_net_uint64():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_float16():
@@ -109,7 +108,7 @@ def test_net_float16():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_float32():
@@ -117,7 +116,7 @@ def test_net_float32():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))
 
 
 def test_net_float64():
@@ -125,4 +124,4 @@ def test_net_float64():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == np.isfinite(x)))
+    assert np.all(output.asnumpy() == np.isfinite(x))

@@ -13,9 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
-import pytest
+import numpy as np
 
 import mindspore as ms
 import mindspore.communication.management as distributedTool
@@ -58,11 +57,12 @@ class Onehot(Cell):
         self.off_value = Tensor(off_value, ms.float32)
         self.transpose = P.Transpose().set_strategy(strategy=trans_stra)
         self.sub = P.Sub().set_strategy(strategy=((1, 1), (1, 1)))
+        self.axis = axis
 
-    def construct(self, input, indices):
+    def construct(self, input_, indices):
         x = self.onehot(indices, self.depth, self.on_value, self.off_value)
         x = self.transpose(x, (1, 0))
-        x = self.sub(input, x)
+        x = self.sub(input_, x)
         return x
 
 
@@ -72,7 +72,7 @@ class DataGenerator():
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks) > 0:
+            while blocks:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
@@ -100,9 +100,9 @@ class DataGenerator():
 
 class OneHotFactory:
     def __init__(self, batch_size, classes, on_value=1.0, off_value=0.0, axis=None, strategy=None):
-        dataGen = DataGenerator()
-        self.input_full, self.input_part = dataGen.input_data((classes, batch_size))
-        self.label_full, self.label_part = dataGen.label_data((batch_size,), classes)
+        data_gen = DataGenerator()
+        self.input_full, self.input_part = data_gen.input_data((classes, batch_size))
+        self.label_full, self.label_part = data_gen.label_data((batch_size,), classes)
         self.depth = classes
         self.on_value = on_value
         self.off_value = off_value

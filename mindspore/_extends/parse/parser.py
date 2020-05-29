@@ -102,7 +102,10 @@ def get_parse_method_of_class(obj, parse_method=None):
         method_name = parse_method
     else:
         if isinstance(obj, nn.Cell):
-            method_name = "construct"
+            if obj.enable_hook:
+                method_name = "_hook_construct"
+            else:
+                method_name = "construct"
     if method_name is not None:
         if hasattr(obj, method_name):
             method = getattr(obj, method_name)

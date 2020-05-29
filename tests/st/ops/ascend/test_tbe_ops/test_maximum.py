@@ -39,9 +39,9 @@ def me_max(inputa, inputb, dtype=ms.float32):
     net.set_train()
     model = Model(net)
     print(type(inputa))
-    if isinstance(inputa, np.ndarray) == True:
+    if isinstance(inputa, np.ndarray):
         inputa = Tensor(inputa)
-    if isinstance(inputb, np.ndarray) == True:
+    if isinstance(inputb, np.ndarray):
         inputb = Tensor(inputb)
     out = model.predict(inputa, inputb)
     print(out)

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -29,8 +28,8 @@ class Net(nn.Cell):
         self.logical_and = P.LogicalAnd()
 
     @ms_function
-    def construct(self, x1, x2):
-        return self.logical_and(x1, x2)
+    def construct(self, x1_, x2_):
+        return self.logical_and(x1_, x2_)
 
 
 x1 = [True, True, False, False, True, True, False, False]

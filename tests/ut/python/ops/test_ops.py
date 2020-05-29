@@ -88,8 +88,8 @@ class NetForPackInput(nn.Cell):
 
     def construct(self, *args):
         t = ()
-        for i in range(len(args)):
-            t = t + (self.mul(args[i], args[i]),)
+        for element in args:
+            t = t + (self.mul(element, element),)
         return self.op(t)
 
 
@@ -121,13 +121,23 @@ class NetForFlatten0D(nn.Cell):
         return self.flatten(x)
 
 
+class NetForFlattenComposed(nn.Cell):
+    # make flatten op together with other ops for testing flatten grad
+    def __init__(self):
+        super(NetForFlattenComposed, self).__init__()
+        self.flatten = P.Flatten()
+
+    def construct(self, x, y):
+        return self.flatten(x+x) + y
+
+
 class ArgmaxNet(nn.Cell):
     def __init__(self):
         super(ArgmaxNet, self).__init__()
         self.argmax = P.Argmax(axis=1)
 
-    def construct(self, input):
-        return self.argmax(input)
+    def construct(self, input_):
+        return self.argmax(input_)
 
 
 class ArgminNet(nn.Cell):
@@ -135,8 +145,8 @@ class ArgminNet(nn.Cell):
         super(ArgminNet, self).__init__()
         self.argmin = P.Argmin(axis=1)
 
-    def construct(self, input):
-        return self.argmin(input)
+    def construct(self, input_):
+        return self.argmin(input_)
 
 
 class CumSumNet(nn.Cell):
@@ -145,8 +155,8 @@ class CumSumNet(nn.Cell):
         self.cumsum = P.CumSum()
         self.axis = 1
 
-    def construct(self, input):
-        return self.cumsum(input, self.axis)
+    def construct(self, input_):
+        return self.cumsum(input_, self.axis)
 
 
 class SummaryNet(nn.Cell):
@@ -186,6 +196,19 @@ class ScatterMax(nn.Cell):
         return out
 
 
+class ScatterAdd(nn.Cell):
+    """ScatterAdd net definition"""
+
+    def __init__(self, ref_shape):
+        super(ScatterAdd, self).__init__()
+        self.scatter_add = P.ScatterAdd()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, np.float32)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_add(self.ref, indices, updates)
+        return out
+
+
 class ApplyFtrlNet(nn.Cell):
     def __init__(self):
         super(ApplyFtrlNet, self).__init__()
@@ -202,8 +225,53 @@ class ApplyFtrlNet(nn.Cell):
         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2, self.lr_power)
         return out
 
+class ApplyRMSNet(nn.Cell):
+    def __init__(self):
+        super(ApplyRMSNet, self).__init__()
+        self.apply_rms = P.ApplyRMSProp()
+        self.lr = 0.001
+        self.rho = 0.0
+        self.momentum = 0.0
+        self.epsilon = 1e-10
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.ms = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="ms")
+        self.moment = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="moment")
+
+    def construct(self, grad):
+        out = self.apply_rms(self.var, self.ms, self.moment, self.lr, grad, self.rho, self.momentum, self.epsilon)
+        return out
 
 test_case_math_ops = [
+    ('BitwiseAnd', {
+        'block': P.BitwiseAnd(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseAnd_1', {
+        'block': P.BitwiseAnd(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [-1, -2, -3]]), mstype.int16),
+                        Tensor(np.array([1, 1, 1]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseOr', {
+        'block': P.BitwiseOr(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseOr_1', {
+        'block': P.BitwiseOr(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [-1, -2, -3]]), mstype.int16),
+                        Tensor(np.array([1, 1, 1]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseXor', {
+        'block': P.BitwiseXor(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseXor_1', {
+        'block': P.BitwiseXor(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [-1, -2, -3]]), mstype.int16),
+                        Tensor(np.array([1, 1, 1]), mstype.int16)],
+        'skip': ['backward']}),
     ('Neg', {
         'block': P.Neg(),
         'desc_inputs': [[1, 3, 4, 4]],
@@ -506,7 +574,8 @@ test_case_math_ops = [
     ('CumSum', {
         'block': CumSumNet(),
         'desc_inputs': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))],
-        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))]}),
+        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7],
+                                        [1, 3, 7, 9]]).astype(np.float32))]}),
     ('ReduceSum_3', {
         'block': P.ReduceSum(),
         'desc_const': [0],
@@ -680,7 +749,7 @@ test_case_nn_ops = [
     ('Flatten', {
         'block': P.Flatten(),
         'desc_inputs': [[128, 32, 32, 64]],
-        'desc_bprop': [[128 * 32 * 8 * 16]]}),
+        'desc_bprop': [[128, 65536]]}),
     ('LogSoftmax', {
         'block': P.LogSoftmax(),
         'desc_inputs': [[64, 2]],
@@ -769,6 +838,10 @@ test_case_nn_ops = [
         'desc_const': [0],
         'desc_inputs': [[1152], Tensor(np.array(10).astype(np.int32))],
         'desc_bprop': [Tensor(np.array(10).astype(np.float32))]}),
+    ('Range', {
+        'block': P.Range(1.0, 5.0),
+        'desc_inputs': [Tensor(np.ones([10]).astype(np.float32))],
+        'desc_bprop': [[10]]}),
     ('UnsortedSegmentSum', {
         'block': P.UnsortedSegmentSum(),
         'desc_const': [1280],
@@ -878,6 +951,11 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.ones([8]).astype(np.int32)), Tensor(np.ones([8, 3]).astype(np.int32))],
         'desc_bprop': [Tensor(np.ones([8, 3]).astype(np.int32))],
         'skip': ['backward']}),
+    ('Flatten_3', {
+        'block': NetForFlattenComposed(),
+        'desc_inputs': [Tensor(np.ones([2, 3, 4]).astype(np.int32)), Tensor(np.ones([2, 12]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.ones([2, 12]).astype(np.int32))],
+        'skip': []}),
     ('ArgmaxNet', {
         'block': ArgmaxNet(),
         'desc_inputs': [Tensor(np.array([[128, 32, 32, 64], [128, 32, 32, 64]]).astype(np.float16))],
@@ -914,9 +992,8 @@ test_case_nn_ops = [
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
     ('ApplyRMSProp', {
-        'block': P.ApplyRMSProp(),
-        'desc_const': [0.9, 0.0, 1e-10, 0.001],
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'block': ApplyRMSNet(),
+        'desc_inputs': [[3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
     ('ApplyCenteredRMSProp', {
@@ -1123,7 +1200,7 @@ test_case_array_ops = [
         'desc_inputs': [(Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
-        'desc_bprop': [[3, ]]}),
+        'desc_bprop': [[3,]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -1224,6 +1301,17 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
                         Tensor(np.ones([2, 2, 3], np.float32) * 99)),
         'skip': ['backward']}),
+    ('ScatterAdd', {
+        'block': ScatterAdd((6,)),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterAdd2d', {
+        'block': ScatterAdd((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
     ('SmoothL1Loss', {
         'block': P.SmoothL1Loss(),
         'desc_inputs': [[256, 4], [256, 4]],
@@ -1269,7 +1357,7 @@ test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 test_exec_case = test_case
 
 test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                           'backward' not in x[1]['skip'], test_case)
+                                 'backward' not in x[1]['skip'], test_case)
 
 
 @non_graph_engine

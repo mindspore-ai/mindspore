@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore.ops import operations as P
-from mindspore import Tensor
 
 # sum = input1 + input2 + const_bias
 class CusAdd3(PrimitiveWithInfer):

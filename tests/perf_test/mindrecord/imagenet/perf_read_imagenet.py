@@ -34,7 +34,7 @@ def use_filereader(mindrecord):
                         num_consumer=4,
                         columns=columns_list)
     num_iter = 0
-    for index, item in enumerate(reader.get_next()):
+    for _, _ in enumerate(reader.get_next()):
         num_iter += 1
         print_log(num_iter)
     end = time.time()
@@ -48,7 +48,7 @@ def use_minddataset(mindrecord):
                               columns_list=columns_list,
                               num_parallel_workers=4)
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for _ in data_set.create_dict_iterator():
         num_iter += 1
         print_log(num_iter)
     end = time.time()
@@ -64,7 +64,7 @@ def use_tfrecorddataset(tfrecord):
                                   shuffle=ds.Shuffle.GLOBAL)
     data_set = data_set.shuffle(10000)
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for _ in data_set.create_dict_iterator():
         num_iter += 1
         print_log(num_iter)
     end = time.time()
@@ -87,7 +87,7 @@ def use_tensorflow_tfrecorddataset(tfrecord):
                                        num_parallel_reads=4)
     data_set = data_set.map(_parse_record, num_parallel_calls=4)
     num_iter = 0
-    for item in data_set.__iter__():
+    for _ in data_set.__iter__():
         num_iter += 1
         print_log(num_iter)
     end = time.time()
@@ -96,18 +96,18 @@ def use_tensorflow_tfrecorddataset(tfrecord):
 
 if __name__ == '__main__':
     # use MindDataset
-    mindrecord = './imagenet.mindrecord00'
-    use_minddataset(mindrecord)
+    mindrecord_test = './imagenet.mindrecord00'
+    use_minddataset(mindrecord_test)
 
     # use TFRecordDataset
-    tfrecord = ['imagenet.tfrecord00', 'imagenet.tfrecord01', 'imagenet.tfrecord02', 'imagenet.tfrecord03',
-                'imagenet.tfrecord04', 'imagenet.tfrecord05', 'imagenet.tfrecord06', 'imagenet.tfrecord07',
-                'imagenet.tfrecord08', 'imagenet.tfrecord09', 'imagenet.tfrecord10', 'imagenet.tfrecord11',
-                'imagenet.tfrecord12', 'imagenet.tfrecord13', 'imagenet.tfrecord14', 'imagenet.tfrecord15']
-    use_tfrecorddataset(tfrecord)
+    tfrecord_test = ['imagenet.tfrecord00', 'imagenet.tfrecord01', 'imagenet.tfrecord02', 'imagenet.tfrecord03',
+                     'imagenet.tfrecord04', 'imagenet.tfrecord05', 'imagenet.tfrecord06', 'imagenet.tfrecord07',
+                     'imagenet.tfrecord08', 'imagenet.tfrecord09', 'imagenet.tfrecord10', 'imagenet.tfrecord11',
+                     'imagenet.tfrecord12', 'imagenet.tfrecord13', 'imagenet.tfrecord14', 'imagenet.tfrecord15']
+    use_tfrecorddataset(tfrecord_test)
 
     # use TensorFlow TFRecordDataset
-    use_tensorflow_tfrecorddataset(tfrecord)
+    use_tensorflow_tfrecorddataset(tfrecord_test)
 
     # use FileReader
     # use_filereader(mindrecord)

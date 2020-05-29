@@ -55,7 +55,9 @@ const char kNameSimpleMeanGrad[] = "SimpleMeanGrad";
 const char kNameAllReduce[] = "AllReduce";
 const char kNameBroadcast[] = "Broadcast";
 const char kNameAllgather[] = "AllGather";
+const char kNameHostAllgather[] = "HostAllGather";
 const char kNameReduceScatter[] = "ReduceScatter";
+const char kNameHostReduceScatter[] = "HostReduceScatter";
 const char kNameReduceSum[] = "ReduceSum";
 const char kNameIsFinite[] = "isFinite";
 const char kNameReciprocal[] = "Reciprocal";
@@ -199,6 +201,7 @@ const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
 const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
+const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
 
 // -----------------OpAdapter initialization--------------
@@ -343,7 +346,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimGelu->name(), ADPT_DESC(Gelu)},
     {prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad)},
     {string(kNameStridedSlice), ADPT_DESC(StridedSlice)},
-    {prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMinD)},
+    {prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMin)},
     {prim::kPrimUnsortedSegmentSum->name(), ADPT_DESC(UnsortedSegmentSumD)},
     {string(kNameExpandDims), ADPT_DESC(ExpandDims)},
     {prim::kPrimSqueeze->name(), ADPT_DESC(Squeeze)},
@@ -400,6 +403,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
+    {string(kNameRange), ADPT_DESC(RangeD)},
     {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);

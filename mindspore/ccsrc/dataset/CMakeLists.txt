@@ -52,9 +52,24 @@ add_subdirectory(core)
 add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
-add_subdirectory(nlp)
+add_subdirectory(text)
 ######################################################################
-
+add_dependencies(core utils)
+add_dependencies(kernels-image core)
+add_dependencies(kernels-data core)
+add_dependencies(kernels core)
+add_dependencies(engine-datasetops-source core)
+add_dependencies(engine-datasetops-source-sampler core)
+add_dependencies(engine-datasetops core)
+add_dependencies(engine-opt core)
+add_dependencies(engine-gnn core)
+add_dependencies(engine core)
+add_dependencies(text core)
+add_dependencies(text-kernels core)
+add_dependencies(APItoPython core)
+if (ENABLE_TDTQUE)
+    add_dependencies(engine-tdt core)
+endif ()
 ################### Create _c_dataengine Library ######################
 set(submodules
     $<TARGET_OBJECTS:core>
@@ -62,15 +77,15 @@ set(submodules
     $<TARGET_OBJECTS:kernels>
     $<TARGET_OBJECTS:kernels-image>
     $<TARGET_OBJECTS:kernels-data>
-    $<TARGET_OBJECTS:kernels-text>
     $<TARGET_OBJECTS:APItoPython>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
+    $<TARGET_OBJECTS:engine-gnn>
     $<TARGET_OBJECTS:engine-datasetops>
     $<TARGET_OBJECTS:engine-opt>
     $<TARGET_OBJECTS:engine>
-    $<TARGET_OBJECTS:nlp>
-    $<TARGET_OBJECTS:nlp-kernels>
+    $<TARGET_OBJECTS:text>
+    $<TARGET_OBJECTS:text-kernels>
     )
 
 if (ENABLE_TDTQUE)

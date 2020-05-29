@@ -16,11 +16,7 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.context as context
-import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.train.model import Model
@@ -33,31 +29,29 @@ class PowMe(Cell):
         super(PowMe, self).__init__()
         self.pow = P.Pow()
 
-    def construct(self, input, exp):
-        return self.pow(input, exp)
+    def construct(self, input_, exp):
+        return self.pow(input_, exp)
 
 
-def pow_forward_me_impl(input, exp):
+def pow_forward_me_impl(input_, exp):
     n = PowMe()
     n.set_train()
     m = Model(n)
-    out = m.predict(input, exp)
+    out = m.predict(input_, exp)
     return out.asnumpy()
 
 
 def pow_forward_cmp(input_shape, exp_shape):
-    if len(input_shape) == 0:
+    if not input_shape:
         input_np = np.absolute(np.random.randn())
     else:
         input_np = np.absolute(np.random.randn(*input_shape).astype(np.float32))
-    input_tf = input_np
     input_me = Tensor(input_np, dtype=ms.float32)
 
-    if len(exp_shape) == 0:
+    if not exp_shape:
         exp_np = np.absolute(np.random.randn())
     else:
         exp_np = np.absolute(np.random.randn(*exp_shape).astype(np.float32))
-    exp_tf = exp_np
     exp_me = Tensor(exp_np, dtype=ms.float32)
 
     out_me = pow_forward_me_impl(input_me, exp_me)

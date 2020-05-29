@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 from mindspore import context
 from mindspore.common.tensor import Tensor
@@ -38,7 +37,7 @@ def tf_me_batchmatmul(inputa, inputb):
     net = Net()
     net.set_train()
     model = Model(net)
-    out_me = model.predict(Tensor(inputa), Tensor(inputb))
+    model.predict(Tensor(inputa), Tensor(inputb))
 
 
 def test_batchmatmul_normal_shape1():

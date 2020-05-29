@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ut for model serialize(save/load)"""
-import numpy as np
 import os
-import pytest
 import stat
 import time
+import pytest
+import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -31,7 +31,7 @@ from mindspore.ops import operations as P
 from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
     _exec_save_checkpoint, export, _save_graph
-from ..ut_filter import run_on_onnxruntime, non_graph_engine
+from ..ut_filter import non_graph_engine
 
 context.set_context(mode=context.GRAPH_MODE)
 

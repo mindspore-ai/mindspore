@@ -20,9 +20,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 
 
@@ -38,7 +35,7 @@ class BatchMatMulNet(nn.Cell):
         return self.batch_matmul(x, y)
 
 
-def test_4D():
+def test_4d():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float32)
 
@@ -60,7 +57,7 @@ def test_4D():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_4D_transpose_a():
+def test_4d_transpose_a():
     input_x = Tensor(np.arange(2 * 4 * 3 * 1).reshape(2, 4, 3, 1), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float32)
 
@@ -82,7 +79,7 @@ def test_4D_transpose_a():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_4D_transpose_b():
+def test_4d_transpose_b():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 4 * 3).reshape(2, 4, 4, 3), mstype.float32)
 
@@ -104,7 +101,7 @@ def test_4D_transpose_b():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_4D_transpose_ab():
+def test_4d_transpose_ab():
     input_x = Tensor(np.arange(2 * 4 * 3 * 1).reshape(2, 4, 3, 1), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 4 * 3).reshape(2, 4, 4, 3), mstype.float32)
 
@@ -121,16 +118,6 @@ def test_4D_transpose_ab():
                [[4163, 4334, 4505, 4676]],
                [[5612, 5810, 6008, 6206]]]]
     assert (output.asnumpy() == expect).all()
-
-
-class BatchMatMulNet(nn.Cell):
-    def __init__(self, transpose_a=False, transpose_b=False):
-        super(BatchMatMulNet, self).__init__()
-        self.batch_matmul = P.BatchMatMul(transpose_a, transpose_b)
-
-    def construct(self, x, y):
-        return self.batch_matmul(x, y)
-
 
 def test_4D_fp16():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float16)

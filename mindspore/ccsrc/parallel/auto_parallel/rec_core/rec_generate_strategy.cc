@@ -78,8 +78,8 @@ std::vector<std::vector<int32_t>> PrepareVirtualDataset(const std::vector<std::s
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                 const size_t iter_ops, std::vector<int32_t> s) {
+std::vector<std::vector<int32_t>> PrepareScalarInputOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                             const size_t iter_ops, std::vector<int32_t> s) {
   std::vector<std::vector<int32_t>> strategies;
 
   auto dev_num = g_device_manager->DeviceNum();
@@ -190,12 +190,16 @@ std::vector<std::vector<int32_t>> MakeDataParallelStrategy(const std::vector<std
     std::vector<int32_t> s;
     size_t input_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
     for (size_t dim = 0; dim < input_size; dim++) {
-      if (dim == 0 && input_size == 4) {
-        size_t max_device_num = g_device_manager->DeviceNum();
-        size_t target_tensor_batch = ops[iter_ops]->outputs_tensor_info()[0].shape()[0];
-        s.push_back(std::min(max_device_num, target_tensor_batch));
+      if (input_size == 1 || input_size == 2 || input_size == 4) {
+        if (dim == 0) {
+          size_t max_device_num = g_device_manager->DeviceNum();
+          size_t target_tensor_batch = ops[iter_ops]->outputs_tensor_info()[0].shape()[0];
+          s.push_back(std::min(max_device_num, target_tensor_batch));
+        } else {
+          s.push_back(1);
+        }
       } else {
-        s.push_back(1);
+        MS_LOG(ERROR) << "Tensor's shape is unknown.";
       }
     }
 
@@ -239,6 +243,8 @@ void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> graph,
     std::vector<std::vector<int32_t>> strategies;
     size_t iter_graph = index_list->at(iter_ops);
     if (iter_graph == SIZE_MAX) {
+      StrategyPtr sp = std::make_shared<Strategy>(0, strategies);
+      ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
       continue;
     }
     strategies = PrepareStrategy(graph, ops, iter_graph, iter_ops);
@@ -389,7 +395,7 @@ std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::share
   std::vector<int32_t> s_Reduce;
   std::vector<int32_t> axis_list;
   for (size_t i = 0; i < s.size(); i++) {
-    axis_list.push_back(i + 1);
+    axis_list.push_back(i);
   }
   auto dim_list = GetDimList(ops, incoming_op_index);
   for (auto axis : dim_list) {
@@ -400,7 +406,7 @@ std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::share
     axis_list.erase(it);
   }
   for (size_t i = 0; i < (size_t)axis_list.size(); i++) {
-    s_Reduce.push_back(s[axis_list[i] - 1]);
+    s_Reduce.push_back(s[axis_list[i]]);
   }
   return s_Reduce;
 }
@@ -418,8 +424,6 @@ std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::sh
         ops[incoming_op_index]->type() == REDUCE_MIN || ops[incoming_op_index]->type() == REDUCE_MEAN) {
       s = ModifyStrategyIfReduceIncoming(ops, incoming_op_index, s);
     }
-  } else {
-    no_stra_op_list->push_back(iter_ops);
   }
   return s;
 }
@@ -428,12 +432,18 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
                                                                  const size_t iter_ops, std::vector<int32_t> s) {
   std::vector<int32_t> s_empty = {};
   std::vector<std::vector<int32_t>> stra;
+
   if (s.size() == 0) {
+    for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_tensor_info().size();
+         iter_op_inputs++) {
+      stra.push_back(s);
+    }
     return stra;
   }
+
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
-  if (ops[iter_ops]->type() == BIAS_ADD) {
-    return PrepareBiasAdd(ops, iter_ops, s);
+  if (ops[iter_ops]->type() == BIAS_ADD || ops[iter_ops]->type() == PRELU) {
+    return PrepareScalarInputOperator(ops, iter_ops, s);
   }
   if (ops[iter_ops]->type() == ONEHOT) {
     return PrepareOneHot(s);
@@ -504,10 +514,14 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> grap
       } else {
         s = CopyIncomingOperatorInputStrategy(ops, incoming_op_index, iter_ops, no_stra_op_list);
       }
-    } else {
-      no_stra_op_list->push_back(iter_ops);
     }
-    stra = GenerateStrategiesFromStrategy(ops, iter_ops, s);
+
+    if (s.size() == 0) {
+      no_stra_op_list->push_back(iter_ops);
+    } else {
+      stra = GenerateStrategiesFromStrategy(ops, iter_ops, s);
+    }
+
     StrategyPtr sp = std::make_shared<Strategy>(0, stra);
     ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
   }
@@ -541,7 +555,7 @@ std::vector<int32_t> ModifyStrategyIfReduceOutgoing(const std::vector<std::share
   size_t s_index = 0;
   size_t dim_list_index = 0;
   for (size_t i = 0; i < (size_t)(s.size() + dim_list.size()); i++) {
-    if ((i + 1) == (size_t)dim_list[dim_list_index]) {
+    if (i == (size_t)dim_list[dim_list_index]) {
       s_Reduce.push_back(1);
       dim_list_index++;
     } else {
@@ -597,6 +611,5 @@ void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_pt
     ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
   }
 }
-
 }  // namespace parallel
 }  // namespace mindspore

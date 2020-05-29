@@ -123,7 +123,7 @@ void Cloner::CloneValueNodes(const FuncGraphPtr &func_graph) {
   if (!clone_all_valuenodes_) {
     return;
   }
-  auto &value_nodes = manager_->valuenodes()[func_graph];
+  auto &value_nodes = func_graph->value_nodes();
   for (auto &value_node : value_nodes) {
     auto old_node = value_node.first;
     MS_EXCEPTION_IF_NULL(old_node);
@@ -153,9 +153,9 @@ void Cloner::AddTotalGraphs(const FuncGraphPtr &func_graph) {
   if (!clone_all_used_graphs_) {
     return;
   }
-  auto &used_graphs = manager_->func_graphs_used()[func_graph];
-  for (auto &used_graph : used_graphs) {
-    todo_.push_back({used_graph.first, nullptr, {}});
+  auto &used = func_graph->func_graphs_used();
+  for (auto &fg : used) {
+    todo_.push_back({fg.first, nullptr, {}});
   }
 }
 
@@ -185,7 +185,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   }
   target_func_graph->set_return(return_node);
 
-  auto &cnodes = manager_->func_graph_cnodes_index()[func_graph];
+  auto &cnodes = func_graph->func_graph_cnodes_index();
   for (auto &cnode : cnodes) {
     auto parent = cnode.first->first->cast<CNodePtr>();
     auto valuenode = parent->input(cnode.first->second);
@@ -441,7 +441,7 @@ void Cloner::CloneAllNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &t
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   MS_EXCEPTION_IF_NULL(manager_);
-  const AnfNodeSet &nodes = manager_->nodes()[func_graph];
+  const AnfNodeSet &nodes = func_graph->nodes();
   for (auto &node : nodes) {
     CloneNode(node, target_func_graph);
   }

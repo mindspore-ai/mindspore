@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,5 +98,11 @@ void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
 }
 
 void MKLCPUKernel::ExecutePrimitive() { MKLKernelEngine::Get().Execute(primitive_, arguments_); }
+void MKLCPUKernel::write_to_dnnl_memory(void *handle, const dnnl::memory &mem) {
+  MKLKernelEngine::Get().write_to_dnnl_memory(handle, mem);
+}
+void MKLCPUKernel::read_from_dnnl_memory(void *handle, const dnnl::memory &mem) {
+  MKLKernelEngine::Get().read_from_dnnl_memory(handle, mem);
+}
 }  // namespace kernel
 }  // namespace mindspore

@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
@@ -43,7 +40,6 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(1, 64, 112, 112).astype(np.float32)
     maxpool = Net()
     output = maxpool()
     print("***********output output*********")

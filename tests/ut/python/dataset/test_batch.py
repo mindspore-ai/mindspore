@@ -434,6 +434,7 @@ def test_batch_exception_11():
         assert "drop_remainder" in str(e)
 
 
+# pylint: disable=redundant-keyword-arg
 def test_batch_exception_12():
     """
     Test batch exception: wrong input order, drop_remainder wrongly used as batch_size

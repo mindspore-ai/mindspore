@@ -170,6 +170,9 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
       MS_EXCEPTION_IF_NULL(output_idx);
       AnfNodePtr input1 = x_cnode->input(1);
       MS_EXCEPTION_IF_NULL(input1);
+      if (!input1->isa<CNode>()) {
+        return false;
+      }
       *prior_op = input1->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(*prior_op);
       AnfNodePtr input2 = x_cnode->input(2);

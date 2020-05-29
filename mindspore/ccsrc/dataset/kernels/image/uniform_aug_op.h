@@ -24,9 +24,6 @@
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
 #include "dataset/util/status.h"
-#include "dataset/kernels/py_func_op.h"
-
-#include "pybind11/stl.h"
 
 namespace mindspore {
 namespace dataset {
@@ -36,10 +33,11 @@ class UniformAugOp : public TensorOp {
   static const int kDefNumOps;
 
   // Constructor for UniformAugOp
-  // @param list op_list: list of candidate C++ operations
-  // @param list num_ops: number of augemtation operations to applied
-  UniformAugOp(py::list op_list, int32_t num_ops);
+  // @param std::vector<std::shared_ptr<TensorOp>> op_list: list of candidate C++ operations
+  // @param int32_t num_ops: number of augemtation operations to applied
+  UniformAugOp(std::vector<std::shared_ptr<TensorOp>> op_list, int32_t num_ops);
 
+  // Destructor
   ~UniformAugOp() override = default;
 
   void Print(std::ostream &out) const override { out << "UniformAugOp:: number of ops " << num_ops_; }

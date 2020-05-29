@@ -4,7 +4,7 @@ if (WIN32)
         LIBS sqlite3
         URL https://sqlite.org/2020/sqlite-amalgamation-3310100.zip
         MD5 2b7bfcdd97dc281903a9aee966213fe4
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.windows.patch001
+        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.windows.patch001 ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.windows.patch002 ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.windows.patch003
         CMAKE_OPTION " "
     )
 
@@ -22,7 +22,7 @@ else ()
         LIBS sqlite3
         URL https://github.com/sqlite/sqlite/archive/version-3.31.1.tar.gz
         MD5 5f4e7b4016c15f4fb5855615279819da
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.patch001
+        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.patch001 ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.patch002 ${CMAKE_SOURCE_DIR}/third_party/patch/sqlite/sqlite.patch003
         CONFIGURE_COMMAND ./configure --enable-shared=no --disable-tcl --disable-editline --enable-json1)
 endif ()
 

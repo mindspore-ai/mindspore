@@ -14,11 +14,10 @@
 # ============================================================================
 
 import pytest
+import numpy as np
 from mindspore import Tensor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
-from mindspore.common.api import ms_function
-import numpy as np
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 
@@ -96,7 +95,7 @@ def test_gatherv2_axisN1():
     expect = np.array([[[1., 2.],
                         [4., 5.]],
                        [[7., 8.],
-                        [10.,11.]]])
+                        [10., 11.]]])
     error = np.ones(shape=ms_output.asnumpy().shape) * 1.0e-6
     diff = ms_output.asnumpy() - expect
     assert np.all(diff < error)

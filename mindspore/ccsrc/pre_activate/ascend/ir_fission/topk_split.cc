@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pre_activate/ascend/ir_fission/topk_split.h"
+#include <string>
 #include <vector>
 #include <memory>
 #include <unordered_set>
@@ -77,6 +78,9 @@ ValueNodePtr CreateValueNode(const AnfNodePtr &node) {
 
 kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetKernelType(TBE_KERNEL);
+  builder.SetFusionType(kernel::OPAQUE);
+  builder.SetProcessor(kernel::AICORE);
   builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
   builder.SetOutputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
   builder.SetInputsDeviceType({kNumberTypeFloat16, kNumberTypeFloat16});
@@ -99,6 +103,11 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   // set value node as topk's input
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
+  if (input_names_vec.size() < kTopkIndexK + 1) {
+    MS_LOG(INFO) << "The input k of topk has been converted to attr";
+    return nullptr;
+  }
   // Copy a new node to check supported.
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKOpName))};
   new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
@@ -129,10 +138,12 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   new_cnode->add_input(indices_const);
   MS_EXCEPTION_IF_NULL(supported_checker_);
   if (!supported_checker_->CheckAiCoreSupported(new_cnode, CreateKernelBuildInfo())) {
+    MS_LOG(INFO) << "split topk failed, check to aicpu.";
     return nullptr;
   }
 
   if (kernel_graph != nullptr) {
+    MS_LOG(INFO) << "split topk success. use tbe aicore.";
     kernel_graph->AddValueNodeToGraph(indices_const);
   }
 

@@ -15,8 +15,9 @@
 """
 Testing RandomCropAndResize op in DE
 """
-import cv2
 import numpy as np
+import cv2
+
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 import mindspore.dataset.transforms.vision.utils as mode

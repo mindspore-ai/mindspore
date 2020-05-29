@@ -47,7 +47,7 @@ std::vector<int> KernelDef::GetOutputRefIndexs() const {
   return output_ref_indexs;
 }
 
-std::vector<int> KernelDef::GetWkRefIndexs() const {
+std::vector<int> KernelDef::GetWorkspaceRefIndexs() const {
   std::vector<int> wk_ref_indexs;
   if (wk_space_.empty()) {
     return wk_ref_indexs;

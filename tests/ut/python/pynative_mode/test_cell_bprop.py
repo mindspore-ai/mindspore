@@ -219,7 +219,7 @@ class OneInputBprop(nn.Cell):
         return self.op(x)
 
     def bprop(self, x, out, dout):
-        return 5 * x,
+        return (5 * x,)
 
 
 def test_grad_one_input_bprop():
@@ -257,7 +257,7 @@ def test_grad_inline_bprop_two_input():
     grads = C.grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
-    assert (len(grads) == 2)
+    assert len(grads) == 2
 
 
 class TwoInputBprop(nn.Cell):
@@ -317,7 +317,7 @@ def test_grad_inline_bprop_multi_input():
     grads = C.grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([[12, 12], [12, 12]]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[19, 19], [19, 19]]).astype(np.float32)).all()
-    assert (len(grads) == 2)
+    assert len(grads) == 2
 
 
 class MulAddWithParam(nn.Cell):
@@ -349,10 +349,11 @@ class MulAddWithWrongOutputNum(nn.Cell):
         return 2 * x + y
 
     def bprop(self, x, y, out, dout):
-        return 2 * dout,
+        return (2 * dout,)
 
 
 def test_grad_mul_add_with_wrong_output_num():
+    context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputNum()
     with pytest.raises(TypeError):
         C.grad_all(mul_add)(1, 2)
@@ -370,6 +371,7 @@ class MulAddWithWrongOutputType(nn.Cell):
 
 
 def test_grad_mul_add_with_wrong_output_type():
+    context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputType()
     with pytest.raises(TypeError):
         C.grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
@@ -378,7 +380,7 @@ def test_grad_mul_add_with_wrong_output_type():
 class MulAddWithWrongOutputShape(nn.Cell):
     def __init__(self):
         super(MulAddWithWrongOutputShape, self).__init__()
-        self.ones = Tensor(np.ones([2, ]))
+        self.ones = Tensor(np.ones([2,]))
 
     def construct(self, x, y):
         return 2 * x + y
@@ -388,6 +390,7 @@ class MulAddWithWrongOutputShape(nn.Cell):
 
 
 def test_grad_mul_add_with_wrong_output_shape():
+    context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputShape()
     with pytest.raises(TypeError):
         C.grad_all(mul_add)(1, Tensor(np.ones([2, 2])))

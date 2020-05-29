@@ -50,7 +50,7 @@ _w1 = Tensor(np.ones([128, 64]), dtype=ms.float32)
 _b = Tensor(np.ones([128, 64]), dtype=ms.float32)
 
 
-def compile(net):
+def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
@@ -63,7 +63,7 @@ def test_dropout_do_mask_data_parallel():
     strategy1 = ((16, 1), (16, 1))
     strategy2 = ((16, 1),)
     net = Net(_w1, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_dropout_do_mask_model_parallel():
@@ -71,7 +71,7 @@ def test_dropout_do_mask_model_parallel():
     strategy1 = ((1, 16), (1, 16))
     strategy2 = ((1, 16),)
     net = Net(_w1, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_dropout_do_mask_hybrid_parallel():
@@ -79,13 +79,13 @@ def test_dropout_do_mask_hybrid_parallel():
     strategy1 = ((4, 4), (4, 4))
     strategy2 = ((4, 4),)
     net = Net(_w1, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_dropout_do_mask_auto_parallel():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
     net = Net(_w1)
-    compile(net)
+    compile_net(net)
 
 
 def test_dropout_do_mask_repeat_calc():
@@ -93,4 +93,4 @@ def test_dropout_do_mask_repeat_calc():
     strategy1 = ((4, 4), (4, 4))
     strategy2 = ((2, 4),)
     net = Net(_w1, strategy1, strategy2)
-    compile(net)
+    compile_net(net)

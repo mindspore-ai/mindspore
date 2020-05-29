@@ -50,6 +50,7 @@ def test_parser_three_default_mixed_args_subnet():
     assert net(tensor1, tensor2) == tensor1
 
 
+# pylint: disable=keyword-arg-before-vararg
 def test_net_vararg_kwonlyarg_kwarg():
     class FirstNet(Cell):
         def __init__(self):
@@ -76,6 +77,7 @@ def test_net_vararg_kwonlyarg_kwarg():
     net()
 
 
+# pylint: disable=keyword-arg-before-vararg
 def test_net_vararg_normal_input():
     class FirstNet(Cell):
         def __init__(self):

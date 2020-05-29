@@ -57,7 +57,7 @@ def test_imagefolder(remove_json_files=True):
     # data1 should still work after saving.
     ds.serialize(data1, "imagenet_dataset_pipeline.json")
     ds1_dict = ds.serialize(data1)
-    assert (validate_jsonfile("imagenet_dataset_pipeline.json") is True)
+    assert validate_jsonfile("imagenet_dataset_pipeline.json") is True
 
     # Print the serialized pipeline to stdout
     ds.show(data1)
@@ -68,8 +68,8 @@ def test_imagefolder(remove_json_files=True):
     # Serialize the pipeline we just deserialized.
     # The content of the json file should be the same to the previous serialize.
     ds.serialize(data2, "imagenet_dataset_pipeline_1.json")
-    assert (validate_jsonfile("imagenet_dataset_pipeline_1.json") is True)
-    assert (filecmp.cmp('imagenet_dataset_pipeline.json', 'imagenet_dataset_pipeline_1.json'))
+    assert validate_jsonfile("imagenet_dataset_pipeline_1.json") is True
+    assert filecmp.cmp('imagenet_dataset_pipeline.json', 'imagenet_dataset_pipeline_1.json')
 
     # Deserialize the latest json file again
     data3 = ds.deserialize(json_filepath="imagenet_dataset_pipeline_1.json")
@@ -78,16 +78,16 @@ def test_imagefolder(remove_json_files=True):
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
     for item1, item2, item3, item4 in zip(data1.create_dict_iterator(), data2.create_dict_iterator(),
                                           data3.create_dict_iterator(), data4.create_dict_iterator()):
-        assert (np.array_equal(item1['image'], item2['image']))
-        assert (np.array_equal(item1['image'], item3['image']))
-        assert (np.array_equal(item1['label'], item2['label']))
-        assert (np.array_equal(item1['label'], item3['label']))
-        assert (np.array_equal(item3['image'], item4['image']))
-        assert (np.array_equal(item3['label'], item4['label']))
+        assert np.array_equal(item1['image'], item2['image'])
+        assert np.array_equal(item1['image'], item3['image'])
+        assert np.array_equal(item1['label'], item2['label'])
+        assert np.array_equal(item1['label'], item3['label'])
+        assert np.array_equal(item3['image'], item4['image'])
+        assert np.array_equal(item3['label'], item4['label'])
         num_samples += 1
 
     logger.info("Number of data in data1: {}".format(num_samples))
-    assert (num_samples == 6)
+    assert num_samples == 6
 
     # Remove the generated json file
     if remove_json_files:
@@ -106,26 +106,26 @@ def test_mnist_dataset(remove_json_files=True):
     data1 = data1.batch(batch_size=10, drop_remainder=True)
 
     ds.serialize(data1, "mnist_dataset_pipeline.json")
-    assert (validate_jsonfile("mnist_dataset_pipeline.json") is True)
+    assert validate_jsonfile("mnist_dataset_pipeline.json") is True
 
     data2 = ds.deserialize(json_filepath="mnist_dataset_pipeline.json")
     ds.serialize(data2, "mnist_dataset_pipeline_1.json")
-    assert (validate_jsonfile("mnist_dataset_pipeline_1.json") is True)
-    assert (filecmp.cmp('mnist_dataset_pipeline.json', 'mnist_dataset_pipeline_1.json'))
+    assert validate_jsonfile("mnist_dataset_pipeline_1.json") is True
+    assert filecmp.cmp('mnist_dataset_pipeline.json', 'mnist_dataset_pipeline_1.json')
 
     data3 = ds.deserialize(json_filepath="mnist_dataset_pipeline_1.json")
 
     num = 0
     for data1, data2, data3 in zip(data1.create_dict_iterator(), data2.create_dict_iterator(),
                                    data3.create_dict_iterator()):
-        assert (np.array_equal(data1['image'], data2['image']))
-        assert (np.array_equal(data1['image'], data3['image']))
-        assert (np.array_equal(data1['label'], data2['label']))
-        assert (np.array_equal(data1['label'], data3['label']))
+        assert np.array_equal(data1['image'], data2['image'])
+        assert np.array_equal(data1['image'], data3['image'])
+        assert np.array_equal(data1['label'], data2['label'])
+        assert np.array_equal(data1['label'], data3['label'])
         num += 1
 
     logger.info("mnist total num samples is {}".format(str(num)))
-    assert (num == 10)
+    assert num == 10
 
     if remove_json_files:
         delete_json_files()
@@ -146,13 +146,13 @@ def test_zip_dataset(remove_json_files=True):
                                          "column_1d", "column_2d", "column_3d", "column_binary"])
     data3 = ds.zip((data1, data2))
     ds.serialize(data3, "zip_dataset_pipeline.json")
-    assert (validate_jsonfile("zip_dataset_pipeline.json") is True)
-    assert (validate_jsonfile("zip_dataset_pipeline_typo.json") is False)
+    assert validate_jsonfile("zip_dataset_pipeline.json") is True
+    assert validate_jsonfile("zip_dataset_pipeline_typo.json") is False
 
     data4 = ds.deserialize(json_filepath="zip_dataset_pipeline.json")
     ds.serialize(data4, "zip_dataset_pipeline_1.json")
-    assert (validate_jsonfile("zip_dataset_pipeline_1.json") is True)
-    assert (filecmp.cmp('zip_dataset_pipeline.json', 'zip_dataset_pipeline_1.json'))
+    assert validate_jsonfile("zip_dataset_pipeline_1.json") is True
+    assert filecmp.cmp('zip_dataset_pipeline.json', 'zip_dataset_pipeline_1.json')
 
     rows = 0
     for d0, d3, d4 in zip(ds0, data3, data4):
@@ -165,7 +165,7 @@ def test_zip_dataset(remove_json_files=True):
             assert np.array_equal(t1, d4[offset + num_cols])
             offset += 1
         rows += 1
-    assert (rows == 12)
+    assert rows == 12
 
     if remove_json_files:
         delete_json_files()
@@ -177,7 +177,7 @@ def test_random_crop():
     SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
     # First dataset
-    data1 = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
     decode_op = vision.Decode()
     random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data1 = data1.map(input_columns="image", operations=decode_op)
@@ -192,12 +192,12 @@ def test_random_crop():
     data1_1 = ds.deserialize(input_dict=ds1_dict)
 
     # Second dataset
-    data2 = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
     data2 = data2.map(input_columns="image", operations=decode_op)
 
     for item1, item1_1, item2 in zip(data1.create_dict_iterator(), data1_1.create_dict_iterator(),
                                      data2.create_dict_iterator()):
-        assert (np.array_equal(item1['image'], item1_1['image']))
+        assert np.array_equal(item1['image'], item1_1['image'])
         image2 = item2["image"]
 
 
@@ -250,7 +250,7 @@ def test_minddataset(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for _ in data_set.create_dict_iterator():
         num_iter += 1
     assert num_iter == 5
 

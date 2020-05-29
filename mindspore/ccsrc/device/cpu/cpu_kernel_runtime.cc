@@ -44,8 +44,7 @@ void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
 void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   size_t type_size = sizeof(float);
-  for (auto &item : kernel_graph->value_nodes()) {
-    auto item_node = item.first;
+  for (auto &item_node : kernel_graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(item_node);
     if (item_node->isa<ValueNode>()) {
       auto value_node = item_node->cast<ValueNodePtr>();

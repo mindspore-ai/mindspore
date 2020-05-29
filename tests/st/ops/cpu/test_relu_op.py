@@ -44,8 +44,8 @@ class NetRelu(nn.Cell):
 def test_relu():
     relu = NetRelu()
     output = relu()
-    expect = np.array([[[[0, 1, 10, ],
-                         [1, 0, 1, ],
+    expect = np.array([[[[0, 1, 10,],
+                         [1, 0, 1,],
                          [10, 1, 0.]]]]).astype(np.float32)
     print(output)
     assert (output.asnumpy() == expect).all()

@@ -27,8 +27,8 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.select = P.Select()
 
-    def construct(self, cond, x, y):
-        return self.select(cond, x, y)
+    def construct(self, cond_op, input_x, input_y):
+        return self.select(cond_op, input_x, input_y)
 
 
 cond = np.array([[True, False], [True, False]]).astype(np.bool)

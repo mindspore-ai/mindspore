@@ -15,11 +15,10 @@
 
 import os
 import random
+from multiprocessing import Process, Queue
 import numpy as np
 import pytest
-from multiprocessing import Process, Queue
 from resnet import resnet50
-
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C

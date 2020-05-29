@@ -35,9 +35,11 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
     """
     Checks whether an argument is a positive int or tuple with 2 or 4(when allow_four is True) positive int elements.
     """
+
     def _raise_message():
         raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
                          f"{'or four ' if allow_four else ''}positive int numbers, but got {arg_value}")
+
     def _get_return_value():
         if isinstance(arg_value, int):
             ret = (1, 1, arg_value, arg_value) if ret_four else (arg_value, arg_value)
@@ -50,6 +52,7 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
         else:
             _raise_message()
         return ret
+
     validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
     ret_value = _get_return_value()
     for item in ret_value:
@@ -57,6 +60,7 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
             continue
         _raise_message()
     return ret_value
+
 
 class Flatten(PrimitiveWithInfer):
     r"""
@@ -205,6 +209,7 @@ class Softplus(PrimitiveWithInfer):
         >>> softplus(input_x)
         [1.3132615, 2.126928, 3.0485873, 4.01815, 5.0067153]
     """
+
     @prim_attr_register
     def __init__(self):
         """init Softplus"""
@@ -301,6 +306,7 @@ class ReLUV2(PrimitiveWithInfer):
         ([[[[1., 0.], [0., 4.]], [[0., 6.], [7., 0.]]]],
          [[[[1, 0], [2, 0]], [[2, 0], [1, 0]]]])
     """
+
     @prim_attr_register
     def __init__(self):
         """init ReLUV2"""
@@ -398,6 +404,7 @@ class HSwish(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> result = hswish(input_x)
     """
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
@@ -730,8 +737,8 @@ class Conv2D(PrimitiveWithInfer):
         """init Conv2D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
-        self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+        self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('stride', self.stride)
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
         validator.check_value_type('pad', pad, (int,), self.name)
@@ -787,7 +794,6 @@ class Conv2D(PrimitiveWithInfer):
 
         self.pad_list = [pad_top, pad_bottom, pad_left, pad_right]
         self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
-
         out_channel = self.out_channel
         out_shape = [x_shape[0], out_channel, h_out, w_out]
         return out_shape
@@ -1077,6 +1083,7 @@ class MaxPoolWithArgmax(_Pool):
         >>> maxpool_arg_op = P.MaxPoolWithArgmax(padding="VALID", ksize=2, strides=1)
         >>> output_tensor, argmax = maxpool_arg_op(input_tensor)
     """
+
     def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
         self.is_tbe = context.get_context("device_target") == "Ascend"
@@ -1495,6 +1502,7 @@ class ApplyMomentum(PrimitiveWithInfer):
         ('gradient', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD),
         ('momentum', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD)
     )
+
     @prim_attr_register
     def __init__(self, use_nesterov=False, use_locking=False, gradient_scale=1.0):
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
@@ -1584,6 +1592,7 @@ class L2Loss(PrimitiveWithInfer):
         >>> l2_loss(input_x)
         7.0
     """
+
     @prim_attr_register
     def __init__(self):
         """init L2Loss"""
@@ -1721,15 +1730,21 @@ class ApplyRMSProp(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['var', 'mean_square', 'moment', 'learning_rate', 'grad',
+                                        'rho', 'momentum', 'epsilon'], outputs=['output'])
+        self.is_ge = context.get_context("enable_ge")
+        self.is_d = context.get_context("device_target") == "Ascend"
 
-    def infer_shape(self, var_shape, mean_square_shape, moment_shape, grad_shape, learning_rate_shape, decay_shape,
+    def infer_shape(self, var_shape, mean_square_shape, moment_shape, learning_rate_shape, grad_shape, decay_shape,
                     momentum_shape, epsilon_shape):
         validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        if not self.is_ge and self.is_d:
+            return var_shape, var_shape, var_shape
         return var_shape
 
-    def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, grad_dtype, learning_rate_dtype, decay_dtype,
+    def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, learning_rate_dtype, grad_dtype, decay_dtype,
                     momentum_dtype, epsilon_dtype):
         args = {"var": var_dtype, "mean_square": mean_square_dtype, "moment": moment_dtype, "grad": grad_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
@@ -1739,6 +1754,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         validator.check_type_same(args_decay, valid_types, self.name)
         args_lr = {"learning_rate": learning_rate_dtype, "decay": decay_dtype}
         validator.check_scalar_or_tensor_type_same(args_lr, valid_types, self.name, allow_mix=True)
+        if not self.is_ge and self.is_d:
+            return var_dtype, var_dtype, var_dtype
         return var_dtype
 
 
@@ -1845,6 +1862,7 @@ class LayerNorm(Primitive):
             the value should be in [-1, rank(input)). Default: 1.
         begin_params_axis (int): The begin axis of the parameter input (`gamma`, `beta`) to
             apply LayerNorm, the value should be in [-1, rank(input)). Default: 1.
+        epsilon (float): A value added to the denominator for numerical stability. Default: 1e-7.
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
@@ -1873,9 +1891,10 @@ class LayerNorm(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
+    def __init__(self, begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7):
         validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
         validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
+        validator.check_value_type('epsilon', epsilon, [float], self.name)
 
 
 class L2Normalize(PrimitiveWithInfer):
@@ -2316,7 +2335,29 @@ class LSTM(PrimitiveWithInfer):
         y_shape = (x_shape[0], x_shape[1], self.hidden_size * self.num_directions)
 
         # set arbitrary shape for reserved space
-        reserved_shape = (1, 1)
+        type_size = 4
+        gates_ws_ld = self.get_good_ld(self.hidden_size * 4, type_size)
+        states_ws_ld = self.get_good_ld(max(self.hidden_size, self.input_size), type_size)
+        self.ws_gates_size = self.num_layers * self.num_directions * x_shape[0] * x_shape[1] * gates_ws_ld * type_size
+        self.ws_states_size = (self.num_layers + 1) * self.num_directions * (x_shape[0] + 1) * x_shape[
+            1] * states_ws_ld * type_size
+        self.ws_c_states_size = (self.num_layers + 1) * self.num_directions * (x_shape[0] + 1) * x_shape[
+            1] * states_ws_ld * type_size
+        self.ws_diff_states_size = (self.num_layers + 1) * self.num_directions * (x_shape[0] + 1) * (2 + 1) * x_shape[
+            1] * states_ws_ld * type_size
+        self.ws_grid_comp_size = 0
+        self.page_size = 4096
+        current_offset = 0
+        current_offset += self.ws_gates_size
+        current_offset = self.rnd_up(current_offset, self.page_size)
+        current_offset += self.ws_states_size
+        current_offset = self.rnd_up(current_offset, self.page_size)
+        current_offset += self.ws_c_states_size
+        current_offset = self.rnd_up(current_offset, self.page_size)
+        current_offset += self.ws_diff_states_size
+        current_offset = self.rnd_up(current_offset, self.page_size)
+        current_offset += self.ws_grid_comp_size
+        reserved_shape = (current_offset, 1)
         state_shape = (1, 1)
         return (y_shape, h_shape, c_shape, reserved_shape, state_shape)
 
@@ -2324,6 +2365,15 @@ class LSTM(PrimitiveWithInfer):
         args = {'x': x_dtype, 'h': h_dtype, 'c': c_dtype, 'w': w_dtype}
         validator.check_tensor_type_same(args, (mstype.float32, mstype.float16), self.name)
         return (x_dtype, x_dtype, x_dtype, x_dtype, x_dtype)
+
+    def rnd_up(self, current_offset, page_size):
+        return ((current_offset + page_size - 1) // page_size) * page_size
+
+    def get_good_ld(self, dim, type_size):
+        ld = self.rnd_up(dim, 64 // type_size)
+        if ld * 256 == 0:
+            return ld + 64 // type_size
+        return ld
 
 
 class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
@@ -2581,8 +2631,7 @@ class Adam(PrimitiveWithInfer):
           Mean square gradients, has the same type as `var`.
         - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
         - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
-        - **lr** (Union[float, Tensor, Iterable]) - :math:`l` in the updating formula.
-          Iterable type is used for the dynamic learning rate.
+        - **lr** (float) - :math:`l` in the updating formula.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
@@ -2991,6 +3040,7 @@ class Dropout(PrimitiveWithInfer):
         >>> in = Tensor((20, 16, 50, 50))
         >>> out = dropout(in)
     """
+
     @prim_attr_register
     def __init__(self, drop_prob=0):
         self.drop_prob = validator.check_number_range("drop_prob", drop_prob, 0, 1, Rel.INC_BOTH, self.name)
@@ -3025,6 +3075,7 @@ class DropoutGrad(PrimitiveWithInfer):
         >>> in = Tensor((20, 16, 50, 50))
         >>> out = dropout_grad(in)
     """
+
     @prim_attr_register
     def __init__(self, drop_prob=0):
         self.drop_prob = validator.check_number_range("drop_prob", drop_prob, 0, 1, Rel.INC_BOTH, self.name)
@@ -3075,6 +3126,7 @@ class CTCLoss(PrimitiveWithInfer):
         >>> ctc_loss = P.CTCloss()
         >>> output = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
     """
+
     @prim_attr_register
     def __init__(self, preprocess_collapse_repeated=False, ctc_merge_repeated=False,
                  ignore_longer_outputs_than_inputs=False):

@@ -48,6 +48,16 @@ class Strategy {
   }
   void ResetInputs(const std::vector<Dimensions> &input) { inputs_ = input; }
 
+  bool IsEqual(const StrategyPtr &another_stra) {
+    if (another_stra == nullptr) {
+      return false;
+    }
+    if ((stage_ != another_stra->GetInputStage()) || (inputs_ != another_stra->GetInputDim())) {
+      return false;
+    }
+    return true;
+  }
+
  private:
   const int32_t stage_;
 

@@ -17,9 +17,6 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 
 
@@ -28,8 +25,8 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.add = P.TensorAdd()
 
-    def construct(self, x, y):
-        return self.add(x, y)
+    def construct(self, x_, y_):
+        return self.add(x_, y_)
 
 
 x = np.random.randn(1, 3, 3, 4).astype(np.float32)

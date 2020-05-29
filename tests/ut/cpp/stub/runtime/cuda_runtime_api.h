@@ -17,7 +17,9 @@
 #define TESTS_UT_STUB_RUNTIME_INCLUDE_CUDA_RUNTIME_API_H_
 
 #include <cstddef>
-typedef enum { cudaSuccess = 0 } cudaError_t;
+typedef enum { cudaSuccess = 0, cudaErrorNotReady = 1 } cudaError_t;
+
+unsigned int cudaEventDefault = 0;
 
 enum cudaMemcpyKind {
   cudaMemcpyHostToHost = 0,

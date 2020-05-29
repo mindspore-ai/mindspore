@@ -23,7 +23,6 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 context.set_context(device_target='GPU')
@@ -81,7 +80,7 @@ class LstmNet(nn.Cell):
                          -2.9055e-01, -2.8129e-01, 6.0219e-01, 4.9193e-01, 3.3115e-01],
                         [-5.6894e-01, -5.0359e-01, 4.7491e-01, 5.8110e-01, -5.4921e-01,
                          -6.1343e-01, -5.8236e-02, -3.7682e-01, 4.8338e-01, -2.1551e-01]]).astype(np.float32).reshape(
-            [1, -1])
+                             [1, -1])
 
         whh = np.array([[-0.4820, -0.2350],
                         [-0.1195, 0.0519],
@@ -205,7 +204,7 @@ class BiLstmNet(nn.Cell):
                         [0.0299, -0.6071, -0.4683, -0.3363, -0.0044, -0.0007, 0.2700, 0.0202, -0.2880, -0.6869],
                         [0.3025, -0.2461, -0.5128, 0.6327, -0.1438, -0.5100, 0.1924, 0.2023, 0.3129, 0.2271],
                         [0.3777, 0.0546, 0.4790, -0.1895, 0.3588, 0.4490, 0.6850, 0.6240, -0.2739, -0.4474]]).astype(
-            np.float32).reshape([1, -1])
+                            np.float32).reshape([1, -1])
 
         whh = np.array([[0.6346, -0.6366],
                         [-0.0248, -0.6156],
@@ -394,7 +393,7 @@ class MultiLayerBiLstmNet(nn.Cell):
                                     5.5428e-01, 1.0429e-01, 5.1322e-01, 1.9406e-01],
                                    [3.9698e-01, -5.2101e-01, 5.1372e-01, -3.9866e-01, 1.0115e-01, -4.1290e-02,
                                     -3.0980e-01, 2.1607e-01, 4.8420e-01, -1.9267e-01]]).astype(np.float32).reshape(
-            [1, -1])
+                                        [1, -1])
 
         whh_reverse_l0 = np.array([[-0.3231, -0.3960],
                                    [-0.1625, -0.3032],
@@ -460,7 +459,7 @@ class MultiLayerBiLstmNet(nn.Cell):
         weight
             layer0
                 forward
-                    wih            
+                    wih
                     whh
                 reverse
                     wih
@@ -662,7 +661,7 @@ class Net(nn.Cell):
              [-0.4520, 0.4201, -0.2374, -0.1556, -0.4175, -0.6834, 0.3096, -0.1581, 0.0127, 0.6872],
              [0.1788, -0.5442, -0.3675, -0.2887, -0.3004, 0.5813, 0.1618, 0.6875, -0.4678, 0.0071],
              [-0.6453, -0.2528, 0.5675, -0.5154, -0.4129, -0.0214, 0.5539, 0.0343, 0.1712, 0.5644]]).astype(
-            np.float32).reshape([1, -1])
+                 np.float32).reshape([1, -1])
 
         whh_reverse_l0 = np.array([[-0.6657, 0.6330],
                                    [-0.2290, 0.6556],
@@ -728,7 +727,7 @@ class Net(nn.Cell):
         weight
             layer0
                 forward
-                    wih            
+                    wih
                     whh
                 reverse
                     wih
@@ -784,10 +783,6 @@ def test_grad():
     bidirectional = True
     dropout = 0.0
 
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
-
     net = Grad(Net(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout))
 
     dy = np.array([[[-3.5471e-01, 7.0540e-01, -7.5945e-01, -1.2322e+00],
@@ -805,7 +800,7 @@ def test_grad():
                    [[-1.6032e+00, -1.8818e-01, 7.0441e-01, -2.8765e+00],
                     [1.0065e-01, 9.2045e-01, 2.7426e-01, 2.6196e-01]]]).astype(np.float32)
 
-    dx, dh, dc, dw = net(Tensor(dy))
+    dx, dh, dc, _ = net(Tensor(dy))
     expect_dx = np.array([[[0.01697153, -0.0096909, 0.01306139, 0.00863109, -0.00122794, -0.00746152, -0.00879683,
                             0.00643571, 0.0015958, 0.01480642],
                            [0.05794962, -0.02326604, 0.01862703, 0.02053947, 0.02607713, -0.01278067, 0.04250786,
@@ -927,7 +922,7 @@ class LstmNetWithDropout(nn.Cell):
                         [0.5142, 0.0790, -0.1123, -0.2351, 0.3982, -0.6351, 0.5906, 0.3917, -0.0850, -0.5397],
                         [-0.4795, -0.6576, 0.5693, 0.0047, -0.6626, 0.1013, -0.4015, -0.4040, -0.2817, 0.4430],
                         [0.0251, -0.3035, -0.6026, 0.2693, -0.2749, 0.1501, -0.5778, 0.5570, -0.7065, -0.6196]]).astype(
-            np.float32).reshape([1, -1])
+                            np.float32).reshape([1, -1])
 
         whh = np.array([[-0.4344, -0.2529],
                         [0.0377, 0.7046],
@@ -965,12 +960,8 @@ def test_lstm_dropout():
     bidirectional = False
     dropout = 1.0
 
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
-
     net = LstmNetWithDropout(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
-    y, h, c, _, _ = net()
+    y, _, _, _, _ = net()
     expect_y = np.array([[[-0.45210335, -0.0844336],
                           [-0.14677924, 0.07140275]],
 

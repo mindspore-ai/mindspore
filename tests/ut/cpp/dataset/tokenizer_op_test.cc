@@ -18,7 +18,7 @@
 #include <string_view>
 
 #include "common/common.h"
-#include "dataset/kernels/text/unicode_char_tokenizer_op.h"
+#include "dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 

@@ -25,6 +25,7 @@ layer_norm_op_info = TBERegOp("LayerNorm") \
     .partial_flag(True) \
     .attr("begin_norm_axis", "required", "int", "all") \
     .attr("begin_params_axis", "required", "int", "all") \
+    .attr("epsilon", "optional", "float", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "gamma", False, "required", "all") \
     .input(2, "beta", False, "required", "all") \

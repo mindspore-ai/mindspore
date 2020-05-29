@@ -546,10 +546,14 @@ std::vector<std::shared_ptr<Edge>> OperatorInfo::GetAliveSuccEdges() {
   for (auto &edge : succ_edges_) {
     if ((edge->next_operator()->is_alive()) && (edge->next_operator()->name().find(RELU) != std::string::npos)) {
       ret.push_back(edge);
+    } else if ((edge->next_operator()->is_alive()) && (edge->next_operator()->name().find(CAST) != std::string::npos)) {
+      // CAST is ordered in front of L2NORMALIZE
+      ret.push_back(edge);
     }
   }
   for (auto &edge : succ_edges_) {
-    if ((edge->next_operator()->is_alive()) && (edge->next_operator()->name().find(RELU) == std::string::npos)) {
+    if ((edge->next_operator()->is_alive()) && (edge->next_operator()->name().find(RELU) == std::string::npos) &&
+        (edge->next_operator()->name().find(CAST) == std::string::npos)) {
       ret.push_back(edge);
     }
   }
@@ -1279,16 +1283,34 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr &stra
     CheckGlobalDeviceManager();
     auto total_device_num = g_device_manager->GetDeviceListByStageId(stra->GetInputStage()).size();
     if (IntToSize(stra->GetInputDim()[0][0]) == total_device_num) {
-      cost->computation_cost_ -= 1.0;
-      cost->communication_cost_ -= 1.0;
-      cost->communication_with_partial_para_ -= 1.0;
-      cost->communication_without_parameter_ -= 1.0;
+      if (cost->computation_cost_ > 1.0) {
+        cost->computation_cost_ -= 1.0;
+      }
+      if (cost->communication_cost_ > 1.0) {
+        cost->communication_cost_ -= 1.0;
+      }
+      if (cost->communication_with_partial_para_ > 1.0) {
+        cost->communication_with_partial_para_ -= 1.0;
+      }
+      if (cost->communication_without_parameter_ > 1.0) {
+        cost->communication_without_parameter_ -= 1.0;
+      }
     }
   }
 }
 
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
   return operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
+}
+
+void OperatorInfo::CheckSelectedStrategy(const StrategyPtr &s_strategy) {
+  MS_EXCEPTION_IF_NULL(s_strategy);
+  if (!s_strategy->IsEqual(selected_strategy_)) {
+    MS_LOG(INFO) << name() << "'s strategy may cause suboptimal, the determined strategy:";
+    PrintStrategy(selected_strategy_);
+    MS_LOG(INFO) << "The minimal strategy:";
+    PrintStrategy(s_strategy);
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore

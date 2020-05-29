@@ -16,8 +16,8 @@
 @File   : test_data_parallel_lenet.py
 @Desc   : test data parallel lenet
 """
-import numpy as np
 import os
+import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -80,7 +80,6 @@ def test_lenet5_train_step_training_pynative():
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
                                       device_num=8, mirror_mean=True)
-    size = 3
     predict = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     DatasetLenet(predict, label, 2)

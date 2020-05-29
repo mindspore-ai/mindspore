@@ -65,14 +65,14 @@ TEST_F(MindDataTestStringTensorDE, Basics) {
 TEST_F(MindDataTestStringTensorDE, Basics2) {
   std::shared_ptr<Tensor> t =
     std::make_shared<Tensor>(std::vector<std::string>{"abc", "defg", "hi", "klmno", "123", "789"}, TensorShape({2, 3}));
-  ASSERT_TRUE(t->SizeInBytes() == 6 * 5 + 20);
-  std::vector<uint32_t> offsets = {3, 8, 11, 17, 21, 25};
+  ASSERT_TRUE(t->SizeInBytes() == 6 * 5 + 20 + 4);
+  std::vector<uint32_t> offsets = {0, 4, 9, 12, 18, 22, 26};
   uint32_t ctr = 0;
   for (auto i : offsets) {
-    ASSERT_TRUE(*(reinterpret_cast<uint32_t *>(t->GetMutableBuffer() + ctr)) == i);
+    ASSERT_TRUE(*(reinterpret_cast<uint32_t *>(t->GetMutableBuffer() + ctr)) == i + 28);
     ctr += 4;
   }
-  const char *buf = reinterpret_cast<char *>(t->GetMutableBuffer()) + 6 * 4;
+  const char *buf = reinterpret_cast<char *>(t->GetMutableBuffer()) + 6 * 4 + 4;
   std::vector<uint32_t> starts = {0, 4, 9, 12, 18, 22};
 
   uint32_t index = 0;
@@ -90,14 +90,14 @@ TEST_F(MindDataTestStringTensorDE, Empty) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(strings, TensorShape({2, 3}));
   //  abc_defg___123__
   //  0123456789012345
-  ASSERT_TRUE(t->SizeInBytes() == 6 * 5 + 10);
-  std::vector<uint32_t> offsets = {3, 8, 9, 10, 14, 15};
+  ASSERT_TRUE(t->SizeInBytes() == 6 * 5 + 10 + 4);
+  std::vector<uint32_t> offsets = {0, 4, 9, 10, 11, 15, 16};
   uint32_t ctr = 0;
   for (auto i : offsets) {
-    ASSERT_TRUE(*(reinterpret_cast<uint32_t *>(t->GetMutableBuffer() + ctr)) == i);
+    ASSERT_TRUE(*(reinterpret_cast<uint32_t *>(t->GetMutableBuffer() + ctr)) == i + 28);
     ctr += 4;
   }
-  const char *buf = reinterpret_cast<char *>(t->GetMutableBuffer()) + 6 * 4;
+  const char *buf = reinterpret_cast<char *>(t->GetMutableBuffer()) + 6 * 4 + 4;
   std::vector<uint32_t> starts = {0, 4, 9, 10, 11, 15};
 
   uint32_t index = 0;

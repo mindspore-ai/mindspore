@@ -34,7 +34,7 @@ class Adam:
         self.epsilon = epsilon
 
     def train_mindspore_impl(self):
-        input = Tensor(np.random.randn(self.batch_num, self.input_channels).astype(np.float32))
+        input_ = Tensor(np.random.randn(self.batch_num, self.input_channels).astype(np.float32))
         weight_np = Tensor(np.random.randn(self.output_channels, self.input_channels).astype(np.float32))
         bias = Tensor(np.random.randn(self.output_channels).astype(np.float32))
 
@@ -60,9 +60,9 @@ class Adam:
         train_network.set_train()
 
         print('MS Initialized!')
-        for i in range(self.epoch):
-            train_network(input, label)
-        output = ms_dense(input)
+        for _ in range(self.epoch):
+            train_network(input_, label)
+        output = ms_dense(input_)
         print("===============output=================", output)
         return output.asnumpy()
 

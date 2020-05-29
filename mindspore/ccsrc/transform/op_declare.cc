@@ -842,6 +842,13 @@ ATTR_MAP(SplitD) = {{"axis", ATTR_DESC(split_dim, AnyTraits<int>())},
                     {"output_num", ATTR_DESC(num_split, AnyTraits<int>())}};
 DYN_OUTPUT_MAP(SplitD) = {{0, DYN_OUTPUT_DESC(y)}};
 
+// Range
+INPUT_MAP(RangeD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(RangeD) = {{"start", ATTR_DESC(start, AnyTraits<float>())},
+                    {"limit", ATTR_DESC(limit, AnyTraits<float>())},
+                    {"delta", ATTR_DESC(delta, AnyTraits<float>())}};
+OUTPUT_MAP(RangeD) = {{0, OUTPUT_DESC(y)}};
+
 // Neg
 INPUT_MAP(Neg) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Neg) = EMPTY_ATTR_MAP;
@@ -1059,10 +1066,9 @@ ATTR_MAP(UnsortedSegmentSumD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentSumD) = {{0, OUTPUT_DESC(y)}};
 
 // UnsortedSegmentMin
-INPUT_MAP(UnsortedSegmentMinD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
-INPUT_ATTR_MAP(UnsortedSegmentMinD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
-ATTR_MAP(UnsortedSegmentMinD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UnsortedSegmentMinD) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(UnsortedSegmentMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
+ATTR_MAP(UnsortedSegmentMin) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UnsortedSegmentMin) = {{0, OUTPUT_DESC(y)}};
 
 // ExpandDims
 INPUT_MAP(ExpandDims) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
@@ -1085,7 +1091,8 @@ OUTPUT_MAP(SGD) = {{0, OUTPUT_DESC(parameters)}};
 // LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
 ATTR_MAP(LayerNorm) = {{"begin_norm_axis", ATTR_DESC(begin_norm_axis, AnyTraits<int>())},
-                       {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int>())}};
+                       {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int>())},
+                       {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
 OUTPUT_MAP(LayerNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
 
 // LayerNormGrad

@@ -147,6 +147,7 @@ bool TbeKernelJsonCreator::GenInputDescJson(const shared_ptr<AnfNode> &anf_node,
       input_desc_json["format"] = format;
     }
     input_desc_json["valid"] = value;
+    input_desc_json["param_type"] = input_ptr->param_type();
     input_list->emplace_back(input_desc_json);
   }
   return true;
@@ -356,6 +357,7 @@ void TbeKernelJsonCreator::GenOutputList(const shared_ptr<AnfNode> &anf_node, co
     output_obj["ori_format"] = kOpFormat_NCHW;
     output_obj["name"] = output_ptr->name();
     output_obj["valid"] = true;
+    output_obj["param_type"] = output_ptr->param_type();
 
     output_list->emplace_back(output_obj);
     (*output_idx)++;
@@ -368,6 +370,7 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
   MS_EXCEPTION_IF_NULL(op_info);
   MS_EXCEPTION_IF_NULL(attrs_json);
   auto attrs_ptr = op_info->attrs_ptr();
+  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
   if (TbeAdapter::RunAttrPass(anf_node, attrs_ptr, attrs_json)) {
     return true;
   }
@@ -377,6 +380,9 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
     std::string attr_name = attr_ptr->name();
     nlohmann::json attr_obj;
     attr_obj["name"] = attr_name;
+    if (op_name == "LayerNorm" && attr_obj["name"] == "epsilon" && creater_type_ == OP_SELECT_FORMAT) {
+      continue;
+    }
     if (primitive->GetAttr(attr_name) != nullptr) {
       auto value = primitive->GetAttr(attr_name);
       std::string type = attr_ptr->type();

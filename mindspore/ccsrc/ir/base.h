@@ -29,6 +29,7 @@
 #include "utils/visible.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
+#include "utils/ordered_map.h"
 
 namespace mindspore {
 template <typename T>

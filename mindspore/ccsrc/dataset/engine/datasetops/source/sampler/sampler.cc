@@ -32,9 +32,7 @@ Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
     }
 
     // Handshake and init child first.
-    if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
-    }
+    RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp is nullptr\n");
@@ -63,7 +61,8 @@ Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t
   }
   TensorShape shape(std::vector<dsize_t>(1, num_elements));
   RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, col_desc_->tensorImpl(), shape, col_desc_->type()));
-  (void)(*sample_ids)->GetMutableBuffer();  // allocate memory in case user forgets!
+  RETURN_IF_NOT_OK(
+    (*sample_ids)->AllocateBuffer((*sample_ids)->SizeInBytes()));  // allocate memory in case user forgets!
   return Status::OK();
 }
 

@@ -27,7 +27,6 @@ def test_exception_01():
     Test single exception with invalid input
     """
     logger.info("test_exception_01")
-    ds.config.set_num_parallel_workers(1)
     data = ds.TFRecordDataset(DATA_DIR, columns_list=["image"])
     with pytest.raises(ValueError) as info:
         data = data.map(input_columns=["image"], operations=vision.Resize(100, 100))

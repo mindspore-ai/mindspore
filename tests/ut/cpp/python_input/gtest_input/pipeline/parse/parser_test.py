@@ -176,20 +176,19 @@ def test_funcdef(x, y):
     def mymax(a, b):
         if a > b:
             return a
-        else:
-            return b
+        return b
 
     t = mymax(x, y)
     return t
 
 
-def test_tuple_fn(x, y):
+def test_tuple_fn(y):
     l = (1, 2, 3, 5, 7)
     l = l + l[y]
     return l
 
 
-def test_list_fn(x, y):
+def test_list_fn(y):
     l = [1, 2, 3, 5, 7]
     l = l + l[y]
     return l
@@ -201,6 +200,7 @@ def get_resolve_fn(x, y):
 
 
 # Test:no return function
+# pylint: disable=pointless-statement
 def get_no_return_fn(x, y):
     x + y
 
@@ -264,7 +264,7 @@ def test_simple_closure(a, b):
     return f() * g()
 
 
-def test_assign_tuple(x, y):
+def test_assign_tuple():
     a = 1
     b = 2
     t = a, b
@@ -339,6 +339,7 @@ def func_call(x, y, *var, a=0, b=1, **kwargs):
     return x + y + var[0] + a + b + kwargs["z"]
 
 
+# pylint: disable=repeated-keyword
 def test_call_variable():
     t = (1, 2, 3)
     d = {"z": 10, "e": 11}

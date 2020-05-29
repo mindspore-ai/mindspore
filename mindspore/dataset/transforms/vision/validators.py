@@ -23,6 +23,7 @@ from .utils import Inter, Border
 from ...transforms.validators import check_pos_int32, check_pos_float32, check_value, check_uint8, FLOAT_MAX_INTEGER, \
     check_bool, check_2tuple, check_range, check_list, check_type, check_positive, INT32_MAX
 
+
 def check_inter_mode(mode):
     if not isinstance(mode, Inter):
         raise ValueError("Invalid interpolation mode.")
@@ -815,8 +816,8 @@ def check_rescale(method):
     return new_method
 
 
-def check_uniform_augmentation(method):
-    """Wrapper method to check the parameters of UniformAugmentation."""
+def check_uniform_augment_cpp(method):
+    """Wrapper method to check the parameters of UniformAugment cpp op."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -830,18 +831,100 @@ def check_uniform_augmentation(method):
         else:
             num_ops = 2
 
+        if not isinstance(num_ops, int):
+            raise ValueError("Number of operations should be an integer.")
+
         if num_ops <= 0:
             raise ValueError("num_ops should be greater than zero")
         if num_ops > len(operations):
             raise ValueError("num_ops is greater than operations list size")
         if not isinstance(operations, list):
-            raise ValueError("operations is not a python list")
+            raise TypeError("operations is not a python list")
         for op in operations:
             if not isinstance(op, TensorOp):
                 raise ValueError("operations list only accepts C++ operations.")
 
         kwargs["num_ops"] = num_ops
         kwargs["operations"] = operations
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_uniform_augment_py(method):
+    """Wrapper method to check the parameters of python UniformAugment op."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        transforms, num_ops = (list(args) + 2 * [None])[:2]
+        if "transforms" in kwargs:
+            transforms = kwargs.get("transforms")
+        if transforms is None:
+            raise ValueError("transforms is not provided.")
+        if not transforms:
+            raise ValueError("transforms list is empty.")
+        check_list(transforms)
+        for transform in transforms:
+            if isinstance(transform, TensorOp):
+                raise ValueError("transform list only accepts Python operations.")
+        kwargs["transforms"] = transforms
+
+        if "num_ops" in kwargs:
+            num_ops = kwargs.get("num_ops")
+        if num_ops is not None:
+            check_type(num_ops, int)
+            check_positive(num_ops)
+            if num_ops > len(transforms):
+                raise ValueError("num_ops cannot be greater than the length of transforms list.")
+            kwargs["num_ops"] = num_ops
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_positive_degrees(method):
+    """A wrapper method to check degrees parameter in RandSharpness and RandColor"""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        degrees = (list(args) + [None])[0]
+        if "degrees" in kwargs:
+            degrees = kwargs.get("degrees")
+
+        if degrees is not None:
+            if isinstance(degrees, (list, tuple)):
+                if len(degrees) != 2:
+                    raise ValueError("Degrees must be a sequence with length 2.")
+                if degrees[0] < 0:
+                    raise ValueError("Degrees range must be non-negative.")
+                if degrees[0] > degrees[1]:
+                    raise ValueError("Degrees should be in (min,max) format. Got (max,min).")
+            else:
+                raise TypeError("Degrees must be a sequence in (min,max) format.")
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_compose_list(method):
+    """Wrapper method to check the transform list of ComposeOp."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        transforms = (list(args) + [None])[0]
+        if "transforms" in kwargs:
+            transforms = kwargs.get("transforms")
+        if transforms is None:
+            raise ValueError("transforms is not provided.")
+        if not transforms:
+            raise ValueError("transforms list is empty.")
+        if not isinstance(transforms, list):
+            raise TypeError("transforms is not a python list")
+
+        kwargs["transforms"] = transforms
 
         return method(self, **kwargs)
 

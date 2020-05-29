@@ -184,7 +184,7 @@ def test_case_6():
     de_types = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
                 mstype.uint64, mstype.float32, mstype.float64]
 
-    for i in range(len(np_types)):
+    for i, _ in enumerate(np_types):
         type_tester_with_type_check(np_types[i], de_types[i])
 
 
@@ -219,7 +219,7 @@ def test_case_7():
     de_types = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
                 mstype.uint64, mstype.float32, mstype.float64]
 
-    for i in range(len(np_types)):
+    for i, _ in enumerate(np_types):
         type_tester_with_type_check_2c(np_types[i], [None, de_types[i]])
 
 
@@ -526,7 +526,7 @@ def test_sequential_sampler():
 def test_random_sampler():
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], shuffle=True)
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for _ in ds1.create_dict_iterator():  # each data is a dictionary
         pass
 
 
@@ -611,7 +611,7 @@ def test_schema():
     de_types = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
                 mstype.uint64, mstype.float32, mstype.float64]
 
-    for i in range(len(np_types)):
+    for i, _ in enumerate(np_types):
         type_tester_with_type_check_2c_schema(np_types[i], [de_types[i], de_types[i]])
 
 
@@ -630,8 +630,7 @@ def manual_test_keyborad_interrupt():
             return 1024
 
     ds1 = ds.GeneratorDataset(MyDS(), ["data"], num_parallel_workers=4).repeat(2)
-    i = 0
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for _ in ds1.create_dict_iterator():  # each data is a dictionary
         pass
 
 

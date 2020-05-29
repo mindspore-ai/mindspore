@@ -40,9 +40,10 @@ using MapPrimTypeFuncGraph = std::map<PrimTypePair, FuncGraphPtr>;
 using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiveAbstractClosure>;
 
 std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
-                                           prim::kPrimMakeTuple};
+                                           prim::kPrimMakeTuple, prim::kPrimBpropCut};
 const std::vector<PrimitivePtr> &GetMsNonlinearOps() {
-  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch};
+  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
+                                                             prim::kPrimBpropCut};
   return ms_nonlinear_ops;
 }
 
@@ -486,13 +487,12 @@ void CompileGraph::AddExternal(const LinConvertResult &result) {
 }
 
 void TraverseGraphMap(
-  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr,
-  const FuncGraphToAnfNodeCounterMap<AnfNodePtr> &cts,
+  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr, const FuncGraphSet &fgs,
   const std::function<std::shared_ptr<FuncGraph>(const PrimitivePtr, const AbstractFunctionPtr)> &get_prim_graph) {
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MS_EXCEPTION_IF_NULL(tr);
-  for (const auto &ct_graphs : cts) {
-    for (const auto &ct_any : ct_graphs.second) {
+  for (const auto &fg : fgs) {
+    for (const auto &ct_any : fg->value_nodes()) {
       AnfNodePtr const_primitive_node = ct_any.first;
       if (const_primitive_node != nullptr && IsValueNode<Primitive>(const_primitive_node)) {
         auto users = manager_ptr->node_users()[const_primitive_node];
@@ -552,8 +552,8 @@ FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph) {
   };
 
   FuncGraphTransaction tr = manager_ptr->Transact();
-  auto &cts = manager_ptr->valuenodes();
-  TraverseGraphMap(manager_ptr, &tr, cts, get_prim_graph);
+  auto &fgs = manager_ptr->func_graphs();
+  TraverseGraphMap(manager_ptr, &tr, fgs, get_prim_graph);
 
   return graph;
 }
@@ -646,8 +646,13 @@ BackendPtr CreateBackend() {
     auto backend = std::make_shared<MsBackend>(name, target, device_id);
     std::string device_target = MsContext::GetInstance()->device_target();
     if (device_target == kAscendDevice) {
-      backend->set_is_multi_graph_sink(true);
-      context_ptr->set_is_multi_graph_sink(true);
+      if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+        backend->set_is_multi_graph_sink(false);
+        context_ptr->set_is_multi_graph_sink(false);
+      } else {
+        backend->set_is_multi_graph_sink(true);
+        context_ptr->set_is_multi_graph_sink(true);
+      }
     }
     return backend;
   }

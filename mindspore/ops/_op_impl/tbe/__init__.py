@@ -180,7 +180,6 @@ from .check_valid import _check_valid_tbe
 from .iou import _iou_tbe
 from .arg_max import _arg_max_tbe
 from .nms_with_mask import _nms_with_mask_tbe
-from .random_choice_with_mask import _random_choice_with_mask_tbe
 from .sgd import _sgd_tbe
 from .lars_update import _lars_update_tbe
 from .bn_training_update_v2 import _bn_training_update_v2_tbe
@@ -195,3 +194,14 @@ from .binary_cross_entropy_grad import _binary_cross_entropy_grad_tbe
 from .sin import _sin_tbe
 from .cos import _cos_tbe
 from .cum_sum import _cum_sum_tbe
+from .apply_rms_prop import _apply_rms_prop_tbe
+from .cumprod import _cumprop_tbe
+from .reduce_prod import _reduce_prod_tbe
+from .flatten_grad import _flatten_grad_tbe
+from .scatter_add import _scatter_add_tbe
+from .atan2 import _atan2_tbe
+from .batch_to_space_nd import _batch_to_space_nd_tbe
+from .space_to_batch_nd import _space_to_batch_nd_tbe
+from .bitwise_and import bitwise_and_op_info
+from .bitwise_or import bitwise_or_op_info
+from .bitwise_xor import bitwise_xor_op_info

@@ -1,0 +1,18 @@
+{
+  "datasetType": "TF",
+  "numRows": 3,
+  "columns": {
+    "line": {
+      "type": "string",
+      "rank": 0
+    },
+    "words": {
+      "type": "string",
+      "rank": 1
+    },
+    "chinese": {
+      "type": "string",
+      "rank": 0
+    }
+  }
+}

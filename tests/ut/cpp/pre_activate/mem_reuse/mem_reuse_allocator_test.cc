@@ -117,16 +117,13 @@ TEST_F(TestMemReuseAllocator, mem_reuse_allocator) {
   MS_LOG(INFO) << "run mem reuse success";
   size_t total_allocated_size = best_fit_mem_reuse->GetAllocatedSize();
   ASSERT_NE(total_allocated_size, 0);
-
-  auto is_reusable_stream = best_fit_mem_reuse->IsReusableStream(1, 3);
-  ASSERT_EQ(is_reusable_stream, true);
 }
 
 TEST_F(TestMemReuseAllocator, mem_reuse_allocator_add_membuf) {
   auto best_fit_mem_reuse = std::make_shared<BestFitMemReuse>();
   auto tensor_desc = std::make_shared<KernelRefCount>();
   tensor_desc->SetKernelRefCountInfo(0, 1024, kDynamicRefCount);
-  best_fit_mem_reuse->AddNewMembufPtr(tensor_desc.get(), kDyFac);
+  best_fit_mem_reuse->AddNewMembufPtr(tensor_desc.get(), kDynamicMem);
   auto allocated_size = best_fit_mem_reuse->GetAllocatedSize();
   ASSERT_EQ(allocated_size, 1024);
 }
@@ -135,7 +132,7 @@ TEST_F(TestMemReuseAllocator, mem_reuse_allocator_split_membuf) {
   auto best_fit_mem_reuse = std::make_shared<BestFitMemReuse>();
   auto tensor_0 = std::make_shared<KernelRefCount>();
   tensor_0->SetKernelRefCountInfo(0, 2048, kDynamicRefCount);
-  best_fit_mem_reuse->AddNewMembufPtr(tensor_0.get(), kDyFac);
+  best_fit_mem_reuse->AddNewMembufPtr(tensor_0.get(), kDynamicMem);
 
   auto tensor_1 = std::make_shared<KernelRefCount>();
   tensor_1->SetKernelRefCountInfo(1, 800, kDynamicRefCount);

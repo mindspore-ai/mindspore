@@ -377,10 +377,10 @@ AbstractBasePtr InferImplListMap(const AnalysisEnginePtr &engine, const Primitiv
     }
     subargs.push_back(AbstractJoin(l_ptr->elements()));
   }
-  AbstractBasePtr engin_exc = engine->Execute(fn, subargs);
+  EvalResultPtr engin_exc = engine->Execute(fn, subargs);
   AbstractBasePtrList result;
   for (std::size_t i = 1; i < args_spec_list.size(); i++) {
-    result.push_back(engin_exc);
+    result.push_back(engin_exc->abstract());
   }
   return std::make_shared<AbstractList>(result);
 }
@@ -398,8 +398,9 @@ AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const Primi
   AbstractBasePtr list_type = AbstractJoin(lst->elements());
   auto result1 = engine->Execute(fn, lst->elements());
   auto result2 = engine->Execute(fn, {dflt, list_type});
-  MS_EXCEPTION_IF_NULL(result1);
-  return result1->Join(result2);
+  MS_EXCEPTION_IF_NULL(result1->abstract());
+  MS_EXCEPTION_IF_NULL(result2->abstract());
+  return result1->abstract()->Join(result2->abstract());
 }
 
 AbstractBasePtr InferImplTupleReversed(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

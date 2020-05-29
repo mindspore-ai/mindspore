@@ -14,18 +14,31 @@
 # ============================================================================
 
 """debug_ops"""
+from types import FunctionType, MethodType
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import Primitive, prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer
 
 
-class ScalarSummary(Primitive):
+def _check_summary_param(name, value, class_name):
+    """Check the name and value is valid for summary."""
+    n_type = name['dtype']
+    n_value = name['value']
+    validator.check_value_type('name', n_type, [type(mstype.string)], class_name)
+    if not n_value:
+        raise ValueError(f"For 'name' the value should by valid string in {class_name}, but got an empty string.")
+
+    v_type = value['dtype']
+    validator.check_value_type('value', v_type, [type(mstype.tensor)], class_name)
+
+
+class ScalarSummary(PrimitiveWithInfer):
     """
     Output scalar to protocol buffer through scalar summary operator.
 
     Inputs:
-        - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of scalar.
+        - **name** (str) - The name of the input variable, it should not be an empty string.
+        - **value** (Tensor) - The value of scalar, and the shape of value should be [] or [1].
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -45,17 +58,25 @@ class ScalarSummary(Primitive):
     def __init__(self):
         """init"""
 
-    def __call__(self, *args, **kwargs):
-        pass
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        v_shape = value['shape']
+        # In the summary, the value whose shape is [1] is also considered as a scalar.
+        if v_shape and v_shape != [1]:
+            raise ValueError(f"For 'value' the type should be scalar, "
+                             f"shape should be [] or [1] in {self.__class__.__name__}, but got {v_shape}.")
+
+        return value
 
 
-class ImageSummary(Primitive):
+class ImageSummary(PrimitiveWithInfer):
     """
     Output image tensor to protocol buffer through image summary operator.
 
     Inputs:
-        - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of image.
+        - **name** (str) - The name of the input variable, it should not be an empty string.
+        - **value** (Tensor) - The value of image, the rank of tensor should be 4.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -73,17 +94,26 @@ class ImageSummary(Primitive):
     def __init__(self):
         """init"""
 
-    def __call__(self, *args, **kwargs):
-        pass
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        # The shape dim of image should be 4.
+        v_shape = value['shape']
+        image_dim = 4
+        if len(v_shape) != image_dim:
+            raise ValueError(f"For 'value' the dim should be {image_dim} in {self.__class__.__name__},"
+                             f" but got {len(v_shape)}.")
+
+        return value
 
 
-class TensorSummary(Primitive):
+class TensorSummary(PrimitiveWithInfer):
     """
     Output tensor to protocol buffer through tensor summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of tensor.
+        - **value** (Tensor) - The value of tensor, and the rank of tensor should be greater than 0.
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -103,11 +133,19 @@ class TensorSummary(Primitive):
     def __init__(self):
         """init"""
 
-    def __call__(self, *args, **kwargs):
-        pass
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        v_shape = value['shape']
+        # In the summary, the value whose shape is [] is not considered as a tensor.
+        if not v_shape:
+            raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
+                             f"shape should not be [].")
+
+        return value
 
 
-class HistogramSummary(Primitive):
+class HistogramSummary(PrimitiveWithInfer):
     """
     Output tensor to protocol buffer through histogram summary operator.
 
@@ -132,6 +170,17 @@ class HistogramSummary(Primitive):
     @prim_attr_register
     def __init__(self):
         """init"""
+
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        v_shape = value['shape']
+        # In the summary, the histogram value should be a tensor whose shape is not [].
+        if not v_shape:
+            raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
+                             f"shape should not be [].")
+
+        return value
 
 
 class InsertGradientOf(PrimitiveWithInfer):
@@ -191,6 +240,65 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type):
         return x_type
+
+
+class HookBackward(PrimitiveWithInfer):
+    """
+    Used as tag to hook gradient in intermediate variables.
+
+    Note:
+        The hook function should have one input of gradient of the variable.
+        hook function will be executed in python environment, while callback
+        of InsertGradientOf will be parsed and added to the graph.
+
+    Args:
+        hook_fn (Function): Python function. hook function.
+
+    Inputs:
+        - **inputs** (Tensor) - The variable to hook.
+
+    Examples:
+        >>> def hook_fn(grad_out):
+        >>>     print(grad_out)
+        >>>
+        >>> hook = P.HookBackward(hook_fn)
+        >>>
+        >>> def hook_test(x, y):
+        >>>     z = x * y
+        >>>     z = hook(z)
+        >>>     z = z * y
+        >>>     return z
+        >>>
+        >>> def backward(x, y):
+        >>>     return C.grad_all(hook_test)(x, y)
+        >>>
+        >>> backward(1, 2)
+    """
+
+    def __init__(self, hook_fn, cell_id=""):
+        super(HookBackward, self).__init__(self.__class__.__name__)
+        self.add_prim_attr("cell_id", cell_id)
+        self.init_attrs["cell_id"] = cell_id
+        if not isinstance(hook_fn, (FunctionType, MethodType)):
+            raise TypeError("Hook function should be python function type.")
+        self.register_hook(hook_fn)
+        self.cell_id = cell_id
+
+    def __call__(self, *inputs):
+        """run in PyNative mode."""
+        if len(inputs) == 1:
+            return inputs[0]
+        return inputs
+
+    def infer_shape(self, *inputs_shape):
+        if len(inputs_shape) == 1:
+            return inputs_shape[0]
+        return inputs_shape
+
+    def infer_dtype(self, *inputs_type):
+        if len(inputs_type) == 1:
+            return inputs_type[0]
+        return inputs_type
 
 
 class Print(PrimitiveWithInfer):

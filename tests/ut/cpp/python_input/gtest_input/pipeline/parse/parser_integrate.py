@@ -15,9 +15,8 @@
 """
 file: parser_integrate.py
 """
-import mindspore._c_expression as me
 import numpy as np
-
+import mindspore._c_expression as me
 import mindspore.nn as nn
 from mindspore.common import dtype
 from mindspore.common.api import ms_function, _executor
@@ -110,9 +109,9 @@ def test_tensor_add():
     Y.set_dtype(dtype.float32)
     X = me.tensor(np.ones([2, 3]))
     Y = me.tensor(np.ones([2, 3]))
-    sum = add(X, Y)
+    tensor_add = add(X, Y)
     print("test tensor add")
-    return sum
+    return tensor_add
 
 
 def loss_func(x, y):
@@ -129,7 +128,7 @@ def test_resetnet50_build():
     X.set_dtype(dtype.float32)
     Y.set_dtype(dtype.float32)
     network = resnet50()
-    model = Model(network=network, loss_fn=loss_func, optimizer=optimizer)
+    Model(network=network, loss_fn=loss_func, optimizer=optimizer)
 
 
 class Net(nn.Cell):
@@ -146,20 +145,20 @@ class TestNet(nn.Cell):
         super(TestNet, self).__init__()
         self.param = Parameter(Tensor([1, 3, 16, 50]), "param")
 
-    def construct(self, input):
-        self.param = self.param + input
+    def construct(self, inputs):
+        self.param = self.param + inputs
         return self.param
 
 
 def test_compile_conv2d():
     net = Net()
-    input = Tensor(np.ones([1, 3, 16, 50]).astype(np.float32))
-    _executor.compile(net, input)
+    inputs = Tensor(np.ones([1, 3, 16, 50]).astype(np.float32))
+    _executor.compile(net, inputs)
 
 
 def test_none(x, y):
     def func(x, y):
-        if y == None:
+        if y is None:
             return x
         return x + y
 

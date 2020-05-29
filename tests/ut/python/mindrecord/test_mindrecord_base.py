@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """test mindrecord base"""
-import numpy as np
 import os
 import uuid
+import numpy as np
 from utils import get_data, get_nlp_data
 
 from mindspore import log as logger
@@ -25,6 +25,7 @@ FILES_NUM = 4
 CV_FILE_NAME = "./imagenet.mindrecord"
 CV2_FILE_NAME = "./imagenet_loop.mindrecord"
 CV3_FILE_NAME = "./imagenet_append.mindrecord"
+CV4_FILE_NAME = "/tmp/imagenet_append.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"
 
 
@@ -164,6 +165,35 @@ def test_cv_file_append_writer():
     reader.close()
 
     paths = ["{}{}".format(CV3_FILE_NAME, str(x).rjust(1, '0'))
+             for x in range(4)]
+    for x in paths:
+        os.remove("{}".format(x))
+        os.remove("{}.db".format(x))
+
+
+def test_cv_file_append_writer_absolute_path():
+    """tutorial for cv dataset append writer."""
+    writer = FileWriter(CV4_FILE_NAME, 4)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data[0:5])
+    writer.commit()
+    write_append = FileWriter.open_for_append(CV4_FILE_NAME + "0")
+    write_append.write_raw_data(data[5:10])
+    write_append.commit()
+    reader = FileReader(CV4_FILE_NAME + "0")
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 10
+    reader.close()
+
+    paths = ["{}{}".format(CV4_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(4)]
     for x in paths:
         os.remove("{}".format(x))

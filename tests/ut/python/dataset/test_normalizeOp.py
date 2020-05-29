@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import mindspore.dataset as ds
@@ -36,6 +35,7 @@ def normalize_np(image):
     return image
 
 
+# pylint: disable=inconsistent-return-statements
 def get_normalized(image_id):
     """
     Reads the image using DE ops and then normalizes using Numpy
@@ -49,6 +49,7 @@ def get_normalized(image_id):
         if num_iter == image_id:
             return normalize_np(image)
         num_iter += 1
+    return None
 
 
 def test_normalize_op():

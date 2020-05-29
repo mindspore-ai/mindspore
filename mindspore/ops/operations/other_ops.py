@@ -323,8 +323,9 @@ class CheckBprop(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, prim_to_check=""):
         """init CheckBprop"""
+        self.prim_to_check = prim_to_check
 
     def infer_shape(self, xshapes, yshapes):
         tips = f'Bprop of {self.prim_to_check}'

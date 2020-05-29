@@ -26,10 +26,6 @@
 #include "dataset/util/task_manager.h"
 #include "dataset/engine/opt/pass.h"
 
-#ifdef ENABLE_TDTQUE
-#include "tdt/tsd_client.h"
-#endif
-
 namespace mindspore {
 namespace dataset {
 DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
@@ -167,9 +163,15 @@ Status DeviceQueueOp::SendDataToGPU() {
           is_break_loop = true;
         }
       }
-      RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+      if (!TaskManager::FindMe()->Interrupted())
+        RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+      else
+        is_break_loop = true;
     }
-    RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+    if (!TaskManager::FindMe()->Interrupted())
+      RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+    else
+      is_break_loop = true;
   }
 
   MS_LOG(INFO) << "Device queue total batch is " << total_batch << ", number of batches is " << num_batch_ << ".";
@@ -191,7 +193,7 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
     items.push_back(data_item);
   }
 
-  while (!GpuBufferMgr::GetInstance().IsClosed()) {
+  while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     RETURN_IF_NOT_OK(MallocForGPUData(&items, curr_row));
     auto ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {

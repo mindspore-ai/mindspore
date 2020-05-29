@@ -70,6 +70,7 @@ SET(DE_UT_SRCS
     concat_op_test.cc
     jieba_tokenizer_op_test.cc
     tokenizer_op_test.cc
+    gnn_graph_test.cc
     )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

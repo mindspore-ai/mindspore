@@ -151,6 +151,8 @@ extern const PrimitivePtr kPrimReshape;
 extern const PrimitivePtr kPrimTile;
 extern const PrimitivePtr kPrimAddN;
 extern const PrimitivePtr KPrimTransData;
+extern const PrimitivePtr kPrimNMSWithMask;
+extern const PrimitivePtr kPrimPad;
 
 // Maths
 extern const PrimitivePtr kPrimTensorAdd;
@@ -173,6 +175,7 @@ extern const PrimitivePtr kPrimEqual;
 extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
 extern const PrimitivePtr kPrimCumSum;
+extern const PrimitivePtr kPrimCumProd;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
@@ -215,6 +218,7 @@ extern const PrimitivePtr kPrimReluV2;
 extern const PrimitivePtr kPrimActivation;
 extern const PrimitivePtr kPrimZerosLikeTensor;
 extern const PrimitivePtr kPrimFakeBprop;
+extern const PrimitivePtr kPrimBpropCut;
 
 // Other Miscellaneous
 extern const PrimitivePtr kPrimIdentity;
@@ -229,6 +233,7 @@ extern const PrimitivePtr kPrimGetRefKey;
 extern const PrimitivePtr kPrimGetRefValue;
 extern const PrimitivePtr kPrimGetRefOrigin;
 extern const PrimitivePtr kPrimInsertGradientOf;
+extern const PrimitivePtr kPrimHookBackward;
 extern const PrimitivePtr kPrimPrintShapeType;
 extern const PrimitivePtr kPrimPrint;
 extern const PrimitivePtr kPrimSameTypeShape;

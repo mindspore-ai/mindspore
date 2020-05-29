@@ -20,6 +20,7 @@
 #include <mutex>
 #include <string>
 #include "dataset/util/memory_pool.h"
+#include "dataset/util/allocator.h"
 #include "dataset/util/service.h"
 
 #define UNIQUEID_LEN 36
@@ -71,6 +72,11 @@ class Services {
 #endif
 
   static std::string GetUniqueID();
+
+  template <typename T>
+  static Allocator<T> GetAllocator() {
+    return Allocator<T>(Services::GetInstance().GetServiceMemPool());
+  }
 
  private:
   static std::once_flag init_instance_flag_;

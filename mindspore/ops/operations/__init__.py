@@ -23,21 +23,23 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
-                        Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
-                        SameTypeShape, ScatterMax, ScatterUpdate,
+                        Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue, Range,
+                        SameTypeShape, ScatterAdd, ScatterMax, ScatterUpdate,
                         ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
                         Shape, Size, Slice, Split,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
-                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace)
+                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
+                        SpaceToBatchND, BatchToSpaceND)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
-                       _VirtualDiv, _GetTensorSlice)
-from .debug_ops import (ImageSummary, InsertGradientOf, ScalarSummary,
+                       _VirtualDiv, _GetTensorSlice,
+                       HostAllGather, HostReduceScatter)
+from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
+from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, Equal, EqualCount, Exp, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -70,6 +72,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
 from ._quant_ops import *
+from .thor_ops import *
 
 __all__ = [
     'TensorAdd',
@@ -125,6 +128,7 @@ __all__ = [
     'StridedSlice',
     'ReduceSum',
     'ReduceMean',
+    'Range',
     'LayerNorm',
     'Rank',
     'Less',
@@ -142,6 +146,7 @@ __all__ = [
     'ReLUV2',
     'Elu',
     'Erf',
+    'Erfc',
     'Sigmoid',
     'HSwish',
     'HSigmoid',
@@ -154,6 +159,7 @@ __all__ = [
     'HistogramSummary',
     "Print",
     'InsertGradientOf',
+    'HookBackward',
     'InvertPermutation',
     'Shape',
     'DropoutDoMask',
@@ -187,6 +193,7 @@ __all__ = [
     'BoundingBoxEncode',
     'BoundingBoxDecode',
     'L2Normalize',
+    'ScatterAdd',
     'ScatterNd',
     'ScatterMax',
     'ResizeNearestNeighbor',
@@ -214,8 +221,10 @@ __all__ = [
     'UnsortedSegmentSum',
     'UnsortedSegmentMin',
     "AllGather",
+    "HostAllGather",
     "AllReduce",
     "ReduceScatter",
+    "HostReduceScatter",
     "Broadcast",
     "ReduceOp",
     'ScalarCast',
@@ -225,6 +234,7 @@ __all__ = [
     'ReduceProd',
     'CumProd',
     'Log',
+    'Log1p',
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
     'FloorMod',
@@ -255,7 +265,12 @@ __all__ = [
     "Atan2",
     "ApplyRMSProp",
     "ApplyCenteredRMSProp",
-    "SquareSumAll"
+    "SpaceToBatchND",
+    "BatchToSpaceND",
+    "SquareSumAll",
+    "BitwiseAnd",
+    "BitwiseOr",
+    "BitwiseXor"
 ]
 
 __all__.extend(_quant_ops.__all__)

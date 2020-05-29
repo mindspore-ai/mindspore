@@ -22,7 +22,6 @@ import glob
 import json
 import math
 import os
-import random
 import uuid
 import multiprocessing
 import queue
@@ -40,7 +39,7 @@ from mindspore._c_expression import typing
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
+from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
@@ -284,10 +283,10 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> import mindspore.dataset.transforms.text.utils as text
+            >>> import mindspore.dataset.text as text
             >>> # declare a function which returns a Dataset object
             >>> def flat_map_func(x):
-            >>>     data_dir = text.as_text(x[0])
+            >>>     data_dir = text.to_str(x[0])
             >>>     d = ds.ImageFolderDatasetV2(data_dir)
             >>>     return d
             >>> # data is a Dataset object
@@ -480,7 +479,7 @@ class Dataset:
              If input_columns not provided or empty, all columns will be used.
 
         Args:
-            predicate(callable): python callable which returns a boolean value.
+            predicate(callable): python callable which returns a boolean value, if False then filter the element.
             input_columns: (list[str], optional): List of names of the input columns, when
                 default=None, the predicate will be applied on all columns in the dataset.
             num_parallel_workers (int, optional): Number of workers to process the Dataset
@@ -634,9 +633,9 @@ class Dataset:
                 Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
                 of the original dataset. If after rounding, any size equals 0, an error will occur.
                 All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
-            randomize (bool): determines whether or not to split the data randomly. If true, the data
-                will be randomly split. Otherwise, each split will be created with consecutive rows
-                from the dataset.
+            randomize (bool, optional): determines whether or not to split the data randomly (default=True).
+                If true, the data will be randomly split. Otherwise, each split will be created with
+                consecutive rows from the dataset.
 
         Note:
             1. Dataset cannot be sharded if split is going to be called.
@@ -679,7 +678,8 @@ class Dataset:
             ds = copy.deepcopy(self)
             if randomize:
                 # want to shuffle the same way every epoch before split
-                ds = ds.shuffle()
+                # in alter_tree, shuffle buffer is minimum 10000, so use 10000 here
+                ds = ds.shuffle(10000)
                 ds.reshuffle_each_epoch = False
 
             if rows_to_skip > 0:
@@ -899,7 +899,7 @@ class Dataset:
 
         def get_distribution(output_dataset):
             dev_id = 0
-            if isinstance(output_dataset, (StorageDataset, MindDataset)):
+            if isinstance(output_dataset, (MindDataset)):
                 return output_dataset.distribution, dev_id
             if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDatasetV2,
                                            ManifestDataset, MnistDataset, VOCDataset, CelebADataset)):
@@ -983,57 +983,6 @@ class Dataset:
     def __iter__(self):
         """Create an Iterator over the dataset."""
         return self.create_tuple_iterator()
-
-    @staticmethod
-    def read_dir(dir_path, schema, columns_list=None, num_parallel_workers=None,
-                 deterministic_output=True, prefetch_size=None, shuffle=False, seed=None, distribution=""):
-        """
-        Append the path of all files in the dir_path to StorageDataset.
-
-        Args:
-            dir_path (str): Path to the directory that contains the dataset.
-            schema (str): Path to the json schema file.
-            columns_list (list[str], optional): List of columns to be read (default=None).
-                If not provided, read all columns.
-            num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel
-                (default=None).
-            deterministic_output (bool, optional): Whether the result of this dataset can be reproduced
-                or not (default=True). If True, performance might be affected.
-            prefetch_size (int, optional): Prefetch number of records ahead of the
-                user's request (default=None).
-            shuffle (bool, optional): Shuffle the list of files in the directory (default=False).
-            seed (int, optional): Create a random generator with a fixed seed. If set to None,
-                create a random seed (default=None).
-            distribution (str, optional): The path of distribution config file (default="").
-
-        Returns:
-            StorageDataset.
-
-        Raises:
-            ValueError: If dataset folder does not exist.
-            ValueError: If dataset folder permission denied.
-        """
-        logger.warning("WARN_DEPRECATED: The usage of read_dir is deprecated, please use TFRecordDataset with GLOB.")
-
-        list_files = []
-
-        if not os.path.isdir(dir_path):
-            raise ValueError("The dataset folder does not exist!")
-        if not os.access(dir_path, os.R_OK):
-            raise ValueError("The dataset folder permission denied!")
-
-        for root, _, files in os.walk(dir_path):
-            for file in files:
-                list_files.append(os.path.join(root, file))
-
-        list_files.sort()
-
-        if shuffle:
-            rand = random.Random(seed)
-            rand.shuffle(list_files)
-
-        return StorageDataset(list_files, schema, distribution, columns_list, num_parallel_workers,
-                              deterministic_output, prefetch_size)
 
     @property
     def input_indexs(self):
@@ -1261,6 +1210,11 @@ class MappableDataset(SourceDataset):
             >>> new_sampler = ds.DistributedSampler(10, 2)
             >>> data.use_sampler(new_sampler)
         """
+        if new_sampler is None:
+            raise TypeError("Input sampler could not be None.")
+        if not isinstance(new_sampler, (samplers.BuiltinSampler, samplers.Sampler)):
+            raise TypeError("Input sampler is not an instance of a sampler.")
+
         self.sampler = self.sampler.child_sampler
         self.add_sampler(new_sampler)
 
@@ -1270,6 +1224,11 @@ class MappableDataset(SourceDataset):
     def is_sharded(self):
         raise NotImplementedError("MappableDataset must implement is_sharded.")
 
+    def _get_sampler_dataset_size(self):
+        if self.sampler is not None:
+            return self.sampler.get_dataset_size()
+
+        return None
 
     @check_split
     def split(self, sizes, randomize=True):
@@ -1288,9 +1247,9 @@ class MappableDataset(SourceDataset):
                 Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
                 of the original dataset. If after rounding, any size equals 0, an error will occur.
                 All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
-            randomize (bool): determines whether or not to split the data randomly. If true, the data
-                will be randomly split. Otherwise, each split will be created with consecutive rows
-                from the dataset.
+            randomize (bool, optional): determines whether or not to split the data randomly (default=True).
+                If true, the data will be randomly split. Otherwise, each split will be created with
+                consecutive rows from the dataset.
 
         Note:
             1. Dataset should not be sharded if split is going to be called. Instead, create a
@@ -1818,7 +1777,7 @@ class FilterDataset(DatasetOp):
 
     Args:
         input_dataset: Input Dataset to be mapped.
-        predicate: python callable which returns a boolean value.
+        predicate: python callable which returns a boolean value, if False then filter the element.
         input_columns: (list[str]): List of names of the input columns, when
         default=None, the predicate will be applied all columns in the dataset.
         num_parallel_workers (int, optional): Number of workers to process the Dataset
@@ -2157,124 +2116,6 @@ class TransferDataset(DatasetOp):
         self.iterator = TupleIterator(self)
 
 
-class StorageDataset(SourceDataset):
-    """
-    A source dataset that reads and parses datasets stored on disk in various formats, including TFData format.
-
-    Args:
-        dataset_files (list[str]): List of files to be read.
-        schema (str): Path to the json schema file. If numRows(parsed from schema) is not exist, read the full dataset.
-        distribution (str, optional): Path of distribution config file (default="").
-        columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
-        num_parallel_workers (int, optional): Number of parallel working threads (default=None).
-        deterministic_output (bool, optional): Whether the result of this dataset can be reproduced
-            or not (default=True). If True, performance might be affected.
-        prefetch_size (int, optional): Prefetch number of records ahead of the user's request (default=None).
-
-    Raises:
-        RuntimeError: If schema file failed to read.
-        RuntimeError: If distribution file path is given but failed to read.
-    """
-
-    @check
-    def __init__(self, dataset_files, schema, distribution="", columns_list=None, num_parallel_workers=None,
-                 deterministic_output=None, prefetch_size=None):
-        super().__init__(num_parallel_workers)
-        logger.warning("WARN_DEPRECATED: The usage of StorageDataset is deprecated, please use TFRecordDataset.")
-        self.dataset_files = dataset_files
-        try:
-            with open(schema, 'r') as load_f:
-                json.load(load_f)
-        except json.decoder.JSONDecodeError:
-            raise RuntimeError("Json decode error when load schema file")
-        except Exception:
-            raise RuntimeError("Schema file failed to load")
-
-        if distribution != "":
-            try:
-                with open(distribution, 'r') as load_d:
-                    json.load(load_d)
-            except json.decoder.JSONDecodeError:
-                raise RuntimeError("Json decode error when load distribution file")
-            except Exception:
-                raise RuntimeError("Distribution file failed to load")
-        if self.dataset_files is None:
-            schema = None
-            distribution = None
-        self.schema = schema
-        self.distribution = distribution
-        self.columns_list = columns_list
-        self.deterministic_output = deterministic_output
-        self.prefetch_size = prefetch_size
-
-    def get_args(self):
-        args = super().get_args()
-        args["dataset_files"] = self.dataset_files
-        args["schema"] = self.schema
-        args["distribution"] = self.distribution
-        args["columns_list"] = self.columns_list
-        args["deterministic_output"] = self.deterministic_output
-        args["prefetch_size"] = self.prefetch_size
-        return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self._dataset_size is None:
-            self._get_pipeline_info()
-        return self._dataset_size
-
-    # manually set dataset_size as a temporary solution.
-    def set_dataset_size(self, value):
-        logger.warning("WARN_DEPRECATED: This method is deprecated. Please use get_dataset_size directly.")
-        if value >= 0:
-            self._dataset_size = value
-        else:
-            raise ValueError('set dataset_size with negative value {}'.format(value))
-
-    def num_classes(self):
-        """
-        Get the number of classes in dataset.
-
-        Return:
-            Number, number of classes.
-
-        Raises:
-            ValueError: If dataset type is invalid.
-            ValueError: If dataset is not Imagenet dataset or manifest dataset.
-            RuntimeError: If schema file is given but failed to load.
-        """
-        cur_dataset = self
-        while cur_dataset.input:
-            cur_dataset = cur_dataset.input[0]
-        if not hasattr(cur_dataset, "schema"):
-            raise ValueError("Dataset type is invalid")
-        # Only IMAGENET/MANIFEST support numclass
-        try:
-            with open(cur_dataset.schema, 'r') as load_f:
-                load_dict = json.load(load_f)
-        except json.decoder.JSONDecodeError:
-            raise RuntimeError("Json decode error when load schema file")
-        except Exception:
-            raise RuntimeError("Schema file failed to load")
-        if load_dict["datasetType"] != "IMAGENET" and load_dict["datasetType"] != "MANIFEST":
-            raise ValueError("%s dataset does not support num_classes!" % (load_dict["datasetType"]))
-
-        if self._num_classes is None:
-            self._get_pipeline_info()
-        return self._num_classes
-
-    def is_shuffled(self):
-        return False
-
-    def is_sharded(self):
-        return False
-
-
 class RangeDataset(MappableDataset):
     """
     A source dataset that reads and parses datasets stored on disk in a range.
@@ -2465,8 +2306,13 @@ class ImageFolderDatasetV2(MappableDataset):
         else:
             num_samples = self.num_samples
         num_rows = ImageFolderOp.get_num_rows_and_classes(self.dataset_dir, num_samples)[0]
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
 
-        return get_num_rows(num_rows, self.num_shards)
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
 
     def num_classes(self):
         """
@@ -2594,8 +2440,13 @@ class MnistDataset(MappableDataset):
             num_samples = self.num_samples
 
         num_rows = MnistOp.get_num_rows(self.dataset_dir, num_samples)
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
 
-        return get_num_rows(num_rows, self.num_shards)
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -3095,7 +2946,12 @@ class GeneratorDataset(MappableDataset):
         Return:
             Number, number of batches.
         """
-        return self._dataset_size
+        rows_from_sampler = self._get_sampler_dataset_size()
+
+        if rows_from_sampler is None:
+            return self._dataset_size
+
+        return min(rows_from_sampler, self._dataset_size)
 
     # manually set dataset_size as a temporary solution.
     def set_dataset_size(self, value):
@@ -3389,8 +3245,13 @@ class ManifestDataset(MappableDataset):
             class_indexing = self.class_indexing
 
         num_rows = ManifestOp.get_num_rows_and_classes(self.dataset_file, num_samples, class_indexing, self.usage)[0]
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
 
-        return get_num_rows(num_rows, self.num_shards)
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
 
     def num_classes(self):
         """
@@ -3548,8 +3409,13 @@ class Cifar10Dataset(MappableDataset):
             num_samples = self.num_samples
 
         num_rows = CifarOp.get_num_rows(self.dataset_dir, num_samples, True)
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
 
-        return get_num_rows(num_rows, self.num_shards)
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -3667,8 +3533,13 @@ class Cifar100Dataset(MappableDataset):
             num_samples = self.num_samples
 
         num_rows = CifarOp.get_num_rows(self.dataset_dir, num_samples, False)
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
 
-        return get_num_rows(num_rows, self.num_shards)
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -3731,7 +3602,12 @@ class RandomDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
-        return num_samples
+        rows_from_sampler = self._get_sampler_dataset_size()
+
+        if rows_from_sampler is None:
+            return self.num_samples
+
+        return min(rows_from_sampler, self.num_samples)
 
     def is_shuffled(self):
         return True
@@ -4040,7 +3916,24 @@ class VOCDataset(MappableDataset):
         Return:
             Number, number of batches.
         """
-        return self.num_samples
+        if self.num_samples is None:
+            num_samples = 0
+        else:
+            num_samples = self.num_samples
+
+        if self.class_indexing is None:
+            class_indexing = dict()
+        else:
+            class_indexing = self.class_indexing
+
+        num_rows = VOCOp.get_num_rows(self.dataset_dir, self.task, self.mode, class_indexing, num_samples)
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
+
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
 
     def get_class_indexing(self):
         """

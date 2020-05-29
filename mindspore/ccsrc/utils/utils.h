@@ -45,8 +45,10 @@ constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
 constexpr auto kGetNextOpName = "GetNext";
 constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kAllGatherOpName = "AllGather";
+constexpr auto kHostAllGatherOpName = "HostAllGather";
 constexpr auto kBroadcastOpName = "Broadcast";
 constexpr auto kReduceScatterOpName = "ReduceScatter";
+constexpr auto kHostReduceScatterOpName = "HostReduceScatter";
 constexpr auto kMemCpyAsyncOpName = "memcpy_async";
 constexpr auto kTopKOpName = "TopK";
 constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
@@ -148,10 +150,11 @@ constexpr auto kReturnOpName = "return";
 constexpr auto kLarsV2OpName = "LarsV2";
 constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
+constexpr auto kNMSWithMaskOpName = "NMSWithMask";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
-constexpr auto kAttrIsAICPUKernel = "is_ai_cpu_kernel";
+constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrVisited = "visited";
@@ -190,6 +193,8 @@ constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
 constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";
+constexpr auto kAttrNewAxisMask = "new_axis_mask";
+constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

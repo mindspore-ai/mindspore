@@ -1,0 +1,85 @@
+diff -Npur -x .git sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/manifest
+--- sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest	2020-04-20 11:05:54.613993594 +0800
++++ sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/manifest	2020-05-25 09:50:05.352246036 +0800
+@@ -1,5 +1,5 @@
+ C Version\s3.31.1
+-D 2020-01-27T19:55:54.490
++D 2020-04-03T13:19:03.054
+ F .fossil-settings/empty-dirs dbb81e8fc0401ac46a1491ab34a7f2c7c0452f2f06b54ebb845d024ca8283ef1
+ F .fossil-settings/ignore-glob 35175cdfcf539b2318cb04a9901442804be81cd677d8b889fcc9149c21f239ea
+ F LICENSE.md df5091916dbb40e6e9686186587125e1b2ff51f022cc334e886c19a0e9982724
+@@ -529,11 +529,11 @@ F src/pragma.h 9f86a3a3a0099e651189521c8
+ F src/prepare.c 6049beb71385f017af6fc320d2c75a4e50b75e280c54232442b785fbb83df057
+ F src/printf.c 9be6945837c839ba57837b4bc3af349eba630920fa5532aa518816defe42a7d4
+ F src/random.c 80f5d666f23feb3e6665a6ce04c7197212a88384
+-F src/resolve.c f0781c9e180028b279bc4ff079ad54f4727223d470c8d2343643fcaf79b67740
+-F src/rowset.c d977b011993aaea002cab3e0bb2ce50cf346000dff94e944d547b989f4b1fe93
+-F src/select.c 3f7aecf64b08b018b89e4fe16ea621cc9a0e3f3801e9e5638cfe1a6035fa1581
+-F src/shell.c.in c2e20c43a44fb5588a6c27ce60589538fbf4794fd7686f5b2598eca22eaae1fa
+-F src/sqlite.h.in 75d0304247a2154122d6d06f12219c1e29291d72304f0eeef4c1ec6b1409b443
++F src/resolve.c 5c3b3b18e096353ee2794a8f8a6227c301a57ea771814c158546265d9ef2087e
++F src/rowset.c ba9515a922af32abe1f7d39406b9d35730ed65efab9443dc5702693b60854c92
++F src/select.c fd38aa7f87ad0fc93577df6ef1d6cf2b9e5f6186b93c04271f5248c6c4be088c
++F src/shell.c.in 759bb4a283651955ff2ddb104541b1805b1fff915017083bdd39975cd4e223aa
++F src/sqlite.h.in cc7d0949ac32bb68ed97acdb3e7ae91cd413a24d32d6ff049ef8308d620a4367
+ F src/sqlite3.rc 5121c9e10c3964d5755191c80dd1180c122fc3a8
+ F src/sqlite3ext.h 27951f294f29cd875c6027f2707d644ef99f469bd97514568b5a8581a114db8c
+ F src/sqliteInt.h d736043dc6291d3af289d911237da0801b6c05be086ae322eedd47a089ae8d2f
+@@ -1718,7 +1718,7 @@ F test/win32heap.test 10fd891266bd00af68
+ F test/win32lock.test fbf107c91d8f5512be5a5b87c4c42ab9fdd54972
+ F test/win32longpath.test 169c75a3b2e43481f4a62122510210c67b08f26d
+ F test/win32nolock.test ac4f08811a562e45a5755e661f45ca85892bdbbc
+-F test/window1.test cec56b9a0a2e7ca4bd63b30590c7b049dce9acfd87478e2597e13b67152bd821
++F test/window1.test ec792f92e63ee457447c5c04de8f8d42f4a94b842b5bac1f403ac38a6d867c22
+ F test/window2.tcl 492c125fa550cda1dd3555768a2303b3effbeceee215293adf8871efc25f1476
+ F test/window2.test e466a88bd626d66edc3d352d7d7e1d5531e0079b549ba44efb029d1fbff9fd3c
+ F test/window3.tcl acea6e86a4324a210fd608d06741010ca83ded9fde438341cb978c49928faf03
+@@ -1857,10 +1857,10 @@ F vsixtest/vsixtest.tcl 6a9a6ab600c25a91
+ F vsixtest/vsixtest.vcxproj.data 2ed517e100c66dc455b492e1a33350c1b20fbcdc
+ F vsixtest/vsixtest.vcxproj.filters 37e51ffedcdb064aad6ff33b6148725226cd608e
+ F vsixtest/vsixtest_TemporaryKey.pfx e5b1b036facdb453873e7084e1cae9102ccc67a0
+-P 9d0d4ab95dc0c56e053c2924ed322a9ea7b25439e6f74599f706905a1994e454
+-R 1c052b7cdf4947664b7043564b643ac3
++P 684293882c302600e112cf52553c19d84fdb31663d96e5dd7f8ac17dda00a026
++R dbb40938a904f2e39c11078dcedb87b0
+ T +bgcolor * #d0c0ff
+ T +sym-release *
+ T +sym-version-3.31.1 *
+ U drh
+-Z e960557a43b001a47933dacf8bc1d10e
++Z 1c021fc7d9ac6b5d0e31d06cd9bb3304
+diff -Npur -x .git sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest.uuid sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/manifest.uuid
+--- sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest.uuid	2020-04-20 11:05:54.613993594 +0800
++++ sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/manifest.uuid	2020-05-25 09:50:19.076317552 +0800
+@@ -1 +1 @@
+-abc473fb8fb999005dc79a360e34f97b3b25429decf1820dd2afa5c19577753d
++4a302b42c7bf5e11ddb5522ca999f74aba397d3a7eb91b1844bb02852f772441
+diff -Npur -x .git sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/select.c sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/src/select.c
+--- sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/select.c	2020-04-20 11:05:54.613993594 +0800
++++ sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/src/select.c	2020-05-25 09:48:15.975677012 +0800
+@@ -5352,6 +5352,7 @@ static void resetAccumulator(Parse *pPar
+   struct AggInfo_func *pFunc;
+   int nReg = pAggInfo->nFunc + pAggInfo->nColumn;
+   if( nReg==0 ) return;
++  if( pParse->nErr ) return;
+ #ifdef SQLITE_DEBUG
+   /* Verify that all AggInfo registers are within the range specified by
+   ** AggInfo.mnReg..AggInfo.mxReg */
+diff -Npur -x .git sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/test/window1.test sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/test/window1.test
+--- sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/test/window1.test	2020-04-20 11:05:54.673992813 +0800
++++ sqlite.3.31.1_CVE-2020-11655_c415d910_patch002/test/window1.test	2020-05-25 09:50:46.824462220 +0800
+@@ -1594,4 +1594,14 @@ do_execsql_test 48.1 {
+ } {2 2 2}
+ 
+ 
++# 2020-04-03 ticket af4556bb5c285c08
++#
++reset_db
++do_catchsql_test 51.1 {
++  CREATE TABLE a(b, c);
++  SELECT c FROM a GROUP BY c
++    HAVING(SELECT(sum(b) OVER(ORDER BY b),
++                  sum(b) OVER(PARTITION BY min(DISTINCT c), c ORDER BY b)));
++} {1 {row value misused}}
++
+ finish_test

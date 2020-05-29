@@ -15,9 +15,6 @@
  */
 
 #include "pre_activate/mem_reuse/mem_reuse_allocator.h"
-#include <memory>
-#include <algorithm>
-#include <set>
 #include "pre_activate/mem_reuse/mem_reuse.h"
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
 
@@ -25,9 +22,9 @@ namespace mindspore {
 namespace memreuse {
 void BestFitMemReuse::InitMemReuseInfo(const MemReuseUtil *mem_reuse_util_ptr) {
   MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
-  tensor_ptr_list_ = mem_reuse_util_ptr->total_refs_list();
-  wk_tensor_list_ = mem_reuse_util_ptr->total_wk_ref_list();
-  op_ptr_list_ = mem_reuse_util_ptr->kernel_def_ptr_list();
+  set_tensor_ptr_list(mem_reuse_util_ptr->total_refs_list());
+  set_workspace_ptr_list(mem_reuse_util_ptr->total_wk_ref_list());
+  set_op_ptr_list(mem_reuse_util_ptr->kernel_def_ptr_list());
   // check info Correctness
   for (auto &tensor : tensor_ptr_list_) {
     tensor->size_ = AlignMemorySize(tensor->size_);
@@ -37,63 +34,65 @@ void BestFitMemReuse::InitMemReuseInfo(const MemReuseUtil *mem_reuse_util_ptr) {
     wk->size_ = AlignMemorySize(wk->size_);
     wk->ref_count_ = 1;
   }
-  auto stream_reuse = std::make_shared<StreamReuse>();
-  stream_reuse->SetStreamReuseResource();
-  parallel_streams_map_ = stream_reuse->parallel_streams_map();
 }
 
-bool BestFitMemReuse::CheckMembufIndx(const std::vector<MembufPtr> &membuf_ptr_list, size_t check_idx) const {
-  return check_idx < membuf_ptr_list.size();
-}
-
-bool BestFitMemReuse::IsMembufListEmpty(const std::vector<MembufPtr> &membuf_ptr_list) const {
-  return membuf_ptr_list.empty();
-}
-
-int BestFitMemReuse::GetFacIdx(size_t real_idx, int flag) const {
-  if (flag == kDyFac) {
-    return SizeToInt(real_idx);
-  } else if (flag == kWkFac) {
-    auto wk_fac_idx = kWkIndexFactor * SizeToInt(real_idx + 1);
-    return wk_fac_idx;
-  } else {
-    MS_LOG(EXCEPTION) << "flag " << flag << " is invalid";
-  }
-}
-
-int BestFitMemReuse::GetRealIdx(int fac_idx, int flag) const {
-  // membuf index maybe invalid_index
-  if (fac_idx == kInvalidIndex) {
-    MS_LOG(EXCEPTION) << "this membuf index is invalid";
-  }
-  if (flag == kDyFac) {
-    return fac_idx;
-  } else if (flag == kWkFac) {
-    if (fac_idx % 10 == 0) {
-      auto wk_fac_idx = fac_idx / kWkIndexFactor + 1;
-      return wk_fac_idx;
-    } else {
-      MS_LOG(EXCEPTION) << "fac_idx: " << fac_idx << "is invalid";
+void BestFitMemReuse::InitKernelDependence() {
+  for (const auto &kernel : op_ptr_list_) {
+    std::set<KernelDefPtr> front;
+    std::queue<KernelDefPtr> to_visit;
+    to_visit.push(kernel);
+    // find all kernels before current kernel
+    while (!to_visit.empty()) {
+      auto curr = to_visit.front();
+      to_visit.pop();
+      if (front.count(curr)) {
+        continue;
+      }
+      front.insert(curr);
+      auto iter = kernel_front_map_.find(curr);
+      if (iter != kernel_front_map_.end()) {
+        auto visited_front = iter->second;
+        front.insert(visited_front.begin(), visited_front.end());
+        continue;
+      }
+      for (const auto &input : curr->input_kernels()) {
+        to_visit.push(input);
+      }
     }
-  } else {
-    MS_LOG(EXCEPTION) << "flag: " << flag << " is invalid";
+    kernel_front_map_[kernel] = front;
   }
 }
 
-void BestFitMemReuse::AssignNodeOutputOffset(const KernelDef *kernel_def_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_def_ptr);
-  for (auto &tensor_idx : kernel_def_ptr->GetOutputRefIndexs()) {
-    CheckTensorIndex(tensor_idx);
-    auto tensor_desc = tensor_ptr_list_[IntToSize(tensor_idx)];
+bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const KernelDefPtr &kernel_prev) {
+  // determine whether the kernel_curr can reuse kernel_prev's output tensor membuf
+  MS_EXCEPTION_IF_NULL(kernel_curr);
+  MS_EXCEPTION_IF_NULL(kernel_prev);
+  auto curr_stream_id = kernel_curr->stream_id();
+  auto prev_stream_id = kernel_prev->stream_id();
+  if (curr_stream_id == prev_stream_id) {
+    return true;
+  }
+  auto iter = kernel_front_map_.find(kernel_curr);
+  if (iter == kernel_front_map_.end()) {
+    MS_LOG(EXCEPTION) << kernel_curr->scope_full_name() << " is not init.";
+  }
+  auto kernel_curr_front = iter->second;
+  return kernel_curr_front.count(kernel_prev);
+}
+
+void BestFitMemReuse::AssignNodeOutputOffset() {
+  for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+    size_t index = GetTensorIndex(tensor_idx);
+    auto tensor_desc = tensor_ptr_list_[index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
     auto reusable_membuf_map = GetReusableMembufMap(tensor_desc->size_);
     if (!reusable_membuf_map.empty()) {
       auto membuf_index = reusable_membuf_map.begin()->second;
       // find the best suitable membuf in membuf list, and reuse it
-      ReuseExistMembuf(tensor_desc.get(), membuf_index, kDyFac);
+      ReuseExistMembuf(tensor_desc.get(), membuf_index, kDynamicMem);
     } else {
       // no membuf can reuse, add new membuf after the membuf_ptr_list
-      AddNewMembufPtr(tensor_desc.get(), kDyFac);
+      AddNewMembufPtr(tensor_desc.get(), kDynamicMem);
 #ifdef MEM_REUSE_DEBUG
       MemReuseChecker::GetInstance().IsAddNewMembuf_ = true;
 #endif
@@ -101,43 +100,24 @@ void BestFitMemReuse::AssignNodeOutputOffset(const KernelDef *kernel_def_ptr) {
   }
 }
 
-void BestFitMemReuse::AssignNodeWkOffset(const KernelDef *kernel_def_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_def_ptr);
-  for (auto &wk_idx : kernel_def_ptr->GetWkRefIndexs()) {
-    if (IntToSize(wk_idx) >= wk_tensor_list_.size()) {
-      MS_LOG(EXCEPTION) << "wk_idx: " << wk_idx << " is invalid";
-    }
-    auto wk_ref = wk_tensor_list_[IntToSize(wk_idx)];
+void BestFitMemReuse::AssignNodeWorkspaceOffset() {
+  for (auto &wk_idx : current_kernel_->GetWorkspaceRefIndexs()) {
+    size_t index = GetWorkspaceIndex(wk_idx);
+    auto wk_ref = wk_tensor_list_[index];
     MS_EXCEPTION_IF_NULL(wk_ref);
     auto re_wk_membuf_map = GetReusableMembufMap(wk_ref->size_);
     if (!re_wk_membuf_map.empty()) {
       auto membuf_index = re_wk_membuf_map.begin()->second;
-      ReuseExistMembuf(wk_ref.get(), membuf_index, kWkFac);
+      ReuseExistMembuf(wk_ref.get(), membuf_index, kWorkspaceMem);
     } else {
-      AddNewMembufPtr(wk_ref.get(), kWkFac);
-    }
-  }
-}
-// releas pre node wk
-void BestFitMemReuse::ReleasePreNodeWkSpace(const KernelDef *kernel_def_ptr) {
-  for (auto &wk_idx : kernel_def_ptr->GetWkRefIndexs()) {
-    auto wk_index = IntToSize(wk_idx);
-    if (wk_index >= wk_tensor_list_.size()) {
-      MS_LOG(EXCEPTION) << "wk_index: " << wk_index << " is larger than wk_tensor_list size" << wk_tensor_list_.size();
-    }
-    auto wk_tensor = wk_tensor_list_[wk_index];
-    wk_tensor->ref_count_--;
-    if (wk_tensor->ref_count_ == 0) {
-      ReleaseMembuf(wk_index, kWkFac);
+      AddNewMembufPtr(wk_ref.get(), kWorkspaceMem);
     }
   }
 }
 
 void BestFitMemReuse::ReuseExistMembuf(KernelRefCount *tensor_desc, size_t membuf_index, int flag) {
   MS_EXCEPTION_IF_NULL(tensor_desc);
-  if (!CheckMembufIndx(membuf_ptr_list_, membuf_index)) {
-    return;
-  }
+  CheckMembufIndx(membuf_index);
   auto membuf = membuf_ptr_list_[membuf_index];
   MS_EXCEPTION_IF_NULL(membuf);
   // first to split && then update membuf_info
@@ -153,11 +133,9 @@ std::map<size_t, size_t> BestFitMemReuse::GetReusableMembufMap(size_t tensor_siz
   std::map<size_t, size_t> size_map;
   for (size_t i = 0; i < membuf_ptr_list_.size(); ++i) {
     auto membuf = membuf_ptr_list_[i];
-    auto called_ids = membuf->called_stream_ids_;
     auto index = i;
-    bool IsMembufOk = membuf->status_ == kUnused && membuf->size_ >= tensor_size;
-    bool has_parallel_id = HasParallelId(called_ids, current_stream_id_);
-    if (IsMembufOk && !has_parallel_id) {
+    bool is_membuf_ok = membuf->status_ == kUnused && membuf->size_ >= tensor_size;
+    if (is_membuf_ok && IsUsable(current_kernel_, membuf->used_kernel_)) {
       (void)size_map.insert(std::make_pair(membuf->size_, index));
       break;
     }
@@ -168,13 +146,10 @@ std::map<size_t, size_t> BestFitMemReuse::GetReusableMembufMap(size_t tensor_siz
 void BestFitMemReuse::UpdateMembufInfo(KernelRefCount *tensor_desc, Membuf *membuf, int flag) {
   MS_EXCEPTION_IF_NULL(tensor_desc);
   MS_EXCEPTION_IF_NULL(membuf);
-  auto fac_idx = GetFacIdx(IntToSize(tensor_desc->index_), flag);
+  auto real_index = GetRealIndex(IntToSize(tensor_desc->index_), flag);
   membuf->status_ = kReused;
-  membuf->stream_id_ = current_stream_id_;
-  // clear before called_ids
-  membuf->called_stream_ids_.clear();
-  (void)membuf->called_stream_ids_.insert(current_stream_id_);
-  membuf->index_ = fac_idx;
+  membuf->index_ = real_index;
+  membuf->used_kernel_ = current_kernel_;
   tensor_desc->offset_ = membuf->offset_;
 }
 
@@ -182,52 +157,39 @@ bool BestFitMemReuse::IsSplit(size_t tensor_size, size_t membuf_size) const { re
 
 void BestFitMemReuse::SplitMembuf(const KernelRefCount *tensor_desc, size_t membuf_index) {
   MS_EXCEPTION_IF_NULL(tensor_desc);
-  if (!CheckMembufIndx(membuf_ptr_list_, membuf_index)) {
-    return;
-  }
+  CheckMembufIndx(membuf_index);
   auto membuf = membuf_ptr_list_[membuf_index];
   MS_EXCEPTION_IF_NULL(membuf);
   auto bias = membuf->size_ - tensor_desc->size_;
   membuf->size_ = tensor_desc->size_;
   // to check if spilt membuf can be merge
   auto new_membuf =
-    std::make_shared<Membuf>(current_stream_id_, kUnused, bias, membuf->offset_ + membuf->size_, kInvalidIndex);
+    std::make_shared<Membuf>(kUnused, bias, membuf->offset_ + membuf->size_, kInvalidIndex, current_kernel_);
   (void)membuf_ptr_list_.insert(membuf_ptr_list_.begin() + SizeToInt(membuf_index + 1), new_membuf);
-  MergeCalledIds(membuf.get(), new_membuf.get());
 }
 
 void BestFitMemReuse::AddNewMembufPtr(KernelRefCount *tensor_desc, int flag) {
   MS_EXCEPTION_IF_NULL(tensor_desc);
-  size_t membuf_offset = std::accumulate(membuf_ptr_list_.begin(), membuf_ptr_list_.end(), IntToSize(0),
-                                         [](size_t sum, MembufPtr &membuf) { return sum + membuf->size_; });
-  size_t membuf_size = tensor_desc->size_;
-  auto fac_idx = GetFacIdx(IntToSize(tensor_desc->index_), flag);
-  auto membuf = std::make_shared<Membuf>(current_stream_id_, kReused, membuf_size, membuf_offset, fac_idx);
+  size_t membuf_offset = 0;
+  if (!membuf_ptr_list_.empty()) {
+    membuf_offset = membuf_ptr_list_.back()->offset_ + membuf_ptr_list_.back()->size_;
+  }
+  auto membuf_size = tensor_desc->size_;
+  auto real_index = GetRealIndex(IntToSize(tensor_desc->index_), flag);
+  auto membuf = std::make_shared<Membuf>(kReused, membuf_size, membuf_offset, real_index, current_kernel_);
   membuf_ptr_list_.push_back(membuf);
   tensor_desc->offset_ = membuf_offset;
-  (void)membuf->called_stream_ids_.insert(current_stream_id_);
 }
 
-void BestFitMemReuse::UpdateNodeInputAndMembuf(const KernelDef *kernel_def_ptr) {
+void BestFitMemReuse::UpdateNodeInputAndMembuf() {
   // process node input tensor
-  for (const auto &tensor_idx : kernel_def_ptr->GetInputRefIndexs()) {
-    auto tensor_index = IntToSize(tensor_idx);
-    CheckTensorIndex(tensor_idx);
+  for (const auto &tensor_idx : current_kernel_->GetInputRefIndexs()) {
+    size_t tensor_index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[tensor_index];
-    auto fac_idx = GetFacIdx(tensor_index, kDyFac);
     MS_EXCEPTION_IF_NULL(tensor_desc);
     tensor_desc->ref_count_--;
-    // find tensor_index -> membuf update it's called_ids
-    for (size_t i = 0; i < membuf_ptr_list_.size(); ++i) {
-      auto membuf = membuf_ptr_list_[i];
-      // find it
-      if (membuf->index_ == fac_idx) {
-        (void)membuf->called_stream_ids_.insert(current_stream_id_);
-        break;
-      }
-    }
     if (tensor_desc->ref_count_ == 0) {
-      ReleaseMembuf(tensor_index, kDyFac);
+      ReleaseMembuf(tensor_index, kDynamicMem);
     } else if (tensor_desc->ref_count_ < 0) {
       MS_LOG(EXCEPTION) << "tensor: " << tensor_desc->index_ << " refcount: " << tensor_desc->ref_count_
                         << " check error";
@@ -235,14 +197,13 @@ void BestFitMemReuse::UpdateNodeInputAndMembuf(const KernelDef *kernel_def_ptr) 
   }
 }
 
-void BestFitMemReuse::ReleaseNodeUnusedOutput(const KernelDef *kernel_def_ptr) {
-  for (auto &tensor_idx : kernel_def_ptr->GetOutputRefIndexs()) {
-    auto tensor_index = IntToSize(tensor_idx);
-    CheckTensorIndex(tensor_idx);
+void BestFitMemReuse::ReleaseNodeUnusedOutput() {
+  for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+    size_t tensor_index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[tensor_index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
     if (tensor_desc->ref_count_ == 0) {
-      ReleaseMembuf(tensor_index, kDyFac);
+      ReleaseMembuf(tensor_index, kDynamicMem);
     } else if (tensor_desc->ref_count_ < 0) {
       MS_LOG(EXCEPTION) << "tensor: " << tensor_desc->index_ << " refcount: " << tensor_desc->ref_count_
                         << " check error";
@@ -250,124 +211,57 @@ void BestFitMemReuse::ReleaseNodeUnusedOutput(const KernelDef *kernel_def_ptr) {
   }
 }
 
-size_t BestFitMemReuse::FindIndx(const std::vector<MembufPtr> &membuf_ptr_list, int fac_idx) const {
-  size_t membuf_index = membuf_ptr_list.size();
-  for (size_t n = 0; n < membuf_ptr_list.size(); ++n) {
-    auto membuf = membuf_ptr_list[n];
-    MS_EXCEPTION_IF_NULL(membuf);
-    if (membuf->index_ == fac_idx) {
-      membuf_index = n;
-      break;
+void BestFitMemReuse::ReleasePreNodeWorkspace(const KernelDef *kernel_def_ptr) {
+  for (auto &workspace_index : kernel_def_ptr->GetWorkspaceRefIndexs()) {
+    size_t index = GetWorkspaceIndex(workspace_index);
+    auto wk_tensor = wk_tensor_list_[index];
+    wk_tensor->ref_count_--;
+    if (wk_tensor->ref_count_ == 0) {
+      ReleaseMembuf(index, kWorkspaceMem);
+    } else if (wk_tensor->ref_count_ < 0) {
+      MS_LOG(EXCEPTION) << "tensor: " << wk_tensor->index_ << " refcount: " << wk_tensor->ref_count_ << " check error";
     }
   }
-  return membuf_index;
 }
 
 void BestFitMemReuse::ReleaseMembuf(size_t tensor_index, int flag) {
-  auto fac_idex = GetFacIdx(tensor_index, flag);
-  auto membuf_index = FindIndx(membuf_ptr_list_, fac_idex);
-  if (!CheckMembufIndx(membuf_ptr_list_, membuf_index)) {
+  if (membuf_ptr_list_.empty()) {
     return;
   }
-  auto membuf = membuf_ptr_list_[membuf_index];
+  auto real_index = GetRealIndex(tensor_index, flag);
+  auto membuf_iter = std::find_if(membuf_ptr_list_.begin(), membuf_ptr_list_.end(),
+                                  [real_index](const MembufPtr &membuf) { return membuf->index_ == real_index; });
+  if (membuf_iter == membuf_ptr_list_.end()) {
+    return;
+  }
+  auto membuf = (*membuf_iter);
   MS_EXCEPTION_IF_NULL(membuf);
   membuf->status_ = kUnused;
-  if (membuf_index != (membuf_ptr_list_.size() - 1)) {
-    auto membuf_next = membuf_ptr_list_[membuf_index + 1];
+  if (membuf_iter != membuf_ptr_list_.end() - 1) {
+    auto next_iter = membuf_iter + 1;
+    auto membuf_next = (*next_iter);
     MS_EXCEPTION_IF_NULL(membuf_next);
-    bool has_parallel_id = false;
-    for (auto &cal_id : membuf->called_stream_ids_) {
-      has_parallel_id = HasParallelId(membuf_next->called_stream_ids_, cal_id);
-      if (has_parallel_id) {
-        break;
-      }
-    }
-    if (membuf_next->status_ == kUnused && !has_parallel_id) {
-      membuf->size_ += membuf_next->size_;
-      MergeCalledIds(membuf_next.get(), membuf.get());
-      auto it = membuf_ptr_list_.begin() + SizeToInt(membuf_index + 1);
-      (void)membuf_ptr_list_.erase(it);
-    }
-  }
-  if (membuf_index != 0) {
-    if (!CheckMembufIndx(membuf_ptr_list_, membuf_index - 1)) {
-      return;
-    }
-    auto membuf_prev = membuf_ptr_list_[membuf_index - 1];
-    MS_EXCEPTION_IF_NULL(membuf_prev);
-    bool has_parallel_id = false;
-    for (auto &cal_id : membuf->called_stream_ids_) {
-      has_parallel_id = HasParallelId(membuf_prev->called_stream_ids_, cal_id);
-      if (has_parallel_id) {
-        break;
-      }
-    }
-    if (membuf_prev->status_ == kUnused && !has_parallel_id) {
-      membuf->size_ += membuf_prev->size_;
-      membuf->offset_ = membuf_prev->offset_;
-      MergeCalledIds(membuf_prev.get(), membuf.get());
-      auto it = membuf_ptr_list_.begin() + SizeToInt(membuf_index - 1);
-      (void)membuf_ptr_list_.erase(it);
-    }
-  }
-}
-
-bool BestFitMemReuse::HasParallelId(const std::set<uint32_t> &called_ids, uint32_t curr_id) {
-  if (called_ids.empty()) {
-    MS_LOG(EXCEPTION) << "There is a invalid WkMembuf,called_ids is empty";
-  }
-  for (auto item : called_ids) {
-    if (!IsReusableStream(curr_id, item)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void BestFitMemReuse::MergeCalledIds(const Membuf *membuf_target, Membuf *membuf) {
-  MS_EXCEPTION_IF_NULL(membuf_target);
-  MS_EXCEPTION_IF_NULL(membuf);
-  for (auto target : membuf_target->called_stream_ids_) {
-    (void)membuf->called_stream_ids_.insert(target);
-  }
-}
-
-void BestFitMemReuse::ReleaseParallStream() {
-  std::vector<size_t> target_relea_idxs;
-  for (size_t i = 0; i < membuf_ptr_list_.size(); ++i) {
-    auto membuf = membuf_ptr_list_[i];
-    if (membuf->status_ == kReused) {
-      continue;
-    }
-    // for begin to end, so no need merge pre_membuf
-    if (i != (membuf_ptr_list_.size() - 1)) {
-      auto membuf_next = membuf_ptr_list_[i + 1];
-      if (membuf_next->status_ == kReused) {
-        continue;
-      }
-      MS_EXCEPTION_IF_NULL(membuf_next);
-      // judge current id no parallel fro membuf && membuf_next
-      bool has_parallel_id_crr = HasParallelId(membuf->called_stream_ids_, current_stream_id_);
-      bool has_parallel_id_next = HasParallelId(membuf_next->called_stream_ids_, current_stream_id_);
-      if (membuf->status_ == kUnused && membuf_next->status_ == kUnused && !has_parallel_id_crr &&
-          !has_parallel_id_next) {
+    if (membuf_next->status_ == kUnused) {
+      bool is_merge = IsUsable(current_kernel_, membuf_next->used_kernel_);
+      if (is_merge) {
         membuf->size_ += membuf_next->size_;
-        MergeCalledIds(membuf_next.get(), membuf.get());
-        target_relea_idxs.push_back(i + 1);
+        (void)membuf_ptr_list_.erase(next_iter);
       }
     }
   }
-  // erase all target membuf
-  std::vector<MembufPtr> membuf_ptr_list_tmp;
-  for (size_t j = 0; j < membuf_ptr_list_.size(); ++j) {
-    for (auto idx : target_relea_idxs) {
-      if (j != idx) {
-        membuf_ptr_list_tmp.push_back(membuf_ptr_list_[j]);
+  if (membuf_iter != membuf_ptr_list_.begin()) {
+    auto prev_iter = membuf_iter - 1;
+    auto membuf_prev = (*prev_iter);
+    MS_EXCEPTION_IF_NULL(membuf_prev);
+    if (membuf_prev->status_ == kUnused) {
+      bool is_merge = IsUsable(current_kernel_, membuf_prev->used_kernel_);
+      if (is_merge) {
+        membuf->size_ += membuf_prev->size_;
+        membuf->offset_ = membuf_prev->offset_;
+        (void)membuf_ptr_list_.erase(prev_iter);
       }
     }
   }
-  membuf_ptr_list_.clear();
-  (void)std::copy(membuf_ptr_list_tmp.begin(), membuf_ptr_list_tmp.end(), back_inserter(membuf_ptr_list_));
 }
 
 size_t BestFitMemReuse::AlignMemorySize(size_t size) const {
@@ -380,74 +274,83 @@ size_t BestFitMemReuse::GetAllocatedSize() {
   if (membuf_ptr_list_.empty()) {
     return AllocatedSize;
   }
-  AllocatedSize = (*membuf_ptr_list_.rbegin())->offset_ + (*membuf_ptr_list_.rbegin())->size_;
+  AllocatedSize = membuf_ptr_list_.back()->offset_ + membuf_ptr_list_.back()->size_;
   MS_LOG(INFO) << "MemReuse Allocated Dynamic Size: " << AllocatedSize;
   return AllocatedSize;
 }
 
-/**
- * parallel_streams_map: key, current_stream_id; value,  streams parallel to current stream
- * @param curr_stream_id
- * @param target_stream_id
- * @return bool, if the target stream can be reused by current stream
- */
-bool BestFitMemReuse::IsReusableStream(uint32_t curr_stream_id, uint32_t target_stream_id) {
-  auto iter_parall = parallel_streams_map_.find(curr_stream_id);
-  if (parallel_streams_map_.empty() || (iter_parall == parallel_streams_map_.end())) {
-    // no parallel stream exists
-    return true;
-  }
-  auto curr_parallel_set = iter_parall->second;
-  return curr_parallel_set.find(target_stream_id) == curr_parallel_set.end();
-}
-
-bool BestFitMemReuse::IsRelease(const std::string &kernel_name) {
+bool BestFitMemReuse::IsRelease() {
   // unable_used_node include the node type that output tensor cannot be released,
   // even if its refcount is equal to zero.
   std::unordered_set<std::string> unable_used_node = {prim::kPrimBatchNorm->name(), prim::kPrimBatchNormGrad->name(),
                                                       prim::kPrimFusedBatchNorm->name(),
                                                       prim::kPrimFusedBatchNormGrad->name()};
-  return unable_used_node.find(kernel_name) == unable_used_node.end();
+  return unable_used_node.find(current_kernel_->kernel_name()) == unable_used_node.end();
 }
 
-void BestFitMemReuse::CheckTensorIndex(int tensor_index) const {
-  if (tensor_index < 0) {
-    MS_LOG(EXCEPTION) << "warning, please check tensor info.";
-  }
-  if (IntToSize(tensor_index) >= tensor_ptr_list_.size()) {
+size_t BestFitMemReuse::GetTensorIndex(int index) const {
+  if (index < 0 || IntToSize(index) >= tensor_ptr_list_.size()) {
+    MS_LOG(WARNING) << "current cnode: " << current_kernel_->scope_full_name();
     MS_LOG(EXCEPTION) << "invalid tensor index";
+  }
+  return IntToSize(index);
+}
+
+size_t BestFitMemReuse::GetWorkspaceIndex(int index) const {
+  if (index < 0 || IntToSize(index) >= wk_tensor_list_.size()) {
+    MS_LOG(WARNING) << "current cnode: " << current_kernel_->scope_full_name();
+    MS_LOG(EXCEPTION) << "invalid tensor index";
+  }
+  return IntToSize(index);
+}
+
+int BestFitMemReuse::GetRealIndex(size_t index, int flag) const {
+  if (flag == kDynamicMem) {
+    return SizeToInt(index);
+  } else if (flag == kWorkspaceMem) {
+    return kWorkspaceIndexFactor * SizeToInt(index + 1);
+  } else {
+    MS_LOG(EXCEPTION) << "flag " << flag << " is invalid";
+  }
+}
+
+void BestFitMemReuse::CheckMembufIndx(size_t membuf_index) const {
+  if (membuf_index >= membuf_ptr_list_.size()) {
+    MS_LOG(WARNING) << "current cnode: " << current_kernel_->scope_full_name();
+    MS_LOG(EXCEPTION) << "invalid membuf index: " << membuf_index << ", real size: " << membuf_ptr_list_.size();
   }
 }
 
 void BestFitMemReuse::Reuse(const MemReuseUtil *mem_reuse_util_ptr) {
   MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
   InitMemReuseInfo(mem_reuse_util_ptr);
+  InitKernelDependence();
   KernelDefPtr pre_op = nullptr;
 #ifdef MEM_REUSE_DEBUG
   size_t op_num = 0;
 #endif
   for (const auto &op_def_ptr : op_ptr_list_) {
-    current_stream_id_ = op_def_ptr->stream_id();
+    current_kernel_ = op_def_ptr;
     // releas pre_op_def
     if (pre_op != nullptr) {
-      ReleasePreNodeWkSpace(pre_op.get());
+      ReleasePreNodeWorkspace(pre_op.get());
     }
     MemReuseChecker::GetInstance().IsAddNewMembuf_ = false;
     // process node output tensor
-    AssignNodeOutputOffset(op_def_ptr.get());
+    AssignNodeOutputOffset();
 #ifdef MEM_REUSE_DEBUG
     if (MemReuseChecker::GetInstance().IsAddNewMembuf_) {
       MemReuseChecker::GetInstance().SetAddNewMembuInfos(op_def_ptr.get(), membuf_ptr_list_, op_num);
     }
 #endif
     // deal with current op'workspace
-    AssignNodeWkOffset(op_def_ptr.get());
+    AssignNodeWorkspaceOffset();
     pre_op = op_def_ptr;
     // update node input tensor refcount, and membuf list status
-    UpdateNodeInputAndMembuf(op_def_ptr.get());
+    UpdateNodeInputAndMembuf();
     // check node output tensor which refcount is equal to zero
-    if (IsRelease(op_def_ptr->kernel_name())) {
-      ReleaseNodeUnusedOutput(op_def_ptr.get());
+    if (IsRelease()) {
+      ReleaseNodeUnusedOutput();
     }
 #ifdef MEM_REUSE_DEBUG
     MemReuseChecker::GetInstance().SetMembuInfos(op_def_ptr.get(), membuf_ptr_list_);
@@ -457,6 +360,8 @@ void BestFitMemReuse::Reuse(const MemReuseUtil *mem_reuse_util_ptr) {
 #ifdef MEM_REUSE_DEBUG
   MemReuseChecker::GetInstance().ExportMembufInfoIR();
   MemReuseChecker::GetInstance().ExportAddNewMmebufIR();
+  MemReuseChecker::GetInstance().set_kernel_front_map(kernel_front_map_);
+  MemReuseChecker::GetInstance().ExportKernelDependence();
 #endif
 }
 }  // namespace memreuse

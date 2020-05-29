@@ -49,7 +49,15 @@ class Optimizer(Cell):
         applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
 
     Args:
-        learning_rate (float): A floating point value for the learning rate. Should be greater than 0.
+        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
+                                                        Iterable or a Tensor and the dims of the Tensor is 1,
+                                                        use dynamic learning rate, then the i-th step will
+                                                        take the i-th value as the learning rate.
+                                                        When the learning_rate is float or learning_rate is a Tensor
+                                                        but the dims of the Tensor is 0, use fixed learning rate.
+                                                        Other cases are not supported. Should be greater than 0.
+                                                        If the type of `learning_rate` input is int, it will be
+                                                        converted to float.
         parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
             updated, the element in `parameters` should be class `Parameter`. When the `parameters` is a list of `dict`,
             the "params", "lr" and "weight_decay" are the keys can be parsed.
@@ -81,7 +89,7 @@ class Optimizer(Cell):
             raise ValueError("Optimizer got an empty parameter list.")
 
         if not isinstance(parameters[0], (dict, Parameter)):
-            raise ValueError("Only a list of Parameter or dict can be supported.")
+            raise TypeError("Only a list of Parameter or dict can be supported.")
 
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
@@ -96,6 +104,8 @@ class Optimizer(Cell):
         self.is_group = False
         self.is_group_lr = False
         self.loss_scale = loss_scale
+        if isinstance(learning_rate, int):
+            learning_rate = float(learning_rate)
         if isinstance(learning_rate, float):
             self.dynamic_lr = False
             self.gather = None
@@ -112,7 +122,7 @@ class Optimizer(Cell):
         learning_rate = self._get_single_lr(learning_rate)
         if isinstance(parameters[0], dict):
             self.is_group = True
-            self.params = []
+            self.group_params = []
             self.group_lr = []
             self.group_weight_decay = []
             self._init_group_params(parameters, learning_rate, weight_decay)
@@ -123,7 +133,7 @@ class Optimizer(Cell):
             self.learning_rate = Parameter(learning_rate, name="learning_rate")
 
         if self.is_group:
-            self.parameters = ParameterTuple(self.params)
+            self.parameters = ParameterTuple(self.group_params)
             self.weight_decay = tuple(self.group_weight_decay)
             decay_filter = lambda x: x > 0
             self.decay_flags = tuple(decay_filter(x) for x in self.weight_decay)
@@ -230,7 +240,10 @@ class Optimizer(Cell):
 
         params_store = []
         for group_param in parameters:
-            self.params += group_param['params']
+            if not group_param['params']:
+                raise ValueError("Optimizer got an empty parameter list.")
+
+            self.group_params += group_param['params']
             if 'lr' in group_param.keys():
                 params_dynamic_lr = isinstance(group_param['lr'], (Iterable, Tensor))
 
@@ -258,9 +271,9 @@ class Optimizer(Cell):
 
             for param in group_param['params']:
                 validator.check_value_type("parameter", param, [Parameter], self.cls_name)
-                if param in params_store:
+                if param.name in params_store:
                     raise RuntimeError(f"The {param.name} parameter has appeared in parameter groups.")
-                params_store.append(param)
+                params_store.append(param.name)
                 self.group_lr.append(Parameter(lr, name="lr_" + param.name))
                 self.group_weight_decay.append(weight_decay_)
 
@@ -297,18 +310,22 @@ class Optimizer(Cell):
             Parameter, single `Parameter` or `list[Parameter]` according to the input type.
         """
         if not isinstance(param, (Parameter, list)):
-            raise TypeError(f"The 'param' only support 'Parameter' or 'list' type.")
+            raise TypeError(f"The parameter only support 'Parameter' or 'list' type.")
 
         if isinstance(param, list):
             lr = []
             for p in param:
                 validator.check_value_type("parameter", p, [Parameter], self.cls_name)
+                if p not in self.parameters:
+                    raise ValueError(f"The parameter {p.name} is not in optimizer.")
                 if self.is_group_lr:
                     index = self.parameters.index(p)
                     lr.append(self.learning_rate[index])
                 else:
                     lr.append(self.learning_rate)
         else:
+            if param not in self.parameters:
+                raise ValueError(f"The parameter {param.name} is not in optimizer.")
             if self.is_group_lr:
                 index = self.parameters.index(param)
                 lr = self.learning_rate[index]

@@ -724,17 +724,25 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // kBytesList can map to the following DE types ONLY!
   // DE_UINT8, DE_INT8
   // Must be single byte type for each element!
-  if (current_col.type() != DataType::DE_UINT8 && current_col.type() != DataType::DE_INT8) {
+  if (current_col.type() != DataType::DE_UINT8 && current_col.type() != DataType::DE_INT8 &&
+      current_col.type() != DataType::DE_STRING) {
     std::string err_msg = "Invalid datatype for Tensor at column: " + current_col.name();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   const dataengine::BytesList &bytes_list = column_values_list.bytes_list();
 
+  *num_elements = bytes_list.value_size();
+
+  if (current_col.type() == DataType::DE_STRING) {
+    TensorShape shape = TensorShape::CreateScalar();
+    RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &shape));
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, shape));
+    return Status::OK();
+  }
+
   uint64_t max_size = 0;
   for (uint32_t i = 0; i < bytes_list.value_size(); ++i) max_size = std::max(max_size, bytes_list.value(i).size());
-
-  *num_elements = bytes_list.value_size();
 
   int64_t pad_size = max_size;
 
@@ -879,7 +887,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
 
   // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  (void)(*tensor)->GetMutableBuffer();
+  RETURN_IF_NOT_OK((*tensor)->AllocateBuffer((*tensor)->SizeInBytes()));
 
   int64_t i = 0;
   auto it = (*tensor)->begin<T>();

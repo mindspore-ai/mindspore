@@ -38,10 +38,6 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
-#include "dataset/kernels/text/jieba_tokenizer_op.h"
-#include "dataset/kernels/text/unicode_char_tokenizer_op.h"
-#include "dataset/nlp/vocab.h"
-#include "dataset/nlp/kernels/lookup_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -61,7 +57,12 @@
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/engine/gnn/graph.h"
 #include "dataset/kernels/data/to_float16_op.h"
+#include "dataset/text/kernels/jieba_tokenizer_op.h"
+#include "dataset/text/kernels/unicode_char_tokenizer_op.h"
+#include "dataset/text/vocab.h"
+#include "dataset/text/kernels/lookup_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
 #include "mindrecord/include/shard_pk_sample.h"
@@ -201,6 +202,13 @@ void bindDatasetOps(py::module *m) {
       return count;
     });
   (void)py::class_<VOCOp, DatasetOp, std::shared_ptr<VOCOp>>(*m, "VOCOp")
+    .def_static("get_num_rows",
+                [](const std::string &dir, const std::string &task_type, const std::string &task_mode,
+                   const py::dict &dict, int64_t numSamples) {
+                  int64_t count = 0;
+                  THROW_IF_ERROR(VOCOp::CountTotalRows(dir, task_type, task_mode, dict, numSamples, &count));
+                  return count;
+                })
     .def_static("get_class_indexing", [](const std::string &dir, const std::string &task_type,
                                          const std::string &task_mode, const py::dict &dict, int64_t numSamples) {
       std::map<std::string, int32_t> output_class_indexing;
@@ -289,7 +297,8 @@ void bindTensorOps1(py::module *m) {
 
   (void)py::class_<UniformAugOp, TensorOp, std::shared_ptr<UniformAugOp>>(
     *m, "UniformAugOp", "Tensor operation to apply random augmentation(s).")
-    .def(py::init<py::list, int32_t>(), py::arg("operations"), py::arg("NumOps") = UniformAugOp::kDefNumOps);
+    .def(py::init<std::vector<std::shared_ptr<TensorOp>>, int32_t>(), py::arg("operations"),
+         py::arg("NumOps") = UniformAugOp::kDefNumOps);
 
   (void)py::class_<ResizeBilinearOp, TensorOp, std::shared_ptr<ResizeBilinearOp>>(
     *m, "ResizeBilinearOp",
@@ -513,6 +522,33 @@ void bindVocabObjects(py::module *m) {
     });
 }
 
+void bindGraphData(py::module *m) {
+  (void)py::class_<gnn::Graph, std::shared_ptr<gnn::Graph>>(*m, "Graph")
+    .def(py::init([](std::string dataset_file, int32_t num_workers) {
+      std::shared_ptr<gnn::Graph> g_out = std::make_shared<gnn::Graph>(dataset_file, num_workers);
+      THROW_IF_ERROR(g_out->Init());
+      return g_out;
+    }))
+    .def("get_nodes",
+         [](gnn::Graph &g, gnn::NodeType node_type, gnn::NodeIdType node_num) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetNodes(node_type, node_num, &out));
+           return out;
+         })
+    .def("get_all_neighbors",
+         [](gnn::Graph &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeType neighbor_type) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetAllNeighbors(node_list, neighbor_type, &out));
+           return out;
+         })
+    .def("get_node_feature",
+         [](gnn::Graph &g, std::shared_ptr<Tensor> node_list, std::vector<gnn::FeatureType> feature_types) {
+           TensorRow out;
+           THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
+           return out;
+         });
+}
+
 // This is where we externalize the C logic as python modules
 PYBIND11_MODULE(_c_dataengine, m) {
   m.doc() = "pybind11 for _c_dataengine";
@@ -549,9 +585,9 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("TEXTFILE", OpName::kTextFile);
 
   (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
-    .value("DE_INTER_JIEBA_MIX", JiebaMode::kMix)
-    .value("DE_INTER_JIEBA_MP", JiebaMode::kMp)
-    .value("DE_INTER_JIEBA_HMM", JiebaMode::kHmm)
+    .value("DE_JIEBA_MIX", JiebaMode::kMix)
+    .value("DE_JIEBA_MP", JiebaMode::kMp)
+    .value("DE_JIEBA_HMM", JiebaMode::kHmm)
     .export_values();
 
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())
@@ -578,6 +614,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindDatasetOps(&m);
   bindInfoObjects(&m);
   bindVocabObjects(&m);
+  bindGraphData(&m);
 }
 }  // namespace dataset
 }  // namespace mindspore

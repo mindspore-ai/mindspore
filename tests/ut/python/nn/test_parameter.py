@@ -1,3 +1,4 @@
+
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +54,6 @@ def test_parameter_tuple_illegal():
 
 
 def test_parameter_init_illegal():
-    import numpy as np
     dat = np.array([[1, 2, 3], [2, 3, 4]])
     tensor = Tensor(dat)
     data_none = None

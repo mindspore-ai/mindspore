@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -40,11 +41,11 @@ def test_slice():
     expect = [[[2., -2., 2.]],
               [[4., -4., 4.]]]
 
-    slice = Slice()
-    output = slice(x)
+    slice_op = Slice()
+    output = slice_op(x)
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
+
 if __name__ == '__main__':
     test_slice()
-

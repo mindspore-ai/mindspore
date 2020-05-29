@@ -48,6 +48,7 @@ def mstype_to_detype(type_):
         mstype.float16: cde.DataType("float16"),
         mstype.float32: cde.DataType("float32"),
         mstype.float64: cde.DataType("float64"),
+        mstype.string: cde.DataType("string"),
     }[type_]
 
 

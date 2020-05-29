@@ -101,7 +101,7 @@ def fixme_test_dataset_interface_sens_scalar():
 
 class TrainOneStepCell(nn.Cell):
 
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.add_flags(defer_inline=True)
@@ -135,7 +135,11 @@ def test_dataset_interface_sens_shape_not_equal_loss():
     sens = Tensor(np.ones([256, 1024]), dtype=ms.float32)
     try:
         loss_scale_manager_sens(strategy1, sens)
-    except:
+    except ValueError:
+        pass
+    except TypeError:
+        pass
+    except RuntimeError:
         pass
 
 
@@ -153,7 +157,7 @@ def test_input_not_in_parameter_layotu_dict():
             self.matmul_weight = Parameter(Tensor(np.ones([128, 256]), dtype=ms.float32), name="weight")
             self.transpose1 = P.Transpose().set_strategy(strategy1)
 
-        def construct(self, x, b):
+        def construct(self, x):
             x = self.matmul(x, self.matmul_weight)
             x = self.transpose1(x, (1, 0))
             return x
@@ -163,7 +167,6 @@ def test_input_not_in_parameter_layotu_dict():
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num)
     predict = Tensor(np.ones([32 * device_num, 128]), dtype=ms.float32)
-    b = Tensor(np.ones([32 * device_num, 128]), dtype=ms.float32)
     net = Net(strategy1)
     net.set_train()
-    net(predict, b)
+    net(predict)

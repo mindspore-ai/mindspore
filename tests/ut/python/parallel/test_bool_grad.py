@@ -21,7 +21,7 @@ from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
 from tests.dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE)

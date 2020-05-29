@@ -25,6 +25,7 @@
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"
+#include "common/trans.h"
 #include "utils/context/ms_context.h"
 
 namespace mindspore {
@@ -70,7 +71,7 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  opt::RemoveNopNode(kernel_graph);
+  // opt::RemoveNopNode(kernel_graph);
   runtime_instance->AssignMemory(kernel_graph);
 }
 
@@ -79,8 +80,51 @@ void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  opt::RemoveNopNode(kernel_graph);
+  // opt::RemoveNopNode(kernel_graph);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+}
+
+void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                               const std::vector<tensor::TensorPtr> &inputs_const) const {
+  std::vector<tensor::TensorPtr> inputs(inputs_const);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto input_nodes = kernel_graph->inputs();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto input_node = input_nodes[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
+      auto pk_node = input_node->cast<ParameterPtr>();
+      auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
+      bool need_sync = false;
+      if (ms_context->enable_pynative_infer()) {
+        if (tensor->device_address().get() == nullptr || tensor->device_address() != device_address) {
+          need_sync = true;
+        }
+      } else {
+        if (tensor->is_dirty()) {
+          need_sync = true;
+        } else if (tensor->device_address() != device_address) {
+          AnfAlgo::SetOutputAddr(tensor->device_address(), 0, pk_node.get());
+          need_sync = false;
+        }
+      }
+      if (need_sync) {
+        tensor->set_device_address(device_address);
+        MS_EXCEPTION_IF_NULL(device_address);
+        if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
+                                              LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                              tensor->data_c(false))) {
+          MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
+        }
+      }
+    }
+    tensor->set_dirty(false);
+  }
 }
 
 void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -106,7 +150,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   // Assign CUDA streams
   AssignStream(graph);
   // Remove NoOp from execution graph
-  opt::HideNopNode(graph.get());
+  // opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
@@ -125,8 +169,11 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Convert inputs to model
   predictmodel::StepConvertWeight(inputs);
-  // Run graph on GPU
-  Execute(kernel_graph);
+  {
+    py::gil_scoped_release gil_release;
+    // Run graph on GPU
+    Execute(kernel_graph);
+  }
   // Get result from GPU
   UpdateOutputs(kernel_graph, outputs, inputs);
   // Summary

@@ -106,6 +106,7 @@ def test_center_crop_comp(height=375, width=375, plot=False):
         visualize(image, image_cropped)
 
 
+# pylint: disable=unnecessary-lambda
 def test_crop_grayscale(height=375, width=375):
     """
     Test that centercrop works with pad and grayscale images

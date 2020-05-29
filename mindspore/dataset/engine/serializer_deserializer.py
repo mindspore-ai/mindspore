@@ -230,11 +230,7 @@ def create_node(node):
     pyobj = None
     # Find a matching Dataset class and call the constructor with the corresponding args.
     # When a new Dataset class is introduced, another if clause and parsing code needs to be added.
-    if dataset_op == 'StorageDataset':
-        pyobj = pyclass(node['dataset_files'], node['schema'], node.get('distribution'),
-                        node.get('columns_list'), node.get('num_parallel_workers'))
-
-    elif dataset_op == 'ImageFolderDatasetV2':
+    if dataset_op == 'ImageFolderDatasetV2':
         sampler = construct_sampler(node.get('sampler'))
         pyobj = pyclass(node['dataset_dir'], node.get('num_samples'), node.get('num_parallel_workers'),
                         node.get('shuffle'), sampler, node.get('extensions'),

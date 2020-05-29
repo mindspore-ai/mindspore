@@ -18,9 +18,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(device_target="Ascend")
@@ -34,8 +31,8 @@ class Net(nn.Cell):
         # 'normal', [2, 3, 3, 4]), name='dout')
 
     @ms_function
-    def construct(self, dout):
-        return self.bias_add_grad(dout)
+    def construct(self, dout_):
+        return self.bias_add_grad(dout_)
 
 
 dout = np.ones([2, 3, 4, 4]).astype(np.float32)

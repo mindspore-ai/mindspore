@@ -44,7 +44,7 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
 
-def compile(net, x, y, b):
+def compile_net(net, x, y, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
@@ -71,7 +71,7 @@ def test_sum_mul():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_sum_mul2():
@@ -95,7 +95,7 @@ def test_sum_mul2():
     x = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_sum_mul3():
@@ -119,4 +119,4 @@ def test_sum_mul3():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)

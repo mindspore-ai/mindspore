@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import os
 import pytest
 
 import mindspore.context as context
@@ -51,5 +50,5 @@ def test_correction_mul_grad():
     expect = [0, 0]
     expect[0] = (dout * np.reshape(batch_std / running_std, (co, 1, 1, 1)))
     expect[1] = (np.sum(dout * x, (1, 2, 3)) / running_std)
-    for i, v in enumerate(output):
-        assert (np.allclose(output[i].asnumpy(), expect[i], rtol=1.e-5, atol=1.e-5))
+    for i, _ in enumerate(output):
+        assert np.allclose(output[i].asnumpy(), expect[i], rtol=1.e-5, atol=1.e-5)

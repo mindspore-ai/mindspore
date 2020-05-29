@@ -120,7 +120,7 @@ def test_shuffle_05():
 
 def test_shuffle_06():
     """
-    Test shuffle: with set seed, both datasets 
+    Test shuffle: with set seed, both datasets
     """
     logger.info("test_shuffle_06")
     # define parameters

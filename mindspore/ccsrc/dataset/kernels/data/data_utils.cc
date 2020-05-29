@@ -162,7 +162,7 @@ void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
   RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, input->shape(), data_type));
 
-  static_cast<void>((*output)->GetMutableBuffer());
+  RETURN_IF_NOT_OK((*output)->AllocateBuffer((*output)->SizeInBytes()));
   switch (input->type().value()) {
     case DataType::DE_BOOL:
       CastFrom<bool>(input, output);
@@ -211,7 +211,7 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   // initiate new tensor for type cast
   DataType new_type = DataType("float16");
   RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, input->shape(), new_type));
-  static_cast<void>((*output)->GetMutableBuffer());
+  RETURN_IF_NOT_OK((*output)->AllocateBuffer((*output)->SizeInBytes()));
 
   auto in_itr = input->begin<float>();
   auto out_itr = (*output)->begin<float16>();

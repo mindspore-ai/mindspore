@@ -331,12 +331,14 @@ bool ExecuteAction(const ResourcePtr &res) {
     }
 
     auto graph_id = res->results()[kOutput].cast<GraphId>();
-    auto bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::MsBackend>>();
+    std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
+    std::shared_ptr<compile::MsBackend> msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr);
+    MS_EXCEPTION_IF_NULL(msbc_ptr);
     compile::VmEvalFuncPtr run =
-      std::make_shared<compile::VmEvalFunc>([&bc_ptr, graph_id](const VectorRef &args) -> BaseRef {
-        MS_LOG(INFO) << "Execute args size" << args.size();
-        auto outs = bc_ptr->RunGraph(graph_id, args);
-        MS_LOG(DEBUG) << "out size" << outs.size();
+      std::make_shared<compile::VmEvalFunc>([msbc_ptr, graph_id](const VectorRef &args) -> BaseRef {
+        MS_LOG(INFO) << "Execute args size " << args.size();
+        auto outs = msbc_ptr->RunGraph(graph_id, args);
+        MS_LOG(DEBUG) << "out size " << outs.size();
         return outs[0];
       });
     res->results()[kOutput] = run;
@@ -389,7 +391,7 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   auto manager = res->manager();
   // Remove duplicated value nodes, due to replace operation, can't use reference.
-  auto value_nodes = manager->valuenodes()[func_graph];
+  auto value_nodes = func_graph->value_nodes();
   HashCache hash_cache;
   HashValue hashes;
   for (const auto &value_pair : value_nodes) {

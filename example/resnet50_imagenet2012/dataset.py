@@ -20,9 +20,9 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
+from mindspore.communication.management import get_rank, get_group_size
 
-
-def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
+def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
     create a train or eval dataset
 
@@ -31,12 +31,17 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
         do_train(bool): whether dataset is used for train or eval.
         repeat_num(int): the repeat times of dataset. Default: 1
         batch_size(int): the batch size of dataset. Default: 32
+        target(str): the device target. Default: Ascend
 
     Returns:
         dataset
     """
-    device_num = int(os.getenv("DEVICE_NUM"))
-    rank_id = int(os.getenv("RANK_ID"))
+    if target == "Ascend":
+        device_num = int(os.getenv("DEVICE_NUM"))
+        rank_id = int(os.getenv("RANK_ID"))
+    else:
+        rank_id = get_rank()
+        device_num = get_group_size()
 
     if device_num == 1:
         ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)

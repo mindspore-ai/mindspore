@@ -139,7 +139,7 @@ TEST_F(TestPrim, test_typeof) {
 
   auto prim_typeof = std::make_shared<Primitive>("typeof");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_typeof, 1);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   res->dump();
   TypePtr res_value = res->GetValueTrack()->cast<TypePtr>();
   res_value->dump();
@@ -164,7 +164,7 @@ TEST_F(TestPrim, test_list_map) {
 
   auto prim_list_map = std::make_shared<Primitive>("list_map");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_list_map, 3);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto expected = std::make_shared<AbstractList>(AbstractBasePtrList({FromValue(3, false), FromValue(3, false)}));
   res->dump();
   MS_LOG(INFO) << "result res: " << res->ToString();
@@ -188,7 +188,7 @@ TEST_F(TestPrim, test_list_reduce) {
 
   auto prim_list_reduce = std::make_shared<Primitive>("list_reduce");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_list_reduce, 3);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   res->dump();
   TypePtr res_type = res->GetTypeTrack();
   res_type->dump();
@@ -205,7 +205,7 @@ TEST_F(TestPrim, test_scalar_to_array) {
 
   auto prim_scalar_to_array = std::make_shared<Primitive>("scalar_to_array");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_to_array, 1);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   res->dump();
   TypePtr res_type = res->BuildType();
   res_type->dump();
@@ -223,7 +223,7 @@ TEST_F(TestPrim, test_array_to_scalar) {
 
   auto prim_array_to_scalar = std::make_shared<Primitive>("array_to_scalar");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_array_to_scalar, 1);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   res->dump();
   TypePtr res_type = res->BuildType();
   res_type->dump();
@@ -239,7 +239,7 @@ TEST_F(TestPrim, test_J_1) {
 
   auto prim_J = std::make_shared<Primitive>("J");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_J, 1);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   AbstractJTaggedPtr res_J = dyn_cast<AbstractJTagged>(res);
   ASSERT_TRUE(res_J != nullptr);
   ASSERT_TRUE(*(res_J->element()) == *abstract_v1);
@@ -280,7 +280,7 @@ TEST_F(TestPrim, test_J_2) {
   int v1 = 1;
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtrList args_spec_list = {abstract_v1};
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   res->dump();
   AbstractTuplePtr res_J = dyn_cast<AbstractTuple>(res);
   ASSERT_TRUE(res_J != nullptr);
@@ -302,7 +302,7 @@ TEST_F(TestPrim, test_dot) {
 
   AbstractBasePtrList args_spec_list = {a1, a2};
 
-  AbstractTensorPtr res = dyn_cast<AbstractTensor>(engine_->Run(func_graph, args_spec_list).inferred);
+  AbstractTensorPtr res = dyn_cast<AbstractTensor>(engine_->Run(func_graph, args_spec_list).inferred->abstract());
 
   ASSERT_TRUE(*(dyn_cast<Shape>(res->GetShapeTrack())) == *(dyn_cast<Shape>(expected->GetShapeTrack())));
 }
@@ -317,7 +317,7 @@ TEST_F(TestPrim, test_switch1) {
   AbstractBasePtr arg2 = FromValue(2, false);
   AbstractBasePtrList args_spec_list = {arg0, arg1, arg2};
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *arg1);
 }
 
@@ -330,7 +330,7 @@ TEST_F(TestPrim, test_switch2) {
   AbstractBasePtr arg2 = FromValue(2, false);
   AbstractBasePtrList args_spec_list = {arg0, arg1, arg2};
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "make result res: " << res->ToString();
   MS_LOG(INFO) << "make result arg2: " << arg2->ToString();
   ASSERT_TRUE(*res == *arg2);
@@ -343,7 +343,7 @@ TEST_F(TestPrim, test_identity) {
   AbstractBasePtr abstract_v1 = FromValue(1, false);
   AbstractBasePtrList args_spec_list = {abstract_v1};
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *abstract_v1);
 }
 
@@ -357,7 +357,7 @@ TEST_F(TestPrim, test_broadcast_shape) {
 
   AbstractBasePtrList args_spec_list = {a, b};
 
-  AbstractTuplePtr res = dyn_cast<AbstractTuple>(engine_->Run(func_graph, args_spec_list).inferred);
+  AbstractTuplePtr res = dyn_cast<AbstractTuple>(engine_->Run(func_graph, args_spec_list).inferred->abstract());
 
   auto ret = res->BuildValue()->cast<ValueTuplePtr>()->value();
   std::vector<ValuePtr> element_list = {MakeValue(Shape::SHP_ANY), MakeValue(Shape::SHP_ANY)};
@@ -377,7 +377,7 @@ TEST_F(TestPrim, test_partial) {
   AbstractBasePtr abstract_v2 = FromValue(1, false);
   AbstractBasePtrList args_spec_list = {abstract_add, abstract_v1, abstract_v2};
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   AbstractBasePtrList fn_args_list = {abstract_v1, abstract_v2};
   auto expected = std::make_shared<PartialAbstractClosure>(
     std::make_shared<PrimitiveAbstractClosure>(prim::kPrimScalarAdd), fn_args_list);
@@ -392,7 +392,7 @@ TEST_F(TestPrim, test_env_setitem) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
   AbstractBasePtr abstract_x = FromValue(1, false);
   AbstractBasePtrList args_spec_list = {abstract_x};
-  AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred;
+  AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
   FuncGraphPtr func_graph = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
 
@@ -400,7 +400,7 @@ TEST_F(TestPrim, test_env_setitem) {
   AbstractBasePtr abstract_y = FromValue(2, false);
   args_spec_list = {abstract_env, embed_x, abstract_y};
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*res == *exp);
 }
@@ -412,7 +412,7 @@ TEST_F(TestPrim, test_env_getitem) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
   AbstractBasePtr abstract_x = FromValue(1, false);
   AbstractBasePtrList args_spec_list = {abstract_x};
-  AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred;
+  AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
   FuncGraphPtr graph_setitem = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
 
@@ -420,7 +420,7 @@ TEST_F(TestPrim, test_env_getitem) {
   AbstractBasePtr abstract_y = FromValue(2, false);
   args_spec_list = {abstract_env, embed_x, abstract_y};
 
-  AbstractBasePtr res = engine_->Run(graph_setitem, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*res == *exp);
 
@@ -429,7 +429,7 @@ TEST_F(TestPrim, test_env_getitem) {
   AbstractBasePtr abstract_z = FromValue(3, false);
   args_spec_list = {res, embed_x, abstract_z};
 
-  res = engine_->Run(graph_getitem, args_spec_list).inferred;
+  res = engine_->Run(graph_getitem, args_spec_list).inferred->abstract();
 
   ASSERT_TRUE(*res == *abstract_x);
 }
@@ -442,7 +442,7 @@ TEST_F(TestPrim, test_env_add) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
   AbstractBasePtr abstract_x = FromValue(1, false);
   AbstractBasePtrList args_spec_list = {abstract_x};
-  AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred;
+  AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
   FuncGraphPtr graph_setitem = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
 
@@ -450,19 +450,19 @@ TEST_F(TestPrim, test_env_add) {
   AbstractBasePtr abstract_y = FromValue(2, false);
   args_spec_list = {abstract_env, embed_x, abstract_y};
 
-  AbstractBasePtr abstract_e1 = engine_->Run(graph_setitem, args_spec_list).inferred;
+  AbstractBasePtr abstract_e1 = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*abstract_e1 == *exp);
 
   AbstractBasePtr abstract_z = FromValue(3, false);
   args_spec_list = {abstract_env, embed_x, abstract_z};
 
-  AbstractBasePtr abstract_e2 = engine_->Run(graph_setitem, args_spec_list).inferred;
+  AbstractBasePtr abstract_e2 = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*abstract_e2 == *exp);
 
   FuncGraphPtr graph_add = MakeFuncGraph(prim::kPrimEnvAdd, 2);
   args_spec_list = {abstract_e1, abstract_e2};
-  AbstractBasePtr res = engine_->Run(graph_add, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph_add, args_spec_list).inferred->abstract();
 
   ASSERT_TRUE(*res == *exp);
 }
@@ -475,7 +475,7 @@ TEST_F(TestPrim, test_shape) {
 
   AbstractBasePtrList args_spec_list = {a};
 
-  AbstractTuplePtr res = dyn_cast<AbstractTuple>(engine_->Run(func_graph, args_spec_list).inferred);
+  AbstractTuplePtr res = dyn_cast<AbstractTuple>(engine_->Run(func_graph, args_spec_list).inferred->abstract());
   auto ret = res->BuildValue()->cast<ValueTuplePtr>()->value();
 
   std::vector<ValuePtr> element_list = {MakeValue(2), MakeValue(3)};
@@ -493,7 +493,7 @@ TEST_F(TestPrim, test_relu) {
   AbstractBasePtr expected = UTPrimUtils::ArrayFloat64Of({2, 2, 2, 3});  // NCHW
   AbstractBasePtrList args_spec_list = {expected};
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *expected);
 }
 
@@ -507,7 +507,7 @@ TEST_F(TestPrim, test_relu2) {
   auto expected = ArrayOfTensor(UTPrimUtils::kF32, {3, 4, 5});
 
   AbstractBasePtrList args_spec_list = {arr};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractTensor>(ret);
   ASSERT_TRUE(*(res->GetShapeTrack()) == *(expected->GetShapeTrack()));
 }
@@ -540,7 +540,7 @@ TEST_F(TestPrim, test_conv2d1) {
   std::vector<int> shape = {2, 64, 14, 14};
   expected->set_shape(std::make_shared<Shape>(shape));
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   MS_LOG(INFO) << "expected: " << expected->ToString();
 
@@ -558,7 +558,7 @@ TEST_F(TestPrim, test_conv2d) {
   auto weight = ArrayOfTensor(UTPrimUtils::kF32, {64, 32, 3, 3});
 
   AbstractBasePtrList args_spec_list = {input, weight};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractTensor>(ret);
   auto expected = ArrayOfTensor(UTPrimUtils::kF32, {10, 64, 16, 16});
   MS_LOG(INFO) << "result: " << res->ToString();
@@ -574,7 +574,7 @@ TEST_F(TestPrim, test_conv2d_native) {
   auto weight = ArrayOfTensor(UTPrimUtils::kF64, {3, 32, 3, 3});
 
   AbstractBasePtrList args_spec_list = {input, weight};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractTensor>(ret);
   auto expected = ArrayOfTensor(UTPrimUtils::kF64, {10, 96, 16, 16});
   MS_LOG(INFO) << "result: " << res->ToString();
@@ -590,7 +590,7 @@ TEST_F(TestPrim, test_biasAdd) {
   auto bias = ArrayOfTensor(UTPrimUtils::kF32, {32});
 
   AbstractBasePtrList args_spec_list = {value, bias};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractTensor>(ret);
   auto expected = ArrayOfTensor(UTPrimUtils::kF32, {10, 32, 32, 32});
   MS_LOG(INFO) << "result: " << res->ToString();
@@ -606,7 +606,7 @@ TEST_F(TestPrim, test_softmax_cross_entropy_with_logits) {
   auto labels = ArrayOfTensor(UTPrimUtils::kF32, {64, 10});
 
   AbstractBasePtrList args_spec_list = {logits, labels};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_NE(ret, nullptr);
   auto res = dyn_cast<AbstractTuple>(ret);
   auto loss = ArrayOfTensor(UTPrimUtils::kF32, {64});
@@ -636,7 +636,7 @@ TEST_F(TestPrim, test_tensor_to_scalar_prim) {
   auto labels = ArrayOfTensor(UTPrimUtils::kF64, {64, 10});
 
   AbstractBasePtrList args_spec_list = {logits, labels};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractScalar>(ret);
   AbstractScalarPtr expected = std::make_shared<AbstractScalar>(kAnyValue, kFloat64);
   expected->set_type(UTPrimUtils::kF64);
@@ -690,7 +690,7 @@ TEST_F(TestPrim, test_fused_batch_norm) {
   AbstractBasePtr expected0 = abstract_inputs->Clone();
   AbstractBasePtr expected1 = abstract_scale->Clone();
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   MS_LOG(INFO) << "expected0: " << expected0->ToString();
   MS_LOG(INFO) << "expected1: " << expected1->ToString();
@@ -722,7 +722,7 @@ TEST_F(TestPrim, test_pooling) {
   inputs->set_shape(inputs_dims);
   AbstractBasePtr abstract_input = FromValue(inputs, false);
   AbstractBasePtrList args_spec_list = {abstract_input};
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
 
   AbstractBasePtr expected = abstract_input->Clone()->Broaden();
   std::vector<int> expected_dims = {8, 64, 2, 2};
@@ -747,7 +747,7 @@ TEST_F(TestPrim, test_hastype) {
   auto prim = std::make_shared<Primitive>("hastype");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 2);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *expected);
 }
 
@@ -761,7 +761,7 @@ TEST_F(TestPrim, test_array_len) {
   auto prim = std::make_shared<Primitive>("array_len");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 1);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *expected);
 }
 
@@ -775,7 +775,7 @@ TEST_F(TestPrim, test_list_len) {
   auto prim = std::make_shared<Primitive>("list_len");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 1);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *expected);
 }
 
@@ -789,7 +789,7 @@ TEST_F(TestPrim, test_tuple_len) {
   auto prim = std::make_shared<Primitive>("tuple_len");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 1);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *expected);
 }
 
@@ -803,7 +803,7 @@ TEST_F(TestPrim, test_tuple_reversed) {
   auto prim = std::make_shared<Primitive>("tuple_reversed");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 1);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "expect=" << expected->ToString();
   ASSERT_TRUE(*res == *expected);
 }
@@ -825,7 +825,7 @@ TEST_F(TestPrim, test_list_getitem) {
   auto prim = std::make_shared<Primitive>("list_getitem");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 2);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *elem);
 }
 
@@ -844,7 +844,7 @@ TEST_F(TestPrim, test_list_setitem) {
   auto prim = std::make_shared<Primitive>("list_setitem");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 3);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   AbstractBasePtrList elems_exp = {elem1, elem2};
   auto expected = std::make_shared<AbstractList>(elems_exp);
@@ -866,7 +866,7 @@ TEST_F(TestPrim, test_list_append) {
   auto prim = std::make_shared<Primitive>("list_append");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 2);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   auto expected = std::make_shared<AbstractList>(AbstractBasePtrList({elem1, elem2}));
   MS_LOG(INFO) << "expected: " << expected->ToString();
@@ -890,7 +890,7 @@ TEST_F(TestPrim, test_tuple_setitem) {
   auto prim = std::make_shared<Primitive>("tuple_setitem");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 3);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   AbstractBasePtrList elems_exp = {elem1, elem2};
   auto expected = std::make_shared<AbstractTuple>(elems_exp);
@@ -916,7 +916,7 @@ TEST_F(TestPrim, test_make_list) {
   auto prim = std::make_shared<Primitive>("make_list");
   FuncGraphPtr func_graph = MakeFuncGraph(prim, 2);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(*res == *expected);
 }
 
@@ -939,7 +939,7 @@ TEST_F(TestPrim, test_make_range) {
   AbstractBasePtrList elem_list({ele1, ele2, ele3});
   AbstractBasePtr expected = std::make_shared<AbstractTuple>(elem_list);
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "res=" << res->ToString();
   MS_LOG(INFO) << "expected=" << expected->ToString();
   ASSERT_TRUE(*res == *expected);
@@ -982,7 +982,7 @@ TEST_F(TestPrim, test_layernorm) {
   AbstractBasePtr expected1 = abstract_mean_var->Clone();
   AbstractBasePtr expected2 = abstract_mean_var->Clone();
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   MS_LOG(INFO) << "expected0: " << expected0->ToString();
   MS_LOG(INFO) << "expected1: " << expected1->ToString();
@@ -1028,7 +1028,7 @@ TEST_F(TestPrim, test_DropoutGenMask) {
   AbstractBasePtr expected = std::make_shared<AbstractTensor>(std::make_shared<AbstractScalar>(kAnyValue, kUInt8),
                                                               std::make_shared<Shape>(std::vector<int>{79}));
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "res=" << res->ToString();
   MS_LOG(INFO) << "expected=" << expected->ToString();
   ASSERT_TRUE(*res == *expected);
@@ -1058,7 +1058,7 @@ TEST_F(TestPrim, test_dropout) {
   std::vector<int> shape = {2, 20, 32, 32};
   expected->set_shape(std::make_shared<Shape>(shape));
 
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "result: " << res->ToString();
   MS_LOG(INFO) << "expected: " << expected->ToString();
 
@@ -1079,7 +1079,7 @@ TEST_F(TestPrim, test_BroadcastGradientArgs_01_dim) {
   auto x_input = std::make_shared<AbstractTuple>(x_arg_list);
   auto y_input = std::make_shared<AbstractTuple>(y_arg_list);
   AbstractBasePtrList args_spec_list = {x_input, y_input};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractTuple>(ret);
   AbstractBasePtrList x_idx_list;
   auto r_x = std::make_shared<AbstractTuple>(x_idx_list);
@@ -1103,7 +1103,7 @@ TEST_F(TestPrim, test_BroadcastGradientArgs_1_dim) {
   auto x_input = std::make_shared<AbstractTuple>(x_arg_list);
   auto y_input = std::make_shared<AbstractTuple>(y_arg_list);
   AbstractBasePtrList args_spec_list = {x_input, y_input};
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   auto res = dyn_cast<AbstractTuple>(ret);
   AbstractBasePtrList x_idx_list({abstract::FromValue(1)});
   auto r_x = std::make_shared<AbstractTuple>(x_idx_list);
@@ -1128,7 +1128,7 @@ TEST_F(TestPrim, test_DictGetItem) {
   AbstractBasePtr key = abstract::FromValue("x");
   AbstractBasePtrList args_spec_list = {array_dict, key};
 
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   AbstractTensorPtr tensor_ret = dyn_cast<AbstractTensor>(ret);
   AbstractTensorPtr expect = dyn_cast<AbstractTensor>(FromValue(tensor_map[0].second));
 
@@ -1147,7 +1147,7 @@ TEST_F(TestPrim, test_DictGetItem2) {
   AbstractBasePtr key = abstract::FromValue("x");
   AbstractBasePtrList args_spec_list = {array_dict, key};
 
-  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr ret = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   AbstractTensorPtr tensor_ret = dyn_cast<AbstractTensor>(ret);
   AbstractTensorPtr expect = dyn_cast<AbstractTensor>(arr_x);
 

@@ -28,13 +28,13 @@ class GradWrap(nn.Cell):
         super(GradWrap, self).__init__()
         self.network = network
 
-    def construct(self, x, y, bias):
-        return C.grad_all(self.network)(x, y, bias)
+    def construct(self, x, y):
+        return C.grad_all(self.network)(x, y)
 
 
-def compile(net, x, y, bias):
+def compile_net(net, x, y):
     net.set_auto_parallel()
-    _executor.compile(net, x, y, bias)
+    _executor.compile(net, x, y)
 
 
 def test_sum_as_loss_float16():
@@ -44,7 +44,7 @@ def test_sum_as_loss_float16():
             self.fc_nobias = P.MatMul(transpose_b=True).set_strategy(strategy0)
             self.reduce_sum = P.ReduceSum(keep_dims=False).set_strategy(strategy1)
 
-        def construct(self, x, y, bias):
+        def construct(self, x, y):
             out = self.fc_nobias(x, y)
             out = self.reduce_sum(out, (0, 1))
             return out
@@ -57,8 +57,7 @@ def test_sum_as_loss_float16():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float16)
     y = Tensor(np.ones([64, 32]), dtype=ms.float16)
-    bias = Tensor(np.ones([64]), dtype=ms.float16)
-    compile(net, x, y, bias)
+    compile_net(net, x, y)
 
 
 def test_sum_as_loss_float32():
@@ -68,7 +67,7 @@ def test_sum_as_loss_float32():
             self.fc_nobias = P.MatMul(transpose_b=True).set_strategy(strategy0)
             self.reduce_sum = P.ReduceSum(keep_dims=False).set_strategy(strategy1)
 
-        def construct(self, x, y, bias):
+        def construct(self, x, y):
             out = self.fc_nobias(x, y)
             out = self.reduce_sum(out, (0, 1))
             return out
@@ -81,8 +80,7 @@ def test_sum_as_loss_float32():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    bias = Tensor(np.ones([64]), dtype=ms.float32)
-    compile(net, x, y, bias)
+    compile_net(net, x, y)
 
 
 def test_sum_as_loss_int32():
@@ -92,7 +90,7 @@ def test_sum_as_loss_int32():
             self.fc_nobias = P.MatMul(transpose_b=True).set_strategy(strategy0)
             self.reduce_sum = P.ReduceSum(keep_dims=False).set_strategy(strategy1)
 
-        def construct(self, x, y, bias):
+        def construct(self, x, y):
             out = self.fc_nobias(x, y)
             out = self.reduce_sum(out, (0, 1))
             return out
@@ -105,5 +103,4 @@ def test_sum_as_loss_int32():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.int32)
     y = Tensor(np.ones([64, 32]), dtype=ms.int32)
-    bias = Tensor(np.ones([64]), dtype=ms.int32)
-    compile(net, x, y, bias)
+    compile_net(net, x, y)

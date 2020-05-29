@@ -211,6 +211,14 @@ class SquareInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~SquareInfo() override = default;
 };
+
+class SigmoidInfo : public ActivationOther {
+ public:
+  SigmoidInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SigmoidInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_

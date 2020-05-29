@@ -23,13 +23,13 @@ from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):
-    def __init__(self, value):
+    def __init__(self, param):
         super(Net, self).__init__()
-        self.var = Parameter(value, name="var")
+        self.var = Parameter(param, name="var")
         self.assign = P.Assign()
 
-    def construct(self, value):
-        return self.assign(self.var, value)
+    def construct(self, param):
+        return self.assign(self.var, param)
 
 
 x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
