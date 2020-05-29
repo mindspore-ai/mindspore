@@ -15,8 +15,8 @@
 # ============================================================================
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_eval.sh DEVICE_ID EPOCH_SIZE DATA_DIR"
-echo "for example: bash run_eval.sh 0 /path/zh-wiki/ "
+echo "bash run_eval.sh DEVICE_ID DATA_DIR"
+echo "for example: bash run_eval.sh /path/zh-wiki/ "
 echo "=============================================================================================================="
  
 DEVICE_ID=$1
