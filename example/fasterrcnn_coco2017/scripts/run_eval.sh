@@ -57,6 +57,7 @@ fi
 mkdir ./eval
 cp ../*.py ./eval
 cp *.sh ./eval
+cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start eval for device $DEVICE_ID"

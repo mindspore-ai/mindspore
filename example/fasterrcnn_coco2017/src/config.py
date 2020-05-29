@@ -134,7 +134,7 @@ config = ed({
     "keep_checkpoint_max": 10,
     "save_checkpoint_path": "./checkpoint",
 
-    "mindrecord_dir": "../MindRecoid_COCO_TRAIN",
+    "mindrecord_dir": "../MindRecord_COCO_TRAIN",
     "coco_root": "./cocodataset/",
     "train_data_type": "train2017",
     "val_data_type": "val2017",

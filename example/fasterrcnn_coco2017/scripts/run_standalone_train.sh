@@ -49,6 +49,7 @@ fi
 mkdir ./train
 cp ../*.py ./train
 cp *.sh ./train
+cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
