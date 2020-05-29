@@ -13,7 +13,7 @@ The overall network architecture of MobileNetV2 is show below:
 
 # Dataset
 
-Dataset used: [imagenet](http://www.image-net.org/)
+Dataset used: imagenet
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
 	- Train: 120G, 1.2W images
@@ -60,8 +60,8 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ### Usage
 
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
-- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
+- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]
+- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]
 
 ### Launch
 

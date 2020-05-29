@@ -33,11 +33,11 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_group_size
+from mindspore.model_zoo.mobilenetV2 import mobilenet_v2
 import mindspore.dataset.engine as de
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_gpu, config_ascend
-from src.mobilenetV2 import mobilenet_v2
 
 random.seed(1)
 np.random.seed(1)

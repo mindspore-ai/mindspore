@@ -34,10 +34,10 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
 from mindspore.communication.management import init, get_group_size
+from mindspore.model_zoo.mobilenetV3 import mobilenet_v3_large
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_gpu, config_ascend
-from src.mobilenetV3 import mobilenet_v3_large
 
 random.seed(1)
 np.random.seed(1)
