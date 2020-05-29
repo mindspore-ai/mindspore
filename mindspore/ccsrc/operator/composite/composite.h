@@ -30,6 +30,7 @@
 #include "operator/composite/list_append_operation.h"
 #include "operator/composite/do_signature.h"
 #include "operator/composite/unpack_call.h"
+#include "operator/composite/multitype_funcgraph.h"
 #include "pipeline/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"
@@ -44,31 +45,6 @@ using AbstractScalarPtr = abstract::AbstractScalarPtr;
 using AbstractTensorPtr = abstract::AbstractTensorPtr;
 using ElemwiseMap = std::unordered_map<std::string, PrimitivePtr>;
 using ArgsPairList = std::vector<std::pair<AnfNodePtr, TypePtr>>;
-
-class MultitypeFuncGraph : public MetaFuncGraph {
- public:
-  explicit MultitypeFuncGraph(const std::string &name);
-  ~MultitypeFuncGraph() override = default;
-  MS_DECLARE_PARENT(MultitypeFuncGraph, MetaFuncGraph)
-
-  using specialize_fn = FuncGraph *(*)(TypePtrList);
-  // Register a method which specialize based on types vectors;
-  virtual void Register(const TypePtrList &types, specialize_fn s_fn);
-  virtual void Register(const TypePtrList &types, const py::function &py_fn);
-  virtual void Register(const std::vector<std::string> &types_name, const py::function &py_fn);
-  virtual void PyRegister(const py::tuple &tuple, const py::function &py_fn);
-
-  FuncGraphPtr GenerateFromTypes(const TypePtrList &types) override;
-  size_t GetPyFnCacheSize() const { return fn_cache_py_.size(); }
-  const std::unordered_map<TypePtrList, py::function, TypeListHasher, TypeListEqual> &GetPyFunctions() const {
-    return fn_cache_py_;
-  }
-
- private:
-  std::unordered_map<TypePtrList, specialize_fn, TypeListHasher, TypeListEqual> fn_cache_;
-  std::unordered_map<TypePtrList, py::function, TypeListHasher, TypeListEqual> fn_cache_py_;
-};
-using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;
 
 class HyperMap : public MetaFuncGraph {
  public:

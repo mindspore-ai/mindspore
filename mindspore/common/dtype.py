@@ -156,7 +156,7 @@ def pytype_to_dtype(obj):
         return obj
     if isinstance(obj, type) and obj in _simple_types:
         return _simple_types[obj]
-    raise NotImplementedError()
+    raise NotImplementedError(f"Unsupported type {obj} for `pytype_to_dtype`.")
 
 
 def get_py_obj_dtype(obj):
@@ -169,7 +169,11 @@ def get_py_obj_dtype(obj):
     Returns:
         Type of MindSpore type.
     """
-
+    # Tensor
+    if hasattr(obj, 'dtype'):
+        return tensor_type(obj.dtype())
+    if hasattr(obj, '__primitive_flag__') or hasattr(obj, 'construct'):
+        return function
     if isinstance(obj, (typing.Type, type)):
         return pytype_to_dtype(obj)
     return pytype_to_dtype(type(obj))

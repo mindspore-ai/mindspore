@@ -98,25 +98,29 @@ TypePtr TensorType::DeepCopy() const {
   MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {
     return std::make_shared<TensorType>();
-  } else {
-    return std::make_shared<TensorType>(element_type_->DeepCopy());
   }
+  return std::make_shared<TensorType>(element_type_->DeepCopy());
+}
+
+std::string TensorType::ToReprString() const {
+  if (element_type_ == nullptr) {
+    return "tensor";
+  }
+  return "tensor[" + element_type_->ToReprString() + "]";
 }
 
 std::string TensorType::ToString() const {
   if (element_type_ == nullptr) {
     return "Tensor";
-  } else {
-    return "Tensor[" + element_type_->ToString() + "]";
   }
+  return "Tensor[" + element_type_->ToString() + "]";
 }
 
 std::string TensorType::DumpText() const {
   if (element_type_ == nullptr) {
     return "Tensor";
-  } else {
-    return "Tensor(" + element_type_->DumpText() + ")";
   }
+  return "Tensor(" + element_type_->DumpText() + ")";
 }
 
 bool TensorType::operator==(const Type &other) const {
