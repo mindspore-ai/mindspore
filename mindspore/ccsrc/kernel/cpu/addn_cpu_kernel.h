@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_GATHER_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_GATHER_CPU_KERNEL_H_
+
+#ifndef MINDSPORE_CCSRC_KERNEL_CPU_ADDN_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_CPU_ADDN_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include "kernel/cpu/cpu_kernel.h"
@@ -22,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class GatherV2CPUKernel : public CPUKernel {
+class AddNCPUKernel : public CPUKernel {
  public:
-  GatherV2CPUKernel() : axis_(0) {}
-  ~GatherV2CPUKernel() override = default;
+  AddNCPUKernel() : input_num_(0) {}
+  ~AddNCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -33,20 +34,15 @@ class GatherV2CPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
-                        float **output_addr, size_t *buff_size);
   void CheckParam(const CNodePtr &kernel_node);
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> indices_shape_;
+  size_t input_num_;
   std::vector<size_t> output_shape_;
-  int axis_;
 };
 
-MS_REG_CPU_KERNEL(
-  GatherV2,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  GatherV2CPUKernel);
+MS_REG_CPU_KERNEL(AddN,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  AddNCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_GATHER_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_CPU_ADDN_CPU_KERNEL_H_
