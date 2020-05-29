@@ -47,7 +47,6 @@ def test_simple_sync_wait():
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
     dataset = dataset.batch(batch_size)
-
     count = 0
     for data in dataset.create_dict_iterator():
         assert data["input"][0] == count
@@ -75,7 +74,6 @@ def test_simple_shuffle_sync():
     count = 0
     for data in dataset.create_dict_iterator():
         count += 1
-        # time.sleep(0.5)
         data = {"loss": count}
         dataset.sync_update(condition_name="policy", data=data)
 
@@ -190,7 +188,6 @@ def test_sync_exception_02():
     dataset = ds.GeneratorDataset(gen, column_names=["input"])
 
     aug = Augment(0)
-    # notice that with our design, we need to have step_size = shuffle size
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
 
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
@@ -202,11 +199,79 @@ def test_sync_exception_02():
     dataset = dataset.batch(batch_size)
 
 
+def test_sync_exception_03():
+    """
+    Test sync: with wrong batch size
+    """
+    logger.info("test_sync_exception_03")
+    batch_size = 6
+
+    dataset = ds.GeneratorDataset(gen, column_names=["input"])
+
+    aug = Augment(0)
+    # try to create dataset with batch_size < 0
+    try:
+        dataset = dataset.sync_wait(condition_name="every batch", num_batch=-1, callback=aug.update)
+    except Exception as e:
+        assert "num_batch" in str(e)
+
+    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+
+
+def test_sync_exception_04():
+    """
+    Test sync: with negative batch size in update
+    """
+    logger.info("test_sync_exception_04")
+    batch_size = 6
+
+    dataset = ds.GeneratorDataset(gen, column_names=["input"])
+
+    aug = Augment(0)
+    # try to create dataset with batch_size < 0
+    dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
+    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    count = 0
+    try:
+        for item in dataset.create_dict_iterator():
+            count += 1
+            data = {"loss": count}
+            # dataset.disable_sync()
+            dataset.sync_update(condition_name="every batch", num_batch=-1, data=data)
+    except Exception as e:
+        assert "batch" in str(e)
+
+def test_sync_exception_05():
+    """
+    Test sync: with wrong batch size in update
+    """
+    logger.info("test_sync_exception_05")
+    batch_size = 6
+
+    dataset = ds.GeneratorDataset(gen, column_names=["input"])
+    count = 0
+    aug = Augment(0)
+    # try to create dataset with batch_size < 0
+    dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
+    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    try:
+        for item in dataset.create_dict_iterator():
+            dataset.disable_sync()
+            count += 1
+            data = {"loss": count}
+            dataset.disable_sync()
+            dataset.sync_update(condition_name="every", data=data)
+    except Exception as e:
+        assert "name" in str(e)
+
 if __name__ == "__main__":
     test_simple_sync_wait()
     test_simple_shuffle_sync()
     test_two_sync()
     test_sync_exception_01()
     test_sync_exception_02()
+    test_sync_exception_03()
+    test_sync_exception_04()
+    test_sync_exception_05()
     test_sync_epoch()
     test_multiple_iterators()
