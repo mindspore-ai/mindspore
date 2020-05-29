@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-from mindspore.communication.management import get_rank, get_group_size
+from mindspore.communication.management import init, get_rank, get_group_size
 from config import config
 
 
