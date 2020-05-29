@@ -271,6 +271,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
