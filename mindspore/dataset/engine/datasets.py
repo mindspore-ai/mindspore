@@ -1227,7 +1227,10 @@ class MappableDataset(SourceDataset):
 
     def _get_sampler_dataset_size(self):
         if self.sampler is not None:
-            return self.sampler.get_dataset_size()
+            if hasattr(self.sampler, 'get_dataset_size'):
+                return self.sampler.get_dataset_size()
+            if hasattr(self.sampler, '__len__'):
+                return len(self.sampler)
 
         return None
 
