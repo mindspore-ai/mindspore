@@ -33,11 +33,11 @@ class Net(nn.Cell):
         return self.reciprocal(x1)
 
 
-x1 = np.random.randn(3, 4).astype(np.float32)
+arr_x1 = np.random.randn(3, 4).astype(np.float32)
 
 
 def test_net():
     reciprocal = Net()
-    output = reciprocal(Tensor(x1))
-    print(x1)
+    output = reciprocal(Tensor(arr_x1))
+    print(arr_x1)
     print(output.asnumpy())

@@ -31,13 +31,13 @@ class Net(nn.Cell):
         return self.sub(x, y)
 
 
-x = np.random.randn(1, 3, 3, 4).astype(np.float32)
-y = np.random.randn(1, 3, 3, 4).astype(np.float32)
+arr_x = np.random.randn(1, 3, 3, 4).astype(np.float32)
+arr_y = np.random.randn(1, 3, 3, 4).astype(np.float32)
 
 
 def test_net():
     sub = Net()
-    output = sub(Tensor(x), Tensor(y))
-    print(x)
-    print(y)
+    output = sub(Tensor(arr_x), Tensor(arr_y))
+    print(arr_x)
+    print(arr_y)
     print(output.asnumpy())

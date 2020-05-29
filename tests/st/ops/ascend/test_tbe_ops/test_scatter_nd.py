@@ -31,13 +31,13 @@ class Net(nn.Cell):
         return self.scatternd(indices, update, (3, 3))
 
 
-indices = np.array([[0, 1], [1, 1]]).astype(np.int32)
-update = np.array([3.2, 1.1]).astype(np.float32)
+arr_indices = np.array([[0, 1], [1, 1]]).astype(np.int32)
+arr_update = np.array([3.2, 1.1]).astype(np.float32)
 
 
 def test_net():
     scatternd = Net()
-    print(indices)
-    print(update)
-    output = scatternd(Tensor(indices), Tensor(update))
+    print(arr_indices)
+    print(arr_update)
+    output = scatternd(Tensor(arr_indices), Tensor(arr_update))
     print(output.asnumpy())

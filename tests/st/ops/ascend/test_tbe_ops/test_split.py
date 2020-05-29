@@ -31,13 +31,13 @@ class Net(nn.Cell):
         return self.split(x)
 
 
-x = np.random.randn(2, 4).astype(np.float32)
+arr_x = np.random.randn(2, 4).astype(np.float32)
 
 
 def test_net():
     split = Net()
-    output = split(Tensor(x))
+    output = split(Tensor(arr_x))
     print("====input========")
-    print(x)
+    print(arr_x)
     print("====output=======")
     print(output)

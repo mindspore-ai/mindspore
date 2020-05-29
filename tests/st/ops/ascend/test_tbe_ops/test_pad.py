@@ -34,11 +34,11 @@ class Net(nn.Cell):
         return x
 
 
-x = np.random.random(size=(2, 2)).astype(np.float32)
+arr_x = np.random.random(size=(2, 2)).astype(np.float32)
 
 
 def test_net():
     pad = Net()
-    output = pad(Tensor(x))
+    output = pad(Tensor(arr_x))
     print("=================output====================")
     print(output.asnumpy())

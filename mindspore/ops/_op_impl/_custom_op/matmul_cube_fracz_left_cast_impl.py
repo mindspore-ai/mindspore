@@ -124,7 +124,7 @@ src_dtype: str
     if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
         raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
 
-    if len(shape_bias):
+    if shape_bias:
         if len(shape_bias) == 1:
             if is_gevm or is_gemv:
                 if shape_bias[0] != m_shape * n_shape:
@@ -144,11 +144,10 @@ def _get_bias(shape_bias):
     bias_length = shape_bias[0]
     if bias_length % 16 == 0:
         return shape_bias
-    else:
-        bias_length = (bias_length // 16) * 16 + 16
-        shape_bias = []
-        shape_bias.append(bias_length)
-        return shape_bias
+    bias_length = (bias_length // 16) * 16 + 16
+    shape_bias = []
+    shape_bias.append(bias_length)
+    return shape_bias
 
 
 def _get_input_shape(shape_x):
@@ -184,7 +183,7 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
     try:
         trans_a_f = bool(1 - trans_a)
-        if src_dtype == "float32" or src_dtype == "int32":
+        if src_dtype in ("floate32", "int32"):
             if len(shape_a) != 2 and len(shape_b) != 2:
                 return False
             if trans_b:
@@ -234,6 +233,7 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
                     return False
 
     except RuntimeError as e:
+        print(e)
         return False
 
     return True

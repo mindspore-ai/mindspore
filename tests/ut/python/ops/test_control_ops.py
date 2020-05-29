@@ -20,7 +20,6 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import nn
-from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -447,11 +446,14 @@ def test_index_to_switch_layer():
 
 def test_control_depend_check():
     with pytest.raises(TypeError) as e:
-        depend = P.ControlDepend(0.0)
+        P.ControlDepend(0.0)
+        print(e)
     with pytest.raises(ValueError) as e:
-        depend = P.ControlDepend(2)
+        P.ControlDepend(2)
+        print(e)
     with pytest.raises(TypeError) as e:
-        depend = P.ControlDepend((2,))
+        P.ControlDepend((2,))
+        print(e)
 
 
 def test_if_nested_compile():
@@ -497,7 +499,7 @@ def test_if_inside_for():
     c1 = Tensor(1, dtype=ms.int32)
     c2 = Tensor(1, dtype=ms.int32)
     net = Net()
-    out = net(c1, c2)
+    net(c1, c2)
 
 
 def test_while_in_while():

@@ -80,8 +80,8 @@ def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y
                  ((32, 128, 16, 16), 'float16', (32, 32, 16, 16), 'float16', (1,), 'float32'),
                  ((64, 32, 16, 16), 'float16', (64, 64, 16, 16), 'float16', (1,), 'float32'),
                  ((16, 64, 16, 16), 'float16', (16, 16, 16, 16), 'float16', (1,), 'float32')]
-    input_shape = (
-        tuple(input_x1_shape), input_x1_dtype, tuple(input_x2_shape), input_x2_dtype, tuple(input_x3_shape), input_x3_dtype)
+    input_shape = (tuple(input_x1_shape), input_x1_dtype, tuple(input_x2_shape),
+                   input_x2_dtype, tuple(input_x3_shape), input_x3_dtype)
     if input_shape not in Supported:
         raise RuntimeError("input_shape %s is not supported" % str(input_shape))
 

@@ -66,7 +66,7 @@ class Net5(nn.Cell):
 def test_conv2d_backprop_input():
     conv2d_input = Net5()
     output = conv2d_input()
-    print("================================") 
+    print("================================")
 #   expect output:
 #   [[[[ -5,  -4,   5,  12,   0,  -8]
 #      [-15,  -6,  17,  17,  -2, -11]

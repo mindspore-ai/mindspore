@@ -13,30 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """ test nn ops """
-import functools
 import numpy as np
-import mindspore
 
 import mindspore.nn as nn
 import mindspore.context as context
-import mindspore.common.dtype as mstype
 
-from mindspore import Tensor, Parameter
-from mindspore.common.initializer import initializer
-from mindspore.ops import Primitive
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
+from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore.ops.primitive import constexpr
-
-from ..ut_filter import non_graph_engine
-from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward \
-    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
-from ....mindspore_test_framework.pipeline.forward.verify_exception \
-    import pipeline_for_verify_exception_for_case_by_case_config
-from mindspore import context
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 class FakeOp(PrimitiveWithInfer):
@@ -57,16 +41,16 @@ def test_conv2d_same_primitive():
     class Conv2DSameNet(nn.Cell):
         def __init__(self):
             super(Conv2DSameNet, self).__init__()
-            self.conv1 = nn.Conv2d(16, 64, (1, 41), (1,4), "same", 0, 1, has_bias=True)
-            self.conv2 = nn.Conv2d(16, 64, (1, 41), (1,4), "same", 0, 1, has_bias=True)
+            self.conv1 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
+            self.conv2 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
         def construct(self, x, y):
             r1 = self.conv1(x)
             r2 = self.conv2(y)
             return (r1, r2)
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
     net = Conv2DSameNet()
-    out = net(t1, t2)
+    net(t1, t2)
 
 # test cell as high order argument
 # The graph with free variables used as argument is not supported yet
@@ -87,10 +71,10 @@ def Xtest_conv2d_op_with_arg():
             a = self.opnet(conv_op, x)
             b = self.opnet(conv_op, y)
             return (a, b)
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
     net = OpsNet(Conv2dNet())
-    out = net(t1, t2)
+    net(t1, t2)
 
 
 def test_conv2d_op_with_arg():
@@ -115,11 +99,10 @@ def test_conv2d_op_with_arg():
             a = self.opnet(op, x, y)
             b = self.opnet(op, y, x)
             return (a, b)
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
     net = OpsNet(OpNet())
-    out = net(t1, t2)
-
+    net(t1, t2)
 
 
 def test_conv2d_op_with_arg_same_input():
@@ -144,10 +127,10 @@ def test_conv2d_op_with_arg_same_input():
             a = self.opnet(op, x, x)
             b = self.opnet(op, y, x)
             return (a, b)
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
     net = OpsNet(OpNet())
-    out = net(t1, t2)
+    net(t1, t2)
 
 # test op with partial
 def test_op_as_partial():
@@ -160,11 +143,11 @@ def test_op_as_partial():
             a = partial_op(y)
             b = partial_op(z)
             return a, b
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1234]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1234]).astype(np.float32))
     net = OpAsPartial()
-    out = net(t1, t2, t3)
+    net(t1, t2, t3)
 
 # test op with partial
 def test_op_as_partial_inside():
@@ -182,13 +165,14 @@ def test_op_as_partial_inside():
             super(OuterNet, self).__init__()
             self.net = OpAsPartial()
         def construct(self, x, y, z):
-            a,b = self.net(x, y, z)
+            a, b = self.net(x, y, z)
             return a, b
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1234]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1234]).astype(np.float32))
     net = OuterNet()
-    out = net(t1, t2, t3)
+    net(t1, t2, t3)
+
 
 # test op with partial case 2
 def test_op_as_partial_independent():
@@ -202,11 +186,12 @@ def test_op_as_partial_independent():
             partial_op2 = F.partial(self.op, x)
             b = partial_op2(z)
             return a, b
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1234]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1234]).astype(np.float32))
     net = OpAsPartial()
-    out = net(t1, t2, t3)
+    net(t1, t2, t3)
+
 
 def test_nest_partial():
     class NestPartial(nn.Cell):
@@ -221,11 +206,11 @@ def test_nest_partial():
             partial_op4 = F.partial(partial_op3, x)
             b = partial_op4(z)
             return a, b
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1234]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1234]).astype(np.float32))
     net = NestPartial()
-    out = net(t1, t2, t3)
+    net(t1, t2, t3)
  
 # high order argument
 # op and op args as network arguments
@@ -245,11 +230,11 @@ def test_op_with_arg_as_input():
             a = self.opnet(op, x, z)
             b = self.opnet(op, x, y)
             return (a, b)
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1234]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1234]).astype(np.float32))
     net = OpsNet(WithOpArgNet())
-    out = net(t1, t2, t3)
+    net(t1, t2, t3)
 
 # The partial application used as argument is not supported yet
 # because of the limit of inference specialize system
@@ -269,8 +254,8 @@ def Xtest_partial_as_arg():
             a = self.partial_net(partial_op, z)
             b = self.partial_net(partial_op, y)
             return (a, b)
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1234]).astype(np.float32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1234]).astype(np.float32))
     net = OpsNet(PartialArgNet())
-    out = net(t1, t2, t3)
+    net(t1, t2, t3)

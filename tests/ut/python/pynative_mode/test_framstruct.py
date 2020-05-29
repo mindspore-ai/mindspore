@@ -982,7 +982,7 @@ def test_bprop_with_wrong_output_shape():
     @bprop_getters.register(BpropWithWrongOutputShape)
     def get_bprop_with_wrong_output_shape(self):
         """Generate bprop for BpropWithWrongOutputShape"""
-        ones = Tensor(np.ones([2, ]).astype(np.int32))
+        ones = Tensor(np.ones([2,]).astype(np.int32))
 
         def bprop(x, out, dout):
             return (ones,)
