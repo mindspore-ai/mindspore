@@ -20,11 +20,11 @@ import os
 from mindspore import Model, context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from wide_deep.models.WideDeep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
-from wide_deep.utils.callbacks import LossCallBack, EvalCallBack
-from wide_deep.data.datasets import create_dataset
-from wide_deep.utils.metrics import AUCMetric
-from tools.config import Config_WideDeep
+from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
+from src.callbacks import LossCallBack, EvalCallBack
+from src.datasets import create_dataset
+from src.metrics import AUCMetric
+from src.config import WideDeepConfig
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Davinci",
                     save_graphs=True)
@@ -88,7 +88,7 @@ def test_eval(config):
 
 
 if __name__ == "__main__":
-    widedeep_config = Config_WideDeep()
+    widedeep_config = WideDeepConfig()
     widedeep_config.argparse_init()
 
     test_eval(widedeep_config.widedeep)
