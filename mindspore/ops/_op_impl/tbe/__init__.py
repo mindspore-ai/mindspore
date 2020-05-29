@@ -225,6 +225,7 @@ from .asin import _asin_tbe
 from .asin_grad import _asin_grad_tbe
 from .asinh import _asinh_tbe
 from .asinh_grad import _asinh_grad_tbe
+from .div_no_nan import _div_no_nan_tbe
 from .atan import _atan_tbe
 from .atan_grad import _atan_grad_tbe
 from .atanh import _atanh_tbe
