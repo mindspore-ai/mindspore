@@ -20,7 +20,7 @@ import time
 from .utils.adapter import get_raw_samples, read_image
 
 
-class BaseDataset(object):
+class BaseDataset:
     """
     Create dataset.
 

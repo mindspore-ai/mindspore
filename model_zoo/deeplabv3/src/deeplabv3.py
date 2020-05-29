@@ -23,11 +23,11 @@ from .backbone.resnet_deeplab import _conv_bn_relu, resnet50_dl, _deep_conv_bn_r
 
 class ASPPSampleBlock(nn.Cell):
     """ASPP sample block."""
-    def __init__(self, feature_shape, scale_size,output_stride):
+    def __init__(self, feature_shape, scale_size, output_stride):
         super(ASPPSampleBlock, self).__init__()
         sample_h = (feature_shape[0] * scale_size + 1) / output_stride + 1
         sample_w = (feature_shape[1] * scale_size + 1) / output_stride + 1
-        self.sample = P.ResizeBilinear((int(sample_h),int(sample_w)),align_corners=True)
+        self.sample = P.ResizeBilinear((int(sample_h), int(sample_w)), align_corners=True)
 
     def construct(self, x):
         return self.sample(x)
@@ -84,25 +84,25 @@ class ASPP(nn.Cell):
                 aspp_scale_depth_size = np.ceil((feature_shape[0]*scale_size)/16)
                 if atrous_rates is None:
                     break
-                for i in range(len(atrous_rates)):
+                for rate in atrous_rates:
                     padding = 0
                     for j in range(100):
-                        padded_size = atrous_rates[i] * j
-                        if padded_size >= aspp_scale_depth_size + 2 * atrous_rates[i]:
-                            padding = padded_size - aspp_scale_depth_size - 2 * atrous_rates[i]
+                        padded_size = rate * j
+                        if padded_size >= aspp_scale_depth_size + 2 * rate:
+                            padding = padded_size - aspp_scale_depth_size - 2 * rate
                             break
-                    paddings = [[atrous_rates[i], atrous_rates[i] + int(padding)],
-                                [atrous_rates[i], atrous_rates[i] + int(padding)]]
-                    self.aspp_depth_spacetobatch = SpaceToBatch(atrous_rates[i],paddings)
+                    paddings = [[rate, rate + int(padding)],
+                                [rate, rate + int(padding)]]
+                    self.aspp_depth_spacetobatch = SpaceToBatch(rate, paddings)
                     self.aspp_depth_spacetobatchs.append(self.aspp_depth_spacetobatch)
-                    crops =[[0, int(padding)], [0, int(padding)]]
-                    self.aspp_depth_batchtospace = BatchToSpace(atrous_rates[i],crops)
+                    crops = [[0, int(padding)], [0, int(padding)]]
+                    self.aspp_depth_batchtospace = BatchToSpace(rate, crops)
                     self.aspp_depth_batchtospaces.append(self.aspp_depth_batchtospace)
             self.aspp_depths = nn.CellList(self.aspp_depths)
             self.aspp_depth_spacetobatchs = nn.CellList(self.aspp_depth_spacetobatchs)
             self.aspp_depth_batchtospaces = nn.CellList(self.aspp_depth_batchtospaces)
 
-        self.global_pooling = nn.AvgPool2d(kernel_size=(int(feature_shape[0]),int(feature_shape[1])))
+        self.global_pooling = nn.AvgPool2d(kernel_size=(int(feature_shape[0]), int(feature_shape[1])))
         self.global_poolings = []
         for scale_size in scale_sizes:
             pooling_h = np.ceil((feature_shape[0]*scale_size)/output_stride)
@@ -116,7 +116,7 @@ class ASPP(nn.Cell):
                                      use_batch_statistics=fine_tune_batch_norm)
         self.samples = []
         for scale_size in scale_sizes:
-            self.samples.append(ASPPSampleBlock(feature_shape,scale_size,output_stride))
+            self.samples.append(ASPPSampleBlock(feature_shape, scale_size, output_stride))
         self.samples = nn.CellList(self.samples)
         self.feature_shape = feature_shape
         self.concat = P.Concat(axis=1)
@@ -126,7 +126,7 @@ class ASPP(nn.Cell):
         aspp1 = self.global_poolings[scale_index](x)
         aspp1 = self.conv_bn(aspp1)
         aspp1 = self.samples[scale_index](aspp1)
-        output = self.concat((aspp1,aspp0))
+        output = self.concat((aspp1, aspp0))
 
         for i in range(len(self.atrous_rates)):
             aspp_i = self.aspp_depth_spacetobatchs[i + scale_index * len(self.atrous_rates)](x)
@@ -135,13 +135,13 @@ class ASPP(nn.Cell):
             aspp_i = self.aspp_depth_bn(aspp_i)
             aspp_i = self.aspp_depth_relu(aspp_i)
             aspp_i = self.aspp_pointwise(aspp_i)
-            output = self.concat((output,aspp_i))
+            output = self.concat((output, aspp_i))
         return output
 
 
 class DecoderSampleBlock(nn.Cell):
     """Decoder sample block."""
-    def __init__(self,feature_shape,scale_size=1.0,decoder_output_stride=4):
+    def __init__(self, feature_shape, scale_size=1.0, decoder_output_stride=4):
         super(DecoderSampleBlock, self).__init__()
         sample_h = (feature_shape[0] * scale_size + 1) / decoder_output_stride + 1
         sample_w = (feature_shape[1] * scale_size + 1) / decoder_output_stride + 1
@@ -206,7 +206,7 @@ class Decoder(nn.Cell):
         self.concat = P.Concat(axis=1)
         self.samples = []
         for scale_size in scale_sizes:
-            self.samples.append(DecoderSampleBlock(feature_shape,scale_size,decoder_output_stride))
+            self.samples.append(DecoderSampleBlock(feature_shape, scale_size, decoder_output_stride))
         self.samples = nn.CellList(self.samples)
 
     def construct(self, x, low_level_feature, scale_index):
@@ -359,10 +359,10 @@ class DeepLabV3(nn.Cell):
 
         self.image_pyramid = image_pyramid
         scale_sizes = []
-        for i in range(len(image_pyramid)):
-            scale_sizes.append(image_pyramid[i])
-        for i in range(len(infer_scale_sizes)):
-            scale_sizes.append(infer_scale_sizes[i])
+        for pyramid in image_pyramid:
+            scale_sizes.append(pyramid)
+        for scale in infer_scale_sizes:
+            scale_sizes.append(scale)
         self.samples = []
         for scale_size in scale_sizes:
             self.samples.append(SampleBlock(feature_shape, scale_size))

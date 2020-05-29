@@ -21,7 +21,7 @@ from .ei_dataset import HwVocRawDataset
 from .utils import custom_transforms as tr
 
 
-class DataTransform(object):
+class DataTransform:
     """Transform dataset for DeepLabV3."""
 
     def __init__(self, args, usage):
@@ -29,12 +29,20 @@ class DataTransform(object):
         self.usage = usage
 
     def __call__(self, image, label):
-        if "train" == self.usage:
+        if self.usage == "train":
             return self._train(image, label)
-        elif "eval" == self.usage:
+        if self.usage == "eval":
             return self._eval(image, label)
+        return None
 
     def _train(self, image, label):
+        """
+        Process training data.
+
+        Args:
+            image (list): Image data.
+            label (list): Dataset label.
+        """
         image = Image.fromarray(image)
         label = Image.fromarray(label)
 
@@ -50,6 +58,13 @@ class DataTransform(object):
         return image, label
 
     def _eval(self, image, label):
+        """
+        Process eval data.
+
+        Args:
+            image (list): Image data.
+            label (list): Dataset label.
+        """
         image = Image.fromarray(image)
         label = Image.fromarray(label)
 
@@ -93,7 +108,7 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train"):
     # 3658 steps / 183 = 20 epochs
     if usage == "train":
         dataset = dataset.shuffle(1464)
-    dataset = dataset.batch(batch_size, drop_remainder=(usage == usage))
+    dataset = dataset.batch(batch_size, drop_remainder=(usage == "train"))
     dataset = dataset.repeat(count=epoch_num)
     dataset.map_model = 4
 

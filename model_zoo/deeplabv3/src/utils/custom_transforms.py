@@ -19,7 +19,7 @@ import numpy as np
 from PIL import Image, ImageOps, ImageFilter
 
 
-class Normalize(object):
+class Normalize:
     """Normalize a tensor image with mean and standard deviation.
     Args:
         mean (tuple): means for each channel.
@@ -37,7 +37,7 @@ class Normalize(object):
         return img, mask
 
 
-class RandomHorizontalFlip(object):
+class RandomHorizontalFlip:
     """Randomly decide whether to horizontal flip."""
     def __call__(self, img, mask):
         if random.random() < 0.5:
@@ -47,7 +47,7 @@ class RandomHorizontalFlip(object):
         return img, mask
 
 
-class RandomRotate(object):
+class RandomRotate:
     """
     Randomly decide whether to rotate.
 
@@ -65,7 +65,7 @@ class RandomRotate(object):
         return img, mask
 
 
-class RandomGaussianBlur(object):
+class RandomGaussianBlur:
     """Randomly decide whether to filter image with gaussian blur."""
     def __call__(self, img, mask):
         if random.random() < 0.5:
@@ -75,7 +75,7 @@ class RandomGaussianBlur(object):
         return img, mask
 
 
-class RandomScaleCrop(object):
+class RandomScaleCrop:
     """Randomly decide whether to scale and crop image."""
     def __init__(self, base_size, crop_size, fill=0):
         self.base_size = base_size
@@ -110,7 +110,7 @@ class RandomScaleCrop(object):
         return img, mask
 
 
-class FixScaleCrop(object):
+class FixScaleCrop:
     """Scale and crop image with fixing size."""
     def __init__(self, crop_size):
         self.crop_size = crop_size
@@ -135,7 +135,7 @@ class FixScaleCrop(object):
         return img, mask
 
 
-class FixedResize(object):
+class FixedResize:
     """Resize image with fixing size."""
     def __init__(self, size):
         self.size = (size, size)
