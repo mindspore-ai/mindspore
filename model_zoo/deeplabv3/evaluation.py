@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(description="Deeplabv3 evaluation")
 parser.add_argument('--epoch_size', type=int, default=2, help='Epoch size.')
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
 parser.add_argument('--batch_size', type=int, default=2, help='Batch size.')
-parser.add_argument('--data_url', required=True, default=None, help='Train data url')
+parser.add_argument('--data_url', required=True, default=None, help='Evaluation data url')
 parser.add_argument('--checkpoint_url', default=None, help='Checkpoint path')
 
 args_opt = parser.parse_args()
