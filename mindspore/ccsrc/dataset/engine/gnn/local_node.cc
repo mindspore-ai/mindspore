@@ -20,12 +20,13 @@
 #include <utility>
 
 #include "dataset/engine/gnn/edge.h"
+#include "dataset/util/random.h"
 
 namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-LocalNode::LocalNode(NodeIdType id, NodeType type) : Node(id, type) {}
+LocalNode::LocalNode(NodeIdType id, NodeType type) : Node(id, type), rnd_(GetRandomDevice()) { rnd_.seed(GetSeed()); }
 
 Status LocalNode::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
   auto itr = features_.find(feature_type);
@@ -38,21 +39,49 @@ Status LocalNode::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature>
   }
 }
 
-Status LocalNode::GetNeighbors(NodeType neighbor_type, int32_t samples_num, std::vector<NodeIdType> *out_neighbors) {
+Status LocalNode::GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors) {
   std::vector<NodeIdType> neighbors;
   auto itr = neighbor_nodes_.find(neighbor_type);
   if (itr != neighbor_nodes_.end()) {
-    if (samples_num == -1) {
-      // Return all neighbors
-      neighbors.resize(itr->second.size() + 1);
-      neighbors[0] = id_;
-      std::transform(itr->second.begin(), itr->second.end(), neighbors.begin() + 1,
-                     [](const std::shared_ptr<Node> node) { return node->id(); });
-    } else {
+    neighbors.resize(itr->second.size() + 1);
+    neighbors[0] = id_;
+    std::transform(itr->second.begin(), itr->second.end(), neighbors.begin() + 1,
+                   [](const std::shared_ptr<Node> node) { return node->id(); });
+  } else {
+    MS_LOG(DEBUG) << "No neighbors. node_id:" << id_ << " neighbor_type:" << neighbor_type;
+    neighbors.emplace_back(id_);
+  }
+  *out_neighbors = std::move(neighbors);
+  return Status::OK();
+}
+
+Status LocalNode::GetSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors, int32_t samples_num,
+                                      std::vector<NodeIdType> *out) {
+  std::vector<NodeIdType> shuffled_id(neighbors.size());
+  std::iota(shuffled_id.begin(), shuffled_id.end(), 0);
+  std::shuffle(shuffled_id.begin(), shuffled_id.end(), rnd_);
+  int32_t num = std::min(samples_num, static_cast<int32_t>(neighbors.size()));
+  for (int32_t i = 0; i < num; ++i) {
+    out->emplace_back(neighbors[shuffled_id[i]]->id());
+  }
+  return Status::OK();
+}
+
+Status LocalNode::GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num,
+                                      std::vector<NodeIdType> *out_neighbors) {
+  std::vector<NodeIdType> neighbors;
+  neighbors.reserve(samples_num);
+  auto itr = neighbor_nodes_.find(neighbor_type);
+  if (itr != neighbor_nodes_.end()) {
+    while (neighbors.size() < samples_num) {
+      RETURN_IF_NOT_OK(GetSampledNeighbors(itr->second, samples_num - neighbors.size(), &neighbors));
     }
   } else {
-    neighbors.push_back(id_);
-    MS_LOG(DEBUG) << "No neighbors. node_id:" << id_ << " neighbor_type:" << neighbor_type;
+    MS_LOG(DEBUG) << "There are no neighbors. node_id:" << id_ << " neighbor_type:" << neighbor_type;
+    // If there are no neighbors, they are filled with kDefaultNodeId
+    for (int32_t i = 0; i < samples_num; ++i) {
+      neighbors.emplace_back(kDefaultNodeId);
+    }
   }
   *out_neighbors = std::move(neighbors);
   return Status::OK();

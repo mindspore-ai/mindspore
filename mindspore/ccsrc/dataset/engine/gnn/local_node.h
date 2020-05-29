@@ -43,12 +43,19 @@ class LocalNode : public Node {
   // @return Status - The error code return
   Status GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) override;
 
-  // Get the neighbors of a node
+  // Get the all neighbors of a node
   // @param NodeType neighbor_type - type of neighbor
-  // @param int32_t samples_num - Number of neighbors to be acquired, if -1 means all neighbors are acquired
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
   // @return Status - The error code return
-  Status GetNeighbors(NodeType neighbor_type, int32_t samples_num, std::vector<NodeIdType> *out_neighbors) override;
+  Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors) override;
+
+  // Get the sampled neighbors of a node
+  // @param NodeType neighbor_type - type of neighbor
+  // @param int32_t samples_num - Number of neighbors to be acquired
+  // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
+  // @return Status - The error code return
+  Status GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num,
+                             std::vector<NodeIdType> *out_neighbors) override;
 
   // Add neighbor of node
   // @param std::shared_ptr<Node> node -
@@ -61,6 +68,10 @@ class LocalNode : public Node {
   Status UpdateFeature(const std::shared_ptr<Feature> &feature) override;
 
  private:
+  Status GetSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors, int32_t samples_num,
+                             std::vector<NodeIdType> *out);
+
+  std::mt19937 rnd_;
   std::unordered_map<FeatureType, std::shared_ptr<Feature>> features_;
   std::unordered_map<NodeType, std::vector<std::shared_ptr<Node>>> neighbor_nodes_;
 };

@@ -1153,6 +1153,36 @@ def check_gnn_get_all_nodes(method):
     return new_method
 
 
+def check_gnn_get_all_edges(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_all_edges` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_type; required argument
+        check_type(param_dict.get("edge_type"), 'edge_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_nodes_from_edges(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_nodes_from_edges` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check edge_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("edge_list"), 'edge_list')
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_gnn_get_all_neighbors(method):
     """A wrapper that wrap a parameter checker to the GNN `get_all_neighbors` function."""
 
@@ -1165,6 +1195,61 @@ def check_gnn_get_all_neighbors(method):
 
         # check neighbor_type; required argument
         check_type(param_dict.get("neighbor_type"), 'neighbor_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_sampled_neighbors(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_sampled_neighbors` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("node_list"), 'node_list')
+
+        # check neighbor_nums; required argument
+        neighbor_nums = param_dict.get("neighbor_nums")
+        check_gnn_list_or_ndarray(neighbor_nums, 'neighbor_nums')
+        if len(neighbor_nums) > 6:
+            raise ValueError("Wrong number of input members for {0}, should be less than or equal to 6, got {1}".format(
+                'neighbor_nums', len(neighbor_nums)))
+
+        # check neighbor_types; required argument
+        neighbor_types = param_dict.get("neighbor_types")
+        check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types')
+        if len(neighbor_nums) > 6:
+            raise ValueError("Wrong number of input members for {0}, should be less than or equal to 6, got {1}".format(
+                'neighbor_types', len(neighbor_types)))
+
+        if len(neighbor_nums) != len(neighbor_types):
+            raise ValueError(
+                "The number of members of neighbor_nums and neighbor_types is inconsistent")
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_neg_sampled_neighbors(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_neg_sampled_neighbors` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("node_list"), 'node_list')
+
+        # check neg_neighbor_num; required argument
+        check_type(param_dict.get("neg_neighbor_num"), 'neg_neighbor_num', int)
+
+        # check neg_neighbor_type; required argument
+        check_type(param_dict.get("neg_neighbor_type"),
+                   'neg_neighbor_type', int)
 
         return method(*args, **kwargs)
 

@@ -15,35 +15,38 @@
 """
 User-defined API for MindRecord GNN writer.
 """
-import csv
 import os
 
+import pickle as pkl
 import numpy as np
 import scipy.sparse as sp
 
 # parse args from command line parameter 'graph_api_args'
 #     args delimiter is ':'
 args = os.environ['graph_api_args'].split(':')
-CORA_CONTENT_FILE = args[0]
-CORA_CITES_FILE = args[1]
-CORA_MINDRECRD_LABEL_FILE = CORA_CONTENT_FILE + "_label_mindrecord"
-CORA_CONTENT_ID_MAP_FILE = CORA_CONTENT_FILE + "_id_mindrecord"
-
-node_id_map = {}
+CORA_PATH = args[0]
+dataset_str = 'cora'
 
 # profile:  (num_features, feature_data_types, feature_shapes)
-node_profile = (2, ["float32", "int64"], [[-1], [-1]])
+node_profile = (2, ["float32", "int32"], [[-1], [-1]])
 edge_profile = (0, [], [])
 
 
 def _normalize_cora_features(features):
-    features = np.array(features)
     row_sum = np.array(features.sum(1))
     r_inv = np.power(row_sum * 1.0, -1).flatten()
     r_inv[np.isinf(r_inv)] = 0.
     r_mat_inv = sp.diags(r_inv)
     features = r_mat_inv.dot(features)
     return features
+
+
+def _parse_index_file(filename):
+    """Parse index file."""
+    index = []
+    for line in open(filename):
+        index.append(int(line.strip()))
+    return index
 
 
 def yield_nodes(task_id=0):
@@ -54,32 +57,32 @@ def yield_nodes(task_id=0):
         data (dict): data row which is dict.
     """
     print("Node task is {}".format(task_id))
-    label_types = {}
-    label_size = 0
-    node_num = 0
-    with open(CORA_CONTENT_FILE) as content_file:
-        content_reader = csv.reader(content_file, delimiter=',')
-        line_count = 0
-        for row in content_reader:
-            if line_count == 0:
-                line_count += 1
-                continue
-            if not row[0] in node_id_map:
-                node_id_map[row[0]] = node_num
-                node_num += 1
-            if not row[-1] in label_types:
-                label_types[row[-1]] = label_size
-                label_size += 1
-            raw_features = [[int(x) for x in row[1:-1]]]
-            node = {'id': node_id_map[row[0]], 'type': 0, 'feature_1': _normalize_cora_features(raw_features),
-                    'feature_2': [label_types[row[-1]]]}
-            yield node
-            line_count += 1
+
+    names = ['tx', 'ty', 'allx', 'ally']
+    objects = []
+    for name in names:
+        with open("{}/ind.{}.{}".format(CORA_PATH, dataset_str, name), 'rb') as f:
+            objects.append(pkl.load(f, encoding='latin1'))
+    tx, ty, allx, ally = tuple(objects)
+    test_idx_reorder = _parse_index_file(
+        "{}/ind.{}.test.index".format(CORA_PATH, dataset_str))
+    test_idx_range = np.sort(test_idx_reorder)
+
+    features = sp.vstack((allx, tx)).tolil()
+    features[test_idx_reorder, :] = features[test_idx_range, :]
+    features = _normalize_cora_features(features)
+    features = features.A
+
+    labels = np.vstack((ally, ty))
+    labels[test_idx_reorder, :] = labels[test_idx_range, :]
+
+    line_count = 0
+    for i, label in enumerate(labels):
+        node = {'id': i, 'type': 0, 'feature_1': features[i].tolist(),
+                'feature_2': label.tolist().index(1)}
+        line_count += 1
+        yield node
     print('Processed {} lines for nodes.'.format(line_count))
-    print('label types {}.'.format(label_types))
-    with open(CORA_MINDRECRD_LABEL_FILE, 'w') as f:
-        for k in label_types:
-            print(k + ',' + str(label_types[k]), file=f)
 
 
 def yield_edges(task_id=0):
@@ -90,24 +93,13 @@ def yield_edges(task_id=0):
         data (dict): data row which is dict.
     """
     print("Edge task is {}".format(task_id))
-    with open(CORA_CITES_FILE) as cites_file:
-        cites_reader = csv.reader(cites_file, delimiter=',')
+    with open("{}/ind.{}.graph".format(CORA_PATH, dataset_str), 'rb') as f:
+        graph = pkl.load(f, encoding='latin1')
         line_count = 0
-        for row in cites_reader:
-            if line_count == 0:
+        for i in graph:
+            for dst_id in graph[i]:
+                edge = {'id': line_count,
+                        'src_id': i, 'dst_id': dst_id, 'type': 0}
                 line_count += 1
-                continue
-            if not row[0] in node_id_map:
-                print('Source node {} does not exist.'.format(row[0]))
-                continue
-            if not row[1] in node_id_map:
-                print('Destination node {} does not exist.'.format(row[1]))
-                continue
-            edge = {'id': line_count,
-                    'src_id': node_id_map[row[0]], 'dst_id': node_id_map[row[1]], 'type': 0}
-            yield edge
-            line_count += 1
+                yield edge
         print('Processed {} lines for edges.'.format(line_count))
-    with open(CORA_CONTENT_ID_MAP_FILE, 'w') as f:
-        for k in node_id_map:
-            print(k + ',' + str(node_id_map[k]), file=f)
