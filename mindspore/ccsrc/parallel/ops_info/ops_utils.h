@@ -126,6 +126,7 @@ constexpr char MIRROR_OP[] = "mirror_op";
 constexpr char FORWARD_OP[] = "forward_op";
 constexpr char REDISTRIBUTION_OP[] = "redistribution_op";
 constexpr char DARA_PARALLEL[] = "data_parallel";
+constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

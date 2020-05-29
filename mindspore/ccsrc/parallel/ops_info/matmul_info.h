@@ -61,6 +61,7 @@ class MatMulBase : public OperatorInfo {
 
   bool transpose_a_ = false;
   bool transpose_b_ = false;
+  bool forward_reduce_scatter_ = false;
   size_t mat_a_dimension_ = 0;
   size_t mat_b_dimension_ = 0;
 };

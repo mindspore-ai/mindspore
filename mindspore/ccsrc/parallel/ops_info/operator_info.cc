@@ -208,6 +208,24 @@ Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &grou
   return op;
 }
 
+Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group) {
+  OperatorName operator_name = REDUCE_SCATTER;
+  ValuePtr attr0_value = MakeValue(reduce_op);  // ReduceOP.SUM
+  ValuePtr attr1_value = MakeValue(group);      // group
+  Attr attr0 = std::make_pair(OP, attr0_value);
+  Attr attr1 = std::make_pair(GROUP, attr1_value);
+  OperatorAttrs operator_attrs;
+  operator_attrs.push_back(attr0);
+  operator_attrs.push_back(attr1);
+
+  OperatorParams operator_param;
+  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+
+  Operator op = std::make_pair(operator_name, operator_arg);
+  MS_LOG(INFO) << "Create reduce scatter op success, the reduce_op is  " << reduce_op << ", the group is " << group;
+  return op;
+}
+
 // use for get tensor slice
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout) {
   Shape tensor_map = tensor_layout.tensor_map().array();
