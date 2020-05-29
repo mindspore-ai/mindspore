@@ -98,18 +98,15 @@ class AscendSession : public SessionBasic {
   void SetFinalGraphOutput(const ValuePtr &value);
   void SetFinalGraphOutput(const VectorRef &vec_output);
 
-  void SplitGraph(const KernelGraphPtr &graph);
+  void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims);
   // split graphs with recurse from root graph
-  void SplitGraphs(const KernelGraphPtr &root_graph);
+  void SplitGraphs(NotNull<KernelGraphPtr> root_graph);
   void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
-  void IRFusion(const KernelGraphPtr &graph) {}
-  void SelectKernelGraphKernel(const KernelGraph &graph) {}
-  void ConvertPredictModel(const KernelGraphPtr graph) {}
-  void HardwareOptimizeGraphs(const KernelGraphPtr graph) {}
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
   std::vector<AnfNodePtr> ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
                                                 const std::vector<CNodePtr> &list);
-  void RecurseCompileGraph(const KernelGraphPtr &graph);
+  void RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo);
+  void RecurseSplitGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo);
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();

@@ -974,17 +974,5 @@ bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
   }
   MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString();
 }
-
-bool AnfRuntimeAlgorithm::IsWhileTrueGraph(const KernelGraphPtr &child_graph) {
-  auto call_nodes = child_graph->FindNodeByPrimitive(prim::kPrimCall);
-  for (const auto &call_node : call_nodes) {
-    auto graphs = GetCallNodeKernelGraph(call_node);
-    if (graphs.size() == 1 && graphs[0] == child_graph->parent_graph()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 }  // namespace session
 }  // namespace mindspore

@@ -25,7 +25,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-
 class AscendLabelAssign {
  public:
   static AscendLabelAssign &GetInstance() {

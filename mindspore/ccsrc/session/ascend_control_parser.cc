@@ -83,7 +83,7 @@ CNodePtr AscendControlParser::GetNextRealKernel(const std::vector<CNodePtr> &lis
 
 NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
                                                           const CNodePtr &last_label,
-                                                          NotNull<std::set<KernelGraphPtr> *> memo) {
+                                                          const NotNull<std::set<KernelGraphPtr> *> memo) {
   MS_LOG(INFO) << "Start process KernelGraph " << kg->ToString();
 
   // 1. recursive condition
@@ -180,7 +180,7 @@ void AscendControlParser::LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNod
 }
 
 void AscendControlParser::RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
-                                      NotNull<std::set<KernelGraphPtr> *> memo) {
+                                      const NotNull<std::set<KernelGraphPtr> *> memo) {
   MS_LOG(INFO) << "process call func " << cur_node->DebugString();
 
   // 1 get kernel graph
@@ -212,7 +212,7 @@ void AscendControlParser::RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodeP
 }
 
 void AscendControlParser::RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node,
-                                        const CNodePtr &next_node, NotNull<std::set<KernelGraphPtr> *> memo) {
+                                        const CNodePtr &next_node, const NotNull<std::set<KernelGraphPtr> *> memo) {
   MS_LOG(INFO) << "process switch node " << cur_node->DebugString();
 
   if (cur_node->size() < kCNodeSwitchLength) {
@@ -249,7 +249,8 @@ void AscendControlParser::RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNod
 }
 
 void AscendControlParser::RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node,
-                                             const CNodePtr &next_node, NotNull<std::set<KernelGraphPtr> *> memo) {
+                                             const CNodePtr &next_node,
+                                             const NotNull<std::set<KernelGraphPtr> *> memo) {
   MS_LOG(INFO) << "process switch node " << cur_node->DebugString();
 
   if (cur_node->size() < kCNodeSwitchLayerLength) {
@@ -353,7 +354,7 @@ void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
 }
 
 std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> graph,
-                                                        NotNull<std::set<KernelGraphPtr> *> memo) {
+                                                        const NotNull<std::set<KernelGraphPtr> *> memo) {
   MS_LOG(INFO) << "graph:" << graph->graph_id() << " start";
   auto print_vector = [&](std::vector<CNodePtr> vec) -> void {
     MS_LOG(INFO) << "graph:" << graph->graph_id() << "execution order";
