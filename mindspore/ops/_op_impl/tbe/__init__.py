@@ -104,6 +104,7 @@ from .tanh_grad import _tanh_grad_tbe
 from .softmax import _softmax_tbe
 from .softplus import _softplus_tbe
 from .softplus_grad import _softplus_grad_tbe
+from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
 from .sqrt import _sqrt_tbe
 from .transpose_d import _transpose_d_tbe
