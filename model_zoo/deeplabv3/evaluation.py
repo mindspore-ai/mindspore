@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """evaluation."""
-import os, time
 import argparse
 from mindspore import context
-from mindspore import log as logger
-from mindspore.communication.management import init
-import mindspore.nn as nn
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore import Model, ParallelMode
-import argparse
+from mindspore import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import Callback,CheckpointConfig, ModelCheckpoint, TimeMonitor
 from src.md_dataset import create_dataset
 from src.losses import OhemLoss
-from src.miou_precision import MiouPrecision 
+from src.miou_precision import MiouPrecision
 from src.deeplabv3 import deeplabv3_resnet50
 from src.config import config
 parser = argparse.ArgumentParser(description="Deeplabv3 evaluation")
@@ -44,15 +35,16 @@ print(args_opt)
 if __name__ == "__main__":
     args_opt.crop_size = config.crop_size
     args_opt.base_size = config.crop_size
-    eval_dataset = create_dataset(args_opt, args_opt.data_url, args_opt.epoch_size, args_opt.batch_size, usage="eval")   
-    net =  deeplabv3_resnet50(config.seg_num_classes, [args_opt.batch_size,3,args_opt.crop_size,args_opt.crop_size],
-                                     infer_scale_sizes=config.eval_scales, atrous_rates=config.atrous_rates,
-                                     decoder_output_stride=config.decoder_output_stride, output_stride = config.output_stride,
-                                     fine_tune_batch_norm=config.fine_tune_batch_norm, image_pyramid = config.image_pyramid)
+    eval_dataset = create_dataset(args_opt, args_opt.data_url, args_opt.epoch_size, args_opt.batch_size, usage="eval")
+    net =  deeplabv3_resnet50(config.seg_num_classes, [args_opt.batch_size, 3, args_opt.crop_size, args_opt.crop_size],
+                              infer_scale_sizes=config.eval_scales, atrous_rates=config.atrous_rates,
+                              decoder_output_stride=config.decoder_output_stride, output_stride=config.output_stride,
+                              fine_tune_batch_norm=config.fine_tune_batch_norm, image_pyramid=config.image_pyramid)
     param_dict = load_checkpoint(args_opt.checkpoint_url)
     load_param_into_net(net, param_dict)
     mIou = MiouPrecision(config.seg_num_classes)
-    metrics={'mIou':mIou}
+    metrics = {'mIou': mIou}
     loss = OhemLoss(config.seg_num_classes, config.ignore_label)
     model = Model(net, loss, metrics=metrics)
     model.eval(eval_dataset)
+    
