@@ -52,6 +52,7 @@
 #include "pre_activate/ascend/ir_fusion/batchnorm_to_bninfer.h"
 #include "pre_activate/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "pre_activate/ascend/ir_fusion/confusion_mul_grad_fusion.h"
+#include "pre_activate/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -98,6 +99,9 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV2>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond1>());
