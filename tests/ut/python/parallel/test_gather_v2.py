@@ -67,8 +67,8 @@ def test_gatherv2_semi_auto0():
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
 
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y)
 
 
@@ -79,8 +79,8 @@ def test_gatherv2_semi_auto1():
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
 
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y)
 
 
@@ -91,8 +91,8 @@ def test_gatherv2_semi_auto2():
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
 
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y)
 
 
@@ -103,7 +103,7 @@ def test_gatherv2_semi_auto3():
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
     net.set_auto_parallel()
 
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y)
 
