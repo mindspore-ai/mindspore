@@ -374,7 +374,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
     p_actions = GePipeline();
   }
 
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, p_actions);
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
 
   // get the parameters items and add the value to args_spec
   abstract::AbstractBasePtrList args_spec;
@@ -406,6 +406,22 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
 
   MS_LOG(INFO) << "End ExecutorPy compile!";
   return true;
+}
+
+std::vector<ActionItem> ExecutorPy::FilterActions(const std::vector<ActionItem> &actions, const std::string &phase) {
+  // phase does not contain 'export_onnx'
+  if (GetPhasePrefix(phase).find("export_onnx") == std::string::npos) {
+    return actions;
+  }
+  MS_LOG(INFO) << "Phase is '" << phase << "', filter out actions after stage 'validate'";
+  std::vector<ActionItem> filtered_actions;
+  for (const auto &item : actions) {
+    filtered_actions.emplace_back(item);
+    if (item.first == "validate") {
+      break;
+    }
+  }
+  return filtered_actions;
 }
 
 void ExecutorPy::ReleaseResource(const py::object &phase) {

@@ -100,6 +100,9 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
   bool ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const;
   void GetGeBackendPolicy() const;
+  // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
+  // 'validate' stage
+  static std::vector<ActionItem> FilterActions(const std::vector<ActionItem> &actions, const std::string &phase);
 
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<ExecutorPy> executor_;

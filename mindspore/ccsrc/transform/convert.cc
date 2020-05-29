@@ -640,7 +640,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
       MS_LOG(WARNING) << name << " is not in params, and create a new node.";
-      ParameterPtr param = anf_graph_->add_parameter();
+      ParameterPtr param = std::make_shared<Parameter>(nullptr);
       name = name + "_temp";
       param->set_name(name);
       (void)ConvertParameter(param);
