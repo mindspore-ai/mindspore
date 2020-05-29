@@ -19,8 +19,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import save_and_check_md5, visualize, diff_mse, \
+    config_get_set_seed, config_get_set_num_parallel_workers
+
+GENERATE_GOLDEN = False
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -37,7 +42,7 @@ def v_flip(image):
     return image
 
 
-def visualize(image_de_random_vertical, image_pil_random_vertical, mse, image_original):
+def visualize_with_mse(image_de_random_vertical, image_pil_random_vertical, mse, image_original):
     """
     visualizes the image using DE op and Numpy op
     """
@@ -61,14 +66,14 @@ def visualize(image_de_random_vertical, image_pil_random_vertical, mse, image_or
 
 def test_random_vertical_op():
     """
-    Test random_vertical
+    Test random_vertical with default probability
     """
     logger.info("Test random_vertical")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    random_vertical_op = vision.RandomVerticalFlip()
+    decode_op = c_vision.Decode()
+    random_vertical_op = c_vision.RandomVerticalFlip()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_vertical_op)
 
@@ -92,9 +97,139 @@ def test_random_vertical_op():
         mse = np.sum(np.power(diff, 2))
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         # Uncomment below line if you want to visualize images
-        # visualize(image_v_flipped, image_v_flipped_2, mse, image)
+        # visualize_with_mse(image_v_flipped, image_v_flipped_2, mse, image)
         num_iter += 1
+
+def test_random_vertical_valid_prob_c():
+    """
+    Test RandomVerticalFlip op with c_transforms: valid non-default input, expect to pass
+    """
+    logger.info("test_random_vertical_valid_prob_c")
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    random_horizontal_op = c_vision.RandomVerticalFlip(0.8)
+    data = data.map(input_columns=["image"], operations=decode_op)
+    data = data.map(input_columns=["image"], operations=random_horizontal_op)
+
+    filename = "random_vertical_01_c_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+def test_random_vertical_valid_prob_py():
+    """
+    Test RandomVerticalFlip op with py_transforms: valid non-default input, expect to pass
+    """
+    logger.info("test_random_vertical_valid_prob_py")
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms = [
+        py_vision.Decode(),
+        py_vision.RandomVerticalFlip(0.8),
+        py_vision.ToTensor()
+    ]
+    transform = py_vision.ComposeOp(transforms)
+    data = data.map(input_columns=["image"], operations=transform())
+
+    filename = "random_vertical_01_py_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+def test_random_vertical_invalid_prob_c():
+    """
+    Test RandomVerticalFlip op in c_transforms: invalid input, expect to raise error
+    """
+    logger.info("test_random_vertical_invalid_prob_c")
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    try:
+        # Note: Valid range of prob should be [0.0, 1.0]
+        random_horizontal_op = c_vision.RandomVerticalFlip(1.5)
+        data = data.map(input_columns=["image"], operations=decode_op)
+        data = data.map(input_columns=["image"], operations=random_horizontal_op)
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Input is not" in str(e)
+
+def test_random_vertical_invalid_prob_py():
+    """
+    Test RandomVerticalFlip op in py_transforms: invalid input, expect to raise error
+    """
+    logger.info("test_random_vertical_invalid_prob_py")
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    try:
+        transforms = [
+            py_vision.Decode(),
+            # Note: Valid range of prob should be [0.0, 1.0]
+            py_vision.RandomVerticalFlip(1.5),
+            py_vision.ToTensor()
+        ]
+        transform = py_vision.ComposeOp(transforms)
+        data = data.map(input_columns=["image"], operations=transform())
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Input is not" in str(e)
+
+def test_random_vertical_comp(plot=False):
+    """
+    Test test_random_vertical_flip and compare between python and c image augmentation ops
+    """
+    logger.info("test_random_vertical_comp")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    # Note: The image must be flipped if prob is set to be 1
+    random_horizontal_op = c_vision.RandomVerticalFlip(1)
+    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(input_columns=["image"], operations=random_horizontal_op)
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms = [
+        py_vision.Decode(),
+        # Note: The image must be flipped if prob is set to be 1
+        py_vision.RandomVerticalFlip(1),
+        py_vision.ToTensor()
+    ]
+    transform = py_vision.ComposeOp(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform())
+
+    images_list_c = []
+    images_list_py = []
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        image_c = item1["image"]
+        image_py = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        images_list_c.append(image_c)
+        images_list_py.append(image_py)
+
+        # Check if the output images are the same
+        mse = diff_mse(image_c, image_py)
+        assert mse < 0.001
+    if plot:
+        visualize(images_list_c, images_list_py)
 
 
 if __name__ == "__main__":
     test_random_vertical_op()
+    test_random_vertical_valid_prob_c()
+    test_random_vertical_valid_prob_py()
+    test_random_vertical_invalid_prob_c()
+    test_random_vertical_invalid_prob_py()
+    test_random_vertical_comp(True)
