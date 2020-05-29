@@ -115,7 +115,7 @@ class FinalVM {
   void InstPushPrim(const VectorRef &args);
   void InstSwitchReturn(const VectorRef &args);
   void set_insts(const InstSet &value) { insts_ = value; }
-  BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &args);
+  BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &arg);
 
  protected:
   BaseRef Ref(int i);
@@ -129,6 +129,7 @@ class FinalVM {
   void PushStatus(bool is_switch_call);
   bool PopStatus();
   void DoJmp(const BaseRef &jmp);
+  void SyncData(const py::object &args);
   void MergeJmpArgs(const BaseRef &jmp, const BaseRef &c);
   BaseRef MergeArgs(const BaseRef &first, const BaseRef &second);
 
