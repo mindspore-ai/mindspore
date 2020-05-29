@@ -29,7 +29,7 @@ from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
-from mindspore.model_zoo.Bert_NEZHA.bert_model import BertModel
+from .bert_model import BertModel
 from .bert_for_pre_training import clip_grad
 from .CRF import CRF
 
@@ -131,6 +131,98 @@ class BertFinetuneCell(nn.Cell):
         ret = (loss, cond)
         return F.depend(ret, succ)
 
+class BertSquadCell(nn.Cell):
+    """
+    specifically defined for finetuning where only four inputs tensor are needed.
+    """
+    def __init__(self, network, optimizer, scale_update_cell=None):
+        super(BertSquadCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.weights = ParameterTuple(network.trainable_params())
+        self.optimizer = optimizer
+        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.reducer_flag = False
+        self.allreduce = P.AllReduce()
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+            self.reducer_flag = True
+        self.grad_reducer = None
+        if self.reducer_flag:
+            mean = context.get_auto_parallel_context("mirror_mean")
+            degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
+        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.cast = P.Cast()
+        self.alloc_status = P.NPUAllocFloatStatus()
+        self.get_status = P.NPUGetFloatStatus()
+        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
+        self.base = Tensor(1, mstype.float32)
+        self.less_equal = P.LessEqual()
+        self.hyper_map = C.HyperMap()
+        self.loss_scale = None
+        self.loss_scaling_manager = scale_update_cell
+        if scale_update_cell:
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
+                                        name="loss_scale")
+    def construct(self,
+                  input_ids,
+                  input_mask,
+                  token_type_id,
+                  start_position,
+                  end_position,
+                  unique_id,
+                  is_impossible,
+                  sens=None):
+        weights = self.weights
+        init = self.alloc_status()
+        loss = self.network(input_ids,
+                            input_mask,
+                            token_type_id,
+                            start_position,
+                            end_position,
+                            unique_id,
+                            is_impossible)
+        if sens is None:
+            scaling_sens = self.loss_scale
+        else:
+            scaling_sens = sens
+        grads = self.grad(self.network, weights)(input_ids,
+                                                 input_mask,
+                                                 token_type_id,
+                                                 start_position,
+                                                 end_position,
+                                                 unique_id,
+                                                 is_impossible,
+                                                 self.cast(scaling_sens,
+                                                           mstype.float32))
+        clear_before_grad = self.clear_before_grad(init)
+        F.control_depend(loss, init)
+        self.depend_parameter_use(clear_before_grad, scaling_sens)
+        grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        if self.reducer_flag:
+            grads = self.grad_reducer(grads)
+        flag = self.get_status(init)
+        flag_sum = self.reduce_sum(init, (0,))
+        if self.is_distributed:
+            flag_reduce = self.allreduce(flag_sum)
+            cond = self.less_equal(self.base, flag_reduce)
+        else:
+            cond = self.less_equal(self.base, flag_sum)
+        F.control_depend(grads, flag)
+        F.control_depend(flag, flag_sum)
+        overflow = cond
+        if sens is None:
+            overflow = self.loss_scaling_manager(self.loss_scale, cond)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, cond)
+        return F.depend(ret, succ)
+
 class BertCLSModel(nn.Cell):
     """
     This class is responsible for classification task evaluation, i.e. XNLI(num_labels=3),
@@ -159,6 +251,30 @@ class BertCLSModel(nn.Cell):
         log_probs = self.log_softmax(logits)
         return log_probs
 
+class BertSquadModel(nn.Cell):
+    '''
+    This class is responsible for SQuAD
+    '''
+    def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
+        super(BertSquadModel, self).__init__()
+        self.bert = BertModel(config, is_training, use_one_hot_embeddings)
+        self.weight_init = TruncatedNormal(config.initializer_range)
+        self.dense1 = nn.Dense(config.hidden_size, num_labels, weight_init=self.weight_init,
+                               has_bias=True).to_float(config.compute_type)
+        self.num_labels = num_labels
+        self.dtype = config.dtype
+        self.log_softmax = P.LogSoftmax(axis=1)
+        self.is_training = is_training
+
+    def construct(self, input_ids, input_mask, token_type_id):
+        sequence_output, _, _ = self.bert(input_ids, token_type_id, input_mask)
+        batch_size, seq_length, hidden_size = P.Shape()(sequence_output)
+        sequence = P.Reshape()(sequence_output, (-1, hidden_size))
+        logits = self.dense1(sequence)
+        logits = P.Cast()(logits, self.dtype)
+        logits = P.Reshape()(logits, (batch_size, seq_length, self.num_labels))
+        logits = self.log_softmax(logits)
+        return logits
 
 class BertNERModel(nn.Cell):
     """
@@ -261,3 +377,36 @@ class BertNER(nn.Cell):
         else:
             loss = self.loss(logits, label_ids, self.num_labels)
         return loss
+
+class BertSquad(nn.Cell):
+    '''
+    Train interface for SQuAD finetuning task.
+    '''
+    def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
+        super(BertSquad, self).__init__()
+        self.bert = BertSquadModel(config, is_training, num_labels, dropout_prob, use_one_hot_embeddings)
+        self.loss = CrossEntropyCalculation(is_training)
+        self.num_labels = num_labels
+        self.seq_length = config.seq_length
+        self.is_training = is_training
+        self.total_num = Parameter(Tensor([0], mstype.float32), name='total_num')
+        self.start_num = Parameter(Tensor([0], mstype.float32), name='start_num')
+        self.end_num = Parameter(Tensor([0], mstype.float32), name='end_num')
+        self.sum = P.ReduceSum()
+        self.equal = P.Equal()
+        self.argmax = P.ArgMaxWithValue(axis=1)
+        self.squeeze = P.Squeeze(axis=-1)
+
+    def construct(self, input_ids, input_mask, token_type_id, start_position, end_position, unique_id, is_impossible):
+        logits = self.bert(input_ids, input_mask, token_type_id)
+        if self.is_training:
+            unstacked_logits_0 = self.squeeze(logits[:, :, 0:1])
+            unstacked_logits_1 = self.squeeze(logits[:, :, 1:2])
+            start_loss = self.loss(unstacked_logits_0, start_position, self.seq_length)
+            end_loss = self.loss(unstacked_logits_1, end_position, self.seq_length)
+            total_loss = (start_loss + end_loss) / 2.0
+        else:
+            start_logits = self.squeeze(logits[:, :, 0:1])
+            end_logits = self.squeeze(logits[:, :, 1:2])
+            total_loss = (unique_id, start_logits, end_logits)
+        return total_loss

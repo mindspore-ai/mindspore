@@ -5,7 +5,7 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 - Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
-- Download the CLUE dataset for fine-tuning and evaluation.
+- Download the CLUE/SQuAD v1.1 dataset for fine-tuning and evaluation.
 >  Notes:
    If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
 
@@ -36,10 +36,19 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 ### Evaluation
 - Set options in `evaluation_config.py`. Make sure the 'data_file', 'schema_file' and 'finetune_ckpt' are set to your own path.
 
-- Run `evaluation.py` for evaluation of BERT-base and BERT-NEZHA model.
+- NER: Run `evaluation.py` for evaluation of BERT-base and BERT-NEZHA model.
 
     ```bash
     python evaluation.py
+    ```
+- SQuAD v1.1: Run `squadeval.py` and  `SQuAD_postprocess.py` for evaluation of BERT-base and BERT-NEZHA model.
+
+    ```bash
+    python squadeval.py
+    ```
+
+    ```bash
+    python SQuAD_postprocess.py
     ```
 
 ## Usage
@@ -80,7 +89,7 @@ config.py:
     optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
 finetune_config.py:
-    task                            task type: NER | XNLI | LCQMC | SENTIi | OTHERS
+    task                            task type: NER | SQUAD | OTHERS
     num_labels                      number of labels to do classification
     data_file                       dataset file to load: PATH, default is "/your/path/train.tfrecord"
     schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"
@@ -92,7 +101,7 @@ finetune_config.py:
     optimizer                       optimizer used in fine-tune network: AdamWeigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
 evaluation_config.py:
-    task                            task type: NER | XNLI | LCQMC | SENTI | OTHERS
+    task                            task type: NER | SQUAD | OTHERS
     num_labels                      number of labels to do classsification
     data_file                       dataset file to load: PATH, default is "/your/path/evaluation.tfrecord"
     schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"

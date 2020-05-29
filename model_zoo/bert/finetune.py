@@ -18,10 +18,9 @@ Bert finetune script.
 '''
 
 import os
-from src.utils import BertFinetuneCell, BertCLS, BertNER
+from src.utils import BertFinetuneCell, BertCLS, BertNER, BertSquad, BertSquadCell
 from src.finetune_config import cfg, bert_net_cfg, tag_to_index
 import mindspore.common.dtype as mstype
-import mindspore.communication.management as D
 from mindspore import context
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
@@ -58,8 +57,6 @@ def get_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     '''
     get dataset
     '''
-    _ = distribute_file
-
     ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask",
                                                                             "segment_ids", "label_ids"])
     type_cast_op = C.TypeCast(mstype.int32)
@@ -77,10 +74,29 @@ def get_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     ds = ds.batch(batch_size, drop_remainder=True)
     return ds
 
+def get_squad_dataset(batch_size=1, repeat_count=1, distribute_file=''):
+    '''
+    get SQuAD dataset
+    '''
+    ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask", "segment_ids",
+                                                                            "start_positions", "end_positions",
+                                                                            "unique_ids", "is_impossible"])
+    type_cast_op = C.TypeCast(mstype.int32)
+    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
+    ds = ds.map(input_columns="start_positions", operations=type_cast_op)
+    ds = ds.map(input_columns="end_positions", operations=type_cast_op)
+    ds = ds.repeat(repeat_count)
+
+    buffer_size = 960
+    ds = ds.shuffle(buffer_size=buffer_size)
+    ds = ds.batch(batch_size, drop_remainder=True)
+    return ds
+
 def test_train():
     '''
     finetune function
-    pytest -s finetune.py::test_train
     '''
     devid = int(os.getenv('DEVICE_ID'))
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=devid)
@@ -92,9 +108,14 @@ def test_train():
                                   tag_to_index=tag_to_index, dropout_prob=0.1)
         else:
             netwithloss = BertNER(bert_net_cfg, True, num_labels=cfg.num_labels, dropout_prob=0.1)
+    elif cfg.task == 'SQUAD':
+        netwithloss = BertSquad(bert_net_cfg, True, 2, dropout_prob=0.1)
     else:
         netwithloss = BertCLS(bert_net_cfg, True, num_labels=cfg.num_labels, dropout_prob=0.1)
-    dataset = get_dataset(bert_net_cfg.batch_size, cfg.epoch_num)
+    if cfg.task == 'SQUAD':
+        dataset = get_squad_dataset(bert_net_cfg.batch_size, cfg.epoch_num)
+    else:
+        dataset = get_dataset(bert_net_cfg.batch_size, cfg.epoch_num)
     # optimizer
     steps_per_epoch = dataset.get_dataset_size()
     if cfg.optimizer == 'AdamWeightDecayDynamicLR':
@@ -103,13 +124,14 @@ def test_train():
                                              learning_rate=cfg.AdamWeightDecayDynamicLR.learning_rate,
                                              end_learning_rate=cfg.AdamWeightDecayDynamicLR.end_learning_rate,
                                              power=cfg.AdamWeightDecayDynamicLR.power,
-                                             warmup_steps=steps_per_epoch,
+                                             warmup_steps=int(steps_per_epoch * cfg.epoch_num * 0.1),
                                              weight_decay=cfg.AdamWeightDecayDynamicLR.weight_decay,
                                              eps=cfg.AdamWeightDecayDynamicLR.eps)
     elif cfg.optimizer == 'Lamb':
         optimizer = Lamb(netwithloss.trainable_params(), decay_steps=steps_per_epoch * cfg.epoch_num,
                          start_learning_rate=cfg.Lamb.start_learning_rate, end_learning_rate=cfg.Lamb.end_learning_rate,
-                         power=cfg.Lamb.power, warmup_steps=steps_per_epoch, decay_filter=cfg.Lamb.decay_filter)
+                         power=cfg.Lamb.power, weight_decay=cfg.Lamb.weight_decay,
+                         warmup_steps=int(steps_per_epoch * cfg.epoch_num * 0.1), decay_filter=cfg.Lamb.decay_filter)
     elif cfg.optimizer == 'Momentum':
         optimizer = Momentum(netwithloss.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
                              momentum=cfg.Momentum.momentum)
@@ -122,10 +144,12 @@ def test_train():
     load_param_into_net(netwithloss, param_dict)
 
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=2**32, scale_factor=2, scale_window=1000)
-    netwithgrads = BertFinetuneCell(netwithloss, optimizer=optimizer, scale_update_cell=update_cell)
+    if cfg.task == 'SQUAD':
+        netwithgrads = BertSquadCell(netwithloss, optimizer=optimizer, scale_update_cell=update_cell)
+    else:
+        netwithgrads = BertFinetuneCell(netwithloss, optimizer=optimizer, scale_update_cell=update_cell)
     model = Model(netwithgrads)
     model.train(cfg.epoch_num, dataset, callbacks=[LossCallBack(), ckpoint_cb])
-    D.release()
 
 if __name__ == "__main__":
     test_train()
