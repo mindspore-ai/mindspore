@@ -29,7 +29,7 @@ class ParamValuePy : public ParamValue {
  public:
   ParamValuePy() : value_(py::none()) {}
   explicit ParamValuePy(py::object value) : value_(value) {}
-  virtual ~ParamValuePy() = default;
+  ~ParamValuePy() override = default;
 
   py::object value() { return value_; }
   void set_value(const py::object &obj) { value_ = obj; }

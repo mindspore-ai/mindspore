@@ -603,8 +603,9 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
 }
 
 BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
-  py::tuple py_args = py::tuple(args.size());
   MS_LOG(DEBUG) << "input for operation:";
+  std::size_t args_size = args.size();
+  py::tuple py_args = py::tuple(args_size);
   size_t i = 0;
   for (auto &arg : args) {
     py_args[i] = BaseRefToPyData(arg);
@@ -622,7 +623,8 @@ BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
   if (is_cell) {
     std::string cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
     if (_hook_grad.find(cell_id) != _hook_grad.end()) {
-      py::tuple hook_args = py::tuple(3);
+      std::size_t hook_args_size = 3;
+      py::tuple hook_args = py::tuple(hook_args_size);
       hook_args[0] = cell_id;
       hook_args[1] = py::make_tuple(_hook_grad[cell_id]);
       hook_args[2] = py::make_tuple(py_args[2]);

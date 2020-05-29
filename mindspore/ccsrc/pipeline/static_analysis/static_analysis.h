@@ -40,7 +40,6 @@
 
 namespace mindspore {
 namespace abstract {
-
 // define attribute value map
 using AttrValueMap = std::unordered_map<std::string, ValuePtr>;
 using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
