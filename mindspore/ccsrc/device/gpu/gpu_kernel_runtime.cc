@@ -104,10 +104,15 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     }
     CHECK_OP_RET_WITH_EXCEPT(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
+
   // destroy remaining memory swap events and free host memory
-  if (mem_swap_manager_->trigger_swap()) {
-    mem_swap_manager_->ClearSwapQueue();
-    mem_swap_manager_->ReleaseHostPinnedMem();
+  for (auto &item : mem_swap_map_) {
+    auto &mem_swap_manager = item.second;
+    MS_EXCEPTION_IF_NULL(mem_swap_manager);
+    if (mem_swap_manager->trigger_swap()) {
+      mem_swap_manager->ClearSwapQueue();
+      mem_swap_manager->ReleaseHostPinnedMem();
+    }
   }
 
   GPUDeviceManager::GetInstance().ReleaseDevice();
@@ -146,6 +151,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
     iter = mem_swap_map_.emplace(graph, std::make_shared<MemSwapManager>(gpu_mem_copy_manager)).first;
   }
   mem_swap_manager_ = iter->second;
+  MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   if (is_enable_dynamic_mem && !is_enable_pynative_infer) {
