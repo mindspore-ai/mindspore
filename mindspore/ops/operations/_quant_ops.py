@@ -88,7 +88,7 @@ class FakeQuantWithMinMax(PrimitiveWithInfer):
                                 outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
-        validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
         validator.check_integer("min rank", len(min_shape), 1, Rel.EQ, self.name)
         return x_shape
@@ -191,7 +191,7 @@ class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
-        validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check_integer("min shape[0]", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
         validator.check_integer("max shape[0]", max_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
         return x_shape
@@ -791,7 +791,7 @@ class FakeQuantWithMinMaxUpdate(PrimitiveWithInfer):
                                 outputs=['min_up', 'max_up'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
-        validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
         validator.check_integer("min rank", len(min_shape), 1, Rel.EQ, self.name)
         return min_shape, max_shape
