@@ -58,7 +58,7 @@ const std::string GetOpName(const ValuePtr &function) {
 }
 
 void ProcessDefault(const std::string &func_name, const AbstractBasePtrList &args_spec_list,
-                    const std::vector<Signature> &signature, bool has_var, std::vector<AnfNodePtr> *op_inputs) {
+                    const std::vector<Signature> &signature, bool has_var, std::vector<AnfNodePtr> *const op_inputs) {
   std::size_t sig_size = signature.size();
   auto positional_size = sig_size;
   if (has_var) {
@@ -206,7 +206,8 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
 }
 
 void DoAutoCast(const std::vector<Signature> &signature, const abstract::AbstractBasePtrList &args_spec_list,
-                const FuncGraphPtr &graph, std::vector<AnfNodePtr> *op_inputs, const std::set<size_t> &write_indexs) {
+                const FuncGraphPtr &graph, std::vector<AnfNodePtr> *const op_inputs,
+                const std::set<size_t> &write_indexs) {
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature &sig) { return sig.dtype; });
