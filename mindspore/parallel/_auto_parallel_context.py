@@ -400,6 +400,23 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_global_rank_is_set()
 
+    def set_enable_parallel_optimizer(self, enable_parallel_optimizer):
+        """
+        Set enable/disable parallel optimizer.
+
+        Args:
+            set_enable_parallel_optimizer (bool): Enable/disable parallel optimizer.
+        """
+        self.check_context_handle()
+        if not isinstance(enable_parallel_optimizer, bool):
+            raise TypeError('enable_parallel_optimizer is invalid type')
+        self._context_handle.set_enable_parallel_optimizer(enable_parallel_optimizer)
+
+    def get_enable_parallel_optimizer(self):
+        """Get parallel optimizer flag."""
+        self.check_context_handle()
+        return self._context_handle.get_enable_parallel_optimizer()
+
     def reset(self):
         """Reset all settings."""
         self.check_context_handle()
@@ -433,7 +450,8 @@ _set_auto_parallel_context_func_map = {
     "parameter_broadcast": auto_parallel_context().set_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().set_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
-    "full_batch": auto_parallel_context().set_full_batch}
+    "full_batch": auto_parallel_context().set_full_batch,
+    "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer}
 
 
 _get_auto_parallel_context_func_map = {
@@ -447,13 +465,15 @@ _get_auto_parallel_context_func_map = {
     "parameter_broadcast": auto_parallel_context().get_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().get_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file,
-    "full_batch": auto_parallel_context().get_full_batch}
+    "full_batch": auto_parallel_context().get_full_batch,
+    "enable_parallel_optimizer": auto_parallel_context().get_enable_parallel_optimizer}
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool,
                  loss_repeated_mean=bool, parallel_mode=str, auto_parallel_search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool)
+                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool)
+
 def _set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -493,6 +513,7 @@ def _set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
+        enable_parallel_optimizer (bool): Enable using optimizer segmentation or noe. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -535,5 +556,6 @@ def _reset_auto_parallel_context():
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: ""
     - strategy_ckpt_save_file: ""
+    - enable_parallel_optimizer: False
     """
     auto_parallel_context().reset()

@@ -327,6 +327,9 @@ TEST_F(TestStepParallel, CreatOpInstance) {
         } else if (name == "instance_name") {
           parse::ConvertData(py::cast<py::object>(item.second), &converted_ret);
           ASSERT_EQ(converted_ret->ToString(), "test");
+        } else if (name == "index") {
+          parse::ConvertData(py::cast<py::object>(item.second), &converted_ret);
+          ASSERT_EQ(converted_ret->ToString(), "0");
         } else {
           MS_LOG(EXCEPTION) << "Test failed";
         }

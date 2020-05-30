@@ -22,11 +22,14 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
+from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from mindspore.common.tensor import Tensor
 from mindspore import log as logger
+from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.train.parallel_utils import ParallelMode
 
 __all__ = ['Optimizer']
 
@@ -154,6 +157,27 @@ class Optimizer(Cell):
         self.exec_weight_decay = any(self.decay_flags)
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
+
+        use_parallel = auto_parallel_context().get_enable_parallel_optimizer()
+        self.use_parallel = use_parallel
+        if use_parallel:
+            if self.cls_name not in ["Lamb", "AdamWeightDecayDynamicLR", "AdamWeightDecay"]:
+                raise RuntimeError("Optimizer segmentation does not support optimizer {}".format(self.cls_name))
+            if _get_parallel_mode() not in [ParallelMode.HYBRID_PARALLEL, ParallelMode.DATA_PARALLEL,
+                                            ParallelMode.AUTO_PARALLEL]:
+                raise RuntimeError("Optimizer segmentation does not support parallel mode {}".format
+                                   (_get_parallel_mode()))
+            self.dev_num = _get_device_num()
+            if self.dev_num > self.param_length:
+                raise RuntimeError("Optimizer segmentation can not be applied when the number of parameters {} is"
+                                   " less than the number of devices {}".format(self.param_length, self.dev_num))
+            self.param_rank = self._get_parameter_group_id()
+            self.optim_filter = tuple(map(lambda x: x == _get_global_rank(), self.param_rank))
+            self.param_names = []
+            for param in self.parameters:
+                self.param_names.append(param.name)
+        else:
+            self.optim_filter = (True,) * self.param_length
 
     def decay_weight(self, gradients):
         """
@@ -383,6 +407,51 @@ class Optimizer(Cell):
             else:
                 lr = self.learning_rate
         return lr
+
+    def _get_parameter_group_id(self):
+        """
+        Get the parameter partition group id, which is less than the number of devices.
+
+        Returns:
+            tuple, the group id tuple of parameters.
+        """
+        rank_list = ()
+        count = 0
+        for _ in range(self.param_length):
+            rank_list = rank_list + (count,)
+            count = count + 1
+            if count == self.dev_num:
+                count = 0
+        return rank_list
+
+    def broadcast_params(self, optim_result):
+        """
+        Apply Broadcast operations in the sequential order of parameter groups.
+
+        Returns:
+             bool, the status flag.
+        """
+        param_group = []
+        key_group = []
+        for _ in range(self.dev_num):
+            param_group.append(F.make_tuple())
+            key_group.append(F.make_tuple())
+        for i in range(self.param_length):
+            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (optim_result[i],)
+            key = P.MakeRefKey(self.param_names[i])()
+            key_group[self.param_rank[i]] = key_group[self.param_rank[i]] + (key,)
+        new_param_group = []
+        for root in range(self.dev_num):
+            ops = P.Broadcast(root)
+            next_params = ops(param_group[root])
+            new_param_group.append(next_params)
+            for i in range(F.tuple_len(next_params)):
+                F.assign(key_group[root][i], next_params[i])
+        status = True
+        for i in range(self.dev_num - 1):
+            status = F.control_depend(new_param_group[i][0], new_param_group[i+1])
+
+        return status
 
     def construct(self, *hyper_params):
         raise NotImplementedError

@@ -62,6 +62,7 @@ void ParallelContext::Reset() {
   enable_all_reduce_fusion_ = false;
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
+  enable_parallel_optimizer_ = false;
 }
 
 void ParallelContext::set_device_num(int32_t device_num) {
