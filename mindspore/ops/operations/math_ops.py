@@ -636,7 +636,7 @@ class CumSum(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - The input tensor to accumulate.
-        - **axis**  (int) - The axis to accumulate the tensor's value.
+        - **axis**  (int) - The axis to accumulate the tensor's value. Only constant value is allowed.
 
     Outputs:
         Tensor, the shape of the output tensor is consistent with the input tensor's.
