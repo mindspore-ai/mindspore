@@ -39,10 +39,10 @@ class MindDataSet(MindData):
         if self._size < self._iter_num:
             raise StopIteration
         self._iter_num += 1
-        next = []
-        for shape, type in zip(self._output_shapes, self._np_types):
-            next.append(Tensor(np.ones(shape).astype(type)))
-        return tuple(next)
+        next_ = []
+        for shape, type_ in zip(self._output_shapes, self._np_types):
+            next_.append(Tensor(np.ones(shape).astype(type_)))
+        return tuple(next_)
 
 
 class Net(nn.Cell):
@@ -53,8 +53,8 @@ class Net(nn.Cell):
         self.matmul = P.MatMul()
         self.add = P.TensorAdd()
 
-    def construct(self, input):
-        output = self.add(self.matmul(input, self.weight), self.bias)
+    def construct(self, input_):
+        output = self.add(self.matmul(input_, self.weight), self.bias)
         return output
 
 
@@ -67,9 +67,9 @@ class NetFP16(nn.Cell):
         self.add = P.TensorAdd()
         self.cast = P.Cast()
 
-    def construct(self, input):
+    def construct(self, input_):
         output = self.cast(
-            self.add(self.matmul(self.cast(input, mstype.float16), self.cast(self.weight, mstype.float16)),
+            self.add(self.matmul(self.cast(input_, mstype.float16), self.cast(self.weight, mstype.float16)),
                      self.cast(self.bias, mstype.float16)), mstype.float32)
         return output
 
@@ -107,5 +107,5 @@ def test_auto_parallel_flag():
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics=None, loss_scale_manager=scale_manager)
     model.train(2, dataset)
-    assert(model._train_network.get_flags()["auto_parallel"] == True)
+    assert model._train_network.get_flags()["auto_parallel"]
     context.reset_auto_parallel_context()
