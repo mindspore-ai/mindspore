@@ -41,7 +41,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_row, in_col, in_depth] and
-          data type is int8, float16, uint8.
+          data type is number.
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x',
@@ -94,5 +94,5 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
     def infer_dtype(self, input_x):
         """infer dtype"""
-        validator.check_tensor_type_same({"input_x": input_x}, (mstype.int8, mstype.float16, mstype.float32), self.name)
+        validator.check_tensor_type_same({"input_x": input_x}, mstype.number_type, self.name)
         return input_x

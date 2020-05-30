@@ -482,7 +482,7 @@ class Unfold(Cell):
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
-          data type is int8, float16, uint8.
+          data type is number.
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x',
