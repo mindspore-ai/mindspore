@@ -27,6 +27,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 import mindspore.context as context
 
+
 __all__ = [
     'FakeQuantWithMinMax',
     'DepthwiseConv2dBatchNormQuant',
@@ -130,7 +131,6 @@ class FakeQuantWithMinMaxD(Cell):
         >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = fake_quant(input_x)
     """
-
     def __init__(self,
                  min_init=-6,
                  max_init=6,
@@ -485,9 +485,9 @@ class DepthwiseConv2dBatchNormQuant(Cell):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(
-            self.in_channels, self.out_channels, self.kernel_size, self.stride,
-            self.pad_mode, self.padding, self.dilation, self.group,
-            self.fake, self.freeze_bn, self.momentum, self.quant_delay)
+                self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                self.pad_mode, self.padding, self.dilation, self.group,
+                self.fake, self.freeze_bn, self.momentum, self.quant_delay)
         return s
 
     def construct(self, x):
@@ -662,9 +662,9 @@ class Conv2dBatchNormQuant(Cell):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(
-            self.in_channels, self.out_channels, self.kernel_size, self.stride,
-            self.pad_mode, self.padding, self.dilation, self.group,
-            self.fake, self.freeze_bn, self.momentum, self.quant_delay)
+                self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                self.pad_mode, self.padding, self.dilation, self.group,
+                self.fake, self.freeze_bn, self.momentum, self.quant_delay)
         return s
 
     def construct(self, x):
@@ -807,9 +807,9 @@ class Conv2dQuant(Cell):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'has_bias={}, quant_delay={}'.format(
-            self.in_channels, self.out_channels, self.kernel_size, self.stride,
-            self.pad_mode, self.padding, self.dilation, self.group,
-            self.has_bias, self.quant_delay)
+                self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                self.pad_mode, self.padding, self.dilation, self.group,
+                self.has_bias, self.quant_delay)
         return s
 
 
