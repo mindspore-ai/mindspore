@@ -54,7 +54,7 @@ KernelRuntime *KernelRuntimeManager::GetSingleKernelRuntime(const std::string &d
     return runtime_iter->second.get();
   } else if (runtime_map_.size() > 0) {
     auto cur_runtime_key = runtime_map_.begin()->first;
-    if (!cur_runtime_key.empty()) {
+    if (cur_runtime_key.rfind('_') != std::string::npos) {
       auto cur_device_id = cur_runtime_key.substr(cur_runtime_key.rfind('_') + 1);
       MS_LOG(EXCEPTION) << "Can't change device id in runtime, already set device id: " << cur_device_id
                         << ", set device id: " << device_id << " failed";
