@@ -121,7 +121,7 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
   } else if (value->isa<None>()) {
     ret = py::none();
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported convert value: " << value->ToString() << " to a PyData.";
+    MS_LOG(INFO) << "Unsupported convert value: " << value->ToString() << " to a PyData.";
   }
   return ret;
 }

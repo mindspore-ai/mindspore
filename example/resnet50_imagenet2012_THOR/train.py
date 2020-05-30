@@ -46,7 +46,7 @@ parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path
 args_opt = parser.parse_args()
 device_id = int(os.getenv('DEVICE_ID'))
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
 
 
 def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
