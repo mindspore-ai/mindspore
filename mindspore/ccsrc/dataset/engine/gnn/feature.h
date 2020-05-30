@@ -33,6 +33,8 @@ class Feature {
   // @param std::shared_ptr<Tensor> value - feature value
   Feature(FeatureType type_name, std::shared_ptr<Tensor> value);
 
+  ~Feature() = default;
+
   // Get feature value
   // @return std::shared_ptr<Tensor> *out_value - feature value
   const std::shared_ptr<Tensor> Value() const { return value_; }
