@@ -34,6 +34,9 @@ GRADIENT_CLIP_VALUE = 1.0
 
 _nn_clip_by_norm = nn.ClipByNorm()
 clip_grad = C.MultitypeFuncGraph("clip_grad")
+
+
+# pylint: disable=consider-using-in
 @clip_grad.register("Number", "Number", "Tensor")
 def _clip_grad(clip_type, clip_value, grad):
     """
@@ -56,6 +59,7 @@ def _clip_grad(clip_type, clip_value, grad):
     else:
         new_grad = _nn_clip_by_norm(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
+
 
 class GetMaskedLMOutput(nn.Cell):
     """
@@ -377,6 +381,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
         self.add_flags(has_effect=True)
+
     def construct(self,
                   input_ids,
                   input_mask,

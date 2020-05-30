@@ -123,6 +123,7 @@ def sub(x, y):
     return x - y
 
 
+# pylint: disable=using-constant-test
 @ms_function
 def if_always_true(x):
     """ if_always_true """
@@ -870,6 +871,7 @@ def test_grad_refactor_14():
     assert C.grad_all(grad_refactor_14)(2, 3) == (3, 9)
 
 
+# pylint: disable=using-constant-test
 class IfDeferInline(nn.Cell):
     def __init__(self, mul_size):
         super().__init__()

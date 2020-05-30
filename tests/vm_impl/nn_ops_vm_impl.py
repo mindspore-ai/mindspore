@@ -223,6 +223,7 @@ def vm_impl_avg_pool_grad(self):
     return vm_impl
 
 
+# pylint: disable=function-redefined
 @vm_impl_getters.register(G.FusedBatchNormGrad)
 def vm_impl_fused_batch_norm_grad(self):
     """Generate vm_impl function for FusedBatchNormGrad"""
@@ -239,6 +240,7 @@ def vm_impl_fused_batch_norm_grad(self):
     return vm_impl
 
 
+# pylint: disable=function-redefined
 @vm_impl_getters.register(G.BatchNormGrad)
 def vm_impl_fused_batch_norm_grad(self):
     """Generate vm_impl function for BatchNormGrad"""

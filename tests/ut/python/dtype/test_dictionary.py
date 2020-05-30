@@ -152,7 +152,7 @@ def test_dict_set_item():
 
     x = Tensor(np.ones([2, 2, 3], np.float32))
     net = DictSetNet()
-    out = net(x)
+    _ = net(x)
 
 
 # if the dictionary item does not exist, create a new one
@@ -168,4 +168,4 @@ def test_dict_set_item_create_new():
             return my_dict
     x = Tensor(np.ones([2, 2, 3], np.float32))
     net = DictSetNet()
-    out = net(x)
+    _ = net(x)

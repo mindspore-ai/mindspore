@@ -18,9 +18,8 @@ import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import Parameter, ParameterTuple, Tensor
+from mindspore import Parameter, ParameterTuple
 from mindspore import Tensor
-from mindspore import context
 from mindspore import context
 from mindspore.common.api import ms_function
 from mindspore.ops import composite as C

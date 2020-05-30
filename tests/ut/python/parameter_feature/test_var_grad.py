@@ -39,7 +39,7 @@ def test_net_vargs_expand():
     y = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
     sens = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
     net = AddNet()
-    out = C.grad_all_with_sens(net, net.trainable_params())(x, y, sens)
+    _ = C.grad_all_with_sens(net, net.trainable_params())(x, y, sens)
 
 
 class VarNet(Cell):
@@ -111,7 +111,7 @@ def test_all_var_args_grad_with_sens():
     sens = Tensor(1.0, dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y, sens)
+    _ = grad_net(x, y, sens)
 
 
 def test_grad_list_var_args():
@@ -128,7 +128,7 @@ def test_grad_list_var_args():
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y)
+    _ = grad_net(x, y)
 
 
 def test_grad_all_var_args():
@@ -145,7 +145,7 @@ def test_grad_all_var_args():
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y)
+    _ = grad_net(x, y)
 
 
 def test_grad_all_var_args_with_sens():
@@ -163,7 +163,7 @@ def test_grad_all_var_args_with_sens():
     sens = Tensor(1.0, dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y, sens)
+    _ = grad_net(x, y, sens)
 
 
 def test_grad_var_args_with_sens():
@@ -181,7 +181,7 @@ def test_grad_var_args_with_sens():
     sens = Tensor(1.0, dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y, sens)
+    _ = grad_net(x, y, sens)
 
 
 def test_var_args_grad():
@@ -219,7 +219,7 @@ def test_var_args_grad():
     sens = Tensor(1.0, dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y, sens)
+    _ = grad_net(x, y, sens)
 
 
 def test_var_args_positional():
@@ -253,7 +253,7 @@ def test_var_args_positional():
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
-    out = grad_net(x, y)
+    _ = grad_net(x, y)
 
 
 def test_grad_within_if_else():
@@ -271,7 +271,7 @@ def test_grad_within_if_else():
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
-    sens = Tensor(1.0, dtype=mstype.float32)
+    _ = Tensor(1.0, dtype=mstype.float32)
     net = VarNet(SecondNet())
     grad_net = GradNet(net)
     out = grad_net(x, y)
@@ -316,10 +316,10 @@ def test_grad_for_concat():
             net = Concat(axis=self.axis)
             grad_net = GradNet(net)
             grad_net.set_train()
-            input_grad = grad_net(*inputs, Tensor(self.out_grad_np))
+            _ = grad_net(*inputs, Tensor(self.out_grad_np))
 
         def grad_cmp(self):
-            input_grad_mindspore = self.grad_mindspore_impl()
+            self.grad_mindspore_impl()
 
     fact = ConcatFactory(input_shape=(
         (2, 184320, 1), (2, 46080, 1), (2, 11520, 1), (2, 2880, 1), (2, 720, 1)), axis=1)

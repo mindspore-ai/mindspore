@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Summary reader."""
-import mindspore.train.summary_pb2 as summary_pb2
 import struct
+
+import mindspore.train.summary_pb2 as summary_pb2
 
 _HEADER_SIZE = 8
 _HEADER_CRC_SIZE = 4

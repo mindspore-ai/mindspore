@@ -63,33 +63,3 @@ class LeNet5(nn.Cell):
         x = self.fc2(x)
         x = self.fc3(x)
         return x
-
-"""
-def test_qat_lenet():
-    net = LeNet5()
-    net = qat.convert_quant_network(
-        net, quant_delay=0, bn_fold=False, freeze_bn=10000, weight_bits=8, act_bits=8)
-
-
-def test_qat_mobile():
-    net = MobileNetV2()
-    img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
-    net = qat.convert_quant_network(
-        net, quant_delay=0, bn_fold=False, freeze_bn=10000, weight_bits=8, act_bits=8)
-    net(img)
-
-
-def test_qat_mobile_train():
-    net = MobileNetV2(num_class=10)
-    img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
-    label = Tensor(np.ones((1, 10)).astype(np.float32))
-    net = qat.convert_quant_network(
-        net, quant_delay=0, bn_fold=False, freeze_bn=10000, weight_bits=8, act_bits=8)
-
-    loss = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
-    optimizer = nn.Momentum(net.trainable_params(),
-                            learning_rate=0.1, momentum=0.9)
-    net = nn.WithLossCell(net, loss)
-    net = nn.TrainOneStepCell(net, optimizer)
-    net(img, label)
-"""

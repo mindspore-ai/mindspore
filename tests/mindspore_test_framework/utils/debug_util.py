@@ -24,8 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 
-logging.basicConfig(level=logging.DEBUG, format=
-'[%(levelname)s] %(asctime)s %(pathname)s:%(lineno)d %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(asctime)s %(pathname)s:%(lineno)d %(message)s')
 logger = logging.getLogger(__name__)
 
 

@@ -41,10 +41,10 @@ class Func(nn.Cell):
 
     def construct(self, x, y):
         init = self.alloc_status()
-        sum = add(x, y)
+        sum_ = add(x, y)
         product = mul1(x, y)
         flag = self.get_status(init)
-        out = add2(sum, product)
+        out = add2(sum_, product)
         clear = self.clear_status(flag)
         out = F.depend(out, clear)
         return out
@@ -88,7 +88,7 @@ def test_sens():
     sens = Tensor(np.ones([3, 3]).astype(np.float32))
     net = Net()
     net.add_flags(has_effect=True)
-    out = net(x, y, sens)
+    _ = net(x, y, sens)
 
 
 class Net_hyper(nn.Cell):
@@ -119,7 +119,7 @@ def test_hyper_add():
     sens = Tensor(np.ones([3, 3]).astype(np.float32))
     net = Net_hyper()
     net.add_flags(has_effect=True)
-    out = net(x, y, sens)
+    _ = net(x, y, sens)
 
 
 def test_keep_order_io_effect_exception_return_dtype():

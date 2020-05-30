@@ -99,4 +99,4 @@ def test_assignadd_scalar_cast():
     net = AssignAddNet()
     x = Tensor(np.ones([1]).astype(np.int64) * 102)
     # _executor.compile(net, 1)
-    result = net(x)
+    _ = net(x)

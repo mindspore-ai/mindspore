@@ -52,19 +52,19 @@ def test_compile_psnr_grayscale():
 def test_psnr_max_val_negative():
     max_val = -1
     with pytest.raises(ValueError):
-        net = PSNRNet(max_val)
+        _ = PSNRNet(max_val)
 
 
 def test_psnr_max_val_bool():
     max_val = True
     with pytest.raises(TypeError):
-        net = PSNRNet(max_val)
+        _ = PSNRNet(max_val)
 
 
 def test_psnr_max_val_zero():
     max_val = 0
     with pytest.raises(ValueError):
-        net = PSNRNet(max_val)
+        _ = PSNRNet(max_val)
 
 
 def test_psnr_different_shape():
