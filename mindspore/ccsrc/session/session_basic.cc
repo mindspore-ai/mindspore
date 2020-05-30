@@ -564,7 +564,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
         // if input is a ValueNode<FuncGraph>
         FuncGraphPtr child_graph = AnfAlgo::GetValueNodeFuncGraph(node);
         if (front_backend_graph_map_.find(child_graph) != front_backend_graph_map_.end()) {
-          MS_LOG(INFO) << "FuncGraph: " << child_graph->ToString() << " has been transformed to KernelGraph.";
           is_trace_back = true;
         } else {
           (void)ConstructKernelGraph(child_graph);
@@ -588,21 +587,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   }
   // if a graph jump back unconditionally, return op of this graph will never be executed, so output is null.
   graph->set_output_null(is_trace_back);
-  auto graph_inputs = graph->MutableInputs();
-  MS_EXCEPTION_IF_NULL(graph_inputs);
-  graph_inputs->clear();
-  for (auto &parameter : func_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(parameter);
-    auto backend_parameter = graph->GetBackendAnfByFrontAnf(parameter);
-    if (backend_parameter == nullptr) {
-      // for example "def f(x,y,z) {return x + y}", parameter z in unused
-      CreateNewParameterFromParameter(parameter, false, graph.get());
-      MS_LOG(INFO) << "Can't find parameter:" << parameter->DebugString();
-      continue;
-    }
-    MS_LOG(INFO) << "graph[" << graph->graph_id() << "],parameter:" << parameter->DebugString();
-    graph_inputs->push_back(backend_parameter);
-  }
+  AddParameterToGraphInputs(func_graph->parameters(), graph.get());
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = context_->manager();
   if (manager) {
@@ -611,6 +596,25 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   }
   graph->SetExecOrderByDefault();
   return graph;
+}
+
+void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  graph_inputs->clear();
+  for (auto &parameter : parameters) {
+    MS_EXCEPTION_IF_NULL(parameter);
+    auto backend_parameter = graph->GetBackendAnfByFrontAnf(parameter);
+    if (backend_parameter == nullptr) {
+      // for example "def f(x,y,z) {return x + y}", parameter z in unused
+      CreateNewParameterFromParameter(parameter, false, graph);
+      MS_LOG(INFO) << "Can't find parameter:" << parameter->DebugString();
+      continue;
+    }
+    MS_LOG(INFO) << "graph[" << graph->graph_id() << "],parameter:" << parameter->DebugString();
+    graph_inputs->push_back(backend_parameter);
+  }
 }
 
 // run graph steps

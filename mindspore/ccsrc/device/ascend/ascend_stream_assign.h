@@ -87,7 +87,6 @@ class AscendStreamAssign {
   void AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, uint32_t deal_logic_id);
   void UpdateStreamId(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void UpdateEventId(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void PrintGraphExeOrders(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void RecordFirstCommonOp(const CNodePtr &cur_cnode_ptr, uint32_t cur_node_logic_id, uint32_t cur_stream_id);
   uint32_t GetLogicId(const CNodePtr &cur_cnode_ptr);
   void SetCommonStreamNum(uint32_t cur_stream_id);
