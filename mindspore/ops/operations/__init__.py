@@ -49,7 +49,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        NPUAllocFloatStatus, NPUClearFloatStatus,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
-                       Sin, Sqrt, Rsqrt,
+                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll)
 from .random_ops import (RandomChoiceWithMask)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
@@ -274,7 +274,9 @@ __all__ = [
     "SquareSumAll",
     "BitwiseAnd",
     "BitwiseOr",
-    "BitwiseXor"
+    "BitwiseXor",
+    "BesselI0e",
+    "BesselI1e",
 ]
 
 __all__.extend(_quant_ops.__all__)

@@ -636,7 +636,7 @@ class CumSum(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - The input tensor to accumulate.
-        - **axis**  (int) - The axis to accumulate the tensor's value.
+        - **axis**  (int) - The axis to accumulate the tensor's value. Only constant value is allowed.
 
     Outputs:
         Tensor, the shape of the output tensor is consistent with the input tensor's.
@@ -2323,3 +2323,61 @@ class BitwiseXor(_BitwiseBinaryOp):
          >>> bitwise_xor(input_x1, input_x2)
          [0, 1, 0, 0, -2, 3, 2]
     """
+
+
+class BesselI0e(PrimitiveWithInfer):
+    """
+    Computes BesselI0e of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> bessel_i0e = P.BesselI0e()
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_i0e(input_x)
+        [0.7979961, 0.5144438, 0.75117415, 0.9157829]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init BesselI0e"""
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
+        return x
+
+
+class BesselI1e(PrimitiveWithInfer):
+    """
+    Computes BesselI1e of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> bessel_i1e = P.BesselI1e()
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_i1e(input_x)
+        [0.09507662, 0.19699717, 0.11505538, 0.04116856]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init BesselI1e"""
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
+        return x

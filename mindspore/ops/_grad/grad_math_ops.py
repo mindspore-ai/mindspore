@@ -24,6 +24,7 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from ..primitive import constexpr
+from ..composite.multitype_ops import _constexpr_utils as const_utils
 
 shape_op = P.Shape()
 reduce_sum = P.ReduceSum()
@@ -896,4 +897,40 @@ def get_bprop_atan2(self):
         bc_dy = tmp * (-x)
         return binop_grad_common(x, y, bc_dx, bc_dy)
 
+    return bprop
+
+
+@bprop_getters.register(P.BesselI0e)
+def get_bprop_bessel_i0e(self):
+    """Generate bprop for BesselI0e"""
+    sign = P.Sign()
+    bessel_i1e = P.BesselI1e()
+
+    def bprop(x, out, dout):
+        dx = dout * (bessel_i1e(x) - sign(x) * out)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.BesselI1e)
+def get_bprop_bessel_i1e(self):
+    """Generate bprop for BesselI1e"""
+
+    sign = P.Sign()
+    bessel_i0e = P.BesselI0e()
+    less = P.Less()
+    select = P.Select()
+    reciprocal = P.Reciprocal()
+    cast = P.Cast()
+    dtype = P.DType()
+
+    def bprop(x, out, dout):
+        zeros = zeros_like(x)
+        np_eps = const_utils.get_np_eps(dtype(x))
+        eps = cast(np_eps, dtype(x))
+        x_is_valid = less(eps, x)
+        x_safe = select(x_is_valid, x, eps + zeros)
+        tmp = bessel_i0e(x_safe) - out * (sign(x) + reciprocal(x_safe))
+        dx = select(x_is_valid, tmp, 0.5 + zeros)
+        return (dx,)
     return bprop
