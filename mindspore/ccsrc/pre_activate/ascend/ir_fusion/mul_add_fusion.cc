@@ -84,8 +84,9 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
     inputs.push_back(mul->input(index));
   }
   auto another_input_node = add->input(add->size() - mul_index);
-  if (IsUsedByOthers(graph, another_input_node)) {
-    MS_LOG(INFO) << "Add's another input node is used by others, do not fuse";
+  if (another_input_node->isa<CNode>() &&
+      AnfAlgo::GetCNodeName(another_input_node) == prim::kPrimTupleGetItem->name()) {
+    MS_LOG(INFO) << "Add's another input node has multiple outputs, do not fuse";
     return nullptr;
   }
   inputs.push_back(another_input_node);
