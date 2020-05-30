@@ -24,7 +24,7 @@ import mmcv
 import mindspore.dataset as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
-from config import config
+from src.config import config
 
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
