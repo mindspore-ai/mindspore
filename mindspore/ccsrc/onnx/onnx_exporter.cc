@@ -411,6 +411,8 @@ void OnnxExporter::InitModelInfo() {
 void OnnxExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, onnx::GraphProto *const graph_proto) {
   std::map<AnfNodePtr, size_t> node_map;
 
+  MS_LOG(INFO) << "Begin exporting onnx model for graph " << func_graph->ToString();
+
   onnx_node_index_ = func_graph->parameters().size();
 
   // set graph name
@@ -423,6 +425,8 @@ void OnnxExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, onnx::GraphPr
 
   // export computational nodes and output nodes
   ExportNodes(func_graph, &node_map, graph_proto);
+
+  MS_LOG(INFO) << "End exporting onnx model for graph " << func_graph->ToString();
 }
 
 void OnnxExporter::ExportParameters(const FuncGraphPtr &func_graph, onnx::GraphProto *const graph_proto) {

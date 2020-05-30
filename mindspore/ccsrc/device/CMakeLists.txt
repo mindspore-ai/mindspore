@@ -20,25 +20,28 @@ endif ()
 if (ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu/*.cc" "gpu/*.cu")
 
+    set(GPU_QUEUE_SRCS "gpu/blocking_queue.cc" "gpu/gpu_buffer_mgr.cc")
+    set(GPU_COLLECTIVE_SRCS "gpu/distribution/collective_wrapper.cc"
+                            "gpu/distribution/mpi_wrapper.cc"
+                            "gpu/distribution/nccl_wrapper.cc")
+
     # gpu_queue
-    list(REMOVE_ITEM CUDA_SRC_LIST "gpu/blocking_queue.cc" "gpu/gpu_buffer_mgr.cc")
-    add_library(gpu_queue SHARED "gpu/blocking_queue.cc" "gpu/gpu_buffer_mgr.cc")
+    list(REMOVE_ITEM CUDA_SRC_LIST ${GPU_QUEUE_SRCS})
+    set_property(SOURCE ${GPU_QUEUE_SRCS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+    add_library(gpu_queue SHARED ${GPU_QUEUE_SRCS})
     target_link_libraries(gpu_queue ${CMAKE_THREAD_LIBS_INIT} ${CUDA_PATH}/lib64/libcudart.so)
 
-    list(REMOVE_ITEM CUDA_SRC_LIST "gpu/mpi/mpi_initializer.cc"
-                                   "gpu/distribution/collective_wrapper.cc"
-                                   "gpu/distribution/mpi_wrapper.cc"
-                                   "gpu/distribution/nccl_wrapper.cc"
-    )
+    list(REMOVE_ITEM CUDA_SRC_LIST "gpu/mpi/mpi_initializer.cc" ${GPU_COLLECTIVE_SRCS})
 
     if (ENABLE_MPI)
         include(ExternalProject)
         # gpu_collective
-        add_library(gpu_collective SHARED "gpu/distribution/collective_wrapper.cc"
-                                          "gpu/distribution/mpi_wrapper.cc"
-                                          "gpu/distribution/nccl_wrapper.cc"
-        )
+        set_property(SOURCE ${GPU_COLLECTIVE_SRCS}
+            PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        add_library(gpu_collective SHARED ${GPU_COLLECTIVE_SRCS})
         # _ms_mpi
+        set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
+            PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
         target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
         target_link_libraries(gpu_collective PRIVATE mindspore::ompi mindspore::nccl)

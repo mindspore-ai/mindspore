@@ -412,9 +412,9 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
     if (params.empty()) {
       MS_EXCEPTION(UnknownError) << "Graph's parameters size is 0";
     }
-    if (args.size() != params.size()) {
-      MS_LOG(EXCEPTION) << "Input size " << args.size() << " not equal to params size " << params.size()
-                        << ", let graph to be executed.";
+    if ((args.size() + func_graph->hyper_param_count()) != params.size()) {
+      MS_LOG(EXCEPTION) << "Input size " << args.size() << " add Parameter count " << func_graph->hyper_param_count()
+                        << " not equal to graph input size " << params.size() << ", let graph to be executed.";
     }
 
     auto it = std::find(params.begin(), params.end(), output);
