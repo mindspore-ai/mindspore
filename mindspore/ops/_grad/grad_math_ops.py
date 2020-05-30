@@ -15,7 +15,6 @@
 
 """Define the grad rules of math related operations."""
 
-
 from functools import reduce
 import numpy as np
 from .. import functional as F
@@ -25,7 +24,6 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from ..primitive import constexpr
-
 
 shape_op = P.Shape()
 reduce_sum = P.ReduceSum()
@@ -129,6 +127,7 @@ def bprop_matmul(self):
         else:
             dw = mul2(x, dout)
         return dx, dw
+
     return bprop
 
 
@@ -152,6 +151,7 @@ def bprop_batchmatmul(self):
         else:
             dw = mul2(x, dout)
         return dx, dw
+
     return bprop
 
 
@@ -161,6 +161,7 @@ def get_bprop_tensor_add(self):
 
     def bprop(x, y, out, dout):
         return binop_grad_common(x, y, dout, dout)
+
     return bprop
 
 
@@ -172,6 +173,7 @@ def get_bprop_neg(self):
     def bprop(x, out, dout):
         dx = neg_grad(dout)
         return (dx,)
+
     return bprop
 
 
@@ -182,6 +184,7 @@ def get_bprop_sub(self):
 
     def bprop(x, y, out, dout):
         return binop_grad_common(x, y, dout, neg_func(dout))
+
     return bprop
 
 
@@ -194,6 +197,7 @@ def get_bprop_mul(self):
         bc_dx = mul_func(dout, y)
         bc_dy = mul_func(dout, x)
         return binop_grad_common(x, y, bc_dx, bc_dy)
+
     return bprop
 
 
@@ -208,6 +212,7 @@ def get_bprop_real_div(self):
         bc_x = div_op(dout, y)
         bc_y = neg(mul_op(bc_x, out))
         return binop_grad_common(x, y, bc_x, bc_y)
+
     return bprop
 
 
@@ -222,6 +227,7 @@ def get_bprop_div(self):
         bc_x = div_op(dout, y)
         bc_y = neg(mul_op(bc_x, out))
         return binop_grad_common(x, y, bc_x, bc_y)
+
     return bprop
 
 
@@ -235,6 +241,7 @@ def get_bprop_floor(self):
     def bprop(x, out, dout):
         bc_x = fill_(dtype_(x), shape_(x), 0.)
         return (bc_x,)
+
     return bprop
 
 
@@ -249,6 +256,7 @@ def get_bprop_floordiv(self):
         bc_x = div_op(dout, y)
         bc_y = neg(mul_op(bc_x, out))
         return binop_grad_common(x, y, bc_x, bc_y)
+
     return bprop
 
 
@@ -260,6 +268,7 @@ def get_bprop_floormod(self):
         bc_x = dout
         bc_y = -dout * (x // y)
         return binop_grad_common(x, y, bc_x, bc_y)
+
     return bprop
 
 
@@ -274,6 +283,7 @@ def get_bprop_square(self):
         temp = mul_func(dout, x)
         dx = mul_func(fill_func(dtype(temp), shape_op(x), 2.0), temp)
         return (dx,)
+
     return bprop
 
 
@@ -290,6 +300,7 @@ def get_bprop_sqrt(self):
         temp = div_op(fill_func(dtype(x), shape_op(x), 0.5), sqrt(x))
         dx = mul_func(dout, temp)
         return (dx,)
+
     return bprop
 
 
@@ -298,9 +309,10 @@ def get_bprop_rsqrt(self):
     """Grad definition for `Rsqrt` operation."""
 
     def bprop(x, out, dout):
-        grad = F.fill(F.dtype(x), F.shape(x), -0.5) / (F.sqrt(x)*x)
+        grad = F.fill(F.dtype(x), F.shape(x), -0.5) / (F.sqrt(x) * x)
         dx = dout * grad
         return (dx,)
+
     return bprop
 
 
@@ -316,6 +328,7 @@ def get_bprop_reciprocal(self):
         g = neg(reciprocal(square(x)))
         dx = mul(dout, g)
         return (dx,)
+
     return bprop
 
 
@@ -328,6 +341,7 @@ def get_bprop_log(self):
         g = reciprocal(x)
         dx = g * dout
         return dx, 0
+
     return bprop
 
 
@@ -341,6 +355,7 @@ def get_bprop_log1p(self):
         g = reciprocal(x_1p)
         dx = g * dout
         return dx, 0
+
     return bprop
 
 
@@ -358,6 +373,7 @@ def get_bprop_erf(self):
         x_square = square(x)
         dx = dout * half_root_pi * exp(-x_square)
         return (dx,)
+
     return bprop
 
 
@@ -388,6 +404,7 @@ def get_bprop_pow(self):
         bc_dx = power * pow_op(x, power - 1.0) * dout
         bc_dpower = out * ln(x) * dout
         return binop_grad_common(x, power, bc_dx, bc_dpower)
+
     return bprop
 
 
@@ -400,6 +417,7 @@ def get_bprop_exp(self):
         g = exp_(x)
         dx = g * dout
         return (dx,)
+
     return bprop
 
 
@@ -411,6 +429,7 @@ def get_bprop_minimum(self):
     def bprop(x, y, out, dout):
         dx, dy = input_grad(x, y, dout)
         return dx, dy
+
     return bprop
 
 
@@ -422,6 +441,7 @@ def get_bprop_maximum(self):
     def bprop(x, y, out, dout):
         dx, dy = input_grad(x, y, dout)
         return dx, dy
+
     return bprop
 
 
@@ -432,6 +452,7 @@ def get_bprop_reducesum(self):
     def bprop(x, axis, out, dout):
         dx = _sum_grad(x, axis, dout)
         return dx, zeros_like(axis)
+
     return bprop
 
 
@@ -442,6 +463,7 @@ def get_bprop_cumsum(self):
 
     def bprop(x, axis, out, dout):
         return cumsum(dout, axis), zeros_like(axis)
+
     return bprop
 
 
@@ -500,6 +522,7 @@ def get_bprop_reduceprod(self):
         out = transpose(y, _invert_permutation(perm)) * grad
         dx = reshape(out, input_shape)
         return dx, zeros_like(axis)
+
     return bprop
 
 
@@ -515,6 +538,7 @@ def get_bprop_cumprod(self):
         prod = cumprod(x, axis)
         out = cumsum(prod * dout, axis)
         return out / x, zeros_like(axis)
+
     return bprop
 
 
@@ -524,6 +548,7 @@ def get_bprop_reduceall(self):
 
     def bprop(x, axis, out, dout):
         return zeros_like(x), zeros_like(axis)
+
     return bprop
 
 
@@ -534,6 +559,7 @@ def get_bprop_reducemax(self):
     def bprop(x, axis, out, dout):
         dx = _min_or_max_grad(x, axis, out, dout)
         return (dx, zeros_like(axis))
+
     return bprop
 
 
@@ -547,6 +573,7 @@ def get_bprop_argmaxwithvalue(self):
     def bprop(x, out, dout):
         dx = _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -557,6 +584,7 @@ def get_bprop_reducemin(self):
     def bprop(x, axis, out, dout):
         dx = _min_or_max_grad(x, axis, out, dout)
         return (dx, zeros_like(axis))
+
     return bprop
 
 
@@ -570,6 +598,7 @@ def get_bprop_argminwithvalue(self):
     def bprop(x, out, dout):
         dx = _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -585,6 +614,7 @@ def get_bprop_reduce_mean(self):
         div_shape = F.shape_mul(shape_op(x)) / F.shape_mul(shape_op(out))
         dx = div_op(grad, cast(F.scalar_to_array(div_shape), dtype(grad)))
         return dx, zeros_like(axis)
+
     return bprop
 
 
@@ -604,6 +634,7 @@ def get_bprop_not_equal(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -613,6 +644,7 @@ def get_bprop_greater(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -622,6 +654,7 @@ def get_bprop_greater_equal(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -631,6 +664,7 @@ def get_bprop_less(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -640,6 +674,7 @@ def get_bprop_less_equal(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -649,6 +684,7 @@ def get_bprop_logical_not(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -658,6 +694,7 @@ def get_bprop_logical_and(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -667,6 +704,7 @@ def get_bprop_logical_or(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -676,6 +714,7 @@ def get_bprop_npu_alloc_float_status(self):
 
     def bprop(out, dout):
         return ()
+
     return bprop
 
 
@@ -685,6 +724,7 @@ def get_bprop_npu_get_float_status(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -694,6 +734,7 @@ def get_bprop_npu_clear_float_status(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -703,6 +744,7 @@ def get_bprop_assign_add(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -712,6 +754,7 @@ def get_bprop_assign_sub(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+
     return bprop
 
 
@@ -721,8 +764,9 @@ def get_bprop_sin(self):
     cos = P.Cos()
 
     def bprop(x, out, dout):
-        dx = dout*cos(x)
+        dx = dout * cos(x)
         return (dx,)
+
     return bprop
 
 
@@ -733,8 +777,9 @@ def get_bprop_cos(self):
     neg = P.Neg()
 
     def bprop(x, out, dout):
-        dx = dout*neg(sin(x))
+        dx = dout * neg(sin(x))
         return (dx,)
+
     return bprop
 
 
@@ -746,6 +791,7 @@ def get_bprop_acos(self):
     def bprop(x, out, dout):
         dx = input_grad(x, dout)
         return (dx,)
+
     return bprop
 
 
@@ -757,6 +803,7 @@ def get_bprop_acosh(self):
     def bprop(x, out, dout):
         dx = input_grad(out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -768,6 +815,7 @@ def get_bprop_abs(self):
     def bprop(x, out, dout):
         dx = abs_grad(x, dout)
         return (dx,)
+
     return bprop
 
 
@@ -777,6 +825,7 @@ def get_bprop_scalar_cast(self):
 
     def bprop(x, t, out, dout):
         return F.scalar_cast(dout, F.typeof(x)), zeros_like(t)
+
     return bprop
 
 
@@ -789,6 +838,7 @@ def get_bprop_scalar_addn(self):
         for _ in range(len(x)):
             dx = dx + (dout,)
         return dx
+
     return bprop
 
 
@@ -798,6 +848,7 @@ def get_bprop_sign(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -807,6 +858,7 @@ def get_bprop_round(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -821,4 +873,5 @@ def get_bprop_atan2(self):
         bc_dx = tmp * y
         bc_dy = tmp * (-x)
         return binop_grad_common(x, y, bc_dx, bc_dy)
+
     return bprop

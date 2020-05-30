@@ -49,6 +49,7 @@ def get_bprop_dtype(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -61,6 +62,7 @@ def get_bprop_cast(self):
     def bprop(x, t, out, dout):
         dx = cast(dout, get_dtype(x))
         return dx, zeros_like(t)
+
     return bprop
 
 
@@ -70,6 +72,7 @@ def get_bprop_shape(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -82,6 +85,7 @@ def get_bprop_split(self):
         concat_op = P.Concat(axis)
         dx = concat_op(dout)
         return (dx,)
+
     return bprop
 
 
@@ -91,6 +95,7 @@ def get_bprop_rank(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+
     return bprop
 
 
@@ -101,6 +106,7 @@ def get_bprop_reshape(self):
     def bprop(x, shp, out, dout):
         shapex = shape_op(x)
         return reshape(dout, shapex), zeros_like(shp)
+
     return bprop
 
 
@@ -111,6 +117,7 @@ def get_bprop_expand_dims(self):
     def bprop(x, axis, out, dout):
         shapex = shape_op(x)
         return reshape(dout, shapex), zeros_like(axis)
+
     return bprop
 
 
@@ -121,6 +128,7 @@ def get_bprop_squeeze(self):
     def bprop(x, out, dout):
         shapex = shape_op(x)
         return (reshape(dout, shapex),)
+
     return bprop
 
 
@@ -132,6 +140,7 @@ def get_bprop_flatten(self):
     def bprop(x, out, dout):
         dx = flatten_grad(dout, shape_op(x))
         return (dx,)
+
     return bprop
 
 
@@ -166,6 +175,7 @@ def _tile_shape(multiples, shapex):
 @bprop_getters.register(P.Tile)
 def get_bprop_tile(self):
     """Generate bprop for Tile"""
+
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
         r_shape = _tile_shape(multiples, shapex)
@@ -174,6 +184,7 @@ def get_bprop_tile(self):
         dx = reduce_sum(reshape(dout, r_shape), axis)
         dx = reshape(dx, shapex)
         return dx, zeros_like(multiples)
+
     return bprop
 
 
@@ -183,6 +194,7 @@ def get_bprop_transpose(self):
 
     def bprop(x, perm, out, dout):
         return transpose(dout, invert_permutation(perm)), zeros_like(perm)
+
     return bprop
 
 
@@ -198,6 +210,7 @@ def get_bprop_concat(self):
             slice_out = P.Slice()(dout, out_offset[i], shape_op(x[i]))
             dx = dx + (slice_out,)
         return (dx,)
+
     return bprop
 
 
@@ -215,12 +228,12 @@ def get_bprop_slice(self):
         dx = P.Pad(_slice_grad_pad(begin, size, shape_op(x)))(dout)
         return (dx, zeros_like(begin), zeros_like(size))
 
-    def bprop_gpu(x, begin, size, out, dout):
+    def bprop_grad(x, begin, size, out, dout):
         dx = dx = G.SliceGrad()(dout, x, begin, size)
         return (dx, zeros_like(begin), zeros_like(size))
 
-    if context.get_context('device_target') == "GPU":
-        return bprop_gpu
+    if context.get_context('device_target') == "GPU" or context.get_context('device_target') == "CPU":
+        return bprop_grad
     return bprop
 
 
@@ -249,6 +262,7 @@ def _generate_inverse_index(x_shape, axis):
 @bprop_getters.register(P.GatherV2)
 def get_bprop_gather_v2(self):
     """Generate bprop for GatherV2"""
+
     def bprop(x, indices, axis, out, dout):
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
@@ -265,6 +279,7 @@ def get_bprop_gather_v2(self):
         perm_2 = _generate_inverse_index(x_shp, axis)
         params_grad = transpose(params_grad, perm_2)
         return params_grad, zeros_like(indices), zeros_like(axis)
+
     return bprop
 
 
@@ -277,6 +292,7 @@ def get_bprop_pack(self):
         pack_grad = P.Unpack(axis)
         out = pack_grad(dout)
         return (out,)
+
     return bprop
 
 
@@ -289,6 +305,7 @@ def get_bprop_unpack(self):
         unpack_grad = P.Pack(axis)
         out = unpack_grad(dout)
         return (out,)
+
     return bprop
 
 
@@ -304,6 +321,7 @@ def get_bprop_strided_slice(self):
     def bprop(x, begin, end, strides, out, dout):
         dx = input_grad(dout, shape_op(x), begin, end, strides)
         return dx, zeros_like(begin), zeros_like(end), zeros_like(strides)
+
     return bprop
 
 
@@ -313,6 +331,7 @@ def get_bprop_eye(self):
 
     def bprop(n, m, t, out, dout):
         return zeros_like(n), zeros_like(m), zeros_like(t)
+
     return bprop
 
 
@@ -323,6 +342,7 @@ def get_bprop_select(self):
 
     def bprop(cond, x, y, out, dout):
         return zeros_like(cond), select(cond, dout, zeros_like(x)), select(cond, zeros_like(y), dout)
+
     return bprop
 
 
@@ -513,9 +533,11 @@ def get_bprop_unsorted_segment_min(self):
 def get_bprop_space_to_batch(self):
     """Generate bprop for SpaceToBatch"""
     space_to_batch_grad = P.BatchToSpace(self.block_size, self.paddings)
+
     def bprop(x, out, dout):
         dx = space_to_batch_grad(dout)
         return (dx,)
+
     return bprop
 
 
@@ -523,7 +545,9 @@ def get_bprop_space_to_batch(self):
 def get_bprop_batch_to_space(self):
     """Generate bprop for BatchToSpace"""
     batch_to_space_grad = P.SpaceToBatch(self.block_size, self.crops)
+
     def bprop(x, out, dout):
         dx = batch_to_space_grad(dout)
         return (dx,)
+
     return bprop
