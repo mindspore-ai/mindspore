@@ -76,7 +76,7 @@ For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an ex
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
     ```
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.3.0-alpha/MindSpore/cpu/x86_ubuntu/mindspore-0.3.0-cp37-cp37m-linux_x86_64.whl
+    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.3.0-alpha/MindSpore/cpu/ubuntu_x86/mindspore-0.3.0-cp37-cp37m-linux_x86_64.whl
     ```
 
 2. Run the following command to verify the install.
