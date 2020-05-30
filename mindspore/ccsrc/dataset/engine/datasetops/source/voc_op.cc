@@ -49,6 +49,7 @@ VOCOp::Builder::Builder() : builder_decode_(false), builder_num_samples_(0), bui
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
+  builder_task_type_ = TaskType::Segmentation;
 }
 
 Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
@@ -270,7 +271,7 @@ Status VOCOp::ParseImageIds() {
   }
   std::string id;
   while (getline(in_file, id)) {
-    if (id[id.size() - 1] == '\r') {
+    if (id.size() > 0 && id[id.size() - 1] == '\r') {
       image_ids_.push_back(id.substr(0, id.size() - 1));
     } else {
       image_ids_.push_back(id);
@@ -330,7 +331,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     std::string label_name;
     uint32_t xmin = 0, ymin = 0, xmax = 0, ymax = 0, truncated = 0, difficult = 0;
     XMLElement *name_node = object->FirstChildElement("name");
-    if (name_node != nullptr) label_name = name_node->GetText();
+    if (name_node != nullptr && name_node->GetText() != 0) label_name = name_node->GetText();
     XMLElement *truncated_node = object->FirstChildElement("truncated");
     if (truncated_node != nullptr) truncated = truncated_node->UnsignedText();
     XMLElement *difficult_node = object->FirstChildElement("difficult");
