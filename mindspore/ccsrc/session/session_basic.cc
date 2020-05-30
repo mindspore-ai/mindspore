@@ -532,7 +532,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   graph->set_output(ConstructOutput(outputs, graph));
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = MakeManager({graph});
-  context_->AddManager(manager);
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
