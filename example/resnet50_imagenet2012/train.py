@@ -46,6 +46,8 @@ args_opt = parser.parse_args()
 
 if __name__ == '__main__':
     target = args_opt.device_target
+    ckpt_save_dir = config.save_checkpoint_path
+    context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
     if not args_opt.do_eval and args_opt.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
