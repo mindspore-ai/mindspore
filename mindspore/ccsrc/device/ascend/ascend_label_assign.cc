@@ -26,7 +26,6 @@ static constexpr uint32_t kLabelSwitchLabelId = 2;
 namespace mindspore {
 namespace device {
 namespace ascend {
-
 static void UpdateLabelGoto(NotNull<CNodePtr> node) {
   if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
     return;
@@ -164,7 +163,6 @@ uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> gr
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<std::shared_ptr<session::KernelGraph>> graph) {
   return GetLabelNum(NOT_NULL(graph.get().get()));
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

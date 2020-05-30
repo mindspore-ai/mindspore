@@ -544,15 +544,12 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (front_backend_graph_map_.find(func_graph) != front_backend_graph_map_.end()) {
-    MS_LOG(INFO) << "FuncGraph: " << func_graph->ToString() << " has been transformed to KernelGraph.";
-    return front_backend_graph_map_[func_graph];
-  }
   auto node_list = TopoSort(func_graph->get_return());
   auto graph = NewKernelGraph();
   front_backend_graph_map_[func_graph] = graph;
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
 
+  bool is_trace_back = false;
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
@@ -565,8 +562,14 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
         (void)CreateNewValueNode(node, graph.get());
       } else {
         // if input is a ValueNode<FuncGraph>
-        auto child_graph = ConstructKernelGraph(AnfAlgo::GetValueNodeFuncGraph(node));
-        auto new_value_node = CreateValueNodeKernelGraph(node, graph.get());
+        FuncGraphPtr child_graph = AnfAlgo::GetValueNodeFuncGraph(node);
+        if (front_backend_graph_map_.find(child_graph) != front_backend_graph_map_.end()) {
+          MS_LOG(INFO) << "FuncGraph: " << child_graph->ToString() << " has been transformed to KernelGraph.";
+          is_trace_back = true;
+        } else {
+          (void)ConstructKernelGraph(child_graph);
+        }
+        (void)CreateValueNodeKernelGraph(node, graph.get());
       }
       continue;
     } else {
@@ -583,6 +586,8 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
       }
     }
   }
+  // if a graph jump back unconditionally, return op of this graph will never be executed, so output is null.
+  graph->set_output_null(is_trace_back);
   auto graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(graph_inputs);
   graph_inputs->clear();

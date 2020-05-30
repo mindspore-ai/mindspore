@@ -172,19 +172,35 @@ std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
   return cnodes;
 }
 
-std::vector<std::vector<CNodePtr>> GetChildList(const KernelGraph &cur_graph, const std::vector<CNodePtr> &cnodes) {
-  size_t after_call_index = 0;
+static std::vector<std::vector<CNodePtr>> GetChildList(const std::vector<CNodePtr> &cnodes,
+                                                       const std::set<PrimitivePtr> &cut_prims) {
+  size_t after_cut_index = 0;
   std::vector<std::vector<CNodePtr>> ret;
-  for (size_t i = 0; i < cnodes.size(); i++) {
-    if (AnfAlgo::CheckPrimitiveType(cnodes[i], prim::kPrimCall) && !AnfAlgo::IsSwitchCall(cnodes[i])) {
-      auto call_kernel_graph = AnfAlgo::GetCallNodeKernelGraph(cnodes[i]);
-      auto prev_call_list = std::vector<CNodePtr>(cnodes.begin() + after_call_index, cnodes.begin() + i);
-      auto call_list = std::vector<CNodePtr>(1, cnodes[i]);
-      after_call_index = i + 1;
-      ret.push_back(prev_call_list);
-      ret.push_back(call_list);
-    } else if (AnfAlgo::CheckPrimitiveType(cnodes[i], prim::kPrimReturn)) {
-      ret.push_back(std::vector<CNodePtr>(cnodes.begin() + after_call_index, cnodes.end()));
+  for (size_t i = 0; i < cnodes.size(); ++i) {
+    bool is_cut_node = false;
+    for (auto &prim : cut_prims) {
+      if (AnfAlgo::CheckPrimitiveType(cnodes[i], prim)) {
+        is_cut_node = true;
+        break;
+      }
+    }
+    if (is_cut_node) {
+      // is call and not switch call,cut to 3 lists
+      if (!AnfAlgo::CheckPrimitiveType(cnodes[i], prim::kPrimCall)) {
+        // if is not a call,cut to 2 lists
+        ret.emplace_back(cnodes.begin() + after_cut_index, cnodes.begin() + i);
+        after_cut_index = i;
+      } else if (!AnfAlgo::IsSwitchCall(cnodes[i])) {
+        ret.emplace_back(cnodes.begin() + after_cut_index, cnodes.begin() + i);
+        ret.emplace_back(1, cnodes[i]);
+        after_cut_index = i + 1;
+        continue;
+      }
+    }
+    // get last child graph list
+    if (AnfAlgo::CheckPrimitiveType(cnodes[i], prim::kPrimReturn)) {
+      ret.emplace_back(cnodes.begin() + after_cut_index, cnodes.end());
+      continue;
     }
   }
   return ret;
@@ -192,7 +208,7 @@ std::vector<std::vector<CNodePtr>> GetChildList(const KernelGraph &cur_graph, co
 
 // if a call has kernel input, it's a child graph split from ME, so these kernel input should be set into real input of
 // graph.For example, call input = (prim,graph,kernel1,kernel2),then real_input = [kernel1,kernel2]
-static void UpdateRealInput(KernelGraph *graph) {
+static void UpdateRealInput(NotNull<KernelGraphPtr> graph) {
   auto call_nodes = graph->FindNodeByPrimitive(prim::kPrimCall);
   auto bind_call_arg_with_parameter = [&](const std::vector<AnfNodePtr> &parameters,
                                           const std::vector<AnfNodePtr> &args, KernelGraph *child_graph) -> void {
@@ -254,16 +270,17 @@ static void UpdateRealInput(KernelGraph *graph) {
   }
 }
 
-void RecurseToUpdateCallRealInput(KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+static void RecurseToUpdateCallRealInput(NotNull<KernelGraphPtr> graph,
+                                         const NotNull<std::set<KernelGraphPtr> *> memo) {
+  memo->insert(graph.get());
   MS_LOG(INFO) << "start graph id:" << graph->graph_id();
   for (auto &child_graph : graph->child_graph_order()) {
-    if (child_graph == graph->parent_graph()) {
+    if (memo->find(child_graph) != memo->end()) {
       MS_LOG(INFO) << "Child graph:" << child_graph->graph_id()
                    << ",parent graph:" << graph->parent_graph()->graph_id();
       continue;
     }
-    RecurseToUpdateCallRealInput(child_graph.get());
+    RecurseToUpdateCallRealInput(NOT_NULL(child_graph), memo);
   }
   // this action should from bottom to top
   graph->UpdateCallRealInput();
@@ -283,7 +300,7 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "start";
   auto graph = ConstructKernelGraph(func_graph);
   // split switch
-  SplitGraphs(graph);
+  SplitGraphs(NOT_NULL(graph));
   // insert goto labels and label_sets
   LinkChildGraphs(NOT_NULL(graph));
   // resource initialize
@@ -291,7 +308,8 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   // assign label
   AssignLabel(NOT_NULL(graph));
   // recurse compile child graph
-  RecurseCompileGraph(graph);
+  std::set<KernelGraphPtr> memo;
+  RecurseCompileGraph(NOT_NULL(graph), NOT_NULL(&memo));
   // root graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(NOT_NULL(graph));
   // adjust kernel
@@ -1424,24 +1442,43 @@ std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPt
   }
   MS_LOG(INFO) << "Construct input of kernel graph:" << new_kernel_graph->graph_id();
   std::vector<AnfNodePtr> call_node_inputs;
-  auto graph_inputs = new_kernel_graph->MutableInputs();
-  MS_EXCEPTION_IF_NULL(graph_inputs);
+  std::vector<AnfNodePtr> new_graph_inputs;
   // create new parameter from cnode
   for (auto &anf_node : list) {
     auto cnode = anf_node->cast<CNodePtr>();
     for (size_t input_idx = 1; input_idx < cnode->inputs().size(); input_idx++) {
       auto input = cnode->inputs()[input_idx];
       MS_EXCEPTION_IF_NULL(input);
-      if (input->isa<Parameter>()) {
-        graph_inputs->push_back(input);
+      AnfNodePtr new_parameter = nullptr;
+      // value node consider move to new graph
+      if (input->isa<ValueNode>()) {
         cnode->set_input(input_idx, input);
+        continue;
+      } else if (input->isa<Parameter>()) {
+        // parameter reuse and should attention mulptiple use of one parameter
+        cnode->set_input(input_idx, input);
+        new_parameter = input;
       } else if (AnfAlgo::GetGraphId(input.get()) != new_kernel_graph->graph_id()) {
-        auto new_parameter = CreateNewParameterFromCNode(input, true, new_kernel_graph.get());
+        // if is cnode and not in current child graph
+        new_parameter = CreateNewParameterFromCNode(input, true, new_kernel_graph.get());
         cnode->set_input(input_idx, new_parameter);
+      } else {
+        // if is a cnode and in current graph
+        continue;
       }
-      call_node_inputs.push_back(input);
+      // if mulptiple use of one parameter or cnode, only set one parameter in graph inputs and one arg in call node
+      // args
+      if (std::find(call_node_inputs.begin(), call_node_inputs.end(), new_parameter) == call_node_inputs.end()) {
+        new_graph_inputs.push_back(new_parameter);
+        call_node_inputs.push_back(input);
+      }
     }
   }
+  // set graph inputs of new graph
+  auto graph_inputs = new_kernel_graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  graph_inputs->clear();
+  std::copy(new_graph_inputs.begin(), new_graph_inputs.end(), std::back_inserter(*graph_inputs));
   MS_LOG(INFO) << "Construct output of kernel graph:" << new_kernel_graph->graph_id();
   auto make_tuple_primitve = NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()));
   std::vector<AnfNodePtr> make_tuple_inputs = {make_tuple_primitve};
@@ -1462,20 +1499,30 @@ std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPt
   return call_node_inputs;
 }
 
-void AscendSession::SplitGraphs(const KernelGraphPtr &root_graph) {
-  SplitGraph(root_graph);
+void AscendSession::SplitGraphs(NotNull<KernelGraphPtr> root_graph) {
+  std::set<KernelGraphPtr> memo;
+  // if root graph output is a call node ,the root graph is condition graph of 'if' sentence
+  auto root_graph_output = AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0).first;
+  if (AnfAlgo::CheckPrimitiveType(root_graph_output, prim::kPrimCall)) {
+    SplitGraph(root_graph, {prim::kPrimReturn});
+    for (auto &child_graph : root_graph->child_graph_order()) {
+      RecurseSplitGraph(NOT_NULL(child_graph), NOT_NULL(&memo));
+    }
+  } else {
+    RecurseSplitGraph(root_graph, NOT_NULL(&memo));
+  }
+  memo.clear();
   // replace the real input if the real input is a call
-  RecurseToUpdateCallRealInput(root_graph.get());
+  RecurseToUpdateCallRealInput(root_graph, NOT_NULL(&memo));
 }
 
-void AscendSession::SplitGraph(const KernelGraphPtr &graph) {
+void AscendSession::SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims) {
   MS_LOG(INFO) << "start,graph_id:" << graph->graph_id();
-  MS_EXCEPTION_IF_NULL(graph);
   auto apply_list = GetCNodes(TopoSort(graph->get_return()));
   // update the root graph child graph order
-  AscendControlParser::UpdateChildGraphOrder(NOT_NULL(graph));
+  AscendControlParser::UpdateChildGraphOrder(graph);
   // get child list from current graph
-  std::vector<std::vector<CNodePtr>> child_graph_lists = GetChildList(*graph, apply_list);
+  std::vector<std::vector<CNodePtr>> child_graph_lists = GetChildList(apply_list, cut_prims);
   auto bind_new_call_to_new_graph = [&](std::vector<CNodePtr> child_graph_list) -> AnfNodePtr {
     // if child graph list only has a call ,then return the exist call
     if (child_graph_list.size() == 1 && AnfAlgo::CheckPrimitiveType(child_graph_list[0], prim::kPrimCall)) {
@@ -1522,20 +1569,22 @@ void AscendSession::SplitGraph(const KernelGraphPtr &graph) {
       pre_call_node = cur_call_node;
       cur_call_node = *iter;
       if (pre_call_node != nullptr && cur_call_node != nullptr) {
-        AscendControlParser::InsertControlDependToGraph(NOT_NULL(graph), NOT_NULL(cur_call_node),
-                                                        NOT_NULL(pre_call_node));
+        AscendControlParser::InsertControlDependToGraph(graph, NOT_NULL(cur_call_node), NOT_NULL(pre_call_node));
       }
     }
   }
-  AscendControlParser::UpdateChildGraphOrder(NOT_NULL(graph));
-  UpdateRealInput(graph.get());
-  auto graph_name = std::string("./kernel-graph-").append(std::to_string(graph->graph_id()));
-  DumpIR(graph_name, graph);
+  AscendControlParser::UpdateChildGraphOrder(graph);
+  UpdateRealInput(graph);
   MS_LOG(INFO) << "split graph[" << graph->graph_id() << "] end";
   // recurse to split child graph
+}
+
+void AscendSession::RecurseSplitGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo) {
+  memo->insert(graph.get());
+  SplitGraph(graph, {prim::kPrimCall});
   for (auto &child_graph : graph->child_graph_order()) {
-    if (child_graph != graph->parent_graph()) {
-      SplitGraph(child_graph);
+    if (memo->find(child_graph) == memo->end()) {
+      RecurseSplitGraph(NOT_NULL(child_graph), memo);
     }
   }
 }
@@ -1546,13 +1595,14 @@ void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph) {
   AscendControlParser::ExecutorValidate(graph);
 }
 
-void AscendSession::RecurseCompileGraph(const KernelGraphPtr &graph) {
+void AscendSession::RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo) {
+  memo->insert(graph.get());
   CompileChildGraph(graph);
   for (auto child_graph : graph->child_graph_order()) {
-    if (child_graph == graph->parent_graph()) {
+    if (memo->find(child_graph) != memo->end()) {
       continue;
     }
-    RecurseCompileGraph(child_graph);
+    RecurseCompileGraph(NOT_NULL(child_graph), memo);
   }
 }
 
