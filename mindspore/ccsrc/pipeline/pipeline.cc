@@ -760,7 +760,9 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // Convert CNodeList to LinConvertResult.
   ConfigManager::GetInstance().set_iter_num(1);
   auto runner = convert_fn({app_init});
-  backend->Link(runner.graph_id);
+  if (MsContext::GetInstance()->execution_mode() != kPynativeMode) {
+    backend->Link(runner.graph_id);
+  }
   ConfigManager::GetInstance().set_iter_num(size);
 
   if (!(*runner.run)) {
