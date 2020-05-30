@@ -35,6 +35,8 @@ class LookupOp : public TensorOp {
   // @param WordIdType default_id, id to lookup if a word is not in vocab
   explicit LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id = Vocab::kSpecialTokens::unk);
 
+  ~LookupOp() = default;
+
   // perform actual lookup on each tensor
   // @param const std::shared_ptr<Tensor> &input
   // @param std::shared_ptr<Tensor> *output

@@ -71,6 +71,8 @@ class Vocab {
   // @param std::unordered_map<WordType, WordIdType> map - sanitized word2id map
   explicit Vocab(std::unordered_map<WordType, WordIdType> map);
 
+  ~Vocab() = default;
+
   // enum type that holds all special tokens, add more if needed
   enum kSpecialTokens : WordIdType { pad = 0, unk = 1, num_tokens = 2 };
 
