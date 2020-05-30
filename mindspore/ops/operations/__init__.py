@@ -50,7 +50,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll)
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh)
 from .random_ops import (RandomChoiceWithMask)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
@@ -277,6 +277,8 @@ __all__ = [
     "BitwiseXor",
     "BesselI0e",
     "BesselI1e",
+    "Atan",
+    "Atanh"
 ]
 
 __all__.extend(_quant_ops.__all__)

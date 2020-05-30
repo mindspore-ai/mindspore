@@ -680,6 +680,18 @@ test_case_math_ops = [
         'block': P.BesselI1e(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Atan', {
+        'block': P.Atan(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('AtanGrad', {
+        'block': G.AtanGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
+    ('Atanh', {
+        'block': P.Atanh(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
 ]
 
 test_case_nn_ops = [
