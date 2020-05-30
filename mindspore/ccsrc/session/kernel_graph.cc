@@ -482,7 +482,13 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
       depend_nodes = GetOutputNodes(depend_node);
     }
     for (auto &first_node : prior_nodes) {
+      if (AnfAlgo::CheckPrimitiveType(first_node, prim::kPrimControlDepend)) {
+        continue;
+      }
       for (auto &second_node : depend_nodes) {
+        if (AnfAlgo::CheckPrimitiveType(second_node, prim::kPrimControlDepend)) {
+          continue;
+        }
         MS_EXCEPTION_IF_NULL(first_node);
         MS_EXCEPTION_IF_NULL(second_node);
         MS_LOG(INFO) << "Add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();

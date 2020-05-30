@@ -259,6 +259,15 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
   return true;
 }
 
+bool AscendKernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
+  if (AnfAlgo::OutputAddrExist(kernel, index)) {
+    auto address = AnfAlgo::GetOutputAddr(kernel, index);
+    MS_EXCEPTION_IF_NULL(address);
+    return address->DeviceType() == DeviceAddressType::kAscend;
+  }
+  return false;
+}
+
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                           TypeId type_id) {
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);

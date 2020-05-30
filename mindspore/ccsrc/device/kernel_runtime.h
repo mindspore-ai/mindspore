@@ -67,6 +67,7 @@ class KernelRuntime {
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) = 0;
+  virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
   virtual bool SyncStream() = 0;
   void AssignStaticMemory(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);

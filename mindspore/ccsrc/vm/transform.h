@@ -79,8 +79,9 @@ class CompileGraph {
 
  private:
   void PushParameters(const FuncGraphPtr &func_graph);
+  std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph);
   bool SplitGraph(const FuncGraphPtr &func_graph);
-  int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list);
+  int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
   int InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
   int AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
   void AddSinkSwitch(const CNodePtr &node);
@@ -124,6 +125,7 @@ class CompileGraphs {
   void Compile(const FuncGraphPtr &func_graph);
   FinalVMPtr Link(const FuncGraphPtr &func_graph);
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
+  bool ContainMixedTarget(const FuncGraphPtr &graph);
 
  private:
   InstSet insts_;

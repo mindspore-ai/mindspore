@@ -92,7 +92,7 @@ class MsContext {
   bool ir_fusion_flag() const { return ir_fusion_flag_; }
 
   bool loop_sink_flag() const { return enable_loop_sink_; }
-
+  void set_loop_sink_flag(bool enable_loop_sink) { enable_loop_sink_ = enable_loop_sink; }
   void set_enable_mem_reuse(bool enable_mem_reuse) { enable_mem_reuse_ = enable_mem_reuse; }
   bool enable_mem_reuse() const { return enable_mem_reuse_; }
 

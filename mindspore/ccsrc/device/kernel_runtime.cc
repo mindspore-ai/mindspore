@@ -102,6 +102,13 @@ bool KernelRuntime::RunTask(const session::KernelGraph *graph) {
   return false;
 }
 
+bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
+  if (AnfAlgo::OutputAddrExist(kernel, index)) {
+    return true;
+  }
+  return false;
+}
+
 size_t KernelRuntime::CountNodeDeviceMemorySize(const mindspore::AnfNodePtr &node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(node);
   if (output_index >= AnfAlgo::GetOutputTensorNum(node)) {
@@ -255,7 +262,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
     if (i < graph_valid_input.size() && !graph_valid_input[i]) {
       continue;
     }
-    if (AnfAlgo::OutputAddrExist(item, 0)) {
+    if (NodeOutputDeviceAddressExist(item, 0)) {
       continue;
     }
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
@@ -431,7 +438,7 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
     if ((kGetAllOuts != index) && (SizeToInt(i) != index)) {
       continue;
     }
-    if (AnfAlgo::OutputAddrExist(node, i)) {
+    if (NodeOutputDeviceAddressExist(node, i)) {
       MS_LOG(INFO) << "Already malloc index:" << i;
       continue;
     }
@@ -493,7 +500,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(ms_context);
   for (auto &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
-    if (AnfAlgo::OutputAddrExist(value_node, 0)) {
+    if (NodeOutputDeviceAddressExist(value_node, 0)) {
       MS_LOG(INFO) << "value_node[" << value_node->DebugString() << "] address already exist";
       continue;
     }

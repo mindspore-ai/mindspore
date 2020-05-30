@@ -28,6 +28,23 @@
 
 namespace mindspore {
 namespace session {
+ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(anf);
+  if (!anf->isa<Parameter>()) {
+    MS_LOG(EXCEPTION) << "anf[" << anf->DebugString() << "] is not a parameter";
+  }
+  auto valid_inputs = graph->MutableValidInputs();
+  MS_EXCEPTION_IF_NULL(valid_inputs);
+  auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
+  ParameterPtr new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
+  TraceManager::EndTrace();
+  graph_inputs->push_back(new_parameter);
+  valid_inputs->push_back(valid_input);
+  return new_parameter;
+}
+
 GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
