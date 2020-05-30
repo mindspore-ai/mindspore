@@ -58,6 +58,7 @@ class MemReuseChecker {
   void ExportNormalTensorIR(std::ofstream &ofs);
   void CheckNormalIR(const session::KernelGraph *graph);
   void ExportMembufInfoIR();
+  void ExportEachMembufInfo(std::ofstream &ofs);
   void SetAddNewMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list, size_t op_idx);
   void ExportAddNewMmebufIR();
   void set_kernel_front_map(const std::map<KernelDefPtr, std::set<KernelDefPtr>> &kernel_front_map) {
