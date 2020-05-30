@@ -359,12 +359,20 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('ACos', {
         'block': P.ACos(),
-        'desc_inputs': [[2, 3]],
-        'desc_bprop': [[2, 3]]}),
+        'desc_inputs': [Tensor(np.array([2., 3.]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([2., 3.]).astype(np.float32))]}),
+    ('ACosGrad', {
+        'block': G.ACosGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
     ('Acosh', {
         'block': P.Acosh(),
-        'desc_inputs': [[3, 4, 5]],
-        'desc_bprop': [[3, 4, 5]]}),
+        'desc_inputs': [Tensor(np.array([2., 3.]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([2., 3.]).astype(np.float32))]}),
+    ('AcoshGrad', {
+        'block': G.AcoshGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
     ('Sin', {
         'block': P.Sin(),
         'desc_inputs': [[2, 3]],
@@ -1012,8 +1020,9 @@ test_case_nn_ops = [
     ('ApplyCenteredRMSProp', {
         'block': P.ApplyCenteredRMSProp(),
         'desc_const': [0.9, 0.0, 1e-10, 0.001],
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], [3, 3]],
-        'desc_bprop': [3, 3],
+        'desc_inputs': [Tensor(1., mstype.float32), Tensor(2., mstype.float32), Tensor(1., mstype.float32),
+                        Tensor(2., mstype.float32), Tensor(1., mstype.float32)],
+        'desc_bprop': [1],
         'skip': ['backward']}),
     ('CTCLoss', {
         'block': P.CTCLoss(),

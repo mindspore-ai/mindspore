@@ -16,8 +16,13 @@
 """tbe ops"""
 from .abs import _abs_tbe
 from .abs_grad import _abs_grad_tbe
+from .acos import _acos_tbe
+from .acos_grad import _acos_grad_tbe
+from .acosh import _acosh_tbe
+from .acosh_grad import _acosh_grad_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe
 from .add import _add_tbe
+from .apply_centered_rms_prop import _apply_centered_rms_prop_tbe
 from .add_n import _add_n_tbe
 from .apply_ftrl import _apply_ftrl_tbe
 from .apply_momentum import _apply_momentum_tbe
@@ -183,6 +188,7 @@ from .arg_max import _arg_max_tbe
 from .nms_with_mask import _nms_with_mask_tbe
 from .sgd import _sgd_tbe
 from .lars_update import _lars_update_tbe
+from .arg_min import _arg_min_tbe
 from .bn_training_update_v2 import _bn_training_update_v2_tbe
 from .square_sum_all import _square_sum_all_tbe
 from .pack import _pack_tbe
