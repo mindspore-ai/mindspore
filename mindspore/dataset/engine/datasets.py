@@ -3011,7 +3011,8 @@ class GeneratorDataset(MappableDataset):
 
         if rows_from_sampler is None:
             return self._dataset_size
-
+        if self._dataset_size is None:
+            return None
         return min(rows_from_sampler, self._dataset_size)
 
     # manually set dataset_size as a temporary solution.
