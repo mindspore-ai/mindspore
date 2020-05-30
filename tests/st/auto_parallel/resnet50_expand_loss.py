@@ -15,7 +15,6 @@
 
 import os
 import numpy as np
-import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.context as context
@@ -113,8 +112,7 @@ class ResidualBlock(nn.Cell):
     def __init__(self,
                  in_channels,
                  out_channels,
-                 stride=1,
-                 momentum=0.9):
+                 stride=1):
         super(ResidualBlock, self).__init__()
 
         out_chls = out_channels // self.expansion
