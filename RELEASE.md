@@ -2,7 +2,69 @@
 
 ## Major Features and Improvements
 
-### TODO
+### Ascend 910 Training and Inference Framework
+* New models
+    * DeepFM: a factorization-machine based neural network for CTR prediction on Criteo dataset.
+    * DeepLabV3: significantly improves over our previous DeepLab versions without DenseCRF post-processing and attains comparable performance with other state-of-art models on the PASCAL VOC 2007 semantic image segmentation benchmark.
+    * Faster-RCNN: towards real-time object detection with region proposal networks on COCO 2017 dataset.
+    * GoogLeNet: a deep convolutional neural network architecture codenamed Inception V1 for classification and detection on CIFAR-10 dataset.
+    * Wide&Deep: jointly trained wide linear models and deep neural networks for recommender systems on Criteo dataset.
+* Frontend and User Interface
+    * Complete numpy advanced indexing method. Supports value and assignment through tensor index.
+    * Some optimizers support separating parameter groups. Different parameter groups can set different `learning_rate` and `weight_decay`.
+    * Support setting submodule's logging level independently, e.g. you can set logging level of module `A` to warning and set logging level of module `B` to info.
+    * Support weights to be compiled according to shape to solve the problem of large memory overhead.
+    * Add some operators implement and grammar support in pynative mode. To be consistent with graph mode.
+    * User interfaces change log
+      * Learning rate and weight decay making group params([!637](https://gitee.com/mindspore/mindspore/pulls/637))
+      * Support weights to be compiled according to shape([!1015](https://gitee.com/mindspore/mindspore/pulls/1015))
+      * delete some context param([!1100](https://gitee.com/mindspore/mindspore/pulls/1100))
+      * ImageSummary/ScalarSummary/TensorSummary/HistogramSummary([!1329](https://gitee.com/mindspore/mindspore/pulls/1329))([!1425](https://gitee.com/mindspore/mindspore/pulls/1425))
+* Executor and Performance Optimization
+    * Support doing evaluation while in training process, so that the accuracy of training can be easily obtained.
+    * Enable second-order optimization for resnet50, which can achieve 75.9% accuracy in 45 epochs (Resnet50 @ImageNet).
+    * Optimize pynative implementation and improve it's execution performance.
+    * Optimize summary record implementation and improve its performance.
+* Data processing, augmentation, and save format
+    * Support simple text processing, such as tokenizer/buildvocab/lookup.
+    * Support padding batch.
+    * Support split or concat dataset.
+    * Support MindDataset reading from file list.
+
+### Other Hardware Support
+* GPU platform
+    * New models supported: MobileNetV2, MobileNetV3.
+    * Support mixed precision training.
+    * Support device memory swapping.
+
+## Bugfixes
+* Python API
+    * An exception to the broadcast input data type check([!712](https://gitee.com/mindspore/mindspore/pulls/712))
+    * Fix issues assignsub return value 0([!1036](https://gitee.com/mindspore/mindspore/pulls/1036))
+    * Fix issue Conv2dBackpropInput bprop should return 3 instead of 2 items([!1001](https://gitee.com/mindspore/mindspore/pulls/1001))
+    * Fix sens shape error of TrainOneStepWithLossScaleCell([!1050](https://gitee.com/mindspore/mindspore/pulls/1050))
+    * Fix BatchNormGrad operator([!1344](https://gitee.com/mindspore/mindspore/pulls/1344))
+* Executor
+    * Fix dropout，topK and addn errors in PyNative mode ([!1285](https://gitee.com/mindspore/mindspore/pulls/1285), [!1138](https://gitee.com/mindspore/mindspore/pulls/1138), [!1033](https://gitee.com/mindspore/mindspore/pulls/1033)).
+    * Fix memory leaks after execution in PyNatvie mode ([!1201](https://gitee.com/mindspore/mindspore/pulls/1201)).
+    * Fix HCCL failure in some special scenes ([!1204](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1204), [!1252](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1252)).
+    * Fix SSD network when Select failed, cann't find kernel info([!1449](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1449)).
+    * Fix Topk operator selection strategy bug between aicore and aicpu([!1367](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1367)).
+    * Fix input memory size of 'assign' op unequal in control sink mode when assigning a data from one child graph to another child graph([!802](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/802)).
+    * Fix allreduce ir inconsistency([!989](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/989)).
+* GPU platform
+    * Fix summary for gradient collection ([!1364](https://gitee.com/mindspore/mindspore/pulls/1364))
+    * Fix the slice operator ([!1489](https://gitee.com/mindspore/mindspore/pulls/1489))
+* Data processing
+    * Fix memory problems of GeneratorDataset of sub-process ([!907](https://gitee.com/mindspore/mindspore/pulls/907))
+    * Fix getting data timeout when training the cifar10 dataset under the lenet([!1391](https://gitee.com/mindspore/mindspore/pulls/1391))
+
+## Contributors
+Thanks goes to these wonderful people:
+
+Alexey Shevlyakov, Amir Lashkari, anthony, baihuawei, biffex, buxue, caifubi, candanzg, caojian05, Cathy Wong, changzherui, chenfei, chengxianbin, chenhaozhe, chenzomi, chujinjin, cristoval, dengwentao, eric, etone-chan, fary86, gaojing, gengdongjie, gongchen, guohongzilong, guozhijian, heleiwang, hesham, He Wei, Hoai Linh Tran h00472437, hongxing, huangdongrun, huanghui, Jamie Nisbet, Jesse Lee, jiangjinsheng, jiangzhiwen, jinyaohui, jjfeing, jonwe, jonyguo, Junhan Hu, Kang, kingfo, kswang, laiyongqiang, leopz, lichenever, lihongkang, limingqi107, liubuyu, liuliyan2, liuwenhao4, liuxiao, liuxiao, liyong, lizhenyu, lvliang, Margaret_wangrui, meixiaowei, ms_yan, Nat Sutyanyong, ougongchang, panfengfeng, panyifeng, Peilin Wang, peixu_ren, qianlong, rick_sanchez, seatea, sheng, shijianning, simson, sunsuodong, Tinazhang, VectorSL, wandongdong, wangcong, wanghua, wangnan39, Wei Luning, wenchunjiang, wilfChen, WilliamLian, wsc, wukesong, wuxuejian, Xiaoda Zhang, xiefangqi, xulei2020, Yang, yangjie159, yangruoqi713, yangyongjie, yangzhenzhang, Yanjun Peng, yanzhenxiang2020, yao_yf, Yi Huaijie, yoonlee666, yujianfeng, YuJianfeng, yvetteliu, z00478463, zhangdengcheng, Zhang Qinghua, zhangz0911gm, zhaojichen, zhaoting, zhaozhenlong, zhoufeng, zhouneng, zhousiyi, zhouyuanshen, Zirui Wu, Ziyan, zjun, ZPaC, lihongzhang
+
+Contributions of any kind are welcome!
 
 # Release 0.2.0-alpha
 
