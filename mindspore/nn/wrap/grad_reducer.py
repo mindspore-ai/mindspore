@@ -52,6 +52,31 @@ def _tensors_allreduce_mean(mul, degree, allreduce_filter, grad):
     return grad
 
 
+@reduce_opt.register("Function", "Number", "Bool", "Tuple")
+def _tensors_allreduce_mean_with_sparse(mul, degree, allreduce_filter, grad):
+    """
+    Apply mean and allgather on gradient instead of allreduce for sparse feature.
+    Allgather is a communication operation used for distributed deep learning.
+
+    Args:
+        mul (Primitive): Div operation.
+        degree (int): The mean coefficient.
+        allreduce_filter (bool): When it is true, allgather would apply.
+        grad (Tuple): The indices, gradient tensor and tensor_shape before operation.
+
+    Returns:
+        Tuple, include indices, the gradient tensor and tensor_shape after operation.
+    """
+    if allreduce_filter:
+        indices = _all_gather(grad[0])
+        degree = F.scalar_cast(degree, F.dtype(grad[1]))
+        dout = _all_gather(grad[1])
+        cast_op = P.Cast()
+        dout = mul(dout, cast_op(F.scalar_to_array(1.0/degree), F.dtype(dout)))
+        grad = (indices, dout, dout[2])
+    return grad
+
+
 @reduce_opt.register("Bool", "Tensor")
 def _tensors_allreduce(allreduce_filter, grad):
     """
@@ -66,6 +91,26 @@ def _tensors_allreduce(allreduce_filter, grad):
     """
     if allreduce_filter:
         return _all_reduce(grad)
+    return grad
+
+
+@reduce_opt.register("Bool", "Tuple")
+def _tensors_allreduce_with_sparse(allreduce_filter, grad):
+    """
+    Apply mean and allgather on gradient instead of allreduce for sparse feature.
+    Allgather is a communication operation used for distributed deep learning.
+
+    Args:
+        allreduce_filter (bool): When it is true, allgather would apply.
+        grad (Tuple): The indices, gradient tensor and tensor_shape before operation.
+
+    Returns:
+        Tuple, include indices, the gradient tensor and tensor_shape after operation.
+    """
+    if allreduce_filter:
+        indices = _all_gather(grad[0])
+        dout = _all_gather(grad[1])
+        grad = (indices, dout, dout[2])
     return grad
 
 
