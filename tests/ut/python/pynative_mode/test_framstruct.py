@@ -30,6 +30,7 @@ from ....mindspore_test_framework.utils.check_gradient import (
     ms_function, check_jacobian, Tensor, NNGradChecker,
     OperationGradChecker, check_gradient, ScalarGradChecker)
 
+context.set_context(mode=context.PYNATIVE_MODE)
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -257,8 +258,8 @@ def if_tensor(a, b):
 
 
 def test_if_tensor():
-    res = if_tensor(Tensor(np.ones([64, 10]).astype(np.int32)), Tensor(np.ones([64, 10]).astype(np.int32)))
-    assert res == Tensor(np.ones([64, 10]).astype(np.int32) * 4)
+    res = if_tensor(Tensor(np.ones([1]).astype(np.int32)), Tensor(np.ones([1]).astype(np.int32)))
+    assert res == Tensor(np.ones([1]).astype(np.int32) * 4)
 
 
 @ms_function
@@ -399,7 +400,7 @@ def if_while(a, b, x, z):
 def test_if_while():
     x = Tensor(np.random.randn(1, 16, 12, 12).astype(np.float32))
     z = Tensor(np.random.randn(1, 16, 16, 16).astype(np.float32))
-    res = if_while(Tensor(np.ones([64, 10]).astype(np.float32)), Tensor(np.ones([64, 10]).astype(np.float32)), x, z)
+    res = if_while(Tensor(np.ones([1]).astype(np.float32)), Tensor(np.ones([1]).astype(np.float32)), x, z)
     assert res == Tensor(np.ones([64, 10]).astype(np.float32) * 4.0)
 
 

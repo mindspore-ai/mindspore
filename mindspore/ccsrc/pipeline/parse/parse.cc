@@ -967,6 +967,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
 
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
+  condition_node = header_block->ForceToWhileCond(condition_node);
   body_block->Mature();
   header_block->ConditionalJump(condition_node, body_block, after_block);
 

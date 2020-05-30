@@ -252,6 +252,7 @@ extern const PrimitivePtr kPrimIsNot;
 extern const PrimitivePtr kPrimInDict;
 extern const PrimitivePtr kPrimNotInDict;
 extern const PrimitivePtr kPrimMixedPrecisionCast;
+extern const PrimitivePtr kPrimIsConsant;
 
 // Comm ops
 extern const PrimitivePtr kPrimMirror;
