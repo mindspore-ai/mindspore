@@ -96,6 +96,12 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
         """init CusCholeskyTrsm"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         from mindspore.ops._op_impl._custom_op.cholesky_trsm_impl import CusCholeskyTrsm
+
+    def get_bprop(self):
+        def bprop(x, out, dout):
+            return (C.zeros_like(x),)
+        return bprop
+
     def infer_shape(self, data1_shape):
         ll = []
         m, _ = data1_shape
