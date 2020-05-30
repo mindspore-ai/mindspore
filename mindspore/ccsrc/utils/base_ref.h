@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,16 @@
 #include <sstream>
 #include <utility>
 #include <iterator>
-#include "pybind11/pybind11.h"
-#include "ir/value.h"
 
-namespace py = pybind11;
+#include "ir/value.h"
 
 namespace mindspore {
 class BaseRef;
 class VectorRef;
 class SetRef;
-class PyObjectRef;
 class RunFunctionRef;
 
 using iterator = std::vector<BaseRef>::iterator;
-
 using const_iterator = std::vector<BaseRef>::const_iterator;
 using const_reverse_iterator = std::vector<BaseRef>::const_reverse_iterator;
 
@@ -88,8 +84,6 @@ inline std::shared_ptr<VectorRef> MakeNode(const AnfNodePtrList &a) {
 }
 inline std::shared_ptr<SetRef> MakeNode(const SetRef &a) { return std::make_shared<SetRef>(std::move(a)); }
 inline std::shared_ptr<RunFunctionRef> MakeNode(const RunFuncPtr &a) { return std::make_shared<RunFunctionRef>(a); }
-inline std::shared_ptr<PyObjectRef> MakeNode(const py::object &a) { return std::make_shared<PyObjectRef>(a); }
-inline std::shared_ptr<PyObjectRef> MakeNode(const py::tuple &a) { return std::make_shared<PyObjectRef>(a); }
 
 class BaseRef : public Base {
  public:
@@ -366,24 +360,6 @@ class SetRef : public BaseRef {
 };
 
 using SetRefPtr = std::shared_ptr<SetRef>;
-
-class PyObjectRef : public BaseRef {
- public:
-  explicit PyObjectRef(const py::object &py_object) : object_(py_object) {}
-  explicit PyObjectRef(const py::tuple &tuple_obj) : object_(tuple_obj) {}
-
-  ~PyObjectRef() override = default;
-
-  std::shared_ptr<Base> copy() const override { return std::make_shared<PyObjectRef>(object_); }
-  MS_DECLARE_PARENT(PyObjectRef, BaseRef)
-
-  uint32_t type() const override { return tid(); }
-  std::string ToString() const override { return py::str(object_); }
-  bool operator==(const BaseRef &other) const override;
-  bool operator==(const PyObjectRef &other) const;
-
-  py::object object_;
-};
 
 class RunFunctionRef : public BaseRef {
  public:

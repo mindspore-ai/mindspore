@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_TRACE_H_
-#define MINDSPORE_CCSRC_DEBUG_TRACE_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_TRACE_BASE_H_
+#define MINDSPORE_CCSRC_DEBUG_TRACE_BASE_H_
 
 #include <fstream>
 #include <memory>
@@ -23,27 +23,17 @@
 #include <utility>
 #include <stack>
 
-#include "debug/trace_base.h"
 #include "debug/info.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "pipeline/static_analysis/static_analysis.h"
 #include "utils/any.h"
 
 namespace mindspore {
 namespace trace {
-DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
-void TraceGraphEval();
-void GetEvalStackInfo(std::ostringstream &oss);
-void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node);
-void TraceGraphEvalLeave(const abstract::EvaluatorPtr &eval);
-void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
-void TraceEvalCNodeLeave();
-std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack();
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphInferStack();
-std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
-void ClearTraceStack();
+std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
+std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
+                         SourceLineTip tip = kSourceLineTipNextLine);
 }  // namespace trace
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEBUG_TRACE_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_TRACE_BASE_H_

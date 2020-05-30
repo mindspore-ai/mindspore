@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <map>
 #include <mutex>
+
+#include "utils/base_ref_extends.h"
 #include "debug/draw.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"

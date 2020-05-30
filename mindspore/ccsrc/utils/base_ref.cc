@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,13 +185,4 @@ bool RunFunctionRef::operator==(const BaseRef &other) const {
 }
 
 bool RunFunctionRef::operator==(const RunFunctionRef &other) const { return func_ == other.func_; }
-
-bool PyObjectRef::operator==(const BaseRef &other) const {
-  if (!utils::isa<PyObjectRef>(other)) {
-    return false;
-  }
-  return *this == utils::cast<PyObjectRef>(other);
-}
-
-bool PyObjectRef::operator==(const PyObjectRef &other) const { return object_ == other.object_; }
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 
 #include "ir/value.h"
+
 #include <algorithm>
 #include <memory>
 #include <cmath>
 #include <cfloat>
-#include "utils/convert_utils.h"
+
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 const ValuePtr ValueSequeue::operator[](const std::size_t &dim) const {
