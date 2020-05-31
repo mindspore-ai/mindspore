@@ -745,8 +745,7 @@ void SessionBasic::Reorder(std::vector<CNodePtr> *node_list) {
   (void)std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
 }
 
-void SessionBasic::GetSummaryNodes(const KernelGraph *graph,
-                                   std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) {
+void SessionBasic::GetSummaryNodes(const KernelGraph *graph, NamedSummaryOutputs *summary) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(summary);
@@ -780,7 +779,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
-  std::unordered_map<std::string, std::pair<AnfNodePtr, int>> summary_outputs;
+  NamedSummaryOutputs summary_outputs;
   GetSummaryNodes(graph, &summary_outputs);
   // do not exist summary node
   if (summary_outputs.empty()) {

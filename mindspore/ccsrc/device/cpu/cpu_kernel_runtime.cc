@@ -27,6 +27,7 @@
 #include "utils/config_manager.h"
 #include "common/utils.h"
 #include "session/anf_runtime_algorithm.h"
+#include "session/session_basic.h"
 #include "operator/ops.h"
 
 namespace mindspore {
@@ -234,9 +235,18 @@ void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<ker
   input_list->push_back(input);
 }
 
+void CPUKernelRuntime::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+  resource_manager_.IncreaseSummaryRefCount(summary_outputs);
+}
+
+void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+  resource_manager_.DecreaseSummaryRefCount(summary_outputs);
+}
+
 bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  resource_manager_.ResetAddressRefCount(kernel_graph);
+  resource_manager_.IncreaseAddressRefCount(kernel_graph);
+
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
     std::vector<kernel::AddressPtr> kernel_inputs;
