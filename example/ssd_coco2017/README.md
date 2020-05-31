@@ -60,10 +60,10 @@ To train the model, run `train.py`. If the `MINDRECORD_DIR` is empty, it will ge
 - Distribute mode
 
     ```
-    sh run_distribute_train.sh 8 150 coco /data/hccl.json
+    sh run_distribute_train.sh 8 500 0.2 coco /data/hccl.json
     ```
 
-    The input parameters are device numbers, epoch size, dataset mode and [hccl json configuration file](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html). **It is better to use absolute path.** 
+    The input parameters are device numbers, epoch size, learning rate, dataset mode and [hccl json configuration file](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html). **It is better to use absolute path.** 
 
 You will get the loss value of each step as following:
 
@@ -75,14 +75,15 @@ epoch: 3 step: 455, loss is 5.458992
 epoch: 148 step: 455, loss is 1.8340507
 epoch: 149 step: 455, loss is 2.0876894
 epoch: 150 step: 455, loss is 2.239692
+...
 ```
 
 ### Evaluation
 
-for evaluation , run `eval.py` with `ckpt_path`. `ckpt_path` is the path of [checkpoint](https://www.mindspore.cn/tutorial/en/master/use/saving_and_loading_model_parameters.html) file.
+for evaluation , run `eval.py` with `checkpoint_path`. `checkpoint_path` is the path of [checkpoint](https://www.mindspore.cn/tutorial/en/master/use/saving_and_loading_model_parameters.html) file.
 
 ```
-python eval.py --ckpt_path ssd.ckpt --dataset coco
+python eval.py --checkpoint_path ssd.ckpt --dataset coco
 ```
 
 You can run ```python eval.py -h```  to get more information.
