@@ -83,7 +83,7 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecUnkownType) {
+  } else if (op.op_type == OperatorType::kRecUnkownType || op.op_type == OperatorType::kRecPReLU) {
     // For unknown type
     return 0.0;
   } else {
@@ -177,7 +177,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecUnkownType) {
+  } else if (node.apply.op_type == OperatorType::kRecUnkownType || node.apply.op_type == OperatorType::kRecPReLU) {
     // For unknown type
     StrategyRec default_strategy;
     return default_strategy;
