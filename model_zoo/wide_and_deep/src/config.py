@@ -22,8 +22,8 @@ def argparse_init():
     parser = argparse.ArgumentParser(description='WideDeep')
     parser.add_argument("--data_path", type=str, default="./test_raw_data/")
     parser.add_argument("--epochs", type=int, default=15)
-    parser.add_argument("--batch_size", type=int, default=10000)
-    parser.add_argument("--eval_batch_size", type=int, default=15)
+    parser.add_argument("--batch_size", type=int, default=16000)
+    parser.add_argument("--eval_batch_size", type=int, default=16000)
     parser.add_argument("--field_size", type=int, default=39)
     parser.add_argument("--vocab_size", type=int, default=184965)
     parser.add_argument("--emb_dim", type=int, default=80)
@@ -45,8 +45,8 @@ class WideDeepConfig():
     def __init__(self):
         self.data_path = "./test_raw_data/"
         self.epochs = 15
-        self.batch_size = 10000
-        self.eval_batch_size = 10000
+        self.batch_size = 16000
+        self.eval_batch_size = 16000
         self.field_size = 39
         self.vocab_size = 184965
         self.emb_dim = 80
