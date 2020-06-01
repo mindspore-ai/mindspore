@@ -525,5 +525,27 @@ std::string GetProcessor(const AnfNodePtr &anf_node) {
   }
   return device;
 }
+
+bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b) {
+  if (shape_a.size() != shape_b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < shape_a.size(); ++i) {
+    if (shape_a[i] != shape_b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int Sign(float x) {
+  if (x > 0) {
+    return 1;
+  }
+  if (x < 0) {
+    return -1;
+  }
+  return 0;
+}
 }  // namespace kernel
 }  // namespace mindspore
