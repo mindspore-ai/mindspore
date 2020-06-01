@@ -1004,6 +1004,36 @@ class Exp(PrimitiveWithInfer):
         return x_type
 
 
+class Expm1(PrimitiveWithInfer):
+    """
+    Returns exponential then minus 1 of a tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
+        >>> expm1 = P.Expm1()
+        >>> expm1(input_x)
+        [ 0.,  1.71828183,  6.3890561 , 53.59815003]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Exp"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        return x_type
+
+
 class Log(PrimitiveWithInfer):
     """
     Returns the natural logarithm of a tensor element-wise.

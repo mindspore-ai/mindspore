@@ -42,7 +42,7 @@ from .inner_ops import ScalarCast
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
-                       Cos, Div, Equal, EqualCount, Exp, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
+                       Cos, Div, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
@@ -89,6 +89,7 @@ __all__ = [
     'Mul',
     'Pow',
     'Exp',
+    'Expm1',
     'Rsqrt',
     'Sqrt',
     'Square',
