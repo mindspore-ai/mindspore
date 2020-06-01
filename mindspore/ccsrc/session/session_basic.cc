@@ -291,6 +291,19 @@ void DumpGraphOutput(const Any &any, size_t recurse_level = 0) {
   (void)tab_str.append(any.ToString());
   MS_LOG(INFO) << tab_str;
 }
+
+bool ExistSummaryNode(const KernelGraph *graph) {
+  auto ret = graph->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  auto all_nodes = DeepLinkedGraphSearch(ret);
+  for (auto &n : all_nodes) {
+    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
+        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -537,6 +550,9 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     graph->set_manager(manager);
   }
   graph->SetExecOrderByDefault();
+  if (ExistSummaryNode(graph.get())) {
+    graph->set_summary_node_exist(true);
+  }
   opt::BackendCommonOptimization(graph);
   return graph;
 }
@@ -594,6 +610,9 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
     graph->set_manager(manager);
   }
   graph->SetExecOrderByDefault();
+  if (ExistSummaryNode(graph.get())) {
+    graph->set_summary_node_exist(true);
+  }
   return graph;
 }
 
@@ -716,6 +735,9 @@ void SessionBasic::GetSummaryNodes(const KernelGraph *graph,
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(summary);
+  if (!graph->summary_node_exist()) {
+    return;
+  }
   auto apply_list = TopoSort(graph->get_return());
   for (auto &n : apply_list) {
     MS_EXCEPTION_IF_NULL(n);
