@@ -64,7 +64,7 @@ def test_embeddinglookup_reducescatter_false():
 
 
 def test_embeddinglookup_reducescatter_true():
-    shape = [8, 8]
+    shape = [64, 8]
     axis = 0
     offset = 8
     reduce_scatter_flag = True
@@ -73,5 +73,5 @@ def test_embeddinglookup_reducescatter_true():
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([1, 32, 8]), dtype=ms.float32)
+    y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
     _executor.compile(net, x, y)
