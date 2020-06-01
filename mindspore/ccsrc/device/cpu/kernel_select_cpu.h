@@ -33,7 +33,7 @@ void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
 class KernelAttr {
  public:
   using DataType = std::pair<TypeId, std::string>;
-  KernelAttr() = default;
+  KernelAttr() : all_same_(0) {}
   ~KernelAttr() = default;
 
   KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT) {
