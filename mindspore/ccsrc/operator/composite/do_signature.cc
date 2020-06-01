@@ -255,9 +255,6 @@ void DoAutoCast(const std::vector<Signature> &signature, const abstract::Abstrac
     if (arg_value->isa<abstract::AbstractTensor>() && arg_type_id == it->second) {
       continue;
     }
-    if ((arg_type_id == kNumberTypeBool || it->second == kNumberTypeBool) && arg_type_id != it->second) {
-      continue;
-    }
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], it->second, graph);
   }
 }
