@@ -118,7 +118,7 @@ class TraceContext {
   void set_location(const LocationPtr &loc) { location_ = loc; }
   LocationPtr location() { return location_; }
   void set_trace_info(const TraceInfoPtr &trace_info) { trace_info_ = trace_info; }
-  TraceInfoPtr trace_info() { return trace_info_; }
+  TraceInfoPtr trace_info() const { return trace_info_; }
   void set_func_name(const std::string &func_name) { func_name_ = func_name; }
   std::string func_name() { return func_name_; }
 };
@@ -139,7 +139,7 @@ class DebugInfo : public Base {
   std::string get_id() { return std::to_string(debug_id()); }
 
   void set_trace_info(const TraceInfoPtr &trace_info) { trace_info_ = trace_info; }
-  TraceInfoPtr trace_info() { return trace_info_; }
+  TraceInfoPtr trace_info() const { return trace_info_; }
   void set_location(const LocationPtr &loc) { location_ = loc; }
   virtual LocationPtr location() { return location_; }
   std::string name() { return name_; }

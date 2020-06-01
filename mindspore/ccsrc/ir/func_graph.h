@@ -57,9 +57,6 @@ class AbstractFunction;
 using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
 }  // namespace abstract
 
-class FuncGraphManager;
-using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
-
 // ANF transform class
 // either a primitive or a func_graph
 class FuncGraphTransform {

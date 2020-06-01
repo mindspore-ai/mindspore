@@ -126,10 +126,10 @@ int64_t DebugInfo::debug_id() {
 }
 
 int64_t DebugInfo::unique_id_through_copy() const {
-  TraceInfoPtr trace_info = const_cast<DebugInfo *>(this)->trace_info();
-  if (trace_info != nullptr) {
-    if (trace_info->isa<TraceCopy>() && trace_info->debug_info() != nullptr) {
-      return trace_info->debug_info()->unique_id_through_copy();
+  auto info = trace_info();
+  if (info != nullptr) {
+    if (info->isa<TraceCopy>() && info->debug_info() != nullptr) {
+      return info->debug_info()->unique_id_through_copy();
     }
   }
   return unique_id();

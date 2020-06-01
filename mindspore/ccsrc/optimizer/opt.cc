@@ -88,7 +88,7 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
   return result;
 }
 
-inline bool isTraversable(const AnfNodePtr &node) {
+static bool isTraversable(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
   }

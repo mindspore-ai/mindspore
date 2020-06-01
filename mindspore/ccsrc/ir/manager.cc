@@ -464,7 +464,7 @@ void FuncGraphManager::MoveAllCNodeDropGraph(FuncGraphPtr source, FuncGraphPtr t
   }
 }
 
-inline void FuncGraphManager::AddEdge(AnfNodePtr node, int index, AnfNodePtr input) {
+void FuncGraphManager::AddEdge(AnfNodePtr node, int index, AnfNodePtr input) {
   auto fg = node->func_graph();
   if (input->isa<ValueNode>()) {
     fg->AddValueNode(input);
@@ -485,7 +485,7 @@ inline void FuncGraphManager::AddEdge(AnfNodePtr node, int index, AnfNodePtr inp
   }
 }
 
-inline void FuncGraphManager::DropEdge(AnfNodePtr node, int index, AnfNodePtr input) {
+void FuncGraphManager::DropEdge(AnfNodePtr node, int index, AnfNodePtr input) {
   auto fg = node->func_graph();
   if (input->isa<ValueNode>()) {
     fg->DropValueNode(input);
@@ -506,7 +506,7 @@ inline void FuncGraphManager::DropEdge(AnfNodePtr node, int index, AnfNodePtr in
   }
 }
 
-inline void FuncGraphManager::MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target) {
+void FuncGraphManager::MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target) {
   target->CopyNodes(source);
   target->CopyValueNodes(source);
   target->CopyFuncGraphCNodesIndex(source);
