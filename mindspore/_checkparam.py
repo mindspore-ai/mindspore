@@ -299,6 +299,9 @@ class Validator:
         def get_typename(t):
             return t.__name__ if hasattr(t, '__name__') else str(t)
 
+        if isinstance(arg_type, type(mstype.tensor)):
+            arg_type = arg_type.element_type()
+
         if arg_type in valid_types:
             return arg_type
         type_names = [get_typename(t) for t in valid_types]

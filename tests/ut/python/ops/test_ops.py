@@ -891,6 +891,11 @@ test_case_nn_ops = [
         'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
         'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
         'skip': ['backward']}),
+    ('BasicLSTMCell', {
+        'block': P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'),
+        'desc_inputs': [[128, 128], [128, 128], [128, 128], [512, 256, 1, 1],[512, 1, 1, 1]],
+        'desc_bprop': [[128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128]],
+        'skip': []}),
     ('TopK', {
         'block': P.TopK(),
         'desc_const': [5],

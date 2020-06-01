@@ -1173,3 +1173,106 @@ class AtanGrad(PrimitiveWithInfer):
         args = {"x": x, "dout": dout}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x
+
+
+class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
+    """Computes the state gradients of BasicLSTMCell."""
+
+    @prim_attr_register
+    def __init__(self, forget_bias, activation):
+        self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
+        self.activation = validator.check_string("activation", activation, ['tanh'], self.name)
+
+    def infer_shape(self, c_shape, dht_shape, dct_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape):
+        # dhy and dcy should be same shape
+        validator.check_integer("c rank", len(c_shape), 2, Rel.EQ, self.name)
+        validator.check("dht rank", len(dht_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("dct rank", len(dct_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("it rank", len(it_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("jt rank", len(jt_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("ft rank", len(ft_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("ot rank", len(ot_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("tanhct rank", len(tanhct_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("dht shape", dht_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("dct shape", dct_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("it shape", it_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("jt shape", jt_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("ft shape", ft_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("ot shape", ot_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("tanhct shape", tanhct_shape, "c shape", c_shape, Rel.EQ, self.name)
+
+        dgate_shape = (c_shape[0], 4 * c_shape[1])
+        dct_1_shape = c_shape
+
+        return (dgate_shape, dct_1_shape)
+
+    def infer_dtype(self, c_dtype, dht_dtype, dct_dtype, it_dtype, jt_dtype, ft_dtype, ot_dtype, tanhct_dtype):
+        validator.check_subclass("c", c_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("dht", dht_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("dct", dct_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("it", it_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("jt", jt_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("ft", ft_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("ot", ot_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("tanhct", tanhct_dtype, [mstype.tensor], self.name)
+        validator.check_type_name("c", c_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("dht", dht_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("dct", dct_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("it", it_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("jt", jt_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("ft", ft_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("ot", ot_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("tanhct", tanhct_dtype, [mstype.float16, mstype.float32], self.name)
+        return (c_dtype, c_dtype)
+
+
+class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
+    """Computes the weight gradients of BasicLSTM."""
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape, h_shape, dgate_shape):
+        validator.check_integer("x rank", len(x_shape), 2, Rel.EQ, self.name)
+        validator.check("h rank", len(h_shape), " x rank", len(x_shape), Rel.EQ, self.name)
+        validator.check("dgate rank", len(dgate_shape), "x rank", len(x_shape), Rel.EQ, self.name)
+        validator.check("h_shape[0]", h_shape[0], "x_shape[0]", x_shape[0], Rel.EQ, self.name)
+        validator.check("dgate_shape[0]", dgate_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
+        validator.check("dgate_shape[1]", dgate_shape[1], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
+        dw_shape = (dgate_shape[1], x_shape[1] + h_shape[1], 1, 1)
+        db_shape = (dgate_shape[1], 1, 1, 1)
+        return (dw_shape, db_shape)
+
+    def infer_dtype(self, x_dtype, h_dtype, dgate_dtype):
+        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
+        validator.check_subclass("h", h_dtype, mstype.tensor, self.name)
+        validator.check_subclass("dgate", dgate_dtype, mstype.tensor, self.name)
+        validator.check_type_name("x", x_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("h", h_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("dgate", dgate_dtype, [mstype.float16, mstype.float32], self.name)
+        return (x_dtype, x_dtype)
+
+
+class BasicLSTMCellInputGrad(PrimitiveWithInfer):
+    """Computes the input gradients of BasicLSTM."""
+
+    @prim_attr_register
+    def __init__(self, keep_prob):
+        self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        self.keep_prob = validator.check_number_range("keep_prob", keep_prob, 0.0, 1.0, Rel.INC_BOTH, self.name)
+
+    def infer_shape(self, dgate_shape, w_shape):
+        validator.check_integer("dgate rank", len(dgate_shape), 2, Rel.EQ, self.name)
+        validator.check_integer("w rank", len(w_shape), 4, Rel.EQ, self.name)
+        validator.check("dgate_shape[1]", dgate_shape[1], "w_shape[0]", w_shape[0], Rel.EQ, self.name)
+        dxt_shape = (dgate_shape[0], w_shape[1] - w_shape[0] // 4)
+        dht_shape = (dgate_shape[0], dgate_shape[1] // 4)
+        return (dxt_shape, dht_shape)
+
+    def infer_dtype(self, dgate_dtype, w_dtype):
+        validator.check_subclass("dgate", dgate_dtype, mstype.tensor, self.name)
+        validator.check_subclass("w", w_dtype, mstype.tensor, self.name)
+        validator.check_type_name("dgate", dgate_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("w", w_dtype, [mstype.float16, mstype.float32], self.name)
+        return (dgate_dtype, dgate_dtype)
