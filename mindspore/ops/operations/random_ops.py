@@ -64,3 +64,61 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({'x': x_dtype}, [mstype.bool_], self.name)
         return (mstype.int32, mstype.bool_)
+
+
+class RandomCategorical(PrimitiveWithInfer):
+    """
+    Generates random samples from a given categorical distribution tensor.
+
+    Args:
+        dtype (mindspore.dtype): The type of output. Its value should be one of [mindspore.int16,
+            mindspore.int32, mindspore.int64]. Default: mindspore.int64.
+
+    Inputs:
+        - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
+        - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
+        - **seed** (int) - Random seed. Default: 0.
+
+    Outputs:
+        - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+
+    Examples:
+        >>> class Net(nn.Cell):
+        >>>   def __init__(self, num_sample):
+        >>>     super(Net, self).__init__()
+        >>>     self.random_categorical = P.RandomCategorical(mindspore.int64)
+        >>>     self.num_sample = num_sample
+        >>>   def construct(self, logits, seed=0):
+        >>>     return self.random_categorical(logits, self.num_sample, seed)
+        >>>
+        >>> x = np.random.random((10, 5)).astype(np.float32)
+        >>> net = Net(8)
+        >>> output = net(Tensor(x))
+    """
+    @prim_attr_register
+    def __init__(self, dtype=mstype.int64):
+        """Init RandomCategorical"""
+        self.dtype = dtype
+
+        valid_values = (mstype.int32, mstype.int16, mstype.int64)
+        validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.init_prim_io_names(inputs=['logits', 'num_samples', 'seed'],
+                                outputs=['output'])
+
+    def __infer__(self, logits, num_samples, seed):
+        logits_dtype = logits['dtype']
+        valid_types = (mstype.float32, mstype.float16, mstype.float64)
+        validator.check_tensor_type_same({'logits': logits_dtype}, valid_types, self.name)
+        num_samples_v = num_samples['value']
+        seed_v = seed['value']
+        validator.check_value_type('num_samples', num_samples_v, (int,), self.name)
+        validator.check_value_type('seed', seed_v, (int,), self.name)
+        validator.check_integer("num_samples", num_samples_v, 0, Rel.GT, self.name)
+        x_shape = list(logits['shape'])
+        if len(x_shape) != 2:
+            raise ValueError("RandomCategorical shape should be 2-dimension.")
+        ndim = len(x_shape) - 1
+        x_shape[ndim] = num_samples_v
+        return {'shape': (x_shape),
+                'dtype': (self.dtype),
+                'value': None}
