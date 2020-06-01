@@ -52,7 +52,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
   size_t num_count_;
-  float drop_prob_;
+  float keep_prob_;
   bool states_init_;
   curandGenerator_t mask_generator_;
   std::vector<size_t> input_size_list_;
