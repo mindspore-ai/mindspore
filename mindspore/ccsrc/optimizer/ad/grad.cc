@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ad {
-FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &resources) {
+FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &resources, bool is_top) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto gradkv = func_graph->transforms().find("grad");
   if (gradkv != func_graph->transforms().end()) {
@@ -46,14 +46,18 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
   auto user_defined = f->KUserDefined(func_graph);
   if (user_defined != nullptr) {
     multi_graph_sink(user_defined);
-    DFunctor::Clear();
+    if (is_top) {
+      DFunctor::Clear();
+    }
     return user_defined;
   }
-  f->Init(f, true);
+  f->Init(f, is_top);
   f->MapObject();
   f->MapMorphism();
   auto ret = f->k_graph();
-  DFunctor::Clear();
+  if (is_top) {
+    DFunctor::Clear();
+  }
 
   multi_graph_sink(ret);
   return ret;
@@ -71,5 +75,7 @@ MetaFuncGraphPtr Kmeta(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
   MetaFuncGraphPtr fg = g_k_prims.KMetaFuncGraph(prim);
   return fg;
 }
+
+void CleanRes() { DFunctor::Clear(); }
 }  // namespace ad
 }  // namespace mindspore

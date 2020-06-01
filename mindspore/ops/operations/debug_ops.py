@@ -286,12 +286,6 @@ class HookBackward(PrimitiveWithInfer):
         self.register_hook(hook_fn)
         self.cell_id = cell_id
 
-    def __call__(self, *inputs):
-        """run in PyNative mode."""
-        if len(inputs) == 1:
-            return inputs[0]
-        return inputs
-
     def infer_shape(self, *inputs_shape):
         if len(inputs_shape) == 1:
             return inputs_shape[0]

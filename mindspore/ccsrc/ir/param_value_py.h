@@ -28,7 +28,7 @@ namespace py = pybind11;
 class ParamValuePy : public ParamValue {
  public:
   ParamValuePy() : value_(py::none()) {}
-  explicit ParamValuePy(py::object value) : value_(value) {}
+  explicit ParamValuePy(const py::object &value) : value_(value) {}
   ~ParamValuePy() override = default;
 
   py::object value() { return value_; }

@@ -19,7 +19,7 @@ from collections import OrderedDict
 from mindspore import log as logger
 from .. import context
 from ..common import dtype as mstype
-from ..common.api import _executor
+from ..common.api import _executor, _pynative_exec
 from .._checkparam import _check_str_by_regular
 from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend
@@ -60,6 +60,7 @@ class Cell:
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self.training = False
+        self.requires_grad = False
         self.pynative = False
         self._param_prefix = ''
         self._auto_prefix = auto_prefix
@@ -79,6 +80,15 @@ class Cell:
         self._backward_hook = None
         self.enable_hook = False
         self._bprop_debug = False
+        self._is_run = False
+
+    @property
+    def is_run(self):
+        return self._is_run
+
+    @is_run.setter
+    def is_run(self, value):
+        self._is_run = value
 
     @property
     def create_time(self):
@@ -192,9 +202,20 @@ class Cell:
             out = self.compile_and_run(*inputs)
             return out
         self.init_parameters_data()
-        output = self.construct(*inputs)
+        if self.requires_grad is True:
+            _pynative_exec.set_grad_flag(True)
+            _pynative_exec.new_graph(self, *inputs)
+        else:
+            _pynative_exec.set_grad_flag(False)
+        if self.enable_hook:
+            output = self._hook_construct(*inputs)
+        else:
+            output = self.construct(*inputs)
         if isinstance(output, Parameter):
             output = output.data
+        if self.requires_grad is True:
+            _pynative_exec.end_graph(self, output, *inputs)
+        self._is_run = True
         return output
 
     def __setattr__(self, name, value):
@@ -722,6 +743,10 @@ class Cell:
         self.add_flags_recursive(**flags)
         return self
 
+    def set_grad(self, mode=True):
+        self.add_flags_recursive(requires_grad=mode)
+        return self
+
     def set_train(self, mode=True):
         """
         Sets the cell to training mode.
@@ -762,9 +787,9 @@ class Cell:
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def _hook_construct(self, inputs):
+    def _hook_construct(self, *inputs):
         """Hook construct method to replace original construct method when hook function enabled."""
-        inputs = self._backward_hook(inputs)
+        inputs = self._backward_hook(*inputs)
         inputs = self.construct(inputs)
         outputs = self._backward_hook(inputs)
         return outputs

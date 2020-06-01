@@ -328,15 +328,9 @@ def _run_op(obj, op_name, args):
     op_inputs = []
     for i, arg in enumerate(args):
         if hasattr(arg, '__parameter__'):
-            op_inputs.append(arg.default_input)
             op_mask[i] = 1
-        elif isinstance(arg, tuple):
-            convert = lambda x: x.default_input if hasattr(x, '__parameter__') else x
-            args_ = tuple(convert(x) for x in arg)
-            op_inputs.append(args_)
-        else:
-            op_inputs.append(arg)
-    output = real_run_op(obj, op_name, tuple(op_inputs), tuple(op_mask))
+        op_inputs.append(arg)
+    output = real_run_op(obj, op_name, args, tuple(op_mask))
     if not output:
         raise RuntimeError("Pynative run op %s failed!" % op_name)
     if len(output) == 1:

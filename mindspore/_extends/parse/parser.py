@@ -209,6 +209,14 @@ def get_object_key(obj):
         obj_id = instance_id + obj_id
     return obj_id, obj_key
 
+def get_default_input(obj):
+    if hasattr(obj, '__parameter__'):
+        return obj.default_input
+    if isinstance(obj, tuple):
+        convert = lambda x: x.default_input if hasattr(x, '__parameter__') else x
+        args = tuple(convert(x) for x in obj)
+        return args
+    return obj
 
 def is_class_member(node):
     """Check the attr is class member variable."""
@@ -221,6 +229,9 @@ def is_class_member(node):
             return True
     return False
 
+def get_obj_id(obj):
+    """Get the obj id."""
+    return str(id(obj))
 
 def get_obj_type(obj):
     """Get the obj type."""

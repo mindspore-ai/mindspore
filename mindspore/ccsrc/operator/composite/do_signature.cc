@@ -285,6 +285,10 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   // and add cast op on other inputs to keep the same type with assigned parameter.
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
     AnfNodePtr param = params_list[i];
+    if (args_spec_list[i] == nullptr) {
+      op_inputs.push_back(param);
+      continue;
+    }
     SignatureEnumRW sig = SignatureEnumRW::kRWDefault;
     // If sig_size is 0 use defalut.
     if (sig_size > 0 && i < sig_size) {
@@ -292,6 +296,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
     } else if (has_var && i >= sig_size) {
       sig = signature[sig_size - 1].rw;
     }
+
     TypePtr type = args_spec_list[i]->GetTypeTrack();
     if (type && type->type_id() == kObjectTypeRef) {
       if (sig == SignatureEnumRW::kRWRead) {

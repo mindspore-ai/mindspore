@@ -328,9 +328,6 @@ void FuncGraphManager::ProcessEdge(AnfNodePtr node, int index, AnfNodePtr inp, E
     DropEdge(node, index, inp);
   } else {
     MS_LOG(DEBUG) << "Add node " << node->ToString() << " input[" << index << "] " << inp->ToString();
-    if (inp->func_graph() != nullptr) {
-      AddFuncGraph(inp->func_graph());
-    }
     if (IsValueNode<FuncGraph>(inp)) {
       MS_LOG(DEBUG) << "Input[" << index << "] is const graph " << inp->ToString();
       AddFuncGraph(GetValueNode<FuncGraphPtr>(inp));
@@ -372,9 +369,8 @@ void FuncGraphManager::AcquireNodes(const std::vector<AnfNodePtr> &nodes) {
 
   for (auto &node : acq) {
     MS_EXCEPTION_IF_NULL(node);
-    FuncGraphPtr fg = node->func_graph();
+    auto fg = node->func_graph();
     if (fg != nullptr) {
-      AddFuncGraph(fg);
       fg->AddNode(node);
     }
     ProcessInputs(node, kIncEdge);

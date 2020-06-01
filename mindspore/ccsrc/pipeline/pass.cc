@@ -278,5 +278,7 @@ std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
                                    {"cconv", CconvPass}};
+
+std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup}, {"opt_b", OptPassBGroup}, {"cconv", CconvPass}};
 }  // namespace pipeline
 }  // namespace mindspore
