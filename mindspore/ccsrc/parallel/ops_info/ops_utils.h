@@ -76,7 +76,7 @@ constexpr char DEPEND[] = "depend";
 constexpr char BATCH_PARALLEL[] = "BatchParallel";
 
 constexpr char ACTIVATION_TYPE[] = "activation_type";
-constexpr char TARGET[] = "target";
+constexpr char TARGET[] = "primitive_target";
 constexpr char CPU[] = "CPU";
 constexpr char TRANSPOSE_A[] = "transpose_a";
 constexpr char TRANSPOSE_B[] = "transpose_b";

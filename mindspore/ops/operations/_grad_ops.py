@@ -21,6 +21,7 @@ from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
 from ...common import dtype as mstype
+from .. import functional as F
 
 
 class AbsGrad(PrimitiveWithInfer):
@@ -1118,6 +1119,37 @@ class MirrorPadGrad(PrimitiveWithInfer):
         validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
         return {'shape': x['shape'],
                 'dtype': dout['dtype'],
+                'value': None}
+
+
+class EmbeddingLookupCommGrad(PrimitiveWithInfer):
+    """
+    Perform the gradient for the communication part of EmbeddingLookup operator.
+
+    This works ONLY when 'reduce_scatter_flag' is True in 'EmbeddingLookup'. Roughly speaking,
+    this primitive is implemented by StridedSlice --> HostAllGather --> Concat. This primitive runs on host.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['dy', 'split_num'], outputs=['output'])
+        self.add_prim_attr('primitive_target', 'CPU')
+
+    def __infer__(self, dy, split_num):
+        """
+        This primitive is implemented by three steps:
+            1) Split the 'dy' along dimension 0 into 'split_num' parts.
+            2) For each part, perform HostAllGather((0, 1, 2, 3, 4, 5, 6, 7)) on the host.
+            3) After HostAllGather, there are still 'split_num' parts in each process. Then, perform Concat on them
+              along dimension 0.
+
+        The output shape of this primitive: shape(output)[0] == shape(dy)[0] * 8
+        """
+        dy_shape = tuple(dy['shape'])
+        split_num_value = split_num['value']
+        validator.check_value_type("split_num_value", split_num_value, [int], self.name)
+        dy_shape_all = F.tuple_setitem(dy_shape, 0, dy_shape[0] * 8)
+        return {'shape': dy_shape_all,
+                'dtype': dy['dtype'],
                 'value': None}
 
 
