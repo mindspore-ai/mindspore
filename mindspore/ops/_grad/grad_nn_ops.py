@@ -697,3 +697,25 @@ def get_bprop_ctc_loss(self):
         return grad, zeros_like(labels_indices), zeros_like(labels_values), zeros_like(sequence_length)
 
     return bprop
+
+
+@bprop_getters.register(P.BasicLSTMCell)
+def get_bprop_basic_lstm_cell(self):
+    """Grad definition for `BasicLSTMCell` operation."""
+    basic_lstm_cell_cstate_grad = G.BasicLSTMCellCStateGrad(
+        forget_bias=self.forget_bias,
+        activation=self.activation
+    )
+
+    basic_lstm_cell_weight_grad = G.BasicLSTMCellWeightGrad()
+
+    basic_lstm_cell_input_grad = G.BasicLSTMCellInputGrad(keep_prob=self.keep_prob)
+
+    def bprop(x, h, c, w, b, out, dout):
+        _, _, it, jt, ft, ot, tanhct = out
+        dct, dht, _, _, _, _, _ = dout
+        dgate, dct_1 = basic_lstm_cell_cstate_grad(c, dht, dct, it, jt, ft, ot, tanhct)
+        dxt, dht = basic_lstm_cell_input_grad(dgate, w)
+        dw, db = basic_lstm_cell_weight_grad(F.depend(x, dxt), h, dgate)
+        return dxt, dht, dct_1, dw, db
+    return bprop
