@@ -17,6 +17,8 @@ import argparse
 import os
 import random
 
+import numpy as np
+
 from mindspore import Tensor
 from mindspore import context
 from mindspore.communication.management import init
@@ -28,7 +30,6 @@ from model.model_thor import Model
 from model.resnet import resnet50
 from model.thor import THOR
 
-import numpy as np
 from config import config
 from crossentropy import CrossEntropy
 from dataset_imagenet import create_dataset
