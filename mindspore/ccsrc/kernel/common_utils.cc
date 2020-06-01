@@ -253,7 +253,7 @@ std::string Dtype2String(const std::string &dtypes) {
 std::string TypeId2String(TypeId type_id) {
   auto iter = type_id_str_map.find(type_id);
   if (iter == type_id_str_map.end()) {
-    MS_EXCEPTION(ArgumentError) << "Illegal input dtype." << TypeIdLabel(type_id);
+    return std::string(TypeIdLabel(type_id));
   }
   return iter->second;
 }

@@ -48,6 +48,7 @@ class MakeRefEliminater : public AnfVisitor {
 
 // {prim::kPrimGetRefKey, {prim::kPrimMakeRef, X, Y, Z}} -> X
 // {prim::kPrimGetRefValue, {prim::kPrimMakeRef, X, Y, Z}} -> Y
+// {prim::kPrimGetRefOrigin, {prim::kPrimMakeRef, X, Y, Z}} -> Z
 class GetMakeRefEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
@@ -69,6 +70,10 @@ class GetMakeRefEliminater : public AnfVisitor {
 
     if (cnode->IsApply(prim::kPrimGetRefValue)) {
       return ref->input(2);
+    }
+
+    if (cnode->IsApply(prim::kPrimGetRefOrigin)) {
+      return ref->input(3);
     }
 
     return nullptr;

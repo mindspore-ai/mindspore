@@ -801,8 +801,8 @@ bool AbstractRef::operator==(const AbstractBase &other) const {
 std::string AbstractRef::ToString() const {
   std::ostringstream buffer;
   buffer << type_name() << "("
-         << "key: " << ref_key_->ToString() << "ref_value: " << ref_->ToString()
-         << "origin_value: " << ref_origin_->ToString();
+         << "key: " << ref_key_->ToString() << " ref_value: " << ref_->ToString()
+         << " origin_value: " << ref_origin_->ToString();
   auto value = GetValueTrack();
   if (value) {
     buffer << ", value: " << value->ToString();

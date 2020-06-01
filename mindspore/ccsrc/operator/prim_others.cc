@@ -160,7 +160,7 @@ AbstractBasePtr InferImplGetRefOrigin(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list) {
   // arguments: value
   if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "get_ref_value requires 1 parameters, while the input size is " << args_spec_list.size()
+    MS_LOG(EXCEPTION) << "get_ref_origin requires 1 parameters, while the input size is " << args_spec_list.size()
                       << ".";
   }
   TypePtr type = args_spec_list[0]->GetTypeTrack();
