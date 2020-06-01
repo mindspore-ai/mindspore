@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_NLP_KERNELS_LOOKUP_OP_H_
-#define DATASET_NLP_KERNELS_LOOKUP_OP_H_
+#ifndef DATASET_TEXT_KERNELS_LOOKUP_OP_H_
+#define DATASET_TEXT_KERNELS_LOOKUP_OP_H_
 
 #include <memory>
 #include <vector>
@@ -61,4 +61,4 @@ class LookupOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_NLP_KERNELS_LOOKUP_OP_H_
+#endif  // DATASET_TEXT_KERNELS_LOOKUP_OP_H_

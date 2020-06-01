@@ -22,7 +22,7 @@ import mindspore._c_dataengine as cde
 
 from .utils import JiebaMode
 from .validators import check_lookup, check_jieba_add_dict, \
-    check_jieba_add_word, check_jieba_init
+    check_jieba_add_word, check_jieba_init, check_ngram
 
 
 class Lookup(cde.LookupOp):
@@ -39,6 +39,27 @@ class Lookup(cde.LookupOp):
             super().__init__(vocab)
         else:
             super().__init__(vocab, unknown)
+
+
+class Ngram(cde.NgramOp):
+    """
+    TensorOp to generate n-gram from a 1-D string Tensor
+    Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an explanation of what n-gram is.
+    Args:
+        n(int or list):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
+        would be a 4-gram followed by a 3-gram in the same tensor.
+        left_pad(tuple, optional): ("pad_token",pad_width). Padding performed on left side of the sequence. pad_width
+        will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__". (Default is None)
+        right_pad(tuple, optional): ("pad_token",pad_width). Padding performed on right side of the sequence. pad_width
+        will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--". (Default is None)
+        separator(str,optional): symbol used to join strings together. for e.g. if 2-gram the ["mindspore", "amazing"]
+        with separator="-" the result would be ["mindspore-amazing"]. (Default is None which means whitespace is used)
+    """
+
+    @check_ngram
+    def __init__(self, n, left_pad=None, right_pad=None, separator=None):
+        super().__init__(ngrams=n, l_pad_len=left_pad[1], r_pad_len=right_pad[1], l_pad_token=left_pad[0],
+                         r_pad_token=right_pad[0], separator=separator)
 
 
 DE_C_INTER_JIEBA_MODE = {

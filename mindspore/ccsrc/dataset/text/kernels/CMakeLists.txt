@@ -4,4 +4,5 @@ add_library(text-kernels OBJECT
         lookup_op.cc
         jieba_tokenizer_op.cc
         unicode_char_tokenizer_op.cc
+        ngram_op.cc
         )

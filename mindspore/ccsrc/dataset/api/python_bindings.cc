@@ -60,6 +60,7 @@
 #include "dataset/engine/gnn/graph.h"
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/text/kernels/jieba_tokenizer_op.h"
+#include "dataset/text/kernels/ngram_op.h"
 #include "dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include "dataset/text/vocab.h"
 #include "dataset/text/kernels/lookup_op.h"
@@ -433,6 +434,11 @@ void bindTensorOps5(py::module *m) {
                                                                   "Tensor operation to LookUp each word")
     .def(py::init<std::shared_ptr<Vocab>, WordIdType>(), py::arg("vocab"), py::arg("unknown"))
     .def(py::init<std::shared_ptr<Vocab>>(), py::arg("vocab"));
+  (void)py::class_<NgramOp, TensorOp, std::shared_ptr<NgramOp>>(*m, "NgramOp", "TensorOp performs ngram mapping")
+    .def(py::init<const std::vector<int32_t> &, int32_t, int32_t, const std::string &, const std::string &,
+                  const std::string &>(),
+         py::arg("ngrams"), py::arg("l_pad_len"), py::arg("r_pad_len"), py::arg("l_pad_token"), py::arg("r_pad_token"),
+         py::arg("separator"));
 }
 
 void bindSamplerOps(py::module *m) {
