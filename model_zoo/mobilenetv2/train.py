@@ -32,12 +32,12 @@ from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine as de
 from mindspore.communication.management import init, get_group_size
+import mindspore.dataset.engine as de
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_gpu, config_ascend
-from src.mobilenetV3 import mobilenet_v3_large
+from src.mobilenetV2 import mobilenet_v2
 
 random.seed(1)
 np.random.seed(1)
@@ -163,7 +163,7 @@ if __name__ == '__main__':
                                           device_num=get_group_size())
 
         # define net
-        net = mobilenet_v3_large(num_classes=config_gpu.num_classes)
+        net = mobilenet_v2(num_classes=config_gpu.num_classes, platform="GPU")
         # define loss
         if config_gpu.label_smooth > 0:
             loss = CrossEntropyWithLabelSmooth(
@@ -205,7 +205,7 @@ if __name__ == '__main__':
             config_ck = CheckpointConfig(save_checkpoint_steps=config_gpu.save_checkpoint_epochs * step_size,
                                          keep_checkpoint_max=config_gpu.keep_checkpoint_max)
             ckpt_cb = ModelCheckpoint(
-                prefix="mobilenet", directory=config_gpu.save_checkpoint_path, config=config_ck)
+                prefix="mobilenetV2", directory=config_gpu.save_checkpoint_path, config=config_ck)
             cb += [ckpt_cb]
         # begine train
         model.train(epoch_size, dataset, callbacks=cb)
@@ -221,14 +221,14 @@ if __name__ == '__main__':
             init()
 
         epoch_size = config_ascend.epoch_size
-        net = mobilenet_v3_large(num_classes=config_ascend.num_classes)
+        net = mobilenet_v2(num_classes=config_ascend.num_classes, platform="Ascend")
         net.to_float(mstype.float16)
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Dense):
                 cell.to_float(mstype.float32)
         if config_ascend.label_smooth > 0:
             loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_ascend.label_smooth, num_classes=config.num_classes)
+                smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
         else:
             loss = SoftmaxCrossEntropyWithLogits(
                 is_grad=False, sparse=True, reduction='mean')
@@ -265,8 +265,8 @@ if __name__ == '__main__':
                 config_ck = CheckpointConfig(save_checkpoint_steps=config_ascend.save_checkpoint_epochs * step_size,
                                              keep_checkpoint_max=config_ascend.keep_checkpoint_max)
                 ckpt_cb = ModelCheckpoint(
-                    prefix="mobilenet", directory=config_ascend.save_checkpoint_path, config=config_ck)
+                    prefix="mobilenetV2", directory=config_ascend.save_checkpoint_path, config=config_ck)
                 cb += [ckpt_cb]
         model.train(epoch_size, dataset, callbacks=cb)
     else:
-        raise Exception
+        raise ValueError("Unsupport platform.")
