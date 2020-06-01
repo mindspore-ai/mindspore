@@ -50,7 +50,7 @@ from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll)
-from .random_ops import (RandomChoiceWithMask)
+from .random_ops import (RandomChoiceWithMask, RandomCategorical)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -65,6 +65,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
                      SmoothL1Loss, Softmax, Softplus,
+                     RNNTLoss,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
@@ -152,6 +153,7 @@ __all__ = [
     'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
+    'RandomCategorical',
     'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',
@@ -180,6 +182,7 @@ __all__ = [
     'SmoothL1Loss',
     'L2Loss',
     'CTCLoss',
+    'RNNTLoss',
     'ReduceAll',
     'ScalarToArray',
     'ScalarToTensor',

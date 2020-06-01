@@ -25,3 +25,5 @@ from .squeeze import _squeeze_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .ctcloss import _ctcloss_aicpu
+from .rnnt_loss import _rnnt_loss_aicpu
+from .random_categorical import _random_categorical_aicpu
