@@ -258,6 +258,21 @@ def get_bprop_floor(self):
         bc_x = fill_(dtype_(x), shape_(x), 0.)
         return (bc_x,)
 
+
+    return bprop
+
+
+@bprop_getters.register(P.Ceil)
+def get_bprop_ceil(self):
+    """Grad definition for `ceil` operation."""
+    fill_ = P.Fill()
+    shape_ = P.Shape()
+    dtype_ = P.DType()
+
+    def bprop(x, out, dout):
+        bc_x = fill_(dtype_(x), shape_(x), 0.)
+        return (bc_x,)
+
     return bprop
 
 

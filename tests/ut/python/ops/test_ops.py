@@ -402,6 +402,11 @@ test_case_math_ops = [
         'desc_inputs': [[2, 512, 56, 56]],
         'desc_bprop': [[2, 512, 56, 56]],
         'skip': ['backward']}),
+    ('Ceil', {
+        'block': P.Ceil(),
+        'desc_inputs': [[2, 512, 56, 56]],
+        'desc_bprop': [[2, 512, 56, 56]],
+        'skip': ['backward']}),
     ('ACos', {
         'block': P.ACos(),
         'desc_inputs': [Tensor(np.array([2., 3.]).astype(np.float32))],
