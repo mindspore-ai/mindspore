@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
  */
 
 #include "ir/dtype/type.h"
-#include <string>
-#include <cstdlib>
+
 #include <algorithm>
-#include "utils/log_adapter.h"
+#include <cstdlib>
+#include <string>
+
 #include "ir/dtype/number.h"
-#include "utils/convert_utils.h"
+#include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 TypeId IntBitsToTypeId(const int nbits) {

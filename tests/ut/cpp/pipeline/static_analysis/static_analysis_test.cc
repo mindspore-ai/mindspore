@@ -21,7 +21,7 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "operator/ops.h"
 #include "pipeline/parse/parse.h"
 #include "pipeline/parse/data_converter.h"

@@ -38,6 +38,7 @@ class KernelRuntimeManager {
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ClearRuntimeResource();
+  void ClearGraphResource(uint32_t graph_id);
 
  private:
   KernelRuntimeManager() = default;

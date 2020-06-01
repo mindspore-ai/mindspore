@@ -121,3 +121,53 @@ def test_two_matmul_repeated_calculation2():
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
+
+
+def test_matmul_forward_reduce_scatter():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.matmul.add_prim_attr("forward_reduce_scatter", True)
+            self.mul = P.Mul().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    context.set_context(save_graphs=True)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_forward_reduce_scatter_transpose():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul(transpose_b=True).set_strategy(strategy1)
+            self.matmul.add_prim_attr("forward_reduce_scatter", True)
+            self.mul = P.Mul().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    context.set_context(save_graphs=True)
+    strategy1 = ((2, 4), (2, 4))
+    strategy2 = ((8, 2), (8, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)

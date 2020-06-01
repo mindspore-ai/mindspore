@@ -23,6 +23,7 @@
 #include "session/anf_runtime_algorithm.h"
 #include "device/kernel_info.h"
 #include "kernel/kernel_build_info.h"
+#include "device/kernel_runtime_manager.h"
 
 namespace mindspore {
 namespace session {
@@ -49,7 +50,7 @@ std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   std::vector<AnfNodePtr> real_inputs;
   auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(item_with_index.first->cast<CNodePtr>());
   for (const auto &child_graph : child_graphs) {
-    if (AnfAlgo::IsWhileTrueGraph(child_graph)) {
+    if (child_graph->get_output_null()) {
       continue;
     }
     auto real_input = child_graph->output();
@@ -591,7 +592,11 @@ void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf
       MS_EXCEPTION_IF_NULL(output_node.first);
       auto output_cnode = output_node.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(output_cnode);
-      const auto &output_node_inputs = output_cnode->inputs();
+      auto &output_node_inputs = output_cnode->inputs();
+      // don't replace node if it is a control edge  => output_node.second == 0
+      if (output_node.second == 0) {
+        continue;
+      }
       for (size_t i = 1; i < output_node_inputs.size(); i++) {
         if (output_node_inputs[i] == old_anf_node) {
           output_cnode->set_input(i, new_anf_node);
@@ -685,10 +690,12 @@ std::set<AnfNodePtr> KernelGraph::GetRealInput(const AnfNodePtr &parameter) {
 
 void KernelGraph::UpdateCallRealInput() {
   MS_LOG(INFO) << "Update graph id: " << graph_id_;
+  std::map<AnfNodePtr, std::set<AnfNodePtr>> real_inputs_map;
+  std::vector<std::pair<AnfNodePtr, AnfNodePtr>> replace_list;
   for (auto &it : real_inputs_) {
-    auto &parameter = it.first;
+    auto parameter = it.first;
     MS_EXCEPTION_IF_NULL(parameter);
-    auto &real_inputs = it.second;
+    auto real_inputs = it.second;
     std::vector<AnfNodePtr> new_real_inputs;
     std::set<AnfNodePtr> erase_real_inputs;
     for (auto &real_input : real_inputs) {
@@ -710,12 +717,28 @@ void KernelGraph::UpdateCallRealInput() {
                    << " insert real input:" << new_real_input->DebugString();
       (void)real_inputs.insert(new_real_input);
       if (new_real_input->isa<Parameter>()) {
-        ReplaceNode(parameter, new_real_input);
+        replace_list.emplace_back(parameter, new_real_input);
+        parameter = new_real_input;
       }
     }
+    real_inputs_map[parameter] = real_inputs;
   }
+  for (auto [parameter, arg] : replace_list) {
+    ReplaceNode(parameter, arg);
+  }
+  real_inputs_ = real_inputs_map;
 }
 
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
+
+KernelGraph::~KernelGraph() {
+  auto context = MsContext::GetInstance();
+  if (!context) {
+    return;
+  }
+  if (context->execution_mode() == kGraphMode) {
+    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_);
+  }
+}
 }  // namespace session
 }  // namespace mindspore

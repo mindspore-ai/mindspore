@@ -26,7 +26,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue, Range,
                         SameTypeShape, ScatterAdd, ScatterMax, ScatterUpdate,
                         ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
-                        Shape, Size, Slice, Split,
+                        Shape, Size, Slice, Split, EmbeddingLookup,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
@@ -39,7 +39,8 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
                         TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
+
+from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, Equal, EqualCount, Exp, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -48,8 +49,8 @@ from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul
                        NPUAllocFloatStatus, NPUClearFloatStatus,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
-                       Sin, Sqrt, Rsqrt,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll)
+                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh)
 from .random_ops import (RandomChoiceWithMask, RandomCategorical)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
@@ -68,7 +69,8 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      RNNTLoss,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
+                     ApplyProximalAdagrad, SparseApplyProximalAdagrad,
                      ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
@@ -131,6 +133,7 @@ __all__ = [
     'ReduceMean',
     'Range',
     'LayerNorm',
+    'EmbeddingLookup',
     'Rank',
     'Less',
     'LessEqual',
@@ -242,6 +245,7 @@ __all__ = [
     'FloorDiv',
     'FloorMod',
     'Acosh',
+    'Asinh',
     "PReLU",
     "Cos",
     "ACos",
@@ -252,6 +256,7 @@ __all__ = [
     'AssignAdd',
     'AssignSub',
     "Sin",
+    "Asin",
     "LSTM",
     "Abs",
     "BinaryCrossEntropy",
@@ -264,6 +269,9 @@ __all__ = [
     "Round",
     "ApplyFtrl",
     "SpaceToBatch",
+    "SparseApplyFtrl",
+    "ApplyProximalAdagrad",
+    "SparseApplyProximalAdagrad",
     "BatchToSpace",
     "Atan2",
     "ApplyRMSProp",
@@ -273,7 +281,11 @@ __all__ = [
     "SquareSumAll",
     "BitwiseAnd",
     "BitwiseOr",
-    "BitwiseXor"
+    "BitwiseXor",
+    "BesselI0e",
+    "BesselI1e",
+    "Atan",
+    "Atanh"
 ]
 
 __all__.extend(_quant_ops.__all__)

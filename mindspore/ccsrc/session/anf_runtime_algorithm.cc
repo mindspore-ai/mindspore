@@ -875,7 +875,9 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
     {prim::kPrimLayerNormBetaGammaBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
     {prim::kPrimLayerNormXBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
     {prim::kPrimMinimumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
-    {prim::kPrimMaximumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}}};
+    {prim::kPrimMaximumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
+    {prim::kPrimApplyCenteredRMSProp->name(),
+     {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}}}};
   size_t ret = cur_index;
   auto node_name = AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
@@ -974,17 +976,5 @@ bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
   }
   MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString();
 }
-
-bool AnfRuntimeAlgorithm::IsWhileTrueGraph(const KernelGraphPtr &child_graph) {
-  auto call_nodes = child_graph->FindNodeByPrimitive(prim::kPrimCall);
-  for (const auto &call_node : call_nodes) {
-    auto graphs = GetCallNodeKernelGraph(call_node);
-    if (graphs.size() == 1 && graphs[0] == child_graph->parent_graph()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 }  // namespace session
 }  // namespace mindspore

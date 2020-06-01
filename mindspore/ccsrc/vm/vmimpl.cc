@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,17 @@
 #include <memory>
 #include <set>
 
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "operator/ops.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
+#include "ir/primitive.h"
 #include "utils/convert_utils.h"
 #include "utils/primitive_utils.h"
 #include "debug/draw.h"
 
 namespace mindspore {
 namespace compile {
-
-using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
 
 // Indicate a call to a new frame.
 struct CallWrap : public Base {

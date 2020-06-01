@@ -17,7 +17,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "session/anf_runtime_algorithm.h"
 #include "operator/ops.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/utils.h"
 #include "kernel/kernel_build_info.h"

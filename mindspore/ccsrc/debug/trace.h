@@ -23,17 +23,15 @@
 #include <utility>
 #include <stack>
 
-#include "ir/anf.h"
-#include "utils/any.h"
-#include "ir/func_graph.h"
+#include "debug/trace_base.h"
 #include "debug/info.h"
+#include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "pipeline/static_analysis/static_analysis.h"
+#include "utils/any.h"
 
 namespace mindspore {
 namespace trace {
-std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
-std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
-                         SourceLineTip tip = kSourceLineTipNextLine);
 DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 void TraceGraphEval();
 void GetEvalStackInfo(std::ostringstream &oss);

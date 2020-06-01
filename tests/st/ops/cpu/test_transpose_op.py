@@ -142,4 +142,6 @@ def test_transpose():
     assert (output[1].asnumpy() == expect1).all()
     assert (output[2].asnumpy() == expect2).all()
     assert (output[3].asnumpy() == expect3).all()
+
+
 test_transpose()

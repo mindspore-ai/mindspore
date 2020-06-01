@@ -1,12 +1,10 @@
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-from mindspore import context
 from mindspore.ops import composite as C
-from mindspore.common import dtype as mstype
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.common.initializer import TruncatedNormal
-from mindspore.nn import Dense, WithLossCell, SoftmaxCrossEntropyWithLogits, Momentum
+from mindspore.nn import WithLossCell, Momentum
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
@@ -18,25 +16,28 @@ def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
                      kernel_size=kernel_size, stride=stride, padding=padding,
                      weight_init=weight, has_bias=False, pad_mode="valid")
 
+
 def fc_with_initialize(input_channels, out_channels):
     """weight initial for fc layer"""
     weight = weight_variable()
     bias = weight_variable()
     return nn.Dense(input_channels, out_channels, weight, bias)
 
+
 def weight_variable():
     """weight initial"""
     return TruncatedNormal(0.02)
 
+
 def cell_hook_function(cell_id, grad_input, grad_output):
     print(cell_id)
-    assert(grad_output[0].asnumpy().shape == (32, 6, 14, 14))
-    assert(grad_input[0].asnumpy().shape == (32, 16, 10, 10))
+    assert (grad_output[0].asnumpy().shape == (32, 6, 14, 14))
+    assert (grad_input[0].asnumpy().shape == (32, 16, 10, 10))
 
 
 def var_hook_function(grad_out):
     print("grad:", grad_out)
-    assert(grad_out[0].asnumpy().shape == (32, 120))
+    assert (grad_out[0].asnumpy().shape == (32, 120))
 
 
 class LeNet5(nn.Cell):
@@ -82,7 +83,7 @@ class LeNet5(nn.Cell):
         x = self.fc3(x)
         return x
 
-    
+
 class GradWrap(nn.Cell):
     """ GradWrap definition """
     def __init__(self, network):
@@ -94,6 +95,7 @@ class GradWrap(nn.Cell):
         weights = self.weights
         return C.GradOperation('get_by_list', get_by_list=True)(self.network, weights)(x, label)
 
+
 def test_hook():
     net = LeNet5()
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.1, 0.9)
@@ -101,7 +103,7 @@ def test_hook():
     net_with_criterion = WithLossCell(net, criterion)
     train_network = GradWrap(net_with_criterion)
     train_network.set_train()
-    
+
     input_data = Tensor(np.ones([net.batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([net.batch_size, net.num_class]).astype(np.float32))
     output = net(Tensor(input_data))
@@ -109,8 +111,6 @@ def test_hook():
     grads = train_network(input_data, label)
     success = optimizer(grads)
     print(loss_output.asnumpy().shape)
-
-
 
 
 class MulAdd(nn.Cell):
@@ -121,11 +121,12 @@ class MulAdd(nn.Cell):
         return 2 * x + y
 
     def bprop(self, x, y, out, dout):
-        assert(x == 1)
-        assert(y == 2)
-        assert(out == 4)
-        assert(dout == 1)
+        assert (x == 1)
+        assert (y == 2)
+        assert (out == 4)
+        assert (dout == 1)
         return 3 * dout, 2 * y
+
 
 def test_custom_bprop():
     mul_add = MulAdd()

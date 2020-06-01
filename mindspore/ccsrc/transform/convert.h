@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "transform/util.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "transform/df_graph_manager.h"
 #include "utils/config_manager.h"
 #include "transform/op_declare.h"

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "ir/primitive.h"
+#include "ir/primitive_base.h"
 #include "ir/scalar.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "debug/label.h"
 
 namespace mindspore {
@@ -41,6 +41,10 @@ enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
 using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;
 using SuccFunc = std::function<std::vector<AnfNodePtr>(AnfNodePtr)>;
 using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr &, const IncludeFunc &)>;
+
+std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include);
+std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include);
+std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include);
 
 std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node);
 std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
@@ -79,26 +83,6 @@ class FuncGraphIndex {
   std::map<std::string, std::set<FuncGraphPtr>> index_func_graph_;
   std::map<std::string, std::set<AnfNodePtr>> index_node_;
 };
-
-// Isomorphism
-
-struct PairHasher {
-  template <class T1, class T2>
-  std::size_t operator()(const std::pair<T1, T2> &p) const {
-    auto h1 = std::hash<T1>{}(p.first);
-    auto h2 = std::hash<T2>{}(p.second);
-    return h1 ^ h2;
-  }
-};
-
-enum EquivState { kNotEquiv = 0, kEquiv = 1, kPending = 2 };
-
-using FuncGraphPairMapEquiv = std::unordered_map<std::pair<FuncGraphPtr, FuncGraphPtr>, EquivState, PairHasher>;
-using NodeMapEquiv = std::unordered_map<AnfNodePtr, AnfNodePtr>;
-
-bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv *equiv_func_graph, NodeMapEquiv *equiv_node);
-
-tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_GRAPH_UTILS_H_

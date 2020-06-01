@@ -631,3 +631,10 @@ def scalar_in_sequence(x, y):
     if x in y:
         return True
     return False
+
+
+@constexpr
+def get_np_eps(input_dtype):
+    nptype = mstype.dtype_to_nptype(input_dtype)
+    eps = np.finfo(nptype).eps
+    return float(eps)

@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 #include "transform/util.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 
 #include "common/common_test.h"
 #include "pipeline/parse/parse.h"

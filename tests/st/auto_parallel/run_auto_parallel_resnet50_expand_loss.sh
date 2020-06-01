@@ -18,7 +18,6 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 CONFIG_PATH=/home/workspace/mindspore_config
 export DEVICE_NUM=8
 export RANK_SIZE=$DEVICE_NUM
-ulimit -n 65535
 source ${BASE_PATH}/env.sh
 unset SLOG_PRINT_TO_STDOUT
 export MINDSPORE_HCCL_CONFIG_PATH=$CONFIG_PATH/hccl/rank_table_${DEVICE_NUM}p.json

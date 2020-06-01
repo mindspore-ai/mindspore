@@ -166,8 +166,8 @@ class AssignAdd(PrimitiveWithInfer):
         >>> net(value)
     """
     __mindspore_signature__ = (
-        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD)
+        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
 
     @prim_attr_register
@@ -210,8 +210,8 @@ class AssignSub(PrimitiveWithInfer):
     """
 
     __mindspore_signature__ = (
-        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD)
+        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
 
     @prim_attr_register
@@ -636,7 +636,7 @@ class CumSum(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - The input tensor to accumulate.
-        - **axis**  (int) - The axis to accumulate the tensor's value.
+        - **axis**  (int) - The axis to accumulate the tensor's value. Only constant value is allowed.
 
     Outputs:
         Tensor, the shape of the output tensor is consistent with the input tensor's.
@@ -1336,8 +1336,7 @@ class Acosh(PrimitiveWithInfer):
     Compute inverse hyperbolic cosine of x element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
-          and the data type of 'input_x' is number, the element in 'input_x' should be greater than or equal to 1.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -1352,12 +1351,42 @@ class Acosh(PrimitiveWithInfer):
     def __init__(self):
         """init Acosh"""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
+class Asinh(PrimitiveWithInfer):
+    """
+    Compute inverse hyperbolic cosine of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> asinh = P.Asinh()
+        >>> input_x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
+        >>> output = asinh(input_x)
+        [-2.3212, 1.1976, 1.8184, 5.2983]
+    """
+
+
+    @prim_attr_register
+    def __init__(self):
+        """init Asinh"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class _LogicBinaryOp(_BinaryOp):
@@ -1415,7 +1444,7 @@ class EqualCount(PrimitiveWithInfer):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have same data type.
+    The two input tensors should have same data type and shape.
 
     Inputs:
         - **input_x** (Tensor) - The first input tensor.
@@ -1438,6 +1467,7 @@ class EqualCount(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
+        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
         output_shape = (1,)
         return output_shape
 
@@ -1926,12 +1956,12 @@ class Cos(PrimitiveWithInfer):
     def __init__(self):
         """init Cos"""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class ACos(PrimitiveWithInfer):
@@ -1954,12 +1984,12 @@ class ACos(PrimitiveWithInfer):
     def __init__(self):
         """init ACos"""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class Sin(PrimitiveWithInfer):
@@ -1982,12 +2012,41 @@ class Sin(PrimitiveWithInfer):
     def __init__(self):
         """Init Sin."""
 
-    def infer_shape(self, x):
-        return x
+    def infer_shape(self, x_shape):
+        return x_shape
 
-    def infer_dtype(self, x):
-        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
+class Asin(PrimitiveWithInfer):
+    """
+    Computes arccosine of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> asin = P.Asin()
+        >>> input_x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+        >>> output = asin(input_x)
+        [0.8331, 0.0400, 0.3047, 0.5944]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Asin"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
 
 
 class NMSWithMask(PrimitiveWithInfer):
@@ -2148,6 +2207,66 @@ class Round(PrimitiveWithInfer):
         return x_type
 
 
+class Atan(PrimitiveWithInfer):
+    """
+    Computes the trignometric inverse tangent of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor): The input tensor.
+
+    Outputs:
+        A Tensor. Has the same type as x.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
+        >>> tan = P.Tan()
+        >>> output_y = tan(input_x)
+        >>> atan = P.Atan()
+        >>> atan(output_y)
+        [[1.047, 07850001]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.name)
+        return x_type
+
+
+class Atanh(PrimitiveWithInfer):
+    """
+    Computes inverse hyperbolic tangent of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor): The input tensor.
+
+    Outputs:
+        A Tensor. Has the same type as x.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
+        >>> atanh = P.Atanh()
+        >>> atanh(input_x)
+        [[1.8869909 1.058268]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.name)
+        return x_type
+
+
 class Atan2(_MathBinaryOp):
     r"""
     Returns arctangent of input_x/input_y element-wise.
@@ -2264,3 +2383,61 @@ class BitwiseXor(_BitwiseBinaryOp):
          >>> bitwise_xor(input_x1, input_x2)
          [0, 1, 0, 0, -2, 3, 2]
     """
+
+
+class BesselI0e(PrimitiveWithInfer):
+    """
+    Computes BesselI0e of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> bessel_i0e = P.BesselI0e()
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_i0e(input_x)
+        [0.7979961, 0.5144438, 0.75117415, 0.9157829]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init BesselI0e"""
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
+        return x
+
+
+class BesselI1e(PrimitiveWithInfer):
+    """
+    Computes BesselI1e of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> bessel_i1e = P.BesselI1e()
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_i1e(input_x)
+        [0.09507662, 0.19699717, 0.11505538, 0.04116856]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init BesselI1e"""
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
+        return x

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include "ir/anf.h"
-#include "ir/primitive.h"
+#include "ir/primitive_base.h"
 
 namespace mindspore {
 // namespace to support primitive operators
@@ -181,6 +181,7 @@ extern const PrimitivePtr kPrimCumProd;
 extern const PrimitivePtr kPrimFlatten;
 extern const PrimitivePtr kPrimLogSoftmax;
 extern const PrimitivePtr kPrimLogSoftmaxGrad;
+extern const PrimitivePtr kPrimApplyCenteredRMSProp;
 extern const PrimitivePtr kPrimTanh;
 extern const PrimitivePtr kPrimTanhGrad;
 extern const PrimitivePtr kPrimPooling;
@@ -252,7 +253,6 @@ extern const PrimitivePtr kPrimInDict;
 extern const PrimitivePtr kPrimNotInDict;
 
 // Comm ops
-extern const PrimitivePtr kPrimAllReduce;
 extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;

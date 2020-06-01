@@ -20,7 +20,6 @@ import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-from mindspore.dataset.transforms.vision import Inter
 from mindspore.dataset.text import to_str
 from mindspore.mindrecord import FileWriter
 

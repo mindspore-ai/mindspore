@@ -25,7 +25,7 @@ from mindspore import log as logger
 
 def test_sequential_sampler(print_res=False):
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(num_samples, num_repeats=None):
         sampler = ds.SequentialSampler()
@@ -36,7 +36,7 @@ def test_sequential_sampler(print_res=False):
         for item in data1.create_dict_iterator():
             logger.info("item[image].shape[0]: {}, item[label].item(): {}"
                         .format(item["image"].shape[0], item["label"].item()))
-            res.append(map[(item["image"].shape[0], item["label"].item())])
+            res.append(map_[(item["image"].shape[0], item["label"].item())])
         if print_res:
             logger.info("image.shapes and labels: {}".format(res))
         return res
@@ -48,7 +48,7 @@ def test_sequential_sampler(print_res=False):
 
 def test_random_sampler(print_res=False):
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(replacement, num_samples, num_repeats):
         sampler = ds.RandomSampler(replacement=replacement, num_samples=num_samples)
@@ -56,7 +56,7 @@ def test_random_sampler(print_res=False):
         data1 = data1.repeat(num_repeats)
         res = []
         for item in data1.create_dict_iterator():
-            res.append(map[(item["image"].shape[0], item["label"].item())])
+            res.append(map_[(item["image"].shape[0], item["label"].item())])
         if print_res:
             logger.info("image.shapes and labels: {}".format(res))
         return res
@@ -71,7 +71,7 @@ def test_random_sampler(print_res=False):
 
 def test_random_sampler_multi_iter(print_res=False):
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(replacement, num_samples, num_repeats, validate):
         sampler = ds.RandomSampler(replacement=replacement, num_samples=num_samples)
@@ -79,7 +79,7 @@ def test_random_sampler_multi_iter(print_res=False):
         while num_repeats > 0:
             res = []
             for item in data1.create_dict_iterator():
-                res.append(map[(item["image"].shape[0], item["label"].item())])
+                res.append(map_[(item["image"].shape[0], item["label"].item())])
             if print_res:
                 logger.info("image.shapes and labels: {}".format(res))
             if validate != sorted(res):
@@ -112,7 +112,7 @@ def test_sampler_py_api():
 
 def test_python_sampler():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     class Sp1(ds.Sampler):
         def __iter__(self):
@@ -138,7 +138,7 @@ def test_python_sampler():
         for item in data1.create_dict_iterator():
             logger.info("item[image].shape[0]: {}, item[label].item(): {}"
                         .format(item["image"].shape[0], item["label"].item()))
-            res.append(map[(item["image"].shape[0], item["label"].item())])
+            res.append(map_[(item["image"].shape[0], item["label"].item())])
         # print(res)
         return res
 
@@ -167,7 +167,7 @@ def test_python_sampler():
 
 def test_subset_sampler():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(num_samples, start_index, subset_size):
         sampler = ds.SubsetSampler(start_index, subset_size)
@@ -175,7 +175,7 @@ def test_subset_sampler():
 
         res = []
         for item in d.create_dict_iterator():
-            res.append(map[(item["image"].shape[0], item["label"].item())])
+            res.append(map_[(item["image"].shape[0], item["label"].item())])
 
         return res
 
@@ -196,7 +196,7 @@ def test_subset_sampler():
 
 def test_sampler_chain():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(num_shards, shard_id):
         sampler = ds.DistributedSampler(num_shards, shard_id, False)
@@ -209,7 +209,7 @@ def test_sampler_chain():
         for item in data1.create_dict_iterator():
             logger.info("item[image].shape[0]: {}, item[label].item(): {}"
                         .format(item["image"].shape[0], item["label"].item()))
-            res.append(map[(item["image"].shape[0], item["label"].item())])
+            res.append(map_[(item["image"].shape[0], item["label"].item())])
         return res
 
     assert test_config(2, 0) == [0, 2, 4]
@@ -222,7 +222,7 @@ def test_sampler_chain():
 
 def test_add_sampler_invalid_input():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+    _ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
     data1 = ds.ManifestDataset(manifest_file)
 
     with pytest.raises(TypeError) as info:

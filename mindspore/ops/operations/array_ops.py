@@ -572,6 +572,73 @@ class Range(PrimitiveWithInfer):
         return x_dtype
 
 
+class EmbeddingLookup(PrimitiveWithInfer):
+    """
+    Returns a slice of input tensor based on the specified indices and axis. This Primitive has the similar
+    functionality as GatherV2, but has three more inputs: `offset`, `reduce_scatter_flag` and `split_num`.
+
+    Inputs:
+        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The Tensor slice, instead of the entire Tensor.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Must be in the range
+          `[0, input_param.shape()[axis])`.
+        - **axis** (int) - Specifies the dimension index to gather indices.
+        - **offset** (int) - Specifies the offset value of this `input_params` slice. Thus the real indices
+          are equal to `input_indices` minus `offset`.
+        - **reduce_scatter_flag** (bool) - Specifies whether perform reduce_scatter on host or not.
+        - **split_num** (int) - Specifies the number of partitions of the reduce_scatter produces. This variable
+          is used only if `reduce_scatter_flag` is True.
+
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
+        >>> axis = 0
+        >>> offset = 4
+        >>> reduce_scatter_flag = False
+        >>> split_num = 1
+        >>> out = P.EmbeddingLookup()(input_params, input_indices, axis, offset, reduce_scatter_flag, split_num)
+        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init index_select"""
+        self.__setattr_flag__ = True
+        self.init_prim_io_names(inputs=['params', 'indices', 'axis', 'offset', 'reduce_scatter_flag', 'split_num'],
+                                outputs=['output'])
+        self.add_prim_attr('target', 'CPU')
+
+    def __infer__(self, params, indices, axis, offset, reduce_scatter_flag=False, split_num=2):
+        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_subclass("axis", axis['dtype'], mstype.int_, self.name)
+        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
+        validator.check_subclass("split_num", split_num['dtype'], mstype.int_, self.name)
+        if split_num['value'] < 1:
+            raise ValueError("The parameter 'split_num' must be positive, but got %d." % split_num)
+        axis_v = axis['value']
+        params_shp = params['shape']
+        rank = len(params_shp)
+        validator.check_int_range("axis", axis_v, -rank, rank, Rel.INC_LEFT, self.name)
+        if axis_v < 0:
+            axis_v += rank
+        out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
+        if reduce_scatter_flag:
+            # partition the tensor along the dimension 0.
+            if out_shape[0] % split_num['value'] != 0:
+                raise ValueError("The dimension 0 of the shape: %d, is not divisible by split_num: %d." %
+                                 (out_shape[0], split_num['value']))
+            out_shape[0] = out_shape[0] // split_num['value']
+        out = {'shape': out_shape,
+               'dtype': params['dtype'],
+               'value': None}
+        return out
+
+
 class Split(PrimitiveWithInfer):
     """
     Splits input tensor into output_num of tensors along the given axis and output numbers.
@@ -1047,8 +1114,8 @@ class Argmin(PrimitiveWithInfer):
 
     Args:
         axis (int): Axis on which Argmin operation applies. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type from: `mindspore.dtype.int32`,
-            `mindspore.dtype.int64`. Default: `mindspore.dtype.int64`.
+        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
+            Default: `mindspore.dtype.int32`.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
@@ -1057,13 +1124,13 @@ class Argmin(PrimitiveWithInfer):
         Tensor, indices of the min value of input tensor across the axis.
 
     Examples:
-        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]))
+        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
         >>> index = P.Argmin()(input_x)
         >>> assert index == Tensor(2, mindspore.int64)
     """
 
     @prim_attr_register
-    def __init__(self, axis=-1, output_type=mstype.int64):
+    def __init__(self, axis=-1, output_type=mstype.int32):
         """init Argmin"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type("axis", axis, [int], self.name)
@@ -1105,9 +1172,11 @@ class ArgMaxWithValue(PrimitiveWithInfer):
           :math:`(x_1, x_2, ..., x_N)`.
 
     Outputs:
-        Tensor, corresponding index and maximum value of input tensor. If `keep_dims` is true, the output tensors shape
+        tuple(Tensor), tuple of 2 tensors, corresponding index and maximum value of input tensor.
+        - index (Tensor) - The index for maximum value of input tensor. If `keep_dims` is true, the output tensors shape
         is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Else, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+        - output_x (Tensor) - The maximum value of input tensor, the shape same as index.
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5))
@@ -1273,7 +1342,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Examples:
-        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
+        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
         >>> num_segments = 4
         >>> P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
@@ -2153,7 +2222,7 @@ class ScatterMax(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Parameter) - The target parameter.
-        - **indices** (Tensor) - The index to do max operation whose data type should be int.
+        - **indices** (Tensor) - The index to do max operation whose data type should be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the maximum operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
@@ -2161,7 +2230,7 @@ class ScatterMax(PrimitiveWithInfer):
         Tensor, has the same shape and data type as `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
         >>> scatter_max = P.ScatterMax()
@@ -2180,7 +2249,7 @@ class ScatterMax(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
+        validator.check_tensor_type_same({'indices': indices_dtype}, (mstype.int32,), self.name)
         args = {"x": x_dtype, "updates": updates_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x_dtype
@@ -2197,7 +2266,7 @@ class ScatterAdd(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Parameter) - The target parameter.
-        - **indices** (Tensor) - The index to do add operation whose data type should be int.
+        - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
@@ -2223,7 +2292,7 @@ class ScatterAdd(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
+        validator.check_tensor_type_same({'indices': indices_dtype}, (mstype.int32,), self.name)
         args = {'x': x_dtype, 'updates': updates_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x_dtype

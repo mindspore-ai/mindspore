@@ -358,6 +358,4 @@ def tensor_grad_scale(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
         return grad
-    cast_op = P.Cast()
-    type_op = P.DType()
-    return grad * cast_op(F.scalar_to_array(scale), type_op(grad))
+    return grad * scale

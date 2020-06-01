@@ -327,16 +327,28 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def _params_init_data(self, obj, params):
+    def _params_init_data(self, obj, params, auto_parallel_mode=False):
+        """Init parameters' data."""
         if params is not None:
             for key, param in params.items():
-                if key not in obj.parameter_layout_dict:
-                    logger.info("Layout dict does not contain the key %s.", key)
+                if not auto_parallel_mode:
                     param.init_data()
+                elif key not in obj.parameter_layout_dict:
+                    logger.info("Layout dict does not contain the key %s.", key)
+                    param.init_data(set_sliced=True)
                 else:
                     layout = obj.parameter_layout_dict[key]
-                    param.init_data(layout)
-        obj.init_parameters_data()
+                    param.init_data(layout, set_sliced=True)
+        obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
+
+    def _set_dataset_mode(self, args_list):
+        """set dataset mode."""
+        # decide whether to sink based on whether the inputs is virtual or args_list is ()
+        if (args_list and isinstance(args_list[0], Tensor) and args_list[0].virtual_flag) or \
+                (args_list is not None and args_list == ()):
+            _set_dataset_mode_config('sink')
+        else:
+            _set_dataset_mode_config('normal')
 
     def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
         """
@@ -368,6 +380,8 @@ class _Executor:
 
         use_vm = not enable_ge or (enable_debug_runtime and context.get_context("mode") == context.PYNATIVE_MODE)
 
+        self._set_dataset_mode(args_list)
+
         if phase in self.compile_cache.keys():
             logger.debug("%r graph has existed.", phase)
             return phase, False
@@ -383,11 +397,11 @@ class _Executor:
         if not do_convert:
             return phase, True
 
-        if auto_parallel_mode and "train" in phase:
+        if auto_parallel_mode:
             obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
-        self._params_init_data(obj, params)
+        self._params_init_data(obj, params, auto_parallel_mode)
         if not enable_debug_runtime or enable_ge:
-            if auto_parallel_mode and "train" in phase:
+            if auto_parallel_mode:
                 obj.load_parameter_slice(params)
 
         # set parallel inputs in sink mode
@@ -396,12 +410,6 @@ class _Executor:
 
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
-            # decide whether to sink based on whether the inputs is virtual or not
-            if args_list and isinstance(args_list[0], Tensor) and args_list[0].virtual_flag:
-                _set_dataset_mode_config('sink')
-            else:
-                _set_dataset_mode_config('normal')
-
             self._build_data_graph(obj, params, phase)
 
             if "export" not in phase:

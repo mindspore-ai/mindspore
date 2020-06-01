@@ -40,13 +40,14 @@ class AscendControlParser {
 
  private:
   static NotNull<CNodePtr> ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
-                                              const CNodePtr &last_label, NotNull<std::set<KernelGraphPtr> *> memo);
+                                              const CNodePtr &last_label,
+                                              const NotNull<std::set<KernelGraphPtr> *> memo);
   static void RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
-                          NotNull<std::set<KernelGraphPtr> *> memo);
+                          const NotNull<std::set<KernelGraphPtr> *> memo);
   static void RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
-                            NotNull<std::set<KernelGraphPtr> *> memo);
+                            const NotNull<std::set<KernelGraphPtr> *> memo);
   static void RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
-                                 NotNull<std::set<KernelGraphPtr> *> memo);
+                                 const NotNull<std::set<KernelGraphPtr> *> memo);
 
   static void LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
                               const CNodePtr &last_label);
@@ -60,12 +61,11 @@ class AscendControlParser {
   static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start);
 
   // root graph order
-  static std::tuple<std::map<uint32_t, CNodePtr>, std::map<CNodePtr, std::vector<uint32_t>>> GetLabelNode(
-    const std::vector<CNodePtr> &nodes);
+  static std::vector<uint32_t> GetLabelSwitchList(const CNodePtr &node);
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);
-  static std::vector<CNodePtr> RecurseGraph(const CNodePtr &cur_label_goto, const CNodePtr &end_label_goto,
-                                            NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
+  static std::vector<CNodePtr> RecurseGraph(NotNull<KernelGraphPtr> graph,
+                                            const NotNull<std::set<KernelGraphPtr> *> memo);
 };
 }  // namespace session
 }  // namespace mindspore

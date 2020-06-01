@@ -560,9 +560,9 @@ class Dataset:
 
         Note:
             1. If count is greater than the number of element in dataset or equal to -1,
-            all the element in dataset will be taken.
+               all the element in dataset will be taken.
             2. The order of using take and batch effects. If take before batch operation,
-            then taken given number of rows, otherwise take given number of batches.
+               then taken given number of rows, otherwise take given number of batches.
 
         Args:
             count (int, optional): Number of elements to be taken from the dataset (default=-1).
@@ -590,7 +590,7 @@ class Dataset:
         # here again
         dataset_size = self.get_dataset_size()
 
-        if(dataset_size is None or dataset_size <= 0):
+        if dataset_size is None or dataset_size <= 0:
             raise RuntimeError("dataset size unknown, unable to split.")
 
         all_int = all(isinstance(item, int) for item in sizes)
@@ -609,7 +609,20 @@ class Dataset:
             absolute_sizes.append(absolute_size)
 
         absolute_sizes_sum = sum(absolute_sizes)
-        if absolute_sizes_sum != dataset_size:
+
+        # if we still need more rows, give them to the first split.
+        # if we have too many rows, remove the extras from the first split that has
+        # enough rows.
+        size_difference = dataset_size - absolute_sizes_sum
+        if size_difference > 0:
+            absolute_sizes[0] += size_difference
+        else:
+            for i, _ in enumerate(absolute_sizes):
+                if absolute_sizes[i] + size_difference > 0:
+                    absolute_sizes[i] += size_difference
+                    break
+
+        if sum(absolute_sizes) != dataset_size:
             raise RuntimeError("sum of calculated split sizes {} is not equal to dataset size {}."
                                .format(absolute_sizes_sum, dataset_size))
 
@@ -629,10 +642,15 @@ class Dataset:
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
                 respectively. If the sum of all sizes does not equal the original dataset size, an
                 an error will occur.
-                If a list of floats [f1, f2, …, fn] is provided, the dataset will be split into n
-                Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
-                of the original dataset. If after rounding, any size equals 0, an error will occur.
-                All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
+                If a list of floats [f1, f2, …, fn] is provided, all floats must be between 0 and 1
+                and must sum to 1, otherwise an error will occur. The dataset will be split into n
+                Datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
+                original dataset.
+                If after rounding:
+                    -Any size equals 0, an error will occur.
+                    -The sum of split sizes < K, the difference will be added to the first split.
+                    -The sum of split sizes > K, the difference will be removed from the first large
+                    enough split such that it will have atleast 1 row after removing the difference.
             randomize (bool, optional): determines whether or not to split the data randomly (default=True).
                 If true, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
@@ -640,8 +658,8 @@ class Dataset:
         Note:
             1. Dataset cannot be sharded if split is going to be called.
             2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
-            Shuffling the dataset may not be deterministic, which means the data in each split
-            will be different in each epoch.
+               Shuffling the dataset may not be deterministic, which means the data in each split
+               will be different in each epoch.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -1055,6 +1073,11 @@ class Dataset:
             return self.input[0].get_sync_notifiers()
         return {}
 
+    def disable_sync(self):
+        if self.input:
+            return self.input[0].disable_sync()
+        return {}
+
     def is_sync(self):
         if self.input:
             return self.input[0].is_sync()
@@ -1062,16 +1085,23 @@ class Dataset:
 
     def sync_update(self, condition_name, num_batch=None, data=None):
         """
-        Release a blocking condition and triger callback with given data.
+        Release a blocking condition and trigger callback with given data.
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
             num_batch (int or None): The number of batches(rows) that are released.
-                When num_batch is None, it will default to the number specified by the sync_wait operator.
-            data (dict or None): The data passed to the callback.
+                When num_batch is None, it will default to the number specified by the
+                sync_wait operator (default=None).
+            data (dict or None): The data passed to the callback (default=None).
         """
+        if isinstance(num_batch, int) and num_batch <= 0:
+            # throwing exception, disable all sync_wait in pipeline
+            self.disable_sync()
+            raise RuntimeError("Sync_update batch size can only be positive, got : {}".format(num_batch))
         notifiers_dict = self.get_sync_notifiers()
         if condition_name not in notifiers_dict:
+            # throwing exception, disable all sync_wait in pipeline
+            self.disable_sync()
             raise RuntimeError("Condition name not found")
         if num_batch is not None:
             num_batch *= self.get_batch_size()
@@ -1173,6 +1203,7 @@ class SourceDataset(Dataset):
     def is_sharded(self):
         raise NotImplementedError("SourceDataset must implement is_sharded.")
 
+
 class MappableDataset(SourceDataset):
     """
     Abstract class to represent a source dataset which supports use of samplers.
@@ -1211,7 +1242,7 @@ class MappableDataset(SourceDataset):
             >>> data.use_sampler(new_sampler)
         """
         if new_sampler is None:
-            raise TypeError("Input sampler could not be None.")
+            raise TypeError("Input sampler can not be None.")
         if not isinstance(new_sampler, (samplers.BuiltinSampler, samplers.Sampler)):
             raise TypeError("Input sampler is not an instance of a sampler.")
 
@@ -1226,7 +1257,10 @@ class MappableDataset(SourceDataset):
 
     def _get_sampler_dataset_size(self):
         if self.sampler is not None:
-            return self.sampler.get_dataset_size()
+            if hasattr(self.sampler, 'get_dataset_size'):
+                return self.sampler.get_dataset_size()
+            if hasattr(self.sampler, '__len__'):
+                return len(self.sampler)
 
         return None
 
@@ -1243,23 +1277,28 @@ class MappableDataset(SourceDataset):
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
                 respectively. If the sum of all sizes does not equal the original dataset size, an
                 an error will occur.
-                If a list of floats [f1, f2, …, fn] is provided, the dataset will be split into n
-                Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
-                of the original dataset. If after rounding, any size equals 0, an error will occur.
-                All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
+                If a list of floats [f1, f2, …, fn] is provided, all floats must be between 0 and 1
+                and must sum to 1, otherwise an error will occur. The dataset will be split into n
+                Datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
+                original dataset.
+                If after rounding:
+                    -Any size equals 0, an error will occur.
+                    -The sum of split sizes < K, the difference will be added to the first split.
+                    -The sum of split sizes > K, the difference will be removed from the first large
+                    enough split such that it will have atleast 1 row after removing the difference.
             randomize (bool, optional): determines whether or not to split the data randomly (default=True).
                 If true, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
 
         Note:
             1. Dataset should not be sharded if split is going to be called. Instead, create a
-            DistributedSampler and specify a split to shard after splitting. If dataset is
-            sharded after a split, it is strongly recommended to set the same seed in each instance
-            of execution, otherwise each shard may not be part of the same split (see Examples)
+               DistributedSampler and specify a split to shard after splitting. If dataset is
+               sharded after a split, it is strongly recommended to set the same seed in each instance
+               of execution, otherwise each shard may not be part of the same split (see Examples).
             2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
-            Shuffling the dataset may not be deterministic, which means the data in each split
-            will be different in each epoch. Furthermore, if sharding occurs after split, each
-            shard may not be part of the same split.
+               Shuffling the dataset may not be deterministic, which means the data in each split
+               will be different in each epoch. Furthermore, if sharding occurs after split, each
+               shard may not be part of the same split.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -1435,7 +1474,6 @@ class BatchDataset(DatasetOp):
         for input_dataset in dataset.input:
             BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
 
-
 class BatchInfo(CBatchInfo):
     """
     The information object associates with the current batch of tensors.
@@ -1468,10 +1506,13 @@ class BlockReleasePair:
         callback (function): The callback funciton that will be called when release is called.
     """
     def __init__(self, init_release_rows, callback=None):
+        if isinstance(init_release_rows, int) and init_release_rows <= 0:
+            raise ValueError("release_rows  need to be greater than 0.")
         self.row_count = -init_release_rows
         self.cv = threading.Condition()
         self.callback = callback
         self.default_rows = init_release_rows
+        self.disable = False
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
@@ -1487,13 +1528,18 @@ class BlockReleasePair:
             self.cv.notify_all()
 
     def update_batched_size(self, batch_size):
+        # sanity check
+        if isinstance(batch_size, int) and batch_size <= 0:
+            raise ValueError("batch_size need to be greater than 0.")
+
         # should only use before the pipeline creates
         self.row_count *= batch_size
         self.default_rows *= batch_size
 
     def block_func(self):
         with self.cv:
-            self.cv.wait_for(lambda: self.row_count < 0)
+            # if disable is true, the always evaluate to true
+            self.cv.wait_for(lambda: (self.row_count < 0 or self.disable))
             self.row_count += 1
         return True
 
@@ -1505,6 +1551,12 @@ class BlockReleasePair:
             if self.callback is not None:
                 self.callback(data)
             self.cv.notify_all()
+
+    def disable_lock(self):
+        with self.cv:
+            self.disable = True
+            self.cv.notify_all()
+
 
 class SyncWaitDataset(DatasetOp):
     """
@@ -1526,6 +1578,9 @@ class SyncWaitDataset(DatasetOp):
         input_dataset.output.append(self)
         # set to the default value, waiting for the batch to update it
         self._condition_name = condition_name
+        if isinstance(num_batch, int) and num_batch <= 0:
+            raise ValueError("num_batch need to be greater than 0.")
+
         self._pair = BlockReleasePair(num_batch, callback)
         if self._condition_name in self.input[0].get_sync_notifiers():
             raise RuntimeError("Condition name is already in use")
@@ -1545,7 +1600,13 @@ class SyncWaitDataset(DatasetOp):
         return args
 
     def update_sync_batch_size(self, batch_size):
+        if isinstance(batch_size, int) and batch_size <= 0:
+            raise ValueError("num_batch need to be greater than 0.")
         self._pair.update_batched_size(batch_size)
+
+    def disable_sync(self):
+        logger.info("Disabling Sync")
+        self._pair.disable_lock()
 
     @staticmethod
     def _is_ancestor_of_batch(dataset):
@@ -2950,7 +3011,8 @@ class GeneratorDataset(MappableDataset):
 
         if rows_from_sampler is None:
             return self._dataset_size
-
+        if self._dataset_size is None:
+            return None
         return min(rows_from_sampler, self._dataset_size)
 
     # manually set dataset_size as a temporary solution.
@@ -4022,6 +4084,31 @@ class CelebADataset(MappableDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        if self._dataset_size is None:
+            dir = os.path.realpath(self.dataset_dir)
+            attr_file = os.path.join(dir, "list_attr_celeba.txt")
+            num_rows = ''
+            try:
+                with open(attr_file, 'r') as f:
+                    num_rows = int(f.readline())
+            except Exception:
+                raise RuntimeError("Get dataset size failed from attribution file.")
+            rows_per_shard = get_num_rows(num_rows, self.num_shards)
+            if self.num_samples is not None:
+                rows_per_shard = min(self.num_samples, rows_per_shard)
+            rows_from_sampler = self._get_sampler_dataset_size()
+            if rows_from_sampler is None:
+                return rows_per_shard
+            return min(rows_from_sampler, rows_per_shard)
+        return self._dataset_size
 
     def is_shuffled(self):
         if self.shuffle_level is None:

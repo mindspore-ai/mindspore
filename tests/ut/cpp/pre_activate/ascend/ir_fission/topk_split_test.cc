@@ -90,7 +90,7 @@ TEST_F(TestHWTopKSplit, test_topk_split) {
   EXPECT_TRUE(value_node->value()->isa<tensor::Tensor>());
   auto tensor = value_node->value()->cast<tensor::TensorPtr>();
   EXPECT_EQ(tensor->shape().size(), 1);
-  EXPECT_EQ(tensor->shape()[0], 4);
+  EXPECT_EQ(tensor->shape()[0], 8);
 }
 
 TEST_F(TestHWTopKSplit, test_topk_no_split) {

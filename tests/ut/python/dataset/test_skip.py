@@ -70,7 +70,6 @@ def test_skip_1():
     buf = []
     for data in ds1:
         buf.append(data[0][0])
-    assert len(buf) == 0
     assert buf == []
 
 

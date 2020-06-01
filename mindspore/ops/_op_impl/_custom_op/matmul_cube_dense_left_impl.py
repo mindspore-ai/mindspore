@@ -127,7 +127,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
     if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
         raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
 
-    if len(shape_bias) != 0:
+    if shape_bias:
         if len(shape_bias) == 1:
             if is_gevm or is_gemv:
                 if shape_bias[0] != m_shape * n_shape:
@@ -189,7 +189,7 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
     try:
         trans_a_f = bool(1 - trans_a)
-        if src_dtype == "float32" or src_dtype == "int32":
+        if src_dtype in ("float32", "int32"):
             if len(shape_a) != 2 and len(shape_b) != 2:
                 return False
             if trans_b:
@@ -239,12 +239,13 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
                     return False
 
     except RuntimeError as e:
+        print(e)
         return False
 
     return True
 
-
-# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements
+# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements,
+# pylint: disable=inconsistent-return-statements
 # @util.check_input_type(dict, dict, (dict, NoneType), dict, bool, bool, str)
 @op_info_register(matmul_cube_dense_left_op_info)
 def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False,
@@ -385,7 +386,7 @@ def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=F
     tensor_b = tvm.placeholder(shape_b_temp, name='tensor_b',
                                dtype=src_dtype)
 
-    if len(shape_bias) > 0:
+    if shape_bias:
         tensor_bias = tvm.placeholder(shape_bias, name='tensor_bias',
                                       dtype=dst_dtype)
 
@@ -449,20 +450,20 @@ def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=F
                                            resMatmul_local_UB, 0, 16, 224 // 2, 0, 56 * 16 * 2 // 2)
         tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2], outputs=[resMatmul])
         return tik_instance
-    else:
-        print("come into tbe, shape is error!")
-        result = te.lang.cce.matmul(tensor_a, tensor_b, trans_a, trans_b, format_a=format_a,
-                                    format_b=format_b, dst_dtype=dst_dtype, tensor_bias=tensor_bias)
 
-        with tvm.target.cce():
-            schedule = generic.auto_schedule(result)
+    print("come into tbe, shape is error!")
+    result = te.lang.cce.matmul(tensor_a, tensor_b, trans_a, trans_b, format_a=format_a,
+                                format_b=format_b, dst_dtype=dst_dtype, tensor_bias=tensor_bias)
 
-        tensor_list = [tensor_a, tensor_b, result]
-        if len(shape_bias) > 0:
-            tensor_list = [tensor_a, tensor_b, tensor_bias, result]
+    with tvm.target.cce():
+        schedule = generic.auto_schedule(result)
 
-        config = {"print_ir": False,
-                  "name": kernel_name,
-                  "tensor_list": tensor_list}
+    tensor_list = [tensor_a, tensor_b, result]
+    if shape_bias:
+        tensor_list = [tensor_a, tensor_b, tensor_bias, result]
 
-        te.lang.cce.cce_build_code(schedule, config)
+    config = {"print_ir": False,
+              "name": kernel_name,
+              "tensor_list": tensor_list}
+
+    te.lang.cce.cce_build_code(schedule, config)

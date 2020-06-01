@@ -53,6 +53,7 @@ class GraphLoader {
  public:
   explicit GraphLoader(std::string mr_filepath, int32_t num_workers = 4);
 
+  ~GraphLoader() = default;
   // Init mindrecord and load everything into memory multi-threaded
   // @return Status - the status code
   Status InitAndLoad();

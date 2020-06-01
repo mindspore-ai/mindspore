@@ -41,24 +41,104 @@ std::vector<AnfNodePtr> AdamApplyOneWithDecayRule::GetFusionNodeInputs(const Equ
   return {NewValueNode(prim), input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, mul4_x, add2_y};
 }
 
-const BaseRef AdamApplyOneWithDecayRule::DefinePattern() const {
+const BaseRef AdamApplyOneWithDecayRuleCond1::DefinePattern() const {
   auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
   auto real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul0_pattern({prim::kPrimMul, mul0_x_, input2_});
-  VectorRef mul1_pattern({prim::kPrimMul, mul1_x_, input0_});
-  VectorRef square0_pattern({prim::kPrimSquare, input0_});
-  VectorRef add0_pattern({add0_var_, mul0_pattern, mul1_pattern});
-  VectorRef mul2_pattern({prim::kPrimMul, mul2_x_, input1_});
-  VectorRef mul3_pattern({prim::kPrimMul, mul3_x_, square0_pattern});
-  VectorRef add1_pattern({add1_var_, mul2_pattern, mul3_pattern});
-  VectorRef sqrt0_pattern({sqrt, add1_pattern});
-  VectorRef add2_pattern({prim::kPrimTensorAdd, sqrt0_pattern, add2_y_});
-  VectorRef mul4_pattern({prim::kPrimMul, mul4_x_, input3_});
-  VectorRef real_div_pattern({real_div, add0_pattern, add2_pattern});
-  VectorRef add3_pattern({prim::kPrimTensorAdd, real_div_pattern, mul4_pattern});
-  VectorRef mul5_pattern({prim::kPrimMul, input4_, add3_pattern});
-  VectorRef sub0_pattern({prim::kPrimSub, input3_, mul5_pattern});
-  return sub0_pattern;
+  VectorRef mul0({prim::kPrimMul, mul0_x_, input2_});
+  VectorRef mul1({prim::kPrimMul, mul1_x_, input0_});
+  VectorRef square0({prim::kPrimSquare, input0_});
+  VectorRef add0({add0_var_, mul0, mul1});
+  VectorRef mul2({prim::kPrimMul, mul2_x_, input1_});
+  VectorRef mul3({prim::kPrimMul, mul3_x_, square0});
+  VectorRef add1({add1_var_, mul2, mul3});
+  VectorRef sqrt0({sqrt, add1});
+  VectorRef add2({prim::kPrimTensorAdd, add2_y_, sqrt0});
+  VectorRef mul4({prim::kPrimMul, mul4_x_, input3_});
+  VectorRef real_div0({real_div, add0, add2});
+  VectorRef add3({prim::kPrimTensorAdd, mul4, real_div0});
+  VectorRef mul5({prim::kPrimMul, input4_, add3});
+  VectorRef sub0({prim::kPrimSub, input3_, mul5});
+  return sub0;
+}
+
+const BaseRef AdamApplyOneWithDecayRuleCond2::DefinePattern() const {
+  auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  auto real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VectorRef mul0({prim::kPrimMul, input2_, mul0_x_});
+  VectorRef mul1({prim::kPrimMul, input0_, mul1_x_});
+  VectorRef square0({prim::kPrimSquare, input0_});
+  VectorRef add0({add0_var_, mul0, mul1});
+  VectorRef mul2({prim::kPrimMul, input1_, mul2_x_});
+  VectorRef mul3({prim::kPrimMul, mul3_x_, square0});
+  VectorRef add1({add1_var_, mul2, mul3});
+  VectorRef sqrt0({sqrt, add1});
+  VectorRef add2({prim::kPrimTensorAdd, sqrt0, add2_y_});
+  VectorRef mul4({prim::kPrimMul, input3_, mul4_x_});
+  VectorRef real_div0({real_div, add0, add2});
+  VectorRef add3({prim::kPrimTensorAdd, mul4, real_div0});
+  VectorRef mul5({prim::kPrimMul, add3, input4_});
+  VectorRef sub0({prim::kPrimSub, input3_, mul5});
+  return sub0;
+}
+
+const BaseRef AdamApplyOneWithDecayRuleCond3::DefinePattern() const {
+  auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  auto real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VectorRef mul0({prim::kPrimMul, mul0_x_, input2_});
+  VectorRef mul1({prim::kPrimMul, mul1_x_, input0_});
+  VectorRef square0({prim::kPrimSquare, input0_});
+  VectorRef add0({add0_var_, mul0, mul1});
+  VectorRef mul2({prim::kPrimMul, mul2_x_, input1_});
+  VectorRef mul3({prim::kPrimMul, square0, mul3_x_});
+  VectorRef add1({add1_var_, mul2, mul3});
+  VectorRef sqrt0({sqrt, add1});
+  VectorRef add2({prim::kPrimTensorAdd, sqrt0, add2_y_});
+  VectorRef mul4({prim::kPrimMul, mul4_x_, input3_});
+  VectorRef real_div0({real_div, add0, add2});
+  VectorRef add3({prim::kPrimTensorAdd, mul4, real_div0});
+  VectorRef mul5({prim::kPrimMul, add3, input4_});
+  VectorRef sub0({prim::kPrimSub, input3_, mul5});
+  return sub0;
+}
+
+const BaseRef AdamApplyOneWithDecayRuleCond4::DefinePattern() const {
+  auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  auto real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VectorRef mul0({prim::kPrimMul, mul0_x_, input2_});
+  VectorRef mul1({prim::kPrimMul, mul1_x_, input0_});
+  VectorRef square0({prim::kPrimSquare, input0_});
+  VectorRef add0({add0_var_, mul0, mul1});
+  VectorRef mul2({prim::kPrimMul, mul2_x_, input1_});
+  VectorRef mul3({prim::kPrimMul, mul3_x_, square0});
+  VectorRef add1({add1_var_, mul2, mul3});
+  VectorRef sqrt0({sqrt, add1});
+  VectorRef add2({prim::kPrimTensorAdd, add2_y_, sqrt0});
+  VectorRef mul4({prim::kPrimMul, mul4_x_, input3_});
+  VectorRef real_div0({real_div, add0, add2});
+  VectorRef add3({prim::kPrimTensorAdd, mul4, real_div0});
+  VectorRef mul5({prim::kPrimMul, add3, input4_});
+  VectorRef sub0({prim::kPrimSub, input3_, mul5});
+  return sub0;
+}
+
+const BaseRef AdamApplyOneWithDecayRuleCond5::DefinePattern() const {
+  auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  auto real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VectorRef mul0({prim::kPrimMul, mul0_x_, input2_});
+  VectorRef mul1({prim::kPrimMul, mul1_x_, input0_});
+  VectorRef square0({prim::kPrimSquare, input0_});
+  VectorRef add0({add0_var_, mul0, mul1});
+  VectorRef mul2({prim::kPrimMul, mul2_x_, input1_});
+  VectorRef mul3({prim::kPrimMul, mul3_x_, square0});
+  VectorRef add1({add1_var_, mul2, mul3});
+  VectorRef sqrt0({sqrt, add1});
+  VectorRef add2({prim::kPrimTensorAdd, sqrt0, add2_y_});
+  VectorRef mul4({prim::kPrimMul, mul4_x_, input3_});
+  VectorRef real_div0({real_div, add0, add2});
+  VectorRef add3({prim::kPrimTensorAdd, mul4, real_div0});
+  VectorRef mul5({prim::kPrimMul, add3, input4_});
+  VectorRef sub0({prim::kPrimSub, input3_, mul5});
+  return sub0;
 }
 
 const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,

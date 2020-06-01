@@ -36,6 +36,10 @@ class MemSwapManager {
     mem_copy_manager_ = mem_copy_manager;
   }
 
+  MemSwapManager(const MemSwapManager &) = delete;
+
+  MemSwapManager &operator=(const MemSwapManager &) = delete;
+
   ~MemSwapManager() = default;
 
   void Init(const mindspore::session::KernelGraph *kernel_graph);
@@ -82,10 +86,6 @@ class MemSwapManager {
   void ClearSwapQueue();
 
  private:
-  MemSwapManager(const MemSwapManager &) = delete;
-
-  MemSwapManager &operator=(const MemSwapManager &) = delete;
-
   void AddSwapInfo();
 
   void ResetSwapInfo();

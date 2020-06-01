@@ -22,7 +22,7 @@
 #include <memory>
 #include "transform/types.h"
 #include "transform/util.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace callbacks {

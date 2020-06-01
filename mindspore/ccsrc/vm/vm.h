@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 #include <unordered_map>
 
 #include "ir/anf.h"
-#include "utils/base_ref.h"
+#include "utils/base_ref_extends.h"
 
 namespace mindspore {
 namespace compile {
@@ -115,7 +115,7 @@ class FinalVM {
   void InstPushPrim(const VectorRef &args);
   void InstSwitchReturn(const VectorRef &args);
   void set_insts(const InstSet &value) { insts_ = value; }
-  BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &args);
+  BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &arg);
 
  protected:
   BaseRef Ref(int i);
@@ -129,6 +129,7 @@ class FinalVM {
   void PushStatus(bool is_switch_call);
   bool PopStatus();
   void DoJmp(const BaseRef &jmp);
+  void SyncData(const py::object &args);
   void MergeJmpArgs(const BaseRef &jmp, const BaseRef &c);
   BaseRef MergeArgs(const BaseRef &first, const BaseRef &second);
 

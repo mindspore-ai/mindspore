@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "common/utils.h"
 #include "common/trans.h"
 #include "utils/context/ms_context.h"
+#include "utils/base_ref_extends.h"
 
 namespace mindspore {
 namespace session {
@@ -159,6 +160,13 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   graph->set_execution_order(execution_order);
   // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
+  MS_EXCEPTION_IF_NULL(context_);
+  FuncGraphManagerPtr manager = MakeManager({graph});
+  context_->AddManager(manager);
+  if (manager) {
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+  }
   return graph_id;
 }
 

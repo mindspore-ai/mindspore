@@ -252,8 +252,8 @@ class BPlusTree {
 
     ~InnerNode() = default;
 
-    slot_type slot_dir_[traits::kInnerSlots];
-    key_type keys_[traits::kInnerSlots];
+    slot_type slot_dir_[traits::kInnerSlots] = {0};
+    key_type keys_[traits::kInnerSlots] = {0};
     BaseNode *data_[traits::kInnerSlots + 1] = {nullptr};
     uint64_t num_keys_[traits::kInnerSlots + 1] = {0};
     slot_type slotuse_;
@@ -282,8 +282,8 @@ class BPlusTree {
 
     ~LeafNode() = default;
 
-    slot_type slot_dir_[traits::kLeafSlots];
-    key_type keys_[traits::kLeafSlots];
+    slot_type slot_dir_[traits::kLeafSlots] = {0};
+    key_type keys_[traits::kLeafSlots] = {0};
     std::unique_ptr<value_type> data_[traits::kLeafSlots];
     slot_type slotuse_;
   };

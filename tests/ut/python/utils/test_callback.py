@@ -15,6 +15,7 @@
 """test callback function."""
 import os
 import stat
+
 import numpy as np
 import pytest
 
@@ -283,14 +284,14 @@ def test_build_callbacks():
 
     callbacks = [ck_obj, loss_cb_1, 'Error', None]
     with pytest.raises(TypeError):
-        callback_list = _build_callbacks(callbacks)
+        _ = _build_callbacks(callbacks)
 
 
 def test_RunContext():
     """Test RunContext."""
     context_err = 666
     with pytest.raises(TypeError):
-        context = RunContext(context_err)
+        _ = RunContext(context_err)
 
     cb_params = _InternalCallbackParam()
     cb_params.member1 = 1

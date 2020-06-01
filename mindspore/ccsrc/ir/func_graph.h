@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@
 
 #include "ir/anf.h"
 #include "ir/manager.h"
-#include "utils/any.h"
 #include "utils/ordered_set.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "utils/ordered_map.h"
+#include "utils/base_ref.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -49,6 +49,16 @@ const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_CORE[] = "core";
 const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
+
+namespace abstract {
+class AbstractKeywordArg;
+using AbstractKeywordArgPtr = std::shared_ptr<AbstractKeywordArg>;
+class AbstractFunction;
+using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
+}  // namespace abstract
+
+class FuncGraphManager;
+using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
 // ANF transform class
 // either a primitive or a func_graph

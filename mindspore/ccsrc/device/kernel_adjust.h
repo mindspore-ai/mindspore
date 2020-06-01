@@ -26,7 +26,7 @@
 #include "session/kernel_graph.h"
 #include "kernel/kernel_build_info.h"
 #include "session/session_context.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "device/ascend/profiling/profiling_utils.h"
 #include "device/kernel_info.h"
 

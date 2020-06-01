@@ -77,7 +77,7 @@ class Cell:
         if flags:
             self.add_flags(**flags)
         self._backward_hook = None
-        self._enable_hook = False
+        self.enable_hook = False
         self._bprop_debug = False
 
     @property
@@ -97,10 +97,24 @@ class Cell:
 
     @property
     def bprop_debug(self):
+        """
+        Get whether cell custom bprop debug is enabled.
+        """
         return self._bprop_debug
 
     @bprop_debug.setter
     def bprop_debug(self, value):
+        """
+        Set whether to enable cell custom bprop debug.
+
+        Note:
+            When bprop is defined in cell, the bprop function will be executed
+            in python interpreter when bprop debug is true, and will be parsed
+            and add to graph when bprop debug is false.
+
+        Args:
+            value (bool): Specifies whether to enable bprop debug. Default: False.
+        """
         if not isinstance(value, bool):
             raise TypeError("'bprop debug' value must be bool type.")
         self._bprop_debug = value
@@ -264,11 +278,12 @@ class Cell:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
                 if self.parameters_dict()[key].sliced:
-                    logger.info("Param %s is from initializer, already sliced.", key)
+                    logger.info("Param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 self.parameters_dict()[key].set_parameter_data(new_tensor)
+                self.parameters_dict()[key].sliced = True
         elif isinstance(params, OrderedDict):
             for key in params:
                 tensor = params[key].data
@@ -276,11 +291,12 @@ class Cell:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
                 if params[key].sliced:
-                    logger.info("Param %s is from initializer, already sliced.", key)
+                    logger.info("Param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 params[key].set_parameter_data(new_tensor)
+                params[key].sliced = True
         else:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
@@ -435,14 +451,17 @@ class Cell:
         """
         raise NotImplementedError
 
-    def init_parameters_data(self, recurse=True):
+    def init_parameters_data(self, recurse=True, auto_parallel_mode=False):
+        """Init parameters' data."""
         for param in self.get_parameters(expand=recurse):
-            if param.name not in self.parameter_layout_dict:
-                logger.info("Layout dict does not contain the key %s.", param.name)
+            if not auto_parallel_mode:
                 param.init_data()
+            elif param.name not in self.parameter_layout_dict:
+                logger.info("Layout dict does not contain the key %s.", param.name)
+                param.init_data(set_sliced=True)
             else:
                 layout = self.parameter_layout_dict[param.name]
-                param.init_data(layout)
+                param.init_data(layout, set_sliced=True)
 
     def parameters_dict(self, recurse=True):
         """
@@ -750,17 +769,19 @@ class Cell:
         outputs = self._backward_hook(inputs)
         return outputs
 
-    @property
-    def enable_hook(self):
-        """Whether the cell register hook function"""
-        return self._enable_hook
-
     def register_backward_hook(self, fn):
         """
         Set the cell backward hook function.
 
+        Note:
+            fn should be defined as following code shows, `cell_name` is the name of registered cell,
+            `grad_input` is gradient passed to the cell, `grad_output` is the gradient computed and pass to
+            next cell or primitve, which may be modified and return.
+            >>> hook_fn(cell_name, grad_input, grad_output) -> Tensor or None
+
         Args:
             fn (function): Specifies the hook function with grad as input.
+
         """
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self._enable_hook = True

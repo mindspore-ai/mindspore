@@ -62,12 +62,12 @@ void ValidateOperation(const AnfNodePtr &node) {
 
 void ValidateAbstract(const AnfNodePtr &node) {
   if (node == nullptr) {
-    MS_LOG(WARNING) << "Node to validate is invalid";
+    MS_LOG(DEBUG) << "Node to validate is invalid";
     return;
   }
   AbstractBasePtr ptrBase = node->abstract();
   if (ptrBase == nullptr) {
-    MS_LOG(WARNING) << "Abstract is null in node: " << node->DebugString();
+    MS_LOG(DEBUG) << "Abstract is null in node: " << node->DebugString();
     return;
   }
   if (ptrBase->isa<AbstractClass>() || ptrBase->isa<AbstractJTagged>()) {
@@ -88,7 +88,7 @@ void ValidateAbstract(const AnfNodePtr &node) {
   }
   if (ptrBase->isa<AbstractError>()) {
     // NOTICE: validate dead code?
-    MS_LOG(WARNING) << "AbstractError in the graph: " << ptrBase->ToString();
+    MS_LOG(DEBUG) << "AbstractError in the graph: " << ptrBase->ToString();
     return;
   }
 

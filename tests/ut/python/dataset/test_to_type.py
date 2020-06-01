@@ -123,7 +123,7 @@ def test_to_type_03():
         ]
         transform = py_vision.ComposeOp(transforms)
         data = data.map(input_columns=["image"], operations=transform())
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Numpy" in str(e)
 
@@ -145,7 +145,7 @@ def test_to_type_04():
         ]
         transform = py_vision.ComposeOp(transforms)
         data = data.map(input_columns=["image"], operations=transform())
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "missing" in str(e)
 
@@ -167,7 +167,7 @@ def test_to_type_05():
         ]
         transform = py_vision.ComposeOp(transforms)
         data = data.map(input_columns=["image"], operations=transform())
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "data type" in str(e)
 

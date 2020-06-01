@@ -49,7 +49,7 @@ def test_textline_dataset_totext():
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
-    assert (count == 5)
+    assert count == 5
     # Restore configuration num_parallel_workers
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 

@@ -31,7 +31,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_basic():
     """
-    Test basic configuration functions    
+    Test basic configuration functions
     """
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
@@ -138,7 +138,7 @@ def test_deterministic_run_fail():
         for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
             np.testing.assert_equal(item1["image"], item2["image"])
 
-    except BaseException as e:
+    except Exception as e:
         # two datasets split the number out of the sequence a
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Array" in str(e)
@@ -157,7 +157,7 @@ def test_deterministic_run_pass():
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
     seed_original = ds.config.get_seed()
- 
+
     ds.config.set_seed(0)
     ds.config.set_num_parallel_workers(1)
 
@@ -179,7 +179,7 @@ def test_deterministic_run_pass():
     try:
         for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
             np.testing.assert_equal(item1["image"], item2["image"])
-    except BaseException as e:
+    except Exception as e:
         # two datasets both use numbers from the generated sequence "a"
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Array" in str(e)
@@ -344,7 +344,7 @@ def test_deterministic_python_seed_multi_thread():
 
     try:
         np.testing.assert_equal(data1_output, data2_output)
-    except BaseException as e:
+    except Exception as e:
         # expect output to not match during multi-threaded excution
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Array" in str(e)

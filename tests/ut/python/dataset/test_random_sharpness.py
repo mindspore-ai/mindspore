@@ -58,7 +58,7 @@ def test_random_sharpness(degrees=(0.1, 1.9), plot=False):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, label) in enumerate(ds_original):
+    for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -79,7 +79,7 @@ def test_random_sharpness(degrees=(0.1, 1.9), plot=False):
 
     ds_random_sharpness = ds_random_sharpness.batch(512)
 
-    for idx, (image, label) in enumerate(ds_random_sharpness):
+    for idx, (image, _) in enumerate(ds_random_sharpness):
         if idx == 0:
             images_random_sharpness = np.transpose(image, (0, 2, 3, 1))
         else:

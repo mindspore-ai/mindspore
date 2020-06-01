@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
 #include "./common.h"
 #include "pipeline/resource.h"
 #include "pipeline/parse/resolve.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "utils/convert_utils.h"
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/static_analysis/param_validator.h"
@@ -346,7 +346,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     if ((*value == *kAnyValue)) {
       auto value_desc = abs_base->value_desc();
       MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
-                              << " for python primitive.";
+                              << " for python primitive." << abs_base->ToString();
     }
     MS_EXCEPTION(TypeError) << "Unsupported parameter type for python primitive, the parameter value is "
                             << value->ToString();

@@ -215,7 +215,7 @@ def test_case_tf_file_no_schema_columns_list():
     assert row["col_sint16"] == [-32768]
 
     with pytest.raises(KeyError) as info:
-        a = row["col_sint32"]
+        _ = row["col_sint32"]
     assert "col_sint32" in str(info.value)
 
 
@@ -234,7 +234,7 @@ def test_tf_record_schema_columns_list():
     assert row["col_sint16"] == [-32768]
 
     with pytest.raises(KeyError) as info:
-        a = row["col_sint32"]
+        _ = row["col_sint32"]
     assert "col_sint32" in str(info.value)
 
 
@@ -246,7 +246,7 @@ def test_case_invalid_files():
     data = ds.TFRecordDataset(files, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
 
     with pytest.raises(RuntimeError) as info:
-        row = data.create_dict_iterator().get_next()
+        _ = data.create_dict_iterator().get_next()
     assert "cannot be opened" in str(info.value)
     assert "not valid tfrecord files" in str(info.value)
     assert valid_file not in str(info.value)

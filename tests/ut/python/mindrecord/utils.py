@@ -14,12 +14,12 @@
 # ============================================================================
 """utils for test"""
 
-import collections
-import json
-import numpy as np
 import os
 import re
 import string
+import collections
+import json
+import numpy as np
 
 from mindspore import log as logger
 
@@ -185,7 +185,7 @@ def get_nlp_data(dir_name, vocab_file, num):
     """
     if not os.path.isdir(dir_name):
         raise IOError("Directory {} not exists".format(dir_name))
-    for root, dirs, files in os.walk(dir_name):
+    for root, _, files in os.walk(dir_name):
         for index, file_name_extension in enumerate(files):
             if index < num:
                 file_path = os.path.join(root, file_name_extension)

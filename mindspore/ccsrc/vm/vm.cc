@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "vm/backend.h"
 #include "vm/transform.h"
 #include "pipeline/parse/data_converter.h"
+#include "utils/base_ref_extends.h"
 
 namespace mindspore {
 namespace compile {
@@ -602,27 +603,47 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
   MS_LOG(DEBUG) << "End";
 }
 
+void FinalVM::SyncData(const py::object &arg) {
+  if (py::isinstance<py::tuple>(arg)) {
+    py::tuple arg_list = py::cast<py::tuple>(arg);
+    for (size_t i = 0; i < arg_list.size(); i++) {
+      SyncData(arg_list[i]);
+    }
+  }
+  if (py::isinstance<tensor::Tensor>(arg)) {
+    auto tensor = py::cast<tensor::TensorPtr>(arg);
+    (void)tensor->data_sync();
+  }
+}
+
 BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
-  py::tuple py_args = py::tuple(args.size());
   MS_LOG(DEBUG) << "input for operation:";
+  std::size_t args_size = args.size();
+  py::tuple py_args = py::tuple(args_size);
   size_t i = 0;
   for (auto &arg : args) {
     py_args[i] = BaseRefToPyData(arg);
     MS_LOG(DEBUG) << "arg: " << i << ":";
     i++;
   }
+  // Hook operator for execute cell custom bprop function
   py::object obj;
   bool is_bprop = prim->HasAttr("bprop");
   if (is_bprop) {
+    SyncData(py_args);
     py::function fn_bprop = prim->hook();
     obj = fn_bprop(*py_args);
     return obj;
   }
+  // Sync gradient data from device to host
+  SyncData(py_args[2]);
   bool is_cell = prim->HasAttr("cell_hook");
   if (is_cell) {
+    // Hook operator for execute cell hook function
     std::string cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
     if (_hook_grad.find(cell_id) != _hook_grad.end()) {
-      py::tuple hook_args = py::tuple(3);
+      std::size_t hook_args_size = 3;
+      py::tuple hook_args = py::tuple(hook_args_size);
       hook_args[0] = cell_id;
       hook_args[1] = py::make_tuple(_hook_grad[cell_id]);
       hook_args[2] = py::make_tuple(py_args[2]);
@@ -637,6 +658,7 @@ BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
       obj = py_args[2];
     }
   } else {
+    // Hook operator for execute variable hook function
     py::function fn_hook = prim->hook();
     obj = fn_hook(py::make_tuple(py_args[2]));
     if (py::isinstance<py::none>(obj)) {

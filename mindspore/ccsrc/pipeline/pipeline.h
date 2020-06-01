@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@
 #include <unordered_map>
 #include <map>
 #include <mutex>
+
+#include "utils/base_ref_extends.h"
 #include "debug/draw.h"
 #include "ir/anf.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "pipeline/action.h"
 #include "vm/segment_runner.h"
 #include "vm/transform.h"
@@ -100,6 +102,9 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
   bool ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const;
   void GetGeBackendPolicy() const;
+  // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
+  // 'validate' stage
+  static std::vector<ActionItem> FilterActions(const std::vector<ActionItem> &actions, const std::string &phase);
 
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<ExecutorPy> executor_;

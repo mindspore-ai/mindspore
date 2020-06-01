@@ -65,6 +65,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"dropout_do_mask", "drop_out_do_mask"},
   {"strided_slice", "strided_slice_d"},
   {"strided_slice_grad", "strided_slice_grad_d"},
+  {"sparse_apply_ftrl", "sparse_apply_ftrl_d"},
   {"transpose", "transpose_d"},
   {"fill", "fill_d"},
   {"unsorted_segment_sum", "unsorted_segment_sum_d"},
@@ -80,6 +81,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"resize_nearest_neighbor_grad", "resize_nearest_neighbor_v2_grad_d"},
   {"pad", "pad_d"},
   {"argmax", "arg_max_d"},
+  {"argmin", "arg_min_d"},
   {"space_to_batch", "space_to_batch_d"},
   {"batch_to_space", "batch_to_space_d"},
   {"space_to_batch_nd", "space_to_batch_nd_d"},
@@ -97,7 +99,12 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"cum_sum", "cumsum_d"},
   {"apply_rms_prop", "apply_rms_prop_d"},
   {"cum_prod", "cumprod_d"},
-  {"reduce_prod", "reduce_prod_d"}};
+  {"reduce_all", "reduce_all_d"},
+  {"sparse_apply_adagrad", "sparse_apply_adagrad_d"},
+  {"unsorted_segment_min", "unsorted_segment_min_d"},
+  {"reduce_prod", "reduce_prod_d"},
+  {"a_cos", "acos"},
+  {"a_cos_grad", "acos_grad"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {
@@ -153,8 +160,8 @@ void TbeAdapter::SetTbeAttrsForTransDataOp(const mindspore::AnfNodePtr &anf_node
 }
 
 std::unordered_set<std::string> input_order_adjusted_ops = {
-  "Conv2DBackpropInput", "Conv2DBackpropFilter",       "LogSoftmaxGrad", "LayerNormGrad",
-  "LayerNormXBackprop",  "LayerNormBetaGammaBackprop", "MinimumGrad",    "MaximumGrad"};
+  "Conv2DBackpropInput",        "Conv2DBackpropFilter", "LogSoftmaxGrad", "LayerNormGrad",       "LayerNormXBackprop",
+  "LayerNormBetaGammaBackprop", "MinimumGrad",          "MaximumGrad",    "ApplyCenteredRMSProp"};
 
 void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vector<nlohmann::json>> const &inputs_list,
                                 nlohmann::json *inputs_json) {

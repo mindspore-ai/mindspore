@@ -46,7 +46,7 @@ def test_take_01():
     data1 = data1.take(1)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for _, d in enumerate(data1):
         assert d[0][0] == 0
 
@@ -63,7 +63,7 @@ def test_take_02():
     data1 = data1.take(2)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i % 2 == d[0][0]
 
@@ -80,7 +80,7 @@ def test_take_03():
     data1 = data1.take(3)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data elements
     for i, d in enumerate(data1):
         assert i % 3 == d[0][0]
 

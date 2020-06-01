@@ -29,47 +29,47 @@ text_file_data = ["This is a text file.", "Another file.", "Be happy every day."
 
 def split_with_invalid_inputs(d):
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([])
+        _, _ = d.split([])
     assert "sizes cannot be empty" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([5, 0.6])
+        _, _ = d.split([5, 0.6])
     assert "sizes should be list of int or list of float" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([-1, 6])
+        _, _ = d.split([-1, 6])
     assert "there should be no negative numbers" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
-        s1, s2 = d.split([3, 1])
+        _, _ = d.split([3, 1])
     assert "sum of split sizes 4 is not equal to dataset size 5" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
-        s1, s2 = d.split([5, 1])
+        _, _ = d.split([5, 1])
     assert "sum of split sizes 6 is not equal to dataset size 5" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
-        s1, s2 = d.split([0.15, 0.15, 0.15, 0.15, 0.15, 0.25])
+        _, _ = d.split([0.15, 0.15, 0.15, 0.15, 0.15, 0.25])
     assert "sum of calculated split sizes 6 is not equal to dataset size 5" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([-0.5, 0.5])
+        _, _ = d.split([-0.5, 0.5])
     assert "there should be no numbers outside the range [0, 1]" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([1.5, 0.5])
+        _, _ = d.split([1.5, 0.5])
     assert "there should be no numbers outside the range [0, 1]" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([0.5, 0.6])
+        _, _ = d.split([0.5, 0.6])
     assert "percentages do not sum up to 1" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        s1, s2 = d.split([0.3, 0.6])
+        _, _ = d.split([0.3, 0.6])
     assert "percentages do not sum up to 1" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
-        s1, s2 = d.split([0.05, 0.95])
+        _, _ = d.split([0.05, 0.95])
     assert "percentage 0.05 is too small" in str(info.value)
 
 
@@ -79,7 +79,7 @@ def test_unmappable_invalid_input():
 
     d = ds.TextFileDataset(text_file_dataset_path, num_shards=2, shard_id=0)
     with pytest.raises(RuntimeError) as info:
-        s1, s2 = d.split([4, 1])
+        _, _ = d.split([4, 1])
     assert "dataset should not be sharded before split" in str(info.value)
 
 
@@ -273,7 +273,7 @@ def test_mappable_invalid_input():
 
     d = ds.ManifestDataset(manifest_file, num_shards=2, shard_id=0)
     with pytest.raises(RuntimeError) as info:
-        s1, s2 = d.split([4, 1])
+        _, _ = d.split([4, 1])
     assert "dataset should not be sharded before split" in str(info.value)
 
 
@@ -554,6 +554,43 @@ def test_mappable_multi_split():
     assert s2_output == [2]
 
 
+def test_rounding():
+    d = ds.ManifestDataset(manifest_file, shuffle=False)
+
+    # under rounding
+    s1, s2 = d.split([0.5, 0.5], randomize=False)
+
+    s1_output = []
+    for item in s1.create_dict_iterator():
+        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+
+    s2_output = []
+    for item in s2.create_dict_iterator():
+        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+
+    assert s1_output == [0, 1, 2]
+    assert s2_output == [3, 4]
+
+    # over rounding
+    s1, s2, s3 = d.split([0.15, 0.55, 0.3], randomize=False)
+
+    s1_output = []
+    for item in s1.create_dict_iterator():
+        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+
+    s2_output = []
+    for item in s2.create_dict_iterator():
+        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+
+    s3_output = []
+    for item in s3.create_dict_iterator():
+        s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+
+    assert s1_output == [0]
+    assert s2_output == [1, 2]
+    assert s3_output == [3, 4]
+
+
 if __name__ == '__main__':
     test_unmappable_invalid_input()
     test_unmappable_split()
@@ -569,3 +606,4 @@ if __name__ == '__main__':
     test_mappable_sharding()
     test_mappable_get_dataset_size()
     test_mappable_multi_split()
+    test_rounding()

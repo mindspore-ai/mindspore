@@ -133,7 +133,7 @@ def test_list_append_2():
 
 
 class ListOperate(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(ListOperate, self).__init__()
 
     def construct(self, t, l):
@@ -153,7 +153,7 @@ class ListOperate(nn.Cell):
 
 
 class InListNet(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(InListNet, self).__init__()
         self.list_ = [1, 2, 3, 4, 5, "ok"]
 

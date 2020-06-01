@@ -199,7 +199,7 @@ def test_jieba_5():
 
 def gen():
     text = np.array("今天天气太好了我们一起去外面玩吧".encode("UTF8"), dtype='S')
-    yield text,
+    yield (text,)
 
 
 def pytoken_op(input_data):

@@ -72,7 +72,7 @@ def test_pad_op():
 # pylint: disable=unnecessary-lambda
 def test_pad_grayscale():
     """
-    Tests that the pad works for grayscale images 
+    Tests that the pad works for grayscale images
     """
 
     def channel_swap(image):
@@ -92,7 +92,7 @@ def test_pad_grayscale():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data1 = data1.map(input_columns=["image"], operations=transform())
 
-    # if input is grayscale, the output dimensions should be single channel 
+    # if input is grayscale, the output dimensions should be single channel
     pad_gray = c_vision.Pad(100, fill_value=(20, 20, 20))
     data1 = data1.map(input_columns=["image"], operations=pad_gray)
     dataset_shape_1 = []
@@ -100,11 +100,11 @@ def test_pad_grayscale():
         c_image = item1["image"]
         dataset_shape_1.append(c_image.shape)
 
-    # Dataset for comparison 
+    # Dataset for comparison
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    # we use the same padding logic 
+    # we use the same padding logic
     ctrans = [decode_op, pad_gray]
     dataset_shape_2 = []
 

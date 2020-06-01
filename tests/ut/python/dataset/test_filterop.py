@@ -15,9 +15,7 @@
 
 import numpy as np
 
-import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as cde
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -31,7 +29,6 @@ def test_diff_predicate_func():
             cde.Decode(),
             cde.Resize([64, 64])
         ]
-        type_cast_op = C.TypeCast(mstype.int32)
         dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image", "label"], shuffle=False)
         dataset = dataset.map(input_columns=["image"], operations=transforms, num_parallel_workers=1)
         dataset = dataset.filter(input_columns=["image", "label"], predicate=predicate_func, num_parallel_workers=4)
@@ -40,7 +37,6 @@ def test_diff_predicate_func():
         label_list = []
         for data in dataset.create_dict_iterator():
             num_iter += 1
-            ori_img = data["image"]
             label = data["label"]
             label_list.append(label)
         assert num_iter == 1
@@ -200,6 +196,7 @@ def generator_1d_zip2():
 
 
 def filter_func_zip(data1, data2):
+    _ = data2
     if data1 > 20:
         return False
     return True
@@ -249,6 +246,7 @@ def test_filter_by_generator_with_zip_after():
 
 
 def filter_func_map(col1, col2):
+    _ = col2
     if col1[0] > 8:
         return True
     return False
@@ -262,6 +260,7 @@ def filter_func_map_part(col1):
 
 
 def filter_func_map_all(col1, col2):
+    _, _ = col1, col2
     return True
 
 
@@ -334,6 +333,7 @@ def test_filter_by_generator_with_rename():
 
 # test input_column
 def filter_func_input_column1(col1, col2):
+    _ = col2
     if col1[0] < 8:
         return True
     return False
@@ -346,6 +346,7 @@ def filter_func_input_column2(col1):
 
 
 def filter_func_input_column3(col1):
+    _ = col1
     return True
 
 
@@ -380,6 +381,7 @@ def generator_mc_p1(maxid=20):
 
 
 def filter_func_Partial_0(col1, col2, col3, col4):
+    _, _, _ = col2, col3, col4
     filter_data = [0, 1, 2, 3, 4, 11]
     if col1[0] in filter_data:
         return False
@@ -439,6 +441,7 @@ def test_filter_by_generator_Partial2():
 
 
 def filter_func_Partial(col1, col2):
+    _ = col2
     if col1[0] % 3 == 0:
         return True
     return False
@@ -461,6 +464,7 @@ def test_filter_by_generator_Partial():
 
 
 def filter_func_cifar(col1, col2):
+    _ = col1
     if col2 % 3 == 0:
         return True
     return False
@@ -490,6 +494,7 @@ def generator_sort2(maxid=20):
 
 
 def filter_func_part_sort(col1, col2, col3, col4, col5, col6):
+    _, _, _, _, _, _ = col1, col2, col3, col4, col5, col6
     return True
 
 

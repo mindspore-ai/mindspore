@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@
 #include <utility>
 #include <memory>
 #include <map>
+
+#include "utils/base_ref_extends.h"
 #include "session/session_context.h"
 #include "session/kernel_graph.h"
 #include "ir/anf.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "utils/any.h"
-#include "utils/base_ref.h"
 #include "utils/contract.h"
 #include "pynative/pynative_execute.h"
 #include "device/kernel_info.h"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <utility>
 #include <string>
 
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 #include "pipeline/resource.h"
 #include "utils/context/ms_context.h"
 namespace mindspore {
@@ -37,8 +37,10 @@ class Context : public pipeline::ResourceBase {
 
   uint32_t device_id() const { return device_id_; }
   static std::shared_ptr<Context> GetInstance();
+  void AddManager(const FuncGraphManagerPtr &m) { manager_list_.push_back(m); }
 
  private:
+  std::vector<FuncGraphManagerPtr> manager_list_;
   std::string target_;
   uint32_t device_id_;
 };

@@ -75,10 +75,11 @@ constexpr auto kApplyMomentumOpName = "ApplyMomentum";
 constexpr auto kApplyAdadeltaOpName = "ApplyAdadelta";
 constexpr auto kApplyAdagradOpName = "ApplyAdagrad";
 constexpr auto kApplyAdagradDAName = "ApplyAdagradDA";
-constexpr auto kApplyAdamOpName = "ApplyAdam";
+constexpr auto kApplyAdamOpName = "Adam";
 constexpr auto kApplyAdaMaxOpName = "ApplyAdaMax";
 constexpr auto kApplyAddSignOpName = "ApplyAddSign";
 constexpr auto kApplyCenteredRMSPOpName = "ApplyCenteredRMSP";
+constexpr auto kApplyCenteredRMSPropOpName = "ApplyCenteredRMSProp";
 constexpr auto kApplyFtrlOpName = "ApplyFtrl";
 constexpr auto kApplyFtrlV2OpName = "ApplyFtrlV2";
 constexpr auto kApplyGradientDescentOpName = "ApplyGradientDescent";
@@ -151,6 +152,7 @@ constexpr auto kLarsV2OpName = "LarsV2";
 constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
 constexpr auto kNMSWithMaskOpName = "NMSWithMask";
+constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";

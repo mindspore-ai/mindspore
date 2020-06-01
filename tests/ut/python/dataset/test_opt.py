@@ -37,8 +37,7 @@ def test_case_0():
 
     data1 = data1.batch(2)
 
-    i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for _ in data1.create_dict_iterator():  # each data is a dictionary
         pass
 
 

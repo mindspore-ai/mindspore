@@ -420,6 +420,8 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         _executor.compile(net, *inputs, phase='export')
         _executor.export(net, file_name, file_format)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
+        # NOTICE: the pahse name `export_onnx` is used for judging whether is exporting onnx in the compile pipeline,
+        #         do not change it to other values.
         phase_name = 'export_onnx'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id)

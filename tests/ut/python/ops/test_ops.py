@@ -225,6 +225,46 @@ class ApplyFtrlNet(nn.Cell):
         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2, self.lr_power)
         return out
 
+
+class SparseApplyFtrlNet(nn.Cell):
+    def __init__(self):
+        super(SparseApplyFtrlNet, self).__init__()
+        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5)
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+
+    def construct(self, grad, indices):
+        out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        return out
+
+
+class SparseApplyProximalAdagradNet(nn.Cell):
+    def __init__(self):
+        super(SparseApplyProximalAdagradNet, self).__init__()
+        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        self.lr = 0.01
+        self.l1 = 0.0
+        self.l2 = 0.0
+
+    def construct(self, var, accum, grad, indices):
+        out = self.sparse_apply_proximal_adagrad(var, accum, self.lr, self.l1, self.l2, grad, indices)
+        return out
+
+
+class ApplyProximalAdagradNet(nn.Cell):
+    def __init__(self):
+        super(ApplyProximalAdagradNet, self).__init__()
+        self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
+        self.lr = 0.01
+        self.l1 = 0.0
+        self.l2 = 0.0
+
+    def construct(self, var, accum, grad):
+        out = self.apply_proximal_adagrad(var, accum, self.lr, self.l1, self.l2, grad)
+        return out
+
+
 class ApplyRMSNet(nn.Cell):
     def __init__(self):
         super(ApplyRMSNet, self).__init__()
@@ -359,16 +399,32 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('ACos', {
         'block': P.ACos(),
-        'desc_inputs': [[2, 3]],
-        'desc_bprop': [[2, 3]]}),
+        'desc_inputs': [Tensor(np.array([2., 3.]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([2., 3.]).astype(np.float32))]}),
+    ('ACosGrad', {
+        'block': G.ACosGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
     ('Acosh', {
         'block': P.Acosh(),
-        'desc_inputs': [[3, 4, 5]],
-        'desc_bprop': [[3, 4, 5]]}),
+        'desc_inputs': [Tensor(np.array([2., 3.]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([2., 3.]).astype(np.float32))]}),
+    ('AcoshGrad', {
+        'block': G.AcoshGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
     ('Sin', {
         'block': P.Sin(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Asin', {
+        'block': P.Asin(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('Asinh', {
+        'block': P.Asinh(),
+        'desc_inputs': [[3, 4, 5]],
+        'desc_bprop': [[3, 4, 5]]}),
     ('Reciprocal', {
         'block': P.Reciprocal(),
         'desc_inputs': [[2, 3, 3, 5]],
@@ -649,6 +705,31 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('Cos', {
         'block': P.Cos(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('ReduceAll', {
+        'block': P.ReduceAll(),
+        'desc_const': [1],
+        'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
+        'desc_bprop': []}),
+    ('BesselI0e', {
+        'block': P.BesselI0e(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('BesselI1e', {
+        'block': P.BesselI1e(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('Atan', {
+        'block': P.Atan(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('AtanGrad', {
+        'block': G.AtanGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
+    ('Atanh', {
+        'block': P.Atanh(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
 ]
@@ -941,6 +1022,18 @@ test_case_nn_ops = [
         'block': P.SparseApplyAdagrad(0.5),
         'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
         'skip': ['backward']}),
+    ('SparseApplyFtrl', {
+        'block': SparseApplyFtrlNet(),
+        'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
+    ('ApplyProximalAdagrad', {
+        'block': ApplyProximalAdagradNet(),
+        'desc_inputs': [[3, 3], [3, 3], [3, 3]],
+        'skip': ['backward']}),
+    ('SparseApplyProximalAdagrad', {
+        'block': SparseApplyProximalAdagradNet(),
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
     ('Flatten_1', {
         'block': NetForFlatten(),
         'desc_inputs': [Tensor(np.ones([2, 3, 4]).astype(np.int32)), Tensor(np.ones([2, 12]).astype(np.int32))],
@@ -999,8 +1092,9 @@ test_case_nn_ops = [
     ('ApplyCenteredRMSProp', {
         'block': P.ApplyCenteredRMSProp(),
         'desc_const': [0.9, 0.0, 1e-10, 0.001],
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], [3, 3]],
-        'desc_bprop': [3, 3],
+        'desc_inputs': [Tensor(1., mstype.float32), Tensor(2., mstype.float32), Tensor(1., mstype.float32),
+                        Tensor(2., mstype.float32), Tensor(1., mstype.float32)],
+        'desc_bprop': [1],
         'skip': ['backward']}),
     ('CTCLoss', {
         'block': P.CTCLoss(),
@@ -1058,6 +1152,13 @@ test_case_nn_ops = [
                         Tensor([[0.4, 1.2], [-0.4, -0.9]], mstype.float16), Tensor(0.85, mstype.float16),
                         Tensor([[-1.4, -0.7], [0.9, 0.7]], mstype.float16)],
         'desc_bprop': [],
+        'skip': ['backward']}),
+    ('SparseApplyAdagrad', {
+        'block': P.SparseApplyAdagrad(0.5),
+        'desc_inputs': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32),
+                        Tensor([[0.2, 0.2], [0.1, 0.4]], mstype.float32),
+                        Tensor([[0.5, 0.4], [0.6, 0.1]], mstype.float32), Tensor([1, 1], mstype.int32)],
+        'desc_bprop': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32)],
         'skip': ['backward']}),
 ]
 
@@ -1266,6 +1367,12 @@ test_case_array_ops = [
         'desc_inputs': [[4, 3, 1, 1]],
         'desc_bprop': [[1, 3, 2, 1]],
     }),
+    ('UnsortedSegmentMin_1', {
+        'block': P.UnsortedSegmentMin(),
+        'desc_const': [2],
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32)),
+                        Tensor(np.array([0, 1, 1]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 3], [4, 2, 1]]).astype(np.float32))]}),
 ]
 
 test_case_other_ops = [

@@ -129,7 +129,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
     if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
         raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
 
-    if len(shape_bias):
+    if shape_bias:
         if len(shape_bias) == 1:
             if is_gevm or is_gemv:
                 if shape_bias[0] != m_shape * n_shape:
@@ -149,11 +149,10 @@ def _get_bias(shape_bias):
     bias_length = shape_bias[0]
     if bias_length % 16 == 0:
         return shape_bias
-    else:
-        bias_length = (bias_length // 16) * 16 + 16
-        shape_bias = []
-        shape_bias.append(bias_length)
-        return shape_bias
+    bias_length = (bias_length // 16) * 16 + 16
+    shape_bias = []
+    shape_bias.append(bias_length)
+    return shape_bias
 
 
 def _get_input_shape(shape_x):
@@ -189,7 +188,7 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
     try:
         trans_a_f = bool(1 - trans_a)
-        if src_dtype == "float32" or src_dtype == "int32":
+        if src_dtype in ("float32", "int32"):
             if len(shape_a) != 2 and len(shape_b) != 2:
                 return False
             if trans_b:
@@ -239,6 +238,7 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
                     return False
 
     except RuntimeError as e:
+        print(e)
         return False
 
     return True
@@ -314,7 +314,7 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
 
     src_dtype = input_x1.get("dtype").lower()
     dst_dtype = output_y.get("dtype").lower()
-    if src_dtype == "float32" or src_dtype == "int32":
+    if src_dtype in ("float32", "int32"):
         matmul_vector_cce(shape_a, shape_b, src_dtype, trans_a, trans_b, shape_bias, kernel_name)
         return
     _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b)
@@ -377,7 +377,7 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
     tensor_b = tvm.placeholder(shape_b_temp, name='tensor_b',
                                dtype=src_dtype)
 
-    if len(shape_bias) > 0:
+    if shape_bias:
         tensor_bias = tvm.placeholder(shape_bias, name='tensor_bias',
                                       dtype=dst_dtype)
     result = te.lang.cce.matmul(tensor_a, tensor_b, trans_a, trans_b, format_a=format_a,
@@ -387,7 +387,7 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
         schedule = generic.auto_schedule(result)
 
     tensor_list = [tensor_a, tensor_b, result]
-    if len(shape_bias) > 0:
+    if shape_bias:
         tensor_list = [tensor_a, tensor_b, tensor_bias, result]
 
     config = {"print_ir": False,

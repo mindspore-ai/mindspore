@@ -31,11 +31,11 @@ class Net(nn.Cell):
         return self.square(x)
 
 
-x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
+arr_x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
 
 
 def test_net():
     square = Net()
-    output = square(Tensor(x))
-    print(x)
+    output = square(Tensor(arr_x))
+    print(arr_x)
     print(output.asnumpy())

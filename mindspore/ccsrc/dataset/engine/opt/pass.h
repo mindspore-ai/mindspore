@@ -88,6 +88,8 @@ class NodePass : public Pass {
   // Default DFS traversal
   explicit NodePass(Order order = Order::DFS) { traversalOrder_ = order; }
 
+  ~NodePass() = default;
+
   // Run the transformation pass against the execution tree.
   // @param tree - Pointer to the execution tree to be transformed.
   // @param modified - Pointer to the modified flag,

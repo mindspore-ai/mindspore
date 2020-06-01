@@ -58,7 +58,7 @@ def test_equalize(plot=False):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, label) in enumerate(ds_original):
+    for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -79,7 +79,7 @@ def test_equalize(plot=False):
 
     ds_equalize = ds_equalize.batch(512)
 
-    for idx, (image, label) in enumerate(ds_equalize):
+    for idx, (image, _) in enumerate(ds_equalize):
         if idx == 0:
             images_equalize = np.transpose(image, (0, 2, 3, 1))
         else:

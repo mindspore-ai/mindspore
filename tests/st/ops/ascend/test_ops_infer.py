@@ -13,21 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """ test nn ops """
-import functools
 import numpy as np
 import mindspore.nn as nn
-import mindspore.context as context
 import mindspore.common.dtype as mstype
 
-from mindspore import Tensor, Parameter
-from mindspore.common.initializer import initializer
-from mindspore.ops import Primitive
-from mindspore.ops import composite as C
+from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore.ops.primitive import constexpr
 from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
@@ -36,14 +29,16 @@ def test_cast_op_attr():
         def __init__(self):
             super(CastNet, self).__init__()
             self.cast = P.Cast()
+
         def construct(self, x, t):
             return self.cast(x, t)
-    
+
     class CastTypeTest(nn.Cell):
         def __init__(self, net):
             super(CastTypeTest, self).__init__()
             self.net = net
             self.cast = P.Cast()
+
         def construct(self, x, y, z):
             cast_op = self.cast
             t1 = cast_op(x, mstype.float32)
@@ -53,10 +48,11 @@ def test_cast_op_attr():
             t4 = cast_net(y, mstype.int32)
             t5 = cast_net(z, mstype.float16)
             return (t1, t2, t3, t4, t5)
+
     net = CastTypeTest(CastNet())
-    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.int32))
-    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
-    t3 = Tensor(np.ones([1,16,1,1918]).astype(np.int32))
+    t1 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.int32))
+    t2 = Tensor(np.ones([1, 16, 1, 3840]).astype(np.float32))
+    t3 = Tensor(np.ones([1, 16, 1, 1918]).astype(np.int32))
     out = net(t1, t2, t3)
     assert out[0].asnumpy().dtype == np.float32
     assert out[1].asnumpy().dtype == np.int32

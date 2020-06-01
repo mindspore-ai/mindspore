@@ -14,7 +14,6 @@
 # ============================================================================
 """ test Activations """
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor

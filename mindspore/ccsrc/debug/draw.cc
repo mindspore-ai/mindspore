@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 #include "debug/draw.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <vector>
 #include <string>
@@ -28,7 +30,7 @@
 #include "utils/graph_utils.h"
 #include "utils/utils.h"
 #include "operator/composite/composite.h"
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 
 namespace py = pybind11;
 
@@ -323,15 +325,17 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
       auto py_p = param_value->value();
       if (py::hasattr(py_p, "default_input")) {
         py_p = py_p.attr("default_input");
+        std::vector<int> shape;
         if (py::hasattr(py_p, PYTHON_TENSOR_FLAG)) {
           auto m_tensor = py_p.cast<std::shared_ptr<tensor::Tensor>>();
-          py::tuple shape = m_tensor->GetPyTupleShape();
-          buffer_ << "[" << py::str(shape) << "]";
+          shape = m_tensor->shape();
         } else if (py::hasattr(py_p, PYTHON_META_TENSOR_FLAG)) {
           auto m_tensor = py_p.cast<std::shared_ptr<tensor::MetaTensor>>();
-          py::tuple shape = m_tensor->GetPyTupleShape();
-          buffer_ << "[" << py::str(shape) << "]";
+          shape = m_tensor->shape();
         }
+        std::ostringstream shape_str;
+        std::copy(shape.begin(), shape.end(), std::ostream_iterator<int>(shape_str, ","));
+        buffer_ << "[" << shape_str.str() << "]";
       }
     }
     buffer_ << "</td></tr>";

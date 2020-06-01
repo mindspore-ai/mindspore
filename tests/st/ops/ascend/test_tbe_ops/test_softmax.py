@@ -31,11 +31,11 @@ class Net(nn.Cell):
         return self.Softmax(x)
 
 
-x = np.array([[5, 1]]).astype(np.float32)
+arr_x = np.array([[5, 1]]).astype(np.float32)
 
 
 def test_net():
     softmax = Net()
-    output = softmax(Tensor(x))
-    print(x)
+    output = softmax(Tensor(arr_x))
+    print(arr_x)
     print(output.asnumpy())

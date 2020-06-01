@@ -43,6 +43,7 @@ cfg = edict({
         'start_learning_rate': 2e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
+        'weight_decay': 0.01,
         'decay_filter': lambda x: False,
     }),
     'Momentum': edict({

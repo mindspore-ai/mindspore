@@ -52,6 +52,7 @@
 #include "pre_activate/ascend/ir_fusion/batchnorm_to_bninfer.h"
 #include "pre_activate/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "pre_activate/ascend/ir_fusion/confusion_mul_grad_fusion.h"
+#include "pre_activate/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -98,6 +99,8 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond1>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond2>());
@@ -113,8 +116,15 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond1Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond2Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond3Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneCond4Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond1>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond2>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond3>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond4>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond5>());
   ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
@@ -244,8 +254,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir ";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
 }
@@ -271,6 +281,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

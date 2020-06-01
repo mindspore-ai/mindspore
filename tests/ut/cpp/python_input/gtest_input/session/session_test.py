@@ -25,7 +25,7 @@ max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 
 
 def test_addn_cast(x, y, z):
-    mysum = addn((x, y))
+    mysum = addn((x, y, z))
     res = cast(mysum, ms.float16)
     return res
 

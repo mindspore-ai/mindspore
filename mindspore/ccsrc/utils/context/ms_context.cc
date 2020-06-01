@@ -29,7 +29,7 @@
 #ifdef ENABLE_GE
 #include "transform/df_graph_manager.h"
 #endif
-#include "ir/meta_tensor.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 #ifdef ENABLE_GE
@@ -80,6 +80,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
   profiling_mode_ = false;
   profiling_options_ = "training_trace";
+  check_bprop_flag_ = false;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {

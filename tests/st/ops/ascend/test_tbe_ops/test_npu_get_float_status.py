@@ -33,11 +33,11 @@ class Net(nn.Cell):
         return self.npu_get_float_status(x1)
 
 
-x1 = np.random.randn(8).astype(np.float32)
+arr_x1 = np.random.randn(8).astype(np.float32)
 
 
 def test_net():
     npu_get_float_status = Net()
-    output = npu_get_float_status(Tensor(x1))
-    print(x1)
+    output = npu_get_float_status(Tensor(arr_x1))
+    print(arr_x1)
     print(output.asnumpy())

@@ -109,10 +109,9 @@ def test_decode_op():
     data1 = data1.map(input_columns=["image"], operations=decode_op)
 
     num_iter = 0
-    image = None
     for item in data1.create_dict_iterator():
         logger.info("Looping inside iterator {}".format(num_iter))
-        image = item["image"]
+        _ = item["image"]
         # plt.subplot(131)
         # plt.imshow(image)
         # plt.title("DE image")
@@ -134,10 +133,9 @@ def test_decode_normalize_op():
     data1 = data1.map(input_columns=["image"], operations=[decode_op, normalize_op])
 
     num_iter = 0
-    image = None
     for item in data1.create_dict_iterator():
         logger.info("Looping inside iterator {}".format(num_iter))
-        image = item["image"]
+        _ = item["image"]
         # plt.subplot(131)
         # plt.imshow(image)
         # plt.title("DE image")

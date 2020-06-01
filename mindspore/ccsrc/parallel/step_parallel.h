@@ -144,8 +144,6 @@ bool StepParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
 
 int32_t GetTupleGetItemIndex(const CNodePtr &cnode);
 
-std::vector<CNodePtr> FindLossCNodeFromRoot(const FuncGraphPtr &root);
-
 Status ParallelInit();
 
 std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);

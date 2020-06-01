@@ -164,9 +164,10 @@ def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=Tr
                             matmul_hybrid_f_t_local_UB = tik_instance.Tensor(dtype, [64],
                                                                              name="matmul_hybrid_f_t_local_UB",
                                                                              scope=tik.scope_ubuf)
-                            matmul_hybrid_f_t_local_UB_dst_tmp = tik_instance.Tensor(dtype, [64],
-                                                                                     name="matmul_hybrid_f_t_local_UB_dst_tmp",
-                                                                                     scope=tik.scope_ubuf)
+                            matmul_hybrid_f_t_local_UB_dst_tmp = tik_instance.Tensor(
+                                dtype, [64],
+                                name="matmul_hybrid_f_t_local_UB_dst_tmp",
+                                scope=tik.scope_ubuf)
                             tik_instance.vector_dup(64, matmul_hybrid_f_t_local_UB, 0, 1, 1, 8)
                             tik_instance.data_move(input_2_local_UB,
                                                    input2[(block_idx // 6) * 16384 + thread_idx2 * 8192], 0, 1,

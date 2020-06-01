@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """test dataset performance about mindspore.MindDataset, mindspore.TFRecordDataset, tf.data.TFRecordDataset"""
-import tensorflow as tf
 import time
+import tensorflow as tf
 
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileReader

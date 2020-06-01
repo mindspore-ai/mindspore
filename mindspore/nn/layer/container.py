@@ -105,6 +105,9 @@ class SequentialCell(Cell):
                     self.insert_child_to_cell(name, cell)
             else:
                 raise TypeError('Cells must be list or orderedDict')
+        else:
+            for index, cell in enumerate(args):
+                self.insert_child_to_cell(str(index), cell)
         self.cell_list = list(self._cells.values())
 
     def __getitem__(self, index):

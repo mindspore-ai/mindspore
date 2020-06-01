@@ -168,7 +168,8 @@ FuncGraphPtr TransformGraphCondTrueBranchNodes(const FuncGraphPtr &graph, const 
 FuncGraphPtr TransformGraphCondFalseBranchNodes(const FuncGraphPtr &graph, const AnfNodePtr &cond);
 AnfNodePtr TransformMergeBranches(const AnfNodePtr &true_output_node, const AnfNodePtr &false_output_node,
                                   const AbstractBasePtr &true_graph_output_abs,
-                                  const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond);
+                                  const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond,
+                                  const FuncGraphPtr &func_graph);
 }  // namespace internal
 
 // {{prim::kPrimSwitch, X, G1, G2}, Xs}
@@ -190,6 +191,20 @@ class ConvertSwitchReplacement : public AnfVisitor {
     if (g2_ == nullptr || g1_->output() == nullptr || g2_->output() == nullptr) {
       return nullptr;
     }
+    // for switch replace method, only graphs without graph inside can be replaced
+    for (auto &item : g1_->value_nodes()) {
+      auto value_node = item.first;
+      if (IsValueNode<FuncGraph>(value_node)) {
+        return nullptr;
+      }
+    }
+
+    for (auto &item : g2_->value_nodes()) {
+      auto value_node = item.first;
+      if (IsValueNode<FuncGraph>(value_node)) {
+        return nullptr;
+      }
+    }
 
     auto true_output = g1_->output()->abstract();
     auto false_output = g2_->output()->abstract();
@@ -200,8 +215,8 @@ class ConvertSwitchReplacement : public AnfVisitor {
     auto fg = node->func_graph();
     auto cloned_g1 = InlineClone(trans_g1, fg, params);
     auto cloned_g2 = InlineClone(trans_g2, fg, params);
-
-    return internal::TransformMergeBranches(cloned_g1, cloned_g2, true_output, false_output, x_);
+    auto nnode = internal::TransformMergeBranches(cloned_g1, cloned_g2, true_output, false_output, x_, fg);
+    return nnode;
   }
 
   void Visit(const AnfNodePtr &node) override {

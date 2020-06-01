@@ -68,7 +68,7 @@ def test_net_3Input():
     addn = Net3I()
     output = addn(Tensor(x, mstype.float32), Tensor(y, mstype.float32), Tensor(z, mstype.float32))
     print("output:\n", output)
-    expect_result = [[0., 3.,  6.],
+    expect_result = [[0., 3., 6.],
                      [9., 12., 15]]
 
     assert (output.asnumpy() == expect_result).all()

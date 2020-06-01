@@ -64,13 +64,13 @@ class BatchNormTester(nn.Cell):
 
 def test_batchnorm_train_onnx_export():
     "test onnx export interface does not modify trainable flag of a network"
-    input = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     net = BatchNormTester(3)
     net.set_train()
     if not net.training:
         raise ValueError('netowrk is not in training mode')
     onnx_file = 'batch_norm.onnx'
-    export(net, input, file_name=onnx_file, file_format='ONNX')
+    export(net, input_, file_name=onnx_file, file_format='ONNX')
 
     if not net.training:
         raise ValueError('netowrk is not in training mode')
@@ -142,6 +142,20 @@ class DepthwiseConv2dAndReLU6(nn.Cell):
         x = self.relu6(x)
         return x
 
+class DeepFMOpNet(nn.Cell):
+    """Net definition with Gatherv2 and Tile and Square."""
+
+    def __init__(self):
+        super(DeepFMOpNet, self).__init__()
+        self.gather = P.GatherV2()
+        self.square = P.Square()
+        self.tile = P.Tile()
+
+    def construct(self, x, y):
+        x = self.tile(x, (1000, 1))
+        x = self.square(x)
+        x = self.gather(x, y, 0)
+        return x
 
 # generate mindspore Tensor by shape and numpy datatype
 def gen_tensor(shape, dtype=np.float32):
@@ -153,10 +167,12 @@ net_cfgs = [
     ('lenet', LeNet5(), gen_tensor([1, 1, 32, 32])),
     ('maxpoolwithargmax', DefinedNet(), gen_tensor([1, 3, 224, 224])),
     ('depthwiseconv_relu6', DepthwiseConv2dAndReLU6(3, kernel_size=3), gen_tensor([1, 3, 32, 32])),
+    ('deepfm_ops', DeepFMOpNet(), (gen_tensor([1, 1]), gen_tensor([1000, 1], dtype=np.int32)))
 ]
 
 
 def get_id(cfg):
+    _ = cfg
     return list(map(lambda x: x[0], net_cfgs))
 
 
@@ -164,7 +180,10 @@ def get_id(cfg):
 @pytest.mark.parametrize('name, net, inp', net_cfgs, ids=get_id(net_cfgs))
 def test_onnx_export(name, net, inp):
     onnx_file = name + ".onnx"
-    export(net, inp, file_name=onnx_file, file_format='ONNX')
+    if isinstance(inp, (tuple, list)):
+        export(net, *inp, file_name=onnx_file, file_format='ONNX')
+    else:
+        export(net, inp, file_name=onnx_file, file_format='ONNX')
 
     # check existence of exported onnx file and delete it
     assert os.path.exists(onnx_file)

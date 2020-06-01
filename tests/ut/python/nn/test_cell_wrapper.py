@@ -64,7 +64,7 @@ def test_parameter_update_int32_and_tensor():
     param_step = train_network.parameters_dict()['global_step']
     update_global_step = ParameterUpdate(param_step)
 
-    input_step = Tensor(np.array([1000]), mstype.float32)
+    input_step = Tensor(np.array([1000]), mstype.int32)
     _executor.compile(update_global_step, input_step)
 
 

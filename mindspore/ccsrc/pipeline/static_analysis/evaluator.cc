@@ -26,15 +26,17 @@
 namespace mindspore {
 namespace abstract {
 namespace {
-void EvalEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &arg_spec_list,
-                      const AnfNodeConfigPtr &out_conf) {
+string EvalEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &arg_spec_list,
+                        const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(evaluator);
+  std::stringstream ss;
   if (out_conf != nullptr) {
-    MS_LOG(DEBUG) << "Evaluator " << evaluator->ToString() << " run for " << out_conf->node()->scope()->name();
+    ss << "Evaluator " << evaluator->ToString() << " run for " << out_conf->node()->scope()->name();
   }
   for (size_t i = 0; i < arg_spec_list.size(); i++) {
-    MS_LOG(DEBUG) << evaluator->ToString() << " input[" << i << "] abstract value: " << arg_spec_list[i]->ToString();
+    ss << evaluator->ToString() << " input[" << i << "] abstract value: " << arg_spec_list[i]->ToString();
   }
+  return ss.str();
 }
 
 void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &, const AnfNodeConfigPtr &out_conf) {
@@ -248,7 +250,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   args_spec_list = NormalizeArgs(args_spec_list);
   args_spec_list = BroadenUndeterminedArgs(args_spec_list);
   trace::TraceGraphEvalEnter(shared_from_base<Evaluator>(), out_conf);
-  EvalEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
+  MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
   MS_EXCEPTION_IF_NULL(cache_);
   auto iter = cache_->find(args_spec_list);
   if (iter == cache_->end()) {

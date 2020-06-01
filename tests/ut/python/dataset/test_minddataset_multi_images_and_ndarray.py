@@ -50,7 +50,7 @@ def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
     assert os.path.exists(CV_FILE_NAME)
     assert os.path.exists(CV_FILE_NAME + ".db")
 
-    """tutorial for minderdataset."""
+    # tutorial for minderdataset.
     columns_list = ["id", "image_0", "image_2", "image_3", "image_4", "input_mask", "segments"]
     num_readers = 1
     data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)

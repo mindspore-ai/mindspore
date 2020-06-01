@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/utils.h"
-#include "utils/base_ref.h"
 #include "vm/segment_runner.h"
 #include "parallel/context.h"
 #include "parallel/graph_util/get_parallel_info.h"
@@ -374,7 +373,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
     p_actions = GePipeline();
   }
 
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, p_actions);
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
 
   // get the parameters items and add the value to args_spec
   abstract::AbstractBasePtrList args_spec;
@@ -406,6 +405,22 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
 
   MS_LOG(INFO) << "End ExecutorPy compile!";
   return true;
+}
+
+std::vector<ActionItem> ExecutorPy::FilterActions(const std::vector<ActionItem> &actions, const std::string &phase) {
+  // phase does not contain 'export_onnx'
+  if (GetPhasePrefix(phase).find("export_onnx") == std::string::npos) {
+    return actions;
+  }
+  MS_LOG(INFO) << "Phase is '" << phase << "', filter out actions after stage 'validate'";
+  std::vector<ActionItem> filtered_actions;
+  for (const auto &item : actions) {
+    filtered_actions.emplace_back(item);
+    if (item.first == "validate") {
+      break;
+    }
+  }
+  return filtered_actions;
 }
 
 void ExecutorPy::ReleaseResource(const py::object &phase) {
@@ -761,7 +776,9 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // Convert CNodeList to LinConvertResult.
   ConfigManager::GetInstance().set_iter_num(1);
   auto runner = convert_fn({app_init});
-  backend->Link(runner.graph_id);
+  if (MsContext::GetInstance()->execution_mode() != kPynativeMode) {
+    backend->Link(runner.graph_id);
+  }
   ConfigManager::GetInstance().set_iter_num(size);
 
   if (!(*runner.run)) {

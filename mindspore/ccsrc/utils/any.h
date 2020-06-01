@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@
 #include <vector>
 #include <utility>
 
-#include "pybind11/pybind11.h"
-
 #include "utils/overload.h"
 #include "utils/log_adapter.h"
 #include "utils/misc.h"
@@ -38,8 +36,6 @@ template <class T>
 std::string type(const T &t) {
   return demangle(typeid(t).name());
 }
-
-std::ostream &operator<<(std::ostream &os, const pybind11::object &obj);
 
 class Any {
  public:

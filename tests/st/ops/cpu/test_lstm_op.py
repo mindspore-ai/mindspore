@@ -14,10 +14,10 @@
 # ============================================================================
 
 import pytest
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+import mindspore.nn as nn
 import mindspore.context as context
+from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -196,10 +196,6 @@ def test_multi_layer_bilstm():
     bidirectional = True
     dropout = 0.0
 
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
-
     net = MultiLayerBiLstmNet(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional,
                               dropout)
     y, h, c, _, _ = net()
@@ -305,9 +301,6 @@ def test_grad():
     has_bias = True
     bidirectional = False
     dropout = 0.0
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
     net = Grad(Net(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout))
     dy = np.array([[[-3.5471e-01, 7.0540e-01],
                     [2.7161e-01, 1.0865e+00]],

@@ -298,9 +298,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
     auto kernel_with_index = AnfAlgo::VisitKernel(cur_input, 0);
     auto is_weight_boundary = [](const AnfNodePtr &node) -> bool {
-      if (node->isa<ValueNode>()) {
-        return true;
-      } else if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+      if (node->isa<ValueNode>() || node->isa<Parameter>()) {
         return true;
       }
       return false;

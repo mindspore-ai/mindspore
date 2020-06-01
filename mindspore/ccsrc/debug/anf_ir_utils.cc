@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 #include "utils/ordered_set.h"
 #include "utils/utils.h"
 #include "debug/trace.h"
+#include "debug/label.h"
 #include "utils/context/ms_context.h"
 #include "operator/ops.h"
 

@@ -119,7 +119,7 @@ def batch_padding_performance_3d():
     num_batches = 0
     for _ in data1.create_dict_iterator():
         num_batches += 1
-    res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
+    _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
 
 
@@ -135,7 +135,7 @@ def batch_padding_performance_1d():
     num_batches = 0
     for _ in data1.create_dict_iterator():
         num_batches += 1
-    res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
+    _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
 
 
@@ -151,7 +151,7 @@ def batch_pyfunc_padding_3d():
     num_batches = 0
     for _ in data1.create_dict_iterator():
         num_batches += 1
-    res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
+    _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
 
 
@@ -166,7 +166,7 @@ def batch_pyfunc_padding_1d():
     num_batches = 0
     for _ in data1.create_dict_iterator():
         num_batches += 1
-    res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
+    _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
 
 

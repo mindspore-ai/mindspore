@@ -31,11 +31,11 @@ class Net(nn.Cell):
         return self.sqrt(x)
 
 
-x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
+arr_x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
 
 
 def test_net():
     sqrt = Net()
-    output = sqrt(Tensor(x))
-    print(x)
+    output = sqrt(Tensor(arr_x))
+    print(arr_x)
     print(output.asnumpy())
