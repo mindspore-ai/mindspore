@@ -757,14 +757,6 @@ void KernelGraph::PrintGraphExecuteOrder() const {
 
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
-KernelGraph::~KernelGraph() {
-  auto context = MsContext::GetInstance();
-  if (!context) {
-    return;
-  }
-  if (context->execution_mode() == kGraphMode) {
-    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_);
-  }
-}
+KernelGraph::~KernelGraph() { device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_); }
 }  // namespace session
 }  // namespace mindspore

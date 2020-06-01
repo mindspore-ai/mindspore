@@ -65,13 +65,13 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  MS_LOG(INFO) << "clear graph:" << graph_id << " runtime resource";
+  MS_LOG(DEBUG) << "clear graph:" << graph_id << " runtime resource";
   auto iter = graph_model_map_.find(graph_id);
   if (iter == graph_model_map_.end()) {
-    MS_LOG(WARNING) << "GraphId:" << graph_id << " not found";
+    MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
     return;
   }
-  MS_LOG(INFO) << "Ge UnloadModel " << iter->first;
+  MS_LOG(DEBUG) << "Ge UnloadModel " << iter->first;
   auto ret = ge::model_runner::ModelRunner::Instance().UnloadModel(iter->first);
   if (!ret) {
     MS_LOG(ERROR) << "UnloadModel failed";
