@@ -42,6 +42,9 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerNode::
       // Swap the key
       std::swap(keys_[j], keys_[i]);
       // Swap the pointers.
+      if ((j + 1) >= traits::kInnerSlots + 1 || (i + 1) >= traits::kInnerSlots + 1) {
+        return IndexRc::kUnexpectedError;
+      }
       std::swap(data_[j + 1], data_[i + 1]);
       // one key in order.
       inverse[j] = j;
@@ -131,6 +134,9 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::S
       slot_type j = inverse[i];
       slot_type k = inverse[j];
       // Swap the key
+      if (j >= traits::kLeafSlots || i >= traits::kLeafSlots) {
+        return IndexRc::kUnexpectedError;
+      }
       std::swap(keys_[j], keys_[i]);
       // Swap the shared pointers
       std::swap(data_[j], data_[i]);
