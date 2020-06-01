@@ -14,13 +14,3 @@
 # ============================================================================
 
 """custom ops"""
-from .batchnorm_fold import _batchnorm_fold_tbe
-from .batchnorm_fold_grad import _batchnorm_fold_grad_tbe
-from .batchnorm_fold2 import _batchnorm_fold2_tbe
-from .batchnorm_fold2_grad import _batchnorm_fold2_grad_tbe
-from .batchnorm_fold2_grad_reduce import _batchnorm_fold2_grad_reduce_tbe
-from .correction_mul import _correction_mul_tbe
-from .correction_mul_grad import _correction_mul_grad_tbe
-from .fake_quant_with_min_max import _fake_quant_tbe
-from .fake_quant_with_min_max_grad import _fake_quant_grad_tbe
-from .fake_quant_with_min_max_update import _fake_quant_update5d_tbe
