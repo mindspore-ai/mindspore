@@ -31,8 +31,11 @@ __all__ = ["FakeQuantWithMinMax",
            "BatchNormFold2",
            "BatchNormFold2Grad",
            "BatchNormFoldD",
+           "BatchNormFoldGradD",
            "BNTrainingReduce",
            "BatchNormFold2_D",
+           "BatchNormFold2GradD",
+           "BatchNormFold2GradReduce",
            "FakeQuantWithMinMaxUpdate",
            ]
 
