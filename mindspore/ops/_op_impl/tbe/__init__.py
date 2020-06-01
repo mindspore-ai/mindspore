@@ -227,3 +227,5 @@ from .asinh_grad import _asinh_grad_tbe
 from .atan import _atan_tbe
 from .atan_grad import _atan_grad_tbe
 from .atanh import _atanh_tbe
+from .cosh import _cosh_tbe
+from .sinh import _sinh_tbe
