@@ -141,9 +141,9 @@ def test_crop_grayscale(height=375, width=375):
 
 
 if __name__ == "__main__":
-    test_center_crop_op(600, 600, True)
+    test_center_crop_op(600, 600, plot=True)
     test_center_crop_op(300, 600)
     test_center_crop_op(600, 300)
     test_center_crop_md5()
-    test_center_crop_comp(True)
+    test_center_crop_comp(plot=True)
     test_crop_grayscale()
