@@ -160,6 +160,13 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   graph->set_execution_order(execution_order);
   // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
+  MS_EXCEPTION_IF_NULL(context_);
+  FuncGraphManagerPtr manager = MakeManager({graph});
+  context_->AddManager(manager);
+  if (manager) {
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+  }
   return graph_id;
 }
 
