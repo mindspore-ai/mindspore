@@ -76,6 +76,8 @@ constexpr char DEPEND[] = "depend";
 constexpr char BATCH_PARALLEL[] = "BatchParallel";
 
 constexpr char ACTIVATION_TYPE[] = "activation_type";
+constexpr char TARGET[] = "target";
+constexpr char CPU[] = "CPU";
 constexpr char TRANSPOSE_A[] = "transpose_a";
 constexpr char TRANSPOSE_B[] = "transpose_b";
 constexpr char SHAPE[] = "shape";
@@ -141,6 +143,8 @@ constexpr char MIRROR_OPERATOR[] = "_MirrorOperator";
 constexpr char STRIDED_SLICE[] = "StridedSlice";
 constexpr char ALL_GATHER[] = "AllGather";
 constexpr char REDUCE_SCATTER[] = "ReduceScatter";
+constexpr char HOST_REDUCE_SCATTER[] = "HostReduceScatter";
+constexpr char EMBEDDING_LOOKUP[] = "EmbeddingLookup";
 constexpr char CONCAT[] = "Concat";
 constexpr char SOFTMAX_CROSS_ENTROPY_WITH_LOGITS[] = "SoftmaxCrossEntropyWithLogits";
 constexpr char SIGMOID_CROSS_ENTROPY_WITH_LOGITS[] = "SigmoidCrossEntropyWithLogits";
