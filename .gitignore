@@ -65,6 +65,7 @@ test_temp_summary_event_file/
 *.ckpt
 *.shp
 *.pkl
+*.pb
 .clangd
 mindspore/version.py
 mindspore/default_config.py

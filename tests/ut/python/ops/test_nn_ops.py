@@ -345,19 +345,6 @@ class Conv2dNativeNet(nn.Cell):
         return self.flatten(self.conv(input_x, self.weight))
 
 
-class MakeRefKeyNet(nn.Cell):
-    """ MakeRefKeyNet definition """
-
-    def __init__(self):
-        super(MakeRefKeyNet, self).__init__()
-        self.y = Parameter(Tensor([1.0], mindspore.float32), name="y")
-
-    def construct(self, x):
-        key = P.MakeRefKey("y")()
-        P.Assign()(key, x)
-        return x
-
-
 class StateNet(nn.Cell):
     """ StateTestTensor definition """
 
@@ -537,10 +524,6 @@ test_cases = [
     ('Conv2dNativeGrad', {
         'block': Grad(NetWithLossClass(Conv2dNativeNet())),
         'desc_inputs': [Tensor(np.ones([1, 3, 16, 16], np.float32)), Tensor(np.zeros([1, 1764], np.float32))],
-    }),
-    ('MakeRefKey', {
-        'block': MakeRefKeyNet(),
-        'desc_inputs': [Tensor([2.0], mindspore.float32)],
     }),
     ('StateTest', {
         'block': StateNet(),
