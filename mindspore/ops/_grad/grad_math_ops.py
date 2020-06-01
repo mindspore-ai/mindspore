@@ -422,6 +422,19 @@ def get_bprop_exp(self):
     return bprop
 
 
+@bprop_getters.register(P.Expm1)
+def get_bprop_expm1(self):
+    """Grad definition for `Expm1` operation."""
+    exp_ = P.Exp()
+
+    def bprop(x, out, dout):
+        g = exp_(x)
+        dx = g * dout
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Minimum)
 def get_bprop_minimum(self):
     """Grad definition for `Minimum` operation."""
