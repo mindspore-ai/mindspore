@@ -94,7 +94,7 @@ def test_random_crop_and_resize_op_py(plot=False):
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         crop_and_resize = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        original = cv2.resize(original, (512,256))
+        original = cv2.resize(original, (512, 256))
         mse = diff_mse(crop_and_resize, original)
         logger.info("random_crop_and_resize_op_{}, mse: {}".format(num_iter + 1, mse))
         num_iter += 1

@@ -78,4 +78,4 @@ def test_layer_switch():
     net = MySwitchNet()
     x = Tensor(np.ones((3, 3, 24, 24)), mindspore.float32)
     index = Tensor(0, dtype=mindspore.int32)
-    y = net(x, index)
+    net(x, index)
