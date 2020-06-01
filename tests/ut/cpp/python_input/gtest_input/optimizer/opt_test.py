@@ -878,7 +878,7 @@ def test_addn_zero(tag):
     fns = FnDict()
     addn = P.AddN()
     AddN = P.AddN
-    zero_tensor = Primitive('zeros_like_tensor')
+    zero_tensor = Primitive('ZerosLike')
 
     @fns
     def before_1(x, y, z, a):

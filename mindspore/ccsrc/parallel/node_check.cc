@@ -75,7 +75,7 @@ const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
                                           DROPOUT_GEN_MASK,
                                           EMBED,
                                           CREATINSTANCE,
-                                          ZEROSLIKETENSOR,
+                                          ZEROSLIKE,
                                           ASSIGN,
                                           REF_TO_EMBED,
                                           STOP_GRADIENT};

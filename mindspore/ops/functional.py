@@ -130,7 +130,7 @@ broadcast_gradient_args = Primitive('BroadcastGradientArgs')
 dot = Primitive('dot')
 array_reduce = Primitive('array_reduce')
 partial = Primitive('partial')
-zeros_like_tensor = Primitive('zeros_like_tensor')
+zeros_like = P.ZerosLike()
 identity = Primitive('identity')
 distribute = Primitive('distribute')
 # depend: mount a node to another node

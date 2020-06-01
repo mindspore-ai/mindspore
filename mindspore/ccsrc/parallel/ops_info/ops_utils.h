@@ -263,7 +263,7 @@ constexpr char COL2IMV1[] = "col2im_v1";
 constexpr char RESOLVE[] = "resolve";
 constexpr char EMBED[] = "embed";
 constexpr char CREATINSTANCE[] = "create_instance";
-constexpr char ZEROSLIKETENSOR[] = "zeros_like_tensor";
+constexpr char ZEROSLIKE[] = "ZerosLike";
 constexpr char REF_TO_EMBED[] = "RefToEmbed";
 constexpr char STOP_GRADIENT[] = "stop_gradient";
 

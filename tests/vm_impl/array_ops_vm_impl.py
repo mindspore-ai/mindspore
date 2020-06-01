@@ -278,3 +278,9 @@ def vm_impl_square(self):
         return Tensor(x * x)
 
     return vm_impl
+
+@vm_impl_getters.register(P.ZerosLike)
+def vm_impl_zeros_like(self):
+    """Generate vm_impl function for ZerosLike"""
+    def vm_impl(x):
+        return Tensor(np.zeros_like(x.asnumpy()))

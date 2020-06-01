@@ -217,7 +217,7 @@ extern const PrimitivePtr kPrimGeluGrad;
 extern const PrimitivePtr kPrimRelu;
 extern const PrimitivePtr kPrimReluV2;
 extern const PrimitivePtr kPrimActivation;
-extern const PrimitivePtr kPrimZerosLikeTensor;
+extern const PrimitivePtr kPrimZerosLike;
 extern const PrimitivePtr kPrimFakeBprop;
 extern const PrimitivePtr kPrimBpropCut;
 

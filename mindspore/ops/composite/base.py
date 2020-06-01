@@ -296,7 +296,7 @@ env_get = MultitypeFuncGraph("env_get")
 @env_get.register("EnvType", "Tensor")
 def _tensor_env_get(env, parameter):
     """Used to get env."""
-    return F.env_getitem(env, F.ref_to_embed(parameter), F.zeros_like_tensor(parameter))
+    return F.env_getitem(env, F.ref_to_embed(parameter), F.zeros_like(parameter))
 
 
 _mp_cast_helper = MultitypeFuncGraph('mixed_precision_cast_helper')
