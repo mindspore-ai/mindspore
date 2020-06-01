@@ -3418,3 +3418,109 @@ class CTCLoss(PrimitiveWithInfer):
         validator.check_tensor_type_same({"labels_values_dtype": labels_values}, [mstype.int32], self.name)
         validator.check_tensor_type_same({"sequence_length_dtype": sequence_length}, [mstype.int32], self.name)
         return inputs, inputs
+
+
+class BasicLSTMCell(PrimitiveWithInfer):
+    r"""
+    Performs the long short term memory(LSTM) on the input.
+
+    .. math::
+        \begin{array}{ll} \\
+            i_t = \sigma(W_{ix} x_t + b_{ix} + W_{ih} h_{(t-1)} + b_{ih}) \\
+            f_t = \sigma(W_{fx} x_t + b_{fx} + W_{fh} h_{(t-1)} + b_{fh}) \\
+            \tilde{c}_t = \tanh(W_{cx} x_t + b_{cx} + W_{ch} h_{(t-1)} + b_{ch}) \\
+            o_t = \sigma(W_{ox} x_t + b_{ox} + W_{oh} h_{(t-1)} + b_{oh}) \\
+            c_t = f_t * c_{(t-1)} + i_t * \tilde{c}_t \\
+            h_t = o_t * \tanh(c_t) \\
+        \end{array}
+
+    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
+    are learnable weights between the output and the input in the formula. For instance,
+    :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
+    Details can be found in paper `LONG SHORT-TERM MEMORY
+    <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ and
+    `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
+    <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
+
+    Args:
+        keep_prob (float): If not 1.0, append `Dropout` layer on the outputs of each
+            LSTM layer except the last layer. Default 1.0. The range of dropout is [0.0, 1.0].
+        forget_bias (float): Add forget bias to forget gate biases in order to decrease former scale. Default to 1.0.
+        state_is_tuple (bool): If True, state is tensor tuple, containing h and c; If False, one tensor,
+          need split first. Default to True.
+        activation (str): Activation. Default to "tanh".
+
+    Inputs:
+        - **x** (Tensor) - Current words. Tensor of shape (`batch_size`, `input_size`).
+        - **h** (Tensor) - Hidden state last moment. Tensor of shape (`batch_size`, `hidden_size`).
+        - **c** (Tensor) - Cell state last moment. Tensor of shape (`batch_size`, `hidden_size`).
+        - **w** (Tensor) - Weight. Tensor of shape (`4 x hidden_size`, `input_size + hidden_size`, 1, 1).
+        - **b** (Tensor) - Bias. Tensor of shape (`4 x hidden_size`, 1, 1, 1).
+
+    Outputs:
+        - **ct** (Tensor) - Forward :math:`c_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
+        - **ht** (Tensor) - Cell output. Tensor of shape (`batch_size`, `hidden_size`).
+        - **it** (Tensor) - Forward :math:`i_t` cache at moment `t`. Tensor of shape (`batch_size`, `4 x hidden_size`).
+        - **jt** (Tensor) - Forward :math:`j_t` cache at moment `t`. Tensor of shape (`batch_size`, `4 x hidden_size`).
+        - **ft** (Tensor) - Forward :math:`f_t` cache at moment `t`. Tensor of shape (`batch_size`, `4 x hidden_size`).
+        - **ot** (Tensor) - Forward :math:`o_t` cache at moment `t`. Tensor of shape (`batch_size`, `4 x hidden_size`).
+        - **tanhct** (Tensor) - Forward :math:`tanh c_t` cache at moment `t`.
+          Tensor of shape (`batch_size`, `4 x hidden_size`).
+
+    Examples:
+         'block': P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'),
+        'desc_inputs': [[128, 128], [128, 128], [128, 128], [512, 256, 1, 1],[512, 1, 1, 1]],
+        'desc_bprop': [[128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128]],
+
+        >>> x = Tensor(np.random.rand(128, 128).astype(np.float16))
+        >>> h = Tensor(np.random.rand(128, 128).astype(np.float16))
+        >>> c = Tensor(np.random.rand(128, 128).astype(np.float16))
+        >>> w = Tensor(np.random.rand(512, 256, 1, 1).astype(np.float16))
+        >>> b = Tensor(np.random.rand(512, 1, 1, 1).astype(np.float16))
+        >>> lstm = P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh')
+        >>> lstm(x, h, c, w, b)
+    """
+
+    @prim_attr_register
+    def __init__(self, keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation="tanh"):
+        self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        self.keep_prob = validator.check_number_range("keep_prob", keep_prob, 0.0, 1.0, Rel.INC_BOTH, self.name)
+        self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
+        self.state_is_tuple = validator.check_value_type("state_is_tuple", state_is_tuple, [bool], self.name)
+        self.activation = validator.check_string("activation", activation, ['tanh'], self.name)
+
+    def infer_shape(self, x_shape, h_shape, c_shape, w_shape, b_shape):
+        # (batch_size, input_size)
+        validator.check_integer("x_shape", len(x_shape), 2, Rel.EQ, self.name)
+
+        # h and c should be same shape
+        validator.check_integer("h_shape", len(h_shape), 2, Rel.EQ, self.name)
+        validator.check("h rank", len(h_shape), "c rank", len(c_shape), Rel.EQ, self.name)
+        validator.check("h shape", h_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check_integer("w rank", len(w_shape), 4, Rel.EQ, self.name)
+        validator.check_integer("b rank", len(b_shape), 4, Rel.EQ, self.name)
+        validator.check("w_shape[0]", w_shape[0], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
+        validator.check("w_shape[1]", w_shape[1], "x_shape[1]+h_shape[1]", x_shape[1] + h_shape[1], Rel.EQ, self.name)
+        validator.check("b_shape[0]", b_shape[0], "4*h_shape[1]", 4*h_shape[1], Rel.EQ, self.name)
+        ct_shape = c_shape
+        ht_shape = h_shape
+        it_shape = h_shape
+        jt_shape = h_shape
+        ft_shape = h_shape
+        ot_shape = h_shape
+        tanhct_shape = h_shape
+
+        return (ct_shape, ht_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape)
+
+    def infer_dtype(self, x_dtype, h_dtype, c_dtype, w_dtype, b_dtype):
+        validator.check_subclass("x", x_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("h", h_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("c", c_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("w", w_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("b", b_dtype, [mstype.tensor], self.name)
+        validator.check_type_name("x", x_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("h", h_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("c", c_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("w", w_dtype, [mstype.float16, mstype.float32], self.name)
+        validator.check_type_name("b", b_dtype, [mstype.float16, mstype.float32], self.name)
+        return (x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype)
