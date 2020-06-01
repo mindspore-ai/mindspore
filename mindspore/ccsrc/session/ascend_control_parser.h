@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace session {
-
 class AscendControlParser {
  public:
   static void ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map);

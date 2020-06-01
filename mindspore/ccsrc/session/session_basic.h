@@ -118,6 +118,7 @@ class SessionBasic {
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;

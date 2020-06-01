@@ -735,6 +735,26 @@ void KernelGraph::UpdateCallRealInput() {
   real_inputs_ = real_inputs_map;
 }
 
+void KernelGraph::PrintGraphExecuteOrder() const {
+  MS_LOG(INFO) << "graph:" << graph_id_ << "execution order";
+  for (size_t i = 0; i < execution_order_.size(); i++) {
+    CNodePtr cur_cnode_ptr = execution_order_[i];
+    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kSendOpName || AnfAlgo::GetCNodeName(cur_cnode_ptr) == kRecvOpName) {
+      auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
+      MS_LOG(INFO) << "index[" << i << "], node name[" << AnfAlgo::GetCNodeName(cur_cnode_ptr) << "], logic id["
+                   << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
+                   << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], event_id["
+                   << GetValue<uint32_t>(primitive->GetAttr(kAttrEventId)) << "], node info["
+                   << cur_cnode_ptr->DebugString() << "]";
+    } else {
+      MS_LOG(INFO) << "index[" << i << "], node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
+                   << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
+                   << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], node info[" << cur_cnode_ptr->DebugString() << "]";
+    }
+  }
+}
+
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
 KernelGraph::~KernelGraph() {

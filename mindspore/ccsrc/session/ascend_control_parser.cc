@@ -32,7 +32,6 @@ static constexpr size_t kCNodeSwitchLayerLength = 3;
 
 namespace mindspore {
 namespace session {
-
 void AscendControlParser::ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map) {
   for (auto &iter : graph_id_map) {
     auto &kg = iter.second;
@@ -356,12 +355,6 @@ void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
 std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> graph,
                                                         const NotNull<std::set<KernelGraphPtr> *> memo) {
   MS_LOG(INFO) << "graph:" << graph->graph_id() << " start";
-  auto print_vector = [&](std::vector<CNodePtr> vec) -> void {
-    MS_LOG(INFO) << "graph:" << graph->graph_id() << "execution order";
-    for (size_t i = 0; i < vec.size(); i++) {
-      MS_LOG(INFO) << "[" << i << "][" << vec[i]->DebugString() << "]";
-    }
-  };
   if (memo->find(graph) != memo->end()) {
     return {};
   }
@@ -403,7 +396,7 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
     }
   }
   graph->set_execution_order(execution_order);
-  print_vector(graph->execution_order());
+  graph->PrintGraphExecuteOrder();
   return execution_order;
 }
 
@@ -474,6 +467,5 @@ void AscendControlParser::UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg) {
   }
   kg->set_child_graph_order(child_graph_order);
 }
-
 }  // namespace session
 }  // namespace mindspore

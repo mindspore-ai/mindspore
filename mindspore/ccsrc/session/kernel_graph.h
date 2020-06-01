@@ -136,6 +136,7 @@ class KernelGraph : public FuncGraph {
   CNodePtr get_end_goto() { return end_goto_; }
   bool get_output_null() { return null_output_; }
   void set_output_null(bool is_output_null) { null_output_ = is_output_null; }
+  void PrintGraphExecuteOrder() const;
 
  private:
   // remove value node form graph

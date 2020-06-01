@@ -107,6 +107,7 @@ class AscendSession : public SessionBasic {
                                                 const std::vector<CNodePtr> &list);
   void RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo);
   void RecurseSplitGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo);
+  AnfNodePtr BindNewCallToNewGraph(NotNull<KernelGraphPtr> graph, const std::vector<CNodePtr> &child_graph_list);
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();

@@ -542,7 +542,7 @@ void AscendStreamAssign::AssignStreamNew(const shared_ptr<session::KernelGraph> 
     GetNeedActiveStreams(graph_ptr);
 
     MS_LOG(INFO) << "after finish stream assign";
-    PrintGraphExeOrders(graph_ptr);
+    graph_ptr->PrintGraphExecuteOrder();
 
     // Get info for D Model
     generator::IRModelUtil::GetInstance().set_event_num(total_event_num());
@@ -809,26 +809,6 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
 
   MS_LOG(INFO) << "after reorder, graph orders size:" << exe_orders.size();
   graph_ptr->set_execution_order(exe_orders);
-}
-
-void AscendStreamAssign::PrintGraphExeOrders(const shared_ptr<mindspore::session::KernelGraph> &graph_ptr) {
-  MS_EXCEPTION_IF_NULL(graph_ptr);
-  auto cnode_ptr_list = graph_ptr->execution_order();
-  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
-    CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
-    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kSendOpName || AnfAlgo::GetCNodeName(cur_cnode_ptr) == kRecvOpName) {
-      auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
-      MS_LOG(INFO) << "node name[" << AnfAlgo::GetCNodeName(cur_cnode_ptr) << "], logic id["
-                   << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
-                   << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], event_id["
-                   << GetValue<uint32_t>(primitive->GetAttr(kAttrEventId)) << "]";
-    } else {
-      MS_LOG(INFO) << "node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
-                   << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
-                   << AnfAlgo::GetStreamId(cur_cnode_ptr) << "]";
-    }
-  }
 }
 }  // namespace ascend
 }  // namespace device
