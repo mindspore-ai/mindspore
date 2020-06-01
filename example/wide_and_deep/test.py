@@ -91,4 +91,4 @@ if __name__ == "__main__":
     widedeep_config = WideDeepConfig()
     widedeep_config.argparse_init()
 
-    test_eval(widedeep_config.widedeep)
+    test_eval(widedeep_config)

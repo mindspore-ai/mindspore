@@ -53,7 +53,7 @@ class LossCallBack(Callback):
         print("===loss===", cb_params.cur_epoch_num, cur_step_in_epoch, wide_loss, deep_loss)
 
         # raise ValueError
-        if self._per_print_times != 0 and cur_num % self._per_print_times == 0 and config is not None:
+        if self._per_print_times != 0 and cur_num % self._per_print_times == 0 and self.config is not None:
             loss_file = open(self.config.loss_file_name, "a+")
             loss_file.write("epoch: %s, step: %s, wide_loss: %s, deep_loss: %s" %
                             (cb_params.cur_epoch_num, cur_step_in_epoch, wide_loss, deep_loss))
