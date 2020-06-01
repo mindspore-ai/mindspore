@@ -293,13 +293,6 @@ raise_set = [
         'desc_inputs': [5.0],
         'skip': ['backward']}),
 
-    # input x is Tensor(bool)
-    ('Pow1', {
-        'block': (P.Pow(),
-                  {'exception': TypeError, 'error_keywords': ['Pow']}),
-        'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_)), 2.0],
-        'skip': ['backward']}),
-
     # input is not Tensor
     ('Exp1', {
         'block': (P.Exp(),
