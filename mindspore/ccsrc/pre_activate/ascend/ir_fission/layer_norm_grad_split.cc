@@ -32,7 +32,6 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
   std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
-  MS_EXCEPTION_IF_NULL(kernel_select_);
   auto prim = std::make_shared<Primitive>(kLayerNormXBackpropOpName);
   std::vector<AnfNodePtr> layer_norm_x_backprop_inputs = {NewValueNode(prim)};
   for (size_t i = 1; i < layer_norm_grad->inputs().size(); ++i) {
@@ -46,7 +45,6 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
   auto shapes = {AnfAlgo::GetOutputInferShape(layer_norm_grad, 0)};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, layer_norm_x_backprop.get());
 
-  kernel_select_->SelectKernel(layer_norm_x_backprop);
   (*layer_norm_x_backprop_outputs).push_back(layer_norm_x_backprop);
 }
 
@@ -55,7 +53,6 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackprop(
   std::vector<AnfNodePtr> *layer_norm_beta_gamma_backprop_outputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(layer_norm_grad);
-  MS_EXCEPTION_IF_NULL(kernel_select_);
   auto prim = std::make_shared<Primitive>(kLayerNormBetaGammaBackpropOpName);
   std::vector<AnfNodePtr> layer_norm_beta_gamma_backprop_inputs = {NewValueNode(prim)};
   for (size_t i = 1; i < layer_norm_grad->inputs().size() - 1; ++i) {
@@ -73,10 +70,9 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackprop(
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, layer_norm_beta_gamma_backprop.get());
 
   // get device shape of LayerNormGrad's 5th Input, and convert it to attr
-  std::vector<size_t> shape_gamma = AnfAlgo::GetInputDeviceShape(layer_norm_grad, 4);
+  std::vector<size_t> shape_gamma = AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, 4);
   AnfAlgo::SetNodeAttr(kAttrShapeGamma, MakeValue(opt::Convert2Int(shape_gamma)), layer_norm_beta_gamma_backprop);
 
-  kernel_select_->SelectKernel(layer_norm_beta_gamma_backprop);
   CreateMultipleOutputsOfAnfNode(graph, layer_norm_beta_gamma_backprop, kLayerNormBetaGammaBackpropOutputNum,
                                  layer_norm_beta_gamma_backprop_outputs);
 }
