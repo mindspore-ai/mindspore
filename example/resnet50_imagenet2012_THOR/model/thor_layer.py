@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """thor_layer"""
+import numpy as np
+
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import check_bool, twice, check_int_positive
@@ -23,7 +25,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import operations as P
-import numpy as np
 C0 = 16
 
 def caculate_device_shape(matrix_dim, channel, is_A):

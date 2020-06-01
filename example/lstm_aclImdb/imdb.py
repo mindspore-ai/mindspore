@@ -18,8 +18,8 @@ imdb dataset parser.
 import os
 from itertools import chain
 
-import gensim
 import numpy as np
+import gensim
 
 
 class ImdbParser():
