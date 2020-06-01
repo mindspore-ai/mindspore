@@ -82,7 +82,7 @@ def test_train_eval(config):
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
     callback = LossCallBack(config=config)
-    ckptconfig = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=5)
+    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train', directory=config.ckpt_path, config=ckptconfig)
 
     out = model.eval(ds_eval)
