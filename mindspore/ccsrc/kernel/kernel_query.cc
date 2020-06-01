@@ -44,6 +44,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
       MS_EXCEPTION_IF_NULL(kernel_info_list->at(index));
       MS_LOG(WARNING) << "kernel [ " << index << " ] :" << kernel_info_list->at(index)->ToString();
     }
+    kernel_info_list->clear();
     MS_LOG(WARNING) << "node" << kernel_node->DebugString() << "'s output size : ["
                     << AnfAlgo::GetOutputTensorNum(kernel_node) << "]"
                     << "input size : [" << AnfAlgo::GetInputTensorNum(kernel_node) << "] cannot match any kernelInfo !";
@@ -54,11 +55,12 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   TbeMetadataInfo(kernel_node, kernel_info_list);
+  FilterInvalidKernelInfo(kernel_node, kernel_info_list);
   if (kernel_info_list->empty()) {
     AicpuMetadataInfo(kernel_node, kernel_info_list);
     if (!kernel_info_list->empty()) {
-      MS_LOG(INFO) << "Warning The node [" << kernel_node->DebugString()
-                   << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
+      MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
+                      << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
       AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
     }
   }
