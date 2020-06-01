@@ -112,6 +112,9 @@ from .softplus_grad import _softplus_grad_tbe
 from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
 from .sqrt import _sqrt_tbe
+from .sparse_apply_ftrl_d import _sparse_apply_ftrl_d
+from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
+from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose_d import _transpose_d_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe

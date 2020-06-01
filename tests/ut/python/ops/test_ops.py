@@ -225,6 +225,46 @@ class ApplyFtrlNet(nn.Cell):
         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2, self.lr_power)
         return out
 
+
+class SparseApplyFtrlNet(nn.Cell):
+    def __init__(self):
+        super(SparseApplyFtrlNet, self).__init__()
+        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5)
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+
+    def construct(self, grad, indices):
+        out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        return out
+
+
+class SparseApplyProximalAdagradNet(nn.Cell):
+    def __init__(self):
+        super(SparseApplyProximalAdagradNet, self).__init__()
+        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        self.lr = 0.01
+        self.l1 = 0.0
+        self.l2 = 0.0
+
+    def construct(self, var, accum, grad, indices):
+        out = self.sparse_apply_proximal_adagrad(var, accum, self.lr, self.l1, self.l2, grad, indices)
+        return out
+
+
+class ApplyProximalAdagradNet(nn.Cell):
+    def __init__(self):
+        super(ApplyProximalAdagradNet, self).__init__()
+        self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
+        self.lr = 0.01
+        self.l1 = 0.0
+        self.l2 = 0.0
+
+    def construct(self, var, accum, grad):
+        out = self.apply_proximal_adagrad(var, accum, self.lr, self.l1, self.l2, grad)
+        return out
+
+
 class ApplyRMSNet(nn.Cell):
     def __init__(self):
         super(ApplyRMSNet, self).__init__()
@@ -980,6 +1020,18 @@ test_case_nn_ops = [
         'desc_bprop': []}),
     ('SparseApplyAdagrad', {
         'block': P.SparseApplyAdagrad(0.5),
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
+    ('SparseApplyFtrl', {
+        'block': SparseApplyFtrlNet(),
+        'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
+    ('ApplyProximalAdagrad', {
+        'block': ApplyProximalAdagradNet(),
+        'desc_inputs': [[3, 3], [3, 3], [3, 3]],
+        'skip': ['backward']}),
+    ('SparseApplyProximalAdagrad', {
+        'block': SparseApplyProximalAdagradNet(),
         'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
         'skip': ['backward']}),
     ('Flatten_1', {

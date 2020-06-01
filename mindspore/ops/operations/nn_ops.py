@@ -2807,6 +2807,126 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         return var_type
 
 
+class ApplyProximalAdagrad(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the proximal adagrad algorithm.
+
+    .. math::
+            accum += grad * grad
+    .. math::
+            prox_v = var - lr * grad * \frac{1}{\sqrt{accum}}
+    .. math::
+            var = \frac{sign(prox_v)}{1 + lr * l2} * \max(\left| prox_v \right| - lr * l1, 0)
+
+    Args:
+        use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
+
+    Inputs:
+        - **var** (Tensor) - Variable to be updated.
+        - **accum** (Tensor) - Accum to be updated. The shape must be the same as `var`'s shape.
+        - **lr** (Union[Number, Tensor]): The learning rate value, must be positive. It should be
+          a scalar tensor or number.
+        - **l1** (Union[Number, Tensor]): l1 regularization strength, must be greater than or equal to zero.
+          It should be a scalar tensor or number.
+        - **l2** (Union[Number, Tensor]): l2 regularization strength, must be greater than or equal to zero.
+          It should be a scalar tensor or number.
+        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape.
+
+    Outputs:
+        Tensor, has the same shape and type as `var`.
+
+    Examples:
+        >>> var = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> accum = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> grad = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> lr = 0.01
+        >>> l1 = 0.0
+        >>> l2 = 0.0
+        >>> apply_proximal_ada_grad = P.ApplyProximalAdagrad()
+        >>> output = apply_proximal_ada_grad(var, accum, lr, l1, l2, grad)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad'], outputs=['output'])
+        self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape):
+        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
+        validator.check('var shape', var_shape, 'grad shape', grad_shape, Rel.EQ, self.name)
+        return var_shape
+
+    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype):
+        valid_types = [mstype.float16, mstype.float32]
+        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        scalar_args = {"lr": lr_dtype, "l1": l1_dtype, "l2": l2_dtype}
+        validator.check_scalar_or_tensor_type_same(scalar_args, valid_types, self.name)
+        return var_dtype
+
+
+class SparseApplyProximalAdagrad(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the proximal adagrad algorithm. Compared with ApplyProximalAdagrad,
+    an additional index tensor is input.
+
+    .. math::
+            accum += grad * grad
+    .. math::
+            prox_v = var - lr * grad * \frac{1}{\sqrt{accum}}
+    .. math::
+            var = \frac{sign(prox_v)}{1 + lr * l2} * \max(\left| prox_v \right| - lr * l1, 0)
+
+    Args:
+        use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
+
+    Inputs:
+        - **var** (Tensor) - Variable tensor to be updated.
+        - **accum** (Tensor) - Variable tensor to be updated. The shape must be the same as `var`'s shape.
+        - **lr** (Union[Number, Tensor]): The learning rate value, must be positive. It should be
+          a scalar tensor or number.
+        - **l1** (Union[Number, Tensor]): l1 regularization strength, must be greater than or equal to zero.
+          It should be a scalar tensor or number.
+        - **l2** (Union[Number, Tensor]): l2 regularization strength, must be greater than or equal to zero.
+          It should be a scalar tensor or number.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
+
+    Outputs:
+        Tensor, has the same shape and type as `var`.
+
+    Examples:
+        >>> var = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> accum = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> grad = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> indices = Tensor(np.ones((3,), np.int32))
+        >>> lr = 0.01
+        >>> l1 = 0.0
+        >>> l2 = 0.0
+        >>> sparse_apply_proximal_ada_grad = P.SparseApplyProximalAdagrad()
+        >>> output = sparse_apply_proximal_ada_grad(var, accum, lr, l1, l2, grad, indices)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad', 'indices'],
+                                outputs=['output'])
+        self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
+        return var_shape
+
+    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
+        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
+        validator.check_tensor_type_same(args, [mstype.float32], self.name)
+        scalar_args = {"lr": lr_dtype, "l1": l1_dtype, "l2": l2_dtype}
+        validator.check_scalar_or_tensor_type_same(scalar_args, [mstype.float32], self.name)
+        valid_types = [mstype.int16, mstype.int32, mstype.int64,
+                       mstype.uint16, mstype.uint32, mstype.uint64]
+        validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
+        return var_dtype
+
+
 class LARSUpdate(PrimitiveWithInfer):
     """
     Conduct lars (layer-wise adaptive rate scaling) update on the square sum of gradient.
@@ -2961,6 +3081,85 @@ class ApplyFtrl(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_type_same({"l2": l2_type}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"lr_power": lr_power_type}, valid_types, self.name)
         return var_type
+
+
+class SparseApplyFtrl(PrimitiveWithInfer):
+    """
+    Update relevant entries according to the FTRL-proximal scheme.
+
+    Args:
+        lr (float): The learning rate value, must be positive.
+        l1 (float): l1 regularization strength, must be greater than or equal to zero.
+        l2 (float): l2 regularization strength, must be greater than or equal to zero.
+        lr_power (float): Learning rate power controls how the learning rate decreases during training,
+            must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
+        use_locking (bool): Use locks for update operation if True . Default: False.
+
+    Inputs:
+        - **var** (Tensor): The variable to be updated.
+        - **accum** (Tensor): The accum to be updated, must be same type and shape as `var`.
+        - **linear** (Tensor): The linear to be updated, must be same type and shape as `var`.
+        - **grad** (Tensor): A tensor of the same type as `var`, for the gradient.
+        - **indices** (Tensor): A vector of indices into the first dimension of `var` and `accum`.
+          The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
+
+    Outputs:
+        - **var** (Tensor): Tensor, has the same shape and type as `var`.
+        - **accum** (Tensor): Tensor, has the same shape and type as `accum`.
+        - **linear** (Tensor): Tensor, has the same shape and type as `linear`.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class SparseApplyFtrlNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(SparseApplyFtrlNet, self).__init__()
+        >>>         self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
+        >>>         self.var = Parameter(Tensor(np.random.random(3, 3).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.random.random(3, 3).astype(np.float32)), name="accum")
+        >>>         self.linear = Parameter(Tensor(np.random.random(3, 3).astype(np.float32)), name="linear")
+        >>>
+        >>>     def construct(self, grad, indices):
+        >>>         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        >>>         return out
+        >>>
+        >>> net = SparseApplyFtrlNet()
+        >>> grad = Tensor(np.random.random(3, 3).astype(np.float32))
+        >>> indices = Tnsor(np.ones([3]), mindspore.float32)
+        >>> output = net(grad, indices)
+    """
+
+    @prim_attr_register
+    def __init__(self, lr, l1, l2, lr_power, use_locking=False):
+        validator.check_value_type("lr", lr, [float], self.name)
+        validator.check_value_type("l1", l1, [float], self.name)
+        validator.check_value_type("l2", l2, [float], self.name)
+        validator.check_value_type("lr_power", lr_power, [float], self.name)
+        self.lr = validator.check_number("lr", lr, 0.0, Rel.GT, self.name)
+        self.l1 = validator.check_number("l1", l1, 0.0, Rel.GE, self.name)
+        self.l2 = validator.check_number("l2", l2, 0.0, Rel.GE, self.name)
+        self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
+        self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+    def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
+        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
+        validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
+        if len(var_shape) > 1:
+            validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
+        validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
+        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
+        return var_shape, accum_shape, linear_shape
+
+    def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
+        args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
+                "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
+        validator.check_tensor_type_same(args, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"indices_dtype": indices_dtype}, [mstype.int32], self.name)
+        return var_dtype, accum_dtype, linear_dtype
 
 
 class ConfusionMulGrad(PrimitiveWithInfer):
@@ -3124,7 +3323,7 @@ class CTCLoss(PrimitiveWithInfer):
         >>> labels_indices = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int64)
         >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
-        >>> ctc_loss = P.CTCloss()
+        >>> ctc_loss = P.CTCLoss()
         >>> output = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
     """
 
