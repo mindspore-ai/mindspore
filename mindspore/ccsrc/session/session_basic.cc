@@ -311,7 +311,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   if (python_paras_ == nullptr) {
     python_paras_ = std::make_shared<std::map<PyObject *, ParameterPtr>>();
   }
-  if (python_paras_->find(m_tensor) != python_paras_->end() && GetGraphIdByNode(anf) == kInvalidGraphId) {
+  if (python_paras_->find(m_tensor) != python_paras_->end()) {
     new_parameter = (*python_paras_)[m_tensor];
   } else {
     TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));

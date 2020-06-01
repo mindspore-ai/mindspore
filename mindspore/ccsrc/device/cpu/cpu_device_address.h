@@ -34,6 +34,7 @@ class CPUDeviceAddress : public DeviceAddress {
 
   bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type, const void *host_ptr) const override;
+  DeviceAddressType DeviceType() const override { return DeviceAddressType::kCPU; }
 };
 }  // namespace cpu
 }  // namespace device

@@ -65,7 +65,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
   for (auto &item : utils::cast<VectorRef>(todos[0])) {
     anf_list.push_back(utils::cast<AnfNodePtr>(item));
   }
-  auto convertResult = MsVmConvert(anf_list);
+  auto convertResult = MsVmConvert(anf_list, "");
   auto runResult = (*(convertResult.run))(args);
   ASSERT_TRUE(runResult.size() == 1 && py::cast<double>(BaseRefToPyData(runResult[0])) == 3.0);
 }
@@ -89,7 +89,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
   for (auto &item : utils::cast<VectorRef>(todos[0])) {
     anf_list.push_back(utils::cast<AnfNodePtr>(item));
   }
-  auto convertResult = MsVmConvert(anf_list);
+  auto convertResult = MsVmConvert(anf_list, "");
   auto runResult = (*(convertResult.run))(args);
   ASSERT_TRUE(runResult.size() == 1 && py::cast<double>(BaseRefToPyData(runResult[0])) == 2.0);
 }
@@ -113,7 +113,7 @@ TEST_F(TestCompileSegmentRunner, test_if) {
   for (auto &item : utils::cast<VectorRef>(todos[0])) {
     anf_list.push_back(utils::cast<AnfNodePtr>(item));
   }
-  auto convertResult = MsVmConvert(anf_list);
+  auto convertResult = MsVmConvert(anf_list, "");
   auto runResult = (*(convertResult.run))(args);
 
   auto result = py::cast<bool>(BaseRefToPyData(runResult[0]));

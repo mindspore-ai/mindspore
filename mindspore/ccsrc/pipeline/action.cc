@@ -307,17 +307,27 @@ bool TaskEmitAction(const ResourcePtr &res) {
   }
   FuncGraphPtr func_graph = res->func_graph();
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
-
   if (IsCtrlSink()) {
     res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
     return true;
   }
-
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
   if (bc_ptr->name() == kMsConvert) {
     cut_list = compile::GetMsNonlinearOps();
   }
+
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (compile->ContainMixedTarget(func_graph)) {
+    bc_ptr->set_is_multi_graph_sink(false);
+    context_ptr->set_loop_sink_flag(false);
+  } else if (context_ptr->execution_mode() != kPynativeMode) {
+    std::string device_target = context_ptr->device_target();
+    if (device_target == kAscendDevice) {
+      bc_ptr->set_is_multi_graph_sink(true);
+    }
+  }
   res->results()[kOutput] = compile->CompileAndLink(func_graph);
   return true;
 }

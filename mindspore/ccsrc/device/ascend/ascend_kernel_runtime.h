@@ -45,6 +45,7 @@ class AscendKernelRuntime : public KernelRuntime {
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
+  bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index) override;
   bool SyncStream() override;
 
  private:

@@ -148,7 +148,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
 //   This implementation will convert the nodes into a subgraph
 //   that will run using the MsVM.
 template <typename T>
-LinConvertResult Convert(const AnfNodePtrList &lst) {
+LinConvertResult Convert(const AnfNodePtrList &lst, const std::string &) {
   auto cached = g_ConvertCache.find(lst);
   if (cached != g_ConvertCache.end()) {
     return cached->second;
