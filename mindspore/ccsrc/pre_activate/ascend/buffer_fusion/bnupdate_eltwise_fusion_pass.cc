@@ -65,10 +65,8 @@ void BnupdateEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGr
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
       auto eltwise_input = cnode->input(1);
-      if (AnfAlgo::GetCNodeName(cnode) == kReluV2OpName || AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimRelu)) {
-        if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTupleGetItem)) {
-          MatchBnupdateRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
-        }
+      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTupleGetItem)) {
+        MatchBnupdateRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
       }
     }
   }
