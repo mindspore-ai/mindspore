@@ -40,6 +40,7 @@ class KernelGraph : public FuncGraph {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
+    summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
   }
   ~KernelGraph() override;
@@ -90,6 +91,10 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+  // set summary_node of graph
+  void set_summary_node_exist(bool summary_node_exist) { summary_node_exist_ = summary_node_exist; }
+  // check whether exist summary node in graph
+  bool summary_node_exist() const { return summary_node_exist_; }
   // set invalid inputs for control sink
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
   std::vector<bool> valid_inputs() const { return valid_inputs_; }
@@ -172,6 +177,8 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   // graph needn't execute
   bool executable_;
+  // exist summary node in graph
+  bool summary_node_exist_;
   // valid inputs
   std::vector<bool> valid_inputs_;
 
