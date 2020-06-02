@@ -84,7 +84,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
     g_norm = op_norm(gradient_fp32)
 
     g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay_tensor * param_fp32)
-    zeros = F.zeros_like_tensor(w_norm)
+    zeros = F.zeros_like(w_norm)
     ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
     trust_ratio = op_select(
         op_greater(w_norm, zeros),

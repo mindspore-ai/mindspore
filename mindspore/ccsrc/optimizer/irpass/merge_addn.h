@@ -177,7 +177,7 @@ class AddNZeroFilter : public AnfVisitor {
     // {kPrimMakeTuple, X1, X2, ...}
     filtered_Xs_.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (auto &x : Xs_) {
-      if (!IsPrimitiveCNode(x, prim::kPrimZerosLikeTensor)) {
+      if (!IsPrimitiveCNode(x, prim::kPrimZerosLike)) {
         filtered_Xs_.push_back(x);
       } else {
         has_zero_like_ = true;

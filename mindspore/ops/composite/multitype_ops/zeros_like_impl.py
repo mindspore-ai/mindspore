@@ -57,7 +57,7 @@ def _zeros_like_func(x):
 @zeros_like_leaf.register("Tensor")
 def _zeros_like_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements ars 1."""
-    return F.zeros_like_tensor(x)
+    return F.zeros_like(x)
 
 
 @zeros_like_leaf.register("TypeType")

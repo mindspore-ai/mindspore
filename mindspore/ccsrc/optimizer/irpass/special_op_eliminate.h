@@ -143,7 +143,7 @@ class ResetDeferInline : public AnfVisitor {
   }
 };
 
-// {PrimZerosLikeTensor, Y} ->
+// {PrimZerosLike, Y} ->
 // {PrimFill, {PrimDType, Y}, {PrimShape, Y}, 0}
 class ZeroLikeFillZero : public AnfVisitor {
  public:
@@ -155,7 +155,7 @@ class ZeroLikeFillZero : public AnfVisitor {
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     y_ = nullptr;
-    AnfVisitor::Match(prim::kPrimZerosLikeTensor, {IsNode})(node);
+    AnfVisitor::Match(prim::kPrimZerosLike, {IsNode})(node);
     if (y_ == nullptr || node->func_graph() == nullptr) {
       return nullptr;
     }
