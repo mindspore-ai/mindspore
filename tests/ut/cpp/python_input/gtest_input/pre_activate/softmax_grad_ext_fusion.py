@@ -54,3 +54,43 @@ def test_softmax_grad_ext_fusion(tag):
         return MakeTuple(res)
 
     return fns[tag]
+
+
+def test_softmax_grad_ext_fusion_v2(tag):
+    fns = FnDict()
+
+    @fns
+    def before(input0, input1, input2):
+        mul = Mul(input1, input0)
+        reduce_sum = ReduceSum(mul, axes)
+        sub = Sub(input0, reduce_sum)
+        mul1 = Mul(input1, sub)
+        mul_grad = Mul(input2, mul1)
+        return mul_grad
+
+    @fns
+    def after(input0, input1, input2):
+        res = SoftmaxGradExt(input0, input1, input2)
+        return MakeTuple(res)
+
+    return fns[tag]
+
+
+def test_softmax_grad_ext_fusion_v3(tag):
+    fns = FnDict()
+
+    @fns
+    def before(input0, input1, input2):
+        mul = Mul(input1, input0)
+        reduce_sum = ReduceSum(mul, axes)
+        sub = Sub(input0, reduce_sum)
+        mul1 = Mul(input1, sub)
+        mul_grad = Mul(mul1, input2)
+        return mul_grad
+
+    @fns
+    def after(input0, input1, input2):
+        res = SoftmaxGradExt(input0, input1, input2)
+        return MakeTuple(res)
+
+    return fns[tag]
