@@ -80,8 +80,7 @@ def fake_quant_with_min_max_vars_ema_compute(x, min_val, max_val, y, quant_min, 
 
     # FakeQuant
     input_x = te.lang.cce.vmin(nudge_max, te.lang.cce.vmax(nudge_min, x))
-    nudge_input = te.lang.cce.floor(te.lang.cce.vadds(te.lang.cce.vdiv(te.lang.cce.vsub(input_x, nudge_min), scale),
-                                                      0.5))
+    nudge_input = te.lang.cce.round(te.lang.cce.vdiv(te.lang.cce.vsub(input_x, nudge_min), scale))
     res = te.lang.cce.vadd(te.lang.cce.vmul(nudge_input, scale), nudge_min)
 
     return res

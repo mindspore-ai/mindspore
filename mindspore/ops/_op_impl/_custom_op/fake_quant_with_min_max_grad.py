@@ -35,6 +35,8 @@ fake_quant_grad_op_info = TBERegOp("FakeQuantWithMinMaxGrad") \
     .partial_flag(True) \
     .attr("num_bits", "optional", "int", "all") \
     .attr("quant_delay", "optional", "int", "all") \
+    .attr("symmetric", "optional", "bool", "all") \
+    .attr("narrow_range", "optional", "bool", "all") \
     .input(0, "dout", None, "required", None) \
     .input(1, "x", None, "required", None) \
     .input(2, "min", None, "required", None) \
@@ -104,8 +106,9 @@ def fake_quant_with_min_max_grad_compute(dout, x, min_val, max_val, quant_min, q
     return res
 
 
-@util.check_input_type(dict, dict, dict, dict, dict, int, int, str)
-def fake_quant_with_min_max_grad(dout, x, min_val, max_val, dx, num_bits, quant_delay,
+@util.check_input_type(dict, dict, dict, dict, dict, int, int, bool, bool, str)
+def fake_quant_with_min_max_grad(dout, x, min_val, max_val, dx,
+                                 num_bits, quant_delay, symmetric, narrow_range,
                                  kernel_name="fake_quant_with_min_max_grad"):
     """FakeQuantWithMinMaxGrad"""
     input_shape = x.get("shape")
@@ -136,8 +139,15 @@ def fake_quant_with_min_max_grad(dout, x, min_val, max_val, dx, num_bits, quant_
     input_shape = (functools_reduce(lambda x, y: x * y, input_shape[:]),)
     shape_min, _, _ = util.produce_shapes(min_shape, input_shape)
 
-    quant_min = 0
-    quant_max = 2 ** num_bits - 1
+    if symmetric:
+        quant_min = 0 - 2 ** (num_bits - 1)
+        quant_max = 2 ** (num_bits - 1) - 1
+    else:
+        quant_min = 0
+        quant_max = 2 ** num_bits - 1
+    if narrow_range:
+        quant_min = quant_min + 1
+
     dout_data = tvm.placeholder(input_shape, name="dout", dtype=x_dtype)
     input_data = tvm.placeholder(input_shape, name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_min, name="min_data", dtype=min_dtype)
