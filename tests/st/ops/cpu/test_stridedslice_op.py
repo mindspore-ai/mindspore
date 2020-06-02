@@ -34,7 +34,7 @@ class StridedSlice(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice():
     x = Tensor(np.array([[[1., 1., 1.], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 7, 8]]]).astype(np.float32))

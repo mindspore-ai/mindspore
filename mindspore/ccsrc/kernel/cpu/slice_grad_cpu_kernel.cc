@@ -61,11 +61,11 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
       end_.emplace_back(begin_[i] + sizes[i]);
     }
   }
-  CPUKernelUtils::ExpandDimsTo4(&output_dx_shape_);
-  auto input_len = input_dy_shape_.size();
-  if (input_len < 4) {
-    for (size_t i = 0; i < 4 - input_len; ++i) {
-      input_dy_shape_.insert(input_dy_shape_.begin(), 1);
+
+  auto output_len = output_dx_shape_.size();
+  if (output_len < 4) {
+    for (size_t i = 0; i < 4 - output_len; ++i) {
+      output_dx_shape_.insert(output_dx_shape_.begin(), 1);
       begin_.insert(begin_.begin(), 0);
       strides_.insert(strides_.begin(), 1);
       end_.insert(end_.begin(), 1);
