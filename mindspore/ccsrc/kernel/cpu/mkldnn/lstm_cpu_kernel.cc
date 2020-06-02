@@ -24,17 +24,20 @@ namespace kernel {
 void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
   input_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_size");
   hidden_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "hidden_size");
   num_layers_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "num_layers");
+  has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
   batch_size_ = SizeToInt(src_shape[1]);
   seq_len_ = SizeToInt(src_shape[0]);
   num_directions_ = 1;
   if (bidirectional_) {
     num_directions_ = 2;
   }
-  int gate_size = 4 * hidden_size_;
+  if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) MS_LOG(EXCEPTION) << "error iteration shape!";
+  const int gate_size = 4 * hidden_size_;
   for (int i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
     weight_h_size_ += gate_size * hidden_size_;
@@ -52,11 +55,11 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto eng = MKLKernelEngine::Get().engine();
   dnnl::stream s(eng);
   auto formatted_md = [](dim dimensions, tag layout) { return dnnl::memory::desc{{dimensions}, dt::f32, layout}; };
+  auto generic_md = [](dim dimensions) { return dnnl::memory::desc{{dimensions}, dt::f32, tag::any}; };
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;
   }
-
   dim src_dims = {seq_len_, batch_size_, input_size_};
   dim src_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim src_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
@@ -69,35 +72,43 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   dnnl::memory::desc src_desc = formatted_md(src_dims, tag::tnc);
   dnnl::memory::desc src_h_desc = formatted_md(src_h_dims, tag::ldnc);
   dnnl::memory::desc src_c_desc = formatted_md(src_c_dims, tag::ldnc);
-  dnnl::memory::desc weights_desc = formatted_md(weights_dims, tag::ldigo);
-  dnnl::memory::desc weights_h_desc = formatted_md(weights_h_dims, tag::ldigo);
-  dnnl::memory::desc bias_desc = formatted_md(bias_dims, tag::ldgo);
   dnnl::memory::desc dst_desc = formatted_md(dst_dims, tag::tnc);
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
-  dnnl::lstm_forward::desc desc =
-    dnnl::lstm_forward::desc(dnnl::prop_kind::forward_training, direction, src_desc, src_h_desc, src_c_desc,
-                             weights_desc, weights_h_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
+  dnnl::lstm_forward::desc desc = dnnl::lstm_forward::desc(
+    dnnl::prop_kind::forward_training, direction, src_desc, src_h_desc, src_c_desc, generic_md(weights_dims),
+    generic_md(weights_h_dims), generic_md(bias_dims), dst_desc, dst_h_desc, dst_c_desc);
   auto prim_desc = dnnl::lstm_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
+
+  // construct fw memory
   auto workspace_memory = dnnl::memory(prim_desc.workspace_desc(), eng);
   auto src_memory = dnnl::memory(formatted_md(src_dims, tag::tnc), eng);
-  write_to_dnnl_memory(inputs[0]->addr, src_memory);
+  src_memory.set_data_handle(inputs[0]->addr);
+  auto src_h_memory = dnnl::memory(formatted_md(src_h_dims, tag::ldnc), eng);
+  auto src_c_memory = dnnl::memory(formatted_md(src_c_dims, tag::ldnc), eng);
+  src_h_memory.set_data_handle(inputs[1]->addr);
+  src_c_memory.set_data_handle(inputs[2]->addr);
+  auto user_weights_memory = dnnl::memory(formatted_md(weights_dims, tag::ldgoi), eng);
+  auto user_weights_h_memory = dnnl::memory(formatted_md(weights_h_dims, tag::ldgoi), eng);
+  user_weights_memory.set_data_handle(inputs[3]->addr);
+  user_weights_h_memory.set_data_handle(reinterpret_cast<float *>(inputs[3]->addr) + weight_size_);
+  auto weights_memory = dnnl::memory(prim_desc.weights_layer_desc(), eng);
+  auto weights_h_memory = dnnl::memory(prim_desc.weights_iter_desc(), eng);
+  dnnl::reorder(user_weights_memory, weights_memory).execute(s, user_weights_memory, weights_memory);
+  dnnl::reorder(user_weights_h_memory, weights_h_memory).execute(s, user_weights_h_memory, weights_h_memory);
 
-  auto src_h_memory = dnnl::memory(prim_desc.src_iter_desc(), eng);
-  auto src_c_memory = dnnl::memory(prim_desc.src_iter_c_desc(), eng);
-  write_to_dnnl_memory(inputs[1]->addr, src_h_memory);
-  write_to_dnnl_memory(inputs[2]->addr, src_c_memory);
-
-  auto weights_memory = dnnl::memory(formatted_md(weights_dims, tag::ldigo), eng);
-  auto weights_h_memory = dnnl::memory(formatted_md(weights_h_dims, tag::ldigo), eng);
-  auto bias_memory = dnnl::memory(formatted_md(bias_dims, tag::ldgo), eng);
-  write_to_dnnl_memory(inputs[3]->addr, weights_memory);
-  write_to_dnnl_memory(reinterpret_cast<float *>(inputs[3]->addr) + weight_size_, weights_h_memory);
-  write_to_dnnl_memory(reinterpret_cast<float *>(inputs[3]->addr) + weight_size_ + weight_h_size_, bias_memory);
-
+  auto bias_memory = dnnl::memory(prim_desc.bias_desc(), eng);
+  if (has_bias_) {
+    auto user_bias_memory = dnnl::memory(formatted_md(bias_dims, tag::ldgo), eng);
+    user_bias_memory.set_data_handle(reinterpret_cast<float *>(inputs[3]->addr) + weight_size_ + weight_h_size_);
+    dnnl::reorder(user_bias_memory, bias_memory).execute(s, user_bias_memory, bias_memory);
+  } else {
+    std::vector<float> net_bias(bias_memory.get_desc().get_size(), 0.0f);
+    write_to_dnnl_memory(net_bias.data(), bias_memory);
+  }
   auto dst_memory = dnnl::memory(formatted_md(dst_dims, tag::tnc), eng);
-  auto dst_h_memory = dnnl::memory(prim_desc.dst_iter_desc(), eng);
-  auto dst_c_memory = dnnl::memory(prim_desc.dst_iter_c_desc(), eng);
+  auto dst_h_memory = dnnl::memory(formatted_md(dst_h_dims, tag::ldnc), eng);
+  auto dst_c_memory = dnnl::memory(formatted_md(dst_c_dims, tag::ldnc), eng);
   dnnl::lstm_forward fw_layer(prim_desc);
   workspace_memory.set_data_handle(outputs[3]->addr);
   dst_memory.set_data_handle(outputs[0]->addr);
@@ -113,8 +124,8 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                        {DNNL_ARG_DST_ITER, dst_h_memory},
                        {DNNL_ARG_DST_ITER_C, dst_c_memory},
                        {DNNL_ARG_WORKSPACE, workspace_memory}});
+  s.wait();
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
