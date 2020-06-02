@@ -2769,6 +2769,283 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         return x_type
 
 
+class ApplyAdaMax(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the adamax scheme.
+
+    The updating formulas are as follows,
+
+    .. math::
+        \begin{array}{ll} \\
+            m_{t} = \beta_1 * m_{t-1} + (1 - \beta_1) * g \\
+            v_{t} = \max(\beta_2 * v{t-1}, \left| g \right|) \\
+            var = var - \frac{l}{1 - \beta_1^t} * \frac{m_{t}}{v_{t} + \epsilon}
+        \end{array}
+
+    :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
+    is the last momentent of :math:`m_{t}`, :math:`v` represents the 2nd moment vector, :math:`v_{t-1}`
+    is the last momentent of :math:`v_{t}`, :math:`l` represents scaling factor `lr`,
+    :math:`g` represents `grad`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`beta_1^t` represent `beta1_power`, :math:`var` represents Variable to be updated,
+    :math:`\epsilon` represents `epsilon`.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated.
+        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same shape and type as `var`.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
+          has the same shape and type as `var`.
+        - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
+        - **lr** (float) - Learning rate, :math:`l` in the updating formula. Has the same type as `var`.
+        - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
+        - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
+        - **epsilon** (float) - A small value added for numerical stability.
+        - **grad** (Tensor) - A tensor for gradient. Has the same shape and type as `var`.
+
+    Outputs:
+        Tuple of 3 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+        - **v** (Tensor) - The same shape and data type as `v`.
+
+    Examples:
+        >>> var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>> m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+        >>> v = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="v")
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> beta1_power = 0.9
+        >>> lr = 0.001
+        >>> beta1 = 0.9
+        >>> beta2 = 0.99
+        >>> epsilon = 1e-10
+        >>> apply_ada_max = P.ApplyAdaMax()
+        >>> output = apply_ada_max(var, m, v, beta1_power, lr, beta1, beta2, epsilon, grad)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('m', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('v', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('beta1_power', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE,
+         sig_dtype.T),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('beta1', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('beta2', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('epsilon', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """init ApplyAdaMax"""
+
+    def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, lr_shape,
+                    beta1_shape, beta2_shape, epsilon_shape, grad_shape):
+        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        return var_shape, m_shape, v_shape
+
+    def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, lr_dtype,
+                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
+        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+
+        scalar_args = {"beta1_power": beta1_power_dtype, 'lr': lr_dtype, "beta1": beta1_dtype,
+                       "beta2": beta2_dtype, "epsilon": epsilon_dtype}
+        validator.check_scalar_or_tensor_type_same(scalar_args, [mstype.float16, mstype.float32], self.name, True)
+        return var_dtype, m_dtype, v_dtype
+
+
+class ApplyAdadelta(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the adadelta scheme.
+
+    .. math::
+            accum = \rho * accum + (1 - \rho) * grad^2
+    .. math::
+            update = \sqrt{accum_update + \esilon} * \rsqrt{accum + \epsilon} * grad
+    .. math::
+            accum_update = \rho * accum_update + (1 - \rho) * update^2
+    .. math::
+            var -= lr * update
+
+    Inputs:
+        - **var** (Parameter) - Weights to be updated.
+        - **accum** (Parameter) - Accum to be updated, has the same shape and type as `var`.
+        - **accum_update** (Parameter) - Accum_update to be updated, has the same shape and type as `var`.
+        - **lr** (float) - Learning rate, has the same type as `var`.
+        - **rho** (float) - Decay rate.
+        - **epsilon** (float) - A small value added for numerical stability.
+        - **grad** (Tensor) - Gradients, has the same shape and type as `var`.
+
+    Outputs:
+        Tuple of 3 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **accum** (Tensor) - The same shape and data type as `accum`.
+        - **accum_update** (Tensor) - The same shape and data type as `accum_update`.
+
+    Examples:
+        >>> var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>> accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>> accum_update = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum_update")
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> lr = 0.001
+        >>> rho = 0.0
+        >>> epsilon = 1e-6
+        >>> apply_adadelta = P.ApplyAdadelta()
+        >>> output = apply_adadelta(var, accum, accum_update, lr, rho, epsilon, grad)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('accum', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('accum_update', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE,
+         sig_dtype.T),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('rho', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('epsilon', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """init ApplyAdadelta"""
+
+    def infer_shape(self, var_shape, accum_shape, accum_update_shape, lr_shape, rho_shape,
+                    epsilon_shape, grad_shape):
+        validator.check("var_shape", var_shape, "accum_shape", accum_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "accum_update_shape", accum_update_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        return var_shape, accum_shape, accum_update_shape
+
+    def infer_dtype(self, var_dtype, accum_dtype, accum_update_dtype, lr_dtype, rho_shape,
+                    epsilon_dtype, grad_dtype):
+        args = {"var": var_dtype, "accum": accum_dtype, "accum_update": accum_update_dtype, "grad": grad_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+
+        scalar_args = {"lr": lr_dtype, "rho": rho_shape, "epsilon": epsilon_dtype}
+        validator.check_scalar_or_tensor_type_same(scalar_args, [mstype.float16, mstype.float32], self.name, True)
+        return var_dtype, accum_dtype, accum_update_dtype
+
+
+class ApplyAdagrad(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the adagrad scheme.
+
+    .. math::
+            accum += grad * grad
+    .. math::
+            var -= lr * grad * \frac{1}{\sqrt{accum}}
+
+    Args:
+        update_slots (bool): If `True`, `accum` will be updated. Default: True.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated.
+        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **lr** (float): The learning rate value, has the same type as `var`.
+        - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
+
+    Outputs:
+        Tuple of 2 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Examples:
+        >>> var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>> accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> lr = 0.01
+        >>> apply_adagrad = P.ApplyAdagrad()
+        >>> output = apply_adagrad(var, accum, lr, grad)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('accum', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, update_slots=True):
+        validator.check_value_type("update_slots", update_slots, [bool], self.name)
+
+    def infer_shape(self, var_shape, accum_shape, lr_shape, grad_shape):
+        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
+        validator.check('var shape', var_shape, 'grad shape', grad_shape, Rel.EQ, self.name)
+        return var_shape, accum_shape
+
+    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
+        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        valid_types = [mstype.float16, mstype.float32]
+        validator.check_scalar_or_tensor_type_same({'lr': lr_dtype}, valid_types, self.name)
+        return var_dtype, accum_dtype
+
+
+class ApplyAdagradV2(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the adagradv2 scheme.
+
+    .. math::
+            accum += grad * grad
+    .. math::
+            var -= lr * grad * \frac{1}{\sqrt{accum} + \epsilon}
+
+    Args:
+        epsilon (float): A small value added for numerical stability.
+        update_slots (bool): If `True`, `accum` will be updated. Default: True.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated.
+        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **lr** (float): The learning rate value, has the same type as `var`.
+        - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
+
+    Outputs:
+        Tuple of 2 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **accum** (Tensor) - The same shape and data type as `m`.
+
+    Examples:
+        >>> var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>> accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> lr = 0.01
+        >>> apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=1e-6)
+        >>> output = apply_adagrad_v2(var, accum, lr, grad)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('accum', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, epsilon, update_slots=True):
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        validator.check_value_type("update_slots", update_slots, [bool], self.name)
+
+    def infer_shape(self, var_shape, accum_shape, lr_shape, grad_shape):
+        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
+        validator.check('var shape', var_shape, 'grad shape', grad_shape, Rel.EQ, self.name)
+        return var_shape, accum_shape
+
+    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
+        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        valid_types = [mstype.float16, mstype.float32]
+        validator.check_scalar_or_tensor_type_same({'lr': lr_dtype}, valid_types, self.name)
+        return var_dtype, accum_dtype
+
+
 class SparseApplyAdagrad(PrimitiveWithInfer):
     r"""
     Update relevant entries according to the adagrad scheme.
