@@ -14,25 +14,17 @@
 # ============================================================================
 
 """SSD net based MobilenetV2."""
+
 import mindspore.common.dtype as mstype
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import Parameter, context, Tensor
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication.management import get_group_size
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.common.initializer import initializer
-from mindspore.ops.operations import TensorAdd
-from mindspore import Parameter
-
-
-def _conv2d(in_channel, out_channel, kernel_size=3, stride=1, pad_mod='same'):
-    weight_shape = (out_channel, in_channel, kernel_size, kernel_size)
-    weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32).to_tensor()
-    return nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=stride,
-                     padding=0, pad_mode=pad_mod, weight_init=weight)
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -44,6 +36,55 @@ def _make_divisible(v, divisor, min_value=None):
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
+
+
+def _conv2d(in_channel, out_channel, kernel_size=3, stride=1, pad_mod='same'):
+    return nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=stride,
+                     padding=0, pad_mode=pad_mod, has_bias=True)
+
+
+def _bn(channel):
+    return nn.BatchNorm2d(channel, eps=1e-3, momentum=0.97,
+                          gamma_init=1, beta_init=0, moving_mean_init=0, moving_var_init=1)
+
+
+def _last_conv2d(in_channel, out_channel, kernel_size=3, stride=1, pad_mod='same', pad=0):
+    depthwise_conv = DepthwiseConv(in_channel, kernel_size, stride, pad_mode='same', pad=pad)
+    conv = _conv2d(in_channel, out_channel, kernel_size=1)
+    return nn.SequentialCell([depthwise_conv, _bn(in_channel), nn.ReLU6(), conv])
+
+
+class ConvBNReLU(nn.Cell):
+    """
+    Convolution/Depthwise fused with Batchnorm and ReLU block definition.
+
+    Args:
+        in_planes (int): Input channel.
+        out_planes (int): Output channel.
+        kernel_size (int): Input kernel size.
+        stride (int): Stride size for the first convolutional layer. Default: 1.
+        groups (int): channel group. Convolution is 1 while Depthiwse is input channel. Default: 1.
+
+    Returns:
+        Tensor, output tensor.
+
+    Examples:
+        >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
+    """
+    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+        super(ConvBNReLU, self).__init__()
+        padding = 0
+        if groups == 1:
+            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='same',
+                             padding=padding)
+        else:
+            conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='same', pad=padding)
+        layers = [conv, _bn(out_planes), nn.ReLU6()]
+        self.features = nn.SequentialCell(layers)
+
+    def construct(self, x):
+        output = self.features(x)
+        return output
 
 
 class DepthwiseConv(nn.Cell):
@@ -64,6 +105,7 @@ class DepthwiseConv(nn.Cell):
     Examples:
         >>> DepthwiseConv(16, 3, 1, 'pad', 1, channel_multiplier=1)
     """
+
     def __init__(self, in_planes, kernel_size, stride, pad_mode, pad, channel_multiplier=1, has_bias=False):
         super(DepthwiseConv, self).__init__()
         self.has_bias = has_bias
@@ -91,42 +133,9 @@ class DepthwiseConv(nn.Cell):
         return output
 
 
-class ConvBNReLU(nn.Cell):
-    """
-    Convolution/Depthwise fused with Batchnorm and ReLU block definition.
-
-    Args:
-        in_planes (int): Input channel.
-        out_planes (int): Output channel.
-        kernel_size (int): Input kernel size.
-        stride (int): Stride size for the first convolutional layer. Default: 1.
-        groups (int): channel group. Convolution is 1 while Depthiwse is input channel. Default: 1.
-
-    Returns:
-        Tensor, output tensor.
-
-    Examples:
-        >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
-    """
-    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
-        super(ConvBNReLU, self).__init__()
-        padding = (kernel_size - 1) // 2
-        if groups == 1:
-            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad',
-                             padding=padding)
-        else:
-            conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='pad', pad=padding)
-        layers = [conv, nn.BatchNorm2d(out_planes), nn.ReLU6()]
-        self.features = nn.SequentialCell(layers)
-
-    def construct(self, x):
-        output = self.features(x)
-        return output
-
-
 class InvertedResidual(nn.Cell):
     """
-    Mobilenetv2 residual block definition.
+    Residual block definition.
 
     Args:
         inp (int): Input channel.
@@ -140,7 +149,7 @@ class InvertedResidual(nn.Cell):
     Examples:
         >>> ResidualBlock(3, 256, 1, 1)
     """
-    def __init__(self, inp, oup, stride, expand_ratio):
+    def __init__(self, inp, oup, stride, expand_ratio, last_relu=False):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
@@ -155,17 +164,21 @@ class InvertedResidual(nn.Cell):
             ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
             # pw-linear
             nn.Conv2d(hidden_dim, oup, kernel_size=1, stride=1, has_bias=False),
-            nn.BatchNorm2d(oup),
+            _bn(oup),
         ])
         self.conv = nn.SequentialCell(layers)
-        self.add = TensorAdd()
+        self.add = P.TensorAdd()
         self.cast = P.Cast()
+        self.last_relu = last_relu
+        self.relu = nn.ReLU6()
 
     def construct(self, x):
         identity = x
         x = self.conv(x)
         if self.use_res_connect:
-            return self.add(identity, x)
+            x = self.add(identity, x)
+        if self.last_relu:
+            x = self.relu(x)
         return x
 
 
@@ -174,14 +187,14 @@ class FlattenConcat(nn.Cell):
     Concatenate predictions into a single tensor.
 
     Args:
-        config (Class): The default config of SSD.
+        config (dict): The default config of SSD.
 
     Returns:
         Tensor, flatten predictions.
     """
     def __init__(self, config):
         super(FlattenConcat, self).__init__()
-        self.num_ssd_boxes = config.NUM_SSD_BOXES
+        self.num_ssd_boxes = config.num_ssd_boxes
         self.concat = P.Concat(axis=1)
         self.transpose = P.Transpose()
     def construct(self, inputs):
@@ -199,7 +212,7 @@ class MultiBox(nn.Cell):
     Multibox conv layers. Each multibox layer contains class conf scores and localization predictions.
 
     Args:
-        config (Class): The default config of SSD.
+        config (dict): The default config of SSD.
 
     Returns:
         Tensor, localization predictions.
@@ -207,17 +220,17 @@ class MultiBox(nn.Cell):
     """
     def __init__(self, config):
         super(MultiBox, self).__init__()
-        num_classes = config.NUM_CLASSES
-        out_channels = config.EXTRAS_OUT_CHANNELS
-        num_default = config.NUM_DEFAULT
+        num_classes = config.num_classes
+        out_channels = config.extras_out_channels
+        num_default = config.num_default
 
         loc_layers = []
         cls_layers = []
         for k, out_channel in enumerate(out_channels):
-            loc_layers += [_conv2d(out_channel, 4 * num_default[k],
-                                   kernel_size=3, stride=1, pad_mod='same')]
-            cls_layers += [_conv2d(out_channel, num_classes * num_default[k],
-                                   kernel_size=3, stride=1, pad_mod='same')]
+            loc_layers += [_last_conv2d(out_channel, 4 * num_default[k],
+                                        kernel_size=3, stride=1, pad_mod='same', pad=0)]
+            cls_layers += [_last_conv2d(out_channel, num_classes * num_default[k],
+                                        kernel_size=3, stride=1, pad_mod='same', pad=0)]
 
         self.multi_loc_layers = nn.layer.CellList(loc_layers)
         self.multi_cls_layers = nn.layer.CellList(cls_layers)
@@ -238,7 +251,7 @@ class SSD300(nn.Cell):
 
     Args:
         backbone (Cell): Backbone Network.
-        config (Class): The default config of SSD.
+        config (dict): The default config of SSD.
 
     Returns:
         Tensor, localization predictions.
@@ -246,25 +259,26 @@ class SSD300(nn.Cell):
 
     Examples:backbone
          SSD300(backbone=resnet34(num_classes=None),
-                config=ConfigSSDResNet34()).
+                config=config).
     """
     def __init__(self, backbone, config, is_training=True):
         super(SSD300, self).__init__()
 
         self.backbone = backbone
-        in_channels = config.EXTRAS_IN_CHANNELS
-        out_channels = config.EXTRAS_OUT_CHANNELS
-        ratios = config.EXTRAS_RATIO
-        strides = config.EXTRAS_STRIDES
+        in_channels = config.extras_in_channels
+        out_channels = config.extras_out_channels
+        ratios = config.extras_ratio
+        strides = config.extras_srides
         residual_list = []
         for i in range(2, len(in_channels)):
-            residual = InvertedResidual(in_channels[i], out_channels[i], stride=strides[i], expand_ratio=ratios[i])
+            residual = InvertedResidual(in_channels[i], out_channels[i], stride=strides[i],
+                                        expand_ratio=ratios[i], last_relu=True)
             residual_list.append(residual)
         self.multi_residual = nn.layer.CellList(residual_list)
         self.multi_box = MultiBox(config)
         self.is_training = is_training
         if not is_training:
-            self.softmax = P.Softmax()
+            self.activation = P.Sigmoid()
 
     def construct(self, x):
         layer_out_13, output = self.backbone(x)
@@ -275,77 +289,42 @@ class SSD300(nn.Cell):
             multi_feature += (feature,)
         pred_loc, pred_label = self.multi_box(multi_feature)
         if not self.is_training:
-            pred_label = self.softmax(pred_label)
+            pred_label = self.activation(pred_label)
         return pred_loc, pred_label
 
 
-class LocalizationLoss(nn.Cell):
+class SigmoidFocalClassificationLoss(nn.Cell):
     """"
-    Computes the localization loss with SmoothL1Loss.
-
-    Returns:
-        Tensor, box regression loss.
-    """
-    def __init__(self):
-        super(LocalizationLoss, self).__init__()
-        self.reduce_sum = P.ReduceSum()
-        self.reduce_mean = P.ReduceMean()
-        self.loss = nn.SmoothL1Loss()
-        self.expand_dims = P.ExpandDims()
-        self.less = P.Less()
-
-    def construct(self, pred_loc, gt_loc, gt_label, num_matched_boxes):
-        mask = F.cast(self.less(0, gt_label), mstype.float32)
-        mask = self.expand_dims(mask, -1)
-        smooth_l1 = self.loss(gt_loc, pred_loc) * mask
-        box_loss = self.reduce_sum(smooth_l1, 1)
-        return self.reduce_mean(box_loss / F.cast(num_matched_boxes, mstype.float32), (0, 1))
-
-
-class ClassificationLoss(nn.Cell):
-    """"
-    Computes the classification loss with hard example mining.
+    Sigmoid focal-loss for classification.
 
     Args:
-        config (Class): The default config of SSD.
+        gamma (float): Hyper-parameter to balance the easy and hard examples. Default: 2.0
+        alpha (float): Hyper-parameter to balance the positive and negative example. Default: 0.25
 
     Returns:
-        Tensor, classification loss.
+        Tensor, the focal loss.
     """
-    def __init__(self, config):
-        super(ClassificationLoss, self).__init__()
-        self.num_classes = config.NUM_CLASSES
-        self.num_boxes = config.NUM_SSD_BOXES
-        self.neg_pre_positive = config.NEG_PRE_POSITIVE
-        self.minimum = P.Minimum()
-        self.less = P.Less()
-        self.sort = P.TopK()
-        self.tile = P.Tile()
-        self.reduce_sum = P.ReduceSum()
-        self.reduce_mean = P.ReduceMean()
-        self.expand_dims = P.ExpandDims()
-        self.sort_descend = P.TopK(True)
-        self.cross_entropy = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+    def __init__(self, gamma=2.0, alpha=0.25):
+        super(SigmoidFocalClassificationLoss, self).__init__()
+        self.sigmiod_cross_entropy = P.SigmoidCrossEntropyWithLogits()
+        self.sigmoid = P.Sigmoid()
+        self.pow = P.Pow()
+        self.onehot = P.OneHot()
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0.0, mstype.float32)
+        self.gamma = gamma
+        self.alpha = alpha
 
-    def construct(self, pred_label, gt_label, num_matched_boxes):
-        gt_label = F.cast(gt_label, mstype.int32)
-        mask = F.cast(self.less(0, gt_label), mstype.float32)
-        gt_label_shape = F.shape(gt_label)
-        pred_label = F.reshape(pred_label, (-1, self.num_classes))
-        gt_label = F.reshape(gt_label, (-1,))
-        cross_entropy = self.cross_entropy(pred_label, gt_label)
-        cross_entropy = F.reshape(cross_entropy, gt_label_shape)
-
-        # Hard example mining
-        num_matched_boxes = F.reshape(num_matched_boxes, (-1,))
-        neg_masked_cross_entropy = F.cast(cross_entropy * (1- mask), mstype.float16)
-        _, loss_idx = self.sort_descend(neg_masked_cross_entropy, self.num_boxes)
-        _, relative_position = self.sort(F.cast(loss_idx, mstype.float16), self.num_boxes)
-        num_neg_boxes = self.minimum(num_matched_boxes * self.neg_pre_positive, self.num_boxes)
-        tile_num_neg_boxes = self.tile(self.expand_dims(num_neg_boxes, -1), (1, self.num_boxes))
-        top_k_neg_mask = F.cast(self.less(relative_position, tile_num_neg_boxes), mstype.float32)
-        class_loss = self.reduce_sum(cross_entropy * (mask + top_k_neg_mask), 1)
-        return self.reduce_mean(class_loss / F.cast(num_matched_boxes, mstype.float32), 0)
+    def construct(self, logits, label):
+        label = self.onehot(label, F.shape(logits)[-1], self.on_value, self.off_value)
+        sigmiod_cross_entropy = self.sigmiod_cross_entropy(logits, label)
+        sigmoid = self.sigmoid(logits)
+        label = F.cast(label, mstype.float32)
+        p_t = label * sigmoid + (1 - label) * (1 - sigmoid)
+        modulating_factor = self.pow(1 - p_t, self.gamma)
+        alpha_weight_factor = label * self.alpha + (1 - label) * (1 - self.alpha)
+        focal_loss = modulating_factor * alpha_weight_factor * sigmiod_cross_entropy
+        return focal_loss
 
 
 class SSDWithLossCell(nn.Cell):
@@ -354,7 +333,7 @@ class SSDWithLossCell(nn.Cell):
 
     Args:
         network (Cell): The training network.
-        config (Class): SSD config.
+        config (dict): SSD config.
 
     Returns:
         Tensor, the loss of the network.
@@ -362,14 +341,29 @@ class SSDWithLossCell(nn.Cell):
     def __init__(self, network, config):
         super(SSDWithLossCell, self).__init__()
         self.network = network
-        self.class_loss = ClassificationLoss(config)
-        self.box_loss = LocalizationLoss()
+        self.less = P.Less()
+        self.tile = P.Tile()
+        self.reduce_sum = P.ReduceSum()
+        self.reduce_mean = P.ReduceMean()
+        self.expand_dims = P.ExpandDims()
+        self.class_loss = SigmoidFocalClassificationLoss(config.gamma, config.alpha)
+        self.loc_loss = nn.SmoothL1Loss()
 
     def construct(self, x, gt_loc, gt_label, num_matched_boxes):
         pred_loc, pred_label = self.network(x)
-        loss_cls = self.class_loss(pred_label, gt_label, num_matched_boxes)
-        loss_loc = self.box_loss(pred_loc, gt_loc, gt_label, num_matched_boxes)
-        return loss_cls + loss_loc
+        mask = F.cast(self.less(0, gt_label), mstype.float32)
+        num_matched_boxes = self.reduce_sum(F.cast(num_matched_boxes, mstype.float32))
+
+        # Localization Loss
+        mask_loc = self.tile(self.expand_dims(mask, -1), (1, 1, 4))
+        smooth_l1 = self.loc_loss(pred_loc, gt_loc) * mask_loc
+        loss_loc = self.reduce_sum(self.reduce_mean(smooth_l1, -1), -1)
+
+        # Classification Loss
+        loss_cls = self.class_loss(pred_label, gt_label)
+        loss_cls = self.reduce_sum(loss_cls, (1, 2))
+
+        return self.reduce_sum((loss_cls + loss_loc) / num_matched_boxes)
 
 
 class TrainingWrapper(nn.Cell):
@@ -413,7 +407,6 @@ class TrainingWrapper(nn.Cell):
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
         return F.depend(loss, self.optimizer(grads))
-
 
 
 class SSDWithMobileNetV2(nn.Cell):

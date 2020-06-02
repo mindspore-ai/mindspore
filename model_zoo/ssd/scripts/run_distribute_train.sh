@@ -14,17 +14,16 @@
 # limitations under the License.
 # ============================================================================
 
-echo "================================================================================================================="
+echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATASET MINDSPORE_HCCL_CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_distribute_train.sh 8 350 coco /data/hccl.json /opt/ssd-300.ckpt(optional) 200(optional)"
+echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET MINDSPORE_HCCL_CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "for example: sh run_distribute_train.sh 8 500 0.2 coco /data/hccl.json /opt/ssd-300.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
-echo "The learning rate is 0.4 as default, if you want other lr, please change the value in this script."
 echo "================================================================================================================="
 
-if [ $# != 4 ] && [ $# != 6 ]
+if [ $# != 5 ] && [ $# != 7 ]
 then
-    echo "Usage: sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [DATASET] \
+    echo "Usage: sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] \
 [MINDSPORE_HCCL_CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
@@ -36,38 +35,39 @@ echo "After running the scipt, the network runs in the background. The log will 
 
 export RANK_SIZE=$1
 EPOCH_SIZE=$2
-DATASET=$3
-PRE_TRAINED=$5
-PRE_TRAINED_EPOCH_SIZE=$6
-export MINDSPORE_HCCL_CONFIG_PATH=$4
-
+LR=$3
+DATASET=$4
+PRE_TRAINED=$6
+PRE_TRAINED_EPOCH_SIZE=$7
+export MINDSPORE_HCCL_CONFIG_PATH=$5
 
 for((i=0;i<RANK_SIZE;i++))
 do
     export DEVICE_ID=$i
     rm -rf LOG$i
     mkdir ./LOG$i
-    cp  *.py ./LOG$i
+    cp ../*.py ./LOG$i
+    cp -r ../src ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
-    if [ $# == 4 ]
+    if [ $# == 5 ]
     then
-        python ../train.py  \
+        python train.py  \
         --distribute=1  \
-        --lr=0.4 \
+        --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
         --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
     fi
 
-    if [ $# == 6 ]
+    if [ $# == 7 ]
     then
-        python ../train.py  \
+        python train.py  \
         --distribute=1  \
-        --lr=0.4 \
+        --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
