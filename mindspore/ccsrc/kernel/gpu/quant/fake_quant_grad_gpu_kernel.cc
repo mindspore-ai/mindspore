@@ -30,7 +30,9 @@ FakeQuantGradGpuKernel::FakeQuantGradGpuKernel()
       quant_max_(0),
       quant_size_(0),
       quant_delay_(0),
-      global_step_(0) {}
+      global_step_(0),
+      narrow_range_(false),
+      symmetric_(false) {}
 
 const std::vector<size_t> &FakeQuantGradGpuKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -59,8 +61,19 @@ bool FakeQuantGradGpuKernel::Init(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Attr \'quant_delay_\' " << quant_delay_ << " is less then 0, require larger than 0.";
   }
 
-  quant_min_ = 0;
-  quant_max_ = (1 << num_bits_) - 1;
+  symmetric_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("symmetric"));
+  if (symmetric_) {
+    quant_min_ = 0 - (1 << (num_bits_ - 1));
+    quant_max_ = (1 << (num_bits_ - 1)) - 1;
+  } else {
+    quant_min_ = 0;
+    quant_max_ = (1 << num_bits_) - 1;
+  }
+
+  narrow_range_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("narrow_range"));
+  if (narrow_range_) {
+    quant_min_++;
+  }
 
   if (quant_size_ == 0) {
     quant_size_ = 1;
