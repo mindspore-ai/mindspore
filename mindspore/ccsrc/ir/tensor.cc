@@ -28,9 +28,7 @@
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
-
 namespace tensor {
-
 void DataBuf2Contiguous(const py::array &src, py::array *const dest) {
   if (dest == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to copy data to a contiguous buffer as dest is nullptr!";
@@ -493,6 +491,5 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                            .def("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
                            .def("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
                        }));
-
 }  // namespace tensor
 }  // namespace mindspore

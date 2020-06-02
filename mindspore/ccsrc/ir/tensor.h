@@ -34,9 +34,7 @@ namespace py = pybind11;
 using float16 = Eigen::half;
 
 namespace pybind11 {
-
 namespace detail {
-
 // Similar to enums in `pybind11/numpy.h`. Determined by doing:
 // python3 -c 'import numpy as np; print(np.dtype(np.float16).num)'
 constexpr int NPY_FLOAT16 = 23;
@@ -85,7 +83,6 @@ template <>
 struct type_caster<float16> : public npy_scalar_caster<float16> {
   static constexpr auto name = "float16";
 };
-
 }  // namespace detail
 }  // namespace pybind11
 
@@ -96,7 +93,6 @@ using DeviceAddressPtr = std::shared_ptr<mindspore::device::DeviceAddress>;
 // mindspore namespace is the top level namespace of Mindsporeession project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
-
 // brief mindspore::tensor namespace
 //
 // A sub namespace in ME to support tensor related definition.
@@ -273,7 +269,6 @@ class Tensor : public MetaTensor {
 
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
-
 }  // namespace tensor
 }  // namespace mindspore
 

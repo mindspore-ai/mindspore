@@ -70,7 +70,6 @@ class TensorMinnie : public MetaTensor {
 };
 
 using TensorMinniePtr = std::shared_ptr<TensorMinnie>;
-
 }  // namespace tensor
 }  // namespace mindspore
 

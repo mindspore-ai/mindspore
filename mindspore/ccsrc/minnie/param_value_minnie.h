@@ -39,6 +39,5 @@ class ParamValueMinnie : public ParamValue {
 };
 
 using ParamValueMinniePtr = std::shared_ptr<ParamValueMinnie>;
-
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_MINNIE_H_
