@@ -49,7 +49,7 @@ class GatherV2PInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
-  Status InferForwardCommunication() override { return SUCCESS; }
+  Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
@@ -57,14 +57,18 @@ class GatherV2PInfo : public OperatorInfo {
 
  private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status ComputeReplaceOp();
   Status InferBias();
   Status InferGroup();
 
   int32_t axis_;
+  std::string target_;
   int32_t bias_;
   int32_t slice_size_;
   Shape out_dev_matrix_shape_;
   Group group_;
+  bool reduce_scatter_flag_ = false;
+  int32_t split_num_ = 1;
 };
 }  // namespace parallel
 }  // namespace mindspore
