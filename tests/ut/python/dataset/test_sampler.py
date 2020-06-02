@@ -170,6 +170,7 @@ def test_subset_sampler():
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(num_samples, start_index, subset_size):
+        _ = num_samples
         sampler = ds.SubsetSampler(start_index, subset_size)
         d = ds.ManifestDataset(manifest_file, sampler=sampler)
 

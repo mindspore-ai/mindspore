@@ -17,9 +17,9 @@ Testing TenCrop in DE
 import pytest
 import numpy as np
 
+from util import visualize, save_and_check_md5
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
-from util import visualize, save_and_check_md5
 from mindspore import log as logger
 
 GENERATE_GOLDEN = False
@@ -123,7 +123,7 @@ def test_ten_crop_list_size_error_msg():
     logger.info("test_ten_crop_list_size_error_msg")
 
     with pytest.raises(TypeError) as info:
-        transforms = [
+        _ = [
             vision.Decode(),
             vision.TenCrop([200, 200, 200]),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
@@ -139,7 +139,7 @@ def test_ten_crop_invalid_size_error_msg():
     logger.info("test_ten_crop_invalid_size_error_msg")
 
     with pytest.raises(ValueError) as info:
-        transforms = [
+        _ = [
             vision.Decode(),
             vision.TenCrop(0),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
@@ -148,7 +148,7 @@ def test_ten_crop_invalid_size_error_msg():
     assert error_msg == str(info.value)
 
     with pytest.raises(ValueError) as info:
-        transforms = [
+        _ = [
             vision.Decode(),
             vision.TenCrop(-10),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images

@@ -14,9 +14,8 @@
 """
 Testing FiveCrop in DE
 """
-import matplotlib.pyplot as plt
-import numpy as np
 import pytest
+import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision

@@ -215,7 +215,7 @@ def test_random_horizontal_comp(plot=False):
         image_py = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         images_list_c.append(image_c)
         images_list_py.append(image_py)
-        
+
         # Check if the output images are the same
         mse = diff_mse(image_c, image_py)
         assert mse < 0.001

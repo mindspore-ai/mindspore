@@ -272,7 +272,7 @@ def test_random_crop_and_resize_05_py():
     expected to raise ValueError
     """
     logger.info("test_random_crop_and_resize_05_py")
-    
+
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:

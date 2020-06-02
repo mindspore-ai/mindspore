@@ -124,12 +124,12 @@ def test_case_2():
     num_iter = 0
     for _ in dataset1.create_dict_iterator():
         num_iter += 1
-    assert (num_iter == 5)
+    assert num_iter == 5
 
     num_iter = 0
     for _ in dataset2.create_dict_iterator():
         num_iter += 1
-    assert (num_iter == 5)
+    assert num_iter == 5
 
 
 def test_voc_exception():
