@@ -248,8 +248,8 @@ def random_split_trans2h5(in_file_path, output_path, criteo_stats, part_rows=200
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Get and Process datasets")
-    parser.add_argument("--raw_data_path", default="/opt/npu/data/origin_criteo_data/", help="The path to save dataset")
-    parser.add_argument("--output_path", default="/opt/npu/data/origin_criteo_data/h5_data/",
+    parser.add_argument("--raw_data_path", default="./raw_data", help="The path to save dataset")
+    parser.add_argument("--output_path", default="./output",
                         help="The path to save dataset")
     args, _ = parser.parse_known_args()
     base_path = args.raw_data_path
