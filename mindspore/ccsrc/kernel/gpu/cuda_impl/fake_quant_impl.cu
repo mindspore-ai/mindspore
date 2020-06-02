@@ -21,7 +21,7 @@
 #include "fake_quant_impl.cuh"
 
 __global__ void FakeQuantize(const float *input, float *output, const int size, const float *nudge_min,
-                             const float *nudge_max, const float *scale, bool symmetric) {
+                             const float *nudge_max, const float *scale) {
   float input_x = 0.f;
   int nudge_input = 0;
 
@@ -35,7 +35,7 @@ __global__ void FakeQuantize(const float *input, float *output, const int size, 
       input_x = nudge_max[0];
     }
     // clamp shift
-    nudge_input = floor((input_x - nudge_min[0]) / scale[0] + 0.5f);
+    nudge_input = round((input_x - nudge_min[0]) / scale[0]);
 
     // quantize
     output[i] = nudge_input * scale[0] + nudge_min[0];
@@ -99,8 +99,7 @@ __global__ void UpdateInputMinMax(float *input_min, float *input_max, const floa
 
 void CalFakeQuantize(const float *input, float *output, const int size, const float *nudge_min, const float *nudge_max,
                      const float *scale, bool symmetric, cudaStream_t cuda_stream) {
-  FakeQuantize<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, output, size, nudge_min, nudge_max, scale,
-                                                                  symmetric);
+  FakeQuantize<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, output, size, nudge_min, nudge_max, scale);
   return;
 }
 
