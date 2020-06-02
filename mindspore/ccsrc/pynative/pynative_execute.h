@@ -44,7 +44,7 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 
 py::tuple RunOp(const py::args &args);
 
-py::list ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args);
+void ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *out_args);
 
 void ClearPyNativeSession();
 
