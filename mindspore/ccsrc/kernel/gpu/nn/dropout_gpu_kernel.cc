@@ -23,7 +23,7 @@ DropoutGpuFwdKernel::DropoutGpuFwdKernel()
     : cudnn_handle_(nullptr),
       is_null_input_(false),
       num_count_(0),
-      drop_prob_(0.0),
+      keep_prob_(0.0),
       states_init_(false),
       mask_generator_(nullptr) {}
 
@@ -54,7 +54,7 @@ bool DropoutGpuFwdKernel::Init(const CNodePtr &kernel_node) {
   for (size_t x : input_shape) {
     num_count_ *= x;
   }
-  drop_prob_ = GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("drop_prob"));
+  keep_prob_ = GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("keep_prob"));
 
   InitSizeLists();
   return true;
@@ -92,7 +92,7 @@ bool DropoutGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   }
 
   curandGenerateUniform(mask_generator_, mask, num_count_);
-  DropoutForward(input, mask, output, num_count_, drop_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  DropoutForward(input, mask, output, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   return true;
 }
