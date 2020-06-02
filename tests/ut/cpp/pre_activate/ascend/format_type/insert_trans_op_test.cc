@@ -21,6 +21,7 @@
 #include "pre_activate/common/pass_manager.h"
 #include "session/anf_runtime_algorithm.h"
 #include "device/kernel_info.h"
+#include "utils/context/ms_context.h"
 
 #define private public
 #define protected public
@@ -103,6 +104,9 @@ TEST_F(TestHWInsertTransOp, test_insert_trans_op_for_single_output) {
    *     return output
    *
    */
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->set_execution_mode(kGraphMode);
   auto fg = GetSingleOutputGraph("test_insert_trans_op_for_single_output", "before", "NC1HWC0");
   // Do insert_trans_op_ pass of hardware opt
   auto graph_optimizer = std::make_shared<opt::GraphOptimizer>();

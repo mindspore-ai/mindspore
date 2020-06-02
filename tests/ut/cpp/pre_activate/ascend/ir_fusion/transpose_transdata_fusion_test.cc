@@ -19,6 +19,7 @@
 #include "device/kernel_info.h"
 #include "session/anf_runtime_algorithm.h"
 #include "kernel/oplib/oplib.h"
+#include "utils/context/ms_context.h"
 #define private public
 #define protected public
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
@@ -76,6 +77,9 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
    * transdata = Transdata(transpose)
    * return transdata
    */
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->set_execution_mode(kGraphMode);
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transpose_transdata_fusion", "before");
   std::vector<int> shp{2, 4, 8, 16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
