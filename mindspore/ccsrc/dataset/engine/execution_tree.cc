@@ -19,6 +19,7 @@
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/util/task_manager.h"
+#include "dataset/util/profiling.h"
 
 #include "dataset/engine/opt/util/printer_pass.h"
 

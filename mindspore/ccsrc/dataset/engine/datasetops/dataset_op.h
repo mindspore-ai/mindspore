@@ -211,6 +211,22 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return - the column name map as a string
   std::string ColumnNameMapAsString() const;
 
+  // Getter function
+  // @return connector size of current op
+  virtual int32_t ConnectorSize() const { return out_connector_->size(); }
+
+  // Getter function
+  // @return connector size of current op
+  virtual int32_t ConnectorCapacity() const { return out_connector_->capacity(); }
+
+  // Getter function
+  // @return connector size of child op
+  int32_t ChildOpConnectorSize(int32_t child_index = 0) const { return child_[child_index]->ConnectorSize(); }
+
+  // Getter function
+  // @return connector capacity of child op
+  int32_t ChildOpConnectorCapacity(int32_t child_index = 0) const { return child_[child_index]->ConnectorCapacity(); }
+
   // Children Getter
   // @return Vector or Children
   std::vector<std::shared_ptr<DatasetOp>> Children() const { return child_; }
