@@ -93,8 +93,8 @@ def correction_mul_grad(dout, x, batch_std, running_std, dx, d_batch_std, channe
 
     util.check_dtype_rule(inp_dtype_dout, ("float16", "float32"))
     util.check_dtype_rule(inp_dtype_x, ("float16", "float32"))
-    util.check_dtype_rule(inp_dtype_batch_std, ("float32",))
-    util.check_dtype_rule(inp_dtype_running_std, ("float32",))
+    util.check_dtype_rule(inp_dtype_batch_std, ("float16", "float32"))
+    util.check_dtype_rule(inp_dtype_running_std, ("float16", "float32"))
     util.compare_tensor_dict_key(dout, x, "dtype")
     util.compare_tensor_dict_key(dout, x, "shape")
     util.compare_tensor_dict_key(dx, x, "shape")
