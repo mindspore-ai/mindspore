@@ -242,6 +242,7 @@ const PrimitivePtr kPrimIs_ = std::make_shared<Primitive>("is_");
 const PrimitivePtr kPrimIsNot = std::make_shared<Primitive>("is_not");
 const PrimitivePtr kPrimInDict = std::make_shared<Primitive>("in_dict");
 const PrimitivePtr kPrimNotInDict = std::make_shared<Primitive>("not_in_dict");
+const PrimitivePtr kPrimMixedPrecisionCast = std::make_shared<Primitive>("mixed_precision_cast");
 
 // Comm ops
 const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

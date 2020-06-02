@@ -24,7 +24,6 @@ from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, MultitypeF
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_exec
 from .. import functional as F
-from .. import operations as P
 from ...common.parameter import Parameter
 
 
@@ -297,32 +296,3 @@ env_get = MultitypeFuncGraph("env_get")
 def _tensor_env_get(env, parameter):
     """Used to get env."""
     return F.env_getitem(env, F.ref_to_embed(parameter), F.zeros_like(parameter))
-
-
-_mp_cast_helper = MultitypeFuncGraph('mixed_precision_cast_helper')
-
-
-@_mp_cast_helper.register("TypeType", "Number")
-@core
-def _mixed_precision_cast_helper_1(type_, x):
-    """if x is float cast to type."""
-    # type_ is place holder
-    return x
-
-
-@_mp_cast_helper.register("TypeType", "Tensor")
-@core
-def _mixed_precision_cast_helper_2(type_, x):
-    """if x is float cast to type."""
-    if F.issubclass_(F.dtype(x), mstype.float_):
-        return P.Cast()(x, type_)
-    return x
-
-@_mp_cast_helper.register("TypeType", "Tuple")
-@core
-def _mixed_precision_cast_helper_3(type_, x):
-    """if x is a tuple"""
-    t = ()
-    for item in x:
-        t = t + (_mp_cast_helper(type_, item),)
-    return t

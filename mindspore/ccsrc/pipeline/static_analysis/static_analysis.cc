@@ -308,6 +308,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
     return evaluator;
   }
+  if (prim->name() == prim::kPrimMixedPrecisionCast->name()) {
+    evaluator = std::make_shared<MixedPrecisionCastEvaluator>(prim);
+    return evaluator;
+  }
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {

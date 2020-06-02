@@ -102,6 +102,22 @@ class UnpackGraphEvaluator : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class MixedPrecisionCastEvaluator : public Evaluator {
+ public:
+  explicit MixedPrecisionCastEvaluator(const PrimitivePtr primitive)
+      : Evaluator("MixedPrecisionCastEvaluator"), prim_(primitive) {}
+  ~MixedPrecisionCastEvaluator() override = default;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
+                    AnfNodeConfigPtr out_config = nullptr) override;
+
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
+  }
+
+ private:
+  PrimitivePtr prim_;
+};
+
 bool IsInWhiteList(PrimitivePtr primitive);
 StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
