@@ -280,6 +280,7 @@ def test_random_crop_04_py():
         data.create_dict_iterator().get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Crop size" in str(e)
 
 def test_random_crop_05_c():
     """
