@@ -56,7 +56,7 @@ if cfg.bert_network == 'base':
     bert_net_cfg = BertConfig(
         batch_size=32,
         seq_length=128,
-        vocab_size=21136,
+        vocab_size=21128,
         hidden_size=768,
         num_hidden_layers=12,
         num_attention_heads=12,
@@ -77,7 +77,7 @@ if cfg.bert_network == 'nezha':
     bert_net_cfg = BertConfig(
         batch_size=32,
         seq_length=128,
-        vocab_size=21136,
+        vocab_size=21128,
         hidden_size=1024,
         num_hidden_layers=24,
         num_attention_heads=16,
@@ -98,7 +98,7 @@ if cfg.bert_network == 'large':
     bert_net_cfg = BertConfig(
         batch_size=16,
         seq_length=512,
-        vocab_size=30528,
+        vocab_size=30522,
         hidden_size=1024,
         num_hidden_layers=24,
         num_attention_heads=16,
