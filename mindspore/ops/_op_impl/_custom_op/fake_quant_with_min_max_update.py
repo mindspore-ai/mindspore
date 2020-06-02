@@ -23,10 +23,10 @@ from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 
-fake_quant_update5d_op_info = TBERegOp("FakeQuantWithMinMaxUpdate") \
+fake_quant_update_op_info = TBERegOp("FakeQuantWithMinMaxUpdate") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("fake_quant_with_min_max_update5d.so") \
+    .binfile_name("fake_quant_with_min_max_update.so") \
     .compute_cost(10) \
     .kernel_name("fake_quant_with_min_max_update") \
     .partial_flag(True) \
@@ -47,9 +47,9 @@ fake_quant_update5d_op_info = TBERegOp("FakeQuantWithMinMaxUpdate") \
     .get_op_info()
 
 
-@op_info_register(fake_quant_update5d_op_info)
-def _fake_quant_update5d_tbe():
-    """_FakeQuantWithMinMaxUpdate5D TBE register"""
+@op_info_register(fake_quant_update_op_info)
+def _fake_quant_update_tbe():
+    """_FakeQuantWithMinMaxUpdate TBE register"""
     return
 
 

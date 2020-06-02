@@ -85,7 +85,7 @@ def get_bprop_batchnorm_fold2(self):
 @bprop_getters.register(P.BatchNormFoldD)
 def get_bprop_BatchNormFold(self):
     """Generate bprop for BatchNormFold for Ascend"""
-    op = P.BatchNormFoldGrad_(self.epsilon, self.is_training, self.freeze_bn)
+    op = P.BatchNormFoldGradD(self.epsilon, self.is_training, self.freeze_bn)
 
     def bprop(x, x_sum, x_square_sum, mean, variance, out, dout):
         dx = op(dout[1], dout[2], x, out[1], out[2])
