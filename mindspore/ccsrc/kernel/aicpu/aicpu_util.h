@@ -28,6 +28,7 @@ constexpr auto kInitDataSetQueue = "InitDataSetQueue";
 constexpr auto kInitData = "InitData";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kPrint = "Print";
+constexpr auto kPack = "Pack";
 constexpr auto kOutputTypes = "output_types";
 constexpr auto kOutputShapes = "output_shapes";
 constexpr auto kChannelName = "channel_name";
