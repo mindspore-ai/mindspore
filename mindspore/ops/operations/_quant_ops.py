@@ -15,15 +15,18 @@
 
 """Operators for quantization."""
 
+import mindspore.context as context
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 from ...common import dtype as mstype
 
-__all__ = ["FakeQuantWithMinMax",
-           "FakeQuantWithMinMaxGrad",
-           "FakeQuantWithMinMaxPerChannel",
-           "FakeQuantWithMinMaxPerChannelGrad",
+__all__ = ["FakeQuantPerLayer",
+           "FakeQuantPerLayerGrad",
+           "FakeQuantPerChannel",
+           "FakeQuantPerChannelGrad",
+           "FakeQuantMinMaxPerLayerUpdate",
+           "FakeQuantMinMaxPerChannelUpdate",
            "BatchNormFold",
            "BatchNormFoldGrad",
            "CorrectionMul",
@@ -36,11 +39,10 @@ __all__ = ["FakeQuantWithMinMax",
            "BatchNormFold2_D",
            "BatchNormFold2GradD",
            "BatchNormFold2GradReduce",
-           "FakeQuantWithMinMaxUpdate",
            ]
 
 
-class FakeQuantWithMinMax(PrimitiveWithInfer):
+class FakeQuantPerLayer(PrimitiveWithInfer):
     r"""
     Simulate the quantize and dequantize operations in training time.
 
@@ -67,49 +69,67 @@ class FakeQuantWithMinMax(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
         >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
-        >>> output_tensor = P.FakeQuantWithMinMax(num_bits=8)(input_tensor, min_tensor, max_tensor)
+        >>> output_tensor = P.FakeQuantPerLayer(num_bits=8)(input_tensor, min_tensor, max_tensor)
     """
     support_quant_bit = [4, 7, 8]
 
     @prim_attr_register
-    def __init__(self, num_bits=8, ema=False, ema_decay=0.999, quant_delay=0, symmetric=False, narrow_range=False,
+    def __init__(self,
+                 num_bits=8,
+                 ema=False,
+                 ema_decay=0.999,
+                 quant_delay=0,
+                 symmetric=False,
+                 narrow_range=False,
                  training=True):
-        """init FakeQuantWithMinMax OP"""
+        """init FakeQuantPerLayer OP"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_quant_perlayer
         if num_bits not in self.support_quant_bit:
-            raise ValueError(f"For '{self.name}' attr \'num_bits\' is not support.")
+            raise ValueError(
+                f"For '{self.name}' attr \'num_bits\' is not support.")
         if ema and not ema_decay:
-            raise ValueError(f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
+            raise ValueError(
+                f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
-        self.symmetric = validator.check_value_type('symmetric', symmetric, (bool,), self.name)
-        self.narrow_range = validator.check_value_type('narrow_range', narrow_range, (bool,), self.name)
-        self.training = validator.check_value_type('training', training, (bool,), self.name)
-        self.ema_decay = validator.check_number_range('ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
-        self.num_bits = validator.check_integer('num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type('quant_delay', quant_delay, (int,), self.name)
+        self.symmetric = validator.check_value_type(
+            'symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+        self.training = validator.check_value_type(
+            'training', training, (bool,), self.name)
+        self.ema_decay = validator.check_number_range(
+            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.num_bits = validator.check_integer(
+            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.quant_delay = validator.check_value_type(
+            'quant_delay', quant_delay, (int,), self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'],
                                 outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(min_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(min_shape), 1, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
         valid_types = (mstype.float16, mstype.float32)
         validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"max": max_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"max": max_type}, valid_types, self.name)
         return x_type
 
 
-class FakeQuantWithMinMaxGrad(PrimitiveWithInfer):
+class FakeQuantPerLayerGrad(PrimitiveWithInfer):
     r"""
-    Performs grad of FakeQuantWithMinMax operation.
+    Performs grad of FakeQuantPerLayerGrad operation.
 
     Examples:
-        >>> fake_min_max_grad = P.FakeQuantWithMinMaxGrad()
+        >>> fake_min_max_grad = P.FakeQuantPerLayerGrad()
         >>> dout = Tensor(np.array([[-2.3, 1.2], [5.7, 0.2]]), mindspore.float32)
         >>> input_x = Tensor(np.array([[18, -23], [0.2, 6]]), mindspore.float32)
         >>> _min = Tensor(np.array([-4]), mindspore.float32)
@@ -119,32 +139,50 @@ class FakeQuantWithMinMaxGrad(PrimitiveWithInfer):
     support_quant_bit = [4, 7, 8]
 
     @prim_attr_register
-    def __init__(self, num_bits=8, quant_delay=0, symmetric=False, narrow_range=False):
+    def __init__(self,
+                 num_bits=8,
+                 quant_delay=0,
+                 symmetric=False,
+                 narrow_range=False):
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_quant_perlayer_grad
         if num_bits not in self.support_quant_bit:
-            raise ValueError(f"For '{self.name}' attr \'num_bits\' is not support.")
+            raise ValueError(
+                f"For '{self.name}' attr \'num_bits\' is not support.")
 
-        self.num_bits = validator.check_integer('num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type('quant_delay', quant_delay, (int,), self.name)
-        self.symmetric = validator.check_value_type('symmetric', symmetric, (bool,), self.name)
-        self.narrow_range = validator.check_value_type('narrow_range', narrow_range, (bool,), self.name)
-        self.init_prim_io_names(inputs=['dout', 'x', 'min', 'max'], outputs=['dx'])
+        self.num_bits = validator.check_integer(
+            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.quant_delay = validator.check_value_type(
+            'quant_delay', quant_delay, (int,), self.name)
+        self.symmetric = validator.check_value_type(
+            'symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+        self.init_prim_io_names(
+            inputs=['dout', 'x', 'min', 'max'], outputs=['dx'])
 
     def infer_shape(self, dout_shape, x_shape, min_shape, max_shape):
-        validator.check("dout shape", dout_shape, "x shape", x_shape, Rel.EQ, self.name)
-        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(min_shape), 1, Rel.EQ, self.name)
+        validator.check("dout shape", dout_shape, "x shape",
+                        x_shape, Rel.EQ, self.name)
+        validator.check("min shape", min_shape, "max shape",
+                        max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(
+            min_shape), 1, Rel.EQ, self.name)
         return dout_shape
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
         valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({"dout": dout_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"dout": dout_type}, valid_types, self.name)
         validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"max": max_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"max": max_type}, valid_types, self.name)
         return dout_type
 
 
-class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
+class FakeQuantPerChannel(PrimitiveWithInfer):
     r"""
     Simulate the quantize and dequantize operations in training time base on per channel.
 
@@ -168,53 +206,76 @@ class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
         - Tensor, has the same type as input.
 
     Examples:
-        >>> fake_quant = P.FakeQuantWithMinMaxPerChannel()
+        >>> fake_quant = P.FakeQuantPerChannel()
         >>> input_x = Tensor(np.array([3, 4, 5, -2, -3, -1]).reshape(3, 2), mindspore.float32)
         >>> _min = Tensor(np.linspace(-2, 2, 12).reshape(3, 2, 2), mindspore.float32)
         >>> _max = Tensor(np.linspace(8, 12, 12).reshape(3, 2, 2), mindspore.float32)
         >>> result = fake_quant(input_x, _min, _max)
     """
     support_quant_bit = [4, 7, 8]
-    channel_axis = 0
 
     @prim_attr_register
-    def __init__(self, num_bits=8, ema=False, ema_decay=0.999, quant_delay=0, symmetric=False, narrow_range=False,
-                 training=True):
-        """init FakeQuantWithMinMaxPerChannel OP"""
+    def __init__(self,
+                 num_bits=8,
+                 ema=False,
+                 ema_decay=0.999,
+                 quant_delay=0,
+                 symmetric=False,
+                 narrow_range=False,
+                 training=True,
+                 channel_axis=1):
+        """init FakeQuantPerChannel OP"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_quant_perchannel
         if num_bits not in self.support_quant_bit:
-            raise ValueError(f"For '{self.name}' Attr \'num_bits\' is not support.")
+            raise ValueError(
+                f"For '{self.name}' Attr \'num_bits\' is not support.")
         if ema and not ema_decay:
-            raise ValueError(f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
+            raise ValueError(
+                f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
-        self.symmetric = validator.check_value_type('symmetric', symmetric, (bool,), self.name)
-        self.narrow_range = validator.check_value_type('narrow_range', narrow_range, (bool,), self.name)
-        self.training = validator.check_value_type('training', training, (bool,), self.name)
-        self.ema_decay = validator.check_number_range('ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
-        self.num_bits = validator.check_integer('num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type('quant_delay', quant_delay, (int,), self.name)
+        self.symmetric = validator.check_value_type(
+            'symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+        self.training = validator.check_value_type(
+            'training', training, (bool,), self.name)
+        self.ema_decay = validator.check_number_range(
+            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.num_bits = validator.check_integer(
+            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.quant_delay = validator.check_value_type(
+            'quant_delay', quant_delay, (int,), self.name)
+        self.channel_axis = validator.check_integer(
+            'channel_axis', channel_axis, 0, Rel.GE, self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
-        validator.check_integer("min shape[0]", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
-        validator.check_integer("max shape[0]", max_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer(
+            "min shape", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
+        validator.check_integer(
+            "max shape", max_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
         valid_types = (mstype.float16, mstype.float32)
         validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"max": max_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"max": max_type}, valid_types, self.name)
         return x_type
 
 
-class FakeQuantWithMinMaxPerChannelGrad(PrimitiveWithInfer):
+class FakeQuantPerChannelGrad(PrimitiveWithInfer):
     r"""
-    Performs grad of FakeQuantWithMinMaxPerChannel operation.
+    Performs grad of FakeQuantPerChannelGrad operation.
 
     Examples:
-        >>> fqmmpc_grad = P.FakeQuantWithMinMaxPerChannelGrad()
+        >>> fqmmpc_grad = P.FakeQuantPerChannelGrad()
         >>> input_x = Tensor(np.random.randint(-4, 4, (2, 3, 4)), mindspore.float32)
         >>> dout = Tensor(np.random.randint(-2, 2, (2, 3, 4)), mindspore.float32)
         >>> _min = Tensor(np.random.randint(-8, 2, (2, 3, 4)), mindspore.float32)
@@ -224,16 +285,31 @@ class FakeQuantWithMinMaxPerChannelGrad(PrimitiveWithInfer):
     support_quant_bit = [4, 7, 8]
 
     @prim_attr_register
-    def __init__(self, num_bits=8, quant_delay=0, symmetric=False, narrow_range=False):
-        """init FakeQuantWithMinMaxPerChannel Fill"""
+    def __init__(self,
+                 num_bits=8,
+                 quant_delay=0,
+                 symmetric=False,
+                 narrow_range=False,
+                 channel_axis=1):
+        """init FakeQuantPerChannelGrad Fill"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_quant_perchannel_grad
         if num_bits not in self.support_quant_bit:
-            raise ValueError(f"For '{self.name}' attr \'num_bits\' is not support.")
+            raise ValueError(
+                f"For '{self.name}' attr \'num_bits\' is not support.")
 
-        self.num_bits = validator.check_integer('num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type('quant_delay', quant_delay, (int,), self.name)
-        self.symmetric = validator.check_value_type('symmetric', symmetric, (bool,), self.name)
-        self.narrow_range = validator.check_value_type('narrow_range', narrow_range, (bool,), self.name)
-        self.init_prim_io_names(inputs=['dout', 'x', 'min', 'max'], outputs=['dx'])
+        self.num_bits = validator.check_integer(
+            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.quant_delay = validator.check_value_type(
+            'quant_delay', quant_delay, (int,), self.name)
+        self.symmetric = validator.check_value_type(
+            'symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+        self.channel_axis = validator.check_integer(
+            'channel axis', channel_axis, 0, Rel.GE, self.name)
+        self.init_prim_io_names(
+            inputs=['dout', 'x', 'min', 'max'], outputs=['dx'])
 
     def infer_shape(self, dout_shape, x_shape, min_shape, max_shape):
         validator.check("dout shape", dout_shape, "x shape", x_shape)
@@ -242,10 +318,13 @@ class FakeQuantWithMinMaxPerChannelGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
         valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({"dout": dout_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"dout": dout_type}, valid_types, self.name)
         validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"max": max_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"max": max_type}, valid_types, self.name)
         return dout_type
 
 
@@ -299,7 +378,7 @@ class BatchNormFold(PrimitiveWithInfer):
     def infer_shape(self, x_shape, mean_shape, variance_shape, global_step_shape):
         validator.check("mean shape", mean_shape, "gamma_shape", variance_shape, Rel.EQ, self.name)
         validator.check("mean_shape[0]", mean_shape[0], "input channel", x_shape[self.channel_axis], Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return mean_shape, mean_shape, mean_shape, mean_shape
 
     def infer_dtype(self, x_type, mean_type, variance_type, global_step_type):
@@ -346,7 +425,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
                         "batch_std shape", batch_std_shape, Rel.EQ, self.name)
         validator.check("d_batch_mean_shape[0]", d_batch_mean_shape[0],
                         "input channel", x_shape[self.channel_axis], Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, d_batch_mean_type, d_batch_std_type, x_type, batch_mean_type, batch_std_type,
@@ -383,6 +462,8 @@ class CorrectionMul(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, channel_axis=0):
         """init correction mul layer"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import correction_mul
         self.channel_axis = channel_axis
         self.init_prim_io_names(inputs=['x', 'batch_std', 'running_std'],
                                 outputs=['out'])
@@ -415,6 +496,8 @@ class CorrectionMulGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, channel_axis=0):
         """init correction mul layer"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import correction_mul_grad
         self.channel_axis = channel_axis
         self.init_prim_io_names(inputs=['dout', 'x', 'gamma', 'running_std'],
                                 outputs=['dx', 'd_gamma'])
@@ -484,7 +567,7 @@ class BatchNormFold2(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "batch_mean shape", gamma_shape, Rel.EQ, self.name)
         validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel_axis],
                         Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, beta_type, gamma_type, batch_std_type, running_std_type, batch_mean_type,
@@ -532,7 +615,7 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "gamma shape", gamma_shape, Rel.EQ, self.name)
         validator.check("batch_std size", batch_std_shape[0], "dout channel size", dout_shape[self.channel_axis],
                         Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return gamma_shape, gamma_shape, gamma_shape, gamma_shape, x_shape
 
     def infer_dtype(self, dout_type, x_type, gamma_type,
@@ -744,17 +827,14 @@ class BatchNormFold2GradReduce(PrimitiveWithInfer):
         return dout_type, dout_type
 
 
-class FakeQuantWithMinMaxUpdate(PrimitiveWithInfer):
+class FakeQuantMinMaxPerLayerUpdate(PrimitiveWithInfer):
     r"""
-    Simulate the quantize and dequantize operations in training time.
+    Update min and max value for fake quant per layer op.
 
     Args:
         num_bits (int) : Number bits for aware quantilization. Default: 8.
         ema (bool): Use EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
-        quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
-            simulate aware quantize funcion. After delay step in training time begin simulate the aware
-            quantize funcion. Default: 0.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
         training (bool): Training the network or not. Default: True.
@@ -776,36 +856,122 @@ class FakeQuantWithMinMaxUpdate(PrimitiveWithInfer):
     support_quant_bit = [4, 7, 8]
 
     @prim_attr_register
-    def __init__(self, num_bits=8, ema=False, ema_decay=0.999, quant_delay=0, symmetric=False, narrow_range=False,
+    def __init__(self, num_bits=8, ema=False, ema_decay=0.999, symmetric=False, narrow_range=False,
                  training=True):
-        """init FakeQuantWithMinMax OP"""
-        from mindspore.ops._op_impl._custom_op import correction_mul, correction_mul_grad
-        from mindspore.ops._op_impl._custom_op import fake_quant_with_min_max, fake_quant_with_min_max_grad
-        from mindspore.ops._op_impl._custom_op import fake_quant_with_min_max_update
+        """init FakeQuantMinMaxPerLayerUpdate OP"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_quant_minmax_perlayer_update
         if num_bits not in self.support_quant_bit:
-            raise ValueError(f"For '{self.name}' attr \'num_bits\' is not support.")
+            raise ValueError(
+                f"For '{self.name}' attr \'num_bits\' is not support.")
         if ema and not ema_decay:
-            raise ValueError(f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
+            raise ValueError(
+                f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
-        self.symmetric = validator.check_value_type('symmetric', symmetric, (bool,), self.name)
-        self.narrow_range = validator.check_value_type('narrow_range', narrow_range, (bool,), self.name)
-        self.training = validator.check_value_type('training', training, (bool,), self.name)
-        self.ema_decay = validator.check_number_range('ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
-        self.num_bits = validator.check_integer('num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type('quant_delay', quant_delay, (int,), self.name)
+        self.symmetric = validator.check_value_type(
+            'symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+        self.training = validator.check_value_type(
+            'training', training, (bool,), self.name)
+        self.ema_decay = validator.check_number_range(
+            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.num_bits = validator.check_integer(
+            'num_bits', num_bits, 0, Rel.GT, self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'],
                                 outputs=['min_up', 'max_up'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
-        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(min_shape), 1, Rel.EQ, self.name)
+        validator.check("min shape", min_shape, "max shape",
+                        max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(
+            min_shape), 1, Rel.EQ, self.name)
         return min_shape, max_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
         valid_types = (mstype.float16, mstype.float32)
         validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"max": max_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"max": max_type}, valid_types, self.name)
+        return min_type, max_type
+
+
+class FakeQuantMinMaxPerChannelUpdate(PrimitiveWithInfer):
+    r"""
+     Update min and max value for fake quant per layer op.
+
+    Args:
+        num_bits (int) : Number bits for aware quantilization. Default: 8.
+        ema (bool): Use EMA algorithm update value min and max. Default: False.
+        ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
+        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
+        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        training (bool): Training the network or not. Default: True.
+        channel_axis (int): Channel asis for per channel compute. Default: 1.
+
+    Inputs:
+        - **x** (Tensor) : float32 Tensor representing the shape of the output tensor.
+        - **min** (Tensor) : Value of the min range of the input data x.
+        - **max** (Tensor) : Value of the max range of the input data x.
+
+    Outputs:
+        - Tensor: Simulate quantize tensor of x.
+
+    Examples:
+        >>> x = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> min = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
+        >>> max = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
+        >>> output_tensor = P.FakeQuantWithMinMax(num_bits=8)(x, min, max)
+    """
+    support_quant_bit = [4, 7, 8]
+
+    @prim_attr_register
+    def __init__(self, num_bits=8, ema=False, ema_decay=0.999, symmetric=False, narrow_range=False,
+                 training=True, channel_axis=1):
+        """init FakeQuantPerChannelUpdate OP for Ascend"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_quant_minmax_perchannel_update
+        if num_bits not in self.support_quant_bit:
+            raise ValueError(
+                f"For '{self.name}' attr \'num_bits\' is not support.")
+        if ema and not ema_decay:
+            raise ValueError(
+                f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
+
+        self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
+        self.symmetric = validator.check_value_type(
+            'symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type(
+            'narrow_range', narrow_range, (bool,), self.name)
+        self.training = validator.check_value_type(
+            'training', training, (bool,), self.name)
+        self.ema_decay = validator.check_number_range(
+            'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.num_bits = validator.check_integer(
+            'num_bits', num_bits, 0, Rel.GT, self.name)
+        self.channel_axis = validator.check_integer(
+            'channel axis', channel_axis, 0, Rel.GE, self.name)
+        self.init_prim_io_names(
+            inputs=['x', 'min', 'max'], outputs=['min_up', 'max_up'])
+
+    def infer_shape(self, x_shape, min_shape, max_shape):
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
+        validator.check("min shape", min_shape, "max shape",
+                        max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(
+            min_shape), 1, Rel.EQ, self.name)
+        return min_shape, max_shape
+
+    def infer_dtype(self, x_type, min_type, max_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same(
+            {"x": x_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same(
+            {"max": max_type}, valid_types, self.name)
         return min_type, max_type

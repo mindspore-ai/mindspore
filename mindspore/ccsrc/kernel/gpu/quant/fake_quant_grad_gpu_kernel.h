@@ -54,6 +54,8 @@ class FakeQuantGradGpuKernel : public GpuKernel {
   int quant_size_;
   int quant_delay_;
   int global_step_;
+  bool narrow_range_;
+  bool symmetric_;
 };
 }  // namespace kernel
 }  // namespace mindspore

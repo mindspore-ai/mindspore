@@ -14,6 +14,7 @@
 # ============================================================================
 """Aware quantization."""
 
+from functools import partial
 import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
@@ -101,125 +102,23 @@ class BatchNormFoldCell(Cell):
         return batch_mean, batch_std, running_mean, running_std
 
 
-class FakeQuantWithMinMaxD(Cell):
-    r"""
-    Aware Quantization training op of ascend. This OP provide Fake quantization observer
-    function on data with min and max.
-
-    Args:
-        min_init (int, list): The dimension of channel or 1(layer). Default: -6.
-        max_init (int, list): The dimension of channel or 1(layer). Default: 6.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        ema (bool): Exponential Moving Average algorithm update min and max. Default: False.
-        ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        per_channel (bool): Quantization by layer or channel. Default: False.
-        out_channels (int): declarate the min and max channel size, Default: 1.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-
-    Inputs:
-        - **x** (Tensor) - The input of FakeQuantWithMinMax.
-
-    Outputs:
-        Tensor, with the same type and shape as the `x`.
-
-    Examples:
-        >>> fake_quant = nn.FakeQuantWithMinMaxD()
-        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = fake_quant(input_x)
-    """
-
-    def __init__(self,
-                 min_init=-6,
-                 max_init=6,
-                 num_bits=8,
-                 ema=False,
-                 ema_decay=0.999,
-                 per_channel=False,
-                 channel_size=1,
-                 quant_delay=0,
-                 symmetric=False,
-                 narrow_range=False,
-                 training=True):
-        """init FakeQuantWithMinMax ascend layer"""
-        super(FakeQuantWithMinMaxD, self).__init__()
-
-        self.min_init = min_init
-        self.num_bits = num_bits
-        self.max_init = max_init
-        self.ema = ema
-        self.ema_decay = ema_decay
-        self.per_channel = per_channel
-        self.channel_size = channel_size
-        self.quant_delay = quant_delay
-        self.symmetric = symmetric
-        self.narrow_range = narrow_range
-        self.training = training
-
-        if not per_channel:
-            self.fake_quant = P.FakeQuantWithMinMax(num_bits=self.num_bits,
-                                                    ema=self.ema,
-                                                    ema_decay=self.ema_decay,
-                                                    quant_delay=self.quant_delay,
-                                                    symmetric=self.symmetric,
-                                                    narrow_range=self.narrow_range,
-                                                    training=training)
-            self.ema_update = P.FakeQuantWithMinMaxUpdate(num_bits=self.num_bits,
-                                                          ema=self.ema,
-                                                          ema_decay=self.ema_decay,
-                                                          quant_delay=self.quant_delay,
-                                                          symmetric=self.symmetric,
-                                                          narrow_range=self.narrow_range,
-                                                          training=training)
-        else:
-            raise RuntimeError("not support per channel")
-
-        if isinstance(min_init, Parameter):
-            self.minq = min_init
-            self.maxq = max_init
-        else:
-            self.minq = Parameter(Tensor(np.array([min_init]).astype(np.float32)),
-                                  name='quant_min',
-                                  requires_grad=False)
-            self.maxq = Parameter(Tensor(np.array([max_init]).astype(np.float32)),
-                                  name='quant_max',
-                                  requires_grad=False)
-        self.reduce_min = P.ReduceMin()
-        self.reduce_max = P.ReduceMax()
-
-    def extend_repr(self):
-        s = 'min_init={}, max_init={}, ema={}, ema_decay={},  per_channel={}, channel_size={}, quant_delay={}'.format(
-            self.min_init, self.max_init, self.ema, self.ema_decay, self.per_channel, self.channel_size,
-            self.quant_delay)
-        return s
-
-    def construct(self, x, minq, maxq):
-        if self.training:
-            min_up, max_up = self.ema_update(x, minq, maxq)
-            out = self.fake_quant(x, min_up, max_up)
-            P.Assign()(self.minq, min_up)
-            P.Assign()(self.maxq, max_up)
-        else:
-            out = self.fake_quant(x, minq, maxq)
-        return out
-
-
 class FakeQuantWithMinMax(Cell):
     r"""
     Aware Quantization op. This OP provide Fake quantization observer function on data with min and max.
 
     Args:
-        min_init (int, list): The dimension of channel or 1(layer). Default: -6.
-        max_init (int, list): The dimension of channel or 1(layer). Default: 6.
+        min_init (int, float): The dimension of channel or 1(layer). Default: -6.
+        max_init (int, float): The dimension of channel or 1(layer). Default: 6.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         ema (bool): Exponential Moving Average algorithm update min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool): Quantization by layer or channel. Default: False.
+        channel_axis (int): Quantization by channel axis. Default: 1.
         out_channels (int): declarate the min and max channel size, Default: 1.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        training (bool): Quantization algorithm training or not. Default: True.
 
     Inputs:
         - **x** (Tensor) - The input of FakeQuantWithMinMax.
@@ -240,95 +139,82 @@ class FakeQuantWithMinMax(Cell):
                  ema=False,
                  ema_decay=0.999,
                  per_channel=False,
+                 channel_axis=1,
                  out_channels=1,
                  quant_delay=0,
                  symmetric=False,
-                 narrow_range=False):
+                 narrow_range=False,
+                 training=True):
         """init FakeQuantWithMinMax layer"""
         super(FakeQuantWithMinMax, self).__init__()
-
         self.min_init = min_init
-        self.num_bits = num_bits
         self.max_init = max_init
+        self.num_bits = num_bits
         self.ema = ema
         self.ema_decay = ema_decay
         self.per_channel = per_channel
         self.out_channels = out_channels
+        self.channel_axis = channel_axis
         self.quant_delay = quant_delay
         self.symmetric = symmetric
         self.narrow_range = narrow_range
+        self.training = training
+        self.is_ascend = context.get_context('device_target') == "Ascend"
 
-        if per_channel:
+        # init tensor min and max for fake quant op
+        if self.per_channel:
             min_array = np.array([self.min_init for i in range(0, self.out_channels)]).astype(np.float32)
-            max_array = np.array([self.max_init for i in range(0, self.channel_size)]).astype(np.float32)
-            self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
-            self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
-            self.fake_quant_train = P.FakeQuantWithMinMaxPerChannel(num_bits=self.num_bits,
-                                                                    ema=self.ema,
-                                                                    ema_decay=self.ema_decay,
-                                                                    quant_delay=self.quant_delay,
-                                                                    symmetric=self.symmetric,
-                                                                    narrow_range=self.narrow_range,
-                                                                    training=True)
-            self.fake_quant_infer = P.FakeQuantWithMinMaxPerChannel(num_bits=self.num_bits,
-                                                                    ema=self.ema,
-                                                                    ema_decay=self.ema_decay,
-                                                                    quant_delay=self.quant_delay,
-                                                                    symmetric=self.symmetric,
-                                                                    narrow_range=self.narrow_range,
-                                                                    training=False)
+            max_array = np.array([self.max_init for i in range(0, self.out_channels)]).astype(np.float32)
         else:
-            min_array = np.array([min_init]).reshape(1).astype(np.float32)
-            max_array = np.array([max_init]).reshape(1).astype(np.float32)
-            self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
-            self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
-            if context.get_context('device_target') == "Ascend":
-                self.fake_quant_train = FakeQuantWithMinMaxD(num_bits=self.num_bits,
-                                                             ema=self.ema,
-                                                             ema_decay=self.ema_decay,
-                                                             quant_delay=self.quant_delay,
-                                                             symmetric=self.symmetric,
-                                                             narrow_range=self.narrow_range,
-                                                             training=True,
-                                                             min_init=self.minq,
-                                                             max_init=self.maxq)
-                self.fake_quant_infer = FakeQuantWithMinMaxD(num_bits=self.num_bits,
-                                                             ema=self.ema,
-                                                             ema_decay=self.ema_decay,
-                                                             quant_delay=self.quant_delay,
-                                                             symmetric=self.symmetric,
-                                                             narrow_range=self.narrow_range,
-                                                             training=False,
-                                                             min_init=self.minq,
-                                                             max_init=self.maxq)
-            elif context.get_context('device_target') == "GPU":
-                self.fake_quant_train = P.FakeQuantWithMinMax(num_bits=self.num_bits,
-                                                              ema=self.ema,
-                                                              ema_decay=self.ema_decay,
-                                                              quant_delay=self.quant_delay,
-                                                              symmetric=self.symmetric,
-                                                              narrow_range=self.narrow_range,
-                                                              training=True)
-                self.fake_quant_infer = P.FakeQuantWithMinMax(num_bits=self.num_bits,
-                                                              ema=self.ema,
-                                                              ema_decay=ema_decay,
-                                                              quant_delay=quant_delay,
-                                                              symmetric=self.symmetric,
-                                                              narrow_range=self.narrow_range,
-                                                              training=False)
-            else:
-                raise ValueError("Not support platform.")
+            min_array = np.array([self.min_init]).reshape(1).astype(np.float32)
+            max_array = np.array([self.max_init]).reshape(1).astype(np.float32)
+        self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
+        self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
+
+        # init fake quant relative op
+        if per_channel:
+            quant_fun = partial(P.FakeQuantPerChannel, channel_axis=self.channel_axis)
+            ema_fun = partial(P.FakeQuantMinMaxPerChannelUpdate, channel_axis=self.channel_axis)
+        else:
+            quant_fun = P.FakeQuantPerLayer
+            ema_fun = P.FakeQuantMinMaxPerLayerUpdate
+
+        if self.is_ascend:
+            self.fake_quant = quant_fun(num_bits=self.num_bits,
+                                        symmetric=self.symmetric,
+                                        narrow_range=self.narrow_range,
+                                        training=self.training)
+        else:
+            self.fake_quant = quant_fun(num_bits=self.num_bits,
+                                        ema=self.ema,
+                                        ema_decay=ema_decay,
+                                        quant_delay=quant_delay,
+                                        symmetric=self.symmetric,
+                                        narrow_range=self.narrow_range,
+                                        training=self.training)
+        if self.ema:
+            self.ema_update = ema_fun(num_bits=self.num_bits,
+                                      ema=self.ema,
+                                      ema_decay=self.ema_decay,
+                                      symmetric=self.symmetric,
+                                      narrow_range=self.narrow_range,
+                                      training=self.training)
 
     def extend_repr(self):
-        s = 'min={}, max={}, ema={}, ema_decay={}, per_channel={}, quant_delay={}'.format(
-            self.min_init, self.max_init, self.ema, self.ema_decay, self.per_channel, self.quant_delay)
+        s = 'num_bits={}, symmetric={}, narrow_range={}, ema={}({}), per_channel={}({}, {}), ' \
+            'quant_delay={}, min_init={}, max_init={}'.format(
+                self.num_bits, self.symmetric, self.narrow_range, self.ema, self.ema_decay, self.per_channel,
+                self.channel_axis, self.out_channels, self.quant_delay, self.min_init, self.max_init)
         return s
 
     def construct(self, x):
-        if self.training:
-            out = self.fake_quant_train(x, self.minq, self.maxq)
+        if self.ema and self.is_ascend:
+            min_up, max_up = self.ema_update(x, self.minq, self.maxq)
+            out = self.fake_quant(x, min_up, max_up)
+            P.Assign()(self.minq, min_up)
+            P.Assign()(self.maxq, max_up)
         else:
-            out = self.fake_quant_infer(x, self.minq, self.maxq)
+            out = self.fake_quant(x, self.minq, self.maxq)
         return out
 
 
@@ -420,7 +306,6 @@ class Conv2dBatchNormQuant(Cell):
         self.per_channel = per_channel
         self.symmetric = symmetric
         self.narrow_range = narrow_range
-        self.channel_axis = int(group > 1)
         self.is_gpu = context.get_context('device_target') == "GPU"
 
         # initialize convolution op and Parameter
@@ -435,6 +320,7 @@ class Conv2dBatchNormQuant(Cell):
                                                 dilation=self.dilation)
             if weight_init is None:
                 weight_init = initializer('normal', [1, in_channels, *self.kernel_size])
+            channel_axis = 1
         else:
             self.conv = P.Conv2D(out_channel=out_channels,
                                  kernel_size=self.kernel_size,
@@ -445,6 +331,7 @@ class Conv2dBatchNormQuant(Cell):
                                  group=group)
             if weight_init is None:
                 weight_init = initializer('normal', [out_channels, in_channels // group, *self.kernel_size])
+            channel_axis = 0
         self.weight = Parameter(weight_init, name='weight')
 
         # initialize batchnorm Parameter
@@ -472,7 +359,7 @@ class Conv2dBatchNormQuant(Cell):
                                                      symmetric=symmetric,
                                                      narrow_range=narrow_range)
         self.batchnorm_fold = BatchNormFoldCell(epsilon=eps, momentum=momentum, freeze_bn=freeze_bn)
-        self.correct_mul = P.CorrectionMul(self.channel_axis)
+        self.correct_mul = P.CorrectionMul(channel_axis)
         if context.get_context('device_target') == "Ascend":
             self.batchnorm_fold2_train = P.BatchNormFold2_D(freeze_bn=freeze_bn)
             self.batchnorm_fold2_infer = P.BatchNormFold2_D(freeze_bn=0)
@@ -522,7 +409,7 @@ class Conv2dBatchNormQuant(Cell):
                 out = self.batchnorm_fold2_train(out, self.beta, self.gamma, batch_std, batch_mean, running_std)
                 F.control_depend(out, self.assignadd(self.step, self.one))
             else:
-                out = self.batchnorm_fold2_infer(out, self.beta, self.gamma, batch_std, batch_mean, running_std)
+                out = self.batchnorm_fold2_infer(out, self.beta, self.gamma, running_std, running_mean, running_std)
         return out
 
 
