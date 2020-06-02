@@ -238,6 +238,31 @@ FuncGraphPtr ConvertToBpropCut(py::object obj) {
   return bprop_graph;
 }
 
+bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
+  FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Parse resolve function error.";
+    return false;
+  }
+  // if the cell object has specified bprop, it has user-defined bprop function parse and record it
+  if (py::hasattr(obj, "bprop")) {
+    FuncGraphPtr bprop_graph = nullptr;
+    bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
+    if (enable_bprop_debug) {
+      bprop_graph = ConvertToBpropCut(obj);
+    } else {
+      bprop_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
+    }
+    if (bprop_graph != nullptr) {
+      (void)func_graph->transforms().insert(std::make_pair("bprop", FuncGraphTransform(bprop_graph)));
+      (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
+      func_graph->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+    }
+  }
+  *data = func_graph;
+  return true;
+}
+
 bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
   auto obj_type = data_converter::GetObjType(obj);
   MS_LOG(DEBUG) << "Converting the object(" << ((std::string)py::str(obj)) << ") detail type: " << obj_type << " ";
@@ -262,32 +287,12 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
     // Create the namespace for common class instance
     // When the obj is Cell, default parse the 'construct'
     if (data_converter::IsCellInstance(obj)) {
-      FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
-      if (func_graph == nullptr) {
-        MS_LOG(ERROR) << "Parse resolve function error.";
-        return false;
-      }
-      // if the cell object has specified bprop, it has user-defined bprop function parse and record it
-      if (py::hasattr(obj, "bprop")) {
-        FuncGraphPtr bprop_graph = nullptr;
-        bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
-        if (enable_bprop_debug) {
-          bprop_graph = ConvertToBpropCut(obj);
-        } else {
-          bprop_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
-        }
-        if (bprop_graph != nullptr) {
-          (void)func_graph->transforms().insert(std::make_pair("bprop", FuncGraphTransform(bprop_graph)));
-          (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
-          func_graph->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-        }
-      }
-      *data = func_graph;
-    } else {
-      py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-      py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
-      *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+      return ConvertCellObjToFuncGraph(obj, data);
     }
+
+    py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+    py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
+    *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
     return true;
   }
   MS_LOG(ERROR) << "Resolve type is invalid " << ((std::string)py::str(obj));

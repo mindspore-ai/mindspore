@@ -124,6 +124,8 @@ class AnalyzedFuncGraphExporter : public AnfExporter {
 
   void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
   void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
+  void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+                   std::map<AnfNodePtr, int> *const apply_map);
 
  private:
   std::string GetNodeType(const AnfNodePtr &nd) override;
@@ -169,7 +171,7 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
   }
   auto abs = ret->abstract();
   if (abs == nullptr) {
-    return nullptr;
+    return "Undefined";
   }
   auto dtype = abs->BuildType();
   auto shape = abs->BuildShape();
@@ -247,6 +249,51 @@ AnalysisContextPtr AnalyzedFuncGraphExporter::ProcessFuncGraphCall(const CNodePt
   return ctx;
 }
 
+void AnalyzedFuncGraphExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                                            int *idx, std::map<AnfNodePtr, int> *const apply_map) {
+  auto &inputs = cnode->inputs();
+  std::string op_text = GetAnfNodeText(func_graph, inputs[0], *apply_map);
+  // non-return node
+  if (cnode != func_graph->get_return()) {
+    int apply_idx = (*idx)++;
+    (*apply_map)[cnode] = apply_idx;
+    std::string type_info = GetNodeType(cnode);
+    if (type_info == "Undefined") {
+      ofs << "    %" << apply_idx << " = " << op_text << "(";
+    } else {
+      ofs << "    %" << apply_idx << " : " << type_info << " = " << op_text << "(";
+    }
+  } else {
+    ofs << "    " << op_text << "(";
+  }
+
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (i != 1) {
+      ofs << ", ";
+    }
+    AnfNodePtr arg = inputs[i];
+    ofs << GetAnfNodeText(func_graph, arg, *apply_map);
+  }
+  ofs << ")";
+
+  // process function graph call
+  auto ctx = ProcessFuncGraphCall(cnode);
+
+  // output comment
+  OutputStatementComment(ofs, cnode);
+  if (ctx != nullptr) {
+    ofs << " @ctx.addr=" << ctx.get();
+  }
+  ofs << "\n";
+
+  if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+    ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
+        << label_manage::Label(cnode->debug_info()) << "\n";
+  } else {
+    ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+  }
+}
+
 void AnalyzedFuncGraphExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes,
                                              const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
@@ -267,47 +314,7 @@ void AnalyzedFuncGraphExporter::OutputCNodes(std::ofstream &ofs, const std::vect
     }
 
     auto cnode = node->cast<CNodePtr>();
-    auto &inputs = cnode->inputs();
-    std::string op_text = GetAnfNodeText(func_graph, inputs[0], apply_map);
-    // non-return node
-    if (node != func_graph->get_return()) {
-      int apply_idx = idx++;
-      apply_map[node] = apply_idx;
-      std::string type_info = GetNodeType(node);
-      if (type_info == "Undefined") {
-        ofs << "    %" << apply_idx << " = " << op_text << "(";
-      } else {
-        ofs << "    %" << apply_idx << " : " << type_info << " = " << op_text << "(";
-      }
-    } else {
-      ofs << "    " << op_text << "(";
-    }
-
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (i != 1) {
-        ofs << ", ";
-      }
-      AnfNodePtr arg = inputs[i];
-      ofs << GetAnfNodeText(func_graph, arg, apply_map);
-    }
-    ofs << ")";
-
-    // process function graph call
-    auto ctx = ProcessFuncGraphCall(cnode);
-
-    // output comment
-    OutputStatementComment(ofs, cnode);
-    if (ctx != nullptr) {
-      ofs << " @ctx.addr=" << ctx.get();
-    }
-    ofs << "\n";
-
-    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
-      ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
-          << label_manage::Label(cnode->debug_info()) << "\n";
-    } else {
-      ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
-    }
+    OutputCNode(ofs, cnode, func_graph, &idx, &apply_map);
   }
 }
 

@@ -172,6 +172,8 @@ struct AnalysisResult {
   AnalysisContextPtr context;
 };
 
+using EvalTraceRevIter = std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>>::reverse_iterator;
+
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
@@ -222,6 +224,12 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
  private:
+  void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
+  EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
+                                     const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
+                                     bool *continue_flag);
+  EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs);
+
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
   std::unordered_map<AbstractFunctionPtr, EvaluatorPtr> constructors_;

@@ -608,7 +608,7 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "End";
 }
 
-void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *arg_list) {
+void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
   std::size_t size = args.size();
 
   for (std::size_t i = 0; i < size; i++) {
