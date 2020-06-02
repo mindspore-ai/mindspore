@@ -1217,8 +1217,8 @@ class RealDiv(_MathBinaryOp):
     and the type of the scalar is the same as the data type of the tensor.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is the same as 'input_x' or
           a number.
 
     Outputs:
@@ -1253,12 +1253,12 @@ class Div(_MathBinaryOp):
     and the type of the scalar is the same as the data type of the tensor.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is the same as 'input_x' or
           a number.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting, and the data type is the same as 'input_x'.
 
     Raises:
         ValueError: When `input_x` and `input_y` are not the same dtype.
@@ -1275,6 +1275,46 @@ class Div(_MathBinaryOp):
             x = x.asnumpy()
             y = y.asnumpy()
             return Tensor(x / y)
+        return None
+
+
+class DivNoNan(_MathBinaryOp):
+    """
+    Computes a safe divide which returns 0 if the y is zero.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors, the shapes of them could be broadcast,
+    and the data types of them should be same.
+    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
+    and the type of the scalar is the same as the data type of the tensor.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is the same as 'input_x' or
+          a number.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+
+    Raises:
+        ValueError: When `input_x` and `input_y` are not the same dtype.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([0., 0., 0., 2.0, 3.0]), mindspore.float32)
+        >>> div_no_nan = P.DivNoNan()
+        >>> div_no_nan(input_x, input_y)
+        [0., 0., 0., 2.5, 2.0]
+    """
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            with np.errstate(divide='ignore', invalid='ignore'):
+                out = np.true_divide(x, y)
+                out[~np.isfinite(out)] = 0
+            return out
         return None
 
 

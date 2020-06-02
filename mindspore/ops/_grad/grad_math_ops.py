@@ -232,6 +232,21 @@ def get_bprop_div(self):
     return bprop
 
 
+@bprop_getters.register(P.DivNoNan)
+def get_bprop_div_no_nan(self):
+    """Grad definition for `DivNoNan` operation."""
+    div_no_nan_op = P.DivNoNan()
+    neg = P.Neg()
+    mul_op = P.Mul()
+
+    def bprop(x, y, out, dout):
+        bc_x = div_no_nan_op(dout, y)
+        bc_y = neg(mul_op(bc_x, out))
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Floor)
 def get_bprop_floor(self):
     """Grad definition for `floor` operation."""
