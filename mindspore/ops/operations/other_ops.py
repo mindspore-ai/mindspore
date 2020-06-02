@@ -58,6 +58,8 @@ class Assign(PrimitiveWithInfer):
         return variable
 
     def infer_dtype(self, variable, value):
+        args = {"variable": variable, "value": value}
+        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
         return variable
 
 

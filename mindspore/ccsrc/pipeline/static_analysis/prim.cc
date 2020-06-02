@@ -783,7 +783,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     AbstractBasePtr abs = node_conf->GetEvaluatedValue()->abstract();
     AbstractRefPtr ref_abs = abs->cast<AbstractRefPtr>();
     if (ref_abs == nullptr) {
-      MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref.";
+      MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref, but " << abs->ToString();
       return nullptr;
     }
     auto key_abs = ref_abs->ref_key();

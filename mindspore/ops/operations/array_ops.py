@@ -31,7 +31,9 @@ from ...common.tensor import Tensor
 from ..operations.math_ops import _infer_shape_reduce
 from .._utils import get_concat_offset
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
-
+from ..._c_expression import signature_rw as sig_rw
+from ..._c_expression import signature_kind as sig_kind
+from ..._c_expression import signature_dtype as sig_dtype
 
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):
     validator.check_value_type('keep_dims', keep_dims, [bool], prim_name)
@@ -2156,13 +2158,17 @@ class ScatterUpdate(PrimitiveWithInfer):
         >>> input_x = mindspore.Parameter(Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32))
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
-        >>> op = P.ScatterNdUpdate()
+        >>> op = P.ScatterUpdate()
         >>> output = op(input_x, indices, update)
     """
-
+    __mindspore_signature__ = (
+        ('x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
     @prim_attr_register
     def __init__(self, use_locking=True):
-        """Init ScatterNdUpdate"""
+        """Init ScatterUpdate"""
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
@@ -2201,7 +2207,11 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
     """
-
+    __mindspore_signature__ = (
+        ('x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Init ScatterNdUpdate"""

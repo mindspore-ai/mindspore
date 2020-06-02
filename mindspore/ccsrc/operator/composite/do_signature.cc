@@ -47,16 +47,6 @@ const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   return empty;
 }
 
-const std::string GetOpName(const ValuePtr &function) {
-  std::string name = "";
-  if (function->isa<Primitive>()) {
-    name = function->cast<PrimitivePyPtr>()->name();
-  } else if (function->isa<MetaFuncGraph>()) {
-    name = function->cast<MetaFuncGraphPtr>()->name();
-  }
-  return name;
-}
-
 void ProcessDefault(const std::string &func_name, const AbstractBasePtrList &args_spec_list,
                     const std::vector<Signature> &signature, bool has_var, std::vector<AnfNodePtr> *const op_inputs) {
   std::size_t sig_size = signature.size();
@@ -93,7 +83,8 @@ void setMaxType(TypeId *max_type_id, TypeId *max_type, size_t *max_type_number, 
   *max_type_number = type_number;
 }
 
-TypeId GetMaxTypeId(const abstract::AbstractBasePtrList &args_spec_list, std::vector<size_t> indexs) {
+TypeId GetMaxTypeId(const abstract::AbstractBasePtrList &args_spec_list, std::vector<size_t> indexs,
+                    const std::set<size_t> &write_indexs) {
   TypeId max_type_id = kTypeUnknown;
   TypeId max_type = kTypeUnknown;
   size_t max_type_number = 0;
@@ -103,7 +94,12 @@ TypeId GetMaxTypeId(const abstract::AbstractBasePtrList &args_spec_list, std::ve
     TypeId arg_type = kTypeUnknown;
     AbstractBasePtr arg_value = args_spec_list[index];
     if (arg_value->isa<abstract::AbstractRef>()) {
-      arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
+      auto is_write = (write_indexs.find(index) != write_indexs.end());
+      if (is_write) {
+        arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref_origin();
+      } else {
+        arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
+      }
     }
     if (arg_value->isa<abstract::AbstractTensor>()) {
       auto tensor = arg_value->cast<abstract::AbstractTensorPtr>();
@@ -157,7 +153,8 @@ TypeId GetMaxTypeId(const abstract::AbstractBasePtrList &args_spec_list, std::ve
 
 // Get the largest type of index in the same SignatureEnumDType of arguments.
 std::map<SignatureEnumDType, TypeId> GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes,
-                                                 const abstract::AbstractBasePtrList &args_spec_list) {
+                                                 const abstract::AbstractBasePtrList &args_spec_list,
+                                                 const std::set<size_t> &write_indexs) {
   // record index for signature.dtypes of the same type
   // eg. [T, T1, T, T2, T, T1, T3] -> {{T:(0,2,4)}, {T1:(1,5)}, {T2:(3)}, {T3:(6)}}
   std::map<SignatureEnumDType, std::vector<size_t>> type_indexs;
@@ -192,7 +189,7 @@ std::map<SignatureEnumDType, TypeId> GetMaxDtype(const std::vector<SignatureEnum
       (void)dst_type.insert(std::make_pair(type, kTypeUnknown));
       continue;
     }
-    (void)dst_type.insert(std::make_pair(type, GetMaxTypeId(args_spec_list, indexs)));
+    (void)dst_type.insert(std::make_pair(type, GetMaxTypeId(args_spec_list, indexs, write_indexs)));
   }
   return dst_type;
 }
@@ -205,9 +202,9 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
   return NewCNode({cast_node, param, dtype_node}, graph);
 }
 
-void DoAutoCast(const std::vector<Signature> &signature, const abstract::AbstractBasePtrList &args_spec_list,
-                const FuncGraphPtr &graph, std::vector<AnfNodePtr> *const op_inputs,
-                const std::set<size_t> &write_indexs) {
+void DoAutoCast(const std::string &func_name, const std::vector<Signature> &signature,
+                const abstract::AbstractBasePtrList &args_spec_list, const FuncGraphPtr &graph,
+                std::vector<AnfNodePtr> *const op_inputs, const std::set<size_t> &write_indexs) {
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature &sig) { return sig.dtype; });
@@ -216,16 +213,23 @@ void DoAutoCast(const std::vector<Signature> &signature, const abstract::Abstrac
     return;
   }
   // Stat the index of the arguments with the largest type in the same SignatureEnumDType.
-  std::map<SignatureEnumDType, TypeId> dst_type = GetMaxDtype(dtypes, args_spec_list);
+  std::map<SignatureEnumDType, TypeId> dst_type = GetMaxDtype(dtypes, args_spec_list, write_indexs);
   // Identify which arg requires auto cast
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
     auto it = dst_type.find(dtypes[i]);
     if (it == dst_type.end() || it->second == kTypeUnknown) {
       continue;
     }
+    auto rw_it = write_indexs.find(i);
+    auto is_write = (rw_it != write_indexs.end());
+
     AbstractBasePtr arg_value = args_spec_list[i];
     if (arg_value->isa<abstract::AbstractRef>()) {
-      arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
+      if (is_write) {
+        arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref_origin();
+      } else {
+        arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
+      }
     }
     TypeId arg_type_id = kTypeUnknown;
     if (arg_value->isa<abstract::AbstractTensor>()) {
@@ -243,10 +247,9 @@ void DoAutoCast(const std::vector<Signature> &signature, const abstract::Abstrac
     if (it_map == type_map.end()) {
       continue;
     }
-    auto rw_it = write_indexs.find(i);
-    if (rw_it != write_indexs.end()) {
+    if (is_write) {
       if (arg_type_id != it->second) {
-        MS_LOG(EXCEPTION) << "In op '" << GetOpName(graph) << "', argument '" << args_spec_list[i]
+        MS_LOG(EXCEPTION) << "In op '" << func_name << "', argument '" << args_spec_list[i]
                           << "' can not cast type from '" << TypeIdLabel(arg_type_id) << "' to '"
                           << TypeIdLabel(it->second) << "' automatically.";
       }
@@ -299,8 +302,8 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       if (sig == SignatureEnumRW::kRWRead) {
         param = func_graph->NewCNode({NewValueNode(prim::kPrimGetRefValue), param});
       } else if (sig == SignatureEnumRW::kRWWrite) {
+        param = func_graph->NewCNode({NewValueNode(prim::kPrimGetRefOrigin), param});
         write_indexs.insert(i);
-        param = func_graph->NewCNode({NewValueNode(prim::kPrimGetRefKey), param});
       }
       // If sig is SignatureEnumRW::kRWRef, not do anything.
     } else if (sig == SignatureEnumRW::kRWWrite && type->type_id() != kObjectTypeRefKey) {
@@ -310,7 +313,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   }
   // process default
   ProcessDefault(func_name, args_spec_list, signature, has_var, &op_inputs);
-  DoAutoCast(signature, args_spec_list, func_graph, &op_inputs, write_indexs);
+  DoAutoCast(func_name, signature, args_spec_list, func_graph, &op_inputs, write_indexs);
   return func_graph->NewCNode(op_inputs);
 }
 }  // namespace

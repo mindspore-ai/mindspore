@@ -315,7 +315,7 @@ void FunctionBlock::InsertDependItemsBeforeReturn() {
 
   ValueNodePtr make_tuple_op = NewValueNode(prim::kPrimMakeTuple);
   ValueNodePtr depend_op = NewValueNode(prim::kPrimDepend);
-  ValueNodePtr get_refkey_op = NewValueNode(prim::kPrimGetRefKey);
+  ValueNodePtr get_ref_origin_op = NewValueNode(prim::kPrimGetRefOrigin);
   ValueNodePtr stop_gradient_op = NewValueNode(prim::kPrimStopGradient);
   const std::string primitive_name("assign");
   const std::string module_name("mindspore.ops.functional");
@@ -329,8 +329,8 @@ void FunctionBlock::InsertDependItemsBeforeReturn() {
   vec_states.emplace_back(make_tuple_op);
   for (auto &item : state_assign_) {
     auto source = ReadVariable(item.second);
-    auto refkey = func_graph()->NewCNode({get_refkey_op, item.first});
-    auto assign = func_graph()->NewCNode({assign_op, refkey, source});
+    auto origin = func_graph()->NewCNode({get_ref_origin_op, item.first});
+    auto assign = func_graph()->NewCNode({assign_op, origin, source});
     MS_LOG(INFO) << "SetState read " << item.first->ToString() << ", " << item.second;
     vec_states.emplace_back(assign);
   }
