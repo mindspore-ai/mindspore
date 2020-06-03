@@ -104,7 +104,7 @@ def test_AdamWeightDecayDynamicLR():
     _executor.compile(train_network, inputs, label)
 
 
-def test_adam_mindspore_flatten():
+def test_adam_mindspore_with_empty_params():
     net = nn.Flatten()
     with pytest.raises(ValueError, match=r"Optimizer got an empty parameter list"):
         AdamWeightDecay(net.get_parameters())
