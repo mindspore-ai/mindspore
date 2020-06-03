@@ -22,6 +22,7 @@
 #include "pre_activate/common/pass_manager.h"
 #include "pre_activate/common/helper.h"
 #include "pre_activate/pass/communication_op_fusion.h"
+#include "pre_activate/pass/getitem_tuple.h"
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"
@@ -54,6 +55,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
+  pm->AddPass(std::make_shared<opt::GetitemTuple>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
