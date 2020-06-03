@@ -23,41 +23,39 @@ template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerNode::Sort() {
   // Build an inverse map. Basically it means keys[i] should be relocated to keys[inverse[i]];
   slot_allocator alloc(this->alloc_);
-  slot_type *inverse = nullptr;
   try {
-    inverse = alloc.allocate(traits::kInnerSlots);
+    // We use a unique_ptr will custom deleter to ensure the memory will be released when this
+    // function returns.
+    std::unique_ptr<slot_type[], std::function<void(slot_type *)>> memGuard(
+      alloc.allocate(traits::kInnerSlots), [&alloc](slot_type *p) { alloc.deallocate(p, traits::kInnerSlots); });
+    slot_type *inverse = memGuard.get();
+    for (slot_type i = 0; i < slotuse_; i++) {
+      inverse[slot_dir_[i]] = i;
+    }
+    for (slot_type i = 0; i < slotuse_; i++) {
+      while (inverse[i] != i) {
+        slot_type j = inverse[i];
+        slot_type k = inverse[j];
+        // Swap the key
+        std::swap(keys_[j], keys_[i]);
+        // Swap the pointers.
+        if ((j + 1) >= traits::kInnerSlots + 1 || (i + 1) >= traits::kInnerSlots + 1) {
+          return IndexRc::kUnexpectedError;
+        }
+        std::swap(data_[j + 1], data_[i + 1]);
+        // one key in order.
+        inverse[j] = j;
+        // continue to move
+        inverse[i] = k;
+      }
+      slot_dir_[i] = i;
+    }
+    return IndexRc::kOk;
   } catch (std::bad_alloc &e) {
     return IndexRc::kOutOfMemory;
   } catch (std::exception &e) {
     return IndexRc::kUnexpectedError;
   }
-
-  for (slot_type i = 0; i < slotuse_; i++) {
-    inverse[slot_dir_[i]] = i;
-  }
-  for (slot_type i = 0; i < slotuse_; i++) {
-    while (inverse[i] != i) {
-      slot_type j = inverse[i];
-      slot_type k = inverse[j];
-      // Swap the key
-      std::swap(keys_[j], keys_[i]);
-      // Swap the pointers.
-      if ((j + 1) >= traits::kInnerSlots + 1 || (i + 1) >= traits::kInnerSlots + 1) {
-        return IndexRc::kUnexpectedError;
-      }
-      std::swap(data_[j + 1], data_[i + 1]);
-      // one key in order.
-      inverse[j] = j;
-      // continue to move
-      inverse[i] = k;
-    }
-    slot_dir_[i] = i;
-  }
-  if (inverse != nullptr) {
-    alloc.deallocate(inverse, traits::kInnerSlots);
-    inverse = nullptr;
-  }
-  return IndexRc::kOk;
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
@@ -117,41 +115,39 @@ template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::Sort() {
   // Build an inverse map. Basically it means keys[i] should be relocated to keys[inverse[i]];
   slot_allocator alloc(this->alloc_);
-  slot_type *inverse = nullptr;
   try {
-    inverse = alloc.allocate(traits::kLeafSlots);
+    // We use a unique_ptr will custom deleter to ensure the memory will be released when this
+    // function returns.
+    std::unique_ptr<slot_type[], std::function<void(slot_type *)>> memGuard(
+      alloc.allocate(traits::kLeafSlots), [&alloc](slot_type *p) { alloc.deallocate(p, traits::kLeafSlots); });
+    slot_type *inverse = memGuard.get();
+    for (slot_type i = 0; i < slotuse_; i++) {
+      inverse[slot_dir_[i]] = i;
+    }
+    for (slot_type i = 0; i < slotuse_; i++) {
+      while (inverse[i] != i) {
+        slot_type j = inverse[i];
+        slot_type k = inverse[j];
+        // Swap the key
+        if (j >= traits::kLeafSlots || i >= traits::kLeafSlots) {
+          return IndexRc::kUnexpectedError;
+        }
+        std::swap(keys_[j], keys_[i]);
+        // Swap the shared pointers
+        std::swap(data_[j], data_[i]);
+        // one key in order.
+        inverse[j] = j;
+        // continue to move
+        inverse[i] = k;
+      }
+      slot_dir_[i] = i;
+    }
+    return IndexRc::kOk;
   } catch (std::bad_alloc &e) {
     return IndexRc::kOutOfMemory;
   } catch (std::exception &e) {
     return IndexRc::kUnexpectedError;
   }
-
-  for (slot_type i = 0; i < slotuse_; i++) {
-    inverse[slot_dir_[i]] = i;
-  }
-  for (slot_type i = 0; i < slotuse_; i++) {
-    while (inverse[i] != i) {
-      slot_type j = inverse[i];
-      slot_type k = inverse[j];
-      // Swap the key
-      if (j >= traits::kLeafSlots || i >= traits::kLeafSlots) {
-        return IndexRc::kUnexpectedError;
-      }
-      std::swap(keys_[j], keys_[i]);
-      // Swap the shared pointers
-      std::swap(data_[j], data_[i]);
-      // one key in order.
-      inverse[j] = j;
-      // continue to move
-      inverse[i] = k;
-    }
-    slot_dir_[i] = i;
-  }
-  if (inverse != nullptr) {
-    alloc.deallocate(inverse, traits::kLeafSlots);
-    inverse = nullptr;
-  }
-  return IndexRc::kOk;
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
