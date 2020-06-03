@@ -455,6 +455,9 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
     def _input_to_factor(img, size):
         img_width, img_height = img.size
         height, width = size
+        if height > img_height or width > img_width:
+            raise ValueError("Crop size {} is larger than input image size {}".format(size, (img_height, img_width)))
+
         if width == img_width and height == img_height:
             return 0, 0, img_height, img_width
 
