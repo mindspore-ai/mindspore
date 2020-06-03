@@ -132,7 +132,6 @@ __all__ = [
     'StridedSlice',
     'ReduceSum',
     'ReduceMean',
-    'Range',
     'LayerNorm',
     'EmbeddingLookup',
     'Rank',
