@@ -40,6 +40,7 @@ class LstmCPUKernel : public MKLCPUKernel {
   int seq_len_;
   int num_directions_;
   bool bidirectional_;
+  bool has_bias_;
 };
 
 MS_REG_CPU_KERNEL(LSTM,

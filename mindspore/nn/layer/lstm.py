@@ -15,7 +15,7 @@
 """lstm"""
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
-from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
 from mindspore._checkparam import Validator as validator
 from mindspore import context
@@ -149,21 +149,28 @@ class LSTM(Cell):
                 weight_size += increment_size * num_directions
             self.weight = Parameter(initializer(0.0, [weight_size, 1, 1]), name='weight')
         else:
-            layer = []
-            layer.append(nn.LSTMCell(input_size=self.input_size,
-                                     hidden_size=self.hidden_size,
-                                     layer_index=0,
-                                     has_bias=self.has_bias,
-                                     bidirectional=self.bidirectional,
-                                     dropout=self.dropout))
-            for i in range(num_layers - 1):
-                layer.append(nn.LSTMCell(input_size=self.hidden_size * num_directions,
-                                         hidden_size=self.hidden_size,
-                                         layer_index=i + 1,
-                                         has_bias=self.has_bias,
-                                         bidirectional=self.bidirectional,
-                                         dropout=self.dropout))
-            self.lstms = layer
+            input_size_list = []
+            input_size_list.append(self.input_size)
+            for i in range(self.num_layers - 1):
+                input_size_list.append(self.hidden_size * num_directions)
+            weights = []
+            layers = []
+            bias_size = 0 if not self.has_bias else num_directions * self.hidden_size * 4
+            for i in range(num_layers):
+                weight_size = (input_size_list[i] + self.hidden_size) * num_directions * self.hidden_size * 4
+                w_np = np.ones([weight_size, 1, 1]).astype(np.float32) * 0.01
+                if has_bias:
+                    bias_np = np.zeros([bias_size, 1, 1]).astype(np.float32)
+                    w_np = np.concatenate([w_np, bias_np], axis=0)
+                weights.append(Parameter(initializer(Tensor(w_np), w_np.shape), name='weight' + str(i)))
+
+                layers.append(nn.LSTMCell(input_size=input_size_list[i],
+                                          hidden_size=self.hidden_size,
+                                          has_bias=self.has_bias,
+                                          bidirectional=self.bidirectional,
+                                          dropout=self.dropout))
+            self.lstms = layers
+            self.weight = ParameterTuple(tuple(weights))
         self.fill = P.Fill()
         self.shape = P.Shape()
 
@@ -177,12 +184,12 @@ class LSTM(Cell):
                 output = self.transpose2(output, (1, 0, 2))
             return (output, (h, c))
         h, c = hx
-        output, hn, cn, _, _ = self.lstms[0](x, h[0], c[0])
+        output, hn, cn, _, _ = self.lstms[0](x, h[0], c[0], self.weight[0])
         for i in range(1, self.num_layers):
-            output, hn, cn, _, _ = self.lstms[i](output, h[i], c[i])
+            output, hn, cn, _, _ = self.lstms[i](output, h[i], c[i], self.weight[i])
         if self.batch_first:
             output = self.transpose2(output, (1, 0, 2))
-        return output, hn, cn, _, _
+        return (output, (hn, cn))
 
 
 class LSTMCell(Cell):
@@ -271,11 +278,9 @@ class LSTMCell(Cell):
         >>> output, hn, cn, _, _ = net(input, h0, c0)
     """
 
-
     def __init__(self,
                  input_size,
                  hidden_size,
-                 layer_index=0,
                  has_bias=True,
                  batch_first=False,
                  dropout=0,
@@ -283,8 +288,6 @@ class LSTMCell(Cell):
         super(LSTMCell, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.num_layers = 1
-        self.layer_index = layer_index
         self.has_bias = has_bias
         self.batch_first = validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
         self.dropout = float(dropout)
@@ -295,16 +298,7 @@ class LSTMCell(Cell):
         if self.batch_first:
             self.transpose1 = P.Transpose()
             self.transpose2 = P.Transpose()
-        w_np = np.ones([(self.input_size + self.hidden_size) * self.num_directions * self.hidden_size * 4, 1]).astype(
-            np.float32) * 0.01
-        if has_bias:
-            b_np = np.ones([self.num_directions * self.hidden_size * 4, 1]).astype(
-                np.float32) * 0.01
-        else:
-            b_np = np.zeros([self.num_directions * self.hidden_size * 4, 1]).astype(
-                np.float32) * 0.01
-        wb_np = np.concatenate((w_np, b_np), axis=0).reshape([-1, 1, 1])
-        self.w = Parameter(initializer(Tensor(wb_np), wb_np.shape), name='w' + str(self.layer_index))
+
         self.lstm = P.LSTM(input_size=self.input_size,
                            hidden_size=self.hidden_size,
                            num_layers=1,
@@ -312,10 +306,10 @@ class LSTMCell(Cell):
                            bidirectional=self.bidirectional,
                            dropout=self.dropout)
 
-    def construct(self, x, h, c):
+    def construct(self, x, h, c, w):
         if self.batch_first:
             x = self.transpose1(x, (1, 0, 2))
-        output, hn, cn, _, _ = self.lstm(x, h, c, self.w)
+        output, hn, cn, _, _ = self.lstm(x, h, c, w)
         if self.batch_first:
             output = self.transpose2(output, (1, 0, 2))
         return output, hn, cn, _, _
