@@ -47,8 +47,7 @@ CNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const CNodePtr 
       convert_inputs.push_back(input_node);
     }
   }
-  cnode_ptr->set_inputs(convert_inputs);
-  return cnode_ptr;
+  return graph->NewCNode(convert_inputs);
 }
 }  // namespace
 
