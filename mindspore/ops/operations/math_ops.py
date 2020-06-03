@@ -1401,6 +1401,35 @@ class FloorMod(_MathBinaryOp):
     """
 
 
+class Ceil(PrimitiveWithInfer):
+    """
+    Round a tensor up to the closest integer element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor. Its element data type must be float.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
+        >>> ceil_op = P.Ceil()
+        >>> ceil_op(input_x)
+        [2.0, 3.0, -1.0]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({"x": x_dtype}, mstype.float_type, self.name)
+        return x_dtype
+
+
 class Acosh(PrimitiveWithInfer):
     """
     Compute inverse hyperbolic cosine of x element-wise.
