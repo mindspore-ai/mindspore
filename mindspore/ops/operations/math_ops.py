@@ -179,7 +179,7 @@ class AssignAdd(PrimitiveWithInfer):
         return value
 
     def infer_dtype(self, variable, value):
-        args = {"value": value}
+        args = {"variable": variable, "value": value}
         validator.check_scalar_or_tensor_type_same(args, mstype.number_type, self.name)
         return value
 
@@ -222,7 +222,7 @@ class AssignSub(PrimitiveWithInfer):
         return value
 
     def infer_dtype(self, variable, value):
-        args = {"value": value}
+        args = {"variable": variable, "value": value}
         validator.check_scalar_or_tensor_type_same(args, mstype.number_type, self.name)
         return value
 
