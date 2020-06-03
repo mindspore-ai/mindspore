@@ -233,6 +233,9 @@ from .atan_grad import _atan_grad_tbe
 from .atanh import _atanh_tbe
 from .cosh import _cosh_tbe
 from .sinh import _sinh_tbe
+from .inv import _inv_tbe
+from .inv_grad import _inv_grad_tbe
+from .invert import _invert_tbe
 from .basic_lstm_cell import _basic_lstm_cell_tbe
 from .basic_lstm_cell_c_state_grad import _basic_lstm_cell_c_state_grad_tbe
 from .basic_lstm_cell_weight_grad import _basic_lstm_cell_weight_grad_tbe

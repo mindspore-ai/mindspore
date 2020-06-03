@@ -1025,3 +1025,14 @@ def get_bprop_atanh(self):
         dx = div(1, tmp) * dout
         return (dx,)
     return bprop
+
+
+@bprop_getters.register(P.Inv)
+def get_bprop_inv(self):
+    """Grad definition for 'Inv' operation"""
+    inv_grad = G.InvGrad()
+
+    def bprop(x, out, dout):
+        dx = inv_grad(x, dout)
+        return (dx,)
+    return bprop
