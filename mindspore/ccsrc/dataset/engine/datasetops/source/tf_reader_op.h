@@ -335,7 +335,7 @@ class TFReaderOp : public ParallelOp {
 
   // Reads one row of data from a tf file and creates a schema based on that row
   // @return Status - the error code returned.
-  Status CreateSchema(const std::string tf_file, const std::vector<std::string> &columns_to_load);
+  Status CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load);
 
   // Meant to be called async. Will read files in the range [begin, end) and return the total rows
   // @param filenames - a list of tf data filenames.

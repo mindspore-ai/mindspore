@@ -15,14 +15,14 @@
  */
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 
-#include <cmath>
-#include <condition_variable>
+#include <algorithm>
 #include <future>
 #include <iomanip>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <utility>
-#include <unordered_map>
+#include <vector>
 
 #include "proto/example.pb.h"
 #include "./securec.h"
@@ -905,7 +905,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   return Status::OK();
 }
 
-Status TFReaderOp::CreateSchema(const std::string tf_file, const std::vector<std::string> &columns_to_load) {
+Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load) {
   std::ifstream reader;
   reader.open(tf_file);
 
@@ -926,12 +926,14 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, const std::vector<std
 
   const dataengine::Features &example_features = example.features();
   const google::protobuf::Map<std::string, dataengine::Feature> &feature_map = example_features.feature();
-  std::vector<std::string> columns = columns_to_load;
 
-  if (columns_to_load.empty())
-    (void)std::transform(feature_map.begin(), feature_map.end(), std::back_inserter(columns),
+  if (columns_to_load.empty()) {
+    (void)std::transform(feature_map.begin(), feature_map.end(), std::back_inserter(columns_to_load),
                          [](const auto &it) -> std::string { return it.first; });
-  for (const auto &curr_col_name : columns) {
+    std::sort(columns_to_load.begin(), columns_to_load.end());
+  }
+
+  for (const auto &curr_col_name : columns_to_load) {
     auto it = feature_map.find(curr_col_name);
     if (it == feature_map.end()) {
       RETURN_STATUS_UNEXPECTED("Failed to find column " + curr_col_name);
