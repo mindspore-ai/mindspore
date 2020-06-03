@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#include "pre_activate/ascend/ir_fission/batch_norm_bert_fission.h"
+#include "pre_activate/ascend/ir_fission/single_batch_norm_fission.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
+#include "debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace opt {
-class TestHWBatchNormBertFission : public BackendCommon {
+class TestHWSingleBatchNormFission : public BackendCommon {
  public:
-  TestHWBatchNormBertFission() : get_py_fun_("gtest_input.pre_activate.batch_norm_bert_fission_test", true) {}
-  ~TestHWBatchNormBertFission() override = default;
+  TestHWSingleBatchNormFission() : get_py_fun_("gtest_input.pre_activate.single_batch_norm_fission_test", true) {}
+  ~TestHWSingleBatchNormFission() override = default;
 
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_fission) {
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batch_norm_bert_fission", "before");
+TEST_F(TestHWSingleBatchNormFission, test_fission) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_single_batch_norm_fission", "before");
   EXPECT_NE(g, nullptr);
   std::vector<int> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -40,36 +41,19 @@ TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_fission) {
     args_spec_list.push_back(y_abstract);
   }
   auto kg = GetKernelGraph(g, args_spec_list);
-  auto ret = kg->get_return();
-  EXPECT_NE(ret, nullptr);
-  auto make_tuple0 = ret->input(1);
-  EXPECT_NE(make_tuple0, nullptr);
-  auto tuple_getitem0 = make_tuple0->cast<CNodePtr>()->input(1);
-  EXPECT_NE(tuple_getitem0, nullptr);
-  auto make_tuple1 = tuple_getitem0->cast<CNodePtr>()->input(1);
-  EXPECT_NE(make_tuple1, nullptr);
-  auto tuple_getitem1 = make_tuple1->cast<CNodePtr>()->input(1);
-  EXPECT_NE(tuple_getitem1, nullptr);
-  auto bn = tuple_getitem1->cast<CNodePtr>()->input(1);
-  EXPECT_NE(bn, nullptr);
-  auto bn_cnode = bn->cast<CNodePtr>();
-  EXPECT_NE(bn_cnode, nullptr);
-  auto inputs = bn_cnode->inputs();
-  std::vector<AnfNodePtr> new_inputs(inputs.begin(), inputs.begin() + 4);
-  bn_cnode->set_inputs(new_inputs);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BatchNormBertFission>());
+  pm->AddPass(std::make_shared<opt::SingleBatchNormFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_batch_norm_bert_fission", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_single_batch_norm_fission", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_no_fission) {
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batch_norm_bert_fission", "before");
+TEST_F(TestHWSingleBatchNormFission, test_no_fission) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_single_batch_norm_fission", "before");
   EXPECT_NE(g, nullptr);
   std::vector<int> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -84,7 +68,7 @@ TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_no_fission) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BatchNormBertFission>());
+  pm->AddPass(std::make_shared<opt::SingleBatchNormFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 

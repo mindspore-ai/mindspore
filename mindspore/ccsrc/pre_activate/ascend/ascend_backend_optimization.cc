@@ -21,6 +21,7 @@
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
 #include "pre_activate/ascend/ir_fission/batch_norm_grad_split.h"
 #include "pre_activate/ascend/ir_fission/batch_norm_bert_fission.h"
+#include "pre_activate/ascend/ir_fission/single_batch_norm_fission.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
 #include "pre_activate/pass/communication_op_fusion.h"
@@ -240,6 +241,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
+    ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
   }
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());

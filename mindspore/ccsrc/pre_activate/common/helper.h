@@ -65,6 +65,7 @@ constexpr size_t kBNGrad3OutputNum = 1;
 constexpr size_t kBNTrainingReduceOutputNum = 2;
 constexpr size_t kBNTrainingUpdateOutputNum = 5;
 constexpr size_t kBNTrainingUpdateV2OutputNum = 3;
+constexpr size_t kBNTrainingUpdateV3OutputNum = 5;
 constexpr size_t kBNTrainingUpdateGradOutputNum = 2;
 
 constexpr size_t kSingleOutputNum = 1;
@@ -176,6 +177,9 @@ bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &va
 
 // Get anf_node from equiv by var_node
 AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
+
+// Compare tuple getitem's index, return bool[n1's index < n2's index]
+bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
