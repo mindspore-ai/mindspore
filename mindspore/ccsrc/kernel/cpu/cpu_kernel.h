@@ -78,6 +78,7 @@ class CPUKernelUtils {
   static void ExpandDimsTo4(std::vector<size_t> *shape);
   static size_t CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3);
   static size_t GetElementNumOnAxis(const std::vector<size_t> &shape, int axis);
+  static void GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num);
 };
 }  // namespace kernel
 }  // namespace mindspore

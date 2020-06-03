@@ -33,12 +33,17 @@ class SliceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  bool CanCopyMemoryOnAxis(size_t dim) const;
+  void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
+                        const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num) const;
+  void CheckParam(const CNodePtr &kernel_node) const;
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
   std::vector<size_t> input_shape_;
+  std::vector<size_t> input_element_num_;
   std::vector<size_t> output_shape_;
+  std::vector<size_t> output_element_num_;
 };
 
 MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

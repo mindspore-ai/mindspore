@@ -66,5 +66,15 @@ size_t CPUKernelUtils::GetElementNumOnAxis(const std::vector<size_t> &shape, int
   }
   return result;
 }
+
+void CPUKernelUtils::GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num) {
+  size_t accumulation = 1;
+  element_num->emplace_back(1);
+  for (size_t i = shape.size() - 1; i > 0; --i) {
+    accumulation *= shape[i];
+    element_num->emplace_back(accumulation);
+  }
+  std::reverse(element_num->begin(), element_num->end());
+}
 }  // namespace kernel
 }  // namespace mindspore
