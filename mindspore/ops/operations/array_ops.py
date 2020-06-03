@@ -614,7 +614,7 @@ class EmbeddingLookup(PrimitiveWithInfer):
         self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=['params', 'indices', 'axis', 'offset', 'reduce_scatter_flag', 'split_num'],
                                 outputs=['output'])
-        self.add_prim_attr('target', 'CPU')
+        self.add_prim_attr('primitive_target', 'CPU')
 
     def __infer__(self, params, indices, axis, offset, reduce_scatter_flag=False, split_num=2):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
