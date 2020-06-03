@@ -587,9 +587,7 @@ bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
   return false;
 }
 
-void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf_node) {
-  MS_EXCEPTION_IF_NULL(old_anf_node);
-  MS_EXCEPTION_IF_NULL(new_anf_node);
+void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node) {
   MS_EXCEPTION_IF_NULL(inputs_);
   auto it = node_output_edges_.find(old_anf_node);
   if (it != node_output_edges_.end()) {
@@ -604,16 +602,16 @@ void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf
         continue;
       }
       for (size_t i = 1; i < output_node_inputs.size(); i++) {
-        if (output_node_inputs[i] == old_anf_node) {
+        if (output_node_inputs[i] == old_anf_node.get()) {
           output_cnode->set_input(i, new_anf_node);
         }
       }
       // update graph inputs
       for (size_t i = 0; i < inputs_->size(); i++) {
-        if ((*inputs_)[i] == old_anf_node) {
+        if ((*inputs_)[i] == old_anf_node.get()) {
           MS_LOG(INFO) << "Replace input of graph:" << graph_id_ << ", old graph input: " << old_anf_node->DebugString()
                        << ",new graph input:" << new_anf_node->DebugString();
-          (*inputs_)[i] = new_anf_node;
+          (*inputs_)[i] = new_anf_node.get();
           break;
         }
       }
@@ -621,7 +619,7 @@ void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf
     // update front to backend map
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
     // update output depend relations
-    node_output_edges_[new_anf_node] = it->second;
+    node_output_edges_[new_anf_node.get()] = it->second;
     (void)node_output_edges_.erase(old_anf_node);
   }
   // update graph inputs in child graph
@@ -633,7 +631,7 @@ void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf
       MS_LOG(WARNING) << new_anf_node->DebugString() << " already exist in real inputs, will be rewrited.";
       iter->second = it_real_inputs->second;
     } else {
-      real_inputs_[new_anf_node] = it_real_inputs->second;
+      real_inputs_[new_anf_node.get()] = it_real_inputs->second;
     }
     // erase old parameter in map
     real_inputs_.erase(old_anf_node);
@@ -697,7 +695,6 @@ std::set<AnfNodePtr> KernelGraph::GetRealInput(const AnfNodePtr &parameter) {
 void KernelGraph::UpdateCallRealInput() {
   MS_LOG(INFO) << "Update graph id: " << graph_id_;
   std::map<AnfNodePtr, std::set<AnfNodePtr>> real_inputs_map;
-  std::vector<std::pair<AnfNodePtr, AnfNodePtr>> replace_list;
   for (auto &it : real_inputs_) {
     auto parameter = it.first;
     MS_EXCEPTION_IF_NULL(parameter);
@@ -722,15 +719,8 @@ void KernelGraph::UpdateCallRealInput() {
       MS_LOG(INFO) << "paramter: " << parameter->DebugString()
                    << " insert real input:" << new_real_input->DebugString();
       (void)real_inputs.insert(new_real_input);
-      if (new_real_input->isa<Parameter>()) {
-        replace_list.emplace_back(parameter, new_real_input);
-        parameter = new_real_input;
-      }
     }
     real_inputs_map[parameter] = real_inputs;
-  }
-  for (auto [parameter, arg] : replace_list) {
-    ReplaceNode(parameter, arg);
   }
   real_inputs_ = real_inputs_map;
 }
