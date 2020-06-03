@@ -764,6 +764,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[24, 4, 13, 9], [1, 5, 10, 8]]).astype(np.int16))],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('HistogramFixedWidth', {
+        'block': P.HistogramFixedWidth(5),
+        'desc_inputs': [Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mstype.float16), Tensor([0.0, 5.0], mstype.float16)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_nn_ops = [
@@ -1202,6 +1207,11 @@ test_case_nn_ops = [
                         Tensor([[0.2, 0.2], [0.1, 0.4]], mstype.float32),
                         Tensor([[0.5, 0.4], [0.6, 0.1]], mstype.float32), Tensor([1, 1], mstype.int32)],
         'desc_bprop': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32)],
+        'skip': ['backward']}),
+    ('DataFormatDimMap', {
+        'block': P.DataFormatDimMap(),
+        'desc_inputs': [Tensor([0, 1, 2, 3], mstype.int32)],
+        'desc_bprop': [],
         'skip': ['backward']}),
 ]
 

@@ -1613,6 +1613,45 @@ class L2Loss(PrimitiveWithInfer):
         return x_type
 
 
+class DataFormatDimMap(PrimitiveWithInfer):
+    """
+    Returns the dimension index in the destination data format given the one in the source data format.
+
+    Args:
+        src_format (string): An optional value for source data format. Default: 'NHWC'.
+        dst_format (string): An optional value for destination data format. Default: 'NCHW'.
+
+    Inputs:
+        - **input_x** (Tensor) - A Tensor with each element as a dimension index in source data format.
+        Must be in the range [-4, 4). It's type is int32.
+
+    Outputs:
+        Tensor, has the same type as the `input_x`.
+
+    Examples:
+        >>> x = Tensor([0, 1, 2, 3], mindspore.int32)
+        >>> dfdm = P.DataFormatDimMap()
+        >>> dfdm(x)
+        [0 3 1 2]
+    """
+
+    @prim_attr_register
+    def __init__(self, src_format='NHWC', dst_format='NCHW'):
+        valid_values = ['NHWC', 'NCHW']
+        self.src_format = validator.check_string("src_format", src_format, valid_values, self.name)
+        self.dst_format = validator.check_string("dst_format", dst_format, valid_values, self.name)
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        valid_types = [mstype.int32]
+        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
+        return x_type
+
+
 class SGD(PrimitiveWithInfer):
     """
     Computes stochastic gradient descent (optionally with momentum).
@@ -3735,7 +3774,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         validator.check_integer("b rank", len(b_shape), 4, Rel.EQ, self.name)
         validator.check("w_shape[0]", w_shape[0], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
         validator.check("w_shape[1]", w_shape[1], "x_shape[1]+h_shape[1]", x_shape[1] + h_shape[1], Rel.EQ, self.name)
-        validator.check("b_shape[0]", b_shape[0], "4*h_shape[1]", 4*h_shape[1], Rel.EQ, self.name)
+        validator.check("b_shape[0]", b_shape[0], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
         ct_shape = c_shape
         ht_shape = h_shape
         it_shape = h_shape

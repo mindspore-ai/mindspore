@@ -1043,6 +1043,50 @@ class Expm1(PrimitiveWithInfer):
         return x_type
 
 
+class HistogramFixedWidth(PrimitiveWithInfer):
+    """
+    Returns a rank 1 histogram counting the number of entries in values that fall into every bin. The bins are equal
+    width and determined by the arguments range and nbins.
+
+    Args:
+        dtype (string): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
+        nbins (Tensor): Number of histogram bins, the type is int32.
+
+    Inputs:
+        - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
+        - **range** (Tensor) - Must have the same type as x. Shape [2] Tensor of same dtype as x.
+        x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
+
+    Outputs:
+        Tensor, the type is int32.
+
+    Examples:
+        >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
+        >>> range = Tensor([0.0, 5.0], mindspore.float16)
+        >>> hist = P.HistogramFixedWidth(5)
+        >>> hist(x, range)
+        [2 1 1 0 2]
+    """
+
+    @prim_attr_register
+    def __init__(self, nbins, dtype='int32'):
+        self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
+        valid_values = ['int32', 'int64']
+        self.dtype = validator.check_string("dtype", dtype, valid_values, self.name)
+        self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
+
+    def infer_shape(self, x_shape, range_shape):
+        return (self.nbins,)
+
+    def infer_dtype(self, x_dtype, range_dtype):
+        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
+        valid_types = (mstype.float16, mstype.float32, mstype.int32)
+        validator.check_tensor_type_same({"x": x_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"range": range_dtype}, valid_types, self.name)
+        y_dtype = mstype.int32
+        return y_dtype
+
+
 class Log(PrimitiveWithInfer):
     """
     Returns the natural logarithm of a tensor element-wise.
