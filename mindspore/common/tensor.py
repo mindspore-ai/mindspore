@@ -71,19 +71,18 @@ class Tensor(Tensor_):
         return str(self.__str__())
 
     def __add__(self, other):
-        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __eq__(self, other):
         if not isinstance(other, Tensor):
             return False
-        return Tensor(np.array(self.asnumpy() == other.asnumpy()))
+        return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
         if not isinstance(other, Tensor):
             return True
-        return Tensor(np.array(self.asnumpy() != other.asnumpy()))
+        return tensor_operator_registry.get('__ne__')(self, other)
 
     def __hash__(self):
         return hash(id(self))
@@ -93,7 +92,8 @@ class Tensor(Tensor_):
         return out
 
     def __neg__(self):
-        return Tensor(-self.asnumpy())
+        out = tensor_operator_registry.get('__neg__')(self)
+        return out
 
     def __iadd__(self, other):
         out = self.__add__(other)
@@ -120,7 +120,7 @@ class Tensor(Tensor_):
         return out
 
     def __sub__(self, other):
-        out = self.__add__(-other)
+        out = tensor_operator_registry.get('__sub__')(self, other)
         return out
 
     def __isub__(self, other):
@@ -128,8 +128,30 @@ class Tensor(Tensor_):
         return out
 
     def __rsub__(self, other):
-        out = tensor_operator_registry.get('__add__')(other, Tensor(-self.asnumpy()))
+        out = tensor_operator_registry.get('__sub__')(other, self)
         return out
+
+    def __lt__(self, other):
+        out = tensor_operator_registry.get('__lt__')(self, other)
+        return out
+
+    def __le__(self, other):
+        out = tensor_operator_registry.get('__le__')(self, other)
+        return out
+
+    def __gt__(self, other):
+        out = tensor_operator_registry.get('__gt__')(self, other)
+        return out
+
+    def __ge__(self, other):
+        out = tensor_operator_registry.get('__ge__')(self, other)
+        return out
+
+    def __len__(self):
+        out = tensor_operator_registry.get('__shape__')(self)
+        if not out:
+            return 1
+        return out[0]
 
     def __str__(self):
         if self.dtype() == mstype.type_none:

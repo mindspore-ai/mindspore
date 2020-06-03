@@ -531,6 +531,11 @@ py::tuple RunOp(const py::args &args) {
       value_ret[0] = output["value"];
       return value_ret;
     }
+    if (py::hasattr(op_exec_info->py_primitive->GetPyObj(), "const_value")) {
+      py::tuple value_ret(1);
+      value_ret[0] = "";
+      return value_ret;
+    }
   }
   MS_LOG(INFO) << "RunOp start, op name is: " << op_exec_info->op_name;
   mindspore::parse::python_adapter::set_python_env_flag(true);

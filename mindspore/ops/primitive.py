@@ -310,6 +310,7 @@ def constexpr(fn=None, get_instance=True, name=None):
             def __init__(self):
                 op_name = name if name else fn.__name__
                 PrimitiveWithInfer.__init__(self, op_name)
+                self.const_value = True
 
             def infer_value(self, *args):
                 return fn(*args)
