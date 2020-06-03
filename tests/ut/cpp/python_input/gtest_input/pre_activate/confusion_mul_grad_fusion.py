@@ -15,12 +15,13 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
+addn = P.AddN()
 mul = P.Mul()
 reduce_sum = P.ReduceSum()
 confusion_mul_grad = Primitive('ConfusionMulGrad')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
-axis = 2
+axis = 1
 
 
 class FnDict:
@@ -39,8 +40,10 @@ def test_confusion_mul_grad_fusion(tag):
 
     @fns
     def before(input1, input2, input3):
-        output1 = mul(input1, input2)
-        mul1 = mul(input3, input2)
+        addn0 = addn((input2, input2))
+
+        output1 = mul(input1, addn0)
+        mul1 = mul(input3, addn0)
         # input axis will be convert to attr in step ConstructKernelGraph
         output2 = reduce_sum(mul1, axis)
         res = make_tuple(output1, output2)
@@ -48,7 +51,8 @@ def test_confusion_mul_grad_fusion(tag):
 
     @fns
     def after(input1, input2, input3):
-        res = confusion_mul_grad(input1, input2, input3)
+        addn0 = addn(input2, input2)
+        res = confusion_mul_grad(input1, addn0, input3)
         item0 = tuple_getitem(res, 0)
         item1 = tuple_getitem(res, 1)
         res = make_tuple(item0, item1)
