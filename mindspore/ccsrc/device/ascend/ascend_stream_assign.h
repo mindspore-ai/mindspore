@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <set>
 #include <unordered_set>
 #include "runtime/base.h"
 #include "runtime/rt_model.h"
@@ -97,6 +98,7 @@ class AscendStreamAssign {
   void InsertSendRecvForIndependent(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void InsertSendRecvForHcomParallel(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void GetNeedActiveStreams(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void ReorderIndependentOrders(const std::shared_ptr<session::KernelGraph> &graph_ptr);
 
   uint32_t total_common_stream_num_{0};
   uint32_t total_independ_stream_num_{0};
