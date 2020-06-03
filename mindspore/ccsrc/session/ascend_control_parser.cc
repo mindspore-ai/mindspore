@@ -18,6 +18,7 @@
 #include <memory>
 #include "session/ascend_control_parser.h"
 #include "session/anf_runtime_algorithm.h"
+#include "utils/union_find_set.h"
 
 static constexpr size_t kCNodePrim = 0;
 static constexpr size_t kCNodeCallArg = 1;
@@ -57,6 +58,110 @@ void AscendControlParser::ChildGraphDataAssign(const std::map<uint32_t, KernelGr
   }
 }
 
+static void InitUnionFindSet(NotNull<KernelGraphPtr> kg, const NotNull<UnionFindSet<AnfNodePtr> *> union_find_set,
+                             const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(kg.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(kg.get());
+
+  const std::map<AnfNodePtr, std::set<AnfNodePtr>> &real_inputs = kg->real_inputs();
+  for (auto &iter : real_inputs) {
+    auto &para = iter.first;
+    if (para->isa<Parameter>()) {
+      union_find_set->Add(para);
+    }
+    for (auto &arg : iter.second) {
+      if (!arg->isa<Parameter>()) {
+        continue;
+      }
+      union_find_set->Add(arg);
+    }
+  }
+  for (auto &child : kg->child_graph_order()) {
+    InitUnionFindSet(NOT_NULL(child), union_find_set, memo);
+  }
+}
+
+static void UnionParentParameter(NotNull<KernelGraphPtr> kg, const NotNull<UnionFindSet<AnfNodePtr> *> union_find_set,
+                                 const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(kg.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(kg.get());
+  const std::map<AnfNodePtr, std::set<AnfNodePtr>> &real_inputs = kg->real_inputs();
+  for (auto &iter : real_inputs) {
+    auto &para = iter.first;
+    for (auto &arg : iter.second) {
+      if (!arg->isa<Parameter>()) {
+        continue;
+      }
+      union_find_set->Union(arg, para);
+    }
+  }
+  for (auto &child : kg->child_graph_order()) {
+    UnionParentParameter(NOT_NULL(child), union_find_set, memo);
+  }
+}
+
+static UnionFindSet<AnfNodePtr> MakeUnionFindSet(NotNull<KernelGraphPtr> root_kg) {
+  UnionFindSet<AnfNodePtr> result;
+  std::set<KernelGraphPtr> memo;
+  InitUnionFindSet(root_kg, NOT_NULL(&result), NOT_NULL(&memo));
+  memo.clear();
+  UnionParentParameter(root_kg, NOT_NULL(&result), NOT_NULL(&memo));
+  return result;
+}
+
+static void RecursiveReplaceNode(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> main_parameter,
+                                 const std::set<AnfNodePtr> &parameter_reuse_set,
+                                 const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (parameter_reuse_set.empty()) {
+    MS_LOG(EXCEPTION) << "parameter_reuse_set is empty.";
+  }
+  if (memo->find(kg.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(kg.get());
+
+  for (auto &para : parameter_reuse_set) {
+    if (para == main_parameter.get()) {
+      continue;
+    }
+    MS_LOG(INFO) << "Replace " << para->DebugString() << " of graph " << AnfAlgo::GetGraphId(para.get()) << " to "
+                 << main_parameter->DebugString() << " of graph " << AnfAlgo::GetGraphId(main_parameter.get().get());
+    kg->ReplaceNode(NOT_NULL(para), main_parameter);
+  }
+
+  for (auto &child : kg->child_graph_order()) {
+    RecursiveReplaceNode(NOT_NULL(child), main_parameter, parameter_reuse_set, memo);
+  }
+}
+
+static void ReuseParameter(NotNull<KernelGraphPtr> root_kg, NotNull<UnionFindSet<AnfNodePtr> *> parameter_set) {
+  auto parameter_reuse_sets = parameter_set->GetSets();
+  for (auto &[key, parameter_reuse_set] : parameter_reuse_sets) {
+    if (parameter_reuse_set.size() <= 1) {
+      continue;
+    }
+
+    AnfNodePtr main_parameter = key;
+    std::set<AnfNodePtr> root_inputs_set;
+    const auto &root_inputs_vector = root_kg->inputs();
+    root_inputs_set.insert(root_inputs_vector.begin(), root_inputs_vector.end());
+    for (auto &node : parameter_reuse_set) {
+      if (root_inputs_set.find(node) == root_inputs_set.end()) {
+        continue;
+      }
+
+      main_parameter = node;
+    }
+
+    std::set<KernelGraphPtr> memo;
+    RecursiveReplaceNode(root_kg, NOT_NULL(main_parameter), parameter_reuse_set, NOT_NULL(&memo));
+  }
+}
+
 void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
   std::set<KernelGraphPtr> memo;
   ProcessKernelGraph(kg, nullptr, nullptr, NOT_NULL(&memo));
@@ -68,6 +173,11 @@ void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
     }
     graph_id_map[g->graph_id()] = g;
   }
+  // Make UnionFindSet
+  UnionFindSet<AnfNodePtr> parameter_set = MakeUnionFindSet(kg);
+  // Reuse Parameter
+  ReuseParameter(kg, NOT_NULL(&parameter_set));
+  // Insert Assign
   ChildGraphDataAssign(graph_id_map);
 }
 
@@ -322,29 +432,6 @@ void AscendControlParser::InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNul
   assign_node->set_abstract(to->abstract());
   // append the assign at the end of from graph
   InsertDependToGraph(kg, NOT_NULL(assign_node));
-}
-
-void AscendControlParser::LinkArgsToParam(NotNull<KernelGraphPtr> to_graph, NotNull<KernelGraphPtr> target_graph,
-                                          NotNull<AnfNodePtr> arg, NotNull<AnfNodePtr> param) {
-  if (IsPrimitiveCNode(arg, prim::kPrimMakeTuple) && IsPrimitiveCNode(param, prim::kPrimMakeTuple)) {
-    MS_LOG(INFO) << "Arg " << arg->DebugString() << " Param " << param->DebugString() << " is a tuple";
-    CNodePtr cnode_arg = arg.get()->cast<CNodePtr>();
-    CNodePtr cnode_param = param.get()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode_arg);
-    MS_EXCEPTION_IF_NULL(cnode_param);
-    if (cnode_arg->size() != cnode_param->size()) {
-      MS_LOG(EXCEPTION) << "Arg " << arg->DebugString() << " size " << cnode_arg->size() << " but Param "
-                        << param->DebugString() << " size " << cnode_param->size();
-    }
-
-    for (size_t i = 1; i < cnode_param->size(); ++i) {
-      LinkArgsToParam(to_graph, target_graph, NOT_NULL(cnode_arg->input(i)), NOT_NULL(cnode_param->input(i)));
-    }
-  } else if (arg->isa<CNode>()) {
-    InsertAssignToGraph(target_graph, arg, param);
-  } else {
-    MS_LOG(EXCEPTION) << "Arg " << arg->DebugString() << " Param " << param->DebugString() << " unknown type.";
-  }
 }
 
 void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {

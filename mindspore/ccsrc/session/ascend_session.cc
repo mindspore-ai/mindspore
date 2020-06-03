@@ -224,14 +224,6 @@ static void BindCallArgsWithParameter(const std::vector<AnfNodePtr> &parameters,
       MS_LOG(INFO) << "Parameter and arg are same";
       continue;
     }
-    // if arg is a parameter ,then reuse this parameter
-    if (args[i]->isa<Parameter>()) {
-      MS_LOG(INFO) << "Parameter:" << parameters[i]->DebugString() << " of graph:" << child_graph->graph_id()
-                   << " reuse parameter:" << args[i]->DebugString()
-                   << " of graph:" << AnfAlgo::GetGraphId(args[i].get());
-      child_graph->ReplaceNode(parameters[i], args[i]);
-      continue;
-    }
     child_graph->SetRealInput(parameters[i], args[i]);
   }
 }
@@ -412,7 +404,6 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
                              VectorRef *const outputs) {
   MS_LOG(INFO) << "start";
   auto kernel_graph = GetGraph(graph_id);
-  DumpIR("./run_graph.ir", kernel_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // if none of child graph and no anf output exists
   if (!kernel_graph->executable()) {
@@ -1134,7 +1125,7 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, GraphId 
     MS_EXCEPTION_IF_NULL(backend_arg);
     MS_LOG(INFO) << "Reuse node [" << backend_arg->DebugString() << "], old node[" << backend_parameter->DebugString()
                  << "] will be replaced.";
-    to_graph->ReplaceNode(backend_parameter, backend_arg);
+    to_graph->ReplaceNode(NOT_NULL(backend_parameter), NOT_NULL(backend_arg));
     return;
   }
   MS_LOG(INFO) << "Assign of node" << backend_arg->DebugString() << " of graph " << from_graph_id << " to node"

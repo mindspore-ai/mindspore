@@ -52,9 +52,6 @@ class AscendControlParser {
                               const CNodePtr &last_label);
   static std::tuple<CNodePtr, KernelGraphPtr> ParsePartial(NotNull<AnfNodePtr> node);
 
-  static void LinkArgsToParam(NotNull<KernelGraphPtr> to_graph, NotNull<KernelGraphPtr> target_graph,
-                              NotNull<AnfNodePtr> arg, NotNull<AnfNodePtr> param);
-
   static void InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
 
   static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start);

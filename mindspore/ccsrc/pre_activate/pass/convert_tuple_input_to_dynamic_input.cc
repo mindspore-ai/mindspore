@@ -69,7 +69,7 @@ CNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNo
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
       (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(plant_inputs));
-    } else if (AnfAlgo::IsTupleOutput(input_node)) {
+    } else if (input_node->Type() != nullptr && AnfAlgo::IsTupleOutput(input_node)) {
       ConvertTupleOuputToPlantInputs(graph, input_node, &plant_inputs, &dyn_input_sizes);
     } else {
       dyn_input_sizes.push_back(-1);

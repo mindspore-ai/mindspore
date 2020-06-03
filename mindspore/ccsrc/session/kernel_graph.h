@@ -99,7 +99,7 @@ class KernelGraph : public FuncGraph {
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
   std::vector<bool> valid_inputs() const { return valid_inputs_; }
   // replace node in graph
-  void ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf_node);
+  void ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node);
   // set stream label of graph
   void set_stream_distinction_label(uint32_t stream_label) { stream_distinction_label_ = stream_label; }
   // get stream label of graph

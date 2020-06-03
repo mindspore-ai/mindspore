@@ -68,8 +68,9 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
     return nullptr;
   }
-  if (std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
-                  [](const AnfNodePtr &node) { return AnfAlgo::IsRealKernel(node) && AnfAlgo::IsTupleOutput(node); })) {
+  if (std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(), [](const AnfNodePtr &node) {
+        return node->Type() != nullptr && AnfAlgo::IsRealKernel(node) && AnfAlgo::IsTupleOutput(node);
+      })) {
     return ConvertTupleInputToMakeTuple(func_graph, cnode);
   }
   return nullptr;

@@ -459,6 +459,8 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
+    } else if (IsValueNode<FuncGraph>(anf)) {
+      continue;
     }
     MS_LOG(EXCEPTION) << "Unexpected input[" << anf->DebugString() << "]";
   }
@@ -613,6 +615,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
   }
+  opt::BackendCommonOptimization(graph);
   return graph;
 }
 
@@ -626,7 +629,7 @@ void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &para
     auto backend_parameter = graph->GetBackendAnfByFrontAnf(parameter);
     if (backend_parameter == nullptr) {
       // for example "def f(x,y,z) {return x + y}", parameter z in unused
-      CreateNewParameterFromParameter(parameter, false, graph);
+      CreateNewParameterFromParameter(parameter, true, graph);
       MS_LOG(INFO) << "Can't find parameter:" << parameter->DebugString();
       continue;
     }
