@@ -261,7 +261,7 @@ class BertOutput(nn.Cell):
     def construct(self, hidden_status, input_tensor):
         output = self.dense(hidden_status)
         output = self.dropout(output)
-        output = self.add(output, input_tensor)
+        output = self.add(input_tensor, output)
         output = self.layernorm(output)
         return output
 
@@ -832,8 +832,7 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
         if not self.input_mask_from_dataset:
             input_mask = self.input_mask
 
-        input_mask = self.cast(self.reshape(input_mask, self.shape), mstype.float32)
-        attention_mask = self.batch_matmul(self.broadcast_ones, input_mask)
+        attention_mask = self.cast(self.reshape(input_mask, self.shape), mstype.float32)
         return attention_mask
 
 
