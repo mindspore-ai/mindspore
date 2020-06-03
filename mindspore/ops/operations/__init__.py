@@ -30,7 +30,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Squeeze, StridedSlice, Tile, TensorScatterUpdate,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
-                        SpaceToBatchND, BatchToSpaceND, BroadcastTo)
+                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -41,7 +41,7 @@ from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr,
-                       BitwiseXor, Inv, Invert,
+                       BitwiseXor, Inv, Invert, ApproximateEqual,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Ceil,
                        Acosh, Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -73,7 +73,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
-                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell)
+                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop, ConfusionMatrix)
 from . import _quant_ops
@@ -306,7 +306,10 @@ __all__ = [
     "ConfusionMatrix",
     "BroadcastTo",
     "Range",
-    "DataFormatDimMap"
+    "DataFormatDimMap",
+    "ApproximateEqual",
+    "InplaceUpdate",
+    "InTopK",
 ]
 
 __all__.extend(_quant_ops.__all__)

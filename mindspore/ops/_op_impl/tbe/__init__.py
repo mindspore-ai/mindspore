@@ -31,6 +31,7 @@ from .apply_ada_max import _apply_ada_max_tbe
 from .apply_adadelta import _apply_adadelta_tbe
 from .apply_adagrad import _apply_adagrad_tbe
 from .apply_adagrad_v2 import _apply_adagrad_v2_tbe
+from .approximate_equal import _approximate_equal_tbe
 from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe
 from .assign_add import _assign_add_tbe
@@ -256,3 +257,5 @@ from .sparse_gather_v2 import _sparse_gather_v2_tbe
 from .data_format_dim_map import _data_format_dim_map_tbe
 from .histogram_fixed_width import _histogram_fixed_width_tbe
 from .tensor_scatter_update import _tensor_scatter_update_tbe
+from .inplace_update import _inplace_update_tbe
+from .in_top_k import _in_top_k_tbe

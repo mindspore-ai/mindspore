@@ -4074,3 +4074,44 @@ class BasicLSTMCell(PrimitiveWithInfer):
         validator.check_type_name("w", w_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("b", b_dtype, [mstype.float16, mstype.float32], self.name)
         return (x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype)
+
+
+class InTopK(PrimitiveWithInfer):
+    r"""
+    Says whether the targets are in the top `k` predictions.
+
+    Args:
+        k (int): Special the number of top elements to look at for computing precision.
+
+    Inputs:
+        - **x1** (Tensor) - A 2D Tensor define the predictions of a batch of samples with float32 data type.
+        - **x2** (Tensor) - A 1D Tensor define the labels of a batch of samples with int32 data type.
+
+    Outputs:
+        Tensor, which is 1 dimension of type bool and has same shape with `x2`. for label of sample `i` in `x2`,
+        if label in first `k` predictions for sample `i` in `x1`, then the value is True else False.
+
+    Examples:
+        >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
+        >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
+        >>> in_top_k = P.InTopK(3)
+        >>> result = in_top_k(x1, x2)
+        [True  False]
+    """
+    @prim_attr_register
+    def __init__(self, k):
+        """Init InTopK"""
+        self.init_prim_io_names(inputs=['x1', 'x2', 'k'], outputs=['y'])
+        validator.check_value_type("k", k, [int], self.name)
+
+    def infer_dtype(self, x1_dtype, x2_dtype):
+        validator.check_tensor_type_same({"x1": x1_dtype}, (mstype.float32,), self.name)
+        validator.check_tensor_type_same({"x2": x2_dtype}, (mstype.int32,), self.name)
+
+        return mstype.tensor_type(mstype.bool_)
+
+    def infer_shape(self, x1_shape, x2_shape):
+        validator.check("x1", len(x1_shape), "", 2, Rel.EQ, self.name)
+        validator.check("x2", len(x2_shape), "", 1, Rel.EQ, self.name)
+        validator.check("size of x2", x2_shape[0], "x1's first dimension", x1_shape[0], Rel.EQ, self.name)
+        return x2_shape
