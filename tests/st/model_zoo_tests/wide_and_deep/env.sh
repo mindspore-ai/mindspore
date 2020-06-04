@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2019 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,20 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-# bash run_multinpu_train.sh
-execute_path=$(pwd)
-
-# export RANK_TABLE_FILE=${execute_path}/rank_table_8p.json
-# export RANK_SIZE=8
-# export MINDSPORE_HCCL_CONFIG_PATH=${execute_path}/rank_table_8p.json
-
-for((i=0;i<=7;i++));
-do
-  rm -rf ${execute_path}/device_$i/
-  mkdir ${execute_path}/device_$i/
-  cd ${execute_path}/device_$i/ || exit
-  export RANK_ID=$i
-  export DEVICE_ID=$i
-  pytest -s ${execute_path}/train_and_test_multinpu.py >train_deep$i.log 2>&1 &
-done
+LOCAL_HIAI=/usr/local/Ascend
+export TBE_IMPL_PATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/impl/:${TBE_IMPL_PATH}
+export LD_LIBRARY_PATH=${LOCAL_HIAI}/runtime/lib64/:${LOCAL_HIAI}/add-ons/:${LD_LIBRARY_PATH}
+export PATH=${LOCAL_HIAI}/runtime/ccec_compiler/bin/:${PATH}
+export PYTHONPATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/:${PYTHONPATH}
+export DEVICE_MEMORY_CAPACITY=1073741824000
+export NOT_FULLY_USE_DEVICES=off
