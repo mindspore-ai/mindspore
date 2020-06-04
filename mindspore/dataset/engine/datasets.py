@@ -42,9 +42,9 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
-    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
-    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_split, check_cluedataset
+    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset,\
+    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat,\
+    check_split, check_bucket_batch_by_length, check_cluedataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -164,6 +164,76 @@ class Dataset:
         args = dict()
         args["num_parallel_workers"] = self.num_parallel_workers
         return args
+
+    @check_bucket_batch_by_length
+    def bucket_batch_by_length(self, column_names, bucket_boundaries, bucket_batch_sizes,
+                               element_length_function=None, pad_info=None,
+                               pad_to_bucket_boundary=False, drop_remainder=False):
+        """
+        Bucket elements according to their lengths, and pad and batch the buckets when
+        they are full.
+
+        A length function is called on each row in the dataset, the row is then
+        bucketed based on its length and bucket_boundaries. When a bucket reaches its
+        corresponding size specified in bucket_batch_sizes, the entire bucket will be
+        padded according to batch_info, and then batched. Each batch will be full,
+        except for maybe the last batch for each bucket.
+
+        Args:
+            column_names (list of string): Columns passed to element_length_function.
+            bucket_boundaries (list of int): A list consisting of the upper boundaries
+                of the buckets. Must be strictly increasing. If there are n boundaries,
+                n+1 buckets are created: One bucket for [0, bucket_boundaries[0]), one
+                bucket for [bucket_boundaries[i], bucket_boundaries[i+1]) for each
+                0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
+            bucket_batch_sizes (list of int): A list consisting of the batch sizes for
+                each buclet. Must contain len(bucket_boundaries)+1 elements.
+            element_length_function (Callable, optional): A function that takes in
+                len(column_names) arguments and returns an int. If no value is
+                provided, then len(column_names) must be 1, and the size of the first
+                dimension of that column will be taken as the length (default=None).
+            pad_info (dict, optional): Represents how to batch each column. The key
+                corresponds to the column name, the value must be a tuple of 2 elements.
+                The first element corresponds to the shape to pad to, and the second
+                element corresponds to the value to pad with. If a column is not
+                specified, then that column will be padded to the longest in the current
+                batch, and 0 will be used as the padding value. Any None dimensions will
+                be padded to the longest in the current batch, unless if
+                pad_to_bucket_boundary is True. If no padding is wanted, set pad_info
+                to None (default=None).
+            pad_to_bucket_boundary (bool, optional): If True, will pad each None
+                dimension in pad_info to the bucket_boundary minus 1. If there are any
+                elements that fall into the last bucket, an error will occur
+                (default=False).
+            drop_remainder (bool, optional): If True, will drop the last batch for each
+                bucket if it is not a full batch (default=False).
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>>
+            >>> # creates a dataset where every 100 rows is combined into a batch
+            >>> # and drops the last incomplete batch if there is one.
+            >>> column_names = ["col1", "col2"]
+            >>> buket_boundaries = [5, 10]
+            >>> bucket_batch_sizes = [5, 1, 1]
+            >>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
+            >>>
+            >>> # will pad col1 to shape [2, bucket_boundaries[i]] where i is the
+            >>> # index of the bucket that is currently being batched.
+            >>> # will pad col2 to a shape where each dimension is the longest in all
+            >>> # the elements currently being batched.
+            >>> pad_info = {"col1", ([2, None], -1)}
+            >>> pad_to_bucket_boundary = True
+            >>>
+            >>> data = data.bucket_batch_by_length(column_names, bucket_boundaries,
+            >>>                                    bucket_batch_sizes,
+            >>>                                    element_length_function, pad_info),
+            >>>                                    pad_to_bucket_boundary)
+        """
+        return BucketBatchByLengthDataset(self, column_names, bucket_boundaries, bucket_batch_sizes,
+                                          element_length_function, pad_info,
+                                          pad_to_bucket_boundary, drop_remainder)
 
     @check_batch
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
@@ -1399,6 +1469,47 @@ class DatasetOp(Dataset):
     """
 
     # No need for __init__ since it is the same as the super's init
+
+class BucketBatchByLengthDataset(DatasetOp):
+    """
+    The result of applying BucketBatchByLength operator to the input dataset.
+    """
+
+    def __init__(self, input_dataset, column_names, bucket_boundaries, bucket_batch_sizes,
+                 element_length_function, pad_info, pad_to_bucket_boundary, drop_remainder):
+        super().__init__()
+
+        self.column_names = column_names
+        self.bucket_boundaries = bucket_boundaries
+        self.bucket_batch_sizes = bucket_batch_sizes
+        self.element_length_function = element_length_function
+        self.pad_info = pad_info
+        self.pad_to_bucket_boundary = pad_to_bucket_boundary
+        self.drop_remainder = drop_remainder
+
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["length_dependent_columns"] = self.column_names
+        args["bucket_boundaries"] = self.bucket_boundaries
+        args["bucket_batch_sizes"] = self.bucket_batch_sizes
+        args["element_length_function"] = self.element_length_function
+        args["pad_info"] = self.pad_info
+        args["pad_to_bucket_boundary"] = self.pad_to_bucket_boundary
+        args["drop_remainder"] = self.drop_remainder
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        return None
 
 
 class BatchDataset(DatasetOp):

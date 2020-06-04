@@ -752,6 +752,67 @@ def check_pad_info(key, val):
             check_type(val[1], "pad_value", (int, float, str, bytes))
 
 
+def check_bucket_batch_by_length(method):
+    """check the input arguments of bucket_batch_by_length."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_list = ['column_names', 'bucket_boundaries', 'bucket_batch_sizes']
+        check_param_type(nreq_param_list, param_dict, list)
+
+        # check column_names: must be list of string.
+        column_names = param_dict.get("column_names")
+        all_string = all(isinstance(item, str) for item in column_names)
+        if not all_string:
+            raise TypeError("column_names should be a list of str.")
+
+        element_length_function = param_dict.get("element_length_function")
+        if element_length_function is None and len(column_names) != 1:
+            raise ValueError("If element_length_function is not specified, exactly one column name should be passed.")
+
+        # check bucket_boundaries: must be list of int, positive and strictly increasing
+        bucket_boundaries = param_dict.get('bucket_boundaries')
+
+        if not bucket_boundaries:
+            raise ValueError("bucket_boundaries cannot be empty.")
+
+        all_int = all(isinstance(item, int) for item in bucket_boundaries)
+        if not all_int:
+            raise TypeError("bucket_boundaries should be a list of int.")
+
+        all_non_negative = all(item >= 0 for item in bucket_boundaries)
+        if not all_non_negative:
+            raise ValueError("bucket_boundaries cannot contain any negative numbers.")
+
+        for i in range(len(bucket_boundaries) - 1):
+            if not bucket_boundaries[i + 1] > bucket_boundaries[i]:
+                raise ValueError("bucket_boundaries should be strictly increasing.")
+
+        # check bucket_batch_sizes: must be list of int and positive
+        bucket_batch_sizes = param_dict.get('bucket_batch_sizes')
+        if len(bucket_batch_sizes) != len(bucket_boundaries) + 1:
+            raise ValueError("bucket_batch_sizes must contain one element more than bucket_boundaries.")
+
+        all_int = all(isinstance(item, int) for item in bucket_batch_sizes)
+        if not all_int:
+            raise TypeError("bucket_batch_sizes should be a list of int.")
+
+        all_non_negative = all(item >= 0 for item in bucket_batch_sizes)
+        if not all_non_negative:
+            raise ValueError("bucket_batch_sizes cannot contain any negative numbers.")
+
+        if param_dict.get('pad_info') is not None:
+            check_type(param_dict["pad_info"], "pad_info", dict)
+            for k, v in param_dict.get('pad_info').items():
+                check_pad_info(k, v)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_batch(method):
     """check the input arguments of batch."""
 

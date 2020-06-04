@@ -19,62 +19,65 @@
 #include <map>
 
 #include "common/utils.h"
-#include "dataset/kernels/py_func_op.h"
-#include "dataset/engine/datasetops/source/image_folder_op.h"
-#include "dataset/engine/datasetops/source/mnist_op.h"
-#include "dataset/engine/datasetops/source/voc_op.h"
-#include "dataset/engine/datasetops/source/coco_op.h"
 #include "dataset/core/tensor.h"
 #include "dataset/engine/dataset_iterator.h"
-#include "dataset/engine/datasetops/source/manifest_op.h"
-#include "dataset/engine/datasetops/source/cifar_op.h"
+#include "dataset/engine/datasetops/bucket_batch_by_length_op.h"
+#include "dataset/engine/datasetops/filter_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
+#include "dataset/engine/datasetops/source/cifar_op.h"
+#include "dataset/engine/datasetops/source/clue_op.h"
+#include "dataset/engine/datasetops/source/coco_op.h"
+#include "dataset/engine/datasetops/source/image_folder_op.h"
+#include "dataset/engine/datasetops/source/manifest_op.h"
+#include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
-#include "dataset/engine/datasetops/source/clue_op.h"
-#include "dataset/engine/datasetops/filter_op.h"
+#include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/kernels/py_func_op.h"
+#include "dataset/util/random.h"
+#include "dataset/util/status.h"
 #include "mindrecord/include/shard_category.h"
 #include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_sample.h"
 #include "mindrecord/include/shard_shuffle.h"
-#include "dataset/util/random.h"
-#include "dataset/util/status.h"
-#include "utils/log_adapter.h"
 #include "pybind11/stl.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
 using pFunction = Status (DEPipeline::*)(const py::dict &, std::shared_ptr<DatasetOp> *);
 
-static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &DEPipeline::ParseStorageOp},
-                                                                   {kShuffle, &DEPipeline::ParseShuffleOp},
-                                                                   {kMindrecord, &DEPipeline::ParseMindRecordOp},
-                                                                   {kMap, &DEPipeline::ParseMapOp},
-                                                                   {kFilter, &DEPipeline::ParseFilterOp},
-                                                                   {kBatch, &DEPipeline::ParseBatchOp},
-                                                                   {kBarrier, &DEPipeline::ParseBarrierOp},
-                                                                   {kRepeat, &DEPipeline::ParseRepeatOp},
-                                                                   {kSkip, &DEPipeline::ParseSkipOp},
-                                                                   {kZip, &DEPipeline::ParseZipOp},
-                                                                   {kConcat, &DEPipeline::ParseConcatOp},
-                                                                   {kRename, &DEPipeline::ParseRenameOp},
-                                                                   {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
-                                                                   {kGenerator, &DEPipeline::ParseGeneratorOp},
-                                                                   {kTfReader, &DEPipeline::ParseTFReaderOp},
-                                                                   {kProject, &DEPipeline::ParseProjectOp},
-                                                                   {kTake, &DEPipeline::ParseTakeOp},
-                                                                   {kImageFolder, &DEPipeline::ParseImageFolderOp},
-                                                                   {kMnist, &DEPipeline::ParseMnistOp},
-                                                                   {kManifest, &DEPipeline::ParseManifestOp},
-                                                                   {kVoc, &DEPipeline::ParseVOCOp},
-                                                                   {kCoco, &DEPipeline::ParseCocoOp},
-                                                                   {kCifar10, &DEPipeline::ParseCifar10Op},
-                                                                   {kCifar100, &DEPipeline::ParseCifar100Op},
-                                                                   {kCelebA, &DEPipeline::ParseCelebAOp},
-                                                                   {kRandomData, &DEPipeline::ParseRandomDataOp},
-                                                                   {kTextFile, &DEPipeline::ParseTextFileOp},
-                                                                   {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
-                                                                   {kClue, &DEPipeline::ParseClueOp}};
+static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {
+  {kStorage, &DEPipeline::ParseStorageOp},
+  {kShuffle, &DEPipeline::ParseShuffleOp},
+  {kMindrecord, &DEPipeline::ParseMindRecordOp},
+  {kMap, &DEPipeline::ParseMapOp},
+  {kFilter, &DEPipeline::ParseFilterOp},
+  {kBatch, &DEPipeline::ParseBatchOp},
+  {kBucketBatch, &DEPipeline::ParseBucketBatchByLengthOp},
+  {kBarrier, &DEPipeline::ParseBarrierOp},
+  {kRepeat, &DEPipeline::ParseRepeatOp},
+  {kSkip, &DEPipeline::ParseSkipOp},
+  {kZip, &DEPipeline::ParseZipOp},
+  {kConcat, &DEPipeline::ParseConcatOp},
+  {kRename, &DEPipeline::ParseRenameOp},
+  {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
+  {kGenerator, &DEPipeline::ParseGeneratorOp},
+  {kTfReader, &DEPipeline::ParseTFReaderOp},
+  {kProject, &DEPipeline::ParseProjectOp},
+  {kTake, &DEPipeline::ParseTakeOp},
+  {kImageFolder, &DEPipeline::ParseImageFolderOp},
+  {kMnist, &DEPipeline::ParseMnistOp},
+  {kManifest, &DEPipeline::ParseManifestOp},
+  {kVoc, &DEPipeline::ParseVOCOp},
+  {kCoco, &DEPipeline::ParseCocoOp},
+  {kCifar10, &DEPipeline::ParseCifar10Op},
+  {kCifar100, &DEPipeline::ParseCifar100Op},
+  {kCelebA, &DEPipeline::ParseCelebAOp},
+  {kRandomData, &DEPipeline::ParseRandomDataOp},
+  {kTextFile, &DEPipeline::ParseTextFileOp},
+  {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
+  {kClue, &DEPipeline::ParseClueOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -667,6 +670,56 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
   }
 
   std::shared_ptr<BatchOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseBucketBatchByLengthOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::vector<std::string> mandatory_arguments = {"length_dependent_columns", "bucket_boundaries",
+                                                  "bucket_batch_sizes"};
+  for (auto name : mandatory_arguments) {
+    if (args[name.c_str()].is_none()) {
+      std::string err_msg = "Error: " + name + " is not set.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+
+  std::shared_ptr<BucketBatchByLengthOp::Builder> builder = std::make_shared<BucketBatchByLengthOp::Builder>(
+    ToStringVector(args[mandatory_arguments[0].c_str()]), ToIntVector(args[mandatory_arguments[1].c_str()]),
+    ToIntVector(args[mandatory_arguments[2].c_str()]));
+
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "length_dependent_columns") {
+        (void)builder->SetLengthDependentColumns(ToStringVector(value));
+      }
+      if (key == "bucket_boundaries") {
+        (void)builder->SetBucketBoundaries(ToIntVector(value));
+      }
+      if (key == "bucket_batch_sizes") {
+        (void)builder->SetBucketBatchSizes(ToIntVector(value));
+      }
+      if (key == "element_length_function") {
+        (void)builder->SetElementLengthFunction(value.cast<py::function>());
+      }
+      if (key == "pad_info") {
+        PadInfo pad_info;
+        RETURN_IF_NOT_OK(ParsePadInfo(value, &pad_info));
+        (void)builder->SetPadInfo(pad_info);
+      }
+      if (key == "pad_to_bucket_boundary") {
+        (void)builder->SetPadToBucketBoundary(ToBool(value));
+      }
+      if (key == "drop_remainder") {
+        (void)builder->SetDropRemainder(ToBool(value));
+      }
+    }
+  }
+
+  std::shared_ptr<BucketBatchByLengthOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();
