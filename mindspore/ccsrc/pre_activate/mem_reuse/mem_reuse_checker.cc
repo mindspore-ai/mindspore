@@ -48,7 +48,8 @@ void MemReuseChecker::CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr 
   auto iter = kernel_refs.find(key);
   auto node_name = AnfAlgo::GetCNodeName(c_node);
   if (iter == kernel_refs.end()) {
-    MS_LOG(EXCEPTION) << "kernel [" << node_name << "] has no output tensor";
+    MS_LOG(EXCEPTION) << "kernel [" << node_name << "] has no output tensor, node: " << c_node->DebugString()
+                      << " output index: " << output_idx;
   }
   if (output_idx >= iter->second.size()) {
     MS_LOG(INFO) << "invalid cnode: " << c_node->fullname_with_scope().c_str();
