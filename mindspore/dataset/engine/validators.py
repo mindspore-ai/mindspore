@@ -522,6 +522,49 @@ def check_vocdataset(method):
     return new_method
 
 
+def check_cocodataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(CocoDataset)."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        # check dataset_dir; required argument
+        dataset_dir = param_dict.get('dataset_dir')
+        if dataset_dir is None:
+            raise ValueError("dataset_dir is not provided.")
+        check_dataset_dir(dataset_dir)
+
+        # check annotation_file; required argument
+        annotation_file = param_dict.get('annotation_file')
+        if annotation_file is None:
+            raise ValueError("annotation_file is not provided.")
+        check_dataset_file(annotation_file)
+
+        # check task; required argument
+        task = param_dict.get('task')
+        if task is None:
+            raise ValueError("task is not provided.")
+        if not isinstance(task, str):
+            raise ValueError("task is not str type.")
+
+        if task not in {'Detection', 'Stuff', 'Panoptic', 'Keypoint'}:
+            raise ValueError("Invalid task type")
+
+        check_param_type(nreq_param_int, param_dict, int)
+
+        check_param_type(nreq_param_bool, param_dict, bool)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_celebadataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(CelebADataset)."""
 

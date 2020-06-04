@@ -33,7 +33,7 @@ import copy
 import numpy as np
 
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, TextFileOp, VOCOp, CBatchInfo
+    MindRecordOp, TextFileOp, VOCOp, CocoOp, CBatchInfo
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
@@ -42,8 +42,9 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
-    check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, check_split
+    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset,\
+    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat,\
+    check_split
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -3867,10 +3868,14 @@ class VOCDataset(MappableDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
-    The generated dataset has two columns ['image', 'target'].
-    The shape of both column is [image_size] if decode flag is False, or [H, W, C]
+    The generated dataset has two columns :
+    task='Detection' : ['image', 'annotation'].
+    task='Segmentation' : ['image', 'target']
+    The shape of both column 'image' and 'target' is [image_size] if decode flag is False, or [H, W, C]
     otherwise.
-    The type of both tensor is uint8.
+    The type of both tensor 'image' and 'target' is uint8.
+    The type of tensor 'annotation' is uint32.
+
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
 
@@ -4021,6 +4026,163 @@ class VOCDataset(MappableDataset):
             class_indexing = self.class_indexing
 
         return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing)
+
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class CocoDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing COCO dataset.
+
+    CocoDataset support four kinds of task:
+    2017 Train/Val/Test Detection, Keypoints, Stuff, Panoptic.
+
+    The generated dataset has multi-columns :
+    task = 'Detection' : column [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+                                 ['iscrowd', dtype=uint32]].
+    task = 'Stuff' : column [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
+    task = 'Keypoint' : column [['image', dtype=uint8], ['keypoints', dtype=float32], ['num_keypoints', dtype=uint32]].
+    task = 'Panoptic' : column [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+                                ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
+    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
+    below shows what input args are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        annotation_file (str): Path to the annotation json.
+        task (str): Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
+            (default='Detection')
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset should be divided
+            into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
+
+    Raises:
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If parse json file failed.
+        ValueError: If task is not in ['Detection', 'Stuff', 'Panoptic', 'Keypoint'].
+        ValueError: If annotation_file is not exist.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> dataset_dir = "/path/to/coco_dataset_directory/image_folder"
+        >>> annotation_file = "/path/to/coco_dataset_directory/annotation_folder/annotation.json"
+        >>> # 1) read COCO data for Detection task
+        >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Detection')
+        >>> # 2) read COCO data for Stuff task
+        >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Stuff')
+        >>> # 3) read COCO data for Panoptic task
+        >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Panoptic')
+        >>> # 4) read COCO data for Keypoint task
+        >>> coco_dataset = ds.CocoDataset(dataset_dir, annotation_file=annotation_file, task='Keypoint')
+        >>> # in COCO dataset, each dictionary has keys "image" and "annotation"
+    """
+
+    @check_cocodataset
+    def __init__(self, dataset_dir, annotation_file, task="Detection", num_samples=None, num_parallel_workers=None,
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+        super().__init__(num_parallel_workers)
+        self.dataset_dir = dataset_dir
+        self.annotation_file = annotation_file
+        self.task = task
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
+        self.num_samples = num_samples
+        self.decode = decode
+        self.shuffle_level = shuffle
+        self.num_shards = num_shards
+        self.shard_id = shard_id
+
+    def get_args(self):
+        args = super().get_args()
+        args["dataset_dir"] = self.dataset_dir
+        args["annotation_file"] = self.annotation_file
+        args["task"] = self.task
+        args["num_samples"] = self.num_samples
+        args["sampler"] = self.sampler
+        args["decode"] = self.decode
+        args["shuffle"] = self.shuffle_level
+        args["num_shards"] = self.num_shards
+        args["shard_id"] = self.shard_id
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        num_rows = CocoOp.get_num_rows(self.dataset_dir, self.annotation_file, self.task)
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
+        rows_from_sampler = self._get_sampler_dataset_size()
+
+        if rows_from_sampler is None:
+            return rows_per_shard
+
+        return min(rows_from_sampler, rows_per_shard)
+
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Return:
+            Dict, A str-to-int mapping from label name to index.
+        """
+        if self.task not in {"Detection", "Panoptic"}:
+            raise NotImplementedError("Only 'Detection' and 'Panoptic' support get_class_indexing.")
+
+        class_index = CocoOp.get_class_indexing(self.dataset_dir, self.annotation_file, self.task)
+        return dict(class_index)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
