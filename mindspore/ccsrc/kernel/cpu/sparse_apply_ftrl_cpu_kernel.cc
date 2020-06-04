@@ -84,19 +84,22 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto grad = reinterpret_cast<float *>(inputs[3]->addr);
   auto indices = reinterpret_cast<int *>(inputs[4]->addr);
 
-  std::vector<float> new_grad(indices_size_ * var_outer_dim_size_);
-  std::vector<int> new_indices(indices_size_);
+  std::vector<float> new_grad;
+  new_grad.reserve(indices_size_ * var_outer_dim_size_);
+  std::vector<int> new_indices;
+  new_indices.reserve(indices_size_);
   SparseGradient unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size_});
   DeduplicateIndexedSlices(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
                            var_outer_dim_size_);
 
   for (size_t i = 0; i < unique_sparse_grad.indices_size_; ++i) {
     int index = unique_sparse_grad.indices_[i];
-    if (index < 0 || (size_t)index >= var_first_dim_size_) {
+    if (index < 0 || IntToSize(index) >= var_first_dim_size_) {
       MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
     }
-    for (size_t j = var_outer_dim_size_ * index, k = var_outer_dim_size_ * i; j < var_outer_dim_size_ * (index + 1);
-         ++j, ++k) {
+    size_t start_index = var_outer_dim_size_ * index;
+    size_t end_index = start_index + var_outer_dim_size_;
+    for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
       auto summed_grad = unique_sparse_grad.value_[k];
       auto accum_new = accum[j] + summed_grad * summed_grad;
       if (lr_power_ == -0.5) {

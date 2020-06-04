@@ -559,21 +559,24 @@ void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGr
   size_t unique_indices_size = 0;
   for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
     int index = origin_sparse_grad.indices_[i];
-    if (index < 0 || (size_t)index >= first_dim) {
+    if (index < 0 || IntToSize(index) >= first_dim) {
       continue;
     }
     auto iter = index_map.find(index);
     if (iter == index_map.end()) {
       index_map[index] = unique_indices_size;
       unique_grad->indices_[unique_indices_size] = index;
-      for (size_t j = unique_indices_size * outer_dim, k = i * outer_dim; j < (unique_indices_size + 1) * outer_dim;
-           ++j, ++k) {
+      size_t start_index = unique_indices_size * outer_dim;
+      size_t end_index = start_index + outer_dim;
+      for (size_t j = start_index, k = i * outer_dim; j < end_index; ++j, ++k) {
         unique_grad->value_[j] = origin_sparse_grad.value_[k];
       }
       unique_indices_size++;
     } else {
       size_t first_index = iter->second;
-      for (size_t j = first_index * outer_dim, k = i * outer_dim; j < (first_index + 1) * outer_dim; ++j, ++k) {
+      size_t start_index = first_index * outer_dim;
+      size_t end_index = start_index + outer_dim;
+      for (size_t j = start_index, k = i * outer_dim; j < end_index; ++j, ++k) {
         unique_grad->value_[j] += origin_sparse_grad.value_[k];
       }
     }
