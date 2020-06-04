@@ -20,8 +20,8 @@
 namespace mindspore {
 namespace dataset {
 
-PythonSampler::PythonSampler(py::object py_sampler_instance, int64_t samples_per_buffer)
-    : Sampler(samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
+PythonSampler::PythonSampler(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_buffer)
+    : Sampler(num_samples, samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
 
 Status PythonSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   if (need_to_reset_) {
@@ -65,6 +65,11 @@ Status PythonSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
 
 Status PythonSampler::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "ERROR num_rows_ should be greater than 0");
+  // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
+  // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
+  if (num_samples_ == 0 || num_samples_ > num_rows_) {
+    num_samples_ = num_rows_;
+  }
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {

@@ -31,26 +31,17 @@ class MindDataTestSubsetRandomSampler : public UT::Common {
  public:
   class DummyRandomAccessOp : public RandomAccessOp {
    public:
-    DummyRandomAccessOp(int64_t num_rows) : num_rows_(num_rows) {};
-    Status GetNumSamples(int64_t *num) const {
-      *num = num_rows_;
-      return Status::OK();
-    }
-
-    Status GetNumRowsInDataset(int64_t *num) const {
-      *num = num_rows_;
-      return Status::OK();
-    }
-
-   private:
-    int64_t num_rows_;
+    DummyRandomAccessOp(int64_t num_rows) {
+      num_rows_ = num_rows;  // base class
+    };
   };
 };
 
 TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
   std::vector<int64_t> in({0, 1, 2, 3, 4});
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
-  SubsetRandomSampler sampler(in);
+  int64_t num_samples = 0;
+  SubsetRandomSampler sampler(num_samples, in);
 
   DummyRandomAccessOp dummyRandomAccessOp(5);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
@@ -77,8 +68,9 @@ TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
 TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
   int64_t total_samples = 100000 - 5;
   int64_t samples_per_buffer = 10;
+  int64_t num_samples = 0;
   std::vector<int64_t> input(total_samples, 1);
-  SubsetRandomSampler sampler(input, samples_per_buffer);
+  SubsetRandomSampler sampler(num_samples, input, samples_per_buffer);
 
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
@@ -109,7 +101,8 @@ TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
 TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
   std::vector<int64_t> in({0, 1, 2, 3, 4});
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
-  SubsetRandomSampler sampler(in);
+  int64_t num_samples = 0;
+  SubsetRandomSampler sampler(num_samples, in);
 
   DummyRandomAccessOp dummyRandomAccessOp(5);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);

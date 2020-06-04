@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-CelebAOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr), builder_num_samples_(0) {
+CelebAOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -38,7 +38,9 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
   MS_LOG(DEBUG) << "Celeba dataset type is " << builder_dataset_type_.c_str() << ".";
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
 
   builder_schema_ = std::make_unique<DataSchema>();
@@ -47,10 +49,9 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
   // label is like this:0 1 0 0 1......
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  *op =
-    std::make_shared<CelebAOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_, builder_op_connector_size_,
-                               builder_decode_, builder_dataset_type_, builder_extensions_, std::move(builder_schema_),
-                               std::move(builder_sampler_), builder_num_samples_);
+  *op = std::make_shared<CelebAOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
+                                   builder_op_connector_size_, builder_decode_, builder_dataset_type_,
+                                   builder_extensions_, std::move(builder_schema_), std::move(builder_sampler_));
   if (*op == nullptr) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "CelebAOp is null");
   }
@@ -68,7 +69,7 @@ Status CelebAOp::Builder::SanityCheck() {
 
 CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size,
                    bool decode, const std::string &dataset_type, const std::set<std::string> &exts,
-                   std::unique_ptr<DataSchema> schema, std::shared_ptr<Sampler> sampler, int64_t num_samples)
+                   std::unique_ptr<DataSchema> schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size),
       rows_per_buffer_(rows_per_buffer),
       folder_path_(dir),
@@ -77,8 +78,6 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
       data_schema_(std::move(schema)),
       sampler_(std::move(sampler)),
       num_rows_in_attr_file_(0),
-      num_rows_exact_(0),
-      num_samples_(num_samples),
       dataset_type_(dataset_type) {
   // Set the column name map (base class field)
   for (int32_t index = 0; index < data_schema_->NumColumns(); index++) {
@@ -202,13 +201,6 @@ Status CelebAOp::ParseImageAttrInfo() {
   RETURN_IF_NOT_OK(attr_info_queue_->PopFront(&image_infos));
   while (!image_infos.empty() && needMoreData) {
     for (uint32_t index = 0; index < image_infos.size(); index++) {
-      if (num_samples_ != 0 && image_labels_vec_.size() >= num_samples_) {
-        MS_LOG(WARNING) << "Image number(" << image_labels_vec_.size() << " is more than"
-                        << " rows num eval attr file(" << num_rows_in_attr_file_ << ") or num samples(" << num_samples_
-                        << ").";
-        needMoreData = false;
-        break;
-      }
       std::string image_info = image_infos[index];
       std::vector<std::string> split = Split(image_info);
       std::pair<std::string, std::vector<int32_t>> image_labels;
@@ -239,14 +231,13 @@ Status CelebAOp::ParseImageAttrInfo() {
     RETURN_IF_NOT_OK(attr_info_queue_->PopFront(&image_infos));
   }
 
-  num_rows_exact_ = image_labels_vec_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_exact_) ? num_rows_exact_ : num_samples_;
-  if (num_rows_exact_ == 0) {
+  num_rows_ = image_labels_vec_.size();
+  if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
       "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
       "validation first.");
   }
-  MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_exact_ << ".";
+  MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_ << ".";
   return Status::OK();
 }
 
@@ -266,28 +257,6 @@ std::vector<std::string> CelebAOp::Split(const std::string &line) {
   }
 
   return split;
-}
-
-// Derived from RandomAccessOp
-Status CelebAOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_samples_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
-  return Status::OK();
-}
-
-Status CelebAOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_exact_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
-      "validation first.");
-  }
-
-  *num = num_rows_exact_;
-  return Status::OK();
 }
 
 // Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
@@ -310,9 +279,8 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
       RETURN_IF_NOT_OK((*data_buffer)->PopRow(&sample_row));
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_exact_) {
-          MS_LOG(WARNING) << "Sample Id (" << *itr << ") is out of bounds, skipping. Max id is " << num_rows_exact_
-                          << ".";
+        if ((*itr) >= num_rows_) {
+          MS_LOG(WARNING) << "Sample Id (" << *itr << ") is out of bounds, skipping. Max id is " << num_rows_ << ".";
           continue;
         }
         keys.push_back(*itr);
@@ -446,7 +414,7 @@ void CelebAOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nNumber of rows:" << num_rows_exact_ << "\nceleba dir: " << folder_path_ << "\n\n";
+    out << "\nNumber of rows:" << num_rows_ << "\nceleba dir: " << folder_path_ << "\n\n";
   }
 }
 

@@ -109,14 +109,6 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
     }
 
     // Setter method
-    // @param int64_t num_samples
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
-      return *this;
-    }
-
-    // Setter method
     // @param const std::string dataset_type: type to be read
     // @return Builder setter method returns reference to the builder.
     Builder &SetDatasetType(const std::string &dataset_type) {
@@ -141,7 +133,6 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
     std::set<std::string> builder_extensions_;
     std::shared_ptr<Sampler> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
-    int64_t builder_num_samples_;
     std::string builder_dataset_type_;
   };
 
@@ -153,7 +144,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
   CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size, bool decode,
            const std::string &dataset_type, const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema,
-           std::shared_ptr<Sampler> sampler, int64_t num_samples);
+           std::shared_ptr<Sampler> sampler);
 
   ~CelebAOp() override = default;
 
@@ -162,16 +153,6 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
   // @return Status - The error code return
   Status operator()() override;
-
-  // Method derived from RandomAccess Op, enable Sampler to get numRows
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumSamples(int64_t *num) const override;
-
-  // Method derived from RandomAccess Op, enable Sampler to get numRows
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumRowsInDataset(int64_t *num) const override;
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t worker_id - id of each worker
@@ -233,11 +214,9 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<Queue<std::vector<std::string>>> attr_info_queue_;
   int64_t num_rows_in_attr_file_;  // rows number specified in attr file
-  int64_t num_rows_exact_;         // exact rows number,maybe is less than rows_num_in_attr_file_
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   WaitPost wp_;
   std::vector<std::pair<std::string, std::vector<int32_t>>> image_labels_vec_;
-  int64_t num_samples_;
   std::string dataset_type_;
   std::ifstream partition_file_;
 };

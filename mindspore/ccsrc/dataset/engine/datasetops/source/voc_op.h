@@ -117,14 +117,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method.
-    // @param int64_t num_samples
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
-      return *this;
-    }
-
-    // Setter method.
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
@@ -157,7 +149,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int32_t builder_rows_per_buffer_;
-    int64_t builder_num_samples_;
     std::shared_ptr<Sampler> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
     std::map<std::string, int32_t> builder_labels_to_read_;
@@ -171,14 +162,12 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param int32_t num_workers - number of workers reading images in parallel
   // @param int32_t rows_per_buffer - number of images (rows) in each buffer
   // @param int32_t queue_size - connector queue size
-  // @param int64_t num_samples - number of samples to read
   // @param bool decode - whether to decode images
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the VOC dataset
   // @param std::shared_ptr<Sampler> sampler - sampler tells VOCOp what to read
   VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
         const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
-        int32_t queue_size, int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema,
-        std::shared_ptr<Sampler> sampler);
+        int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
 
   // Destructor
   ~VOCOp() = default;
@@ -194,15 +183,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Method derived from RandomAccessOp, enable Sampler to get numRows
-  // @param uint64_t num - to return numRows
-  // return Status - The error code return
-  Status GetNumSamples(int64_t *num) const override;
-
-  // Method derived from RandomAccessOp, enable Sampler to get total number of rows in dataset
-  // @param uint64_t num - to return numRows
-  Status GetNumRowsInDataset(int64_t *num) const override;
-
   // A print method typically used for debugging
   // @param out
   // @param show_all
@@ -212,10 +192,9 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param const std::string &task_type - task type of reading voc job
   // @param const std::string &task_mode - task mode of reading voc job
   // @param const py::dict &dict - input dict of class index
-  // @param int64_t numSamples - samples number of VOCDataset
   // @param int64_t *count - output rows number of VOCDataset
   static Status CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               const py::dict &dict, int64_t numSamples, int64_t *count);
+                               const py::dict &dict, int64_t *count);
 
   // @param const std::string &dir - VOC dir path
   // @param const std::string &task_type - task type of reading voc job
@@ -224,8 +203,7 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param int64_t numSamples - samples number of VOCDataset
   // @param std::map<std::string, int32_t> *output_class_indexing - output class index of VOCDataset
   static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                                 const py::dict &dict, int64_t numSamples,
-                                 std::map<std::string, int32_t> *output_class_indexing);
+                                 const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing);
 
  private:
   // Initialize Sampler, calls sampler->Init() within
@@ -283,8 +261,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   bool decode_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
-  int64_t num_rows_;
-  int64_t num_samples_;
   std::string folder_path_;
   TaskType task_type_;
   std::string task_mode_;

@@ -8,6 +8,5 @@ add_library(engine-datasetops-source-sampler OBJECT
     sampler.cc
     sequential_sampler.cc
     subset_random_sampler.cc
-    subset_sampler.cc
     weighted_random_sampler.cc
     )

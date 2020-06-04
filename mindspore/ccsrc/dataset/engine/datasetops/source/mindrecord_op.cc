@@ -91,7 +91,6 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buf
       block_reader_(block_reader),
       buffers_needed_(0),
       buf_cnt_(0),
-      num_rows_(0),
       ended_worker_(0),
       buffer_water_mark_(0) {
   io_blk_queues_.Init(num_workers_, op_connector_queue_size);

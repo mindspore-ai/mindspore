@@ -23,7 +23,7 @@ from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset
     GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CelebADataset, TextFileDataset, \
     Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
-    WeightedRandomSampler, SubsetSampler, Sampler
+    WeightedRandomSampler, Sampler
 from .engine.serializer_deserializer import serialize, deserialize, show
 from .engine.graphdata import GraphData
 

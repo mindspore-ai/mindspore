@@ -1261,8 +1261,8 @@ class MappableDataset(SourceDataset):
 
     def _get_sampler_dataset_size(self):
         if self.sampler is not None:
-            if hasattr(self.sampler, 'get_dataset_size'):
-                return self.sampler.get_dataset_size()
+            if hasattr(self.sampler, 'get_num_samples'):
+                return self.sampler.get_num_samples()
             if hasattr(self.sampler, '__len__'):
                 return len(self.sampler)
 
@@ -1355,7 +1355,7 @@ class MappableDataset(SourceDataset):
                 random_sampler.reshuffle_each_epoch = False
                 ds.add_sampler(random_sampler)
 
-            subset_sampler = samplers.SubsetSampler(current_split_start_index, size)
+            subset_sampler = samplers.SequentialSampler(current_split_start_index, size)
             ds.add_sampler(subset_sampler)
 
             # add sequential sampler, so that if user calls use_sampler, we will
@@ -2226,31 +2226,45 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         num_shards (int): Number of shard for sharding.
         shard_id (int): Shard ID.
     """
+    if input_sampler is not None:
+        # If the user provided a sampler, then it doesn't matter what the other args are because
+        # we are being asked specifically to use the given sampler.
+        # That means the following arguments: num_shards, shard_id, shuffle, num_samples should all
+        # be None. Consider this example:
+        #     sampler = ds.DistributedSampler(num_shards=8, shard_id=3, shuffle=shuffle)
+        #     data1 = ds.VOCDataset(voc_dir, decode=True, sampler=sampler, num_shards=4, shard_id=1)
+        # In this case, the user has given different sample-related arguments that contradict each other.
+        # To prevent this, only allow the user to manually specify the sampler if those arguments are all None
+        if (isinstance(input_sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
+                                       samplers.RandomSampler, samplers.SubsetRandomSampler,
+                                       samplers.WeightedRandomSampler, samplers.Sampler)) and
+                (num_shards is not None or shard_id is not None or shuffle is not None or num_samples is not None)):
+            raise ValueError(
+                'Conflicting arguments during sampler assignments. num_samples: {}, num_shards: {},'
+                ' shard_id: {}, shuffle: {})'.format(num_samples, num_shards, shard_id, shuffle))
+        return input_sampler
     if shuffle is None:
-        if input_sampler is not None:
-            # If shuffle is not specified, user provided sampler, use user's sampler
-            return input_sampler
         if num_shards is not None:
             # If shuffle is not specified, sharding enabled, use distributed random sampler
             shuffle = True
-            return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle)
+            return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle, num_samples=num_samples)
         # If shuffle is not specified, sharding disabled, use random sampler
         if num_samples is not None:
             return samplers.RandomSampler(replacement=True, num_samples=num_samples)
-        return samplers.RandomSampler()
+        return samplers.RandomSampler(num_samples=num_samples)
     if shuffle is True:
         if num_shards is not None:
             # If shuffle enabled, sharding enabled, use distributed random sampler
-            return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle)
+            return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle, num_samples=num_samples)
         # If shuffle enabled, sharding disabled, use random sampler
         if num_samples is not None:
             return samplers.RandomSampler(replacement=True, num_samples=num_samples)
-        return samplers.RandomSampler()
+        return samplers.RandomSampler(num_samples=num_samples)
     if num_shards is not None:
         # If shuffle disabled, sharding enabled, use distributed sequential sampler
-        return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle)
+        return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle, num_samples=num_samples)
     # If shuffle disabled, sharding disabled, use sequential sampler
-    return samplers.SequentialSampler()
+    return samplers.SequentialSampler(num_samples=num_samples)
 
 
 class ImageFolderDatasetV2(MappableDataset):
@@ -2370,11 +2384,7 @@ class ImageFolderDatasetV2(MappableDataset):
         Return:
             Number, number of batches.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-        num_rows = ImageFolderOp.get_num_rows_and_classes(self.dataset_dir, num_samples)[0]
+        num_rows = ImageFolderOp.get_num_rows_and_classes(self.dataset_dir)[0]
         rows_per_shard = get_num_rows(num_rows, self.num_shards)
         rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -2390,11 +2400,7 @@ class ImageFolderDatasetV2(MappableDataset):
         Return:
             Number, number of classes.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-        return ImageFolderOp.get_num_rows_and_classes(self.dataset_dir, num_samples)[1]
+        return ImageFolderOp.get_num_rows_and_classes(self.dataset_dir)[1]
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -2503,12 +2509,7 @@ class MnistDataset(MappableDataset):
         Return:
             Number, number of batches.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-
-        num_rows = MnistOp.get_num_rows(self.dataset_dir, num_samples)
+        num_rows = MnistOp.get_num_rows(self.dataset_dir)
         rows_per_shard = get_num_rows(num_rows, self.num_shards)
         rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -2956,11 +2957,8 @@ class GeneratorDataset(MappableDataset):
             if isinstance(self.sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
                                          samplers.RandomSampler, samplers.SubsetRandomSampler,
                                          samplers.WeightedRandomSampler, samplers.Sampler)):
-                if num_samples is None:
-                    num_samples = len(source)
                 sampler_instance = self.sampler.create()
                 sampler_instance.set_num_rows(len(source))
-                sampler_instance.set_num_samples(num_samples)
                 sampler_instance.initialize()
                 if num_parallel_workers > 1:
                     self.source = (lambda: _cpp_sampler_fn_mp(sampler_instance, source, num_parallel_workers))
@@ -3304,17 +3302,12 @@ class ManifestDataset(MappableDataset):
         Return:
             Number, number of batches.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-
         if self.class_indexing is None:
             class_indexing = dict()
         else:
             class_indexing = self.class_indexing
 
-        num_rows = ManifestOp.get_num_rows_and_classes(self.dataset_file, num_samples, class_indexing, self.usage)[0]
+        num_rows = ManifestOp.get_num_rows_and_classes(self.dataset_file, class_indexing, self.usage)[0]
         rows_per_shard = get_num_rows(num_rows, self.num_shards)
         rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -3330,17 +3323,12 @@ class ManifestDataset(MappableDataset):
         Return:
             Number, number of classes.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-
         if self.class_indexing is None:
             class_indexing = dict()
         else:
             class_indexing = self.class_indexing
 
-        return ManifestOp.get_num_rows_and_classes(self.dataset_file, num_samples, class_indexing, self.usage)[1]
+        return ManifestOp.get_num_rows_and_classes(self.dataset_file, class_indexing, self.usage)[1]
 
     def get_class_indexing(self):
         """
@@ -3349,17 +3337,12 @@ class ManifestDataset(MappableDataset):
         Return:
             Dict, A str-to-int mapping from label name to index.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-
         if self.class_indexing is None:
             class_indexing = dict()
         else:
             class_indexing = self.class_indexing
 
-        return ManifestOp.get_class_indexing(self.dataset_file, num_samples, class_indexing, self.usage)
+        return ManifestOp.get_class_indexing(self.dataset_file, class_indexing, self.usage)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -3473,12 +3456,8 @@ class Cifar10Dataset(MappableDataset):
         Return:
             Number, number of batches.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
 
-        num_rows = CifarOp.get_num_rows(self.dataset_dir, num_samples, True)
+        num_rows = CifarOp.get_num_rows(self.dataset_dir, True)
         rows_per_shard = get_num_rows(num_rows, self.num_shards)
         rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -3597,12 +3576,8 @@ class Cifar100Dataset(MappableDataset):
         Return:
             Number, number of batches.
         """
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
 
-        num_rows = CifarOp.get_num_rows(self.dataset_dir, num_samples, False)
+        num_rows = CifarOp.get_num_rows(self.dataset_dir, False)
         rows_per_shard = get_num_rows(num_rows, self.num_shards)
         rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -3631,7 +3606,7 @@ class RandomDataset(SourceDataset):
     Args:
         num_samples (int): number of samples to generate.
         schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
-            If the schema is not provided, the meta data from the TFRecord file is considered the schema.
+            If the schema is not provided, the random dataset generates a random schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
@@ -3644,9 +3619,12 @@ class RandomDataset(SourceDataset):
             schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
         self.schema = schema
         self.columns_list = columns_list
-        self.num_samples = num_samples
         if schema_obj is not None and num_samples is None:
             self.num_samples = schema_obj.num_rows
+        elif num_samples is None:
+            self.num_samples = 0
+        else:
+            self.num_samples = num_samples
 
     def get_args(self):
         args = super().get_args()
@@ -4015,17 +3993,12 @@ class VOCDataset(MappableDataset):
         if self.task != "Detection":
             raise NotImplementedError()
 
-        if self.num_samples is None:
-            num_samples = 0
-        else:
-            num_samples = self.num_samples
-
         if self.class_indexing is None:
             class_indexing = dict()
         else:
             class_indexing = self.class_indexing
 
-        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing, num_samples)
+        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4205,9 +4178,11 @@ class TextFileDataset(SourceDataset):
         if self._dataset_size is None:
             num_rows = TextFileOp.get_num_rows(self.dataset_files)
             num_rows = get_num_rows(num_rows, self.num_shards)
-            if self.num_samples is None:
-                return num_rows
-            return min(self.num_samples, num_rows)
+            # If the user gave a num samples in the dataset, then the sampler will limit the rows returned
+            # to that amount.  Account for that here in the row count
+            if self.num_samples is not None and self.num_samples > 0 and num_rows > self.num_samples:
+                num_rows = self.num_samples
+            return num_rows
         return self._dataset_size
 
     def is_shuffled(self):

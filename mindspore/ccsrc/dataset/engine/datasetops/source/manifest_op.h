@@ -87,14 +87,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method
-    // @param int64_t num_samples
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
-      return *this;
-    }
-
-    // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
@@ -129,7 +121,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
 
    private:
     std::shared_ptr<Sampler> builder_sampler_;
-    int64_t builder_num_samples_;
     bool builder_decode_;
 
     std::string builder_file_;
@@ -147,8 +138,8 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @param std::string - file list of Manifest
   // @param int32_t queue_size - connector queue size
   // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
-  ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, int64_t num_samples,
-             bool decode, const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
+  ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
+             const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
              std::shared_ptr<Sampler> sampler, std::string usage);
   // Destructor.
   ~ManifestOp() = default;
@@ -164,16 +155,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Method derived from RandomAccess Op, enable Sampler to get numRows
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumSamples(int64_t *num) const override;
-
-  // Method derived from RandomAccess Op, enable Sampler to get total number of Rows in dataset
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumRowsInDataset(int64_t *num) const override;
-
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
@@ -184,12 +165,12 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-  static Status CountTotalRows(const std::string &file, int64_t numSamples, const py::dict &dict,
-                               const std::string &usage, int64_t *count, int64_t *numClasses);
+  static Status CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage, int64_t *count,
+                               int64_t *numClasses);
 
   // Get str-to-int mapping from label name to index
-  static Status GetClassIndexing(const std::string &file, int64_t numSamples, const py::dict &dict,
-                                 const std::string &usage, std::map<std::string, int32_t> *output_class_indexing);
+  static Status GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
+                                 std::map<std::string, int32_t> *output_class_indexing);
 
  private:
   // Initialize Sampler, calls sampler->Init() within
@@ -240,8 +221,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   std::string file_;  // file that store the information of images
   std::map<std::string, int32_t> class_index_;
   std::shared_ptr<Sampler> sampler_;
-  int64_t num_samples_;
-  int64_t num_rows_;
   bool decode_;
   std::string usage_;
   int64_t buf_cnt_;

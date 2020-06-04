@@ -544,7 +544,7 @@ def test_distributed_sampler():
 def test_num_samples():
     source = [(np.array([x]),) for x in range(64)]
     num_samples = 32
-    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_samples=num_samples)
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(num_samples=num_samples))
     ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(32)], num_samples=num_samples)
     ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples=num_samples)
 
@@ -660,4 +660,6 @@ if __name__ == "__main__":
     test_sequential_sampler()
     test_distributed_sampler()
     test_random_sampler()
+    test_num_samples()
+    test_num_samples_underflow()
     test_schema()

@@ -856,9 +856,7 @@ Status DEPipeline::ParseImageFolderOp(const py::dict &args, std::shared_ptr<Data
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -893,9 +891,7 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -930,9 +926,7 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -966,9 +960,7 @@ Status DEPipeline::ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetO
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -1001,9 +993,7 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -1039,10 +1029,12 @@ Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<Datas
       (void)builder.SetNumWorkers(ToInt(value));
     } else if (key == "schema_file_path" || key == "schema_json_string") {
       schema_exists = true;
-    } else if (key == "num_samples") {
-      (void)builder.SetTotalRows(ToInt(value));
     } else if (key == "columns_list") {
       columns_to_load = ToStringVector(value);
+    } else if (key == "num_samples") {
+      // This is not sampling here. The random data op needs to know how much data to
+      // generate. It does not currently support sampling.
+      (void)builder.SetTotalRows(ToInt(value));
     }
   }
   if (schema_exists) {
@@ -1077,9 +1069,7 @@ Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp>
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -1121,8 +1111,6 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
         (void)builder->SetDecode(ToBool(value));
       } else if (key == "extensions") {
         (void)builder->SetExtensions(ToStringSet(value));
-      } else if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
       } else if (key == "dataset_type") {
         (void)builder->SetDatasetType(ToString(value));
       }
@@ -1153,7 +1141,7 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
       } else if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
+        (void)builder->SetTotalRows(ToInt(value));
       } else if (key == "num_shards") {
         (void)builder->SetNumDevices(ToInt(value));
       } else if (key == "shard_id") {
