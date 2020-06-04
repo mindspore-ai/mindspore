@@ -21,7 +21,6 @@ from .._checkparam import Rel
 from ..common import dtype as mstype
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..ops import functional as F
-from ..ops.composite.base import _mp_cast_helper
 from ..parallel._utils import _get_parallel_mode
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
 from .parallel_utils import ParallelMode
@@ -98,7 +97,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
 
         def construct(self, data, label):
             out = self._backbone(data)
-            label = _mp_cast_helper(mstype.float32, label)
+            label = F.mixed_precision_cast(mstype.float32, label)
             return self._loss_fn(F.cast(out, mstype.float32), label)
 
     validator.check_value_type('loss_fn', loss_fn, nn.Cell, None)

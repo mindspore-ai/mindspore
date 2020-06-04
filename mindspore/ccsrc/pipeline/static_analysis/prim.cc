@@ -147,9 +147,6 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         AnfNodeConfigPtr out_conf) {
   AbstractBasePtrList args_spec_list;
-  if (!prim_->isa<prim::DoSignaturePrimitive>()) {
-    MS_LOG(EXCEPTION) << "Primitive should be DoSignature, but " << prim_->ToString();
-  }
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
@@ -221,9 +218,6 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
-  if (!prim_->isa<prim::UnpackGraphPrimitive>()) {
-    MS_LOG(EXCEPTION) << "Primitive should be UnpackGraphPrimitive, but got " << prim_->ToString();
-  }
 
   auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
   auto out_node = out_conf->node()->cast<CNodePtr>();
@@ -263,6 +257,63 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   ScopeGuard scope_guard(scope);
   AnfNodePtr new_vnode = NewValueNode(new_graph);
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context());
+
+  return engine->ForwardConfig(out_conf, fn_conf);
+}
+
+AnfNodePtr MixedPrecisionCastHelper(AnfNodePtr source_node, AbstractBasePtr node_type, AnfNodePtr target_type,
+                                    FuncGraphPtr func_graph) {
+  AnfNodePtr target_node = source_node;
+  if (node_type->isa<AbstractTensor>()) {
+    auto x = node_type->cast<AbstractTensorPtr>();
+    if (x->element()->BuildType()->isa<Float>()) {
+      auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
+      MS_EXCEPTION_IF_NULL(cast);
+      target_node = func_graph->NewCNode({NewValueNode(cast), source_node, target_type});
+    }
+  } else if (node_type->isa<AbstractTuple>()) {
+    auto x = node_type->cast<AbstractTuplePtr>();
+    auto &items = x->elements();
+    std::size_t size = items.size();
+    std::vector<AnfNodePtr> nodes;
+    nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    for (int i = 0; i < SizeToInt(size); i++) {
+      AnfNodePtr tuple_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(i)});
+      AnfNodePtr node = MixedPrecisionCastHelper(tuple_node, items[i], target_type, func_graph);
+      nodes.emplace_back(node);
+    }
+    target_node = func_graph->NewCNode(nodes);
+  }
+  return target_node;
+}
+
+EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                               AnfNodeConfigPtr out_conf) {
+  AbstractBasePtrList args_spec_list;
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "MixedPrecisionCast"
+                      << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
+
+  ScopePtr scope = kDefaultScope;
+  if (out_conf != nullptr) {
+    scope = out_conf->node()->scope();
+  }
+  ScopeGuard scope_guard(scope);
+
+  FuncGraphPtr func_graph = out_conf->node()->func_graph();
+  AnfNodePtr new_node = MixedPrecisionCastHelper(out_node_inputs[2], args_spec_list[1], out_node_inputs[1], func_graph);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
 
   return engine->ForwardConfig(out_conf, fn_conf);
 }

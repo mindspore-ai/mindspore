@@ -21,7 +21,6 @@ from ...common.parameter import Parameter, ParameterTuple
 from ...ops import composite as C
 from ...ops import functional as F
 from ...ops import operations as P
-from ...ops.composite.base import _mp_cast_helper
 from ...ops.operations.comm_ops import _VirtualDataset
 from ..cell import Cell
 from .grad_reducer import DistributedGradReducer
@@ -345,7 +344,7 @@ class WithEvalCell(Cell):
     def construct(self, data, label):
         outputs = self._network(data)
         if self.add_cast_fp32:
-            label = _mp_cast_helper(mstype.float32, label)
+            label = F.mixed_precision_cast(mstype.float32, label)
             outputs = F.cast(outputs, mstype.float32)
         loss = self._loss_fn(outputs, label)
         return loss, outputs, label
