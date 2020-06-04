@@ -39,7 +39,7 @@ epoch: 1 step: 1538, loss is 1.0221305
 Then, evaluate AlexNet according to network model
 ```python
 # evaluate AlexNet, 1 epoch training accuracy is up to 51.1%; 10 epoch training accuracy is up to 81.2%
-python eval.py --data_path cifar-10-verify-bin --mode test --ckpt_path checkpoint_alexnet-1_1562.ckpt
+python eval.py --data_path cifar-10-verify-bin --ckpt_path checkpoint_alexnet-1_1562.ckpt
 ```
 
 ## Note
