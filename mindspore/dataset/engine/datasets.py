@@ -42,8 +42,8 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
-    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset,\
-    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat,\
+    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
+    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_split
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
@@ -824,6 +824,29 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
+    def build_vocab(self, vocab, columns, freq_range, top_k):
+        """
+        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+        which contains top_k most frequent words (if top_k is specified)
+        This function is not meant to be called directly by user. To build vocab, please use the function
+        text.Vocab.from_dataset()
+
+        Args:
+            vocab(Vocab): vocab object
+            columns(str or list, optional): column names to get words from. It can be a list of column names.
+            (Default is None where all columns will be used. If any column isn't string type, will return error)
+            freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+            range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+            can be None, which corresponds to 0/total_words separately (default is None, all words are included)
+            top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
+            taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default is None
+            all words are included)
+
+        Returns:
+            BuildVocabDataset
+        """
+        return BuildVocabDataset(self, vocab, columns, freq_range, top_k)
+
     def apply(self, apply_func):
         """
         Apply a function in this dataset.
@@ -1483,6 +1506,7 @@ class BatchDataset(DatasetOp):
         for input_dataset in dataset.input:
             BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
 
+
 class BatchInfo(CBatchInfo):
     """
     The information object associates with the current batch of tensors.
@@ -1506,6 +1530,7 @@ class BatchInfo(CBatchInfo):
         """
         return
 
+
 class BlockReleasePair:
     """
     The blocking condition class used by SyncWaitDataset.
@@ -1514,6 +1539,7 @@ class BlockReleasePair:
         init_release_rows (int): Number of lines to allow through the pipeline.
         callback (function): The callback funciton that will be called when release is called.
     """
+
     def __init__(self, init_release_rows, callback=None):
         if isinstance(init_release_rows, int) and init_release_rows <= 0:
             raise ValueError("release_rows  need to be greater than 0.")
@@ -1696,6 +1722,7 @@ class _PythonCallable:
     """
     Internal python function wrapper for multiprocessing pyfunc.
     """
+
     def __init__(self, py_callable, idx, pool=None):
         # Original python callable from user.
         self.py_callable = py_callable
@@ -2593,7 +2620,7 @@ class MindDataset(SourceDataset):
 
         if sampler is not None:
             if isinstance(sampler, samplers.SubsetRandomSampler) is False and \
-            isinstance(sampler, samplers.PKSampler) is False:
+                    isinstance(sampler, samplers.PKSampler) is False:
                 raise ValueError("the sampler is not supported yet.")
 
         # sampler exclusive
@@ -2859,6 +2886,7 @@ class _GeneratorWorker(multiprocessing.Process):
     """
     Worker process for multiprocess Generator.
     """
+
     def __init__(self, dataset, eoe):
         self.idx_queue = multiprocessing.Queue(16)
         self.res_queue = multiprocessing.Queue(16)
@@ -3686,6 +3714,7 @@ class RandomDataset(SourceDataset):
     def is_sharded(self):
         return False
 
+
 class Schema:
     """
     Class to represent a schema of dataset.
@@ -4383,6 +4412,7 @@ class _NumpySlicesDataset:
     """
     Mainly for dealing with several kinds of format of python data, and return one row each time.
     """
+
     def __init__(self, data, column_list=None):
         self.column_list = None
         # Convert dict data into tuple
@@ -4525,6 +4555,7 @@ class NumpySlicesDataset(GeneratorDataset):
         >>> df = pd.read_csv("file.csv")
         >>> dataset4 = ds.NumpySlicesDataset(dict(df), shuffle=False)
     """
+
     @check_numpyslicesdataset
     def __init__(self, data, column_names=None, num_samples=None, num_parallel_workers=1, shuffle=None,
                  sampler=None, num_shards=None, shard_id=None):
@@ -4532,3 +4563,61 @@ class NumpySlicesDataset(GeneratorDataset):
         super().__init__(dataset, column_names=dataset.column_list, num_samples=num_samples,
                          num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
                          num_shards=num_shards, shard_id=shard_id)
+
+
+class BuildVocabDataset(DatasetOp):
+    """
+    Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+    which contains top_k most frequent words (if top_k is specified)
+    This function is not meant to be called directly by user. To build vocab, please use the function
+    text.Vocab.from_dataset()
+
+    Args:
+        vocab(Vocab): vocab object
+        columns(str or list, optional): column names to get words from. It can be a list of column names.
+        (Default is None where all columns will be used. If any column isn't string type, will return error)
+        freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+        range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+        can be None, which corresponds to 0/total_words separately (default is None, all words are included)
+        top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
+        taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default is None
+        all words are included)
+
+    Returns:
+        BuildVocabDataset
+    """
+
+    def __init__(self, input_dataset, vocab, columns, freq_range, top_k, prefetch_size=None):
+        super().__init__()
+        self.columns = columns
+        self.input.append(input_dataset)
+        self.prefetch_size = prefetch_size
+        self.vocab = vocab
+        self.freq_range = freq_range
+        self.top_k = top_k
+        input_dataset.output.append(self)
+
+    def get_args(self):
+        args = super().get_args()
+        args["columns"] = self.columns
+        args["vocab"] = self.vocab
+        args["freq_range"] = self.freq_range
+        args["prefetch_size"] = self.prefetch_size
+        args["top_k"] = self.top_k
+        return args
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        cls = self.__class__
+        new_op = cls.__new__(cls)
+        memodict[id(self)] = new_op
+        new_op.input = copy.deepcopy(self.input, memodict)
+        new_op.columns = copy.deepcopy(self.columns, memodict)
+        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
+        new_op.prefetch_size = copy.deepcopy(self.prefetch_size, memodict)
+        new_op.output = copy.deepcopy(self.output, memodict)
+        new_op.freq_range = copy.deepcopy(self.freq_range, memodict)
+        new_op.top_k = copy.deepcopy(self.top_k, memodict)
+        new_op.vocab = self.vocab
+        return new_op

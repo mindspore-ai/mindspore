@@ -16,20 +16,43 @@ Some basic function for nlp
 """
 from enum import IntEnum
 
+import copy
 import numpy as np
 import mindspore._c_dataengine as cde
 
-from .validators import check_from_file, check_from_list, check_from_dict
+from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset
 
 
 class Vocab(cde.Vocab):
     """
         Vocab object that is used for lookup word
-    Args:
     """
 
-    def __init__(self):
-        pass
+    @classmethod
+    @check_from_dataset
+    def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None):
+        """
+        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+        which contains top_k most frequent words (if top_k is specified)
+        Args:
+            dataset(Dataset): dataset to build vocab from.
+            columns(str or list, optional): column names to get words from. It can be a list of column names.
+                (Default is None where all columns will be used. If any column isn't string type, will return error)
+            freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+                range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+                can be None, which corresponds to 0/total_words separately (default is None, all words are included)
+            top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
+                taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default is None
+                all words are included)
+        return:
+            text.Vocab: vocab object built from dataset.
+        """
+        vocab = Vocab()
+        root = copy.deepcopy(dataset).build_vocab(vocab, columns, freq_range, top_k)
+        for d in root.create_dict_iterator():
+            if d is not None:
+                raise ValueError("from_dataset should receive data other than None")
+        return vocab
 
     @classmethod
     @check_from_list

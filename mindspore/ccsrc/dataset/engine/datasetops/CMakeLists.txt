@@ -19,5 +19,6 @@ add_library(engine-datasetops OBJECT
     zip_op.cc
     concat_op.cc
     filter_op.cc
+    build_vocab_op.cc
     )
 
