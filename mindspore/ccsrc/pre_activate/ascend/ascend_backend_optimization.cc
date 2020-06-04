@@ -239,7 +239,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   } else {
     ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion>());
+    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
+    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
   }
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
