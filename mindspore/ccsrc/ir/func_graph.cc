@@ -44,7 +44,7 @@ using mindspore::abstract::VirtualAbstractClosure;
  * Methods of Graph
  */
 FuncGraph::FuncGraph()
-    : flags_(),
+    : attrs_(),
       transforms_(),
       parameter_default_value_(),
       seen_(0),
@@ -155,11 +155,25 @@ ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
   return p;
 }
 
-bool FuncGraph::has_flag(const std::string &flag) {
-  if (flags_.count(flag)) {
-    return flags_[flag];
+bool FuncGraph::has_flag(const std::string &key) {
+  auto iter = attrs_.find(key);
+  if (iter != attrs_.cend()) {
+    if (iter->second->isa<BoolImm>()) {
+      return GetValue<bool>(iter->second);
+    }
+    MS_LOG(WARNING) << "key " << key << " is not a flag, please use has_attr function.";
   }
   return false;
+}
+
+bool FuncGraph::has_attr(const std::string &key) {
+  auto iter = attrs_.find(key);
+  return !(iter == attrs_.cend());
+}
+
+ValuePtr FuncGraph::get_attr(const std::string &key) {
+  auto iter = attrs_.find(key);
+  return iter == attrs_.cend() ? nullptr : iter->second;
 }
 
 CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
@@ -979,8 +993,8 @@ void FuncGraph::ReleaseFullOrderToEffectOrder() {
         depend_inputs.push_back(*iter);
       }
     }
-    set_flags(GRAPH_FLAG_HAS_EFFECT, false);
-    set_flags(GRAPH_FLAG_EFFECT_PATIAL_ORDER, true);
+    set_flag(GRAPH_FLAG_HAS_EFFECT, false);
+    set_flag(GRAPH_FLAG_EFFECT_PATIAL_ORDER, true);
     if (!depend_inputs.empty()) {
       SetEffectDepends(depend_inputs);
     }

@@ -17,6 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
+from mindspore.ops import resolved_ops as RO
 
 
 def _weight_variable(shape, factor=0.01):
@@ -46,12 +47,12 @@ def _conv7x7(in_channel, out_channel, stride=1):
 
 
 def _bn(channel):
-    return nn.BatchNorm2d(channel, eps=1e-4, momentum=0.9,
+    return RO.BatchNorm2d(channel, eps=1e-4, momentum=0.9,
                           gamma_init=1, beta_init=0, moving_mean_init=0, moving_var_init=1)
 
 
 def _bn_last(channel):
-    return nn.BatchNorm2d(channel, eps=1e-4, momentum=0.9,
+    return RO.BatchNorm2d(channel, eps=1e-4, momentum=0.9,
                           gamma_init=0, beta_init=0, moving_mean_init=0, moving_var_init=1)
 
 
@@ -94,7 +95,7 @@ class ResidualBlock(nn.Cell):
         self.conv3 = _conv1x1(channel, out_channel, stride=1)
         self.bn3 = _bn_last(out_channel)
 
-        self.relu = nn.ReLU()
+        self.relu = RO.ReLU()
 
         self.down_sample = False
 
@@ -167,7 +168,7 @@ class ResNet(nn.Cell):
 
         self.conv1 = _conv7x7(3, 64, stride=2)
         self.bn1 = _bn(64)
-        self.relu = P.ReLU()
+        self.relu = RO.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
 
         self.layer1 = self._make_layer(block,
@@ -191,7 +192,7 @@ class ResNet(nn.Cell):
                                        out_channel=out_channels[3],
                                        stride=strides[3])
 
-        self.mean = P.ReduceMean(keep_dims=True)
+        self.mean = RO.ReduceMean(keep_dims=True)
         self.flatten = nn.Flatten()
         self.end_point = _fc(out_channels[3], num_classes)
 
@@ -260,6 +261,7 @@ def resnet50(class_num=10):
                   [256, 512, 1024, 2048],
                   [1, 2, 2, 2],
                   class_num)
+
 
 def resnet101(class_num=1001):
     """

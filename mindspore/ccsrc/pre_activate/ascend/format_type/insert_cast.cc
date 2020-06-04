@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "device/kernel_info.h"
 #include "pre_activate/ascend/ascend_helper.h"
@@ -27,34 +28,45 @@
 #include "session/anf_runtime_algorithm.h"
 #include "session/kernel_graph.h"
 #include "utils/utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                       const std::vector<bool> &need_insert_cast) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   for (size_t output_idx = 0; output_idx < AnfAlgo::GetOutputTensorNum(cnode); ++output_idx) {
-    const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, output_idx);
-    const std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(cnode, output_idx);
-    const TypeId origin_type = AnfAlgo::GetOutputInferDataType(cnode, output_idx);
-    const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_idx);
+    AnfNodePtr replace_node = nullptr;
+    const auto origin_shape = AnfAlgo::GetOutputInferShape(cnode, output_idx);
+    const auto infer_type = AnfAlgo::GetOutputInferDataType(cnode, output_idx);
     auto idx = NewValueNode(SizeToInt(output_idx));
     MS_EXCEPTION_IF_NULL(idx);
     auto imm = std::make_shared<Int32Imm>(output_idx);
     idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
     auto getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
-    AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, getitem.get());
-    AnfNodePtr replace_node = nullptr;
-    if (origin_type != device_type) {
-      replace_node =
-        AddCastOpNodeToGraph(func_graph, getitem, dev_fmt, device_type, origin_type, origin_shape, origin_type);
-      MS_EXCEPTION_IF_NULL(replace_node);
-      replace_node->set_scope(cnode->scope());
-      AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
+    AnfAlgo::SetOutputInferTypeAndShape({infer_type}, {origin_shape}, getitem.get());
+    if (need_insert_cast[output_idx]) {
+      const auto dev_fmt = AnfAlgo::GetOutputFormat(cnode, output_idx);
+      TypeId origin_type(kTypeUnknown);
+      if (func_graph->has_attr(FUNC_GRAPH_FLAG_COMPOSITE)) {
+        origin_type = AnfAlgo::GetCNodeOutputPrecision(cnode);
+      }
+      origin_type = origin_type == kTypeUnknown ? infer_type : origin_type;
+      const auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_idx);
+      if (origin_type != device_type) {
+        replace_node =
+          AddCastOpNodeToGraph(func_graph, getitem, dev_fmt, device_type, origin_type, origin_shape, infer_type);
+        MS_EXCEPTION_IF_NULL(replace_node);
+        replace_node->set_scope(cnode->scope());
+        AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
+      } else {
+        replace_node = getitem;
+      }
     } else {
       replace_node = getitem;
     }
@@ -65,9 +77,10 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;
-}
+}  // namespace
 
-AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                               const std::vector<bool> &need_insert_cast) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetOutputTensorNum(cnode) == 0) {
@@ -76,14 +89,23 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &c
   MS_EXCEPTION_IF_NULL(cnode->Type());
   // Single output
   if (!cnode->Type()->isa<Tuple>()) {
+    if (!need_insert_cast[0]) {
+      return cnode;
+    }
+
     const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, 0);
     std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(cnode, 0);
-    const TypeId origin_type = AnfAlgo::GetOutputInferDataType(cnode, 0);
+    const auto infer_type = AnfAlgo::GetOutputInferDataType(cnode, 0);
+    TypeId origin_type(kTypeUnknown);
+    if (func_graph->has_attr(FUNC_GRAPH_FLAG_COMPOSITE)) {
+      origin_type = AnfAlgo::GetCNodeOutputPrecision(cnode);
+    }
+    origin_type = origin_type == kTypeUnknown ? infer_type : origin_type;
     const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, 0);
     AnfNodePtr replace_node = cnode;
     if (origin_type != device_type) {
       replace_node =
-        AddCastOpNodeToGraph(func_graph, cnode, dev_fmt, device_type, origin_type, origin_shape, origin_type);
+        AddCastOpNodeToGraph(func_graph, cnode, dev_fmt, device_type, origin_type, origin_shape, infer_type);
       MS_EXCEPTION_IF_NULL(replace_node);
       replace_node->set_scope(cnode->scope());
       AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
@@ -91,7 +113,57 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &c
     return replace_node;
   }
   // Multiple output
-  return InsertCastForMultipleOutput(func_graph, cnode);
+  return InsertCastForMultipleOutput(func_graph, cnode, need_insert_cast);
+}
+
+AnfNodePtr ProcessCompositeOp(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  // insert cast for ops in composite.
+  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  MS_EXCEPTION_IF_NULL(sub_graph);
+  auto mng = sub_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  std::vector<AnfNodePtr> todo;
+  std::vector<std::pair<AnfNodePtr, size_t>> graph_rets;
+  kernel::GetValidKernelNodes(sub_graph, &todo);
+  kernel::GetGraphRealOutput(sub_graph, &graph_rets);
+  for (auto &t : todo) {
+    AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), t);
+    // process input
+    CNodePtr t_cnode = t->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(t_cnode);
+    auto t_new_node = InsertCastForInput(sub_graph, t_cnode);
+    AnfNodePtr t_new_node_1 = nullptr;
+    std::vector<bool> need_insert_cast(AnfAlgo::GetOutputTensorNum(t), true);
+    // process output
+    auto iter = std::find_if(graph_rets.begin(), graph_rets.end(),
+                             [&t](const std::pair<AnfNodePtr, size_t> &ret) { return ret.first == t; });
+    if (iter != graph_rets.end()) {
+      auto t_fix_output_type = AnfAlgo::GetCNodeOutputPrecision(t);
+      auto t_output_type = AnfAlgo::GetOutputDeviceDataType(t, iter->second);
+      auto graph_output_type = AnfAlgo::GetOutputDeviceDataType(node, iter - graph_rets.begin());
+      if (t_fix_output_type == kTypeUnknown && t_output_type == graph_output_type) {
+        need_insert_cast[iter->second] = false;
+      } else if (t_fix_output_type == t_output_type && t_output_type == graph_output_type) {
+        need_insert_cast[iter->second] = false;
+      }
+      t_new_node_1 = InsertCastForOutput(sub_graph, t_new_node, need_insert_cast);
+    } else {
+      t_new_node_1 = InsertCastForOutput(sub_graph, t_new_node, need_insert_cast);
+    }
+
+    if (t_new_node_1 != nullptr && t_new_node_1 != t) {
+      (void)mng->Replace(t, t_new_node_1);
+    }
+  }
+
+  // insert cast for composite.
+  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  // process input
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto new_node = InsertCastForInput(func_graph, cnode);
+  // process output
+  return InsertCastForOutput(func_graph, new_node, std::vector<bool>(AnfAlgo::GetOutputTensorNum(new_node), true));
 }
 }  // namespace
 
@@ -106,13 +178,27 @@ const AnfNodePtr InsertCast::Process(const FuncGraphPtr &func_graph, const AnfNo
   if (!AnfAlgo::IsRealCNodeKernel(node) || func_graph == nullptr) {
     return nullptr;
   }
+
+  if (AnfAlgo::IsCompositeKernel(node)) {
+    return ProcessCompositeOp(func_graph, node);
+  } else {
+    // insert cast for single op.
+    AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+    // process input
+    CNodePtr cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto new_node = InsertCastForInput(func_graph, cnode);
+    // process output
+    return InsertCastForOutput(func_graph, new_node, std::vector<bool>(AnfAlgo::GetOutputTensorNum(new_node), true));
+  }
+  // insert cast for single op.
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   // process input
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_node = InsertCastForInput(func_graph, cnode);
   // process output
-  return InsertCastForOutput(func_graph, new_node);
+  return InsertCastForOutput(func_graph, new_node, std::vector<bool>(AnfAlgo::GetOutputTensorNum(new_node), true));
 }
 }  // namespace opt
 }  // namespace mindspore

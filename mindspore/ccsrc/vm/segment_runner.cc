@@ -92,6 +92,8 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     } else if (eqv.find(a) == eqv.end()) {
       inputs.push_back(a);
       eqv[a] = fg->add_parameter();
+      eqv[a]->set_abstract(a->abstract());
+      eqv[a]->set_kernel_info(a->kernel_info_ptr());
     }
 
     return eqv[a];
@@ -107,15 +109,20 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     if (inps.empty()) {
       MS_LOG(EXCEPTION) << "Input is empty";
     }
-    if (!IsValueNode<Primitive>(inps[0])) {
+    if (!IsValueNode<Primitive>(inps[0]) &&
+        !(IsValueNode<FuncGraph>(inps[0]) &&
+          inps[0]->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>()->has_attr(FUNC_GRAPH_FLAG_COMPOSITE))) {
       MS_LOG(EXCEPTION) << "Input[0] Must be a Primitive valuenode";
     }
+
     auto fn = inps[0];
 
     std::vector<AnfNodePtr> args{fn};
     (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args), ref);
 
     eqv[n] = fg->NewCNode(args);
+    eqv[n]->set_abstract(n->abstract());
+    eqv[n]->set_kernel_info(n->kernel_info_ptr());
   }
 
   std::vector<AnfNodePtr> eqv_keys;
@@ -123,15 +130,18 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
                        [](const std::pair<AnfNodePtr, AnfNodePtr> &elem) -> AnfNodePtr { return elem.first; });
 
   auto outputs = GetOutput(lst, lst[0]->func_graph()->manager()->node_users(), eqv_keys);
-  std::vector<AnfNodePtr> output_args;
-  output_args.push_back(NewValueNode(prim::kPrimMakeTuple));
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_args),
-                       [&eqv](const AnfNodePtr &o) -> AnfNodePtr { return eqv[o]; });
-
-  // Set output for AnfGraph
-  auto fg_output = fg->NewCNode(output_args);
+  AnfNodePtr fg_output;
+  if (outputs.size() > 1) {
+    std::vector<AnfNodePtr> output_args;
+    output_args.push_back(NewValueNode(prim::kPrimMakeTuple));
+    (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_args),
+                         [&eqv](const AnfNodePtr &o) -> AnfNodePtr { return eqv[o]; });
+    // Set output for AnfGraph
+    fg_output = fg->NewCNode(output_args);
+  } else {
+    fg_output = eqv[outputs[0]];
+  }
   fg->set_output(fg_output);
-
   return std::make_tuple(fg, inputs, outputs);
 }
 

@@ -245,6 +245,9 @@ checkopts "$@"
 echo "---------------- mindspore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
+if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
+    git submodule update --init --recursive akg
+fi
 
 build_exit()
 {
@@ -307,7 +310,7 @@ build_mindspore()
     if [[ "X$USE_GLOG" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DUSE_GLOG=ON"
     fi
-    if [[ "X$ENABLE_AKG" = "Xon" ]]; then
+    if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
     fi
     echo "${CMAKE_ARGS}"
@@ -450,5 +453,12 @@ fi
 
 cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
 cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
+
+if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
+    so_lib_dir=${BUILD_PATH}/package/mindspore/lib
+    akg_build_dir=${BUILD_PATH}/mindspore/akg/mindspore/ccsrc/akg
+    mkdir -p ${so_lib_dir}
+    cp ${akg_build_dir}/*.so ${so_lib_dir}
+fi
 
 echo "---------------- mindspore: build end   ----------------"

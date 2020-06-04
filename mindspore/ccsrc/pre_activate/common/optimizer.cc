@@ -86,11 +86,8 @@ void GraphOptimizer::AddPassManager(const PassManagerPtr &pass_manager) {
 FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_only_once) {
   MS_EXCEPTION_IF_NULL(func_graph);
   run_only_once_ = (pass_managers_.size() == 1) ? true : run_only_once;
-  auto manager = func_graph->manager();
-  if (manager == nullptr) {
-    manager = Manage(func_graph, false);
-    func_graph->set_manager(manager);
-  }
+  // Performance risk by creating new manager each time
+  auto manager = Manage(func_graph, true);
 
   bool changed = true;
   while (changed) {

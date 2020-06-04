@@ -22,6 +22,11 @@
 #include "nlohmann/json.hpp"
 #include "session/anf_runtime_algorithm.h"
 #include "common/utils.h"
+#include "ir/manager.h"
+#include "ir/meta_tensor.h"
+#include "ir/func_graph.h"
+#include "operator/ops.h"
+#include "utils/graph_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,12 +50,6 @@ const std::map<TypeId, std::string> type_id_str_map = {
   {TypeId::kNumberTypeUInt8, "uint8"},     {TypeId::kNumberTypeUInt16, "uint16"},
   {TypeId::kNumberTypeUInt32, "uint32"},   {TypeId::kNumberTypeUInt64, "uint64"},
   {TypeId::kNumberTypeBool, "bool"},
-};
-
-const std::map<std::string, std::string> DATATYPE_STRING_MAP{
-  {"Float32", "float32"}, {"Float16", "float16"}, {"Int8", "int8"},   {"Int16", "int16"},
-  {"UInt16", "uint16"},   {"UInt8", "uint8"},     {"Int32", "int32"}, {"UInt32", "uint32"},
-  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool_", "bool"},  {"Float64", "double"},
 };
 
 const std::unordered_map<std::string, std::string> dtype_shortdtype_map_ = {
@@ -242,14 +241,6 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   }
 }
 
-std::string Dtype2String(const std::string &dtypes) {
-  auto iter = DATATYPE_STRING_MAP.find(dtypes);
-  if (iter == DATATYPE_STRING_MAP.end()) {
-    MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtypes;
-  }
-  return iter->second;
-}
-
 std::string TypeId2String(TypeId type_id) {
   auto iter = type_id_str_map.find(type_id);
   if (iter == type_id_str_map.end()) {
@@ -360,7 +351,7 @@ bool SetOutputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &ou
       output_num = 1;
     } else {
       if (output_idx < real_output_num) {
-        MS_LOG(INFO) << "Set output kernel builder info, output type is optional, output index is :" << output_idx;
+        MS_LOG(DEBUG) << "Set output kernel builder info, output type is optional, output index is :" << output_idx;
         output_num = 1;
       }
     }
@@ -402,7 +393,7 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
   }
 
   if (imply_type == kAKG) {
-    builder->SetKernelType(AUTO_DIFF_KERNEL);
+    builder->SetKernelType(AKG_KERNEL);
   } else if (imply_type == kAICPU) {
     builder->SetKernelType(AICPU_KERNEL);
   } else {
@@ -536,6 +527,257 @@ bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &
     }
   }
   return true;
+}
+
+std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+
+  if (index >= AnfAlgo::GetInputTensorNum(anf_node)) {
+    MS_EXCEPTION(ArgumentError) << "Index is out of the size of anf_node inputs.";
+  }
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return AnfAlgo::VisitKernel(anf_node, 0);
+  } else {
+    return AnfAlgo::VisitKernel(anf_node->cast<CNodePtr>()->input(index + 1), 0);
+  }
+}
+
+std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                                            const std::vector<AnfNodePtr> &input_list) {
+  std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> input_index;
+  for (size_t i = 0; i < input_list.size(); ++i) {
+    auto const &input = input_list[i];
+    MS_EXCEPTION_IF_NULL(input);
+    bool found = false;
+    // using NodeUsersMap = std::unordered_map<AnfNodePtr, std::set<std::pair<AnfNodePtr, int>>>;
+    auto mng = input->func_graph()->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    const NodeUsersMap &users = mng->node_users();
+    auto input_users = users.find(input);
+    if (input_users == users.end() || input_users->second.empty()) {
+      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
+                                  << input->func_graph()->ToString() << "] has no users.";
+    }
+
+    for (auto const &input_user : input_users->second) {
+      for (auto const &anf_node : node_list) {
+        if (anf_node != input_user.first) {
+          continue;
+        }
+
+        std::vector<int> dyn_input_sizes;
+        auto prim = AnfAlgo::GetCNodePrimitive(anf_node);
+        MS_EXCEPTION_IF_NULL(prim);
+        if (prim->GetAttr(kAttrDynInputSizes) != nullptr) {
+          dyn_input_sizes = GetValue<const std::vector<int>>(prim->GetAttr(kAttrDynInputSizes));
+        }
+
+        if (dyn_input_sizes.empty()) {
+          input_index.push_back(std::make_pair(anf_node, std::make_pair(IntToSize(input_user.second - 1), 0)));
+          found = true;
+          break;
+        } else {
+          int used_as_idx = input_user.second - 1;
+          int accum_idx = 0;
+          size_t dyn_i = 0;
+          for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
+            accum_idx += dyn_input_sizes[dyn_i];
+            if (used_as_idx < accum_idx) {
+              input_index.push_back(std::make_pair(
+                anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
+              break;
+            }
+          }
+          if (dyn_i != dyn_input_sizes.size()) {
+            found = true;
+            break;
+          }
+        }
+      }
+      if (found) {
+        break;
+      }
+    }
+
+    if (!found) {
+      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
+                                  << input->func_graph()->ToString() << "] found no related kernel info.";
+    }
+  }
+  return input_index;
+}
+
+std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                          const std::vector<AnfNodePtr> &input_list,
+                                                          const std::vector<AnfNodePtr> &output_list) {
+  std::vector<std::pair<AnfNodePtr, size_t>> output_index;
+  for (size_t i = 0; i < output_list.size(); ++i) {
+    auto const &output = output_list[i];
+    MS_EXCEPTION_IF_NULL(output);
+    bool found = false;
+    auto pree_node = AnfAlgo::VisitKernel(output, 0);
+
+    auto pos = std::find(std::begin(node_list), std::end(node_list), pree_node.first);
+    if (pos != std::end(node_list)) {
+      output_index.push_back(pree_node);
+      continue;
+    }
+
+    auto ret = std::find(std::begin(input_list), std::end(input_list), pree_node.first);
+    if (ret != std::end(input_list)) {
+      output_index.push_back(std::make_pair(pree_node.first, 0));
+      found = true;
+    }
+
+    if (!found) {
+      MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(2) << "] of ["
+                                  << output->func_graph()->ToString() << "] found no related kernel info.";
+    }
+  }
+  return output_index;
+}
+
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list) {
+  MS_EXCEPTION_IF_NULL(node_list);
+
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  std::vector<AnfNodePtr> node_lists = TopoSort(func_graph->get_return());
+  for (auto const &node : node_lists) {
+    if (!AnfAlgo::IsRealKernel(node) || !node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+
+    if (IsValueNode<Primitive>(cnode->input(kAnfPrimitiveIndex))) {
+      node_list->push_back(node);
+    }
+  }
+}
+
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
+                         std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list) {
+  MS_EXCEPTION_IF_NULL(node_list);
+  MS_EXCEPTION_IF_NULL(input_list);
+  MS_EXCEPTION_IF_NULL(output_list);
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  GetValidKernelNodes(func_graph, node_list);
+
+  auto parameters = func_graph->parameters();
+  input_list->insert(input_list->begin(), parameters.begin(), parameters.end());
+
+  auto func_output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(func_output);
+  if (func_output->isa<CNode>()) {
+    // multi output.
+    auto cnode = func_output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto input0 = cnode->input(kAnfPrimitiveIndex);
+    MS_EXCEPTION_IF_NULL(input0);
+    if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
+      for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
+        auto input_node = cnode->input(input_idx);
+        MS_EXCEPTION_IF_NULL(input_node);
+        output_list->push_back(AnfAlgo::VisitKernel(input_node, 0).first);
+      }
+    } else {
+      // single output.
+      output_list->push_back(AnfAlgo::VisitKernel(func_output, 0).first);
+    }
+  } else {
+    // single output.
+    output_list->push_back(AnfAlgo::VisitKernel(func_output, 0).first);
+  }
+}
+
+bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(node_json);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (input_idx + 1 >= cnode->size()) {
+    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
+                                << cnode->inputs().size() << "][" << cnode->DebugString() << "]";
+  }
+
+  auto input_node = cnode->input(input_idx + 1);
+  if (!IsValueNode<tensor::Tensor>(input_node)) {
+    return false;
+  }
+
+  auto tensor = GetValueNode<tensor::TensorPtr>(input_node);
+  if (tensor == nullptr) {
+    return false;
+  }
+
+  auto type_id = tensor->data_type();
+  auto *data = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data);
+  if (tensor->DataDim() > 1 || tensor->DataSize() != 1) {
+    // not const tensor.
+    MS_LOG(WARNING) << "We take first value of tensor whose datasize != 1, [" << input_node->DebugString(2) << "]";
+  }
+
+  if (type_id == kFloat32->type_id()) {
+    float *val = static_cast<float *>(data);
+    MS_EXCEPTION_IF_NULL(val);
+    (*node_json)["value"] = val[0];
+    MS_LOG(DEBUG) << "Value of tensor[" << cnode->DebugString() << "] is [float32][" << *val << "].";
+    return true;
+  } else if (type_id == kFloat16->type_id()) {
+    float16 *val = static_cast<float16 *>(data);
+    MS_EXCEPTION_IF_NULL(val);
+    (*node_json)["value"] = static_cast<float>(val[0]);
+    MS_LOG(INFO) << "Value of tensor[" << cnode->DebugString() << "] is [float16][" << *val << "].";
+    return true;
+  } else if (type_id == kInt32->type_id()) {
+    int *val = static_cast<int *>(data);
+    MS_EXCEPTION_IF_NULL(val);
+    (*node_json)["value"] = val[0];
+    MS_LOG(INFO) << "Value of tensor[" << cnode->DebugString() << "] is [int32][" << *val << "].";
+    return true;
+  }
+  MS_LOG(ERROR) << "Unknown value type of tensor[" << cnode->DebugString() << "]";
+  return false;
+}
+
+void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node_list);
+  auto output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(output);
+  if (AnfAlgo::IsRealKernel(output)) {
+    // single output.
+    node_list->push_back(std::make_pair(output, 0));
+    return;
+  } else if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+    auto output_cnode = output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(output_cnode);
+    // multi output.
+    auto &inputs = output_cnode->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      auto in_with_idx = AnfAlgo::VisitKernel(inputs[i], 0);
+      node_list->push_back(in_with_idx);
+    }
+    return;
+  }
+  MS_EXCEPTION(ArgumentError) << "Unknown  output type: " << output->DebugString(2)
+                              << " of graph: " << func_graph->ToString();
+}
+
+bool IsWeightBoundary(const AnfNodePtr &node) {
+  if (node->isa<ValueNode>()) {
+    return true;
+  }
+  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+    return true;
+  }
+  return false;
 }
 }  // namespace kernel
 }  // namespace mindspore

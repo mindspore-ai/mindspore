@@ -157,7 +157,7 @@ def test_deterministic_run_pass():
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
     seed_original = ds.config.get_seed()
- 
+
     ds.config.set_seed(0)
     ds.config.set_num_parallel_workers(1)
 

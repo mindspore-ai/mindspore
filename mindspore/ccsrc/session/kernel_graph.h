@@ -50,6 +50,7 @@ class KernelGraph : public FuncGraph {
   std::vector<AnfNodePtr> *MutableInputs() const { return inputs_.get(); }
   std::vector<AnfNodePtr> outputs() const;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
+  void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr);

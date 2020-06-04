@@ -77,9 +77,9 @@ class Bool : public Number {
 
   TypeId generic_type_id() const override { return kNumberTypeBool; }
   TypePtr DeepCopy() const override { return std::make_shared<Bool>(); }
-  std::string ToString() const override { return "Bool_"; }
-  std::string ToReprString() const override { return "bool_"; }
-  std::string DumpText() const override { return "Bool_"; }
+  std::string ToString() const override { return "Bool"; }
+  std::string ToReprString() const override { return "bool"; }
+  std::string DumpText() const override { return "Bool"; }
 };
 
 // Int

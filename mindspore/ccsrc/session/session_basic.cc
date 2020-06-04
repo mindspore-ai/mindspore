@@ -21,6 +21,7 @@
 #include "pipeline/parse/data_converter.h"
 #include "ir/manager.h"
 #include "ir/param_value_py.h"
+#include "kernel/common_utils.h"
 #include "operator/ops.h"
 #include "common/trans.h"
 #include "utils/context/ms_context.h"
@@ -33,6 +34,7 @@
 #include "common/utils.h"
 #include "ir/dtype.h"
 #include "ir/anf.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 namespace session {
@@ -392,10 +394,17 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
   *from_other_graph = false;
   // get primitive of old node
+  std::vector<AnfNodePtr> cnode_inputs;
   auto prim = AnfAlgo::GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(prim);
-  // push attr to inputs[0] of new cnode
-  std::vector<AnfNodePtr> cnode_inputs = {std::make_shared<ValueNode>(std::make_shared<Primitive>(*prim))};
+  if (prim != nullptr) {
+    // push attr to inputs[0] of new cnode
+    cnode_inputs.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>(*prim)));
+  } else {
+    auto fg = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
+    MS_EXCEPTION_IF_NULL(fg);
+    auto new_fg = BasicClone(fg);
+    cnode_inputs.push_back(std::make_shared<ValueNode>(new_fg));
+  }
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < cnode->inputs().size(); input_idx++) {
     auto anf = cnode->inputs()[input_idx];

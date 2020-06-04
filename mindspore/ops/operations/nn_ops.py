@@ -584,6 +584,45 @@ class FusedBatchNorm(Primitive):
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
 
 
+class BNTrainingReduce(PrimitiveWithInfer):
+    """
+    primitive operator of bn_training_reduce's register and info descriptor
+    """
+
+    @prim_attr_register
+    def __init__(self, mode=0, epsilon=1e-5, momentum=0.1):
+        self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
+        self.mode = validator.check_integer('mode', mode, [0, 1], Rel.IN, self.name)
+        self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
+        self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
+
+    def infer_shape(self, x):
+        input_shp = _infer_shape_reduce(x, (0, 2, 3), False, self.name)
+        return (input_shp, input_shp)
+
+    def infer_dtype(self, x):
+        return (x, x)
+
+
+class BNTrainingUpdate(PrimitiveWithInfer):
+    """
+    primitive operator of bn_training_update's register and info descriptor
+    """
+    @prim_attr_register
+    def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
+        self.init_prim_io_names(inputs=['x', 'sum', 'square_sum', 'scale', 'b', 'mean', 'variance'],
+                                outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
+        #self.isRef = validator.check_integer('isRef', isRef, [0, 1], Rel.IN)
+        self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, 'BNTrainingUpdate')
+        self.factor = validator.check_number_range('factor', factor, 0, 1, Rel.INC_BOTH, 'BNTrainingUpdate')
+
+    def infer_shape(self, x, sum, square_sum, scale, b, mean, variance):
+        return (x, variance, variance, variance, variance)
+
+    def infer_dtype(self, x, sum, square_sum, scale, b, mean, variance):
+        return (x, variance, variance, variance, variance)
+
+
 class BatchNorm(PrimitiveWithInfer):
     r"""
     Batch Normalization for input data and updated parameters.
@@ -786,9 +825,9 @@ class Conv2D(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
             h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                    / stride_h
+                / stride_h
             w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                    / stride_w
+                / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -908,9 +947,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
             h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                    / stride_h
+                / stride_h
             w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                    / stride_w
+                / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 

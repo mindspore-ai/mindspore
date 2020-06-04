@@ -45,6 +45,8 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) co
     auto node_value = GetValueNode(node);
     if (main_value->isa<Primitive>() && node_value->isa<Primitive>()) {
       replace = false;
+    } else if (main_value->isa<tensor::Tensor>() && node_value->isa<tensor::Tensor>()) {
+      replace = (AbsOf(main) == AbsOf(node)) && CheckEqualKernelBuildInfo(main, node);
     } else {
       replace = (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
     }

@@ -80,7 +80,8 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
 using NodeInputReplMap = std::unordered_map<std::pair<AnfNodePtr, size_t>, AnfNodePtr, PairHasher>;
 // replace the nodes which should be changed
 void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::pair<CNodePtr, CNodePtr>> nodes_changed,
-                          std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node, NodeInputReplMap repl_node_inputs) {
+                          std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node, NodeInputReplMap repl_node_inputs,
+                          const FuncGraphPtr &func_graph) {
   for (auto &node_pair : nodes_changed) {
     CNodePtr old_node = node_pair.first;
     CNodePtr new_node = node_pair.second;
@@ -99,9 +100,11 @@ void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::p
   }
 
   for (auto &item : repl_node) {
-    if (!manager->Replace(item.first, item.second)) {
-      MS_LOG(EXCEPTION) << "TransformGraphDependNode replace node failed original:" << item.first->DebugString()
-                        << " to new: " << item.second->DebugString();
+    if (IsPrimitiveCNode(item.second, prim::kPrimReturn)) {
+      func_graph->set_output(item.second->cast<CNodePtr>()->input(1));
+    } else if (!manager->Replace(item.first, item.second)) {
+      MS_LOG(EXCEPTION) << "TransformGraphDependNode replace node failed original:" << item.first->DebugString(2)
+                        << " to new: " << item.second->DebugString(2);
     }
   }
 }
@@ -154,7 +157,7 @@ FuncGraphPtr TransformGraphCondBranchNodes(
       nodes_changed.emplace_back(node->cast<CNodePtr>(), new_node);
     }
   }
-  RunSwitchNodeReplace(manager, nodes_changed, repl_node, repl_node_inputs);
+  RunSwitchNodeReplace(manager, nodes_changed, repl_node, repl_node_inputs, graph);
   return graph;
 }
 

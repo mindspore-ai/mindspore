@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <memory>
+#include <unordered_set>
 
 #include "optimizer/irpass.h"
 #include "optimizer/optimizer.h"
@@ -28,7 +29,6 @@
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "operator/ops.h"
-
 namespace mindspore {
 namespace opt {
 namespace irpass {
@@ -81,13 +81,32 @@ class IncorporateGetitem : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int32Imm>})(node);
-
-    if (node->func_graph() != nullptr && idx_ >= 0 && fg_ != nullptr) {
-      auto new_fg = getitem_transform_(fg_, idx_);
-      (void)args_.insert(args_.begin(), NewValueNode(new_fg));
-      return node->func_graph()->NewCNode(args_);
+    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr) {
+      return nullptr;
     }
-    return nullptr;
+
+    if (fg_->has_attr(FUNC_GRAPH_FLAG_COMPOSITE)) {
+      // If composite has muti output, do not split.
+      // some composite output has EnvInstance node or DeadCode node should split.
+      auto output = fg_->output();
+      if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+        auto output_cnode = output->cast<CNodePtr>();
+        auto outputs = output_cnode->inputs();
+        int real_output_cnt = 0;
+        for (size_t i = 1; i < outputs.size(); ++i) {
+          if (IsCNode(outputs[i]) || IsValueNode<tensor::Tensor>(outputs[i]) || IsParam(outputs[i])) {
+            real_output_cnt++;
+            if (real_output_cnt > 1) {
+              return nullptr;
+            }
+          }
+        }
+      }
+    }
+
+    auto new_fg = getitem_transform_(fg_, idx_);
+    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
+    return node->func_graph()->NewCNode(args_);
   }
 
   void Visit(const CNodePtr &cnode) override {
@@ -113,6 +132,172 @@ class IncorporateGetitem : public AnfVisitor {
   FuncGraphPtr fg_{nullptr};
   std::vector<AnfNodePtr> args_{};
   internal::GetitemTransform getitem_transform_;
+};
+
+class IncorporateGetitemFromParam : public AnfVisitor {
+ public:
+  void Process(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &param, size_t input_idx) {
+    auto mng = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    auto &node_users = mng->node_users();
+    if (node_users.find(param) == node_users.end() || node_users[param].empty()) {
+      args_.push_back(cnode->input(input_idx + 1));
+      return;
+    }
+
+    for (auto &user : node_users[param]) {
+      if (!IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem)) {
+        // we do not process this case.
+        args_.push_back(cnode->input(input_idx + 1));
+        return;
+      }
+    }
+
+    // update new args.
+    if (IsPrimitiveCNode(cnode->input(input_idx + 1), prim::kPrimMakeTuple)) {
+      // case 1
+      replace_parameters_[input_idx] = true;
+      need_update_ = true;
+      auto make_tuple_cnode = cnode->input(input_idx + 1)->cast<CNodePtr>();
+      auto &make_tuple_cnode_inputs = make_tuple_cnode->inputs();
+      inputs_num_[input_idx] = make_tuple_cnode_inputs.size() - 1;
+      args_.insert(args_.end(), make_tuple_cnode_inputs.begin() + 1, make_tuple_cnode_inputs.end());
+    } else {
+      // case 2
+      auto prev_cnode = cnode->input(input_idx + 1)->cast<CNodePtr>();
+      auto prev_fg = GetValueNode<FuncGraphPtr>(prev_cnode->input(0));
+      auto fg_output = prev_fg->output();
+      if (!IsPrimitiveCNode(fg_output, prim::kPrimMakeTuple)) {
+        MS_LOG(ERROR) << "The return of: " << prev_fg->ToString()
+                      << " should be a make tuple, but got: " << fg_output->DebugString();
+        return;
+      }
+      replace_parameters_[input_idx] = true;
+      need_update_ = true;
+      auto make_tuple_cnode = fg_output->cast<CNodePtr>();
+      inputs_num_[input_idx] = make_tuple_cnode->inputs().size() - 1;
+      for (size_t output_i = 0; output_i < inputs_num_[input_idx]; ++output_i) {
+        auto new_getitem =
+          func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), prev_cnode, NewValueNode(SizeToInt(output_i))});
+        auto aptr = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(SizeToInt(output_i)));
+        new_getitem->input(2)->set_abstract(aptr);
+        new_getitem->set_abstract(make_tuple_cnode->input(output_i + 1)->abstract());
+        args_.push_back(new_getitem);
+      }
+    }
+  }
+
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    Reset();
+
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      return nullptr;
+    }
+    auto &inputs = cnode->inputs();
+    auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
+    if (fg == nullptr) {
+      return nullptr;
+    }
+    auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    auto parameters = fg->parameters();
+    if (parameters.size() != inputs.size() - 1) {
+      return nullptr;
+    }
+    replace_parameters_ = std::vector<bool>(parameters.size(), false);
+    inputs_num_ = std::vector<size_t>(parameters.size(), 1);
+    auto node_fg = node->func_graph();
+
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (IsPrimitiveCNode(inputs[i], prim::kPrimMakeTuple) || IsCNodeComposite(inputs[i])) {
+        Process(node_fg, cnode, parameters[i - 1], i - 1);
+      } else {
+        args_.push_back(inputs[i]);
+      }
+    }
+
+    if (!need_update_) {
+      return nullptr;
+    }
+
+    FuncGraphPtr new_fg = TransformableClone(fg, std::make_shared<TraceTransform>("sp"));
+    mng->AddFuncGraph(new_fg);
+
+    auto node_users = mng->node_users();
+    std::vector<AnfNodePtr> new_fg_parameters = new_fg->parameters();
+    std::vector<AnfNodePtr> new_parameters;
+    size_t curr_input_idx{0};
+    for (size_t param_i = 0; param_i < new_fg_parameters.size(); ++param_i) {
+      if (!replace_parameters_[param_i]) {
+        if (parameters[param_i]->abstract() != nullptr) {
+          new_fg_parameters[param_i]->set_abstract(parameters[param_i]->abstract());
+        }
+        new_parameters.push_back(new_fg_parameters[param_i]);
+        curr_input_idx++;
+        continue;
+      }
+
+      // make a new parameter.
+      for (size_t input_i = 0; input_i < inputs_num_[param_i]; ++input_i) {
+        auto new_param = std::make_shared<Parameter>(new_fg);
+        new_param->set_abstract(args_.at(curr_input_idx)->abstract());
+
+        // update users of new parameter.
+        for (auto &user : node_users[new_fg_parameters[param_i]]) {
+          idx_ = -1;
+          AnfVisitor::Match(prim::kPrimTupleGetItem, {IsParam, IsValueNode<Int32Imm>})(user.first);
+          if (idx_ == -1) {
+            MS_LOG(ERROR) << "User of: " << new_fg_parameters[param_i]->DebugString()
+                          << " must be tuple getitem here, but got: " << user.first->DebugString();
+            return nullptr;
+          }
+
+          if (input_i == IntToSize(idx_)) {
+            for (auto &sub_user : node_users[user.first]) {
+              auto sub_user_cnode = sub_user.first->cast<CNodePtr>();
+              MS_EXCEPTION_IF_NULL(sub_user_cnode);
+              sub_user_cnode->set_input(sub_user.second, new_param);
+              (void)mng->Replace(sub_user.first, sub_user_cnode);
+            }
+          }
+        }
+
+        // (void)mng->Replace(new_fg_parameters[param_i], new_param);
+        new_parameters.push_back(new_param);
+        curr_input_idx++;
+      }
+    }
+
+    mng->SetParameters(new_fg, new_parameters);
+    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
+    auto new_call = node_fg->NewCNode(args_);
+    new_call->set_abstract(node->abstract());
+    return new_call;
+  }
+
+  void Visit(const ValueNodePtr &vnode) override { idx_ = GetValue<int>(vnode->value()); }
+
+  void Visit(const CNodePtr &cnode) override {}
+
+  void Reset() {
+    replace_parameters_.clear();
+    args_.clear();
+    inputs_num_.clear();
+    need_update_ = false;
+    idx_ = -1;
+  }
+
+ private:
+  std::vector<bool> replace_parameters_{};
+  std::vector<AnfNodePtr> args_{};
+  std::vector<size_t> inputs_num_{};
+  bool need_update_{false};
+  int idx_{-1};
 };
 
 // {prim::kPrimTupleGetItem, {{prim::kPrimSwitch, X, G1, G2}, Xs}, C}

@@ -24,9 +24,12 @@
 #include "ir/manager.h"
 #include "ir/visitor.h"
 #include "optimizer/irpass.h"
+#include "optimizer/opt.h"
+#include "pipeline/action.h"
 #include "pipeline/resource.h"
 #include "debug/draw.h"
 #include "pipeline/parse/data_converter.h"
+#include "pipeline/static_analysis/static_analysis.h"
 
 namespace mindspore {
 namespace opt {
@@ -574,6 +577,5 @@ TEST_F(TestOptLib, test_adjust_allreduce_mul_add) {
   ASSERT_TRUE(CheckOpt(before2l, after2, patterns));
   ASSERT_TRUE(CheckOpt(before2r, after2, patterns));
 }
-
 }  // namespace opt
 }  // namespace mindspore

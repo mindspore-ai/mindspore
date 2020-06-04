@@ -20,7 +20,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
+from mindspore.ops import resolved_ops as RO
 from ..cell import Cell
+
 
 __all__ = ['Softmax',
            'LogSoftmax',
@@ -73,7 +75,7 @@ class Softmax(Cell):
 
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
-        self.softmax = P.Softmax(axis)
+        self.softmax = RO.Softmax(axis)
 
     def construct(self, x):
         return self.softmax(x)
@@ -110,7 +112,7 @@ class LogSoftmax(Cell):
 
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()
-        self.log_softmax = P.LogSoftmax(axis)
+        self.log_softmax = RO.LogSoftmax(axis)
 
     def construct(self, x):
         return self.log_softmax(x)
@@ -286,7 +288,7 @@ class Tanh(Cell):
 
     def __init__(self):
         super(Tanh, self).__init__()
-        self.tanh = P.Tanh()
+        self.tanh = RO.Tanh()
 
     def construct(self, x):
         return self.tanh(x)
@@ -318,7 +320,7 @@ class GELU(Cell):
 
     def __init__(self):
         super(GELU, self).__init__()
-        self.gelu = P.Gelu()
+        self.gelu = RO.Gelu()
 
     def construct(self, x):
         return self.gelu(x)

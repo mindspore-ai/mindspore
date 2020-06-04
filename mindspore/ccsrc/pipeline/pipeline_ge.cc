@@ -488,7 +488,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
 #ifdef ENABLE_INFER
   // Now don't use the graph because the exec ge function don't take effect
   MS_EXCEPTION_IF_NULL(info.at(phase)->func_graph);
-  if (ENABLE_TRAIN != info.at(phase)->func_graph->flags()["training"]) {
+  if (ENABLE_TRAIN != info.at(phase)->func_graph->has_flag("training")) {
     MS_LOG(ERROR) << "Graph training mode mismatch mode of libraries";
     ConfigManager::GetInstance().ResetConfig();
     return py::none();

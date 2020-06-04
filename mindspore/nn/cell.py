@@ -657,9 +657,6 @@ class Cell:
         return cells
 
     def add_flags(self, **flags):
-        for x in flags:
-            if not isinstance(flags[x], bool):
-                raise TypeError(f"Flags (f{x}) must be bool but {type(flags[x])}.")
         if not hasattr(self, "_mindspore_flags"):
             self._mindspore_flags = {}
         self._mindspore_flags.update({**flags})
@@ -764,3 +761,12 @@ class Cell:
         """
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self._enable_hook = True
+
+class Composite(Cell):
+    def __init__(self, auto_prefix=True, pips=None):
+        super(Composite, self).__init__(auto_prefix, pips)
+        class_name = self.__class__.__name__
+        self.add_flags(composite=class_name)
+
+    def construct(self):
+        raise NotImplementedError

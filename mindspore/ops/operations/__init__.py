@@ -47,13 +47,13 @@ from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll)
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Eps)
 from .random_ops import (RandomChoiceWithMask)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
                      DropoutDoMask, DropoutGrad, Dropout,
-                     DropoutGenMask, Flatten, FusedBatchNorm,
+                     DropoutGenMask, Flatten, FusedBatchNorm, BNTrainingReduce, BNTrainingUpdate,
                      Gelu, Elu,
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss,
                      LogSoftmax,
@@ -93,6 +93,8 @@ __all__ = [
     'Flatten',
     'MaxPoolWithArgmax',
     'FusedBatchNorm',
+    'BNTrainingReduce',
+    'BNTrainingUpdate',
     'BatchNorm',
     'MaxPool',
     'TopK',
@@ -253,6 +255,7 @@ __all__ = [
     "Sign",
     "LARSUpdate",
     "Round",
+    "Eps",
     "ApplyFtrl",
     "SpaceToBatch",
     "BatchToSpace",

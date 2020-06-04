@@ -82,7 +82,7 @@ class LeNet5(nn.Cell):
         x = self.fc3(x)
         return x
 
-    
+
 class GradWrap(nn.Cell):
     """ GradWrap definition """
     def __init__(self, network):
@@ -101,7 +101,7 @@ def test_hook():
     net_with_criterion = WithLossCell(net, criterion)
     train_network = GradWrap(net_with_criterion)
     train_network.set_train()
-    
+
     input_data = Tensor(np.ones([net.batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([net.batch_size, net.num_class]).astype(np.float32))
     output = net(Tensor(input_data))

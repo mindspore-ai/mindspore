@@ -18,14 +18,14 @@ Neural Networks Cells.
 Pre-defined building blocks or computing units to construct Neural Networks.
 """
 from . import layer, loss, optim, metrics, wrap
-from .cell import Cell
+from .cell import Cell, Composite
 from .layer import *
 from .loss import *
 from .optim import *
 from .metrics import *
 from .wrap import *
 
-__all__ = ["Cell"]
+__all__ = ["Cell", "Composite"]
 __all__.extend(layer.__all__)
 __all__.extend(loss.__all__)
 __all__.extend(optim.__all__)
