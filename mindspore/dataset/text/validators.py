@@ -34,9 +34,11 @@ def check_lookup(method):
         if "unknown" in kwargs:
             unknown = kwargs.get("unknown")
         if unknown is not None:
-            assert isinstance(unknown, int) and unknown >= 0, "unknown needs to be a non-negative integer"
+            if not (isinstance(unknown, int) and unknown >= 0):
+                raise ValueError("unknown needs to be a non-negative integer")
 
-        assert isinstance(vocab, cde.Vocab), "vocab is not an instance of cde.Vocab"
+        if not isinstance(vocab, cde.Vocab):
+            raise ValueError("vocab is not an instance of cde.Vocab")
 
         kwargs["vocab"] = vocab
         kwargs["unknown"] = unknown
@@ -58,13 +60,17 @@ def check_from_file(method):
         if "vocab_size" in kwargs:
             vocab_size = kwargs.get("vocab_size")
 
-        assert isinstance(file_path, str), "file_path needs to be str"
+        if not isinstance(file_path, str):
+            raise ValueError("file_path needs to be str")
+
         if delimiter is not None:
-            assert isinstance(delimiter, str), "delimiter needs to be str"
+            if not isinstance(delimiter, str):
+                raise ValueError("delimiter needs to be str")
         else:
             delimiter = ""
         if vocab_size is not None:
-            assert isinstance(vocab_size, int) and vocab_size > 0, "vocab size needs to be a positive integer"
+            if not (isinstance(vocab_size, int) and vocab_size > 0):
+                raise ValueError("vocab size needs to be a positive integer")
         else:
             vocab_size = -1
         kwargs["file_path"] = file_path
@@ -83,9 +89,11 @@ def check_from_list(method):
         word_list, = (list(args) + [None])[:1]
         if "word_list" in kwargs:
             word_list = kwargs.get("word_list")
-        assert isinstance(word_list, list), "word_list needs to be a list of words"
+        if not isinstance(word_list, list):
+            raise ValueError("word_list needs to be a list of words")
         for word in word_list:
-            assert isinstance(word, str), "each word in word list needs to be type str"
+            if not isinstance(word, str):
+                raise ValueError("each word in word list needs to be type str")
 
         kwargs["word_list"] = word_list
         return method(self, **kwargs)
@@ -101,10 +109,13 @@ def check_from_dict(method):
         word_dict, = (list(args) + [None])[:1]
         if "word_dict" in kwargs:
             word_dict = kwargs.get("word_dict")
-        assert isinstance(word_dict, dict), "word_dict needs to be a list of word,id pairs"
+        if not isinstance(word_dict, dict):
+            raise ValueError("word_dict needs to be a list of word,id pairs")
         for word, word_id in word_dict.items():
-            assert isinstance(word, str), "each word in word_dict needs to be type str"
-            assert isinstance(word_id, int) and word_id >= 0, "each word id needs to be positive integer"
+            if not isinstance(word, str):
+                raise ValueError("each word in word_dict needs to be type str")
+            if not (isinstance(word_id, int) and word_id >= 0):
+                raise ValueError("each word id needs to be positive integer")
         kwargs["word_dict"] = word_dict
         return method(self, **kwargs)
 
@@ -170,6 +181,64 @@ def check_jieba_add_dict(method):
         if user_dict is None:
             raise ValueError("user_dict is not provided")
         kwargs["user_dict"] = user_dict
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_ngram(method):
+    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        n, left_pad, right_pad, separator = (list(args) + 4 * [None])[:4]
+        if "n" in kwargs:
+            n = kwargs.get("n")
+        if "left_pad" in kwargs:
+            left_pad = kwargs.get("left_pad")
+        if "right_pad" in kwargs:
+            right_pad = kwargs.get("right_pad")
+        if "separator" in kwargs:
+            separator = kwargs.get("separator")
+
+        if isinstance(n, int):
+            n = [n]
+
+        if not (isinstance(n, list) and n != []):
+            raise ValueError("n needs to be a non-empty list of positive integers")
+
+        for gram in n:
+            if not (isinstance(gram, int) and gram > 0):
+                raise ValueError("n in ngram needs to be a positive number\n")
+
+        if left_pad is None:
+            left_pad = ("", 0)
+
+        if right_pad is None:
+            right_pad = ("", 0)
+
+        if not (isinstance(left_pad, tuple) and len(left_pad) == 2 and isinstance(left_pad[0], str) and isinstance(
+                left_pad[1], int)):
+            raise ValueError("left_pad needs to be a tuple of (str, int) str is pad token and int is pad_width")
+
+        if not (isinstance(right_pad, tuple) and len(right_pad) == 2 and isinstance(right_pad[0], str) and isinstance(
+                right_pad[1], int)):
+            raise ValueError("right_pad needs to be a tuple of (str, int) str is pad token and int is pad_width")
+
+        if not (left_pad[1] >= 0 and right_pad[1] >= 0):
+            raise ValueError("padding width need to be positive numbers")
+
+        if separator is None:
+            separator = " "
+
+        if not isinstance(separator, str):
+            raise ValueError("separator needs to be a string")
+
+        kwargs["n"] = n
+        kwargs["left_pad"] = left_pad
+        kwargs["right_pad"] = right_pad
+        kwargs["separator"] = separator
+
         return method(self, **kwargs)
 
     return new_method

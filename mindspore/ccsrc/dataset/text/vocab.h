@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_NLP_VOCAB_H_
-#define DATASET_NLP_VOCAB_H_
+#ifndef DATASET_TEXT_VOCAB_H_
+#define DATASET_TEXT_VOCAB_H_
 
 #include <string>
 #include <memory>
@@ -87,4 +87,4 @@ class Vocab {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_NLP_VOCAB_H_
+#endif  // DATASET_TEXT_VOCAB_H_
