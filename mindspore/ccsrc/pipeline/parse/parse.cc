@@ -1175,11 +1175,11 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   auto filename = location[0].cast<std::string>();
   auto line_no = location[1].cast<int>();
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
-  if (!py::hasattr(ast()->obj(), attr_name.c_str())) {
+  if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
     MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined, at " << filename << ":"
                             << line_no;
   }
-  auto obj = ast()->obj().attr(attr_name.c_str());
+  auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
   auto obj_type = obj.attr("__class__").attr("__name__");
   if (!py::hasattr(obj, "__parameter__")) {
     MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
@@ -1205,8 +1205,18 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   // getitem apply should return the sequence data structure itself
   std::string var_name = "";
   if (ast_->IsClassMember(value_obj)) {
-    var_name = "self.";
-    (void)var_name.append(value_obj.attr("attr").cast<std::string>());
+    std::string attr_name = value_obj.attr("attr").cast<std::string>();
+    var_name = "self." + attr_name;
+    if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
+      MS_EXCEPTION(TypeError) << "'" << var_name << "' was not defined in the class '__init__' function.";
+    }
+    auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
+    auto obj_type = obj.attr("__class__").attr("__name__");
+    if (!py::hasattr(obj, "__parameter__")) {
+      MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
+                              << py::str(obj).cast<std::string>() << "' with type '"
+                              << py::str(obj_type).cast<std::string>() << "'.";
+    }
   } else {
     var_name = value_obj.attr("id").cast<std::string>();
   }
@@ -1231,7 +1241,7 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   }
 }
 
-// process a assign statement , such as a =b,  a,b = tup
+// process a assign statement, such as a =b,  a,b = tup
 FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast assgin";
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
