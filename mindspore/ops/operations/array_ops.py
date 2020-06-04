@@ -2720,3 +2720,54 @@ class BatchToSpaceND(PrimitiveWithInfer):
                              f'block_shape_prod {block_shape_prod}')
         out_shape[0] = out_shape[0] // block_shape_prod
         return out_shape
+
+
+class ReverseSequence(PrimitiveWithInfer):
+    """
+    Reverses variable length slices.
+
+    Note:
+        If the specified axis is a negative number, the index is counted
+        backward from the end and starts at 1.
+
+    Raises:
+        ValueError: If axis is not an integer or not in the valid range.
+    Args:
+        seq_dim (int): The dimension which is partially reversed. Required.
+        batch_dim (int): The dimension along which reversal is performed. Default: 0
+
+    Inputs:
+        - **x** (Tensor) - The input to reverse.
+        - **seq_lengths** (int) - Must be 1-D vector with types: int32, int64
+
+    Outputs:
+        Reversed tensor with the same shape and data type as x.
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> seq_lengths = Tensor(np.array([1, 2, 3]))
+        >>> reverse_sequence = P.ReverseSequence(seq_dim=1)
+        >>> output = reverse_sequence(x, seq_lengths)
+    """
+
+    @prim_attr_register
+    def __init__(self, seq_dim, batch_dim=0):
+        """init ReverseSequence"""
+        self.init_prim_io_names(inputs=['x', 'seq_lengths'], outputs=['y'])
+        validator.check_value_type("seq_dim", seq_dim, [int], self.name)
+        self.seq_dim_ = seq_dim
+        validator.check_value_type("batch_dim", batch_dim, [int], self.name)
+        self.batch_dim_ = batch_dim
+
+    def infer_shape(self, x, seq_lengths):
+        validator.check("seq_dim", self.seq_dim_, "x rank", len(x), Rel.LE, self.name)
+        validator.check("batch_dim", self.batch_dim_, "x rank", len(x), Rel.LE, self.name)
+        validator.check("batch_dim", self.batch_dim_, "seq_dim", self.seq_dim_, Rel.NE, self.name)
+        validator.check("seq_lengths rank", len(seq_lengths), "expected", 1, Rel.EQ, self.name)
+        validator.check("seq_lengths vector size", seq_lengths[0],
+                        "input size along batch_dim", x[self.batch_dim_], Rel.EQ, self.name)
+        return x
+
+    def infer_dtype(self, x, seq_lengths):
+        validator.check_tensor_type_same({"seq_lengths_dtype": seq_lengths}, [mstype.int32, mstype.int64], self.name)
+        return x
