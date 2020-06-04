@@ -61,12 +61,21 @@ class FusedBatchNormFusion : public PatternProcessPass {
   VarPtr batch_norm_var_;
 };
 
-class FusedBatchNormMixPrecisionFusion : public FusedBatchNormFusion {
+class FusedBatchNormMixPrecisionFusion0 : public FusedBatchNormFusion {
  public:
-  explicit FusedBatchNormMixPrecisionFusion(bool multigraph = true)
+  explicit FusedBatchNormMixPrecisionFusion0(bool multigraph = true)
       : FusedBatchNormFusion("fused_batch_norm_mix_precision_fusion", multigraph) {}
 
-  ~FusedBatchNormMixPrecisionFusion() override = default;
+  ~FusedBatchNormMixPrecisionFusion0() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class FusedBatchNormMixPrecisionFusion1 : public FusedBatchNormFusion {
+ public:
+  explicit FusedBatchNormMixPrecisionFusion1(bool multigraph = true)
+      : FusedBatchNormFusion("fused_batch_norm_mix_precision_fusion", multigraph) {}
+
+  ~FusedBatchNormMixPrecisionFusion1() override = default;
   const BaseRef DefinePattern() const override;
 };
 }  // namespace opt
