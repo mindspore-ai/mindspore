@@ -366,3 +366,50 @@ class CheckBprop(PrimitiveWithInfer):
                 raise TypeError(f"{tips}, the dtype of {i}th output should be {ydtype},"
                                 f" but got {xdtype}.")
         return xdtypes
+
+
+class ConfusionMatrix(PrimitiveWithInfer):
+    r"""
+    Calculate the confusion matrix from labels and predictions.
+
+    Args:
+        num_classes (int): The num of classes.
+        dtype (str): Data type of confusion matrix. Default: 'int32'.
+
+    Inputs:
+        - **labels** (Tensor) - real labels, tensor of 1-D. the dtype must be non-negative Integer.
+        - **predictions** (Tensor) - the labels from prediction, tensor of 1-D.
+        the shape same as `labels` and the dtype must be non-negative Integer.
+        - **weights** (Tensor) - tensor of 1-D. the shape same as `predictions`.
+
+    Outputs:
+        Tensor, the confusion matrix, with shape (`num_classes`, `num_classes`).
+
+    Examples:
+        >>> confusion_matrix = P.ConfusionMatrix(4)
+        >>> labels = Tensor([0, 1, 1, 3], mindspore.int32)
+        >>> predictions = Tensor([1, 2, 1, 3], mindspore.int32)
+        >>> confusion_matrix(labels, predictions)
+    """
+
+    @prim_attr_register
+    def __init__(self, num_classes, dtype="int32"):
+        validator.check_value_type("num_classes", num_classes, [int], self.name)
+        validator.check_value_type("dtype", dtype, [str], self.name)
+
+    def infer_shape(self, labels, predictions, weights=None):
+        validator.check('labels dimension', len(labels), '', 1, Rel.EQ, self.name)
+        validator.check('labels shape', labels, 'predictions shape', predictions, Rel.EQ, self.name)
+        if weights is not None:
+            validator.check('labels shape', labels, 'weights shape', weights, Rel.EQ, self.name)
+        ret = (self.num_classes, self.num_classes)
+        return ret
+
+    def infer_dtype(self, labels, predictions, weights=None):
+        validator.check_subclass('labels', labels, mstype.tensor, self.name)
+        validator.check_subclass('predictions', predictions, mstype.tensor, self.name)
+        if weights is not None:
+            validator.check_subclass('weights', weights, mstype.tensor, self.name)
+        args = {"labels": labels, "predictions": predictions}
+        validator.check_tensor_type_same(args, (mstype.number_type), self.name)
+        return labels

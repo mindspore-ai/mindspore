@@ -285,6 +285,16 @@ class SpaceToBatchNDNet(Cell):
     def construct(self, x):
         return self.space_to_batch_nd(x)
 
+
+class ConfusionMatrixNet(Cell):
+    def __init__(self):
+        super(ConfusionMatrixNet, self).__init__()
+        self.confusion_matrix = P.ConfusionMatrix(4, "int32")
+
+    def construct(self, x, y):
+        return self.confusion_matrix(x, y)
+
+
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -325,6 +335,9 @@ test_case_array_ops = [
     ('BatchToSpaceNDNet', {
         'block': BatchToSpaceNDNet(),
         'desc_inputs': [Tensor(np.random.rand(4, 1, 1, 1).astype(np.float16))]}),
+    ('ConfusionMatrixNet', {
+        'block': ConfusionMatrixNet(),
+        'desc_inputs': [Tensor([0, 1, 1, 3], ms.int32), Tensor([0, 1, 1, 3], ms.int32)]}),
 ]
 
 test_case_lists = [test_case_array_ops]
