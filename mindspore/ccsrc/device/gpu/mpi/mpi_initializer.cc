@@ -24,8 +24,26 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 MPIInitializer::MPIInitializer() {
+  int init_flag = 0;
+  if (MPI_Initialized(&init_flag) != MPI_SUCCESS) {
+    return;
+  }
+  if (init_flag == 0) {
+    auto ret = MPI_Init(nullptr, nullptr);
+    if (ret != MPI_SUCCESS) {
+      return;
+    }
+  }
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_);
   MPI_Comm_size(MPI_COMM_WORLD, &rank_size_);
+}
+
+MPIInitializer::~MPIInitializer() {
+  int finalized_flag = 0;
+  (void)MPI_Finalized(&finalized_flag);
+  if (finalized_flag == 0) {
+    (void)MPI_Finalize();
+  }
 }
 
 MPIInitializer &MPIInitializer::GetInstance() {

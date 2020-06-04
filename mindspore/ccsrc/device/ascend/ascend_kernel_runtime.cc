@@ -15,7 +15,6 @@
  */
 
 #include "device/ascend/ascend_kernel_runtime.h"
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -24,6 +23,7 @@
 #include <algorithm>
 
 #include "device/ascend/ascend_device_address.h"
+#include "device/cpu/mpi/mpi_adapter.h"
 #include "utils/context/ms_context.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
@@ -510,11 +510,19 @@ bool AscendKernelRuntime::HcclInit() {
     MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
     return false;
   }
-
+#ifdef ENABLE_MPI
+  int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
+  const char *offset = std::getenv("RANK_OFFSET");
+  if (offset != nullptr) {
+    int rank_offset = std::stoi(offset);
+    rank_id += rank_offset;
+  }
+  const char *identify = reinterpret_cast<const char *>(std::to_string(rank_id).c_str());
+#else
   const char *identify = std::getenv("RANK_ID");
+#endif
   if (identify == nullptr) {
     MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
-    free(full_path);
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << identify;

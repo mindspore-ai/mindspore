@@ -109,19 +109,20 @@ if (ENABLE_CPU)
     )
 endif ()
 
+if (ENABLE_MPI)
+    install(
+        TARGETS _ms_mpi
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+endif ()
+
 if (ENABLE_GPU)
-    if (ENABLE_MPI)
-        install(
-            TARGETS _ms_mpi
-            DESTINATION ${INSTALL_BASE_DIR}
-            COMPONENT mindspore
-        )
         install(
             TARGETS gpu_collective
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
-    endif ()
     install(
         TARGETS gpu_queue
         DESTINATION ${INSTALL_LIB_DIR}

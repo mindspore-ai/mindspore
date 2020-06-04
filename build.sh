@@ -86,7 +86,7 @@ checkopts()
   ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
-  ENABLE_MPI="on"
+  ENABLE_MPI="off"
   CUDA_VERSION="9.2"
   COMPILE_PREDICT="off"
   USE_GLOG="on"
@@ -168,6 +168,7 @@ checkopts()
         if [[ "X$OPTARG" == "Xgpu" ]]; then
           ENABLE_GPU="on"
           ENABLE_CPU="on"
+          ENABLE_MPI="on"
         elif [[ "X$OPTARG" == "Xd" || "X$OPTARG" == "Xascend" ]]; then
           ENABLE_D="on"
           ENABLE_CPU="on"
