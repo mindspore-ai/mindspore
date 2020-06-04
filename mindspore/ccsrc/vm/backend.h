@@ -107,10 +107,13 @@ class MsBackend : public Backend {
   LinConvertResult GetMultiGraphRun(const FuncGraphPtr &g) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
+  void CreateOtherSession(const std::string &target);
 
  private:
   session::SessionPtr target_sess_;
-  session::SessionPtr cpu_sess_;
+  session::SessionPtr other_sess_;
+  std::string target_device_;
+  std::string other_device_;
   std::unordered_map<BaseRef, CondGraph, BaseRefHash> simu_cond_map_;
   std::unordered_map<GraphId, LinConvertResult> graph_id_map_;
   std::unordered_map<BaseRef, std::list<std::pair<GraphId, VectorRef>>, BaseRefHash> graph_inputs_;

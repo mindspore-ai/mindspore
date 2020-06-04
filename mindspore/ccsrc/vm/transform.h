@@ -79,7 +79,6 @@ class CompileGraph {
 
  private:
   void PushParameters(const FuncGraphPtr &func_graph);
-  std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph);
   bool SplitGraph(const FuncGraphPtr &func_graph);
   int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
   int InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);

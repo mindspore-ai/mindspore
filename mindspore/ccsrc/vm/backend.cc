@@ -65,8 +65,9 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
   GraphId graph_id = kInvalidGraphId;
-  if (target == kCPUDevice) {
-    graph_id = cpu_sess_->CompileGraph(lst, outputs);
+  if (target != target_device_ && target != "") {
+    CreateOtherSession(target);
+    graph_id = other_sess_->CompileGraph(lst, outputs);
   } else {
     graph_id = target_sess_->CompileGraph(lst, outputs);
   }
@@ -75,8 +76,8 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return result;
   }
-  if (target == kCPUDevice) {
-    cpu_sess_->BuildGraph(graph_id);
+  if (target != target_device_ && target != "") {
+    other_sess_->BuildGraph(graph_id);
   } else if (!is_multi_graph_sink_) {
     target_sess_->BuildGraph(graph_id);
   }
@@ -278,8 +279,8 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
 
   VectorRef outputs;
   // call ms rungraph (graphId, input ,output)
-  if (target == kCPUDevice) {
-    cpu_sess_->RunGraph(g, inputs, &outputs);
+  if (target != target_device_ && target != "") {
+    other_sess_->RunGraph(g, inputs, &outputs);
   } else {
     target_sess_->RunGraph(g, inputs, &outputs);
   }
@@ -341,16 +342,20 @@ MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_
   }
   target_sess_->Init(device_id);
   target_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
-  if (target == kCPUDevice) {
-    cpu_sess_ = target_sess_;
-  } else {
-    cpu_sess_ = session::SessionFactory::Get().Create(kCPUDevice);
-    if (cpu_sess_ == nullptr) {
-      MS_LOG(EXCEPTION) << "Create cpu session failed with target " << target << ".";
-    }
-    cpu_sess_->Init(0);
-    cpu_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
+  target_device_ = target;
+}
+
+void MsBackend::CreateOtherSession(const std::string &target) {
+  if (other_sess_ != nullptr && other_device_ == target) {
+    return;
   }
+  other_sess_ = session::SessionFactory::Get().Create(kCPUDevice);
+  if (other_sess_ == nullptr) {
+    MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
+  }
+  other_sess_->Init(0);
+  other_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
+  other_device_ = target;
 }
 
 GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraph(fg); }
