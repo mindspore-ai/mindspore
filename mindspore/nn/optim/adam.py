@@ -67,9 +67,9 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, grad
     next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32)
                                             - beta2, op_square(gradient_fp32))
 
-    update = next_m / (op_sqrt(next_v) + eps)
+    update = next_m / (eps + op_sqrt(next_v))
     if decay_flag:
-        update = update + op_mul(weight_decay_tensor, param_fp32)
+        update = op_mul(weight_decay_tensor, param_fp32) + update
 
     update_with_lr = op_mul(lr, update)
     next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
