@@ -71,16 +71,16 @@ def setup_module():
 def test_save_graph():
     """ test_exec_save_graph """
 
-    class Net(nn.Cell):
+    class Net1(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super(Net1, self).__init__()
             self.add = P.TensorAdd()
 
         def construct(self, x, y):
             z = self.add(x, y)
             return z
 
-    net = Net()
+    net = Net1()
     net.set_train()
     out_me_list = []
     x = Tensor(np.random.rand(2, 1, 2, 3).astype(np.float32))

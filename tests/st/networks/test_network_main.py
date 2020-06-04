@@ -19,9 +19,8 @@ Usage:
     python test_network_main.py --net lenet --target Ascend
 """
 import argparse
+
 import numpy as np
-import os
-import time
 from models.alexnet import AlexNet
 from models.lenet import LeNet
 from models.resnetv1_5 import resnet50

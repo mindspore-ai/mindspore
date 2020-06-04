@@ -14,6 +14,7 @@
 # ============================================================================
 """ test ops """
 import functools
+
 import numpy as np
 
 import mindspore.nn as nn
@@ -898,7 +899,7 @@ test_case_nn_ops = [
         'skip': ['backward']}),
     ('BasicLSTMCell', {
         'block': P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'),
-        'desc_inputs': [[128, 128], [128, 128], [128, 128], [512, 256, 1, 1],[512, 1, 1, 1]],
+        'desc_inputs': [[128, 128], [128, 128], [128, 128], [512, 256, 1, 1], [512, 1, 1, 1]],
         'desc_bprop': [[128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128]],
         'skip': []}),
     ('TopK', {
@@ -1324,7 +1325,7 @@ test_case_array_ops = [
         'desc_inputs': [(Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
-        'desc_bprop': [[3, ]]}),
+        'desc_bprop': [[3,]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -1486,8 +1487,7 @@ test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 test_exec_case = test_case
 
-test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                           'backward' not in x[1]['skip'], test_case)
+test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or 'backward' not in x[1]['skip'], test_case)
 
 
 @non_graph_engine

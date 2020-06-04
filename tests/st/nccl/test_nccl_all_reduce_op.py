@@ -91,10 +91,10 @@ class Net2(nn.Cell):
         self.all_reduce3 = P.AllReduce(self.op2, group=NCCL_WORLD_COMM_GROUP)
 
     def construct(self):
-        x = self.all_reduce1(self.x1)
-        y = self.all_reduce2(x)
+        x_ = self.all_reduce1(self.x1)
+        y = self.all_reduce2(x_)
         z = self.all_reduce3(y)
-        return (x, y, z)
+        return (x_, y, z)
 
 
 def test_AllReduce2():

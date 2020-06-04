@@ -19,9 +19,10 @@
 @Desc  : test parse the object's method
 """
 import logging
+from dataclasses import dataclass
+
 import numpy as np
 import pytest
-from dataclasses import dataclass
 
 import mindspore.nn as nn
 from mindspore import context

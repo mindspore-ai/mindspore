@@ -16,8 +16,8 @@ Some basic function for nlp
 """
 from enum import IntEnum
 
-import mindspore._c_dataengine as cde
 import numpy as np
+import mindspore._c_dataengine as cde
 
 from .validators import check_from_file, check_from_list, check_from_dict
 
