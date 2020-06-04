@@ -1,0 +1,1 @@
+## the file is a patch which is about just change data_processor_seq.py the part of generated tfrecord to MindRecord in [CLUEbenchmark/CLUENER2020](https://github.com/CLUEbenchmark/CLUENER2020/tree/master/tf_version)
