@@ -20,7 +20,6 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-
 class CollectiveFakeInitializer {
  public:
   CollectiveFakeInitializer() = default;

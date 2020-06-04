@@ -21,6 +21,11 @@ if (ENABLE_CPU)
     file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "cpu/*.cc"
     )
+    
+    if (NOT ENABLE_MPI)
+        list(REMOVE_ITEM CPU_SRC_LIST "cpu/allgather_cpu_kernel.cc")
+        list(REMOVE_ITEM CPU_SRC_LIST "cpu/reduce_scatter_cpu_kernel.cc")
+    endif ()
 endif ()
 
 if (ENABLE_GPU)
