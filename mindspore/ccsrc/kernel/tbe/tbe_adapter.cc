@@ -32,6 +32,8 @@ namespace tbe {
 static std::map<string, string> tbe_func_adapter_map = {
   {"softmax", "softmax_v2"},
   {"log_softmax", "log_softmax_v2"},
+  {"apply_momentum", "apply_momentum_d"},
+  {"apply_ftrl", "apply_ftrl_d"},
   {"re_lu6", "relu6"},
   {"re_lu6_grad", "relu6_grad"},
   {"re_lu", "relu"},
@@ -89,7 +91,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"batch_to_space_nd", "batch_to_space_nd_d"},
   {"resize_bilinear", "resize_bilinear_v2_d"},
   {"resize_bilinear_grad", "resize_bilinear_v2_grad"},
-  {"adam", "apply_adam"},
+  {"adam", "apply_adam_d"},
   {"r_oi_align", "roi_align"},
   {"r_oi_align_grad", "roi_align_grad"},
   {"i_ou", "iou"},

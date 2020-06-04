@@ -103,7 +103,7 @@ hcclResult_t hcom_receive(const char *tag, void *outputPtr, u64 count, hcclDataT
 
 /* 获取梯度参数切分方案 */
 hcclResult_t hcom_get_split_strategy(const char *group, const struct model_feature *feature, u32 maxSegmentNum,
-                                     u32 *segmentNum, u32 *segmentIdx) {
+                                     u32 *segmentNum, u32 *segmentIdx, GradSplitForceMode force) {
   return HCCL_SUCCESS;
 }
 

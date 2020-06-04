@@ -1,4 +1,4 @@
-set(gtest_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+set(gtest_CXXFLAGS "-D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
 set(gtest_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 mindspore_add_pkg(gtest
         VER 1.8.0

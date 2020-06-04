@@ -1058,6 +1058,7 @@ test_case_nn_ops = [
     ('SparseApplyAdagrad', {
         'block': P.SparseApplyAdagrad(0.5),
         'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
+        'desc_bprop': [[3, 3], [3, 3]],
         'skip': ['backward']}),
     ('SparseApplyFtrl', {
         'block': SparseApplyFtrlNet(),
