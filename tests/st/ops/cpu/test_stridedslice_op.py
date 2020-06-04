@@ -43,3 +43,6 @@ def test_slice():
     expect = [[[5., 5., 5.],
                [6., 7., 8.]]]
     assert (output.asnumpy() == expect).all()
+
+if __name__ == '__main__':
+    test_slice()
