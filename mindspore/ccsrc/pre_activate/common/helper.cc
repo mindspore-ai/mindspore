@@ -16,6 +16,7 @@
 
 #include "pre_activate/common/helper.h"
 #include <string>
+#include <utility>
 #include <unordered_set>
 #include <algorithm>
 #include <map>
@@ -473,15 +474,36 @@ void RemoveNopNode(session::KernelGraph *const graph) {
   }
 }
 
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                             const AnfNodePtr &node) {
+  auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    MS_LOG(EXCEPTION) << "node has no output in manager";
+  }
+  auto output_info_list = iter->second;
+  for (const auto &output_info : output_info_list) {
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimControlDepend->name()) {
+      continue;
+    }
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
+        output_info.second == kDependAttachNodeIndex) {
+      continue;
+    }
+    output_node_list->push_back(output_info);
+  }
+  return output_node_list;
+}
+
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  if (manager->node_users().find(node) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
-  }
-  return manager->node_users()[node].size() > 1;
+  auto output_node_list = GetRealNodeUsedList(graph, node);
+  MS_EXCEPTION_IF_NULL(output_node_list);
+  return output_node_list->size() > 1;
 }
 
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
