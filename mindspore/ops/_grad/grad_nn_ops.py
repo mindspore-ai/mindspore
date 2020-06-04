@@ -309,7 +309,7 @@ def get_bprop_softmax(self):
     axis = self.axis
 
     def bprop(x, out, dout):
-        dx = mul(sub(dout, sum_func(mul(dout, out), axis)), out)
+        dx = mul(out, sub(dout, sum_func(mul(out, dout), axis)))
         return (dx,)
 
     return bprop
