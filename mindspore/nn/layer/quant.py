@@ -175,7 +175,7 @@ class FakeQuantWithMinMaxAscend(Cell):
         else:
             quant_fun = P.FakeQuantPerLayer
             ema_fun = P.FakeQuantMinMaxPerLayerUpdate
-        
+
         self.fake_quant = quant_fun(num_bits=self.num_bits,
                                     ema=self.ema,
                                     ema_decay=self.ema_decay,
@@ -272,7 +272,7 @@ class FakeQuantWithMinMaxGPU(Cell):
                 0, self.out_channels)]).astype(np.float32)
         self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
         self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
-        
+
         if per_channel:
             quant_fun = partial(P.FakeQuantPerChannel, channel_axis=self.channel_axis)
         else:

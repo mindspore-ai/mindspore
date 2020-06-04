@@ -1396,6 +1396,10 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32)),
                         Tensor(np.array([0, 1, 1]).astype(np.int32))],
         'desc_bprop': [Tensor(np.array([[1, 2, 3], [4, 2, 1]]).astype(np.float32))]}),
+    ('BroadcastTo', {
+        'block': P.BroadcastTo((2,3)),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.float32))]}),
 ]
 
 test_case_other_ops = [
