@@ -93,13 +93,13 @@ class Optimizer(Cell):
 
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
-        validator.check_value_type("loss_scale", loss_scale, [float], None)
-        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, None)
+        validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
+        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
 
         if isinstance(weight_decay, int):
             weight_decay = float(weight_decay)
-        validator.check_value_type("weight_decay", weight_decay, [float], None)
-        validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, None)
+        validator.check_value_type("weight_decay", weight_decay, [float], self.cls_name)
+        validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         self.is_group = False
         self.is_group_lr = False

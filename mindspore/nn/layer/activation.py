@@ -250,7 +250,7 @@ class LeakyReLU(Cell):
 
     def construct(self, x):
         alpha = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
-        if self.alpha <= 1:
+        if alpha <= 1:
             out = P.Maximum()(alpha * x, x)
         else:
             out = P.Minimum()(alpha * x, x)
