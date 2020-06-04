@@ -54,6 +54,8 @@ class AnfRuntimeAlgorithm {
   static PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
   // check whether anf node is a node of 'primitive_type',such as make_tuple is a cnode of kPrimMakeTuple
   static bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
+  // get cnode primitive
+  static FuncGraphPtr GetCNodeFuncGraphPtr(const AnfNodePtr &node);
   // get kernel_name of anf node
   static std::string GetCNodeName(const AnfNodePtr &node);
   // get detail info of anf node
@@ -161,6 +163,8 @@ class AnfRuntimeAlgorithm {
   static bool IsRealKernel(const AnfNodePtr &node);
   // checkout whether the anf node is a real kernel that is a cnode and can run on device
   static bool IsRealCNodeKernel(const AnfNodePtr &node);
+  // checkout whether the anf node is a graph kernel.
+  static bool IsGraphKernel(const AnfNodePtr &node);
   // check parameter is weight or data
   static bool IsParameterWeight(const ParameterPtr &node);
   // set stream id of kernel,which will be set in stream assign and be used in stream generate
@@ -190,6 +194,11 @@ class AnfRuntimeAlgorithm {
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
   static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
+  static bool IsWhileTrueGraph(const KernelGraphPtr &child_graph);
+  // get fix output precision of cnode.
+  static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
+  // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
+  static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

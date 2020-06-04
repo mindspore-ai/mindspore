@@ -1448,15 +1448,23 @@ bool ParseAst::UpdateFuncGraphFlags(const FuncGraphPtr &func_graph) {
   }
   py::dict flags = python_adapter::GetPyObjAttr(obj_, PYTHON_EXTERN_MINDSPORE_FLAG);
   for (auto &item : flags) {
-    if (!py::isinstance<py::str>(item.first) || !py::isinstance<py::bool_>(item.second)) {
+    if (!py::isinstance<py::str>(item.first)) {
       MS_LOG(ERROR) << "Type error in flags dict convert";
       return false;
     }
     auto name = py::cast<std::string>(item.first);
-    auto value = py::cast<bool>(item.second);
-    MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
-
-    func_graph->set_flags(name, value);
+    if (py::isinstance<py::bool_>(item.second)) {
+      auto value = py::cast<bool>(item.second);
+      MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
+      func_graph->set_flag(name, value);
+    } else if (py::isinstance<py::str>(item.second)) {
+      auto value = py::cast<std::string>(item.second);
+      MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
+      func_graph->set_attr(name, MakeValue(value));
+    } else {
+      MS_LOG(ERROR) << "Type error in flags/attrs dict convert";
+      return false;
+    }
   }
 
   return true;

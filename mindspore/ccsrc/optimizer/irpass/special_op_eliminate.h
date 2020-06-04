@@ -142,7 +142,7 @@ class ResetDeferInline : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     if (IsValueNode<FuncGraph>(node)) {
       auto fg = GetValueNode<FuncGraphPtr>(node);
-      fg->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
+      fg->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
     }
     return nullptr;
   }

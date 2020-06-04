@@ -22,6 +22,7 @@
 #include "utils/utils.h"
 #include "device/kernel_info.h"
 #include "kernel/oplib/oplib.h"
+#include "kernel/common_utils.h"
 #include "operator/ops.h"
 #include "session/anf_runtime_algorithm.h"
 #include "session/kernel_graph.h"
@@ -229,7 +230,7 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kTBE) != nullptr) {
     builder.SetKernelType(KernelType::TBE_KERNEL);
   } else {
-    builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+    builder.SetKernelType(KernelType::AKG_KERNEL);
   }
   // if kernel info is null , it remarks this function is running ut
   if (cast->kernel_info() == nullptr) {
@@ -284,22 +285,17 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(cnode); ++input_index) {
-    TypeId origin_type;
+    const auto infer_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
+    TypeId origin_type(kTypeUnknown);
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
     auto kernel_with_index = AnfAlgo::VisitKernel(cur_input, 0);
-    auto is_weight_boundary = [](const AnfNodePtr &node) -> bool {
-      if (node->isa<ValueNode>()) {
-        return true;
-      }
-      if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
-        return true;
-      }
-      return false;
-    };
     auto real_input_node = kernel_with_index.first;
-    if (is_weight_boundary(real_input_node)) {
+    if (kernel::IsWeightBoundary(real_input_node) || func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
       // weight
-      origin_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(cnode, input_index);
+      origin_type = AnfAlgo::GetPrevNodeOutputPrecision(cnode, input_index);
+      if (origin_type == kTypeUnknown) {
+        origin_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(cnode, input_index);
+      }
     } else {
       // feature map
       origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
@@ -307,9 +303,13 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
     const std::vector<size_t> origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, input_index);
     const TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index);
-    if (origin_type != device_type) {
+    // In graph kernel, we check parameter,
+    // the eliminate pass will not eliminate this case, so we just do not insert the noused cast.
+    if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && IsValueNode<tensor::Tensor>(cur_input)) {
+      new_inputs.push_back(cur_input);
+    } else if (origin_type != device_type) {
       auto cast =
-        AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape, origin_type);
+        AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape, infer_type);
       MS_EXCEPTION_IF_NULL(cast);
       cast->set_scope(cnode->scope());
       AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);

@@ -23,6 +23,8 @@
 #include "optimizer/irpass.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
+#include "utils/graph_utils.h"
+#include "operator/composite/composite.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,6 +38,7 @@ class MakeRefEliminater : public AnfVisitor {
       this->y_ = node;
       return true;
     };
+
     AnfVisitor::Match(prim::kPrimMakeRef, {IsNode, gety, IsNode})(node);
     return y_;
   }

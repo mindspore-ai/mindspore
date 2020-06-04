@@ -13,7 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """momentum"""
-from mindspore.ops import functional as F, composite as C, operations as P
+from mindspore.ops import functional as F, composite as C
+from mindspore.ops import _selected_ops
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
@@ -120,7 +121,7 @@ class Momentum(Optimizer):
         self.use_nesterov = check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
-        self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
+        self.opt = _selected_ops.ApplyMomentum(use_nesterov=self.use_nesterov)
 
     def construct(self, gradients):
         params = self.params

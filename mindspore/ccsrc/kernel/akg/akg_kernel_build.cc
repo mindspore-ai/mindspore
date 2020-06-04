@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/akg/akgkernelbuild.h"
+#include "kernel/akg/akg_kernel_build.h"
 #include <Python.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -43,7 +43,9 @@ namespace kernel {
 constexpr int ME_MAX_KERNEL_NAME_LENGTH = 200;
 constexpr int32_t ARGS_SIZE = 1;
 constexpr auto kCompileWithJsonFunc = "compilewithjson";
+
 // json key
+constexpr auto kOpDesc = "op_desc";
 constexpr auto kInputDesc = "input_desc";
 constexpr auto kShape = "shape";
 constexpr auto kDataType = "data_type";
@@ -51,13 +53,24 @@ constexpr auto kOutputDesc = "output_desc";
 constexpr auto kName = "name";
 constexpr auto kTensorName = "tensor_name";
 constexpr auto kValue = "value";
-constexpr auto KInpputNames = "input_names";
+constexpr auto KDynInputSizes = "dyn_input_sizes";
+constexpr auto KInputNames = "input_names";
 constexpr auto KInput = "input";
 constexpr auto KDtype = "dtype";
-int AkgKernelBuild::op_cnt_ = 0;
-std::mutex AkgKernelBuild::op_cnt_mtx_;
+namespace {
+template <typename T>
+std::string Vector2Str(const std::vector<T> &inputs) {
+  if (!inputs.empty()) {
+    std::ostringstream oss;
+    (void)std::copy(inputs.begin(), inputs.end() - 1, std::ostream_iterator<T>(oss, ", "));
+    oss << inputs.back();
+    return oss.str();
+  }
+  return "";
+}
+}  // namespace
 
-std::string PyObjectToStr(PyObject *const PyObj) {
+std::string AkgKernelBuild::PyObjectToStr(PyObject *const PyObj) {
   char *pChar = nullptr;
   std::string str_res;
   if (PyObj == nullptr) {
@@ -75,6 +88,72 @@ std::string PyObjectToStr(PyObject *const PyObj) {
   str_res = pChar;
   return str_res;
 }
+
+std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
+                          const std::pair<size_t, size_t> &position) {
+  if (node_json.count(tag) == 0) {
+    MS_LOG(ERROR) << "Node [" << node_json.dump() << "] has no key [" << tag << "].";
+    return "";
+  }
+
+  auto const &tag_desc = node_json[tag];
+  nlohmann::json first_index;
+  if (tag == kOutputDesc) {
+    first_index = tag_desc;
+  } else if (!tag_desc.is_array() || tag_desc.size() <= position.first) {
+    MS_LOG(ERROR) << "Node [" << tag_desc.dump() << "] has no enough value [" << position.first << "].";
+    return "";
+  } else {
+    first_index = tag_desc[position.first];
+  }
+
+  if (!first_index.is_array() || first_index.size() <= position.second) {
+    MS_LOG(ERROR) << "Node [" << first_index.dump() << "] has no enough value [" << position.second << "].";
+    return "";
+  }
+  auto const &second_index = first_index[position.second];
+  if (second_index.count(kTensorName) == 0) {
+    MS_LOG(ERROR) << "Node [" << second_index.dump() << "] has no key [" << kTensorName << "].";
+    return "";
+  }
+
+  return second_index[kTensorName];
+}
+
+void SetTensorName(const std::string &tag, const std::string &new_name, const std::pair<size_t, size_t> &position,
+                   nlohmann::json *const node_json) {
+  MS_EXCEPTION_IF_NULL(node_json);
+  if (node_json->count(tag) == 0) {
+    MS_LOG(ERROR) << "Node [" << node_json->dump() << "] has no key [" << tag << "].";
+    return;
+  }
+
+  nlohmann::json *tag_desc = &((*node_json)[tag]);
+  nlohmann::json *first_index;
+  if (tag == kOutputDesc) {
+    first_index = tag_desc;
+  } else if (!tag_desc->is_array() || tag_desc->size() <= position.first) {
+    MS_LOG(ERROR) << "Node [" << tag_desc->dump() << "] has no enough value [" << position.first << "].";
+    return;
+  } else {
+    first_index = &((*tag_desc)[position.first]);
+  }
+
+  if (!first_index->is_array() || first_index->size() <= position.second) {
+    MS_LOG(ERROR) << "Node [" << first_index->dump() << "] has no enough value [" << position.second << "].";
+    return;
+  }
+  nlohmann::json *second_index = &((*first_index)[position.second]);
+  if (second_index->count(kTensorName) == 0) {
+    MS_LOG(ERROR) << "Node [" << second_index->dump() << "] has no key [" << kTensorName << "].";
+    return;
+  }
+  (*second_index)[kTensorName] = new_name;
+  return;
+}
+
+int AkgKernelBuild::op_cnt_ = 0;
+std::mutex AkgKernelBuild::op_cnt_mtx_;
 
 std::string AkgKernelBuild::GetProcessor(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -187,10 +266,7 @@ bool AkgKernelBuild::CreateInputDescJson(const AnfNodePtr &anf_node, nlohmann::j
     for (size_t input_i = 0; input_i < input_tensor_num; input_i++) {
       // dtype : float16
       auto type_id = AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index);
-      TypePtr type_ptr = TypeIdToType(type_id);
-      MS_EXCEPTION_IF_NULL(type_ptr);
-      std::string dtype = type_ptr->ToString();
-      dtype = Dtype2String(dtype);
+      std::string dtype = TypeId2String(type_id);
       if (dtype.empty()) {
         MS_LOG(ERROR) << "Op [" << op_name << "] input [" << input_i << "] data type is null. ";
         return false;
@@ -198,13 +274,23 @@ bool AkgKernelBuild::CreateInputDescJson(const AnfNodePtr &anf_node, nlohmann::j
       nlohmann::json input_desc_json;
       input_desc_json[kDataType] = dtype;
       input_desc_json[kName] = op_input_name;
-      input_desc_json[kTensorName] =
-        op_input_name + "_" + std::to_string(real_input_index) + "_" + std::to_string(input_i);
-      input_desc_json[kShape] = AnfAlgo::GetInputDeviceShape(anf_node, real_input_index);
+      input_desc_json[kTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
+      auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, real_input_index);
+      if (GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
+        MS_LOG(WARNING) << "we take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
+                        << "] as const tensor, shape: [" << Vector2Str(input_shape)
+                        << "], value: " << input_desc_json[kValue];
+
+        input_shape.clear();
+      }
+      if (input_shape.empty()) {
+        input_shape.push_back(1);
+      }
+      input_desc_json[kShape] = input_shape;
       input_list.emplace_back(input_desc_json);
+      real_input_index++;
     }
     inputs_json->emplace_back(input_list);
-    real_input_index++;
   }
   return true;
 }
@@ -220,10 +306,7 @@ bool AkgKernelBuild::CreateOutputDescJson(const AnfNodePtr &anf_node, nlohmann::
   for (size_t i = 0; i < output_tensor_num; i++) {
     nlohmann::json output_json;
     auto type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
-    TypePtr type_ptr = TypeIdToType(type_id);
-    MS_EXCEPTION_IF_NULL(type_ptr);
-    std::string dtype = type_ptr->ToString();
-    dtype = Dtype2String(dtype);
+    std::string dtype = TypeId2String(type_id);
     if (dtype.empty()) {
       MS_LOG(ERROR) << "Op [" << op_name << "] output [" << i << "] data type is null. ";
       return false;
@@ -232,7 +315,7 @@ bool AkgKernelBuild::CreateOutputDescJson(const AnfNodePtr &anf_node, nlohmann::
     std::string output_name = outputs[i]->name();
     output_json[kDataType] = dtype;
     output_json[kName] = output_name;
-    output_json[kTensorName] = output_name + "_" + std::to_string(i);
+    output_json[kTensorName] = "output_" + std::to_string(i) + "_" + std::to_string(GetOutputTensorIdxInc());
     output_json[kShape] = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     outputs_json->push_back(output_json);
   }
@@ -358,15 +441,14 @@ bool AkgKernelBuild::GenerateSingleKernelJson(const AnfNodePtr &anf_node, const 
   MS_EXCEPTION_IF_NULL(op_info_ptr);
 
   // get basic params from currentNodeOpDesc
-  (*node_json)["platform"] = "AKG";
   (*node_json)[kName] = op_name;
-  (*node_json)["fusion_type"] = AnfAlgo::GetFusionType(anf_node);
   (*node_json)["impl_path"] = op_info_ptr->impl_path();
   (*node_json)["process"] = AkgKernelBuild::GetProcessor(anf_node);
+  (*node_json)["composite"] = false;
 
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  ValuePtr input_names_v = primitive->GetAttr(KInpputNames);
+  ValuePtr input_names_v = primitive->GetAttr(KInputNames);
   if (input_names_v == nullptr) {
     MS_LOG(ERROR) << "ApplyKernel has no input_names, op[" << op_name << "].";
     return false;
@@ -465,12 +547,12 @@ KernelPackPtr AkgKernelBuild::OpBuild(const std::string &node_json, const AnfNod
   (void)alarm(0);
   if (pRes == nullptr) {
     MS_LOG(ERROR) << "No ret got, failed to call function [" << kCompileWithJsonFunc << "], args:\n("
-                  << PyObjectToStr(pArg) << ").";
+                  << AkgKernelBuild::PyObjectToStr(pArg) << ").";
     return nullptr;
   }
   if (PyObject_IsTrue(pRes) != 1) {
     MS_LOG(ERROR) << "Illegal ret, failed to call function [" << kCompileWithJsonFunc << "], args:\n("
-                  << PyObjectToStr(pArg) << ").";
+                  << AkgKernelBuild::PyObjectToStr(pArg) << ").";
     return nullptr;
   }
 
@@ -513,5 +595,29 @@ KernelPackPtr AkgKernelBuild::BuildByJson(const AnfNodePtr &anf_node, std::vecto
                << "]";
   return kernel_pack;
 }
+
+size_t AkgKernelBuild::GetInputTensorIdxInc(const AnfNodePtr &anf_node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (input_idx + 1 >= cnode->inputs().size()) {
+    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
+                                << cnode->inputs().size() - 1 << "][" << cnode->DebugString() << "]";
+  }
+
+  auto input_node = cnode->input(input_idx + 1);
+  if (input_tensor_idx_.find(input_node) == input_tensor_idx_.end()) {
+    size_t index = input_tensor_idx_.size();
+    input_tensor_idx_[input_node] = index;
+  }
+
+  return input_tensor_idx_[input_node];
+}
+
+size_t AkgKernelBuild::GetOutputTensorIdxInc() {
+  size_t idx = output_tensor_idx_++;
+  return idx;
+}
+
 }  // namespace kernel
 }  // namespace mindspore

@@ -21,6 +21,7 @@
 #include "kernel/rts/rt_kernel_info.h"
 #include "kernel/hccl/hccl_kernel_metadata.h"
 #include "kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
+#include "kernel/akg/akg_kernel_metadata.h"
 #include "session/anf_runtime_algorithm.h"
 
 namespace mindspore {
@@ -59,10 +60,14 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
   }
 }
 }  // namespace
-void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+
+void KernelQueryAll(const CNodePtr &kernel_node,
+                    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
+
   TbeMetadataInfo(kernel_node, kernel_info_list);
+
   if (kernel_info_list->empty()) {
     AicpuMetadataInfo(kernel_node, kernel_info_list);
     if (!kernel_info_list->empty()) {
@@ -82,6 +87,28 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   if (kernel_info_list->empty()) {
     MS_LOG(EXCEPTION) << "Op " << kernel_node->DebugString() << "kernel query fail!";
   }
+}
+
+void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list,
+                 KernelType kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_info_list);
+
+  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+
+  switch (kernel_type) {
+    case KernelType::AKG_KERNEL:
+      AkgMetadataInfo(kernel_node, kernel_info_list);
+      break;
+    default:
+      KernelQueryAll(kernel_node, kernel_info_list);
+      break;
+  }
+
+  if (kernel_info_list->empty()) {
+    MS_EXCEPTION(NotExistsError) << "Op[" << kernel_node->DebugString() << "] kernel query fail!";
+  }
+  // check output
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
 

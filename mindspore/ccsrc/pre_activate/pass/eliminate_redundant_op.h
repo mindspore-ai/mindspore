@@ -40,6 +40,7 @@ class EliminateRedundantOp : public PatternProcessPass {
 
  private:
   void Init();
+  const AnfNodePtr DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   std::unordered_map<std::string, RedundantOpPair> redundant_process_map_;
 };
 }  // namespace opt

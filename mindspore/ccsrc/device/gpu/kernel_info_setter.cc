@@ -184,7 +184,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
 
   if (!result) {
     result = SelectAkgKernel(kernel_node, builder->Build());
-    kernel_type = AUTO_DIFF_KERNEL;
+    kernel_type = AKG_KERNEL;
   }
 
   if (!result) {

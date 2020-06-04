@@ -24,7 +24,7 @@ namespace device {
 namespace ascend {
 void GraphDescReporter::ReportData() {
   for (const auto &node : cnode_list_) {
-    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AUTO_DIFF_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AKG_KERNEL) {
       MS_LOG(WARNING) << "Skip non tbe kernel";
       continue;
     }

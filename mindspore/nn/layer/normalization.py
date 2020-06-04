@@ -24,7 +24,9 @@ from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
 from mindspore._checkparam import check_int_positive
+from mindspore.ops import _selected_ops
 from ..cell import Cell
+
 
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm']
@@ -116,10 +118,9 @@ class _BatchNorm(Cell):
                              "local_rank_size is {}".format(group_size, get_group_size()))
         if len(world_rank) % group_size != 0:
             raise ValueError("please make your group size correct.")
-        world_rank_list = zip(*(iter(world_rank),) *group_size)
+        world_rank_list = zip(*(iter(world_rank),) * group_size)
         group_list = [list(i) for i in world_rank_list]
         return group_list
-
 
 
     def _global_sync(self, x, axes, re_shape):
@@ -188,15 +189,19 @@ class _BatchNorm(Cell):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
             self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
 
+
 @constexpr
 def _channel_check(channel, num_channel):
     if channel != num_channel:
         raise ValueError("the input channel is not equal with num_channel")
 
+
 @constexpr
 def _shape_check(in_shape):
     if len(in_shape) != 4:
         raise ValueError("The input must has 4 dims")
+
+
 @constexpr
 def _shape_infer(x_shape, num_feature):
     """global batch normalization shape and axes infer"""
@@ -207,6 +212,7 @@ def _shape_infer(x_shape, num_feature):
         axes = (0,)
         re_shape = (1, num_feature)
     return axes, re_shape
+
 
 class BatchNorm1d(_BatchNorm):
     r"""
@@ -257,6 +263,7 @@ class BatchNorm1d(_BatchNorm):
         >>> input = Tensor(np.random.randint(0, 255, [3, 16]), mindspore.float32)
         >>> net(input)
     """
+
     def __init__(self,
                  num_features,
                  eps=1e-5,
@@ -276,6 +283,7 @@ class BatchNorm1d(_BatchNorm):
                                           moving_mean_init,
                                           moving_var_init,
                                           use_batch_statistics)
+
     def _check_data_dim(self, x):
         if x.dim() != 2:
             pass
@@ -330,6 +338,7 @@ class BatchNorm2d(_BatchNorm):
         >>> input = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
         >>> net(input)
     """
+
     def __init__(self,
                  num_features,
                  eps=1e-5,
@@ -349,6 +358,7 @@ class BatchNorm2d(_BatchNorm):
                                           moving_mean_init,
                                           moving_var_init,
                                           use_batch_statistics)
+
     def _check_data_dim(self, x):
         if x.dim() != 4:
             pass
@@ -404,6 +414,7 @@ class GlobalBatchNorm(_BatchNorm):
         >>> input = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
         >>> global_bn_op(input)
     """
+
     def __init__(self,
                  num_features,
                  eps=1e-5,
@@ -428,9 +439,11 @@ class GlobalBatchNorm(_BatchNorm):
         self.group = check_int_positive(device_num_each_group)
         if self.group <= 1:
             raise ValueError("the number of group must be greater than 1.")
+
     def _check_data_dim(self, x):
         if x.dim == 0:
             pass
+
 
 class LayerNorm(Cell):
     r"""
@@ -475,6 +488,7 @@ class LayerNorm(Cell):
         >>> m = nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
         >>> m(x)
     """
+
     def __init__(self,
                  normalized_shape,
                  begin_norm_axis=-1,
@@ -495,8 +509,8 @@ class LayerNorm(Cell):
             gamma_init, normalized_shape), name="gamma")
         self.beta = Parameter(initializer(
             beta_init, normalized_shape), name="beta")
-        self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis, begin_params_axis=self.begin_params_axis,
-                                      epsilon=self.epsilon)
+        self.layer_norm = _selected_ops.LayerNorm(begin_norm_axis=self.begin_norm_axis,
+                                                  begin_params_axis=self.begin_params_axis)
 
     def construct(self, input_x):
         y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)
@@ -507,6 +521,7 @@ class LayerNorm(Cell):
         s = 'normalized_shape={}, begin_norm_axis={}, begin_params_axis={}, gamma{}, beta={}'.format(
             self.normalized_shape, self.begin_norm_axis, self.begin_params_axis, self.gamma, self.beta)
         return s
+
 
 class GroupNorm(Cell):
     r"""
@@ -544,6 +559,7 @@ class GroupNorm(Cell):
         >>> x = Tensor(np.ones([1, 64, 256, 256], np.float32))
         >>> goup_norm_op(x)
     """
+
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
         super(GroupNorm, self).__init__()
         self.num_groups = check_int_positive(num_groups)

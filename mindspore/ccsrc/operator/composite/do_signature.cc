@@ -304,7 +304,7 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
   }
   auto new_cnode = BuildNewCNode(func_graph, name_, function_, args_spec_list, func_graph->parameters());
   func_graph->set_output(new_cnode);
-  func_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  func_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   return func_graph;
 }
 }  // namespace prim

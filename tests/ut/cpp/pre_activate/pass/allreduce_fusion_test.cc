@@ -56,7 +56,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_all) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node == nullptr) {
@@ -97,7 +97,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_group) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node == nullptr) {
@@ -138,7 +138,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_op) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   int count = 0;
   for (auto &node : node_list) {
@@ -195,7 +195,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node == nullptr) {

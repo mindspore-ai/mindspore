@@ -236,6 +236,16 @@ if (ENABLE_GPU)
     endif ()
 endif ()
 
+if (ENABLE_D AND ENABLE_AKG)
+    set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
+    install(
+        DIRECTORY
+            ${AKG_PATH}/akg
+        DESTINATION ${INSTALL_PY_DIR}/..
+        COMPONENT mindspore
+    )
+endif ()
+
 if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
     install(
         DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/dataset

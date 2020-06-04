@@ -24,7 +24,7 @@
 #include <map>
 #include "device/kernel_runtime.h"
 #include "kernel/aicpu/aicpu_kernel_mod.h"
-#include "kernel/akg/akgkernelbuild.h"
+#include "kernel/akg/akg_kernel_build.h"
 #include "proto/tensor.pb.h"
 #include "proto/tensor_shape.pb.h"
 #include "proto/attr.pb.h"

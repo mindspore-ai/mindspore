@@ -985,7 +985,7 @@ FuncGraphPtr PynativeExecutor::GradGraph(FuncGraphPtr g, const GradOperationPtr 
   auto nparam = top_g_->parameters().size();
   std::ostringstream ss;
   ss << "grad{" << nparam << "}";
-  df_builder_->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  df_builder_->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   df_builder_->debug_info()->set_name(ss.str());
 
   auto df = grad_op->GetGrad(NewValueNode(g), nullptr, top_g_->parameters(), weights);

@@ -107,7 +107,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Now leaving step auto parallel, used time: " << time << " us";
 
-  root->flags()[AUTO_PARALLEL_RUN_ONCE_ONLY] = true;
+  root->set_flag(AUTO_PARALLEL_RUN_ONCE_ONLY, true);
   return changes;
 }
 

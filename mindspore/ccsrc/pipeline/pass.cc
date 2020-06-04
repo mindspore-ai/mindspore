@@ -25,12 +25,14 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
+#include "debug/anf_ir_utils.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/resource.h"
 #include "pipeline/validator.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/cse.h"
+#include "optimizer/graph_kernel_reuse.h"
 #include "optimizer/clean.h"
 #include "optimizer/irpass.h"
 #include "optimizer/control_depend.h"
@@ -38,6 +40,7 @@
 #include "parallel/step_auto_parallel.h"
 #include "parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "utils/any.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -162,6 +165,40 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   return map;
 }
 
+OptPassGroupMap GetOptPassesGraphKernelA(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig interface_fusion = opt::OptPassConfig({
+    irpass.mark_interface_fusion_,
+  });
+  OptPassGroupMap map({
+    {"graph_kernel_reuse", opt::OptPassConfig(opt::GraphKernelReuse())},
+    {"interface_fusion", interface_fusion},
+    {"renormalize", opt::OptPassConfig::Renormalize()},
+    {"cse", opt::OptPassConfig(opt::CSE(false))},
+  });
+  return map;
+}
+
+OptPassGroupMap GetOptPassesGraphKernelB(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig elim_1 = opt::OptPassConfig({
+    irpass.addn_eliminate_,
+    irpass.incorporate_getitem_from_param_,
+  });
+  opt::OptPassConfig elim_2 = opt::OptPassConfig({
+    irpass.unused_parameter_eliminate_,
+    irpass.unused_output_eliminate_,
+  });
+  OptPassGroupMap map({
+    {"elim_1", elim_1},
+    {"renormalize", opt::OptPassConfig::Renormalize()},
+    {"elim_2", elim_2},
+  });
+  return map;
+}
+
+OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &irpass) {
+  return OptPassGroupMap({{"renormalize", opt::OptPassConfig::Renormalize()}});
+}
+
 OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig control_group = opt::OptPassConfig({irpass.convert_switch_replacement_}, true);
   OptPassGroupMap map({
@@ -191,8 +228,19 @@ void InitOpt(const ResourcePtr &res) {
     opt::irpass::OptimizeIRPassLib irpass;
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
     g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
+    g_pass_opts["opt_graph_kernel_a"] =
+      Optimizer::MakeOptimizer("opt_graph_kernel_a", res, GetOptPassesGraphKernelA(irpass), true);
+    g_pass_opts["opt_graph_kernel_b"] =
+      Optimizer::MakeOptimizer("opt_graph_kernel_b", res, GetOptPassesGraphKernelB(irpass), false);
+    g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", res, GetOptPassesC(irpass));
     g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), false, true);
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (!(context_ptr->enable_graph_kernel())) {
+      g_pass_opts["opt_graph_kernel_a"]->set_enable(false);
+      g_pass_opts["opt_graph_kernel_b"]->set_enable(false);
+    }
   }
 }
 }  // namespace
@@ -224,8 +272,12 @@ bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
 
 bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
 bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
+bool OptPassGraphKernelGroupA(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_a"); }
+bool OptPassGraphKernelGroupB(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_b"); }
 bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
 bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
+
+bool OptPassRNGroup(const ResourcePtr &res) { return OptPassGroup(res, "renormal"); }
 
 bool AddControlDependPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
@@ -270,8 +322,10 @@ bool InferenceOptPreparePass(const ResourcePtr &res) {
 std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},
                                    {"opt_b", OptPassBGroup},
-                                   {"add_control_depend", AddControlDependPass},
-                                   {"cconv", CconvPass}};
+                                   {"cconv", CconvPass},
+                                   {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
+                                   {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
+                                   {"add_control_depend", AddControlDependPass}};
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},

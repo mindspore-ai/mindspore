@@ -91,6 +91,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/device/kernel_info.cc"
         "../../../mindspore/ccsrc/device/ascend/profiling/*.cc"
         "../../../mindspore/ccsrc/device/ascend/kernel_select_ascend.cc"
+        "../../../mindspore/ccsrc/device/ascend/kernel_select_graph_kernel.cc"
         "../../../mindspore/ccsrc/device/convert_tensor_utils.cc"
         "../../../mindspore/ccsrc/device/ascend/kernel_build_ascend.cc"
         "../../../mindspore/ccsrc/device/ascend/ascend_kernel_runtime.cc"

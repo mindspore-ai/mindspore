@@ -43,7 +43,37 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
 void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressPtrList *kernel_inputs) {
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
   if (anf_node_ptr->inputs().size() != 2) {
-    MS_LOG(EXCEPTION) << "atomic Addr clean Node Input nodes not equal 2.";
+    // akg process
+    // set atomic clean addr
+    if (AnfAlgo::HasNodeAttr(kAttrAutomicOutputIndexs, anf_node_ptr)) {
+      auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(anf_node_ptr, kAttrAutomicOutputIndexs);
+      auto graph = anf_node_ptr->func_graph();
+      MS_EXCEPTION_IF_NULL(graph);
+      auto manager = graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      auto node_users = manager->node_users();
+      if (node_users[anf_node_ptr].empty()) {
+        MS_LOG(EXCEPTION) << "Node users of " << anf_node_ptr->ToString() << " is empty.";
+      }
+      auto depend_node = node_users[anf_node_ptr].pop().first;
+      if (!IsPrimitiveCNode(depend_node, prim::kPrimDepend)) {
+        MS_LOG(EXCEPTION) << "Checking Depend node failed";
+      }
+      if (node_users[depend_node].empty()) {
+        MS_LOG(EXCEPTION) << "Node users of " << depend_node->ToString() << " is empty.";
+      }
+      auto post_node = node_users[depend_node].pop().first;
+      for (auto index : clean_output_indexs) {
+        auto device_address = AnfAlgo::GetOutputAddr(post_node, index);
+        kernel::AddressPtr input = std::make_shared<kernel::Address>();
+        input->addr = device_address->ptr_;
+        MS_EXCEPTION_IF_NULL(input->addr);
+        input->size = device_address->size_;
+        kernel_inputs->push_back(input);
+      }
+      MS_LOG(DEBUG) << "AtomicAddClean clean output size: " << clean_output_indexs.size();
+    }
+    return;
   }
   MS_EXCEPTION_IF_NULL(anf_node_ptr->inputs()[1]);
   auto pre_node = (anf_node_ptr->inputs()[1])->cast<CNodePtr>();
@@ -59,7 +89,7 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
       input->size = device_address->size_;
       kernel_inputs->push_back(input);
     }
-    MS_LOG(INFO) << "AtomicAddClean clean output size:" << clean_output_indexs.size();
+    MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexs.size();
   }
   // set clean workspace address
   if (AnfAlgo::HasNodeAttr(kAttrAutomicWorkspaceSize, pre_node)) {

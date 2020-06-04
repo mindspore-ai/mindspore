@@ -26,6 +26,7 @@
 #include "utils/context/ms_context.h"
 #include "operator/ops.h"
 #include "session/anf_runtime_algorithm.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -34,14 +35,24 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   if (node == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-  CNodePtr cnode = node->cast<CNodePtr>();
-
-  ConstInputToAttrInfoRegister reg;
-  if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
-    return nullptr;
+  std::vector<AnfNodePtr> todos;
+  if (AnfAlgo::IsGraphKernel(node)) {
+    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    kernel::GetValidKernelNodes(sub_graph, &todos);
+  } else {
+    todos.push_back(node);
   }
-  ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
-  return cnode;
+
+  for (auto &t : todos) {
+    CNodePtr cnode = t->cast<CNodePtr>();
+    ConstInputToAttrInfoRegister reg;
+    if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
+      continue;
+    }
+    ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
+  }
+  return node;
 }
 }  // namespace opt
 }  // namespace mindspore

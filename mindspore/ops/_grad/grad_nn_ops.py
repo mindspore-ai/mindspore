@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
+from mindspore.ops import _selected_grad_ops as SG
 from .grad_base import bprop_getters
 from .. import functional as F
 from .. import operations as P
@@ -23,10 +24,11 @@ from ..operations import _inner_ops as inner
 from ... import context
 
 
+
 @bprop_getters.register(P.BiasAdd)
 def get_bprop_bias_add(self):
     """Grad definition for `BiasAdd` operation."""
-    bias_grad = G.BiasAddGrad()
+    bias_grad = SG.BiasAddGrad()
 
     def bprop(x, w, out, dout):
         return dout, bias_grad(dout)
@@ -303,7 +305,6 @@ def get_bprop_softmax(self):
     sub = P.Sub()
     mul = P.Mul()
     axis = self.axis
-
     def bprop(x, out, dout):
         dx = mul(out, sub(dout, sum_func(mul(out, dout), axis)))
         return (dx,)
@@ -338,10 +339,10 @@ def get_bprop_softplus(self):
 @bprop_getters.register(P.Tanh)
 def get_bprop_tanh(self):
     """Grad definition for `Tanh` operation."""
-    logsoftmax_grad = G.TanhGrad()
+    tanh_grad = SG.TanhGrad()
 
     def bprop(x, out, dout):
-        dx = logsoftmax_grad(out, dout)
+        dx = tanh_grad(out, dout)
         return (dx,)
 
     return bprop
@@ -404,7 +405,8 @@ def get_bprop_layer_norm(self):
     layer_norm_grad = G.LayerNormGrad(self.begin_norm_axis, self.begin_params_axis)
 
     def bprop(x, gamma, beta, out, dout):
-        dx, d_gamma, d_beta = layer_norm_grad(x, dout[0], out[2], out[1], gamma)
+        dx, d_gamma, d_beta = layer_norm_grad(
+            x, dout[0], out[2], out[1], gamma)
         return dx, d_gamma, d_beta
 
     return bprop

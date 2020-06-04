@@ -90,6 +90,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_abstract(old_node->abstract());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
+  new_node->set_kernel_info(old_node->kernel_info_ptr());
   repl_node_[old_node] = new_node;
   nodes_.emplace_back(old_node, new_node);
   TraceManager::EndTrace();
@@ -211,7 +212,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *cons
   MS_EXCEPTION_IF_NULL(target_func_graph);
   TraceManager::DebugTrace(func_graph->debug_info(), target_relation_);
   *target_func_graph = std::make_shared<FuncGraph>();
-  (*target_func_graph)->set_flags(func_graph->flags());
+  (*target_func_graph)->set_attrs(func_graph->attrs());
   (*target_func_graph)->set_transforms(func_graph->transforms());
   (*target_func_graph)->set_has_vararg(func_graph->has_vararg());
   (*target_func_graph)->set_has_kwarg(func_graph->has_kwarg());
@@ -636,9 +637,14 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
 
   if (MsContext::GetInstance()->is_multi_graph_sink()) {
     if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
-      new_func_graph->set_flags(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+      new_func_graph->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
     }
   }
+
+  if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+    new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+  }
+
   return new_func_graph;
 }
 }  // namespace mindspore

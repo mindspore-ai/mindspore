@@ -428,6 +428,10 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
   auto temp_shape = shape;
   std::vector<size_t> device_shape;
   if (format == kOpFormat_FRAC_NZ) {
+    if (shape.size() == 1 && (shape[0] == 1 || shape[0] % kCubeSize == 0)) {
+      // For [1] and [1024] shape we can trait it as NZ shape
+      return shape;
+    }
     if (shape.size() < 2) {
       MS_LOG(EXCEPTION) << "Format" << format << " is not support shape " << shape.size();
     } else {

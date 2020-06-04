@@ -83,12 +83,17 @@ class ExpandDims(PrimitiveWithInfer):
         axis_v = axis['value']
         rank = len(x_shape)
         validator.check_int_range('axis', axis_v, -rank - 1, rank, Rel.INC_BOTH, self.name)
+        value = None
+        if x['value'] is not None:
+            value = x['value'].asnumpy()
+            value = np.expand_dims(value, axis_v)
+            value = Tensor(value)
         if axis_v < 0:
             axis_v = rank + 1 + axis_v
         x_shape.insert(axis_v, 1)
         out = {'shape': x_shape,
                'dtype': x['dtype'],
-               'value': None}
+               'value': value}
         return out
 
 
@@ -1661,6 +1666,7 @@ class Select(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+        self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
 
     def infer_shape(self, cond_shape, x_shape, y_shape):
         if cond_shape != x_shape or x_shape != y_shape:
@@ -1675,6 +1681,16 @@ class Select(PrimitiveWithInfer):
         if x_type != y_type:
             raise TypeError('\'%s\' the x_type %s must be the same as y_type %s.' % (self.name, x_type, y_type))
         return x_type
+
+    def infer_value(self, cond, x, y):
+        if cond is not None and x is not None and y is not None:
+            cond = cond.asnumpy()
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.where(cond, x, y)
+            return Tensor(out)
+        return None
+
 
 
 class StridedSlice(PrimitiveWithInfer):
@@ -2472,8 +2488,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         validator.check_integer('rank of input_x', len(x_shape), 4, Rel.EQ, self.name)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
-            padded = out_shape[i + 2] + self.paddings[i][0] + \
-                     self.paddings[i][1]
+            padded = out_shape[i + 2] + self.paddings[i][0] + self.paddings[i][1]
             if padded % self.block_size != 0:
                 raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
                                  f'block_size {self.block_size}')

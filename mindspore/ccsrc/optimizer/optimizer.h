@@ -89,7 +89,7 @@ using OptPassGroupMap = std::vector<std::pair<std::string, OptPassConfig>>;
 class Optimizer : public std::enable_shared_from_this<Optimizer> {
  public:
   Optimizer(const std::string &name, const pipeline::ResourceBasePtr &resource_ptr)
-      : name_(name), resource_(resource_ptr), run_only_once_(false), is_watch_renormalize_(false) {}
+      : name_(name), resource_(resource_ptr), run_only_once_(false), is_watch_renormalize_(false), is_enable_(true) {}
   virtual ~Optimizer() = default;
 
   void Init(const OptPassGroupMap &passes, bool run_only_once) {
@@ -132,6 +132,9 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   }
 
   FuncGraphPtr step(FuncGraphPtr func_graph, bool use_profile = true) {
+    if (!is_enable_) {
+      return func_graph;
+    }
     // Optimizer step counter;
     int counter = -1;
     bool changes = true;
@@ -171,7 +174,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
           if (IS_OUTPUT_ON(mindspore::DEBUG) && MsContext::GetInstance()->save_graphs_flag()) {
-            MS_LOG(DEBUG) << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
+            MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
             auto fg_name =
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
             func_graph->DumpFuncGraph(fg_name);
@@ -211,6 +214,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   void enable_watch_renormalize() { is_watch_renormalize_ = true; }
   void disable_watch_renormalize() { is_watch_renormalize_ = false; }
   bool is_watch_renormalize() { return is_watch_renormalize_; }
+  void set_enable(bool enable) { is_enable_ = enable; }
 
  private:
   const std::string name_;
@@ -220,6 +224,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   bool run_only_once_;
   std::vector<AnfNodePtr> untyped_nodes_;
   bool is_watch_renormalize_;
+  bool is_enable_;
 };
 }  // namespace opt
 }  // namespace mindspore

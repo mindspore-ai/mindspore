@@ -84,6 +84,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   check_bprop_flag_ = false;
   max_device_memory_ = kDefaultMaxDeviceMemory;
   print_file_path_ = "";
+  enable_graph_kernel_ = false;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {

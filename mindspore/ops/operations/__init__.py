@@ -51,7 +51,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum, HistogramFixedWidth,
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
-                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh)
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps)
 
 from .random_ops import (RandomChoiceWithMask, Normal)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
@@ -282,6 +282,7 @@ __all__ = [
     "Sign",
     "LARSUpdate",
     "Round",
+    "Eps",
     "ApplyFtrl",
     "SpaceToBatch",
     "SparseApplyFtrl",

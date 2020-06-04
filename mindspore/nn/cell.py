@@ -707,9 +707,6 @@ class Cell:
         return cells
 
     def add_flags(self, **flags):
-        for x in flags:
-            if not isinstance(flags[x], bool):
-                raise TypeError(f"Flags (f{x}) must be bool but {type(flags[x])}.")
         if not hasattr(self, "_mindspore_flags"):
             self._mindspore_flags = {}
         self._mindspore_flags.update({**flags})
@@ -820,3 +817,27 @@ class Cell:
         """
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self.enable_hook = True
+
+class GraphKernel(Cell):
+    """
+    Base class for GraphKernel.
+
+    A `GraphKernel` a composite of basic primitives and can be compiled into a fused kernel automaticly when
+    context.set_context(enable_graph_kernel=True).
+
+    Examples:
+        >>> class Relu(GraphKernel):
+        >>>    def __init__(self):
+        >>>        super(Relu, self).__init__()
+        >>>        self.max = P.Maximum()
+        >>>
+        >>>    def construct(self, x):
+        >>>        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
+    """
+    def __init__(self, auto_prefix=True, pips=None):
+        super(GraphKernel, self).__init__(auto_prefix, pips)
+        class_name = self.__class__.__name__
+        self.add_flags(graph_kernel=class_name)
+
+    def construct(self):
+        raise NotImplementedError

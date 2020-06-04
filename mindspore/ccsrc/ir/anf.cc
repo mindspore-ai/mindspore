@@ -26,6 +26,8 @@
 #include "ir/func_graph.h"
 #include "ir/primitive_base.h"
 
+#include "operator/ops.h"
+
 namespace mindspore {
 // namespace to support intermediate representation definition
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
@@ -106,10 +108,14 @@ std::string ValueNode::fullname_with_scope() {
 bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
-  if (cnode != nullptr) {
+  if (cnode == nullptr) {
+    return false;
+  }
+  if (value != nullptr) {
     return cnode->IsApply(value);
   }
-  return false;
+  const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  return prim != nullptr;
 }
 
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {

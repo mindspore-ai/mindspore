@@ -479,7 +479,7 @@ void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator) {
   if (undetermined_fgs) {
     auto fg_parent = fg->parent();
     MS_EXCEPTION_IF_NULL(fg_parent);
-    fg_parent->set_flags(kFuncGraphFlagUndetermined, true);
+    fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
     MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString();
   }
 }

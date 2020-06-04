@@ -20,7 +20,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
+from mindspore.ops import _selected_ops
 from ..cell import Cell
+
 
 __all__ = ['Softmax',
            'LogSoftmax',
@@ -73,7 +75,7 @@ class Softmax(Cell):
 
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
-        self.softmax = P.Softmax(axis)
+        self.softmax = _selected_ops.Softmax(axis)
 
     def construct(self, x):
         return self.softmax(x)
@@ -110,7 +112,7 @@ class LogSoftmax(Cell):
 
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()
-        self.log_softmax = P.LogSoftmax(axis)
+        self.log_softmax = _selected_ops.LogSoftmax(axis)
 
     def construct(self, x):
         return self.log_softmax(x)
@@ -286,7 +288,7 @@ class Tanh(Cell):
 
     def __init__(self):
         super(Tanh, self).__init__()
-        self.tanh = P.Tanh()
+        self.tanh = _selected_ops.Tanh()
 
     def construct(self, x):
         return self.tanh(x)
@@ -318,7 +320,7 @@ class GELU(Cell):
 
     def __init__(self):
         super(GELU, self).__init__()
-        self.gelu = P.Gelu()
+        self.gelu = _selected_ops.Gelu()
 
     def construct(self, x):
         return self.gelu(x)
@@ -503,6 +505,7 @@ class LogSigmoid(Cell):
         [-3.1326166e-01, -1.2692806e-01, -4.8587345e-02]
 
     """
+
     def __init__(self):
         super(LogSigmoid, self).__init__()
         self.mul = P.Mul()

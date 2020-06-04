@@ -51,8 +51,8 @@ AnfNodePtr Map::FullMakeLeaf(const FuncGraphPtr &func_graph, const AnfNodePtr &f
 FuncGraphPtr Map::GenerateLeafFunc(const size_t &args_size) {
   // Generate func for leaf nodes
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
   ptrGraph->debug_info()->set_name("map");
   AnfNodePtr ptrFnArg = nullptr;
   if (fn_leaf_ == nullptr) {
@@ -237,8 +237,8 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
 
 FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_spec_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
   ptrGraph->debug_info()->set_name("map");
 
   AnfNodePtr ptrFnArg = nullptr;

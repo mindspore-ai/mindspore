@@ -124,6 +124,7 @@ class AnfNode : public Base {
 
   const KernelInfoDevice *kernel_info() const { return kernel_info_.get(); }
   KernelInfoDevice *kernel_info() { return kernel_info_.get(); }
+  const KernelInfoDevicePtr &kernel_info_ptr() { return kernel_info_; }
   void set_kernel_info(const KernelInfoDevicePtr &kernel_info) { kernel_info_ = kernel_info; }
 
   AbstractBasePtr abstract() const { return abstract_; }
@@ -395,9 +396,9 @@ static S GetValue(const ValuePtr &value) {
 std::string GetCNodeFuncName(CNodePtr cnode);
 
 // used to check whether an AnfNode is a cnode with a kind of Primitive as first input
-bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value);
+bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
 
-// used to check whether an AnfNode is a cnode with a Primitive as first input
+// used to get PrimitivePtr from a cnode first input
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 
 // used to check whether an AnfNode is a valuenode having some Primitive value
