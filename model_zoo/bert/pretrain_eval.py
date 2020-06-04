@@ -19,7 +19,7 @@ Bert evaluation script.
 
 import os
 from src import BertModel, GetMaskedLMOutput
-from evaluation_config import cfg, bert_net_cfg
+from src.evaluation_config import cfg, bert_net_cfg
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.common.tensor import Tensor
@@ -87,17 +87,18 @@ class BertPretrainEva(nn.Cell):
         self.cast = P.Cast()
 
 
-    def construct(self, input_ids, input_mask, token_type_id, masked_pos, masked_ids, nsp_label, masked_weights):
+    def construct(self, input_ids, input_mask, token_type_id, masked_pos, masked_ids, masked_weights, nsp_label):
         bs, _ = self.shape(input_ids)
         probs = self.bert(input_ids, input_mask, token_type_id, masked_pos)
         index = self.argmax(probs)
         index = self.reshape(index, (bs, -1))
         eval_acc = self.equal(index, masked_ids)
         eval_acc1 = self.cast(eval_acc, mstype.float32)
-        acc = self.mean(eval_acc1)
-        P.Print()(acc)
-        self.total += self.shape(probs)[0]
-        self.acc += self.sum(eval_acc1)
+        real_acc = eval_acc1 * masked_weights
+        acc = self.sum(real_acc)
+        total = self.sum(masked_weights)
+        self.total += total
+        self.acc += acc
         return acc, self.total, self.acc
 
 
@@ -107,8 +108,8 @@ def get_enwiki_512_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     '''
     ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                             "masked_lm_positions", "masked_lm_ids",
-                                                                            "next_sentence_labels",
-                                                                            "masked_lm_weights"])
+                                                                            "masked_lm_weights",
+                                                                            "next_sentence_labels"])
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
@@ -143,7 +144,8 @@ def MLM_eval():
     Evaluate function
     '''
     _, dataset, net_for_pretraining = bert_predict()
-    net = Model(net_for_pretraining, eval_network=net_for_pretraining, eval_indexes=[0, 1, 2], metrics={myMetric()})
+    net = Model(net_for_pretraining, eval_network=net_for_pretraining, eval_indexes=[0, 1, 2],
+                metrics={'name': myMetric()})
     res = net.eval(dataset, dataset_sink_mode=False)
     print("==============================================================")
     for _, v in res.items():

@@ -66,6 +66,8 @@ def run_pretrain():
     parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")
     parser.add_argument("--save_checkpoint_steps", type=int, default=1000, help="Save checkpoint steps, "
                                                                                 "default is 1000.")
+    parser.add_argument("--train_steps", type=int, default=-1, help="Training Steps, default is -1, "
+                                                                    "meaning run all steps according to epoch number.")
     parser.add_argument("--save_checkpoint_num", type=int, default=1, help="Save checkpoint numbers, default is 1.")
     parser.add_argument("--data_dir", type=str, default="", help="Data path, it is better to use absolute path")
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
@@ -93,11 +95,12 @@ def run_pretrain():
     ds, new_repeat_count = create_bert_dataset(args_opt.epoch_size, device_num, rank, args_opt.do_shuffle,
                                                args_opt.enable_data_sink, args_opt.data_sink_steps,
                                                args_opt.data_dir, args_opt.schema_dir)
-
+    if args_opt.train_steps > 0:
+        new_repeat_count = min(new_repeat_count, args_opt.train_steps // args_opt.data_sink_steps)
     netwithloss = BertNetworkWithLoss(bert_net_cfg, True)
 
     if cfg.optimizer == 'Lamb':
-        optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size() * ds.get_repeat_count(),
+        optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size() * new_repeat_count,
                          start_learning_rate=cfg.Lamb.start_learning_rate, end_learning_rate=cfg.Lamb.end_learning_rate,
                          power=cfg.Lamb.power, warmup_steps=cfg.Lamb.warmup_steps, weight_decay=cfg.Lamb.weight_decay,
                          eps=cfg.Lamb.eps)
@@ -106,7 +109,7 @@ def run_pretrain():
                              momentum=cfg.Momentum.momentum)
     elif cfg.optimizer == 'AdamWeightDecayDynamicLR':
         optimizer = AdamWeightDecayDynamicLR(netwithloss.trainable_params(),
-                                             decay_steps=ds.get_dataset_size() * ds.get_repeat_count(),
+                                             decay_steps=ds.get_dataset_size() * new_repeat_count,
                                              learning_rate=cfg.AdamWeightDecayDynamicLR.learning_rate,
                                              end_learning_rate=cfg.AdamWeightDecayDynamicLR.end_learning_rate,
                                              power=cfg.AdamWeightDecayDynamicLR.power,
