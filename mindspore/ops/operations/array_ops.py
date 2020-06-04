@@ -2241,7 +2241,8 @@ class ScatterMax(PrimitiveWithInfer):
     """
     Update the value of the input tensor through the max operation.
 
-    Using given values to update tensor value through the max operation, along with the input indices,.
+    Using given values to update tensor value through the max operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
@@ -2253,7 +2254,7 @@ class ScatterMax(PrimitiveWithInfer):
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
-        Tensor, has the same shape and data type as `input_x`.
+        Parameter, the updated `input_x`.
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
@@ -2286,6 +2287,7 @@ class ScatterAdd(PrimitiveWithInfer):
     Update the value of the input tensor through the add operation.
 
     Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -2297,7 +2299,7 @@ class ScatterAdd(PrimitiveWithInfer):
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
-        Tensor, has the same shape and data type as `input_x`.
+        Parameter, the updated `input_x`.
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
