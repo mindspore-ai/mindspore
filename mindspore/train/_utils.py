@@ -22,6 +22,7 @@ from mindspore import log as logger
 from mindspore.common.api import _executor
 from mindspore.common.dtype import pytype_to_dtype
 
+from .lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
 
 def _convert_type(types):
     """
@@ -196,3 +197,38 @@ def _to_full_shapes(shapes, device_num):
                 new_shape += (item,)
         new_shapes.append(new_shape)
     return new_shapes
+
+
+def _check_to_numpy(plugin, tensor):
+    """Check the tensor and return a numpy.ndarray."""
+    np_value = tensor.asnumpy()
+    if plugin == 'scalar':
+        if np_value.size == 1:
+            return np_value
+        raise ValueError('The tensor holds more than one value, but the scalar plugin expects on value.')
+    if plugin == 'image':
+        if np_value.ndim == 4:
+            return np_value
+        raise ValueError('The tensor seems not to hold a valid image.')
+    if plugin in ('tensor', 'histogram'):
+        if np_value.ndim > 0:
+            return np_value
+        raise ValueError('The tensor should not be empty.')
+    return np_value
+
+def _check_lineage_value(plugin, value):
+    """Check the lineage value."""
+    def raises(plugin, prototype):
+        raise TypeError(f'Plugin {repr(plugin)} expects a {prototype.__name__} value.')
+
+    if plugin == 'dataset_graph' and not isinstance(value, DatasetGraph):
+        raises(plugin, DatasetGraph)
+
+    if plugin == 'eval_lineage' and not isinstance(value, EvaluationLineage):
+        raises(plugin, EvaluationLineage)
+
+    if plugin == 'train_lineage' and not isinstance(value, TrainLineage):
+        raises(plugin, TrainLineage)
+
+    if plugin == 'custom_lineage_data' and not isinstance(value, UserDefinedInfo):
+        raises(plugin, UserDefinedInfo)
