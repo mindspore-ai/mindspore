@@ -177,6 +177,18 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
       for (size_t i = 3; i < inputs_list.size(); ++i) {
         inputs_json->push_back(inputs_list[i]);
       }
+    } else if (op_name == "ApplyCenteredRMSProp") {
+      // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
+      // TBE parameter to correspond python API parameter by latter's index using hardcode
+      inputs_json->push_back(inputs_list[0]);
+      inputs_json->push_back(inputs_list[1]);
+      inputs_json->push_back(inputs_list[2]);
+      inputs_json->push_back(inputs_list[3]);
+      inputs_json->push_back(inputs_list[5]);
+      inputs_json->push_back(inputs_list[6]);
+      inputs_json->push_back(inputs_list[7]);
+      inputs_json->push_back(inputs_list[8]);
+      inputs_json->push_back(inputs_list[4]);
     } else {
       inputs_json->push_back(inputs_list[1]);
       inputs_json->push_back(inputs_list[0]);
