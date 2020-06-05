@@ -18,7 +18,9 @@ from . import _constexpr_utils as const_utils
 from ... import functional as F
 from ... import operations as P
 from ...composite import base
+from ....common.tensor import Tensor
 from ....common import dtype as mstype
+from ....common._register_for_tensor import tensor_operator_registry
 
 hyper_map = base.HyperMap()
 pack = P.Pack(axis=-1)
@@ -152,3 +154,101 @@ def generate_updates_from_tensor(data, index, value, op_type):
     if need_broadcast:
         return broadcast(updates_shape, value)
     return value
+
+
+
+def tensor_getitem(self, index):
+    """Handle tensor getitem"""
+    if isinstance(index, Tensor):
+        return tensor_index_by_tensor(self, index)
+    if isinstance(index, tuple):
+        return tensor_index_by_tuple(self, index)
+    if isinstance(index, int):
+        return tensor_index_by_number(self, index)
+    if isinstance(index, slice):
+        return tensor_index_by_slice(self, index)
+    if isinstance(index, bool):
+        return tensor_index_by_bool(self, index)
+    if index is ...:
+        return self
+    raise IndexError("Only support integers, slices(`:`), ellipsis(`...`), None, bool and tensor with int32,\
+                         got {} with type{}".format(index, type(index)))
+
+
+
+tensor_operator_registry.register("__getitem__", tensor_getitem)
+
+
+def tensor_getitem_by_tuple_of_tensor(data, tuple_index):
+    """Tensor getitem by a tuple of tensor."""
+    indices = generate_indices_from_tuple_of_tensor(data,
+                                                    tuple_index,
+                                                    const_utils.TENSOR_GETITEM)
+    result = F.gather_nd(data, indices)
+    return result
+
+
+def tensor_getitem_by_tuple_of_mixed_tensors(data, tuple_index):
+    """Tensor getitem by a tuple of mixed tensor."""
+    indices = generate_indices_from_tuple_of_mixed_tensors(data,
+                                                           tuple_index,
+                                                           const_utils.TENSOR_GETITEM)
+    result = F.gather_nd(data, indices)
+    return result
+
+
+def tensor_index_by_slice(data, slice_index):
+    """Tensor getitem by a single slice"""
+    begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_slice(F.shape(data), slice_index)
+    return F.strided_slice(data, begin_strides, end_strides, step_strides)
+
+
+def tensor_index_by_integer(data, number):
+    """Tensor getitem by a single integer number"""
+    begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_integer(F.shape(data), number)
+    shrink_axis_mask = 1
+    return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
+
+
+def tensor_index_by_bool(data, bool_value):
+    """Tensor getitem by a single bool value"""
+    if bool_value:
+        return F.expand_dims(data, 0)
+    return const_utils.raise_index_error("bool value as indexing ,false is not supported")
+
+
+def tensor_index_by_number(data, number):
+    """Tensor getitem by a Number which may be integer/float/bool value"""
+    number_type = const_utils.check_number_index_type(number)
+    if number_type == const_utils.BOOL_:
+        return tensor_index_by_bool(data, number)
+    if number_type == const_utils.INT_:
+        return tensor_index_by_integer(data, number)
+    return const_utils.raise_index_error("Only support integers, slices(`:`), ellipsis(`...`), None and bool")
+
+
+def tensor_index_by_tensor(data, tensor_index):
+    """Tensor getitem by a single tensor"""
+    dtype_valid = const_utils.check_index_tensor_dtype(F.dtype(tensor_index),
+                                                       const_utils.TENSOR_GETITEM)
+    if dtype_valid:
+        return F.gather(data, tensor_index, 0)
+    return const_utils.raise_index_error("Only support integers, slices(`:`), ellipsis(`...`), None and bool")
+
+
+def tensor_index_by_tuple_slice(data, t):
+    """Tensor getitem by a tuple of slice"""
+    begin_strides, end_strides, step_strides, shrink_axis_mask = \
+        const_utils.get_stride_info_from_tuple(F.shape(data), t)
+    return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
+
+
+def tensor_index_by_tuple(data, tuple_index):
+    """Tensor getitem by tuple of various types"""
+    indexes_types = hyper_map(F.typeof, tuple_index)
+    index_elements_type = const_utils.tuple_index_elements_type(indexes_types, const_utils.TENSOR_GETITEM)
+    if index_elements_type == const_utils.NO_TENSOR:
+        return tensor_index_by_tuple_slice(data, tuple_index)
+    if index_elements_type == const_utils.ALL_TENSOR:
+        return tensor_getitem_by_tuple_of_tensor(data, tuple_index)
+    return tensor_getitem_by_tuple_of_mixed_tensors(data, tuple_index)

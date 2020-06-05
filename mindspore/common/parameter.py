@@ -206,6 +206,9 @@ class Parameter:
         res.default_input = res.default_input / other
         return res
 
+    def __setitem__(self, index, value):
+        return self
+
     def set_parameter_data(self, data):
         """Set `default_input` of current `Parameter`."""
         if isinstance(data, bool):

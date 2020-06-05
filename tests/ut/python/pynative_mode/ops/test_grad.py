@@ -168,7 +168,7 @@ def test_select_grad():
     sens = Tensor(np.ones_like(out.asnumpy()).astype(np.float32))
     args = [cond, x, y, sens]
     gout = gfn(*args)
-    expect_cond = np.zeros_like(cond)
+    expect_cond = np.zeros_like(cond.asnumpy())
     expect_x = np.array([[1, 0, 0], [0, 1, 1]])
     expect_y = np.array([[0, 1, 1], [1, 0, 0]])
     assert np.all(gout[0].asnumpy() == expect_cond)

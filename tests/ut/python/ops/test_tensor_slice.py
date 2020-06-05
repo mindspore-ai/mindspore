@@ -25,7 +25,6 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
-
 class NetWorkSlicePositive(Cell):
     def __init__(self):
         super(NetWorkSlicePositive, self).__init__()
@@ -528,6 +527,7 @@ def test_tensor_assign():
     # 2. A[::, 1:, ...] = scalar/tensor
     net = TensorAssignWithTupleEllipsis()
     net(Ta, b)
+    Tc = Tensor(1, mstype.float32)
     with pytest.raises(ValueError):
         net(Ta, Tc)
     with pytest.raises(ValueError):
