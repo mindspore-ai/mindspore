@@ -22,6 +22,8 @@
 #include "device/ascend/kernel_select_ascend.h"
 #include "kernel/kernel_query.h"
 #include "kernel/tbe/tbe_kernel_select.h"
+#include "kernel/oplib/oplib.h"
+#include "session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -55,6 +57,17 @@ class KernelQuery {
   virtual void Query(const CNodePtr &kernel_node,
                      std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
     kernel::KernelQuery(kernel_node, kernel_info_list);
+  }
+  virtual bool IsTbeRef(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      return false;
+    }
+    auto op_info = mindspore::kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(node), kernel::kTBE);
+    if (op_info != nullptr) {
+      return op_info->is_ref();
+    }
+    return false;
   }
 };
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
