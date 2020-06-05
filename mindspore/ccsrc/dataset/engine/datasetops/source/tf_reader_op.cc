@@ -481,7 +481,7 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
   int64_t start_offset = 0;
   int64_t end_offset = 0;
   bool finish = false;
-  bool end_of_epoch = true;
+  bool end_of_epoch = false;
   while (!finish) {
     // Iterate over all the keys and add one key to each block.
     for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
