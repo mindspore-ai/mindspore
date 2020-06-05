@@ -65,7 +65,7 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
   GraphId graph_id = kInvalidGraphId;
-  if (target != target_device_ && target != "") {
+  if (target != target_device_ && !target.empty()) {
     CreateOtherSession(target);
     graph_id = other_sess_->CompileGraph(lst, outputs);
   } else {
@@ -76,7 +76,7 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return result;
   }
-  if (target != target_device_ && target != "") {
+  if (target != target_device_ && !target.empty()) {
     other_sess_->BuildGraph(graph_id);
   } else if (!is_multi_graph_sink_) {
     target_sess_->BuildGraph(graph_id);
@@ -279,7 +279,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
 
   VectorRef outputs;
   // call ms rungraph (graphId, input ,output)
-  if (target != target_device_ && target != "") {
+  if (target != target_device_ && !target.empty()) {
     other_sess_->RunGraph(g, inputs, &outputs);
   } else {
     target_sess_->RunGraph(g, inputs, &outputs);
