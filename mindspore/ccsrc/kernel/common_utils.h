@@ -82,6 +82,8 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
 bool IsAtomicNode(const CNodePtr &kernel_node);
 void SaveJsonInfo(const std::string &json_name, const std::string &info);
 std::string GetProcessor(const AnfNodePtr &anf_node);
+bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
+int Sign(float x);
 }  // namespace kernel
 }  // namespace mindspore
 
