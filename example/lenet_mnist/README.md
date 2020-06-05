@@ -44,7 +44,7 @@ epoch: 1 step: 1741, loss is 0.05018193
 Then, evaluate LeNet according to network model
 ```python
 # evaluate LeNet, after 1 epoch training, the accuracy is up to 96.5%
-python eval.py --data_path MNIST_Data --mode test --ckpt_path checkpoint_lenet-1_1875.ckpt
+python eval.py --data_path MNIST_Data --ckpt_path checkpoint_lenet-1_1875.ckpt
 ```
 
 ## Note
