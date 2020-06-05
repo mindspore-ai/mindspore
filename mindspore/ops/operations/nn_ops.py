@@ -1807,18 +1807,23 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     Examples:
         >>> centered_rms_prop = P.ApplyCenteredRMSProp()
-        >>> input_x = Tensor(1., mindspore.float32)
-        >>> mean_grad = Tensor(2., mindspore.float32)
-        >>> mean_square = Tensor(1., mindspore.float32)
-        >>> moment = Tensor(2., mindspore.float32)
-        >>> grad = Tensor(1., mindspore.float32)
+        >>> input_x = Tensor(np.arange(-6, 6).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
+        >>> mean_grad = Tensor(np.arange(12).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
+        >>> mean_square = Tensor(np.arange(-8, 4).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
+        >>> moment = Tensor(np.arange(12).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
+        >>> grad = Tensor(np.arange(12).astype(np.float32).rehspae(2, 3, 2), mindspore.float32)
         >>> learning_rate = Tensor(0.9, mindspore.float32)
         >>> decay = 0.0
         >>> momentum = 1e-10
-        >>> epsilon = 0.001
+        >>> epsilon = 0.05
         >>> result = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
         >>>                            learning_rate, decay, momentum, epsilon)
-        -27.460497
+        [[[ -6.        -9.024922]
+          [-12.049845 -15.074766]
+          [-18.09969  -21.124613]]
+         [[-24.149532 -27.174456]
+          [-30.199379 -33.2243  ]
+          [-36.249226 -39.274143]]]
     """
 
     @prim_attr_register
