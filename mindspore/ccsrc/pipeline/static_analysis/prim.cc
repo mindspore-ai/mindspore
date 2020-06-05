@@ -274,14 +274,15 @@ AnfNodePtr MixedPrecisionCastHelper(AnfNodePtr source_node, AbstractBasePtr node
   } else if (node_type->isa<AbstractTuple>()) {
     auto x = node_type->cast<AbstractTuplePtr>();
     auto &items = x->elements();
-    std::size_t size = items.size();
     std::vector<AnfNodePtr> nodes;
     nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    for (int i = 0; i < SizeToInt(size); i++) {
+    int idx = 0;
+    for (const auto &item : items) {
       AnfNodePtr tuple_node =
-        func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(i)});
-      AnfNodePtr node = MixedPrecisionCastHelper(tuple_node, items[i], target_type, func_graph);
+        func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(idx)});
+      AnfNodePtr node = MixedPrecisionCastHelper(tuple_node, item, target_type, func_graph);
       nodes.emplace_back(node);
+      ++idx;
     }
     target_node = func_graph->NewCNode(nodes);
   }

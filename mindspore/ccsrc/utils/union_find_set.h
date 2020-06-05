@@ -27,6 +27,7 @@ template <class T>
 class UnionFindSet {
  public:
   UnionFindSet() : union_find_set_() {}
+  ~UnionFindSet() = default;
   void Add(const T &elem) {
     if (union_find_set_.find(elem) != union_find_set_.end()) {
       return;
