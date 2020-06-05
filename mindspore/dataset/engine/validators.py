@@ -323,6 +323,27 @@ def check_sampler_shuffle_shard_options(param_dict):
         raise RuntimeError("shard_id is specified but num_shards is not.")
 
 
+def check_padding_options(param_dict):
+    """ check for valid padded_sample and num_padded of padded samples"""
+    columns_list = param_dict.get('columns_list')
+    block_reader = param_dict.get('block_reader')
+    padded_sample, num_padded = param_dict.get('padded_sample'), param_dict.get('num_padded')
+    if padded_sample is not None:
+        if num_padded is None:
+            raise RuntimeError("padded_sample is specified and requires num_padded as well.")
+        if num_padded < 0:
+            raise ValueError("num_padded is invalid, num_padded={}.".format(num_padded))
+        if columns_list is None:
+            raise RuntimeError("padded_sample is specified and requires columns_list as well.")
+        for column in columns_list:
+            if column not in padded_sample:
+                raise ValueError("padded_sample cannot match columns_list.")
+        if block_reader:
+            raise RuntimeError("block_reader and padded_sample cannot be specified at the same time.")
+
+    if padded_sample is None and num_padded is not None:
+        raise RuntimeError("num_padded is specified but padded_sample is not.")
+
 def check_imagefolderdatasetv2(method):
     """A wrapper that wrap a parameter checker to the original Dataset(ImageFolderDatasetV2)."""
 
@@ -549,9 +570,10 @@ def check_minddataset(method):
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
 
-        nreq_param_int = ['num_samples', 'num_parallel_workers', 'seed', 'num_shards', 'shard_id']
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'seed', 'num_shards', 'shard_id', 'num_padded']
         nreq_param_list = ['columns_list']
         nreq_param_bool = ['block_reader']
+        nreq_param_dict = ['padded_sample']
 
         # check dataset_file; required argument
         dataset_file = param_dict.get('dataset_file')
@@ -569,12 +591,11 @@ def check_minddataset(method):
 
         check_param_type(nreq_param_bool, param_dict, bool)
 
-        num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
-        if (num_shards is not None and shard_id is None) or (num_shards is None and shard_id is not None):
-            raise ValueError("num_shards and shard_id need to be set or not set at the same time")
+        check_param_type(nreq_param_dict, param_dict, dict)
 
         check_sampler_shuffle_shard_options(param_dict)
 
+        check_padding_options(param_dict)
         return method(*args, **kwargs)
 
     return new_method

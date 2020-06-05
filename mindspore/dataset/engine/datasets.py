@@ -2548,7 +2548,11 @@ class MindDataset(SourceDataset):
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, sampler is exclusive
             with shuffle and block_reader). Support list: SubsetRandomSampler,
-            PkSampler
+            PkSampler.
+        padded_sample (dict, optional): Samples will be appended to dataset, which
+            keys are the same as column_list.
+        num_padded (int, optional): Number of padding samples.Dataset size
+            plus num_padded should be divisible by num_shards.
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -2559,7 +2563,8 @@ class MindDataset(SourceDataset):
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
                  shuffle=None, num_shards=None, shard_id=None,
-                 block_reader=False, sampler=None):
+                 block_reader=False, sampler=None, padded_sample=None,
+                 num_padded=None):
         super().__init__(num_parallel_workers)
         if isinstance(dataset_file, list):
             self.load_dataset = False
@@ -2567,7 +2572,7 @@ class MindDataset(SourceDataset):
             self.load_dataset = True
         self.dataset_file = dataset_file
         self.columns_list = columns_list
-        self.global_shuffle = shuffle
+        self.shuffle_option = shuffle
         self.distribution = ""
         self.sampler = sampler
 
@@ -2598,22 +2603,36 @@ class MindDataset(SourceDataset):
             raise ValueError("shuffle not allowed when use sampler")
 
         if block_reader is False and sampler is None:
-            self.global_shuffle = not bool(shuffle is False)
+            self.shuffle_option = not bool(shuffle is False)
+
+        if num_padded is None:
+            num_padded = 0
 
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.block_reader = block_reader
+        self.padded_sample = padded_sample
+        self.num_padded = num_padded
 
     def get_args(self):
         args = super().get_args()
+        padded_sample = {}
+        if self.padded_sample:
+            for k, v in self.padded_sample.items():
+                if isinstance(v, np.ndarray):
+                    padded_sample[k] = v.tobytes()
+                else:
+                    padded_sample[k] = v
         args["dataset_file"] = self.dataset_file
         args["load_dataset"] = self.load_dataset
         args["columns_list"] = self.columns_list
-        args["global_shuffle"] = self.global_shuffle
+        args["shuffle_option"] = self.shuffle_option
         args["partitions"] = self.partitions
         args["block_reader"] = self.block_reader
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["num_padded"] = self.num_padded
+        args["padded_sample"] = padded_sample
         args["sampler"] = self.sampler
         return args
 
@@ -2628,19 +2647,22 @@ class MindDataset(SourceDataset):
             dataset_file = [self.dataset_file]
         else:
             dataset_file = self.dataset_file
-        num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler)
+        num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler, self.num_padded)
         if self.partitions is not None and self.partitions[0] > 0:
             if num_rows % self.partitions[0] == 0:
                 num_rows = num_rows // self.partitions[0]
             else:
+                if self.num_padded > 0:
+                    raise RuntimeError(
+                        "Dataset size plus number of padded samples is not divisible by number of shards.")
                 num_rows = num_rows // self.partitions[0] + 1
         return num_rows
 
     def is_shuffled(self):
-        if self.global_shuffle is None:
+        if self.shuffle_option is None:
             return True
 
-        return self.global_shuffle or self.sampler.is_shuffled()
+        return self.shuffle_option or self.sampler.is_shuffled()
 
     def is_sharded(self):
         if self.num_shards is not None:

@@ -73,6 +73,10 @@ enum ShardType {
   kCV = 1,
 };
 
+enum TaskType {
+  kCommonTask = 0,
+  kPaddedTask = 1,
+};
 enum SamplerType { kCustomTopNSampler, kCustomTopPercentSampler, kSubsetRandomSampler, kPKSampler };
 
 enum ShuffleType { kShuffleCategory, kShuffleSample };

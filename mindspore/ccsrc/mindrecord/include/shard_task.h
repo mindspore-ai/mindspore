@@ -29,9 +29,10 @@ class ShardTask {
  public:
   void MakePerm();
 
-  void InsertTask(int shard_id, int group_id, const std::vector<uint64_t> &offset, const json &label);
+  void InsertTask(TaskType task_type, int shard_id, int group_id, const std::vector<uint64_t> &offset,
+                  const json &label);
 
-  void InsertTask(std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> task);
+  void InsertTask(std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> task);
 
   void PopBack();
 
@@ -39,15 +40,15 @@ class ShardTask {
 
   uint32_t SizeOfRows() const;
 
-  std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &GetTaskByID(size_t id);
+  std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &GetTaskByID(size_t id);
 
-  std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &GetRandomTask();
+  std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &GetRandomTask();
 
   static ShardTask Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements);
 
   uint32_t categories = 1;
 
-  std::vector<std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json>> task_list_;
+  std::vector<std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json>> task_list_;
   std::vector<int> permutation_;
 };
 }  // namespace mindrecord

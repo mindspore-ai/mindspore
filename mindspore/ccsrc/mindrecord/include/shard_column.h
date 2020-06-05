@@ -89,12 +89,16 @@ class ShardColumn {
   MSRStatus GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                               const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
                               uint64_t *n_bytes);
+  std::pair<MSRStatus, ColumnCategory> GetColumnTypeByName(const std::string &column_name,
+                                                           ColumnDataType *column_data_type,
+                                                           uint64_t *column_data_type_size,
+                                                           std::vector<int64_t> *column_shape);
 
- private:
   /// \brief get column value from json
   MSRStatus GetColumnFromJson(const std::string &column_name, const json &columns_json,
                               std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes);
 
+ private:
   /// \brief get float value from json
   template <typename T>
   MSRStatus GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value, bool use_double);

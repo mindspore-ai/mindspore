@@ -32,6 +32,7 @@
 #include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/engine/datasetops/filter_op.h"
 #include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_sample.h"
 #include "mindrecord/include/shard_shuffle.h"
 #include "dataset/util/random.h"
@@ -400,7 +401,7 @@ Status DEPipeline::CheckMindRecordPartitionInfo(const py::dict &args, std::vecto
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
-  constexpr int kMaxPartitions = 64;
+  constexpr int kMaxPartitions = 1024;
   if (in_partitions->at(0) <= 0 || in_partitions->at(0) > kMaxPartitions) {
     std::string err_msg = "Error: partitions is invalid or not set.";
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -438,6 +439,10 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
     (void)builder->SetColumnsToLoad(in_col_names);
   }
 
+  if (!args["padded_sample"].is_none()) {
+    (void)builder->SetPaddedSample(args["padded_sample"]);
+    (void)builder->SetNumToPadSamples(ToInt(args["num_padded"]));
+  }
   std::vector<std::shared_ptr<mindrecord::ShardOperator>> operators;
   for (auto arg : args) {
     std::string key = py::str(arg.first);
@@ -447,14 +452,15 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
         (void)builder->SetNumMindRecordWorkers(ToInt(value));
       } else if (key == "block_reader" && ToBool(value) == true) {
         (void)builder->SetBlockReader();
-      } else if (key == "global_shuffle" && ToBool(value) == true) {
-        uint32_t seed = args["partitions"].is_none() ? GetSeed() : 0;
+      } else if (key == "shuffle_option" && ToBool(value) == true) {
+        if (!args["partitions"].is_none()) continue;
+        uint32_t seed = GetSeed();
         operators.push_back(std::make_shared<mindrecord::ShardShuffle>(seed));
       } else if (key == "sampler") {
-        auto create = py::reinterpret_borrow<py::object>(value).attr("_create_for_minddataset");
-        std::shared_ptr<mindrecord::ShardOperator> sample_op =
-          create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
-        operators.push_back(sample_op);
+        auto sampler = py::reinterpret_borrow<py::object>(value);
+        auto create = sampler.attr("_create_for_minddataset");
+        auto op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+        operators.push_back(op);
       }
     }
   }
@@ -465,7 +471,13 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
     if (Status::OK() != ret) {
       return ret;
     }
-    operators.push_back(std::make_shared<mindrecord::ShardSample>(1, in_partitions[0], in_partitions[1]));
+    auto shuffle = ToBool(args["shuffle_option"]);
+    int num_padded = 0;
+    if (!args["num_padded"].is_none()) {
+      num_padded = ToInt(args["num_padded"]);
+    }
+    operators.push_back(
+      std::make_shared<mindrecord::ShardDistributedSample>(in_partitions[0], in_partitions[1], num_padded, shuffle, 0));
   }
 
   if (!operators.empty()) {
