@@ -55,6 +55,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimIsNot, {InferImplIsNot, true}},
     {prim::kPrimInDict, {InferImplInDict, true}},
     {prim::kPrimNotInDict, {InferImplNotInDict, true}},
+    {prim::kPrimIsConsant, {InferImplIsConstant, true}},
     // Maths
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},

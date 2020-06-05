@@ -147,8 +147,8 @@ TEST_F(TestOptLib, test_inline_new_closure) {
 TEST_F(TestOptLib, test_inline_while) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_inline_while", "before");
   auto patterns = std::vector<SubstitutionPtr>({irpass.inline_});
-  FuncGraphPtr after_ = RunSubs(before, patterns);
-  ASSERT_TRUE(CheckOpt(before, before, patterns));
+  FuncGraphPtr after = RunSubs(before, patterns);
+  ASSERT_TRUE(CheckOpt(before, after, patterns, true));
 }
 
 TEST_F(TestOptLib, test_arithmetic) {

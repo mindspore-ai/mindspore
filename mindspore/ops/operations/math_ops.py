@@ -2294,7 +2294,7 @@ class Abs(PrimitiveWithInfer):
     def infer_value(self, x):
         if x is not None:
             x = x.asnumpy()
-            out = np.abs(x, dtype=x.dtype)
+            out = np.array(np.abs(x, dtype=x.dtype))
             return Tensor(out)
         return None
 

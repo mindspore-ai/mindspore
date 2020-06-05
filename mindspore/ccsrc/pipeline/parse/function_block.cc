@@ -265,6 +265,13 @@ CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
   return op_apply_node;
 }
 
+CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
+  TraceManager::DebugTrace(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
+  CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation("while_cond"), cond});
+  TraceManager::EndTrace();
+  return op_apply_node;
+}
+
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, AnfNodePtr node) {
   if (func_graph()->get_return() != nullptr) {

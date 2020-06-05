@@ -26,6 +26,7 @@ typeof = Primitive('typeof')
 hastype = Primitive('hastype')
 cast = P.Cast()
 dtype = P.DType()
+isconstant = Primitive('is_constant')
 
 
 issubclass_ = P.IsSubClass()

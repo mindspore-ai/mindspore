@@ -126,7 +126,7 @@ convert_object_map = {
     T.make_list:    F.make_list,
     T.make_slice:   F.make_slice,
     T.range:        F.make_range,
-
+    T.while_cond:   M.while_cond,
     # lib function
     math.floor:     NO_IMPLEMENT,
     math.trunc:     NO_IMPLEMENT,

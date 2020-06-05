@@ -91,3 +91,7 @@ def to_array(x):  # pragma: no cover
 def not_contains(x):  # pragma: no cover
     """Not in function."""
     raise RuntimeError('This operation is not meant to be called directly.')
+
+def while_cond(x):  # pragma: no cover
+    """Not in function."""
+    raise RuntimeError('This operation is not meant to be called directly.')
