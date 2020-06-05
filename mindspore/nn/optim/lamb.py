@@ -111,10 +111,12 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
 def _check_param_value(decay_steps, warmup_steps, start_learning_rate,
                        end_learning_rate, power, beta1, beta2, eps, weight_decay, prim_name):
     """Check the type of inputs."""
-    validator.check_float_positive('start_learning_rate', start_learning_rate, prim_name)
-    validator.check_float_legal_value('start_learning_rate', start_learning_rate, prim_name)
+    validator.check_value_type("start_learning_rate", start_learning_rate, [float], prim_name)
+    validator.check_number_range("start_learning_rate rate", start_learning_rate, 0.0, float("inf"), Rel.INC_LEFT,
+                                 prim_name)
     validator.check_value_type("end_learning_rate", end_learning_rate, [float], prim_name)
-    validator.check_float_legal_value('end_learning_rate', end_learning_rate, prim_name)
+    validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT,
+                                 prim_name)
     validator.check_float_positive('power', power, prim_name)
     validator.check_float_legal_value('power', power, prim_name)
     validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
@@ -180,8 +182,7 @@ class Lamb(Optimizer):
                  eps=1e-6,
                  weight_decay=0.0,
                  decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()):
-
-        super(Lamb, self).__init__(start_learning_rate, params)
+        super(Lamb, self).__init__(0.0, params)
         if self.is_group:
             raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(decay_steps, warmup_steps, start_learning_rate, end_learning_rate,
