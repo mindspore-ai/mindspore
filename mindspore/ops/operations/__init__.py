@@ -30,7 +30,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
-                        SpaceToBatchND, BatchToSpaceND)
+                        SpaceToBatchND, BatchToSpaceND, BroadcastTo)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -289,7 +289,8 @@ __all__ = [
     "Atan",
     "Atanh",
     "BasicLSTMCell",
-    "ConfusionMatrix"
+    "ConfusionMatrix",
+    "BroadcastTo"
 ]
 
 __all__.extend(_quant_ops.__all__)

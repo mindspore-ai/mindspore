@@ -217,9 +217,9 @@ from .bessel_i0e import _bessel_i0e_tbe
 from .bessel_i1e import _bessel_i1e_tbe
 from .batch_to_space_nd import _batch_to_space_nd_tbe
 from .space_to_batch_nd import _space_to_batch_nd_tbe
-from .bitwise_and import bitwise_and_op_info
-from .bitwise_or import bitwise_or_op_info
-from .bitwise_xor import bitwise_xor_op_info
+from .bitwise_and import _bitwise_and_tbe
+from .bitwise_or import _bitwise_or_tbe
+from .bitwise_xor import _bitwise_xor_tbe
 from .reduce_all import _reduce_all_tbe
 from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
 from .unsorted_segment_min import _unsorted_segment_min_tbe
@@ -238,3 +238,4 @@ from .basic_lstm_cell_c_state_grad import _basic_lstm_cell_c_state_grad_tbe
 from .basic_lstm_cell_weight_grad import _basic_lstm_cell_weight_grad_tbe
 from .basic_lstm_cell_input_grad import _basic_lstm_cell_input_grad_tbe
 from .confusion_matrix import _confusion_matrix_tbe
+from .broadcast_to import _broadcast_to_tbe

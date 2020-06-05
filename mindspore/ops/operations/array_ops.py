@@ -2738,3 +2738,40 @@ class BatchToSpaceND(PrimitiveWithInfer):
                              f'block_shape_prod {block_shape_prod}')
         out_shape[0] = out_shape[0] // block_shape_prod
         return out_shape
+
+
+class BroadcastTo(PrimitiveWithInfer):
+    """
+    Broadcasts input tensor to a given shape.
+
+    Args:
+        shape (tuple): The target shape to broadcast.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, with the given `shape` and the same data type as `input_x`.
+
+    Examples:
+        >>> shape = (2, 3)
+        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> broadcast_to = P.BroadcastTo(shape)
+        >>> broadcast_to(input_x)
+        [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
+    """
+
+    @prim_attr_register
+    def __init__(self, shape):
+        """Init BroadcastTo"""
+        validator.check_value_type("shape", shape, (tuple), self.name)
+        for i in shape:
+            validator.check_integer("shape element", i, 0, Rel.GT, self.name)
+        self.shape = shape
+
+    def infer_shape(self, x_shape):
+        return self.shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
+        return x_dtype

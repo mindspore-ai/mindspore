@@ -18,6 +18,7 @@
 from .. import operations as P
 from ..operations import _grad_ops as G
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ..functional import broadcast_gradient_args
 from .. import functional as F
 from .grad_base import bprop_getters
 from ..primitive import constexpr
@@ -578,5 +579,19 @@ def get_bprop_batch_to_space_nd(self):
     batch_to_space_nd_grad = P.SpaceToBatchND(self.block_shape, self.crops)
     def bprop(x, out, dout):
         dx = batch_to_space_nd_grad(dout)
+        return (dx,)
+    return bprop
+
+@bprop_getters.register(P.BroadcastTo)
+def get_bprop_broadcast_to(self):
+    """Generate bprop for BroadcastTo"""
+    reduce_keep_dim = P.ReduceSum(keep_dims=True)
+    broadcast_shape = self.shape
+
+    def bprop(x, out, dout):
+        x_shape = shape_op(x)
+        _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
+        reduced_grad = reduce_keep_dim(dout, reduction_axes)
+        dx = reshape(reduced_grad, x_shape)
         return (dx,)
     return bprop

@@ -105,7 +105,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"unsorted_segment_min", "unsorted_segment_min_d"},
   {"reduce_prod", "reduce_prod_d"},
   {"a_cos", "acos"},
-  {"a_cos_grad", "acos_grad"}};
+  {"a_cos_grad", "acos_grad"},
+  {"broadcast_to", "broadcast_to_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {
@@ -139,7 +140,7 @@ void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   *func_name = name_tmp;
   auto iter = tbe_func_adapter_map.find(*func_name);
   if (iter != tbe_func_adapter_map.end()) {
-    MS_LOG(INFO) << "map actual op from me " << func_name << "to tbe op" << iter->second;
+    MS_LOG(INFO) << "map actual op from me " << *func_name << " to tbe op" << iter->second;
     *func_name = iter->second;
   }
 }
