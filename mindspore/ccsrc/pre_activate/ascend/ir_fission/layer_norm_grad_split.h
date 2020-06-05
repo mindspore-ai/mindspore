@@ -26,8 +26,7 @@ namespace mindspore {
 namespace opt {
 class LayerNormGradSplit : public PatternProcessPass {
  public:
-  explicit LayerNormGradSplit(bool multigraph = true)
-      : PatternProcessPass("layer_norm_grad_split", multigraph), kernel_select_(std::make_shared<KernelSelect>()) {}
+  explicit LayerNormGradSplit(bool multigraph = true) : PatternProcessPass("layer_norm_grad_split", multigraph) {}
   ~LayerNormGradSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
@@ -37,7 +36,6 @@ class LayerNormGradSplit : public PatternProcessPass {
                                          std::vector<AnfNodePtr> *layer_norm_grad_outputs) const;
   void CreateOutputsOfLayerNormBetaGammaBackprop(const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
                                                  std::vector<AnfNodePtr> *layer_norm_beta_gamma_outputs) const;
-  KernelSelectPtr kernel_select_;
 };
 }  // namespace opt
 }  // namespace mindspore
