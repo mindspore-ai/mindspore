@@ -171,6 +171,6 @@ bool FakeQuantGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   return true;
 }
 
-MS_REG_GPU_KERNEL(FakeQuantWithMinMax, FakeQuantGpuKernel)
+MS_REG_GPU_KERNEL(FakeQuantPerLayer, FakeQuantGpuKernel)
 }  // namespace kernel
 }  // namespace mindspore
