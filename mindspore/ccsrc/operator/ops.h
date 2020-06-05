@@ -140,6 +140,8 @@ extern const PrimitivePtr kPrimConcat;
 extern const PrimitivePtr kPrimSqueeze;
 extern const PrimitivePtr kPrimTranspose;
 extern const PrimitivePtr kPrimGatherV2;
+extern const PrimitivePtr kPrimEmbeddingLookup;
+extern const PrimitivePtr kPrimEmbeddingLookupCommGrad;
 extern const PrimitivePtr kPrimSize;
 extern const PrimitivePtr kPrimArgMax;
 extern const PrimitivePtr kPrimPack;
@@ -176,6 +178,7 @@ extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
 extern const PrimitivePtr kPrimCumSum;
 extern const PrimitivePtr kPrimCumProd;
+extern const PrimitivePtr kPrimSubscalar;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;

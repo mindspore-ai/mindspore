@@ -133,6 +133,8 @@ const PrimitivePtr kPrimConcat = std::make_shared<Primitive>("Concat");
 const PrimitivePtr kPrimSqueeze = std::make_shared<Primitive>("Squeeze");
 const PrimitivePtr kPrimTranspose = std::make_shared<Primitive>("Transpose");
 const PrimitivePtr kPrimGatherV2 = std::make_shared<Primitive>("GatherV2");
+const PrimitivePtr kPrimEmbeddingLookup = std::make_shared<Primitive>("EmbeddingLookup");
+const PrimitivePtr kPrimEmbeddingLookupCommGrad = std::make_shared<Primitive>("EmbeddingLookupCommGrad");
 const PrimitivePtr kPrimSize = std::make_shared<Primitive>("Size");
 const PrimitivePtr kPrimArgMax = std::make_shared<Primitive>("Argmax");
 const PrimitivePtr kPrimPack = std::make_shared<Primitive>("Pack");
@@ -168,6 +170,7 @@ const PrimitivePtr kPrimLess = std::make_shared<Primitive>("Less");
 const PrimitivePtr kPrimLessEqual = std::make_shared<Primitive>("LessEqual");
 const PrimitivePtr kPrimCumSum = std::make_shared<Primitive>("CumSum");
 const PrimitivePtr kPrimCumProd = std::make_shared<Primitive>("CumProd");
+const PrimitivePtr kPrimSubscalar = std::make_shared<Primitive>("Subscalar");
 
 // NN
 const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
