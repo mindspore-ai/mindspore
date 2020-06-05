@@ -58,7 +58,8 @@ using ROW_GROUPS =
   std::tuple<MSRStatus, std::vector<std::vector<std::vector<uint64_t>>>, std::vector<std::vector<json>>>;
 using ROW_GROUP_BRIEF =
   std::tuple<MSRStatus, std::string, int, uint64_t, std::vector<std::vector<uint64_t>>, std::vector<json>>;
-using TASK_RETURN_CONTENT = std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, json>>>;
+using TASK_RETURN_CONTENT =
+  std::pair<MSRStatus, std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>>>;
 const int kNumBatchInMap = 1000;  // iterator buffer size in row-reader mode
 const int kNumPageInBuffer = 16;  // page buffer size in block-reader mode
 
@@ -78,7 +79,8 @@ class ShardReader {
   /// \return MSRStatus the status of MSRStatus
   MSRStatus Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer = 4,
                  const std::vector<std::string> &selected_columns = {},
-                 const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const bool &block_reader = false);
+                 const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const bool &block_reader = false,
+                 const int num_padded = 0);
 
   /// \brief open files and initialize reader, python API
   /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
@@ -127,7 +129,7 @@ class ShardReader {
   /// \param[out] count # of rows
   /// \return MSRStatus the status of MSRStatus
   MSRStatus CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
-                           const std::shared_ptr<ShardOperator> &op, int64_t *count);
+                           const std::shared_ptr<ShardOperator> &op, int64_t *count, const int num_padded);
 
   /// \brief shuffle task with incremental seed
   /// \return void
@@ -182,7 +184,8 @@ class ShardReader {
 
   /// \brief return a row by id
   /// \return a batch of images and image data
-  std::vector<std::tuple<std::vector<uint8_t>, json>> GetNextById(const int64_t &task_id, const int32_t &consumer_id);
+  std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>> GetNextById(const int64_t &task_id,
+                                                                                       const int32_t &consumer_id);
 
   /// \brief return a batch in block-reader mode, given that one is ready
   /// \return a batch of images and image data
@@ -329,6 +332,8 @@ class ShardReader {
   // flags
   bool all_in_index_ = true;  // if all columns are stored in index-table
   bool interrupt_ = false;    // reader interrupted
+
+  int num_padded_;  // number of padding samples
 
   // Delivery/Iterator mode begin
   const std::string kThreadName = "THRD_ITER_";  // prefix of thread name

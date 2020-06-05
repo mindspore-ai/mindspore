@@ -66,6 +66,25 @@ ShardColumn::ShardColumn(const std::shared_ptr<ShardHeader> &shard_header, bool 
   num_blob_column_ = blob_column_.size();
 }
 
+std::pair<MSRStatus, ColumnCategory> ShardColumn::GetColumnTypeByName(const std::string &column_name,
+                                                                      ColumnDataType *column_data_type,
+                                                                      uint64_t *column_data_type_size,
+                                                                      std::vector<int64_t> *column_shape) {
+  // Skip if column not found
+  auto column_category = CheckColumnName(column_name);
+  if (column_category == ColumnNotFound) {
+    return {FAILED, ColumnNotFound};
+  }
+
+  // Get data type and size
+  auto column_id = column_name_id_[column_name];
+  *column_data_type = column_data_type_[column_id];
+  *column_data_type_size = ColumnDataTypeSize[*column_data_type];
+  *column_shape = column_shape_[column_id];
+
+  return {SUCCESS, column_category};
+}
+
 MSRStatus ShardColumn::GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                                             const json &columns_json, const unsigned char **data,
                                             std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes,

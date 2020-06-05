@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
-#define MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#ifndef MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
+#define MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
 
 #include <memory>
 #include <string>
@@ -23,39 +23,25 @@
 #include <vector>
 #include "mindrecord/include/shard_operator.h"
 #include "mindrecord/include/shard_shuffle.h"
+#include "mindrecord/include/shard_sample.h"
 
 namespace mindspore {
 namespace mindrecord {
-class ShardSample : public ShardOperator {
+class ShardDistributedSample : public ShardSample {
  public:
-  explicit ShardSample(int n);
+  ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle, uint32_t seed);
 
-  ShardSample(int num, int den);
+  ~ShardDistributedSample() override{};
 
-  ShardSample(int num, int den, int par);
-
-  ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
-
-  ~ShardSample() override{};
-
-  MSRStatus Execute(ShardTask &tasks) override;
-
-  MSRStatus SufExecute(ShardTask &tasks) override;
+  MSRStatus PreExecute(ShardTask &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
- protected:
-  int numerator_;
-  int denominator_;
-  int partition_id_;
-  std::shared_ptr<ShardShuffle> shuffle_op_;
-
  private:
-  int no_of_samples_;
-  std::vector<int64_t> indices_;
-  SamplerType sampler_type_;
+  bool shuffle_;
+  int no_of_padded_samples_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#endif  // MINDRECORD_INCLUDE_SHARD_DISTRIBUTED_SAMPLE_H_
