@@ -175,8 +175,7 @@ class Adam(Optimizer):
             If True, updates the gradients using NAG.
             If False, updates the gradients without using NAG. Default: False.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
-                            1.0.
+        loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -210,7 +209,7 @@ class Adam(Optimizer):
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)

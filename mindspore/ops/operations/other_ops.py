@@ -379,7 +379,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
     Inputs:
         - **labels** (Tensor) - real labels, tensor of 1-D. the dtype must be non-negative Integer.
         - **predictions** (Tensor) - the labels from prediction, tensor of 1-D.
-        the shape same as `labels` and the dtype must be non-negative Integer.
+          the shape same as `labels` and the dtype must be non-negative Integer.
         - **weights** (Tensor) - tensor of 1-D. the shape same as `predictions`.
 
     Outputs:

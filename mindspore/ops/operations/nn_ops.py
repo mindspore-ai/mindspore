@@ -1707,9 +1707,9 @@ class ApplyRMSProp(PrimitiveWithInfer):
         - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
         - **learning_rate** (Union[Number, Tensor]) - Learning rate.
         - **grad** (Tensor) - Gradients, must have the same type as `var`.
-        - **decay** (float) - Decay rate.
-        - **momentum** (float) - Momentum.
-        - **epsilon** (float) - Ridge term.
+        - **decay** (float) - Decay rate. Only constant value is allowed.
+        - **momentum** (float) - Momentum. Only constant value is allowed.
+        - **epsilon** (float) - Ridge term. Only constant value is allowed.
 
     Outputs:
         Tensor, parameters to be update.
@@ -1758,6 +1758,13 @@ class ApplyRMSProp(PrimitiveWithInfer):
         if not self.is_ge and self.is_d:
             return var_dtype, var_dtype, var_dtype
         return var_dtype
+
+    def infer_value(self, var, mean_square, moment, learning_rate, grad, decay, momentum, epsilon):
+        if decay is None or momentum is None or epsilon is None:
+            raise ValueError(f"For {self.name}, decay, momentum, epsilon must be const.")
+        if not self.is_ge and self.is_d:
+            return None, None, None
+        return None
 
 
 class ApplyCenteredRMSProp(PrimitiveWithInfer):
