@@ -84,28 +84,35 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto grad = reinterpret_cast<float *>(inputs[3]->addr);
   auto indices = reinterpret_cast<int *>(inputs[4]->addr);
 
-  for (size_t i = 0; i < indices_size_; ++i) {
-    int index = indices[i];
-    if ((size_t)index >= var_first_dim_size_) {
-      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range";
+  std::vector<float> new_grad(indices_size_ * var_outer_dim_size_);
+  std::vector<int> new_indices(indices_size_);
+  SparseGradient unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size_});
+  DeduplicateIndexedSlices(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
+                           var_outer_dim_size_);
+
+  for (size_t i = 0; i < unique_sparse_grad.indices_size_; ++i) {
+    int index = unique_sparse_grad.indices_[i];
+    if (index < 0 || (size_t)index >= var_first_dim_size_) {
+      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
     }
     for (size_t j = var_outer_dim_size_ * index, k = var_outer_dim_size_ * i; j < var_outer_dim_size_ * (index + 1);
          ++j, ++k) {
-      auto accum_new = accum[j] + grad[k] * grad[k];
+      auto summed_grad = unique_sparse_grad.value_[k];
+      auto accum_new = accum[j] + summed_grad * summed_grad;
       if (lr_power_ == -0.5) {
-        linear[j] += grad[k] - (sqrt(accum_new) - sqrt(accum[j])) / lr_ * var[j];
+        linear[j] += summed_grad - (std::sqrt(accum_new) - std::sqrt(accum[j])) / lr_ * var[j];
       } else {
-        linear[j] += grad[k] - (pow(accum_new, -lr_power_) - pow(accum[j], -lr_power_)) / lr_ * var[j];
+        linear[j] += summed_grad - (std::pow(accum_new, -lr_power_) - std::pow(accum[j], -lr_power_)) / lr_ * var[j];
       }
       auto x = Sign(linear[j]) * l1_ - linear[j];
       float y;
       if (lr_power_ == -0.5) {
-        y = sqrt(accum_new) / lr_ + 2 * l2_;
+        y = std::sqrt(accum_new) / lr_ + 2 * l2_;
       } else {
-        y = pow(accum_new, -lr_power_) / lr_ + 2 * l2_;
+        y = std::pow(accum_new, -lr_power_) / lr_ + 2 * l2_;
       }
       auto pre_shrink = x / y;
-      var[j] = abs(linear[j]) > l1_ ? pre_shrink : 0;
+      var[j] = std::fabs(linear[j]) > l1_ ? pre_shrink : 0;
       accum[j] = accum_new;
     }
   }

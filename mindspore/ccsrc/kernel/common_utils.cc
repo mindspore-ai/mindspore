@@ -547,5 +547,38 @@ int Sign(float x) {
   }
   return 0;
 }
+
+void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                              size_t outer_dim) {
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.value_);
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.indices_);
+  MS_EXCEPTION_IF_NULL(unique_grad);
+  MS_EXCEPTION_IF_NULL(unique_grad->value_);
+  MS_EXCEPTION_IF_NULL(unique_grad->indices_);
+  std::unordered_map<int, size_t> index_map;
+  size_t unique_indices_size = 0;
+  for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
+    int index = origin_sparse_grad.indices_[i];
+    if (index < 0 || (size_t)index >= first_dim) {
+      continue;
+    }
+    auto iter = index_map.find(index);
+    if (iter == index_map.end()) {
+      index_map[index] = unique_indices_size;
+      unique_grad->indices_[unique_indices_size] = index;
+      for (size_t j = unique_indices_size * outer_dim, k = i * outer_dim; j < (unique_indices_size + 1) * outer_dim;
+           ++j, ++k) {
+        unique_grad->value_[j] = origin_sparse_grad.value_[k];
+      }
+      unique_indices_size++;
+    } else {
+      size_t first_index = iter->second;
+      for (size_t j = first_index * outer_dim, k = i * outer_dim; j < (first_index + 1) * outer_dim; ++j, ++k) {
+        unique_grad->value_[j] += origin_sparse_grad.value_[k];
+      }
+    }
+  }
+  unique_grad->indices_size_ = unique_indices_size;
+}
 }  // namespace kernel
 }  // namespace mindspore

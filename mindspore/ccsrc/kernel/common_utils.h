@@ -69,6 +69,12 @@ class KernelMeta {
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
 
+struct SparseGradient {
+  float *value_;
+  int *indices_;
+  size_t indices_size_;
+};
+
 bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
@@ -84,6 +90,8 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info);
 std::string GetProcessor(const AnfNodePtr &anf_node);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
 int Sign(float x);
+void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                              size_t outer_dim);
 }  // namespace kernel
 }  // namespace mindspore
 
