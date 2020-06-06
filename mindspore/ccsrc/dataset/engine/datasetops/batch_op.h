@@ -38,6 +38,7 @@ class DataBuffer;
 
 using TensorBatch = std::vector<std::shared_ptr<Tensor>>;
 using TensorBatchTable = std::vector<TensorBatch>;
+using PadInfo = std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>>;
 
 class BatchOp : public ParallelOp {
  public:
@@ -66,7 +67,7 @@ class BatchOp : public ParallelOp {
       return *this;
     }
 
-    Builder &SetPaddingMap(const std::map<std::string, std::pair<TensorShape, float>> &pad_map, bool pad = true) {
+    Builder &SetPaddingMap(const PadInfo &pad_map, bool pad = true) {
       builder_pad_ = pad;
       builder_pad_map_ = pad_map;
       return *this;
@@ -119,7 +120,7 @@ class BatchOp : public ParallelOp {
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     std::vector<std::string> builder_cols_to_map_;
-    std::map<std::string, std::pair<TensorShape, float>> builder_pad_map_;
+    PadInfo builder_pad_map_;
     py::function builder_batch_size_func_;
     py::function builder_batch_map_func_;
   };
@@ -150,8 +151,7 @@ class BatchOp : public ParallelOp {
   // @param int32_t rows_per_buf
   // @param int32_t num_workers
   BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
-          const std::vector<std::string> &, py::function batch_size_func, py::function batch_map_func,
-          std::map<std::string, std::pair<TensorShape, float>> pad_map);
+          const std::vector<std::string> &, py::function batch_size_func, py::function batch_map_func, PadInfo pad_map);
 
   // BatchOp destructor
   ~BatchOp() {}
@@ -183,15 +183,6 @@ class BatchOp : public ParallelOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Pad input tensor according pad_shape, need to have same rank.
-  // @param std::shared_ptr<Tensor> src - tensor to pad from
-  // @param std::shared_ptr<Tensor> *dst - return tensor padded
-  // @param std::vector<dsize_t> pad_shape - shape to pad to
-  // @param float pad_val - value to pad with
-  // @return - The error code return
-  Status PadTensor(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> *dst, const std::vector<dsize_t> &pad_shape,
-                   float pad_val);
-
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.
@@ -199,18 +190,6 @@ class BatchOp : public ParallelOp {
   Status Accept(NodePass *p, bool *modified) override;
 
  private:
-  // recursive helper function. This function could be very expensive if called on a multi-dimensional tensor
-  // it is only meant to be called by PadTensor.
-  // @tparam T - type of tensor and fill value
-  // @param std::shared_ptr<Tensor> src - Tensor to pad from
-  // @param std::shared_ptr<Tensor>* dst - Tensor to pad to, return value
-  // @param std::vector<dsize_t> cur_ind - recursion helper
-  // @param T pad_val - value to pad tensor with
-  // @param size_t cur_dim - recursion helper
-  // @return Status - The error code return
-  Status PadHelper(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> dst, std::vector<dsize_t> cur_ind,
-                   const std::vector<dsize_t> &src_s, const std::vector<dsize_t> &dst_s, size_t cur_dim = 0);
-
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
   // @return Status - The error code return
@@ -225,23 +204,33 @@ class BatchOp : public ParallelOp {
   // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching
   // @param const std::unique_ptr<TensorQTable> *dest - dest_table to hold batched rows
   // @param int32_t size - batch_size
+  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @return Status - The error code return
-  Status BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest, size_t size);
+  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
+                          dsize_t batch_size);
 
   // Function that calls pyfunc to perform map on batch
   // @param (std::pair<std::unique_ptr<TensorQTable>, batch_stats> *table_pair - contains un-batched tensor
   // @return Status - The error code return
   Status MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair);
 
+  // @param const PadInfo &pad_info pad info to unpack
+  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @param std::set<int32_t> *cols, col ids to perform pad on
   // @param std::vector<float> *vals, default padding value for each column
   // @param std::vector<std::vector<dsize_t>> *shapes, padding shape specified by user
   // @return Status - The error code return
-  Status UnpackPadInfo(std::set<int32_t> *cols, std::vector<float> *vals, std::vector<std::vector<dsize_t>> *shapes);
+  static Status UnpackPadInfo(const PadInfo &pad_info,
+                              const std::unordered_map<std::string, int32_t> &column_name_id_map,
+                              std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
+                              std::vector<std::vector<dsize_t>> *pad_shapes);
 
-  // @param table_pair
+  // @param table
+  // @param const PadInfo &pad_info pad info
+  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @return Status - The error code return
-  Status PadColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair);
+  static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
+                           const std::unordered_map<std::string, int32_t> &column_name_id_map);
 
   // the number of thread pulling from the mOutConnector of the Op below
   // @return int32_t, 1
@@ -264,11 +253,11 @@ class BatchOp : public ParallelOp {
   Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info);
 
   int32_t start_batch_size_;
-  bool drop_;                                                      // bool for whether to drop remainder or not
-  bool pad_;                                                       // bool for whether to perform padding on tensor
-  std::vector<std::string> pyfunc_column_names_;                   // Name of the columns to perform map op on
-  std::map<std::string, std::pair<TensorShape, float>> pad_info_;  // column names to perform padding on
-  std::unique_ptr<ChildIterator> child_iterator_;                  // child iterator for fetching TensorRows 1 by 1
+  bool drop_;                                      // bool for whether to drop remainder or not
+  bool pad_;                                       // bool for whether to perform padding on tensor
+  std::vector<std::string> pyfunc_column_names_;   // Name of the columns to perform map op on
+  PadInfo pad_info_;                               // column names to perform padding on
+  std::unique_ptr<ChildIterator> child_iterator_;  // child iterator for fetching TensorRows 1 by 1
   QueueList<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>> worker_queues_;  // internal queue for syncing worker
   py::function batch_size_func_;  // Function pointer of batch size function
   py::function batch_map_func_;   // Function pointer of per batch map function

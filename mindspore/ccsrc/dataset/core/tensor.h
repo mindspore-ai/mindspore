@@ -529,6 +529,12 @@ class Tensor {
     return TensorIterator<T>(data_end_);
   }
 
+  // Copies the last dimension at `index` from Tensor `src` to this Tensor.
+  // @param src Tensor
+  // @param index vector to the start of the dimension. The last dim should be 0
+  // @return Status
+  Status CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vector<dsize_t> &index);
+
  protected:
   // A function that prints Tensor recursively, first called by print
   // @param out

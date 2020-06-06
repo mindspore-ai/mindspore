@@ -229,7 +229,12 @@ Status Tensor::CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::arr
   }
   arr.resize({arr.size()});  // flatten the py::array so we can iterate once
   std::vector<std::string> strings;
-  std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::bytes>(s)); });
+
+  if (arr.dtype().kind() == 'U') {
+    std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::str>(s)); });
+  } else {
+    std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::bytes>(s)); });
+  }
 
   arr.resize(shape);  // resize arr back to the original shape
 
@@ -699,6 +704,8 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   for (; itr != end<std::string_view>(); itr++) {
     max = std::max((*itr).length(), max);
   }
+  // if all strings are empty, numpy stores a byte for each string |S1
+  max = (max == 0 ? 1 : max);
   uint64_t total_size = shape_.NumOfElements() * max;
   char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
   if (tmp_data == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
@@ -708,8 +715,10 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   itr = begin<std::string_view>();
   uint64_t i = 0;
   for (; itr != end<std::string_view>(); itr++, i++) {
-    ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
+    if (!(*itr).empty()) {
+      ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
+    }
   }
   auto strides = shape_.Strides();
   std::transform(strides.begin(), strides.end(), strides.begin(), [&max](const auto &s) { return s * max; });
@@ -845,6 +854,21 @@ Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length
   offset_t start = offset_ptr[index];
   *string_start = data_ + start;
   *length = offset_ptr[index + 1] - start - 1;  // -1 to skip the \0 from the string length
+  return Status::OK();
+}
+Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vector<dsize_t> &index) {
+  CHECK_FAIL_RETURN_UNEXPECTED(src->type() == type_, "Source Tensor has a different type");
+  CHECK_FAIL_RETURN_UNEXPECTED(index.back() == 0, "Last dim in index should be 0");
+
+  uint8_t type_size = type_.SizeInBytes();
+  size_t len = std::min(src->shape()[-1], shape_[-1]) * type_size;
+  dsize_t src_flat_ind = 0, dst_flat_ind = 0;
+  RETURN_IF_NOT_OK(src->shape().ToFlatIndex(index, &src_flat_ind));
+  RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &dst_flat_ind));
+
+  const unsigned char *src_addr = src->GetBuffer() + src_flat_ind * type_size;
+  unsigned char *dst_addr = GetMutableBuffer() + dst_flat_ind * type_size;
+  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
   return Status::OK();
 }
 

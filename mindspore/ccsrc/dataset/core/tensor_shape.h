@@ -118,7 +118,10 @@ class TensorShape {
 
   bool operator!=(const TensorShape &rhs) const { return !(rhs == *this); }
 
-  dsize_t operator[](const dsize_t index) const { return raw_shape_[index]; }
+  dsize_t operator[](const dsize_t index) const {
+    if (index < 0) return raw_shape_[raw_shape_.size() + index];
+    return raw_shape_[index];
+  }
 
   // Return the Shape as a vector
   // @return
