@@ -153,6 +153,8 @@ constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
 constexpr auto kNMSWithMaskOpName = "NMSWithMask";
 constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
+constexpr auto kStridedReadOpName = "StridedRead";
+constexpr auto kStridedWriteOpName = "StridedWrite";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";

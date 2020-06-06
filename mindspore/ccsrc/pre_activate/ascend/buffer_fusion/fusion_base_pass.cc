@@ -49,6 +49,19 @@ bool FusionBasePass::CheckDoubleInEltWiseNode(FuncGraphManager *manager, const A
          cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
 }
 
+bool FusionBasePass::CheckMultiOutputEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(manager);
+  if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto user_nodes = manager->node_users()[node];
+  return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
+         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && user_nodes.size() == ELTWISE_MULTI_USE &&
+         cnode->inputs().size() == ELTWISE_INPUT_SIZE;
+}
+
 void FusionBasePass::SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record) {
   auto id = fusion_id_allocator->AllocateFusionId();
   for (auto node : record) {
