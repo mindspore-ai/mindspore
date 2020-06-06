@@ -340,7 +340,7 @@ class RandomSampler(BuiltinSampler):
             raise ValueError("replacement should be a boolean value, but got replacement={}".format(replacement))
 
         if num_samples is not None:
-            if num_samples < 0:
+            if num_samples <= 0:
                 raise ValueError("num_samples should be a positive integer "
                                  "value, but got num_samples={}".format(num_samples))
 
@@ -490,7 +490,7 @@ class WeightedRandomSampler(BuiltinSampler):
             weights = [weights]
 
         if num_samples is not None:
-            if num_samples < 0:
+            if num_samples <= 0:
                 raise ValueError("num_samples should be a positive integer "
                                  "value, but got num_samples={}".format(num_samples))
 
