@@ -31,7 +31,7 @@ enum KernelType : int { UNKNOWN_KERNEL_TYPE = 0, AUTO_DIFF_KERNEL, AICPU_KERNEL,
 
 namespace kernel {
 
-enum Axis {
+enum Axis : int {
   N = 0,
   C,
   H,

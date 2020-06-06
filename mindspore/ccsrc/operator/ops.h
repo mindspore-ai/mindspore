@@ -211,6 +211,7 @@ extern const PrimitivePtr kPrimLayerNormGrad;
 extern const PrimitivePtr kPrimLayerNormXBackprop;
 extern const PrimitivePtr kPrimLayerNormBetaGammaBackprop;
 extern const PrimitivePtr kPrimDropoutGenMask;
+extern const PrimitivePtr kPrimDropoutDoMask;
 extern const PrimitivePtr kPrimOneHot;
 extern const PrimitivePtr kPrimGelu;
 extern const PrimitivePtr kPrimGeluGrad;

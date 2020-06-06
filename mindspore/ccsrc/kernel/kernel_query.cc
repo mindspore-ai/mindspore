@@ -41,8 +41,16 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
   } else {
     MS_LOG(WARNING) << "All kernel Info list does not match any kernel info ";
     for (size_t index = 0; index < kernel_info_list->size(); ++index) {
+      std::ostringstream buffer;
       MS_EXCEPTION_IF_NULL(kernel_info_list->at(index));
-      MS_LOG(WARNING) << "kernel [ " << index << " ] :" << kernel_info_list->at(index)->ToString();
+      if (AnfAlgo::GetOutputTensorNum(kernel_node) != kernel_info_list->at(index)->GetOutputNum()) {
+        buffer << "Kernel node's output size [" << AnfAlgo::GetOutputTensorNum(kernel_node) << "]"
+               << " cannot match the kernel's output size [" << kernel_info_list->at(index)->GetOutputNum() << "]";
+      } else {
+        buffer << "Kernel node's output size [" << AnfAlgo::GetInputTensorNum(kernel_node) << "]"
+               << " cannot match the kernel's output size [" << kernel_info_list->at(index)->GetInputNum() << "]";
+      }
+      MS_LOG(WARNING) << "kernel [ " << index << " ] :" << kernel_info_list->at(index)->ToString() << buffer.str();
     }
     kernel_info_list->clear();
     MS_LOG(WARNING) << "node" << kernel_node->DebugString() << "'s output size : ["
