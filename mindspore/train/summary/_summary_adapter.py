@@ -113,7 +113,7 @@ def package_summary_event(data_list, step):
         data = value["data"]
         tag = value["name"]
 
-        logger.debug("Now process %r summary, tag = %r", summary_type, tag)
+        logger.debug(f"Now process {summary_type} summary, tag = {tag}")
 
         summary_value = summary.value.add()
         summary_value.tag = tag
@@ -130,7 +130,7 @@ def package_summary_event(data_list, step):
             _fill_histogram_summary(tag, data, summary_value.histogram)
         else:
             # The data is invalid ,jump the data
-            logger.error("Summary type(%r) is error, tag = %r", summary_type, tag)
+            logger.error(f"Summary type({summary_type}) is error, tag = {tag}")
             del summary.value[-1]
 
     return summary_event
@@ -186,17 +186,17 @@ def _fill_scalar_summary(tag: str, np_value, summary):
     Returns:
         Summary, return scalar summary content.
     """
-    logger.debug("Set(%r) the scalar summary value", tag)
+    logger.debug(f"Set({tag}) the scalar summary value")
     if np_value.size == 1:
         # is scalar
         summary.scalar_value = np_value.item()
         return True
     if np_value.size > 1:
-        logger.warning("The tensor is not a single scalar, tag = %r, ndim = %r, shape = %r", tag, np_value.ndim,
-                       np_value.shape)
+        logger.warning(
+            f"The tensor is not a single scalar, tag = {tag}, ndim = {np_value.ndim}, shape = {np_value.shape}")
         summary.scalar_value = next(np_value.flat).item()
         return True
-    logger.error("There no values inside tensor, tag = %r, size = %r", tag, np_value.size)
+    logger.error(f"There no values inside tensor, tag = {tag}, size = {np_value.size}")
     return False
 
 
@@ -212,7 +212,7 @@ def _fill_tensor_summary(tag: str, np_value, summary_tensor):
     Retruns:
         Summary, return tensor summary content.
     """
-    logger.debug("Set(%r) the tensor summary value", tag)
+    logger.debug(f"Set({tag}) the tensor summary value")
     # get tensor dtype
     tensor_dtype = _nptype_to_prototype(np_value)
     summary_tensor.data_type = DataType.Value(tensor_dtype)
@@ -266,7 +266,7 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
         np_value (np.ndarray): Summary data.
         summary (summary_pb2.Summary.Histogram): Summary histogram data.
     """
-    logger.debug("Set(%r) the histogram summary value", tag)
+    logger.debug(f"Set({tag}) the histogram summary value")
     # Default bucket for tensor with no valid data.
     ma_value = np.ma.masked_invalid(np_value)
     total, valid = np_value.size, ma_value.count()
@@ -281,7 +281,7 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
     summary.count = total
     summary.nan_count, summary.pos_inf_count, summary.neg_inf_count = invalids
     if not valid:
-        logger.warning('There are no valid values in the ndarray(size=%d, shape=%d)', total, np_value.shape)
+        logger.warning(f'There are no valid values in the ndarray(size={total}, shape={np_value.shape})')
         # summary.{min, max, sum} are 0s by default, no need to explicitly set
     else:
         # BUG: max of a masked array with dtype np.float16 returns inf
@@ -290,9 +290,8 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
             summary.min = ma_value.min(fill_value=np.PINF)
             summary.max = ma_value.max(fill_value=np.NINF)
             if summary.min < F32_MIN or summary.max > F32_MAX:
-                logger.warning(
-                    'Values(%r, %r) are too large, '
-                    'you may encounter some undefined behaviours hereafter.', summary.min, summary.max)
+                logger.warning(f'Values({summary.min}, {summary.max}) are too large, '
+                               f'you may encounter some undefined behaviours hereafter.')
         else:
             summary.min = ma_value.min()
             summary.max = ma_value.max()
@@ -327,14 +326,14 @@ def _fill_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
     Returns:
         Summary, return image summary content.
     """
-    logger.debug("Set(%r) the image summary value", tag)
+    logger.debug(f"Set({tag}) the image summary value")
     if np_value.ndim != 4 or np_value.shape[1] not in (1, 3):
-        logger.error("The value is not Image, tag = %r, ndim = %r, shape=%r", tag, np_value.ndim, np_value.shape)
+        logger.error(f"The value is not Image, tag = {tag}, ndim = {np_value.ndim}, shape={np_value.shape}")
         return False
 
     if np_value.ndim != len(input_format):
-        logger.error("The tensor with dim(%r) can't convert the format(%r) because dim not same", np_value.ndim,
-                     input_format)
+        logger.error(
+            f"The tensor with dim({np_value.ndim}) can't convert the format({input_format}) because dim not same")
         return False
 
     # convert the tensor format
