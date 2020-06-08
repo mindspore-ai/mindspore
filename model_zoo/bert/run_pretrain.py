@@ -19,6 +19,7 @@ python run_pretrain.py
 
 import os
 import argparse
+import numpy
 import mindspore.communication.management as D
 from mindspore import context
 from mindspore.train.model import Model
@@ -142,4 +143,5 @@ def run_pretrain():
     model = Model(netwithgrads)
     model.train(new_repeat_count, ds, callbacks=callback, dataset_sink_mode=(args_opt.enable_data_sink == "true"))
 if __name__ == '__main__':
+    numpy.random.seed(0)
     run_pretrain()
