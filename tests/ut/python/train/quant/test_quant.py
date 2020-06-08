@@ -13,14 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ tests for quant """
-import numpy as np
-from mobilenetv2_combined import MobileNetV2
-
 import mindspore.context as context
-from mindspore import Tensor
 from mindspore import nn
 from mindspore.nn.layer import combined
-from mindspore.train.quant import quant as qat
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

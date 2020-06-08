@@ -22,9 +22,9 @@ import os
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 from mindspore import Tensor
-from model_zoo.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import AdamWeightDecayDynamicLR
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
+from model_zoo.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from ...dataset_mock import MindData
 from ...ops_common import nn, np, batch_tuple_tensor, build_construct_graph
 

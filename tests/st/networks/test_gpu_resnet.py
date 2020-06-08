@@ -397,5 +397,5 @@ def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
         loss = train_network(data, label)
         losses.append(loss)
     assert (losses[-1][0].asnumpy() < 1)
-    assert (losses[-1][1].asnumpy() == False)
+    assert not losses[-1][1].asnumpy()
     assert (losses[-1][2].asnumpy() > 1)

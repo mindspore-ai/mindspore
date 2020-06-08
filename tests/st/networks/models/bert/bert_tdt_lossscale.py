@@ -17,8 +17,11 @@
 
 import os
 import time
-import pytest
+
 import numpy as np
+import pytest
+from src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
+from src.bert_model import BertConfig
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
@@ -26,8 +29,6 @@ import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
-from src.bert_model import BertConfig
-from src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Lamb
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager

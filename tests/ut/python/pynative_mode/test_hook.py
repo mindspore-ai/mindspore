@@ -1,10 +1,11 @@
 import numpy as np
+
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-from mindspore.ops import composite as C
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.nn import WithLossCell, Momentum
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
@@ -45,7 +46,6 @@ class LeNet5(nn.Cell):
     Lenet network
     Args:
         num_class (int): Num classes. Default: 10.
-        
     Returns:
         Tensor, output tensor
 

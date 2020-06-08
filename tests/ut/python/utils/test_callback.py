@@ -74,7 +74,7 @@ class LossNet(nn.Cell):
         return out
 
 
-def test_Model_Checkpoint_prefix_invalid():
+def test_model_checkpoint_prefix_invalid():
     """Test ModelCheckpoint prefix invalid."""
     with pytest.raises(ValueError):
         ModelCheckpoint(123)
@@ -338,9 +338,9 @@ def test_step_end_save_graph():
     ckpoint_cb.begin(run_context)
     # import pdb;pdb.set_trace()
     ckpoint_cb.step_end(run_context)
-    assert os.path.exists('./test_files/test-graph.meta') == True
+    assert os.path.exists('./test_files/test-graph.meta')
     if os.path.exists('./test_files/test-graph.meta'):
         os.chmod('./test_files/test-graph.meta', stat.S_IWRITE)
         os.remove('./test_files/test-graph.meta')
     ckpoint_cb.step_end(run_context)
-    assert os.path.exists('./test_files/test-graph.meta') == False
+    assert not os.path.exists('./test_files/test-graph.meta')

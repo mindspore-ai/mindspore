@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
+
+import numpy as np
 import pytest
 
 import mindspore.context as context

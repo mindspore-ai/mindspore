@@ -13,15 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """lstm"""
-from mindspore.ops import operations as P
-from mindspore.nn.cell import Cell
-from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.initializer import initializer
-from mindspore._checkparam import Validator as validator
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.common.tensor import Tensor
 import numpy as np
+
+import mindspore.nn as nn
+from mindspore import context
+from mindspore._checkparam import Validator as validator
+from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.tensor import Tensor
+from mindspore.nn.cell import Cell
+from mindspore.ops import operations as P
 
 __all__ = ['LSTM', 'LSTMCell']
 
