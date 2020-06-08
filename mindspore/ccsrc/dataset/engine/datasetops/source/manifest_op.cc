@@ -39,8 +39,8 @@ ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_decode_(fals
 Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    int64_t num_samples = 0;
-    int64_t start_index = 0;
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
     builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();

@@ -124,6 +124,7 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buf
       operators_(operators),
       num_mind_record_workers_(num_mind_record_workers),
       block_reader_(block_reader),
+      num_rows_(0),
       buffers_needed_(0),
       buf_cnt_(0),
       ended_worker_(0),

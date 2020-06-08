@@ -36,8 +36,8 @@ ImageFolderOp::Builder::Builder() : builder_decode_(false), builder_recursive_(f
 Status ImageFolderOp::Builder::Build(std::shared_ptr<ImageFolderOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    int64_t num_samples = 0;  // default num samples of 0 means to sample entire set of data
-    int64_t start_index = 0;
+    const int64_t num_samples = 0;  // default num samples of 0 means to sample entire set of data
+    const int64_t start_index = 0;
     builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();

@@ -59,6 +59,8 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (end_ind - start_ind < n) {
       res.emplace_back(std::string());  // push back empty string
     } else {
+      if (end_ind - n < 0) RETURN_STATUS_UNEXPECTED("loop condition error!");
+
       for (int i = start_ind; i < end_ind - n; i++) {
         res.emplace_back(str_buffer.substr(offsets[i], offsets[i + n] - offsets[i] - separator_.size()));
       }
