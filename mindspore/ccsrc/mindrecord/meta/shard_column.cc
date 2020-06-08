@@ -87,7 +87,7 @@ std::pair<MSRStatus, ColumnCategory> ShardColumn::GetColumnTypeByName(const std:
 
 MSRStatus ShardColumn::GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                                             const json &columns_json, const unsigned char **data,
-                                            std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes,
+                                            std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
                                             ColumnDataType *column_data_type, uint64_t *column_data_type_size,
                                             std::vector<int64_t> *column_shape) {
   // Skip if column not found
@@ -250,7 +250,7 @@ MSRStatus ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const 
 
 MSRStatus ShardColumn::GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                                          const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
-                                         uint64_t *n_bytes) {
+                                         uint64_t *const n_bytes) {
   uint64_t offset_address = 0;
   auto column_id = column_name_id_[column_name];
   if (GetColumnAddressInBlock(column_id, columns_blob, n_bytes, &offset_address) == FAILED) {
@@ -357,7 +357,7 @@ vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const
 
     // Update date type in bit map
     dst_bytes[i / kNumDataOfByte + kBytesOfColumnLen] |=
-      (dst_int_type << (kDataTypeBits * (kNumDataOfByte - kUnsignedOne - (i % kNumDataOfByte))));
+      (static_cast<uint8_t>(dst_int_type) << (kDataTypeBits * (kNumDataOfByte - kUnsignedOne - (i % kNumDataOfByte))));
   }
   // Resize destination blob
   dst_bytes.resize(i_dst);
@@ -385,7 +385,7 @@ MSRStatus ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const 
 }
 
 template <typename T>
-MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *data_ptr,
+MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
                                      const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes,
                                      uint64_t shift_idx) {
   auto num_elements = BytesBigToUInt64(columns_blob, shift_idx, kInt32Type);
@@ -406,7 +406,7 @@ MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<
 
   auto data = reinterpret_cast<const unsigned char *>(array_data.get());
   *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
-  memcpy(data_ptr->get(), data, *num_bytes);
+  memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes);
 
   return SUCCESS;
 }
@@ -414,14 +414,14 @@ MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<
 uint64_t ShardColumn::BytesBigToUInt64(const std::vector<uint8_t> &bytes_array, const uint64_t &pos,
                                        const IntegerType &i_type) {
   uint64_t result = 0;
-  for (uint64_t i = 0; i < (kUnsignedOne << i_type); i++) {
+  for (uint64_t i = 0; i < (kUnsignedOne << static_cast<uint8_t>(i_type)); i++) {
     result = (result << kBitsOfByte) + bytes_array[pos + i];
   }
   return result;
 }
 
 std::vector<uint8_t> ShardColumn::UIntToBytesBig(uint64_t value, const IntegerType &i_type) {
-  uint64_t n_bytes = kUnsignedOne << i_type;
+  uint64_t n_bytes = kUnsignedOne << static_cast<uint8_t>(i_type);
   std::vector<uint8_t> result(n_bytes, 0);
   for (uint64_t i = 0; i < n_bytes; i++) {
     result[n_bytes - 1 - i] = value & std::numeric_limits<uint8_t>::max();
@@ -431,7 +431,7 @@ std::vector<uint8_t> ShardColumn::UIntToBytesBig(uint64_t value, const IntegerTy
 }
 
 std::vector<uint8_t> ShardColumn::UIntToBytesLittle(uint64_t value, const IntegerType &i_type) {
-  uint64_t n_bytes = kUnsignedOne << i_type;
+  uint64_t n_bytes = kUnsignedOne << static_cast<uint8_t>(i_type);
   std::vector<uint8_t> result(n_bytes, 0);
   for (uint64_t i = 0; i < n_bytes; i++) {
     result[i] = value & std::numeric_limits<uint8_t>::max();
@@ -443,7 +443,7 @@ std::vector<uint8_t> ShardColumn::UIntToBytesLittle(uint64_t value, const Intege
 int64_t ShardColumn::BytesLittleToMinIntType(const std::vector<uint8_t> &bytes_array, const uint64_t &pos,
                                              const IntegerType &src_i_type, IntegerType *dst_i_type) {
   uint64_t u_temp = 0;
-  for (uint64_t i = 0; i < (kUnsignedOne << src_i_type); i++) {
+  for (uint64_t i = 0; i < (kUnsignedOne << static_cast<uint8_t>(src_i_type)); i++) {
     u_temp = (u_temp << kBitsOfByte) + bytes_array[pos + (kUnsignedOne << src_i_type) - kUnsignedOne - i];
   }
 

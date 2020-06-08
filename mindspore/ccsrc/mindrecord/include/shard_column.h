@@ -67,7 +67,7 @@ class ShardColumn {
   /// \brief get column value by column name
   MSRStatus GetColumnValueByName(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                                  const json &columns_json, const unsigned char **data,
-                                 std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes,
+                                 std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
                                  ColumnDataType *column_data_type, uint64_t *column_data_type_size,
                                  std::vector<int64_t> *column_shape);
 
@@ -88,7 +88,7 @@ class ShardColumn {
   /// \brief get column value from blob
   MSRStatus GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                               const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
-                              uint64_t *n_bytes);
+                              uint64_t *const n_bytes);
   std::pair<MSRStatus, ColumnCategory> GetColumnTypeByName(const std::string &column_name,
                                                            ColumnDataType *column_data_type,
                                                            uint64_t *column_data_type_size,
@@ -119,7 +119,7 @@ class ShardColumn {
 
   /// \brief uncompress integer array column
   template <typename T>
-  static MSRStatus UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *data_ptr,
+  static MSRStatus UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
                                  const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes, uint64_t shift_idx);
 
   /// \brief convert big-endian bytes to unsigned int
