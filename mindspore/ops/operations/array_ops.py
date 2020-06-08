@@ -145,8 +145,8 @@ class SameTypeShape(PrimitiveWithInfer):
 
     def __call__(self, x, y):
         """run in PyNative mode"""
-        validator.check_subclass('x', x.dtype(), mstype.tensor, self.name)
-        validator.check_subclass('y', y.dtype(), mstype.tensor, self.name)
+        validator.check_value_type("x", x, Tensor, self.name)
+        validator.check_value_type("y", y, Tensor, self.name)
         validator.check('x dtype', x.dtype(), 'y dtype', y.dtype(), Rel.EQ, self.name, TypeError)
         validator.check('x shape', x.shape(), 'y shape', y.shape(), Rel.EQ, self.name)
         return x
