@@ -69,7 +69,7 @@ void Task::ShutdownGroup() {  // Wake up watch dog and shutdown the engine.
       vg->rc_ = rc_;
       rcLock.unlock();
       TaskManager::InterruptMaster(rc_);
-      TaskManager::InterruptGroup(*gMyTask);
+      TaskManager::InterruptGroup(*this);
     }
   }
 }
