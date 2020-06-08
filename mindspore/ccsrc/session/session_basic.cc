@@ -460,7 +460,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if (IsValueNode<FuncGraph>(anf)) {
+    } else if (IsValueNode<None>(anf)) {
       continue;
     }
     MS_LOG(EXCEPTION) << "Unexpected input[" << anf->DebugString() << "]";
