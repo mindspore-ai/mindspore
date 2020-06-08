@@ -620,12 +620,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   // if a graph jump back unconditionally, return op of this graph will never be executed, so output is null.
   graph->set_output_null(is_trace_back);
   AddParameterToGraphInputs(func_graph->parameters(), graph.get());
-  MS_EXCEPTION_IF_NULL(context_);
-  FuncGraphManagerPtr manager = MakeManager({graph});
-  if (manager) {
-    manager->AddFuncGraph(graph);
-    graph->set_manager(manager);
-  }
   graph->SetExecOrderByDefault();
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
