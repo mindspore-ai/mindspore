@@ -465,9 +465,11 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
       // Needed by rec_parser
-      PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-      if (prim->name() == TUPLE_GETITEM) {
-        entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), cnode->input(1)->UniqueId()));
+      if (ParallelContext::GetInstance()->strategy_search_mode() == RECURSIVE_PROGRAMMING) {
+        auto prev_cnode = GetInternalOperatorInfo(cnode, prim_anf_node);
+        if (prev_cnode != nullptr) {
+          entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), prev_cnode->UniqueId()));
+        }
       }
       continue;
     }
@@ -528,9 +530,11 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
       // Needed by rec_parser
-      PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-      if (prim->name() == TUPLE_GETITEM) {
-        entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), cnode->input(1)->UniqueId()));
+      if (ParallelContext::GetInstance()->strategy_search_mode() == RECURSIVE_PROGRAMMING) {
+        auto prev_cnode = GetInternalOperatorInfo(cnode, prim_anf_node);
+        if (prev_cnode != nullptr) {
+          entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), prev_cnode->UniqueId()));
+        }
       }
       continue;
     }
@@ -1153,6 +1157,26 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
     }
   }
   return input_tensor_names;
+}
+
+CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node) {
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+  if (prim->name() == TUPLE_GETITEM || prim->name() == DEPEND) {
+    auto prev_cnode = cnode->input(1)->cast<CNodePtr>();
+    if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
+      return nullptr;
+    }
+    auto prev_prim = prev_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
+    while (prev_prim->name() == TUPLE_GETITEM || prev_prim->name() == DEPEND) {
+      prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
+      if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
+        return nullptr;
+      }
+      prev_prim = prev_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
+    }
+    return prev_cnode;
+  }
+  return nullptr;
 }
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {

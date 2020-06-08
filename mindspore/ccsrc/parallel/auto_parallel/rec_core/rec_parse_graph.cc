@@ -199,7 +199,7 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
     OperatorType::kRecOneHot, OperatorType::kRecReLU,      OperatorType::kRecLog,     OperatorType::kRecExp,
     OperatorType::kRecAdd,    OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd, OperatorType::kRecSub,
     OperatorType::kRecMul,    OperatorType::kRecDiv,       OperatorType::kRecSqueeze, OperatorType::kRecReduce,
-    OperatorType::kRecCast,   OperatorType::kRecReshape};
+    OperatorType::kRecCast,   OperatorType::kRecReshape,   OperatorType::kRecGatherV2};
   for (size_t node_index = 0; node_index < (size_t)graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
     if (type_list.find(type) != type_list.end()) {
