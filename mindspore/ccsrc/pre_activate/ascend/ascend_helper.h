@@ -70,6 +70,21 @@ class KernelQuery {
   }
 };
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
+
+class OpFinder {
+ public:
+  OpFinder() = default;
+  virtual ~OpFinder() = default;
+  virtual int GetOpRegisteredOutputNum(const std::string &op_name) {
+    auto op_info = kernel::OpLib::FindOp(op_name, kernel::kTBE);
+    if (op_info == nullptr) {
+      return -1;
+    }
+    return op_info->outputs_ptr().size();
+  }
+};
+using OpFinderPtr = std::shared_ptr<OpFinder>;
+
 void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
                             const AnfNodePtr &trans_data, const std::vector<kernel::Axis> &reshape_type = {});
 

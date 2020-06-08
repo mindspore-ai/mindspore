@@ -164,6 +164,15 @@ constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
+constexpr auto kApplyAdagradV2OpName = "ApplyAdagradV2";
+constexpr auto kSparseApplyAdagradV2OpName = "SparseApplyAdagradV2";
+constexpr auto kSparseApplyFtrlOpName = "SparseApplyFtrl";
+constexpr auto kSparseApplyFtrlV2OpName = "SparseApplyFtrlV2";
+constexpr auto kApplyKerasMomentumOpName = "ApplyKerasMomentum";
+constexpr auto kSparseApplyProximalAdagradOpName = "SparseApplyProximalAdagrad";
+constexpr auto kSparseApplyRMSPropOpName = "SparseApplyRMSProp";
+constexpr auto kSparseApplyAdadeltaOpName = "SparseApplyAdadelta";
+constexpr auto kApplyAdamWithAmsgradOpName = "ApplyAdamWithAmsgrad";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
