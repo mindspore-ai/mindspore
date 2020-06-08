@@ -65,7 +65,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
     dtype = AnfAlgo::GetInputDeviceDataType(cnode, insert_index);
     dst_format = AnfAlgo::GetInputFormat(cnode, insert_index);
     input_node = AnfAlgo::GetInputNode(cnode, insert_index);
-    padding_axis = AnfAlgo::GetInputReshapeType(node, 0);
+    padding_axis = AnfAlgo::GetInputReshapeType(node, insert_index);
   }
   bool need_padding = false;
   if (is_insert_input) {
