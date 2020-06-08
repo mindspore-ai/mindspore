@@ -409,6 +409,11 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
+      // Needed by rec_parser
+      PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+      if (prim->name() == TUPLE_GETITEM) {
+        entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), cnode->input(1)->UniqueId()));
+      }
       continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
@@ -467,6 +472,11 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
+      // Needed by rec_parser
+      PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+      if (prim->name() == TUPLE_GETITEM) {
+        entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), cnode->input(1)->UniqueId()));
+      }
       continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
@@ -1098,6 +1108,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     MS_LOG(ERROR) << "Constructing nodes for cost graph failed.";
     return FAILED;
   }
+
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   auto tuple_getitem_list = entire_costgraph->get_tuple_getitem_list();

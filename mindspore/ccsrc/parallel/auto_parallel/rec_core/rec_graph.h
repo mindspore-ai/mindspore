@@ -47,7 +47,8 @@ enum OperatorType {
   kRecDiv,
   kRecSqueeze,
   kRecCast,
-  kRecReduce
+  kRecReduce,
+  kRecPReLU
 };
 
 enum InfoType { kApplication, kConstant };
