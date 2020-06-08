@@ -55,8 +55,8 @@ class Optimizer(Cell):
                                                         take the i-th value as the learning rate.
                                                         When the learning_rate is float or learning_rate is a Tensor
                                                         but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Should be greater than 0.
-                                                        If the type of `learning_rate` input is int, it will be
+                                                        Other cases are not supported. It should be equal to or greater
+                                                        than 0. If the type of `learning_rate` input is int, it will be
                                                         converted to float.
         parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
             updated, the element in `parameters` should be class `Parameter`. When the `parameters` is a list of `dict`,

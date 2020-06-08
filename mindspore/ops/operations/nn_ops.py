@@ -2829,8 +2829,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     Inputs:
         - **var** (Tensor) - Variable to be updated.
         - **accum** (Tensor) - Accum to be updated. The shape must be the same as `var`'s shape.
-        - **lr** (Union[Number, Tensor]): The learning rate value, must be positive. It should be
-          a scalar tensor or number.
+        - **lr** (Union[Number, Tensor]): The learning rate value. It should be a scalar tensor or number.
         - **l1** (Union[Number, Tensor]): l1 regularization strength, must be greater than or equal to zero.
           It should be a scalar tensor or number.
         - **l2** (Union[Number, Tensor]): l2 regularization strength, must be greater than or equal to zero.
@@ -2888,8 +2887,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
     Inputs:
         - **var** (Tensor) - Variable tensor to be updated.
         - **accum** (Tensor) - Variable tensor to be updated. The shape must be the same as `var`'s shape.
-        - **lr** (Union[Number, Tensor]): The learning rate value, must be positive. It should be
-          a scalar tensor or number.
+        - **lr** (Union[Number, Tensor]): The learning rate value. It should be a scalar tensor or number.
         - **l1** (Union[Number, Tensor]): l1 regularization strength, must be greater than or equal to zero.
           It should be a scalar tensor or number.
         - **l2** (Union[Number, Tensor]): l2 regularization strength, must be greater than or equal to zero.
@@ -3124,17 +3122,17 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(SparseApplyFtrlNet, self).__init__()
         >>>         self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
-        >>>         self.var = Parameter(Tensor(np.random.random(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.random(3, 3).astype(np.float32)), name="accum")
-        >>>         self.linear = Parameter(Tensor(np.random.random(3, 3).astype(np.float32)), name="linear")
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>>         self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
         >>>
         >>>     def construct(self, grad, indices):
-        >>>         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        >>>         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
         >>>         return out
         >>>
         >>> net = SparseApplyFtrlNet()
-        >>> grad = Tensor(np.random.random(3, 3).astype(np.float32))
-        >>> indices = Tnsor(np.ones([3]), mindspore.float32)
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> indices = Tensor(np.ones([3]), mindspore.int32)
         >>> output = net(grad, indices)
     """
 

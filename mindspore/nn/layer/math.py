@@ -79,8 +79,8 @@ class Range(Cell):
         start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
             defaults to `0`. Otherwise, it acts as first entry in the range.
         limit (Union[int, float]): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`.
-        delta (Union[int, float]): Increment of the range. Default: 1.
+            while set the first entry of the range to `0`. It can not be equal to `start`.
+        delta (Union[int, float]): Increment of the range. It can not be equal to zero. Default: 1.
 
     Outputs:
         Tensor, the dtype is int if the dtype of `start`, `limit` and `delta` all are int. Otherwise, dtype is float.
@@ -93,10 +93,12 @@ class Range(Cell):
 
     def __init__(self, start, limit=None, delta=1):
         super(Range, self).__init__()
-        validator.check_value_type("start", start, [int, float], None)
-        validator.check_value_type("delta", delta, [int, float], None)
+        validator.check_value_type("start", start, [int, float], self.cls_name)
+        validator.check_value_type("delta", delta, [int, float], self.cls_name)
+        if delta == 0:
+            raise ValueError("The input of `delta` can not be equal to zero.")
         if limit is not None:
-            validator.check_value_type("limit", limit, [int, float], None)
+            validator.check_value_type("limit", limit, [int, float], self.cls_name)
             if isinstance(start, int) and isinstance(limit, int) and isinstance(delta, int):
                 self.dtype = mstype.int32
             else:

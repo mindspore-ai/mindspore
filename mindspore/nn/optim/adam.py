@@ -265,14 +265,15 @@ class AdamWeightDecay(Optimizer):
                                                         take the i-th value as the learning rate.
                                                         When the learning_rate is float or learning_rate is a Tensor
                                                         but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Default: 1e-3.
+                                                        Other cases are not supported. It should be equal to or
+                                                        greater than 0. Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
             Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
@@ -322,18 +323,20 @@ class AdamWeightDecayDynamicLR(Optimizer):
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
                                   should be class mindspore.Parameter.
-        decay_steps (int): The steps of the decay.
+        decay_steps (int): The steps of the decay. It must be int and positive.
         warmup_steps (int): The steps of lr warm up. Default: 0.
-        learning_rate (float): A floating point value for the learning rate. Default: 0.001.
-        end_learning_rate (float): A floating point value for the end learning rate. Default: 0.0001.
-        power (float): The Power of the polynomial. Default: 10.0.
+        learning_rate (float): A floating point value for the learning rate. It should be equal to or
+            greater than 0. Default: 0.001.
+        end_learning_rate (float): A floating point value for the end learning rate. It should be equal
+            to or greater than 0. Default: 0.0001.
+        power (float): The Power of the polynomial. It must be positive. Default: 10.0.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
             Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
