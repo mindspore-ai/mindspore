@@ -60,8 +60,9 @@ def test_group_lr():
     default_lr = 0.1
     conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
     no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-    group_params = [{'params': conv_params, 'lr': conv_lr},
-                    {'params': no_conv_params}]
+    group_params = [{'params': no_conv_params},
+                    {'params': conv_params, 'lr': conv_lr},
+                    {'order_params': net.trainable_params()}]
     net.set_train()
     loss = nn.SoftmaxCrossEntropyWithLogits()
 
@@ -69,11 +70,14 @@ def test_group_lr():
     assert opt.is_group is True
     assert opt.is_group_lr is True
     assert opt.dynamic_lr is False
-    for lr, param in zip(opt.learning_rate, opt.parameters):
+    assert opt.is_group_params_ordered is True
+    for lr, param, order_param in zip(opt.learning_rate, opt.parameters, net.trainable_params()):
         if param in conv_params:
             assert np.all(lr.data.asnumpy() == Tensor(conv_lr, mstype.float32).asnumpy())
         else:
             assert np.all(lr.data.asnumpy() == Tensor(default_lr, mstype.float32).asnumpy())
+
+        assert param.name == order_param.name
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
@@ -89,19 +93,23 @@ def test_group_dynamic_1():
     default_lr = (0.1, 0.2, 0.3)
     conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
     no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-    group_params = [{'params': conv_params, 'lr': conv_lr},
-                    {'params': no_conv_params}]
+    group_params = [{'params': no_conv_params},
+                    {'params': conv_params, 'lr': conv_lr},
+                    {'order_params': net.trainable_params()}]
     net.set_train()
     loss = nn.SoftmaxCrossEntropyWithLogits()
 
     opt = Momentum(group_params, learning_rate=default_lr, momentum=0.9)
     assert opt.is_group is True
     assert opt.dynamic_lr is True
-    for lr, param in zip(opt.learning_rate, opt.parameters):
+    assert opt.is_group_params_ordered is True
+    for lr, param, order_param in zip(opt.learning_rate, opt.parameters, net.trainable_params()):
         if param in conv_params:
             assert np.all(lr.data.asnumpy() == Tensor(np.array([conv_lr] * 3).astype(np.float32)).asnumpy())
         else:
             assert np.all(lr.data.asnumpy() == Tensor(np.array(list(default_lr)).astype(np.float32)).asnumpy())
+
+        assert param.name == order_param.name
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
@@ -127,9 +135,9 @@ def test_group_dynamic_2():
     assert opt.dynamic_lr is True
     for lr, param in zip(opt.learning_rate, opt.parameters):
         if param in conv_params:
-            assert np.all(lr.data == Tensor(np.array(list(conv_lr)).astype(np.float32)))
+            assert np.all(lr.data.asnumpy() == Tensor(np.array(list(conv_lr)).astype(np.float32)).asnumpy())
         else:
-            assert np.all(lr.data == Tensor(np.array([default_lr] * 3).astype(np.float32)))
+            assert np.all(lr.data.asnumpy() == Tensor(np.array([default_lr] * 3).astype(np.float32)).asnumpy())
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
@@ -180,21 +188,26 @@ def test_weight_decay():
     default_weight_decay = 0.0
     conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
     no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-    group_params = [{'params': conv_params, 'weight_decay': conv_weight_decay},
-                    {'params': no_conv_params}]
+    group_params = [{'params': no_conv_params},
+                    {'params': conv_params, 'weight_decay': conv_weight_decay},
+                    {'order_params': net.trainable_params()}]
     net.set_train()
     loss = nn.SoftmaxCrossEntropyWithLogits()
 
     opt = SGD(group_params, learning_rate=0.1, weight_decay=default_weight_decay)
     assert opt.is_group is True
     assert opt.is_group_lr is False
-    for weight_decay, decay_flags, param in zip(opt.weight_decay, opt.decay_flags, opt.parameters):
+    assert opt.is_group_params_ordered is True
+    for weight_decay, decay_flags, param, order_param in zip(
+            opt.weight_decay, opt.decay_flags, opt.parameters, net.trainable_params()):
         if param in conv_params:
             assert weight_decay == conv_weight_decay
             assert decay_flags is True
         else:
             assert weight_decay == default_weight_decay
             assert decay_flags is False
+
+        assert param.name == order_param.name
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, opt)
@@ -233,6 +246,19 @@ def test_get_lr_parameter_with_group():
         assert lr.name == 'lr_' + param.name
 
 
+def test_get_lr_parameter_with_order_group():
+    net = LeNet5()
+    conv_lr = 0.1
+    conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+    group_params = [{'params': conv_params, 'lr': conv_lr},
+                    {'order_params': net.trainable_params()}]
+    opt = SGD(group_params)
+    assert opt.is_group_lr is True
+    for param in opt.parameters:
+        lr = opt.get_lr_parameter(param)
+        assert lr.name == 'lr_' + param.name
+
+
 def test_get_lr_parameter_with_no_group():
     net = LeNet5()
     conv_weight_decay = 0.8
@@ -250,3 +276,125 @@ def test_get_lr_parameter_with_no_group():
     params_error = [1, 2, 3]
     with pytest.raises(TypeError):
         opt.get_lr_parameter(params_error)
+
+
+def test_order_params_lr():
+    net = LeNet5()
+    conv_lr = 0.01
+    default_lr = 0.1
+    conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+    group_params = [{'params': conv_params, 'lr': conv_lr},
+                    {'order_params': net.trainable_params()}]
+    opt = SGD(group_params, learning_rate=default_lr)
+    assert opt.is_group is True
+    assert opt.is_group_lr is True
+    assert opt.is_group_params_ordered is True
+    for lr, param, order_param in zip(opt.learning_rate, opt.parameters, net.trainable_params()):
+        if param in conv_params:
+            assert np.all(lr.data.asnumpy() == Tensor(conv_lr, mstype.float32).asnumpy())
+        else:
+            assert np.all(lr.data.asnumpy() == Tensor(default_lr, mstype.float32).asnumpy())
+
+        assert param.name == order_param.name
+        assert lr.name == 'lr_' + param.name
+
+
+def test_order_params_weight_decay():
+    net = LeNet5()
+    conv_weight_decay = 0.01
+    default_wd = 0.0
+    default_lr = 0.1
+    conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+    group_params = [{'params': conv_params, 'weight_decay': conv_weight_decay},
+                    {'order_params': net.trainable_params()}]
+    opt = SGD(group_params, learning_rate=default_lr, weight_decay=default_wd)
+    assert opt.is_group is True
+    assert opt.is_group_lr is False
+    assert opt.is_group_params_ordered is True
+    assert opt.learning_rate.name == "learning_rate"
+    assert np.all(opt.learning_rate.data.asnumpy() == Tensor(default_lr, mstype.float32).asnumpy())
+    for weight_decay, decay_flags, param, order_param in zip(
+            opt.weight_decay, opt.decay_flags, opt.parameters, net.trainable_params()):
+        if param in conv_params:
+            assert weight_decay == conv_weight_decay
+            assert decay_flags is True
+        else:
+            assert weight_decay == default_wd
+            assert decay_flags is False
+        assert param.name == order_param.name
+
+
+def test_order_params_all_1():
+    net = LeNet5()
+    conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+    bias_params = list(filter(lambda x: 'bias' in x.name, net.trainable_params()))
+    group_params = [{'params': conv_params, 'weight_decay': 0.01},
+                    {'params': bias_params, 'lr': 0.01},
+                    {'order_params': net.trainable_params()}]
+    opt = SGD(group_params, learning_rate=0.1, weight_decay=0.0)
+    assert opt.is_group is True
+    assert opt.is_group_lr is True
+    assert opt.is_group_params_ordered is True
+    for weight_decay, decay_flags, lr, param, order_param in zip(
+            opt.weight_decay, opt.decay_flags, opt.learning_rate, opt.parameters, net.trainable_params()):
+        if param in conv_params:
+            assert np.all(lr.data.asnumpy() == Tensor(0.1, mstype.float32).asnumpy())
+            assert weight_decay == 0.01
+            assert decay_flags is True
+        elif param in bias_params:
+            assert np.all(lr.data.asnumpy() == Tensor(0.01, mstype.float32).asnumpy())
+            assert weight_decay == 0.0
+            assert decay_flags is False
+        else:
+            assert np.all(lr.data.asnumpy() == Tensor(0.1, mstype.float32).asnumpy())
+            assert weight_decay == 0.0
+            assert decay_flags is False
+
+        assert param.name == order_param.name
+        assert lr.name == 'lr_' + param.name
+
+
+def test_order_params_all_2():
+    net = LeNet5()
+    conv_weight_decay = 0.01
+    fc1_lr = (0.5, 0.4, 0.3)
+    default_lr = 0.1
+    default_wd = 0.0
+    conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+    fc1_params = list(filter(lambda x: 'fc1' in x.name, net.trainable_params()))
+    group_params = [{'params': fc1_params, 'lr': fc1_lr},
+                    {'params': conv_params, 'weight_decay': conv_weight_decay},
+                    {'order_params': net.trainable_params()}]
+    opt = SGD(group_params, learning_rate=default_lr, weight_decay=default_wd)
+    assert opt.is_group is True
+    assert opt.is_group_lr is True
+    assert opt.is_group_params_ordered is True
+    for weight_decay, decay_flags, lr, param, order_param in zip(
+            opt.weight_decay, opt.decay_flags, opt.learning_rate, opt.parameters, net.trainable_params()):
+        if param in conv_params:
+            assert np.all(lr.data.asnumpy() == Tensor(np.array([default_lr] * 3), mstype.float32).asnumpy())
+            assert weight_decay == conv_weight_decay
+            assert decay_flags is True
+        elif param in fc1_params:
+            assert np.all(lr.data.asnumpy() == Tensor(fc1_lr, mstype.float32).asnumpy())
+            assert weight_decay == default_wd
+            assert decay_flags is False
+        else:
+            assert np.all(lr.data.asnumpy() == Tensor(np.array([default_lr] * 3), mstype.float32).asnumpy())
+            assert weight_decay == default_wd
+            assert decay_flags is False
+
+        assert param.name == order_param.name
+        assert lr.name == 'lr_' + param.name
+
+
+def test_get_order_params_with_not_include():
+    net = LeNet5()
+    conv_weight_decay = 0.8
+
+    conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+    no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+    group_params = [{'params': conv_params, 'weight_decay': conv_weight_decay},
+                    {'order_params': no_conv_params}]
+    with pytest.raises(ValueError):
+        SGD(group_params)
