@@ -181,7 +181,8 @@ class WideDeepModel(nn.Cell):
                                         self.weight_bias_init,
                                         self.deep_layer_act, convert_dtype=True)
 
-        self.gather_v2 = P.GatherV2()
+        self.gather_v2 = P.GatherV2().set_strategy(((1, 8), (1, 1)))
+        self.gather_v2_1 = P.GatherV2()
         self.mul = P.Mul()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.reshape = P.Reshape()
@@ -199,7 +200,7 @@ class WideDeepModel(nn.Cell):
         """
         mask = self.reshape(wt_hldr, (self.batch_size, self.field_size, 1))
         # Wide layer
-        wide_id_weight = self.gather_v2(self.wide_w, id_hldr, 0)
+        wide_id_weight = self.gather_v2_1(self.wide_w, id_hldr, 0)
         wx = self.mul(wide_id_weight, mask)
         wide_out = self.reshape(self.reduce_sum(wx, 1) + self.wide_b, (-1, 1))
         # Deep layer
@@ -229,7 +230,7 @@ class NetWithLossClass(nn.Cell):
         self.network = network
         self.l2_coef = config.l2_coef
         self.loss = P.SigmoidCrossEntropyWithLogits()
-        self.square = P.Square()
+        self.square = P.Square().set_strategy(((1, get_group_size()),))
         self.reduceMean_false = P.ReduceMean(keep_dims=False)
         self.reduceSum_false = P.ReduceSum(keep_dims=False)
 

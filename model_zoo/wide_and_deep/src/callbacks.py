@@ -17,6 +17,7 @@ callbacks
 import time
 from mindspore.train.callback import Callback
 from mindspore import context
+from mindspore.train import ParallelMode
 
 def add_write(file_path, out_str):
     """
@@ -85,14 +86,17 @@ class EvalCallBack(Callback):
         self.aucMetric = auc_metric
         self.aucMetric.clear()
         self.eval_file_name = config.eval_file_name
+        self.eval_values = []
 
-    def epoch_name(self, run_context):
+    def epoch_end(self, run_context):
         """
-        epoch name
+        epoch end
         """
         self.aucMetric.clear()
-        context.set_auto_parallel_context(strategy_ckpt_save_file="",
-                                          strategy_ckpt_load_file="./strategy_train.ckpt")
+        parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        if parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            context.set_auto_parallel_context(strategy_ckpt_save_file="",
+                                              strategy_ckpt_load_file="./strategy_train.ckpt")
         start_time = time.time()
         out = self.model.eval(self.eval_dataset)
         end_time = time.time()
@@ -101,4 +105,5 @@ class EvalCallBack(Callback):
         time_str = time.strftime("%Y-%m-%d %H:%M%S", time.localtime())
         out_str = "{}==== EvalCallBack model.eval(): {}; eval_time: {}s".format(time_str, out.values(), eval_time)
         print(out_str)
+        self.eval_values = out.values()
         add_write(self.eval_file_name, out_str)

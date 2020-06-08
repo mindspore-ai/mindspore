@@ -25,6 +25,8 @@ The entire code structure is as following:
         WideDeep.py              "Model structure"
         callbacks.py             "Callback class for training and evaluation"
         metrics.py               "Metric class"
+    |--- script/                 "run shell dir"
+        run_multinpu_train.sh    "run data parallel"
 ```
 
 ### Train and evaluate model
