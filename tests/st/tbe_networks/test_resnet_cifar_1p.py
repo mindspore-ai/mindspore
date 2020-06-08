@@ -15,8 +15,6 @@
 
 import os
 import random
-
-import pytest
 import numpy as np
 from resnet import resnet50
 
@@ -152,10 +150,7 @@ def train_process(epoch_size, num_classes, batch_size):
     print("result: ", res)
     return res
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_resnet_cifar_1p():
     epoch_size = 1
     num_classes = 10
