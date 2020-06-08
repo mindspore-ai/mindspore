@@ -14,7 +14,10 @@
 # ============================================================================
 """Train utility."""
 import os
+from collections.abc import Iterable
+
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype, pytype_to_dtype
 from mindspore.common import dtype as mstype
@@ -213,6 +216,7 @@ def _check_to_numpy(plugin, tensor):
         raise ValueError('The tensor should not be empty.')
     return np_value
 
+
 def _check_lineage_value(plugin, value):
     """Check the lineage value."""
     def raises(plugin, prototype):
@@ -229,3 +233,20 @@ def _check_lineage_value(plugin, value):
 
     if plugin == 'custom_lineage_data' and not isinstance(value, UserDefinedInfo):
         raises(plugin, UserDefinedInfo)
+
+
+def check_value_type(arg_name, arg_value, valid_types):
+    """Checks whether a value is instance of some types."""
+    valid_types = tuple(valid_types) if isinstance(valid_types, Iterable) else (valid_types,)
+    is_valid = True
+
+    # bool is subclass of int, so for a bool value, we need to extra check
+    if isinstance(arg_value, int) and isinstance(arg_value, bool) and bool not in valid_types:
+        is_valid = False
+
+    if not isinstance(arg_value, valid_types):
+        is_valid = False
+
+    if not is_valid:
+        raise TypeError(f'For `{arg_name}` the type should be a valid type of {[t.__name__ for t in valid_types]}, '
+                        f'bug got {type(arg_value).__name__}.')

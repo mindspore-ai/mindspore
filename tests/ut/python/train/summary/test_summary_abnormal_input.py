@@ -59,7 +59,8 @@ def test_summaryrecord_input_null_string():
     log.debug("begin test_summaryrecord_input_null_string")
     # step 0: create the thread
     try:
-        SummaryRecord("")
+        with SummaryRecord(""):
+            pass
     except:
         assert True
     else:
@@ -71,7 +72,8 @@ def test_summaryrecord_input_None():
     log.debug("begin test_summaryrecord_input_None")
     # step 0: create the thread
     try:
-        SummaryRecord(None)
+        with SummaryRecord(None):
+            pass
     except:
         assert True
     else:
@@ -83,7 +85,8 @@ def test_summaryrecord_input_relative_dir_1():
     log.debug("begin test_summaryrecord_input_relative_dir_1")
     # step 0: create the thread
     try:
-        SummaryRecord("./test_temp_summary_event_file/")
+        with SummaryRecord("./test_temp_summary_event_file/"):
+            pass
     except:
         assert False
     else:
@@ -95,7 +98,8 @@ def test_summaryrecord_input_relative_dir_2():
     log.debug("begin test_summaryrecord_input_relative_dir_2")
     # step 0: create the thread
     try:
-        SummaryRecord("../summary/")
+        with SummaryRecord("../summary/"):
+            pass
     except:
         assert False
     else:
@@ -107,7 +111,8 @@ def test_summaryrecord_input_invalid_type_dir():
     log.debug("begin test_summaryrecord_input_invalid_type_dir")
     # step 0: create the thread
     try:
-        SummaryRecord(32)
+        with SummaryRecord(32):
+            pass
     except:
         assert True
     else:
@@ -119,7 +124,8 @@ def test_mulit_layer_directory():
     log.debug("begin test_mulit_layer_directory")
     # step 0: create the thread
     try:
-        SummaryRecord("./test_temp_summary_event_file/test/t1/")
+        with SummaryRecord("./test_temp_summary_event_file/test/t1/"):
+            pass
     except:
         assert False
     else:

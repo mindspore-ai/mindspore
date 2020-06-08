@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Model."""
+from collections.abc import Iterable
+
 import numpy as np
 
 from mindspore import log as logger
@@ -345,7 +347,8 @@ class Model:
         cb_params.parallel_mode = self._parallel_mode
         cb_params.device_number = self._device_number
         cb_params.train_dataset = train_dataset
-        cb_params.list_callback = callbacks
+        cb_params.list_callback = self._transform_callbacks(callbacks)
+        cb_params.train_dataset_element = None
 
         # build callback list
         with _CallbackManager(callbacks) as list_callback:
@@ -357,6 +360,17 @@ class Model:
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
                 self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params)
+
+    @staticmethod
+    def _transform_callbacks(callbacks):
+        """Transform callback to a list."""
+        if callbacks is None:
+            return []
+
+        if isinstance(callbacks, Iterable):
+            return list(callbacks)
+
+        return [callbacks]
 
     def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
         """
@@ -449,6 +463,7 @@ class Model:
                     scaling_sens = self._get_scaling_sens()
                     next_element = tuple(next_element) + (Tensor(scaling_sens, mstype.float32),)
 
+                cb_params.train_dataset_element = next_element
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
@@ -628,6 +643,7 @@ class Model:
         cb_params.batch_num = valid_dataset.get_dataset_size()
         cb_params.mode = "eval"
         cb_params.cur_step_num = 0
+        cb_params.list_callback = self._transform_callbacks(callbacks)
 
         self._eval_network.set_train(mode=False)
         self._eval_network.phase = 'eval'
