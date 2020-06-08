@@ -133,7 +133,7 @@ bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
     for (int i = 0; i < split_num_; i++) {
       device::cpu::MPIAdapter::Instance().ReduceScatter(reinterpret_cast<float *>(gather_v2_out_) + i * one_split_lens,
                                                         output_addr + i * reduce_scatter_out_lens, group,
-                                                        one_split_lens, "sum");
+                                                        one_split_lens / 8, "sum");
     }
   }
 #if defined(_WIN32) || defined(_WIN64)
