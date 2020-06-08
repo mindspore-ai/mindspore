@@ -31,6 +31,9 @@ ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, int
   shuffle_op_ = std::make_shared<ShardShuffle>(seed, kShuffleSample);
 }
 
+ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed)
+    : ShardDistributedSample(num_shards, shard_id, 0, shuffle, seed) {}
+
 int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (no_of_padded_samples_ <= 0) {
     if (dataset_size % denominator_ == 0) {

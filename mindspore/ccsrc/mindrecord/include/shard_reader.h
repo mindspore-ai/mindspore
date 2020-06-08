@@ -34,6 +34,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <stack>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -44,6 +45,7 @@
 #include "mindrecord/include/common/shard_utils.h"
 #include "mindrecord/include/shard_category.h"
 #include "mindrecord/include/shard_column.h"
+#include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_index_generator.h"
 #include "mindrecord/include/shard_operator.h"

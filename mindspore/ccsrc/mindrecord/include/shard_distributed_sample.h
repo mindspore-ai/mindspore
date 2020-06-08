@@ -31,6 +31,10 @@ class ShardDistributedSample : public ShardSample {
  public:
   ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle, uint32_t seed);
 
+  ShardDistributedSample(int num_shards, int shard_id, bool shuffle, uint32_t seed);
+
+  void SetNumPaddedSamples(int no_of_padded_samples) { no_of_padded_samples_ = no_of_padded_samples; }
+
   ~ShardDistributedSample() override{};
 
   MSRStatus PreExecute(ShardTask &tasks) override;

@@ -792,24 +792,51 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
 }
 
 MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
-                                      const std::shared_ptr<ShardOperator> &op, int64_t *count, const int num_padded) {
+                                      const std::shared_ptr<ShardOperator> &ops, int64_t *count, const int num_padded) {
   if (SUCCESS != Init(file_paths, load_dataset)) {
     return FAILED;
   }
   int64_t num_samples = num_rows_;
-  if (std::dynamic_pointer_cast<ShardCategory>(op)) {
-    auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
-    std::string category_field = category_op->GetCategoryField();
-    auto num_classes = GetNumClasses(category_field);
-    num_samples = category_op->GetNumSamples(num_rows_, num_classes);
-  } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
-    num_samples = op->GetNumSamples(num_rows_, 0);
-    if (-1 == num_samples) {
-      MS_LOG(ERROR) << "Dataset size plus number of padded samples is not divisible by number of shards.";
-      return FAILED;
+  bool root = true;
+  std::stack<std::shared_ptr<ShardOperator>> stack_ops;
+  std::shared_ptr<ShardOperator> op(ops);
+  while (op != nullptr) {
+    stack_ops.push(op);
+    op = op->GetChildOp();
+  }
+  while (!stack_ops.empty()) {
+    op = stack_ops.top();
+    stack_ops.pop();
+    if (std::dynamic_pointer_cast<ShardShuffle>(op)) {
+      num_samples = op->GetNumSamples(num_samples, 0);
+      if (num_padded > 0 && root == true) {
+        num_samples += num_padded;
+        MS_LOG(DEBUG) << "Padding samples work on shuffle sampler.";
+        root = false;
+      }
+    } else if (std::dynamic_pointer_cast<ShardCategory>(op)) {
+      auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
+      std::string category_field = category_op->GetCategoryField();
+      auto num_classes = GetNumClasses(category_field);
+      num_samples = category_op->GetNumSamples(num_samples, num_classes);
+    } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
+      if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
+        auto sampler_op = std::dynamic_pointer_cast<ShardDistributedSample>(op);
+        if (root == true) {
+          sampler_op->SetNumPaddedSamples(num_padded);
+          num_samples = op->GetNumSamples(num_samples, 0);
+          if (-1 == num_samples) {
+            MS_LOG(ERROR) << "Dataset size plus number of padded samples is not divisible by number of shards.";
+            return FAILED;
+          }
+          root = false;
+        }
+      } else {
+        num_samples = op->GetNumSamples(num_samples, 0);
+      }
+    } else {
+      if (num_padded > 0) num_samples += num_padded;
     }
-  } else {
-    if (num_padded > 0) num_samples += num_padded;
   }
   *count = num_samples;
   return SUCCESS;
@@ -1385,12 +1412,16 @@ void ShardReader::Reset() {
 }
 
 void ShardReader::ShuffleTask() {
+  if (block_reader_) return;
+  // exist shuffle and distributed sampler in ops, skip shuffle
+  bool has_sharding = false;
   for (const auto &op : operators_) {
-    if (block_reader_) {
-      continue;
+    if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
+      has_sharding = true;
     }
-
-    if (std::dynamic_pointer_cast<ShardShuffle>(op)) {
+  }
+  for (const auto &op : operators_) {
+    if (std::dynamic_pointer_cast<ShardShuffle>(op) && has_sharding == false) {
       if (SUCCESS != (*op)(tasks_)) {
         MS_LOG(WARNING) << "Reshuffle reader tasks failed.";
       }

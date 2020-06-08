@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -108,9 +109,11 @@ class DEPipeline {
 
   Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
-  Status CheckMindRecordPartitionInfo(const py::dict &args, std::vector<int> *ptr);
-
   Status ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status BuildMindrecordSamplerChain(const py::handle &handle,
+                                     std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators,
+                                     int num_padded);
 
   Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 

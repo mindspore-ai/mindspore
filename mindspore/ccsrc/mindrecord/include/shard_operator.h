@@ -17,6 +17,7 @@
 #ifndef MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 #define MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 
+#include <memory>
 #include "mindrecord/include/shard_task.h"
 
 namespace mindspore {
@@ -37,6 +38,14 @@ class ShardOperator {
     }
     return SUCCESS;
   }
+  virtual bool HasChildOp() { return child_op_ != nullptr; }
+
+  virtual MSRStatus SetChildOp(std::shared_ptr<ShardOperator> child_op) {
+    if (child_op != nullptr) child_op_ = child_op;
+    return SUCCESS;
+  }
+
+  virtual std::shared_ptr<ShardOperator> GetChildOp() { return child_op_; }
 
   virtual MSRStatus PreExecute(ShardTask &tasks) { return SUCCESS; }
 
@@ -44,7 +53,10 @@ class ShardOperator {
 
   virtual MSRStatus SufExecute(ShardTask &tasks) { return SUCCESS; }
 
-  virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return -1; }
+  virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return 0; }
+
+ private:
+  std::shared_ptr<ShardOperator> child_op_ = nullptr;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

@@ -72,6 +72,7 @@ std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTa
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
   return task_list_[dis(gen)];
 }
+
 ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements) {
   ShardTask res;
   if (category_tasks.empty()) return res;
