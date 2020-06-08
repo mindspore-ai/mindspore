@@ -750,6 +750,15 @@ test_case_math_ops = [
         'block': P.Sinh(),
         'desc_inputs': [[3, 4, 5]],
         'desc_bprop': [[3, 4, 5]]}),
+    ('Inv', {
+        'block': P.Inv(),
+        'desc_inputs': [[21, 9, 12, 5]],
+        'desc_bprop': [[21, 9, 12, 5]]}),
+    ('Invert', {
+        'block': P.Invert(),
+        'desc_inputs': [Tensor(np.array([[24, 4, 13, 9], [1, 5, 10, 8]]).astype(np.int16))],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_nn_ops = [

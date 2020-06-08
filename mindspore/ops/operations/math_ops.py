@@ -2597,3 +2597,63 @@ class BesselI1e(PrimitiveWithInfer):
     def infer_dtype(self, x):
         validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
         return x
+
+
+class Inv(PrimitiveWithInfer):
+    """
+    Computes Inv(Reciprocal) of input tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> inv = P.Inv()
+        >>> input_x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
+        >>> output = inv(input_x)
+        [4., 2.5, 3.2258065, 1.923077]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.float16, mstype.float32,
+                                                                mstype.int32, mstype.int8,
+                                                                mstype.uint8], self.name)
+        return x_dtype
+
+
+class Invert(PrimitiveWithInfer):
+    """
+    Flips all bits of input tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor[int16], Tensor[uint16]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> invert = P.Invert()
+        >>> input_x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
+        >>> output = invert(input_x)
+        [-26, -5, -14, -10]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.int16, mstype.uint16], self.name)
+        return x_dtype

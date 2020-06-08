@@ -41,7 +41,7 @@ from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr,
-                       BitwiseXor,
+                       BitwiseXor, Inv, Invert,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Ceil,
                        Acosh, Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -141,6 +141,8 @@ __all__ = [
     'RealDiv',
     'Div',
     'DivNoNan',
+    'Inv',
+    'Invert',
     'TruncatedNormal',
     'Fill',
     'OnesLike',
