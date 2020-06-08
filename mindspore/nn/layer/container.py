@@ -150,8 +150,9 @@ class CellList(_CellListBase, Cell):
     """
     Holds Cells in a list.
 
-    CellList can be indexed like a regular Python list, but cells it
-    contains are properly registered, and will be visible by all Cell methods.
+    CellList can be used like a regular Python list, support
+    '__getitem__', '__setitem__', '__delitem__', '__len__', '__iter__' and '__iadd__',
+    but cells it contains are properly registered, and will be visible by all Cell methods.
 
     Args:
         args (list, optional): List of subclass of Cell.

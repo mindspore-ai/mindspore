@@ -119,18 +119,20 @@ class TensorAdd(_MathBinaryOp):
     Adds two input tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> add = P.TensorAdd()
@@ -758,18 +760,20 @@ class Sub(_MathBinaryOp):
     Subtracts the second input tensor from the first input tensor element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
-    Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -785,18 +789,20 @@ class Mul(_MathBinaryOp):
     Multiplies two tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -936,28 +942,21 @@ class Pow(_MathBinaryOp):
     """
     Computes a tensor to the power of the second input.
 
-    The first input must be a tensor, and the second input should be a tensor or a number.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be the same.
-    When the inputs are one tensor and one scalar, the scalar could not be a parameter,
-    only could be a constant, and the type of the scalar is the same as the data type of the tensor.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
-
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor.
-        - **input_y** (Union[Tensor, Number]) - The exponent part. If exponent is a tensor, its shape must be able to
-          broadcast to the shape of the `input_x`.
-
-    Outputs:
-        Tensor, has the same shape as the `input_x`.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -1157,18 +1156,20 @@ class Minimum(_MathBinaryOp):
     Computes the element-wise minimum of input tensors.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -1184,18 +1185,20 @@ class Maximum(_MathBinaryOp):
     Computes the element-wise maximum of input tensors.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -1211,18 +1214,20 @@ class RealDiv(_MathBinaryOp):
     Divide the first input tensor by the second input tensor in floating-point type element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is the same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1247,18 +1252,20 @@ class Div(_MathBinaryOp):
     Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is the same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is the same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
         ValueError: When `input_x` and `input_y` are not the same dtype.
@@ -1283,18 +1290,20 @@ class DivNoNan(_MathBinaryOp):
     Computes a safe divide which returns 0 if the y is zero.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is the same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
         ValueError: When `input_x` and `input_y` are not the same dtype.
@@ -1323,18 +1332,20 @@ class FloorDiv(_MathBinaryOp):
     Divide the first input tensor by the second input tensor element-wise and rounds down to the closest integer.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1379,18 +1390,20 @@ class FloorMod(_MathBinaryOp):
     Compute element-wise remainder of division.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1565,19 +1578,17 @@ class Equal(_LogicBinaryOp):
     Computes the equivalence between two tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar, the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a tensor whose data type is number or bool, or
-          a number or a bool object.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input tensor whose data type is same as 'input_x' or
-          a number or a bool object.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -1638,19 +1649,17 @@ class NotEqual(_LogicBinaryOp):
     Computes the non-equivalence of two tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar, the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a tensor whose data type is number or bool, or
-          a number or a bool object.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input tensor whose data type is same as `input_x` or
-          a number or a bool object.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -1674,18 +1683,19 @@ class Greater(_LogicBinaryOp):
     Computes the boolean value of :math:`x > y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1701,18 +1711,19 @@ class GreaterEqual(_LogicBinaryOp):
     Computes the boolean value of :math:`x >= y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1728,18 +1739,19 @@ class Less(_LogicBinaryOp):
     Computes the boolean value of :math:`x < y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1755,18 +1767,19 @@ class LessEqual(_LogicBinaryOp):
     Computes the boolean value of :math:`x <= y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1811,15 +1824,16 @@ class LogicalAnd(_LogicBinaryOp):
     """
     Computes the "logical AND" of two tensors element-wise.
 
-    The inputs must be two tensors or one tensor and one bool object.
+    The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
-    When the inputs are one tensor and one bool object, the bool object cannot be a parameter, only can be a constant,
+    When the inputs are one tensor and one bool, the bool object only could be a constant,
     and the data type of the tensor should be bool.
 
     Inputs:
-        - **input_x** (Union[Tensor, bool]) - The first input is a tensor whose data type is bool or a bool object.
-        - **input_y** (Union[Tensor, bool]) - The second input is a tensor whose data type is bool or a bool object.
+        - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
+        - **input_y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+         a tensor whose data type is bool.
 
     Outputs:
         Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
@@ -1840,18 +1854,19 @@ class LogicalOr(_LogicBinaryOp):
     """
     Computes the "logical OR" of two tensors element-wise.
 
-    The inputs must be two tensors or one tensor and one bool object.
+    The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
-    When the inputs are one tensor and one bool object, the bool object cannot be a parameter, only can be a constant,
+    When the inputs are one tensor and one bool, the bool object only could be a constant,
     and the data type of the tensor should be bool.
 
     Inputs:
-        - **input_x** (Union[Tensor, bool]) - The first input is a tensor whose data type is bool or a bool object.
-        - **input_y** (Union[Tensor, bool]) - The second input is a tensor whose data type is bool or a bool object.
+        - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
+        - **input_y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+         a tensor whose data type is bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -2435,7 +2450,7 @@ class Atan2(_MathBinaryOp):
         - **input_y** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as `input_x`.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is same as `input_x`.
 
     Examples:
          >>> input_x = Tensor(np.array([[0, 1]]), mindspore.float32)
