@@ -772,6 +772,125 @@ class Neg(PrimitiveWithInfer):
         return input_x
 
 
+class InplaceAdd(PrimitiveWithInfer):
+    """
+    Adds v into specified rows of x. Computes y = x; y[i,] += v.
+
+    Args:
+        - **indices** (Union[int, tuple]) - Indices into the left-most dimension of x, and determines which rows of x
+        to add with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+
+    Inputs:
+        - **input_x** (Tensor) - The first input is a tensor whose data type is number.
+        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
+        the first dimension, which must be the same as indices's size.
+
+    Outputs:
+        Tensor, has the same shape and dtype as input.
+
+    Examples:
+
+        >>> indices = [0, 1]
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceAdd = P.InplaceAdd(indices)
+        >>> inplaceAdd(input_x, input_v)
+        [[1.5 3.]
+         [4. 5.5]
+         [5. 6.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, indices):
+        """init InplaceAdd"""
+        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
+        self.indices = indices
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+        if isinstance(self.indices, int):
+            validator.check("size of indices", 1, "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            if self.indices < 0 or self.indices >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {self.indices}.')
+        else:
+            validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            for i in self.indices:
+                if i < 0 or i >= x_shape[0]:
+                    raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        if len(x_shape) > 1:
+            validator.check("x's ith dimension", x_shape[1:], "v's ith dimension", v_shape[1:],
+                            Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, v_dtype):
+        args = {'x': x_dtype, 'v': v_dtype}
+        valid_type = [mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_value_type('indices', self.indices, [tuple, int], self.name)
+        return x_dtype
+
+
+class InplaceSub(PrimitiveWithInfer):
+    """
+    Subtracts v into specified rows of x. Computes y = x; y[i, :] -= v; return y.
+
+    Args:
+        - **indices** (Union[int, tuple]) - Indices into the left-most dimension of x, and determines which rows of x
+        to sub with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+
+    Inputs:
+        - **input_x** (Tensor) - The first input is a tensor whose data type is number.
+        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
+        the first dimension, which must be the same as indices's size.
+
+    Outputs:
+        Tensor, has the same shape and dtype as input.
+
+    Examples:
+        >>> indices = [0, 1]
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceSub = P.InplaceSub(indices)
+        >>> inplaceSub(input_x, input_v)
+        [[0.5 1.]
+         [2. 2.5]
+         [5. 6.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, indices):
+        """init InplaceSub"""
+        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
+        self.indices = indices
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+        if isinstance(self.indices, int):
+            validator.check("size of indices", 1, "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            if self.indices < 0 or self.indices >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {self.indices}.')
+        else:
+            validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            for i in self.indices:
+                if i < 0 or i >= x_shape[0]:
+                    raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        if len(x_shape) > 1:
+            validator.check("x's ith dimension", x_shape[1:], "v's ith dimension", v_shape[1:],
+                            Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, v_dtype):
+        args = {'x': x_dtype, 'v': v_dtype}
+        valid_type = [mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_value_type('indices', self.indices, [tuple, int], self.name)
+        return x_dtype
+
+
 class Sub(_MathBinaryOp):
     """
     Subtracts the second input tensor from the first input tensor element-wise.

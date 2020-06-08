@@ -41,7 +41,7 @@ from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr,
-                       BitwiseXor, Inv, Invert, ApproximateEqual,
+                       BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Ceil,
                        Acosh, Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -178,6 +178,8 @@ __all__ = [
     'DropoutGrad',
     'Dropout',
     'Neg',
+    'InplaceAdd',
+    'InplaceSub',
     'Slice',
     'DType',
     'NPUAllocFloatStatus',

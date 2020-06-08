@@ -80,6 +80,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"concat", "concat_d"},
   {"slice", "slice_d"},
   {"reduce_sum", "reduce_sum_d"},
+  {"inplace_add", "inplace_add_d"},
+  {"inplace_sub", "inplace_sub_d"},
   {"one_hot", "one_hot_d"},
   {"sum", "reduce_sum_d"},
   {"lamb_next_mv_with_decay", "lamb_next_m_v_with_decay"},

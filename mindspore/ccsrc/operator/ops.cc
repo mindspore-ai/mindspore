@@ -171,6 +171,8 @@ const PrimitivePtr kPrimLessEqual = std::make_shared<Primitive>("LessEqual");
 const PrimitivePtr kPrimCumSum = std::make_shared<Primitive>("CumSum");
 const PrimitivePtr kPrimCumProd = std::make_shared<Primitive>("CumProd");
 const PrimitivePtr kPrimSubscalar = std::make_shared<Primitive>("Subscalar");
+const PrimitivePtr kPrimInplaceAdd = std::make_shared<Primitive>("InplaceAdd");
+const PrimitivePtr kPrimInplaceSub = std::make_shared<Primitive>("InplaceSub");
 
 // NN
 const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
