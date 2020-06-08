@@ -377,8 +377,8 @@ void KernelGraph::FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, cons
   MS_EXCEPTION_IF_NULL(old_backend_anf);
   MS_EXCEPTION_IF_NULL(new_backend_anf);
   if (old_backend_anf == new_backend_anf) {
-    MS_LOG(INFO) << "old:" << old_backend_anf->DebugString() << ",new:" << new_backend_anf->DebugString();
-    MS_LOG(EXCEPTION) << "old can't be same with new";
+    MS_LOG(DEBUG) << "old same with new:" << old_backend_anf->DebugString();
+    return;
   }
   if (backend_front_anf_map_.find(old_backend_anf) == backend_front_anf_map_.end()) {
     MS_LOG(DEBUG) << "old_backend_anf " << old_backend_anf->DebugString() << " is not exist in the map";

@@ -54,10 +54,7 @@ class AscendControlParser {
 
   static void InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
 
-  static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start);
-
   // root graph order
-  static std::vector<uint32_t> GetLabelSwitchList(const CNodePtr &node);
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);
   static std::vector<CNodePtr> RecurseGraph(NotNull<KernelGraphPtr> graph,
