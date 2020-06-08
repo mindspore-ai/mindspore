@@ -46,8 +46,8 @@ CifarOp::Builder::Builder() : sampler_(nullptr) {
 Status CifarOp::Builder::Build(std::shared_ptr<CifarOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (sampler_ == nullptr) {
-    int64_t num_samples = 0;
-    int64_t start_index = 0;
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
     sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   schema_ = std::make_unique<DataSchema>();
@@ -430,7 +430,11 @@ Status CifarOp::CountTotalRows(const std::string &dir, bool isCIFAR10, int64_t *
         std::string err_msg = "Invalid cifar100 file path";
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
-      std::string file_name(file.substr(pos + 1));
+      std::string file_name;
+      if (file.size() > 0)
+        file_name = file.substr(pos + 1);
+      else
+        RETURN_STATUS_UNEXPECTED("Invalid string length!");
       if (file_name.find("test") != std::string::npos) {
         num_cifar100_records = 10000;
       } else if (file_name.find("train") != std::string::npos) {
