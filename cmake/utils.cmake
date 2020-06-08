@@ -206,7 +206,7 @@ function(mindspore_add_pkg pkg_name )
 
     set(options )
     set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH RELEASE LIB_PATH CUSTOM_CMAKE)
-    set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES)
+    set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES ONLY_MAKE ONLY_MAKE_INCS ONLY_MAKE_LIBS)
     cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     if (NOT PKG_LIB_PATH)
@@ -290,7 +290,7 @@ function(mindspore_add_pkg pkg_name )
     foreach(_PATCH_FILE ${PKG_PATCHES})
         get_filename_component(_PATCH_FILE_NAME ${_PATCH_FILE} NAME)
         set(_LF_PATCH_FILE ${CMAKE_BINARY_DIR}/_ms_patch/${_PATCH_FILE_NAME})
-        configure_file(${_PATCH_FILE} ${_LF_PATCH_FILE} NEWLINE_STYLE LF)
+        configure_file(${_PATCH_FILE} ${_LF_PATCH_FILE} NEWLINE_STYLE LF @ONLY)
 
         message("patching ${${pkg_name}_SOURCE_DIR} -p1 < ${_LF_PATCH_FILE}")
         execute_process(COMMAND ${Patch_EXECUTABLE} -p1 INPUT_FILE ${_LF_PATCH_FILE}
@@ -323,6 +323,16 @@ function(mindspore_add_pkg pkg_name )
                 add_library(${pkg_name} INTERFACE)
                 target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
             endif ()
+
+        elseif (PKG_ONLY_MAKE)
+            __exec_cmd(COMMAND ${CMAKE_MAKE_PROGRAM} ${${pkg_name}_CXXFLAGS} -j${THNUM}
+                    WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR})
+            set(PKG_INSTALL_INCS ${PKG_ONLY_MAKE_INCS})
+            set(PKG_INSTALL_LIBS ${PKG_ONLY_MAKE_LIBS})
+            file(GLOB ${pkg_name}_INSTALL_INCS ${${pkg_name}_SOURCE_DIR}/${PKG_INSTALL_INCS})
+            file(GLOB ${pkg_name}_INSTALL_LIBS ${${pkg_name}_SOURCE_DIR}/${PKG_INSTALL_LIBS})
+            file(COPY ${${pkg_name}_INSTALL_INCS} DESTINATION ${${pkg_name}_BASE_DIR}/include)
+            file(COPY ${${pkg_name}_INSTALL_LIBS} DESTINATION ${${pkg_name}_BASE_DIR}/lib)
 
         elseif (PKG_CMAKE_OPTION)
             # in cmake

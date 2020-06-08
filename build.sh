@@ -25,7 +25,7 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-E]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -55,6 +55,7 @@ usage()
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
   echo "    -B Enable debugger, default off"
+  echo "    -E Enable IBVERBS for parameter server, default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -96,9 +97,10 @@ checkopts()
   ENABLE_AKG="on"
   ENABLE_SERVING="off"
   ENABLE_DEBUGGER="off"
+  ENABLE_IBVERBS="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:sB:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:sB:E' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -252,6 +254,10 @@ checkopts()
         ENABLE_DEBUGGER="on"
         echo "enable debugger"
         ;;
+      E)
+        ENABLE_IBVERBS="on"
+        echo "enable IBVERBS for parameter server"
+        ;;
       *)
         echo "Unknown option ${opt}!"
         usage
@@ -338,6 +344,9 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DEBUGGER=ON"
     fi
 
+    if [[ "X$ENABLE_IBVERBS" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_IBVERBS=ON"
+    fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..

@@ -38,6 +38,10 @@ if (NOT Patch_FOUND)
 endif ()
 message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
 
+if (ENABLE_AKG AND ENABLE_D)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/akg")
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake/mind_expression.cmake)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
@@ -84,10 +88,6 @@ if (ENABLE_GE OR ENABLE_D OR ENABLE_TESTCASES)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/graphengine/inc/framework)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/graphengine/third_party/fwkacllib/inc)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/graphengine/third_party/fwkacllib/inc/toolchain)
-endif()
-
-if (ENABLE_AKG AND ENABLE_D)
-    add_subdirectory("${CMAKE_SOURCE_DIR}/akg")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
