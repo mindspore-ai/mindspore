@@ -206,6 +206,7 @@ const PrimitivePtr kPrimLayerNormGrad = std::make_shared<Primitive>("LayerNormGr
 const PrimitivePtr kPrimLayerNormXBackprop = std::make_shared<Primitive>("LayerNormXBackprop");
 const PrimitivePtr kPrimLayerNormBetaGammaBackprop = std::make_shared<Primitive>("LayerNormBetaGammaBackprop");
 const PrimitivePtr kPrimDropoutGenMask = std::make_shared<Primitive>("DropoutGenMask");
+const PrimitivePtr kPrimDropoutDoMask = std::make_shared<Primitive>("DropoutDoMask");
 const PrimitivePtr kPrimOneHot = std::make_shared<Primitive>("OneHot");
 const PrimitivePtr kPrimGelu = std::make_shared<Primitive>("Gelu");
 const PrimitivePtr kPrimGeluGrad = std::make_shared<Primitive>("GeluGrad");

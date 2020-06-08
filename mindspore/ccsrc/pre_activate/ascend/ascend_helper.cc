@@ -32,14 +32,13 @@ namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
 kernel::KernelBuildInfoPtr RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
-                                                  const AnfNodePtr &node, const TypeId device_type,
-                                                  const kernel::KernelBuildInfo &ori_build_info,
+                                                  const AnfNodePtr &node, const kernel::KernelBuildInfo &ori_build_info,
                                                   const std::vector<kernel::Axis> &reshape_type) {
   KernelBuildInfoBuilder builder;
   builder.SetInputsFormat({input_format});
   builder.SetOutputsFormat({output_format});
-  builder.SetInputsDeviceType({device_type});
-  builder.SetOutputsDeviceType({device_type});
+  builder.SetInputsDeviceType({ori_build_info.GetInputDeviceType(0)});
+  builder.SetOutputsDeviceType({ori_build_info.GetOutputDeviceType(0)});
   builder.SetOutputReshapeType({reshape_type});
   builder.SetInputReshapeType({reshape_type});
   builder.SetKernelType(ori_build_info.kernel_type());
@@ -179,7 +178,6 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   AnfNodePtr input_node = node;
   AnfNodePtr trans_data = nullptr;
   std::vector<kernel::Axis> reshape_type = AnfAlgo::GetOutputReshapeType(node, 0);
-  TypeId dtype = AnfAlgo::GetOutputDeviceDataType(node, 0);
   MS_EXCEPTION_IF_NULL(node);
   if (origin_format.empty() || dest_format.empty()) {
     MS_LOG(EXCEPTION) << "trans op format is error, origin = " << origin_format << ", dest " << origin_format;
@@ -190,7 +188,6 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
       MS_LOG(EXCEPTION) << "cannot insert a transdata node to a node's input which the node is not a cnode";
     }
     auto cnode = node->cast<CNodePtr>();
-    dtype = AnfAlgo::GetInputDeviceDataType(cnode, insert_index);
     MS_EXCEPTION_IF_NULL(cnode);
     input_node = AnfAlgo::GetInputNode(cnode, insert_index);
     reshape_type = AnfAlgo::GetInputReshapeType(node, insert_index);
@@ -228,7 +225,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   MS_EXCEPTION_IF_NULL(trans_data->kernel_info());
   auto trans_ori_build_info = trans_data->kernel_info()->select_kernel_build_info();
   auto kernel_build_info =
-    RefreshKernelBuildInfo(origin_format, dest_format, input_node, dtype, *trans_ori_build_info, reshape_type);
+    RefreshKernelBuildInfo(origin_format, dest_format, input_node, *trans_ori_build_info, reshape_type);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, trans_data.get());
   return trans_node;
 }

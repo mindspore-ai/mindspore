@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_INSERT_CAST_FOR_RUNOP_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_INSERT_CAST_FOR_RUNOP_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_RECTIFY_DO_MASK_KERNEL_INFO_H
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_RECTIFY_DO_MASK_KERNEL_INFO_H
+#include <map>
 #include <string>
+#include <vector>
 
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/common/pattern_engine.h"
 #include "ir/anf.h"
 namespace mindspore {
 namespace opt {
-class RunOpInsertCast : public PatternProcessPass {
+class RectifyDoMaskKernelInfo : public PatternProcessPass {
  public:
-  explicit RunOpInsertCast(bool multigraph = true) : PatternProcessPass("insert_cast_for_runop", multigraph) {}
-  ~RunOpInsertCast() override = default;
+  explicit RectifyDoMaskKernelInfo(bool multigraph = true)
+      : PatternProcessPass("batch_norm_bert_fission", multigraph) {}
+  ~RectifyDoMaskKernelInfo() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  void RectifyKernelInfo(const std::vector<CNodePtr> &do_mask_node_list) const;
+  std::string GetConvertFormat(const std::map<std::string, size_t> &format_counter) const;
+  void RectifyDropOutDoMaskKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const std::string &format) const;
 };
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_INSERT_CAST_FOR_RUNOP_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_RECTIFY_DO_MASK_KERNEL_INFO_H
