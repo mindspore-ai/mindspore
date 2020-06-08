@@ -16,7 +16,8 @@
 
 # bash run_multinpu_train.sh
 execute_path=$(pwd)
-
+script_self=$(readlink -f "$0")
+self_path=$(dirname "${script_self}")
 export RANK_SIZE=$1
 export EPOCH_SIZE=$2
 export DATASET=$3
@@ -30,5 +31,5 @@ do
   cd ${execute_path}/device_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  pytest -s ${execute_path}/train_and_test_multinpu.py --data_path=$DATASET --epochs=$EPOCH_SIZE >train_deep$i.log 2>&1 &
+  python -s ${self_path}/../train_and_test_multinpu.py --data_path=$DATASET --epochs=$EPOCH_SIZE >train_deep$i.log 2>&1 &
 done
