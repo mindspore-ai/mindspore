@@ -537,8 +537,8 @@ class Range(PrimitiveWithInfer):
         start (float): If `limit` is `None`, the value acts as limit in the range and first entry
             defaults to `0`. Otherwise, it acts as first entry in the range.
         limit (float): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`.
-        delta (float): Increment of the range. Default: 1.0.
+            while set the first entry of the range to `0`. It can not be equal to `start`.
+        delta (float): Increment of the range. It can not be equal to zero. Default: 1.0.
 
     Inputs:
         - **input_x** (Tensor) - The assistant data. A `1-D` tensor of type float32 or int32.
@@ -565,6 +565,15 @@ class Range(PrimitiveWithInfer):
             self.add_prim_attr("limit", self.limit)
         else:
             validator.check_value_type("limit", limit, [float], self.name)
+        validator.check('start', self.start, 'limit', self.limit, Rel.NE, self.name)
+        if self.delta == 0.0:
+            raise ValueError("The input of `delta` can not be equal to zero.")
+        if self.delta > 0.0 and self.start > self.limit:
+            raise ValueError(f"Limit should be greater than start when delta:{self.delta} is more than zero, "
+                             f"but got start:{self.start}, limit:{self.limit}")
+        if self.delta < 0.0 and self.start < self.limit:
+            raise ValueError(f"Start should be greater than limit when delta:{self.delta} is less than zero, "
+                             f"but got start:{self.start}, limit:{self.limit}")
 
     def infer_shape(self, x_shape):
         return x_shape
