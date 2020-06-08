@@ -37,7 +37,10 @@ void GenerateStrategy(std::shared_ptr<Graph> graph, const std::vector<std::share
   MS_EXCEPTION_IF_NULL(index_list);
   GeneratePartitionedOperatorStrategy(graph, ops, index_list);
   std::shared_ptr<std::vector<size_t>> no_stra_op_list(new std::vector<size_t>);
-  GenerateEliminatedOperatorStrategyForward(graph, ops, eli_list, input_tensor_names, index_list, no_stra_op_list);
+  for (size_t i = 0; i < eli_list->size(); i++) {
+    no_stra_op_list->push_back(eli_list->at(i)[0]);
+  }
+  GenerateEliminatedOperatorStrategyForward(graph, ops, input_tensor_names, index_list, no_stra_op_list);
   GenerateEliminatedOperatorStrategyBackward(ops, input_tensor_names, no_stra_op_list);
   GenerateRemainingOperatorStrategy(graph, ops, input_tensor_names, index_list, no_stra_op_list);
 }
@@ -49,6 +52,58 @@ std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &gr
   auto attrs = ops[iter_ops]->attrs();
   bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
   bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+
+  // HCCL does not support multi-dimension partition, and the hardware does not support excessive
+  // number of EVENT, so we temporarily disable matmul's multi-dimension partition function.
+  auto max_cut = 1.0 / g_device_manager->DeviceNum();
+  if (graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h != max_cut &&
+      graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w != max_cut) {
+    graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = 1.0;
+    graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_w = 1.0;
+    graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_h = 1.0;
+    graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w = 1.0;
+    graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = 1.0;
+    graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = 1.0;
+
+    auto shape_1 = ops[iter_ops]->inputs_tensor_info()[0].shape()[0];
+    if (transpose_a) {
+      shape_1 = ops[iter_ops]->inputs_tensor_info()[0].shape()[1];
+    }
+    auto shape_4 = ops[iter_ops]->inputs_tensor_info()[1].shape()[1];
+    if (transpose_b) {
+      shape_4 = ops[iter_ops]->inputs_tensor_info()[1].shape()[0];
+    }
+
+    bool already_cut = false;
+    if (shape_1 >= shape_4) {
+      if (shape_1 % g_device_manager->DeviceNum() == 0) {
+        graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = max_cut;
+        graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = max_cut;
+        already_cut = true;
+      }
+      if (!already_cut && shape_4 % g_device_manager->DeviceNum() == 0) {
+        graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w = max_cut;
+        graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = max_cut;
+        already_cut = true;
+      }
+    } else {
+      if (shape_4 % g_device_manager->DeviceNum() == 0) {
+        graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w = max_cut;
+        graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = max_cut;
+        already_cut = true;
+      }
+      if (!already_cut && shape_1 % g_device_manager->DeviceNum() == 0) {
+        graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = max_cut;
+        graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = max_cut;
+        already_cut = true;
+      }
+    }
+
+    if (!already_cut) {
+      MS_LOG(EXCEPTION) << "Failure: MatMul's shape is invalid.";
+    }
+  }
+
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
     std::vector<int32_t> s;
     if (transpose_a && (iter_op_inputs == 0)) {
@@ -401,6 +456,11 @@ std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::share
   return s_Reduce;
 }
 
+std::vector<int32_t> ModifyStrategyIfSoftmaxIncoming(std::vector<int32_t> s) {
+  s.pop_back();
+  return s;
+}
+
 std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                        const size_t iter_ops, const size_t incoming_op_index) {
   std::vector<int32_t> s;
@@ -413,6 +473,9 @@ std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::sh
     if (ops[incoming_op_index]->type() == REDUCE_SUM || ops[incoming_op_index]->type() == REDUCE_MAX ||
         ops[incoming_op_index]->type() == REDUCE_MIN || ops[incoming_op_index]->type() == REDUCE_MEAN) {
       s = ModifyStrategyIfReduceIncoming(ops, incoming_op_index, s);
+    }
+    if (ops[incoming_op_index]->type() == SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
+      s = ModifyStrategyIfSoftmaxIncoming(s);
     }
   }
   return s;
@@ -466,12 +529,16 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
 
 void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> graph,
                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                               const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
                                                const std::vector<std::vector<std::string>> &input_tensor_names,
                                                const std::shared_ptr<std::vector<size_t>> index_list,
                                                const std::shared_ptr<std::vector<size_t>> no_stra_op_list) {
-  for (size_t eli_index = eli_list->size(); eli_index > 0; eli_index--) {
-    size_t iter_ops = eli_list->at(eli_index - 1)[0];
+  if (no_stra_op_list->size() == 0) {
+    return;
+  }
+  std::vector<size_t> no_stra_op_list_bis;
+
+  for (size_t iter_list = no_stra_op_list->size(); iter_list > 0; iter_list--) {
+    size_t iter_ops = no_stra_op_list->at(iter_list - 1);
     std::vector<std::vector<int32_t>> stra;
     std::vector<int32_t> s;
     size_t incoming_op_index = FindIndexOfOperatorIncoming(input_tensor_names, iter_ops);
@@ -485,13 +552,18 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> grap
     }
 
     if (s.size() == 0) {
-      no_stra_op_list->push_back(iter_ops);
+      no_stra_op_list_bis.push_back(iter_ops);
     } else {
       stra = GenerateStrategiesFromStrategy(ops, iter_ops, s);
     }
 
     StrategyPtr sp = std::make_shared<Strategy>(0, stra);
     ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
+  }
+
+  no_stra_op_list->clear();
+  for (size_t i = 0; i < no_stra_op_list_bis.size(); i++) {
+    no_stra_op_list->push_back(no_stra_op_list_bis[i]);
   }
 }
 
@@ -598,30 +670,26 @@ void GenerateRemainingOperatorStrategy(const std::shared_ptr<Graph> graph,
     return;
   }
 
-  for (size_t iter_list = no_stra_op_list->size(); iter_list > 0; iter_list--) {
-    auto iter_ops = no_stra_op_list->at(iter_list - 1);
+  size_t no_stra_op_list_size;
+  do {
+    no_stra_op_list_size = no_stra_op_list->size();
+    GenerateEliminatedOperatorStrategyForward(graph, ops, input_tensor_names, index_list, no_stra_op_list);
+    GenerateEliminatedOperatorStrategyBackward(ops, input_tensor_names, no_stra_op_list);
+  } while (no_stra_op_list_size > no_stra_op_list->size());
+
+  for (size_t iter_list = 0; iter_list < no_stra_op_list->size(); iter_list++) {
+    auto iter_ops = no_stra_op_list->at(iter_list);
     std::vector<std::vector<int32_t>> stra;
     std::vector<int32_t> s;
-    size_t incoming_op_index = FindIndexOfOperatorIncoming(input_tensor_names, iter_ops);
-    if (incoming_op_index != SIZE_MAX) {
-      auto iter_graph = index_list->at(incoming_op_index);
-      if (iter_graph != SIZE_MAX) {
-        s = CopyIncomingOperatorOutputStrategy(graph, ops, iter_ops, iter_graph);
-      } else {
-        s = CopyIncomingOperatorInputStrategy(ops, iter_ops, incoming_op_index);
+
+    size_t max_dim_num = 0;
+    for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
+      if (ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size() > max_dim_num) {
+        max_dim_num = ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size();
       }
     }
-
-    if (s.size() == 0) {
-      size_t max_dim_num = 0;
-      for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
-        if (ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size() > max_dim_num) {
-          max_dim_num = ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size();
-        }
-      }
-      for (size_t i = 0; i < max_dim_num; i++) {
-        s.push_back(1);
-      }
+    for (size_t i = 0; i < max_dim_num; i++) {
+      s.push_back(1);
     }
 
     stra = GenerateStrategiesFromStrategy(ops, iter_ops, s);

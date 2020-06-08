@@ -1101,13 +1101,22 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
 }
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
-  if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
-    MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are " << entire_costgraph->GetOperators().size()
-                 << " operators.";
+  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
+    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
   } else {
-    MS_LOG(ERROR) << "Constructing nodes for cost graph failed.";
-    return FAILED;
+    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
   }
+  ReshapeCostCompute(all_nodes);
 
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
