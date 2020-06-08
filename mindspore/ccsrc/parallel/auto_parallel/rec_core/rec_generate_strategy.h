@@ -64,13 +64,13 @@ std::vector<int32_t> ModifyStrategyIfSqueezeIncoming(const std::vector<std::shar
 std::vector<int32_t> GetDimList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
 std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                     const size_t incoming_op_index, std::vector<int32_t> s);
+std::vector<int32_t> ModifyStrategyIfSoftmaxIncoming(std::vector<int32_t> s);
 std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                        const size_t iter_ops, const size_t incoming_op_index);
 std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                                  const size_t iter_ops, std::vector<int32_t> s);
 void GenerateEliminatedOperatorStrategyForward(std::shared_ptr<Graph> graph,
                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                               const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
                                                const std::vector<std::vector<std::string>> &input_tensor_names,
                                                const std::shared_ptr<std::vector<size_t>> index_list,
                                                const std::shared_ptr<std::vector<size_t>> no_stra_op_list);
