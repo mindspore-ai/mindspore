@@ -30,7 +30,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
-                        SpaceToBatchND, BatchToSpaceND)
+                        SpaceToBatchND, BatchToSpaceND, ReverseSequence)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -278,6 +278,7 @@ __all__ = [
     "ApplyCenteredRMSProp",
     "SpaceToBatchND",
     "BatchToSpaceND",
+    "ReverseSequence",
     "SquareSumAll",
     "BitwiseAnd",
     "BitwiseOr",
