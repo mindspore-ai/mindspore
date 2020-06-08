@@ -21,7 +21,7 @@ from .._checkparam import check_type, check_typename
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 
-__all__ = ['Tensor', 'MetaTensor']
+__all__ = ['Tensor', 'MetaTensor', 'IndexedSlices']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_)
@@ -214,3 +214,8 @@ class Tensor(Tensor_):
             raise TypeError("init_flag must be bool.")
         self.set_init_flag(value)
         self._init_flag = value
+
+
+class IndexedSlices:
+    def __init__(self, indices, values, dense_shape):
+        raise NotImplementedError

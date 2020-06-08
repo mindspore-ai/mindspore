@@ -356,6 +356,14 @@ class _Context:
         self._context_handle.set_check_bprop_flag(check_bprop_flag)
 
     @property
+    def enable_sparse(self):
+        return self._context_handle.get_enable_sparse_flag()
+
+    @enable_sparse.setter
+    def enable_sparse(self, enable_sparse_flag):
+        self._context_handle.set_enable_sparse_flag(enable_sparse_flag)
+
+    @property
     def max_device_memory(self):
         return self._context_handle.get_max_device_memory()
 
@@ -510,7 +518,8 @@ def reset_auto_parallel_context():
                  save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
-                 enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str)
+                 enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
+                 enable_sparse=bool)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -567,6 +576,7 @@ def set_context(**kwargs):
             The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
             a file by default, and turn off printing to the screen.
+        enable_sparse (bool): Whether to enable sparse feature. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.

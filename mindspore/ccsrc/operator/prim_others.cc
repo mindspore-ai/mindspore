@@ -24,6 +24,7 @@
 #include "pipeline/static_analysis/prim.h"
 #include "pipeline/static_analysis/utils.h"
 #include "utils/symbolic.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
@@ -173,6 +174,13 @@ AbstractBasePtr InferImplEnvGetItem(const AnalysisEnginePtr &, const PrimitivePt
     return std::make_shared<AbstractTuple>(sparse_list);
   }
 
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse_flag = context->enable_sparse_flag();
+  if (enable_sparse_flag && key->has_indexed_slices_grad() && dflt->isa<AbstractTensor>()) {
+    auto dflt_tensor = dflt->cast<AbstractTensorPtr>();
+    return std::make_shared<AbstractUndetermined>(dflt_tensor->element()->Clone(), dflt_tensor->shape()->Clone());
+  }
   if (!key->GetValueTrack()->isa<SymbolicKeyInstance>()) {
     return dflt;
   }
@@ -236,6 +244,7 @@ AbstractBasePtr InferImplMakeRef(const AnalysisEnginePtr &, const PrimitivePtr &
   }
   auto ret = std::make_shared<AbstractRef>(args_spec_list[0], args_spec_list[1], args_spec_list[2]);
   ret->set_sparse_grad(args_spec_list[2]->sparse_grad());
+  ret->set_has_indexed_slices_grad(args_spec_list[2]->has_indexed_slices_grad());
   return ret;
 }
 
@@ -436,6 +445,73 @@ AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const Primitiv
     }
   }
   return std::make_shared<AbstractScalar>(kAnyValue, kBool);
+}
+
+AbstractBasePtr InferImplMakeIndexedSlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 2);
+
+  auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(dense_shape_value);
+  auto shp = dense_shape_value->value();
+  std::vector<int> dense_shape_vec;
+  (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
+                       [](const ValuePtr &e) -> int {
+                         auto elem = GetValue<int>(e);
+                         return elem;
+                       });
+  auto ret = std::make_shared<AbstractIndexedSlices>(values->element()->BuildType(), dense_shape_vec);
+  ret->set_indices(indices);
+  ret->set_values(values);
+  ret->set_dense_shape(dense_shape);
+  return ret;
+}
+
+AbstractBasePtr InferImplIndexedSlicesGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(indexed_slices->values());
+  return indexed_slices->values();
+}
+
+AbstractBasePtr InferImplIndexedSlicesGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(indexed_slices->indices());
+  return indexed_slices->indices();
+}
+
+AbstractBasePtr InferImplIndexedSlicesGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors and a tuple.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto indexed_slices = CheckArg<AbstractIndexedSlices>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(indexed_slices->dense_shape());
+  return indexed_slices->dense_shape();
+}
+
+AbstractBasePtr InferImplIsIndexedSlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  bool ret = false;
+  if (args_spec_list[0]->isa<AbstractIndexedSlices>()) {
+    ret = true;
+  }
+  MS_LOG(DEBUG) << "IsIndexedSlices result: " << ret << ", input: " << args_spec_list[0]->ToString();
+  return std::make_shared<AbstractScalar>(ret);
 }
 }  // namespace abstract
 }  // namespace mindspore

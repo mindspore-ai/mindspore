@@ -30,6 +30,10 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
   if (tid() != other.tid()) {
     return false;
   }
+  if (BuildType()->type_id() == kObjectTypeUndeterminedType &&
+      other.BuildType()->type_id() == kObjectTypeUndeterminedType) {
+    return true;
+  }
   if (value_ == nullptr || other.value_ == nullptr) {
     MS_LOG(EXCEPTION) << "If value_ is nullptr, AbstractBase::operator== should not be called. this: "
                       << this->ToString() << ", other: " << other.ToString();
@@ -65,7 +69,7 @@ std::string AbstractBase::ToString() const {
   MS_EXCEPTION_IF_NULL(shape_);
   buffer << type_name() << "("
          << "Type: " << type_->ToString() << " Value: " << value << " Shape: " << shape_->ToString()
-         << " sparse_grad: " << sparse_grad_ << ")";
+         << " sparse_grad: " << sparse_grad_ << " has_indexed_slices_grad: " << has_indexed_slices_grad_ << ")";
   return buffer.str();
 }
 
@@ -76,6 +80,7 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   if (*this == *other) {
     auto ret = shared_from_base<AbstractBase>();
     ret->set_sparse_grad(sparse_grad());
+    ret->set_has_indexed_slices_grad(has_indexed_slices_grad());
     return ret;
   }
   auto value_self = GetValueTrack();
@@ -85,10 +90,12 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   if (res_value == value_self) {
     auto ret = shared_from_base<AbstractBase>();
     ret->set_sparse_grad(sparse_grad());
+    ret->set_has_indexed_slices_grad(has_indexed_slices_grad());
     return ret;
   }
   auto ret = std::make_shared<AbstractScalar>(res_value, res_type);
   ret->set_sparse_grad(sparse_grad());
+  ret->set_has_indexed_slices_grad(has_indexed_slices_grad());
   return ret;
 }
 
@@ -409,6 +416,14 @@ std::size_t AbstractSlice::hash() const {
   return hash_combine({tid(), start_->hash(), stop_->hash(), step_->hash()});
 }
 
+ShapePtr AbstractUndetermined::shape() const {
+  auto shp = dyn_cast<Shape>(GetShapeTrack());
+  if (shp == nullptr) {
+    MS_LOG(EXCEPTION) << "Tensor should have a shape.";
+  }
+  return shp;
+}
+
 TypePtr AbstractTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(element_);
   TypePtr element_type = element_->BuildType();
@@ -425,6 +440,13 @@ BaseShapePtr AbstractTensor::BuildShape() const {
 }
 
 AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
+  if (other->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+    auto other_tensor = dyn_cast<AbstractUndetermined>(other);
+    auto element = element_->Join(other_tensor->element());
+    auto shape = ShapeJoin(this->shape(), other_tensor->shape());
+    auto ret = std::make_shared<AbstractUndetermined>(element, shape);
+    return ret;
+  }
   auto other_tensor = dyn_cast<AbstractTensor>(other);
   if (other_tensor == nullptr) {
     MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
@@ -433,6 +455,7 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   auto shape = ShapeJoin(this->shape(), other_tensor->shape());
   auto ret = std::make_shared<AbstractTensor>(element, shape);
   ret->set_sparse_grad(sparse_grad());
+  ret->set_has_indexed_slices_grad(has_indexed_slices_grad());
   return ret;
 }
 
@@ -474,6 +497,7 @@ AbstractBasePtr AbstractTensor::Clone() const {
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
   clone->set_sparse_grad(sparse_grad());
+  clone->set_has_indexed_slices_grad(has_indexed_slices_grad());
   return clone;
 }
 
@@ -484,6 +508,7 @@ AbstractBasePtr AbstractTensor::Broaden() const {
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
   broaden->set_sparse_grad(sparse_grad());
+  broaden->set_has_indexed_slices_grad(has_indexed_slices_grad());
   return broaden;
 }
 
@@ -495,15 +520,8 @@ AbstractBasePtr AbstractTensor::BroadenWithShape() const {
   broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
   broaden->set_sparse_grad(sparse_grad());
+  broaden->set_has_indexed_slices_grad(has_indexed_slices_grad());
   return broaden;
-}
-
-ShapePtr AbstractTensor::shape() const {
-  auto shp = dyn_cast<Shape>(GetShapeTrack());
-  if (shp == nullptr) {
-    MS_LOG(EXCEPTION) << "Tensor should have a shape.";
-  }
-  return shp;
 }
 
 std::string AbstractTensor::ToString() const {
@@ -516,7 +534,7 @@ std::string AbstractTensor::ToString() const {
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element_->ToString()
          << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << " sparse_grad " << sparse_grad()
-         << ")";
+         << " has_indexed_slices_grad " << has_indexed_slices_grad() << ")";
   return buffer.str();
 }
 
@@ -1018,6 +1036,65 @@ std::size_t AbstractBasePtrListHasher::operator()(const AbstractBasePtrList &arg
 
 bool AbstractBasePtrListEqual::operator()(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) const {
   return AbstractBasePtrListDeepEqual(lhs, rhs);
+}
+
+// IndexedSlices
+TypePtr AbstractIndexedSlices::BuildType() const {
+  MS_EXCEPTION_IF_NULL(element());
+  TypePtr element_type = element()->BuildType();
+  return std::make_shared<IndexedSlicesType>(element_type);
+}
+
+AbstractBasePtr AbstractIndexedSlices::Clone() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto clone = std::make_shared<AbstractIndexedSlices>(element()->Clone());
+  ShapePtr shp = shape();
+  clone->set_shape(shp->Clone());
+  clone->set_value(GetValueTrack());
+  clone->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  clone->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  clone->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return clone;
+}
+
+AbstractBasePtr AbstractIndexedSlices::Broaden() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto broaden = std::make_shared<AbstractIndexedSlices>(element()->Broaden());
+  auto shp = shape();
+  broaden->set_shape(shp->Clone());
+  broaden->set_value(kAnyValue);
+  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return broaden;
+}
+
+AbstractBasePtr AbstractIndexedSlices::BroadenWithShape() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto broaden = std::make_shared<AbstractIndexedSlices>(element()->Broaden());
+  auto shp = shape()->Clone();
+  shp->Broaden();
+  broaden->set_shape(shp);
+  broaden->set_value(kAnyValue);
+  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return broaden;
+}
+
+std::string AbstractIndexedSlices::ToString() const {
+  std::ostringstream buffer;
+  BaseShapePtr shape_track = GetShapeTrack();
+  MS_EXCEPTION_IF_NULL(shape_track);
+  MS_EXCEPTION_IF_NULL(element());
+  auto value_track = GetValueTrack();
+  MS_EXCEPTION_IF_NULL(value_track);
+  buffer << type_name() << "("
+         << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
+         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
+         << ", indices: " << indices_->ToString() << ", values" << values_->ToString()
+         << ", dense_shape: " << dense_shape_->ToString();
+  return buffer.str();
 }
 }  // namespace abstract
 }  // namespace mindspore

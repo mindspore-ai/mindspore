@@ -564,7 +564,7 @@ class SparseGatherV2(GatherV2):
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> out = P.GatherV2()(input_params, input_indices, axis)
+        >>> out = P.SparseGatherV2()(input_params, input_indices, axis)
     """
 
 

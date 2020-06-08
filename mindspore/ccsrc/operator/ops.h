@@ -287,6 +287,13 @@ extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;
 
+// IndexedSlices
+extern const PrimitivePtr kPrimMakeIndexedSlices;
+extern const PrimitivePtr kPrimIndexedSlicesGetValues;
+extern const PrimitivePtr kPrimIndexedSlicesGetIndices;
+extern const PrimitivePtr kPrimIndexedSlicesGetDenseShape;
+extern const PrimitivePtr kPrimIsIndexedSlices;
+
 class DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)

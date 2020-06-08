@@ -108,10 +108,34 @@ class Slice : public Object {
 };
 using SlicePtr = std::shared_ptr<Slice>;
 
+class UndeterminedType : public Object {
+ public:
+  UndeterminedType() : Object(kObjectTypeUndeterminedType) {}
+  explicit UndeterminedType(const TypePtr &ele)
+      : Object(kObjectTypeUndeterminedType, kMetaTypeObject, false), element_type_(ele) {}
+  ~UndeterminedType() override = default;
+  MS_DECLARE_PARENT(UndeterminedType, Object)
+
+  TypeId generic_type_id() const override { return kObjectTypeUndeterminedType; }
+  const TypePtr element() const { return element_type_; }
+  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
+
+  TypePtr DeepCopy() const override;
+  std::string ToString() const override;
+  std::string ToReprString() const override;
+  std::string DumpText() const override;
+  bool operator==(const Type &other) const override;
+
+ protected:
+  TypePtr element_type_;
+};
+using MetaTensorTypePtr = std::shared_ptr<UndeterminedType>;
+
 class TensorType : public Object {
  public:
-  TensorType() : Object(kObjectTypeTensorType) {}
-  explicit TensorType(const TypePtr &ele) : Object(kObjectTypeTensorType, false), element_type_(ele) {}
+  TensorType() : Object(kObjectTypeTensorType, kObjectTypeUndeterminedType) {}
+  explicit TensorType(const TypePtr &ele)
+      : Object(kObjectTypeTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
   ~TensorType() override = default;
   MS_DECLARE_PARENT(TensorType, Object)
 
@@ -129,6 +153,29 @@ class TensorType : public Object {
   TypePtr element_type_;
 };
 using TensorTypePtr = std::shared_ptr<TensorType>;
+
+class IndexedSlicesType : public Object {
+ public:
+  IndexedSlicesType() : Object(kObjectTypeIndexedSlicesType, kObjectTypeUndeterminedType) {}
+  explicit IndexedSlicesType(const TypePtr &ele)
+      : Object(kObjectTypeIndexedSlicesType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+  ~IndexedSlicesType() override = default;
+  MS_DECLARE_PARENT(IndexedSlicesType, Object)
+
+  TypeId generic_type_id() const override { return kObjectTypeIndexedSlicesType; }
+  const TypePtr element() const { return element_type_; }
+  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
+
+  TypePtr DeepCopy() const override;
+  std::string ToString() const override;
+  std::string ToReprString() const override;
+  std::string DumpText() const override;
+  bool operator==(const Type &other) const override;
+
+ private:
+  TypePtr element_type_;
+};
+using IndexedSlicesTypePtr = std::shared_ptr<IndexedSlicesType>;
 
 class Function : public Object {
  public:
@@ -254,6 +301,8 @@ TypePtr StringToType(const std::string &type_name);
 
 // Judge whether x is predicate or is a subclass of predicate.
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type);
+
+bool IsParentOrChildrenType(TypePtr const &x, TypePtr const &base_type);
 
 // Whether t1 is identity or a subclass of t2.
 bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);

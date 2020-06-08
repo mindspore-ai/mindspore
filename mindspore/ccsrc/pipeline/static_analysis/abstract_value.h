@@ -44,7 +44,7 @@ class AbstractBase : public Base {
  public:
   explicit AbstractBase(const ValuePtr &value = nullptr, const TypePtr &type = kAnyType,
                         const BaseShapePtr &shape = kNoShape)
-      : value_(value), type_(type), shape_(shape), sparse_grad_("") {}
+      : value_(value), type_(type), shape_(shape), sparse_grad_(""), has_indexed_slices_grad_(false) {}
   ~AbstractBase() override = default;
   MS_DECLARE_PARENT(AbstractBase, Base)
 
@@ -54,12 +54,16 @@ class AbstractBase : public Base {
   virtual bool operator==(const AbstractBase &other) const;
   void set_value(const ValuePtr &value) { value_ = value; }
   void set_sparse_grad(const std::string &sparse_grad) { sparse_grad_ = sparse_grad; }
+  void set_has_indexed_slices_grad(const bool &has_indexed_slices_grad) {
+    has_indexed_slices_grad_ = has_indexed_slices_grad;
+  }
   void set_type(const TypePtr &type) { type_ = type; }
   void set_shape(const BaseShapePtr &shape) { shape_ = shape; }
   void set_value_desc(const std::string &desc) { value_desc_ = desc; }
   const std::string &value_desc() const { return value_desc_; }
   ValuePtr GetValueTrack() const { return value_; }
   const std::string &sparse_grad() const { return sparse_grad_; }
+  const bool &has_indexed_slices_grad() const { return has_indexed_slices_grad_; }
   TypePtr GetTypeTrack() const { return type_; }
   BaseShapePtr GetShapeTrack() const { return shape_; }
 
@@ -88,6 +92,7 @@ class AbstractBase : public Base {
   BaseShapePtr shape_;
   std::string value_desc_;  // store initial value description for error report
   std::string sparse_grad_;
+  bool has_indexed_slices_grad_;
 };
 
 class AbstractScalar : public AbstractBase {
@@ -231,35 +236,49 @@ class AbstractKeywordArg : public AbstractBase {
 };
 using AbstractKeywordArgPtr = std::shared_ptr<AbstractKeywordArg>;
 
-class AbstractTensor : public AbstractBase {
+class AbstractUndetermined : public AbstractBase {
  public:
+  // shape and type are all unknown
+  AbstractUndetermined() : AbstractBase(kAnyValue) {}
   // only element_ and value, shape track are valid member, type track are unknown.
-  explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+  explicit AbstractUndetermined(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractBase(kAnyValue), element_(element) {
     if (element == nullptr) {
       MS_LOG(EXCEPTION) << "element is nullptr";
     }
-    if (element->isa<AbstractTensor>()) {
+    if (element->isa<AbstractUndetermined>()) {
       MS_LOG(EXCEPTION) << "element type error";
     }
     set_shape(shape);
   }
-  AbstractTensor(const TypePtr &element_type, const std::vector<int> &shape)
+  AbstractUndetermined(const TypePtr &element_type, const std::vector<int> &shape)
       : AbstractBase(kAnyValue), element_(std::make_shared<AbstractScalar>(kAnyValue, element_type)) {
     if (element_type == nullptr) {
       MS_LOG(EXCEPTION) << "element_type is nullptr";
     }
     set_shape(std::make_shared<Shape>(shape));
   }
-  explicit AbstractTensor(const tensor::TensorPtr &tensor)
-      : AbstractBase(tensor), element_(std::make_shared<AbstractScalar>(kAnyValue, tensor->Dtype())) {
-    if (tensor == nullptr) {
-      MS_LOG(EXCEPTION) << "tensor is nullptr";
-    }
-    set_shape(std::make_shared<Shape>(tensor->shape()));
-  }
+  ~AbstractUndetermined() override = default;
+  MS_DECLARE_PARENT(AbstractUndetermined, AbstractBase)
+  TypePtr BuildType() const override { return std::make_shared<UndeterminedType>(); }
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractUndetermined>(); }
+  const AbstractBasePtr element() const { return element_; }
+  ShapePtr shape() const;
+
+ protected:
+  AbstractBasePtr element_;
+};
+
+class AbstractTensor : public AbstractUndetermined {
+ public:
+  // only element_ and value, shape track are valid member, type track are unknown.
+  explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+      : AbstractUndetermined(element, shape) {}
+  AbstractTensor(const TypePtr &element_type, const std::vector<int> &shape)
+      : AbstractUndetermined(element_type, shape) {}
+  explicit AbstractTensor(const tensor::TensorPtr &tensor) : AbstractUndetermined(tensor->Dtype(), tensor->shape()) {}
   ~AbstractTensor() override = default;
-  MS_DECLARE_PARENT(AbstractTensor, AbstractBase)
+  MS_DECLARE_PARENT(AbstractTensor, AbstractUndetermined)
 
   TypePtr BuildType() const override;
   BaseShapePtr BuildShape() const override;
@@ -271,9 +290,7 @@ class AbstractTensor : public AbstractBase {
   bool operator==(const AbstractTensor &other) const;
   bool operator==(const AbstractBase &other) const override;
 
-  ShapePtr shape() const;
   std::string ToString() const override;
-  const AbstractBasePtr element() const { return element_; }
   std::size_t hash() const override {
     auto value = GetValueTrack();
     auto hash_sum = hash_combine(tid(), element_->hash());
@@ -285,9 +302,6 @@ class AbstractTensor : public AbstractBase {
     }
     return hash_sum;
   }
-
- private:
-  AbstractBasePtr element_;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
@@ -585,6 +599,35 @@ struct AbstractBasePtrListEqual {
 
 std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list);
 bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs);
+
+// IndexedSlices
+class AbstractIndexedSlices : public AbstractUndetermined {
+ public:
+  explicit AbstractIndexedSlices(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+      : AbstractUndetermined(element, shape) {}
+  AbstractIndexedSlices(const TypePtr &element_type, const std::vector<int> &shape)
+      : AbstractUndetermined(element_type, shape) {}
+  ~AbstractIndexedSlices() override = default;
+  MS_DECLARE_PARENT(AbstractIndexedSlices, AbstractUndetermined)
+
+  const AbstractTensorPtr indices() const { return indices_; }
+  const AbstractTensorPtr values() const { return values_; }
+  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
+  void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }
+  void set_values(const AbstractTensorPtr &values) { values_ = values; }
+  void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
+  TypePtr BuildType() const override;
+  AbstractBasePtr Clone() const override;
+  AbstractBasePtr Broaden() const override;
+  AbstractBasePtr BroadenWithShape() const;
+
+  std::string ToString() const override;
+
+ private:
+  AbstractTensorPtr indices_;
+  AbstractTensorPtr values_;
+  AbstractTuplePtr dense_shape_;
+};
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // PIPELINE_STATIC_ANALYSIS_ABSTRACT_VALUE_H_

@@ -232,6 +232,9 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
       auto sparse_grad =
         py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), "sparse_grad"));
       ptr->set_sparse_grad(sparse_grad);
+      auto has_indexed_slices_grad =
+        py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "has_indexed_slices_grad"));
+      ptr->set_has_indexed_slices_grad(has_indexed_slices_grad);
 
       parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
       args_spec.push_back(ptr);
