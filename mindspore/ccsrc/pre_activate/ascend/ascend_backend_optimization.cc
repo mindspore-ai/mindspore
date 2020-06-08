@@ -66,6 +66,8 @@
 #include "pre_activate/ascend/format_type/check_consistency.h"
 #include "pre_activate/ascend/buffer_fusion/ub_pattern_fusion.h"
 #include "pre_activate/ascend/buffer_fusion/eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/multi_output_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/stridedread_conv_stridedwrite_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
@@ -365,6 +367,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto ub_fusion_pm = std::make_shared<PassManager>("ub_fusion_pm");
   ub_fusion_pm->AddPass(std::make_shared<Conv2DBackpropEltwiseEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<Conv2DBackpropEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<StridedReadConvStridedWriteFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<ConvBnReduceFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<ConvSingleInFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator));
@@ -373,6 +376,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   ub_fusion_pm->AddPass(std::make_shared<ConvDoubleInFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<SegmentEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<MultiOutputFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
