@@ -33,5 +33,8 @@ dnnl::memory MKLKernelEngine::CreateMemory(const dnnl::memory::desc &mem_desc, b
     return dnnl::memory(mem_desc, engine_, nullptr);
   }
 }
+void MKLKernelEngine::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
+  dnnl::reorder(*src_mem, *dst_mem).execute(stream_, *src_mem, *dst_mem);
+}
 }  // namespace kernel
 }  // namespace mindspore

@@ -41,30 +41,7 @@ class MKLKernelEngine {
 
   void Execute(const std::shared_ptr<dnnl::primitive> &primitive,
                const std::unordered_map<int, dnnl::memory> &arguments);
-
-  inline void read_from_dnnl_memory(void *handle, const dnnl::memory &mem) {
-    dnnl::engine eng = mem.get_engine();
-    size_t bytes = mem.get_desc().get_size();
-    if (eng.get_kind() == dnnl::engine::kind::cpu) {
-      auto dst = reinterpret_cast<uint8_t *>(handle);
-      uint8_t *src = reinterpret_cast<uint8_t *>(mem.get_data_handle());
-      for (size_t i = 0; i < bytes; ++i) {
-        dst[i] = src[i];
-      }
-    }
-  }
-  // Read from handle, write to memory
-  inline void write_to_dnnl_memory(void *handle, const dnnl::memory &mem) {
-    dnnl::engine eng = mem.get_engine();
-    size_t bytes = mem.get_desc().get_size();
-    if (eng.get_kind() == dnnl::engine::kind::cpu) {
-      auto src = reinterpret_cast<uint8_t *>(handle);
-      uint8_t *dst = reinterpret_cast<uint8_t *>(mem.get_data_handle());
-      for (size_t i = 0; i < bytes; ++i) {
-        dst[i] = src[i];
-      }
-    }
-  }
+  void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
 
  private:
   MKLKernelEngine() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}

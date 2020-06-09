@@ -20,7 +20,6 @@ import mindspore.context as context
 from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.ops import composite as C
-from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
 
@@ -28,7 +27,7 @@ context.set_context(device_target='CPU')
 
 
 class LstmNet(nn.Cell):
-    def __init__(self, seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+    def __init__(self, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
         super(LstmNet, self).__init__()
 
         num_directions = 1
@@ -92,7 +91,7 @@ def test_lstm():
     num_directions = 1
     if bidirectional:
         num_directions = 2
-    net = LstmNet(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
+    net = LstmNet(batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
     y, (h, c) = net()
     print(y)
     print(c)
@@ -131,7 +130,7 @@ def test_lstm():
 
 
 class MultiLayerBiLstmNet(nn.Cell):
-    def __init__(self, seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+    def __init__(self, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
         super(MultiLayerBiLstmNet, self).__init__()
 
         num_directions = 1
@@ -166,6 +165,17 @@ class MultiLayerBiLstmNet(nn.Cell):
 
         self.h = tuple((self.h0, self.h1))
         self.c = tuple((self.c0, self.c1))
+        input_size_list = [input_size, hidden_size * num_directions]
+        weights = []
+        bias_size = 0 if not has_bias else num_directions * hidden_size * 4
+        for i in range(num_layers):
+            weight_size = (input_size_list[i] + hidden_size) * num_directions * hidden_size * 4
+            w_np = np.ones([weight_size, 1, 1]).astype(np.float32) * 0.02
+            if has_bias:
+                bias_np = np.zeros([bias_size, 1, 1]).astype(np.float32)
+                w_np = np.concatenate([w_np, bias_np], axis=0)
+            weights.append(Parameter(initializer(Tensor(w_np), w_np.shape), name='weight' + str(i)))
+        self.lstm.weight = weights
 
     @ms_function
     def construct(self):
@@ -176,7 +186,6 @@ class MultiLayerBiLstmNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_multi_layer_bilstm():
-    seq_len = 5
     batch_size = 2
     input_size = 10
     hidden_size = 2
@@ -185,7 +194,7 @@ def test_multi_layer_bilstm():
     bidirectional = True
     dropout = 0.0
 
-    net = MultiLayerBiLstmNet(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional,
+    net = MultiLayerBiLstmNet(batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional,
                               dropout)
     y, (h, c) = net()
     print(y)
@@ -274,7 +283,7 @@ def test_grad():
     input_size = 3
     hidden_size = 2
     num_layers = 1
-    has_bias = True
+    has_bias = False
     bidirectional = False
     dropout = 0.0
     net = Grad(Net(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout))
