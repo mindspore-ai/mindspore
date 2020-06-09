@@ -28,6 +28,7 @@
 #include <utility>
 #include "pipeline/parse/parse_base.h"
 #include "utils/log_adapter.h"
+#include "utils/ordered_map.h"
 
 namespace mindspore {
 namespace parse {
@@ -100,7 +101,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis_;
 
   // set state nodes need to insert before function return nodes.
-  std::unordered_map<AnfNodePtr, std::string> state_assign_;
+  OrderedMap<AnfNodePtr, std::string> state_assign_;
 
   // hold declared global variables in function
   std::set<std::string> global_vars_;

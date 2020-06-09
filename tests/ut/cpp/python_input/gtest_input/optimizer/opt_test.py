@@ -1046,8 +1046,8 @@ def test_print_tuple_wrapper(tag):
 # pylint: disable=unnecessary-semicolon
 def test_constant_duplicate_mul(tag):
     fns = FnDict()
-    Mul = Primitive('Mul');
-    Sqrt = Primitive('Sqrt');
+    Mul = Primitive('Mul')
+    Sqrt = Primitive('Sqrt')
 
     x = Tensor(np.array([[2, 2], [2, 3]]).astype('float32'))
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
@@ -1072,5 +1072,46 @@ def test_constant_duplicate_mul(tag):
     @fns
     def after():
         return Mul(Sqrt(x), Mul(tensor1, tensor2))
+
+    return fns[tag]
+
+
+def test_adjust_allreduce_mul_add(tag):
+    fns = FnDict()
+    Mul = Primitive('Mul')
+    AddN = Primitive('AddN')
+    AllReduce = Primitive('AllReduce')
+
+    @fns
+    def beforell(x, y, z):
+        return AddN((z, Mul(y, AllReduce(x))))
+
+    @fns
+    def beforelr(x, y, z):
+        return AddN((z, Mul(AllReduce(x), y)))
+
+    @fns
+    def beforerl(x, y, z):
+        return AddN((Mul(y, AllReduce(x)), z))
+
+    @fns
+    def beforerr(x, y, z):
+        return AddN((Mul(AllReduce(x), y), z))
+
+    @fns
+    def after1(x, y, z):
+        return Mul(AllReduce(AddN((z, x))), y)
+
+    @fns
+    def before2r(x, y, z):
+        return AddN((Mul(AllReduce(x), y), Mul(z, z)))
+
+    @fns
+    def before2l(x, y, z):
+        return AddN((Mul(z, z), Mul(AllReduce(x), y)))
+
+    @fns
+    def after2(x, y, z):
+        return Mul(AllReduce(AddN((Mul(z, z), x))), y)
 
     return fns[tag]

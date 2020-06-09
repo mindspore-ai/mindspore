@@ -20,9 +20,12 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import amp
 from mindspore import nn
-from mindspore.train import Model
+from mindspore.train import Model, ParallelMode
+from mindspore.common import dtype as mstype
+from mindspore.model_zoo.resnet import resnet50
 from ....dataset_mock import MindData
-
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.communication.management import init
 
 def setup_module(module):
     _ = module
@@ -139,3 +142,22 @@ def test_compile_model_train_O2():
     with pytest.raises(ValueError):
         # not actual run, the metrics step will fail, check if compile ok.
         model.eval(dataset)
+
+def test_compile_model_train_O2_parallel():
+    dataset_types = (np.float32, np.float32)
+    dataset_shapes = ((16, 16), (16, 16))
+
+    dataset = MindDataSet(dataset_types, dataset_shapes)
+
+    net = NetNoLoss(16, 16)
+    loss = nn.MSELoss()
+    optimizer = nn.Momentum(net.trainable_params(), 0.1, 0.9, 0.00004, 1024.0)
+
+    context.set_auto_parallel_context(
+        global_rank=0, device_num=8,
+        mirror_mean=True, parameter_broadcast=True,
+        parallel_mode=ParallelMode.DATA_PARALLEL)
+    init()
+
+    model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={"acc"}, amp_level="O2")
+    model.train(2, dataset, dataset_sink_mode=False)
