@@ -17,6 +17,7 @@
 #define DATASET_KERNELS_DATA_DATA_UTILS_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "dataset/core/constants.h"
 #include "dataset/core/cv_tensor.h"
@@ -58,6 +59,59 @@ void Cast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output)
 Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type);
+
+// Pad input tensor according pad_shape, need to have same rank.
+// Based on the type of the input tensor, PadEndNumeric/String will be called.
+// @param std::shared_ptr<Tensor> src - tensor to pad from
+// @param std::shared_ptr<Tensor> *dst - return tensor padded
+// @param std::vector<dsize_t> pad_shape - shape to pad to
+// @param std::shared_ptr<Tensor> pad_val - value to pad with in Tensor format,
+// @return - The error code return
+Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, const std::vector<dsize_t> &pad_shape,
+              const std::shared_ptr<Tensor> &pad_val);
+
+// Pad input numeric tensor according pad_shape, need to have same rank.
+// @param std::shared_ptr<Tensor> src - tensor to pad from
+// @param std::shared_ptr<Tensor> *dst - return tensor padded
+// @param std::vector<dsize_t> pad_shape - shape to pad to
+// @param float pad_val - value to pad with
+// @return - The error code return
+Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
+                     const std::vector<dsize_t> &pad_shape, float pad_val);
+
+// recursive helper function for padding numric tensors. This function could be very expensive if called on a
+// multi-dimensional tensor it is only meant to be called by PadEndNumeric.
+// @tparam T - type of tensor and fill value
+// @param std::shared_ptr<Tensor> src - Tensor to pad from
+// @param std::shared_ptr<Tensor>* dst - Tensor to pad to, return value
+// @param std::vector<dsize_t> cur_ind - recursion helper
+// @param T pad_val - value to pad tensor with
+// @param size_t cur_dim - recursion helper
+// @return Status - The error code return
+Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> dst,
+                           std::vector<dsize_t> cur_ind, size_t cur_dim = 0);
+
+// Pad input string tensor according pad_shape, need to have same rank.
+// @param std::shared_ptr<Tensor> src - tensor to pad from
+// @param std::shared_ptr<Tensor> *dst - return tensor padded
+// @param std::vector<dsize_t> pad_shape - shape to pad to
+// @param std::string pad_val - value to pad with
+// @return - The error code return
+Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
+                    const std::vector<dsize_t> &pad_shape, const std::string &pad_val);
+
+// recursive helper function for padding string tensors. This function could be very expensive if called on a
+// multi-dimensional tensor it is only meant to be called by PadEndNumeric.
+// @tparam T - type of tensor and fill value
+// @param std::shared_ptr<Tensor> src - Tensor to pad from
+// @param std::shared_ptr<Tensor>* dst - Tensor to pad to, return value
+// @param std::vector<dsize_t> cur_ind - recursion helper
+// @param std::string pad_val - value to pad tensor with
+// @param size_t cur_dim - recursion helper
+// @return Status - The error code return
+Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::string> *dst,
+                          const TensorShape &dst_shape, std::vector<dsize_t> cur_ind, size_t cur_dim,
+                          const std::string &pad_value);
 }  // namespace dataset
 }  // namespace mindspore
 

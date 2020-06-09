@@ -19,10 +19,12 @@ import inspect as ins
 import os
 from functools import wraps
 from multiprocessing import cpu_count
+
 import numpy as np
 from mindspore._c_expression import typing
-from . import samplers
+
 from . import datasets
+from . import samplers
 
 INT32_MAX = 2147483647
 valid_detype = [
@@ -704,7 +706,7 @@ def check_pad_info(key, val):
                     check_type(dim, "dim in pad_shape", int)
                     assert dim > 0, "pad shape should be positive integers"
         if val[1] is not None:
-            check_type(val[1], "pad_value", (int, float))
+            check_type(val[1], "pad_value", (int, float, str, bytes))
 
 
 def check_batch(method):

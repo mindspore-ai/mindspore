@@ -169,6 +169,8 @@ class DEPipeline {
   // Validate required args passed to storage op.
   Status ValidateArgStorageOp(const py::dict &args);
 
+  static Status ParsePadInfo(py::handle value, PadInfo *pad_info);
+
   int batch_size_;
   int repeat_num_;
   int num_rows_;

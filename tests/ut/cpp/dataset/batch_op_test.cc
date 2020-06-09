@@ -299,8 +299,11 @@ TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
 TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset";
   std::shared_ptr<BatchOp> op;
-  std::map<std::string, std::pair<TensorShape, float>> m;
-  m.insert({"col_1d", std::make_pair(TensorShape({4}), -1)});
+  PadInfo m;
+  std::shared_ptr<Tensor> pad_value;
+  Tensor::CreateTensor(&pad_value, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32));
+  pad_value->SetItemAt<float>({}, -1);
+  m.insert({"col_1d", std::make_pair(TensorShape({4}), pad_value)});
   de::BatchOp::Builder(12).SetDrop(false).SetPaddingMap(m, true).Build(&op);
   auto tree = Build({Storage(schema_file), op});
   tree->Prepare();
@@ -308,9 +311,54 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Return code error detected during tree launch: " << rc.ToString() << ".";
   } else {
-    int64_t payload[] = {-9223372036854775807 - 1,  1,  -1, -1, 2,  3,  -1, -1, 4,  5,  -1, -1, 6,  7,  -1, -1,
-                         8,  9,  -1, -1, 10, 11, -1, -1, 12, 13, -1, -1, 14, 15, -1, -1,
-                         16, 17, -1, -1, 18, 19, -1, -1, 20, 21, -1, -1, 22, 23, -1, -1};
+    int64_t payload[] = {-9223372036854775807 - 1,
+                         1,
+                         -1,
+                         -1,
+                         2,
+                         3,
+                         -1,
+                         -1,
+                         4,
+                         5,
+                         -1,
+                         -1,
+                         6,
+                         7,
+                         -1,
+                         -1,
+                         8,
+                         9,
+                         -1,
+                         -1,
+                         10,
+                         11,
+                         -1,
+                         -1,
+                         12,
+                         13,
+                         -1,
+                         -1,
+                         14,
+                         15,
+                         -1,
+                         -1,
+                         16,
+                         17,
+                         -1,
+                         -1,
+                         18,
+                         19,
+                         -1,
+                         -1,
+                         20,
+                         21,
+                         -1,
+                         -1,
+                         22,
+                         23,
+                         -1,
+                         -1};
     std::shared_ptr<de::Tensor> t;
     rc = de::Tensor::CreateTensor(&t, TensorImpl::kFlexible, de::TensorShape({12, 4}), de::DataType(DataType::DE_INT64),
                                   (unsigned char *)payload);

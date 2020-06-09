@@ -138,7 +138,7 @@ DataType DataType::FromNpArray(const py::array &arr) {
     return DataType(DataType::DE_FLOAT32);
   } else if (py::isinstance<py::array_t<std::double_t>>(arr)) {
     return DataType(DataType::DE_FLOAT64);
-  } else if (arr.dtype().kind() == 'S') {
+  } else if (arr.dtype().kind() == 'S' || arr.dtype().kind() == 'U') {
     return DataType(DataType::DE_STRING);
   } else {
     MS_LOG(ERROR) << "Cannot convert from numpy type. Unknown data type is returned!";

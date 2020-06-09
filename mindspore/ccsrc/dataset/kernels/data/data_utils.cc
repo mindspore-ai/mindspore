@@ -15,6 +15,8 @@
  */
 
 #include "dataset/kernels/data/data_utils.h"
+#include <algorithm>
+#include <string>
 #include <vector>
 #include "dataset/core/constants.h"
 #include "dataset/core/tensor.h"
@@ -218,6 +220,126 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   auto out_end = (*output)->end<float16>();
   for (; out_itr != out_end; in_itr++, out_itr++) *out_itr = Eigen::half(*in_itr);
 
+  return Status::OK();
+}
+
+Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, const std::vector<dsize_t> &pad_shape,
+              const std::shared_ptr<Tensor> &pad_val) {
+  if (pad_val == nullptr) {
+    if (src->type().IsNumeric()) {
+      return PadEndNumeric(src, dst, pad_shape, 0);
+    } else {
+      return PadEndString(src, dst, pad_shape, "");
+    }
+  }
+  if (pad_val->type().IsNumeric()) {
+    float val = 0;
+    RETURN_IF_NOT_OK(pad_val->GetItemAt<float>(&val, {}));
+    return PadEndNumeric(src, dst, pad_shape, val);
+  }
+  std::string_view val;
+  RETURN_IF_NOT_OK(pad_val->GetItemAt(&val, {}));
+  return PadEndString(src, dst, pad_shape, std::string(val));
+}
+
+Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
+                     const std::vector<dsize_t> &pad_shape, float pad_val) {
+  CHECK_FAIL_RETURN_UNEXPECTED(src != nullptr && dst != nullptr, "tensor can't be nullptr");
+  if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
+    (*dst) = src;  // if no padding, copy the pointer
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(dst, TensorImpl::kFlexible, TensorShape(pad_shape), src->type()));
+    auto tensor_type = src->type().value();
+    if (pad_val == 0) {  // if pad with zero, don't care what type it is
+      RETURN_IF_NOT_OK((*dst)->Zero());
+    } else if (tensor_type == DataType::DE_INT8) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int8_t>(pad_val));
+    } else if (tensor_type == DataType::DE_BOOL) {
+      RETURN_IF_NOT_OK((*dst)->Fill<bool>(pad_val));
+    } else if (tensor_type == DataType::DE_UINT8) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint8_t>(pad_val));
+    } else if (tensor_type == DataType::DE_INT16) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int16_t>(pad_val));
+    } else if (tensor_type == DataType::DE_FLOAT16) {
+      RETURN_IF_NOT_OK((*dst)->Fill<float16>(static_cast<float16>(pad_val)));
+    } else if (tensor_type == DataType::DE_UINT16) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint16_t>(pad_val));
+    } else if (tensor_type == DataType::DE_INT32) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int32_t>(pad_val));
+    } else if (tensor_type == DataType::DE_UINT32) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint32_t>(pad_val));
+    } else if (tensor_type == DataType::DE_INT64) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int64_t>(pad_val));
+    } else if (tensor_type == DataType::DE_UINT64) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint64_t>(pad_val));
+    } else if (tensor_type == DataType::DE_FLOAT32) {
+      RETURN_IF_NOT_OK((*dst)->Fill<float>(pad_val));
+    } else if (tensor_type == DataType::DE_FLOAT64) {
+      RETURN_IF_NOT_OK((*dst)->Fill<double>(pad_val));
+    } else {
+      RETURN_STATUS_UNEXPECTED("Incorrect/Unknown tensor type");
+    }
+    std::vector<dsize_t> cur_ind(src->Rank(), 0);
+    RETURN_IF_NOT_OK(PadEndNumericHelper(src, *dst, cur_ind, 0));
+  }
+  return Status::OK();
+}
+Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> dst,
+                           std::vector<dsize_t> cur_ind, size_t cur_dim) {
+  if (cur_dim == src->Rank() - 1) {  // if this is the last dimension, copy the data
+    dst->CopyLastDimAt(src, cur_ind);
+  } else {  // not the last dimension, keep doing recursion
+    dsize_t min_ind = std::min(dst->shape()[cur_dim], src->shape()[cur_dim]);
+    for (dsize_t i = 0; i < min_ind; i++) {
+      cur_ind[cur_dim] = i;
+      RETURN_IF_NOT_OK(PadEndNumericHelper(src, dst, cur_ind, cur_dim + 1));
+    }
+  }
+  return Status::OK();
+}
+
+Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
+                    const std::vector<dsize_t> &pad_shape, const std::string &pad_val) {
+  CHECK_FAIL_RETURN_UNEXPECTED(src != nullptr && dst != nullptr, "tensor can't be nullptr");
+  if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
+    (*dst) = src;  // if no padding, copy the pointer
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
+    std::vector<dsize_t> cur_ind(src->Rank(), 0);
+    std::vector<std::string> strings;
+    RETURN_IF_NOT_OK(PadEndStringHelper(src, &strings, TensorShape(pad_shape), cur_ind, 0, pad_val));
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(dst, strings, TensorShape(pad_shape)));
+  }
+  return Status::OK();
+}
+
+Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::string> *dst,
+                          const TensorShape &dst_shape, std::vector<dsize_t> cur_ind, size_t cur_dim,
+                          const std::string &pad_value) {
+  if (cur_dim == src->Rank() - 1) {  // if this is the last dimension, copy the data
+    dsize_t min_ind = std::min(dst_shape[cur_dim], src->shape()[cur_dim]);
+    for (dsize_t i = 0; i < min_ind; i++) {
+      cur_ind[cur_dim] = i;
+      std::string_view item;
+      RETURN_IF_NOT_OK(src->GetItemAt(&item, cur_ind));
+      dst->emplace_back(item);
+    }
+    for (dsize_t i = min_ind; i < dst_shape[cur_dim]; i++) {
+      dst->emplace_back(pad_value);
+    }
+
+  } else {  // not the last dimension, keep doing recursion
+    dsize_t min_ind = std::min(dst_shape[cur_dim], src->shape()[cur_dim]);
+    for (dsize_t i = 0; i < min_ind; i++) {
+      cur_ind[cur_dim] = i;
+      RETURN_IF_NOT_OK(PadEndStringHelper(src, dst, dst_shape, cur_ind, cur_dim + 1, pad_value));
+    }
+    dsize_t count = (dst_shape[cur_dim] - min_ind) * dst_shape.Strides()[cur_dim];
+    for (dsize_t i = 0; i < count; i++) {
+      dst->emplace_back(pad_value);
+    }
+  }
   return Status::OK();
 }
 }  // namespace dataset

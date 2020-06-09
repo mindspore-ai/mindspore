@@ -654,18 +654,8 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
         (void)builder->SetColumnsToMap(ToStringVector(value));
       }
       if (key == "pad_info") {
-        std::map<std::string, std::pair<TensorShape, float>> pad_info;
-        for (auto p : py::reinterpret_borrow<py::dict>(value)) {
-          if (!p.second.is_none()) {
-            py::tuple tp = py::reinterpret_borrow<py::tuple>(p.second);
-            CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == 2, "tuple in pad_info must be (list,int) or (list,float)");
-            TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
-            float pad_val = tp[1].is_none() ? 0 : ToFloat(tp[1]);
-            (void)pad_info.insert({ToString(p.first), {shape, pad_val}});
-          } else {  // tuple is None
-            (void)pad_info.insert({ToString(p.first), {TensorShape({}), 0}});
-          }
-        }
+        PadInfo pad_info;
+        RETURN_IF_NOT_OK(ParsePadInfo(value, &pad_info));
         (void)builder->SetPaddingMap(pad_info, true);
       }
     }
@@ -1164,6 +1154,32 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
   std::shared_ptr<TextFileOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
+  return Status::OK();
+}
+Status DEPipeline::ParsePadInfo(py::handle value, PadInfo *pad_info) {
+  for (auto p : py::reinterpret_borrow<py::dict>(value)) {
+    if (!p.second.is_none()) {
+      auto tp = py::reinterpret_borrow<py::tuple>(p.second);
+      CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == 2, "tuple in pad_info must be (list,int) or (list,float)");
+      TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
+      std::shared_ptr<Tensor> pad_val = nullptr;
+      if (py::isinstance<py::str>(tp[1])) {
+        std::string pad_val_string = tp[1].is_none() ? "" : ToString(tp[1]);
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          Tensor::CreateTensor(&pad_val, std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar()),
+          "Cannot create pad_value Tensor");
+      } else {
+        float pad_val_float = tp[1].is_none() ? 0 : ToFloat(tp[1]);
+        CHECK_FAIL_RETURN_UNEXPECTED(Tensor::CreateTensor(&pad_val, TensorImpl::kFlexible, TensorShape::CreateScalar(),
+                                                          DataType(DataType::DE_FLOAT32)),
+                                     "Cannot create pad_value Tensor");
+        pad_val->SetItemAt<float>({}, pad_val_float);
+      }
+      (void)pad_info->insert({ToString(p.first), {shape, pad_val}});
+    } else {  // tuple is None
+      (void)pad_info->insert({ToString(p.first), {TensorShape({}), nullptr}});
+    }
+  }
   return Status::OK();
 }
 }  // namespace dataset
