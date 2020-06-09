@@ -26,6 +26,7 @@ from .sgd import SGD
 from .lars import LARS
 from .ftrl import FTRL
 from .rmsprop import RMSProp
+from .proximal_ada_grad import ProximalAdagrad
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay',
-           'AdamWeightDecayDynamicLR', 'Lamb', 'SGD', 'FTRL', 'RMSProp']
+           'AdamWeightDecayDynamicLR', 'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad']
