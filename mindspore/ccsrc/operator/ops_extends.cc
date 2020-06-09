@@ -23,10 +23,10 @@
 namespace mindspore {
 // namespace to support primitive operators
 namespace prim {
-ValuePtr GetPythonOps(const std::string &op_name, const std::string &module_name) {
+ValuePtr GetPythonOps(const std::string &op_name, const std::string &module_name, bool use_signature) {
   py::object obj = parse::python_adapter::GetPyFn(module_name, op_name);
   ValuePtr node = nullptr;
-  bool succ = parse::ConvertData(obj, &node);
+  bool succ = parse::ConvertData(obj, &node, use_signature);
   if (!succ) {
     MS_LOG(EXCEPTION) << "get Python op " << op_name << " from " << module_name << " fail";
   }

@@ -47,7 +47,7 @@ class Net(nn.Cell):
 
 
 def test_assign_through_cell():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.to_float(ms.float16)
     net.add_flags_recursive(fp16=False)
@@ -55,6 +55,25 @@ def test_assign_through_cell():
     net(input_data)
     with pytest.raises(TypeError):
         net(None)
+
+
+class AssignOp(nn.Cell):
+    def __init__(self):
+        super(AssignOp, self).__init__()
+        self.b = Parameter(initializer('ones', [5]), name='b')
+
+
+    def construct(self, w):
+        self.b = w
+        return w
+
+
+def test_assign_by_operator():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = AssignOp()
+    net.to_float(ms.float16)
+    input_data = Tensor(np.ones([5]).astype(np.float32))
+    net(input_data)
 
 
 class NetScatterNdUpdate(nn.Cell):
