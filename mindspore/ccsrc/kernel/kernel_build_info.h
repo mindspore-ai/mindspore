@@ -131,6 +131,10 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 
   void SetOpPattern(OpPattern pattern);
 
+  void SetInputFormat(const std::string &format, size_t index);
+
+  void SetOutputFormat(const std::string &format, size_t index);
+
   std::shared_ptr<KernelBuildInfo> Build();
 
  private:

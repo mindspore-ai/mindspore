@@ -167,5 +167,21 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOpPattern(OpPattern pattern) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->op_pattern_ = pattern;
 }
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputFormat(const std::string &format, size_t index) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  if (index >= kernel_build_info_->inputs_format_.size()) {
+    MS_LOG(EXCEPTION) << "index out of range!";
+  }
+  kernel_build_info_->inputs_format_[index] = format;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputFormat(const std::string &format, size_t index) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  if (index >= kernel_build_info_->outputs_format_.size()) {
+    MS_LOG(EXCEPTION) << "index out of range!";
+  }
+  kernel_build_info_->outputs_format_[index] = format;
+}
 }  // namespace kernel
 }  // namespace mindspore

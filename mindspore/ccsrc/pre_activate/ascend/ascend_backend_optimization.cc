@@ -55,6 +55,7 @@
 #include "pre_activate/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
+#include "pre_activate/ascend/format_type/rectify_do_mask_kernel_info.h"
 #include "pre_activate/pass/optimize_dependence.h"
 #include "pre_activate/pass/erase_visit_attr.h"
 #include "pre_activate/ascend/format_type/insert_cast.h"
@@ -79,7 +80,6 @@
 #include "pre_activate/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "pre_activate/ascend/enhancer/add_memcpy_async.h"
 #include "pre_activate/ascend/enhancer/insert_pad_for_nms_with_mask.h"
-#include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
 #include "pre_activate/ascend/ir_fission/addn_fission.h"
@@ -143,6 +143,7 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("pynative_transop_pm");
   data_layout_pm->AddPass(std::make_shared<LayerNormGradSplit>());
+  data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
@@ -155,31 +156,12 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   kernel_graph->SetExecOrderByDefault();
 }
 
-void RunOpAscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto mixed_precision_pm = std::make_shared<PassManager>("pynative_transop_pm");
-  mixed_precision_pm->AddPass(std::make_shared<RunOpInsertCast>());
-  mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
-  mixed_precision_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
-  mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());
-  mixed_precision_pm->AddPass(std::make_shared<OptimizeDependence>());
-  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  mixed_precision_pm->AddPass(std::make_shared<DealRefTransAndCast>());
-  mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
-  mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
-  mixed_precision_pm->AddPass(std::make_shared<LayerNormBetaGammaBackpropFusion>());
-  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  optimizer->AddPassManager(mixed_precision_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-}
-
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
   data_layout_pm->AddPass(std::make_shared<LayerNormGradSplit>());
+  data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
