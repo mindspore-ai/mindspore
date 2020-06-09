@@ -16,9 +16,9 @@
 
 import time
 import argparse
+import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Adam
 from mindspore.train.model import Model
@@ -34,7 +34,6 @@ from src.transformer_for_train import TransformerTrainOneStepCell, TransformerNe
                                       TransformerTrainOneStepWithLossScaleCell
 from src.config import cfg, transformer_net_cfg
 from src.dataset import create_transformer_dataset
-from src.weight_init import weight_variable, one_weight, zero_weight, normal_weight
 from src.lr_schedule import create_dynamic_lr
 
 
@@ -108,7 +107,7 @@ def run_transformer_train():
     parser = argparse_init()
     args, _ = parser.parse_known_args()
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
-    context.set_context(save_graphs=True, reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
+    context.set_context(reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
 
     if args.distribute == "true":
         device_num = args.device_num
@@ -129,29 +128,15 @@ def run_transformer_train():
 
     if args.checkpoint_path:
         parameter_dict = load_checkpoint(args.checkpoint_path)
-    else:
-        parameter_dict = {}
-        params = netwithloss.trainable_params()
-        for param in params:
-            name = param.name
-            value = param.default_input
-            if isinstance(value, Tensor):
-                if name.endswith(".gamma"):
-                    parameter_dict[name] = Parameter(one_weight(value.asnumpy().shape), name=name)
-                elif name.endswith(".beta") or name.endswith(".bias"):
-                    parameter_dict[name] = Parameter(zero_weight(value.asnumpy().shape), name=name)
-                elif "embedding" in name:
-                    parameter_dict[name] = Parameter(normal_weight(value.asnumpy().shape,
-                                                                   transformer_net_cfg.hidden_size), name=name)
-                else:
-                    parameter_dict[name] = Parameter(weight_variable(value.asnumpy().shape), name=name)
-    load_param_into_net(netwithloss, parameter_dict)
+        load_param_into_net(netwithloss, parameter_dict)
 
     lr = Tensor(create_dynamic_lr(schedule="constant*rsqrt_hidden*linear_warmup*rsqrt_decay",
                                   training_steps=dataset.get_dataset_size()*args.epoch_size,
                                   learning_rate=cfg.lr_schedule.learning_rate,
                                   warmup_steps=cfg.lr_schedule.warmup_steps,
-                                  hidden_size=transformer_net_cfg.hidden_size), mstype.float32)
+                                  hidden_size=transformer_net_cfg.hidden_size,
+                                  start_decay_step=cfg.lr_schedule.start_decay_step,
+                                  min_lr=cfg.lr_schedule.min_lr), mstype.float32)
     optimizer = Adam(netwithloss.trainable_params(), lr)
 
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack()]
@@ -176,4 +161,7 @@ def run_transformer_train():
     model.train(repeat_count, dataset, callbacks=callbacks, dataset_sink_mode=(args.enable_data_sink == "true"))
 
 if __name__ == '__main__':
+    random_seed = 1
+    np.random.seed(random_seed)
+
     run_transformer_train()
