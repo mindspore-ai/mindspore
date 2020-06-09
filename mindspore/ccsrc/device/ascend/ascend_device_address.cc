@@ -92,10 +92,29 @@ bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *s
   return true;
 }
 
+void AscendDeviceAddress::SyncStream() const {
+  MS_LOG(INFO) << "Start!";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->device_id();
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto ret = runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Sync stream error!";
+  }
+  MS_LOG(INFO) << "Finish!";
+}
+
 bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t size, mindspore::TypeId type,
                                            void *host_ptr) const {
   MS_LOG(INFO) << "SyncDeviceToHost, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->execution_mode() == kPynativeMode) {
+    SyncStream();
+  }
   bool sync_ok = false;
   std::vector<size_t> host_shape;
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);

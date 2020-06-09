@@ -55,6 +55,7 @@ class KernelRuntime {
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
+  virtual bool SyncStream() = 0;
 
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr GetDumpConf();
@@ -68,7 +69,6 @@ class KernelRuntime {
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) = 0;
   virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
-  virtual bool SyncStream() = 0;
   void AssignStaticMemory(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
   void ReuseAssignDynamicMemory(session::KernelGraph *graph);
