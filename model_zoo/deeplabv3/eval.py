@@ -25,9 +25,7 @@ from src.config import config
 
 
 parser = argparse.ArgumentParser(description="Deeplabv3 evaluation")
-parser.add_argument('--epoch_size', type=int, default=2, help='Epoch size.')
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-parser.add_argument('--batch_size', type=int, default=2, help='Batch size.')
 parser.add_argument('--data_url', required=True, default=None, help='Evaluation data url')
 parser.add_argument('--checkpoint_url', default=None, help='Checkpoint path')
 
@@ -39,8 +37,8 @@ print(args_opt)
 if __name__ == "__main__":
     args_opt.crop_size = config.crop_size
     args_opt.base_size = config.crop_size
-    eval_dataset = create_dataset(args_opt, args_opt.data_url, args_opt.epoch_size, args_opt.batch_size, usage="eval")
-    net = deeplabv3_resnet50(config.seg_num_classes, [args_opt.batch_size, 3, args_opt.crop_size, args_opt.crop_size],
+    eval_dataset = create_dataset(args_opt, args_opt.data_url, config.epoch_size, config.batch_size, usage="eval")
+    net = deeplabv3_resnet50(config.seg_num_classes, [config.batch_size, 3, args_opt.crop_size, args_opt.crop_size],
                              infer_scale_sizes=config.eval_scales, atrous_rates=config.atrous_rates,
                              decoder_output_stride=config.decoder_output_stride, output_stride=config.output_stride,
                              fine_tune_batch_norm=config.fine_tune_batch_norm, image_pyramid=config.image_pyramid)

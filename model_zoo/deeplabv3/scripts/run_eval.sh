@@ -15,18 +15,20 @@
 # ============================================================================
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_eval.sh DEVICE_ID DATA_DIR"
-echo "for example: bash run_eval.sh /path/zh-wiki/ "
+echo "bash run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH"
+echo "for example: bash run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH"
 echo "=============================================================================================================="
  
 DEVICE_ID=$1
 DATA_DIR=$2
+PATH_CHECKPOINT=$3
+
  
 mkdir -p ms_log 
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
-python evaluation.py  \
+python eval.py  \
     --device_id=$DEVICE_ID \
-    --checkpoint_url="" \
+    --checkpoint_url=$PATH_CHECKPOINT \
     --data_url=$DATA_DIR > log.txt 2>&1 &
