@@ -185,6 +185,8 @@ class AnfRuntimeAlgorithm {
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
   static std::vector<KernelGraphPtr> GetCallNodeKernelGraph(const CNodePtr &call_node);
   static bool IsSwitchCall(const CNodePtr &call_node);
+  static bool IsScalarInput(const CNodePtr &cnode, size_t index);
+  static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

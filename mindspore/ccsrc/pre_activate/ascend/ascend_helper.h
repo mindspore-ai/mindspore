@@ -37,11 +37,11 @@ class SupportedChecker {
  public:
   SupportedChecker() = default;
   virtual ~SupportedChecker() = default;
-  virtual bool CheckAiCoreSupported(const AnfNodePtr &anf_node,
+  virtual bool CheckAICoreSupported(const AnfNodePtr &anf_node,
                                     const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
     return kernel::IsSupportedByAICore(anf_node, select_kernel_build_info);
   }
-  virtual bool CheckAiCpuSupported(const AnfNodePtr &anf_node,
+  virtual bool CheckAICPUSupported(const AnfNodePtr &anf_node,
                                    const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
     return kernel::IsSupportedByAICPU(anf_node, select_kernel_build_info);
   }

@@ -148,7 +148,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   auto indices_const = CreateValueNode(new_cnode);
   new_cnode->add_input(indices_const);
   MS_EXCEPTION_IF_NULL(supported_checker_);
-  if (!supported_checker_->CheckAiCoreSupported(new_cnode, CreateKernelBuildInfo())) {
+  if (!supported_checker_->CheckAICoreSupported(new_cnode, CreateKernelBuildInfo())) {
     MS_LOG(INFO) << "split topk failed, check to aicpu.";
     return nullptr;
   }
