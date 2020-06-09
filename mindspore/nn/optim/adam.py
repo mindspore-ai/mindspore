@@ -162,13 +162,14 @@ class Adam(Optimizer):
               in the value of 'order_params' but not in any group will use default learning rate and default weight
               decay.
 
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Default: 1e-3.
+        learning_rate (Union[int, float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
+                                                             Iterable or a Tensor and the dims of the Tensor is 1,
+                                                             use dynamic learning rate, then the i-th step will
+                                                             take the i-th value as the learning rate.
+                                                             When the learning_rate is float or learning_rate is a
+                                                             Tensor but the dims of the Tensor is 0, use fixed learning
+                                                             rate. Other cases are not supported. It should be equal to
+                                                             or greater than 0. Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0). Default:
                        0.9.
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0). Default:
@@ -181,7 +182,7 @@ class Adam(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If True, updates the gradients using NAG.
             If False, updates the gradients without using NAG. Default: False.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
 
     Inputs:

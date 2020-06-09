@@ -59,13 +59,13 @@ class LARS(Optimizer):
         optimizer (Optimizer): MindSpore optimizer for which to wrap and modify gradients.
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
         hyperpara (float): Trust coefficient for calculating the local learning rate. Default: 0.001.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
         decay_filter (Function): A function to determine whether apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
         lars_filter (Function): A function to determine whether apply lars algorithm. Default:
                                 lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params` in optimizer, the shape is
