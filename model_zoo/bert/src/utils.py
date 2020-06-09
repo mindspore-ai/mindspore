@@ -42,6 +42,13 @@ reciprocal = P.Reciprocal()
 def tensor_grad_scale(scale, grad):
     return grad * reciprocal(scale)
 
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
+grad_overflow = P.FloatStatus()
+
+@_grad_overflow.register("Tensor")
+def _tensor_grad_overflow(grad):
+    return grad_overflow(grad)
+
 class BertFinetuneCell(nn.Cell):
     """
     Especifically defined for finetuning where only four inputs tensor are needed.
@@ -67,9 +74,16 @@ class BertFinetuneCell(nn.Cell):
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.cast = P.Cast()
-        self.alloc_status = P.NPUAllocFloatStatus()
-        self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.gpu_target = False
+        if context.get_context("device_target") == "GPU":
+            self.gpu_target = True
+            self.float_status = P.FloatStatus()
+            self.addn = P.AddN()
+            self.reshape = P.Reshape()
+        else:
+            self.alloc_status = P.NPUAllocFloatStatus()
+            self.get_status = P.NPUGetFloatStatus()
+            self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
@@ -90,7 +104,7 @@ class BertFinetuneCell(nn.Cell):
 
 
         weights = self.weights
-        init = self.alloc_status()
+        init = False
         loss = self.network(input_ids,
                             input_mask,
                             token_type_id,
@@ -99,28 +113,36 @@ class BertFinetuneCell(nn.Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
+
+        if not self.gpu_target:
+            init = self.alloc_status()
+            clear_before_grad = self.clear_before_grad(init)
+            F.control_depend(loss, init)
+            self.depend_parameter_use(clear_before_grad, scaling_sens)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  token_type_id,
                                                  label_ids,
                                                  self.cast(scaling_sens,
                                                            mstype.float32))
-        clear_before_grad = self.clear_before_grad(init)
-        F.control_depend(loss, init)
-        self.depend_parameter_use(clear_before_grad, scaling_sens)
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        flag = self.get_status(init)
-        flag_sum = self.reduce_sum(init, (0,))
+        if not self.gpu_target:
+            flag = self.get_status(init)
+            flag_sum = self.reduce_sum(init, (0,))
+            F.control_depend(grads, flag)
+            F.control_depend(flag, flag_sum)
+        else:
+            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
+            flag_sum = self.addn(flag_sum)
+            flag_sum = self.reshape(flag_sum, (()))
         if self.is_distributed:
             flag_reduce = self.allreduce(flag_sum)
             cond = self.less_equal(self.base, flag_reduce)
         else:
             cond = self.less_equal(self.base, flag_sum)
-        F.control_depend(grads, flag)
-        F.control_depend(flag, flag_sum)
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
