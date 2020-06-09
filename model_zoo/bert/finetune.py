@@ -18,6 +18,7 @@ Bert finetune script.
 '''
 
 import os
+import argparse
 from src.utils import BertFinetuneCell, BertCLS, BertNER, BertSquad, BertSquadCell
 from src.finetune_config import cfg, bert_net_cfg, tag_to_index
 import mindspore.common.dtype as mstype
@@ -98,8 +99,14 @@ def test_train():
     '''
     finetune function
     '''
-    devid = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=devid)
+    target = args_opt.device_target
+    if target == "Ascend":
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=devid)
+    elif target == "GPU":
+        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    else:
+        raise Exception("Target error, GPU or Ascend is supported.")
     #BertCLSTrain for classification
     #BertNERTrain for sequence labeling
     if cfg.task == 'NER':
@@ -151,5 +158,9 @@ def test_train():
     model = Model(netwithgrads)
     model.train(cfg.epoch_num, dataset, callbacks=[LossCallBack(), ckpoint_cb])
 
+
+parser = argparse.ArgumentParser(description='Bert finetune')
+parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
+args_opt = parser.parse_args()
 if __name__ == "__main__":
     test_train()
