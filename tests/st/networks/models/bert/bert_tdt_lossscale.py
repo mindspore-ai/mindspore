@@ -199,10 +199,10 @@ def test_bert_percision():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    assert np.allclose(loss_value[0], 12.207198, 0, 0.000001)
+    assert np.allclose(loss_value[0], 12.206575, 0, 0.000001)
 
-    expect_loss_value = [12.207198, 11.980881, 11.984844, 11.879381, 11.832978, 12.411333, 12.009284,
-                         12.621277, 12.223178, 12.427385]
+    expect_loss_value = [12.206575, 11.980493, 11.984225, 11.878742, 11.832555, 12.410444, 12.008799,
+                         12.620619, 12.22254, 12.4261055]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 

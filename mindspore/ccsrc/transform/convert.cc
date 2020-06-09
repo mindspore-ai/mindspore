@@ -212,7 +212,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameIOU), ADPT_DESC(Iou)},
     {string(kNameGreaterEqual), ADPT_DESC(GreaterEqual)},
     {string(kNameSlice), ADPT_DESC(SliceD)},
-    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
+    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentumD)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
     {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
@@ -395,7 +395,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
     {string(kNameRound), ADPT_DESC(Round)},
-    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)},
+    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrlD)},
     {string(kNameDiag), ADPT_DESC(Diag)},
     {string(kNameDiagPart), ADPT_DESC(DiagPart)},
     {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},
@@ -409,7 +409,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
-  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdam);
+  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);
 #endif
   return adpt_map;
 }

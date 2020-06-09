@@ -127,11 +127,12 @@ INPUT_MAP(Constant) = EMPTY_INPUT_MAP;
 ATTR_MAP(Constant) = {{"value", ATTR_DESC(value, AnyTraits<AnyValue>())}};
 OUTPUT_MAP(Constant) = {{0, OUTPUT_DESC(y)}};
 
-// ApplyMomentum
-INPUT_MAP(ApplyMomentum) = {
+// ApplyMomentumD
+INPUT_MAP(ApplyMomentumD) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(momentum)}};
-ATTR_MAP(ApplyMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyMomentum) = {{0, OUTPUT_DESC(var)}};
+ATTR_MAP(ApplyMomentumD) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
+                            {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyMomentumD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 
 // ScalarSummary
 INPUT_MAP(Summary) = {{2, INPUT_DESC(x)}};
@@ -470,7 +471,16 @@ INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       
                         {10, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
+OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
+
+// ApplyAdamD
+INPUT_MAP(ApplyAdamD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
+                         {4, INPUT_DESC(beta1_power)}, {5, INPUT_DESC(beta2_power)}, {6, INPUT_DESC(lr)},
+                         {7, INPUT_DESC(beta1)},       {8, INPUT_DESC(beta2)},       {9, INPUT_DESC(epsilon)},
+                         {10, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdamD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdamD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
 
 // Relu6
 INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
@@ -823,7 +833,7 @@ OUTPUT_MAP(RealDiv) = {{0, OUTPUT_DESC(y)}};
 // Cast
 INPUT_MAP(Cast) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
-ATTR_MAP(Cast) = {{"Truncate", ATTR_DESC(truncate, AnyTraits<bool>())}};
+ATTR_MAP(Cast) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 
 // Reciprocal
@@ -1194,12 +1204,12 @@ INPUT_MAP(Round) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Round) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Round) = {{0, OUTPUT_DESC(y)}};
 
-// ApplyFtrl
-INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
-                        {4, INPUT_DESC(grad)}, {5, INPUT_DESC(lr)},      {6, INPUT_DESC(l1)},
-                        {7, INPUT_DESC(l2)},   {8, INPUT_DESC(lr_power)}};
-ATTR_MAP(ApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyFtrl) = {{0, OUTPUT_DESC(var)}};
+// ApplyFtrlD
+INPUT_MAP(ApplyFtrlD) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
+                         {4, INPUT_DESC(grad)}, {5, INPUT_DESC(lr)},      {6, INPUT_DESC(l1)},
+                         {7, INPUT_DESC(l2)},   {8, INPUT_DESC(lr_power)}};
+ATTR_MAP(ApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyFtrlD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
 
 // Diag
 INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
