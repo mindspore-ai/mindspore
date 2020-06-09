@@ -334,7 +334,7 @@ static int TypeStrToDstType(const std::string &type_str) {
   } else if (type_str == "Bool_") {
     ret = 12;
   } else {
-    MS_EXCEPTION(ArgumentError) << "type str is invailed: " << type_str;
+    MS_LOG(INFO) << "Error type str is invailed: " << type_str;
   }
   return ret;
 }

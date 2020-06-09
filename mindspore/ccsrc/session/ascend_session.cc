@@ -523,13 +523,17 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
     }
     MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();
   }
-  if (raise_precision_count > 0) {
-    MS_LOG(WARNING) << "There has " << raise_precision_count
-                    << " node/nodes used raise precision to selected the kernel!";
-  }
-  if (reduce_precision_count > 0) {
-    MS_LOG(WARNING) << "There has " << reduce_precision_count
-                    << " node/nodes used reduce precision to selected the kernel!";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->execution_mode() == kGraphMode) {
+    if (raise_precision_count > 0) {
+      MS_LOG(WARNING) << "There has " << raise_precision_count
+                      << " node/nodes used raise precision to selected the kernel!";
+    }
+    if (reduce_precision_count > 0) {
+      MS_LOG(WARNING) << "There has " << reduce_precision_count
+                      << " node/nodes used reduce precision to selected the kernel!";
+    }
   }
   MS_LOG(INFO) << "Finish!";
 }
