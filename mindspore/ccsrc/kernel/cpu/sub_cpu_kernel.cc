@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 #include <thread>
-#include "kernel/cpu/subscalar_cpu_kernel.h"
+#include "kernel/cpu/sub_cpu_kernel.h"
 #include "device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-void SubscalarCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  offset_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_y");
-  MS_LOG(DEBUG) << "offset: " << offset_;
+void SubCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (shape.size() == 1) {
+    if (shape[0] != 1) {
+      MS_LOG(EXCEPTION) << "input 1 only support scalar";
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "input 1 only support scalar";
+  }
 }
 
 void sub_task(int *in_addr, int *out_addr, size_t lens, int offset) {
@@ -30,9 +36,9 @@ void sub_task(int *in_addr, int *out_addr, size_t lens, int offset) {
   }
 }
 
-bool SubscalarCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool SubCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                          const std::vector<kernel::AddressPtr> & /*workspace*/,
+                          const std::vector<kernel::AddressPtr> &outputs) {
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
 #else
@@ -41,6 +47,8 @@ bool SubscalarCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 #endif
   auto input_addr = reinterpret_cast<int *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<int *>(outputs[0]->addr);
+  offset_ = *reinterpret_cast<int *>(inputs[1]->addr);
+  MS_LOG(INFO) << "offset: " << offset_;
   auto lens = inputs[0]->size / sizeof(int);
   if (lens < 10000) {
     for (size_t i = 0; i < lens; i++) {
@@ -73,7 +81,7 @@ bool SubscalarCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = 1000000 * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "SubscalarCPUKernel, used time: " << time << " us";
+  MS_LOG(INFO) << "SubCPUKernel, used time: " << time << " us";
 #endif
   return true;
 }
