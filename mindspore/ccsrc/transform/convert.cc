@@ -959,8 +959,8 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
     for (unsigned int i = 1; i < c->inputs().size(); i++) {
       TraceOutput(c->input(i));
     }
-  } else if (name == "depend") {
-    if (c->inputs().size() < 3) {  // "depend" primitive have 3 inputs
+  } else if (name == "Depend") {
+    if (c->inputs().size() < 3) {  // "Depend" primitive have 3 inputs
       MS_LOG(EXCEPTION) << "length of inputs is " << c->inputs().size() << ", which is less than 3";
     }
     TraceOutput(c->input(1));
@@ -1183,7 +1183,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   auto &inputs = node->inputs();
   for (size_t i = 1; i < inputs.size(); i++) {
     auto pred = inputs[i];
-    while (pred->isa<CNode>() && GetCNodeFuncName(pred->cast<CNodePtr>()) == "depend") {
+    while (pred->isa<CNode>() && GetCNodeFuncName(pred->cast<CNodePtr>()) == "Depend") {
       pred = pred->cast<CNodePtr>()->input(1);
     }
     // skip the None input
@@ -1362,7 +1362,7 @@ AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, unsigned in
 
 AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().size() < 3) {  // "depend" primitive have 3 inputs
+  if (cnode->inputs().size() < 3) {  // "Depend" primitive have 3 inputs
     MS_LOG(EXCEPTION) << "length of inputs of depend is less than 3";
   }
   return cnode->inputs()[1];
@@ -1483,7 +1483,7 @@ AnfNodePtr DfGraphConvertor::GetRealOpNode(AnfNodePtr node) {
   // depend apply inputs: depend,output,depended_node
   if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
     auto depend_inputs = node->cast<CNodePtr>()->inputs();
-    if (depend_inputs.size() != 3) {  // "depend" primitive have 3 inputs
+    if (depend_inputs.size() != 3) {  // "Depend" primitive have 3 inputs
       MS_LOG(ERROR) << "depend input items not correct";
       error_ = FAILED;
       return node;
@@ -1700,7 +1700,7 @@ void DfGraphConvertor::ConvertControlDependNode(const CNodePtr node) {
 
 bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) {
   // ignore apply node of return
-  if (name == "return" || name == "depend") {
+  if (name == "return" || name == "Depend") {
     return false;
   }
 

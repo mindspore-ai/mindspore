@@ -15,7 +15,7 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
-depend = Primitive('depend')
+depend = P.Depend()
 TransData = Primitive('TransData')
 add = P.TensorAdd()
 make_tuple = Primitive('make_tuple')

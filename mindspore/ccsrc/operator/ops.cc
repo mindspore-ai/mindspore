@@ -220,7 +220,7 @@ const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 
 // Other miscellaneous
 const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity");
-const PrimitivePtr kPrimPartial = std::make_shared<Primitive>("partial");
+const PrimitivePtr kPrimPartial = std::make_shared<Primitive>("Partial");
 const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");
 const PrimitivePtr kPrimEnvSetItem = std::make_shared<Primitive>("env_setitem");
 const PrimitivePtr kPrimEnvGetItem = std::make_shared<Primitive>("env_getitem");
@@ -237,7 +237,7 @@ const PrimitivePtr kPrimCheckBprop = std::make_shared<Primitive>("CheckBprop");
 const PrimitivePtr kPrimPrint = std::make_shared<Primitive>("Print");
 
 const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
-const PrimitivePtr kPrimDepend = std::make_shared<Primitive>("depend");
+const PrimitivePtr kPrimDepend = std::make_shared<Primitive>("Depend");
 const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 
 const PrimitivePtr kPrimBroadcastGradientArgs = std::make_shared<Primitive>("BroadcastGradientArgs");

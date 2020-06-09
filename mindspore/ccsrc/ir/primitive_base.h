@@ -89,9 +89,6 @@ class Primitive : public Named {
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
 
-  void set_hook(const py::function &hook) { hook_ = hook; }
-  py::function hook() const { return hook_; }
-
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() { return evaluate_added_attrs_; }
 
@@ -124,7 +121,6 @@ class Primitive : public Named {
 
  private:
   std::string instance_name_;
-  py::function hook_;
   bool is_base_;
   bool has_signature_;
   PrimType prim_type_;

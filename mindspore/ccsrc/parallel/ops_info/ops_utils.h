@@ -72,7 +72,7 @@ constexpr char OP[] = "op";
 constexpr char IDENTITY_INFO[] = "identity_info";
 constexpr char DIVISOR[] = "divisor";
 constexpr char NONE[] = "None";
-constexpr char DEPEND[] = "depend";
+constexpr char DEPEND[] = "Depend";
 constexpr char BATCH_PARALLEL[] = "BatchParallel";
 
 constexpr char ACTIVATION_TYPE[] = "activation_type";

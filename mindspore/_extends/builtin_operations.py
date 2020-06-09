@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """builtin_operations"""
-import functools
 import numpy as np
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype, get_py_obj_dtype
@@ -124,17 +123,8 @@ def list_len(x):
     """Implement `list_len`."""
     return len(x)
 
-
-# only used in PyNative mode
-def partial(*args):
-    """Implement `partial`."""
-    func = args[0].__call__
-    partial_func = functools.partial(func, *args[1:])
-    return partial_func
-
-
-# only used in PyNative mode
-def depend(value, expr):
+def Depend(value, expr):
+    """Implement `Depend`."""
     return value
 
 # only used in PyNative mode

@@ -74,7 +74,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
-                        CheckValid, MakeRefKey, CheckBprop, ConfusionMatrix)
+                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop, ConfusionMatrix)
 from . import _quant_ops
 from ._quant_ops import *
 from .thor_ops import *
@@ -213,6 +213,8 @@ __all__ = [
     'NMSWithMask',
     'IOU',
     'MakeRefKey',
+    'Partial',
+    'Depend',
     'AvgPool',
     # Back Primitive
     'Equal',

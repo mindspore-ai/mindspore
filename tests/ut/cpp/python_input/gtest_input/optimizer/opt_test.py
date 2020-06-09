@@ -636,7 +636,7 @@ def test_tuple_get_set_item(tag):
 def test_partial(tag):
     """ test_partial """
     fns = FnDict()
-    partail = Primitive('partial')
+    partail = P.Partial()
 
     def f(x, y):
         return scalar_add(x, y)
@@ -655,7 +655,7 @@ def test_partial(tag):
 def test_replace_applicator(tag):
     """ test_replace_applicator """
     fns = FnDict()
-    partail = Primitive('partial')
+    partail = P.Partial()
 
     def app1(x, y):
         return scalar_add(x, y)

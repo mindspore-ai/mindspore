@@ -341,7 +341,7 @@ TEST_F(TestOps, ResolveTest) {
 }
 
 TEST_F(TestOps, PartialTest) {
-  auto prim = std::make_shared<Primitive>("partial");
+  auto prim = std::make_shared<Primitive>("Partial");
   ASSERT_EQ(prim->name(), kPrimPartial->name());
 }
 

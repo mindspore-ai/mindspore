@@ -195,7 +195,7 @@ def bprop_array_reduce(fn, x, shp, out, dout):
     return F.distribute(dout, F.shape(x)), C.zeros_like(shp)
 
 
-@bprops.register("depend")
+@bprops.register("Depend")
 def bprop_depend(x, y, out, dout):
     """Backpropagator for primitive `depend`."""
     return dout, C.zeros_like(y)
@@ -235,7 +235,6 @@ def bprop_bool_and(x, y, out, dout):
 def bprop_control_depend(x, y, out, dout):
     """Backpropagator for primitive `Control_depend`."""
     return C.zeros_like(x), C.zeros_like(y)
-
 
 @bprops.register("switch")
 def bprop_switch(cond, tb, fb, out, dout):

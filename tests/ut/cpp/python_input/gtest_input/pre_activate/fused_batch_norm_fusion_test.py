@@ -16,13 +16,13 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 AssignSub = P.AssignSub()
 Mul = P.Mul()
 Sub = P.Sub()
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
-depend = Primitive('depend')
 BatchNorm = P.BatchNorm()
 Cast = P.Cast()
 BNTrainingReduce = Primitive('BNTrainingReduce')
@@ -54,8 +54,8 @@ def test_fused_batch_norm_fusion(tag):
         mul1 = Mul(sub1, constant1)
         assign_sub0 = AssignSub(var0, mul0)
         assign_sub1 = AssignSub(var1, mul1)
-        depend0 = depend(tuple_getitem(batch_norm, 0), assign_sub0)
-        depend1 = depend(depend0, assign_sub1)
+        depend0 = F.depend(tuple_getitem(batch_norm, 0), assign_sub0)
+        depend1 = F.depend(depend0, assign_sub1)
         outputs = make_tuple(depend1, tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4))
         output = tuple_getitem(outputs, 0)
         return output
@@ -69,8 +69,8 @@ def test_fused_batch_norm_fusion(tag):
         mul1 = Mul(sub1, constant1)
         assign_sub0 = AssignSub(var0, Cast(mul0, mstype.float32))
         assign_sub1 = AssignSub(var1, Cast(mul1, mstype.float32))
-        depend0 = depend(tuple_getitem(batch_norm, 0), assign_sub0)
-        depend1 = depend(depend0, assign_sub1)
+        depend0 = F.depend(tuple_getitem(batch_norm, 0), assign_sub0)
+        depend1 = F.depend(depend0, assign_sub1)
         outputs = make_tuple(depend1, tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4))
         output = tuple_getitem(outputs, 0)
         return output
@@ -84,8 +84,8 @@ def test_fused_batch_norm_fusion(tag):
         mul1 = Mul(Cast(sub1, mstype.float32), constant1)
         assign_sub0 = AssignSub(var0, mul0)
         assign_sub1 = AssignSub(var1, mul1)
-        depend0 = depend(tuple_getitem(batch_norm, 0), assign_sub0)
-        depend1 = depend(depend0, assign_sub1)
+        depend0 = F.depend(tuple_getitem(batch_norm, 0), assign_sub0)
+        depend1 = F.depend(depend0, assign_sub1)
         outputs = make_tuple(depend1, tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4))
         output = tuple_getitem(outputs, 0)
         return output

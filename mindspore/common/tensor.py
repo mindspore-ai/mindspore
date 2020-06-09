@@ -78,6 +78,8 @@ class Tensor(Tensor_):
     def __eq__(self, other):
         if not isinstance(other, Tensor):
             return False
+        #  The GE backend don't support single `Equal` operator execution.
+        #  bool type is not supported for `Equal` operator in backend.
         if context.get_context("enable_ge") or self.dtype() == mstype.bool_ or other.dtype() == mstype.bool_:
             return Tensor(np.array(self.asnumpy() == other.asnumpy()))
         return tensor_operator_registry.get('__eq__')(self, other)
