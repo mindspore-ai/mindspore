@@ -27,7 +27,8 @@ namespace mindspore {
 // namespace to support primitive operators
 namespace prim {
 ValuePtr GetPythonOps(const std::string &op_name,
-                      const std::string &module_name = "mindspore._extends.parse.standard_method");
+                      const std::string &module_name = "mindspore._extends.parse.standard_method",
+                      bool use_signature = false);
 
 // Arithmetic
 extern const PrimitivePtr kPrimScalarAdd;
