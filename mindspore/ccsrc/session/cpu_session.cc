@@ -68,11 +68,25 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   predictmodel::StepConvertWeight(inputs);
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);
+
+  bool enable_summary = summary_callback_ != nullptr;
   kernel_graph->set_execution_order(execution_order);
+  NamedSummaryOutputs summary_outputs;
+  if (enable_summary) {
+    GetSummaryNodes(kernel_graph.get(), &summary_outputs);
+    runtime_.IncreaseSummaryRefCount(summary_outputs);
+  }
+
   bool ret = runtime_.Run(kernel_graph.get());
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
+
+  if (enable_summary) {
+    Summary(kernel_graph.get());
+    runtime_.DecreaseSummaryRefCount(summary_outputs);
+  }
+
   MS_LOG(INFO) << "Run graph end";
 }
 

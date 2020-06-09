@@ -130,6 +130,7 @@ class SessionBasic {
 };
 
 using SessionPtr = std::shared_ptr<session::SessionBasic>;
+using NamedSummaryOutputs = std::unordered_map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H

@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include "device/kernel_runtime.h"
 #include "session/kernel_graph.h"
+#include "session/session_basic.h"
 #include "device/cpu/cpu_resource_manager.h"
 #include "utils/any.h"
 namespace mindspore {
@@ -37,6 +38,8 @@ class CPUKernelRuntime : public KernelRuntime {
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void BindInputOutput(const session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                        VectorRef *outputs);
+  void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
+  void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
  protected:
   bool SyncStream() override { return true; };
