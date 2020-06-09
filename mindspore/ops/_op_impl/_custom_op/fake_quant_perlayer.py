@@ -43,7 +43,7 @@ fake_quant_per_layer_op_info = TBERegOp("FakeQuantPerLayer") \
     .get_op_info()
 
 
-@op_info_register(fake_quant_op_info)
+@op_info_register(fake_quant_per_layer_op_info)
 def _fake_quant_per_layer_tbe():
     """FakeQuantPerLayer TBE register"""
     return

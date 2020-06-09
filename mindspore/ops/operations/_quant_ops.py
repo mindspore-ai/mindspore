@@ -110,10 +110,8 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
-        validator.check("min shape", min_shape, "max shape",
-                        max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(
-            min_shape), 1, Rel.EQ, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer("min shape", len(min_shape), 1, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
@@ -168,7 +166,7 @@ class FakeQuantPerLayerGrad(PrimitiveWithInfer):
                         x_shape, Rel.EQ, self.name)
         validator.check("min shape", min_shape, "max shape",
                         max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(
+        validator.check_integer("min shape", len(
             min_shape), 1, Rel.EQ, self.name)
         return dout_shape
 
@@ -255,10 +253,11 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
         validator.check_integer(
-            "min shape[0]", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
+            "min shape", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
         validator.check_integer(
-            "max shape[0]", max_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
+            "max shape", max_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
@@ -379,7 +378,7 @@ class BatchNormFold(PrimitiveWithInfer):
     def infer_shape(self, x_shape, mean_shape, variance_shape, global_step_shape):
         validator.check("mean shape", mean_shape, "gamma_shape", variance_shape, Rel.EQ, self.name)
         validator.check("mean_shape[0]", mean_shape[0], "input channel", x_shape[self.channel_axis], Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return mean_shape, mean_shape, mean_shape, mean_shape
 
     def infer_dtype(self, x_type, mean_type, variance_type, global_step_type):
@@ -426,7 +425,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
                         "batch_std shape", batch_std_shape, Rel.EQ, self.name)
         validator.check("d_batch_mean_shape[0]", d_batch_mean_shape[0],
                         "input channel", x_shape[self.channel_axis], Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, d_batch_mean_type, d_batch_std_type, x_type, batch_mean_type, batch_std_type,
@@ -568,7 +567,7 @@ class BatchNormFold2(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "batch_mean shape", gamma_shape, Rel.EQ, self.name)
         validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel_axis],
                         Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, beta_type, gamma_type, batch_std_type, running_std_type, batch_mean_type,
@@ -616,7 +615,7 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "gamma shape", gamma_shape, Rel.EQ, self.name)
         validator.check("batch_std size", batch_std_shape[0], "dout channel size", dout_shape[self.channel_axis],
                         Rel.EQ, self.name)
-        validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("global step shape len", len(global_step_shape), 1, Rel.EQ, self.name)
         return gamma_shape, gamma_shape, gamma_shape, gamma_shape, x_shape
 
     def infer_dtype(self, dout_type, x_type, gamma_type,
@@ -887,7 +886,7 @@ class FakeQuantMinMaxPerLayerUpdate(PrimitiveWithInfer):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check("min shape", min_shape, "max shape",
                         max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(
+        validator.check_integer("min shape", len(
             min_shape), 1, Rel.EQ, self.name)
         return min_shape, max_shape
 
@@ -963,7 +962,7 @@ class FakeQuantMinMaxPerChannelUpdate(PrimitiveWithInfer):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
         validator.check("min shape", min_shape, "max shape",
                         max_shape, Rel.EQ, self.name)
-        validator.check_integer("min rank", len(
+        validator.check_integer("min shape", len(
             min_shape), 1, Rel.EQ, self.name)
         return min_shape, max_shape
 

@@ -117,6 +117,7 @@ def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
                                kernel_name="fake_quant_perchannel_grad"):
     """FakeQuantPerChannelGrad"""
     x_shape = x.get("shape")
+    x_shape_ = x.get("ori_shape")
     x_format = x.get("format")
     x_dtype = x.get("dtype")
     min_shape = min_val.get("ori_shape")
@@ -126,8 +127,8 @@ def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
 
     util.check_kernel_name(kernel_name)
     util.check_shape_rule(x_shape)
-    util.check_shape_rule(min_shape, 1, 1, x_shape[channel_axis])
-    util.check_shape_rule(max_shape, 1, 1, x_shape[channel_axis])
+    util.check_shape_rule(min_shape, 1, 1, x_shape_[channel_axis])
+    util.check_shape_rule(max_shape, 1, 1, x_shape_[channel_axis])
     util.check_tensor_shape_size(x_shape)
     util.check_tensor_shape_size(min_shape)
     util.check_tensor_shape_size(max_shape)
