@@ -151,6 +151,8 @@ class THOR(Optimizer):
                 temp_g = self.mul(temp_g, matrix_G_inv_max)
                 temp_max = self.mul(matrix_A_max_allreduce[i], matrix_G_max_allreduce[i])
                 temp_max = self.mul(temp_max, self.feature_map[i])
+                temp_a = self.cast(temp_a, mstype.float16)
+                temp_g = self.cast(temp_g, mstype.float16)
                 if i == 53:
                     g = self.cube_matmul_left_fc(temp_g, g)
                     g = self.cube_matmul_right_fc(g, temp_a, temp_max)

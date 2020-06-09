@@ -172,7 +172,6 @@ class Conv2d_Thor(_Conv):
         self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
         self.fake_G = Tensor(
             np.reshape(np.identity(self.matrix_G_device_dim).astype(np.float16), self.matrix_G_device_shape))
-        self.fake_G_inv_max = Tensor(np.zeros([1,]).astype(np.float32))
 
         self.shape = P.Shape()
         self.reshape = P.Reshape()
@@ -287,7 +286,6 @@ class Conv2d_Thor(_Conv):
                 matrix_A_inv = self.device_shape_pad(matrix_A_inv)
             matrix_A_inv = self.reshape(matrix_A_inv, self.matrix_A_device_temp_shape)
             matrix_A_inv = self.transpose(matrix_A_inv, (2, 0, 1, 3))
-            self.G_inv_max = self.fake_G_inv_max
             self.matrix_A_inv = matrix_A_inv
             self.matrix_G_inv = self.fake_G
             out = self.conv2d(x, self.weight)
