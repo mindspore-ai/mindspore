@@ -1378,6 +1378,11 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32)),
                         Tensor(np.array([0, 1, 1]).astype(np.int32))],
         'desc_bprop': [Tensor(np.array([[1, 2, 3], [4, 2, 1]]).astype(np.float32))]}),
+    ('ReverseSequence', {
+        'block': P.ReverseSequence(1, 0),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)),
+                        Tensor(np.array([1, 2, 3]).astype(np.int32))],
+        'desc_bprop': [[3, 3]]}),
 ]
 
 test_case_other_ops = [
