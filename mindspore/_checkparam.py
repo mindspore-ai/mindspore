@@ -322,6 +322,15 @@ class Validator:
             return arg_value
         raise TypeError(f"{msg_prefix} `{arg_name}` must be float.")
 
+    @staticmethod
+    def check_reduce_shape(ori_shape, shape, axis, prim_name):
+        """Checks whether shape is ori_shape reduced on axis"""
+        axis = axis if isinstance(axis, Iterable) else (axis,)
+        exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
+        if list(shape) != exp_shape:
+            raise ValueError(f'For {prim_name}, {ori_shape} reduce on {axis} should be '
+                             f'{tuple(exp_shape)}, but got {shape}.')
+
 
 class ParamValidator:
     """Parameter validator. NOTICE: this class will be replaced by `class Validator`"""

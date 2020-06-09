@@ -62,3 +62,11 @@ def test_SoftmaxCrossEntropyExpand():
     logits = Tensor(np.random.randint(0, 9, [100, 10]).astype(np.float32))
     labels = Tensor(np.random.randint(0, 9, [10,]).astype(np.float32))
     _executor.compile(loss, logits, labels)
+
+def test_cosine_embedding_loss():
+    """ test CosineEmbeddingLoss """
+    loss = nn.CosineEmbeddingLoss()
+    x1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]).astype(np.float32))
+    x2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]).astype(np.float32))
+    label = Tensor(np.array([1, -1]).astype(np.int32))
+    loss(x1, x2, label)
