@@ -43,7 +43,6 @@ def test_sequential_sampler(print_res=False):
 
     assert test_config(num_samples=3, num_repeats=None) == [0, 1, 2]
     assert test_config(num_samples=None, num_repeats=2) == [0, 1, 2, 3, 4] * 2
-    assert test_config(num_samples=0, num_repeats=2) == [0, 1, 2, 3, 4] * 2
     assert test_config(num_samples=4, num_repeats=2) == [0, 1, 2, 3] * 2
 
 
