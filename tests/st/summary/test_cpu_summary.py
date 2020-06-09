@@ -14,6 +14,7 @@
 # ============================================================================
 """Summary cpu st."""
 import os
+import platform
 import tempfile
 
 import numpy as np
@@ -58,22 +59,23 @@ def train_summary_record(test_writer, steps):
     return out_me_dict
 
 
-class TestCpuSummary:
-    """Test cpu summary."""
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_summary_step2_summary_record1():
+    """Test record 10 step summary."""
+    if platform.system() == "Windows":
+        # Summary does not support windows currently.
+        return
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_cpu_training
-    @pytest.mark.env_onecard
-    def test_summary_step2_summary_record1(self):
-        """Test record 10 step summary."""
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            steps = 2
-            with SummaryRecord(tmp_dir) as test_writer:
-                train_summary_record(test_writer, steps=steps)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        steps = 2
+        with SummaryRecord(tmp_dir) as test_writer:
+            train_summary_record(test_writer, steps=steps)
 
-                file_name = os.path.realpath(test_writer.full_file_name)
-            with SummaryReader(file_name) as summary_writer:
-                for _ in range(steps):
-                    event = summary_writer.read_event()
-                    tags = set(value.tag for value in event.summary.value)
-                    assert tags == {'tensor', 'histogram', 'scalar', 'image'}
+            file_name = os.path.realpath(test_writer.full_file_name)
+        with SummaryReader(file_name) as summary_writer:
+            for _ in range(steps):
+                event = summary_writer.read_event()
+                tags = set(value.tag for value in event.summary.value)
+                assert tags == {'tensor', 'histogram', 'scalar', 'image'}
