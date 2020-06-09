@@ -99,6 +99,7 @@ namespace {
 void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
   ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
@@ -225,7 +226,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
-    ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
   }
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());

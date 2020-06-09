@@ -24,7 +24,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 const std::vector<int> kOutputIndex{0, 1, 2, 3, 4};
-constexpr size_t kBatchNormRealOutputNum = 5;
+constexpr size_t kBatchNormLeastOutputNum = 1;
 constexpr size_t kBatchNormRealInputNum = 3;
 
 bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vector<AnfNodePtr> *bn_outputs) {
@@ -56,7 +56,7 @@ bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, s
     bn_outputs->push_back(output);
     output_num++;
   }
-  return output_num == kBatchNormRealOutputNum;
+  return output_num > kBatchNormLeastOutputNum;
 }
 
 AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) {
