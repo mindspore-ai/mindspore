@@ -13,8 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""FakeQuantWithMinMax op"""
-
+"""FakeQuantPerLayer op"""
 from functools import reduce as functools_reduce
 import te.lang.cce
 from te import tvm
@@ -23,20 +22,16 @@ from topi import generic
 from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-fake_quant_op_info = TBERegOp("FakeQuantWithMinMax") \
+fake_quant_per_layer_op_info = TBERegOp("FakeQuantPerLayer") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("fake_quant_with_min_max_vars_ema.so") \
+    .binfile_name("fake_quant_per_layer.so") \
     .compute_cost(10) \
-    .kernel_name("fake_quant_with_min_max_vars_ema") \
+    .kernel_name("fake_quant_per_layer") \
     .partial_flag(True) \
-    .attr("ema", "optional", "bool", "all") \
-    .attr("ema_decay", "optional", "float", "all") \
     .attr("symmetric", "optional", "bool", "all") \
     .attr("narrow_range", "optional", "bool", "all") \
-    .attr("training", "optional", "bool", "all") \
     .attr("num_bits", "optional", "int", "all") \
-    .attr("quant_delay", "optional", "int", "all") \
     .input(0, "x", None, "required", None) \
     .input(1, "min", None, "required", None) \
     .input(2, "max", None, "required", None) \
@@ -48,16 +43,16 @@ fake_quant_op_info = TBERegOp("FakeQuantWithMinMax") \
     .get_op_info()
 
 
-@op_info_register(fake_quant_op_info)
-def _fake_quant_tbe():
-    """FakeQuantWithMinMax TBE register"""
+@op_info_register(fake_quant_per_layer_op_info)
+def _fake_quant_per_layer_tbe():
+    """FakeQuantPerLayer TBE register"""
     return
 
 
-@fusion_manager.register("fake_quant_with_min_max_vars_ema")
-def fake_quant_with_min_max_vars_ema_compute(x, min_val, max_val, y, quant_min, quant_max,
-                                             kernel_name="correction_mul"):
-    """FakeQuantWithMinMax"""
+@fusion_manager.register("fake_quant_per_layer")
+def fake_quant_per_layer_compute(x, min_val, max_val, y, quant_min, quant_max,
+                                 kernel_name="fake_quant_per_layer"):
+    """FakeQuantPerLayer"""
     shape = te.lang.cce.util.shape_to_list(x.shape)
     shape_min = te.lang.cce.util.shape_to_list(min_val.shape)
     quant_min = te.lang.cce.broadcast(quant_min, shape_min, x.dtype)
@@ -66,10 +61,13 @@ def fake_quant_with_min_max_vars_ema_compute(x, min_val, max_val, y, quant_min, 
     max_val = te.lang.cce.broadcast(max_val, shape_min, x.dtype)
 
     # CalNudge(NudgeMinMax)
-    scale = te.lang.cce.vdiv(te.lang.cce.vsub(max_val, min_val), te.lang.cce.vsub(quant_max, quant_min))
+    scale = te.lang.cce.vdiv(te.lang.cce.vsub(
+        max_val, min_val), te.lang.cce.vsub(quant_max, quant_min))
     zp_from_min = te.lang.cce.vsub(quant_min, te.lang.cce.vdiv(min_val, scale))
     # Nudge zero point
-    nudge_zp = te.lang.cce.round(te.lang.cce.vmin(quant_max, te.lang.cce.vmax(quant_min, zp_from_min)))
+    nudge_zp_ = te.lang.cce.vmin(
+        quant_max, te.lang.cce.vmax(quant_min, zp_from_min))
+    nudge_zp = te.lang.cce.floor(te.lang.cce.vadds(nudge_zp_, 0.5))
     nudge_min = te.lang.cce.vmul(te.lang.cce.vsub(quant_min, nudge_zp), scale)
     nudge_max = te.lang.cce.vmul(te.lang.cce.vsub(quant_max, nudge_zp), scale)
 
@@ -80,17 +78,19 @@ def fake_quant_with_min_max_vars_ema_compute(x, min_val, max_val, y, quant_min, 
 
     # FakeQuant
     input_x = te.lang.cce.vmin(nudge_max, te.lang.cce.vmax(nudge_min, x))
-    nudge_input = te.lang.cce.round(te.lang.cce.vdiv(te.lang.cce.vsub(input_x, nudge_min), scale))
+    nudge_input_ = te.lang.cce.vdiv(
+        te.lang.cce.vsub(input_x, nudge_min), scale)
+    nudge_input = te.lang.cce.floor(te.lang.cce.vadds(nudge_input_, 0.5))
     res = te.lang.cce.vadd(te.lang.cce.vmul(nudge_input, scale), nudge_min)
 
     return res
 
 
-@util.check_input_type(dict, dict, dict, dict, bool, float, bool, bool, bool, int, int, str)
-def fake_quant_with_min_max_vars_ema(x, min_val, max_val, y,
-                                     ema, ema_decay, symmetric, narrow_range, training, num_bits, quant_delay,
-                                     kernel_name="fake_quant"):
-    """FakeQuantWithMinMax"""
+@util.check_input_type(dict, dict, dict, dict, bool, bool, int, str)
+def fake_quant_per_layer(x, min_val, max_val, y,
+                         symmetric, narrow_range, num_bits,
+                         kernel_name="fake_quant_per_layer"):
+    """FakeQuantPerLayer"""
     input_shape = x.get("shape")
     input_dtype = x.get("dtype")
     min_shape = min_val.get("ori_shape")
@@ -131,8 +131,8 @@ def fake_quant_with_min_max_vars_ema(x, min_val, max_val, y,
     input_data = tvm.placeholder(input_shape, name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_min, name="min_data", dtype=min_dtype)
     max_data = tvm.placeholder(shape_min, name="max_data", dtype=max_dtype)
-    res = fake_quant_with_min_max_vars_ema_compute(input_data, min_data, max_data, y,
-                                                   quant_min, quant_max, kernel_name)
+    res = fake_quant_per_layer_compute(input_data, min_data, max_data, y,
+                                       quant_min, quant_max, kernel_name)
 
     with tvm.target.cce():
         sch = generic.auto_schedule(res)

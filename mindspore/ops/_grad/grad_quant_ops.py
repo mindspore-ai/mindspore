@@ -20,10 +20,11 @@ from .grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 
 
-@bprop_getters.register(P.FakeQuantWithMinMax)
+@bprop_getters.register(P.FakeQuantPerLayer)
 def get_bprop_fakequant_with_minmax(self):
-    """Generate bprop for FakeQuantWithMinMax for GPU and Ascend"""
-    op = P.FakeQuantWithMinMaxGrad(num_bits=self.num_bits, quant_delay=self.quant_delay)
+    """Generate bprop for FakeQuantPerLayer for GPU and Ascend"""
+    op = P.FakeQuantPerLayerGrad(
+        num_bits=self.num_bits, quant_delay=self.quant_delay)
 
     def bprop(x, x_min, x_max, out, dout):
         dx = op(dout, x, x_min, x_max)
@@ -32,10 +33,14 @@ def get_bprop_fakequant_with_minmax(self):
     return bprop
 
 
-@bprop_getters.register(P.FakeQuantWithMinMaxPerChannel)
+@bprop_getters.register(P.FakeQuantPerChannel)
 def get_bprop_fakequant_with_minmax_perchannel(self):
-    """Generate bprop for FakeQuantWithMinMaxPerChannel for GPU"""
-    op = P.FakeQuantWithMinMaxPerChannelGrad(num_bits=self.num_bits, quant_delay=self.quant_delay)
+    """Generate bprop for FakeQuantPerChannel"""
+    op = P.FakeQuantPerChannelGrad(num_bits=self.num_bits,
+                                   quant_delay=self.quant_delay,
+                                   symmetric=self.symmetric,
+                                   narrow_range=self.symmetric,
+                                   channel_axis=self.channel_axis)
 
     def bprop(x, x_min, x_max, out, dout):
         dx = op(dout, x, x_min, x_max)
@@ -77,7 +82,7 @@ def get_bprop_batchnorm_fold2(self):
         d_batch_std, d_batch_mean, d_beta, d_gamma, d_x = op_f(dout, x, gamma, batch_std, batch_mean, running_std,
                                                                running_mean, global_step)
         return d_x, d_beta, d_gamma, d_batch_std, d_batch_mean, zeros_like(running_std), zeros_like(running_mean), \
-               zeros_like(global_step)
+            zeros_like(global_step)
 
     return bprop
 
@@ -117,9 +122,19 @@ def get_bprop_batchnorm_fold2_(self):
     return bprop
 
 
-@bprop_getters.register(P.FakeQuantWithMinMaxUpdate)
-def get_bprop_fakequant_with_minmax_update(self):
-    """Generate bprop for FakeQuantWithMinMaxUpdate for Ascend"""
+@bprop_getters.register(P.FakeQuantMinMaxPerLayerUpdate)
+def get_bprop_fakequant_with_minmax_per_layer_update(self):
+    """Generate bprop for FakeQuantMinMaxPerLayerUpdate for Ascend"""
+
+    def bprop(x, x_min, x_max, out, dout):
+        return zeros_like(x), zeros_like(x_min), zeros_like(x_max)
+
+    return bprop
+
+
+@bprop_getters.register(P.FakeQuantMinMaxPerChannelUpdate)
+def get_bprop_fakequant_with_minmax_per_channel_update(self):
+    """Generate bprop for FakeQuantMinMaxPerChannelUpdate for Ascend"""
 
     def bprop(x, x_min, x_max, out, dout):
         return zeros_like(x), zeros_like(x_min), zeros_like(x_max)
