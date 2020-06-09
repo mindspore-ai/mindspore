@@ -89,7 +89,7 @@
 +                 "segment_ids": {"type": "int64", "shape": [-1]},
 +                 "masked_lm_positions": {"type": "int64", "shape": [-1]},
 +                 "masked_lm_ids": {"type": "int64", "shape": [-1]},
-+                 "masked_lm_weights": {"type": "float64", "shape": [-1]},
++                 "masked_lm_weights": {"type": "float32", "shape": [-1]},
 +                 "next_sentence_labels": {"type": "int64", "shape": [-1]},
 +                }
 +  writer.add_schema(data_schema, "zhwiki schema")
@@ -112,13 +112,13 @@
 -
 -    writers[writer_index].write(tf_example.SerializeToString())
 -    writer_index = (writer_index + 1) % len(writers)
-+    features["input_ids"] = np.asarray(input_ids)
-+    features["input_mask"] = np.asarray(input_mask)
-+    features["segment_ids"] = np.asarray(segment_ids)
-+    features["masked_lm_positions"] = np.asarray(masked_lm_positions)
-+    features["masked_lm_ids"] = np.asarray(masked_lm_ids)
-+    features["masked_lm_weights"] = np.asarray(masked_lm_weights)
-+    features["next_sentence_labels"] = np.asarray([next_sentence_label])
++    features["input_ids"] = np.asarray(input_ids, np.int64)
++    features["input_mask"] = np.asarray(input_mask, np.int64)
++    features["segment_ids"] = np.asarray(segment_ids, np.int64)
++    features["masked_lm_positions"] = np.asarray(masked_lm_positions, np.int64)
++    features["masked_lm_ids"] = np.asarray(masked_lm_ids, np.int64)
++    features["masked_lm_weights"] = np.asarray(masked_lm_weights, np.float32)
++    features["next_sentence_labels"] = np.asarray([next_sentence_label], np.int64)
  
      total_written += 1
  

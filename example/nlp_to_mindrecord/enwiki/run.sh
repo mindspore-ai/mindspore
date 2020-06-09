@@ -14,9 +14,30 @@
 # limitations under the License.
 # ============================================================================
 
-rm -f output/*.mindrecord*
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 input_dir output_dir vocab_file"
+    exit 1
+fi
 
-data_dir="./data/extract"
+if [ ! -d $1 ]; then
+    echo "The input dir: $1 is not exist."
+    exit 1
+fi
+
+if [ ! -d $2 ]; then
+    echo "The output dir: $2 is not exist."
+    exit 1
+fi
+rm -fr $2/*.mindrecord*
+
+if [ ! -f $3 ]; then
+    echo "The vocab file: $3 is not exist."
+    exit 1
+fi
+
+data_dir=$1
+output_dir=$2
+vocab_file=$3
 file_list=()
 output_filename=()
 file_index=0
@@ -34,7 +55,7 @@ function getdir() {
             echo "${dir_or_file}" | tr '/' '\n' > dir_file_list.txt   # dir dir file to mapfile
             mapfile parent_dir < dir_file_list.txt
             rm dir_file_list.txt >/dev/null 2>&1
-            tmp_output_filename=${parent_dir[${#parent_dir[@]}-2]}${parent_dir[${#parent_dir[@]}-1]}".mindrecord"
+            tmp_output_filename=${parent_dir[${#parent_dir[@]}-1]}".mindrecord"
             output_filename[$file_index]=`echo ${tmp_output_filename} | sed 's/ //g'`
             file_index=`expr $file_index + 1`
         fi
@@ -75,15 +96,15 @@ for index in $(seq 0 $file_list_len); do
     echo "Begin output file: ${output_filename[$index]}"
     python ../../../third_party/to_mindrecord/zhwiki/create_pretraining_data_patched.py \
         --input_file=${file_list[$index]} \
-        --output_file=output/${output_filename[$index]} \
+        --output_file=${output_dir}/${output_filename[$index]} \
         --partition_number=1 \
-        --vocab_file=../../../third_party/to_mindrecord/zhwiki/vocab.txt \
+        --vocab_file=${vocab_file} \
         --do_lower_case=True \
-        --max_seq_length=128 \
-        --max_predictions_per_seq=20 \
+        --max_seq_length=512 \
+        --max_predictions_per_seq=76 \
         --masked_lm_prob=0.15 \
         --random_seed=12345 \
-        --dupe_factor=5 >/tmp/${output_filename[$index]}.log 2>&1 &
+        --dupe_factor=10 >/tmp/${output_filename[$index]}.log 2>&1 &
     process_count=`ps -ef | grep create_pretraining_data_patched | grep -v grep | wc -l`
     echo "Total task: ${#file_list[*]}, processing: ${process_count}"
     if [ $process_count -ge $avaiable_core_size ]; then
