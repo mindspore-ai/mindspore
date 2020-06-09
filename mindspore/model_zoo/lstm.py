@@ -13,42 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """LSTM."""
-import math
 
 import numpy as np
 
-from mindspore import Parameter, Tensor, nn, context, ParameterTuple
-from mindspore.common.initializer import initializer
+from mindspore import Tensor, nn, context
 from mindspore.ops import operations as P
-
-
-def init_lstm_weight(
-        input_size,
-        hidden_size,
-        num_layers,
-        bidirectional,
-        has_bias=True):
-    """Initialize lstm weight."""
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
-
-    weight_size = 0
-    gate_size = 4 * hidden_size
-    for layer in range(num_layers):
-        for _ in range(num_directions):
-            input_layer_size = input_size if layer == 0 else hidden_size * num_directions
-            weight_size += gate_size * input_layer_size
-            weight_size += gate_size * hidden_size
-            if has_bias:
-                weight_size += 2 * gate_size
-
-    stdv = 1 / math.sqrt(hidden_size)
-    w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
-    w = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
-
-    return w
-
 
 # Initialize short-term memory (h) and long-term memory (c) to 0
 def lstm_default_state(batch_size, hidden_size, num_layers, bidirectional):
@@ -60,19 +29,15 @@ def lstm_default_state(batch_size, hidden_size, num_layers, bidirectional):
     if context.get_context("device_target") == "CPU":
         h_list = []
         c_list = []
-        for i in range(num_layers):
-            hi = Parameter(initializer(
-                Tensor(np.zeros((num_directions, batch_size, hidden_size)).astype(np.float32)),
-                [num_directions, batch_size, hidden_size]
-            ), name='h' + str(i))
+        i = 0
+        while i < num_layers:
+            hi = Tensor(np.zeros((num_directions, batch_size, hidden_size)).astype(np.float32))
             h_list.append(hi)
-            ci = Parameter(initializer(
-                Tensor(np.zeros((num_directions, batch_size, hidden_size)).astype(np.float32)),
-                [num_directions, batch_size, hidden_size]
-            ), name='c' + str(i))
+            ci = Tensor(np.zeros((num_directions, batch_size, hidden_size)).astype(np.float32))
             c_list.append(ci)
-        h = ParameterTuple(tuple(h_list))
-        c = ParameterTuple(tuple(c_list))
+            i = i + 1
+        h = tuple(h_list)
+        c = tuple(c_list)
         return h, c
 
     h = Tensor(
@@ -108,12 +73,7 @@ class SentimentNet(nn.Cell):
                                has_bias=True,
                                bidirectional=bidirectional,
                                dropout=0.0)
-        w_init = init_lstm_weight(
-            embed_size,
-            num_hiddens,
-            num_layers,
-            bidirectional)
-        self.encoder.weight = w_init
+
         self.h, self.c = lstm_default_state(batch_size, num_hiddens, num_layers, bidirectional)
 
         self.concat = P.Concat(1)

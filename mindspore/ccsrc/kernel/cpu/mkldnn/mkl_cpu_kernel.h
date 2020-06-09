@@ -39,10 +39,12 @@ class MKLCPUKernel : public CPUKernel {
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
   dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape);
   void ExecutePrimitive();
-  void write_to_dnnl_memory(void *handle, const dnnl::memory &mem);
-  void read_from_dnnl_memory(void *handle, const dnnl::memory &mem);
   std::unordered_map<int, dnnl::memory> arguments_;
   std::shared_ptr<dnnl::primitive> primitive_{nullptr};
+  inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) {
+    return dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
+  }
+  void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
 };
 }  // namespace kernel
 }  // namespace mindspore

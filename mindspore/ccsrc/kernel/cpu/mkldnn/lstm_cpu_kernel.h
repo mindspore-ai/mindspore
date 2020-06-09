@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H
-#define MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include "kernel/cpu/mkldnn/mkl_cpu_kernel.h"
@@ -41,6 +41,10 @@ class LstmCPUKernel : public MKLCPUKernel {
   int num_directions_;
   bool bidirectional_;
   bool has_bias_;
+  dnnl::memory::dims weights_dims_;
+  dnnl::memory::dims weights_h_dims_;
+  dnnl::memory::dims bias_dims_;
+  dnnl::lstm_forward::primitive_desc prim_desc_;
 };
 
 MS_REG_CPU_KERNEL(LSTM,
