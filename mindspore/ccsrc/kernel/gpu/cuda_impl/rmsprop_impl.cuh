@@ -19,7 +19,7 @@
 #include "device/gpu/cuda_common.h"
 
 template <typename T>
-void RmsProp(const T* learning_rate, const T* decay, const T* momentum, const T* epsilon, T* variable, T* mean_square,
+void RmsProp(const T* learning_rate, const T decay, const T momentum, const T epsilon, T* variable, T* mean_square,
              T* moment, T* gradients, const size_t size, cudaStream_t cuda_stream);
 
 template <typename T>

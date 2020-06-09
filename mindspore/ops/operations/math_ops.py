@@ -260,6 +260,8 @@ class _Reduce(PrimitiveWithInfer):
         args = {'input_x': input_x['dtype']}
         validator.check_tensor_type_same(args, valid_dtype, self.name)
 
+        if axis_v is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
         input_shp = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         return {'shape': input_shp,
                 'dtype': input_x['dtype'],
@@ -447,8 +449,9 @@ class ReduceProd(_Reduce):
                           Default : False, don't keep these reduced dimensions.
 
     Inputs:
-         - **input_x** (Tensor[Number]) - The input tensor.
-         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+        - **input_x** (Tensor[Number]) - The input tensor.
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed.
 
     Outputs:
         Tensor, has the same dtype as the 'input_x'.
@@ -476,8 +479,9 @@ class CumProd(PrimitiveWithInfer):
         reverse (bool): If True, reverse the result along axis. Default: False
 
     Inputs:
-         - **input_x** (Tensor[Number]) - The input tensor.
-         - **axis** (int) - The dimensions to compute the cumulative product.
+        - **input_x** (Tensor[Number]) - The input tensor.
+        - **axis** (int) - The dimensions to compute the cumulative product.
+          Only constant value is allowed.
 
     Outputs:
         Tensor, has the same shape and dtype as the 'input_x'.
@@ -508,6 +512,10 @@ class CumProd(PrimitiveWithInfer):
         validator.check_tensor_type_same({'x': x_type}, mstype.number_type, cls_name)
         validator.check_subclass("axis", axis_type, mstype.int_, cls_name)
         return x_type
+
+    def infer_value(self, x, axis):
+        if axis is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
 
 
 class MatMul(PrimitiveWithInfer):
@@ -670,6 +678,10 @@ class CumSum(PrimitiveWithInfer):
         return {'shape': x_shp,
                 'dtype': x['dtype'],
                 'value': None}
+
+    def infer_value(self, x, axis):
+        if axis is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
 
 
 class AddN(PrimitiveWithInfer):

@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class RMSPropGpuKernel : public GpuKernel {
  public:
-  RMSPropGpuKernel() : size_(1), use_center_(false) {}
+  RMSPropGpuKernel() : size_(1), use_center_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}
   ~RMSPropGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -40,13 +40,10 @@ class RMSPropGpuKernel : public GpuKernel {
       T *variable = GetDeviceAddress<T>(inputs, 0);
       T *mean_square = GetDeviceAddress<T>(inputs, 1);
       T *moment = GetDeviceAddress<T>(inputs, 2);
-      T *gradients = GetDeviceAddress<T>(inputs, 3);
-      T *learning_rate = GetDeviceAddress<T>(inputs, 4);
-      T *decay = GetDeviceAddress<T>(inputs, 5);
-      T *momentum = GetDeviceAddress<T>(inputs, 6);
-      T *epsilon = GetDeviceAddress<T>(inputs, 7);
+      T *learning_rate = GetDeviceAddress<T>(inputs, 3);
+      T *gradients = GetDeviceAddress<T>(inputs, 4);
 
-      RmsProp(learning_rate, decay, momentum, epsilon, variable, mean_square, moment, gradients, size_,
+      RmsProp(learning_rate, decay_, momentum_, epsilon_, variable, mean_square, moment, gradients, size_,
               reinterpret_cast<cudaStream_t>(stream));
     } else {
       T *variable = GetDeviceAddress<T>(inputs, 0);
@@ -70,6 +67,11 @@ class RMSPropGpuKernel : public GpuKernel {
       use_center_ = true;
     }
 
+    if (node_name == "ApplyRMSProp") {
+      decay_ = GetAttr<float>(kernel_node, "rho");
+      momentum_ = GetAttr<float>(kernel_node, "momentum");
+      epsilon_ = GetAttr<float>(kernel_node, "epsilon");
+    }
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (auto &dim : input_shape) {
       size_ *= dim;
@@ -81,24 +83,33 @@ class RMSPropGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     size_t input_size = size_ * sizeof(T);
-    input_size_list_.push_back(input_size);
-    if (use_center_) {
+    if (!use_center_) {
       input_size_list_.push_back(input_size);
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(sizeof(T));
+      input_size_list_.push_back(input_size);
+      output_size_list_.push_back(input_size);
+    } else {
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(input_size);
+      input_size_list_.push_back(sizeof(T));
+      input_size_list_.push_back(sizeof(T));
+      input_size_list_.push_back(sizeof(T));
+      input_size_list_.push_back(sizeof(T));
+      output_size_list_.push_back(input_size);
     }
-
-    input_size_list_.push_back(input_size);
-    input_size_list_.push_back(input_size);
-    input_size_list_.push_back(input_size);
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    output_size_list_.push_back(0);
   }
 
  private:
   size_t size_;
   bool use_center_;
+  float decay_;
+  float momentum_;
+  float epsilon_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

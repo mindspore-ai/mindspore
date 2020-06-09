@@ -122,7 +122,8 @@ class SameTypeShape(PrimitiveWithInfer):
     Checks whether data type and shape of two tensors are the same.
 
     Raises:
-        TypeError or ValueError: If not the same.
+        TypeError - If data type not the same.
+        ValueError - If shape of two tensors not the same.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -1040,7 +1041,7 @@ class InvertPermutation(PrimitiveWithInfer):
         - **input_x** (Union(tuple[int], Tensor[int])) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
-          If the input is Tensor, it must be 1-d and the dtype is int.
+          If the input is Tensor, it must be 1-d and the dtype is int. Only constant value is allowed.
 
 
     Outputs:
@@ -1070,7 +1071,9 @@ class InvertPermutation(PrimitiveWithInfer):
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
 
-        validator.check(f'value length', len(x_value), f'unique value length', len(set(x_value)), Rel.EQ, self.name)
+        for i in range(1, len(z)):
+            if z[i-1] == z[i]:
+                raise ValueError(f"For {self.name}, {z[i]} is duplicated in the input.")
         validator.check(f'value min', min(x_value), '', 0, Rel.EQ, self.name)
         validator.check(f'value max', max(x_value), '', len(x_value)-1, Rel.EQ, self.name)
 
