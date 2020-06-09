@@ -23,7 +23,7 @@ greater = base.MultitypeFuncGraph("greater")
 
 
 @greater.register("Number", "Number")
-def _greater_scala(x, y):
+def _greater_scalar(x, y):
     """
     Determine whether two numbers are greater.
 

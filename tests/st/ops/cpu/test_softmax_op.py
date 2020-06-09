@@ -33,7 +33,7 @@ class NetSoftmax(nn.Cell):
         x = Tensor(np.array([[0.1, 0.3, 0.6],
                              [0.2, -0.6, 0.8],
                              [0.6, 1, 0.4]]).astype(np.float32))
-        self.x = Parameter(initializer(x, x.shape()), name='x')
+        self.x = Parameter(initializer(x, x.shape), name='x')
 
     def construct(self):
         return self.softmax(self.x)

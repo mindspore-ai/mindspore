@@ -71,7 +71,7 @@ def test(name, file_path, batch_size):
         data_list.append(data.asnumpy())
     batch_data = np.concatenate(data_list, axis=0).transpose((0, 3, 1, 2))
     input_tensor = Tensor(batch_data)
-    print(input_tensor.shape())
+    print(input_tensor.shape)
     network(input_tensor)
 
 

@@ -65,19 +65,19 @@ def test_equal():
     equal = NetEqual()
     output0 = equal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
     output1 = equal(x1, y1)
     assert np.all(output1.asnumpy() == expect1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     equal = NetEqual()
     output0 = equal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
     output1 = equal(x1, y1)
     assert np.all(output1.asnumpy() == expect1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
 
 
 @pytest.mark.level0
@@ -92,13 +92,13 @@ def test_notequal():
     notequal = NetNotEqual()
     output0 = notequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     notequal = NetNotEqual()
     output0 = notequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
 
 
 @pytest.mark.level0
@@ -113,10 +113,10 @@ def test_greaterqual():
     gequal = NetGreaterEqual()
     output0 = gequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gequal = NetGreaterEqual()
     output0 = gequal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape

@@ -384,6 +384,28 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                            .def(py::init<py::tuple, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
                            .def(py::init<Tensor, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
                            .def_readonly(PYTHON_TENSOR_FLAG, &Tensor::parse_info_)
+                           .def_property_readonly("dtype", &Tensor::Dtype, R"mydelimiter(
+                             Get the tensor's data type.
+
+                             Returns:
+                                 type, the data type of tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
+                                 >>> data.dtype
+                                 Int32
+                             )mydelimiter")
+                           .def_property_readonly("shape", &Tensor::GetPyTupleShape, R"mydelimiter(
+                             Get the tensor's shape.
+
+                             Returns:
+                                 tuple[int], the shape of tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((3, 3)))
+                                 >>> data.shape()
+                                 (3, 3)
+                             )mydelimiter")
                            .def("asnumpy", &Tensor::data_sync, R"mydelimiter(
                              Convert tensor to numpy.ndarray.
 
@@ -437,17 +459,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.dim()
                                  2
                              )mydelimiter")
-                           .def("dtype", &Tensor::Dtype, R"mydelimiter(
-                             Get the tensor's data type.
-
-                             Returns:
-                                 type, the data type of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
-                                 >>> data.dtype()
-                                 Int32
-                             )mydelimiter")
                            .def("set_dtype", &Tensor::SetDtype, R"mydelimiter(
                              Set the tensor's data type.
 
@@ -458,17 +469,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
                                  >>> data.set_dtype(mindspore.int32)
                                  mindspore.int32
-                             )mydelimiter")
-                           .def("shape", &Tensor::GetPyTupleShape, R"mydelimiter(
-                             Get the tensor's shape.
-
-                             Returns:
-                                 tuple[int], the shape of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((3, 3)))
-                                 >>> data.shape()
-                                 (3, 3)
                              )mydelimiter")
                            .def("__str__", &Tensor::ToString)
                            .def("__repr__", &Tensor::ToStringRepr)
@@ -488,8 +488,8 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                          (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
                            .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
                            .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
-                           .def("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
-                           .def("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
+                           .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
+                           .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
                        }));
 }  // namespace tensor
 }  // namespace mindspore

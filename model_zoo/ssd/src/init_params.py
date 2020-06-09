@@ -23,9 +23,9 @@ def init_net_param(network, initialize_mode='TruncatedNormal'):
     for p in params:
         if isinstance(p.data, Tensor) and 'beta' not in p.name and 'gamma' not in p.name and 'bias' not in p.name:
             if initialize_mode == 'TruncatedNormal':
-                p.set_parameter_data(initializer(TruncatedNormal(0.03), p.data.shape(), p.data.dtype()))
+                p.set_parameter_data(initializer(TruncatedNormal(0.03), p.data.shape, p.data.dtype))
             else:
-                p.set_parameter_data(initialize_mode, p.data.shape(), p.data.dtype())
+                p.set_parameter_data(initialize_mode, p.data.shape, p.data.dtype)
 
 
 def load_backbone_params(network, param_dict):

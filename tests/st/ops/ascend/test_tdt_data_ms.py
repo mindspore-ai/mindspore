@@ -64,7 +64,7 @@ def convert_type(shapes, types):
     for np_shape, np_type in zip(shapes, types):
         input_np = np.zeros(np_shape, np_type)
         tensor = Tensor(input_np)
-        ms_types.append(tensor.dtype())
+        ms_types.append(tensor.dtype)
     return ms_types
 
 

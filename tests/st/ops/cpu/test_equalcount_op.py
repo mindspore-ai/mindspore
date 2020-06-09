@@ -32,8 +32,8 @@ class NetEqualCount(nn.Cell):
         self.equalcount = P.EqualCount()
         x = Tensor(np.array([1, 20, 5]).astype(np.int32))
         y = Tensor(np.array([2, 20, 5]).astype(np.int32))
-        self.x = Parameter(initializer(x, x.shape()), name='x')
-        self.y = Parameter(initializer(y, y.shape()), name='y')
+        self.x = Parameter(initializer(x, x.shape), name='x')
+        self.y = Parameter(initializer(y, y.shape), name='y')
 
     def construct(self):
         return self.equalcount(self.x, self.y)

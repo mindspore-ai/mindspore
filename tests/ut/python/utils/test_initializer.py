@@ -65,7 +65,7 @@ def test_init_Initializer():
 def test_init_tensor():
     tensor = ms.Tensor(np.zeros([1, 2, 3]))
     tensor = init.initializer(tensor, [1, 2, 3], ms.float32)
-    assert tensor.shape() == (1, 2, 3)
+    assert tensor.shape == (1, 2, 3)
 
 
 def test_init_zero_default_dtype():

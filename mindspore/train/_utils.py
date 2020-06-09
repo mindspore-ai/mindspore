@@ -157,8 +157,8 @@ def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
             data = Tensor(data)
         if not isinstance(data, Tensor):
             raise ValueError("elements in tensors must be Tensor")
-        shape_ = data.shape()
-        type_ = data.dtype()
+        shape_ = data.shape
+        type_ = data.dtype
         new_shape = ()
         batchsize_per_device = 1
         for i, item in enumerate(shape_):

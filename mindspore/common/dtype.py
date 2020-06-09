@@ -170,8 +170,8 @@ def get_py_obj_dtype(obj):
         Type of MindSpore type.
     """
     # Tensor
-    if hasattr(obj, 'dtype') and callable(obj.dtype) and isinstance(obj.dtype(), typing.Type):
-        return tensor_type(obj.dtype())
+    if hasattr(obj, 'dtype') and isinstance(obj.dtype, typing.Type):
+        return tensor_type(obj.dtype)
     if hasattr(obj, '__primitive_flag__') or hasattr(obj, 'construct'):
         return function
     if isinstance(obj, (typing.Type, type)):
