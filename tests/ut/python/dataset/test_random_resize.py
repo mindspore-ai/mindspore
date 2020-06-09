@@ -15,35 +15,16 @@
 """
 Testing the resize op in DE
 """
-import matplotlib.pyplot as plt
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
+from util import visualize_list
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def visualize(image_de_resized, image_np_resized, mse):
-    """
-    visualizes the image using DE op and Numpy op
-    """
-    plt.subplot(131)
-    plt.imshow(image_de_resized)
-    plt.title("DE resize image")
-
-    plt.subplot(132)
-    plt.imshow(image_np_resized)
-    plt.title("Numpy resized image")
-
-    plt.subplot(133)
-    plt.imshow(image_de_resized - image_np_resized)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
-
-
-def test_random_resize_op():
+def test_random_resize_op(plot=False):
     """
     Test random_resize_op
     """
@@ -56,15 +37,20 @@ def test_random_resize_op():
 
     # apply map operations on images
     data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
 
+    data2 = data1.map(input_columns=["image"], operations=resize_op)
+    image_original = []
+    image_resized = []
     num_iter = 0
-    for item in data1.create_dict_iterator():
-        _ = item["image"]
-        # Uncomment below line if you want to visualize images
-        # visualize(image_de_resized, image_np_resized, mse)
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        image_1 = item1["image"]
+        image_2 = item2["image"]
+        image_original.append(image_1)
+        image_resized.append(image_2)
         num_iter += 1
+    if plot:
+        visualize_list(image_original, image_resized)
 
 
 if __name__ == "__main__":
-    test_random_resize_op()
+    test_random_resize_op(plot=True)

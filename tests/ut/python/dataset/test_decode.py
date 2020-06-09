@@ -15,12 +15,12 @@
 """
 Testing Decode op in DE
 """
-import numpy as np
 import cv2
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
+from util import diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -45,8 +45,7 @@ def test_decode_op():
         expected = cv2.imdecode(item2["image"], cv2.IMREAD_COLOR)
         expected = cv2.cvtColor(expected, cv2.COLOR_BGR2RGB)
         assert actual.shape == expected.shape
-        diff = actual - expected
-        mse = np.sum(np.power(diff, 2))
+        mse = diff_mse(actual, expected)
         assert mse == 0
 
 
@@ -71,8 +70,7 @@ def test_decode_op_tf_file_dataset():
         expected = cv2.imdecode(item2["image"], cv2.IMREAD_COLOR)
         expected = cv2.cvtColor(expected, cv2.COLOR_BGR2RGB)
         assert actual.shape == expected.shape
-        diff = actual - expected
-        mse = np.sum(np.power(diff, 2))
+        mse = diff_mse(actual, expected)
         assert mse == 0
 
 

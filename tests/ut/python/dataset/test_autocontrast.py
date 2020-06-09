@@ -12,32 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-import matplotlib.pyplot as plt
+"""
+Testing AutoContrast op in DE
+"""
 import numpy as np
 
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
+from util import visualize_list
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
-
-
-def visualize(image_original, image_auto_contrast):
-    """
-    visualizes the image using DE op and Numpy op
-    """
-    num = len(image_auto_contrast)
-    for i in range(num):
-        plt.subplot(2, num, i + 1)
-        plt.imshow(image_original[i])
-        plt.title("Original image")
-
-        plt.subplot(2, num, i + num + 1)
-        plt.imshow(image_auto_contrast[i])
-        plt.title("DE AutoContrast image")
-
-    plt.show()
 
 
 def test_auto_contrast(plot=False):
@@ -94,7 +79,7 @@ def test_auto_contrast(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
     if plot:
-        visualize(images_original, images_auto_contrast)
+        visualize_list(images_original, images_auto_contrast)
 
 
 if __name__ == "__main__":

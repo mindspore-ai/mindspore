@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import visualize, diff_mse
+from util import visualize_list, diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -60,7 +60,7 @@ def test_random_choice_op(plot=False):
         image_choice.append(image1)
         image_original.append(image2)
     if plot:
-        visualize(image_original, image_choice)
+        visualize_list(image_original, image_choice)
 
 
 def test_random_choice_comp(plot=False):
@@ -102,7 +102,7 @@ def test_random_choice_comp(plot=False):
         mse = diff_mse(image1, image2)
         assert mse == 0
     if plot:
-        visualize(image_original, image_choice)
+        visualize_list(image_original, image_choice)
 
 
 def test_random_choice_exception_random_crop_badinput():

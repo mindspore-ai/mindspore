@@ -20,7 +20,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
 from mindspore import log as logger
-from util import visualize
+from util import visualize_list
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -63,7 +63,7 @@ def test_five_crop_op(plot=False):
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
         if plot:
-            visualize(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
+            visualize_list(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 5 images.
         assert len(image_2.shape) == 4
