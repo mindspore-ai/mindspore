@@ -244,12 +244,14 @@ class SparseApplyProximalAdagradNet(nn.Cell):
     def __init__(self):
         super(SparseApplyProximalAdagradNet, self).__init__()
         self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
         self.lr = 0.01
         self.l1 = 0.0
         self.l2 = 0.0
 
-    def construct(self, var, accum, grad, indices):
-        out = self.sparse_apply_proximal_adagrad(var, accum, self.lr, self.l1, self.l2, grad, indices)
+    def construct(self, grad, indices):
+        out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad, indices)
         return out
 
 
@@ -257,12 +259,14 @@ class ApplyProximalAdagradNet(nn.Cell):
     def __init__(self):
         super(ApplyProximalAdagradNet, self).__init__()
         self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
         self.lr = 0.01
         self.l1 = 0.0
         self.l2 = 0.0
 
-    def construct(self, var, accum, grad):
-        out = self.apply_proximal_adagrad(var, accum, self.lr, self.l1, self.l2, grad)
+    def construct(self, grad):
+        out = self.apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad)
         return out
 
 
@@ -1061,11 +1065,11 @@ test_case_nn_ops = [
         'skip': ['backward']}),
     ('ApplyProximalAdagrad', {
         'block': ApplyProximalAdagradNet(),
-        'desc_inputs': [[3, 3], [3, 3], [3, 3]],
+        'desc_inputs': [[3, 3]],
         'skip': ['backward']}),
     ('SparseApplyProximalAdagrad', {
         'block': SparseApplyProximalAdagradNet(),
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
+        'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
         'skip': ['backward']}),
     ('Flatten_1', {
         'block': NetForFlatten(),

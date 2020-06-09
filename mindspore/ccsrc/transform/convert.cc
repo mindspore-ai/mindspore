@@ -182,6 +182,7 @@ const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
 const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
+const char kNameApplyProximalAdagrad[] = "ApplyProximalAdagrad";
 const char kNameAcosh[] = "Acosh";
 const char kNameAcoshGrad[] = "AcoshGrad";
 const char kNameFloorMod[] = "FloorMod";
@@ -386,6 +387,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
+    {string(kNameApplyProximalAdagrad), ADPT_DESC(ApplyProximalAdagrad)},
     {string(kNameAcosh), ADPT_DESC(Acosh)},
     {string(kNameAcoshGrad), ADPT_DESC(AcoshGrad)},
     {string(kNameFloorMod), ADPT_DESC(FloorMod)},
