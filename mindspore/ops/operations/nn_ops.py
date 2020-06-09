@@ -3149,7 +3149,7 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         validator.check_value_type("l1", l1, [float], self.name)
         validator.check_value_type("l2", l2, [float], self.name)
         validator.check_value_type("lr_power", lr_power, [float], self.name)
-        self.lr = validator.check_number("lr", lr, 0.0, Rel.GT, self.name)
+        self.lr = validator.check_number_range("lr", lr, 0.0, float("inf"), Rel.INC_LEFT, self.name)
         self.l1 = validator.check_number("l1", l1, 0.0, Rel.GE, self.name)
         self.l2 = validator.check_number("l2", l2, 0.0, Rel.GE, self.name)
         self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
