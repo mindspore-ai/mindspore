@@ -976,5 +976,21 @@ bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
   }
   MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString();
 }
+
+bool AnfRuntimeAlgorithm::IsScalarInput(const CNodePtr &cnode, size_t index) {
+  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+  if (shape.empty()) {
+    return true;
+  }
+  return shape.size() == kShape1dDims && shape[0] == 1;
+}
+
+bool AnfRuntimeAlgorithm::IsScalarOutput(const CNodePtr &cnode, size_t index) {
+  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+  if (shape.empty()) {
+    return true;
+  }
+  return shape.size() == kShape1dDims && shape[0] == 1;
+}
 }  // namespace session
 }  // namespace mindspore
