@@ -19,6 +19,7 @@ from .._c_expression import Tensor as Tensor_
 from .._c_expression import MetaTensor
 from .._checkparam import check_type, check_typename
 from . import dtype as mstype
+from .. import context
 from ._register_for_tensor import tensor_operator_registry
 
 __all__ = ['Tensor', 'MetaTensor']
@@ -77,6 +78,8 @@ class Tensor(Tensor_):
     def __eq__(self, other):
         if not isinstance(other, Tensor):
             return False
+        if context.get_context("enable_ge") or self.dtype() == mstype.bool_ or other.dtype() == mstype.bool_:
+            return Tensor(np.array(self.asnumpy() == other.asnumpy()))
         return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
