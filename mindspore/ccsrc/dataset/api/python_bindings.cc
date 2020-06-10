@@ -527,10 +527,22 @@ void bindGraphData(py::module *m) {
       THROW_IF_ERROR(g_out->Init());
       return g_out;
     }))
-    .def("get_nodes",
-         [](gnn::Graph &g, gnn::NodeType node_type, gnn::NodeIdType node_num) {
+    .def("get_all_nodes",
+         [](gnn::Graph &g, gnn::NodeType node_type) {
            std::shared_ptr<Tensor> out;
-           THROW_IF_ERROR(g.GetNodes(node_type, node_num, &out));
+           THROW_IF_ERROR(g.GetAllNodes(node_type, &out));
+           return out;
+         })
+    .def("get_all_edges",
+         [](gnn::Graph &g, gnn::EdgeType edge_type) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetAllEdges(edge_type, &out));
+           return out;
+         })
+    .def("get_nodes_from_edges",
+         [](gnn::Graph &g, std::vector<gnn::NodeIdType> edge_list) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetNodesFromEdges(edge_list, &out));
            return out;
          })
     .def("get_all_neighbors",
@@ -539,12 +551,31 @@ void bindGraphData(py::module *m) {
            THROW_IF_ERROR(g.GetAllNeighbors(node_list, neighbor_type, &out));
            return out;
          })
+    .def("get_sampled_neighbors",
+         [](gnn::Graph &g, std::vector<gnn::NodeIdType> node_list, std::vector<gnn::NodeIdType> neighbor_nums,
+            std::vector<gnn::NodeType> neighbor_types) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetSampledNeighbors(node_list, neighbor_nums, neighbor_types, &out));
+           return out;
+         })
+    .def("get_neg_sampled_neighbors",
+         [](gnn::Graph &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeIdType neighbor_num,
+            gnn::NodeType neg_neighbor_type) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetNegSampledNeighbors(node_list, neighbor_num, neg_neighbor_type, &out));
+           return out;
+         })
     .def("get_node_feature",
          [](gnn::Graph &g, std::shared_ptr<Tensor> node_list, std::vector<gnn::FeatureType> feature_types) {
            TensorRow out;
            THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
            return out;
-         });
+         })
+    .def("graph_info", [](gnn::Graph &g) {
+      py::dict out;
+      THROW_IF_ERROR(g.GraphInfo(&out));
+      return out;
+    });
 }
 
 // This is where we externalize the C logic as python modules

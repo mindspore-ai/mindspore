@@ -52,12 +52,19 @@ class Node {
   // @return Status - The error code return
   virtual Status GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) = 0;
 
-  // Get the neighbors of a node
+  // Get the all neighbors of a node
   // @param NodeType neighbor_type - type of neighbor
-  // @param int32_t samples_num - Number of neighbors to be acquired, if -1 means all neighbors are acquired
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
   // @return Status - The error code return
-  virtual Status GetNeighbors(NodeType neighbor_type, int32_t samples_num, std::vector<NodeIdType> *out_neighbors) = 0;
+  virtual Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors) = 0;
+
+  // Get the sampled neighbors of a node
+  // @param NodeType neighbor_type - type of neighbor
+  // @param int32_t samples_num - Number of neighbors to be acquired
+  // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
+  // @return Status - The error code return
+  virtual Status GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num,
+                                     std::vector<NodeIdType> *out_neighbors) = 0;
 
   // Add neighbor of node
   // @param std::shared_ptr<Node> node -
