@@ -460,12 +460,12 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::
       ValuePtr converted = nullptr;
       bool succ = parse::ConvertData(args[i], &converted);
       if (!succ) {
-        MS_LOG(EXCEPTION) << "Args convert error";
+        MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
       }
       if (converted->isa<tensor::Tensor>()) {
         inputs->push_back(converted->cast<tensor::TensorPtr>());
       } else {
-        MS_EXCEPTION(TypeError) << "Args " << converted->ToString() << " is not tensor";
+        MS_EXCEPTION(TypeError) << "The " << i << "th arg: " << converted->ToString() << " is not tensor.";
       }
     }
   }

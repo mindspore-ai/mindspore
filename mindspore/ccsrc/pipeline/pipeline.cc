@@ -615,12 +615,16 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     py::object arg = args[i];
     auto ms_context = MsContext::GetInstance();
     if (ms_context->backend_policy() == kMsConvert && py::isinstance<py::array>(arg)) {
-      MS_LOG(EXCEPTION) << "Args[" << i << "] is numpy array, not tensor";
+      MS_LOG(EXCEPTION) << "The " << i << "th arg is numpy array, not tensor.";
     }
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(arg, &converted);
     if (!succ) {
-      MS_LOG(EXCEPTION) << "Args convert error";
+      MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
+    }
+    if (MsContext::GetInstance()->execution_mode() == 0 && !converted->isa<tensor::Tensor>()) {
+      MS_EXCEPTION(TypeError) << "For 'graph mode', the " << i << "th arg: " << converted->ToString()
+                              << " is not tensor.";
     }
     arg_list->push_back(converted);
   }
