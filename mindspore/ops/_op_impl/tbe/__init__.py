@@ -244,3 +244,7 @@ from .confusion_matrix import _confusion_matrix_tbe
 from .broadcast_to import _broadcast_to_tbe
 from .strided_read import _strided_read_tbe
 from .strided_write import _strided_write_tbe
+from .range import _range_tbe
+from .fused_mul_add_n_l2loss import _fused_mul_add_n_l2loss_tbe
+from .fused_mul_apply_momentum_extern import _fused_mul_apply_momentum_extern_tbe
+from .lamb_next_right import _lamb_next_right_tbe

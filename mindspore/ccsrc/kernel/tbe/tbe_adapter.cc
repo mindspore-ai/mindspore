@@ -100,6 +100,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"n_ms_with_mask", "nms_with_mask"},
   {"square_sum_all", "square_sum_all"},
   {"cum_sum", "cumsum_d"},
+  {"range", "range_d"},
   {"inv_grad", "inv_grad"},
   {"apply_rms_prop", "apply_rms_prop_d"},
   {"cum_prod", "cumprod_d"},

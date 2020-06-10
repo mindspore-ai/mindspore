@@ -292,7 +292,8 @@ __all__ = [
     "Atanh",
     "BasicLSTMCell",
     "ConfusionMatrix",
-    "BroadcastTo"
+    "BroadcastTo",
+    "Range"
 ]
 
 __all__.extend(_quant_ops.__all__)
