@@ -295,6 +295,15 @@ class ConfusionMatrixNet(Cell):
         return self.confusion_matrix(x, y)
 
 
+class RangeNet(Cell):
+    def __init__(self):
+        super(RangeNet, self).__init__()
+        self.range_ops = P.Range(1.0, 8.0, 2.0)
+
+    def construct(self, x):
+        return self.range_ops(x)
+
+
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -338,6 +347,9 @@ test_case_array_ops = [
     ('ConfusionMatrixNet', {
         'block': ConfusionMatrixNet(),
         'desc_inputs': [Tensor([0, 1, 1, 3], ms.int32), Tensor([0, 1, 1, 3], ms.int32)]}),
+    ('RangeNet', {
+        'block': RangeNet(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]}),
 ]
 
 test_case_lists = [test_case_array_ops]
