@@ -219,6 +219,7 @@ TEST_F(TestOptLib, test_elim_reshape_same_shape) {
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
+    before->output()->set_abstract(x_abstract);
   }
   auto patterns = std::vector<SubstitutionPtr>({irpass.reshape_eliminate_});
   ASSERT_TRUE(CheckOpt(before, after, patterns));
