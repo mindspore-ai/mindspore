@@ -28,6 +28,13 @@ namespace device {
 namespace gpu {
 bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, TypeId, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  auto ret = GPUDeviceManager::GetInstance().SyncStream(stream);
+  if (!ret) {
+    MS_LOG(ERROR) << "SyncStream failed";
+    return ret;
+  }
   if (size != size_) {
     MS_LOG(WARNING) << "SyncDeviceToHost ignored, host size: " << size << ", device size " << size_;
     return true;

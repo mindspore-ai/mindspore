@@ -41,12 +41,12 @@ class AscendKernelRuntime : public KernelRuntime {
   bool RunTask(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph) override;
   void ClearGraphRuntimeResource(uint32_t graph_id) override;
+  bool SyncStream() override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
   bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index) override;
-  bool SyncStream() override;
 
  private:
   bool InitDevice();

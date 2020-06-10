@@ -680,10 +680,6 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
     MS_LOG(ERROR) << "LaunchKernelMod failed!";
     return false;
   }
-  if (!SyncStream()) {
-    MS_LOG(ERROR) << "SyncStream failed!";
-    return false;
-  }
   return true;
 }
 
