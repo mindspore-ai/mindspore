@@ -141,7 +141,7 @@ def test_eval():
         if cfg.task == "NER":
             print("Precision {:.6f} ".format(callback.TP / (callback.TP + callback.FP)))
             print("Recall {:.6f} ".format(callback.TP / (callback.TP + callback.FN)))
-            print("F1 {:.6f} ".format(2*callback.TP / (2*callback.TP + callback.FP + callback.FP)))
+            print("F1 {:.6f} ".format(2*callback.TP / (2*callback.TP + callback.FP + callback.FN)))
         else:
             print("acc_num {} , total_num {}, accuracy {:.6f}".format(callback.acc_num, callback.total_num,
                                                                       callback.acc_num / callback.total_num))
