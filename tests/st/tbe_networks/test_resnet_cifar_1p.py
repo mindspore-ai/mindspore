@@ -163,4 +163,4 @@ def test_resnet_cifar_1p():
     acc = train_process(epoch_size, num_classes, batch_size)
     os.system("rm -rf kernel_meta")
     print("End training...")
-    assert acc['acc'] > 0.35
+    assert acc['acc'] > 0.20
