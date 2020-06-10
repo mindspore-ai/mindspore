@@ -19,7 +19,6 @@ import random
 import numpy as np
 from mindspore import context
 from mindspore import Tensor
-from mindspore.model_zoo.resnet import resnet101
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model, ParallelMode
@@ -30,6 +29,7 @@ import mindspore.dataset.engine as de
 from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
+from src.resnet101 import resnet101
 from src.dataset import create_dataset
 from src.lr_generator import warmup_cosine_annealing_lr
 from src.config import config
