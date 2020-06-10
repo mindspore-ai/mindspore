@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import visualize, diff_mse, config_get_set_seed, \
+from util import visualize, config_get_set_seed, \
     config_get_set_num_parallel_workers, save_and_check_md5
 
 GENERATE_GOLDEN = False
