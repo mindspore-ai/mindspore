@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Dataset help for minddata dataset"""
+import math
+
 from mindspore._checkparam import check_bool
 from .. import context
 from .parallel_utils import ParallelMode
@@ -104,10 +106,10 @@ class _DatasetIter:
         loop_count = 1
         if hasattr(dataset, '__loop_size__'):
             loop_size = dataset.__loop_size__
-            if dataset.get_dataset_size() % loop_size != 0:
+            if loop_size <= dataset.get_dataset_size() and dataset.get_dataset_size() % loop_size != 0:
                 raise ValueError(f'Dataset size {dataset.get_dataset_size()} and '
                                  f'loop_size {loop_size} are not matched.')
-            loop_count = int(dataset.get_dataset_size() / loop_size)
+            loop_count = math.ceil(dataset.get_dataset_size() / loop_size)
         return loop_count
 
 

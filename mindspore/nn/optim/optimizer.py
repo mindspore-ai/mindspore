@@ -48,11 +48,13 @@ class Optimizer(Cell):
         value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
         applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
 
+        To improve parameter groups performance, the customized order of parameters can be supported.
+
     Args:
         learning_rate (float): A floating point value for the learning rate. Should be greater than 0.
         parameters (Union[list[Parameter], list[dict]]): When the `parameters` is a list of `Parameter` which will be
             updated, the element in `parameters` should be class `Parameter`. When the `parameters` is a list of `dict`,
-            the "params", "lr" and "weight_decay" are the keys can be parsed.
+            the "params", "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
             - params: Required. The value should be a list of `Parameter`.
 
@@ -61,6 +63,11 @@ class Optimizer(Cell):
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
+
+            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
+              in the value of 'order_params' but not in any group will use default learning rate and default weight
+              decay.
 
         weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
@@ -95,6 +102,7 @@ class Optimizer(Cell):
 
         self.is_group = False
         self.is_group_lr = False
+        self.is_group_params_ordered = False
         self.loss_scale = loss_scale
         if isinstance(learning_rate, float):
             self.dynamic_lr = False
@@ -200,9 +208,8 @@ class Optimizer(Cell):
             raise TypeError("Learning rate should be float, Tensor or Iterable.")
         return lr
 
-    def _init_group_params(self, parameters, learning_rate, weight_decay):
-        """Init learning rate or weight decay in group params."""
-        origin_dynamic_lr = self.dynamic_lr
+    def _parse_group_params(self, parameters, learning_rate):
+        """Parse group params."""
         if self.dynamic_lr:
             dynamic_lr_length = learning_rate.size()
         else:
@@ -210,6 +217,15 @@ class Optimizer(Cell):
 
         for group_param in parameters:
             lr_length = dynamic_lr_length
+            if 'order_params' in group_param.keys():
+                if len(group_param.keys()) > 1:
+                    raise ValueError("The order params dict in group parameters should "
+                                     "only include the 'order_params' key.")
+                if not isinstance(group_param['order_params'], Iterable):
+                    raise TypeError("The value of 'order_params' should be an Iterable type.")
+                self.is_group_params_ordered = True
+                continue
+
             if 'lr' in group_param.keys():
                 self.is_group_lr = True
                 self._get_single_lr(group_param['lr'])
@@ -219,10 +235,20 @@ class Optimizer(Cell):
                 elif isinstance(group_param['lr'], Tensor):
                     lr_length = group_param['lr'].size()
                     self.dynamic_lr = True
+
             if dynamic_lr_length not in (lr_length, 0):
                 raise ValueError("The dynamic learning rate in group should be the same size.")
-            dynamic_lr_length = lr_length
 
+            if not group_param['params']:
+                raise ValueError("Optimizer got an empty group parameter list.")
+
+            dynamic_lr_length = lr_length
+        self.dynamic_lr_length = dynamic_lr_length
+
+    def _init_group_params(self, parameters, learning_rate, weight_decay):
+        """Init learning rate or weight decay in group params."""
+        origin_dynamic_lr = self.dynamic_lr
+        self._parse_group_params(parameters, learning_rate)
         if self.dynamic_lr and not origin_dynamic_lr:
             self.gather = P.GatherV2()
             self.assignadd = P.AssignAdd()
@@ -230,20 +256,20 @@ class Optimizer(Cell):
 
         params_store = []
         for group_param in parameters:
-            if not group_param['params']:
-                raise ValueError("Optimizer got an empty parameter list.")
+            if 'order_params' in group_param.keys():
+                ordered_parameters = group_param['order_params']
+                continue
 
             self.group_params += group_param['params']
             if 'lr' in group_param.keys():
                 params_dynamic_lr = isinstance(group_param['lr'], (Iterable, Tensor))
-
                 if self.dynamic_lr and not params_dynamic_lr:
-                    lr = Tensor(np.array([group_param['lr']] * dynamic_lr_length).astype(np.float32))
+                    lr = Tensor(np.array([group_param['lr']] * self.dynamic_lr_length).astype(np.float32))
                 else:
                     lr = self._get_single_lr(group_param['lr'])
             else:
                 if self.dynamic_lr and not origin_dynamic_lr:
-                    lr = Tensor(np.array([self.scalar_lr] * dynamic_lr_length).astype(np.float32))
+                    lr = Tensor(np.array([self.scalar_lr] * self.dynamic_lr_length).astype(np.float32))
                 else:
                     lr = learning_rate
 
@@ -263,9 +289,32 @@ class Optimizer(Cell):
                 validator.check_value_type("parameter", param, [Parameter], self.cls_name)
                 if param.name in params_store:
                     raise RuntimeError(f"The {param.name} parameter has appeared in parameter groups.")
+
                 params_store.append(param.name)
                 self.group_lr.append(Parameter(lr, name="lr_" + param.name))
                 self.group_weight_decay.append(weight_decay_)
+
+        if self.is_group_params_ordered:
+            self._order_and_adjust_group_params(ordered_parameters, learning_rate, weight_decay)
+
+    def _order_and_adjust_group_params(self, ordered_parameters, learning_rate, weight_decay):
+        """
+        Order group parameter, learning rate and weight decay in group params. And assign the parameters
+        which in the value of 'order_params' but not in any group to default value.
+        """
+        params_length = len(ordered_parameters)
+        ordered_learning_rate = [Parameter(learning_rate, name="lr_" + param.name) for param in ordered_parameters]
+        ordered_weight_decay = [weight_decay * self.loss_scale] * params_length
+        params_name = [param.name for param in ordered_parameters]
+
+        for param, lr, wd in zip(self.group_params, self.group_lr, self.group_weight_decay):
+            index = params_name.index(param.name)
+            ordered_learning_rate[index] = lr
+            ordered_weight_decay[index] = wd
+
+        self.group_params = list(ordered_parameters)
+        self.group_lr = ordered_learning_rate
+        self.group_weight_decay = ordered_weight_decay
 
     def get_lr(self):
         """

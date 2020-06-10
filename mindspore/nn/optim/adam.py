@@ -144,10 +144,12 @@ class Adam(Optimizer):
         value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
         applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
 
+        To improve parameter groups performance, the customized order of parameters can be supported.
+
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
             the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
-            "lr" and "weight_decay" are the keys can be parsed.
+            "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
             - params: Required. The value should be a list of `Parameter`.
 
@@ -156,6 +158,11 @@ class Adam(Optimizer):
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
+
+            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
+              in the value of 'order_params' but not in any group will use default learning rate and default weight
+              decay.
 
         learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                         Iterable or a Tensor and the dims of the Tensor is 1,
@@ -193,13 +200,16 @@ class Adam(Optimizer):
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
-        >>>                 {'params': no_conv_params}]
+        >>> bias_params = list(filter(lambda x: 'bias' in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
+        >>>                 {'params': bias_params, 'lr': 0.01},
+        >>>                 {'order_params': net.trainable_params()}]
         >>> opt = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
-        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
-        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
+        >>> # The bias_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
+        >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
+        >>> # The parameters which in the value of 'order_params' but not in any group will use a learning rate
+        >>> # of default value 0.1 and a weight decay of default value 0.0.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
