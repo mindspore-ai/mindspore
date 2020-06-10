@@ -63,23 +63,6 @@ def normalize_np(image, mean, std):
     return image
 
 
-# pylint: disable=inconsistent-return-statements
-def get_normalized(image_id):
-    """
-    Reads the image using DE ops and then normalizes using Numpy
-    """
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    num_iter = 0
-    for item in data1.create_dict_iterator():
-        image = item["image"]
-        if num_iter == image_id:
-            return normalize_np(image)
-        num_iter += 1
-    return None
-
-
 def util_test_normalize(mean, std, op_type):
     """
     Utility function for testing Normalize. Input arguments are given by other tests
