@@ -2187,6 +2187,47 @@ class GatherNd(PrimitiveWithInfer):
         return x_dtype
 
 
+class TensorScatterUpdate(PrimitiveWithInfer):
+    """
+    Update tensor value by using input indices and value.
+
+    Using given values to update tensor value, along with the input indices.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor.
+        - **indices** (Tensor) - The index of input tensor whose data type is int32.
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and update.shape = indices.shape + input_x.shape[1:].
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
+        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> op = P.TensorScatterUpdate()
+        >>> output = op(input_x, indices, update)
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Init TensorScatterUpdate"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+
+    def infer_shape(self, x_shape, indices_shape, value_shape):
+        validator.check('the dimension of x', len(x_shape),
+                        'the dimension of indices', indices_shape[-1], Rel.GE)
+        if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
+            raise ValueError("For 'TensorScatterUpdate', input value are not match with input indices.")
+        return x_shape
+
+    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        args = {"x": x_dtype, "value": value_dtype}
+        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        return x_dtype
+
+
 class ScatterUpdate(PrimitiveWithInfer):
     """
     Update tensor value by using input indices and value.
@@ -2227,7 +2268,7 @@ class ScatterUpdate(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
         if indices_shape + x_shape[1:] != value_shape:
-            raise ValueError('Input value are not match with input indices.')
+            raise ValueError("For 'ScatterUpdate', input value are not match with input indices.")
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
@@ -2277,7 +2318,7 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         validator.check('the dimension of x', len(x_shape),
                         'the dimension of indices', indices_shape[-1], Rel.GE)
         if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
-            raise ValueError('Input value are not match with input indices.')
+            raise ValueError("For 'ScatterNdUpdate', input value are not match with input indices.")
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
