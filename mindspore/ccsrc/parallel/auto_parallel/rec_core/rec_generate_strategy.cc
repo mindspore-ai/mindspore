@@ -55,7 +55,7 @@ std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &gr
 
   // HCCL does not support multi-dimension partition, and the hardware does not support excessive
   // number of EVENT, so we temporarily disable matmul's multi-dimension partition function.
-  auto max_cut = 1.0 / g_device_manager->DeviceNum();
+  const auto max_cut = 1.0 / g_device_manager->DeviceNum();
   if (graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h != max_cut &&
       graph->nodes[iter_graph].apply.arguments[1].tensor_str.str_w != max_cut) {
     graph->nodes[iter_graph].apply.arguments[0].tensor_str.str_h = 1.0;
@@ -465,7 +465,6 @@ std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::sh
                                                        const size_t iter_ops, const size_t incoming_op_index) {
   std::vector<int32_t> s;
   s = PrepareIncomingOperatorInputStrategy(ops, incoming_op_index);
-
   if (s.size() != 0) {
     if (ops[incoming_op_index]->type() == SQUEEZE) {
       s = ModifyStrategyIfSqueezeIncoming(ops, incoming_op_index, s);
