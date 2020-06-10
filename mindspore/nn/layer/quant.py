@@ -118,7 +118,6 @@ class FakeQuantWithMinMax(Cell):
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        training (bool): Quantization algorithm training or not. Default: True.
 
     Inputs:
         - **x** (Tensor) - The input of FakeQuantWithMinMax.
@@ -143,8 +142,7 @@ class FakeQuantWithMinMax(Cell):
                  out_channels=1,
                  quant_delay=0,
                  symmetric=False,
-                 narrow_range=False,
-                 training=True):
+                 narrow_range=False):
         """init FakeQuantWithMinMax layer"""
         super(FakeQuantWithMinMax, self).__init__()
         self.min_init = min_init
@@ -158,7 +156,6 @@ class FakeQuantWithMinMax(Cell):
         self.quant_delay = quant_delay
         self.symmetric = symmetric
         self.narrow_range = narrow_range
-        self.training = training
         self.is_ascend = context.get_context('device_target') == "Ascend"
 
         # init tensor min and max for fake quant op
@@ -208,7 +205,7 @@ class FakeQuantWithMinMax(Cell):
         return s
 
     def construct(self, x):
-        if self.ema and self.is_ascend:
+        if self.is_ascend and self.training:
             min_up, max_up = self.ema_update(x, self.minq, self.maxq)
             out = self.fake_quant(x, min_up, max_up)
             P.Assign()(self.minq, min_up)
