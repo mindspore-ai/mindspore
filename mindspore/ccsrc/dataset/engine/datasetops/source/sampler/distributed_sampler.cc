@@ -55,14 +55,14 @@ Status DistributedSampler::InitSampler() {
   return Status::OK();
 }
 
-Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (cnt_ > samples_per_buffer_) {
     RETURN_STATUS_UNEXPECTED("Distributed Sampler Error");
   } else if (cnt_ == samples_per_buffer_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);

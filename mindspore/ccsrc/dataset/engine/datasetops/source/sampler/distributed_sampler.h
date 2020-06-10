@@ -40,7 +40,7 @@ class DistributedSampler : public Sampler {
   // @param std::unique_ptr<DataBuffer> * pBuffer
   // @param int32_t workerId
   // @return - The error code return
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
   // Init sampler, called by base class or python
   Status InitSampler() override;

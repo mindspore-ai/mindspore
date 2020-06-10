@@ -100,7 +100,7 @@ CifarOp::CifarOp(CifarType type, int32_t num_works, int32_t rows_per_buf, const 
 Status CifarOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
   while (true) {  // each iterator is 1 epoch
     std::vector<int64_t> keys;
     keys.reserve(rows_per_buffer_);
@@ -118,7 +118,7 @@ Status CifarOp::operator()() {
           keys.clear();
         }
       }
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
     if (keys.empty() == false) {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
@@ -139,7 +139,7 @@ Status CifarOp::operator()() {
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());  // Master thread goes to sleep after it has made all the IOBlocks
       wp_.Clear();
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
   }
 }

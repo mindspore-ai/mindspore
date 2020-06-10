@@ -23,14 +23,14 @@ namespace dataset {
 SequentialSampler::SequentialSampler(int64_t num_samples, int64_t start_index, int64_t samples_per_buffer)
     : Sampler(num_samples, samples_per_buffer), start_index_(start_index), current_id_(start_index), id_count_(0) {}
 
-Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status SequentialSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (id_count_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("SequentialSampler Internal Error");
   } else if (id_count_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(current_id_, DataBuffer::kDeBFlagNone);

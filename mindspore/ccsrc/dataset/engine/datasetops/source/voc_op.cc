@@ -123,7 +123,7 @@ Status VOCOp::TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::
 Status VOCOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
   while (true) {
     std::vector<int64_t> keys;
     keys.reserve(rows_per_buffer_);
@@ -134,7 +134,7 @@ Status VOCOp::operator()() {
         RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't int64");
       }
       RETURN_IF_NOT_OK(TraverseSampleIds(sample_ids, &keys));
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
     if (keys.empty() == false) {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
@@ -155,7 +155,7 @@ Status VOCOp::operator()() {
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());
       wp_.Clear();
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
   }
 }

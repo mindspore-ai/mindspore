@@ -49,7 +49,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<int64_t> out;
-  ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<int64_t>(); it != t->end<int64_t>(); it++) {
@@ -61,7 +61,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
     ASSERT_NE(in_set.find(out[i]), in_set.end());
   }
 
-  ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 }
 
@@ -79,7 +79,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
   TensorRow row;
   std::vector<int64_t> out;
 
-  ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   int epoch = 0;
   while (!db->eoe()) {
     epoch++;
@@ -91,7 +91,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
     }
     db.reset();
 
-    ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+    ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   }
 
   ASSERT_EQ(epoch, (total_samples + samples_per_buffer - 1) / samples_per_buffer);
@@ -111,7 +111,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
   TensorRow row;
   std::vector<int64_t> out;
 
-  ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<int64_t>(); it != t->end<int64_t>(); it++) {
@@ -125,7 +125,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
 
   sampler.Reset();
 
-  ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), false);
   db->PopRow(&row);
   out.clear();
@@ -139,6 +139,6 @@ TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
     ASSERT_NE(in_set.find(out[i]), in_set.end());
   }
 
-  ASSERT_EQ(sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 }

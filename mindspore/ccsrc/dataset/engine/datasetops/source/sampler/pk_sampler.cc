@@ -59,14 +59,14 @@ Status PKSampler::InitSampler() {
   return Status::OK();
 }
 
-Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status PKSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_ || num_samples_ == 0) {
     RETURN_STATUS_UNEXPECTED("Index out of bound in PKSampler");
   } else if (next_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);

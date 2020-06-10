@@ -31,14 +31,14 @@ RandomSampler::RandomSampler(int64_t num_samples, bool replacement, bool reshuff
       reshuffle_each_epoch_(reshuffle_each_epoch),
       dist(nullptr) {}
 
-Status RandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status RandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("RandomSampler Internal Error");
   } else if (next_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
     (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
 
