@@ -376,8 +376,9 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
       *output = input;
       return Status::OK();
     }
-    if (input_cv->shape().Size() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels is not equal 3");
+    if (input_cv->shape().Size() < 2 || input_cv->shape().Size() > 3 ||
+        (input_cv->shape().Size() == 3 && input_cv->shape()[2] != 3 && input_cv->shape()[2] != 1)) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3 nor 1");
     }
     cv::Mat output_img;
 
@@ -401,8 +402,8 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
-    if (input_cv->shape().Size() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels is not equal 3");
+    if (input_cv->shape().Size() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -422,7 +423,7 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
     if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-      RETURN_STATUS_UNEXPECTED("Ishape not <H,W,C> or <H,W>");
+      RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
     }
     // image too large or too small
     if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * 1000 ||
@@ -541,8 +542,8 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -561,8 +562,8 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     cv::Mat gray, output_img;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
@@ -587,8 +588,8 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -615,8 +616,8 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -644,7 +645,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
              uint8_t fill_g, uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (input_cv->mat().data == nullptr || (input_cv->Rank() != 3 && input_cv->shape()[2] != 3)) {
+    if (input_cv->mat().data == nullptr || input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
       RETURN_STATUS_UNEXPECTED("bad CV Tensor input for erase");
     }
     cv::Mat input_img = input_cv->mat();
