@@ -35,6 +35,7 @@ This is an example of training ResNet101 with ImageNet dataset in MindSpore.
     ├─crossentropy.py                 # CrossEntropy loss function
     ├─dataset.py                      # data preprocessin
     ├─lr_generator.py                 # generate learning rate
+    ├─resnet101.py                    # resnet101 backbone
   ├─eval.py                           # eval net
   └─train.py                          # train net
 ```

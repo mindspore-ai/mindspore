@@ -20,12 +20,12 @@ import argparse
 import random
 import numpy as np
 from mindspore import context
-from mindspore.model_zoo.resnet import resnet101
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
 from mindspore.communication.management import init
+from src.resnet101 import resnet101
 from src.dataset import create_dataset
 from src.config import config
 from src.crossentropy import CrossEntropy
