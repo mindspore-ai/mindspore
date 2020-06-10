@@ -14,9 +14,12 @@
 # ============================================================================
 """ test nn ops """
 import numpy as np
+from numpy.random import normal
 
 import mindspore.nn as nn
 import mindspore.context as context
+from mindspore.ops.composite import core
+from mindspore.common.api import ms_function
 
 from mindspore import Tensor
 from mindspore.ops import functional as F
@@ -59,10 +62,39 @@ def test_conv2d_same_primitive():
     net(t1, t2)
 
 
+# test free variable function list as parameter
+def test_remove_and_fv_2():
+    @core(loop_can_uroll=True)
+    def inner_loop(x, input_data, fv_func_list):
+        ret = ()
+        for fv_fn in fv_func_list:
+            ele = fv_fn(input_data)
+            ret += (ele,)
+        return ret
+
+    @ms_function
+    def out_loop(input1, input_data):
+        ret = ()
+
+        def fv_func1(y):
+            return input1 * y
+        def fv_func2(y):
+            return input1 - y
+        fv_func_list = [fv_func1, fv_func2]
+        ele0 = inner_loop(input1, input_data[0], fv_func_list)
+        ele1 = inner_loop(input1, input_data[1], fv_func_list)
+        ret = (ele0, ele1)
+        return ret
+
+    input_data = (Tensor(normal(0, 0.1, (3, 3))), Tensor(normal(0, 0.1, (3, 1))))
+    input1 = Tensor(normal(0, 0.1, (3, 3)))
+    out_loop(input1, input_data)
+
+
 # test cell as high order argument
 # The graph with free variables used as argument is not supported yet
 # because of the limit of inference specialize system
-def Xtest_conv2d_op_with_arg():
+def test_conv2d_op_with_argi_1():
     class Conv2dNet(nn.Cell):
         def __init__(self):
             super(Conv2dNet, self).__init__()
@@ -279,7 +311,7 @@ def test_op_with_arg_as_input():
 
 # The partial application used as argument is not supported yet
 # because of the limit of inference specialize system
-def Xtest_partial_as_arg():
+def test_partial_as_arg():
     class PartialArgNet(nn.Cell):
         def __init__(self):
             super(PartialArgNet, self).__init__()
