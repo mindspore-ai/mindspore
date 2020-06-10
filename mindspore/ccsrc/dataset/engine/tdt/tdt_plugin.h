@@ -26,6 +26,7 @@
 
 #include "dataset/core/data_type.h"
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 
 namespace mindspore {
 namespace dataset {

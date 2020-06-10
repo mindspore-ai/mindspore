@@ -213,7 +213,7 @@ Status CocoOp::Reset() {
   return Status::OK();
 }
 
-Status CocoOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
+Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *trow) {
   std::shared_ptr<Tensor> image, coordinate;
   auto itr = coordinate_map_.find(image_id);
   if (itr == coordinate_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
@@ -246,11 +246,11 @@ Status CocoOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
                                         data_schema_->column(1).type(),
                                         reinterpret_cast<unsigned char *>(&bbox_row[0])));
   if (task_type_ == TaskType::Detection) {
-    RETURN_IF_NOT_OK(LoadDetectionTensorRow(image_id, image, coordinate, trow));
+    RETURN_IF_NOT_OK(LoadDetectionTensorRow(row_id, image_id, image, coordinate, trow));
   } else if (task_type_ == TaskType::Stuff || task_type_ == TaskType::Keypoint) {
-    RETURN_IF_NOT_OK(LoadSimpleTensorRow(image_id, image, coordinate, trow));
+    RETURN_IF_NOT_OK(LoadSimpleTensorRow(row_id, image_id, image, coordinate, trow));
   } else if (task_type_ == TaskType::Panoptic) {
-    RETURN_IF_NOT_OK(LoadMixTensorRow(image_id, image, coordinate, trow));
+    RETURN_IF_NOT_OK(LoadMixTensorRow(row_id, image_id, image, coordinate, trow));
   } else {
     RETURN_STATUS_UNEXPECTED("Invalid task type.");
   }
@@ -265,7 +265,7 @@ Status CocoOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
 // column ["iscrowd"] with datatype=uint32
 // By the way, column ["iscrowd"] is used for some testcases, like fasterRcnn.
 // If "iscrowd" is not existed, user will get default value 0.
-Status CocoOp::LoadDetectionTensorRow(const std::string &image_id, std::shared_ptr<Tensor> image,
+Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                       std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> category_id, iscrowd;
   std::vector<uint32_t> category_id_row;
@@ -288,7 +288,7 @@ Status CocoOp::LoadDetectionTensorRow(const std::string &image_id, std::shared_p
   RETURN_IF_NOT_OK(Tensor::CreateTensor(
     &iscrowd, data_schema_->column(3).tensorImpl(), TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}),
     data_schema_->column(3).type(), reinterpret_cast<unsigned char *>(&iscrowd_row[0])));
-  (*trow) = {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd)});
   return Status::OK();
 }
 
@@ -296,7 +296,7 @@ Status CocoOp::LoadDetectionTensorRow(const std::string &image_id, std::shared_p
 // column ["image"] with datatype=uint8
 // column ["segmentation"]/["keypoints"] with datatype=float32
 // column ["iscrowd"]/["num_keypoints"] with datatype=uint32
-Status CocoOp::LoadSimpleTensorRow(const std::string &image_id, std::shared_ptr<Tensor> image,
+Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                    std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> item;
   std::vector<uint32_t> item_queue;
@@ -308,7 +308,7 @@ Status CocoOp::LoadSimpleTensorRow(const std::string &image_id, std::shared_ptr<
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&item, data_schema_->column(2).tensorImpl(), TensorShape(bbox_dim),
                                         data_schema_->column(2).type(),
                                         reinterpret_cast<unsigned char *>(&item_queue[0])));
-  (*trow) = {std::move(image), std::move(coordinate), std::move(item)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(item)});
   return Status::OK();
 }
 
@@ -318,7 +318,7 @@ Status CocoOp::LoadSimpleTensorRow(const std::string &image_id, std::shared_ptr<
 // column ["category_id"] with datatype=uint32
 // column ["iscrowd"] with datatype=uint32
 // column ["area"] with datattype=uint32
-Status CocoOp::LoadMixTensorRow(const std::string &image_id, std::shared_ptr<Tensor> image,
+Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> category_id, iscrowd, area;
   std::vector<uint32_t> category_id_row;
@@ -349,15 +349,16 @@ Status CocoOp::LoadMixTensorRow(const std::string &image_id, std::shared_ptr<Ten
   RETURN_IF_NOT_OK(Tensor::CreateTensor(
     &area, data_schema_->column(4).tensorImpl(), TensorShape({static_cast<dsize_t>(area_row.size()), 1}),
     data_schema_->column(4).type(), reinterpret_cast<unsigned char *>(&area_row[0])));
-  (*trow) = {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd), std::move(area)};
+  (*trow) = TensorRow(
+    row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd), std::move(area)});
   return Status::OK();
 }
 
 Status CocoOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
-  for (const uint64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_ids_[key], &trow));
+  for (const int64_t &key : keys) {
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_ids_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));

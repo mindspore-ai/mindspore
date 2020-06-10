@@ -205,36 +205,40 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   Status InitSampler();
 
   // Load a tensor row according to image id
+  // @param row_id_type row_id - id for this tensor row
   // @param std::string image_id - image id
   // @param TensorRow row - image & target read into this tensor row
   // @return Status - The error code return
-  Status LoadTensorRow(const std::string &image_id, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *row);
 
   // Load a tensor row with vector which a vector to a tensor
+  // @param row_id_type row_id - id for this tensor row
   // @param const std::string &image_id - image is
   // @param std::shared_ptr<Tensor> image - image tensor
   // @param std::shared_ptr<Tensor> coordinate - coordinate tensor
   // @param TensorRow row - image & target read into this tensor row
   // @return Status - The error code return
-  Status LoadDetectionTensorRow(const std::string &image_id, std::shared_ptr<Tensor> image,
+  Status LoadDetectionTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
   // Load a tensor row with vector which a vector to a tensor
+  // @param row_id_type row_id - id for this tensor row
   // @param const std::string &image_id - image is
   // @param std::shared_ptr<Tensor> image - image tensor
   // @param std::shared_ptr<Tensor> coordinate - coordinate tensor
   // @param TensorRow row - image & target read into this tensor row
   // @return Status - The error code return
-  Status LoadSimpleTensorRow(const std::string &image_id, std::shared_ptr<Tensor> image,
+  Status LoadSimpleTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                              std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
   // Load a tensor row with vector which a vector to multi-tensor
+  // @param row_id_type row_id - id for this tensor row
   // @param const std::string &image_id - image is
   // @param std::shared_ptr<Tensor> image - image tensor
   // @param std::shared_ptr<Tensor> coordinate - coordinate tensor
   // @param TensorRow row - image & target read into this tensor row
   // @return Status - The error code return
-  Status LoadMixTensorRow(const std::string &image_id, std::shared_ptr<Tensor> image,
+  Status LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                           std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
   // @param const std::string &path - path to the image file

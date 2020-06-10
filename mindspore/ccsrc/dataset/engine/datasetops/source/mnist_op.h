@@ -162,10 +162,11 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   Status InitSampler();
 
   // Load a tensor row according to a pair
+  // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status - The error code return
-  Status LoadTensorRow(const MnistLabelPair &mnist_pair, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *row);
 
   // @param const std::vector<int64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 #include "dataset/engine/gnn/graph_loader.h"
 #include "dataset/engine/gnn/feature.h"
 #include "dataset/engine/gnn/node.h"

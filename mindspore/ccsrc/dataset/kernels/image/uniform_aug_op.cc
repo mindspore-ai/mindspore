@@ -27,8 +27,7 @@ UniformAugOp::UniformAugOp(std::vector<std::shared_ptr<TensorOp>> op_list, int32
 }
 
 // compute method to apply uniformly random selected augmentations from a list
-Status UniformAugOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                             std::vector<std::shared_ptr<Tensor>> *output) {
+Status UniformAugOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
 
   // randomly select ops to be applied

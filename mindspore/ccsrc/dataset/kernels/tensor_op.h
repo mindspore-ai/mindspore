@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 #include "dataset/util/status.h"
 
 #define IO_CHECK(input, output)                             \
@@ -75,8 +76,7 @@ class TensorOp {
   // @param input is a vector of shared_ptr to Tensor (pass by const reference).
   // @param output is the address to an empty vector of shared_ptr to Tensor.
   // @return Status
-  virtual Status Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                         std::vector<std::shared_ptr<Tensor>> *output);
+  virtual Status Compute(const TensorRow &input, TensorRow *output);
 
   // Returns true oif the TensorOp takes one input and returns one output.
   // @return true/false

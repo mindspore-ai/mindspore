@@ -584,7 +584,7 @@ void bindGraphData(py::module *m) {
          [](gnn::Graph &g, std::shared_ptr<Tensor> node_list, std::vector<gnn::FeatureType> feature_types) {
            TensorRow out;
            THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
-           return out;
+           return out.getRow();
          })
     .def("graph_info", [](gnn::Graph &g) {
       py::dict out;

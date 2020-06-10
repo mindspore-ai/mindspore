@@ -187,10 +187,12 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   Status AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer);
 
   // Load a tensor row according to a pair
+  // @param row_id_type row_id - id for this tensor row
   // @param std::pair<std::string, std::vector<std::string>> - <imagefile, <label1, label2...>>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status - The error code return
-  Status LoadTensorRow(const std::pair<std::string, std::vector<std::string>> &data, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<std::string>> &data,
+                       TensorRow *row);
 
   // @param const std::vector<int64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db

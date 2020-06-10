@@ -215,10 +215,11 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   Status InitSampler();
 
   // Load a tensor row according to image id
+  // @param row_id_type row_id - id for this tensor row
   // @param std::string image_id - image id
   // @param TensorRow row - image & target read into this tensor row
   // @return Status - The error code return
-  Status LoadTensorRow(const std::string &image_id, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *row);
 
   // @param const std::string &path - path to the image file
   // @param const ColDescriptor &col - contains tensor implementation and datatype

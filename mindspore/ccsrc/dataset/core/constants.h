@@ -51,6 +51,9 @@ constexpr uint32_t kCfgMonitorSamplingInterval = 10;
 
 // Invalid OpenCV type should not be from 0 to 7 (opencv4/opencv2/core/hal/interface.h)
 constexpr uint8_t kCVInvalidType = 255;
+
+using connection_id_type = int64_t;
+using row_id_type = int64_t;
 }  // namespace dataset
 }  // namespace mindspore
 

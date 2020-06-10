@@ -183,7 +183,7 @@ Status VOCOp::Reset() {
   return Status::OK();
 }
 
-Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
+Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *trow) {
   if (task_type_ == TaskType::Segmentation) {
     std::shared_ptr<Tensor> image, target;
     const std::string kImageFile =
@@ -192,7 +192,7 @@ Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
       folder_path_ + std::string(kSegmentationClassFolder) + image_id + std::string(kSegmentationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
-    (*trow) = {std::move(image), std::move(target)};
+    (*trow) = TensorRow(row_id, {std::move(image), std::move(target)});
   } else if (task_type_ == TaskType::Detection) {
     std::shared_ptr<Tensor> image, annotation;
     const std::string kImageFile =
@@ -201,7 +201,7 @@ Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
       folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, data_schema_->column(1), &annotation));
-    (*trow) = {std::move(image), std::move(annotation)};
+    (*trow) = TensorRow(row_id, {std::move(image), std::move(annotation)});
   }
   return Status::OK();
 }
@@ -210,7 +210,7 @@ Status VOCOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataB
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
   for (const uint64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_ids_[key], &trow));
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_ids_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));

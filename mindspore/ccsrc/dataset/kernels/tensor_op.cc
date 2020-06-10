@@ -37,8 +37,7 @@ Status TensorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
 // Name: Compute()
 // Description: This Compute() take multiple Tensors from different columns and produce multiple Tensors too.
 //              The derived class should override this function otherwise error.
-Status TensorOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                         std::vector<std::shared_ptr<Tensor>> *output) {
+Status TensorOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   if (OneToOne()) {
     output->resize(1);

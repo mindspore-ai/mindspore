@@ -44,9 +44,6 @@ class Tensor;
 
 using CharAllocPtr = std::unique_ptr<Allocator<unsigned char>>;
 using TensorAllocPtr = std::shared_ptr<Allocator<Tensor>>;  // An allocator shared_ptr for Tensors
-using TensorRow = std::vector<std::shared_ptr<Tensor>>;     // A row is a set of Tensor pointers
-using TensorTable = std::vector<TensorRow>;                 // The table of tensors is a vector of rows
-using TensorQTable = std::deque<TensorRow>;  // A different flavour of tensor table, this one has queue functionality
 
 class Tensor {
  public:

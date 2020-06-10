@@ -182,7 +182,8 @@ Status ManifestOp::WorkerEntry(int32_t worker_id) {
 }
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
-Status ManifestOp::LoadTensorRow(const std::pair<std::string, std::vector<std::string>> &data, TensorRow *trow) {
+Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<std::string>> &data,
+                                 TensorRow *trow) {
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;
   std::vector<int32_t> label_index(data.second.size());
@@ -222,7 +223,7 @@ Status ManifestOp::LoadTensorRow(const std::pair<std::string, std::vector<std::s
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
-  (*trow) = {std::move(image), std::move(label)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
 
@@ -231,7 +232,7 @@ Status ManifestOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   for (const auto &key : keys) {
     TensorRow trow;
-    RETURN_IF_NOT_OK(LoadTensorRow(image_labelname_[static_cast<size_t>(key)], &trow));
+    RETURN_IF_NOT_OK(LoadTensorRow(key, image_labelname_[static_cast<size_t>(key)], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));

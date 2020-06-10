@@ -36,7 +36,7 @@ namespace mindspore {
 namespace dataset {
 class DataBuffer;
 
-using TensorBatch = std::vector<std::shared_ptr<Tensor>>;
+using TensorBatch = TensorRow;
 using TensorBatchTable = std::vector<TensorBatch>;
 using PadInfo = std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>>;
 

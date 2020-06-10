@@ -199,7 +199,7 @@ Status ImageFolderOp::WorkerEntry(int32_t worker_id) {
 }
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
-Status ImageFolderOp::LoadTensorRow(ImageLabelPair pairPtr, TensorRow *trow) {
+Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, TensorRow *trow) {
   std::shared_ptr<Tensor> image, label;
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
                                         data_schema_->column(1).type(),
@@ -223,7 +223,7 @@ Status ImageFolderOp::LoadTensorRow(ImageLabelPair pairPtr, TensorRow *trow) {
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
-  (*trow) = {std::move(image), std::move(label)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
 
@@ -232,7 +232,7 @@ Status ImageFolderOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_p
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
   for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_label_pairs_[key], &trow));
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_label_pairs_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));

@@ -24,8 +24,7 @@
 
 namespace mindspore {
 namespace dataset {
-Status PyFuncOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                         std::vector<std::shared_ptr<Tensor>> *output) {
+Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   Status ret = Status(StatusCode::kOK, "PyFunc Call Succeed");
   {
