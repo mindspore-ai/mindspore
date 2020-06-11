@@ -38,12 +38,6 @@ correction_mul_grad_op_info = TBERegOp("CorrectionMulGrad") \
     .input(3, "running_std", None, "required", None) \
     .output(0, "dx", True, "required", "all") \
     .output(1, "d_batch_std", True, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
-                  DataType.F16_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
