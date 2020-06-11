@@ -335,15 +335,15 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
 
       int index = sqlite3_bind_parameter_index(stmt, common::SafeCStr(place_holder));
       if (field_type == "INTEGER") {
-        if (sqlite3_bind_int(stmt, index, std::stoi(field_value)) != SQLITE_OK) {
+        if (sqlite3_bind_int64(stmt, index, std::stoll(field_value)) != SQLITE_OK) {
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index
-                        << ", field value: " << std::stoi(field_value);
+                        << ", field value: " << std::stoll(field_value);
           return FAILED;
         }
       } else if (field_type == "NUMERIC") {
-        if (sqlite3_bind_double(stmt, index, std::stod(field_value)) != SQLITE_OK) {
+        if (sqlite3_bind_double(stmt, index, std::stold(field_value)) != SQLITE_OK) {
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index
-                        << ", field value: " << std::stoi(field_value);
+                        << ", field value: " << std::stold(field_value);
           return FAILED;
         }
       } else if (field_type == "NULL") {
