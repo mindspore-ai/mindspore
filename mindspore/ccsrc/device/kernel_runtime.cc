@@ -80,6 +80,14 @@ bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
 }
 
 // for D to impl
+bool KernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  if (graph != nullptr) {
+    return true;
+  }
+  return false;
+}
+
+// for D to impl
 bool KernelRuntime::GenTask(const session::KernelGraph *graph) {
   if (graph != nullptr) {
     return true;

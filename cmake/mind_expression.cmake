@@ -14,6 +14,16 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/eigen.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
+
+if (ENABLE_DEBUGGER)
+    # build dependencies of gRPC
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/absl.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/c-ares.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/zlib.cmake)
+    # build gRPC
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/grpc.cmake)
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/pybind11.cmake)
 MESSAGE("go to link flatbuffers")
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/flatbuffers.cmake)

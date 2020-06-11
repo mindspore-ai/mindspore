@@ -346,6 +346,9 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
                                                const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list);
+
+AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list);
 }  // namespace abstract
 }  // namespace mindspore
 

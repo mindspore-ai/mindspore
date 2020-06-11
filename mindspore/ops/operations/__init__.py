@@ -37,7 +37,7 @@ from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast
                        _VirtualDiv, _GetTensorSlice,
                        HostAllGather, HostReduceScatter)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
-                        TensorSummary, HistogramSummary, Print)
+                        TensorSummary, HistogramSummary, Debug, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 
@@ -173,6 +173,7 @@ __all__ = [
     'ImageSummary',
     'TensorSummary',
     'HistogramSummary',
+    "Debug",
     "Print",
     'InsertGradientOf',
     'HookBackward',

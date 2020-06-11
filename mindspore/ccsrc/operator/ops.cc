@@ -275,5 +275,6 @@ const PrimitivePtr kPrimScalarSummary = std::make_shared<Primitive>("ScalarSumma
 const PrimitivePtr kPrimImageSummary = std::make_shared<Primitive>("ImageSummary");
 const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("TensorSummary");
 const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
+const PrimitivePtr kPrimDebug = std::make_shared<Primitive>("Debug");
 }  // namespace prim
 }  // namespace mindspore

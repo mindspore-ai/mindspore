@@ -25,6 +25,9 @@
 #include "ir/dtype.h"
 
 namespace mindspore {
+#ifdef ENABLE_DEBUGGER
+class Debugger;
+#endif
 namespace device {
 namespace ascend {
 class AscendDeviceAddress : public DeviceAddress {
@@ -39,6 +42,10 @@ class AscendDeviceAddress : public DeviceAddress {
 #ifdef ENABLE_DUMP_E2E
   bool DumpMemToFile(bool dump_mode, const std::string &filepath, const std::string &host_fmt,
                      const std::vector<int> &host_shape, TypeId host_type) const;
+#endif
+#ifdef ENABLE_DEBUGGER
+  bool LoadMemToHost(bool dump_mode, const std::string &tensor_name, int execution_order, const std::string &host_fmt,
+                     const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger) const;
 #endif
  private:
   bool SyncDeviceToHostAndConvertFormat(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const;

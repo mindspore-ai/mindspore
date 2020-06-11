@@ -30,6 +30,10 @@
 #ifdef ENABLE_DUMP_E2E
 #include "debug/e2e_dump.h"
 #endif
+#ifdef ENABLE_DEBUGGER
+#include "debug/tensor_load.h"
+#endif
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -346,6 +350,52 @@ bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &file
   return ret;
 }
 #endif
+
+#ifdef ENABLE_DEBUGGER
+bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tensor_name, int execution_order,
+                                        const std::string &host_fmt, const std::vector<int> &host_shape,
+                                        TypeId host_type, size_t slot, Debugger *debugger) const {
+  bool ret = false;
+
+  DebugServices *debug_services = debugger->get_debug_services();
+  TensorLoader *tensor_loader = debug_services->get_tensor_loader();
+
+  if (trans_flag) {
+    MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
+    mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
+    size_t host_size = out_tensor->data().nbytes();
+    ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c(true));
+    if (!ret) {
+      MS_LOG(ERROR) << "Copy device mem to host failed";
+      return ret;
+    }
+    auto tensor_data = std::make_shared<mindspore::TensorData>();
+    tensor_data->SetName(tensor_name);
+    tensor_data->SetExecutionOrder(execution_order);
+    tensor_data->SetTensor(out_tensor);
+    tensor_data->SetSlot(slot);
+    ret = tensor_loader->LoadNewTensor(tensor_data);
+
+  } else {
+    mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(type_id_, host_shape);
+    size_t host_size = out_tensor->data().nbytes();
+    auto ret_rt_memcpy = rtMemcpy(out_tensor->data_c(true), host_size, ptr_, host_size, RT_MEMCPY_DEVICE_TO_HOST);
+
+    auto tensor_data = std::make_shared<mindspore::TensorData>();
+    tensor_data->SetName(tensor_name);
+    tensor_data->SetExecutionOrder(execution_order);
+    tensor_data->SetTensor(out_tensor);
+    tensor_data->SetSlot(slot);
+    ret = tensor_loader->LoadNewTensor(tensor_data);
+    if (ret_rt_memcpy != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "SyncDeviceToHost: rtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
+    }
+    MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
+  }
+  return ret;
+}
+#endif
+
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

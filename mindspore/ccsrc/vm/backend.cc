@@ -362,5 +362,9 @@ GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_-
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
 
+#ifdef ENABLE_DEBUGGER
+void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
+#endif
+
 }  // namespace compile
 }  // namespace mindspore

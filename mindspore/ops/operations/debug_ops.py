@@ -17,7 +17,7 @@
 from types import FunctionType, MethodType
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
 
 def _check_summary_param(name, value, class_name):
@@ -340,3 +340,29 @@ class Print(PrimitiveWithInfer):
         for dtype in inputs:
             validator.check_subclass("input", dtype, (mstype.tensor, mstype.string), self.name)
         return mstype.int32
+
+
+class Debug(Primitive):
+    """
+    Print tensor value.
+
+    Inputs:
+        - **value** (Tensor) - The value of tensor.
+
+    Examples:
+        >>> class DebugNN(nn.Cell):
+        >>>     def __init__(self,):
+        >>>         self.debug = nn.Debug()
+        >>>
+        >>>     def construct(self, x, y):
+        >>>         x = self.add(x, y)
+        >>>         self.debug(x)
+        >>>         return x
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def __call__(self, *args, **kwargs):
+        pass

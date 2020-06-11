@@ -69,7 +69,11 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_task_sink_ = true;
   ir_fusion_flag_ = true;
   enable_hccl_ = false;
+#ifdef ENABLE_DEBUGGER
+  enable_mem_reuse_ = false;
+#else
   enable_mem_reuse_ = true;
+#endif
   enable_gpu_summary_ = true;
   precompile_only_ = false;
   auto_mixed_precision_flag_ = false;

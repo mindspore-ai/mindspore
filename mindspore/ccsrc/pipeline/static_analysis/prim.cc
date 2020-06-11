@@ -130,6 +130,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDepend, {InferImplDepend, true}},
     {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
     {prim::kPrimControlDepend, {InferImplControlDepend, true}},
+    // Debug
+    {prim::kPrimDebug, {InferImplDebug, true}},
   };
   return prim_eval_implement_map;
 }
