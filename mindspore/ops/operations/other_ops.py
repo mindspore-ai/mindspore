@@ -373,6 +373,8 @@ class CheckBprop(PrimitiveWithInfer):
 
     def infer_shape(self, xshapes, yshapes):
         tips = f'Bprop of {self.prim_to_check}'
+        validator.check_value_type('grads', xshapes, (tuple,), tips)
+        validator.check_value_type('params', yshapes, (tuple,), tips)
         if len(xshapes) < len(yshapes):
             raise TypeError(f"{tips}, the size of output should be {len(yshapes)},"
                             f" but got {len(xshapes)}.")
@@ -389,6 +391,8 @@ class CheckBprop(PrimitiveWithInfer):
 
     def infer_dtype(self, xdtypes, ydtypes):
         tips = f'Bprop of {self.prim_to_check}'
+        validator.check_value_type('grads', xdtypes, (tuple,), tips)
+        validator.check_value_type('params', ydtypes, (tuple,), tips)
         if len(xdtypes) < len(ydtypes):
             raise TypeError(f"{tips}, the size of output should be {len(ydtypes)},"
                             f" but got {len(xdtypes)}.")

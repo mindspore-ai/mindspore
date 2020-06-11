@@ -30,6 +30,7 @@ unsorted_segment_sum = P.UnsortedSegmentSum()
 transpose = P.Transpose()
 shape_op = P.Shape()
 reshape = P.Reshape()
+size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
 
@@ -270,6 +271,37 @@ def get_bprop_gather_v2(self):
         if F.rank(indices) == 0:
             indices = P.ExpandDims()(indices, -1)
         x_shp = shape_op(x)
+        out_shp = shape_op(dout)
+        ind_shp = shape_op(indices)
+        # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
+        perm_1 = _generate_shape_index(out_shp, ind_shp, axis)
+        values_transpose = transpose(dout, perm_1)
+        params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
+        # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)
+        perm_2 = _generate_inverse_index(x_shp, axis)
+        params_grad = transpose(params_grad, perm_2)
+        return params_grad, zeros_like(indices), zeros_like(axis)
+
+    return bprop
+
+
+@bprop_getters.register(P.SparseGatherV2)
+def get_bprop_sparse_gather_v2(self):
+    """Generate bprop for SparseGatherV2"""
+
+    def bprop(x, indices, axis, out, dout):
+        x_shp = shape_op(x)
+        if axis == 0:
+            indices_size = (size_op(indices),)
+            x_tail_shp = x_shp[1:]
+            values_shape = indices_size + x_tail_shp
+            values = reshape(dout, values_shape)
+            indices = reshape(indices, indices_size)
+            return (indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+        if F.rank(dout) == 0:
+            dout = P.ExpandDims()(dout, -1)
+        if F.rank(indices) == 0:
+            indices = P.ExpandDims()(indices, -1)
         out_shp = shape_op(dout)
         ind_shp = shape_op(indices)
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)

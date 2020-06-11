@@ -44,7 +44,7 @@ class AbstractBase : public Base {
  public:
   explicit AbstractBase(const ValuePtr &value = nullptr, const TypePtr &type = kAnyType,
                         const BaseShapePtr &shape = kNoShape)
-      : value_(value), type_(type), shape_(shape) {}
+      : value_(value), type_(type), shape_(shape), sparse_grad_(false) {}
   ~AbstractBase() override = default;
   MS_DECLARE_PARENT(AbstractBase, Base)
 
@@ -53,11 +53,13 @@ class AbstractBase : public Base {
 
   virtual bool operator==(const AbstractBase &other) const;
   void set_value(const ValuePtr &value) { value_ = value; }
+  void set_sparse_grad(const bool &sparse_grad) { sparse_grad_ = sparse_grad; }
   void set_type(const TypePtr &type) { type_ = type; }
   void set_shape(const BaseShapePtr &shape) { shape_ = shape; }
   void set_value_desc(const std::string &desc) { value_desc_ = desc; }
   const std::string &value_desc() const { return value_desc_; }
   ValuePtr GetValueTrack() const { return value_; }
+  bool sparse_grad() const { return sparse_grad_; }
   TypePtr GetTypeTrack() const { return type_; }
   BaseShapePtr GetShapeTrack() const { return shape_; }
 
@@ -85,6 +87,7 @@ class AbstractBase : public Base {
   TypePtr type_;
   BaseShapePtr shape_;
   std::string value_desc_;  // store initial value description for error report
+  bool sparse_grad_;
 };
 
 class AbstractScalar : public AbstractBase {

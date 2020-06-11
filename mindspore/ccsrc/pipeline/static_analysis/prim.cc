@@ -851,7 +851,11 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     }
     auto refkey = key_value->cast<RefKeyPtr>();
     if (refkey == nullptr) {
-      return std::make_shared<EvalResult>(std::make_shared<AbstractScalar>(type), std::make_shared<AttrValueMap>());
+      auto ret = std::make_shared<AbstractScalar>(type);
+      auto ref_value = ref_abs->ref();
+      MS_EXCEPTION_IF_NULL(ref_value);
+      ret->set_sparse_grad(ref_value->sparse_grad());
+      return std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     }
 
     std::string name = refkey->tag();
@@ -865,6 +869,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     x = SensitivityTransform(x);
     std::shared_ptr<SymbolicKeyInstance> key = std::make_shared<SymbolicKeyInstance>(node, x);
     std::shared_ptr<AbstractScalar> abs_scalar = std::make_shared<AbstractScalar>(key, type);
+    abs_scalar->set_sparse_grad(x->sparse_grad());
     return std::make_shared<EvalResult>(abs_scalar, std::make_shared<AttrValueMap>());
   }
 };

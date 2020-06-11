@@ -19,7 +19,7 @@
 from functools import partial
 
 from mindspore import context
-from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, MultitypeFuncGraph_, Tail_, TensorSlice_, \
+from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, TensorSlice_, \
                              TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_exec, _wrap_func
@@ -240,6 +240,69 @@ class HyperMap(HyperMap_):
         if not isinstance(args_list[0], (tuple, list)):
             return func(*args_list)
         return tuple(map(hypermap, *args_list))
+
+class Map(Map_):
+    """
+    Map will apply the set operation on input sequences.
+
+    Which will apply the operations of every elements of the sequence.
+
+    Args:
+        ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
+            the operations should be putted in the first input of the instance.
+
+    Inputs:
+        - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
+          and each row of the sequences. e.g. If args length is 2, and for `i` in length of each sequence
+          `(args[0][i], args[1][i])` will be the input of the operation.
+
+          If `ops` is not `None`, the first input is the operation, and the other is inputs.
+
+    Outputs:
+        sequence, the output will be same type and same length of sequence from input and the value of each element
+        is the result of operation apply each row of element. e.g. `operation(args[0][i], args[1][i])`.
+    """
+
+    def __init__(self, ops=None):
+        self.ops = ops
+        if ops:
+            Map_.__init__(self, ops)
+        else:
+            Map_.__init__(self)
+
+    def __call__(self, *args):
+        func = args[0]
+        count = 0
+        count_max = 1
+        args_list = args[1:]
+        if self.ops is not None:
+            func = self.ops
+            args_list = args
+        for item in args_list:
+            if isinstance(item, (tuple, list)):
+                count_max = len(item)
+                break
+
+        def get_item(x):
+            nonlocal count
+            if isinstance(x, (tuple, list)):
+                return x[count]
+            return x
+
+        for i in range(count_max):
+            true_args = tuple(map(get_item, args_list))
+            func(*true_args)
+            count = i + 1
+        return True
+
+    def register(self, *type_names):
+        """Register a function for the given type string."""
+
+        def deco(fn):
+            self.register_fn(type_names, fn)
+            return fn
+        return deco
+
 
 class _ListAppend(ListAppend_):
     """

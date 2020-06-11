@@ -51,6 +51,7 @@ ValuePtr AbstractBase::BuildValue() const {
 AbstractBasePtr AbstractBase::Broaden() const {
   AbstractBasePtr clone = Clone();
   clone->set_value(kAnyValue);
+  clone->set_sparse_grad(sparse_grad_);
   return clone;
 }
 
@@ -63,7 +64,8 @@ std::string AbstractBase::ToString() const {
   MS_EXCEPTION_IF_NULL(type_);
   MS_EXCEPTION_IF_NULL(shape_);
   buffer << type_name() << "("
-         << "Type: " << type_->ToString() << " Value: " << value << " Shape: " << shape_->ToString() << ")";
+         << "Type: " << type_->ToString() << " Value: " << value << " Shape: " << shape_->ToString()
+         << " sparse_grad: " << sparse_grad_ << ")";
   return buffer.str();
 }
 
@@ -72,16 +74,22 @@ AbstractBasePtr AbstractScalar::Broaden() const { return AbstractBase::Broaden()
 AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   if (*this == *other) {
-    return shared_from_base<AbstractBase>();
+    auto ret = shared_from_base<AbstractBase>();
+    ret->set_sparse_grad(sparse_grad());
+    return ret;
   }
   auto value_self = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_self);
   ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
   TypePtr res_type = TypeJoin(GetTypeTrack(), other->GetTypeTrack());
   if (res_value == value_self) {
-    return shared_from_base<AbstractBase>();
+    auto ret = shared_from_base<AbstractBase>();
+    ret->set_sparse_grad(sparse_grad());
+    return ret;
   }
-  return std::make_shared<AbstractScalar>(res_value, res_type);
+  auto ret = std::make_shared<AbstractScalar>(res_value, res_type);
+  ret->set_sparse_grad(sparse_grad());
+  return ret;
 }
 
 AbstractBasePtr AbstractType::Clone() const {
@@ -423,7 +431,9 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   }
   auto element = element_->Join(other_tensor->element_);
   auto shape = ShapeJoin(this->shape(), other_tensor->shape());
-  return std::make_shared<AbstractTensor>(element, shape);
+  auto ret = std::make_shared<AbstractTensor>(element, shape);
+  ret->set_sparse_grad(sparse_grad());
+  return ret;
 }
 
 bool AbstractTensor::operator==(const AbstractTensor &other) const {
@@ -463,6 +473,7 @@ AbstractBasePtr AbstractTensor::Clone() const {
   ShapePtr shp = shape();
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
+  clone->set_sparse_grad(sparse_grad());
   return clone;
 }
 
@@ -472,6 +483,7 @@ AbstractBasePtr AbstractTensor::Broaden() const {
   auto shp = shape();
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
+  broaden->set_sparse_grad(sparse_grad());
   return broaden;
 }
 
@@ -482,6 +494,7 @@ AbstractBasePtr AbstractTensor::BroadenWithShape() const {
   shp->Broaden();
   broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
+  broaden->set_sparse_grad(sparse_grad());
   return broaden;
 }
 
@@ -502,7 +515,8 @@ std::string AbstractTensor::ToString() const {
   MS_EXCEPTION_IF_NULL(value_track);
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element_->ToString()
-         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")";
+         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << " sparse_grad " << sparse_grad()
+         << ")";
   return buffer.str();
 }
 
