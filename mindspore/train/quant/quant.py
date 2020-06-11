@@ -247,7 +247,7 @@ def convert_quant_network(network,
         network (Cell): Obtain a pipeline through network for saving graph summary.
         quant_delay (int): Number of steps after which weights and activations are quantized during eval. Default: 0.
         bn_fold (bool): Flag to used bn fold ops for simulation inference operation. Default: False.
-        freeze_bn (bool): Number of steps after which BN parameters used total mean and variance. Default: 0.
+        freeze_bn (int): Number of steps after which BN parameters used total mean and variance. Default: 0.
         weight_bits (int): Number of bits to use for quantizing weights. Default: 8.
         act_bits (int): Number of bits to use for quantizing activations. Default: 8.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
