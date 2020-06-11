@@ -40,7 +40,7 @@ from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
-    check_rename, \
+    check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset,\
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat,\
@@ -4377,3 +4377,158 @@ class TextFileDataset(SourceDataset):
             return self.num_shards > 1
 
         return False
+
+
+class _NumpySlicesDataset:
+    """
+    Mainly for dealing with several kinds of format of python data, and return one row each time.
+    """
+    def __init__(self, data, column_list=None):
+        self.column_list = None
+        # Convert dict data into tuple
+        if isinstance(data, dict) or isinstance(data[0], dict):
+            data = self.process_dict(data)
+
+        if isinstance(data[0], tuple) or isinstance(data, tuple):
+            self.is_tuple = True
+            self.data = data
+            if isinstance(data[0], tuple):
+                for i in range(len(self.data)):
+                    self.data[i] = np.array(self.data[i])
+        else:
+            self.is_tuple = False
+            self.data = np.array(data)
+
+        # Init column_name
+        if column_list is not None:
+            self.column_list = column_list
+        elif self.column_list is None:
+            self.column_list = []
+            column_num = len(self.data) if self.is_tuple else 1
+            for i in range(column_num):
+                self.column_list.append("column_" + str(i))
+
+    def __getitem__(self, index):
+        if self.is_tuple:
+            data_row = []
+            for i in range(len(self.data)):
+                data_row.append(self.data[i][index, ...])
+            data_res = tuple(data_row)
+        else:
+            data_row = self.data[index, ...]
+            data_row = [data_row]
+            data_res = tuple(data_row)
+
+        return data_res
+
+    def __len__(self):
+        if self.is_tuple:
+            return len(self.data[0])
+        return len(self.data)
+
+    def process_dict(self, input_data):
+        """
+        Convert the dict like data into tuple format, when input is a tuple of dict then compose it into a dict first.
+        """
+        # When input is a tuple of dict, composing it
+        if isinstance(input_data, tuple) and isinstance(input_data[0], dict):
+            data_dict = {}
+            for d in input_data:
+                data_dict.update(d)
+            input_data = data_dict
+
+        # convert pandas like dict(has "values" column) into General dict
+        data_keys = list(input_data.keys())
+        data_col = input_data[data_keys[0]]
+        if hasattr(data_col, "values"):
+            new_dict = {}
+            for key in data_keys:
+                item1 = input_data.pop(key)
+                new_dict[key] = item1.values
+            input_data = new_dict
+
+        # Convert the data in dict into tuple
+        data = []
+        self.column_list = []
+        keys = input_data.keys()
+        for key in keys:
+            self.column_list.append(key)
+            value = input_data[key]
+            data.append(tuple(value))
+
+        return data
+
+
+class NumpySlicesDataset(GeneratorDataset):
+    """
+    Create a dataset with given data slices, mainly for loading python data into dataset.
+
+    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
+    below shows what input args are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Args:
+        data（list, tuple or dict）Input of Given data, supported data type includes list, tuple, dict and other numpy
+            format. Input data will be sliced in first dimension and generate many rows, large data is not recommend to
+            load in this way as data is loading into memory.
+        column_names (list[str], optional): List of column names of the dataset (default=None). If column_names not
+            provided, when data is dict, column_names will be its key, otherwise it will be like column_1, column_2 ...
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
+            required (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+            This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
+            when num_shards is also specified. Random accessible input is required.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> # 1) Input data can be a list
+        >>> data = [1, 2, 3]
+        >>> dataset1 = ds.NumpySlicesDataset(data, column_names=["column_1"])
+        >>> # 2) Input data can be a dict, and column_names will be its key
+        >>> data = {"a": [1, 2], "b": [3, 4]}
+        >>> dataset2 = ds.NumpySlicesDataset(data)
+        >>> # 3) Input data can be a tuple (or list of tuple), and each tuple element refers to data in each column
+        >>> data = ((1, 2), (3, 4), (5, 6))
+        >>> dataset3 = ds.NumpySlicesDataset(data, column_names=["column_1", "column_2", "column_3"])
+        >>> # 4) Load data from csv file
+        >>> import pandas as pd
+        >>> df = pd.read_csv("file.csv")
+        >>> dataset4 = ds.NumpySlicesDataset(dict(df), shuffle=False)
+    """
+    @check_numpyslicesdataset
+    def __init__(self, data, column_names=None, num_samples=None, num_parallel_workers=1, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None):
+        dataset = _NumpySlicesDataset(data, column_names)
+        super().__init__(dataset, column_names=dataset.column_list, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
