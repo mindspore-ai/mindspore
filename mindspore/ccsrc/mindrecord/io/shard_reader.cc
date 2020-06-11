@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_reader.h"
 #include "common/utils.h"
 
@@ -1385,9 +1386,18 @@ void ShardReader::Reset() {
 
 void ShardReader::ShuffleTask() {
   for (const auto &op : operators_) {
-    if (block_reader_ || !std::dynamic_pointer_cast<ShardShuffle>(op)) continue;
-    if (SUCCESS != (*op)(tasks_)) {
-      MS_LOG(WARNING) << "Reshuffle reader tasks failed.";
+    if (block_reader_) {
+      continue;
+    }
+
+    if (std::dynamic_pointer_cast<ShardShuffle>(op)) {
+      if (SUCCESS != (*op)(tasks_)) {
+        MS_LOG(WARNING) << "Reshuffle reader tasks failed.";
+      }
+    } else if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
+      if (SUCCESS != op->PreExecute(tasks_)) {
+        MS_LOG(WARNING) << "Distribute reshuffle reader tasks failed.";
+      }
     }
   }
 }
