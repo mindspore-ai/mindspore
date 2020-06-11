@@ -44,6 +44,8 @@ const char kAscendDevice[] = "Ascend";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
+// The default max available device memory is 1024GB.
+const float kDefaultMaxDeviceMemory = 1024;
 
 class MsContext {
  public:
@@ -143,6 +145,9 @@ class MsContext {
   bool check_bprop_flag() const { return check_bprop_flag_; }
   void set_check_bprop_flag(bool check_bprop_flag) { check_bprop_flag_ = check_bprop_flag; }
 
+  float max_device_memory() const { return max_device_memory_; }
+  void set_max_device_memory(float max_device_memory) { max_device_memory_ = max_device_memory; }
+
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
   void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
@@ -182,6 +187,7 @@ class MsContext {
   bool profiling_mode_;
   std::string profiling_options_;
   bool check_bprop_flag_;
+  float max_device_memory_;
 };
 
 }  // namespace mindspore

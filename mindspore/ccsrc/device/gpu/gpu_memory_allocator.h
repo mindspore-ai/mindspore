@@ -48,6 +48,9 @@ class GPUMemoryAllocator : public DynamicMemPoolBestFit {
 
   // Used to track address of data buffer queue.
   DeviceMemPtr buffer_q_addr_{nullptr};
+
+  size_t total_used_device_memory_{0};
+  size_t max_available_device_memory_{0};
 };
 }  // namespace gpu
 }  // namespace device
