@@ -58,6 +58,10 @@ const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const 
   auto input1 = GetAnfNodeByVar(equiv, input1_);
   auto input2 = GetAnfNodeByVar(equiv, input2_);
   auto sum = GetAnfNodeByVar(equiv, sum_var_);
+  if (!GetBoolAttr(sum, kAttrKeepDims)) {
+    MS_LOG(INFO) << "sum's attr keep_dims should be true if do fusion";
+    return nullptr;
+  }
 
   auto prim = std::make_shared<Primitive>(kSoftmaxGradExtOpName);
   auto fusion_node = graph->NewCNode({NewValueNode(prim), input0, input1, input2});

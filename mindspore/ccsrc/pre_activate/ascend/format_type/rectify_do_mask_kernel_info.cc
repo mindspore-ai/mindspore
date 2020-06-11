@@ -128,7 +128,7 @@ void RectifyDoMaskKernelInfo::RectifyKernelInfo(const std::vector<CNodePtr> &do_
 
 std::string RectifyDoMaskKernelInfo::GetConvertFormat(const std::map<std::string, size_t> &format_counter) const {
   std::string convert_format;
-  size_t counter = 0;
+  const size_t counter = 0;
   for (const auto &iter : format_counter) {
     if (counter < iter.second) {
       convert_format = iter.first;

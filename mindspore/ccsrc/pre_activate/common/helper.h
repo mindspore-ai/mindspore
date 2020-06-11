@@ -180,6 +180,9 @@ AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
 
 // Compare tuple getitem's index, return bool[n1's index < n2's index]
 bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
+
+// Get attr which is bool from cnode
+bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
