@@ -238,8 +238,12 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
 
-  auto bprop_cut = std::make_shared<Primitive>("bprop_cut");
-  bprop_cut->set_hook(prim->hook());
+  auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut", py::object());
+  if (!prim->is_base()) {
+    PrimitivePyPtr prim_py = dyn_cast<PrimitivePy>(prim);
+    bprop_cut->set_hook(prim_py->hook());
+  }
+
   auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
   if (cell_id != "") {
     (void)bprop_cut->AddAttr("cell_hook", MakeValue(true));

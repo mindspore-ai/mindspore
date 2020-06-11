@@ -284,3 +284,21 @@ def vm_impl_zeros_like(self):
     """Generate vm_impl function for ZerosLike"""
     def vm_impl(x):
         return Tensor(np.zeros_like(x.asnumpy()))
+
+@vm_impl_getters.register(P.Partial)
+def vm_impl_partial(self):
+    """Generate vm_impl function for Partial"""
+    def vm_impl(*args):
+        func = args[0].__call__
+        partial_func = functools.partial(func, *args[1:])
+        return partial_func
+
+    return vm_impl
+
+@vm_impl_getters.register(P.Depend)
+def vm_impl_depend(self):
+    """Generate vm_impl function for Depend"""
+    def vm_impl(value, expr):
+        return value
+
+    return vm_impl

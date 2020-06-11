@@ -49,6 +49,8 @@ class PrimitivePy : public Primitive {
   void AddPyAttr(const py::str &name, const py::object &obj);
 
   py::dict GetAttrDict();
+  void set_hook(const py::function &hook) { hook_ = hook; }
+  py::function hook() const { return hook_; }
 
   const bool parse_info_ = true;
   const py::object &GetPyObj() const { return python_obj_; }
@@ -56,6 +58,7 @@ class PrimitivePy : public Primitive {
 
  private:
   py::object python_obj_;
+  py::function hook_;
   std::vector<Signature> signatures_;
 };
 

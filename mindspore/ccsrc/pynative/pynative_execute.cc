@@ -53,7 +53,7 @@
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 // primitive unable to infer value for constant input in PyNative mode
-const std::set<std::string> vm_operators = {"partial", "depend", "make_ref", "HookBackward"};
+const std::set<std::string> vm_operators = {"make_ref", "HookBackward"};
 
 namespace mindspore {
 namespace pynative {

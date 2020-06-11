@@ -217,7 +217,7 @@ FuncGraphPtr ConvertToBpropCut(py::object obj) {
   FuncGraphPtr bprop_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
 
-  auto fake_bprop = std::make_shared<Primitive>("bprop_cut");
+  auto fake_bprop = std::make_shared<PrimitivePy>("bprop_cut", py::object());
   fake_bprop->set_hook(bprop_func);
   (void)fake_bprop->AddAttr("bprop", MakeValue(true));
   outputs.push_back(NewValueNode(fake_bprop));

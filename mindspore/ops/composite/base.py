@@ -22,7 +22,7 @@ from mindspore import context
 from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, MultitypeFuncGraph_, Tail_, TensorSlice_, \
                              TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
-from ...common.api import ms_function, _pynative_exec
+from ...common.api import ms_function, _pynative_exec, _wrap_func
 from .. import functional as F
 from ...common.parameter import Parameter
 
@@ -117,6 +117,7 @@ class GradOperation(GradOperation_):
                     def after_grad(*args):
                         return grad_(fn, weights)(*args)
                 else:
+                    @_wrap_func
                     def after_grad(*args):
                         if fn.is_run and not fn.requires_grad:
                             raise ValueError("obj must set_grad.")

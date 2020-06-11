@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Other operators."""
+import functools
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
@@ -302,6 +303,46 @@ class MakeRefKey(Primitive):
 
     def __call__(self):
         pass
+
+
+class Partial(Primitive):
+    """
+    Make a partial function instance, used for pynative mode.
+
+    Inputs:
+        - **args** (Union[FunctionType, Tensor]) - The function and bind arguments.
+
+    Outputs:
+        FunctionType, partial function binded with arguments.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __call__(self, *args):
+        func = args[0].__call__
+        partial_func = functools.partial(func, *args[1:])
+        return partial_func
+
+class Depend(Primitive):
+    """
+    Depend is used for process side-effect operations.
+
+    Inputs:
+        - **value** (Tensor) - the real value to return for depend operator.
+        - **expr** (Expression) - the expression to execute with no outputs.
+
+    Outputs:
+        Tensor, the value passed by last operator.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __call__(self, value, expr):
+        return value
 
 
 class CheckBprop(PrimitiveWithInfer):

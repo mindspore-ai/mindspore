@@ -59,7 +59,7 @@ struct OpExecInfo {
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
-const std::set<std::string> ignore_infer_prim = {"partial", "make_ref"};
+const std::set<std::string> ignore_infer_prim = {"make_ref"};
 }  // namespace pynative
 }  // namespace mindspore
 

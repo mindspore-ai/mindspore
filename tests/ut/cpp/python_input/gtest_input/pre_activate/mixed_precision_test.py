@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 tuple_getitem = Primitive('tuple_getitem')
-depend = Primitive('depend')
+depend = P.Depend()
 addn = P.AddN()
 add = P.TensorAdd()
 sub = P.Sub()

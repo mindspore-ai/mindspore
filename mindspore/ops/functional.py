@@ -77,6 +77,9 @@ gather_nd = P.GatherNd()
 scatter_update = P.ScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 pack = P.Pack()
+partial = P.Partial()
+# depend: mount a node to another node
+depend = P.Depend()
 
 
 tuple_setitem = Primitive('tuple_setitem')
@@ -131,12 +134,9 @@ mixed_precision_cast = Primitive("mixed_precision_cast")
 broadcast_gradient_args = Primitive('BroadcastGradientArgs')
 dot = Primitive('dot')
 array_reduce = Primitive('array_reduce')
-partial = Primitive('partial')
 zeros_like = P.ZerosLike()
 identity = Primitive('identity')
 distribute = Primitive('distribute')
-# depend: mount a node to another node
-depend = Primitive('depend')
 embed = Primitive('embed')
 ref_to_embed = _grad_ops.RefToEmbed()
 env_setitem = Primitive('env_setitem')
