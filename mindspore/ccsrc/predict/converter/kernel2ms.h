@@ -64,10 +64,10 @@ class Kernel2Ms {
 
   bool SetAllTensors(const TensorCachePtr &tensor_cache, SubGraphDefT *sub_graph_def_t);
 
-  bool SetOpInputIdx(const CNodePtr &c_node_ptr, const TensorCachePtr &tensor_cache, NodeDef *ms_node);
+  bool SetOpInputIdx(const CNodePtr &c_node_ptr, const TensorCachePtr &tensor_cache, OpDefT *ms_node);
 
   bool SetOpOutputIdx(const CNodePtr &c_node_ptr, const TensorPtr &output_tensor, const TensorCachePtr &tensor_cache,
-                      int ref_count, size_t order_index, NodeDef *ms_node);
+                      int ref_count, size_t order_index, OpDefT *ms_node);
 
   bool SetGraphOutputIdx(const KernelGraphPtr &kernel_graph_ptr, const TensorCachePtr &tensor_cache,
                          SubGraphDefT *sub_graph_def_t, AllOutputTensors *all_output_tensors);
@@ -102,7 +102,7 @@ class Kernel2Ms {
   bool SetMemResue() const;
   SubGraphPtr sub_ms_graph_;
   AllOutputTensors all_output_tensors_;
-  std::vector<NodeDef *> tmp_op_nodes_;
+  std::vector<OpDefT *> tmp_op_nodes_;
   std::unordered_map<MsKernelKey, int> node_indexs_;
   std::unordered_map<int, MsKernelKey> index_nodes_;
   int graph_index_ = 0;

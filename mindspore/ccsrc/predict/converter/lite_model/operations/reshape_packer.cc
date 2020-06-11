@@ -25,7 +25,7 @@ bool ReshapePacker(const CNodePtr &c_node_ptr, OpDefT *ms_op) {
   }
   std::unique_ptr<ReshapeT> attr(new ReshapeT());
   MS_EXCEPTION_IF_NULL(attr);
-  attr->format = predict::DataFormatType::DataFormatType_NCHW;
+  attr->format = predict::Format::Format_NCHW;
   ms_op->name = c_node_ptr->fullname_with_scope();
   ms_op->attr.type = OpT_Reshape;
   ms_op->attr.value = attr.release();

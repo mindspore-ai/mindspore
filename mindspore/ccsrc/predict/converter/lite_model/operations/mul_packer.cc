@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,13 @@
 namespace mindspore {
 namespace predict {
 namespace convert {
-bool AddPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op) {
+bool MulPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op) {
   if (c_node_ptr == nullptr || ms_op == nullptr) {
     return false;
   }
-  std::unique_ptr<AddT> attr(new AddT());
+  std::unique_ptr<MulT> attr(new MulT());
   MS_EXCEPTION_IF_NULL(attr);
-  ms_op->name = c_node_ptr->fullname_with_scope();
-  ms_op->attr.type = OpT_Add;
+  ms_op->attr.type = OpT_Mul;
   ms_op->attr.value = attr.release();
   return true;
 }

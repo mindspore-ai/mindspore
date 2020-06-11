@@ -13,42 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 include "op.fbs";
 
 namespace mindspore.predict;
 
-enum DataType : int {
-  DT_FLOAT = 0,
-  DT_FLOAT16 = 1,
-  DT_INT8 = 2,
-  DT_INT32 = 3,
-  DT_UINT8 = 4,
-  DT_UINT32 = 8,
-  DT_UNDEFINED = 16
-}
-
-enum Format : int {
-    NCHW = 0,
-    NHWC,
-    NC4HW4 = 100,
-    NUM_OF_FORMAT
-}
-
-enum MSConst: int {
+enum MSCONST: int {
     WEIGHT_REFCOUNT = 999
 }
 
-table QuantizationDef {
-    // Quantized value q, corresponding float value r:
-    // r = scale * (q - zero_point), where scale = (rmax - rmin) / (qmax - qmin)
-    min: [float];
-    max: [float];
-    scale: [float];
-    zero_point: [long];
+table QuantParam {
+    scale: double;
+    zeroPoint: int;
+    min: double = 0;
+    max: double = 0;
+    narrowRange: bool = true;
+    numBits: int = 8;
+}
 
-    // Tensor shape of the specifies dimension.
-    dimension: int;
+table QuantParamArray {
+    param: [QuantParam];  //pre-channel
 }
 
 table TensorDef {
@@ -60,7 +44,6 @@ table TensorDef {
     refCount: int;
     offset: int;
     data: [ubyte];
-    quantization: QuantizationDef;
 }
 
 union OpT {
@@ -70,7 +53,6 @@ union OpT {
     Conv2D,
     FusedBatchNorm,
     CaffeBatchNorm,
-    Squeeze,
     BiasAdd,
     Pooling,
     DepthwiseConv2D,
@@ -85,57 +67,134 @@ union OpT {
     Eltwise,
     NetOutput,
     Add,
+    Sub,
     MatMul,
     StridedSlice,
     Power,
     Slice,
     Stack,
     Mul,
+    RealDiv,
     Pad,
     Maximum,
+    Minimum,
     CaffePReLU,
+    LeakyReLU,
     ArgMax,
+    ArgMin,
     Exp,
     CaffeCrop,
     Range,
+    Rsqrt,
     ExpandDims,
     Tile,
-    Cast
-//    Split
+    Cast,
+    Shape,
+    Nchw2Nhwc,
+    Nhwc2Nchw,
+    QuantDTypeCast,
+    Split,
+    Permute,
+    FakeQuantWithMinMaxVars,
+    Equal,
+    Less,
+    Greater,
+    Min,
+    Floor,
+    Abs,
+    Neg,
+    Cos,
+    Sin,
+    Sqrt,
+    Square,
+    Constant,
+    Log,
+    Tan,
+    Atan,
+    Asin,
+    Clip,
+    Transpose,
+    Squeeze,
+    Unsqueeze,
+    Upsample,
+    Dropout,
+    Broadcast,
+    Lrn,
+    Prelu,
+    ZerosLike,
+    TopK,
+    SpaceToDepth,
+    SpaceToBatch,
+    SparseToDense,
+    ReverseSequence,
+    Rank,
+    Gather,
+    GatherNd,
+    Fill,
+    Elu,
+    DepthToSpace,
+    BatchToSpace,
+    AddN,
+    Ceil,
+    EmbeddingLookup,
+    EmbeddingLookupSparse,
+    FloorDiv,
+    FloorMod,
+    L2Norm,
+    LocalResponseNormalization,
+    MatrixDiag,
+    Reduce,
+    Reverse,
+    Round,
+    Select,
+    Scatter,
+    Unique,
+    Unstack,
+    LogicalAnd,
+    LogicalOr,
+    LogicalXor,
+    LogicalNot,
+    OnnxInt8Quantize,
+    OnnxInt8Dequantize,
+    FakeQuantWithMinMax,
+    FakeQuantWithMinMaxPerChannel,
+    BatchNormFold,
+    MulFold,
+    AddFold,
+    SquaredDifference
 }
 
 enum QuantType: int {
     QUANT_NONE,
-    QUANT_INT8
+    AwareTrainning,
+    WeightQuant,
+    PostTraining
+}
+
+enum FmkType: int {
+    TF,
+    CAFFE,
+    ONNX,
+    MS,
+    TFLITE
 }
 
 table OpDef {
     name: string;
+    fmkType: FmkType;
     attr: OpT;
     inputIndex: [uint];
     outputIndex: [uint];
-    isLastConv: bool;
     quantType: QuantType = QUANT_NONE;
+    quantParam: [QuantParamArray];
 }
-
-
-enum FmkType: int {
-    TF,
-    CAFFE
-}
-
-table NodeDef {
-    fmkType: FmkType;
-    opDef: OpDef;
-}
-
 
 table SubGraphDef {
     name: string;
     inputIndex: [uint];
     outputIndex: [uint];
     mempoolSize: uint;
-    nodes: [NodeDef];
+    nodes: [OpDef];
     allTensors: [TensorDef]; // weight + input + output
 }
 

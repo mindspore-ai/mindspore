@@ -33,6 +33,14 @@ bool CastPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
 bool MeanPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
 bool SoftmaxPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
 bool ScalePacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool AddFoldPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool ArgMaxPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool BatchNormFoldPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool FakeQuantWithMinMaxPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool FakeQuantWithMinMaxPerChannelPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool MulPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool MulFoldPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
+bool SqueezePacker(const CNodePtr &c_node_ptr, OpDefT *ms_op);
 
 OpAttrFactory::OpAttrFactory() {
   pack_funs_ = {{"Conv2D", Conv2dPacker},
@@ -60,23 +68,31 @@ OpAttrFactory::OpAttrFactory() {
                 {"TensorAdd", AddPacker},
                 {"SoftMax", SoftmaxPacker},
                 {"SimpleMean", MeanPacker},
-                {"Scale", ScalePacker}};
+                {"ReduceMean", MeanPacker},
+                {"AddFold", AddFoldPacker},
+                {"ArgMax", ArgMaxPacker},
+                {"BatchNorm", BatchNormFoldPacker},
+                {"FakeQuantWithMinMax", FakeQuantWithMinMaxPacker},
+                {"FakeQuantWithMinMaxPerChannel", FakeQuantWithMinMaxPerChannelPacker},
+                {"Mul", MulPacker},
+                {"MulFold", MulFoldPacker},
+                {"Squeeze", SqueezePacker}};
 }
 OpAttrPackFun OpAttrFactory::GetPackFun(const std::string &opType) {
   if (pack_funs_.find(opType) == pack_funs_.end()) {
-    MS_LOG(ERROR) << "Op Attr pack fun  [\" << opType << \"] not found.";
+    MS_LOG(WARNING) << "Op Attr pack fun  [" << opType << "] not found.";
     return nullptr;
   }
   return pack_funs_[opType];
 }
 
-mindspore::predict::DataFormatType GetAttrFormat(const std::string &format) {
+mindspore::predict::Format GetAttrFormat(const std::string &format) {
   if (format == kOpFormat_NCHW) {
-    return predict::DataFormatType::DataFormatType_NCHW;
+    return predict::Format::Format_NCHW;
   } else if (format == kOpFormat_NHWC) {
-    return predict::DataFormatType::DataFormatType_NHWC;
+    return predict::Format::Format_NHWC;
   } else {
-    return predict::DataFormatType::DataFormatType_UNKNOW;
+    return predict::Format::Format_NUM_OF_FORMAT;
   }
 }
 

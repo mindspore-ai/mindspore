@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace predictmodel {
-void StepConvertGraph(const KernelGraphPtrNew &kernel_graph_ptr) {
+void StepConvertGraph(const KernelGraphPtr &kernel_graph_ptr) {
   MS_LOG(INFO) << "start convert_graph step";
   // get kernel_graph. this graph can be origin or device, depends on which steps to persistence
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
@@ -57,16 +57,6 @@ void StepConvertWeight(const std::vector<tensor::TensorPtr> &inputs) {
     } else {
       MS_LOG(INFO) << "save ms model success";
     }
-  }
-}
-
-executor::TargetMode GetDeviceTarget(const std::string &device_target) {
-  if (device_target == "GPU") {
-    return executor::kGPUTarget;
-  } else if (device_target == "Ascend") {
-    return executor::kCPUTarget;
-  } else {
-    return executor::kUnknowTarget;
   }
 }
 }  // namespace predictmodel
