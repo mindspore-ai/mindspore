@@ -206,6 +206,7 @@ class GraphData:
         """
         Get the meta information of the graph, including the number of nodes, the type of nodes,
         the feature information of nodes, the number of edges, the type of edges, and the feature information of edges.
+
         Returns:
             Dict: Meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
                 node_feature_type and edge_feature_type.
