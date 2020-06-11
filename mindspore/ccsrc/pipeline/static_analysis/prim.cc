@@ -286,6 +286,22 @@ AnfNodePtr MixedPrecisionCastHelper(AnfNodePtr source_node, AbstractBasePtr node
       ++idx;
     }
     target_node = func_graph->NewCNode(nodes);
+  } else if (node_type->isa<AbstractDictionary>()) {
+    auto x = node_type->cast<AbstractDictionaryPtr>();
+    auto &items = x->elements();
+    std::vector<AnfNodePtr> dict_key_nodes;
+    std::vector<AnfNodePtr> dict_value_nodes;
+    dict_key_nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    dict_value_nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    for (const auto &item : items) {
+      AnfNodePtr dict_value_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), source_node, NewValueNode(item.first)});
+      AnfNodePtr node = MixedPrecisionCastHelper(dict_value_node, item.second, target_type, func_graph);
+      dict_key_nodes.emplace_back(NewValueNode(item.first));
+      dict_value_nodes.emplace_back(node);
+    }
+    target_node = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(dict_key_nodes),
+                                        func_graph->NewCNode(dict_value_nodes)});
   }
   return target_node;
 }

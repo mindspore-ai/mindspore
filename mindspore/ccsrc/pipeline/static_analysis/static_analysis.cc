@@ -308,7 +308,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
     return evaluator;
   }
-  if (prim->name() == prim::kPrimMixedPrecisionCast->name()) {
+  if (prim->Hash() == prim::kPrimMixedPrecisionCast->Hash() && prim->name() == prim::kPrimMixedPrecisionCast->name()) {
     evaluator = std::make_shared<MixedPrecisionCastEvaluator>(prim);
     return evaluator;
   }
