@@ -119,17 +119,14 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
-bool HasJpegMagic(const unsigned char *data, size_t data_size) {
+bool HasJpegMagic(const std::shared_ptr<Tensor> &input) {
   const unsigned char *kJpegMagic = (unsigned char *)"\xFF\xD8\xFF";
   constexpr size_t kJpegMagicLen = 3;
-  return data_size >= kJpegMagicLen && memcmp(data, kJpegMagic, kJpegMagicLen) == 0;
+  return input->SizeInBytes() >= kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  if (input->GetMutableBuffer() == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Tensor is nullptr");
-  }
-  if (HasJpegMagic(input->GetMutableBuffer(), input->SizeInBytes())) {
+  if (HasJpegMagic(input)) {
     return JpegCropAndDecode(input, output);
   } else {
     return DecodeCv(input, output);
@@ -283,7 +280,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
     jpeg_create_decompress(&cinfo);
-    JpegSetSource(&cinfo, input->GetMutableBuffer(), input->SizeInBytes());
+    JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
     (void)jpeg_read_header(&cinfo, TRUE);
     RETURN_IF_NOT_OK(JpegSetColorSpace(&cinfo));
     jpeg_calc_output_dimensions(&cinfo);
@@ -312,7 +309,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   TensorShape ts = TensorShape({crop_h, crop_w, kOutNumComponents});
   auto output_tensor = std::make_shared<Tensor>(ts, DataType(DataType::DE_UINT8));
   const int buffer_size = output_tensor->SizeInBytes();
-  JSAMPLE *buffer = static_cast<JSAMPLE *>(output_tensor->GetMutableBuffer());
+  JSAMPLE *buffer = static_cast<JSAMPLE *>(reinterpret_cast<uchar *>(&(*output_tensor->begin<uint8_t>())));
   const int max_scanlines_to_read = skipped_scanlines + crop_h;
   // stride refers to output tensor, which has 3 components at most
   const int stride = crop_w * kOutNumComponents;

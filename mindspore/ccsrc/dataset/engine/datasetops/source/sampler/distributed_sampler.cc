@@ -68,8 +68,8 @@ Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer
     (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, samples_per_buffer_));
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(sample_ids->GetMutableBuffer());
-    while (cnt_ < samples_per_buffer_) {
+    auto id_ptr = sample_ids->begin<int64_t>();
+    while (cnt_ < samples_per_buffer_ && id_ptr != sample_ids->end<int64_t>()) {
       int64_t sampled_id = (num_devices_ * cnt_ + device_id_) % num_rows_;
       if (shuffle_) {
         sampled_id = shuffle_vec_[static_cast<size_t>(sampled_id)];

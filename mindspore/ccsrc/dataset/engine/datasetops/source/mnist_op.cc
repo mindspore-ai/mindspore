@@ -167,7 +167,7 @@ Status MnistOp::LoadTensorRow(const MnistLabelPair &mnist_pair, TensorRow *trow)
   int32_t l = mnist_pair.second;
   // make a copy of cached tensor
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(), mnist_pair.first->shape(),
-                                        mnist_pair.first->type(), mnist_pair.first->GetMutableBuffer()));
+                                        mnist_pair.first->type(), mnist_pair.first->GetBuffer()));
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
                                         data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&l)));
   (*trow) = {std::move(image), std::move(label)};

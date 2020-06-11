@@ -31,11 +31,9 @@ using namespace mindspore::dataset;
 
 Status CreateINT64Tensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements, unsigned char *data = nullptr) {
   TensorShape shape(std::vector<int64_t>(1, num_elements));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, TensorImpl::kFlexible, shape,
-                                        DataType(DataType::DE_INT64), data));
-  if (data == nullptr) {
-    (*sample_ids)->GetMutableBuffer();  // allocate memory in case user forgets!
-  }
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, TensorImpl::kFlexible, shape, DataType(DataType::DE_INT64), data));
+  (*sample_ids)->AllocateBuffer((*sample_ids)->SizeInBytes());  // allocate memory in case user forgets!
+
   return Status::OK();
 }
 

@@ -135,8 +135,40 @@ class Tensor {
   static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const std::vector<std::string> &strings,
                              const TensorShape &shape = TensorShape::CreateUnknownRankShape());
 
+  // create tensor from protobuf bytelist with strings
   static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::BytesList &bytes_list,
                              const TensorShape &shape);
+
+  // A static factory method to create a Tensor from a given list of numbers.
+  // @param ptr output argument to hold the created Tensor
+  // @param items elements of the tensor
+  // @param shape shape of the tensor
+  // @return Status Code
+  template <typename T>
+  static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const std::vector<T> &items,
+                             const TensorShape &shape_req = TensorShape::CreateUnknownRankShape()) {
+    DataType type = DataType::FromCType<T>();
+    auto items_ptr = reinterpret_cast<const uchar *>(&items[0]);
+    TensorShape shape = shape_req;
+    if (!shape.known()) {
+      shape = TensorShape({static_cast<dsize_t>(items.size())});
+    }
+    return CreateTensor(ptr, TensorImpl::kFlexible, shape, type, items_ptr);
+  }
+
+  // A static factory method to create a Tensor from a given number.
+  // @param ptr output argument to hold the created Tensor
+  // @param item value
+  // @return Status Code
+  template <typename T>
+  static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const T &item) {
+    return CreateTensor<T>(ptr, {item}, TensorShape::CreateScalar());
+  }
+  // Create tensor from protobuf bytelist with uint8 or int8 types
+  static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::BytesList &bytes_list,
+                             const TensorShape &shape, const DataType &type, dsize_t pad_size);
+
+  static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const std::string &path);
 
   // Copy raw data of a array based on shape and strides to the destination pointer
   // @param dst Pointer to the destination array where the content is to be copied
@@ -259,11 +291,6 @@ class Tensor {
   // drives an allocation if the data area.
   // @return const unsigned char*
   const unsigned char *GetBuffer() const;
-
-  // Get the starting memory address for the data of the tensor.  This potentially
-  // drives an allocation if the data area.
-  // @return unsigned char*
-  unsigned char *GetMutableBuffer();
 
   // Getter of the type
   // @return
@@ -518,6 +545,7 @@ class Tensor {
   // @return TensorIterator
   template <typename T>
   TensorIterator<T> begin() {
+    AllocateBuffer(SizeInBytes());
     return TensorIterator<T>(data_);
   }
 
@@ -536,6 +564,11 @@ class Tensor {
   Status CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vector<dsize_t> &index);
 
  protected:
+  // Get the starting memory address for the data of the tensor.  This potentially
+  // drives an allocation if the data is null.
+  // @return unsigned char*
+  unsigned char *GetMutableBuffer();
+
   // A function that prints Tensor recursively, first called by print
   // @param out
   // @param cur_dim

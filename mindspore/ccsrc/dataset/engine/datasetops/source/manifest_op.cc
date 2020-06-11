@@ -198,23 +198,7 @@ Status ManifestOp::LoadTensorRow(const std::pair<std::string, std::vector<std::s
       data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&label_index[0])));
   }
 
-  std::ifstream fs;
-  fs.open(data.first, std::ios::binary | std::ios::in);
-  if (!fs.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + data.first);
-  }
-
-  int64_t num_elements = fs.seekg(0, std::ios::end).tellg();
-  (void)fs.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
-                                        TensorShape(std::vector<dsize_t>(1, num_elements)),
-                                        data_schema_->column(0).type(), nullptr));
-  (void)fs.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
-  if (fs.fail()) {
-    fs.close();
-    RETURN_STATUS_UNEXPECTED("Fail to read file: " + data.first);
-  }
-  fs.close();
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data.first));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {

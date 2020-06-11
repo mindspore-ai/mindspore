@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <vector>
 #include <utility>
@@ -308,6 +309,50 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::Byte
                             const TensorShape &shape) {
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *ptr = std::allocate_shared<Tensor>(*alloc, bytes_list, shape);
+  return Status::OK();
+}
+
+Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const std::string &file_path) {
+  std::ifstream fs;
+  fs.open(file_path, std::ios::binary | std::ios::in);
+  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + file_path);
+  int64_t num_bytes = fs.seekg(0, std::ios::end).tellg();
+  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Fail to find size of file");
+  RETURN_IF_NOT_OK(
+    Tensor::CreateTensor(ptr, TensorImpl::kFlexible, TensorShape{num_bytes}, DataType(DataType::DE_UINT8)));
+  int64_t written_bytes = fs.read(reinterpret_cast<char *>((*ptr)->GetMutableBuffer()), num_bytes).gcount();
+  CHECK_FAIL_RETURN_UNEXPECTED(written_bytes == num_bytes && fs.good(), "Error in writing to tensor");
+  fs.close();
+  return Status::OK();
+}
+
+Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::BytesList &bytes_list,
+                            const TensorShape &shape, const DataType &type, dsize_t pad_size) {
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(ptr, TensorImpl::kFlexible, shape, type));
+
+  unsigned char *current_tensor_addr = (*ptr)->GetMutableBuffer();
+  int64_t tensor_bytes_remaining = bytes_list.value_size() * pad_size;
+
+  for (int i = 0; i < bytes_list.value_size(); i++) {
+    // read string data into tensor
+    const std::string &current_element = bytes_list.value(i);
+    int return_code =
+      memcpy_s(current_tensor_addr, tensor_bytes_remaining, common::SafeCStr(current_element), current_element.size());
+
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed when reading bytesList element into Tensor");
+
+    current_tensor_addr += current_element.size();
+    tensor_bytes_remaining -= current_element.size();
+
+    // pad
+    int64_t chars_to_pad = pad_size - current_element.size();
+    return_code = memset_s(current_tensor_addr, tensor_bytes_remaining, static_cast<int>(' '), chars_to_pad);
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed when padding Tensor");
+
+    current_tensor_addr += chars_to_pad;
+    tensor_bytes_remaining -= chars_to_pad;
+  }
+
   return Status::OK();
 }
 

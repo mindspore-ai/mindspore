@@ -42,7 +42,7 @@ Status SequentialSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer)
     int64_t num_elements = std::min(remaining_ids, samples_per_buffer_);
 
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, num_elements));
-    int64_t *idPtr = reinterpret_cast<int64_t *>(sampleIds->GetMutableBuffer());
+    auto idPtr = sampleIds->begin<int64_t>();
     for (int64_t i = 0; i < num_elements; i++) {
       int64_t sampled_id = current_id_;
       if (HasChildSampler()) {

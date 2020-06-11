@@ -59,7 +59,7 @@ Status Graph::CreateTensorByVector(const std::vector<std::vector<T>> &data, Data
   size_t n = data[0].size();
   RETURN_IF_NOT_OK(Tensor::CreateTensor(
     &tensor, TensorImpl::kFlexible, TensorShape({static_cast<dsize_t>(m), static_cast<dsize_t>(n)}), type, nullptr));
-  T *ptr = reinterpret_cast<T *>(tensor->GetMutableBuffer());
+  auto ptr = tensor->begin<T>();
   for (const auto &id_m : data) {
     CHECK_FAIL_RETURN_UNEXPECTED(id_m.size() == n, "Each member of the vector has a different size");
     for (const auto &id_n : id_m) {

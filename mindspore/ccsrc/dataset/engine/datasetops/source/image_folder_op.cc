@@ -204,18 +204,8 @@ Status ImageFolderOp::LoadTensorRow(ImageLabelPair pairPtr, TensorRow *trow) {
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
                                         data_schema_->column(1).type(),
                                         reinterpret_cast<unsigned char *>(&pairPtr->second)));
-  std::ifstream fs;
-  fs.open(folder_path_ + (pairPtr->first), std::ios::binary | std::ios::in);
-  if (fs.fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + pairPtr->first);
-  }
-  int64_t num_elements = fs.seekg(0, std::ios::end).tellg();
-  (void)fs.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
-                                        TensorShape(std::vector<dsize_t>(1, num_elements)),
-                                        data_schema_->column(0).type(), nullptr));
-  (void)fs.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
-  fs.close();
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, folder_path_ + (pairPtr->first)));
+
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {

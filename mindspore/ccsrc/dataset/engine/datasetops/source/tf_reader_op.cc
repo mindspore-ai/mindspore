@@ -771,53 +771,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // know how many elements there are and the total bytes, create tensor here:
   TensorShape current_shape = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape((*num_elements) * pad_size, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
-
-  // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  unsigned char *current_tensor_addr = (*tensor)->GetMutableBuffer();
-  int64_t tensor_bytes_remaining = (*num_elements) * pad_size;
-
-  if (current_tensor_addr == nullptr) {
-    std::string err_msg = "tensor memory allocation failed";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(LoadAndPadBytes(current_tensor_addr, bytes_list, tensor_bytes_remaining, pad_size));
-
-  return Status::OK();
-}
-
-Status TFReaderOp::LoadAndPadBytes(unsigned char *current_tensor_addr, const dataengine::BytesList &bytes_list,
-                                   int64_t tensor_bytes_remaining, int64_t pad_size) {
-  if (current_tensor_addr == nullptr) {
-    std::string err_msg = "current_tensor_addr is null";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  for (int i = 0; i < bytes_list.value_size(); i++) {
-    // read string data into tensor
-    const std::string &current_element = bytes_list.value(i);
-    int return_code =
-      memcpy_s(current_tensor_addr, tensor_bytes_remaining, common::SafeCStr(current_element), current_element.size());
-    if (return_code != 0) {
-      std::string err_msg = "memcpy_s failed when reading bytesList element into Tensor";
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-
-    current_tensor_addr += current_element.size();
-    tensor_bytes_remaining -= current_element.size();
-
-    // pad
-    int64_t chars_to_pad = pad_size - current_element.size();
-    return_code = memset_s(current_tensor_addr, tensor_bytes_remaining, static_cast<int>(' '), chars_to_pad);
-    if (return_code != 0) {
-      std::string err_msg = "memset_s failed when padding bytesList in Tensor";
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-
-    current_tensor_addr += chars_to_pad;
-    tensor_bytes_remaining -= chars_to_pad;
-  }
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, current_shape, current_col.type(), pad_size));
 
   return Status::OK();
 }
