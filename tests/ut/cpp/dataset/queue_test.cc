@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//
-// Created by jesse on 10/3/19.
-//
 
 #include "common/common.h"
 #include "gtest/gtest.h"
@@ -25,32 +22,32 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestQueue : public UT::Common {
  public:
-    MindDataTestQueue() {}
+  MindDataTestQueue() {}
 
-    void SetUp() {}
+  void SetUp() {}
 };
 
 int gRefCountDestructorCalled;
 
 class RefCount {
  public:
-    RefCount() : v_(nullptr) {}
-    explicit RefCount(int x) : v_(std::make_shared<int>(x)) {}
-    explicit RefCount(const RefCount &o) : v_(o.v_) {}
-    ~RefCount() {
-      MS_LOG(DEBUG) << "Destructor of RefCount called" << std::endl;
-      gRefCountDestructorCalled++;
-    }
-    RefCount& operator=(const RefCount &o) {
-      v_ = o.v_;
-      return *this;
-    }
+  RefCount() : v_(nullptr) {}
+  explicit RefCount(int x) : v_(std::make_shared<int>(x)) {}
+  explicit RefCount(const RefCount &o) : v_(o.v_) {}
+  ~RefCount() {
+    MS_LOG(DEBUG) << "Destructor of RefCount called" << std::endl;
+    gRefCountDestructorCalled++;
+  }
+  RefCount &operator=(const RefCount &o) {
+    v_ = o.v_;
+    return *this;
+  }
 
   std::shared_ptr<int> v_;
 };
@@ -70,22 +67,22 @@ TEST_F(MindDataTestQueue, Test1) {
   // Use count should remain 2. a and b. No copy in the queue.
   ASSERT_EQ(a.use_count(), 2);
   a.reset(new int(5));
-  ASSERT_EQ(a.use_count(),1);
+  ASSERT_EQ(a.use_count(), 1);
   // Push again but expect a is nullptr after push
   rc = que.Add(std::move(a));
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(a.use_count(),0);
+  ASSERT_EQ(a.use_count(), 0);
   rc = que.PopFront(&b);
   ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(*b, 5);
-  ASSERT_EQ(b.use_count(),1);
+  ASSERT_EQ(b.use_count(), 1);
   // Test construct in place
   rc = que.EmplaceBack(std::make_shared<int>(100));
   ASSERT_TRUE(rc.IsOk());
   rc = que.PopFront(&b);
   ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(*b, 100);
-  ASSERT_EQ(b.use_count(),1);
+  ASSERT_EQ(b.use_count(), 1);
   // Test the destructor of the Queue by add an element in the queue without popping it and let the queue go
   // out of scope.
   rc = que.EmplaceBack(std::make_shared<int>(2000));
@@ -127,7 +124,7 @@ TEST_F(MindDataTestQueue, Test3) {
   ASSERT_EQ(*b, 40);
 }
 
-void test4(){
+void test4() {
   gRefCountDestructorCalled = 0;
   // Pass a structure along the queue.
   Queue<RefCount> que(3);
@@ -144,9 +141,7 @@ void test4(){
   ASSERT_TRUE(rc.IsOk());
 }
 
-TEST_F(MindDataTestQueue, Test4) {
- test4();
-}
+TEST_F(MindDataTestQueue, Test4) { test4(); }
 
 TEST_F(MindDataTestQueue, Test5) {
   test4();

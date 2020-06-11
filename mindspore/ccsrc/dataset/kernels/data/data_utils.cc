@@ -23,6 +23,7 @@
 #include "dataset/core/tensor_shape.h"
 #include "dataset/core/data_type.h"
 #include "dataset/core/pybind_support.h"
+#include "dataset/kernels/data/type_cast_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -78,6 +79,7 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
 
 Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, dsize_t num_classes) {
   input->Squeeze();
+
   if (input->Rank() > 1) {  // We expect the input to be int he first dimension
     RETURN_STATUS_UNEXPECTED("One hot only supports scalars or 1D shape Tensors.");
   }
@@ -106,11 +108,121 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
   }
 }
 
+Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, std::shared_ptr<Tensor> fill_value) {
+  CHECK_FAIL_RETURN_UNEXPECTED(!((fill_value->type() == DataType::DE_STRING) && (input->type() != DataType::DE_STRING)),
+                               "Types do not match");
+
+  CHECK_FAIL_RETURN_UNEXPECTED(fill_value->shape() == TensorShape({}), "fill_value is not a scalar");
+
+  std::shared_ptr<Tensor> out;
+
+  const DataType &to = input->type();
+  std::unique_ptr<TypeCastOp> op(new TypeCastOp(to));
+
+  std::shared_ptr<Tensor> fill_output;
+  op->Compute(fill_value, &fill_output);
+
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, TensorImpl::kFlexible, input->shape(), input->type()));
+
+  switch (input->type().value()) {
+    case DataType::DE_BOOL: {
+      bool value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<bool>(value);
+      break;
+    }
+    case DataType::DE_INT8: {
+      int8_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<int8_t>(value);
+      break;
+    }
+    case DataType::DE_UINT8: {
+      uint8_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<uint8_t>(value);
+      break;
+    }
+    case DataType::DE_UINT16: {
+      uint16_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<uint16_t>(value);
+      break;
+    }
+    case DataType::DE_INT16: {
+      int16_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<int16_t>(value);
+      break;
+    }
+    case DataType::DE_UINT32: {
+      uint32_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<uint32_t>(value);
+      break;
+    }
+    case DataType::DE_INT32: {
+      int32_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<int32_t>(value);
+      break;
+    }
+    case DataType::DE_UINT64: {
+      uint64_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<uint64_t>(value);
+      break;
+    }
+    case DataType::DE_INT64: {
+      int64_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<int64_t>(value);
+      break;
+    }
+    case DataType::DE_FLOAT16: {
+      int64_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<float>(value);
+      break;
+    }
+    case DataType::DE_FLOAT32: {
+      float value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<float>(value);
+      break;
+    }
+    case DataType::DE_FLOAT64: {
+      double value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      out->Fill<double>(value);
+      break;
+    }
+    case DataType::DE_STRING: {
+      std::vector<std::string> strings;
+      std::string_view fill_string_view;
+      RETURN_IF_NOT_OK(fill_value->GetItemAt(&fill_string_view, {}));
+      std::string fill_string = std::string(fill_string_view);
+      for (int i = 0; i < input->shape().NumOfElements(); i++) {
+        strings.emplace_back(fill_string);
+      }
+      RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, strings, input->shape()));
+      break;
+    }
+    case DataType::DE_UNKNOWN: {
+      RETURN_STATUS_UNEXPECTED("FillOp does not support input of this type.");
+      break;
+    }
+  }
+
+  *output = out;
+  return Status::OK();
+}
 template <typename FROM, typename TO>
 void Cast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   auto in_itr = input->begin<FROM>();
   auto out_itr = (*output)->begin<TO>();
   auto out_end = (*output)->end<TO>();
+
   for (; out_itr != out_end; static_cast<void>(in_itr++), static_cast<void>(out_itr++))
     *out_itr = static_cast<TO>(*in_itr);
 }

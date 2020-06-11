@@ -15,9 +15,9 @@
 """
 This module c_transforms provides common operations, including OneHotOp and TypeCast.
 """
+import numpy as np
 import mindspore._c_dataengine as cde
-
-from .validators import check_num_classes, check_de_type
+from .validators import check_num_classes, check_de_type, check_fill_value
 from ..core.datatypes import mstype_to_detype
 
 
@@ -33,6 +33,22 @@ class OneHot(cde.OneHotOp):
     def __init__(self, num_classes):
         self.num_classes = num_classes
         super().__init__(num_classes)
+
+
+class Fill(cde.FillOp):
+    """
+    Tensor operation to create a tensor filled with passed scalar value.
+    The output tensor will have the same shape and type as the input tensor.
+
+    Args:
+        fill_value (python types (str, int, float, or bool)) : scalar value
+            to fill created tensor with.
+    """
+
+    @check_fill_value
+    def __init__(self, fill_value):
+        print(fill_value)
+        super().__init__(cde.Tensor(np.array(fill_value)))
 
 
 class TypeCast(cde.TypeCastOp):

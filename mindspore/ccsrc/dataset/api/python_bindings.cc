@@ -38,6 +38,7 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
+#include "dataset/kernels/data/fill_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -349,6 +350,10 @@ void bindTensorOps2(py::module *m) {
   (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
     *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")
     .def(py::init<int32_t>());
+
+  (void)py::class_<FillOp, TensorOp, std::shared_ptr<FillOp>>(
+    *m, "FillOp", "Tensor operation to return tensor filled with same value as input fill value.")
+    .def(py::init<std::shared_ptr<Tensor>>());
 
   (void)py::class_<RandomRotationOp, TensorOp, std::shared_ptr<RandomRotationOp>>(
     *m, "RandomRotationOp",
