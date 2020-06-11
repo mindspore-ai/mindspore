@@ -550,7 +550,6 @@ void AscendSession::InitRuntimeResource() {
 
 void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "HardwareOptimize start!";
-  device::ascend::KernelPreBuild(kernel_graph.get());
   opt::AscendBackendOptimization(kernel_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
