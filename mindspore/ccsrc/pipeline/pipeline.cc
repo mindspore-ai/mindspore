@@ -882,7 +882,7 @@ void ClearResAtexit() {
   pipeline::GetMethodMap().clear();
   pipeline::ExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
-  pynative::PynativeExecutor::GetInstance()->Clean();
+  pynative::PynativeExecutor::GetInstance()->ClearRes();
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::DfGraphConvertor::get_adpt_map().clear();
