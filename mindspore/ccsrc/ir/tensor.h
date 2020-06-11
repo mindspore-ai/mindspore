@@ -20,9 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "pybind11/numpy.h"
-#include "pybind11/pybind11.h"
+#include <numeric>
 
 #include "Eigen/Core"
 #include "device/device_address.h"
@@ -30,62 +28,7 @@
 #include "include/ms_tensor.h"
 #include "utils/log_adapter.h"
 
-namespace py = pybind11;
-
 using float16 = Eigen::half;
-
-namespace pybind11 {
-namespace detail {
-// Similar to enums in `pybind11/numpy.h`. Determined by doing:
-// python3 -c 'import numpy as np; print(np.dtype(np.float16).num)'
-constexpr int NPY_FLOAT16 = 23;
-
-template <typename T>
-struct npy_scalar_caster {
-  PYBIND11_TYPE_CASTER(T, _("PleaseOverride"));
-  using Array = array_t<T>;
-
-  bool load(handle src, bool convert) {
-    // Taken from Eigen casters. Permits either scalar dtype or scalar array.
-    handle type = dtype::of<T>().attr("type");
-    if (!convert && !isinstance<Array>(src) && !isinstance(src, type)) return false;
-
-    Array tmp = Array::ensure(src);
-    if (tmp && tmp.size() == 1 && tmp.ndim() == 0) {
-      this->value = *tmp.data();
-      return true;
-    }
-
-    return false;
-  }
-
-  static handle cast(T src, return_value_policy, handle) {
-    Array tmp({1});
-    tmp.mutable_at(0) = src;
-    tmp.resize({});
-
-    // You could also just return the array if you want a scalar array.
-    object scalar = tmp[tuple()];
-    return scalar.release();
-  }
-};
-
-template <>
-struct npy_format_descriptor<float16> {
-  static constexpr auto name = "float16";
-  static pybind11::dtype dtype() {
-    handle ptr = npy_api::get().PyArray_DescrFromType_(NPY_FLOAT16);
-    return reinterpret_borrow<pybind11::dtype>(ptr);
-  }
-  virtual ~npy_format_descriptor<float16>() {}
-};
-
-template <>
-struct type_caster<float16> : public npy_scalar_caster<float16> {
-  static constexpr auto name = "float16";
-};
-}  // namespace detail
-}  // namespace pybind11
 
 using mindspore::device::DeviceAddress;
 using DeviceAddressPtr = std::shared_ptr<mindspore::device::DeviceAddress>;
@@ -98,179 +41,195 @@ namespace mindspore {
 //
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
+// Tensor data interface.
+class TensorData {
+ public:
+  /// Total number of elements.
+  virtual ssize_t size() const = 0;
+  /// Byte size of a single element.
+  virtual ssize_t itemsize() const = 0;
+  /// Total number of bytes.
+  virtual ssize_t nbytes() const = 0;
+  /// Number of dimensions.
+  virtual ssize_t ndim() const = 0;
+  /// Data pointer.
+  virtual void *data() = 0;
+  /// Is data equals.
+  virtual bool equals(const TensorData &other) const = 0;
+  /// To string.
+  virtual std::string ToString() const = 0;
+};
+
+using TensorDataPtr = std::shared_ptr<TensorData>;
+
 // Tensor entity class
 class Tensor : public MetaTensor {
  public:
-  Tensor() = default;
   abstract::AbstractBasePtr ToAbstract() override;
-  // brief Constructor for Python.
-  //
-  // param type_ptr [TypePty] Data type of the tensor.
-  // param py_shape [py::tuple] The shape represented by py::tuple of the tensor.
-  Tensor(const TypePtr &type_ptr, const py::tuple &shape);
 
-  // brief Constructor for C++.
+  // brief Create tensor from another tensor, data is shared.
+  //
+  // param tensor [Tensor] The input tensor.
+  explicit Tensor(const Tensor &tensor);
+
+  // brief Create tensor with given data type from another tensor.
+  //
+  // param tensor [Tensor] The input tensor.
+  // param data_type [TypeId] The new tensor data type.
+  Tensor(const Tensor &tensor, TypeId data_type);
+
+  // brief Create tensor with the given shared tensor data.
+  //
+  // param data_type [TypeId] Data type of the tensor.
+  // param shape The shape represented by std::vector<int> of the tensor.
+  // param data The shared tensor data.
+  Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data);
+
+  // brief Create an all zero tensor.
   //
   // param data_type [TypeId] Data type of the tensor.
   // param shape The shape represented by std::vector<int> of the tensor.
   Tensor(TypeId data_type, const std::vector<int> &shape);
 
-  // brief Constructor for Python.
+  // brief Create a tensor with input data buffer.
   //
-  // param input [py::array] Data value of the tensor.
   // param data_type [TypeId] Data type of the tensor.
-  explicit Tensor(const py::array &input, const TypePtr &data_type = nullptr);
+  // param shape The shape represented by std::vector<int> of the tensor.
+  // param data The input data to be copied into tensor.
+  // param data_len The length of data in bytes.
+  Tensor(TypeId data_type, const std::vector<int> &shape, void *data, size_t data_len);
 
-  // brief Constructor
+  // brief Create a tensor with input data buffer and given source data type.
   //
-  // param input [py::list] the data for tensor
-  // param data_type [TypeId] data type
-  explicit Tensor(const py::list &input, const TypePtr &data_type = nullptr);
+  // param data_type [TypeId] Data type of the tensor.
+  // param shape The shape represented by std::vector<int> of the tensor.
+  // param data The input data to be copied into tensor.
+  // param src_data_type The source data type.
+  Tensor(TypeId data_type, const std::vector<int> &shape, void *data, TypeId src_data_type);
 
-  // brief Constructor
+  // brief Create 1 dimension tensor from an int vector.
   //
-  // param input [py::tuple] the data for tensor
+  // param input [std::vector<int64_t>] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::tuple &input, const TypePtr &data_type = nullptr);
+  explicit Tensor(const std::vector<int64_t> &input, const TypePtr &data_type = nullptr);
 
-  // brief Constructor
+  // brief Create 1 dimension tensor from a float vector.
   //
-  // param input [py::float_] the data for tensor
+  // param input [std::vector<double>] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::float_ &input, const TypePtr &data_type = nullptr);
+  explicit Tensor(const std::vector<double> &input, const TypePtr &data_type = nullptr);
 
-  // brief Constructor
+  // brief Create 0 dimension tensor from an int scalar.
   //
-  // param input [py::int_] the data for tensor
+  // param input [int64] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::int_ &input, const TypePtr &data_type = nullptr);
+  explicit Tensor(int64_t input, const TypePtr &data_type = nullptr);
 
-  // brief Constructor
+  // brief Create 0 dimension tensor from a float scalar.
   //
-  // param input [Tensor] the data for tensor
+  // param input [double] the data for tensor
   // param data_type [TypeId] data type
-  Tensor(const Tensor &tensor, const TypePtr &data_type = nullptr);
+  explicit Tensor(double input, const TypePtr &data_type = nullptr);
 
   ~Tensor() override = default;
 
   MS_DECLARE_PARENT(Tensor, MetaTensor);
 
-  // brief Overloads operator = for Tensor.
-  //
-  // The constructed Tensor object has the same type and shape with tensor.
-  //
-  // param tensor An existing Tensor object.
-  Tensor &operator=(const Tensor &tensor);
-
   // brief Compares two Tensor objects.
   //
-  // Compare two tensor objects to see if they have same data type, shape and
-  // data value.
+  // Compare two tensor objects to see if they have same data type, shape and data address.
   //
   // param tensor The Tensor object to be compared.
-  // return true: If having same type, shape and data, return true, or return false.
+  // return true: If having same type, shape and data address, return true, or return false.
   bool operator==(const Tensor &tensor) const;
 
-  // It is different from 'operator==' which just compare shape/type/address, it do real value comparison.
-  bool ValueEqual(const Tensor &other) const;
-
-  // assgin value to this tensor
-  Tensor &AssignValue(const Tensor &tensor);
+  // It is different from 'operator==' which just compare shape/type/address,
+  // it do real value comparison.
+  bool ValueEqual(const Tensor &tensor) const;
 
   bool operator==(const Value &other) const override {
     if (other.isa<Tensor>()) {
-      auto other_ = static_cast<const Tensor &>(other);
+      auto &other_ = static_cast<const Tensor &>(other);
       return *this == other_;
-    } else {
-      return false;
     }
+    return false;
   }
-
-  py::tuple GetPyTupleShape() const;
 
   // brief Gets tensor's dimension
   //
   // return The number of dimensions of the tensor data.
-  int DataDim() const;
+  int DataDim() const { return static_cast<int>(data().ndim()); }
 
   // brief Getting tensor data size
   //
   // return The total number of elements of the tensor data.
-  int DataSize() const;
-
-  // brief Tensor's data value.
-  //
-  // return [py::array] The tensor's data in py::array.
-  py::array data() const;
+  int DataSize() const { return static_cast<int>(data().size()); }
 
   // brief Get the data type fo the tensor for C++
   //
   // return [int] The tensor's data type will be cast to int to return.
-  int data_type_c() const;
+  int data_type_c() const { return static_cast<int>(data_type_); }
 
   // brief Get the tensor's shape for C++
   //
   // return [std::vector<int>]
-  std::vector<int> shape_c(void) const;
+  std::vector<int> shape_c(void) const { return shape(); }
 
   // brief Get Tensor data pointer for c++ type
   //
   // param writable true if writable, false if read only
   // return The pointer to the object
-  void *data_c(bool writable = false);
+  void *data_c() { return data().data(); }
 
   // brief Get Tensor data byte-size for c++ type
   //
   // return byte size of Tensor data
-  size_t Size() const { return this->data().nbytes(); }
+  size_t Size() const { return data().nbytes(); }
 
-  // brief Get data type from tensor data.
-  //
-  // param buf The buffer info of the py::array data.
-  // return The [TypeId] of the tensor data.
-  TypeId GetDataType(const py::buffer_info &buf) const;
+  void *data_c() const { return data_->data(); }
 
-  // brief Sets the data type of a tensor.
+  // brief Sync data with device.
+  void data_sync() const;
+
+  // brief Get the internal data object.
   //
-  // param data_type The data type of the tensor to be set.
+  // return The reference to internal data object.
+  TensorData &data() { return *data_; }
+
+  // brief Get the internal data shared pointer.
   //
+  // return The reference to internal data object.
+  const TensorDataPtr &data_ptr() const { return data_; }
+
+  // brief Get the internal data object.
+  //
+  // return The reference to internal data object.
+  const TensorData &data() const { return *data_; }
+
   TypeId set_data_type(const TypeId data_type) override;
-  TypePtr SetDtype(const TypePtr type_ptr) override;
+
   std::string GetShapeAndDataTypeInfo() const;
+
   std::string ToString() const override;
+
   std::string ToStringRepr() const;
-  py::array data_;  // < Tensor's data value
-  const bool parse_info_ = true;
-  bool is_init();
-  void set_init_flag(bool flag);
 
- private:
-  // brief init tensor
-  //
-  // param input [py::array] the data for tensor
-  // param data_type [TypeId] data type
-  // return true if succeed, false if failed.
-  void init(const py::array &input, const TypeId &data_type);
-  void init(const py::array &input, const TypePtr &type_ptr);
-  bool init_flag_{false};
-  // brief init tensor attribute
-  //
-  // param data_type [TypeId] Data type of the tensor.
-  // param shape [py::array] The shape of the tensor.
-  // return true if succeed, false if failed.
-  void init(TypeId data_type, const std::vector<int> &shape, py::array *data);
+  bool is_init() { return init_flag_; }
+  void set_init_flag(bool flag) { init_flag_ = flag; }
 
-  bool convert_data(const py::array &in, const TypeId in_data_type, py::array *out, const TypeId out_data_type);
-
- public:
   bool is_dirty() const { return dirty_; }
   void set_dirty(const bool dirty) { dirty_ = dirty; }
+
   DeviceAddressPtr device_address() const { return device_address_; }
   void set_device_address(const DeviceAddressPtr &device_address) { device_address_ = device_address; }
-  py::array data_sync();
+
   std::string id() const { return id_; }
 
+  const bool parse_info_ = true;
+
  private:
+  bool init_flag_{false};
+  TensorDataPtr data_{nullptr};
   bool dirty_{true};
   std::string id_{""};
   DeviceAddressPtr device_address_{nullptr};
@@ -282,8 +241,6 @@ using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 namespace inference {
 class Tensor : public MSTensor {
  public:
-  Tensor();
-
   Tensor(TypeId data_type, const std::vector<int> &shape);
 
   explicit Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr);

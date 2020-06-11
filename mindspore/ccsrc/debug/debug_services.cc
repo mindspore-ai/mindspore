@@ -117,7 +117,7 @@ void DebugServices::check_watchpoints(std::vector<std::string> *name, std::vecto
       continue;
     }
 
-    float *start_addr = reinterpret_cast<float *>(tensor_ptr->data_c(false));
+    float *start_addr = reinterpret_cast<float *>(tensor_ptr->data_c());
     unsigned int num_elements = (tensor_ptr->data().nbytes()) / sizeof(float);
 
     std::unordered_map<unsigned int, watchpoint_t>::iterator it_w_table_check;
@@ -144,7 +144,7 @@ void DebugServices::check_watchpoints(std::vector<std::string> *name, std::vecto
           name->push_back(name_no_slot);
 
           slot->push_back(std::to_string(tensor_list[i]->GetSlot()));
-          data_ptr->push_back(reinterpret_cast<char *>(tensor_ptr->data_c(false)));
+          data_ptr->push_back(reinterpret_cast<char *>(tensor_ptr->data_c()));
           data_size->push_back(tensor_ptr->data().nbytes());
 
           int condition_item = -1;
@@ -182,7 +182,7 @@ void DebugServices::read_nodes_tensors(std::vector<std::string> name, std::vecto
       continue;
     }
     ret_name->push_back(std::get<0>(result));
-    data_ptr->push_back(reinterpret_cast<char *>(std::get<1>(result)->GetTensor()->data_c(false)));
+    data_ptr->push_back(reinterpret_cast<char *>(std::get<1>(result)->GetTensor()->data_c()));
     data_size->push_back(std::get<1>(result)->GetTensor()->data().nbytes());
     dtype->push_back(std::get<1>(result)->GetTensor()->Dtype());
     shape->push_back(std::get<1>(result)->GetTensor()->shape());

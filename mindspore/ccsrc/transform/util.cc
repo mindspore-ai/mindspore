@@ -342,7 +342,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
   MeTensor me_tensor(me_type, me_dims);
 
   // Get the writable data pointer of the tensor and cast it to its data type
-  auto me_data_ptr = reinterpret_cast<uint8_t *>(me_tensor.data_c(true));
+  auto me_data_ptr = reinterpret_cast<uint8_t *>(me_tensor.data_c());
   size_t me_data_size = static_cast<size_t>(me_tensor.data().nbytes());
   MS_EXCEPTION_IF_NULL(me_data_ptr);
   MS_EXCEPTION_IF_NULL(ge_tensor);

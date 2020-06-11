@@ -26,6 +26,7 @@
 #include <stack>
 
 #include "pybind11/pybind11.h"
+#include "pybind11/numpy.h"
 
 #include "pynative/base.h"
 #include "utils/context/ms_context.h"

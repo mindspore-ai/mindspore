@@ -44,7 +44,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   indices_tensor->set_device_info(device_info);
 
   // 2 set value of tensor
-  auto data_ptr = indices_tensor->data_c(true);
+  auto data_ptr = indices_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
   std::vector<Eigen::half> half_data;
   for (size_t i = 0; i < last_dim; ++i) {

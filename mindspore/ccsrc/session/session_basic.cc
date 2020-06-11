@@ -96,8 +96,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
     tensor->set_device_address(AnfAlgo::GetMutableOutputAddr(node, output_index));
     tensor->set_dirty(false);
   } else if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, output_index),
-                                        LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                        tensor->data_c(true))) {
+                                        LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c())) {
     MS_LOG(INFO) << "output sync device to host error!!!";
     tensor->set_dirty(false);
   }
@@ -218,7 +217,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   }
   auto tensor = (*inputs_params)[0];
   MS_EXCEPTION_IF_NULL(tensor);
-  auto *val = static_cast<int32_t *>(tensor->data_c(true));
+  auto *val = static_cast<int32_t *>(tensor->data_c());
   MS_EXCEPTION_IF_NULL(val);
   *val = 0;
   tensor->set_dirty(true);
@@ -720,7 +719,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
         MS_EXCEPTION_IF_NULL(device_address);
         if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                               LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                              tensor->data_c(false))) {
+                                              tensor->data_c())) {
           MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
         }
       }
@@ -815,7 +814,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
       continue;
     }
     if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, index), LongToSize(tensor->data().nbytes()),
-                                   tensor->data_type(), tensor->data_c(true))) {
+                                   tensor->data_type(), tensor->data_c())) {
       MS_LOG(ERROR) << "Failed to sync output from device to host.";
     }
     tensor->set_dirty(false);

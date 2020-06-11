@@ -706,7 +706,7 @@ TEST_F(TestConvert, TestConvertTensor) {
   auto type_id = kNumberTypeFloat32;
   MeTensor me_tensor(type_id, dims);
   // Get the writable data pointer of the tensor and cast it to its data type
-  uint8_t* me_data_ptr = reinterpret_cast<uint8_t*>(me_tensor.data_c(true));
+  uint8_t* me_data_ptr = reinterpret_cast<uint8_t*>(me_tensor.data_c());
   // Copy or use the writable data pointer of the ME tensor
   memcpy_s(me_data_ptr, me_tensor.data().nbytes(), data, 12 * sizeof(float));
   auto me_tensor_ptr = std::make_shared<MeTensor>(me_tensor);

@@ -61,9 +61,9 @@ class Tensor(Tensor_):
         if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
             input_data = np.ascontiguousarray(input_data)
         if dtype is None:
-            super(Tensor, self).__init__(input_data)
+            Tensor_.__init__(self, input_data)
         else:
-            super(Tensor, self).__init__(input_data, dtype)
+            Tensor_.__init__(self, input_data, dtype)
         self._virtual_flag = False
         self._init_flag = False
 

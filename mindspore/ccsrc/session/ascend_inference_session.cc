@@ -16,6 +16,7 @@
 #include "session/ascend_inference_session.h"
 #include "operator/ops.h"
 #include "ir/tensor.h"
+#include "ir/tensor_py.h"
 #include "ir/anf.h"
 #include "ir/param_value_py.h"
 #include "device/kernel_runtime.h"
@@ -25,6 +26,8 @@
 #include "kernel/tbe/tbe_python_funcs.h"
 #include "utils/config_manager.h"
 #include "utils/base_ref_extends.h"
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace session {
@@ -51,7 +54,7 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
       auto py_param = param_value->value();
       MS_EXCEPTION_IF_NULL(py_param);
       py::array py_array = py_param.cast<py::array>();
-      tensor = std::make_shared<tensor::Tensor>(py_array);
+      tensor = TensorPy::MakeTensor(py_array);
     } else {
       tensor = inputs[no_weight_input++];
     }
@@ -78,7 +81,7 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
         MS_EXCEPTION_IF_NULL(device_address);
         if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                               LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                              tensor->data_c(false))) {
+                                              tensor->data_c())) {
           MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
         }
       }
