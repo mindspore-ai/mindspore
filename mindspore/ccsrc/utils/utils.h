@@ -65,6 +65,7 @@ constexpr auto kScatterNdOpName = "ScatterNd";
 constexpr auto kStridedSliceAssignOpName = "StridedSliceAssign";
 constexpr auto kStridedSliceOpName = "StridedSlice";
 constexpr auto kStridedSliceGradOpName = "StridedSliceGrad";
+constexpr auto kSparseGatherV2 = "SparseGatherV2";
 constexpr auto kUnsortedSegmentProdOpName = "UnsortedSegmentProd";
 constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kFlattenGradOpName = "FlattenGrad";

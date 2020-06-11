@@ -53,6 +53,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"scatter_nd", "scatter_nd_d"},
   {"tile", "tile_d"},
   {"gather_v2", "gather_v2_d"},
+  {"sparse_gather_v2", "gather_v2_d"},
   {"batch_mat_mul", "batch_matmul"},
   {"b_n_training_reduce", "bn_training_reduce"},
   {"b_n_training_update", "bn_training_update"},
