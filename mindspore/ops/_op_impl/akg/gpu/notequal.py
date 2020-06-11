@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""LessEqual op"""
+"""NotEqual op"""
 from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
 
-lessequal_op_info = AkgRegOp("LessEqual") \
+notequal_op_info = AkgRegOp("NotEqual") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .input(1, "y") \
@@ -26,7 +26,7 @@ lessequal_op_info = AkgRegOp("LessEqual") \
     .get_op_info()
 
 
-@op_info_register(lessequal_op_info)
-def _lessequal_akg():
-    """LessEqual register"""
+@op_info_register(notequal_op_info)
+def _notequal_akg():
+    """NotEqual AutoDiff register"""
     return
