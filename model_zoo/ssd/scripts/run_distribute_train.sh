@@ -29,6 +29,8 @@ then
 fi
 
 # Before start distribute train, first create mindrecord files.
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+cd $BASE_PATH/../ || exit
 python train.py --only_create_dataset=1
 
 echo "After running the scipt, the network runs in the background. The log will be generated in LOGx/log.txt"
@@ -46,8 +48,8 @@ do
     export DEVICE_ID=$i
     rm -rf LOG$i
     mkdir ./LOG$i
-    cp ../*.py ./LOG$i
-    cp -r ../src ./LOG$i
+    cp ./*.py ./LOG$i
+    cp -r ./src ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
