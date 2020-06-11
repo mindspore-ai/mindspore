@@ -23,12 +23,12 @@ namespace dataset {
 PythonSampler::PythonSampler(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_buffer)
     : Sampler(num_samples, samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
 
-Status PythonSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status PythonSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (need_to_reset_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     std::shared_ptr<Tensor> sample_ids;

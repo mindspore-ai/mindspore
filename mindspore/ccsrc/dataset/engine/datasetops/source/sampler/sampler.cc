@@ -33,11 +33,7 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
 }
 
 Sampler::Sampler(int64_t num_samples, int64_t samples_per_buffer)
-    : DatasetOp(0),
-      num_rows_(0),
-      num_samples_(num_samples),
-      samples_per_buffer_(samples_per_buffer),
-      col_desc_(nullptr) {}
+    : num_rows_(0), num_samples_(num_samples), samples_per_buffer_(samples_per_buffer), col_desc_(nullptr) {}
 
 Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   std::shared_ptr<Sampler> child_sampler;
@@ -97,7 +93,7 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
   std::shared_ptr<Tensor> sample_ids;
 
   // A call to derived class to get sample ids wrapped inside a buffer
-  RETURN_IF_NOT_OK(GetNextBuffer(&db));
+  RETURN_IF_NOT_OK(GetNextSample(&db));
   // Get the only tensor inside the buffer that contains the actual SampleIds for the entire epoch
   RETURN_IF_NOT_OK(db->GetTensor(&sample_ids, 0, 0));
   // check this buffer is not a ctrl buffer
@@ -114,7 +110,7 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
     }
   }
   // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
-  RETURN_IF_NOT_OK(GetNextBuffer(&db));
+  RETURN_IF_NOT_OK(GetNextSample(&db));
   CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
   // Reset Sampler since this is the end of the epoch
   RETURN_IF_NOT_OK(Reset());
@@ -133,17 +129,7 @@ Status Sampler::SetNumRowsInDataset(int64_t num_rows) {
   return Status::OK();
 }
 
-// inline op doesn't have it's own consumer, it's assigned from parent
-int32_t Sampler::num_consumers() const {
-  if (parent_.empty() || parent_[0] == nullptr) {
-    MS_LOG(WARNING) << "Sampler with no parent.  num_consumers is 0.";
-    return 0;
-  } else {
-    return parent_[0]->num_consumers();
-  }
-}
-
-Status Sampler::AddChild(std::shared_ptr<DatasetOp> child) {
+Status Sampler::AddChild(std::shared_ptr<Sampler> child) {
   if (child == nullptr) {
     return Status::OK();
   }
@@ -182,14 +168,5 @@ Status Sampler::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   return Status::OK();
 }
 
-// inline op doesn't have it's own producers, it's assigned from child
-int32_t Sampler::num_producers() const {
-  if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(WARNING) << "Sampler with no child, num_producers is 0.";
-    return 0;
-  } else {
-    return child_[0]->num_producers();
-  }
-}
 }  // namespace dataset
 }  // namespace mindspore

@@ -41,7 +41,7 @@ class RandomSampler : public Sampler {
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
   // @param int32_t workerId - not meant to be used
   // @return - The error code return
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
   // meant to be called by base class or python
   Status InitSampler() override;

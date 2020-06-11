@@ -263,7 +263,7 @@ std::vector<std::string> CelebAOp::Split(const std::string &line) {
 Status CelebAOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   std::unique_ptr<DataBuffer> data_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&data_buffer));
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&data_buffer));
   RETURN_IF_NOT_OK(AddIOBlock(&data_buffer));
   return Status::OK();
 }
@@ -291,7 +291,7 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
           keys.clear();
         }
       }
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(data_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(data_buffer));
     }
 
     if (!keys.empty()) {
@@ -313,7 +313,7 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
         io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());  // Master thread goes to sleep after it has made all the IOBlocks
       wp_.Clear();
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(data_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(data_buffer));
     }
   }
 }

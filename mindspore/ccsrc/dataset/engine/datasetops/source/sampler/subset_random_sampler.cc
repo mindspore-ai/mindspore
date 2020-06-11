@@ -72,13 +72,13 @@ Status SubsetRandomSampler::Reset() {
 }
 
 // Get the sample ids.
-Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status SubsetRandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   // All samples have been drawn
   if (sample_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);

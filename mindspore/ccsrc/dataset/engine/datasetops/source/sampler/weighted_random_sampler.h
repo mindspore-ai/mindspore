@@ -51,7 +51,7 @@ class WeightedRandomSampler : public Sampler {
   // Get the sample ids.
   // @param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.
   // @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
  private:
   // A list of weights for each sample.
