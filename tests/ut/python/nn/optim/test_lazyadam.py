@@ -12,23 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test FTRL """
-
+""" test lazy adam """
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn.optim import FTRL
+from mindspore.nn.optim import LazyAdam
 from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):
+    """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
-        self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name='weight')
-        self.bias = Parameter(Tensor(np.ones([10]).astype(np.float32)), name='bias')
+        self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
+        self.bias = Parameter(Tensor(np.ones([10]).astype((np.float32))), name="bias")
         self.matmul = P.MatMul()
         self.biasAdd = P.BiasAdd()
 
@@ -50,26 +52,37 @@ class NetWithSparseGatherV2(nn.Cell):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
 
-def test_ftrl():
-    """ test_ftrl """
+def test_lazy_adam_compile():
+    """ test lazy adam compile """
     inputs = Tensor(np.ones([1, 64]).astype(np.float32))
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     net = Net()
     net.set_train()
+
     loss = nn.SoftmaxCrossEntropyWithLogits()
-    optimizer = FTRL(net.trainable_params())
+    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9)
+
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     _executor.compile(train_network, inputs, label)
 
 
-def test_spares_ftrl_compile():
-    """ test sparse ftrl compile """
+def test_spares_lazy_adam_compile():
+    """ test sparse adam compile """
     indices = Tensor(np.array([0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
     net = NetWithSparseGatherV2()
     net.set_train()
 
-    optimizer = FTRL(net.trainable_params())
+    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1)
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)
+
+
+def test_lazy_adam_error():
+    net = Net()
+    with pytest.raises(ValueError):
+        LazyAdam(net.get_parameters(), learning_rate=-0.1)
+
+    with pytest.raises(TypeError):
+        LazyAdam(net.get_parameters(), learning_rate=0.1, beta1=2)

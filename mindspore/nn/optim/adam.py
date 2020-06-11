@@ -101,10 +101,21 @@ def _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, po
     validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
 
 
-@adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
-                   "Tensor")
-def _run_opt_with_one_number(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params, moment1,
-                             moment2):
+@adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tuple",
+                   "Tensor", "Tensor", "Tensor")
+def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
+                         moment1, moment2):
+    """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
+    success = True
+    success = F.depend(success, sparse_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+                                           eps, gradient[1], gradient[0]))
+    return success
+
+
+@adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor",
+                   "Tensor", "Tensor", "Tensor")
+def _run_opt_with_one_number(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
+                             moment1, moment2):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
     success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
@@ -143,6 +154,10 @@ class Adam(Optimizer):
         applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
 
         To improve parameter groups performance, the customized order of parameters can be supported.
+
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
+        `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
+        behavior is currently performed on the CPU, weight decay and loss scale is not supported.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -231,12 +246,9 @@ class Adam(Optimizer):
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
         self.hyper_map = C.HyperMap()
+        self.map_ = C.Map()
         self.opt = P.Adam(use_locking, use_nesterov)
-
-        self.pow = P.Pow()
-        self.sqrt = P.Sqrt()
-        self.one = Tensor(np.array([1.0]).astype(np.float32))
-        self.realdiv = P.RealDiv()
+        self.sparse_opt = P.SparseApplyAdam()
 
     def construct(self, gradients):
         params = self.parameters
@@ -251,13 +263,13 @@ class Adam(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
-                                               self.beta2, self.eps),
-                                     lr, gradients, params, moment1, moment2)
+            success = self.map_(F.partial(adam_opt, self.opt, self.sparse_opt, beta1_power, beta2_power,
+                                          self.beta1, self.beta2, self.eps),
+                                lr, gradients, params, moment1, moment2)
         else:
-            success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
-                                               self.beta2, self.eps, lr),
-                                     gradients, params, moment1, moment2)
+            success = self.map_(F.partial(adam_opt, self.opt, self.sparse_opt, beta1_power, beta2_power,
+                                          self.beta1, self.beta2, self.eps, lr),
+                                gradients, params, moment1, moment2)
         return success
 
 
