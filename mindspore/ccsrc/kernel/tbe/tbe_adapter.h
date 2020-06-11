@@ -27,7 +27,7 @@
 //       the TBE back-end operator implementation difference
 namespace mindspore {
 namespace kernel {
-enum kCreaterType : int { SINGLE_BUILD = 0, PREBUILD, OP_SELECT_FORMAT, CHECK_SUPPORTED };
+enum kCreaterType : int { SINGLE_BUILD = 0, PREBUILD, OP_SELECT_FORMAT, CHECK_SUPPORTED, OP_PRE_COMPILE };
 namespace tbe {
 using FAttrsPass = void (*)(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
                             nlohmann::json *attrs_json);

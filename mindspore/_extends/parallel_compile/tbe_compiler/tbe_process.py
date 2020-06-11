@@ -75,7 +75,6 @@ def check_supported(op_json: str):
 
     return ret
 
-
 def run_compiler(op_json):
     """
     run compiler to compile op with subprocess
@@ -88,15 +87,16 @@ def run_compiler(op_json):
     """
     try:
         tbe_compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
-        subprocess.run([sys.executable, tbe_compiler], input=op_json, timeout=300,
-                       text=True, capture_output=True, check=True)
-        return "Success", "Success"
+        completed_object = subprocess.run([sys.executable, tbe_compiler], input=op_json, timeout=300,
+                                          text=True, capture_output=True, check=False)
+        if completed_object:
+            code = completed_object.returncode
+        return "Success", str(code)
     except subprocess.TimeoutExpired:
         tb = traceback.format_exc()
-        return "TBEException", "CompileTimeOut: " + tb + "\ninput_args: " + op_json
+        return "TBEException", "PreCompileTimeOut: " + tb + "\ninput_args: " + op_json
     except subprocess.CalledProcessError as e:
-        return "TBEException", "CompileProcessFailed:\n" + e.stdout + "\n" + e.stderr + "\ninput_args: " + op_json
-
+        return "TBEException", "PreCompileProcessFailed:\n" + e.stdout + "\n" + e.stderr + "\ninput_args: " + op_json
 
 class CompilerPool:
     """compiler pool"""
@@ -154,11 +154,11 @@ class CompilerPool:
             task_id, task_future = self.__running_tasks.pop(0)
             ret_type, result = task_future.get(330)
             if ret_type == "Success":
-                ret = task_id, "Success"
+                ret = task_id, "Success", result
             elif ret_type in ("Exception", "TBEException"):
-                ret = task_id, ret_type + ":" + result
+                ret = task_id, ret_type + ":" + result, "_"
             else:
-                ret = task_id, "Exception: Not support return type:" + str(ret_type)
+                ret = task_id, "Exception: Not support return type:" + str(ret_type), "_"
         return ret
 
     def reset_task_info(self):
