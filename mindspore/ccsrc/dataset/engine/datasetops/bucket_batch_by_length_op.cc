@@ -237,6 +237,5 @@ Status BucketBatchByLengthOp::Reset() {
 
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

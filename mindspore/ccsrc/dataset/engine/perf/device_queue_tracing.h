@@ -29,7 +29,7 @@ class DeviceQueueTracing : public Tracing {
   DeviceQueueTracing() = default;
 
   // Destructor
-  ~DeviceQueueTracing() = default;
+  ~DeviceQueueTracing() override = default;
 
   // Record tracing data
   // @return Status - The error code return
@@ -41,7 +41,7 @@ class DeviceQueueTracing : public Tracing {
   // @return Status - The error code return
   Status SaveToFile() override;
 
-  Status Init(const std::string &dir_path, const std::string &device_id);
+  Status Init(const std::string &dir_path, const std::string &device_id) override;
 
  private:
   std::vector<std::string> value_;

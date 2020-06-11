@@ -44,6 +44,8 @@ class ConnectorSize : public Sampling {
  public:
   explicit ConnectorSize(ExecutionTree *tree) : tree_(tree) {}
 
+  ~ConnectorSize() = default;
+
   // Driver function for connector size sampling.
   // This function samples the connector size of every nodes within the ExecutionTree
   Status Sample() override;
@@ -54,7 +56,7 @@ class ConnectorSize : public Sampling {
   // @return Status - The error code return
   Status SaveToFile() override;
 
-  Status Init(const std::string &dir_path, const std::string &device_id);
+  Status Init(const std::string &dir_path, const std::string &device_id) override;
 
   // Parse op infomation and transform to json format
   json ParseOpInfo(const DatasetOp &node, const std::vector<int32_t> &size);

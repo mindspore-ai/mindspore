@@ -99,7 +99,7 @@ class ProfilingManager {
   // If profiling is enabled.
   bool IsProfilingEnable() const;
 
-  std::unordered_map<std::string, std::shared_ptr<Sampling>> &GetSamplingNodes() { return sampling_nodes_; }
+  const std::unordered_map<std::string, std::shared_ptr<Sampling>> &GetSamplingNodes() { return sampling_nodes_; }
 
  private:
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;

@@ -146,7 +146,6 @@ class BucketBatchByLengthOp : public PipelineOp {
   std::unique_ptr<ChildIterator> child_iterator_;
   std::vector<std::unique_ptr<TensorQTable>> buckets_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 

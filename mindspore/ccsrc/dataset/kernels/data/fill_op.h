@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class FillOp : public TensorOp {
  public:
   explicit FillOp(std::shared_ptr<Tensor> value) : fill_value_(value) {}
@@ -39,9 +38,7 @@ class FillOp : public TensorOp {
  private:
   std::shared_ptr<Tensor> fill_value_;
 };
-
 }  // namespace dataset
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_FILL_OP_H

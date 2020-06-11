@@ -84,7 +84,12 @@ Status IteratorBase::FetchNextTensorRow(TensorRow *out_row) {
 
 // Constructor of the DatasetIterator
 DatasetIterator::DatasetIterator(std::shared_ptr<ExecutionTree> exe_tree)
-    : IteratorBase(), root_(exe_tree->root()), tracing_(nullptr), cur_batch_num_(0), cur_connector_size_(0) {
+    : IteratorBase(),
+      root_(exe_tree->root()),
+      tracing_(nullptr),
+      cur_batch_num_(0),
+      cur_connector_size_(0),
+      cur_connector_capacity_(0) {
   std::shared_ptr<Tracing> node;
   Status s = exe_tree->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
   if (s.IsOk()) {

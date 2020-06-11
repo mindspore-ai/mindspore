@@ -554,26 +554,28 @@ def adjust_hue(img, hue_factor):
     Returns:
         img (PIL Image), Hue adjusted image.
     """
-    if not -0.5 <= hue_factor <= 0.5:
-        raise ValueError('hue_factor {} is not in [-0.5, 0.5].'.format(hue_factor))
+    image = img
+    image_hue_factor = hue_factor
+    if not -0.5 <= image_hue_factor <= 0.5:
+        raise ValueError('image_hue_factor {} is not in [-0.5, 0.5].'.format(image_hue_factor))
 
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
+    if not is_pil(image):
+        raise TypeError(augment_error_message.format(type(image)))
 
-    input_mode = img.mode
-    if input_mode in {'L', '1', 'I', 'F'}:
-        return img
+    mode = image.mode
+    if mode in {'L', '1', 'I', 'F'}:
+        return image
 
-    h, s, v = img.convert('HSV').split()
+    hue, saturation, value = img.convert('HSV').split()
 
-    np_h = np.array(h, dtype=np.uint8)
+    np_hue = np.array(hue, dtype=np.uint8)
 
     with np.errstate(over='ignore'):
-        np_h += np.uint8(hue_factor * 255)
-    h = Image.fromarray(np_h, 'L')
+        np_hue += np.uint8(image_hue_factor * 255)
+    hue = Image.fromarray(np_hue, 'L')
 
-    img = Image.merge('HSV', (h, s, v)).convert(input_mode)
-    return img
+    image = Image.merge('HSV', (hue, saturation, value)).convert(mode)
+    return image
 
 
 def to_type(img, output_type):
