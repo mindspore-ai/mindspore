@@ -83,7 +83,14 @@ Status IteratorBase::FetchNextTensorRow(TensorRow *out_row) {
 }
 
 // Constructor of the DatasetIterator
-DatasetIterator::DatasetIterator(std::shared_ptr<ExecutionTree> exe_tree) : IteratorBase(), root_(exe_tree->root()) {}
+DatasetIterator::DatasetIterator(std::shared_ptr<ExecutionTree> exe_tree)
+    : IteratorBase(), root_(exe_tree->root()), tracing_(nullptr), cur_batch_num_(0), cur_connector_size_(0) {
+  std::shared_ptr<Tracing> node;
+  Status s = exe_tree->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
+  if (s.IsOk()) {
+    tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
+  }
+}
 
 DatasetIterator::~DatasetIterator() = default;
 
@@ -101,6 +108,10 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
 
   // Check if we need to get a new DataBuffer to iterate.
   if (curr_buffer_ == nullptr || curr_buffer_->NumRows() == 0) {
+    if (tracing_ != nullptr) {
+      cur_connector_size_ = root_->ConnectorSize();
+      cur_connector_capacity_ = root_->ConnectorCapacity();
+    }
     RETURN_IF_NOT_OK(root_->GetNextBuffer(&curr_buffer_));
 
     // Since GetNextBuffer was used rather than GetNextInput(), it means we need to manually
@@ -121,6 +132,8 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
       }
       eof_handled_ = true;
       curr_buffer_.reset();  // explicitly free the eof buffer
+      // Set tree to Finished state
+      root_->Tree()->SetFinished();
 
       return Status::OK();
     }
@@ -131,13 +144,18 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
       // flow of an eof up the pipeline by itself.
       eof_handled_ = true;
       curr_buffer_.reset();  // explicitly free the eof buffer
+      // Set tree to Finished state
+      root_->Tree()->SetFinished();
       return Status::OK();
     }
   }
 
   // If we got this far, now it's time to pop that next row for return to caller
   RETURN_IF_NOT_OK(curr_buffer_->PopRow(out_row));
-
+  if (tracing_ != nullptr) {
+    cur_batch_num_++;
+    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_);
+  }
   return Status::OK();
 }
 

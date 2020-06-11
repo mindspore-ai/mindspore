@@ -107,6 +107,10 @@ class ProjectOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ProjectOp"; }
+
  private:
   std::vector<std::string> columns_to_project_;
   std::vector<int32_t> projected_column_indices_;

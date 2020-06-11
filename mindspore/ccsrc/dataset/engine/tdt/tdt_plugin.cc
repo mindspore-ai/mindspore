@@ -16,6 +16,7 @@
 #include "dataset/engine/tdt/tdt_plugin.h"
 #include "common/utils.h"
 #include "utils/log_adapter.h"
+#include "dataset/engine/perf/profiling.h"
 
 namespace mindspore {
 namespace dataset {
@@ -28,17 +29,25 @@ std::shared_ptr<TdtPlugin> TdtPlugin::GetInstance() {
   return instance_ptr_;
 }
 
-TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name) {
+TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profiling, int32_t &time) {
   MS_LOG(INFO) << "TDT channel name is " << channel_name << ".";
   std::vector<DataItem> items;
+  double start_time;
   auto ret = translate(ts_row, items);
   if (ret != SUCCESS) {
     MS_LOG(ERROR) << "TDT converting tensor failed!";
     return FAILED;
   }
+  if (profiling) {
+    start_time = ProfilingTime::GetCurMilliSecond();
+  }
   if (tdt::TdtHostPushData(channel_name, items) != 0) {
     MS_LOG(ERROR) << "TDT pushing data failed!";
     return FAILED;
+  }
+  if (profiling) {
+    double end_time = ProfilingTime::GetCurMilliSecond();
+    time = (int32_t)(end_time - start_time);
   }
   return SUCCESS;
 }

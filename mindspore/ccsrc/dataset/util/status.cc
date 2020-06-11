@@ -45,6 +45,9 @@ std::string CodeAsString(const StatusCode c) {
       case StatusCode::kDuplicateKey:
         s = "Duplicate key";
         break;
+      case StatusCode::kProfilingError:
+        s = "Error encountered while profiling";
+        break;
       case StatusCode::kUnexpectedError:
       default:
         s = "Unexpected error";

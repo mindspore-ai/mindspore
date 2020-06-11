@@ -239,11 +239,13 @@ void bindTensor(py::module *m) {
     .def("set_worker_connector_size", &ConfigManager::set_worker_connector_size)
     .def("set_op_connector_size", &ConfigManager::set_op_connector_size)
     .def("set_seed", &ConfigManager::set_seed)
+    .def("set_monitor_sampling_interval", &ConfigManager::set_monitor_sampling_interval)
     .def("get_rows_per_buffer", &ConfigManager::rows_per_buffer)
     .def("get_num_parallel_workers", &ConfigManager::num_parallel_workers)
     .def("get_worker_connector_size", &ConfigManager::worker_connector_size)
     .def("get_op_connector_size", &ConfigManager::op_connector_size)
     .def("get_seed", &ConfigManager::seed)
+    .def("get_monitor_sampling_interval", &ConfigManager::monitor_sampling_interval)
     .def("load", [](ConfigManager &c, std::string s) { (void)c.LoadFile(s); });
 
   (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor", py::buffer_protocol())

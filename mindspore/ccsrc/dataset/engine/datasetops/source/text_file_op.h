@@ -169,6 +169,10 @@ class TextFileOp : public ParallelOp {
   // @return Status - the error coed returned.
   static Status CountAllFileRows(const std::vector<std::string> &files, int64_t *count);
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "TextFileOp"; }
+
  private:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.

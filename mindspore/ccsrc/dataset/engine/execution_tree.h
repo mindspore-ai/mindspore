@@ -23,12 +23,14 @@
 #include <vector>
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/util/status.h"
+#include "mindspore/ccsrc/dataset/engine/perf/profiling.h"
 
 namespace mindspore {
 namespace dataset {
 // Forward declares
 class TaskGroup;
 class DatasetOp;
+class Monitor;
 
 class ExecutionTree {
  public:
@@ -40,11 +42,12 @@ class ExecutionTree {
 
   // State flags for the lifecycle of the tree
   enum TreeState {
-    kDeTStateInit = 0,  // The freshly initialized state after construction
-    kDeTStateBuilding,  // The tree is being built, nodes are being added
-    kDeTStatePrepare,   // The tree has been assigned a root node and is pending prepare
-    kDeTStateReady,     // The tree has been prepared and is ready to be launched
-    kDeTStateExecuting  // The tree has been launched and is executing
+    kDeTStateInit = 0,   // The freshly initialized state after construction
+    kDeTStateBuilding,   // The tree is being built, nodes are being added
+    kDeTStatePrepare,    // The tree has been assigned a root node and is pending prepare
+    kDeTStateReady,      // The tree has been prepared and is ready to be launched
+    kDeTStateExecuting,  // The tree has been launched and is executing
+    kDeTStateFinished    // The tree has been drained, dataset iterator received EOF
   };
 
   class Iterator {
@@ -120,7 +123,7 @@ class ExecutionTree {
   // Returns an iterator positioned at the start
   // @return Iterator - The iterator
   ExecutionTree::Iterator begin(const std::shared_ptr<DatasetOp> &root = nullptr) const {
-    return Iterator((root == nullptr) ? root_ : root);
+    return Iterator(root == nullptr ? root_ : root);
   }
 
   // Returns an iterator positioned at the end
@@ -207,6 +210,16 @@ class ExecutionTree {
   // @return raw pointer to the TaskGroup
   TaskGroup *AllTasks() const { return tg_.get(); }
 
+  // Return if the ExecutionTree is finished (iterator receives EOF).
+  // @return Bool - true is ExecutionTree is finished
+  bool isFinished() const { return tree_state_ == TreeState::kDeTStateFinished; }
+
+  // Set the ExecutionTree to Finished state.
+  void SetFinished() { tree_state_ = TreeState::kDeTStateFinished; }
+
+  // Getter for profiling manager, no ownership
+  ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
+
  private:
   // A helper functions for doing the recursive printing
   // @param dataset_op - The dataset op to print
@@ -222,6 +235,8 @@ class ExecutionTree {
   uint32_t prepare_flags_;                               // Flags used during tree prepare
   TreeState tree_state_;                                 // Tracking the current tree state
   std::stack<std::shared_ptr<DatasetOp>> repeat_stack_;  // A stack used during prepare phase
+  std::unique_ptr<Monitor> perf_monitor_;                // Performance Monitor
+  std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
 };
 }  // namespace dataset
 }  // namespace mindspore

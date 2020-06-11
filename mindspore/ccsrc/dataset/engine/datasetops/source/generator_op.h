@@ -127,6 +127,10 @@ class GeneratorOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "GeneratorOp"; }
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

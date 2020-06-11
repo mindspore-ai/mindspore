@@ -177,6 +177,10 @@ class MapOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "MapOp"; }
+
  private:
   // Local queues where worker threads can pop from.
   // Popping directly from the Connector can block if the previous designated threads haven't pop.

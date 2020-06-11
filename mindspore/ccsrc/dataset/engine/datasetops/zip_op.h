@@ -110,6 +110,10 @@ class ZipOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ZipOp"; }
+
  private:
   // Handles preprocessing of the main loop, used when starting new epoch
   Status prepare(TensorQTable *const table);

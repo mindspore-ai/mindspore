@@ -116,6 +116,10 @@ class RenameOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "RenameOp"; }
+
  protected:
   // Rename core functionality
   Status RenameColumns();
