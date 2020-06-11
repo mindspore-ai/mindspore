@@ -29,9 +29,6 @@ py::function GetBpropFunctionByObj(py::object obj) {
 
 py::function GetBpropFunction(std::string name) {
   auto fn = GetBpropFunctionByObj(py::str(name));
-  if (fn.is_none()) {
-    MS_LOG(WARNING) << "Can't find bprop function for " << name;
-  }
   return fn;
 }
 
