@@ -146,16 +146,6 @@ std::vector<std::vector<int32_t>> PrepareBatchNorm(const std::shared_ptr<Graph> 
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareSoftmaxWithLogits(const std::shared_ptr<Graph> &graph,
-                                                           const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                           const size_t iter_graph, const size_t iter_ops) {
-  std::vector<std::vector<int32_t>> strategies = MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
-  graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = graph->nodes[iter_graph].tensor_parm.tensor_str.str_h;
-  graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = graph->nodes[iter_graph].tensor_parm.tensor_str.str_c;
-  graph->nodes[iter_graph].tensor_parm.tensor_str.str_c = graph->nodes[iter_graph].tensor_parm.tensor_str.str_n;
-  return strategies;
-}
-
 std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vector<int32_t>> &s) {
   std::vector<std::vector<int32_t>> strategies;
   strategies.push_back(*s);
@@ -299,9 +289,8 @@ std::vector<std::vector<int32_t>> PrepareStrategy(const std::shared_ptr<Graph> &
     return PreparePReLU(graph, ops, iter_graph, iter_ops);
   } else if (type == BATCH_NORM) {
     return PrepareBatchNorm(graph, ops, iter_graph, iter_ops);
-  } else if (type == SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
-    return PrepareSoftmaxWithLogits(graph, ops, iter_graph, iter_ops);
-  } else if (type == SOFTMAX || type == LOG_SOFTMAX || type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
+  } else if (type == SOFTMAX || type == LOG_SOFTMAX || type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS ||
+             type == SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
   } else {
     return MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
