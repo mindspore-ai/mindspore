@@ -102,7 +102,8 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
   while (!build_manger->IsAllTaskFinish()) {
     int task_id = -1;
     char *task_result = nullptr;
-    auto ret = build_manger->WaitOne(&task_id, &task_result);
+    char *pre_build_result = nullptr;
+    auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }

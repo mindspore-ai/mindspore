@@ -62,6 +62,31 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
   return kernel_mod_ptr;
 }
 
+static bool KernelPreBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  std::vector<AnfNodePtr> tbe_nodes;
+  for (const auto &anf_node : kernel_graph_ptr->execution_order()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    if (!AnfAlgo::IsRealKernel(anf_node)) {
+      continue;
+    }
+    KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
+    switch (kernel_type) {
+      case KernelType::TBE_KERNEL: {
+        if (AnfAlgo::GetKernelMod(anf_node) == nullptr) {
+          tbe_nodes.push_back(anf_node);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+  bool ret = kernel::TbeOpParallelPreBuild(tbe_nodes);
+  return ret;
+}
+
 static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   std::vector<AnfNodePtr> tbe_nodes;
@@ -186,6 +211,12 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
     }
   }
   return atomic_flag;
+}
+
+bool KernelPreBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  bool ret = device::ascend::KernelPreBuildParallelCompile(kernel_graph_ptr);
+  return ret;
 }
 
 bool KernelBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {

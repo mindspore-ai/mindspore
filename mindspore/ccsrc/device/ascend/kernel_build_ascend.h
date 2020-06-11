@@ -23,6 +23,10 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 /**
+ * @brief kernel pre build for ascend.
+ */
+bool KernelPreBuild(const mindspore::session::KernelGraph *kernel_graph_ptr);
+/**
  * @brief kernel build for ascend.
  */
 bool KernelBuild(const mindspore::session::KernelGraph *kernel_graph_ptr);

@@ -28,7 +28,8 @@ build_in_impl_path = get_build_in_impl_path()
 # op function list
 op_build = "compile"
 op_pre_build = "pre_build"
-
+fusion_type_map = {'Convolution': 0, 'ElemWise': 1, 'CommReduce': 2,
+                   'Segment': 3, 'Opaque': 4}
 
 def _initialize(impl_path):
     """Initialize"""
@@ -108,7 +109,7 @@ def build_op(build_type, json_str):
 
         # pre build
         if build_type == op_pre_build:
-            op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name)
+            op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
             # disable only pattern configuration
             op_build_cfg_en()
             return get_op_pattern()
@@ -159,11 +160,16 @@ def compile_with_json(json_str):
     json_info = json.loads(json_str)
     if "fusion_op" in json_info:
         ret = compile_fusion_op(json_str)
+    elif "compile_type" in json_info:
+        ret = build_op(op_pre_build, json_str)
     else:
         ret = build_op(op_build, json_str)
     return ret
 
-
 if __name__ == "__main__":
     in_args = sys.stdin.readline()
-    compile_with_json(in_args)
+    result = compile_with_json(in_args)
+    if result in fusion_type_map:
+        exit(fusion_type_map[result])
+    else:
+        exit(100)
