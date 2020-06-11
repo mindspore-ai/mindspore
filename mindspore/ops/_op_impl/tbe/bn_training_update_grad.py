@@ -31,10 +31,10 @@ bn_training_update_grad_op_info = TBERegOp("BNTrainingUpdateGrad") \
     .output(0, "diff_scale", False, "required", "all") \
     .output(1, "diff_offset", False, "required", "all") \
     .op_pattern("dynamicFormat") \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F32_None, DataType.F32_None,
+                  DataType.F32_None, DataType.F32_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None, DataType.F32_None,
+                  DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
 
