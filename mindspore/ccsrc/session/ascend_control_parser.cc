@@ -40,7 +40,7 @@ static void InitUnionFindSet(NotNull<KernelGraphPtr> kg, const NotNull<UnionFind
   }
   memo->insert(kg.get());
 
-  const std::map<AnfNodePtr, std::set<AnfNodePtr>> &real_inputs = kg->real_inputs();
+  const std::map<AnfNodePtr, std::vector<AnfNodePtr>> &real_inputs = kg->real_inputs();
   for (auto &iter : real_inputs) {
     auto &para = iter.first;
     if (para->isa<Parameter>()) {
@@ -65,7 +65,7 @@ static void UnionParentParameter(NotNull<KernelGraphPtr> kg, const NotNull<Union
   }
   memo->insert(kg.get());
 
-  const std::map<AnfNodePtr, std::set<AnfNodePtr>> &real_inputs = kg->real_inputs();
+  const std::map<AnfNodePtr, std::vector<AnfNodePtr>> &real_inputs = kg->real_inputs();
   for (auto &iter : real_inputs) {
     auto &para = iter.first;
     for (auto &arg : iter.second) {
@@ -174,10 +174,14 @@ void AscendControlParser::ChildGraphDataAssign(const std::map<uint32_t, KernelGr
   for (auto &iter : graph_id_map) {
     auto &kg = iter.second;
     MS_EXCEPTION_IF_NULL(kg);
-    auto real_inputs = kg->real_inputs();
-    for (auto &it : real_inputs) {
-      auto &parameter = it.first;
-      auto &args = it.second;
+    const std::map<AnfNodePtr, std::vector<AnfNodePtr>> &real_inputs = kg->real_inputs();
+    for (auto &in : kg->inputs()) {
+      auto it = real_inputs.find(in);
+      if (it == real_inputs.end()) {
+        continue;
+      }
+      auto &parameter = it->first;
+      auto &args = it->second;
       for (auto &arg : args) {
         MS_EXCEPTION_IF_NULL(arg);
         if (arg->isa<Parameter>()) {
