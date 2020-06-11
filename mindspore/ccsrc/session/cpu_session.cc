@@ -73,7 +73,8 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   kernel_graph->set_execution_order(execution_order);
   NamedSummaryOutputs summary_outputs;
   if (enable_summary) {
-    GetSummaryNodes(kernel_graph.get(), &summary_outputs);
+    GetSummaryNodes(kernel_graph.get());
+    summary_outputs = kernel_graph->summary_nodes();
     runtime_.IncreaseSummaryRefCount(summary_outputs);
   }
 

@@ -67,8 +67,7 @@ class AscendSession : public SessionBasic {
   void SetActive(GraphId, GraphId) override;
   // compile child graph when session have multiple child graphs
   void CompileChildGraph(const KernelGraphPtr &child_graph);
-  void GetSummaryNodes(const KernelGraph *graph,
-                       std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) override;
+  void GetSummaryNodes(KernelGraph *graph) override;
 
  private:
   void InitRuntimeResource();
@@ -149,6 +148,7 @@ class AscendSession : public SessionBasic {
   AnfNodePtr CreateFakeOutput(GraphId final_graph_id, const AnfNodePtr &true_output);
   // sync intial tensors' data to device
   void SyncInitialTenosrToDevice();
+  void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
 
   // member variables
   // key is final_graph_id,value is child graph execute order of final graph
