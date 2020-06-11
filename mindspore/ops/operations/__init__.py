@@ -54,7 +54,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh)
 
 from .random_ops import (RandomChoiceWithMask)
-from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
+from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
                      DropoutDoMask, DropoutGrad, Dropout,
@@ -104,6 +104,8 @@ __all__ = [
     'MaxPool',
     'TopK',
     'Adam',
+    'SparseApplyAdam',
+    'SparseApplyLazyAdam',
     'Softplus',
     'Softmax',
     'LogSoftmax',

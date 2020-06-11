@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+import mindspore.common.dtype as mstype
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import AdamWeightDecay, AdamWeightDecayDynamicLR
@@ -108,3 +109,34 @@ def test_adam_mindspore_with_empty_params():
     net = nn.Flatten()
     with pytest.raises(ValueError, match=r"Optimizer got an empty parameter list"):
         AdamWeightDecay(net.get_parameters())
+
+
+class TestSparseOps(nn.Cell):
+    """Define sparse operator"""
+    def __init__(self, sparse_opt):
+        super(TestSparseOps, self).__init__()
+        self.sparse_apply_adam = sparse_opt
+        self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="m")
+        self.v = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="v")
+
+    def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, indices):
+        out = self.sparse_apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon,
+                                     grad, indices)
+        return out
+
+
+def test_sparse_adam():
+    """test sparse operator"""
+    gradient = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+    indices = Tensor([0, 1, 2], mstype.int32)
+    net = TestSparseOps(P.SparseApplyAdam())
+    _executor.compile(net, 0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient, indices)
+
+
+def test_sparse_lazy_adam():
+    """test sparse operator"""
+    gradient = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+    indices = Tensor([0, 1, 2], mstype.int32)
+    net = TestSparseOps(P.SparseApplyLazyAdam())
+    _executor.compile(net, 0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient, indices)
