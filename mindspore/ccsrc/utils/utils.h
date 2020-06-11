@@ -261,12 +261,12 @@ const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z,       kOpFo
                                                    kOpFormat_FRACTAL_Z_C04};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
-  if (access(file_name.c_str(), F_OK) != 0) {
-    MS_LOG(DEBUG) << "File `" << file_name << "` does not exist.";
-    return;
-  }
-  if (chmod(file_name.c_str(), mode) != 0) {
-    MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+  try {
+    if (chmod(file_name.c_str(), mode) != 0) {
+      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+    }
+  } catch (std::exception &e) {
+    MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";
   }
 }
 }  // namespace mindspore

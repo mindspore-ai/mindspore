@@ -646,7 +646,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
   }
 }
 
-void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list) {
+void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list) {
   ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
