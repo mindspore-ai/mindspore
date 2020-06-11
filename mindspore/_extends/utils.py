@@ -19,7 +19,6 @@ import logging
 import os
 import inspect
 from functools import wraps
-from dataclasses import dataclass
 
 
 def cal_sha256(file_path):
@@ -100,20 +99,3 @@ def cell_attr_register(fn=None, attrs=None):
     if fn is not None:
         return wrap_cell(fn)
     return wrap_cell
-
-
-@dataclass
-class Slice:
-    """
-    Slice class
-    """
-    start: int
-    end: int
-    step: int
-
-
-@dataclass
-class Ellipsis_:
-    """
-    Ellipsis class
-    """

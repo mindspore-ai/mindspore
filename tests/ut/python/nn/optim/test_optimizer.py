@@ -107,5 +107,5 @@ class TestUnsupportParam():
 
     def test_Sgd_init(self):
         with pytest.raises(TypeError):
-            paramsTensor = Tensor(np.zeros([1, 2, 3]))
+            paramsTensor = Parameter(Tensor(np.zeros([1, 2, 3])), "x")
             SGD(paramsTensor)

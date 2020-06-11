@@ -175,16 +175,6 @@ class TupleSlice : public MetaFuncGraph {
 };
 using TupleSlicePtr = std::shared_ptr<TupleSlice>;
 
-class TensorSlice : public MetaFuncGraph {
- public:
-  explicit TensorSlice(const std::string &name) : MetaFuncGraph(name) {}
-  ~TensorSlice() override = default;
-  MS_DECLARE_PARENT(TensorSlice, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  friend bool operator==(const TensorSlice &lhs, const TensorSlice &rhs) { return lhs.name_ == rhs.name_; }
-};
-using TensorSlicePtr = std::shared_ptr<TensorSlice>;
-
 class TupleGetItemTensor : public MetaFuncGraph {
  public:
   explicit TupleGetItemTensor(const std::string &name) : MetaFuncGraph(name) {}

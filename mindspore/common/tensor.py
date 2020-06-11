@@ -144,6 +144,13 @@ class Tensor(Tensor_):
         out = tensor_operator_registry.get('__le__')(self, other)
         return out
 
+    def __getitem__(self, index):
+        out = tensor_operator_registry.get('__getitem__')(self, index)
+        return out
+
+    def __setitem__(self, index, value):
+        return self
+
     def __gt__(self, other):
         out = tensor_operator_registry.get('__gt__')(self, other)
         return out

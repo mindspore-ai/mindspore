@@ -353,11 +353,9 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     auto value = abs_base->cast<AbstractRefPtr>()->ref();
     dic = ConvertAbstractToPython(value);
   } else if (abs_base->isa<AbstractEllipsis>()) {
-    auto arg_slice = dyn_cast<AbstractEllipsis>(abs_base);
-    std::vector<int> shape;
-    dic["shape"] = shape;
-    dic["dtype"] = arg_slice->BuildType();
-    dic["value"] = BuildValue(arg_slice->BuildValue());
+    dic["shape"] = py::none();
+    dic["dtype"] = py::ellipsis();
+    dic["value"] = py::ellipsis();
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();

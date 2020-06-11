@@ -209,6 +209,28 @@ bool ConvertTensor(const py::object &obj, ValuePtr *const data) {
   return true;
 }
 
+bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
+  MS_LOG(DEBUG) << "Converting slice object";
+
+  py::slice slice_obj = obj.cast<py::slice>();
+  auto convert_func = [obj](std::string attr) -> ValuePtr {
+    auto py_attr = py::getattr(obj, attr.c_str());
+    if (py::isinstance<py::none>(py_attr)) {
+      return kNone;
+    } else if (py::isinstance<py::int_>(py_attr)) {
+      int value = py::cast<int>(py_attr);
+      return MakeValue(value);
+    } else {
+      MS_LOG(EXCEPTION) << "Slice should contain only int or none";
+    }
+  };
+  ValuePtr start = convert_func("start");
+  ValuePtr stop = convert_func("stop");
+  ValuePtr step = convert_func("step");
+  *data = std::make_shared<ValueSlice>(start, stop, step);
+  return true;
+}
+
 FuncGraphPtr ConvertToBpropCut(py::object obj) {
   std::vector<std::string> results = data_converter::GetObjKey(obj);
   std::string obj_key = results[0];
@@ -321,6 +343,10 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     converted = std::make_shared<StringImm>(py::cast<std::string>(obj));
   } else if (py::isinstance<py::dict>(obj)) {
     ret = ConvertDict(obj, &converted, use_signature);
+  } else if (py::isinstance<py::slice>(obj)) {
+    ret = ConvertSlice(obj, &converted);
+  } else if (py::isinstance<py::ellipsis>(obj)) {
+    converted = kEllipsis;
   } else if (py::isinstance<py::tuple>(obj)) {
     ret = ConvertTuple(obj, &converted, use_signature);
   } else if (py::hasattr(obj, PYTHON_CELL_AS_LIST)) {
