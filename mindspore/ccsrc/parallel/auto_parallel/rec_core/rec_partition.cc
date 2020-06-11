@@ -53,9 +53,8 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostTensorAdd>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecReLU || op.op_type == OperatorType::kRecSoftmax ||
-             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
-    // For Activation and Softmax
+  } else if (op.op_type == OperatorType::kRecReLU) {
+    // For Activation
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetMinCostIn();
@@ -69,11 +68,6 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostBiasAdd>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecBatchNorm) {
-    // For BatchNorm
-    auto cost_ptr = std::make_shared<CostBatchNorm>();
-
-    return cost_ptr->GetMinCostIn(op);
   } else if (op.op_type == OperatorType::kRecOneHot || op.op_type == OperatorType::kRecLog ||
              op.op_type == OperatorType::kRecExp || op.op_type == OperatorType::kRecAdd ||
              op.op_type == OperatorType::kRecSub || op.op_type == OperatorType::kRecMul ||
@@ -83,8 +77,10 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecUnkownType || op.op_type == OperatorType::kRecPReLU) {
-    // For unknown type
+  } else if (op.op_type == OperatorType::kRecUnkownType || op.op_type == OperatorType::kRecPReLU ||
+             op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecSoftmax ||
+             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
+    // For unprocessed type
     return 0.0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
@@ -147,9 +143,8 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostTensorAdd>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecReLU || node.apply.op_type == OperatorType::kRecSoftmax ||
-             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
-    // For Softmax & Activation
+  } else if (node.apply.op_type == OperatorType::kRecReLU) {
+    // For Activation
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
@@ -163,11 +158,6 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostBiasAdd>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecBatchNorm) {
-    // For BatchNorm
-    auto cost_ptr = std::make_shared<CostBatchNorm>();
-
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
   } else if (node.apply.op_type == OperatorType::kRecOneHot || node.apply.op_type == OperatorType::kRecLog ||
              node.apply.op_type == OperatorType::kRecExp || node.apply.op_type == OperatorType::kRecAdd ||
              node.apply.op_type == OperatorType::kRecSub || node.apply.op_type == OperatorType::kRecMul ||
@@ -177,8 +167,10 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecUnkownType || node.apply.op_type == OperatorType::kRecPReLU) {
-    // For unknown type
+  } else if (node.apply.op_type == OperatorType::kRecUnkownType || node.apply.op_type == OperatorType::kRecPReLU ||
+             node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecSoftmax ||
+             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
+    // For unprocessed type
     StrategyRec default_strategy;
     return default_strategy;
   } else {

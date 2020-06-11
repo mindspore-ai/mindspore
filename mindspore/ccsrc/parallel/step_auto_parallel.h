@@ -57,6 +57,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
 
 std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::string, std::string>::iterator &it,
                                                           std::vector<std::vector<std::string>> input_tensor_names);
+
+CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_STEP_AUTO_PARALLEL_H_

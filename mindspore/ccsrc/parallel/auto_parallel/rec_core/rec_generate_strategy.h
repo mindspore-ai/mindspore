@@ -37,8 +37,15 @@ std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &gr
 std::vector<std::vector<int32_t>> PreparePReLU(const std::shared_ptr<Graph> &graph,
                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                const size_t iter_graph, const size_t iter_ops);
-std::vector<std::vector<int32_t>> PrepareBiasAdd(std::vector<int32_t> s);
-std::vector<std::vector<int32_t>> PrepareOneHot(std::vector<int32_t> s);
+std::vector<std::vector<int32_t>> PrepareBatchNorm(const std::shared_ptr<Graph> &graph,
+                                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                   const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> PrepareSoftmaxWithLogits(const std::shared_ptr<Graph> &graph,
+                                                           const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                           const size_t iter_graph, const size_t iter_ops);
+std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vector<int32_t>> &s);
+std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<std::vector<int32_t>> &s);
+std::vector<std::vector<int32_t>> PrepareGatherV2(const std::shared_ptr<std::vector<int32_t>> &s);
 std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
                                                         const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                         const size_t iter_graph, const size_t iter_ops);
@@ -64,11 +71,11 @@ std::vector<int32_t> ModifyStrategyIfSqueezeIncoming(const std::vector<std::shar
 std::vector<int32_t> GetDimList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);
 std::vector<int32_t> ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                     const size_t incoming_op_index, std::vector<int32_t> s);
-std::vector<int32_t> ModifyStrategyIfSoftmaxIncoming(std::vector<int32_t> s);
 std::vector<int32_t> CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                        const size_t iter_ops, const size_t incoming_op_index);
 std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                                 const size_t iter_ops, std::vector<int32_t> s);
+                                                                 const size_t iter_ops,
+                                                                 std::vector<int32_t> basic_stra);
 void GenerateEliminatedOperatorStrategyForward(std::shared_ptr<Graph> graph,
                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                const std::vector<std::vector<std::string>> &input_tensor_names,
