@@ -165,6 +165,8 @@ class Iterator:
             op_type = OpName.MANIFEST
         elif isinstance(dataset, de.VOCDataset):
             op_type = OpName.VOC
+        elif isinstance(dataset, de.CocoDataset):
+            op_type = OpName.COCO
         elif isinstance(dataset, de.Cifar10Dataset):
             op_type = OpName.CIFAR10
         elif isinstance(dataset, de.Cifar100Dataset):

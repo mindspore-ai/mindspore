@@ -56,6 +56,7 @@
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/engine/datasetops/source/coco_op.h"
 #include "dataset/engine/gnn/graph.h"
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/text/kernels/jieba_tokenizer_op.h"
@@ -213,6 +214,18 @@ void bindDatasetOps(py::module *m) {
       std::map<std::string, int32_t> output_class_indexing;
       THROW_IF_ERROR(VOCOp::GetClassIndexing(dir, task_type, task_mode, dict, &output_class_indexing));
       return output_class_indexing;
+    });
+  (void)py::class_<CocoOp, DatasetOp, std::shared_ptr<CocoOp>>(*m, "CocoOp")
+    .def_static("get_class_indexing",
+                [](const std::string &dir, const std::string &file, const std::string &task) {
+                  std::vector<std::pair<std::string, std::vector<int32_t>>> output_class_indexing;
+                  THROW_IF_ERROR(CocoOp::GetClassIndexing(dir, file, task, &output_class_indexing));
+                  return output_class_indexing;
+                })
+    .def_static("get_num_rows", [](const std::string &dir, const std::string &file, const std::string &task) {
+      int64_t count = 0;
+      THROW_IF_ERROR(CocoOp::CountTotalRows(dir, file, task, &count));
+      return count;
     });
 }
 void bindTensor(py::module *m) {
@@ -607,6 +620,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("MNIST", OpName::kMnist)
     .value("MANIFEST", OpName::kManifest)
     .value("VOC", OpName::kVoc)
+    .value("COCO", OpName::kCoco)
     .value("CIFAR10", OpName::kCifar10)
     .value("CIFAR100", OpName::kCifar100)
     .value("RANDOMDATA", OpName::kRandomData)

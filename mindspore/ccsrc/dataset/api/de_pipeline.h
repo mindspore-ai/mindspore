@@ -58,6 +58,7 @@ enum OpName {
   kMnist,
   kManifest,
   kVoc,
+  kCoco,
   kCifar10,
   kCifar100,
   kCelebA,
@@ -141,6 +142,8 @@ class DEPipeline {
   Status ParseManifestOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 

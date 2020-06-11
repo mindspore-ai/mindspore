@@ -23,6 +23,7 @@
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/engine/datasetops/source/coco_op.h"
 #include "dataset/core/tensor.h"
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
@@ -65,6 +66,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kMnist, &DEPipeline::ParseMnistOp},
                                                                    {kManifest, &DEPipeline::ParseManifestOp},
                                                                    {kVoc, &DEPipeline::ParseVOCOp},
+                                                                   {kCoco, &DEPipeline::ParseCocoOp},
                                                                    {kCifar10, &DEPipeline::ParseCifar10Op},
                                                                    {kCifar100, &DEPipeline::ParseCifar100Op},
                                                                    {kCelebA, &DEPipeline::ParseCelebAOp},
@@ -920,6 +922,16 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  if (args["task"].is_none()) {
+    std::string err_msg = "Error: No task specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (args["mode"].is_none()) {
+    std::string err_msg = "Error: No mode specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
   std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
   (void)builder->SetTask(ToString(args["task"]));
@@ -942,6 +954,47 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     }
   }
   std::shared_ptr<VOCOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["dataset_dir"].is_none()) {
+    std::string err_msg = "Error: No dataset path specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (args["annotation_file"].is_none()) {
+    std::string err_msg = "Error: No annotation_file specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (args["task"].is_none()) {
+    std::string err_msg = "Error: No task specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  std::shared_ptr<CocoOp::Builder> builder = std::make_shared<CocoOp::Builder>();
+  (void)builder->SetDir(ToString(args["dataset_dir"]));
+  (void)builder->SetFile(ToString(args["annotation_file"]));
+  (void)builder->SetTask(ToString(args["task"]));
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("create");
+        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        (void)builder->SetSampler(std::move(sampler));
+      } else if (key == "decode") {
+        (void)builder->SetDecode(ToBool(value));
+      }
+    }
+  }
+  std::shared_ptr<CocoOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();
