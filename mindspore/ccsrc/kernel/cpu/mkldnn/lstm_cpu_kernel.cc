@@ -27,6 +27,7 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   using dim = dnnl::memory::dims;
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
   input_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_size");
   hidden_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "hidden_size");
@@ -40,6 +41,12 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
     MS_LOG(EXCEPTION) << "error iteration shape!";
+  }
+  if (num_layers_ <= 0) {
+    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
+  }
+  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
+    MS_LOG(EXCEPTION) << "conv2d only support 3-D input!";
   }
   const int gate_size = 4 * hidden_size_;
   for (int i = 0; i < num_layers_; ++i) {

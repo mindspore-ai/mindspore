@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """lstm"""
+import math
 import numpy as np
-
 import mindspore.nn as nn
 from mindspore import context
 from mindspore._checkparam import Validator as validator
@@ -148,7 +148,9 @@ class LSTM(Cell):
                 if self.has_bias:
                     increment_size += 2 * gate_size
                 weight_size += increment_size * num_directions
-            self.weight = Parameter(initializer(0.0, [weight_size, 1, 1]), name='weight')
+            stdv = 1 / math.sqrt(hidden_size)
+            w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
+            self.weight = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
         else:
             input_size_list = []
             input_size_list.append(self.input_size)
@@ -157,14 +159,13 @@ class LSTM(Cell):
             weights = []
             layers = []
             bias_size = 0 if not self.has_bias else num_directions * self.hidden_size * 4
+            stdv = 1 / math.sqrt(hidden_size)
             for i in range(num_layers):
                 weight_size = (input_size_list[i] + self.hidden_size) * num_directions * self.hidden_size * 4
-                w_np = np.ones([weight_size, 1, 1]).astype(np.float32) * 0.01
                 if has_bias:
-                    bias_np = np.zeros([bias_size, 1, 1]).astype(np.float32)
-                    w_np = np.concatenate([w_np, bias_np], axis=0)
+                    weight_size = weight_size + bias_size
+                w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
                 weights.append(Parameter(initializer(Tensor(w_np), w_np.shape), name='weight' + str(i)))
-
                 layers.append(nn.LSTMCell(input_size=input_size_list[i],
                                           hidden_size=self.hidden_size,
                                           has_bias=self.has_bias,
