@@ -158,14 +158,38 @@ class BuiltinSampler:
         Given these conditions, we need to output what the sampler count is for this sampler.
         The following table shows the possible results from calling this function.
 
-        child sampler  num_samples  child_samples  result
-        -------------  -----------  -------------  --------
-        T              x            y              min(x, y)
-        T              x            None           x
-        T              None         y              y
-        T              None         None           None
-        None           x            n/a            x
-        None           None         n/a            None
+        .. list-table::
+           :widths: 25 25 25 25
+           :header-rows: 1
+
+           * - child sampler
+             - num_samples
+             - child_samples
+             - result
+           * - T
+             - x
+             - y
+             - min(x, y)
+           * - T
+             - x
+             - None
+             - x
+           * - T
+             - None
+             - y
+             - y
+           * - T
+             - None
+             - None
+             - None
+           * - None
+             - x
+             - n/a
+             - x
+           * - None
+             - None
+             - n/a
+             - None
 
         Returns:
             int, The number of samples, or None
