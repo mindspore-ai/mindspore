@@ -1001,15 +1001,16 @@ def get_bprop_bessel_i1e(self):
     reciprocal = P.Reciprocal()
     cast = P.Cast()
     dtype = P.DType()
+    abs_ops = P.Abs()
 
     def bprop(x, out, dout):
         zeros = zeros_like(x)
         np_eps = const_utils.get_np_eps(dtype(x))
         eps = cast(np_eps, dtype(x))
-        x_is_valid = less(eps, x)
+        x_is_valid = less(eps, abs_ops(x))
         x_safe = select(x_is_valid, x, eps + zeros)
-        tmp = bessel_i0e(x_safe) - out * (sign(x) + reciprocal(x_safe))
-        dx = select(x_is_valid, tmp, 0.5 + zeros)
+        tmp = bessel_i0e(x_safe) - out * (sign(x_safe) + reciprocal(x_safe))
+        dx = select(x_is_valid, tmp, cast(0.5, dtype(x)) + zeros) * dout
         return (dx,)
     return bprop
 

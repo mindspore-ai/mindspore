@@ -1767,9 +1767,6 @@ class ApplyRMSProp(PrimitiveWithInfer):
     def infer_value(self, var, mean_square, moment, learning_rate, grad, decay, momentum, epsilon):
         if decay is None or momentum is None or epsilon is None:
             raise ValueError(f"For {self.name}, decay, momentum, epsilon must be const.")
-        if not self.is_ge and self.is_d:
-            return None, None, None
-        return None
 
 
 class ApplyCenteredRMSProp(PrimitiveWithInfer):
