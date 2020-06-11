@@ -39,6 +39,8 @@ __all__ = ["FakeQuantPerLayer",
            "BatchNormFold2_D",
            "BatchNormFold2GradD",
            "BatchNormFold2GradReduce",
+           "AscendQuant",
+           "AscendDequant",
            ]
 
 
@@ -975,3 +977,104 @@ class FakeQuantMinMaxPerChannelUpdate(PrimitiveWithInfer):
         validator.check_tensor_type_same(
             {"max": max_type}, valid_types, self.name)
         return min_type, max_type
+
+
+class AscendQuant(PrimitiveWithInfer):
+    r"""
+    Returns the quantized value of input_x.
+
+    If `sqrt_mode` is False:
+
+    .. math::
+        y = round(scale * x + offset)
+    If `sqrt_mode` is True:
+
+    .. math::
+        y = round(scale * x * scale + offset)
+
+    Note:
+        This operation only support Ascend 310 inference environment.
+
+    Args:
+        scale (float) : Specifies the scaling ratio.
+        offset (float): Specifies the offset.
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: False.
+        round_mode (str): Specifies the way to round. Should be one of ["Round", "Floor", "Ceil", "Trunc"].
+          Default: "Round".
+
+    Inputs:
+        - **input_x** (Tensor) : Input tensor. Its data type should be mindspore.float16 or mindspore.float32.
+
+    Outputs:
+        - Tensor: The quantized output tensor of type mindspore.int8.
+
+    Examples:
+        >>> input_x = Tensor([100.0, 150.0], mstype.float32)
+        >>> quant = P.AscendQuant(80.0, 0.0, False, "Round")
+        >>> y = quant(input_x)
+    """
+
+    @prim_attr_register
+    def __init__(self, scale, offset, sqrt_mode=False, round_mode="Round"):
+        self.scale = validator.check_value_type("scale", scale, [float], self.name)
+        self.offset = validator.check_value_type("offset", offset, [float], self.name)
+        self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
+        self.round_mode = validator.check_string("round_mode", round_mode,
+                                                 ["Round", "Floor", "Ceil", "Trunc"], self.name)
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
+        validator.check_type_name("input_x", x_type, [mstype.float16, mstype.float32], self.name)
+        return mstype.int8
+
+
+class AscendDequant(PrimitiveWithInfer):
+    r"""
+    Returns the dequantized value of input_x.
+    This operation will do ReLU to the dequantized value if `relu_flag` is True.
+
+    If `sqrt_mode` is False:
+
+    .. math::
+        y = x * deq\_scale
+    If `sqrt_mode` is True:
+
+    .. math::
+        y = x * deq\_scale * deq\_scale
+
+    Note:
+        This operation only support Ascend 310 inference environment.
+
+    Args:
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: False.
+        relu_flag (bool): Specifies whether to perform ReLU. Default: False.
+
+    Inputs:
+        - **input_x** (Tensor) : Input tensor. Should be mindspore.int32.
+        - **deq_scale** (Tensor) : Specifies the scaling ratio.
+          Data type should be mindspore.float16 or mindspore.uint64
+
+    Outputs:
+        - Tensor: The quantized output tensor of type mindspore.float16.
+
+    Examples:
+        >>> input_x = Tensor([100.0, 150.0], mstype.float32)
+        >>> dequant = P.AscendDequant(False, False)
+        >>> y = dequant(input_x)
+    """
+    @prim_attr_register
+    def __init__(self, sqrt_mode=False, relu_flag=False):
+        self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
+        self.relu_flag = validator.check_value_type("relu_flag", relu_flag, [bool], self.name)
+
+    def infer_shape(self, x_shape, deq_scale_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type, deq_scale_type):
+        validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        validator.check_type_name("x", x_type, [mstype.int32], self.name)
+        validator.check_type_name("deq_scale", deq_scale_type, [mstype.float16, mstype.uint64], self.name)
+        return mstype.float16

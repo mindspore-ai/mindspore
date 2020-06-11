@@ -1277,6 +1277,19 @@ ATTR_MAP(CTCLoss) = {
   {"ignore_longer_outputs_than_inputs", ATTR_DESC(ignore_longer_outputs_than_inputs, AnyTraits<bool>())}};
 OUTPUT_MAP(CTCLoss) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(gradient)}};
 
+// AscendQuant
+INPUT_MAP(AscendQuant) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(AscendQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
+                         {"offset", ATTR_DESC(offset, AnyTraits<float>())},
+                         {"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
+                         {"round_mode", ATTR_DESC(round_mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(AscendQuant) = {{0, OUTPUT_DESC(y)}};
+
+// AscendDequant
+INPUT_MAP(AscendDequant) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(deq_scale)}};
+ATTR_MAP(AscendDequant) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
+                           {"relu_flag", ATTR_DESC(relu_flag, AnyTraits<bool>())}};
+OUTPUT_MAP(AscendDequant) = {{0, OUTPUT_DESC(y)}};
 #ifdef ENABLE_GE
 // Print
 INPUT_MAP(Print) = EMPTY_INPUT_MAP;
