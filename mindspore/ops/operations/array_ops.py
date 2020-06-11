@@ -30,7 +30,7 @@ from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..operations.math_ops import _infer_shape_reduce
 from .._utils import get_concat_offset
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register, _run_op
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
@@ -990,8 +990,13 @@ class TupleToArray(PrimitiveWithInfer):
             ret = np.array(x, np.int32)
         else:
             ret = np.array(x, np.float32)
-
         return Tensor(ret)
+
+    def __call__(self, x):
+        args = list()
+        if isinstance(x, range):
+            args.append(tuple(x))
+        return _run_op(self, self.name, args)
 
 
 class ScalarToArray(PrimitiveWithInfer):

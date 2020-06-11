@@ -52,11 +52,11 @@ class TestAdam():
              use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
 
     def test_construct(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError):
             gradient = Tensor(np.zeros([1, 2, 3]))
             adam = Adam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                         use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
-            adam.construct(gradient)
+            adam(gradient)
 
 
 class TestSGD():

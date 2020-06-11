@@ -202,6 +202,7 @@ class Cell:
         if context.get_context("mode") == context.GRAPH_MODE:
             out = self.compile_and_run(*inputs)
             return out
+        self.init_parameters_data()
         orign_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
@@ -254,9 +255,12 @@ class Cell:
                 value.update_parameters_name(name + '.')
             cells[name] = value
         elif params and name in params:
-            if value is not None:
+            if isinstance(value, Tensor) and self._params[name] is not None:
+                self._params[name].set_parameter_data(value)
+            elif value is not None:
                 raise TypeError("Expected type in (Parameter, ParameterTuple), but got {}.".format(type(value)))
-            self.insert_param_to_cell(name, None)
+            else:
+                self.insert_param_to_cell(name, None)
         elif cells and name in cells:
             if value is not None:
                 raise TypeError("Expected type is cell, but got {}.".format(type(value)))
