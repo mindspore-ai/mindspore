@@ -71,11 +71,7 @@ class ReplaceApplicator : public AnfVisitor {
 using CriterionFuncType = std::function<bool(FuncGraphPtr, AnfNodePtr)>;
 
 bool IsTrivial(const FuncGraphPtr &fg, AnfNodePtr) {
-  auto &s = fg->nodes();
-  int n_cnode = std::count_if(s.begin(), s.end(), [](const AnfNodePtr &n) {
-    MS_EXCEPTION_IF_NULL(n);
-    return n->isa<CNode>();
-  });
+  auto n_cnode = fg->nodes().size() - fg->parameters().size();
   // There is at least one CNode(return, other_node).
   return n_cnode <= 2;
 }
