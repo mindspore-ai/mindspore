@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_MEMCPY_ASYNC_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_MEMCPY_ASYNC_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
 
 #include <memory>
 #include "pre_activate/common/optimizer.h"
+#include "pre_activate/ascend/ascend_helper.h"
+
 namespace mindspore {
 namespace opt {
-class AddMemcpyAsync : public PatternProcessPass {
+class InsertMemcpyAsyncForHcclOp : public PatternProcessPass {
  public:
-  explicit AddMemcpyAsync(bool multigraph = true) : PatternProcessPass("add_memcpy_async", multigraph) {}
-  ~AddMemcpyAsync() override = default;
+  explicit InsertMemcpyAsyncForHcclOp(bool multigraph = true)
+      : PatternProcessPass("insert_memcpy_async_for_hccl_op", multigraph),
+        kernel_query_(std::make_shared<KernelQuery>()) {}
+  ~InsertMemcpyAsyncForHcclOp() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  void InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
+  bool NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input) const;
+  KernelQueryPtr kernel_query_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_MEMCPY_ASYNC_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_

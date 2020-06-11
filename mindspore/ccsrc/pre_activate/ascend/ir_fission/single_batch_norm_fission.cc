@@ -56,7 +56,7 @@ bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, s
     bn_outputs->push_back(output);
     output_num++;
   }
-  return output_num > kBatchNormLeastOutputNum;
+  return output_num >= kBatchNormLeastOutputNum;
 }
 
 AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) {
