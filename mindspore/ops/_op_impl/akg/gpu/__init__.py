@@ -32,3 +32,5 @@ from .logical_and import _logical_and_akg
 from .logical_not import _logical_not_akg
 from .logical_or import _logical_or_akg
 from .lessequal import _lessequal_akg
+from .notequal import _notequal_akg
+from .greater_equal import _greater_equal_akg
