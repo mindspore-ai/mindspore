@@ -59,6 +59,7 @@ using mindspore::abstract::AbstractTuplePtr;
 
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
+const char IR_TYPE_BINARY[] = "binary_ir";
 
 ExecutorPyPtr ExecutorPy::executor_ = nullptr;
 std::mutex ExecutorPy::instance_lock_;
@@ -206,6 +207,14 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
 
   if (ir_type == IR_TYPE_ONNX) {
     std::string proto_str = GetOnnxProtoString(fg_ptr);
+    if (proto_str.empty()) {
+      MS_LOG(EXCEPTION) << "Graph proto is empty.";
+    }
+    return proto_str;
+  }
+
+  if (ir_type == IR_TYPE_BINARY) {
+    std::string proto_str = GetBinaryProtoString(fg_ptr);
     if (proto_str.empty()) {
       MS_LOG(EXCEPTION) << "Graph proto is empty.";
     }
@@ -506,7 +515,6 @@ void RunPipelineAction(const ActionItem &action, pipeline::ResourcePtr resource,
 
   // when in loading anf ir mode, action `parse` do nothing
   if (action.first == "parse") {
-    parse::PythonAdapter::SetPythonEnvFlag(true);
     return;
   }
 
@@ -566,6 +574,7 @@ void Pipeline::Run() {
           draw::Draw(base_name + ".dot", graph);
           // generate IR file in human readable format
           DumpIR(base_name + ".ir", graph);
+
           // generate IR file in a heavily commented format, which can also be reloaded
           if (action.first != "parse") {
             ExportIR(base_name + ".dat", std::to_string(i), graph);

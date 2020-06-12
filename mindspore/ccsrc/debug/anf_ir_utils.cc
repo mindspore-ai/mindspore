@@ -1566,7 +1566,7 @@ class IrParser {
       return lexer_.GetNextToken();
     } else if (type == "Tuple") {
       return ParseTypeVector(func_graph, lexer_.GetNextToken(), type, ptr);
-    } else if (type == "Array") {
+    } else if (type == "Tensor") {
       return ParseTypeArray(func_graph, lexer_.GetNextToken(), ptr);
     } else if (type == "List") {
       return ParseTypeVector(func_graph, lexer_.GetNextToken(), type, ptr);

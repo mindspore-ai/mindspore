@@ -17,8 +17,9 @@
 
 namespace mindspore {
 
-std::string GetFuncGraphProtoString(const FuncGraphPtr& func_graph) { return ""; }
+std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
-std::string GetOnnxProtoString(const FuncGraphPtr& func_graph) { return ""; }
+std::string GetOnnxProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) { return ""; }
 }  // namespace mindspore
