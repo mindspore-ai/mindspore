@@ -225,6 +225,21 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_strategy_ckpt_load_file()
 
+    def set_full_batch(self, full_batch):
+        """
+        Set whether load full batch on each device.
+
+        Args:
+            full_batch (bool): True if load full batch on each device.
+        """
+        self.check_context_handle()
+        self._context_handle.set_full_batch(full_batch)
+
+    def get_full_batch(self):
+        """Get whether load full batch on each device."""
+        self.check_context_handle()
+        return self._context_handle.get_full_batch()
+
     def set_strategy_ckpt_save_file(self, strategy_ckpt_save_file):
         """
         Set strategy checkpoint save path.
@@ -409,7 +424,8 @@ _set_auto_parallel_context_func_map = {
     "parallel_mode": auto_parallel_context().set_parallel_mode,
     "parameter_broadcast": auto_parallel_context().set_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().set_strategy_ckpt_load_file,
-    "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file}
+    "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
+    "full_batch": auto_parallel_context().set_full_batch}
 
 
 _get_auto_parallel_context_func_map = {
@@ -421,12 +437,13 @@ _get_auto_parallel_context_func_map = {
     "parallel_mode": auto_parallel_context().get_parallel_mode,
     "parameter_broadcast": auto_parallel_context().get_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().get_strategy_ckpt_load_file,
-    "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file}
+    "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file,
+    "full_batch": auto_parallel_context().get_full_batch}
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool,
                  loss_repeated_mean=bool, parallel_mode=str, parameter_broadcast=bool,
-                 strategy_ckpt_load_file=str, strategy_ckpt_save_file=str)
+                 strategy_ckpt_load_file=str, strategy_ckpt_save_file=str, full_batch=bool)
 def _set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -459,6 +476,7 @@ def _set_auto_parallel_context(**kwargs):
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
+        full_batch (bool): Whether to load the whole batch on each device. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

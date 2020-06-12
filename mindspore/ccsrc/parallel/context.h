@@ -55,6 +55,9 @@ class ParallelContext {
   void set_mirror_mean(bool mirror_mean);
   bool mirror_mean() const { return mirror_mean_; }
 
+  void set_full_batch(bool full_batch);
+  bool full_batch() const { return full_batch_; }
+
   void set_cast_before_mirror(bool cast_before_mirror);
   bool cast_before_mirror() const { return cast_before_mirror_; }
 
@@ -103,6 +106,7 @@ class ParallelContext {
   ParallelContext();
   static std::shared_ptr<ParallelContext> inst_context_;
   bool mirror_mean_;
+  bool full_batch_;
   bool cast_before_mirror_;
   bool loss_repeated_mean_;
   int32_t device_num_;

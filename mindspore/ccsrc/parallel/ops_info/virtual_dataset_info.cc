@@ -23,6 +23,7 @@
 #include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/step_parallel.h"
+#include "parallel/context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -93,59 +94,21 @@ Status VirtualDatasetInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status VirtualDatasetInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-
-  int32_t stage = strategy_->GetInputStage();
-  CheckGlobalDeviceManager();
-  RankList dev_list = g_device_manager->GetDeviceListByStageId(stage);
-  if (dev_list.empty()) {
-    MS_LOG(ERROR) << name_ << ": The current stage is empty!";
-    return Status::FAILED;
-  }
-  if (dev_list.size() == 1) {
-    MS_LOG(INFO) << name_ << ": No need mirror ops.";
-    return Status::SUCCESS;
-  }
-
-  OperatorName operator_name = BROADCAST;
-  ValuePtr attr0_value = MakeValue(dev_list.front());
-  std::vector<Group> group_list;
-  if (CreateGroupByDim(dev_matrix_shape_.size() - 1, &group_list) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer mirror ops, create group failed.";
-    return FAILED;
-  } else if (group_list.empty()) {
-    MS_LOG(INFO) << name_ << ": No need mirror ops.";
-    return SUCCESS;
-  }
-  std::string group = group_list[0].name();
-  ValuePtr attr1_value = MakeValue(group);
-
-  Attr attr0 = std::make_pair(SRC, attr0_value);
-  Attr attr1 = std::make_pair(GROUP, attr1_value);
-
-  OperatorAttrs operator_attrs = {attr0, attr1};
-
-  OperatorParams operator_param;
-  OperatorArgs operator_args = std::make_pair(operator_attrs, operator_param);
-
-  Operator op = std::make_pair(operator_name, operator_args);
-  OperatorVector op_vector = {op};
-
-  size_t size = inputs_shape_.size();
-  for (size_t i = 0; i < size; ++i) {
-    mirror_ops_.push_back(op_vector);
-  }
-  mirror_ops_.clear();
-  return SUCCESS;
-}
+Status VirtualDatasetInfo::InferMirrorOps() { return SUCCESS; }
 
 Status VirtualDatasetInfo::InferForwardCommunication() { return SUCCESS; }
 
 Status VirtualDatasetInfo::InferTensorMap() {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+
   for (size_t i = 0; i < strategy_->GetInputNumber(); i++) {
     std::vector<int32_t> tensor_map_index;
-    tensor_map_index.push_back((int32_t)(LAST_INDEX(SizeToUint(dev_matrix_shape_.size()))));
+    if (full_batch) {
+      tensor_map_index.push_back(MAP_NONE);
+    } else {
+      tensor_map_index.push_back((int32_t)(LAST_INDEX(SizeToUint(dev_matrix_shape_.size()))));
+    }
     for (size_t j = 1; j < strategy_->GetInputDim()[i].size(); ++j) {
       tensor_map_index.push_back(MAP_NONE);
     }
@@ -213,6 +176,10 @@ Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 }
 
 Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+  size_t total_dev_num;
+
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GetAttrs failed";
     return FAILED;
@@ -220,7 +187,11 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
 
   CheckGlobalDeviceManager();
   is_auto_parallel_ = true;
-  size_t total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+  if (full_batch) {
+    total_dev_num = 1;
+  } else {
+    total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+  }
   StrategyPtr sp;
   std::vector<Dimensions> strategy;
   for (auto &shape : inputs_shape_) {
@@ -232,10 +203,18 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
   sp = std::make_shared<Strategy>(stage_id, strategy);
 
   if (SetCostUnderStrategy(sp) == SUCCESS) {
-    MS_LOG(INFO) << name_ << ": Successfully generated batch-parallel-strategy.";
+    if (full_batch) {
+      MS_LOG(INFO) << name_ << ": Successfully generated full-batch-parallel-strategy.";
+    } else {
+      MS_LOG(INFO) << name_ << ": Successfully generated batch-parallel-strategy.";
+    }
     PrintStrategy(sp);
   } else {
-    MS_LOG(ERROR) << name_ << ": Generating batch-parallel-strategy failed.";
+    if (full_batch) {
+      MS_LOG(ERROR) << name_ << ": Generating full-batch-parallel-strategy failed.";
+    } else {
+      MS_LOG(ERROR) << name_ << ": Generating batch-parallel-strategy failed.";
+    }
     return FAILED;
   }
   return SUCCESS;
