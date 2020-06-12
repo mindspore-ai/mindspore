@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
-BatchNorm = P.BatchNorm()
+BatchNorm = P.BatchNorm(is_training=True)
 BNTrainingReduce = Primitive('BNTrainingReduce')
 BNTrainingUpdateV3 = Primitive('BNTrainingUpdateV3')
 

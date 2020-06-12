@@ -722,5 +722,16 @@ bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
   MS_EXCEPTION_IF_NULL(value_node2);
   return GetValue<int>(value_node1->value()) < GetValue<int>(value_node2->value());
 }
+
+bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(INFO) << "node is not a cnode";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  return AnfAlgo::HasNodeAttr(attr_name, cnode) && AnfAlgo::GetNodeAttr<bool>(node, attr_name);
+}
 }  // namespace opt
 }  // namespace mindspore

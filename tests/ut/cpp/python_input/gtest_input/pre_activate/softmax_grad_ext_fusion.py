@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 Mul = P.Mul()
-ReduceSum = P.ReduceSum()
+ReduceSum = P.ReduceSum(keep_dims=True)
 Sub = P.Sub()
 SoftmaxGradExt = Primitive('SoftmaxGradExt')
 MakeTuple = Primitive('make_tuple')
