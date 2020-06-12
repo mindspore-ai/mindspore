@@ -24,13 +24,15 @@ from mindspore.ops import operations as P
 
 
 class Net(Cell):
-    def __init__(self):
+    def __init__(self, type0, type1):
         super(Net, self).__init__()
         self.Cast = P.Cast()
+        self.type0 = type0
+        self.type1 = type1
 
-    def construct(self, x0, type0, x1, type1):
-        output = (self.Cast(x0, type0),
-                  self.Cast(x1, type1))
+    def construct(self, x0, x1):
+        output = (self.Cast(x0, self.type0),
+                  self.Cast(x1, self.type1))
         return output
 
 
@@ -44,8 +46,8 @@ def test_cast():
     t1 = mstype.float32
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = Net()
-    output = net(x0, t0, x1, t1)
+    net = Net(t0, t1)
+    output = net(x0, x1)
     type0 = output[0].asnumpy().dtype
     assert type0 == 'float16'
     type1 = output[1].asnumpy().dtype
@@ -62,8 +64,8 @@ def test_cast1():
     t1 = mstype.float32
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = Net()
-    output = net(x0, t0, x1, t1)
+    net = Net(t0, t1)
+    output = net(x0, x1)
     type0 = output[0].asnumpy().dtype
     assert type0 == 'float32'
     type1 = output[1].asnumpy().dtype

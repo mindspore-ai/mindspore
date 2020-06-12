@@ -775,7 +775,7 @@ class Sub(_MathBinaryOp):
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
-        Inputs:
+    Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
           a bool or a tensor whose data type is number or bool.
         - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
@@ -1843,7 +1843,7 @@ class LogicalAnd(_LogicBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
         - **input_y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
-         a tensor whose data type is bool.
+          a tensor whose data type is bool.
 
     Outputs:
         Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
@@ -1873,7 +1873,7 @@ class LogicalOr(_LogicBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
         - **input_y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
-         a tensor whose data type is bool.
+          a tensor whose data type is bool.
 
     Outputs:
         Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
