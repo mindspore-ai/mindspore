@@ -45,6 +45,7 @@ bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodeP
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   std::map<AnfNodePtr, std::set<AnfNodePtr>> control_depend_map;
   for (auto &nd : node_list) {
+    MS_EXCEPTION_IF_NULL(nd);
     if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
       auto control_depend = nd->cast<CNodePtr>();
       auto prior_node = control_depend->input(kControlDependPriorIndex);
@@ -157,6 +158,7 @@ const AnfNodePtr EliminateDependTransop(const FuncGraphPtr &func_graph, const An
   MS_EXCEPTION_IF_NULL(func_graph);
 
   auto transop_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kTransOpInputNum);
+  MS_EXCEPTION_IF_NULL(transop_cnode);
   auto depend_cnode = CheckAnfNodeIfCNodeAndInputSize(transop_cnode->input(kCastInputNum - 1), kDependInputNum);
   auto prev_transop_cnode = CheckAnfNodeIfCNodeAndInputSize(depend_cnode->input(1), kTransOpInputNum);
   MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependInputNum - 1));
@@ -545,14 +547,22 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
     auto a_node = utils::cast<AnfNodePtr>(a);
     auto b_node = utils::cast<AnfNodePtr>(b);
+    MS_EXCEPTION_IF_NULL(a_node);
+    MS_EXCEPTION_IF_NULL(b_node);
     if (IsValueNode<Primitive>(a_node) && IsValueNode<Primitive>(b_node)) {
       auto a_value_node = a_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(a_value_node);
       auto a_value = a_value_node->value();
+      MS_EXCEPTION_IF_NULL(a_value);
       auto a_prim = a_value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(a_prim);
 
       auto b_value_node = b_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(b_value_node);
       auto b_value = b_value_node->value();
+      MS_EXCEPTION_IF_NULL(b_value);
       auto b_prim = b_value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(b_prim);
 
       return a_prim->name() == b_prim->name();
     } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {

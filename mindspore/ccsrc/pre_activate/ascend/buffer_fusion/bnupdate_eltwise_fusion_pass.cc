@@ -34,12 +34,17 @@ void BnupdateEltwiseFusionPass::MatchBnupdateRelu(const CNodePtr &cnode, const A
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(relu_input);
   auto getitem = relu_input->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(getitem);
   auto bnupdate = getitem->input(1);
+  MS_EXCEPTION_IF_NULL(bnupdate);
   if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
     std::vector<int> output_used_num(AnfAlgo::GetOutputTensorNum(bnupdate), 0);
     for (auto out_getitem : manager->node_users()[bnupdate]) {
+      MS_EXCEPTION_IF_NULL(out_getitem.first);
       auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(out_getitem_ptr);
       auto input2 = out_getitem_ptr->input(2);
       auto output_idx = GetValue<int>(GetValueNode(input2));
       output_used_num[output_idx] = SizeToInt(manager->node_users()[out_getitem.first].size());
