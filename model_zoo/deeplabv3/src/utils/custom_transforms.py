@@ -33,6 +33,7 @@ class Normalize:
     def __call__(self, img, mask):
         img = np.array(img).astype(np.float32)
         mask = np.array(mask).astype(np.float32)
+        img = ((img - self.mean) / self.std).astype(np.float32)
 
         return img, mask
 

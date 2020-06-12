@@ -16,6 +16,7 @@
 from PIL import Image
 import mindspore.dataset as de
 import mindspore.dataset.transforms.vision.c_transforms as C
+import numpy as np
 
 from .ei_dataset import HwVocRawDataset
 from .utils import custom_transforms as tr
@@ -52,8 +53,8 @@ class DataTransform:
         rhf_tr = tr.RandomHorizontalFlip()
         image, label = rhf_tr(image, label)
 
-        nor_tr = tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-        image, label = nor_tr(image, label)
+        image = np.array(image).astype(np.float32)
+        label = np.array(label).astype(np.float32)
 
         return image, label
 
@@ -71,13 +72,13 @@ class DataTransform:
         fsc_tr = tr.FixScaleCrop(crop_size=self.args.crop_size)
         image, label = fsc_tr(image, label)
 
-        nor_tr = tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-        image, label = nor_tr(image, label)
+        image = np.array(image).astype(np.float32)
+        label = np.array(label).astype(np.float32)
 
         return image, label
 
 
-def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train"):
+def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train", shuffle=True):
     """
     Create Dataset for DeepLabV3.
 
@@ -106,7 +107,7 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train"):
     # 1464 samples / batch_size 8 = 183 batches
     # epoch_num is num of steps
     # 3658 steps / 183 = 20 epochs
-    if usage == "train":
+    if usage == "train" and shuffle:
         dataset = dataset.shuffle(1464)
     dataset = dataset.batch(batch_size, drop_remainder=(usage == "train"))
     dataset = dataset.repeat(count=epoch_num)

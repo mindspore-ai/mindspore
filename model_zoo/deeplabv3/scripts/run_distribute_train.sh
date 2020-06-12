@@ -16,17 +16,21 @@
  
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_DIR MINDSPORE_HCCL_CONFIG_PATH"
-echo "for example: bash run_distribute_train.sh 8 40 /path/zh-wiki/ /path/hccl.json"
+echo "bash run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH DATA_PATH"
+echo "for example: bash run_distribute_train.sh  MINDSPORE_HCCL_CONFIG_PATH DATA_PATH [PRETRAINED_CKPT_PATH](option)"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
  
-EPOCH_SIZE=$2
-DATA_DIR=$3
+DATA_DIR=$2
  
-export MINDSPORE_HCCL_CONFIG_PATH=$4
-export RANK_TABLE_FILE=$4
-export RANK_SIZE=$1
+export MINDSPORE_HCCL_CONFIG_PATH=$1
+export RANK_TABLE_FILE=$1
+export RANK_SIZE=8
+PATH_CHECKPOINT=""
+if [ $# == 3 ]
+then
+	PATH_CHECKPOINT=$3
+fi
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
 echo "the number of logical core" $cores
 avg_core_per_rank=`expr $cores \/ $RANK_SIZE`
@@ -55,12 +59,8 @@ do
     env > env.log
     taskset -c $cmdopt python ../train.py  \
     --distribute="true" \
-    --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
-    --enable_save_ckpt="true" \
-    --checkpoint_url="" \
-    --save_checkpoint_steps=10000 \
-    --save_checkpoint_num=1 \
+    --checkpoint_url=$PATH_CHECKPOINT \
     --data_url=$DATA_DIR > log.txt 2>&1 &
     cd ../
 done

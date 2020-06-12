@@ -16,17 +16,17 @@ This is an example of training DeepLabv3 with PASCAL VOC 2012 dataset in MindSpo
 - Set options in config.py.
 - Run `run_standalone_train.sh` for non-distributed training.
 	``` bash 
-	sh scripts/run_standalone_train.sh DEVICE_ID EPOCH_SIZE DATA_DIR
+	sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 	```
 - Run `run_distribute_train.sh` for distributed training.
 	``` bash
-	sh scripts/run_distribute_train.sh DEVICE_NUM EPOCH_SIZE DATA_DIR MINDSPORE_HCCL_CONFIG_PATH
+	sh scripts/run_distribute_train.sh MINDSPORE_HCCL_CONFIG_PATH DATA_PATH
 	```
 ### Evaluation
 Set options in evaluation_config.py. Make sure the 'data_file' and 'finetune_ckpt' are set to your own path.
 - Run run_eval.sh for evaluation.
 	``` bash
-	sh scripts/run_eval.sh DEVICE_ID DATA_DIR
+	sh scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
 	```
 
 ## Options and Parameters
@@ -49,6 +49,11 @@ config.py:
 	decoder_output_stride			The ratio of input to output spatial resolution when employing decoder
 									to refine segmentation results, default is None.
 	image_pyramid					Input scales for multi-scale feature extraction, default is None.
+	epoch_size						Epoch size, default is 6.
+    batch_size                      batch size of input dataset: N, default is 2.
+	enable_save_ckpt				Enable save checkpoint, default is true.
+	save_checkpoint_steps			Save checkpoint steps, default is 1000.
+	save_checkpoint_num				Save checkpoint numbers, default is 1.
 ```	
 
 
@@ -56,11 +61,6 @@ config.py:
 ```
 Parameters for dataset and network:
     distribute						Run distribute, default is false.
-	epoch_size						Epoch size, default is 6.
-    batch_size                      batch size of input dataset: N, default is 2.
 	data_url						Train/Evaluation data url, required.
 	checkpoint_url					Checkpoint path, default is None.
-	enable_save_ckpt				Enable save checkpoint, default is true.
-	save_checkpoint_steps			Save checkpoint steps, default is 1000.
-	save_checkpoint_num				Save checkpoint numbers, default is 1.
 ```

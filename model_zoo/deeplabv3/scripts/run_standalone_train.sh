@@ -15,13 +15,17 @@
 # ============================================================================
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR"
-echo "for example: bash run_standalone_train.sh 0 40 /path/zh-wiki/ "
+echo "bash run_standalone_pretrain.sh DEVICE_ID DATA_PATH"
+echo "for example: bash run_standalone_train.sh DEVICE_ID DATA_PATH [PRETRAINED_CKPT_PATH](option)"
 echo "=============================================================================================================="
  
 DEVICE_ID=$1
-EPOCH_SIZE=$2
-DATA_DIR=$3
+DATA_DIR=$2
+PATH_CHECKPOINT=""
+if [ $# == 3 ]
+then
+	PATH_CHECKPOINT=$3
+fi
  
 mkdir -p ms_log 
 CUR_DIR=`pwd`
@@ -29,10 +33,6 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python train.py  \
     --distribute="false" \
-    --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
-    --enable_save_ckpt="true" \
-    --checkpoint_url="" \
-    --save_checkpoint_steps=10000 \
-    --save_checkpoint_num=1 \
+    --checkpoint_url=$PATH_CHECKPOINT \
     --data_url=$DATA_DIR > log.txt 2>&1 &

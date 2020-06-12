@@ -29,5 +29,10 @@ config = ed({
     "fine_tune_batch_norm": False,
     "ignore_label": 255,
     "decoder_output_stride": None,
-    "seg_num_classes": 21
+    "seg_num_classes": 21,
+    "epoch_size": 6,
+    "batch_size": 2,
+    "enable_save_ckpt": True,
+    "save_checkpoint_steps": 10000,
+    "save_checkpoint_num": 1
 })
