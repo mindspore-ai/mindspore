@@ -45,7 +45,7 @@ const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeInt64, "int64"},     {TypeId::kNumberTypeUInt, "uint"},
   {TypeId::kNumberTypeUInt8, "uint8"},     {TypeId::kNumberTypeUInt16, "uint16"},
   {TypeId::kNumberTypeUInt32, "uint32"},   {TypeId::kNumberTypeUInt64, "uint64"},
-  {TypeId::kNumberTypeBool, "bool"},
+  {TypeId::kNumberTypeBool, "int8"},
 };
 
 const std::map<std::string, std::string> type_str_maps = {
@@ -85,7 +85,7 @@ std::string DtypeToString(const std::string &dtypes) {
 std::string TypeIdToString(TypeId type_id) {
   auto iter = type_id_str_maps.find(type_id);
   if (iter == type_id_str_maps.end()) {
-    MS_LOG(EXCEPTION) << "Illegal input dtype." << TypeIdLabel(type_id);
+    MS_LOG(EXCEPTION) << "Illegal input dtype: " << TypeIdLabel(type_id);
   }
   return iter->second;
 }

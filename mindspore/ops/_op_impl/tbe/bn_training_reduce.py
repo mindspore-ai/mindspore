@@ -26,6 +26,7 @@ bn_training_reduce_op_info = TBERegOp("BNTrainingReduce") \
     .input(0, "x", False, "required", "all", reshape_type="NC") \
     .output(0, "sum", False, "required", "all") \
     .output(1, "square_sum", False, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()

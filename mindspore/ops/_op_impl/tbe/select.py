@@ -27,6 +27,7 @@ select_op_info = TBERegOp("Select") \
     .input(1, "x1", False, "required", "all") \
     .input(2, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.BOOL_Default, DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \

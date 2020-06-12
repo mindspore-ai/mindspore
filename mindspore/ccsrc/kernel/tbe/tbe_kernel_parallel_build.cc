@@ -230,7 +230,7 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
                                  task_iter->second.output_size_list, kernel_pack);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   if (set_kernel_mod) {
-    AnfAlgo ::SetKernelMod(kernel_mod, task_iter->second.node);
+    AnfAlgo::SetKernelMod(kernel_mod, task_iter->second.node);
   }
   auto ret = std::make_pair(task_iter->second.scope_id, kernel_mod);
   (void)task_map_.erase(task_iter);

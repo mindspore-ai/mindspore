@@ -34,7 +34,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     return nullptr;
   }
   auto node_name = AnfAlgo::GetCNodeName(node);
-  if (node_name != prim::KPrimTransData->name() || node_name != prim::kPrimCast->name()) {
+  if (node_name != prim::KPrimTransData->name() && node_name != prim::kPrimCast->name()) {
     return nullptr;
   }
   auto kernel_builder_info = AnfAlgo::GetSelectKernelBuildInfo(node);

@@ -32,6 +32,7 @@ bn_training_update_v2_op_info = TBERegOp("BNTrainingUpdateV2") \
     .output(0, "y", False, "required", "all", reshape_type="NC") \
     .output(1, "batch_mean", False, "required", "all") \
     .output(2, "batch_variance", False, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.F16_5HD,
                   DataType.F32_5HD, DataType.F32_5HD) \

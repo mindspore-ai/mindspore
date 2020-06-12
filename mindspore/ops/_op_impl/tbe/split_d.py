@@ -27,6 +27,7 @@ split_d_op_info = TBERegOp("Split") \
     .attr("output_num", "required", "int", "all") \
     .input(0, "value", False, "required", "all") \
     .output(0, "output", False, "dynamic", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.BOOL_NHWC, DataType.BOOL_NHWC) \
     .dtype_format(DataType.I8_Default, DataType.I8_Default) \

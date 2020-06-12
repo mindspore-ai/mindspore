@@ -23,7 +23,6 @@ abs_grad_op_info = TBERegOp("AbsGrad") \
     .compute_cost(10) \
     .kernel_name("abs_grad") \
     .partial_flag(True) \
-    .op_pattern("formatAgnostic") \
     .input(0, "y", None, "required", None) \
     .input(1, "dy", None, "required", None) \
     .output(0, "z", False, "required", "all") \

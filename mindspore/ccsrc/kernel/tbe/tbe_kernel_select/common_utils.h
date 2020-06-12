@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_TBE_KERNEL_SELECT_H
-#define MINDSPORE_TBE_KERNEL_SELECT_H
-
+#ifndef MINDSPORE_CCSRC_KERNEL_TBE_KERNEL_SELECT_COMMON_UTILS_H_
+#define MINDSPORE_CCSRC_KERNEL_TBE_KERNEL_SELECT_COMMON_UTILS_H_
 #include <string>
 #include <vector>
-#include <memory>
-#include "kernel/oplib/opinfo.h"
-#include "kernel/kernel_build_info.h"
-
 namespace mindspore {
 namespace kernel {
-void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
+struct SupportFormat {
+  std::vector<std::vector<std::string>> input_format;
+  std::vector<std::vector<std::string>> output_format;
+};
+using SupportFormatItem = std::vector<std::string>;
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_TBE_KERNEL_SELECT_H
+#endif  // MINDSPORE_CCSRC_KERNEL_TBE_COMMON_UTILS_H_
