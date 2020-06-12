@@ -20,9 +20,13 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
+from mindspore.common.parameter import ParameterTuple
+from mindspore.ops import composite as C
+
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+
 
 class NetWorkSlicePositive(Cell):
     def __init__(self):
@@ -139,7 +143,7 @@ class TensorGetItemByThreeTensors(Cell):
         return ret0, ret1, ret2
 
 
-def Xtest_getitem_by_tensors():
+def test_getitem_by_tensors():
     net = TensorGetItemByThreeTensors()
     input_x = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
     index_0 = np.random.randint(6, size=(3, 4, 5)).astype(np.int32)
@@ -155,117 +159,138 @@ def Xtest_getitem_by_tensors():
     assert np.all(output2.asnumpy() == input_x[index_0, index_1, index_2] + np.ones([5, 3, 4, 5]))
 
 
-class TensorGetItemByMixedTensors_0(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_0, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 3, 6, 5), np.float32))
+class TensorGetItemByMixedTensorsBasicCase(Cell):
+    def __init__(self, c0, c1, c2, c3, c4, c5):
+        super(TensorGetItemByMixedTensorsBasicCase, self).__init__()
+        self.const0 = Tensor(c0)
+        self.const1 = Tensor(c1)
+        self.const2 = Tensor(c2)
+        self.const3 = Tensor(c3)
+        self.const4 = Tensor(c4)
+        self.const5 = Tensor(c5)
 
     def construct(self, tensor, index_0, index_1):
-        ret = tensor[index_0, index_1, 0:3, ..., 0:5, 3] + self.const
-        return ret
+        ret0 = tensor[index_0, index_1, 0:3] + self.const0
+        ret1 = tensor[0:3, index_0, ...] + self.const1
+        ret2 = tensor[0, index_0, index_1] + self.const2
+        ret3 = tensor[..., index_0, 0:3] + self.const3
+        ret4 = tensor[0:2, index_0, index_1] + self.const4
+        ret5 = tensor[..., index_0, index_1] + self.const5
+        return ret0, ret1, ret2, ret3, ret4, ret5
 
 
-class TensorGetItemByMixedTensors_1(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_1, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 3, 5, 5), np.float32))
-
-    def construct(self, tensor, index_0, index_1):
-        ret = tensor[0:3, index_0, ..., index_1, 3, 0:5] + self.const
-        return ret
-
-
-class TensorGetItemByMixedTensors_2(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_2, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 6, 7), np.float32))
-
-    def construct(self, tensor, index_0, index_1):
-        ret = tensor[0, index_0, index_1, ..., 3] + self.const
-        return ret
-
-
-class TensorGetItemByMixedTensors_3(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_3, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 3, 4, 3, 5), np.float32))
-
-    def construct(self, tensor, index_0, index_1):
-        ret = tensor[..., index_0, 0:3, index_1, 0:5] + self.const
-        return ret
-
-
-class TensorGetItemByMixedTensors_4(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_4, self).__init__()
-        self.const = Tensor(np.ones((2, 2, 3, 4, 5, 3, 9), np.float32))
-
-    def construct(self, tensor, index_0, index_1, index_2):
-        ret = tensor[0:2, index_0, index_1, 2, index_2, 0:3, ...] + self.const
-        return ret
-
-
-class TensorGetItemByMixedTensors_5(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_5, self).__init__()
-        self.const = Tensor(np.ones((2, 3, 4, 5, 2, 6), np.float32))
-
-    def construct(self, tensor, index_0, index_1, index_2):
-        ret = tensor[0:2, index_0, index_1, ..., index_2, 2] + self.const
-        return ret
-
-
-class TensorGetItemByMixedTensors_6(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensors_6, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 2, 3, 4, 5), np.float32))
-
-    def construct(self, tensor, index_0, index_1, index_2):
-        ret = tensor[..., index_0, index_1, index_2, 3] + self.const
-        return ret
+def test_getitem_by_mixed_tensors():
+    const0 = np.ones((3, 4, 5, 3), np.float32)
+    const1 = np.ones((3, 3, 4, 5, 5), np.float32)
+    const2 = np.ones((3, 4, 5), np.float32)
+    const3 = np.ones((3, 3, 4, 5, 3), np.float32)
+    const4 = np.ones((2, 3, 4, 5), np.float32)
+    const5 = np.ones((3, 3, 4, 5), np.float32)
+    net = TensorGetItemByMixedTensorsBasicCase(const0, const1, const2, const3, const4, const5)
+    input_np = np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32)
+    input_ms = Tensor(input_np, mstype.float32)
+    index_np_0 = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
+    index_np_1 = np.random.randint(4, size=(4, 5)).astype(np.int32)
+    index_0 = Tensor(index_np_0, mstype.int32)
+    index_1 = Tensor(index_np_1, mstype.int32)
+    out0, out1, out2, out3, out4, out5 = net(input_ms, index_0, index_1)
+    assert np.all(out0.asnumpy() == (input_np[index_np_0, index_np_1, 0:3] + const0))
+    assert np.all(out1.asnumpy() == (input_np[0:3, index_np_0, ...] + const1))
+    assert np.all(out2.asnumpy() == (input_np[0, index_np_0, index_np_1] + const2))
+    assert np.all(out3.asnumpy() == (input_np[..., index_np_0, 0:3] + const3))
+    assert np.all(out4.asnumpy() == (input_np[0:2, index_np_0, index_np_1] + const4))
+    assert np.all(out5.asnumpy() == (input_np[..., index_np_0, index_np_1] + const5))
 
 
 class TensorSetItemByMixedTensors_0(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_0, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 6, 7, 8, 9), np.float32))
-        self.param = Parameter(Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8 * 9).reshape((3, 4, 5, 6, 7, 8, 9)),
+        self.const = Tensor(np.ones((3, 4, 5), np.float32))
+        self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)),
                                       mstype.float32),
                                name="x")
         self.value = value
 
     def construct(self, index_0, index_1, index_2):
-        self.param[0:2, index_0, index_1, 2, index_2, 0:3, ...] = self.value
+        self.param[0:2, index_0, index_1] = self.value
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_mixed_tensors_0():
+    value = 88.0
+    net = TensorSetItemByMixedTensors_0(value)
+    index_0 = np.random.randint(3, size=(3, 4, 5))
+    index_1 = np.random.randint(4, size=(4, 5))
+    index_2 = np.random.randint(3, size=(2, 1, 4, 5))
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    input_np = np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32)
+    const = np.ones((3, 4, 5), np.float32)
+    out = net(index_0_ms, index_1_ms, index_2_ms)
+    input_np[0:2, index_0, index_1] = value
+    assert np.all(out.asnumpy() == (input_np + const))
 
 
 class TensorSetItemByMixedTensors_1(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_1, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 6, 7, 8), np.float32))
-        self.param = Parameter(Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8).reshape((3, 4, 5, 6, 7, 8)), mstype.float32),
+        self.const = Tensor(np.ones((3, 4, 5), np.float32))
+        self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
                                name="x")
         self.value = value
 
     def construct(self, index_0, index_1, index_2):
-        self.param[0:2, index_0, index_1, ..., index_2, 2] = self.value
+        self.param[0:2, index_0, ...] = self.value
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_mixed_tensors_1():
+    value = 88.0
+    net = TensorSetItemByMixedTensors_1(value)
+    index_0 = np.random.randint(3, size=(3, 4, 5))
+    index_1 = np.random.randint(4, size=(4, 5))
+    index_2 = np.random.randint(3, size=(2, 1, 4, 5))
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    input_np = np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32)
+    const = np.ones((3, 4, 5), np.float32)
+    out = net(index_0_ms, index_1_ms, index_2_ms)
+    input_np[0:2, index_0, ...] = value
+    assert np.all(out.asnumpy() == (input_np + const))
 
 
 class TensorSetItemByMixedTensors_2(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_2, self).__init__()
-        self.const = Tensor(np.ones((3, 4, 5, 6, 7, 8), np.float16))
-        self.param = Parameter(Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8).reshape((3, 4, 5, 6, 7, 8)), mstype.float16),
+        self.const = Tensor(np.ones((3, 4, 5), np.float16))
+        self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float16),
                                name="x")
         self.value = value
 
     def construct(self, index_0, index_1, index_2):
-        self.param[..., index_0, index_1, index_2, 3] = self.value
+        self.param[..., index_0, 1] = self.value
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_mixed_tensors_2():
+    value = 88.0
+    net = TensorSetItemByMixedTensors_2(value)
+    index_0 = np.random.randint(3, size=(3, 4, 5))
+    index_1 = np.random.randint(4, size=(4, 5))
+    index_2 = np.random.randint(3, size=(2, 1, 4, 5))
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    input_np = np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(np.float32)
+    const = np.ones((3, 4, 5), np.float32)
+    out = net(index_0_ms, index_1_ms, index_2_ms)
+    input_np[..., index_0, 1] = value
+    assert np.all(out.asnumpy() == (input_np + const))
 
 
 class TensorGetItemByMixedTensorsTypeError(Cell):
@@ -277,13 +302,13 @@ class TensorGetItemByMixedTensorsTypeError(Cell):
         return ret
 
 
-class TensorGetItemByMixedTensorsNumberError(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensorsNumberError, self).__init__()
-
-    def construct(self, x, index_0, index_1):
-        ret = x[index_0, index_1, 0:3, ..., index_1, index_0]
-        return ret
+def test_getitem_by_mixedtensor_exception():
+    input_ms = Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8 * 9).reshape((3, 4, 5, 6, 7, 8, 9)), mstype.int32)
+    index_0 = Tensor(np.random.randint(3, size=(3, 4, 5)), mstype.int32)
+    index_1 = Tensor(np.random.randint(4, size=(3, 4, 5)), mstype.int32)
+    net1 = TensorGetItemByMixedTensorsTypeError()
+    with pytest.raises(TypeError):
+        net1(input_ms, index_0, index_1)
 
 
 class TensorSetItemByOneTensorWithNumber(Cell):
@@ -299,6 +324,18 @@ class TensorSetItemByOneTensorWithNumber(Cell):
         return ret
 
 
+def test_setitem_one_tensor_with_number():
+    value = 0.0
+    net = TensorSetItemByOneTensorWithNumber(value)
+    index_np = np.random.randint(4, size=(5, 4))
+    index = Tensor(index_np, mstype.int32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8))
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    out = net(index)
+    input_data[index_np] = value
+    assert np.all(out.asnumpy() == (input_data + const))
+
+
 class TensorSetItemByOneTensorWithTensor(Cell):
     def __init__(self):
         super(TensorSetItemByOneTensorWithTensor, self).__init__()
@@ -309,6 +346,19 @@ class TensorSetItemByOneTensorWithTensor(Cell):
         self.param[index] = value
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_one_tensor_with_tensor():
+    net = TensorSetItemByOneTensorWithTensor()
+    index_np = np.random.randint(4, size=(5, 4))
+    index = Tensor(index_np, mstype.int32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8))
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    value = np.zeros((4, 7, 8)).astype(np.float32)
+    value_ms = Tensor(value, mstype.float32)
+    out = net(index, value_ms)
+    input_data[index_np] = value
+    assert np.all(out.asnumpy() == (input_data + const))
 
 
 class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
@@ -324,6 +374,18 @@ class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
         return ret
 
 
+def test_setitem_by_one_tensor_with_tuple_number():
+    value = (0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7)
+    net = TensorSetItemByOneTensorWithTupleOfNumber(value)
+    input_np = np.random.randint(5, size=(5, 4))
+    input_ms = Tensor(input_np, mstype.int32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8)).astype(np.float32)
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    out = net(input_ms)
+    input_data[input_np] = value
+    assert np.all(out.asnumpy() == (input_data + const))
+
+
 class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
     def __init__(self):
         super(TensorSetItemByOneTensorWithTupleOfTensor, self).__init__()
@@ -334,6 +396,23 @@ class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
         self.param[index] = (value_0, value_1, value_2)
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_one_tensor_with_tuple_tensors():
+    net = TensorSetItemByOneTensorWithTupleOfTensor()
+    input_np = np.random.randint(6, size=(5, 4)).astype(np.int32)
+    input_ms = Tensor(input_np, mstype.int32)
+    input_data = np.arange(6 * 3 * 8).reshape((6, 3, 8)).astype(np.float32)
+    value_0_np = np.zeros((8,), np.float32)
+    value_1_np = np.ones((8,), np.float32)
+    value_2_np = np.ones((8,), np.float32)*2
+    value_0 = Tensor(value_0_np)
+    value_1 = Tensor(value_1_np)
+    value_2 = Tensor(value_2_np)
+    const = np.ones((6, 3, 8)).astype(np.float32)
+    out = net(input_ms, value_0, value_1, value_2)
+    input_data[input_np] = (value_0_np, value_1_np, value_2_np)
+    assert np.all(out.asnumpy() == (input_data + const))
 
 
 class TensorSetItemByTensorsWithNumber(Cell):
@@ -349,6 +428,22 @@ class TensorSetItemByTensorsWithNumber(Cell):
         return ret
 
 
+def test_setitem_by_tensors_with_number():
+    value = 0.0
+    net = TensorSetItemByTensorsWithNumber(value)
+    index_0 = np.random.randint(6, size=(3, 4, 5))
+    index_1 = np.random.randint(7, size=(4, 5))
+    index_2 = np.random.randint(8, size=(5, 3, 4, 5))
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    out = net(index_0_ms, index_1_ms, index_2_ms)
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8)).astype(np.float32)
+    input_data[index_0, index_1, index_2] = value
+    assert np.all(out.asnumpy() == (input_data + const))
+
+
 class TensorSetItemByTensorsWithTensor(Cell):
     def __init__(self):
         super(TensorSetItemByTensorsWithTensor, self).__init__()
@@ -361,6 +456,23 @@ class TensorSetItemByTensorsWithTensor(Cell):
         return ret
 
 
+def test_setitem_by_tensors_with_tensor():
+    net = TensorSetItemByTensorsWithTensor()
+    index_0 = np.random.randint(6, size=(3, 4, 5))
+    index_1 = np.random.randint(7, size=(4, 5))
+    index_2 = np.random.randint(8, size=(5, 3, 4, 5))
+    value = np.zeros((4, 5)).astype(np.float32)
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    value_ms = Tensor(value, mstype.float32)
+    out = net(index_0_ms, index_1_ms, index_2_ms, value_ms)
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8)).astype(np.float32)
+    input_data[index_0, index_1, index_2] = value
+    assert np.all(out.asnumpy() == (input_data + const))
+
+
 class TensorSetItemByTensorsWithTensorNumberError(Cell):
     def __init__(self):
         super(TensorSetItemByTensorsWithTensorNumberError, self).__init__()
@@ -371,6 +483,17 @@ class TensorSetItemByTensorsWithTensorNumberError(Cell):
         self.param[index_0, index_1, index_2, index_3] = value
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_tensors_with_tensor_error():
+    index_0 = Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32)
+    index_1 = Tensor(np.random.randint(7, size=(4, 5)), mstype.int32)
+    index_2 = Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)
+    index_3 = Tensor(np.random.randint(8, size=(1, 3, 4, 5)), mstype.int32)
+    value = Tensor(np.zeros((2, 5)), mstype.float32)
+    net = TensorSetItemByTensorsWithTensorNumberError()
+    with pytest.raises(IndexError):
+        net(index_0, index_1, index_2, index_3, value)
 
 
 class TensorSetItemByTensorsWithTupleOfNumber(Cell):
@@ -386,6 +509,22 @@ class TensorSetItemByTensorsWithTupleOfNumber(Cell):
         return ret
 
 
+def test_setitem_by_tensors_with_tuple_of_number():
+    value = (0.0, 1.1, 2.2, 3.3, 4.4)
+    net = TensorSetItemByTensorsWithTupleOfNumber(value)
+    index_0 = np.random.randint(6, size=(3, 4, 5))
+    index_1 = np.random.randint(7, size=(4, 5))
+    index_2 = np.random.randint(8, size=(5, 3, 4, 5))
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8)).astype(np.float32)
+    input_data[index_0, index_1, index_2] = value
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    out = net(index_0_ms, index_1_ms, index_2_ms)
+    assert np.all(out.asnumpy() == (input_data + const))
+
+
 class TensorSetItemByTensorsWithTupleOfTensor(Cell):
     def __init__(self):
         super(TensorSetItemByTensorsWithTupleOfTensor, self).__init__()
@@ -396,6 +535,27 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
         self.param[index_0, index_1, index_2] = (value_0, value_1, value_2)
         ret = self.param + self.const
         return ret
+
+
+def test_setitem_by_tensors_with_tuple_of_tensor():
+    value_0 = np.zeros((4, 5))
+    value_1 = np.ones((4, 5))
+    value_2 = np.ones((4, 5)) * 2
+    value_0_ms = Tensor(value_0, mstype.float32)
+    value_1_ms = Tensor(value_1, mstype.float32)
+    value_2_ms = Tensor(value_2, mstype.float32)
+    net = TensorSetItemByTensorsWithTupleOfTensor()
+    index_0 = np.random.randint(6, size=(3, 4, 5))
+    index_1 = np.random.randint(7, size=(4, 5))
+    index_2 = np.random.randint(8, size=(5, 3, 4, 5))
+    index_0_ms = Tensor(index_0, mstype.int32)
+    index_1_ms = Tensor(index_1, mstype.int32)
+    index_2_ms = Tensor(index_2, mstype.int32)
+    input_data = np.arange(6 * 7 * 8).reshape((6, 7, 8)).astype(np.float32)
+    input_data[index_0, index_1, index_2] = (value_0, value_1, value_2)
+    const = np.ones((6, 7, 8)).astype(np.float32)
+    out = net(index_0_ms, index_1_ms, index_2_ms, value_0_ms, value_1_ms, value_2_ms)
+    assert np.all(out.asnumpy() == (input_data + const))
 
 
 class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
@@ -410,17 +570,44 @@ class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
         return ret
 
 
-class TensorSetItemByMixedTensors(Cell):
-    def __init__(self):
-        super(TensorSetItemByMixedTensors, self).__init__()
-        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
-        self.param = Parameter(Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.float32), name="x")
-        self.value = 99.0
+def test_setitem_by_tensor_with_tuple_of_tensor_error():
+    net = TensorSetItemByTensorsWithTupleOfTensorNumberError()
+    index_0_ms = Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32)
+    index_1_ms = Tensor(np.random.randint(7, size=(4, 5)), mstype.int32)
+    index_2_ms = Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)
+    value_0 = np.zeros((4, 5))
+    value_1 = np.ones((4, 5))
+    value_0_ms = Tensor(value_0, mstype.float32)
+    value_1_ms = Tensor(value_1, mstype.float32)
+    with pytest.raises(ValueError):
+        net(index_0_ms, index_1_ms, index_2_ms, value_0_ms, value_1_ms)
 
-    def construct(self, index_0, index_1):
-        self.param[index_0, index_1, 0:6] = self.value
-        ret = self.param + self.const
-        return ret
+
+def test_setitem_grad():
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.weight = Parameter(
+                Tensor(np.ones([4, 4, 5]), dtype=mstype.float32), "b1", requires_grad=True)
+
+        def construct(self, a, b):
+            a[1:3:1, ::] = b
+            c = a + self.weight
+            return c
+
+    class GradNet(Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, x, y, sens):
+            return C.grad_by_list_with_sens(self.net, self.weights)(x, y, sens)
+    net = GradNet(Net())
+    x = Tensor(np.ones([4, 4, 5]).astype(np.float32), mstype.float32)
+    y = Tensor(np.array([3]).astype(np.float32), mstype.float32)
+    sens = Tensor(np.ones([4, 4, 5]).astype(np.float32), mstype.float32)
+    net(x, y, sens)
 
 
 class TensorAssignWithSliceError1(Cell):
@@ -475,7 +662,6 @@ class TensorAssignWithSlice(Cell):
 
 
 def test_tensor_assign():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     net = TensorAssignWithSlice()
     net2 = TensorAssignWithSlice2()
     net_e1 = TensorAssignWithSliceError1()
@@ -621,7 +807,7 @@ class TensorAssignWithTupleInteger(Cell):
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex, self).__init__()
-        self.t = Tensor(np.arange(60).reshape([3, 4, 5]), dtype=mstype.float32)
+        self.t = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
     def construct(self, a, b, c, u_tensor):
@@ -643,8 +829,7 @@ class TensorAssignWithBoolTensorIndexError(Cell):
 class TensorAssignWithBoolTensorIndex2(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex2, self).__init__()
-        self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float32)
-        self.t = Tensor(np.arange(60).reshape([3, 4, 5]), dtype=mstype.float32)
+        self.t = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
     def construct(self, a, u_tensor):
@@ -666,7 +851,40 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         return a
 
 
-def Xtest_tensor_assign_bool_index():
+def test_tensor_assign_bool_index_0():
+    a = np.arange(60).reshape(3, 4, 5)
+    b = a > 5
+    c = a < 3
+    Ta = Tensor(a, dtype=mstype.float32)
+    Tb = Tensor(b)
+    Tc = Tensor(c)
+    u_tensor = Tensor([1], dtype=mstype.float32)
+    net1 = TensorAssignWithBoolTensorIndex()
+    out = net1(Ta, Tb, Tc, u_tensor)
+    res = np.arange(60).reshape(3, 4, 5)
+    res[c] = 5
+    res[b] = 1
+    res = res + np.ones([3, 4, 5])
+    assert np.all(out.asnumpy() == res)
+
+
+def test_tensor_assign_bool_index_1():
+    a = np.arange(60).reshape(3, 4, 5)
+    Ta = Tensor(a, dtype=mstype.float32)
+    u_tensor = Tensor([1], dtype=mstype.float32)
+    net2 = TensorAssignWithBoolTensorIndex2()
+    out = net2(Ta, u_tensor)
+    res = np.arange(60).reshape(3, 4, 5)
+    res[res > 8] = 1
+    res[res >= 6] = 5
+    res[res < 3] = 5
+    res[res <= 5] = 1
+    res[res == 5] = 5
+    res = res + np.ones([3, 4, 5])
+    assert np.all(out.asnumpy() == res)
+
+
+def test_tensor_assign_bool_index_exception():
     a = np.arange(60).reshape(3, 4, 5)
     b = a > 5
     c = a < 3
@@ -679,8 +897,6 @@ def Xtest_tensor_assign_bool_index():
     u_scalar = 5
     net1 = TensorAssignWithBoolTensorIndex()
     net2 = TensorAssignWithBoolTensorIndex2()
-    net1(Ta, Tb, Tc, u_tensor)
-    net1(Ta, Tb, Tc, u_tensor)
     with pytest.raises(ValueError):
         net1(Ta, Td, Tc, u_tensor)
     with pytest.raises(IndexError):
@@ -695,14 +911,14 @@ def Xtest_tensor_assign_bool_index():
     with pytest.raises(ValueError):
         net2(Ta, u_tensor_error)
     net3 = TensorAssignWithBoolTensorIndexError()
-    with pytest.raises(AttributeError):
+    with pytest.raises(IndexError):
         net3(Ta, Tb, Tc, u_tensor)
-    with pytest.raises(AttributeError):
+    with pytest.raises(IndexError):
         net3(Ta, Tb, Tc, u_scalar)
     net4 = TensorAssignWithBoolTensorIndex2Error()
-    with pytest.raises(AttributeError):
+    with pytest.raises(IndexError):
         net4(Ta, u_tensor)
-    with pytest.raises(AttributeError):
+    with pytest.raises(IndexError):
         net4(Ta, u_scalar)
 
 

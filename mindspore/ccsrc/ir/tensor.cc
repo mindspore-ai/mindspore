@@ -92,6 +92,10 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   }
   return *this;
 }
+Tensor &Tensor::AssignValue(const Tensor &tensor) {
+  *this = tensor;
+  return *this;
+}
 
 bool Tensor::operator==(const Tensor &tensor) const {
   return (MetaTensor::operator==(tensor) && data_ == tensor.data_);
@@ -469,6 +473,19 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
                                  >>> data.set_dtype(mindspore.int32)
                                  mindspore.int32
+                             )mydelimiter")
+                           .def("assign_value", &Tensor::AssignValue, R"mydelimiter(
+                             Assign another tensor value to this.
+
+                             Arg:
+                                 value (:class:`mindspore.tensor`): The value tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
+                                 >>> data2 = mindspore.Tensor(np.ones((2, 2), np.float32))
+                                 >>> data.assign_value(data2)
+                                 >>> data.shape
+                                 (2, 2)
                              )mydelimiter")
                            .def("__str__", &Tensor::ToString)
                            .def("__repr__", &Tensor::ToStringRepr)
