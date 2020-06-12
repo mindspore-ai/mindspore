@@ -74,14 +74,14 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
       dy_shape_[i] = shape3[i];
       output_num_ *= shape3[i];
     }
-    int offset = shape3.size() - shape1.size();
+    int x1_offset = shape3.size() - shape1.size();
     for (size_t i = 0; i < shape1.size(); i++) {
-      x1_shape_[i + offset] = shape1[i];
+      x1_shape_[i + x1_offset] = shape1[i];
       input1_num_ *= shape1[i];
     }
-    offset = shape3.size() - shape2.size();
+    int x2_offset = shape3.size() - shape2.size();
     for (size_t i = 0; i < shape2.size(); i++) {
-      x2_shape_[i + offset] = shape2[i];
+      x2_shape_[i + x2_offset] = shape2[i];
       input2_num_ *= shape2[i];
     }
 
