@@ -205,6 +205,7 @@ constexpr char EQUAL[] = "Equal";
 constexpr char NOT_EQUAL[] = "NotEqual";
 constexpr char LOGICALNOT[] = "LogicalNot";
 constexpr char GATHERV2[] = "GatherV2";
+constexpr char SPARSE_GATHERV2[] = "SparseGatherV2";
 constexpr char STRIDEDSLICE[] = "StridedSlice";
 constexpr char BROADCAST[] = "Broadcast";
 constexpr char SQRT[] = "Sqrt";
