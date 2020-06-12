@@ -27,6 +27,7 @@
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/engine/datasetops/barrier_op.h"
 #include "dataset/engine/datasetops/batch_op.h"
+#include "dataset/engine/datasetops/build_vocab_op.h"
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/device_queue_op.h"
 #include "dataset/engine/datasetops/map_op.h"

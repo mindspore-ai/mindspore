@@ -186,6 +186,62 @@ def check_jieba_add_dict(method):
     return new_method
 
 
+def check_from_dataset(method):
+    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+
+    # def from_dataset(cls, dataset, columns, freq_range=None, top_k=None):
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        dataset, columns, freq_range, top_k = (list(args) + 4 * [None])[:4]
+        if "dataset" in kwargs:
+            dataset = kwargs.get("dataset")
+        if "columns" in kwargs:
+            columns = kwargs.get("columns")
+        if "freq_range" in kwargs:
+            freq_range = kwargs.get("freq_range")
+        if "top_k" in kwargs:
+            top_k = kwargs.get("top_k")
+
+        if columns is None:
+            columns = []
+
+        if not isinstance(columns, list):
+            columns = [columns]
+
+        for column in columns:
+            if not isinstance(column, str):
+                raise ValueError("columns need to be a list of strings")
+
+        if freq_range is None:
+            freq_range = (None, None)
+
+        if not isinstance(freq_range, tuple) or len(freq_range) != 2:
+            raise ValueError("freq_range needs to be either None or a tuple of 2 integers or an int and a None")
+
+        for num in freq_range:
+            if num is not None and (not isinstance(num, int)):
+                raise ValueError("freq_range needs to be either None or a tuple of 2 integers or an int and a None")
+
+        if isinstance(freq_range[0], int) and isinstance(freq_range[1], int):
+            if freq_range[0] > freq_range[1] or freq_range[0] < 0:
+                raise ValueError("frequency range [a,b] should be 0 <= a <= b (a,b are inclusive)")
+
+        if top_k is not None and (not isinstance(top_k, int)):
+            raise ValueError("top_k needs to be a positive integer")
+
+        if isinstance(top_k, int) and top_k <= 0:
+            raise ValueError("top_k needs to be a positive integer")
+
+        kwargs["dataset"] = dataset
+        kwargs["columns"] = columns
+        kwargs["freq_range"] = freq_range
+        kwargs["top_k"] = top_k
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
 def check_ngram(method):
     """A wrapper that wrap a parameter checker to the original function(crop operation)."""
 

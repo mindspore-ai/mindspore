@@ -65,12 +65,19 @@ class Vocab {
   // reverse lookup, lookup the word based on its id
   // @param WordIdType id - word id to lookup to
   // @return WordType the word
-  WordType Lookup(WordIdType id) const;
+  WordType Lookup(WordIdType id);
 
   // constructor, shouldn't be called directly, can't be private due to std::make_unique()
   // @param std::unordered_map<WordType, WordIdType> map - sanitized word2id map
   explicit Vocab(std::unordered_map<WordType, WordIdType> map);
 
+  Vocab() = default;
+
+  // add one word to vocab, increment it's index automatically
+  // @param std::string & word - word to be added will skip if word already exists
+  void append_word(const std::string &word);
+
+  // destructor
   ~Vocab() = default;
 
   // enum type that holds all special tokens, add more if needed

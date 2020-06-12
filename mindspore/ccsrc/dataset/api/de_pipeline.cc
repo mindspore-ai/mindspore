@@ -71,7 +71,8 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kCifar100, &DEPipeline::ParseCifar100Op},
                                                                    {kCelebA, &DEPipeline::ParseCelebAOp},
                                                                    {kRandomData, &DEPipeline::ParseRandomDataOp},
-                                                                   {kTextFile, &DEPipeline::ParseTextFileOp}};
+                                                                   {kTextFile, &DEPipeline::ParseTextFileOp},
+                                                                   {kBuildVocab, &DEPipeline::ParseBuildVocabOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -1235,5 +1236,36 @@ Status DEPipeline::ParsePadInfo(py::handle value, PadInfo *pad_info) {
   }
   return Status::OK();
 }
+Status DEPipeline::ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<BuildVocabOp::Builder> builder = std::make_shared<BuildVocabOp::Builder>();
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "freq_range") {
+        py::tuple tp = py::reinterpret_borrow<py::tuple>(value);
+        if (!tp[0].is_none()) (void)builder->SetMinFreq(py::reinterpret_borrow<py::int_>(tp[0]));
+        if (!tp[1].is_none()) (void)builder->SetMaxFreq(py::reinterpret_borrow<py::int_>(tp[1]));
+      }
+      if (key == "top_k") {
+        builder->SetTopK(py::reinterpret_borrow<py::int_>(value));
+      }
+      if (key == "columns") {
+        (void)builder->SetColumnNames(ToStringVector(value));
+      }
+      if (key == "vocab") {
+        (void)builder->SetVocab(value.cast<std::shared_ptr<Vocab>>());
+      }
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      }
+    }
+  }
+  std::shared_ptr<BuildVocabOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

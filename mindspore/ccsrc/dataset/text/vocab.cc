@@ -21,19 +21,23 @@
 
 namespace mindspore {
 namespace dataset {
-Vocab::Vocab(std::unordered_map<WordType, WordIdType> word2id) {
-  word2id_ = std::move(word2id);
-  id2word_.resize(word2id_.size());
-  for (auto p : word2id_) {
-    id2word_[p.second - kSpecialTokens::num_tokens] = p.first;
-  }
-}
+Vocab::Vocab(std::unordered_map<WordType, WordIdType> word2id) { word2id_ = std::move(word2id); }
 
 WordIdType Vocab::Lookup(const WordType &word, WordIdType default_id) const {
   auto itr = word2id_.find(word);
   return itr == word2id_.end() ? default_id : itr->second;
 }
-WordType Vocab::Lookup(WordIdType id) const {
+
+WordType Vocab::Lookup(WordIdType id) {
+  // this operation is most likely only done with since reverse lookup is only needed when training is done
+  // hence, the worst case of inserting while keep looking up isn't likely to happen
+  if (id2word_.size() != word2id_.size() && (id - kSpecialTokens::num_tokens >= id2word_.size())) {
+    id2word_.clear();
+    id2word_.reserve(word2id_.size());
+    for (auto p : word2id_) {
+      id2word_[p.second - kSpecialTokens::num_tokens] = p.first;
+    }
+  }
   if (id < kSpecialTokens::num_tokens) {
     return reserved_token_str_[id];
   } else if (id - kSpecialTokens::num_tokens >= id2word_.size()) {
@@ -97,5 +101,11 @@ Status Vocab::BuildFromPyDict(const py::dict &words, std::shared_ptr<Vocab> *voc
   return Status::OK();
 }
 const std::vector<WordType> Vocab::reserved_token_str_ = {"<pad>", "<unk>"};
+
+void Vocab::append_word(const std::string &word) {
+  if (word2id_.find(word) == word2id_.end()) {
+    word2id_[word] = word2id_.size() + kSpecialTokens::num_tokens;
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

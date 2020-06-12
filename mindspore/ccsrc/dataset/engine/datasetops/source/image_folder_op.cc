@@ -364,9 +364,7 @@ Status ImageFolderOp::startAsyncWalk() {
 }
 
 Status ImageFolderOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
-  }
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   // Registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(folder_name_queue_->Register(tree_->AllTasks()));

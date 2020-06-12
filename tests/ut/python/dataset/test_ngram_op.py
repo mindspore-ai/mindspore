@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing NgramOP in DE
+Testing Ngram in mindspore.dataset
 """
 import mindspore.dataset as ds
 import mindspore.dataset.text as nlp

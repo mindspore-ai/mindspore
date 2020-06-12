@@ -516,6 +516,7 @@ void bindInfoObjects(py::module *m) {
 
 void bindVocabObjects(py::module *m) {
   (void)py::class_<Vocab, std::shared_ptr<Vocab>>(*m, "Vocab")
+    .def(py::init<>())
     .def_static("from_list",
                 [](const py::list &words) {
                   std::shared_ptr<Vocab> v;
@@ -626,6 +627,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("CIFAR10", OpName::kCifar10)
     .value("CIFAR100", OpName::kCifar100)
     .value("RANDOMDATA", OpName::kRandomData)
+    .value("BUILDVOCAB", OpName::kBuildVocab)
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile);
 

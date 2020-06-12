@@ -177,6 +177,8 @@ class Iterator:
             op_type = OpName.RANDOMDATA
         elif isinstance(dataset, de.TextFileDataset):
             op_type = OpName.TEXTFILE
+        elif isinstance(dataset, de.BuildVocabDataset):
+            op_type = OpName.BUILDVOCAB
         else:
             raise ValueError("Unsupported DatasetOp")
 
