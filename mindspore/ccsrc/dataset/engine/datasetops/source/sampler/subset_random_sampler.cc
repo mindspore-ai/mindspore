@@ -94,7 +94,7 @@ Status SubsetRandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffe
     RETURN_IF_NOT_OK(CreateSamplerTensor(&outputIds, last_id - sample_id_));
 
     // Initialize tensor
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(outputIds->GetMutableBuffer());
+    auto id_ptr = outputIds->begin<int64_t>();
     while (sample_id_ < last_id) {
       if (indices_[sample_id_] >= num_rows_) {
         std::string err_msg =

@@ -73,8 +73,8 @@ Status PKSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
     std::shared_ptr<Tensor> sample_ids;
     int64_t last_id = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, last_id - next_id_));
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(sample_ids->GetMutableBuffer());
-    while (next_id_ < last_id) {
+    auto id_ptr = sample_ids->begin<int64_t>();
+    while (next_id_ < last_id && id_ptr != sample_ids->end<int64_t>()) {
       int64_t cls_id = next_id_++ / samples_per_class_;
       const std::vector<int64_t> &samples = label_to_ids_[labels_[cls_id]];
       int64_t rnd_ind = std::uniform_int_distribution<int64_t>(0, samples.size() - 1)(rnd_);

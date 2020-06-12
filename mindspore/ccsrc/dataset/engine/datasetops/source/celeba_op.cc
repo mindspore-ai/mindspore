@@ -363,19 +363,7 @@ Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>
 
   Path path(folder_path_);
   Path image_path = path / image_label.first;
-  std::ifstream handle(image_path.toString(), std::ios::binary | std::ios::in);
-  if (handle.fail()) {
-    std::string err_msg = "Fail to open file: " + image_path.toString();
-    return Status(StatusCode::kFileNotExist, __LINE__, __FILE__, err_msg);
-  }
-
-  (void)handle.seekg(0, std::ios::end);
-  int64_t num_elements = handle.tellg();
-  (void)handle.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
-                                        TensorShape(std::vector<dsize_t>(1, num_elements)),
-                                        data_schema_->column(0).type()));
-  (void)handle.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, image_path.toString()));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {

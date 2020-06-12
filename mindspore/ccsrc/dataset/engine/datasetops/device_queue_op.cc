@@ -254,7 +254,7 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memory malloc failed.");
     }
     (void)memset_s(sub_item.data_ptr_, sub_item.data_len_, 0, sub_item.data_len_);
-    unsigned char *column_data = curr_row[i]->GetMutableBuffer();
+    const unsigned char *column_data = curr_row[i]->GetBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
       MS_LOG(ERROR) << "memcpy_s failed!";

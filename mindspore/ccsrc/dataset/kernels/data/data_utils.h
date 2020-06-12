@@ -101,11 +101,11 @@ Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> 
                     const std::vector<dsize_t> &pad_shape, const std::string &pad_val);
 
 // recursive helper function for padding string tensors. This function could be very expensive if called on a
-// multi-dimensional tensor it is only meant to be called by PadEndNumeric.
+// multi-dimensional tensor it is only meant to be called by PadEndString.
 // @tparam T - type of tensor and fill value
 // @param std::shared_ptr<Tensor> src - Tensor to pad from
 // @param std::shared_ptr<Tensor>* dst - Tensor to pad to, return value
-// @param std::vector<dsize_t> cur_ind - recursion helper
+// @param std::vector<dsize_t> cur_ind - recursion helperas text
 // @param std::string pad_val - value to pad tensor with
 // @param size_t cur_dim - recursion helper
 // @return Status - The error code return

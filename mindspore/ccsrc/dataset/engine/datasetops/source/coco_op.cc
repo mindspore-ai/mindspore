@@ -591,17 +591,8 @@ Status CocoOp::LaunchThreadsAndInitOp() {
 }
 
 Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
-  std::ifstream fs;
-  fs.open(path, std::ios::binary | std::ios::in);
-  if (fs.fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + path);
-  }
-  int64_t num_elements = fs.seekg(0, std::ios::end).tellg();
-  (void)fs.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(
-    Tensor::CreateTensor(tensor, col.tensorImpl(), TensorShape(std::vector<dsize_t>(1, num_elements)), col.type()));
-  (void)fs.read(reinterpret_cast<char *>((*tensor)->GetMutableBuffer()), num_elements);
-  fs.close();
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, path));
+
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {

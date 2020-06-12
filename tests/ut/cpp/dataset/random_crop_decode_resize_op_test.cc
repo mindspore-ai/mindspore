@@ -54,16 +54,17 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   auto decode_and_crop = static_cast<RandomCropAndResizeOp>(crop_and_decode_copy);
   EXPECT_TRUE(crop_and_decode.OneToOne());
   GlobalContext::config_manager()->set_seed(42);
-  for (int i = 0; i < 100; i++) {
+  for (int k = 0; k < 100; k++) {
     (void)crop_and_decode.Compute(raw_input_tensor_, &crop_and_decode_output);
     (void)decode_and_crop.Compute(input_tensor_, &decode_and_crop_output);
-    cv::Mat output1(target_height, target_width, CV_8UC3, crop_and_decode_output->GetMutableBuffer());
-    cv::Mat output2(target_height, target_width, CV_8UC3, decode_and_crop_output->GetMutableBuffer());
+    cv::Mat output1 = CVTensor::AsCVTensor(crop_and_decode_output)->mat().clone();
+    cv::Mat output2 = CVTensor::AsCVTensor(decode_and_crop_output)->mat().clone();
+
     long int mse_sum = 0;
     long int count = 0;
     int a, b;
-    for (int j = 0; j < target_height; j++) {
-      for (int k = 0; k < target_width; k++) {
+    for (int i = 0; i < target_height; i++) {
+      for (int j = 0; j < target_width; j++) {
         a = static_cast<int>(output1.at<cv::Vec3b>(i, j)[1]);
         b = static_cast<int>(output2.at<cv::Vec3b>(i, j)[1]);
         mse_sum += sqrt((a - b) * (a - b));
@@ -133,8 +134,8 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
     crop_and_decode_status = Crop(decoded, &decoded_and_cropped, x, y, crop_width, crop_height);
     decode_and_crop_status = JpegCropAndDecode(raw_input_tensor_, &cropped_and_decoded, x, y, crop_width, crop_height);
     {
-      cv::Mat M1(crop_height, crop_width, CV_8UC3, decoded_and_cropped->GetMutableBuffer());
-      cv::Mat M2(crop_height, crop_width, CV_8UC3, cropped_and_decoded->GetMutableBuffer());
+      cv::Mat M1 = CVTensor::AsCVTensor(decoded_and_cropped)->mat().clone();
+      cv::Mat M2 = CVTensor::AsCVTensor(cropped_and_decoded)->mat().clone();
       for (int i = 0; i < crop_height; ++i) {
         for (int j = 0; j < crop_width; ++j) {
           m1 = M1.at<cv::Vec3b>(i, j)[1];

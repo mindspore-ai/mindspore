@@ -96,7 +96,7 @@ Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
-bool HasJpegMagic(const unsigned char *data, size_t data_size);
+bool HasJpegMagic(const std::shared_ptr<Tensor> &input);
 
 void JpegSetSource(j_decompress_ptr c_info, const void *data, int64_t data_size);
 

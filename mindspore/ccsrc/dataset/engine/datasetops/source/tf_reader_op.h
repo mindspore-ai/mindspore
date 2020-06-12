@@ -296,17 +296,8 @@ class TFReaderOp : public ParallelOp {
   // @param column_values_list - the cell that contains the bytes list to read from.
   // @param elementStr - the string we read the value into.
   // @return Status - the error code returned.
-  Status LoadBytesList(const ColDescriptor &current_col, const dataengine::Feature &column_values_list,
-                       int32_t *num_elements, std::shared_ptr<Tensor> *tensor);
-
-  // Loads all the strings in bytes_list into the memory at current_tensor_addr.
-  // @param current_tensor_addr - the memory address to load the strings to.
-  // @param bytes_list - the list of strings to load.
-  // @param tensor_bytes_remaining - the number of bytes available for this function to use.
-  // @param pad_size - number of bytes to pad to.
-  // @return Status - the error code returned.
-  Status LoadAndPadBytes(unsigned char *current_tensor_addr, const dataengine::BytesList &bytes_list,
-                         int64_t tensor_bytes_remaining, int64_t pad_size);
+  static Status LoadBytesList(const ColDescriptor &current_col, const dataengine::Feature &column_values_list,
+                              int32_t *num_elements, std::shared_ptr<Tensor> *tensor);
 
   // Reads values from a float list
   // @param current_col - the column descriptor containing the expected shape and type of the data.

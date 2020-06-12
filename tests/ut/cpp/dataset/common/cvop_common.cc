@@ -28,9 +28,9 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 using UT::CVOP::CVOpCommon;
 
 CVOpCommon::CVOpCommon() {}
@@ -52,15 +52,7 @@ std::string CVOpCommon::GetFilename() {
 
 void CVOpCommon::GetInputImage(std::string filename) {
   try {
-    std::ifstream tmp(filename, std::ios::binary | std::ios::ate);
-    dsize_t file_size = tmp.tellg();
-    tmp.close();
-
-    std::ifstream file(filename, std::ios::binary);
-    TensorShape in_shape({file_size});
-    raw_input_tensor_ = std::make_shared<Tensor>(in_shape, DataType(DataType::DE_UINT8));
-
-    file.read(reinterpret_cast<char *>(raw_input_tensor_->GetMutableBuffer()), raw_input_tensor_->SizeInBytes());
+    Tensor::CreateTensor(&raw_input_tensor_, filename);
     raw_cv_image_ = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
     input_tensor_ = std::dynamic_pointer_cast<Tensor>(std::make_shared<CVTensor>(raw_cv_image_));
     SwapRedAndBlue(input_tensor_, &input_tensor_);
