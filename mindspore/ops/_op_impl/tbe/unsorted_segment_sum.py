@@ -27,6 +27,7 @@ unsorted_segment_sum_op_info = TBERegOp("UnsortedSegmentSum") \
     .input(0, "x", False, "required", "all") \
     .input(1, "segment_ids", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I8_Default) \
     .dtype_format(DataType.I8_5HD, DataType.I32_5HD, DataType.I8_5HD) \
     .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.U8_Default) \

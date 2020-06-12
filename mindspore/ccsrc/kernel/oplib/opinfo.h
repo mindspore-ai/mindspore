@@ -126,6 +126,8 @@ class OpInfo {
   bool is_ref() const { return !ref_infos_.empty(); }
   bool has_ref_index(size_t out_index) const { return ref_infos_.find(out_index) != ref_infos_.end(); }
   void add_ref_pair(size_t out_index, size_t in_index) { (void)ref_infos_.emplace(out_index, in_index); }
+  void ClearInputs() { (void)inputs_ptr_.clear(); }
+  void ClearOutputs() { (void)outputs_ptr_.clear(); }
 
  private:
   std::string op_name_;

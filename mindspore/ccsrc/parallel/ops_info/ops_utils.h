@@ -216,6 +216,13 @@ constexpr char NEG[] = "Neg";
 constexpr char BATCH_MATMUL[] = "BatchMatMul";
 constexpr char EXPAND_DIMS[] = "ExpandDims";
 constexpr char SQUARE[] = "Square";
+constexpr char BATCHMATMUL[] = "BatchMatMul";
+constexpr char TOPK[] = "TopK";
+constexpr char IN_TOPK[] = "InTopK";
+constexpr char PACK[] = "Pack";
+constexpr char GATHER_ND[] = "GatherNd";
+constexpr char UNSORTEF_SEGMENT_MIND[] = "UnsortedSegmentMinD";
+constexpr char UNSORTEF_SEGMENT_PRODD[] = "UnsortedSegmentProdD";
 
 // Parallel don't care
 constexpr char TUPLE_GETITEM[] = "tuple_getitem";

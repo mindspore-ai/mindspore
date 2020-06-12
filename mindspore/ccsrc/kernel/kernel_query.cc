@@ -20,7 +20,7 @@
 #include "kernel/aicpu/aicpu_kernel_metadata.h"
 #include "kernel/rts/rt_kernel_info.h"
 #include "kernel/hccl/hccl_kernel_metadata.h"
-#include "kernel/tbe/tbe_kernel_select.h"
+#include "kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 #include "session/anf_runtime_algorithm.h"
 
 namespace mindspore {
@@ -63,7 +63,6 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   TbeMetadataInfo(kernel_node, kernel_info_list);
-  FilterInvalidKernelInfo(kernel_node, kernel_info_list);
   if (kernel_info_list->empty()) {
     AicpuMetadataInfo(kernel_node, kernel_info_list);
     if (!kernel_info_list->empty()) {
@@ -114,7 +113,6 @@ bool IsSupportedByAICore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr
   auto cnode = kernel_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   TbeMetadataInfo(cnode, &kernel_info_list);
-  FilterInvalidKernelInfo(cnode, &kernel_info_list);
   return std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
                      [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
                        MS_EXCEPTION_IF_NULL(item);

@@ -26,32 +26,27 @@ cast_op_info = TBERegOp("Cast") \
     .attr("dst_type", "required", "int", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.BOOL_Default, DataType.F16_Default) \
-    .dtype_format(DataType.BOOL_Default, DataType.U8_Default) \
-    .dtype_format(DataType.BOOL_Default, DataType.F32_Default) \
-    .dtype_format(DataType.BOOL_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I8_Default, DataType.F16_Default) \
-    .dtype_format(DataType.I8_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I8_Default, DataType.I32_Default) \
-    .dtype_format(DataType.U8_Default, DataType.F16_Default) \
-    .dtype_format(DataType.U8_Default, DataType.F32_Default) \
-    .dtype_format(DataType.U8_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.BOOL_Default) \
-    .dtype_format(DataType.I32_Default, DataType.F16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U8_Default) \
-    .dtype_format(DataType.F16_Default, DataType.U8_Default) \
-    .dtype_format(DataType.F16_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F32_5HD) \
-    .dtype_format(DataType.F16_FracZ, DataType.F32_FracZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F32_FracNZ) \
-    .dtype_format(DataType.F32_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_FracZ, DataType.F16_FracZ) \
-    .dtype_format(DataType.F32_FracNZ, DataType.F16_FracNZ) \
-    .dtype_format(DataType.F32_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default) \
+    .op_pattern("formatAgnostic") \
+    .dtype_format(DataType.BOOL_None, DataType.F16_None) \
+    .dtype_format(DataType.BOOL_None, DataType.U8_None) \
+    .dtype_format(DataType.BOOL_None, DataType.F32_None) \
+    .dtype_format(DataType.BOOL_None, DataType.I32_None) \
+    .dtype_format(DataType.I8_None, DataType.F16_None) \
+    .dtype_format(DataType.I8_None, DataType.F32_None) \
+    .dtype_format(DataType.I8_None, DataType.I32_None) \
+    .dtype_format(DataType.U8_None, DataType.F16_None) \
+    .dtype_format(DataType.U8_None, DataType.F32_None) \
+    .dtype_format(DataType.U8_None, DataType.I32_None) \
+    .dtype_format(DataType.I32_None, DataType.BOOL_None) \
+    .dtype_format(DataType.I32_None, DataType.F16_None) \
+    .dtype_format(DataType.I32_None, DataType.F32_None) \
+    .dtype_format(DataType.I32_None, DataType.I8_None) \
+    .dtype_format(DataType.I32_None, DataType.U8_None) \
+    .dtype_format(DataType.F16_None, DataType.U8_None) \
+    .dtype_format(DataType.F16_None, DataType.F32_None) \
+    .dtype_format(DataType.F16_None, DataType.I32_None) \
+    .dtype_format(DataType.F32_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.I32_None) \
     .get_op_info()
 
 

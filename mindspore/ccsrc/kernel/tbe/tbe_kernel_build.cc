@@ -111,41 +111,20 @@ bool TbeKernelJsonCreator::GenInputDescJson(const shared_ptr<AnfNode> &anf_node,
   if (input_ptr->name() == "input_indices" && op_name == kTopKOpName) {
     TbeAdapter::GenTopKV2IndicesTensorInfo(anf_node, real_input_index, input_list, creater_type_);
   } else {
-    // dtype : float16
-    auto tensor_dtype =
-      std::make_shared<TensorType>(TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index)));
-    MS_EXCEPTION_IF_NULL(tensor_dtype);
-    std::string dtype = tensor_dtype->element()->ToString();
-    dtype = tbe::DtypeToString(dtype);
-
-    // format
-    std::string format = AnfAlgo::GetInputFormat(anf_node, real_input_index);
-    if (format == kOpFormat_DEFAULT) {
-      format = kOpFormat_NCHW;
-    } else if (format == kOpFormat_FRAC_Z) {
-      format = kOpFormat_FRACTAL_Z;
-    }
-
-    nlohmann::json input_desc_json;
-    input_desc_json["dtype"] = dtype;
-    input_desc_json["name"] = op_input_name + std::to_string(input_i);
+    auto dtype = GetDeviceInputType(anf_node, real_input_index);
+    auto format = GetDeviceInputFormat(anf_node, real_input_index);
+    auto shape = GetDeviceInputShape(anf_node, real_input_index);
     auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
     if (ori_shape.empty()) {
       ori_shape.emplace_back(1);
     }
+    nlohmann::json input_desc_json;
+    input_desc_json["dtype"] = dtype;
+    input_desc_json["name"] = op_input_name + std::to_string(input_i);
     input_desc_json["ori_shape"] = ori_shape;
     input_desc_json["ori_format"] = kOpFormat_NCHW;
-    auto shape = AnfAlgo::GetInputDeviceShape(anf_node, real_input_index);
-    if (shape.empty()) {
-      shape.emplace_back(1);
-    }
-    if (creater_type_ == OP_SELECT_FORMAT || creater_type_ == CHECK_SUPPORTED) {
-      input_desc_json["shape"] = ori_shape;
-      input_desc_json["format"] = kOpFormat_NCHW;
-    } else {
-      input_desc_json["shape"] = shape;
-      input_desc_json["format"] = format;
-    }
+    input_desc_json["shape"] = shape;
+    input_desc_json["format"] = format;
     input_desc_json["valid"] = value;
     input_desc_json["param_type"] = input_ptr->param_type();
     input_list->emplace_back(input_desc_json);
@@ -325,40 +304,22 @@ void TbeKernelJsonCreator::GenOutputList(const shared_ptr<AnfNode> &anf_node, co
   MS_EXCEPTION_IF_NULL(output_idx);
   MS_EXCEPTION_IF_NULL(output_list);
   for (size_t i = 0; i < output_obj_num; i++) {
-    nlohmann::json output_obj;
-    auto type_ptr = std::make_shared<TensorType>(TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, *output_idx)));
-    std::string dtype = type_ptr->element()->ToString();
-    dtype = tbe::DtypeToString(dtype);
-    std::string format = AnfAlgo::GetOutputFormat(anf_node, *output_idx);
-    if (format == kOpFormat_DEFAULT) {
-      format = kOpFormat_NCHW;
-    } else if (format == kOpFormat_FRAC_Z) {
-      format = kOpFormat_FRACTAL_Z;
-    }
-    std::vector<size_t> ori_shape;
-    if (AnfAlgo::GetOutputInferShape(anf_node, *output_idx).empty()) {
+    auto dtype = GetDeviceOutputType(anf_node, *output_idx);
+    auto format = GetDeviceOutputFormat(anf_node, *output_idx);
+    auto shape = GetDeviceOutputShape(anf_node, *output_idx);
+    std::vector<size_t> ori_shape = AnfAlgo::GetOutputInferShape(anf_node, *output_idx);
+    if (ori_shape.empty()) {
       ori_shape.emplace_back(1);
-    } else {
-      ori_shape = AnfAlgo::GetOutputInferShape(anf_node, *output_idx);
     }
+    nlohmann::json output_obj;
     output_obj["dtype"] = dtype;
-    auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, *output_idx);
-    if (shape.empty()) {
-      shape.emplace_back(1);
-    }
-    if (creater_type_ == OP_SELECT_FORMAT || creater_type_ == CHECK_SUPPORTED) {
-      output_obj["shape"] = ori_shape;
-      output_obj["format"] = kOpFormat_NCHW;
-    } else {
-      output_obj["shape"] = shape;
-      output_obj["format"] = format;
-    }
+    output_obj["shape"] = shape;
+    output_obj["format"] = format;
     output_obj["ori_shape"] = ori_shape;
     output_obj["ori_format"] = kOpFormat_NCHW;
     output_obj["name"] = output_ptr->name();
     output_obj["valid"] = true;
     output_obj["param_type"] = output_ptr->param_type();
-
     output_list->emplace_back(output_obj);
     (*output_idx)++;
   }
@@ -454,6 +415,84 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   } else {
     MS_LOG(EXCEPTION) << "type: " << type << "not support";
   }
+}
+
+std::vector<size_t> TbeKernelJsonCreator::GetDeviceInputShape(const AnfNodePtr &anf_node, size_t real_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<size_t> shape;
+  if (creater_type_ == OP_SELECT_FORMAT || creater_type_ == CHECK_SUPPORTED) {
+    shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_index);
+  } else {
+    shape = AnfAlgo::GetInputDeviceShape(anf_node, real_index);
+  }
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
+
+std::string TbeKernelJsonCreator::GetDeviceInputType(const AnfNodePtr &anf_node, size_t real_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  TypeId type_id;
+  if (creater_type_ == OP_SELECT_FORMAT) {
+    type_id = AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_index);
+  } else {
+    type_id = AnfAlgo::GetInputDeviceDataType(anf_node, real_index);
+  }
+  return tbe::TypeIdToString(type_id);
+}
+
+std::string TbeKernelJsonCreator::GetDeviceInputFormat(const AnfNodePtr &anf_node, size_t real_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::string format = kOpFormat_NCHW;
+  if (creater_type_ != OP_SELECT_FORMAT && creater_type_ != CHECK_SUPPORTED) {
+    format = AnfAlgo::GetInputFormat(anf_node, real_index);
+    if (format == kOpFormat_FRAC_Z) {
+      format = kOpFormat_FRACTAL_Z;
+    } else if (format == kOpFormat_DEFAULT) {
+      format = kOpFormat_NCHW;
+    }
+  }
+  return format;
+}
+
+std::vector<size_t> TbeKernelJsonCreator::GetDeviceOutputShape(const AnfNodePtr &anf_node, size_t real_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<size_t> shape;
+  if (creater_type_ == OP_SELECT_FORMAT || creater_type_ == CHECK_SUPPORTED) {
+    shape = AnfAlgo::GetOutputInferShape(anf_node, real_index);
+  } else {
+    shape = AnfAlgo::GetOutputDeviceShape(anf_node, real_index);
+  }
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
+
+std::string TbeKernelJsonCreator::GetDeviceOutputType(const AnfNodePtr &anf_node, size_t real_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  TypeId type_id;
+  if (creater_type_ == OP_SELECT_FORMAT) {
+    type_id = AnfAlgo::GetOutputInferDataType(anf_node, real_index);
+  } else {
+    type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, real_index);
+  }
+  return tbe::TypeIdToString(type_id);
+}
+
+std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_node, size_t real_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::string format = kOpFormat_NCHW;
+  if (creater_type_ != OP_SELECT_FORMAT && creater_type_ != CHECK_SUPPORTED) {
+    format = AnfAlgo::GetOutputFormat(anf_node, real_index);
+    if (format == kOpFormat_FRAC_Z) {
+      format = kOpFormat_FRACTAL_Z;
+    } else if (format == kOpFormat_DEFAULT) {
+      format = kOpFormat_NCHW;
+    }
+  }
+  return format;
 }
 
 bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,

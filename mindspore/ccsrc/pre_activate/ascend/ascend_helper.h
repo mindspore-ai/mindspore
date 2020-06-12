@@ -21,7 +21,6 @@
 #include <vector>
 #include "device/ascend/kernel_select_ascend.h"
 #include "kernel/kernel_query.h"
-#include "kernel/tbe/tbe_kernel_select.h"
 #include "kernel/oplib/oplib.h"
 #include "session/anf_runtime_algorithm.h"
 
