@@ -88,6 +88,6 @@ class SentimentNet(nn.Cell):
         embeddings = self.trans(embeddings, self.perm)
         output, _ = self.encoder(embeddings, (self.h, self.c))
         # states[i] size(64,200)  -> encoding.size(64,400)
-        encoding = self.concat((output[0], output[1]))
+        encoding = self.concat((output[0], output[-1]))
         outputs = self.decoder(encoding)
         return outputs
