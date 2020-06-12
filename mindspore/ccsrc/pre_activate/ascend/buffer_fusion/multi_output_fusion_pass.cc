@@ -36,6 +36,8 @@ void MultiOutputFusionPass::MatchMultiOutputEltwise(const CNodePtr &cnode, const
   std::unordered_set<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(1);
   if (CheckMultiOutputEltWiseNode(manager.get(), eltwise_input)) {
+    std::vector<int> output_used_num{SizeToInt(manager->node_users()[eltwise_input].size())};
+    AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), eltwise_input);
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
