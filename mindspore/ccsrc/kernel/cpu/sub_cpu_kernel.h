@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_SUBSCALAR_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_SUBSCALAR_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_CPU_SUB_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_CPU_SUB_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include "kernel/cpu/cpu_kernel.h"
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SubscalarCPUKernel : public CPUKernel {
+class SubCPUKernel : public CPUKernel {
  public:
-  SubscalarCPUKernel() : offset_(0) {}
-  ~SubscalarCPUKernel() override = default;
+  SubCPUKernel() : offset_(0) {}
+  ~SubCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -36,9 +36,8 @@ class SubscalarCPUKernel : public CPUKernel {
   int offset_;
 };
 
-MS_REG_CPU_KERNEL(Subscalar, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  SubscalarCPUKernel);
+MS_REG_CPU_KERNEL(Sub, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SubCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_SUBSCALAR_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_CPU_SUB_CPU_KERNEL_H_
