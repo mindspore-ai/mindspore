@@ -48,9 +48,9 @@ class GPUMemCopyManager : public MemCopyManager {
 
   DeviceAddressPtr UpdateSwapInQueue() override;
 
-  bool AllocHostPinnedMem(size_t size, void **addr) override;
+  bool AllocHostPinnedMem(size_t size, void **addr) const override;
 
-  void FreeHostPinnedMem(void *addr) override;
+  void FreeHostPinnedMem(void *addr) const override;
 
   void ClearSwapQueue() override;
 
@@ -61,7 +61,6 @@ class GPUMemCopyManager : public MemCopyManager {
   std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_in_queue_;
 };
 using GPUMemCopyManagerPtr = std::shared_ptr<GPUMemCopyManager>;
-
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

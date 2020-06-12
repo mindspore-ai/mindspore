@@ -171,7 +171,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(DEBUG) << "kernel runtime run graph in " << cost << " us";
+  MS_LOG(DEBUG) << "GPU kernel runtime run graph in " << cost << " us";
   return ret;
 }
 
