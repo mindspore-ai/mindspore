@@ -457,6 +457,9 @@ class SubsetRandomSampler(BuiltinSampler):
 
     def get_num_samples(self):
         num_samples = super().get_num_samples()
+        if num_samples is None:
+            return len(self.indices)
+
         return min(len(self.indices), num_samples)
 
 
