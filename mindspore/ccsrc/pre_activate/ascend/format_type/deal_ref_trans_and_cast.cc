@@ -37,7 +37,7 @@ session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
     std::string op_name = AnfAlgo::GetCNodeName(cnode);
     auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
     // deal ref op
-    if (op_info->is_ref()) {
+    if (op_info != nullptr && op_info->is_ref()) {
       auto ref_infos = op_info->ref_infos();
       if (ref_infos.count(cur_out_index) != 0) {
         auto in_index = ref_infos.at(cur_out_index);

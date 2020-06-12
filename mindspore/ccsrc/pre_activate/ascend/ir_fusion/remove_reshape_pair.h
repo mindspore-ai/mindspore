@@ -28,15 +28,10 @@ namespace mindspore {
 namespace opt {
 class RemoveReshapePair : public PatternProcessPass {
  public:
-  explicit RemoveReshapePair(bool multigraph = true) : PatternProcessPass("remove_reshape_pair", multigraph) {
-    input_varptr_ = std::make_shared<Var>();
-  }
+  explicit RemoveReshapePair(bool multigraph = true) : PatternProcessPass("remove_reshape_pair", multigraph) {}
   ~RemoveReshapePair() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-
- private:
-  VarPtr input_varptr_;
 };
 }  // namespace opt
 }  // namespace mindspore
