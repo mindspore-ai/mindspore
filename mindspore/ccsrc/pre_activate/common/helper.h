@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <utility>
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
@@ -159,6 +160,9 @@ void HideNopNode(session::KernelGraph *const graph);
 void RemoveNopNode(session::KernelGraph *const graph);
 
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
+
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                             const AnfNodePtr &node);
 
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
