@@ -104,12 +104,12 @@ DeviceAddressPtr GPUMemCopyManager::UpdateSwapInQueue() {
   return device_address;
 }
 
-bool GPUMemCopyManager::AllocHostPinnedMem(size_t size, void **addr) {
+bool GPUMemCopyManager::AllocHostPinnedMem(size_t size, void **addr) const {
   auto alloc_size = CudaDriver::AllocHostPinnedMem(size, addr);
   return alloc_size == size;
 }
 
-void GPUMemCopyManager::FreeHostPinnedMem(void *addr) { CudaDriver::FreeHostPinnedMem(addr); }
+void GPUMemCopyManager::FreeHostPinnedMem(void *addr) const { CudaDriver::FreeHostPinnedMem(addr); }
 
 void GPUMemCopyManager::ClearSwapQueue() {
   CHECK_OP_RET_WITH_EXCEPT(SyncMemCopyStream(SwapKind::kDeviceToHost), "Failed to sync swap out stream");
