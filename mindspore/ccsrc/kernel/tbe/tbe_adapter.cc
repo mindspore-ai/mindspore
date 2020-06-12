@@ -111,6 +111,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"reduce_prod", "reduce_prod_d"},
   {"a_cos", "acos"},
   {"a_cos_grad", "acos_grad"},
+  {"histogram_fixed_width", "histogram_fixed_width_d"},
   {"broadcast_to", "broadcast_to_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {

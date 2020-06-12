@@ -49,7 +49,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
-                       Reciprocal, CumSum,
+                       Reciprocal, CumSum, HistogramFixedWidth,
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh)
 
@@ -62,7 +62,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      Gelu, Elu,
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss,
                      LogSoftmax,
-                     MaxPool,
+                     MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ConfusionMulGrad,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
@@ -207,6 +207,7 @@ __all__ = [
     'ScatterNd',
     'ScatterMax',
     'ResizeNearestNeighbor',
+    'HistogramFixedWidth',
     'Pad',
     'MirrorPad',
     'GatherNd',
@@ -298,7 +299,8 @@ __all__ = [
     "BasicLSTMCell",
     "ConfusionMatrix",
     "BroadcastTo",
-    "Range"
+    "Range",
+    "DataFormatDimMap"
 ]
 
 __all__.extend(_quant_ops.__all__)
