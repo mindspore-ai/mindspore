@@ -202,7 +202,6 @@ class Cell:
         if context.get_context("mode") == context.GRAPH_MODE:
             out = self.compile_and_run(*inputs)
             return out
-        self.init_parameters_data()
         orign_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
