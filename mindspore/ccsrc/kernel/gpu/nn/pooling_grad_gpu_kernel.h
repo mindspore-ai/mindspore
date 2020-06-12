@@ -239,7 +239,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
   void SetPoolingMode(const CNodePtr &kernel_node) {
     pad_mode_ = GetAttr<std::string>(kernel_node, "padding");
     stride_ = GetAttr<std::vector<int>>(kernel_node, "strides");
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPoolGradGpu") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;

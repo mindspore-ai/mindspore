@@ -82,9 +82,9 @@ class MatMulGpuKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    dtype_a_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
-    dtype_b_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1))];
-    dtype_c_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0))];
+    dtype_a_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
+    dtype_b_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));
+    dtype_c_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0)));
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(output_shape);
     if (is_null_input_) {

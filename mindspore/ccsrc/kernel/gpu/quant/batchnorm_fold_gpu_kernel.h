@@ -141,7 +141,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     input_size_ = sizeof(T) * batch_ * channel_ * height_ * width_;
     output_size_ = sizeof(T) * channel_;
 
-    cudnnDataType_t cudnnDataType = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnnDataType_t cudnnDataType = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnnDataType, batch_, channel_, height_, width_),
       "Set x desc failed");
