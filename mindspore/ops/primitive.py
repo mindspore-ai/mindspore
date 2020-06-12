@@ -140,9 +140,24 @@ class Primitive(Primitive_):
             return self.attrs[item]
         raise AttributeError(item)
 
+    def check_elim(self, *args):
+        """
+        Check whether or not certain inputs should go into backend. Subclass in need should override this method.
+
+        Args:
+            Same as arguments of current Primitive
+
+        Returns:
+            A tuple of two elements, first element indicates whether or not we should filter out current arguments;
+            seconde element is the output in case where we should filter out the arguments.
+        """
+        return (False, None)
+
     def __call__(self, *args):
-        output = _run_op(self, self.name, args)
-        return output
+        should_elim, output = self.check_elim(*args)
+        if should_elim:
+            return output
+        return _run_op(self, self.name, args)
 
     def __getstate__(self):
         return self.__dict__

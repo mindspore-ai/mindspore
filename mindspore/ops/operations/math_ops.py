@@ -715,6 +715,13 @@ class AddN(PrimitiveWithInfer):
     def __init__(self):
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
+    def check_elim(self, inputs):
+        if len(inputs) != 1:
+            return (False, None)
+        if isinstance(inputs[0], Tensor):
+            return (True, inputs[0])
+        raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
+
     def infer_shape(self, inputs):
         cls_name = self.name
         validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
