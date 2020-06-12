@@ -23,6 +23,13 @@ namespace {
 constexpr size_t kSparseApplyFtrlInputSize = 5;
 }  // namespace
 
+void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+}
+
 void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -72,7 +79,7 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &workspace,
                                       const std::vector<kernel::AddressPtr> & /*outputs*/) {
   if (inputs.size() < kSparseApplyFtrlInputSize) {
     MS_LOG(EXCEPTION) << "error input output size!";
@@ -83,14 +90,11 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto linear = reinterpret_cast<float *>(inputs[2]->addr);
   auto grad = reinterpret_cast<float *>(inputs[3]->addr);
   auto indices = reinterpret_cast<int *>(inputs[4]->addr);
-
-  std::vector<float> new_grad;
-  new_grad.reserve(indices_size_ * var_outer_dim_size_);
-  std::vector<int> new_indices;
-  new_indices.reserve(indices_size_);
-  SparseGradient unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size_});
-  DeduplicateIndexedSlices(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
-                           var_outer_dim_size_);
+  auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
+  auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
+  SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
+  ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
+                       var_outer_dim_size_);
 
   for (size_t i = 0; i < unique_sparse_grad.indices_size_; ++i) {
     int index = unique_sparse_grad.indices_[i];

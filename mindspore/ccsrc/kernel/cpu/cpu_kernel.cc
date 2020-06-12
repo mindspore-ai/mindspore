@@ -37,8 +37,8 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 void CPUKernel::Init(const CNodePtr &kernel_node) {
-  InitInputOutputSize(kernel_node);
   InitKernel(kernel_node);
+  InitInputOutputSize(kernel_node);
 }
 
 void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {

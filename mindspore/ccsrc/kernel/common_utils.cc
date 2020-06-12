@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <map>
 #include <iostream>
+#include <utility>
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include "session/anf_runtime_algorithm.h"
@@ -580,6 +581,56 @@ void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGr
         unique_grad->value_[j] += origin_sparse_grad.value_[k];
       }
     }
+  }
+  unique_grad->indices_size_ = unique_indices_size;
+}
+
+void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                          size_t outer_dim) {
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.value_);
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.indices_);
+  MS_EXCEPTION_IF_NULL(unique_grad);
+  MS_EXCEPTION_IF_NULL(unique_grad->value_);
+  MS_EXCEPTION_IF_NULL(unique_grad->indices_);
+  size_t unique_indices_size = 0;
+  std::vector<std::pair<int, size_t>> sorted_indices;
+  sorted_indices.reserve(origin_sparse_grad.indices_size_);
+  for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
+    int index = origin_sparse_grad.indices_[i];
+    if (index < 0 || IntToSize(index) >= first_dim) {
+      continue;
+    }
+    sorted_indices.emplace_back(std::pair<int, size_t>(index, i * outer_dim));
+  }
+  std::sort(
+    sorted_indices.begin(), sorted_indices.end(),
+    [](const std::pair<int, size_t> &left, const std::pair<int, size_t> &right) { return left.first < right.first; });
+
+  int last_index = 0;
+  size_t indices_size = sorted_indices.size();
+  size_t start_index = 0;
+  size_t end_index = outer_dim;
+  size_t dst_len = indices_size * outer_dim;
+  for (size_t i = 0; i < indices_size; ++i) {
+    int index = sorted_indices[i].first;
+    if (i == 0 || last_index != index) {
+      if (i > 0 && last_index != index) {
+        unique_indices_size++;
+        start_index += outer_dim;
+        end_index += outer_dim;
+      }
+      unique_grad->indices_[unique_indices_size] = index;
+      auto ret_code = memcpy_s(unique_grad->value_ + start_index, dst_len - start_index,
+                               origin_sparse_grad.value_ + sorted_indices[i].second, outer_dim);
+      if (ret_code != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy data!";
+      }
+    } else {
+      for (size_t j = start_index, k = sorted_indices[i].second; j < end_index; ++j, ++k) {
+        unique_grad->value_[j] += origin_sparse_grad.value_[k];
+      }
+    }
+    last_index = index;
   }
   unique_grad->indices_size_ = unique_indices_size;
 }
