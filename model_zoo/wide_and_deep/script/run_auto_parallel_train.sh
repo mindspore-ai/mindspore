@@ -31,5 +31,5 @@ do
   cd ${execute_path}/device_$i/ || exit
   export RANK_ID=$i
   export DEVICE_ID=$i
-  python -s ${self_path}/../train_and_eval_multinpu.py --data_path=$DATASET --epochs=$EPOCH_SIZE >train_deep$i.log 2>&1 &
+  python -s ${self_path}/../train_and_eval_auto_parallel.py --data_path=$DATASET --epochs=$EPOCH_SIZE >train_deep$i.log 2>&1 &
 done

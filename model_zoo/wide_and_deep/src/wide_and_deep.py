@@ -19,7 +19,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-# from mindspore.nn import Dropout
+from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam, FTRL
 # from mindspore.nn.metrics import Metric
 from mindspore.common.initializer import Uniform, initializer
@@ -82,7 +82,7 @@ class DenseLayer(nn.Cell):
     """
 
     def __init__(self, input_dim, output_dim, weight_bias_init, act_str,
-                 keep_prob=0.7, scale_coef=1.0, convert_dtype=True):
+                 keep_prob=0.7, scale_coef=1.0, convert_dtype=True, drop_out=False):
         super(DenseLayer, self).__init__()
         weight_init, bias_init = weight_bias_init
         self.weight = init_method(
@@ -92,11 +92,12 @@ class DenseLayer(nn.Cell):
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
         self.cast = P.Cast()
-        #self.dropout = Dropout(keep_prob=keep_prob)
+        self.dropout = Dropout(keep_prob=keep_prob)
         self.mul = P.Mul()
         self.realDiv = P.RealDiv()
         self.scale_coef = scale_coef
         self.convert_dtype = convert_dtype
+        self.drop_out = drop_out
 
     def _init_activation(self, act_str):
         act_str = act_str.lower()
@@ -110,8 +111,8 @@ class DenseLayer(nn.Cell):
 
     def construct(self, x):
         x = self.act_func(x)
-        # if self.training:
-        #    x = self.dropout(x)
+        if self.training and self.drop_out:
+            x = self.dropout(x)
         x = self.mul(x, self.scale_coef)
         if self.convert_dtype:
             x = self.cast(x, mstype.float16)
@@ -163,23 +164,28 @@ class WideDeepModel(nn.Cell):
         self.dense_layer_1 = DenseLayer(self.all_dim_list[0],
                                         self.all_dim_list[1],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_2 = DenseLayer(self.all_dim_list[1],
                                         self.all_dim_list[2],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_3 = DenseLayer(self.all_dim_list[2],
                                         self.all_dim_list[3],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_4 = DenseLayer(self.all_dim_list[3],
                                         self.all_dim_list[4],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_5 = DenseLayer(self.all_dim_list[4],
                                         self.all_dim_list[5],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
 
         self.gather_v2 = P.GatherV2()
         self.mul = P.Mul()

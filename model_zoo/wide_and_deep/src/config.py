@@ -31,7 +31,7 @@ def argparse_init():
     parser.add_argument("--deep_layer_dim", type=int, nargs='+', default=[1024, 512, 256, 128])
     parser.add_argument("--deep_layer_act", type=str, default='relu')
     parser.add_argument("--keep_prob", type=float, default=1.0)
-
+    parser.add_argument("--dropout_flag", type=int, default=0)
     parser.add_argument("--output_path", type=str, default="./output/")
     parser.add_argument("--ckpt_path", type=str, default="./checkpoints/")
     parser.add_argument("--eval_file_name", type=str, default="eval.log")
@@ -86,7 +86,7 @@ class WideDeepConfig():
         self.weight_bias_init = ['normal', 'normal']
         self.emb_init = 'normal'
         self.init_args = [-0.01, 0.01]
-        self.dropout_flag = False
+        self.dropout_flag = bool(args.dropout_flag)
         self.l2_coef = 8e-5
 
         self.output_path = args.output_path
