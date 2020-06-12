@@ -201,6 +201,7 @@ constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";
 constexpr auto kAttrNewAxisMask = "new_axis_mask";
 constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
+constexpr auto kAttrDatadumpOriginalNames = "_datadump_original_names";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
