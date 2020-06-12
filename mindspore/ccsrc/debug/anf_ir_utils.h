@@ -118,6 +118,8 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
+
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_
