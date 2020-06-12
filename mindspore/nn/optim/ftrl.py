@@ -23,8 +23,18 @@ from .optimizer import Optimizer, apply_decay, grad_scale
 ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
-@ftrl_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
+@ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple", "Tensor",
+                   "Tensor")
+def _tensor_run_opt_with_sparse(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
+    """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
+    success = True
+    success = F.depend(success, spars_opt(weight, moment, linear, gradient[1], gradient[0]))
+    return success
+
+
+@ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
+                   "Tensor")
+def _tensor_run_opt(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
     success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
@@ -66,6 +76,11 @@ class FTRL(Optimizer):
     based on the loss functions. Refer to paper `Adaptive Bound Optimization for Online Convex Optimization
     <https://arxiv.org/abs/1002.4908>`_. Refer to paper `Ad Click Prediction: a View from the Trenches
     <https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf>`_ for engineering document.
+
+    Note:
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
+        `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
+        behavior is currently performed on the CPU, weight decay and loss scale is not supported.
 
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
@@ -109,8 +124,9 @@ class FTRL(Optimizer):
         self.weight_decay = weight_decay
         self.decay_tf = tuple((lambda: True)() for x in self.parameters)
         self.hyper_map = C.HyperMap()
+        self.map_ = C.Map()
         self.opt = P.ApplyFtrl(use_locking=use_locking)
-        self.one = Tensor(1, mstype.int32)
+        self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
 
     def construct(self, grads):
         params = self.parameters
@@ -121,6 +137,6 @@ class FTRL(Optimizer):
         if self.reciprocal_scale != 1.0:
             grads = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), grads)
         lr = self.learning_rate
-        success = self.hyper_map(F.partial(ftrl_opt, self.opt, lr, self.l1, self.l2, self.lr_power),
-                                 linear, grads, params, moments)
+        success = self.map_(F.partial(ftrl_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2, self.lr_power),
+                            linear, grads, params, moments)
         return success
