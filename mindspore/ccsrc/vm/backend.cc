@@ -349,7 +349,7 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   if (other_sess_ != nullptr && other_device_ == target) {
     return;
   }
-  other_sess_ = session::SessionFactory::Get().Create(kCPUDevice);
+  other_sess_ = session::SessionFactory::Get().Create(target);
   if (other_sess_ == nullptr) {
     MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
   }
