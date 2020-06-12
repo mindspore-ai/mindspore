@@ -362,7 +362,7 @@ class _Executor:
                 if not auto_parallel_mode:
                     param.init_data()
                 elif key not in obj.parameter_layout_dict:
-                    logger.info("Layout dict does not contain the key %s.", key)
+                    logger.debug("Layout dict does not contain the key %s.", key)
                     param.init_data(set_sliced=True)
                 else:
                     layout = obj.parameter_layout_dict[key]
