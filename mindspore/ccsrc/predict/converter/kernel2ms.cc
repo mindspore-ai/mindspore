@@ -108,8 +108,7 @@ bool Kernel2Ms::SetGraphOutputIdx(const KernelGraphPtr &kernel_graph_ptr, const 
 }
 
 bool Kernel2Ms::SetOpOutputIdx(const CNodePtr &c_node_ptr, const TensorPtr &output_tensor,
-                               const TensorCachePtr &tensor_cache, int ref_count, size_t order_index,
-                               NodeDef *ms_node) {
+                               const TensorCachePtr &tensor_cache, int ref_count, size_t order_index, OpDefT *ms_node) {
   MS_EXCEPTION_IF_NULL(c_node_ptr);
   MS_EXCEPTION_IF_NULL(output_tensor);
   MS_EXCEPTION_IF_NULL(ms_node);
@@ -123,7 +122,7 @@ bool Kernel2Ms::SetOpOutputIdx(const CNodePtr &c_node_ptr, const TensorPtr &outp
   std::vector<int> tensor_shape;
   (void)std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(tensor_shape), SizeToInt);
   int outputIndex = tensor_cache->addExTensor(tensor_key, output_tensor, ref_count, tensor_shape, KERNEL);
-  ms_node->opDef->outputIndex.push_back(outputIndex);
+  ms_node->outputIndex.push_back(outputIndex);
   return true;
 }
 
@@ -164,7 +163,7 @@ void Kernel2Ms::GetRealInpoutsPtr(const AnfNodePtr &node, std::vector<AnfNodePtr
   }
 }
 
-bool Kernel2Ms::SetOpInputIdx(const CNodePtr &c_node_ptr, const TensorCachePtr &tensor_cache, NodeDef *ms_node) {
+bool Kernel2Ms::SetOpInputIdx(const CNodePtr &c_node_ptr, const TensorCachePtr &tensor_cache, OpDefT *ms_node) {
   MS_EXCEPTION_IF_NULL(c_node_ptr);
   MS_EXCEPTION_IF_NULL(tensor_cache);
   MS_EXCEPTION_IF_NULL(ms_node);
@@ -184,7 +183,7 @@ bool Kernel2Ms::SetOpInputIdx(const CNodePtr &c_node_ptr, const TensorCachePtr &
       }
       ExTensorPtr ex_tensor_ptr = ex_tensor_list[real_output_idx[j]];
       ex_tensor_list.clear();
-      ms_node->opDef->inputIndex.push_back(ex_tensor_ptr->index_);
+      ms_node->inputIndex.push_back(ex_tensor_ptr->index_);
     }
   }
   return true;
@@ -397,19 +396,18 @@ bool Kernel2Ms::SetGraphOpTensors(const KernelGraphPtr &kernel_graph_ptr, const 
       return false;
     }
     auto kernel_key = node_indexs_[kernel.get()];
-    std::unique_ptr<NodeDef> ms_node(new NodeDef);
+    std::unique_ptr<OpDefT> ms_node(new OpDefT);
+    ms_node->name = kernel->fullname_with_scope();
     ms_node->fmkType = mindspore::predict::FmkType_CAFFE;
-    std::unique_ptr<OpDefT> ms_op(new OpDefT());
     auto c_name = AnfAlgo::GetCNodeName(kernel);
     auto fun = predict::convert::OpAttrFactory::GetInstance()->GetPackFun(c_name);
     if (fun == nullptr) {
       MS_LOG(ERROR) << "get node [" << kernel->fullname_with_scope() << "] attr failed.";
       return false;
-    } else if (!fun(kernel, ms_op.get())) {
+    } else if (!fun(kernel, ms_node.get())) {
       MS_LOG(ERROR) << "set node [" << kernel->fullname_with_scope() << "] attr failed.";
       return false;
     }
-    ms_node->opDef = std::move(ms_op);
     auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
     int nodeRefCount = SizeToInt(output_size);
     for (size_t j = 0; j < output_size; ++j) {
@@ -466,7 +464,7 @@ bool Kernel2Ms::KernelGraph2MsGraph(const KernelGraphPtr &kernel_graph_ptr) {
     if (!SetOpInputIdx(kernels[i], tensor_cache_ptr_, ms_node)) {
       return false;
     }
-    std::unique_ptr<NodeDef> ms_node_tmp(ms_node);
+    std::unique_ptr<OpDefT> ms_node_tmp(ms_node);
     sub_ms_graph->nodes.emplace_back(std::move(ms_node_tmp));
   }
   if (!SetAllTensors(tensor_cache_ptr_, sub_ms_graph.get())) {

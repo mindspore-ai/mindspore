@@ -19,16 +19,14 @@
 
 #include <memory>
 #include <vector>
-#include <string>
 #include "session/session_basic.h"
 #include "predict/converter/kernel2ms.h"
 
 namespace mindspore {
 namespace predictmodel {
-using KernelGraphPtrNew = std::shared_ptr<mindspore::session::KernelGraph>;
-void StepConvertGraph(const KernelGraphPtrNew &kernel_graph_ptr);
+using KernelGraphPtr = std::shared_ptr<mindspore::session::KernelGraph>;
+void StepConvertGraph(const KernelGraphPtr &kernel_graph_ptr);
 void StepConvertWeight(const std::vector<tensor::TensorPtr> &inputs);
-executor::TargetMode GetDeviceTarget(const std::string &device_target);
 }  // namespace predictmodel
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_PREDICT_H_
