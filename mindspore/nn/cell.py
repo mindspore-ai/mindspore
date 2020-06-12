@@ -305,7 +305,7 @@ class Cell:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
                 if self.parameters_dict()[key].sliced:
-                    logger.info("Param %s is already sliced.", key)
+                    logger.debug("Param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -318,7 +318,7 @@ class Cell:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
                 if params[key].sliced:
-                    logger.info("Param %s is already sliced.", key)
+                    logger.debug("Param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -484,7 +484,7 @@ class Cell:
             if not auto_parallel_mode:
                 param.init_data()
             elif param.name not in self.parameter_layout_dict:
-                logger.info("Layout dict does not contain the key %s.", param.name)
+                logger.debug("Layout dict does not contain the key %s.", param.name)
                 param.init_data(set_sliced=True)
             else:
                 layout = self.parameter_layout_dict[param.name]
