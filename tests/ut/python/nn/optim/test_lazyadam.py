@@ -60,7 +60,7 @@ def test_lazy_adam_compile():
     net.set_train()
 
     loss = nn.SoftmaxCrossEntropyWithLogits()
-    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9)
+    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, weight_decay=0.9, loss_scale=2.0)
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
@@ -74,7 +74,7 @@ def test_spares_lazy_adam_compile():
     net = NetWithSparseGatherV2()
     net.set_train()
 
-    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1)
+    optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1, loss_scale=2.0)
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)
 

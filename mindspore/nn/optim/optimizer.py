@@ -153,6 +153,7 @@ class Optimizer(Cell):
         self.reciprocal_scale = 1.0 / loss_scale
         self.exec_weight_decay = any(self.decay_flags)
         self.param_length = len(self.parameters)
+        self.map_ = C.Map()
 
     def decay_weight(self, gradients):
         """
@@ -195,7 +196,7 @@ class Optimizer(Cell):
 
         """
         if self.reciprocal_scale != 1.0:
-            gradients = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), gradients)
+            gradients = self.map_(F.partial(grad_scale, self.reciprocal_scale), gradients)
 
         return gradients
 
@@ -409,3 +410,11 @@ def tensor_grad_scale(scale, grad):
     if scale == 1.0:
         return grad
     return grad * scale
+
+
+@grad_scale.register("Number", "Tuple")
+def tensor_grad_scale_with_sparse(scale, grad):
+    """Get grad with scale."""
+    if scale == 1.0:
+        return grad
+    return grad[0], grad[1] * scale, grad[2]

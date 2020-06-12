@@ -234,8 +234,6 @@ class Adam(Optimizer):
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
-        validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
@@ -247,9 +245,8 @@ class Adam(Optimizer):
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
         self.hyper_map = C.HyperMap()
-        self.map_ = C.Map()
         self.opt = P.Adam(use_locking, use_nesterov)
-        self.sparse_opt = P.SparseApplyAdam()
+        self.sparse_opt = P.SparseApplyAdam(use_locking, use_nesterov)
 
     def construct(self, gradients):
         params = self.parameters
