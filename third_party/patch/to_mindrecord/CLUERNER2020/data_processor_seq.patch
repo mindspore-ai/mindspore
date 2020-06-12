@@ -1,0 +1,105 @@
+--- data_processor_seq.py	2020-05-28 10:07:13.365947168 +0800
++++ data_processor_seq.py	2020-05-28 10:14:33.298177130 +0800
+@@ -4,11 +4,18 @@
+ @author: Cong Yu
+ @time: 2019-12-07 17:03
+ """
++import sys
++sys.path.append("../../../third_party/to_mindrecord/CLUERNER2020")
++
++import argparse
+ import json
+ import tokenization
+ import collections
+-import tensorflow as tf
+ 
++import numpy as np
++from mindspore.mindrecord import FileWriter
++
++# pylint: skip-file
+ 
+ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
+     """Truncates a sequence pair in place to the maximum length."""
+@@ -80,11 +87,18 @@ def process_one_example(tokenizer, label
+     return feature
+ 
+ 
+-def prepare_tf_record_data(tokenizer, max_seq_len, label2id, path, out_path):
++def prepare_mindrecord_data(tokenizer, max_seq_len, label2id, path, out_path):
+     """
+-        生成训练数据， tf.record, 单标签分类模型, 随机打乱数据
++        生成训练数据， *.mindrecord, 单标签分类模型, 随机打乱数据
+     """
+-    writer = tf.python_io.TFRecordWriter(out_path)
++    writer = FileWriter(out_path)
++
++    data_schema = {"input_ids": {"type": "int64", "shape": [-1]},
++                   "input_mask": {"type": "int64", "shape": [-1]},
++                   "segment_ids": {"type": "int64", "shape": [-1]},
++                   "label_ids": {"type": "int64", "shape": [-1]}}
++    writer.add_schema(data_schema, "CLUENER2020 schema")
++
+     example_count = 0
+ 
+     for line in open(path):
+@@ -113,16 +127,12 @@ def prepare_tf_record_data(tokenizer, ma
+         feature = process_one_example(tokenizer, label2id, list(_["text"]), labels,
+                                       max_seq_len=max_seq_len)
+ 
+-        def create_int_feature(values):
+-            f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
+-            return f
+-
+         features = collections.OrderedDict()
+         # 序列标注任务
+-        features["input_ids"] = create_int_feature(feature[0])
+-        features["input_mask"] = create_int_feature(feature[1])
+-        features["segment_ids"] = create_int_feature(feature[2])
+-        features["label_ids"] = create_int_feature(feature[3])
++        features["input_ids"] = np.asarray(feature[0])
++        features["input_mask"] = np.asarray(feature[1])
++        features["segment_ids"] = np.asarray(feature[2])
++        features["label_ids"] = np.asarray(feature[3])
+         if example_count < 5:
+             print("*** Example ***")
+             print(_["text"])
+@@ -132,8 +142,7 @@ def prepare_tf_record_data(tokenizer, ma
+             print("segment_ids: %s" % " ".join([str(x) for x in feature[2]]))
+             print("label: %s " % " ".join([str(x) for x in feature[3]]))
+ 
+-        tf_example = tf.train.Example(features=tf.train.Features(feature=features))
+-        writer.write(tf_example.SerializeToString())
++        writer.write_raw_data([features])
+         example_count += 1
+ 
+         # if example_count == 20:
+@@ -141,17 +150,22 @@ def prepare_tf_record_data(tokenizer, ma
+         if example_count % 3000 == 0:
+             print(example_count)
+     print("total example:", example_count)
+-    writer.close()
++    writer.commit()
+ 
+ 
+ if __name__ == "__main__":
+-    vocab_file = "./vocab.txt"
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--vocab_file", type=str, required=True, help='The vocabulary file.')
++    parser.add_argument("--label2id_file", type=str, required=True, help='The label2id.json file.')
++    args = parser.parse_args()
++
++    vocab_file = args.vocab_file
+     tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file)
+-    label2id = json.loads(open("label2id.json").read())
++    label2id = json.loads(open(args.label2id_file).read())
+ 
+     max_seq_len = 64
+ 
+-    prepare_tf_record_data(tokenizer, max_seq_len, label2id, path="data/thuctc_train.json",
+-                           out_path="data/train.tf_record")
+-    prepare_tf_record_data(tokenizer, max_seq_len, label2id, path="data/thuctc_valid.json",
+-                           out_path="data/dev.tf_record")
++    prepare_mindrecord_data(tokenizer, max_seq_len, label2id, path="data/cluener_public/train.json",
++                           out_path="output/train.mindrecord")
++    prepare_mindrecord_data(tokenizer, max_seq_len, label2id, path="data/cluener_public/dev.json",
++                           out_path="output/dev.mindrecord")
