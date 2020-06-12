@@ -192,8 +192,12 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
     if (item->isa<Parameter>()) {
       auto address = AnfAlgo::GetMutableOutputAddr(item, 0);
       auto tensor = inputs[input_idx];
+      auto tensor_address = tensor->device_address();
       MS_EXCEPTION_IF_NULL(address);
       MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor_address != nullptr && tensor_address != address) {
+        (void)tensor->data_sync();
+      }
       std::vector<int> data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
