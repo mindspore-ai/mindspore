@@ -34,6 +34,25 @@ from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
 
+def test_tensor_scatter_update():
+    class TensorScatterUpdateNet(nn.Cell):
+        """TensorScatterUpdate net definition"""
+
+        def __init__(self):
+            super(TensorScatterUpdateNet, self).__init__()
+            self.tensor_scatter_update = P.TensorScatterUpdate()
+
+        def construct(self, x, i, u):
+            out = self.tensor_scatter_update(x, i, u)
+            return out
+    net = TensorScatterUpdateNet()
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)),  mstype.float32)
+    indices = Tensor(np.array([[0, 0], [1, 1]], np.int32))
+    updates = Tensor(np.ones([2, 5], np.float32))
+    net(x, indices, updates)
+
+
 class InputBackward(nn.Cell):
     def __init__(self, network):
         super(InputBackward, self).__init__()
@@ -1537,6 +1556,12 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.ones((2, 2), np.int32)),
                         Tensor(np.ones((2,), np.int32))),
         'desc_bprop': [([3, 3], {'dtype': np.int32})]}),
+    ('TensorScatterUpdate', {
+        'block': P.TensorScatterUpdate(),
+        'desc_inputs': (Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)),  mstype.float32),
+                        Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.ones([2, 5], np.float32) * 99)),
+        'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
     ('ScatterMax', {
         'block': ScatterMax(),
         'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),

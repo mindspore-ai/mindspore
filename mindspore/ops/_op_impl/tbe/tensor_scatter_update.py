@@ -13,30 +13,29 @@
 # limitations under the License.
 # ============================================================================
 
-"""ScatterUpdate op"""
+"""TensorScatterUpdate op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-scatter_update_op_info = TBERegOp("ScatterUpdate") \
+tensor_scatter_update_op_info = TBERegOp("TensorScatterUpdate") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("scatter_update.so") \
+    .binfile_name("tensor_scatter_update.so") \
     .compute_cost(10) \
-    .kernel_name("scatter_update") \
+    .kernel_name("tensor_scatter_update") \
     .partial_flag(True) \
-    .attr("use_locking", "optional", "bool", "all") \
-    .input(0, "var", False, "required", "all") \
+    .input(0, "x", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(1, "updates", False, "required", "all") \
-    .output(0, "var", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
 
 
-@op_info_register(scatter_update_op_info)
-def _scatter_update_tbe():
-    """ScatterUpdate TBE register"""
+@op_info_register(tensor_scatter_update_op_info)
+def _tensor_scatter_update_tbe():
+    """TensorScatterUpdate TBE register"""
     return
