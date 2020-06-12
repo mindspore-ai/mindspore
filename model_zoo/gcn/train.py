@@ -13,38 +13,41 @@
 # limitations under the License.
 # ============================================================================
 
+"""
+GCN training script.
+"""
+
 import time
-import pytest
+import argparse
+
 import numpy as np
 from mindspore import context
+
 from src.gcn import GCN, LossAccuracyWrapper, TrainNetWrapper
 from src.config import ConfigGCN
 from src.dataset import get_adj_features_labels, get_mask
 
 
-DATA_DIR = '/home/workspace/mindspore_dataset/cora/cora_mr/cora_mr'
-TRAIN_NODE_NUM = 140
-EVAL_NODE_NUM = 500
-TEST_NODE_NUM = 1000
-SEED = 20
+def train():
+    """Train model."""
+    parser = argparse.ArgumentParser(description='GCN')
+    parser.add_argument('--data_dir', type=str, default='./data/cora/cora_mr', help='Dataset directory')
+    parser.add_argument('--seed', type=int, default=123, help='Random seed')
+    parser.add_argument('--train_nodes_num', type=int, default=140, help='Nodes numbers for training')
+    parser.add_argument('--eval_nodes_num', type=int, default=500, help='Nodes numbers for evaluation')
+    parser.add_argument('--test_nodes_num', type=int, default=1000, help='Nodes numbers for test')
+    args_opt = parser.parse_args()
 
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_gcn():
-    print("test_gcn begin")
-    np.random.seed(SEED)
+    np.random.seed(args_opt.seed)
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend", save_graphs=True)
+                        device_target="Ascend", save_graphs=False)
     config = ConfigGCN()
-    adj, feature, label = get_adj_features_labels(DATA_DIR)
+    adj, feature, label = get_adj_features_labels(args_opt.data_dir)
 
     nodes_num = label.shape[0]
-    train_mask = get_mask(nodes_num, 0, TRAIN_NODE_NUM)
-    eval_mask = get_mask(nodes_num, TRAIN_NODE_NUM, TRAIN_NODE_NUM + EVAL_NODE_NUM)
-    test_mask = get_mask(nodes_num, nodes_num - TEST_NODE_NUM, nodes_num)
+    train_mask = get_mask(nodes_num, 0, args_opt.train_nodes_num)
+    eval_mask = get_mask(nodes_num, args_opt.train_nodes_num, args_opt.train_nodes_num + args_opt.eval_nodes_num)
+    test_mask = get_mask(nodes_num, nodes_num - args_opt.test_nodes_num, nodes_num)
 
     class_num = label.shape[1]
     gcn_net = GCN(config, adj, feature, class_num)
@@ -77,10 +80,14 @@ def test_gcn():
             print("Early stopping...")
             break
 
+    t_test = time.time()
     test_net.set_train(False)
     test_result = test_net()
     test_loss = test_result[0].asnumpy()
     test_accuracy = test_result[1].asnumpy()
     print("Test set results:", "loss=", "{:.5f}".format(test_loss),
-          "accuracy=", "{:.5f}".format(test_accuracy))
-    assert test_accuracy > 0.812
+          "accuracy=", "{:.5f}".format(test_accuracy), "time=", "{:.5f}".format(time.time() - t_test))
+
+
+if __name__ == '__main__':
+    train()
