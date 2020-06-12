@@ -49,7 +49,7 @@ def test_momentum():
     epoch = 3
     net = NetMomentum()
     learning_rate = initializer(Tensor(np.array([0.01]).astype(np.float32)), [1])
-    momentum = initializer(Tensor(np.array([0.9]).astype(np.float32)), [1])
+    momentum = 0.9
 
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
     criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
