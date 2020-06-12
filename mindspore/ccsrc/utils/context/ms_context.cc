@@ -81,6 +81,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   profiling_mode_ = false;
   profiling_options_ = "training_trace";
   check_bprop_flag_ = false;
+  max_device_memory_ = kDefaultMaxDeviceMemory;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
