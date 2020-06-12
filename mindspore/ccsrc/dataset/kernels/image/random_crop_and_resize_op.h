@@ -60,6 +60,8 @@ class RandomCropAndResizeOp : public TensorOp {
   std::mt19937 rnd_;
   InterpolationMode interpolation_;
   int32_t max_iter_;
+  double aspect_lb_;
+  double aspect_ub_;
 };
 }  // namespace dataset
 }  // namespace mindspore
