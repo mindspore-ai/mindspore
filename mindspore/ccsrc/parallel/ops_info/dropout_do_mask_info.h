@@ -41,7 +41,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
   std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
-  Operator GetDropoutGenMaskReplaceOp(const CNodePtr &cnode);
+  std::vector<Operator> GetDropoutGenMaskReplaceOp(const CNodePtr &cnode);
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
