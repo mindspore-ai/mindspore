@@ -27,6 +27,10 @@ from .add_n import _add_n_tbe
 from .apply_ftrl import _apply_ftrl_tbe
 from .apply_momentum import _apply_momentum_tbe
 from .apply_adam import _apply_adam_tbe
+from .apply_ada_max import _apply_ada_max_tbe
+from .apply_adadelta import _apply_adadelta_tbe
+from .apply_adagrad import _apply_adagrad_tbe
+from .apply_adagrad_v2 import _apply_adagrad_v2_tbe
 from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe
 from .assign_add import _assign_add_tbe

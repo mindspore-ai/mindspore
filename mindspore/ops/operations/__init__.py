@@ -72,6 +72,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad,
+                     ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop, ConfusionMatrix)
@@ -282,6 +283,10 @@ __all__ = [
     "SparseApplyFtrl",
     "ApplyProximalAdagrad",
     "SparseApplyProximalAdagrad",
+    "ApplyAdaMax",
+    "ApplyAdadelta",
+    "ApplyAdagrad",
+    "ApplyAdagradV2",
     "BatchToSpace",
     "Atan2",
     "ApplyRMSProp",

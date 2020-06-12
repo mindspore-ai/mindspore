@@ -270,6 +270,67 @@ class ApplyProximalAdagradNet(nn.Cell):
         return out
 
 
+class ApplyAdaMaxNet(nn.Cell):
+    def __init__(self):
+        super(ApplyAdaMaxNet, self).__init__()
+        self.apply_ada_max = P.ApplyAdaMax()
+        self.beta1_power = 0.9
+        self.lr = 0.001
+        self.beta1 = 0.9
+        self.beta2 = 0.99
+        self.epsilon = 1e-10
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+        self.v = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="v")
+
+    def construct(self, grad):
+        out = self.apply_ada_max(self.var, self.m, self.v, self.beta1_power, self.lr,
+                                 self.beta1, self.beta2, self.epsilon, grad)
+        return out
+
+
+class ApplyAdadeltaNet(nn.Cell):
+    def __init__(self):
+        super(ApplyAdadeltaNet, self).__init__()
+        self.apply_adadelta = P.ApplyAdadelta()
+        self.lr = 0.001
+        self.rho = 0.0
+        self.epsilon = 1e-6
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        self.accum_update = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum_update")
+
+    def construct(self, grad):
+        out = self.apply_adadelta(self.var, self.accum, self.accum_update, self.lr, self.rho, self.epsilon, grad)
+        return out
+
+
+class ApplyAdagradNet(nn.Cell):
+    def __init__(self):
+        super(ApplyAdagradNet, self).__init__()
+        self.apply_adagrad = P.ApplyAdagrad()
+        self.lr = 0.001
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+
+    def construct(self, grad):
+        out = self.apply_adagrad(self.var, self.accum, self.lr, grad)
+        return out
+
+
+class ApplyAdagradV2Net(nn.Cell):
+    def __init__(self):
+        super(ApplyAdagradV2Net, self).__init__()
+        self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=1e-6)
+        self.lr = 0.001
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+
+    def construct(self, grad):
+        out = self.apply_adagrad_v2(self.var, self.accum, self.lr, grad)
+        return out
+
+
 class ApplyRMSNet(nn.Cell):
     def __init__(self):
         super(ApplyRMSNet, self).__init__()
@@ -1081,6 +1142,22 @@ test_case_nn_ops = [
     ('SparseApplyProximalAdagrad', {
         'block': SparseApplyProximalAdagradNet(),
         'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
+    ('ApplyAdaMax', {
+        'block': ApplyAdaMaxNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyAdadelta', {
+        'block': ApplyAdadeltaNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyAdagrad', {
+        'block': ApplyAdagradNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyAdagradV2', {
+        'block': ApplyAdagradV2Net(),
+        'desc_inputs': [[3, 3]],
         'skip': ['backward']}),
     ('Flatten_1', {
         'block': NetForFlatten(),
