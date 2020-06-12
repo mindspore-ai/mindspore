@@ -595,7 +595,7 @@ py::tuple RunOp(const py::args &args) {
 
 void ClearPyNativeSession() { session = nullptr; }
 
-PynativeExecutor::~PynativeExecutor() { Clean(); }
+PynativeExecutor::~PynativeExecutor() { ClearRes(); }
 
 PynativeExecutor::PynativeExecutor() { grad_flag_ = false; }
 
@@ -849,17 +849,32 @@ void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &c
   pipeline::ReclaimOptimizer();
 }
 
-void PynativeExecutor::Clear() {
-  MS_LOG(INFO) << "Clear all res";
-  top_g_ = curr_g_ = nullptr;
-  std::stack<FuncGraphPtr>().swap(graph_p_);
+void PynativeExecutor::Clear(const std::string &flag) {
+  if (flag == "resource") {
+    MS_LOG(INFO) << "Clear res";
+    Clean();
+    return;
+  }
+  MS_LOG(INFO) << "Clear";
+  top_g_ = nullptr;
+  curr_g_ = nullptr;
   graph_info_map_.clear();
+  std::stack<FuncGraphPtr>().swap(graph_p_);
 }
 
 void PynativeExecutor::Clean() {
+  MS_LOG(INFO) << "Clean all res";
+  Clear();
+  grad_flag_ = false;
   graph_map_.clear();
   cell_graph_map_.clear();
-  Clear();
+  df_builder_ = nullptr;
+  ad::CleanRes();
+  pipeline::ReclaimOptimizer();
+}
+
+void PynativeExecutor::ClearRes() {
+  Clean();
   resource_.reset();
 }
 
@@ -908,8 +923,8 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def_static("get_instance", &PynativeExecutor::GetInstance, "PynativeExecutor get_instance.")
                            .def("new_graph", &PynativeExecutor::NewGraph, "pynative new a graph.")
                            .def("end_graph", &PynativeExecutor::EndGraph, "pynative end a graph.")
-                           .def("grad_net", &PynativeExecutor::GradNet, "pynative  grad graph.")
-                           .def("clear", &PynativeExecutor::Clear, "pynative  clear status.")
+                           .def("grad_net", &PynativeExecutor::GradNet, "pynative grad graph.")
+                           .def("clear", &PynativeExecutor::Clear, "pynative clear status.")
                            .def("__call__", &PynativeExecutor::Run, py::arg("args"), py::arg("phase") = py::str(""),
                                 "Executor run function.")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),

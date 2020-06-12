@@ -68,8 +68,9 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
-  void Clear();
+  void Clear(const std::string &flag = "");
   void Clean();
+  void ClearRes();
   bool grad_flag() { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   AnfNodePtr GetInput(const py::object &obj, const py::object &op_mask);

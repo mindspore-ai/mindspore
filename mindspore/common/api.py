@@ -293,8 +293,8 @@ class _PynativeExecutor:
     def grad(self, grad, obj, weights, *args):
         self._executor.grad_net(grad, obj, weights, *args)
 
-    def clear(self):
-        self._executor.clear()
+    def clear(self, flag=""):
+        self._executor.clear(flag)
 
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
