@@ -60,7 +60,7 @@ class AddNGpuFwdKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     InitResource();
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     num_input_ = GetAttr<int>(kernel_node, "n");
     if (IntToSize(num_input_) != input_num) {

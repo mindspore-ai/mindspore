@@ -89,7 +89,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
       return false;
     }
     is_grad_ = GetAttr<bool>(kernel_node, "is_grad");
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
 
     InferInputOutputSize(kernel_node);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
