@@ -73,10 +73,11 @@ class SGD(Optimizer):
                                                         take the i-th value as the learning rate.
                                                         When the learning_rate is float or learning_rate is a Tensor
                                                         but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Default: 0.1.
-        momentum (float): A floating point value the momentum. Default: 0.0.
-        dampening (float): A floating point value of dampening for momentum. Default: 0.0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+                                                        Other cases are not supported. It should be equal to or
+                                                        greater than 0. Default: 0.1.
+        momentum (float): A floating point value the momentum. should be at least 0.0. Default: 0.0.
+        dampening (float): A floating point value of dampening for momentum. should be at least 0.0. Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         nesterov (bool): Enables the Nesterov momentum. Default: False.
         loss_scale (float): A floating point value for the loss scale, which should be larger
                             than 0.0. Default: 1.0.

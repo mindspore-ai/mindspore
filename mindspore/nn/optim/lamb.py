@@ -143,10 +143,12 @@ class Lamb(Optimizer):
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
                                   should be class mindspore.Parameter.
         decay_steps (int): The steps of the lr decay. Should be equal to or greater than 1.
-        warmup_steps (int): The steps of lr warm up. Default: 0.
-        start_learning_rate (float): A floating point value for the learning rate. Default: 0.1.
-        end_learning_rate (float): A floating point value for the end learning rate. Default: 0.0001.
-        power (float): The power of the polynomial. Default: 1.0.
+        warmup_steps (int): The steps of lr warm up. Should be equal to or greater than 0. Default: 0.
+        start_learning_rate (float): A floating point value for the learning rate. Should be equal to
+            or greater than 0. Default: 0.1.
+        end_learning_rate (float): A floating point value for the end learning rate. Should be equal to
+            or greater than 0. Default: 0.0001.
+        power (float): The power of the polynomial. It must be positive. Default: 1.0.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
             Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
