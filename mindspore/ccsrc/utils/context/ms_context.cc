@@ -281,6 +281,7 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
   (*ge_options)["device_id"] = "0";
   (*ge_options)["ge.exec.enableDump"] = std::to_string(enable_dump_);
   (*ge_options)["ge.exec.dumpPath"] = save_dump_path_;
+  (*ge_options)["ge.exec.dumpMode"] = "output";
   MS_LOG(INFO) << "The enable dump state is " << std::to_string(enable_dump_) << " and save dump path is "
                << save_dump_path_ << ".";
   (*ge_options)["ge.exec.profilingMode"] = std::to_string(profiling_mode_);
