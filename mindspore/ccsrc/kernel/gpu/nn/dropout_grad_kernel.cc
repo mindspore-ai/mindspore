@@ -66,15 +66,13 @@ void DropoutGradGpuFwdKernel::InitSizeLists() {
   size_t dy_size = num_count_ * sizeof(float);
   size_t mask_size = dy_size;
   size_t dx_size = dy_size;
-  size_t workspace_size = 0;
 
   input_size_list_.push_back(dy_size);
   input_size_list_.push_back(mask_size);
   output_size_list_.push_back(dx_size);
-  workspace_size_list_.push_back(workspace_size);
 }
 
-bool DropoutGradGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool DropoutGradGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;

@@ -68,14 +68,12 @@ void DropoutGpuFwdKernel::DestroyResource() noexcept {}
 
 void DropoutGpuFwdKernel::InitSizeLists() {
   size_t input_size = num_count_ * sizeof(float);
-  size_t workspace_size = 0;
   input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);  // output size: the same with input size
   output_size_list_.push_back(input_size);  // mask size: the same with input size
-  workspace_size_list_.push_back(workspace_size);
 }
 
-bool DropoutGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool DropoutGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
