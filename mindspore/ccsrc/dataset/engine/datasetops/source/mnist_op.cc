@@ -162,7 +162,7 @@ Status MnistOp::WorkerEntry(int32_t worker_id) {
 }
 
 // Load 1 TensorRow (image,label) using 1 MnistLabelPair.
-Status MnistOp::LoadTensorRow(const MnistLabelPair &mnist_pair, TensorRow *trow) {
+Status MnistOp::LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *trow) {
   std::shared_ptr<Tensor> image, label;
   int32_t l = mnist_pair.second;
   // make a copy of cached tensor
@@ -170,7 +170,7 @@ Status MnistOp::LoadTensorRow(const MnistLabelPair &mnist_pair, TensorRow *trow)
                                         mnist_pair.first->type(), mnist_pair.first->GetBuffer()));
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
                                         data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&l)));
-  (*trow) = {std::move(image), std::move(label)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
 
@@ -179,7 +179,7 @@ Status MnistOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
   for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_label_pairs_[key], &trow));
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_label_pairs_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));

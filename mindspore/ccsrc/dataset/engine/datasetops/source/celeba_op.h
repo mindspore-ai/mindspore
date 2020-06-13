@@ -197,10 +197,12 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 
   // Load a tensor row according to a pair
+  // @param row_id_type row_id - id for this tensor row
   // @param std::pair - <image_file,<label>>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status - The error code return
-  Status LoadTensorRow(const std::pair<std::string, std::vector<int32_t>> &image_label, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<int32_t>> &image_label,
+                       TensorRow *row);
 
   // Check if need read according to dataset type
   // @return bool - if need read

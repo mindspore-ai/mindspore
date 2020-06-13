@@ -349,7 +349,7 @@ Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Da
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   for (const auto &key : keys) {
     TensorRow row;
-    RETURN_IF_NOT_OK(LoadTensorRow(image_labels_vec_[key], &row));
+    RETURN_IF_NOT_OK(LoadTensorRow(key, image_labels_vec_[key], &row));
     deq->push_back(std::move(row));
   }
 
@@ -357,7 +357,8 @@ Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Da
   return Status::OK();
 }
 
-Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>> &image_label, TensorRow *row) {
+Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<int32_t>> &image_label,
+                               TensorRow *row) {
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;
 
@@ -386,7 +387,7 @@ Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>
   }
   label->Squeeze();
 
-  (*row) = {std::move(image), std::move(label)};
+  (*row) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
 

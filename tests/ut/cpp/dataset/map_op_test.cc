@@ -55,8 +55,7 @@ class ThreeToOneOp : public TensorOp {
 
     uint32_t NumInput() override { return 3; }
     // Compute function that holds the actual implementation of the operation.
-    Status Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                   std::vector<std::shared_ptr<Tensor>> *output) override {
+    Status Compute(const TensorRow &input, TensorRow *output) override {
       output->push_back(input[0]);
       return Status::OK();
     };
@@ -74,8 +73,7 @@ class OneToThreeOp : public TensorOp {
 
     // Compute function that holds the actual implementation of the operation.
     // Simply pushing the same shared pointer of the first element of input vector three times.
-    Status Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                   std::vector<std::shared_ptr<Tensor>> *output) override {
+    Status Compute(const TensorRow &input, TensorRow *output) override {
       output->push_back(input[0]);
       output->push_back(input[0]);
       output->push_back(input[0]);

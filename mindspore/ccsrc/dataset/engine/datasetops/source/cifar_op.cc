@@ -203,9 +203,9 @@ Status CifarOp::LoadTensorRow(uint64_t index, TensorRow *trow) {
     RETURN_IF_NOT_OK(Tensor::CreateTensor(
       &fine_label, data_schema_->column(2).tensorImpl(), data_schema_->column(2).shape(),
       data_schema_->column(2).type(), reinterpret_cast<unsigned char *>(&cifar_image_label_pairs_[index].second[1])));
-    (*trow) = {copy_image, std::move(label), std::move(fine_label)};
+    (*trow) = TensorRow(index, {copy_image, std::move(label), std::move(fine_label)});
   } else {
-    (*trow) = {copy_image, std::move(label)};
+    (*trow) = TensorRow(index, {copy_image, std::move(label)});
   }
 
   return Status::OK();

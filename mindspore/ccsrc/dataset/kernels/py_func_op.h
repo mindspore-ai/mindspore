@@ -36,8 +36,7 @@ class __attribute__((visibility("hidden"))) PyFuncOp : public TensorOp {
   uint32_t NumOutput() override { return 0; }
 
   // Compute function for n-n mapping.
-  Status Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                 std::vector<std::shared_ptr<Tensor>> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
  private:
   py::function py_func_ptr_;
