@@ -93,8 +93,7 @@ class SessionBasic {
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   virtual void SetActive(GraphId, GraphId) {}
-  virtual void GetSummaryNodes(const KernelGraph *graph,
-                               std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary);
+  virtual void GetSummaryNodes(KernelGraph *graph);
 
  protected:
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
@@ -130,7 +129,7 @@ class SessionBasic {
 };
 
 using SessionPtr = std::shared_ptr<session::SessionBasic>;
-using NamedSummaryOutputs = std::unordered_map<std::string, std::pair<AnfNodePtr, int>>;
+using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H

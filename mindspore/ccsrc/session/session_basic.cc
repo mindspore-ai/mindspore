@@ -745,13 +745,13 @@ void SessionBasic::Reorder(std::vector<CNodePtr> *node_list) {
   (void)std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
 }
 
-void SessionBasic::GetSummaryNodes(const KernelGraph *graph, NamedSummaryOutputs *summary) {
+void SessionBasic::GetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(summary);
   if (!graph->summary_node_exist()) {
     return;
   }
+  auto summary = graph->summary_nodes();
   auto apply_list = TopoSort(graph->get_return());
   for (auto &n : apply_list) {
     MS_EXCEPTION_IF_NULL(n);
@@ -764,14 +764,15 @@ void SessionBasic::GetSummaryNodes(const KernelGraph *graph, NamedSummaryOutputs
       }
       auto node = cnode->input(kSummaryGetItem);
       MS_EXCEPTION_IF_NULL(node);
-      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0);
+      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
       if (!AnfAlgo::IsRealKernel(item_with_index.first)) {
         MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
       }
-      (*summary)[n->fullname_with_scope()] = item_with_index;
+      summary[n->fullname_with_scope()] = item_with_index;
     }
   }
-  MS_LOG(DEBUG) << "Update summary end size: " << (*summary).size();
+  graph->set_summary_nodes(summary);
+  MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
 
 void SessionBasic::Summary(KernelGraph *graph) {
@@ -779,8 +780,8 @@ void SessionBasic::Summary(KernelGraph *graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
-  NamedSummaryOutputs summary_outputs;
-  GetSummaryNodes(graph, &summary_outputs);
+  GetSummaryNodes(graph);
+  auto summary_outputs = graph->summary_nodes();
   // do not exist summary node
   if (summary_outputs.empty()) {
     return;

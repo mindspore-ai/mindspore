@@ -142,6 +142,8 @@ class KernelGraph : public FuncGraph {
   bool get_output_null() { return null_output_; }
   void set_output_null(bool is_output_null) { null_output_ = is_output_null; }
   void PrintGraphExecuteOrder() const;
+  std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() { return summary_nodes_; }
+  void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
 
  private:
   // remove value node form graph
@@ -175,6 +177,7 @@ class KernelGraph : public FuncGraph {
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
+  std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // graph needn't execute
   bool executable_;
   // exist summary node in graph
