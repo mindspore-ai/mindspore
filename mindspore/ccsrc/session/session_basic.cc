@@ -54,46 +54,6 @@ PyObject *GetParamDefaultInputTensor(const AnfNodePtr &node) {
   return py_param.ptr();
 }
 
-void GetSummaryNodes(const KernelGraph *graph, std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) {
-  MS_LOG(DEBUG) << "Update summary Start";
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(summary);
-  summary->clear();
-  auto apply_list = TopoSort(graph->get_return());
-  for (auto &n : apply_list) {
-    MS_EXCEPTION_IF_NULL(n);
-    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
-      auto cnode = n->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "the node Summary should have 2 inputs at least!";
-      }
-      auto node = cnode->input(kSummaryGetItem);
-      MS_EXCEPTION_IF_NULL(node);
-      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0);
-      if (!AnfAlgo::IsRealKernel(item_with_index.first)) {
-        MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
-      }
-      (*summary)[n->fullname_with_scope()] = item_with_index;
-    }
-  }
-  MS_LOG(DEBUG) << "Update summary end size: " << (*summary).size();
-}
-
-bool ExistSummaryNode(const KernelGraph *graph) {
-  auto ret = graph->get_return();
-  MS_EXCEPTION_IF_NULL(ret);
-  auto all_nodes = DeepLinkedGraphSearch(ret);
-  for (auto &n : all_nodes) {
-    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const KernelGraph &graph,
                         const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(node);
@@ -329,6 +289,19 @@ void DumpGraphOutput(const Any &any, size_t recurse_level = 0) {
   }
   (void)tab_str.append(any.ToString());
   MS_LOG(INFO) << tab_str;
+}
+
+bool ExistSummaryNode(const KernelGraph *graph) {
+  auto ret = graph->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  auto all_nodes = DeepLinkedGraphSearch(ret);
+  for (auto &n : all_nodes) {
+    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
+        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace
 
@@ -595,6 +568,9 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     graph->set_manager(manager);
   }
   graph->SetExecOrderByDefault();
+  if (ExistSummaryNode(graph.get())) {
+    graph->set_summary_node_exist(true);
+  }
   opt::BackendCommonOptimization(graph);
   return graph;
 }
@@ -658,6 +634,9 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
     graph->set_manager(manager);
   }
   graph->SetExecOrderByDefault();
+  if (ExistSummaryNode(graph.get())) {
+    graph->set_summary_node_exist(true);
+  }
   return graph;
 }
 
@@ -751,6 +730,36 @@ void SessionBasic::Reorder(std::vector<CNodePtr> *node_list) {
   (void)std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
 }
 
+void SessionBasic::GetSummaryNodes(KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Update summary Start";
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!graph->summary_node_exist()) {
+    return;
+  }
+  auto summary = graph->summary_nodes();
+  auto apply_list = TopoSort(graph->get_return());
+  for (auto &n : apply_list) {
+    MS_EXCEPTION_IF_NULL(n);
+    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
+        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
+      auto cnode = n->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (cnode->inputs().size() <= kSummaryGetItem) {
+        MS_LOG(EXCEPTION) << "the node Summary should have 2 inputs at least!";
+      }
+      auto node = cnode->input(kSummaryGetItem);
+      MS_EXCEPTION_IF_NULL(node);
+      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+      if (!AnfAlgo::IsRealKernel(item_with_index.first)) {
+        MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
+      }
+      summary[n->fullname_with_scope()] = item_with_index;
+    }
+  }
+  graph->set_summary_nodes(summary);
+  MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
+}
+
 void SessionBasic::Summary(KernelGraph *graph) {
   if (summary_callback_ == nullptr) {
     return;
@@ -760,8 +769,12 @@ void SessionBasic::Summary(KernelGraph *graph) {
   if (!exist_summary) {
     return;
   }
-  std::unordered_map<std::string, std::pair<AnfNodePtr, int>> summary_outputs;
-  GetSummaryNodes(graph, &summary_outputs);
+  GetSummaryNodes(graph);
+  auto summary_outputs = graph->summary_nodes();
+  // do not exist summary node
+  if (summary_outputs.empty()) {
+    return;
+  }
   std::map<std::string, tensor::TensorPtr> params_list;
   // fetch outputs apply kernel in session & run callback functions
   for (auto &output_item : summary_outputs) {

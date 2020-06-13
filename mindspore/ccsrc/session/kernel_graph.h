@@ -40,6 +40,7 @@ class KernelGraph : public FuncGraph {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
+    summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
   }
   ~KernelGraph() override;
@@ -90,6 +91,10 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+  // set summary_node of graph
+  void set_summary_node_exist(bool summary_node_exist) { summary_node_exist_ = summary_node_exist; }
+  // check whether exist summary node in graph
+  bool summary_node_exist() const { return summary_node_exist_; }
   // set invalid inputs for control sink
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
   std::vector<bool> valid_inputs() const { return valid_inputs_; }
@@ -132,6 +137,8 @@ class KernelGraph : public FuncGraph {
 
   void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
   CNodePtr get_start_label() { return start_label_; }
+  const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
+  void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
 
  private:
   // remove value node form graph
@@ -165,6 +172,9 @@ class KernelGraph : public FuncGraph {
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
+  std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
+  // exist summary node in graph
+  bool summary_node_exist_;
   // graph needn't execute
   bool executable_;
   // valid inputs

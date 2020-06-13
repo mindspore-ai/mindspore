@@ -92,6 +92,7 @@ class SessionBasic {
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   virtual void SetActive(GraphId, GraphId) {}
+  virtual void GetSummaryNodes(KernelGraph *graph);
 
  protected:
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
