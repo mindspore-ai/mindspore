@@ -35,7 +35,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_group_size
 from mindspore.model_zoo.mobilenetV2 import mobilenet_v2
 import mindspore.dataset.engine as de
-from src.dataset import create_dataset
+from src.dataset import create_dataset_py
 from src.lr_generator import get_lr
 from src.config import config_gpu, config_ascend
 
@@ -173,12 +173,12 @@ if __name__ == '__main__':
                 is_grad=False, sparse=True, reduction='mean')
         # define dataset
         epoch_size = config_gpu.epoch_size
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_gpu,
-                                 platform=args_opt.platform,
-                                 repeat_num=epoch_size,
-                                 batch_size=config_gpu.batch_size)
+        dataset = create_dataset_py(dataset_path=args_opt.dataset_path,
+                                    do_train=True,
+                                    config=config_gpu,
+                                    platform=args_opt.platform,
+                                    repeat_num=epoch_size,
+                                    batch_size=config_gpu.batch_size)
         step_size = dataset.get_dataset_size()
         # resume
         if args_opt.pre_trained:
@@ -232,12 +232,12 @@ if __name__ == '__main__':
         else:
             loss = SoftmaxCrossEntropyWithLogits(
                 is_grad=False, sparse=True, reduction='mean')
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_ascend,
-                                 platform=args_opt.platform,
-                                 repeat_num=epoch_size,
-                                 batch_size=config_ascend.batch_size)
+        dataset = create_dataset_py(dataset_path=args_opt.dataset_path,
+                                    do_train=True,
+                                    config=config_ascend,
+                                    platform=args_opt.platform,
+                                    repeat_num=epoch_size,
+                                    batch_size=config_ascend.batch_size)
         step_size = dataset.get_dataset_size()
         if args_opt.pre_trained:
             param_dict = load_checkpoint(args_opt.pre_trained)

@@ -23,7 +23,7 @@ from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
 from mindspore.model_zoo.mobilenetV2 import mobilenet_v2
-from src.dataset import create_dataset
+from src.dataset import create_dataset_py
 from src.config import config_ascend, config_gpu
 
 
@@ -60,11 +60,11 @@ if __name__ == '__main__':
             if isinstance(cell, nn.Dense):
                 cell.to_float(mstype.float32)
 
-    dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                             do_train=False,
-                             config=config_platform,
-                             platform=args_opt.platform,
-                             batch_size=config_platform.batch_size)
+    dataset = create_dataset_py(dataset_path=args_opt.dataset_path,
+                                do_train=False,
+                                config=config_platform,
+                                platform=args_opt.platform,
+                                batch_size=config_platform.batch_size)
     step_size = dataset.get_dataset_size()
 
     if args_opt.checkpoint_path:
