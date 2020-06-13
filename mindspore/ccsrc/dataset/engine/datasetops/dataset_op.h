@@ -225,7 +225,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return connector size of current op
   int32_t ConnectorCapacity() const {
     if (!inlined()) {
-      return out_connector_->size();
+      return out_connector_->capacity();
     }
     // Return -1 for inlined op
     return -1;
