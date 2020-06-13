@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import numpy as np
 from resnet import resnet50
 
 import mindspore.common.dtype as mstype
+import mindspore.ops.functional as F
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -34,6 +37,9 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
+from mindspore.train.callback import Callback
+from resnet import resnet50
+import random
 random.seed(1)
 np.random.seed(1)
 ds.config.set_seed(1)
@@ -62,12 +68,12 @@ def create_dataset(repeat_num=1, training=True):
     data_dir = data_home + "/cifar-10-batches-bin"
     if not training:
         data_dir = data_home + "/cifar-10-verify-bin"
-    data_set = ds.Cifar10Dataset(data_dir)
+    data_set = ds.Cifar10Dataset(data_dir, num_samples=32)
 
     if args_opt.run_distribute:
         rank_id = int(os.getenv('RANK_ID'))
         rank_size = int(os.getenv('RANK_SIZE'))
-        data_set = ds.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id)
+        data_set = ds.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id, num_samples=32)
 
     resize_height = 224
     resize_width = 224
@@ -140,8 +146,9 @@ if __name__ == '__main__':
         batch_num = dataset.get_dataset_size()
         config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 5, keep_checkpoint_max=10)
         ckpoint_cb = ModelCheckpoint(prefix="train_resnet_cifar10", directory="./", config=config_ck)
+        time_cb = TimeMonitor(data_size=batch_num)
         loss_cb = LossMonitor()
-        model.train(epoch_size, dataset, callbacks=[ckpoint_cb, loss_cb])
+        model.train(epoch_size, dataset, callbacks=[ckpoint_cb, loss_cb, time_cb])
 
     if args_opt.do_eval:
         if args_opt.checkpoint_path:

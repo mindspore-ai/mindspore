@@ -55,7 +55,8 @@ def _make_directory(path):
             os.makedirs(path)
             real_path = path
         except PermissionError as e:
-            logger.error(f"No write permission on the directory `{path}, error = {e}")
+            logger.error(
+                f"No write permission on the directory `{path}, error = {e}")
             raise ValueError(f"No write permission on the directory `{path}`.")
     return real_path
 
@@ -78,11 +79,13 @@ class _ThreadLocalInfo(threading.local):
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Sets whether to save the network class name in the scope."""
         if not isinstance(reserve_class_name_in_scope, bool):
-            raise ValueError("Set reserve_class_name_in_scope value must be bool!")
+            raise ValueError(
+                "Set reserve_class_name_in_scope value must be bool!")
         self._reserve_class_name_in_scope = reserve_class_name_in_scope
 
 
-_ContextRecord = namedtuple("_ContextRecord", ["is_pynative_mode", "switch_context_fn"])
+_ContextRecord = namedtuple(
+    "_ContextRecord", ["is_pynative_mode", "switch_context_fn"])
 
 
 class _ContextSwitchInfo(threading.local):
@@ -109,7 +112,8 @@ class _ContextSwitchInfo(threading.local):
         """
         if isinstance(switch_context_fn, FunctionType):
             switch_context_fn()
-        self.context_stack.append(_ContextRecord(is_pynative, switch_context_fn))
+        self.context_stack.append(
+            _ContextRecord(is_pynative, switch_context_fn))
 
     def pop(self):
         self.context_stack.pop()
@@ -193,7 +197,8 @@ class _Context:
 
     @save_graphs_path.setter
     def save_graphs_path(self, save_graphs_path):
-        self._context_handle.set_save_graphs_path(_make_directory(save_graphs_path))
+        self._context_handle.set_save_graphs_path(
+            _make_directory(save_graphs_path))
 
     @property
     def device_target(self):
@@ -212,7 +217,8 @@ class _Context:
     @device_id.setter
     def device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
-            raise ValueError("Device id must be in [0, 4095], but got {}".format(device_id))
+            raise ValueError(
+                "Device id must be in [0, 4095], but got {}".format(device_id))
         success = self._context_handle.set_device_id(device_id)
         if not success:
             raise RuntimeError("Device id set failed!!!")
@@ -239,7 +245,8 @@ class _Context:
 
     @enable_auto_mixed_precision.setter
     def enable_auto_mixed_precision(self, enable_auto_mixed_precision):
-        self._context_handle.set_auto_mixed_precision_flag(enable_auto_mixed_precision)
+        self._context_handle.set_auto_mixed_precision_flag(
+            enable_auto_mixed_precision)
 
     @property
     def enable_reduce_precision(self):
@@ -247,7 +254,8 @@ class _Context:
 
     @enable_reduce_precision.setter
     def enable_reduce_precision(self, enable_reduce_precision):
-        self._context_handle.set_enable_reduce_precision_flag(enable_reduce_precision)
+        self._context_handle.set_enable_reduce_precision_flag(
+            enable_reduce_precision)
 
     @property
     def enable_dump(self):
@@ -279,11 +287,20 @@ class _Context:
 
     @profiling_options.setter
     def profiling_options(self, option):
-        options = ["training_trace", "task_trace", "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
+        options = ["training_trace", "task_trace",
+                   "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
         if option not in options:
             raise ValueError("Profiling options must be in 'training_trace' 'task_trace' "
                              "'task_trace:training_trace' 'training_trace:task_trace' or 'op_trace'.")
         self._context_handle.set_profiling_options(option)
+
+    @property
+    def enable_graph_kernel(self):
+        return self._context_handle.get_enable_graph_kernel()
+
+    @enable_graph_kernel.setter
+    def enable_graph_kernel(self, graph_kernel_switch_):
+        self._context_handle.set_enable_graph_kernel(graph_kernel_switch_)
 
     @property
     def reserve_class_name_in_scope(self):
@@ -302,13 +319,19 @@ class _Context:
     @variable_memory_max_size.setter
     def variable_memory_max_size(self, variable_memory_max_size):
         if not check_input_format(variable_memory_max_size):
-            raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
+            raise ValueError(
+                "Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
         if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
-            raise ValueError("Context param variable_memory_max_size should be less than 31GB.")
-        variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
-        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
-        graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
-        self._context_handle.set_variable_memory_max_size(variable_memory_max_size_)
+            raise ValueError(
+                "Context param variable_memory_max_size should be less than 31GB.")
+        variable_memory_max_size_ = variable_memory_max_size[:-
+                                                             2] + " * 1024 * 1024 * 1024"
+        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - \
+            int(variable_memory_max_size[:-2])
+        graph_memory_max_size_ = str(
+            graph_memory_max_size) + " * 1024 * 1024 * 1024"
+        self._context_handle.set_variable_memory_max_size(
+            variable_memory_max_size_)
         self._context_handle.set_graph_memory_max_size(graph_memory_max_size_)
 
     @property
@@ -540,5 +563,6 @@ def get_context(attr_key):
         ValueError: If input key is not an attribute in context.
     """
     if not hasattr(_context(), attr_key):
-        raise ValueError("Get context keyword %s is not recognized!" % attr_key)
+        raise ValueError(
+            "Get context keyword %s is not recognized!" % attr_key)
     return getattr(_context(), attr_key)

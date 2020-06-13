@@ -43,7 +43,8 @@ void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_g
   std::vector<CNodePtr> momentum_list;
   std::vector<CNodePtr> other_list;
   for (const auto &cnode : origin_cnode_list) {
-    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
+    if (!AnfAlgo::IsCompositeKernel(cnode) &&
+        kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
       momentum_list.emplace_back(cnode);
     } else {
       other_list.emplace_back(cnode);

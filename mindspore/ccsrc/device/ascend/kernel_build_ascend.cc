@@ -26,10 +26,12 @@
 #include "kernel/kernel.h"
 #include "kernel/tbe/tbe_kernel_build.h"
 #include "kernel/tbe/tbe_kernel_parallel_build.h"
+#include "kernel/akg/ascend/akg_ascend_kernel_build.h"
 #include "kernel/aicpu/aicpu_kernel_build.h"
 #include "kernel/hccl/hccl_kernel_build.h"
 #include "kernel/rts/rt_kernel_build.h"
 #include "kernel/tbe/tbe_utils.h"
+#include "kernel/common_utils.h"
 #include "operator/ops.h"
 #include "session/anf_runtime_algorithm.h"
 #include "./common.h"
@@ -65,6 +67,7 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
 static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   std::vector<AnfNodePtr> tbe_nodes;
+  std::vector<AnfNodePtr> akg_nodes;
   std::vector<AnfNodePtr> other_nodes;
   for (const auto &anf_node : kernel_graph_ptr->execution_order()) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -79,19 +82,26 @@ static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *ke
         }
         break;
       }
+      case KernelType::AKG_KERNEL: {
+        akg_nodes.push_back(anf_node);
+        break;
+      }
       default: {
         other_nodes.push_back(anf_node);
         break;
       }
     }
   }
-  bool ret = kernel::TbeOpParallelBuild(tbe_nodes);
+  bool tbe_ret = kernel::TbeOpParallelBuild(tbe_nodes);
+  bool akg_ret = kernel::AkgAscendKernelParallelBuild(akg_nodes);
+  auto bin_map = kernel::tbe::KernelMeta::GetInstance();
+  (void)bin_map->ReadIndex(kernel::kCceKernelMeta);
   for (const auto &anf_node : other_nodes) {
     kernel::KernelModPtr kernel_mod_ptr = SerialCompileImpl(anf_node);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
   }
-  return ret;
+  return tbe_ret && akg_ret;
 }
 
 static std::vector<int> CalCleanZerosSize(const CNodePtr &pre_node) {
@@ -202,7 +212,7 @@ void KernelBuildPreprocess(mindspore::session::KernelGraph *kernel_graph) {
   for (const auto &anf_node : kernel_graph->execution_order()) {
     std::string apply_function_name = AnfAlgo::GetCNodeName(anf_node);
     if (apply_function_name == prim::kPrimMaxPoolGrad->name() &&
-        AnfAlgo::GetKernelType(anf_node) == KernelType::AUTO_DIFF_KERNEL) {
+        AnfAlgo::GetKernelType(anf_node) == KernelType::AKG_KERNEL) {
       auto clear_zero_prim = std::make_shared<Primitive>(kClearZeroOpName);
       MS_EXCEPTION_IF_NULL(clear_zero_prim);
       auto new_value_node = NewValueNode(clear_zero_prim);

@@ -38,7 +38,7 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
       continue;
     }
 
-    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AUTO_DIFF_KERNEL) {
+    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
       auto gpu_kernel_ptr = kernel::AkgGpuKernelBuild(kernel);
       if (!gpu_kernel_ptr) {
         MS_LOG(EXCEPTION) << "Build akg kernel op[" << kernel_name << "] failed";

@@ -17,6 +17,7 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops import resolved_ops as RO
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -42,7 +43,7 @@ class _Loss(Cell):
         if reduction == 'none':
             self.reduce = False
 
-        self.reduce_mean = P.ReduceMean()
+        self.reduce_mean = RO.ReduceMean()
         self.reduce_sum = P.ReduceSum()
 
     def get_axis(self, x):
@@ -247,7 +248,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         validator.check_number_range("smooth_factor", smooth_factor, 0, 1, Rel.INC_BOTH, self.cls_name)
         self.smooth_factor = smooth_factor
         self.num_classes = num_classes
-        self.softmax_cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        self.softmax_cross_entropy = RO.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0 - self.smooth_factor, mstype.float32)
         self.off_value = Tensor(1.0 * self.smooth_factor / (self.num_classes - 1), mstype.float32)

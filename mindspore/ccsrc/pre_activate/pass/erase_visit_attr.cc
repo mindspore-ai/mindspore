@@ -16,6 +16,8 @@
 
 #include "pre_activate/pass/erase_visit_attr.h"
 #include <memory>
+#include <vector>
+#include "kernel/common_utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "pre_activate/common/helper.h"
 
@@ -28,7 +30,20 @@ const BaseRef EraseVisitAttr::DefinePattern() const {
 }
 
 const AnfNodePtr EraseVisitAttr::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
-  AnfAlgo::EraseNodeAttr(kAttrVisited, node);
+  if (node != nullptr && AnfAlgo::IsRealCNodeKernel(node)) {
+    if (AnfAlgo::IsCompositeKernel(node)) {
+      auto fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
+      MS_EXCEPTION_IF_NULL(fg);
+      std::vector<AnfNodePtr> todos;
+      kernel::GetValidKernelNodes(fg, &todos);
+      for (auto &t : todos) {
+        AnfAlgo::EraseNodeAttr(kAttrVisited, t);
+      }
+    }
+    AnfAlgo::EraseNodeAttr(kAttrVisited, node);
+  } else {
+    AnfAlgo::EraseNodeAttr(kAttrVisited, node);
+  }
   return nullptr;
 }
 }  // namespace opt

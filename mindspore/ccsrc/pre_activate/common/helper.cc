@@ -101,9 +101,12 @@ bool UnVisited(const BaseRef &n) {
       auto prim_py = value->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(prim_py);
       return !prim_py->HasAttr(kAttrVisited);
-    } else {
-      return false;
+    } else if (IsValueNode<FuncGraph>(in)) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(in);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      return !func_graph->has_flag(kAttrVisited);
     }
+    return false;
   }
   return false;
 }
@@ -186,9 +189,12 @@ bool Visited(const BaseRef &n) {
       auto prim_py = value->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(prim_py);
       return prim_py->HasAttr(kAttrVisited);
-    } else {
-      return false;
+    } else if (IsValueNode<FuncGraph>(in)) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(in);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      return func_graph->has_flag(kAttrVisited);
     }
+    return false;
   }
   return false;
 }

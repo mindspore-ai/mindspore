@@ -41,6 +41,8 @@
 #include "optimizer/irpass/incorporate_call.h"
 #include "optimizer/irpass/grad_var_prepare.h"
 #include "optimizer/irpass/param_replace.h"
+#include "optimizer/irpass/mark_interface_fusion.h"
+#include "optimizer/opt.h"
 
 namespace mindspore {
 namespace opt {
@@ -48,7 +50,7 @@ namespace irpass {
 OptimizeIRPassLib::OptimizeIRPassLib() {
   arithmetic_simplify_ = MakeSubstitution(ArithmeticSimplify(), "arithmetic_simplify",
                                           {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimTensorAdd,
-                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul});
+                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
   special_op_eliminate_ =
     MakeSubstitution(SpecialOpEliminater(), "special_op_eliminate",
                      {prim::kPrimInsertGradientOf, prim::kPrimHookBackward, prim::kPrimPrintShapeType,
@@ -88,7 +90,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   replace_refkey_by_param_ =
     MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>, opt::FORCE_RENORM);
   replace_old_param_ = MakeSubstitution(ReplaceOldParam(), "replace_old_param", IsParam);
-
+  get_ref_value_eliminate_ =
+    MakeSubstitution(GetRefValueEliminater(), "get_ref_value_eliminate", prim::kPrimGetRefValue);
   // Gradient transforms
   expand_jprim_ = MakeSubstitution(ExpandJPrim(), "expand_jprim", prim::kPrimJ);
   stop_gradient_eliminate_ =
@@ -114,6 +117,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // Incorporation
   incorporate_getitem_ = MakeSubstitution(IncorporateGetitem(), "incorporate_getitem", prim::kPrimTupleGetItem);
+  incorporate_getitem_from_param_ =
+    MakeSubstitution(IncorporateGetitemFromParam(), "incorporate_getitem_from_param", IsCNodeComposite);
   incorporate_getitem_switch_ =
     MakeSubstitution(IncorporateGetitemSwitch(), "incorporate_getitem_switch", prim::kPrimTupleGetItem);
   incorporate_call_ = MakeSubstitution(IncorporateCall(), "incorporate_call", IsCNodeDup);
@@ -125,6 +130,17 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // Convert
   print_tuple_wrapper_ = MakeSubstitution(PrintTupleWrapper(), "print_tuple_wrapper", prim::kPrimPrint);
+
+  // Unused parameter eliminate
+  unused_parameter_eliminate_ =
+    MakeSubstitution(UnusedParasEliminater(), "unused_parameter_eliminate", IsCNodeComposite);
+  unused_output_eliminate_ = MakeSubstitution(UnusedOutputEliminater(), "unused_output_eliminate", IsCNodeComposite);
+
+  // AddN eliminate
+  addn_eliminate_ = MakeSubstitution(AddNEliminater(), "addn_eliminate", IsCNodeComposite);
+
+  // Mark interface fusion
+  mark_interface_fusion_ = MakeSubstitution(MarkInterfaceFusion(), "mark_interface_fusion", prim::kPrimSelect);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

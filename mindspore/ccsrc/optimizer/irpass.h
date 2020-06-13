@@ -61,6 +61,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr get_make_ref_eliminate_;
   SubstitutionPtr replace_refkey_by_param_;
   SubstitutionPtr replace_old_param_;
+  SubstitutionPtr get_ref_value_eliminate_;
 
   // Branch culling
   SubstitutionPtr switch_simplify_;
@@ -84,6 +85,7 @@ class OptimizeIRPassLib {
 
   // Incorporation
   SubstitutionPtr incorporate_getitem_;
+  SubstitutionPtr incorporate_getitem_from_param_;
   SubstitutionPtr incorporate_getitem_switch_;
   SubstitutionPtr incorporate_call_;
   SubstitutionPtr incorporate_call_switch_;
@@ -93,6 +95,16 @@ class OptimizeIRPassLib {
 
   // Convert
   SubstitutionPtr print_tuple_wrapper_;
+
+  // Unused parameter eliminate
+  SubstitutionPtr unused_parameter_eliminate_;
+  SubstitutionPtr unused_output_eliminate_;
+
+  // AddN eliminate
+  SubstitutionPtr addn_eliminate_;
+
+  // Fusion
+  SubstitutionPtr mark_interface_fusion_;
 };
 
 // the collection of irpass for resolve action
@@ -145,6 +157,23 @@ inline bool IsCNodeGraph(const AnfNodePtr &node) {
   auto inp0 = node->cast<CNodePtr>()->input(0);
   if (IsValueNode<FuncGraph>(inp0)) {
     return true;
+  }
+  return false;
+}
+
+// Check if CNode Input 0 is Func Graph of composite op.
+inline bool IsCNodeComposite(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+
+  auto inp0 = node->cast<CNodePtr>()->input(0);
+  if (IsValueNode<FuncGraph>(inp0)) {
+    auto fg = GetValueNode<FuncGraphPtr>(inp0);
+    if (fg == nullptr) {
+      return false;
+    }
+    return fg->has_attr(FUNC_GRAPH_FLAG_COMPOSITE);
   }
   return false;
 }

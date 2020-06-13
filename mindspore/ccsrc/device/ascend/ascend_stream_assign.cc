@@ -512,9 +512,15 @@ void AscendStreamAssign::GetNeedActiveStreams(const shared_ptr<session::KernelGr
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+    ValuePtr value_ptr = nullptr;
     auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto value_ptr = primitive->GetAttr(kStreamNeedActivedFirst);
+    if (primitive != nullptr) {
+      value_ptr = primitive->GetAttr(kStreamNeedActivedFirst);
+    } else {
+      auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(cur_cnode_ptr);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      value_ptr = func_graph->get_attr(kStreamNeedActivedFirst);
+    }
     if (value_ptr == nullptr) {
       continue;
     }
@@ -774,6 +780,7 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
   }
 
   std::set<CNode *> processed;
+
   for (size_t i = 0; i < others.size(); i++) {
     auto begin = others.begin() + i;
     auto end = begin + 1;
@@ -781,6 +788,7 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
     for (size_t j = 0; j < independents.size(); j++) {
       auto cur_independent = independents[j];
       auto it = std::find(processed.begin(), processed.end(), cur_independent.get());
+
       if (it != processed.end()) {
         continue;
       }

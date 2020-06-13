@@ -181,6 +181,9 @@ constexpr auto kAttrEventId = "event_id";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
+constexpr auto kAttrMultiples = "multiples";
+constexpr auto kAttrFixPrecision = "fix_precision";
+constexpr auto kAttrOutputPrecision = "output_precision";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
 constexpr auto kAttrN = "n";
@@ -192,6 +195,7 @@ constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
 constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";
+constexpr auto kAttrOutputDefault = "output_default";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

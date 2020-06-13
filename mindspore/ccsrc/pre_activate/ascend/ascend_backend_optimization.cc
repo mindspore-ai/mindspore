@@ -16,6 +16,7 @@
 #include "pre_activate/ascend/ascend_backend_optimization.h"
 #include <memory>
 #include <string>
+#include <set>
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/ascend/ir_fission/bn_split.h"
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
@@ -62,6 +63,9 @@
 #include "pre_activate/ascend/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "pre_activate/pass/eliminate_redundant_op.h"
 #include "pre_activate/pass/common_subexpression_elimination.h"
+#include "pre_activate/pass/fuse_composite.h"
+#include "pre_activate/pass/fuse_basic.h"
+#include "pre_activate/pass/add_atomic_clean.h"
 #include "pre_activate/ascend/format_type/merge_cast_to_op.h"
 #include "pre_activate/ascend/format_type/check_consistency.h"
 #include "pre_activate/ascend/buffer_fusion/ub_pattern_fusion.h"
@@ -85,6 +89,8 @@
 #include "pre_activate/ascend/ir_fission/addn_fission.h"
 #include "pre_activate/ascend/enhancer/insert_memcpy_async_for_getnext.h"
 #include "pre_activate/ascend/ir_fission/batch_norm_grad_infer_fission.h"
+#include "pre_activate/ascend/format_type/modify_ops_attrs.h"
+#include "pre_activate/ascend/format_type/remove_no_use_reshape_op.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -152,6 +158,19 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
   data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
   optimizer->AddPassManager(data_layout_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
+void AscendCompositeCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  MS_EXCEPTION_IF_NULL(optimizer);
+  auto common_process = std::make_shared<PassManager>("composite_common_process");
+  MS_EXCEPTION_IF_NULL(common_process);
+  common_process->AddPass(std::make_shared<ModifyOpAttrs>());
+  common_process->AddPass(std::make_shared<RemoveNoUseReshapeOp>());
+  optimizer->AddPassManager(common_process);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 }
@@ -313,7 +332,94 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     std::string file_path =
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
-    DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
+    DumpIRProto(kernel_graph, "after_hwopt");
+    kernel_graph->DumpFuncGraph("hwopt_d_end");
+  }
+}
+
+void AscendBackendCompositeOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                               bool is_before_kernel_select) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->enable_graph_kernel())) {
+    return;
+  }
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_composite_opt_before_graph_" +
+                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
+                            ".ir";
+    DumpIR(file_path, kernel_graph);
+  }
+
+  // Fuse composite ops with basic ops
+  FuseComposite(kernel_graph, is_before_kernel_select);
+
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_composite_opt_end_graph_" +
+                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
+                            ".ir";
+    DumpIR(file_path, kernel_graph, true);
+  }
+}
+
+void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                               bool is_before_kernel_select) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->enable_graph_kernel())) {
+    return;
+  }
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_fuse_basic_opt_before_graph_" +
+                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
+                            ".ir";
+    DumpIR(file_path, kernel_graph, true);
+  }
+
+  // Fuse basic ops with basic ops
+  FuseBasic(kernel_graph, is_before_kernel_select);
+
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_fuse_basic_opt_end_graph_" +
+                            std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
+                            ".ir";
+    DumpIR(file_path, kernel_graph, true);
+  }
+}
+
+void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->enable_graph_kernel())) {
+    return;
+  }
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_add_atomic_clean_before" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_path, kernel_graph);
+  }
+
+  AddAtomicClean(kernel_graph);
+
+  if (save_graphs) {
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_path, kernel_graph, true);
   }
 }
 
@@ -330,7 +436,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_before.ir";
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_before.ir" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
   auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
@@ -355,7 +462,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_after.ir";
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_after.ir" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
 }

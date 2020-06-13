@@ -37,7 +37,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
   auto multi_graph_sink = [&func_graph](const FuncGraphPtr &f) {
     if (MsContext::GetInstance()->is_multi_graph_sink()) {
       if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
-        f->set_flags(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+        f->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
       }
     }
   };

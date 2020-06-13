@@ -17,9 +17,12 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "utils/utils.h"
 #include "session/anf_runtime_algorithm.h"
+#include "common/utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -74,11 +77,21 @@ const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePt
   if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealKernel(node)) {
     return nullptr;
   }
-  CNodePtr cnode = node->cast<CNodePtr>();
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(cnode); i++) {
-    if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
-      MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << AnfAlgo::GetCNodeName(node) << "["
-                        << node->DebugString() << "]";
+
+  std::vector<AnfNodePtr> todos = {node};
+  if (AnfAlgo::IsCompositeKernel(node)) {
+    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    kernel::GetValidKernelNodes(sub_graph, &todos);
+  }
+
+  for (auto &t : todos) {
+    CNodePtr cnode = t->cast<CNodePtr>();
+    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(cnode); i++) {
+      if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
+        MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << AnfAlgo::GetCNodeName(cnode) << "["
+                          << cnode->DebugString() << "]";
+      }
     }
   }
   return nullptr;

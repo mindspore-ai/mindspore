@@ -90,20 +90,10 @@ bool IsUniqueUse(const FuncGraphPtr &fg, AnfNodePtr) {
 
 bool IsInside(FuncGraphPtr, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node->func_graph());
-  auto &flags = node->func_graph()->flags();
-  if (flags.find("inline_inside") != flags.end()) {
-    return flags["inline_inside"];
-  }
-  return false;
+  return node->func_graph()->has_flag("inline_inside");
 }
 
-bool IsCore(const FuncGraphPtr &fg, AnfNodePtr) {
-  auto &flags = fg->flags();
-  if (flags.find("core") != flags.end()) {
-    return flags["core"];
-  }
-  return false;
-}
+bool IsCore(const FuncGraphPtr &fg, AnfNodePtr) { return fg->has_flag("core"); }
 
 bool NoCriterion(FuncGraphPtr, AnfNodePtr) { return true; }
 
@@ -126,6 +116,13 @@ class InlinerBase : public AnfVisitor {
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
     if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
       return nullptr;
+    }
+    // Do not inline composite op to Cell.
+    if (fg->has_attr(FUNC_GRAPH_FLAG_COMPOSITE) && !node->func_graph()->has_attr(FUNC_GRAPH_FLAG_COMPOSITE)) {
+      // If the composite op only contains a return node, we make it inlined.
+      if (fg->nodes().size() - fg->parameters().size() > 1) {
+        return nullptr;
+      }
     }
 
     Reset();

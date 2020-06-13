@@ -31,7 +31,7 @@ void TaskDescReporter::ReportData() {
 
   size_t task_index = 0;
   for (const auto &node : cnode_list_) {
-    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AKG_KERNEL) {
       MS_LOG(WARNING) << "Skip non tbe kernel";
       ++task_index;
       continue;

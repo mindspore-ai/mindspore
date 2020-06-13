@@ -222,6 +222,24 @@ if (ENABLE_GPU)
     endif ()
 endif ()
 
+if (ENABLE_D AND ENABLE_AKG)
+    set (AKG_PATH ${CMAKE_SOURCE_DIR}/akg)
+    set (TVM_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg/mindspore/ccsrc/akg/incubator-tvm)
+    install(
+            DIRECTORY
+                ${AKG_PATH}/mindspore/akg
+            DESTINATION ${INSTALL_PY_DIR}/..
+            COMPONENT mindspore
+    )
+    install(
+            DIRECTORY
+                ${TVM_PATH}/topi/python/topi
+                ${TVM_PATH}/python/tvm
+            DESTINATION ${INSTALL_PY_DIR}/../akg
+            COMPONENT mindspore
+    )
+endif()
+
 if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
     install(
         DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/dataset

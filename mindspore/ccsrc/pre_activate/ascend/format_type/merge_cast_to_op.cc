@@ -133,6 +133,9 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
     return nullptr;
   }
   auto next_cnode = next_node->cast<CNodePtr>();
+  if (AnfAlgo::IsCompositeKernel(next_node)) {
+    return nullptr;
+  }
   auto next_op_name = AnfAlgo::GetCNodeName(next_node);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   kernel_query->Query(next_cnode, &kernel_info_list);
@@ -206,6 +209,9 @@ AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_nod
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(prior_op);
+  if (AnfAlgo::IsCompositeKernel(prior_op)) {
+    return nullptr;
+  }
 
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   kernel_query->Query(prior_op, &kernel_info_list);

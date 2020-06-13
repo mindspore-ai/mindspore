@@ -1074,7 +1074,6 @@ def test_constant_duplicate_mul(tag):
 
     return fns[tag]
 
-
 def test_adjust_allreduce_mul_add(tag):
     fns = FnDict()
     Mul = Primitive('Mul')

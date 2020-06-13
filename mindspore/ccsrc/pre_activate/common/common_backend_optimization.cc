@@ -36,7 +36,8 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_common_before.ir";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_common_before" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
@@ -49,7 +50,8 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_common_after.ir";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_common_after" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
 }

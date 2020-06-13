@@ -2258,10 +2258,10 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
       (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
     if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
       if (HasStrategy(root)) {
-        MS_LOG(INFO) << "strategies ignored in " << parallel_mode
+        MS_LOG(INFO) << "Strategies ignored in " << parallel_mode
                      << ", set_strategy() only valid in [semi_]auto_parallel.";
       }
-      root->flags()[CHECK_SET_STRATEGY_VALID_ONCE_ONLY] = true;
+      root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
     }
 
     return changes;
@@ -2318,11 +2318,11 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once
-  root->flags()[SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY] = true;
+  root->set_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY, true);
   res->results()[pipeline::kStepParallelGraph] = root;
 
   // in auto parallel mode, no need to check if stategies set
-  root->flags()[CHECK_SET_STRATEGY_VALID_ONCE_ONLY] = true;
+  root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
 
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);

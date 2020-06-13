@@ -24,6 +24,12 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AscendCompositeCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AscendBackendCompositeOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                               bool is_before_kernel_select = false);
+void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                               bool is_before_kernel_select = false);
+void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt

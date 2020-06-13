@@ -23,6 +23,8 @@
 #include "optimizer/irpass.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
+#include "utils/graph_utils.h"
+#include "operator/composite/composite.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,6 +38,7 @@ class MakeRefEliminater : public AnfVisitor {
       this->y_ = node;
       return true;
     };
+
     AnfVisitor::Match(prim::kPrimMakeRef, {IsNode, gety, IsNode})(node);
     return y_;
   }
@@ -75,6 +78,32 @@ class GetMakeRefEliminater : public AnfVisitor {
   }
 };
 
+// {prim::kPrimGetRefValue, {X}} -> X
+class GetRefValueEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto gety = [this](const AnfNodePtr &node) -> bool {
+      if (node->isa<Parameter>()) {
+        this->y_ = node;
+        return true;
+      }
+      return false;
+    };
+
+    y_ = nullptr;
+    AnfVisitor::Match(prim::kPrimGetRefValue, {gety})(node);
+    return y_;
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+
+ private:
+  AnfNodePtr y_{nullptr};
+};
 // IsValueNode<RefKey>
 class ReplaceRefkeyByParam : public AnfVisitor {
  public:

@@ -27,9 +27,11 @@ from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from mindspore.common.api import ms_function
 from mindspore import context
+from mindspore.ops import resolved_ops as RO
 from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
+
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold']
 
@@ -74,6 +76,7 @@ class Dropout(Cell):
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net(x)
     """
+
     def __init__(self, keep_prob=0.5, seed0=0, seed1=0, dtype=mstype.float32):
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
@@ -137,6 +140,7 @@ class Flatten(Cell):
         [[1.2 1.2 2.1 2.1]
          [2.2 2.2 3.2 3.2]]
     """
+
     def __init__(self):
         super(Flatten, self).__init__()
 
@@ -212,7 +216,7 @@ class Dense(Cell):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
 
         self.matmul = P.MatMul(transpose_b=True)
-        self.bias_add = P.BiasAdd()
+        self.bias_add = RO.BiasAdd()
 
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
@@ -271,6 +275,7 @@ class ClipByNorm(Cell):
         >>> net(input, clip_norm)
 
     """
+
     def __init__(self):
         super(ClipByNorm, self).__init__()
         self.reduce_sum = P.ReduceSum(keep_dims=True)
@@ -302,6 +307,7 @@ class ClipByNorm(Cell):
             intermediate = x
         else:
             intermediate = x * clip_norm
+
         max_norm = self.max_op(l2norm, clip_norm)
         values_clip = self.cast(intermediate, mstype.float32) / self.expand_dims(max_norm, -1)
         values_clip = self.reshape(values_clip, self.shape(x))
@@ -330,6 +336,7 @@ class Norm(Cell):
         >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> net(input)
     """
+
     def __init__(self, axis=(), keep_dims=False):
         super(Norm, self).__init__()
         self.axis = axis
@@ -392,6 +399,7 @@ class OneHot(Cell):
           [0. 1.]
           [0. 0.]]]
     """
+
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
         super(OneHot, self).__init__()
         self.onehot = P.OneHot(axis)
@@ -506,6 +514,7 @@ class Unfold(Cell):
         Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1], [1, 1]]]],
                 shape=(1, 4, 2, 2), dtype=mstype.float16)
     """
+
     def __init__(self, ksizes, strides, rates, padding="valid"):
         super(Unfold, self).__init__()
         self.extract_image_patches = inner.ExtractImagePatches(ksizes, strides, rates, padding)

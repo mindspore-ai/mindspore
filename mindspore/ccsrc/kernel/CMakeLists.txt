@@ -9,6 +9,10 @@ if (ENABLE_D)
 	file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 		"kernel_query.cc"
 		"kernel_fusion.cc"
+		"akg/ascend/*.cc"
+		"akg/akgkernelbuild.cc"
+		"akg/akg_kernel_attrs_process.cc"
+		"akg/akg_kernel_metadata.cc"
 		"tbe/*.cc"
 		"aicpu/*.cc"
 		"rts/*.cc"

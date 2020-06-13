@@ -27,6 +27,7 @@ from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
+from mindspore.ops import resolved_ops as RO
 from .bert_model import BertModel
 
 GRADIENT_CLIP_TYPE = 1
@@ -127,7 +128,7 @@ class GetNextSentenceOutput(nn.Cell):
     """
     def __init__(self, config):
         super(GetNextSentenceOutput, self).__init__()
-        self.log_softmax = P.LogSoftmax()
+        self.log_softmax = RO.LogSoftmax()
         self.weight_init = TruncatedNormal(config.initializer_range)
         self.dense = nn.Dense(config.hidden_size, 2,
                               weight_init=self.weight_init, has_bias=True).to_float(config.compute_type)

@@ -31,7 +31,7 @@ class KernelBuildInfo {
   class KernelBuildInfoBuilder;
 
   KernelBuildInfo() {
-    kernel_type_ = AUTO_DIFF_KERNEL;
+    kernel_type_ = AKG_KERNEL;
     fusion_type_ = OPAQUE;
     processor_ = AICORE;
     op_pattern_ = kCommonPattern;

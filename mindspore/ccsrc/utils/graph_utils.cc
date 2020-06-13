@@ -28,6 +28,7 @@
 #include <fstream>
 
 #include "ir/visitor.h"
+#include "ir/manager.h"
 #include "utils/log_adapter.h"
 #include "common/utils.h"
 #include "pipeline/parse/function_block.h"
@@ -160,6 +161,24 @@ class DeepLinkedGraphSearcher : public DeepFirstSearcher {
 
   void Visit(const ValueNodePtr &) override {}
 };
+
+class DeepUsersSearcher : public DeepFirstSearcher {
+ public:
+  explicit DeepUsersSearcher(const IncludeFunc &include, const FuncGraphManagerPtr &mng)
+      : DeepFirstSearcher(include), mng_(mng) {}
+  ~DeepUsersSearcher() override = default;
+
+  void Visit(const CNodePtr &cnode) override {
+    auto &users = mng_->node_users()[cnode];
+    for (auto iter = users.begin(); iter != users.end(); ++iter) {
+      DeepFirstSearcher::Visit(iter->first);
+    }
+  }
+  void Visit(const ValueNodePtr &) override {}
+
+ private:
+  FuncGraphManagerPtr mng_;
+};
 }  // namespace
 
 std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
@@ -172,6 +191,11 @@ std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const Includ
 
 std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepLinkedGraphSearcher(include).Search(root);
+}
+
+std::vector<AnfNodePtr> DeepUsersSearch(const AnfNodePtr &root, const IncludeFunc &include,
+                                        const FuncGraphManagerPtr &mng) {
+  return DeepUsersSearcher(include, mng).Search(root);
 }
 
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {

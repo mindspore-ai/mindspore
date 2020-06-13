@@ -141,6 +141,9 @@ class MsContext {
   void set_profiling_options(const std::string &options) { profiling_options_ = options; }
   std::string profiling_options() const { return profiling_options_; }
 
+  void set_enable_graph_kernel(bool enable_graph_kernel) { enable_graph_kernel_ = enable_graph_kernel; }
+  bool enable_graph_kernel() const { return enable_graph_kernel_; }
+
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
   void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
@@ -179,6 +182,7 @@ class MsContext {
   std::thread tdt_print_;
   bool profiling_mode_;
   std::string profiling_options_;
+  bool enable_graph_kernel_;
 };
 
 }  // namespace mindspore

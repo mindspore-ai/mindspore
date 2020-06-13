@@ -69,7 +69,7 @@ std::string CNode::fullname_with_scope() {
     }
     fullname_with_scope_ = name;
   } else {
-    // cnode input 0 should be primitive ptr
+    // cnode input 0 should be primitive ptr or funcgraph ptr
     auto value_ptr = input(0)->cast<ValueNodePtr>();
     if (value_ptr == nullptr) {
       MS_LOG(WARNING) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
@@ -83,11 +83,23 @@ std::string CNode::fullname_with_scope() {
       return fullname_with_scope_;
     }
 
-    PrimitivePtr prim = GetValue<PrimitivePtr>(input_value);
+    auto prim = input_value->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(scope());
-    MS_EXCEPTION_IF_NULL(prim);
-    fullname_with_scope_ =
-      scope()->name() + "/" + prim->name() + "-op" + id_generator::get_id(shared_from_base<CNode>());
+    fullname_with_scope_ = scope()->name() + "/";
+    if (prim != nullptr) {
+      fullname_with_scope_ += prim->name();
+    } else {
+      auto func_graph = input_value->cast<FuncGraphPtr>();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto fg_flag = func_graph->get_attr(FUNC_GRAPH_FLAG_COMPOSITE);
+      if (fg_flag != nullptr) {
+        auto fg_name = GetValue<std::string>(fg_flag);
+        fullname_with_scope_ += "composite_" + fg_name;
+      } else {
+        fullname_with_scope_ += func_graph->ToString();
+      }
+    }
+    fullname_with_scope_ += "-op" + id_generator::get_id(shared_from_base<CNode>());
   }
 
   return fullname_with_scope_;

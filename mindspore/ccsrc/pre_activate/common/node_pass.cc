@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"
+#include "session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -52,8 +53,13 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     if (new_node && IsValueNode<FuncGraph>(new_node)) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(new_node);
       MS_EXCEPTION_IF_NULL(const_func_graph);
-      todo.push_back(const_func_graph->output());
+      if (!const_func_graph->has_attr(FUNC_GRAPH_FLAG_COMPOSITE)) {
+        todo.push_back(const_func_graph->output());
+      }
     } else if (new_node && new_node->isa<CNode>()) {
+      if (AnfAlgo::IsCompositeKernel(new_node)) {
+        todo.push_back(new_node);
+      }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();

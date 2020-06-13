@@ -80,6 +80,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
   profiling_mode_ = false;
   profiling_options_ = "training_trace";
+  enable_graph_kernel_ = false;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {

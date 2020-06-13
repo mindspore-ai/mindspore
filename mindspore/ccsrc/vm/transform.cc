@@ -30,6 +30,7 @@
 #include "utils/graph_utils.h"
 #include "utils/context/ms_context.h"
 #include "debug/trace.h"
+#include "debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace compile {
@@ -72,6 +73,14 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
     }
 
     AnfNodePtr fn = inputs[0];
+    MS_EXCEPTION_IF_NULL(fn);
+    if (IsValueNode<FuncGraph>(fn)) {
+      FuncGraphPtr fg = fn->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
+      if (fg->has_attr(FUNC_GRAPH_FLAG_COMPOSITE)) {
+        return false;
+      }
+    }
+
     if (!IsValueNode<Primitive>(fn)) {
       return true;
     }
@@ -108,7 +117,6 @@ VectorRef CompileGraph::SplitNodes(const FuncGraphPtr &graph) {
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (IsCut(node)) {
-      MS_LOG(DEBUG) << "Cut node:" << node->DebugString(10) << ", size:" << split.size();
       if (split.size() != 0) {
         splits.push_back(split);
       }
@@ -116,10 +124,8 @@ VectorRef CompileGraph::SplitNodes(const FuncGraphPtr &graph) {
       split.clear();
     } else if (!(node->isa<ValueNode>() || node->isa<Parameter>())) {
       split.push_back(node);
-      MS_LOG(DEBUG) << "Insert node:" << node->DebugString(10) << ", size:" << split.size();
     }
   }
-  MS_LOG(DEBUG) << "Split node size :" << splits.size();
   return splits;
 }
 
@@ -348,7 +354,6 @@ InstSet CompileGraph::GenMultiGraphsSinkInst(const FuncGraphPtr &graph) {
 
 InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(DEBUG) << "Compile start graph: " << graph->ToString();
 
   Reset();
   PushParameters(graph);
@@ -487,8 +492,7 @@ void CompileGraph::AddExternal(const LinConvertResult &result) {
 }
 
 void TraverseGraphMap(
-  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr,
-  const FuncGraphSet &fgs,
+  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr, const FuncGraphSet &fgs,
   const std::function<std::shared_ptr<FuncGraph>(const PrimitivePtr, const AbstractFunctionPtr)> &get_prim_graph) {
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MS_EXCEPTION_IF_NULL(tr);
@@ -569,16 +573,11 @@ CompileGraphs::CompileGraphs(const BackendPtr &backend, const std::vector<Primit
 // Convert graphs to unlinked instructions.
 void CompileGraphs::Compile(const FuncGraphPtr &graph) {
   MS_LOG(DEBUG) << "Start";
-  auto graph_manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(graph_manager);
-  FuncGraphSet graphs = graph_manager->func_graphs();
-  for (auto &g : graphs) {
-    mapping_[g] = static_cast<int>(insts_.size());
-    if (transform_ != nullptr) {
-      InstSet insts = transform_->Run(g);
-      if (!insts.empty()) {
-        (void)insts_.insert(insts_.end(), insts.begin(), insts.end());
-      }
+  mapping_[graph] = static_cast<int>(insts_.size());
+  if (transform_ != nullptr) {
+    InstSet insts = transform_->Run(graph);
+    if (!insts.empty()) {
+      (void)insts_.insert(insts_.end(), insts.begin(), insts.end());
     }
   }
   MS_LOG(DEBUG) << "End";
@@ -623,8 +622,15 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   Reset();
   MS_LOG(DEBUG) << "Begin parameter:" << graph->parameters().size();
 
-  (void)WrapPrimitives(graph);
-  Compile(graph);
+  FuncGraphPtr prim_graph = WrapPrimitives(graph);
+  Compile(prim_graph);
+  MS_EXCEPTION_IF_NULL(prim_graph);
+  FuncGraphSet graphs = prim_graph->manager()->func_graphs();
+  for (auto g : graphs) {
+    if (g != graph && g != nullptr && !(g->has_attr(FUNC_GRAPH_FLAG_COMPOSITE))) {
+      Compile(g);
+    }
+  }
 
   FinalVMPtr rt = Link(graph);
   Reset();
