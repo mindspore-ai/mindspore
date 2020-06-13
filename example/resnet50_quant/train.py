@@ -23,7 +23,7 @@ from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from models.resnet_quant import resnet50_quant
@@ -57,13 +57,8 @@ if __name__ == '__main__':
                                               mirror_mean=True)
             auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
             ckpt_save_dir = config.save_checkpoint_path
-        elif target == "GPU":
-            context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=False)
-            init("nccl")
-            context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True)
-            ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
-
+        else:
+            raise ValueError("Unsupport platform.")
     epoch_size = config.epoch_size
     net = resnet50_quant(class_num=config.class_num)
     net.set_train(True)
