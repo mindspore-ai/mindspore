@@ -27,7 +27,7 @@ l2_normalize_grad_op_info = TBERegOp("L2NormalizeGrad") \
     .attr("epsilon", "required", "float", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "y", False, "required", "all") \
-    .input(2, "dy", False, "requried", "all") \
+    .input(2, "dy", False, "required", "all") \
     .output(0, "dx", True, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
