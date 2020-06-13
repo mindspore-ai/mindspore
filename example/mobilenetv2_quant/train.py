@@ -21,7 +21,6 @@ import numpy as np
 from mindspore import context
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.loss.loss import _Loss
@@ -57,9 +56,6 @@ if args_opt.platform == "Ascend":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         device_id=device_id, save_graphs=False)
-elif args_opt.platform == "GPU":
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="GPU", save_graphs=False)
 else:
     raise ValueError("Unsupport platform.")
 
@@ -191,7 +187,6 @@ if __name__ == '__main__':
     if run_distribute:
         context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           parameter_broadcast=True, mirror_mean=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([140])
         init()
 
     epoch_size = config_ascend.epoch_size

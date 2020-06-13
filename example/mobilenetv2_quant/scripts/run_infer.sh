@@ -35,20 +35,19 @@ fi
 
 # set environment
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-export PYTHONPATH=${BASEPATH}:$PYTHONPATH
 export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
-if [ -d "eval" ];
+if [ -d "../eval" ];
 then
     rm -rf ../eval
 fi
 mkdir ../eval
 cd ../eval || exit
 
-# luanch
+# launch
 python ${BASEPATH}/../eval.py \
         --platform=$1 \
         --dataset_path=$2 \
         --checkpoint_path=$3 \
-        &> ../infer.log &  # dataset val folder path
+        &> infer.log &  # dataset val folder path

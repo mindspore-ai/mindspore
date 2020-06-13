@@ -18,6 +18,7 @@ import sys
 import json
 import subprocess
 import shutil
+import platform
 from argparse import ArgumentParser
 
 
@@ -80,7 +81,8 @@ def main():
             device_ips[device_id] = device_ip
             print('device_id:{}, device_ip:{}'.format(device_id, device_ip))
     hccn_table = {}
-    hccn_table['board_id'] = '0x0020'
+    arch = platform.processor()
+    hccn_table['board_id'] = {'aarch64': '0x002f', 'x86_64': '0x0000'}[arch]
     hccn_table['chip_info'] = '910'
     hccn_table['deploy_mode'] = 'lab'
     hccn_table['group_count'] = '1'

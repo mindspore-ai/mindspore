@@ -30,7 +30,7 @@ run_ascend()
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-    if [ -d "train" ];
+    if [ -d "../train" ];
     then
         rm -rf ../train
     fi
@@ -43,39 +43,7 @@ run_ascend()
             --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
             --pre_trained=$6 \
-            --platform=$1 &> ../train.log &  # dataset train folder
-}
-
-run_gpu()
-{
-    if [ $2 -lt 1 ] && [ $2 -gt 8 ]
-    then
-        echo "error: DEVICE_NUM=$2 is not in (1-8)"
-    exit 1
-    fi
-
-    if [ ! -d $4 ]
-    then
-        echo "error: DATASET_PATH=$4 is not a directory"
-    exit 1
-    fi
-
-    BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-    export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-    if [ -d "train" ];
-    then
-        rm -rf ../train
-    fi
-    mkdir ../train
-    cd ../train || exit
-
-    export CUDA_VISIBLE_DEVICES="$3"
-    mpirun -n $2 --allow-run-as-root \
-    python ${BASEPATH}/../train.py \
-        --dataset_path=$4 \
-        --platform=$1 \
-        --pre_trained=$5 \
-        &> ../train.log &  # dataset train folder
+            --platform=$1 &> train.log &  # dataset train folder
 }
 
 if [ $# -gt 6 ] || [ $# -lt 4 ]
