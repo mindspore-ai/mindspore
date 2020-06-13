@@ -306,17 +306,25 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
-  other_pm->AddPass(std::make_shared<GetitemTuple>());
-  other_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
-  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
-    other_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
-  }
-  other_pm->AddPass(std::make_shared<CheckConsistency>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   // buffer fusion
   AscendBackendUBFusionOptimization(kernel_graph);
+
+  // other2 optimization
+  auto optimizer2 = std::make_shared<GraphOptimizer>();
+  auto other2_pm = std::make_shared<PassManager>("other2_pm");
+  other2_pm->AddPass(std::make_shared<GetitemTuple>());
+  other2_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+    other2_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
+  }
+  other2_pm->AddPass(std::make_shared<CheckConsistency>());
+  optimizer2->AddPassManager(other2_pm);
+  (void)optimizer2->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+
   if (save_graphs) {
     std::string file_path =
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
