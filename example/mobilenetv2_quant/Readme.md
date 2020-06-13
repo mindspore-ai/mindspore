@@ -41,7 +41,7 @@ Dataset used: imagenet
 ## Script and sample code
 
 ```python
-├── MobileNetV2        
+├── mobilenetv2_quant        
   ├── Readme.md                      
   ├── scripts 
   │   ├──run_train.sh                  
@@ -51,7 +51,7 @@ Dataset used: imagenet
   │   ├──dataset.py
   │   ├──luanch.py       
   │   ├──lr_generator.py                                 
-  │   ├──mobilenetV2.py
+  │   ├──mobilenetV2_quant.py
   ├── train.py
   ├── eval.py
 ```

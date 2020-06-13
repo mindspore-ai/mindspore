@@ -15,8 +15,7 @@
 # ============================================================================
 if [ $# != 3 ]
 then
-    echo "Ascend: sh run_infer.sh [PLATFORM] [DATASET_PATH] [CHECKPOINT_PATH] \
-          GPU: sh run_infer.sh [PLATFORM] [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Ascend: sh run_infer.sh [PLATFORM] [DATASET_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
 
