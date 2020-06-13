@@ -56,7 +56,7 @@ def init_net_param(network, init_value='ones'):
     params = network.trainable_params()
     for p in params:
         if isinstance(p.data, Tensor) and 'beta' not in p.name and 'gamma' not in p.name and 'bias' not in p.name:
-            p.set_parameter_data(initializer(init_value, p.data.shape(), p.data.dtype()))
+            p.set_parameter_data(initializer(init_value, p.data.shape, p.data.dtype))
 
 
 def main():

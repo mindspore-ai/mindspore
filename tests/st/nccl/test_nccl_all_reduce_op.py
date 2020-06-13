@@ -62,19 +62,19 @@ def test_AllReduce():
     diff0 = output[0].asnumpy() - expect0
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
-    assert output[0].shape() == expect0.shape
+    assert output[0].shape == expect0.shape
 
     expect1 = expect0
     diff1 = output[1].asnumpy() - expect1
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
-    assert output[1].shape() == expect1.shape
+    assert output[1].shape == expect1.shape
 
     expect2 = expect1
     diff2 = output[2].asnumpy() - expect2
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
-    assert output[2].shape() == expect2.shape
+    assert output[2].shape == expect2.shape
 
 
 class Net2(nn.Cell):
@@ -108,16 +108,16 @@ def test_AllReduce2():
     diff0 = abs(output[0].asnumpy() - expect0)
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
-    assert output[0].shape() == expect0.shape
+    assert output[0].shape == expect0.shape
 
     expect1 = expect0 * size
     diff1 = abs(output[1].asnumpy() - expect1)
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
-    assert output[1].shape() == expect1.shape
+    assert output[1].shape == expect1.shape
 
     expect2 = expect1 * size
     diff2 = abs(output[2].asnumpy() - expect2)
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
-    assert output[2].shape() == expect2.shape
+    assert output[2].shape == expect2.shape

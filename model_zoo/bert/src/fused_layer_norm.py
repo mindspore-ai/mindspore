@@ -73,7 +73,7 @@ class FusedLayerNorm(Cell):
 
     Examples:
         >>> x = Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
-        >>> shape1 = x.shape()[1:]
+        >>> shape1 = x.shape[1:]
         >>> m = nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
         >>> m(x)
     """

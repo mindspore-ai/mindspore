@@ -69,7 +69,7 @@ class Conv2d(Cell):
     Examples:
         >>> net = combined.Conv2d(120, 240, 4, batchnorm=True, activation='ReLU')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> net(input).shape()
+        >>> net(input).shape
         (1, 240, 1024, 640)
     """
 

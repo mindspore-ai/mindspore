@@ -20,6 +20,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from tests.ut.python.ut_filter import non_graph_engine
 from tests.mindspore_test_framework.mindspore_test import mindspore_test
 from tests.mindspore_test_framework.pipeline.forward.compile_forward \
@@ -44,7 +45,12 @@ def test_list_equal():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == x
+    ret = net(x, y)
+
+    print(ret.asnumpy())
+    assert ret == x
+    assert ret.dtype == mstype.int32
+    assert ret.shape == (6, 8, 10)
 
 
 def test_list_not_equal():

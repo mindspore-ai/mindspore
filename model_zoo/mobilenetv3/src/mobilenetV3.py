@@ -322,21 +322,21 @@ class MobileNetV3(nn.Cell):
             if isinstance(m, (nn.Conv2d)):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.set_parameter_data(Tensor(np.random.normal(0, np.sqrt(2. / n),
-                                                                    m.weight.data.shape()).astype("float32")))
+                                                                    m.weight.data.shape).astype("float32")))
                 if m.bias is not None:
                     m.bias.set_parameter_data(
-                        Tensor(np.zeros(m.bias.data.shape(), dtype="float32")))
+                        Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
             elif isinstance(m, nn.BatchNorm2d):
                 m.gamma.set_parameter_data(
-                    Tensor(np.ones(m.gamma.data.shape(), dtype="float32")))
+                    Tensor(np.ones(m.gamma.data.shape, dtype="float32")))
                 m.beta.set_parameter_data(
-                    Tensor(np.zeros(m.beta.data.shape(), dtype="float32")))
+                    Tensor(np.zeros(m.beta.data.shape, dtype="float32")))
             elif isinstance(m, nn.Dense):
                 m.weight.set_parameter_data(Tensor(np.random.normal(
-                    0, 0.01, m.weight.data.shape()).astype("float32")))
+                    0, 0.01, m.weight.data.shape).astype("float32")))
                 if m.bias is not None:
                     m.bias.set_parameter_data(
-                        Tensor(np.zeros(m.bias.data.shape(), dtype="float32")))
+                        Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
 
 
 def mobilenet_v3(model_name, **kwargs):

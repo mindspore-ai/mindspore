@@ -49,19 +49,19 @@ def test_exp():
     output0 = exp(x0)
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
     output1 = exp(x1)
     diff1 = output1.asnumpy() - expect1
     assert np.all(diff1 < error1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     exp = NetExp()
     output0 = exp(x0)
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
     output1 = exp(x1)
     diff1 = output1.asnumpy() - expect1
     assert np.all(diff1 < error1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape

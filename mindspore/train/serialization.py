@@ -42,17 +42,17 @@ def _special_process_par(par, new_par):
 
     Like (12,2048,1,1)->(12,2048), this case is caused by GE 4 dimensions tensor.
     """
-    par_shape_len = len(par.data.shape())
-    new_par_shape_len = len(new_par.data.shape())
+    par_shape_len = len(par.data.shape)
+    new_par_shape_len = len(new_par.data.shape)
     delta_len = new_par_shape_len - par_shape_len
     delta_i = 0
     for delta_i in range(delta_len):
-        if new_par.data.shape()[par_shape_len + delta_i] != 1:
+        if new_par.data.shape[par_shape_len + delta_i] != 1:
             break
     if delta_i == delta_len - 1:
         new_val = new_par.data.asnumpy()
-        new_val = new_val.reshape(par.data.shape())
-        par.set_parameter_data(Tensor(new_val, par.data.dtype()))
+        new_val = new_val.reshape(par.data.shape)
+        par.set_parameter_data(Tensor(new_val, par.data.dtype))
         return True
     return False
 
@@ -61,17 +61,17 @@ def _update_param(param, new_param):
     """Updates param's data from new_param's data."""
 
     if isinstance(param.data, Tensor) and isinstance(new_param.data, Tensor):
-        if param.data.dtype() != new_param.data.dtype():
+        if param.data.dtype != new_param.data.dtype:
             logger.error("Failed to combine the net and the parameters for param %s.", param.name)
             msg = ("Net parameters {} type({}) different from parameter_dict's({})"
-                   .format(param.name, param.data.dtype(), new_param.data.dtype()))
+                   .format(param.name, param.data.dtype, new_param.data.dtype))
             raise RuntimeError(msg)
 
-        if param.data.shape() != new_param.data.shape():
+        if param.data.shape != new_param.data.shape:
             if not _special_process_par(param, new_param):
                 logger.error("Failed to combine the net and the parameters for param %s.", param.name)
                 msg = ("Net parameters {} shape({}) different from parameter_dict's({})"
-                       .format(param.name, param.data.shape(), new_param.data.shape()))
+                       .format(param.name, param.data.shape, new_param.data.shape))
                 raise RuntimeError(msg)
             return
 
@@ -79,12 +79,12 @@ def _update_param(param, new_param):
         return
 
     if isinstance(param.data, Tensor) and not isinstance(new_param.data, Tensor):
-        if param.data.shape() != (1,) and param.data.shape() != ():
+        if param.data.shape != (1,) and param.data.shape != ():
             logger.error("Failed to combine the net and the parameters for param %s.", param.name)
             msg = ("Net parameters {} shape({}) is not (1,), inconsitent with parameter_dict's(scalar)."
-                   .format(param.name, param.data.shape()))
+                   .format(param.name, param.data.shape))
             raise RuntimeError(msg)
-        param.set_parameter_data(initializer(new_param.data, param.data.shape(), param.data.dtype()))
+        param.set_parameter_data(initializer(new_param.data, param.data.shape, param.data.dtype))
 
     elif isinstance(new_param.data, Tensor) and not isinstance(param.data, Tensor):
         logger.error("Failed to combine the net and the parameters for param %s.", param.name)
@@ -120,12 +120,12 @@ def save_checkpoint(parameter_list, ckpoint_file_name):
                 param["data"].init_data()
             param_data = param["data"].asnumpy().reshape(-1)
             param_tensor.tensor_content = param_data.tostring()
-            param_tensor.tensor_type = str(param["data"].dtype())
+            param_tensor.tensor_type = str(param["data"].dtype)
 
-            if param['data'].shape() == ():
+            if param['data'].shape == ():
                 param_tensor.dims.append(0)
             else:
-                for dim in param['data'].shape():
+                for dim in param['data'].shape:
                     param_tensor.dims.append(dim)
 
         with open(ckpoint_file_name, "wb") as f:

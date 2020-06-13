@@ -75,93 +75,93 @@ def test_tensor_auto_cast():
     t_fp64 = Tensor(np.ones([2, 1, 2, 2]), mstype.float64)
     net = TensorAutoCast()
     rs = net(t_uint8, t_int8)
-    assert rs.dtype() == mstype.int16
+    assert rs.dtype == mstype.int16
     rs = net(t_uint8, t_int16)
-    assert rs.dtype() == mstype.int16
+    assert rs.dtype == mstype.int16
     rs = net(t_uint8, t_int32)
-    assert rs.dtype() == mstype.int32
+    assert rs.dtype == mstype.int32
     rs = net(t_uint8, t_int64)
-    assert rs.dtype() == mstype.int64
+    assert rs.dtype == mstype.int64
     rs = net(t_int8, t_int16)
-    assert rs.dtype() == mstype.int16
+    assert rs.dtype == mstype.int16
     rs = net(t_int8, t_int32)
-    assert rs.dtype() == mstype.int32
+    assert rs.dtype == mstype.int32
     rs = net(t_int8, t_int64)
-    assert rs.dtype() == mstype.int64
+    assert rs.dtype == mstype.int64
     rs = net(t_int16, t_int32)
-    assert rs.dtype() == mstype.int32
+    assert rs.dtype == mstype.int32
     rs = net(t_int16, t_int64)
-    assert rs.dtype() == mstype.int64
+    assert rs.dtype == mstype.int64
     rs = net(t_int32, t_int64)
-    assert rs.dtype() == mstype.int64
+    assert rs.dtype == mstype.int64
 
     rs = net(t_fp16, t_fp32)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = net(t_fp16, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
     rs = net(t_fp32, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
 
     rs = net(t_uint8, t_fp16)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
     rs = net(t_uint8, t_fp32)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = net(t_uint8, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
     rs = net(t_int8, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
     rs = net(t_int16, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
     rs = net(t_int32, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
     rs = net(t_int64, t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
 
     rs = net(t_fp16, t_int8)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
     rs = net(t_fp16, t_uint8)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
     rs = net(t_fp16, t_int16)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
     rs = net(t_fp16, t_int32)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
     rs = net(t_fp16, t_int64)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
 
     tint = TensorIntAutoCast()
     rs = tint(t_uint8)
-    assert rs.dtype() == mstype.uint8
+    assert rs.dtype == mstype.uint8
     rs = tint(t_int8)
-    assert rs.dtype() == mstype.int8
+    assert rs.dtype == mstype.int8
     rs = tint(t_int16)
-    assert rs.dtype() == mstype.int16
+    assert rs.dtype == mstype.int16
     rs = tint(t_int32)
-    assert rs.dtype() == mstype.int32
+    assert rs.dtype == mstype.int32
     rs = tint(t_int64)
-    assert rs.dtype() == mstype.int64
+    assert rs.dtype == mstype.int64
     rs = tint(t_fp16)
-    assert rs.dtype() == mstype.float16
+    assert rs.dtype == mstype.float16
     rs = tint(t_fp32)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tint(t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
     tfp = TensorFPAutoCast()
     rs = tfp(t_uint8)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_int8)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_int16)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_int32)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_int64)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_fp16)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_fp32)
-    assert rs.dtype() == mstype.float32
+    assert rs.dtype == mstype.float32
     rs = tfp(t_fp64)
-    assert rs.dtype() == mstype.float64
+    assert rs.dtype == mstype.float64
 
     t_uint16 = Tensor(np.ones([2, 1, 2, 2]), mstype.uint16)
     t_uint32 = Tensor(np.ones([2, 1, 2, 2]), mstype.uint32)

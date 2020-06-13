@@ -331,11 +331,11 @@ def initializer(init, shape=None, dtype=mstype.float32):
         raise TypeError("Unsupported init type '{}'.".format(type(init)))
 
     if isinstance(init, Tensor):
-        init_shape = init.shape()
+        init_shape = init.shape
         shape = shape if isinstance(shape, (tuple, list)) else [shape]
         if shape is not None and init_shape != tuple(shape):
             raise ValueError("The shape of init should be same as variable shape, but got the shape of init {} and "
-                             "the variable shape {}.".format(list(init.shape()), shape))
+                             "the variable shape {}.".format(list(init.shape), shape))
         return init
 
     if isinstance(shape, list):

@@ -126,8 +126,8 @@ def test_load_checkpoint():
 
     assert len(par_dict) == 3
     assert par_dict['param_test'].name == 'param_test'
-    assert par_dict['param_test'].data.dtype() == mstype.float32
-    assert par_dict['param_test'].data.shape() == (1, 3, 224, 224)
+    assert par_dict['param_test'].data.dtype == mstype.float32
+    assert par_dict['param_test'].data.shape == (1, 3, 224, 224)
     assert isinstance(par_dict, dict)
 
 

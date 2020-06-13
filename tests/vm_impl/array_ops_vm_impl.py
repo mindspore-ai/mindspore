@@ -46,7 +46,7 @@ def vm_impl_dType(self):
 
     def vm_impl(x):
         # update the src type
-        return x.dtype()
+        return x.dtype
 
     return vm_impl
 

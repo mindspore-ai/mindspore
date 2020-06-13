@@ -34,7 +34,7 @@ class NetArgmax(nn.Cell):
         x = Tensor(np.array([[1., 20., 5.],
                              [67., 8., 9.],
                              [130., 24., 15.]]).astype(np.float32))
-        self.x = Parameter(initializer(x, x.shape()), name='x')
+        self.x = Parameter(initializer(x, x.shape), name='x')
 
     def construct(self):
         return self.argmax(self.x)

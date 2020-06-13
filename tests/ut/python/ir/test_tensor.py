@@ -50,148 +50,148 @@ def test_tensor():
     """test_tensor"""
     t1 = ms.Tensor(ndarr)
     assert isinstance(t1, ms.Tensor)
-    assert t1.dtype() == ms.float64
+    assert t1.dtype == ms.float64
 
     t2 = ms.Tensor(np.zeros([1, 2, 3]), ms.float32)
     assert isinstance(t2, ms.Tensor)
-    assert t2.shape() == (1, 2, 3)
-    assert t2.dtype() == ms.float32
+    assert t2.shape == (1, 2, 3)
+    assert t2.dtype == ms.float32
 
     t3 = ms.Tensor(0.1)
     assert isinstance(t3, ms.Tensor)
-    assert t3.dtype() == ms.float64
+    assert t3.dtype == ms.float64
 
     t4 = ms.Tensor(1)
     assert isinstance(t4, ms.Tensor)
-    assert t4.dtype() == ms.int64
+    assert t4.dtype == ms.int64
 
 
 def test_tensor_type_float16():
     t_float16 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float16))
     assert isinstance(t_float16, ms.Tensor)
-    assert t_float16.shape() == (2, 3)
-    assert t_float16.dtype() == ms.float16
+    assert t_float16.shape == (2, 3)
+    assert t_float16.dtype == ms.float16
 
 
 def test_tensor_type_float32():
     t_float32 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32))
     assert isinstance(t_float32, ms.Tensor)
-    assert t_float32.shape() == (2, 3)
-    assert t_float32.dtype() == ms.float32
+    assert t_float32.shape == (2, 3)
+    assert t_float32.dtype == ms.float32
 
 
 def test_tensor_type_float32_user_define():
     t = ms.Tensor(np.zeros([1, 2, 3]), ms.float32)
     assert isinstance(t, ms.Tensor)
-    assert t.shape() == (1, 2, 3)
-    assert t.dtype() == ms.float32
+    assert t.shape == (1, 2, 3)
+    assert t.dtype == ms.float32
 
 
 def test_tensor_type_float64():
     t = ms.Tensor([[1.0, 2, 3], [4, 5, 6]])
     assert isinstance(t, ms.Tensor)
-    assert t.shape() == (2, 3)
-    assert t.dtype() == ms.float64
+    assert t.shape == (2, 3)
+    assert t.dtype == ms.float64
 
     t_zero = ms.Tensor(np.zeros([1, 2, 3]))
     assert isinstance(t_zero, ms.Tensor)
-    assert t_zero.shape() == (1, 2, 3)
-    assert t_zero.dtype() == ms.float64
+    assert t_zero.shape == (1, 2, 3)
+    assert t_zero.dtype == ms.float64
 
 
 def test_tensor_type_float64_user_define():
     t = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=float))
     assert isinstance(t, ms.Tensor)
-    assert t.shape() == (2, 3)
-    assert t.dtype() == ms.float64
+    assert t.shape == (2, 3)
+    assert t.dtype == ms.float64
 
     t_float64 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]]), ms.float64)
     assert isinstance(t_float64, ms.Tensor)
-    assert t_float64.shape() == (2, 3)
-    assert t_float64.dtype() == ms.float64
+    assert t_float64.shape == (2, 3)
+    assert t_float64.dtype == ms.float64
 
 
 def test_tensor_type_bool():
     # init a tensor with bool type
     ts_bool_array = ms.Tensor(np.zeros([2, 3], np.bool), ms.bool_)
     assert isinstance(ts_bool_array, ms.Tensor)
-    assert ts_bool_array.dtype() == ms.bool_
+    assert ts_bool_array.dtype == ms.bool_
 
     t_bool = ms.Tensor(True)
     assert isinstance(t_bool, ms.Tensor)
-    assert t_bool.dtype() == ms.bool_
+    assert t_bool.dtype == ms.bool_
 
     t_bool_array = ms.Tensor(np.array([[True, False, True], [False, False, False]]))
     assert isinstance(t_bool_array, ms.Tensor)
-    assert t_bool_array.shape() == (2, 3)
-    assert t_bool_array.dtype() == ms.bool_
+    assert t_bool_array.shape == (2, 3)
+    assert t_bool_array.dtype == ms.bool_
 
 
 def test_tensor_type_int8():
     t_int8_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int8))
     assert isinstance(t_int8_array, ms.Tensor)
-    assert t_int8_array.shape() == (2, 3)
-    assert t_int8_array.dtype() == ms.int8
+    assert t_int8_array.shape == (2, 3)
+    assert t_int8_array.dtype == ms.int8
 
 
 def test_tensor_type_int16():
     t_int16_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int16))
     assert isinstance(t_int16_array, ms.Tensor)
-    assert t_int16_array.shape() == (2, 3)
-    assert t_int16_array.dtype() == ms.int16
+    assert t_int16_array.shape == (2, 3)
+    assert t_int16_array.dtype == ms.int16
 
 
 def test_tensor_type_int32():
     t_int = ms.Tensor([[1, 2, 3], [4, 5, 6]])
     assert isinstance(t_int, ms.Tensor)
-    assert t_int.shape() == (2, 3)
-    assert t_int.dtype() == ms.int64
+    assert t_int.shape == (2, 3)
+    assert t_int.dtype == ms.int64
 
     t_int_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32))
     assert isinstance(t_int_array, ms.Tensor)
-    assert t_int_array.shape() == (2, 3)
-    assert t_int_array.dtype() == ms.int32
+    assert t_int_array.shape == (2, 3)
+    assert t_int_array.dtype == ms.int32
 
 
 def test_tensor_type_int64():
     t_int64 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int64))
     assert isinstance(t_int64, ms.Tensor)
-    assert t_int64.shape() == (2, 3)
-    assert t_int64.dtype() == ms.int64
+    assert t_int64.shape == (2, 3)
+    assert t_int64.dtype == ms.int64
 
 
 def test_tensor_type_uint8():
     t_uint8_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8))
     assert isinstance(t_uint8_array, ms.Tensor)
-    assert t_uint8_array.shape() == (2, 3)
-    assert t_uint8_array.dtype() == ms.uint8
+    assert t_uint8_array.shape == (2, 3)
+    assert t_uint8_array.dtype == ms.uint8
 
 
 def test_tensor_type_uint16():
     t_uint16_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint16))
     assert isinstance(t_uint16_array, ms.Tensor)
-    assert t_uint16_array.shape() == (2, 3)
-    assert t_uint16_array.dtype() == ms.uint16
+    assert t_uint16_array.shape == (2, 3)
+    assert t_uint16_array.dtype == ms.uint16
 
 
 def test_tensor_type_uint32():
     t_uint32_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint32))
     assert isinstance(t_uint32_array, ms.Tensor)
-    assert t_uint32_array.shape() == (2, 3)
-    assert t_uint32_array.dtype() == ms.uint32
+    assert t_uint32_array.shape == (2, 3)
+    assert t_uint32_array.dtype == ms.uint32
 
 
 def test_tensor_type_uint64():
     t_uint64 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint64))
     assert isinstance(t_uint64, ms.Tensor)
-    assert t_uint64.shape() == (2, 3)
-    assert t_uint64.dtype() == ms.uint64
+    assert t_uint64.shape == (2, 3)
+    assert t_uint64.dtype == ms.uint64
 
 
 def test_set_type():
     t = ms.Tensor(ndarr)
     t.set_dtype(ms.float32)
-    assert t.dtype() == ms.float32
+    assert t.dtype == ms.float32
 
 
 @non_graph_engine
@@ -250,11 +250,11 @@ def test_return_tensor():
     tensor_ = exe(net, input_data)
 
     # get shape
-    shape_ = tensor_.shape()
+    shape_ = tensor_.shape
     print("shape = ", shape_)
 
     # get type
-    type_ = tensor_.dtype()
+    type_ = tensor_.dtype
     print("type = ", type_)
 
     # get value

@@ -78,7 +78,7 @@ class Flatten(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
         >>> flatten = P.Flatten()
         >>> output = flatten(input_tensor)
-        >>> assert output.shape() == (1, 24)
+        >>> assert output.shape == (1, 24)
     """
 
     @prim_attr_register
@@ -840,7 +840,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         >>> weight = Tensor(np.ones([1, 32, 3, 3]), mindspore.float32)
         >>> depthwise_conv2d = P.DepthwiseConv2dNative(channel_multiplier = 3, kernel_size = (3, 3))
         >>> output = depthwise_conv2d(input, weight)
-        >>> assert output.shape() == (10, 96, 30, 30)
+        >>> assert output.shape == (10, 96, 30, 30)
     """
 
     @prim_attr_register
@@ -2057,7 +2057,7 @@ class DropoutDoMask(PrimitiveWithInfer):
         >>> dropout_do_mask = P.DropoutDoMask()
         >>> mask = dropout_gen_mask(shape, keep_prob)
         >>> output = dropout_do_mask(x, mask, keep_prob)
-        >>> assert output.shape() == (20, 16, 50)
+        >>> assert output.shape == (20, 16, 50)
     """
 
     @prim_attr_register
@@ -2114,7 +2114,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.int32)
         >>> resize_bilinear = P.ResizeBilinear((5, 5))
         >>> result = resize_bilinear(tensor)
-        >>> assert result.shape() == (5, 5)
+        >>> assert result.shape == (5, 5)
     """
 
     @prim_attr_register

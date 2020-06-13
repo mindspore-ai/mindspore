@@ -56,7 +56,7 @@ class Embedding(Cell):
         >>>
         >>> # Maps the input word IDs to word embedding.
         >>> output = net(input_data)
-        >>> output.shape()
+        >>> output.shape
         (8, 128, 768)
     """
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal', dtype=mstype.float32):

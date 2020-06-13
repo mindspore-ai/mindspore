@@ -140,8 +140,8 @@ class Parameter:
         x.name = prefix + '.' + x.name
         x.is_init = False
         if init != 'same':
-            shape = self.default_input.shape()
-            dtype = self.default_input.dtype()
+            shape = self.default_input.shape
+            dtype = self.default_input.dtype
             if isinstance(init, (str, Initializer, numbers.Number)):
                 x.init_mode = initializer(init, shape=shape, dtype=dtype)
                 x.default_input = MetaTensor(dtype, shape)

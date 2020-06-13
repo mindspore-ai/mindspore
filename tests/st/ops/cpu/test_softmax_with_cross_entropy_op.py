@@ -32,9 +32,9 @@ class NetSoftmaxWithCrossEntropy(nn.Cell):
         logits = Tensor(np.array([[1, 1, 10],
                                   [1, 10, 1],
                                   [10, 1, 1]]).astype(np.float32))
-        self.logits = Parameter(initializer(logits, logits.shape()), name='logits')
+        self.logits = Parameter(initializer(logits, logits.shape), name='logits')
         labels = Tensor(np.array([2, 1, 0]).astype(np.int32))
-        self.labels = Parameter(initializer(labels, labels.shape()), name='labels')
+        self.labels = Parameter(initializer(labels, labels.shape), name='labels')
         self.SoftmaxWithCrossEntropy = P.SparseSoftmaxCrossEntropyWithLogits(True)
 
     def construct(self):

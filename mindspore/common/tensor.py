@@ -45,13 +45,13 @@ class Tensor(Tensor_):
         >>> # init a tensor with input data
         >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> assert isinstance(t1, Tensor)
-        >>> assert t1.shape() == (1, 2, 3)
-        >>> assert t1.dtype() == mindspore.float32
+        >>> assert t1.shape == (1, 2, 3)
+        >>> assert t1.dtype == mindspore.float32
         >>>
         >>> # init a tensor with a float scalar
         >>> t2 = Tensor(0.1)
         >>> assert isinstance(t2, Tensor)
-        >>> assert t2.dtype() == mindspore.float64
+        >>> assert t2.dtype == mindspore.float64
     """
 
     def __init__(self, input_data, dtype=None):
@@ -80,7 +80,7 @@ class Tensor(Tensor_):
             return False
         #  The GE backend don't support single `Equal` operator execution.
         #  bool type is not supported for `Equal` operator in backend.
-        if context.get_context("enable_ge") or self.dtype() == mstype.bool_ or other.dtype() == mstype.bool_:
+        if context.get_context("enable_ge") or self.dtype == mstype.bool_ or other.dtype == mstype.bool_:
             return Tensor(np.array(self.asnumpy() == other.asnumpy()))
         return tensor_operator_registry.get('__eq__')(self, other)
 
@@ -166,7 +166,7 @@ class Tensor(Tensor_):
         return out[0]
 
     def __str__(self):
-        if self.dtype() == mstype.type_none:
+        if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
         return str(self.asnumpy())
 

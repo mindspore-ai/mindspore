@@ -79,12 +79,12 @@ if __name__ == '__main__':
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Conv2d):
                 cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
-                                                                    cell.weight.default_input.shape(),
-                                                                    cell.weight.default_input.dtype()).to_tensor()
+                                                                    cell.weight.default_input.shape,
+                                                                    cell.weight.default_input.dtype).to_tensor()
             if isinstance(cell, nn.Dense):
                 cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
-                                                                    cell.weight.default_input.shape(),
-                                                                    cell.weight.default_input.dtype()).to_tensor()
+                                                                    cell.weight.default_input.shape,
+                                                                    cell.weight.default_input.dtype).to_tensor()
     if not config.use_label_smooth:
         config.label_smooth_factor = 0.0
 

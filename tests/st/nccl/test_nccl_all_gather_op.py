@@ -51,4 +51,4 @@ def test_AllGather():
     diff = output.asnumpy() - expect
     error = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < error)
-    assert output.shape() == expect.shape
+    assert output.shape == expect.shape
