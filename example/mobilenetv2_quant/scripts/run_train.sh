@@ -82,15 +82,12 @@ if [ $# -gt 6 ] || [ $# -lt 4 ]
 then
     echo "Usage:\n \
           Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
           "
 exit 1
 fi
 
 if [ $1 = "Ascend" ] ; then
     run_ascend "$@"
-elif [ $1 = "GPU" ] ; then
-    run_gpu "$@"
 else
     echo "not support platform"
 fi;

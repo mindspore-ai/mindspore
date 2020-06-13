@@ -30,14 +30,12 @@ from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
-from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_group_size
+from mindspore.train.serialization import load_checkpoint
+from mindspore.communication.management import init
 import mindspore.dataset.engine as de
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
-from src.config import config_gpu, config_ascend
-from src.mobilenetV2 import mobilenet_v2
+from src.config import config_ascend
 from src.mobilenetV2_quant import mobilenet_v2_quant
 
 random.seed(1)
@@ -153,122 +151,87 @@ class Monitor(Callback):
             np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
 
+def _load_param_into_net(ori_model, ckpt_param_dict):
+    """
+    load fp32 model parameters to quantization model.
+
+    Args:
+        ori_model: quantization model
+        ckpt_param_dict: f32 param
+
+    Returns:
+        None
+    """
+    iterable_dict = {
+        'weight': iter([item for item in ckpt_param_dict.items() if item[0].endswith('weight')]),
+        'bias': iter([item for item in ckpt_param_dict.items() if item[0].endswith('bias')]),
+        'gamma': iter([item for item in ckpt_param_dict.items() if item[0].endswith('gamma')]),
+        'beta': iter([item for item in ckpt_param_dict.items() if item[0].endswith('beta')]),
+        'moving_mean': iter([item for item in ckpt_param_dict.items() if item[0].endswith('moving_mean')]),
+        'moving_variance': iter(
+            [item for item in ckpt_param_dict.items() if item[0].endswith('moving_variance')]),
+        'minq': iter([item for item in ckpt_param_dict.items() if item[0].endswith('minq')]),
+        'maxq': iter([item for item in ckpt_param_dict.items() if item[0].endswith('maxq')])
+    }
+    for name, param in ori_model.parameters_and_names():
+        key_name = name.split(".")[-1]
+        if key_name not in iterable_dict.keys():
+            continue
+        value_param = next(iterable_dict[key_name], None)
+        if value_param is not None:
+            param.set_parameter_data(value_param[1].data)
+            print(f'init model param {name} with checkpoint param {value_param[0]}')
+
+
 if __name__ == '__main__':
-    if args_opt.platform == "GPU":
-        # train on gpu
-        print("train args: ", args_opt, "\ncfg: ", config_gpu)
+    # train on ascend
+    print("train args: ", args_opt, "\ncfg: ", config_ascend,
+          "\nparallel args: rank_id {}, device_id {}, rank_size {}".format(rank_id, device_id, rank_size))
 
-        init('nccl')
-        context.set_auto_parallel_context(parallel_mode="data_parallel",
-                                          mirror_mean=True,
-                                          device_num=get_group_size())
+    if run_distribute:
+        context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          parameter_broadcast=True, mirror_mean=True)
+        auto_parallel_context().set_all_reduce_fusion_split_indices([140])
+        init()
 
-        # define net
-        net = mobilenet_v2(num_classes=config_gpu.num_classes, platform="GPU")
-        # define loss
-        if config_gpu.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_gpu.label_smooth, num_classes=config_gpu.num_classes)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(
-                is_grad=False, sparse=True, reduction='mean')
-        # define dataset
-        epoch_size = config_gpu.epoch_size
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_gpu,
-                                 platform=args_opt.platform,
-                                 repeat_num=epoch_size,
-                                 batch_size=config_gpu.batch_size)
-        step_size = dataset.get_dataset_size()
-        # resume
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
-        # define optimizer
-        loss_scale = FixedLossScaleManager(
-            config_gpu.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0,
-                           lr_init=0,
-                           lr_end=0,
-                           lr_max=config_gpu.lr,
-                           warmup_epochs=config_gpu.warmup_epochs,
-                           total_epochs=epoch_size,
-                           steps_per_epoch=step_size))
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_gpu.momentum,
-                       config_gpu.weight_decay, config_gpu.loss_scale)
-        # define model
-        model = Model(net, loss_fn=loss, optimizer=opt,
-                      loss_scale_manager=loss_scale)
-
-        cb = [Monitor(lr_init=lr.asnumpy())]
-        if config_gpu.save_checkpoint:
-            config_ck = CheckpointConfig(save_checkpoint_steps=config_gpu.save_checkpoint_epochs * step_size,
-                                         keep_checkpoint_max=config_gpu.keep_checkpoint_max)
-            ckpt_cb = ModelCheckpoint(
-                prefix="mobilenet", directory=config_gpu.save_checkpoint_path, config=config_ck)
-            cb += [ckpt_cb]
-        # begine train
-        model.train(epoch_size, dataset, callbacks=cb)
-    elif args_opt.platform == "Ascend":
-        # train on ascend
-        print("train args: ", args_opt, "\ncfg: ", config_ascend,
-              "\nparallel args: rank_id {}, device_id {}, rank_size {}".format(rank_id, device_id, rank_size))
-
-        if run_distribute:
-            context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              parameter_broadcast=True, mirror_mean=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-            init()
-
-        epoch_size = config_ascend.epoch_size
-        net = mobilenet_v2(num_classes=config_ascend.num_classes, platform="Ascend")
-        net = mobilenet_v2_quant(num_classes=config_ascend.num_classes, platform="Ascend")
-        net.to_float(mstype.float16)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
-        if config_ascend.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(
-                is_grad=False, sparse=True, reduction='mean')
-        dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                                 do_train=True,
-                                 config=config_ascend,
-                                 platform=args_opt.platform,
-                                 repeat_num=epoch_size,
-                                 batch_size=config_ascend.batch_size)
-        step_size = dataset.get_dataset_size()
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
-
-        loss_scale = FixedLossScaleManager(
-            config_ascend.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0,
-                           lr_init=0,
-                           lr_end=0,
-                           lr_max=config_ascend.lr,
-                           warmup_epochs=config_ascend.warmup_epochs,
-                           total_epochs=epoch_size,
-                           steps_per_epoch=step_size))
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_ascend.momentum,
-                       config_ascend.weight_decay, config_ascend.loss_scale)
-
-        model = Model(net, loss_fn=loss, optimizer=opt,
-                      loss_scale_manager=loss_scale)
-
-        cb = None
-        if rank_id == 0:
-            cb = [Monitor(lr_init=lr.asnumpy())]
-            if config_ascend.save_checkpoint:
-                config_ck = CheckpointConfig(save_checkpoint_steps=config_ascend.save_checkpoint_epochs * step_size,
-                                             keep_checkpoint_max=config_ascend.keep_checkpoint_max)
-                ckpt_cb = ModelCheckpoint(
-                    prefix="mobilenet", directory=config_ascend.save_checkpoint_path, config=config_ck)
-                cb += [ckpt_cb]
-        model.train(epoch_size, dataset, callbacks=cb)
+    epoch_size = config_ascend.epoch_size
+    net = mobilenet_v2_quant(num_classes=config_ascend.num_classes)
+    if config_ascend.label_smooth > 0:
+        loss = CrossEntropyWithLabelSmooth(
+            smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
     else:
-        raise ValueError("Unsupport platform.")
+        loss = SoftmaxCrossEntropyWithLogits(
+            is_grad=False, sparse=True, reduction='mean')
+    dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                             do_train=True,
+                             config=config_ascend,
+                             platform=args_opt.platform,
+                             repeat_num=epoch_size,
+                             batch_size=config_ascend.batch_size)
+    step_size = dataset.get_dataset_size()
+    if args_opt.pre_trained:
+        param_dict = load_checkpoint(args_opt.pre_trained)
+        _load_param_into_net(net, param_dict)
+
+    lr = Tensor(get_lr(global_step=config_ascend.start_epoch * step_size,
+                       lr_init=0,
+                       lr_end=0,
+                       lr_max=config_ascend.lr,
+                       warmup_epochs=config_ascend.warmup_epochs,
+                       total_epochs=epoch_size + config_ascend.start_epoch,
+                       steps_per_epoch=step_size))
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_ascend.momentum,
+                   config_ascend.weight_decay)
+
+    model = Model(net, loss_fn=loss, optimizer=opt)
+
+    cb = None
+    if rank_id == 0:
+        cb = [Monitor(lr_init=lr.asnumpy())]
+        if config_ascend.save_checkpoint:
+            config_ck = CheckpointConfig(save_checkpoint_steps=config_ascend.save_checkpoint_epochs * step_size,
+                                         keep_checkpoint_max=config_ascend.keep_checkpoint_max)
+            ckpt_cb = ModelCheckpoint(
+                prefix="mobilenet", directory=config_ascend.save_checkpoint_path, config=config_ck)
+            cb += [ckpt_cb]
+    model.train(epoch_size, dataset, callbacks=cb)

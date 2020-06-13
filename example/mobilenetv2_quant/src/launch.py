@@ -20,6 +20,7 @@ import subprocess
 import shutil
 from argparse import ArgumentParser
 
+
 def parse_args():
     """
     parse args .
@@ -79,7 +80,7 @@ def main():
             device_ips[device_id] = device_ip
             print('device_id:{}, device_ip:{}'.format(device_id, device_ip))
     hccn_table = {}
-    hccn_table['board_id'] = '0x0000'
+    hccn_table['board_id'] = '0x0020'
     hccn_table['chip_info'] = '910'
     hccn_table['deploy_mode'] = 'lab'
     hccn_table['group_count'] = '1'

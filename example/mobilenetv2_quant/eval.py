@@ -21,18 +21,15 @@ from mindspore import context
 from mindspore import nn
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.common import dtype as mstype
-from mindspore.model_zoo.mobilenetV2 import mobilenet_v2
+from src.mobilenetV2_quant import mobilenet_v2_quant
 from src.dataset import create_dataset
-from src.config import config_ascend, config_gpu
-
+from src.config import config_ascend
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--platform', type=str, default=None, help='run platform')
 args_opt = parser.parse_args()
-
 
 if __name__ == '__main__':
     config_platform = None
@@ -42,23 +39,12 @@ if __name__ == '__main__':
         device_id = int(os.getenv('DEVICE_ID'))
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                             device_id=device_id, save_graphs=False)
-        net = mobilenet_v2(num_classes=config_platform.num_classes, platform="Ascend")
-    elif args_opt.platform == "GPU":
-        config_platform = config_gpu
-        context.set_context(mode=context.GRAPH_MODE,
-                            device_target="GPU", save_graphs=False)
-        net = mobilenet_v2(num_classes=config_platform.num_classes, platform="GPU")
+        net = mobilenet_v2_quant(num_classes=config_platform.num_classes)
     else:
         raise ValueError("Unsupport platform.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(
         is_grad=False, sparse=True, reduction='mean')
-
-    if args_opt.platform == "Ascend":
-        net.to_float(mstype.float16)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=False,

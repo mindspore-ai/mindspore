@@ -69,11 +69,12 @@ class BatchNormFoldCell(Cell):
 
     """
 
-    def __init__(self, momentum=0.9, epsilon=1e-5, freeze_bn=0):
+    def __init__(self, momentum=0.9, epsilon=1e-5, freeze_bn=0, freeze_bn_ascend=True):
         """init batch norm fold layer"""
         super(BatchNormFoldCell, self).__init__()
         self.epsilon = epsilon
         self.is_gpu = context.get_context('device_target') == "GPU"
+        self.freeze_bn_ascend = freeze_bn_ascend
         if self.is_gpu:
             self.bn_train = P.BatchNormFold(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
             self.bn_infer = P.BatchNormFold(momentum, epsilon, is_training=False, freeze_bn=freeze_bn)
@@ -88,7 +89,7 @@ class BatchNormFoldCell(Cell):
             else:
                 batch_mean, batch_std, running_mean, running_std = self.bn_infer(x, mean, variance, global_step)
         else:
-            if self.training:
+            if self.training and not self.freeze_bn_ascend:
                 x_sum, x_square_sum = self.bn_reduce(x)
                 _, batch_mean, batch_std, running_mean, running_std, mean_updated, variance_updated = \
                     self.bn_update(x, x_sum, x_square_sum, mean, variance)
@@ -279,7 +280,8 @@ class Conv2dBatchNormQuant(Cell):
                  num_bits=8,
                  per_channel=False,
                  symmetric=False,
-                 narrow_range=False):
+                 narrow_range=False,
+                 freeze_bn_ascend=True):
         """init Conv2dBatchNormQuant layer"""
         super(Conv2dBatchNormQuant, self).__init__()
         self.in_channels = in_channels
@@ -300,6 +302,7 @@ class Conv2dBatchNormQuant(Cell):
         self.symmetric = symmetric
         self.narrow_range = narrow_range
         self.is_gpu = context.get_context('device_target') == "GPU"
+        self.freeze_bn_ascend = freeze_bn_ascend
 
         # initialize convolution op and Parameter
         if context.get_context('device_target') == "Ascend" and group > 1:
@@ -398,7 +401,7 @@ class Conv2dBatchNormQuant(Cell):
                 out = self.batchnorm_fold2_infer(out, self.beta, self.gamma,
                                                  batch_std, batch_mean, running_std, running_mean, self.step)
         else:
-            if self.training:
+            if self.training and not self.freeze_bn_ascend:
                 out = self.batchnorm_fold2_train(out, self.beta, self.gamma, batch_std, batch_mean, running_std)
                 F.control_depend(out, self.assignadd(self.step, self.one))
             else:
