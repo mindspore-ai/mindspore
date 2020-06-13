@@ -20,6 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
+import mindspore.dataset.transforms.vision.py_transforms as P
 
 def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch_size=32):
     """
@@ -56,7 +57,6 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
         raise ValueError("Unsupport platform.")
 
     resize_height = config.image_height
-    resize_width = config.image_width
 
     if do_train:
         buffer_size = 20480
@@ -65,20 +65,16 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
 
     # define map operations
     decode_op = C.Decode()
-    resize_crop_op = C.RandomCropDecodeResize(resize_height, scale=(0.08, 1.0), ratio=(0.75, 1.333))
+    resize_crop_decode_op = C.RandomCropDecodeResize(resize_height, scale=(0.08, 1.0), ratio=(0.75, 1.333))
     horizontal_flip_op = C.RandomHorizontalFlip(prob=0.5)
 
-    resize_op = C.Resize((256, 256))
-    center_crop = C.CenterCrop(resize_width)
-    random_color_op = C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
+    resize_op = C.Resize(256)
+    center_crop = C.CenterCrop(resize_height)
     normalize_op = C.Normalize(mean=[0.485*255, 0.456*255, 0.406*255], std=[0.229*255, 0.224*255, 0.225*255])
     change_swap_op = C.HWC2CHW()
 
-    transform_uniform = [horizontal_flip_op, random_color_op]
-    uni_aug = C.UniformAugment(operations=transform_uniform, num_ops=2)
-
     if do_train:
-        trans = [resize_crop_op, uni_aug, normalize_op, change_swap_op]
+        trans = [resize_crop_decode_op, horizontal_flip_op, normalize_op, change_swap_op]
     else:
         trans = [decode_op, resize_op, center_crop, normalize_op, change_swap_op]
 
@@ -86,6 +82,74 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
 
     ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=16)
     ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
+
+    # apply batch operations
+    ds = ds.batch(batch_size, drop_remainder=True)
+
+    # apply dataset repeat operation
+    ds = ds.repeat(repeat_num)
+
+    return ds
+
+def create_dataset_py(dataset_path, do_train, config, platform, repeat_num=1, batch_size=32):
+    """
+    create a train or eval dataset
+
+    Args:
+        dataset_path(string): the path of dataset.
+        do_train(bool): whether dataset is used for train or eval.
+        repeat_num(int): the repeat times of dataset. Default: 1.
+        batch_size(int): the batch size of dataset. Default: 32.
+
+    Returns:
+        dataset
+    """
+    if platform == "Ascend":
+        rank_size = int(os.getenv("RANK_SIZE"))
+        rank_id = int(os.getenv("RANK_ID"))
+        if do_train:
+            if rank_size == 1:
+                ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+            else:
+                ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
+                                             num_shards=rank_size, shard_id=rank_id)
+        else:
+            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=False)
+    elif platform == "GPU":
+        if do_train:
+            from mindspore.communication.management import get_rank, get_group_size
+            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
+                                         num_shards=get_group_size(), shard_id=get_rank())
+        else:
+            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=False)
+    else:
+        raise ValueError("Unsupport platform.")
+
+    resize_height = config.image_height
+
+    if do_train:
+        buffer_size = 20480
+        # apply shuffle operations
+        ds = ds.shuffle(buffer_size=buffer_size)
+
+    # define map operations
+    decode_op = P.Decode()
+    resize_crop_op = P.RandomResizedCrop(resize_height, scale=(0.08, 1.0), ratio=(0.75, 1.333))
+    horizontal_flip_op = P.RandomHorizontalFlip(prob=0.5)
+
+    resize_op = P.Resize(256)
+    center_crop = P.CenterCrop(resize_height)
+    to_tensor = P.ToTensor()
+    normalize_op = P.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+    if do_train:
+        trans = [decode_op, resize_crop_op, horizontal_flip_op, to_tensor, normalize_op]
+    else:
+        trans = [decode_op, resize_op, center_crop, to_tensor, normalize_op]
+
+    compose = P.ComposeOp(trans)
+
+    ds = ds.map(input_columns="image", operations=compose(), num_parallel_workers=8, python_multiprocessing=True)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
