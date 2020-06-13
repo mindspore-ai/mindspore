@@ -27,7 +27,7 @@ from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from models.resnet_quant import resnet50_quant
-from src.dataset import create_dataset
+from src.dataset import create_dataset_py
 from src.lr_generator import get_lr
 from src.config import config
 from src.crossentropy import CrossEntropy
@@ -85,8 +85,8 @@ if __name__ == '__main__':
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     if args_opt.do_train:
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
-                                 repeat_num=epoch_size, batch_size=config.batch_size, target=target)
+        dataset = create_dataset_py(dataset_path=args_opt.dataset_path, do_train=True,
+                                    repeat_num=epoch_size, batch_size=config.batch_size, target=target)
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
