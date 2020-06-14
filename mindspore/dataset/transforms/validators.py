@@ -15,6 +15,7 @@
 """Validators for TensorOps.
 """
 from functools import wraps
+
 from mindspore._c_expression import typing
 
 # POS_INT_MIN is used to limit values from starting from 0
@@ -193,5 +194,22 @@ def check_de_type(method):
         kwargs["data_type"] = data_type
 
         return method(self, **kwargs)
+
+    return new_method
+
+
+def check_slice_op(method):
+    """Wrapper method to check the parameters of slice."""
+
+    @wraps(method)
+    def new_method(self, *args):
+        for i, arg in enumerate(args):
+            if arg is not None and arg is not Ellipsis and not isinstance(arg, (int, slice, list)):
+                raise TypeError("Indexing of dim " + str(i) + "is not of valid type")
+            if isinstance(arg, list):
+                for a in arg:
+                    if not isinstance(a, int):
+                        raise TypeError("Index " + a + " is not an int")
+        return method(self, *args)
 
     return new_method

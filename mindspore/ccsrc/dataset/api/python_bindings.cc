@@ -37,8 +37,9 @@
 #include "dataset/kernels/image/resize_bilinear_op.h"
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
-#include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/kernels/data/fill_op.h"
+#include "dataset/kernels/data/slice_op.h"
+#include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -367,6 +368,37 @@ void bindTensorOps2(py::module *m) {
   (void)py::class_<FillOp, TensorOp, std::shared_ptr<FillOp>>(
     *m, "FillOp", "Tensor operation to return tensor filled with same value as input fill value.")
     .def(py::init<std::shared_ptr<Tensor>>());
+
+  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp", "")
+    .def(py::init<bool>())
+    .def(py::init([](const py::list &py_list) {
+      std::vector<dsize_t> c_list;
+      for (auto l : py_list) {
+        if (!l.is_none()) {
+          c_list.push_back(py::reinterpret_borrow<py::int_>(l));
+        }
+      }
+      return std::make_shared<SliceOp>(c_list);
+    }))
+    .def(py::init([](const py::tuple &py_slice) {
+      if (py_slice.size() != 3) {
+        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
+      }
+      Slice c_slice;
+      if (!py_slice[0].is_none() && !py_slice[1].is_none() && !py_slice[2].is_none()) {
+        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice[0]), py::reinterpret_borrow<py::int_>(py_slice[1]),
+                        py::reinterpret_borrow<py::int_>(py_slice[2]));
+      } else if (py_slice[0].is_none() && py_slice[2].is_none()) {
+        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice[1]));
+      } else if (!py_slice[0].is_none() && !py_slice[1].is_none()) {
+        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice[0]), py::reinterpret_borrow<py::int_>(py_slice[1]));
+      }
+
+      if (!c_slice.valid()) {
+        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
+      }
+      return std::make_shared<SliceOp>(c_slice);
+    }));
 
   (void)py::class_<RandomRotationOp, TensorOp, std::shared_ptr<RandomRotationOp>>(
     *m, "RandomRotationOp",
