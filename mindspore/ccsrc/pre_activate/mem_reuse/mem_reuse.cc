@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <memory>
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
+#include "pre_activate/common/helper.h"
+
 namespace mindspore {
 namespace memreuse {
 bool MemReuseUtil::InitDynamicOutputKernelRef() {
@@ -324,9 +326,17 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
+  auto is_all_nop_node = opt::IsAllNopNode(graph_);
   auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
-    auto kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0);
+    session::KernelWithIndex kernel_input;
+    if (is_all_nop_node) {
+      // The graph does not remove the nop node.
+      kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, false);
+    } else {
+      // The graph removes the nop node.
+      kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+    }
     MS_EXCEPTION_IF_NULL(kernel_input.first);
     if (!kernel_input.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_input.first)) {
       continue;

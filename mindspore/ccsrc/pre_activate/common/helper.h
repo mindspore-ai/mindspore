@@ -154,6 +154,8 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
 
 tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
 
+bool IsAllNopNode(const session::KernelGraph *const graph);
+
 bool IsNopNode(const AnfNodePtr &node);
 
 void HideNopNode(session::KernelGraph *const graph);
