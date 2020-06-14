@@ -201,6 +201,7 @@ class DfGraphConvertor {
   OperatorPtr ConvertParameter(AnfNodePtr node);
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
+  void GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node);
   void ConvertTupleGetItem(const CNodePtr node);
   void GetDependOnParameterUse(const CNodePtr &node, const AnfNodePtr &src_node, const AnfNodePtr &dest_node,
                                const std::shared_ptr<std::vector<OperatorPtr>> &src_ops_list,
@@ -217,6 +218,8 @@ class DfGraphConvertor {
   void SetNodeInput(AnfNodePtr node);
   void SetOpControlInput(const AnfNodePtr node);
   void UpdateOpDesc(AnfNodePtr node);
+  void SetSubgraph(AnfNodePtr node);
+  void ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNodePtr> &inputs);
   void BuildSaveCheckpointGraph();
   void DrawCNode(const CNodePtr node, const OpAdapterPtr adpt);
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
@@ -228,22 +231,26 @@ class DfGraphConvertor {
   std::shared_ptr<DfGraph> save_ckp_graph_{nullptr};
   std::shared_ptr<DfGraph> restore_ckp_graph_{nullptr};
   std::shared_ptr<DfGraph> broadcast_graph_{nullptr};
+  std::unordered_map<AnfNode *, DfGraph> branches_map_;
   std::unordered_map<AnfNode *, OperatorPtr> op_cache_;
   std::unordered_map<AnfNode *, std::vector<ControlEdge>> control_depend_cache_;
   /* record "tuple_getitem"<->"out_handler" mapping */
   std::unordered_map<AnfNode *, OutHandler> out_handle_cache_;
   /* record "make_tuple"<->"out_handler vector" mapping */
   std::unordered_map<AnfNode *, std::shared_ptr<std::vector<OutHandler>>> tuple_out_handle_cache_;
+  std::unordered_map<AnfNode *, std::shared_ptr<std::vector<AnfNodePtr>>> case_input_handle_cache_;
   std::unordered_map<std::string, AnfNodePtr> params_;
   std::unordered_map<std::string, OperatorPtr> vars_;
   std::vector<std::pair<ge::Operator, std::string>> graph_outputs_;
   std::vector<OperatorPtr> graph_const_inputs_;
   std::vector<OperatorPtr> init_ops_;
   std::vector<OperatorPtr> broadcast_ops_;
+  std::vector<AnfNodePtr> inputs_;
   OperatorPtr dataset_iter_getnext_;
   Status error_ = SUCCESS;
   bool training_ = false;
   bool distribute_ = false;
+  bool use_inputs_ = false;
 };
 }  // namespace transform
 }  // namespace mindspore
