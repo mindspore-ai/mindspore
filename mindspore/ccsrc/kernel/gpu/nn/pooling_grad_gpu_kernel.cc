@@ -24,27 +24,27 @@ MS_REG_GPU_KERNEL_ONE(MaxPoolGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      PoolingGradGpuFwdKernel, float)
+                      PoolingGradGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(MaxPoolGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      PoolingGradGpuFwdKernel, half)
+                      PoolingGradGpuKernel, half)
 MS_REG_GPU_KERNEL_ONE(AvgPoolGradGpu,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      PoolingGradGpuFwdKernel, float)
+                      PoolingGradGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(AvgPoolGradGpu,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      PoolingGradGpuFwdKernel, half)
+                      PoolingGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

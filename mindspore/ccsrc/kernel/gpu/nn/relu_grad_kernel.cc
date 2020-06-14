@@ -21,10 +21,10 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ReluGradGpuFwdKernel, float)
+  ReluGradGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ReluGradGpuFwdKernel, half)
+  ReluGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

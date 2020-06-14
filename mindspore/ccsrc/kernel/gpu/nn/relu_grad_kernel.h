@@ -25,9 +25,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReluGradGpuFwdKernel : public GpuKernel {
+class ReluGradGpuKernel : public GpuKernel {
  public:
-  ReluGradGpuFwdKernel()
+  ReluGradGpuKernel()
       : cudnn_handle_(nullptr),
         activation_desc_(nullptr),
         mode_(CUDNN_ACTIVATION_RELU),
@@ -35,7 +35,7 @@ class ReluGradGpuFwdKernel : public GpuKernel {
         is_null_input_(false),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         input_size_(0) {}
-  ~ReluGradGpuFwdKernel() override { DestroyResource(); }
+  ~ReluGradGpuKernel() override { DestroyResource(); }
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -63,14 +63,14 @@ class ReluGradGpuFwdKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ReluGradGpuFwdKernel needs 2.";
+      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ReluGradGpuKernel needs 2.";
       return false;
     }
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     mode_ = CUDNN_ACTIVATION_RELU;
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "ReluGradGpuFwdKernel input is null.";
+      MS_LOG(WARNING) << "ReluGradGpuKernel input is null.";
       InitSizeLists();
       return true;
     }
