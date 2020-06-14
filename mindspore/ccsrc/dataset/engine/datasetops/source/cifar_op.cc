@@ -367,9 +367,14 @@ Status CifarOp::ParseCifarData() {
                                             TensorShape({kCifarImageHeight, kCifarImageWidth, kCifarImageChannel}),
                                             data_schema_->column(0).type()));
       auto itr = image_tensor->begin<uint8_t>();
-      for (; itr != image_tensor->end<uint8_t>(); itr++) {
-        *itr = block[cur_block_index++];
+      uint32_t total_pix = kCifarImageHeight * kCifarImageWidth;
+      for (int pix = 0; pix < total_pix; ++pix) {
+        for (int ch = 0; ch < kCifarImageChannel; ++ch) {
+          *itr = block[cur_block_index + ch * total_pix + pix];
+          itr++;
+        }
       }
+      cur_block_index += total_pix * kCifarImageChannel;
       cifar_image_label_pairs_.emplace_back(std::make_pair(image_tensor, labels));
     }
     RETURN_IF_NOT_OK(cifar_raw_data_block_->PopFront(&block));
