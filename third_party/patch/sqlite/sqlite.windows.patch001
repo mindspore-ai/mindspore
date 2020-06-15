@@ -1,6 +1,6 @@
-diff -uprN sqlite-amalgamation-3310100/CMakeLists.txt sqlite-patch001/CMakeLists.txt
---- sqlite-amalgamation-3310100/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
-+++ sqlite-patch001/CMakeLists.txt	2020-05-25 10:47:36.902007755 +0800
+diff -Npur sqlite-amalgamation-3320200/CMakeLists.txt linux-amalgamation/CMakeLists.txt
+--- sqlite-amalgamation-3320200/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
++++ linux-amalgamation/CMakeLists.txt	2020-06-16 09:21:51.768154641 +0800
 @@ -0,0 +1,6 @@
 +cmake_minimum_required(VERSION 3.14)
 +project (Sqlite[C])
@@ -8,126 +8,245 @@ diff -uprN sqlite-amalgamation-3310100/CMakeLists.txt sqlite-patch001/CMakeLists
 +set_target_properties(sqlite3 PROPERTIES PUBLIC_HEADER "sqlite3.h;sqlite3ext.h")
 +include(GNUInstallDirs)
 +install(TARGETS sqlite3 PUBLIC_HEADER)
-diff -uprN sqlite-amalgamation-3310100/sqlite3.c sqlite-patch001/sqlite3.c
---- sqlite-amalgamation-3310100/sqlite3.c	2020-01-28 04:25:14.000000000 +0800
-+++ sqlite-patch001/sqlite3.c	2020-05-25 10:49:04.057117196 +0800
-@@ -1167,7 +1167,7 @@ extern "C" {
+diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
+--- sqlite-amalgamation-3320200/sqlite3.c	2020-06-04 22:01:17.000000000 +0800
++++ linux-amalgamation/sqlite3.c	2020-06-15 14:18:34.330175000 +0800
+@@ -1164,7 +1164,7 @@ extern "C" {
  */
- #define SQLITE_VERSION        "3.31.1"
- #define SQLITE_VERSION_NUMBER 3031001
--#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6"
-+#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 bc2f42080a6a8a33048eedf289152768c416b2a7677a92111b3b1ea60d4aalt1"
+ #define SQLITE_VERSION        "3.32.2"
+ #define SQLITE_VERSION_NUMBER 3032002
+-#define SQLITE_SOURCE_ID      "2020-06-04 12:58:43 ec02243ea6ce33b090870ae55ab8aa2534b54d216d45c4aa2fdbb00e86861e8c"
++#define SQLITE_SOURCE_ID      "2020-06-04 12:58:43 ec02243ea6ce33b090870ae55ab8aa2534b54d216d45c4aa2fdbb00e8686alt1"
  
  /*
  ** CAPI3REF: Run-Time Library Version Numbers
-@@ -17428,8 +17428,11 @@ struct Table {
+@@ -14521,7 +14521,12 @@ typedef INT16_TYPE LogEst;
  */
- #ifndef SQLITE_OMIT_VIRTUALTABLE
- #  define IsVirtual(X)      ((X)->nModuleArg)
-+#  define ExprIsVtab(X)  \
-+              ((X)->op==TK_COLUMN && (X)->y.pTab!=0 && (X)->y.pTab->nModuleArg)
+ #if defined(SQLITE_ENABLE_SELECTTRACE)
+ # define SELECTTRACE_ENABLED 1
++# define SELECTTRACE(K,P,S,X)  \
++  if(sqlite3SelectTrace&(K))   \
++    sqlite3DebugPrintf("%u/%d/%p: ",(S)->selId,(P)->addrExplain,(S)),\
++    sqlite3DebugPrintf X
  #else
- #  define IsVirtual(X)      0
-+#  define ExprIsVtab(X)     0
++# define SELECTTRACE(K,P,S,X)
+ # define SELECTTRACE_ENABLED 0
  #endif
  
- /*
-@@ -104133,19 +104136,25 @@ static int impliesNotNullRow(Walker *pWa
-     case TK_LT:
-     case TK_LE:
-     case TK_GT:
--    case TK_GE:
-+    case TK_GE: {
-+      Expr *pLeft = pExpr->pLeft;
-+      Expr *pRight = pExpr->pRight;
-       testcase( pExpr->op==TK_EQ );
-       testcase( pExpr->op==TK_NE );
-       testcase( pExpr->op==TK_LT );
-       testcase( pExpr->op==TK_LE );
-       testcase( pExpr->op==TK_GT );
-       testcase( pExpr->op==TK_GE );
--      if( (pExpr->pLeft->op==TK_COLUMN && IsVirtual(pExpr->pLeft->y.pTab))
--       || (pExpr->pRight->op==TK_COLUMN && IsVirtual(pExpr->pRight->y.pTab))
-+      /* The y.pTab=0 assignment in wherecode.c always happens after the
-+      ** impliesNotNullRow() test */
-+      if( (pLeft->op==TK_COLUMN && ALWAYS(pLeft->y.pTab!=0)
-+                               && IsVirtual(pLeft->y.pTab))
-+       || (pRight->op==TK_COLUMN && ALWAYS(pRight->y.pTab!=0)
-+                               && IsVirtual(pRight->y.pTab))
-       ){
--       return WRC_Prune;
-+        return WRC_Prune;
-       }
--
-+    }
-     default:
-       return WRC_Continue;
-   }
-@@ -142591,7 +142600,8 @@ static int isAuxiliaryVtabOperator(
-     **       MATCH(expression,vtab_column)
-     */
-     pCol = pList->a[1].pExpr;
--    if( pCol->op==TK_COLUMN && IsVirtual(pCol->y.pTab) ){
-+    testcase( pCol->op==TK_COLUMN && pCol->y.pTab==0 );
-+    if( ExprIsVtab(pCol) ){
-       for(i=0; i<ArraySize(aOp); i++){
-         if( sqlite3StrICmp(pExpr->u.zToken, aOp[i].zOp)==0 ){
-           *peOp2 = aOp[i].eOp2;
-@@ -142613,7 +142623,8 @@ static int isAuxiliaryVtabOperator(
-     ** with function names in an arbitrary case.
-     */
-     pCol = pList->a[0].pExpr;
--    if( pCol->op==TK_COLUMN && IsVirtual(pCol->y.pTab) ){
-+    testcase( pCol->op==TK_COLUMN && pCol->y.pTab==0 );
-+    if( ExprIsVtab(pCol) ){
-       sqlite3_vtab *pVtab;
-       sqlite3_module *pMod;
-       void (*xNotUsed)(sqlite3_context*,int,sqlite3_value**);
-@@ -142636,10 +142647,12 @@ static int isAuxiliaryVtabOperator(
-     int res = 0;
-     Expr *pLeft = pExpr->pLeft;
-     Expr *pRight = pExpr->pRight;
--    if( pLeft->op==TK_COLUMN && IsVirtual(pLeft->y.pTab) ){
-+    testcase( pLeft->op==TK_COLUMN && pLeft->y.pTab==0 );
-+    if( ExprIsVtab(pLeft) ){
-       res++;
-     }
--    if( pRight && pRight->op==TK_COLUMN && IsVirtual(pRight->y.pTab) ){
-+    testcase( pRight && pRight->op==TK_COLUMN && pRight->y.pTab==0 );
-+    if( pRight && ExprIsVtab(pRight) ){
-       res++;
-       SWAP(Expr*, pLeft, pRight);
-     }
-@@ -223667,7 +223680,7 @@ static void fts5SourceIdFunc(
- ){
-   assert( nArg==0 );
-   UNUSED_PARAM2(nArg, apUnused);
--  sqlite3_result_text(pCtx, "fts5: 2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6", -1, SQLITE_TRANSIENT);
-+  sqlite3_result_text(pCtx, "fts5: 2020-01-27 19:55:54 abc473fb8fb999005dc79a360e34f97b3b25429decf1820dd2afa5c19577753d", -1, SQLITE_TRANSIENT);
- }
+@@ -17880,9 +17885,24 @@ struct AggInfo {
+     int iDistinct;           /* Ephemeral table used to enforce DISTINCT */
+   } *aFunc;
+   int nFunc;              /* Number of entries in aFunc[] */
++#ifdef SQLITE_DEBUG
++  u32 iAggMagic;          /* Sanity checking constant */
++#endif
+ };
  
  /*
-@@ -228440,9 +228453,9 @@ SQLITE_API int sqlite3_stmt_init(
++** Allowed values for AggInfo.iAggMagic
++*/
++#define SQLITE_AGGMAGIC_VALID  0x05cadade
++
++/*
++** True if the AggInfo object is valid.  Used inside of assert() only.
++*/
++#ifdef SQLITE_DEBUG
++#  define AggInfoValid(P) ((P)->iAggMagic==SQLITE_AGGMAGIC_VALID)
++#endif
++
++/*
+ ** The datatype ynVar is a signed integer, either 16-bit or 32-bit.
+ ** Usually it is 16-bits.  But if SQLITE_MAX_VARIABLE_NUMBER is greater
+ ** than 32767 we have to make it 32-bit.  16-bit is preferred because
+@@ -19903,10 +19923,11 @@ SQLITE_PRIVATE const unsigned char sqlit
+ SQLITE_PRIVATE const unsigned char sqlite3CtypeMap[];
+ SQLITE_PRIVATE SQLITE_WSD struct Sqlite3Config sqlite3Config;
+ SQLITE_PRIVATE FuncDefHash sqlite3BuiltinFunctions;
++SQLITE_PRIVATE u32 sqlite3SelectTrace;
+ #ifndef SQLITE_OMIT_WSD
+ SQLITE_PRIVATE int sqlite3PendingByte;
+ #endif
+-#endif
++#endif /* !defined(SQLITE_AMALGAMATION) */
+ #ifdef VDBE_PROFILE
+ SQLITE_PRIVATE sqlite3_uint64 sqlite3NProfileCnt;
+ #endif
+@@ -20616,6 +20637,11 @@ SQLITE_PRIVATE sqlite3_uint64 sqlite3NPr
+ SQLITE_PRIVATE int sqlite3PendingByte = 0x40000000;
+ #endif
+ 
++/*
++** Flags for select tracing and the ".selecttrace" macro of the CLI
++*/
++/**/ u32 sqlite3SelectTrace = 0;
++
+ /* #include "opcodes.h" */
+ /*
+ ** Properties of opcodes.  The OPFLG_INITIALIZER macro is
+@@ -99243,6 +99269,14 @@ static int resolveSelectStep(Walker *pWa
+           return WRC_Abort;
+         }
+       }
++    }else if( p->pWin && ALWAYS( (p->selFlags & SF_WinRewrite)==0 ) ){
++      sqlite3WindowRewrite(pParse, p);
++#if SELECTTRACE_ENABLED
++      if( (sqlite3SelectTrace & 0x108)!=0 ){
++        SELECTTRACE(0x104,pParse,p, ("after window rewrite:\n"));
++        sqlite3TreeViewSelect(0, p, 0);
++      }
++#endif
+     }
+ #endif
+ 
+@@ -103297,6 +103331,7 @@ expr_code_doover:
+       AggInfo *pAggInfo = pExpr->pAggInfo;
+       struct AggInfo_col *pCol;
+       assert( pAggInfo!=0 );
++      assert( AggInfoValid(pAggInfo) );
+       assert( pExpr->iAgg>=0 && pExpr->iAgg<pAggInfo->nColumn );
+       pCol = &pAggInfo->aCol[pExpr->iAgg];
+       if( !pAggInfo->directMode ){
+@@ -103605,6 +103640,7 @@ expr_code_doover:
+         assert( !ExprHasProperty(pExpr, EP_IntValue) );
+         sqlite3ErrorMsg(pParse, "misuse of aggregate: %s()", pExpr->u.zToken);
+       }else{
++        assert( AggInfoValid(pInfo) );
+         return pInfo->aFunc[pExpr->iAgg].iMem;
+       }
+       break;
+@@ -105142,13 +105178,7 @@ struct SrcCount {
+ ** Count the number of references to columns.
+ */
+ static int exprSrcCount(Walker *pWalker, Expr *pExpr){
+-  /* There was once a NEVER() on the second term on the grounds that
+-  ** sqlite3FunctionUsesThisSrc() was always called before 
+-  ** sqlite3ExprAnalyzeAggregates() and so the TK_COLUMNs have not yet 
+-  ** been converted into TK_AGG_COLUMN. But this is no longer true due
+-  ** to window functions - sqlite3WindowRewrite() may now indirectly call
+-  ** FunctionUsesThisSrc() when creating a new sub-select. */
+-  if( pExpr->op==TK_COLUMN || pExpr->op==TK_AGG_COLUMN ){
++  if( pExpr->op==TK_COLUMN || NEVER(pExpr->op==TK_AGG_COLUMN) ){
+     int i;
+     struct SrcCount *p = pWalker->u.pSrcCount;
+     SrcList *pSrc = p->pSrc;
+@@ -128851,20 +128881,6 @@ SQLITE_API int sqlite3_prepare16_v3(
+ /* #include "sqliteInt.h" */
+ 
+ /*
+-** Trace output macros
+-*/
+-#if SELECTTRACE_ENABLED
+-/***/ int sqlite3SelectTrace = 0;
+-# define SELECTTRACE(K,P,S,X)  \
+-  if(sqlite3SelectTrace&(K))   \
+-    sqlite3DebugPrintf("%u/%d/%p: ",(S)->selId,(P)->addrExplain,(S)),\
+-    sqlite3DebugPrintf X
+-#else
+-# define SELECTTRACE(K,P,S,X)
+-#endif
+-
+-
+-/*
+ ** An instance of the following object is used to record information about
+ ** how to process the DISTINCT keyword, to simplify passing that information
+ ** into the selectInnerLoop() routine.
+@@ -133262,11 +133278,14 @@ static int pushDownWhereTerms(
+ ){
+   Expr *pNew;
+   int nChng = 0;
++  Select *pSel;
+   if( pWhere==0 ) return 0;
+   if( pSubq->selFlags & SF_Recursive ) return 0;  /* restriction (2) */
+ 
+ #ifndef SQLITE_OMIT_WINDOWFUNC
+-  if( pSubq->pWin ) return 0;    /* restriction (6) */
++  for(pSel=pSubq; pSel; pSel=pSel->pPrior){
++    if( pSel->pWin ) return 0;    /* restriction (6) */
++  }
+ #endif
+ 
+ #ifdef SQLITE_DEBUG
+@@ -134602,6 +134621,9 @@ SQLITE_PRIVATE int sqlite3Select(
+   }
+   if( sqlite3AuthCheck(pParse, SQLITE_SELECT, 0, 0, 0) ) return 1;
+   memset(&sAggInfo, 0, sizeof(sAggInfo));
++#ifdef SQLITE_DEBUG
++  sAggInfo.iAggMagic = SQLITE_AGGMAGIC_VALID;
++#endif
+ #if SELECTTRACE_ENABLED
+   SELECTTRACE(1,pParse,p, ("begin processing:\n", pParse->addrExplain));
+   if( sqlite3SelectTrace & 0x100 ){
+@@ -134640,19 +134662,6 @@ SQLITE_PRIVATE int sqlite3Select(
+     generateColumnNames(pParse, p);
+   }
+ 
+-#ifndef SQLITE_OMIT_WINDOWFUNC
+-  rc = sqlite3WindowRewrite(pParse, p);
+-  if( rc ){
+-    assert( db->mallocFailed || pParse->nErr>0 );
+-    goto select_end;
+-  }
+-#if SELECTTRACE_ENABLED
+-  if( p->pWin && (sqlite3SelectTrace & 0x108)!=0 ){
+-    SELECTTRACE(0x104,pParse,p, ("after window rewrite:\n"));
+-    sqlite3TreeViewSelect(0, p, 0);
+-  }
+-#endif
+-#endif /* SQLITE_OMIT_WINDOWFUNC */
+   pTabList = p->pSrc;
+   isAgg = (p->selFlags & SF_Aggregate)!=0;
+   memset(&sSort, 0, sizeof(sSort));
+@@ -134980,7 +134989,7 @@ SQLITE_PRIVATE int sqlite3Select(
+   if( (p->selFlags & (SF_Distinct|SF_Aggregate))==SF_Distinct 
+    && sqlite3ExprListCompare(sSort.pOrderBy, pEList, -1)==0
+ #ifndef SQLITE_OMIT_WINDOWFUNC
+-   && p->pWin==0
++   && ALWAYS(p->pWin==0)
+ #endif
+   ){
+     p->selFlags &= ~SF_Distinct;
+@@ -135627,6 +135636,14 @@ SQLITE_PRIVATE int sqlite3Select(
+ select_end:
+   sqlite3ExprListDelete(db, pMinMaxOrderBy);
+   sqlite3DbFree(db, sAggInfo.aCol);
++#ifdef SQLITE_DEBUG
++  for(i=0; i<sAggInfo.nFunc; i++){
++    assert( sAggInfo.aFunc[i].pExpr!=0 );
++    assert( sAggInfo.aFunc[i].pExpr->pAggInfo==&sAggInfo );
++    sAggInfo.aFunc[i].pExpr->pAggInfo = 0;
++  }
++  sAggInfo.iAggMagic = 0;
++#endif
+   sqlite3DbFree(db, sAggInfo.aFunc);
+ #if SELECTTRACE_ENABLED
+   SELECTTRACE(0x1,pParse,p,("end processing\n"));
+@@ -151305,7 +151322,7 @@ static int sqlite3WindowExtraAggFuncDept
+ */
+ SQLITE_PRIVATE int sqlite3WindowRewrite(Parse *pParse, Select *p){
+   int rc = SQLITE_OK;
+-  if( p->pWin && p->pPrior==0 && (p->selFlags & SF_WinRewrite)==0 ){
++  if( ALWAYS(p->pWin && (p->selFlags & SF_WinRewrite)==0) ){
+     Vdbe *v = sqlite3GetVdbe(pParse);
+     sqlite3 *db = pParse->db;
+     Select *pSub = 0;             /* The subquery */
+@@ -229607,7 +229624,7 @@ SQLITE_API int sqlite3_stmt_init(
  #endif /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_STMTVTAB) */
  
  /************** End of stmt.c ************************************************/
--#if __LINE__!=228443
-+#if __LINE__!=228456
+-#if __LINE__!=229610
++#if __LINE__!=229627
  #undef SQLITE_SOURCE_ID
--#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837balt2"
-+#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 bc2f42080a6a8a33048eedf289152768c416b2a7677a92111b3b1ea60d4aalt2"
+ #define SQLITE_SOURCE_ID      "2020-06-04 12:58:43 ec02243ea6ce33b090870ae55ab8aa2534b54d216d45c4aa2fdbb00e8686alt2"
  #endif
- /* Return the source-id for this library */
- SQLITE_API const char *sqlite3_sourceid(void){ return SQLITE_SOURCE_ID; }
-diff -uprN sqlite-amalgamation-3310100/sqlite3.h sqlite-patch001/sqlite3.h
---- sqlite-amalgamation-3310100/sqlite3.h	2020-01-28 04:25:14.000000000 +0800
-+++ sqlite-patch001/sqlite3.h	2020-05-25 10:49:17.932970790 +0800
+diff -Npur sqlite-amalgamation-3320200/sqlite3.h linux-amalgamation/sqlite3.h
+--- sqlite-amalgamation-3320200/sqlite3.h	2020-06-04 22:01:17.000000000 +0800
++++ linux-amalgamation/sqlite3.h	2020-06-15 14:18:32.674154000 +0800
 @@ -125,7 +125,7 @@ extern "C" {
  */
- #define SQLITE_VERSION        "3.31.1"
- #define SQLITE_VERSION_NUMBER 3031001
--#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6"
-+#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 bc2f42080a6a8a33048eedf289152768c416b2a7677a92111b3b1ea60d4aalt1"
+ #define SQLITE_VERSION        "3.32.2"
+ #define SQLITE_VERSION_NUMBER 3032002
+-#define SQLITE_SOURCE_ID      "2020-06-04 12:58:43 ec02243ea6ce33b090870ae55ab8aa2534b54d216d45c4aa2fdbb00e86861e8c"
++#define SQLITE_SOURCE_ID      "2020-06-04 12:58:43 ec02243ea6ce33b090870ae55ab8aa2534b54d216d45c4aa2fdbb00e8686alt1"
  
  /*
  ** CAPI3REF: Run-Time Library Version Numbers
