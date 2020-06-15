@@ -28,7 +28,7 @@ class SparseApplyFtrlCPUKernel : public CPUKernel {
   ~SparseApplyFtrlCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 

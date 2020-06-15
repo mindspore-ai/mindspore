@@ -92,6 +92,8 @@ bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &
 int Sign(float x);
 void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
                               size_t outer_dim);
+void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                          size_t outer_dim);
 }  // namespace kernel
 }  // namespace mindspore
 
