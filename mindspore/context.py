@@ -25,6 +25,7 @@ from mindspore._c_expression import MSContext
 from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
+from mindspore.parallel.mpi._mpi_config import _set_mpi_config, _get_mpi_config
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context']
@@ -566,3 +567,40 @@ def get_context(attr_key):
     if not hasattr(_context(), attr_key):
         raise ValueError("Get context keyword %s is not recognized!" % attr_key)
     return getattr(_context(), attr_key)
+
+@args_type_check(enable_mpi=bool)
+def set_mpi_config(**kwargs):
+    """
+    Sets mpi config for running environment.
+
+    mpi config should be configured before running your program. If there is no configuration,
+    mpi moudle will be disabled by default.
+
+    Note:
+        Attribute name is required for setting attributes.
+
+    Args:
+        enable_mpi (bool): Whether to enable mpi. Default: False.
+
+    Raises:
+        ValueError: If input key is not an attribute in mpi config.
+
+    Examples:
+        >>> mpiconfig.set_mpi_config(enable_mpi=True)
+    """
+    _set_mpi_config(**kwargs)
+
+def get_mpi_config(attr_key):
+    """
+    Gets mpi config attribute value according to the input key.
+
+    Args:
+        attr_key (str): The key of the attribute.
+
+    Returns:
+        Object, The value of given attribute key.
+
+    Raises:
+        ValueError: If input key is not an attribute in context.
+    """
+    return _get_mpi_config(attr_key)

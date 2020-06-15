@@ -32,8 +32,10 @@ class MPIAdapter {
   ~MPIAdapter();
   static MPIAdapter &Instance();
   int GetRankId() const;
-  bool ReduceScatter(float *input, float *output, const std::vector<int> &ranks_group, size_t data_num,
+  bool ReduceScatter(const float *input, float *output, const std::vector<int> &ranks_group, size_t data_num,
                      const std::string &op_type = kOpTypeSum);
+  bool ReduceScatterOverwriteInput(float *input, const std::vector<int> &ranks_group, size_t data_num,
+                                   const std::string &op_type = kOpTypeSum, float *output = nullptr);
   bool AllGather(float *input, float *output, const std::vector<int> &ranks_group, size_t data_num);
 
  private:

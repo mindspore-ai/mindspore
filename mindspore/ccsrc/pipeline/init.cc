@@ -26,6 +26,7 @@
 #include "pipeline/parse/python_adapter.h"
 #include "utils/summary/event_writer.h"
 #include "utils/config_manager.h"
+#include "utils/mpi/mpi_config.h"
 #include "parallel/context.h"
 #include "parallel/device_manager.h"
 #include "parallel/costmodel_context.h"
@@ -146,6 +147,11 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_check_bprop_flag", &mindspore::MsContext::set_check_bprop_flag, "Set whether to check bprop.")
     .def("get_max_device_memory", &mindspore::MsContext::max_device_memory, "Get deivce memory max size.")
     .def("set_max_device_memory", &mindspore::MsContext::set_max_device_memory, "Set deivce memory max size.");
+
+  (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
+    .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")
+    .def("get_enable_mpi", &mindspore::MpiConfig::enable_mpi, "Get whether enable mpi.")
+    .def("set_enable_mpi", &mindspore::MpiConfig::set_enable_mpi, "Set whether to enable mpi.");
 
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")

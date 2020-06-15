@@ -16,6 +16,7 @@
 
 #include "device/cpu/mpi/mpi_adapter.h"
 #include <algorithm>
+#include "utils/mpi/mpi_config.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -34,6 +35,20 @@ MPI_Op GetMpiOp(const std::string &op_type) {
   }
   MS_LOG(EXCEPTION) << "unsupport op_type:" << op_type;
   return MPI_SUM;
+}
+
+int GetScatterIndex(int rankid, const std::vector<int> &ranks_group) {
+  int scatter_index = -1;
+  for (size_t i = 0; i < ranks_group.size(); ++i) {
+    if (ranks_group[i] == rankid) {
+      scatter_index = static_cast<int>(i);
+      break;
+    }
+  }
+  if (scatter_index == -1) {
+    MS_LOG(EXCEPTION) << "process rankid " << rankid << " does not in the input rank group!";
+  }
+  return scatter_index;
 }
 }  // namespace
 
@@ -64,6 +79,11 @@ void MPIAdapter::Init() {
   static bool init = false;
   if (init) {
     return;
+  }
+  auto mpi_config_ptr = MpiConfig::GetInstance();
+  MS_EXCEPTION_IF_NULL(mpi_config_ptr);
+  if (!mpi_config_ptr->enable_mpi()) {
+    MS_LOG(EXCEPTION) << "MPI is disabled now!Please enable mpi with mpi config first.";
   }
   int init_flag = 0;
   if (MPI_Initialized(&init_flag) != MPI_SUCCESS) {
@@ -123,7 +143,7 @@ MPI_Group MPIAdapter::AddGroup(const std::vector<int> &ranks) {
   return group;
 }
 
-bool MPIAdapter::ReduceScatter(float *input, float *output, const std::vector<int> &ranks_group, size_t data_num,
+bool MPIAdapter::ReduceScatter(const float *input, float *output, const std::vector<int> &ranks_group, size_t data_num,
                                const std::string &op_type) {
   if (ranks_group.empty()) {
     MS_LOG(ERROR) << "input rank group is empty!";
@@ -157,6 +177,51 @@ bool MPIAdapter::ReduceScatter(float *input, float *output, const std::vector<in
     MS_LOG(WARNING) << "mpi comm free fail! ret = " << ret << ", rankid:" << rank_id_;
   }
   return result;
+}
+
+bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int> &ranks_group, size_t data_num,
+                                             const std::string &op_type, float *output) {
+  int scatter_index = GetScatterIndex(rank_id_, ranks_group);
+  auto group = AddGroup(ranks_group);
+  if (group == MPI_GROUP_NULL) {
+    MS_LOG(EXCEPTION) << "Get mpi group fail!rankid:" << rank_id_;
+  }
+  MPI_Comm comm;
+  MPI_Comm_create_group(MPI_COMM_WORLD, group, 0, &comm);
+  if (comm == MPI_COMM_NULL) {
+    MS_LOG(EXCEPTION) << "create mpi comm fail!rankid:" << rank_id_;
+  }
+
+  MPI_Win window;
+  auto ret = MPI_Win_create(input, data_num * sizeof(float), sizeof(float), MPI_INFO_NULL, comm, &window);
+  if (ret != MPI_SUCCESS) {
+    MS_LOG(ERROR) << "mpi window create fail! ret = " << ret;
+    return false;
+  }
+  MPI_Win_fence(0, window);
+  for (size_t i = 0; i < ranks_group.size(); ++i) {
+    int remote_rank = ranks_group[i];
+    if (rank_id_ == remote_rank) {
+      continue;
+    }
+    auto op = GetMpiOp(op_type);
+    ret = MPI_Accumulate(input + i * data_num, data_num, MPI_FLOAT, remote_rank, i * data_num, data_num, MPI_FLOAT, op,
+                         window);
+    if (ret != MPI_SUCCESS) {
+      MS_LOG(EXCEPTION) << "mpi accumulate " << op_type << " fail!ret = " << ret;
+    }
+  }
+  MPI_Win_fence(0, window);
+  if (output != nullptr) {
+    auto data_size = data_num * sizeof(float);
+    auto copy_ret = memcpy_s(output, data_size, input + scatter_index * data_num, data_size);
+    if (copy_ret != 0) {
+      MS_LOG(EXCEPTION) << "copy output memory fail!";
+    }
+  }
+  MPI_Win_free(&window);
+  MPI_Comm_free(&comm);
+  return true;
 }
 
 bool MPIAdapter::AllGather(float *input, float *output, const std::vector<int> &ranks_group, size_t data_num) {

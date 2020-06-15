@@ -14,15 +14,17 @@ endif ()
 
 if (ENABLE_CPU)
     file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
-    if (ENABLE_MPI)
-        # _ms_mpi
-        set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
-            PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-        pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
-        target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
-    else ()
+    if (NOT ENABLE_MPI)
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/mpi/mpi_adapter.cc")
     endif ()
+endif ()
+
+if (ENABLE_MPI)
+    # _ms_mpi
+    set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
+        PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+    pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
+    target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
 endif ()
 
 # gpu
