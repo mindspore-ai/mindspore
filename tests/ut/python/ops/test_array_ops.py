@@ -25,6 +25,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import prim_attr_register
 from mindspore.ops.primitive import PrimitiveWithInfer
 import mindspore.context as context
@@ -286,19 +287,10 @@ class SpaceToBatchNDNet(Cell):
         return self.space_to_batch_nd(x)
 
 
-class ConfusionMatrixNet(Cell):
-    def __init__(self):
-        super(ConfusionMatrixNet, self).__init__()
-        self.confusion_matrix = P.ConfusionMatrix(4, "int32")
-
-    def construct(self, x, y):
-        return self.confusion_matrix(x, y)
-
-
 class RangeNet(Cell):
     def __init__(self):
         super(RangeNet, self).__init__()
-        self.range_ops = P.Range(1.0, 8.0, 2.0)
+        self.range_ops = inner.Range(1.0, 8.0, 2.0)
 
     def construct(self, x):
         return self.range_ops(x)
@@ -344,9 +336,6 @@ test_case_array_ops = [
     ('BatchToSpaceNDNet', {
         'block': BatchToSpaceNDNet(),
         'desc_inputs': [Tensor(np.random.rand(4, 1, 1, 1).astype(np.float16))]}),
-    ('ConfusionMatrixNet', {
-        'block': ConfusionMatrixNet(),
-        'desc_inputs': [Tensor([0, 1, 1, 3], ms.int32), Tensor([0, 1, 1, 3], ms.int32)]}),
     ('RangeNet', {
         'block': RangeNet(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]}),

@@ -17,6 +17,7 @@
 
 from .. import operations as P
 from ..operations import _grad_ops as G
+from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args
 from .. import functional as F
@@ -341,7 +342,7 @@ def get_bprop_sparse_gather_v2(self):
     return bprop
 
 
-@bprop_getters.register(P.Range)
+@bprop_getters.register(inner.Range)
 def get_bprop_range(self):
     """Generate bprop for Range"""
 

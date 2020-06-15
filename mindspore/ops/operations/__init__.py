@@ -23,7 +23,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
-                        Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue, Range,
+                        Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
                         SameTypeShape, ScatterAdd, ScatterMax, ScatterUpdate,
                         ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
                         Shape, Size, Slice, Split, EmbeddingLookup,
@@ -75,7 +75,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
-                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop, ConfusionMatrix)
+                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
 from . import _quant_ops
 from ._quant_ops import *
 from .thor_ops import *
@@ -303,13 +303,12 @@ __all__ = [
     "Atan",
     "Atanh",
     "BasicLSTMCell",
-    "ConfusionMatrix",
     "BroadcastTo",
-    "Range",
     "DataFormatDimMap",
     "ApproximateEqual",
     "InplaceUpdate",
     "InTopK",
+    "DataFormatDimMap"
 ]
 
 __all__.extend(_quant_ops.__all__)

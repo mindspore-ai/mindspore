@@ -45,8 +45,9 @@ class Embedding(Cell):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{input_length})`. The element of
-            the Tensor should be integer and not larger than vocab_size. else the corresponding embedding vector is zero
-            if larger than vocab_size.
+          the Tensor should be integer and not larger than vocab_size. else the corresponding embedding vector is zero
+          if larger than vocab_size.
+
     Outputs:
         Tensor of shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
 
