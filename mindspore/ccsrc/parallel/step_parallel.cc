@@ -1876,15 +1876,11 @@ void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePt
 
   DropoutDoMaskInfoPtr dropout_do_mask = std::dynamic_pointer_cast<DropoutDoMaskInfo>(distribute_operator);
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
-  std::vector<Operator> replace_op = dropout_do_mask->GetDropoutGenMaskReplaceOp(cnode);
-  if (replace_op.empty()) {
-    MS_LOG(DEBUG) << "No need to replace dropout_gen_mask";
-    return;
-  }
+  Operator replace_op = dropout_do_mask->GetDropoutGenMaskReplaceOp(cnode);
   if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of drop out do mask cnode's input is not " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
   }
-  ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
+  ReplaceOneOp(replace_op, cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 
 void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
