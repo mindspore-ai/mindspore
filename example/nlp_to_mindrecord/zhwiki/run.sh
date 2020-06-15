@@ -83,7 +83,7 @@ for index in $(seq 0 $file_list_len); do
         --max_predictions_per_seq=20 \
         --masked_lm_prob=0.15 \
         --random_seed=12345 \
-        --dupe_factor=5 >/tmp/${output_filename[$index]}.log 2>&1 &
+        --dupe_factor=10 >/tmp/${output_filename[$index]}.log 2>&1 &   # user defined
     process_count=`ps -ef | grep create_pretraining_data_patched | grep -v grep | wc -l`
     echo "Total task: ${#file_list[*]}, processing: ${process_count}"
     if [ $process_count -ge $avaiable_core_size ]; then
