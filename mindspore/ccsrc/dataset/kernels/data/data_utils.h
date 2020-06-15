@@ -43,6 +43,13 @@ Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_
 Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                             int64_t index);
 
+// Returns a tensor of shape input filled with the passed fill_value
+// @param input  Tensor
+// @param output Tensor. The shape and type of the output tensor is same as input
+// @param fill_value Tensor. A scalar tensor used to fill the output tensor
+
+Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, std::shared_ptr<Tensor> fill_value);
+
 // Returns a type changed input tensor.
 //          Example: if input tensor is float64, the output will the specified dataType. See DataTypes.cpp
 // @param input  Tensor

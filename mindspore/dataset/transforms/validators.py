@@ -17,7 +17,6 @@
 from functools import wraps
 from mindspore._c_expression import typing
 
-
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
 UINT8_MAX = 255
@@ -153,6 +152,25 @@ def check_num_classes(method):
 
         check_pos_int32(num_classes)
         kwargs["num_classes"] = num_classes
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_fill_value(method):
+    """Wrapper method to check the parameters of fill value."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        fill_value = (list(args) + [None])[0]
+        if "fill_value" in kwargs:
+            fill_value = kwargs.get("fill_value")
+        if fill_value is None:
+            raise ValueError("fill_value is not provided.")
+        if not isinstance(fill_value, (str, float, bool, int)):
+            raise TypeError("fill_value must be either a primitive python str, float, bool, or int")
+        kwargs["fill_value"] = fill_value
 
         return method(self, **kwargs)
 
