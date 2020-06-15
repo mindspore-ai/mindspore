@@ -1422,7 +1422,7 @@ def check_numpyslicesdataset(method):
 
             # Consider input is a tuple of dict
             elif isinstance(data[0], dict):
-                data_column = np.sum(len(list(data[i].keys())) for i in range(len(data)))
+                data_column = sum(len(list(data[i].keys())) for i in range(len(data)))
                 if column_num != data_column:
                     raise ValueError("Num of column is {0}, but required is {1}.".format(column_num, data_column))
 
