@@ -32,7 +32,12 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs,
   if (context_ptr->enable_task_sink()) {
     return true;
   }
+  if (inputs.empty() || hccl_data_type_list_.empty()) {
+    MS_LOG(ERROR) << "BroadCast param is empty";
+    return false;
+  }
   const char *tag = "Hccl-BroadCast";
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   hcclResult_t ret =
     hcom_broadcast(tag, inputs[0]->addr, hccl_count_, hccl_data_type_list_[0], root_id_, nullptr, stream_ptr);
   if (ret != HCCL_SUCCESS) {
