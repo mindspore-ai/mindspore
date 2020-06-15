@@ -76,9 +76,15 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     return default_target;
   }
   auto primitive = value->cast<PrimitivePtr>();
-  ValuePtr att_target = primitive->GetAttr("primitive_target");
+  auto att_target = primitive->GetAttr("primitive_target");
   if (att_target != nullptr) {
-    std::string target = GetValue<std::string>(att_target);
+    if (!att_target->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
+    auto target = GetValue<std::string>(att_target);
+    if (kTargetSet.find(target) == kTargetSet.end()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
     return target;
   }
   return default_target;
