@@ -22,6 +22,10 @@
 namespace mindspore {
 namespace kernel {
 void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+#ifdef PLATFORM_86
+  _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+  _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#endif
   MS_EXCEPTION_IF_NULL(kernel_node);
   using tag = dnnl::memory::format_tag;
   using dim = dnnl::memory::dims;
