@@ -101,7 +101,7 @@ size_t GetDtypeNbyte(const std::string &dtypes) {
 FusionType GetFusionType(const std::string &pattern) {
   auto iter = fusion_type_maps.find(pattern);
   if (iter == fusion_type_maps.end()) {
-    MS_LOG(DEBUG) << "Illegal fusion pattern: " << pattern;
+    MS_LOG(INFO) << "Illegal fusion pattern: " << pattern;
     return UNKNOWN_FUSION_TYPE;
   }
   return iter->second;
@@ -115,7 +115,7 @@ std::string GetProcessor(const AnfNodePtr &anf_node) {
       device = kProcessorAiCore;
       break;
     default:
-      MS_LOG(DEBUG) << "Unknown processor type." << anf_node->fullname_with_scope();
+      MS_LOG(INFO) << "Unknown processor type." << anf_node->fullname_with_scope();
       break;
   }
   return device;

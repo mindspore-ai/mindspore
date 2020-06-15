@@ -220,7 +220,7 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
     if (set_kernel_mod) {
       MS_EXCEPTION(ArgumentError) << "build kernel name:" << task_iter->second.json_name << " failed.";
     } else {
-      MS_LOG(DEBUG) << "fusion build kernel name:" << task_iter->second.json_name << "failed.";
+      MS_LOG(INFO) << "fusion build kernel name:" << task_iter->second.json_name << "failed.";
       auto ret = std::make_pair(task_iter->second.scope_id, nullptr);
       (void)task_map_.erase(task_iter);
       return ret;
@@ -255,7 +255,7 @@ bool ParallelBuildManager::GenSameOpKernelMod() const {
     bool ret = SearchInCache(task_info.json_name, task_info.processor, task_info.input_size_list,
                              task_info.output_size_list, task_info.node);
     if (!ret) {
-      MS_LOG(DEBUG) << "can't find " << task_info.json_name << " in cache.";
+      MS_LOG(INFO) << "can't find " << task_info.json_name << " in cache.";
       return false;
     }
   }
