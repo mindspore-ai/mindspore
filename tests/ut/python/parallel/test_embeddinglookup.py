@@ -33,10 +33,9 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict)
 
 class Net(nn.Cell):
-    def __init__(self, shape, axis, offset, reduce_scatter_flag, split_num):
+    def __init__(self, shape, offset, reduce_scatter_flag, split_num):
         super().__init__()
         self.index = Tensor(np.ones(shape), dtype=ms.int32)
-        self.axis = axis
         self.offset = offset
         self.reduce_scatter_flag = reduce_scatter_flag
         self.split_num = split_num
@@ -44,18 +43,17 @@ class Net(nn.Cell):
         self.mm = P.BatchMatMul()
 
     def construct(self, x, y):
-        out = self.elu(x, self.index, self.axis, self.offset, self.reduce_scatter_flag, self.split_num)
+        out = self.elu(x, self.index, self.offset, self.reduce_scatter_flag, self.split_num)
         out = self.mm(out, y)
         return out
 
 
 def test_embeddinglookup_reducescatter_false():
     shape = [8, 8]
-    axis = 0
     offset = 8
     reduce_scatter_flag = False
     split_num = 1
-    net = NetWithLoss(Net(shape, axis, offset, reduce_scatter_flag, split_num))
+    net = NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -65,11 +63,10 @@ def test_embeddinglookup_reducescatter_false():
 
 def test_embeddinglookup_reducescatter_true():
     shape = [64, 8]
-    axis = 0
     offset = 8
     reduce_scatter_flag = True
     split_num = 8
-    net = NetWithLoss(Net(shape, axis, offset, reduce_scatter_flag, split_num))
+    net = NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
