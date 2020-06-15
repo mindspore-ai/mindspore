@@ -40,7 +40,7 @@ class ProjectOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object.
+    // @return shared_ptr to the new ProjectOp object.
     Status Build(std::shared_ptr<ProjectOp> *);
 
    private:

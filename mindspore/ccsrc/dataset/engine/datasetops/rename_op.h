@@ -67,7 +67,7 @@ class RenameOp : public PipelineOp {
     }
 
     // The builder "build" method creates the ZipOp dataset Operator.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new RenameOp object
     Status Build(std::shared_ptr<RenameOp> *);
 
    private:

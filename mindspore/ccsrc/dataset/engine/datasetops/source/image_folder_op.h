@@ -198,7 +198,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-  // This function is a hack! It is to return the num_class and num_rows the old storageOp does. The result
+  // This function is a hack! It is to return the num_class and num_rows. The result
   // returned by this function may not be consistent with what image_folder_op is going to return
   // user this at your own risk!
   static Status CountRowsAndClasses(const std::string &path, const std::set<std::string> &exts, int64_t *num_rows,

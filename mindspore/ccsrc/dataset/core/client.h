@@ -39,7 +39,6 @@
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/engine/datasetops/source/generator_op.h"
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
-#include "dataset/engine/datasetops/source/storage_op.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/datasetops/take_op.h"
 #include "dataset/engine/datasetops/zip_op.h"

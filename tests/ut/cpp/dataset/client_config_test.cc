@@ -88,17 +88,17 @@ TEST_F(MindDataTestClientConfig, TestClientConfig2) {
   // Dataset from testDataset1 has 10 rows, 2 columns.
   // RowsPerBuffer buffer setting of 2 divides evenly into total rows.
   std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/testDataset1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  StorageOp::Builder builder;
-  builder.SetDatasetFilesDir(dataset_path);
-  rc = builder.Build(&my_storage_op);
+  dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  TFReaderOp::Builder builder;
+  builder.SetDatasetFilesList({dataset_path});
+  rc = builder.Build(&my_tfreader_op);
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(my_storage_op->num_workers(),16);
-  my_tree->AssociateNode(my_storage_op);
+  ASSERT_EQ(my_tfreader_op->num_workers(),1);
+  my_tree->AssociateNode(my_tfreader_op);
 
   // Set children/root layout.
-  my_tree->AssignRoot(my_storage_op);
+  my_tree->AssignRoot(my_tfreader_op);
 
   my_tree->Prepare();
   my_tree->Launch();
@@ -116,5 +116,5 @@ TEST_F(MindDataTestClientConfig, TestClientConfig2) {
     row_count++;
   }
   ASSERT_EQ(row_count, 10); // Should be 10 rows fetched
-  ASSERT_EQ(my_storage_op->num_workers(),16);
+  ASSERT_EQ(my_tfreader_op->num_workers(),1);
 }

@@ -38,7 +38,7 @@ class RandomAccessOp {
   // @return - The error code return
   Status GetNumRowsInDataset(int64_t *num_rows) const;
 
-  // sampler gets label , imageIds from storageOp, this function is unique to PK
+  // sampler gets label , imageIds from corresponding Dataset Op, this function is unique to PK
   // @param std::map<int64_t, std::vector<int64_t>> * map
   // @return - The error code return
   virtual Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *map) const {

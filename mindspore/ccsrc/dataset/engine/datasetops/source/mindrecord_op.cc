@@ -44,7 +44,7 @@ using mindrecord::ShardReader;
 MindRecordOp::Builder::Builder() : build_dataset_file_({}) {
   // Some arguments to the MindRecordOp constructor have a default argument that is taken
   // from the client config.
-  // The user may choose to change these values for the construction of the StorageOp by
+  // The user may choose to change these values for the construction of the MindRecordOp by
   // using the various builder set methods.
 
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();

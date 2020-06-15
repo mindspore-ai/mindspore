@@ -44,23 +44,23 @@ TEST_F(MindDataTestRenameOp, TestRenameOpDefault) {
 //
 //       OpId(2) RenameOp
 //            |
-//     OpId(0) StorageOp
+//     OpId(0) TFReaderOp
 // Start with an empty execution tree
   Status rc;
   MS_LOG(INFO) << "UT test TestRenameBasic.";
   auto my_tree = std::make_shared<ExecutionTree>();
-  // Creating StorageOp
+  // Creating TFReaderOp
 
-  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1/train-0000-of-0001.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(1)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op);
+  rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
   // Creating DatasetOp
@@ -76,7 +76,7 @@ TEST_F(MindDataTestRenameOp, TestRenameOpDefault) {
 
   rc = my_tree->AssociateNode(rename_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = rename_op->AddChild(std::move(my_storage_op));
+  rc = rename_op->AddChild(std::move(my_tfreader_op));
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(rename_op);
   EXPECT_TRUE(rc.IsOk());

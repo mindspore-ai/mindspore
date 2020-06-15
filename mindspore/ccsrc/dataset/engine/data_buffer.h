@@ -29,9 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Forward declares
-class StorageClient;
-
 // The DataBuffer class is a base class that will represent the data for n values based
 // on a unique row id for each row of data.
 // There can be different types of DataBuffers to abstract over how the data is stored
@@ -52,14 +49,6 @@ class DataBuffer {
 
   // Destructor
   virtual ~DataBuffer();
-
-  // Name: CreateDataBuffer()
-  // Description: A factory method to create the appropriate type of derived class
-  //              buffer.  Returns the base class reference for DataBuffer.
-  static Status CreateDataBuffer(
-    int32_t id,                      // In: The id for the new buffer
-    std::shared_ptr<StorageClient>,  // In: The StorageClient is used to choose the buffer type to create
-    std::unique_ptr<DataBuffer> *);
 
   // Name: print()
   // Description: A function that prints info about the DataBuffer (base class version)

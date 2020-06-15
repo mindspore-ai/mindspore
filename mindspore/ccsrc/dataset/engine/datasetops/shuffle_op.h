@@ -101,7 +101,7 @@ class ShuffleOp : public PipelineOp {
     }
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new ShuffleOp object
     Status Build(std::shared_ptr<ShuffleOp> *);
 
    private:

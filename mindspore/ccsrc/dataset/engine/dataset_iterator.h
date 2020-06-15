@@ -53,7 +53,7 @@ class IteratorBase {
   // messages are encountered (such as eoe or eof), then an empty TensorRow is returned back.
   // @return Status - The error code return
   // @note The position of a Tensor/column might be different from the initial column order
-  // in the storageOp. User must be aware that MapOp, ZipOps, and others might change
+  // in corresponding Dataset Op. User must be aware that MapOp, ZipOps, and others might change
   // the column ordering.
   virtual Status FetchNextTensorRow(TensorRow *out_row);
 
