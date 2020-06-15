@@ -2773,17 +2773,18 @@ class SparseApplyAdam(PrimitiveWithInfer):
             If False, updates the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Parameters to be updated.
-        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`.
+        - **var** (Parameter) - Parameters to be updated. With float32 data type.
+        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`. With
+                              float32 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-                              has the same type as `var`.
-        - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
-        - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
-        - **lr** (float) - :math:`l` in the updating formula.
-        - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
-        - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
-        - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **gradient** (Tensor) - Gradient value.
+                              has the same type as `var`. With float32 data type.
+        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
+        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
+        - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimates. With float32 data type.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimates. With float32 data type.
+        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. With float32 data type.
+        - **gradient** (Tensor) - Gradient value. With float32 data type.
         - **indices** (Tensor) - Gradient indices. With int32 data type.
 
     Outputs:
@@ -2803,17 +2804,23 @@ class SparseApplyAdam(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.sparse_apply_adam = P.SparseApplyAdam()
-        >>>         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="m")
-        >>>         self.v = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="v")
+        >>>         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+        >>>         self.m = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="m")
+        >>>         self.v = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="v")
         >>>     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, indices):
         >>>         out = self.sparse_apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
         >>>                                      epsilon, grad, indices)
         >>>         return out
         >>> net = Net()
-        >>> gradient = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
-        >>> indices = Tensor([0, 1, 2], mstype.int32)
-        >>> result = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient, indices)
+        >>> beta1_power = Tensor(0.9, mstype.float32)
+        >>> beta2_power = Tensor(0.999, mstype.float32)
+        >>> lr = Tensor(0.001, mstype.float32)
+        >>> beta1 = Tensor(0.9, mstype.float32)
+        >>> beta2 = Tensor(0.999, mstype.float32)
+        >>> epsilon = Tensor(1e-8, mstype.float32)
+        >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
+        >>> indices = Tensor([0, 1], mstype.int32)
+        >>> result = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
     """
     __mindspore_signature__ = (
         ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
@@ -2900,17 +2907,18 @@ class SparseApplyLazyAdam(PrimitiveWithInfer):
             If False, updates the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Weights to be updated.
-        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`.
+        - **var** (Parameter) - Parameters to be updated. With float32 data type.
+        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`. With
+                              float32 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-                              has the same type as `var`.
-        - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
-        - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
-        - **lr** (float) - :math:`l` in the updating formula.
-        - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
-        - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
-        - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **gradient** (Tensor) - Gradient value.
+                              has the same type as `var`. With float32 data type.
+        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
+        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
+        - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimates. With float32 data type.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimates. With float32 data type.
+        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. With float32 data type.
+        - **gradient** (Tensor) - Gradient value. With float32 data type.
         - **indices** (Tensor) - Gradient indices. With int32 data type.
 
     Outputs:
@@ -2938,9 +2946,15 @@ class SparseApplyLazyAdam(PrimitiveWithInfer):
         >>>                                          beta2, epsilon, grad, indices)
         >>>         return out
         >>> net = Net()
-        >>> gradient = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
-        >>> indices = Tensor([0, 1, 2], mstype.int32)
-        >>> result = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient, indices)
+        >>> beta1_power = Tensor(0.9, mstype.float32)
+        >>> beta2_power = Tensor(0.999, mstype.float32)
+        >>> lr = Tensor(0.001, mstype.float32)
+        >>> beta1 = Tensor(0.9, mstype.float32)
+        >>> beta2 = Tensor(0.999, mstype.float32)
+        >>> epsilon = Tensor(1e-8, mstype.float32)
+        >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
+        >>> indices = Tensor([0, 1], mstype.int32)
+        >>> result = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
     """
     __mindspore_signature__ = (
         ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
