@@ -4045,15 +4045,17 @@ class CocoDataset(MappableDataset):
     A source dataset for reading and parsing COCO dataset.
 
     CocoDataset support four kinds of task:
-    2017 Train/Val/Test Detection, Keypoints, Stuff, Panoptic.
+        2017 Train/Val/Test Detection, Keypoints, Stuff, Panoptic.
 
     The generated dataset has multi-columns :
-    task = 'Detection' : column [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-                                 ['iscrowd', dtype=uint32]].
-    task = 'Stuff' : column [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
-    task = 'Keypoint' : column [['image', dtype=uint8], ['keypoints', dtype=float32], ['num_keypoints', dtype=uint32]].
-    task = 'Panoptic' : column [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-                                ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
+        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+          ['iscrowd', dtype=uint32]].
+        - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
+        - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+          ['num_keypoints', dtype=uint32]].
+        - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+          ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
+
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
 
