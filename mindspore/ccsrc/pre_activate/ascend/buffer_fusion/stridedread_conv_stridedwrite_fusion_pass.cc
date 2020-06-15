@@ -45,6 +45,7 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
     write_input = input_cnode->input(1);
   }
 
+  MS_EXCEPTION_IF_NULL(write_input);
   if (!write_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(write_input) ||
       fusion_id_allocator->HasFusionIdAttr(write_input)) {
     return;
@@ -57,6 +58,7 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
       conv_cnode->inputs().size() <= CONV_QUART_IN_INPUT_SIZE) {
     (void)record.insert(write_input);
     auto conv_input = conv_cnode->input(1);
+    MS_EXCEPTION_IF_NULL(conv_input);
     if (!conv_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(conv_input) ||
         fusion_id_allocator->HasFusionIdAttr(conv_input)) {
       return;

@@ -346,7 +346,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_before.ir";
+    std::string file_path =
+      save_graphs_path + "/hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
   auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
@@ -372,7 +373,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_after.ir";
+    std::string file_path =
+      save_graphs_path + "/hwopt_d_ub_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
 }

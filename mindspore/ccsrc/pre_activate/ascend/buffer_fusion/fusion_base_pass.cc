@@ -25,6 +25,7 @@ namespace mindspore {
 namespace opt {
 bool FusionBasePass::CheckEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
     return false;
   }
@@ -38,6 +39,7 @@ bool FusionBasePass::CheckEltWiseNode(FuncGraphManager *manager, const AnfNodePt
 
 bool FusionBasePass::CheckDoubleInEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
     return false;
   }
@@ -51,6 +53,7 @@ bool FusionBasePass::CheckDoubleInEltWiseNode(FuncGraphManager *manager, const A
 
 bool FusionBasePass::CheckMultiOutputEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
     return false;
   }
