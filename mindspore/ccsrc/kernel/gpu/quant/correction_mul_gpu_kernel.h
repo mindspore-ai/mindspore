@@ -33,7 +33,8 @@ class CorrectionMulGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto *weight = GetDeviceAddress<T>(inputs, 0);
     auto *gamma = GetDeviceAddress<T>(inputs, 1);
@@ -74,10 +75,9 @@ class CorrectionMulGpuKernel : public GpuKernel {
     input_size_list_.push_back(input_size);   // weight
     input_size_list_.push_back(weight_size);  // gamma
     input_size_list_.push_back(weight_size);  // running_std
-    size_t workspace_size = 0;
     output_size_list_.push_back(input_size);
-    workspace_size_list_.push_back(workspace_size);
   }
+
   void InitResource() override {}
 
  private:
