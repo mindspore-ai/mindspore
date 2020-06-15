@@ -633,103 +633,7 @@ void FuncGraphTransaction::Commit() {
   manager_->CommitChanges(changes);
 }
 
-FuncGraphAnalysis::FuncGraphAnalysis(const FuncGraphManager *const manager)
-    : manager_(manager), include_func_graph_none_(false) {}
-
-DepCollector::DepCollector(const FuncGraphManager *const manager) : FuncGraphAnalysis(manager) {
-  MS_EXCEPTION_IF_NULL(manager_);
-}
-
-void DepCollector::OnAddEdge(AnfNodePtr node, int index, AnfNodePtr inp) { OnModEdge(node, index, inp, kIncEdge); }
-
-void DepCollector::OnDropEdge(AnfNodePtr node, int index, AnfNodePtr inp) { OnModEdge(node, index, inp, kDecEdge); }
-
-template <typename ValueT, class CollectorHash, class CollectorEqual>
-bool CounterAnfNodeCollector<ValueT, CollectorHash, CollectorEqual>::Inc(const FuncGraphPtr &func_graph,
-                                                                         const ValueT &key, int count) {
-  auto &d = count_nodes_map_[func_graph];
-  if (d.count(key) == 0) {
-    d[key] = count;
-    return true;
-  } else {
-    d[key] += count;
-  }
-  return false;
-}
-
-template <typename ValueT, class CollectorHash, class CollectorEqual>
-bool CounterAnfNodeCollector<ValueT, CollectorHash, CollectorEqual>::Dec(const FuncGraphPtr &func_graph,
-                                                                         const ValueT &key, int count) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto &d = count_nodes_map_[func_graph];
-  if (d.count(key) != 0) {
-    if (d[key] == count) {
-      (void)d.erase(key);
-      return true;
-    } else {
-      d[key] -= count;
-      if (d[key] < 0) {
-        MS_LOG(EXCEPTION) << "Count of key '" << key
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
-      }
-    }
-  }
-  return false;
-}
-
-template <typename ValueT, class CollectorHash, class CollectorEqual>
-bool CounterAnfNodeCollector<ValueT, CollectorHash, CollectorEqual>::Mod(const FuncGraphPtr &func_graph,
-                                                                         const ValueT &key, int count) {
-  if (count > 0) {
-    return Inc(func_graph, key, count);
-  } else if (count < 0) {
-    return Dec(func_graph, key, -count);
-  } else {
-    MS_LOG(EXCEPTION) << "Count of key '" << key
-                      << "' cannot be 0. NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
-  }
-}
-
-bool CounterFuncGraphCollector::Inc(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count = 1) {
-  auto &d = count_func_graphs_map_[func_graph];
-  if (d.count(key) == 0) {
-    d[key] = count;
-    return true;
-  } else {
-    d[key] += count;
-  }
-  return false;
-}
-
-bool CounterFuncGraphCollector::Dec(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count = 1) {
-  auto &d = count_func_graphs_map_[func_graph];
-  if (d.count(key) != 0) {
-    if (d[key] == count) {
-      (void)d.erase(key);
-      return true;
-    } else {
-      d[key] -= count;
-      if (d[key] < 0) {
-        MS_LOG(EXCEPTION) << "Count of key '" << key->ToString()
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
-      }
-    }
-  }
-  return false;
-}
-
-bool CounterFuncGraphCollector::Mod(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count) {
-  if (count > 0) {
-    return Inc(func_graph, key, count);
-  } else if (count < 0) {
-    return Dec(func_graph, key, -count);
-  } else {
-    MS_LOG(EXCEPTION) << "Count of key '" << key->ToString()
-                      << "' cannot be 0. NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
-  }
-}
-
-DepComputer::DepComputer(const FuncGraphManager *const manager) : FuncGraphAnalysis(manager) {
+DepComputer::DepComputer(const FuncGraphManager *const manager) : manager_(manager) {
   MS_EXCEPTION_IF_NULL(manager_);
   manager_->signals()->InvalidateComputer.connect(this, &DepComputer::OnInvalidateComputer);
   validate_ = false;
@@ -839,16 +743,15 @@ void FVTotalComputer::RealRecompute() {
 
   for (auto &fg : manager->func_graphs()) {
     fv_total_analysis_[fg] = OrderedMap<BaseRef, int, BaseRefHash>();
-    count_nodes_map_[fg] = OrderedMap<AnfNodePtr, int>();
-    count_func_graphs_map_[fg] = OrderedMap<FuncGraphPtr, int>();
   }
 
   for (auto &fg : manager->func_graphs()) {
+    // add all free variable nodes
     AnfNodeCounterMap items = fg->free_variables();
     for (auto &iter : items) {
       auto curr = fg;
       while (curr != nullptr) {
-        (void)CounterAnfNodeCollector::Mod(curr, iter.first, iter.second);
+        fv_total_analysis_[curr][iter.first] = iter.second;
         curr = manager->parent(curr);
         if (curr != nullptr) {
           const AnfNodeSet &all_nodes = curr->nodes();
@@ -859,6 +762,7 @@ void FVTotalComputer::RealRecompute() {
       }
     }
 
+    // add all FGs of free variables
     auto &used = fg->func_graphs_used();
     for (auto &iter : used) {
       auto p = manager->parent(iter.first);
@@ -867,19 +771,9 @@ void FVTotalComputer::RealRecompute() {
       }
       auto curr = fg;
       while (curr != p) {
-        (void)CounterFuncGraphCollector::Mod(curr, iter.first, iter.second);
+        fv_total_analysis_[curr][iter.first] = iter.second;
         curr = manager->parent(curr);
       }
-    }
-  }
-  for (auto &fg : manager->func_graphs()) {
-    auto &fvp = count_nodes_map_[fg];
-    auto &fvg = count_func_graphs_map_[fg];
-    for (auto &item : fvp) {
-      fv_total_analysis_[fg][item.first] = item.second;
-    }
-    for (auto &item : fvg) {
-      fv_total_analysis_[fg][item.first] = item.second;
     }
   }
 }

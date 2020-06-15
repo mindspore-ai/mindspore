@@ -38,6 +38,32 @@ namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
 using FuncGraphCounterMap = OrderedMap<FuncGraphPtr, int>;
 
+struct CNodeIndexHasher {
+  std::size_t operator()(const CNodeIndexPairPtr pair) const {
+    MS_EXCEPTION_IF_NULL(pair);
+    MS_EXCEPTION_IF_NULL(pair->first);
+    return hash_combine(pair->first->hash(), std::hash<int>()(pair->second));
+  }
+};
+
+struct CNodeIndexEqual {
+  bool operator()(const CNodeIndexPairPtr lhs, const CNodeIndexPairPtr rhs) const {
+    if (lhs == nullptr || rhs == nullptr) {
+      return false;
+    }
+    if (lhs == rhs) {
+      return true;
+    }
+    if (lhs->first != rhs->first) {
+      return false;
+    }
+    if (lhs->second != rhs->second) {
+      return false;
+    }
+    return true;
+  }
+};
+
 template <typename ValueT, class CounterHash = std::hash<ValueT>, class CounterEqual = std::equal_to<ValueT>>
 using CounterOrderedMap = OrderedMap<ValueT, int, CounterHash, CounterEqual>;
 using AnfNodeCounterMap = CounterOrderedMap<AnfNodePtr>;
