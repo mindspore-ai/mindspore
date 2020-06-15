@@ -462,6 +462,9 @@ std::vector<std::string> TbeKernelSelect::SplitStrToVec(const std::string &op_se
   std::vector<std::string> ret;
   auto begin = op_select_tmp.find_first_not_of(space, 0);
   auto sep_pos = op_select_tmp.find(sep);
+  if (begin >= sep_pos) {
+    MS_LOG(EXCEPTION) << "Select ret json is error.";
+  }
   while (sep_pos != std::string::npos) {
     auto obj = op_select_tmp.substr(begin, sep_pos - begin);
     if (kDynamicFormatMap.find(obj) != kDynamicFormatMap.end()) {
@@ -628,6 +631,5 @@ void TbeKernelSelect::PrintSupportedFormat(const SupportFormat &support_format) 
     MS_LOG(INFO) << "Support format: " << print_str;
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore

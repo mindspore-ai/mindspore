@@ -51,7 +51,6 @@ class TbeKernelBroadCastSelecter {
   std::vector<std::vector<size_t>> input_shapes_;
   std::vector<std::vector<size_t>> output_shapes_;
 };
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_TBE_KERNEL_BROADCAST_SELECTER_HELPER_H

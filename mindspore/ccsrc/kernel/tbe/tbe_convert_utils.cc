@@ -74,14 +74,6 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   return iter->second;
 }
 
-std::string DtypeToString(const std::string &dtypes) {
-  auto iter = type_str_maps.find(dtypes);
-  if (iter == type_str_maps.end()) {
-    MS_LOG(EXCEPTION) << "Illegal input dtype: " << dtypes;
-  }
-  return iter->second;
-}
-
 std::string TypeIdToString(TypeId type_id) {
   auto iter = type_id_str_maps.find(type_id);
   if (iter == type_id_str_maps.end()) {
