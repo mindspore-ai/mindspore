@@ -41,7 +41,8 @@ def test_random_crop_and_resize_op_c(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (1, 1), (0.5, 0.5))
+    # With these inputs we expect the code to crop the whole image
+    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_crop_and_resize_op)
 
@@ -65,6 +66,7 @@ def test_random_crop_and_resize_op_c(plot=False):
     if plot:
         visualize(original_images, crop_and_resize_images)
 
+
 def test_random_crop_and_resize_op_py(plot=False):
     """
     Test RandomCropAndResize op in py transforms
@@ -72,9 +74,10 @@ def test_random_crop_and_resize_op_py(plot=False):
     logger.info("test_random_crop_and_resize_op_py")
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    # With these inputs we expect the code to crop the whole image
     transforms1 = [
         py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), (1, 1), (0.5, 0.5)),
+        py_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
         py_vision.ToTensor()
     ]
     transform1 = py_vision.ComposeOp(transforms1)
@@ -96,12 +99,15 @@ def test_random_crop_and_resize_op_py(plot=False):
         original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         original = cv2.resize(original, (512, 256))
         mse = diff_mse(crop_and_resize, original)
+        # Due to rounding error the mse for Python is not exactly 0
+        assert mse <= 0.05
         logger.info("random_crop_and_resize_op_{}, mse: {}".format(num_iter + 1, mse))
         num_iter += 1
         crop_and_resize_images.append(crop_and_resize)
         original_images.append(original)
     if plot:
         visualize(original_images, crop_and_resize_images)
+
 
 def test_random_crop_and_resize_01():
     """
@@ -114,7 +120,7 @@ def test_random_crop_and_resize_01():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (0.5, 1), (0.5, 1))
+    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1))
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_crop_and_resize_op)
 
@@ -122,7 +128,7 @@ def test_random_crop_and_resize_01():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
         py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), (0.5, 1), (0.5, 1)),
+        py_vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1)),
         py_vision.ToTensor()
     ]
     transform = py_vision.ComposeOp(transforms)
@@ -136,6 +142,7 @@ def test_random_crop_and_resize_01():
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 
 def test_random_crop_and_resize_02():
     """
@@ -172,6 +179,7 @@ def test_random_crop_and_resize_02():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_and_resize_03():
     """
     Test RandomCropAndResize with md5 check: max_attempts is 1, expected to pass
@@ -206,6 +214,7 @@ def test_random_crop_and_resize_03():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_and_resize_04_c():
     """
     Test RandomCropAndResize with c_tranforms: invalid range of scale (max<min),
@@ -224,6 +233,7 @@ def test_random_crop_and_resize_04_c():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input range is not valid" in str(e)
+
 
 def test_random_crop_and_resize_04_py():
     """
@@ -247,6 +257,7 @@ def test_random_crop_and_resize_04_py():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input range is not valid" in str(e)
 
+
 def test_random_crop_and_resize_05_c():
     """
     Test RandomCropAndResize with c_transforms: invalid range of ratio (max<min),
@@ -265,6 +276,7 @@ def test_random_crop_and_resize_05_c():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input range is not valid" in str(e)
+
 
 def test_random_crop_and_resize_05_py():
     """
@@ -287,6 +299,7 @@ def test_random_crop_and_resize_05_py():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input range is not valid" in str(e)
+
 
 def test_random_crop_and_resize_comp(plot=False):
     """
@@ -320,6 +333,7 @@ def test_random_crop_and_resize_comp(plot=False):
         image_py_cropped.append(py_image)
     if plot:
         visualize(image_c_cropped, image_py_cropped)
+
 
 if __name__ == "__main__":
     test_random_crop_and_resize_op_c(True)

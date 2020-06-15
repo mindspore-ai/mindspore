@@ -35,8 +35,10 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
     : target_height_(target_height),
       target_width_(target_width),
       rnd_scale_(scale_lb, scale_ub),
-      rnd_aspect_(aspect_lb, aspect_ub),
+      rnd_aspect_(log(aspect_lb), log(aspect_ub)),
       interpolation_(interpolation),
+      aspect_lb_(aspect_lb),
+      aspect_ub_(aspect_ub),
       max_iter_(max_iter) {
   rnd_.seed(GetSeed());
 }
@@ -64,33 +66,42 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
 }
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
-  double scale, aspect;
   *crop_width = w_in;
   *crop_height = h_in;
-  bool crop_success = false;
+  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "Width is 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "Height is 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(aspect_lb_ > 0, "Aspect lower bound must be greater than zero");
   for (int32_t i = 0; i < max_iter_; i++) {
-    scale = rnd_scale_(rnd_);
-    aspect = rnd_aspect_(rnd_);
-    *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * scale / aspect)));
-    *crop_height = static_cast<int32_t>(std::round(*crop_width * aspect));
+    double const sample_scale = rnd_scale_(rnd_);
+    // In case of non-symmetrical aspect ratios, use uniform distribution on a logarithmic sample_scale.
+    // Note rnd_aspect_ is already a random distribution of the input aspect ratio in logarithmic sample_scale.
+    double const sample_aspect = exp(rnd_aspect_(rnd_));
+
+    *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * sample_scale * sample_aspect)));
+    *crop_height = static_cast<int32_t>(std::round(*crop_width / sample_aspect));
     if (*crop_width <= w_in && *crop_height <= h_in) {
-      crop_success = true;
-      break;
+      std::uniform_int_distribution<> rd_x(0, w_in - *crop_width);
+      std::uniform_int_distribution<> rd_y(0, h_in - *crop_height);
+      *x = rd_x(rnd_);
+      *y = rd_y(rnd_);
+      return Status::OK();
     }
   }
-  if (!crop_success) {
-    CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "Width is 0");
-    aspect = static_cast<double>(h_in) / w_in;
-    scale = rnd_scale_(rnd_);
-    *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * scale / aspect)));
-    *crop_height = static_cast<int32_t>(std::round(*crop_width * aspect));
-    *crop_height = (*crop_height > h_in) ? h_in : *crop_height;
-    *crop_width = (*crop_width > w_in) ? w_in : *crop_width;
+  double const img_aspect = static_cast<double>(w_in) / h_in;
+  if (img_aspect < aspect_lb_) {
+    *crop_width = w_in;
+    *crop_height = static_cast<int32_t>(std::round(*crop_width / static_cast<double>(aspect_lb_)));
+  } else {
+    if (img_aspect > aspect_ub_) {
+      *crop_height = h_in;
+      *crop_width = static_cast<int32_t>(std::round(*crop_height * static_cast<double>(aspect_ub_)));
+    } else {
+      *crop_width = w_in;
+      *crop_height = h_in;
+    }
   }
-  std::uniform_int_distribution<> rd_x(0, w_in - *crop_width);
-  std::uniform_int_distribution<> rd_y(0, h_in - *crop_height);
-  *x = rd_x(rnd_);
-  *y = rd_y(rnd_);
+  *x = static_cast<int32_t>(std::round((w_in - *crop_width) / 2.0));
+  *y = static_cast<int32_t>(std::round((h_in - *crop_height) / 2.0));
   return Status::OK();
 }
 }  // namespace dataset
