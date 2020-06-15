@@ -682,6 +682,16 @@ def get_bprop_not_equal(self):
     return bprop
 
 
+@bprop_getters.register(P.ApproximateEqual)
+def get_bprop_approximate_equal(self):
+    """Grad definition for `ApproximateEqual` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Greater)
 def get_bprop_greater(self):
     """Grad definition for `Greater` operation."""

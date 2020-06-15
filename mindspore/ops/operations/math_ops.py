@@ -1668,6 +1668,44 @@ class Equal(_LogicBinaryOp):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.name)
 
 
+class ApproximateEqual(_LogicBinaryOp):
+    """
+    Returns the truth value of abs(x1-x2) < tolerance element-wise.
+
+    Args:
+        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
+
+    Inputs:
+        - **x1** (Tensor) - A tensor. Must be one of the following types: float32, float16.
+        - **x2** (Tensor) - A tensor of the same type and shape as 'x1'.
+
+    Outputs:
+        Tensor, the shape is same as the shape of 'x1', and the data type is bool.
+
+    Examples:
+        >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> x2 = Tensor(np.array([2, 4, 6]), mindspore.float32)
+        >>> approximate_equal = P.ApproximateEqual(2.)
+        >>> result = approximate_equal(x1, x2)
+        [True  True  False]
+    """
+
+    @prim_attr_register
+    def __init__(self, tolerance=1e-05):
+        """Init ApproximateEqual"""
+        validator.check_value_type("tolerance", tolerance, [float], self.name)
+
+    def infer_shape(self, x_shape, y_shape):
+        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        args_dtype = {"x": x_dtype, "y": y_dtype}
+        valid_type = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same(args_dtype, valid_type, prim_name=self.name)
+        return mstype.tensor_type(mstype.bool_)
+
+
 class EqualCount(PrimitiveWithInfer):
     """
     Computes the number of the same elements of two tensors.

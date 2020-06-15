@@ -2870,3 +2870,70 @@ class BroadcastTo(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
         return x_dtype
+
+
+class InplaceUpdate(PrimitiveWithInfer):
+    r"""
+    Updates specified rows with values in `v`.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`.
+
+    Inputs:
+        - **x** (Tensor) - A tensor which to be inplace updated. It can be of the following data types:
+          float32, float16, int32.
+        - **v** (Tensor) - A tensor of the same type as `x`. Same dimension size as `x` except
+          the first dimension, which must be the same as the size of `indices`.
+
+    Outputs:
+        Tensor, with the same type and shape as the input `x`.
+
+    Examples:
+        >>> x = Tensor(np.arange(24).reshape(3, 4, 2), mindspore.float32)
+        >>> v = Tensor(np.arange(-8, 8).reshape(2, 4, 2), mindspore.float32)
+        >>> inplace_update = P.InplaceUpdate((0, 2))
+        >>> result = inplace_update(x, v)
+        [[[-8.  -7.]
+          [-6.  -5.]
+          [-4.  -3.]
+          [-2.  -1.]]
+         [[ 8.   9.]
+          [10.  11.]
+          [12.  13.]
+          [14.  15.]]
+         [[ 0.   1.]
+          [ 2.   3.]
+          [ 4.   5.]
+          [ 6.   7.]]]
+    """
+    @prim_attr_register
+    def __init__(self, indices):
+        """Init InplaceUpdate"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'v'], outputs=['y'])
+        validator.check_value_type("indices", indices, [int, tuple], self.name)
+        if isinstance(indices, int):
+            self.add_prim_attr('indices', (indices,))
+        for item in self.indices:
+            validator.check_value_type("item of indices", item, [int], self.name)
+
+    def infer_dtype(self, x_dtype, v_dtype):
+        valid_type = [mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(
+            {
+                "x": x_dtype,
+                "v": v_dtype
+            }, valid_type, self.name)
+
+        return x_dtype
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+
+        x_rank = len(x_shape)
+        for idx in range(x_rank)[1:]:
+            validator.check("x dim %d" % idx, x_shape[idx], 'v dim %d' % idx, v_shape[idx], Rel.EQ, self.name)
+
+        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                        Rel.EQ, self.name)
+
+        return x_shape

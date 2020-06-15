@@ -671,6 +671,10 @@ test_case_math_ops = [
         'desc_inputs': [1, [2, 3, 4, 5]],
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))],
         'skip': ['backward']}),
+    ('ApproximateEqual', {
+        'block': P.ApproximateEqual(),
+        'desc_inputs': [[3, 4, 5], [3, 4, 5]],
+        'desc_bprop': [Tensor(np.zeros((3, 4, 5), np.bool_))]}),
     ('Greater', {
         'block': P.Greater(),
         'desc_inputs': [[2, 3, 4, 1], [4, 5]],
@@ -1526,6 +1530,18 @@ test_case_array_ops = [
         'block': P.BroadcastTo((2,3)),
         'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.float32))]}),
+    ('InTopK', {
+        'block': P.InTopK(2),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [2, 3, 6], [4, 2, 1]]).astype(np.float32)),
+                        Tensor(np.array([2, 1, 2]).astype(np.int32))],
+        'skip': ['backward'],
+    }),
+    ('InplaceUpdate', {
+        'block': P.InplaceUpdate((0, 2)),
+        'desc_inputs': [Tensor(np.arange(24).reshape(3, 4, 2).astype(np.float32)),
+                        Tensor(np.arange(16).reshape(2, 4, 2).astype(np.float32))],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_other_ops = [
