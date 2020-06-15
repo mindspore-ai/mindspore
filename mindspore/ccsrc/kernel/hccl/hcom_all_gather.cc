@@ -31,6 +31,10 @@ bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   if (context_ptr->enable_task_sink()) {
     return true;
   }
+  if (inputs.empty() || hccl_data_type_list_.empty()) {
+    MS_LOG(ERROR) << "AllGather param is empty";
+    return false;
+  }
   const char *tag = "Hccl-AllGather";
   hcclResult_t ret =
     hcom_all_gather(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], nullptr, stream_ptr);

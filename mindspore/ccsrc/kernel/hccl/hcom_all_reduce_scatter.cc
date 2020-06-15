@@ -32,6 +32,10 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> &inputs,
   if (context_ptr->enable_task_sink()) {
     return true;
   }
+  if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
+    MS_LOG(ERROR) << "ReduceScatter param is empty";
+    return false;
+  }
   const char *tag = "Hccl-ReduceScatter";
   hcclResult_t ret = hcom_reduce_scatter(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
                                          op_type_, nullptr, stream_ptr);

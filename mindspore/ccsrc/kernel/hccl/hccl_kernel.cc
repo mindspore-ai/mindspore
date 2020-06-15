@@ -129,7 +129,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &workspace,
                                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "inputs or outputs is empty";
+    MS_LOG(EXCEPTION) << "Inputs or outputs is empty";
   }
   stream_id_ = stream_id;
   std::string hccl_type = AnfAlgo::GetCNodeName(anf_node_);
