@@ -56,7 +56,8 @@ class Node {
   // @param NodeType neighbor_type - type of neighbor
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
   // @return Status - The error code return
-  virtual Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors) = 0;
+  virtual Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors,
+                                 bool exclude_itself = false) = 0;
 
   // Get the sampled neighbors of a node
   // @param NodeType neighbor_type - type of neighbor
