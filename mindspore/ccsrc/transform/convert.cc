@@ -205,6 +205,8 @@ const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
 const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
+const char kNameAscendQuant[] = "AscendQuant";
+const char kNameAscendDequant[] = "AscendDequant";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -408,7 +410,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
     {string(kNameRange), ADPT_DESC(RangeD)},
-    {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)}};
+    {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)},
+    {string(kNameAscendQuant), ADPT_DESC(AscendQuant)},
+    {string(kNameAscendDequant), ADPT_DESC(AscendDequant)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
   adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);

@@ -1614,7 +1614,43 @@ test_case_other_ops = [
 
 ]
 
-test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops, test_case_other_ops]
+
+test_case_quant_ops = [
+    ('AscendQuant_1', {
+        'block': P.AscendQuant(0.5, 0.0, False, "Round"),
+        'desc_inputs': [Tensor(np.random.rand(1,2,4,4), mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_2', {
+        'block': P.AscendQuant(80.0, 10.0, True, "Round"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_3', {
+        'block': P.AscendQuant(80.0, 0.0, False, "Floor"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_4', {
+        'block': P.AscendQuant(80.0, 0.0, False, "Ceil"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_5', {
+        'block': P.AscendQuant(80.0, 0.0, False, "Trunc"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_6', {
+        'block': P.AscendQuant(-80.0, 10.0, False, "Round"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_7', {
+        'block': P.AscendQuant(80.0, -10.0, False, "Round"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
+        'skip': ['backward']}),
+    ('AscendQuant_8', {
+        'block': P.AscendQuant(80.0, 10.0, False, "Round"),
+        'desc_inputs': [Tensor([100.0, 200.0], mstype.float16)],
+        'skip': ['backward']}),
+]
+
+test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops, test_case_other_ops, test_case_quant_ops]
 test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
