@@ -20,6 +20,7 @@
 #include <iostream>
 #include <utility>
 #include <fstream>
+#include <thread>
 #include "nlohmann/json.hpp"
 #include "session/anf_runtime_algorithm.h"
 #include "common/utils.h"
@@ -875,6 +876,22 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
     return true;
   }
   return false;
+}
+
+void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params, size_t thread_num,
+                        size_t total_compute_size) {
+  std::vector<std::thread> threads;
+  threads.reserve(thread_num);
+  size_t start = 0;
+  size_t once_compute_size = (total_compute_size + thread_num - 1) / thread_num;
+  while (start < total_compute_size) {
+    size_t end = (start + once_compute_size) > total_compute_size ? total_compute_size : (start + once_compute_size);
+    threads.emplace_back(std::thread(func, params, start, end));
+    start += once_compute_size;
+  }
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
