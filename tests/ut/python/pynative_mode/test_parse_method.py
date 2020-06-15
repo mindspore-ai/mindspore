@@ -31,6 +31,7 @@ from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import core
 from mindspore.ops.primitive import constexpr
+from mindspore.ops import functional as F
 from ..ut_filter import non_graph_engine
 
 
@@ -427,3 +428,10 @@ def test_expr():
     def tuple_len(x):
         assert len(x) == 2
     tuple_len(a)
+
+
+def test_tuple_to_array():
+    """ test range tuple to array """
+    range_x = range(10)
+    res = F.tuple_to_array(range_x)
+    print(res)

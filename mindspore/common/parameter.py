@@ -15,7 +15,7 @@
 
 """Parameter for cell."""
 import numbers
-from copy import copy, deepcopy
+from copy import copy
 from mindspore import context
 from . import dtype as mstype
 from .initializer import initializer, Initializer
@@ -191,25 +191,16 @@ class Parameter:
         return self.default_input
 
     def __add__(self, other):
-        res = deepcopy(self)
-        res.default_input = res.default_input + other
-        return res
+        return self.default_input + other
 
     def __sub__(self, other):
-        res = deepcopy(self)
-        res.default_input = res.default_input - other
-        return res
+        return self.default_input - other
 
     def __mul__(self, other):
-        res = deepcopy(self)
-        default_input = res.default_input * other
-        res.default_input = Tensor(default_input.asnumpy().copy())
-        return res
+        return self.default_input * other
 
     def __truediv__(self, other):
-        res = deepcopy(self)
-        res.default_input = res.default_input / other
-        return res
+        return self.default_input / other
 
     def __setitem__(self, index, value):
         return self
