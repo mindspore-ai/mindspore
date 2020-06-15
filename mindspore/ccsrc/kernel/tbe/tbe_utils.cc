@@ -67,12 +67,12 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
   filewrite << info << std::endl;
   filewrite.close();
   if (nullptr == realpath(path.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "dir: " << path << "does not exit.";
+    MS_LOG(INFO) << "dir: " << path << "does not exit.";
     return;
   }
   MS_LOG(INFO) << "real path is: " << real_path;
   if (chmod(real_path, S_IRUSR) == -1) {
-    MS_LOG(DEBUG) << "modify file: " << real_path << "to read only fail.";
+    MS_LOG(INFO) << "modify file: " << real_path << "to read only fail.";
   }
 }
 
@@ -93,7 +93,7 @@ KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const std::s
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
-    MS_LOG(DEBUG) << "kernel cache is invalid.";
+    MS_LOG(INFO) << "kernel cache is invalid.";
     return nullptr;
   }
   return bin_map->GetKernelPack(kernel_name, processor);
@@ -118,14 +118,14 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
   dev_bin.data = kernel_buffer.contents;
   auto iter = magic_maps.find(magic);
   if (iter == magic_maps.end()) {
-    MS_LOG(DEBUG) << "Invalid magic number: " << magic;
+    MS_LOG(INFO) << "Invalid magic number: " << magic;
     return -1;
   }
   dev_bin.magic = iter->second;
   dev_bin.length = kernel_buffer.len;
   dev_bin.version = 2;
   if (RT_ERROR_NONE != rtDevBinaryRegister(&dev_bin, module)) {
-    MS_LOG(DEBUG) << "Call runtime rtDevBinaryRegister error.";
+    MS_LOG(INFO) << "Call runtime rtDevBinaryRegister error.";
     return -1;
   }
   return 0;
@@ -158,14 +158,14 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   }
   void *module = nullptr;
   if (0 != BinaryRegister((*kernel_pack.GetKernel()), &module, magic)) {
-    MS_LOG(DEBUG) << "Call runtime BinaryRegister error.";
+    MS_LOG(INFO) << "Call runtime BinaryRegister error.";
     return 0;
   }
   // to diff different funcs.
   uintptr_t funcstub = ++kernel_stub_gen_;
   if (RT_ERROR_NONE !=
       rtFunctionRegister(module, reinterpret_cast<void *>(funcstub), funcname.c_str(), funcname.c_str(), 0)) {
-    MS_LOG(DEBUG) << "Call runtime rtFunctionRegister error.";
+    MS_LOG(INFO) << "Call runtime rtFunctionRegister error.";
     return 0;
   }
   // cache the registered kernelmeta.
@@ -236,7 +236,7 @@ KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const st
     (void)cce_json.append(kernel_name).append(kJsonSuffix);
     ret = std::make_shared<KernelPack>();
     if (!ret->LoadKernelMeta(cce_json, processor)) {
-      MS_LOG(DEBUG) << "Read cache json and bin file failed[" << cce_json << "]";
+      MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";
       return nullptr;
     }
     kernel_pack_map_[kernel_name] = ret;
