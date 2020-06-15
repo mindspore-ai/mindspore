@@ -201,18 +201,18 @@ def test_bert_percision():
     loss_value = np.array(callback.loss_list)
     assert np.allclose(loss_value[0], 12.206575, 0, 0.000001)
 
-    expect_loss_value = [12.206575, 11.980493, 11.984225, 11.878742, 11.832555, 12.410444, 12.008799,
-                         12.620619, 12.22254, 12.4261055]
+    expect_loss_value = [12.206575, 11.865044, 11.828129, 11.826707, 11.82108, 12.407423, 12.005459,
+                         12.621225, 12.222903, 12.427446]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
     overflow = np.array(callback.overflow_list)
-    expect_overflow = [True, True, False, False, False, True, False, False, False, True]
+    expect_overflow = [False, False, False, True, False, False, False, True, False, False]
     print("overflow: {}".format(overflow))
     assert (overflow == expect_overflow).all()
 
     loss_scale = np.array(callback.lossscale_list)
-    expect_loss_scale = [32768.0, 16384.0, 16384.0, 16384.0, 32768.0, 16384.0, 16384.0, 16384.0, 32768.0, 16384.0]
+    expect_loss_scale = [65536.0, 65536.0, 131072.0, 65536.0, 65536.0, 65536.0, 131072.0, 65536.0, 65536.0, 65536.0]
     print("loss scale: {}".format(loss_scale))
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
@@ -259,27 +259,27 @@ def test_bert_performance():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    expect_loss_value = [10.237753, 10.213153, 10.212972]
+    expect_loss_value = [10.235566, 10.207392, 10.206976]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
     overflow = np.array(callback.overflow_list)
-    expect_overflow = [False, False, False]
+    expect_overflow = [True, True, True]
     print("overflow: {}".format(overflow))
     assert (overflow == expect_overflow).all()
 
     loss_scale = np.array(callback.lossscale_list)
-    expect_loss_scale = [16384.0, 16384.0, 16384.0]
+    expect_loss_scale = [262144.0, 262144.0, 262144.0]
     print("loss scale: {}".format(loss_scale))
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
     epoch_mseconds = np.array(time_monitor_callback.epoch_mseconds_list)[2]
-    expect_epoch_mseconds = 1726
+    expect_epoch_mseconds = 1600
     print("epoch mseconds: {}".format(epoch_mseconds))
     assert epoch_mseconds <= expect_epoch_mseconds + 5
 
     per_step_mseconds = np.array(time_monitor_callback.per_step_mseconds_list)[2]
-    expect_per_step_mseconds = 17
+    expect_per_step_mseconds = 16
     print("per step mseconds: {}".format(per_step_mseconds))
     assert per_step_mseconds <= expect_per_step_mseconds + 1
 
