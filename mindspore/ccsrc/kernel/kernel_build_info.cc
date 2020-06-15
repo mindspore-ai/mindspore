@@ -105,7 +105,12 @@ bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
     return false;
   }
   if (inputs_format_ != other.inputs_format_ || outputs_format_ != other.outputs_format_) {
-    return false;
+    if (op_pattern_ != kFormatAgnosticPattern) {
+      return false;
+    } else {
+      MS_LOG(INFO) << "this kernel build info:" << this->ToString()
+                   << ", other kernel build info: " << other.ToString();
+    }
   }
   return !(inputs_device_type_ != other.inputs_device_type_ || outputs_device_type_ != other.outputs_device_type_);
 }
