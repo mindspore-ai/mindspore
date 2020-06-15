@@ -105,7 +105,7 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     CHECK_OP_RET_WITH_EXCEPT(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
 
-  // destroy remaining memory swap events and free host memory
+  // Destroy remaining memory swap events and free host memory.
   for (auto &item : mem_swap_map_) {
     auto &mem_swap_manager = item.second;
     MS_EXCEPTION_IF_NULL(mem_swap_manager);
@@ -119,7 +119,10 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
   if (mem_manager_ != nullptr) {
     mem_manager_->FreeDeviceMemory();
   }
-  kernel::KernelMeta::GetInstance()->RemoveKernelCache();
+
+  kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
+  MS_EXCEPTION_IF_NULL(bin_map);
+  bin_map->RemoveKernelCache();
 }
 
 void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
@@ -233,6 +236,7 @@ void GPUKernelRuntime::ClearKernelOutputAddress(const session::KernelGraph *grap
 
 bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   auto graph_id = graph->graph_id();
   auto mem_reuse_util_ptr = mem_reuse_util_map_[graph_id];
   MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
@@ -277,6 +281,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
 }
 
 bool GPUKernelRuntime::AddMemSwapTask(const AnfNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   auto &mem_swap_info_list = mem_swap_manager_->QueryKernelMemSwapInfo(kernel);
   for (auto &mem_swap_info : mem_swap_info_list) {
     auto &kernel_exec_info = mem_swap_manager_->SearchKernelExecutionInfo(mem_swap_info.kernel_);
@@ -304,6 +309,7 @@ bool GPUKernelRuntime::AddMemSwapTask(const AnfNodePtr &kernel) {
 }
 
 bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size) {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   auto ret = mem_manager_->MallocMemFromMemPool(device_address, size);
   if (!ret) {
     if (!mem_swap_manager_->trigger_swap()) {
@@ -327,6 +333,7 @@ bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, 
 }
 
 void *GPUKernelRuntime::AttemptMallocMem(size_t size) {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
   if (!device_ptr) {
     if (!mem_swap_manager_->trigger_swap()) {
@@ -367,6 +374,7 @@ bool GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
 bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
+  MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -415,6 +423,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_outputs);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   if (mem_swap_manager_->trigger_swap()) {
     while (auto device_address_swap_out = mem_swap_manager_->UpdateSwapQueue(SwapKind::kDeviceToHost)) {
       if (!mem_swap_manager_->FindInSwapInBlackList(device_address_swap_out->ptr_) && device_address_swap_out->ptr_) {
@@ -444,7 +453,6 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
                                                       AddressPtrList *kernel_workspaces) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_workspaces);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   auto workspace_sizes = kernel_mod.GetWorkspaceSizeList();
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
     if (workspace_sizes[i] == 0) {
@@ -478,7 +486,6 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
 
 void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   bool is_need_alloc_memory = false;
   bool is_need_free_memory = false;
   size_t total_size = 0;
@@ -501,7 +508,6 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
 
 void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   bool is_need_alloc_memory = false;
   bool is_need_free_memory = false;
   size_t total_size = 0;
@@ -528,6 +534,7 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
 void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
                                                   const DeviceAddressPtrList addr_list, size_t total_size,
                                                   std::vector<size_t> size_list) {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!is_need_alloc_memory) {
     return;
   }

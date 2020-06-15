@@ -26,6 +26,7 @@ namespace device {
 namespace gpu {
 void GpuBuild(const KernelGraphPtr &kernel_graph) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
+  MS_EXCEPTION_IF_NULL(bin_map);
   bin_map->Initialize();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto kernels = kernel_graph->execution_order();

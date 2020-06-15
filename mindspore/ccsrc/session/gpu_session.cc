@@ -52,6 +52,7 @@ void GPUSession::StartKernelRT() const {
 }
 
 void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
@@ -144,6 +145,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   // Construct graph, if successfully, graph_sum_ + 1
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
+  MS_EXCEPTION_IF_NULL(graph);
   // Select kernel build info
   SelectKernel(graph);
   // Convert kernel Graph to model
