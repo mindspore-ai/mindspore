@@ -21,6 +21,39 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSparseApplyLazyAdamInputSize = 11;
+
+void ComputeLazyAdam(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+  MS_EXCEPTION_IF_NULL(input_params);
+  auto var = input_params->var_;
+  auto m = input_params->m_;
+  auto v = input_params->v_;
+  auto lr = input_params->lr_;
+  auto beta1 = input_params->beta1_;
+  auto beta2 = input_params->beta2_;
+  auto epsilon = input_params->epsilon_;
+  auto use_nesterov = input_params->use_nesterov_;
+  auto unique_sparse_grad = input_params->sparse_grad_;
+  auto var_first_dim_size = input_params->var_first_dim_size_;
+  auto var_outer_dim_size = input_params->var_outer_dim_size_;
+  for (size_t i = start; i < end; ++i) {
+    int index = unique_sparse_grad.indices_[i];
+    if (index < 0 || IntToSize(index) >= var_first_dim_size) {
+      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range";
+    }
+    size_t start_index = var_outer_dim_size * index;
+    size_t end_index = start_index + var_outer_dim_size;
+    for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
+      auto summed_grad = unique_sparse_grad.value_[k];
+      m[j] = beta1 * m[j] + (1 - beta1) * summed_grad;
+      v[j] = beta2 * v[j] + (1 - beta2) * summed_grad * summed_grad;
+      if (use_nesterov) {
+        var[j] -= lr * (m[j] * beta1 + (1 - beta1) * summed_grad) / (std::sqrt(v[j]) + epsilon);
+      } else {
+        var[j] -= lr * m[j] / (std::sqrt(v[j]) + epsilon);
+      }
+    }
+  }
+}
 }  // namespace
 
 void SparseApplyLazyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
@@ -94,24 +127,20 @@ bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> 
                        var_outer_dim_size_);
 
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
-  for (size_t i = 0; i < unique_sparse_grad.indices_size_; ++i) {
-    int index = unique_sparse_grad.indices_[i];
-    if (index < 0 || IntToSize(index) >= var_first_dim_size_) {
-      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range";
-    }
-    size_t start_index = var_outer_dim_size_ * index;
-    size_t end_index = start_index + var_outer_dim_size_;
-    for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
-      auto summed_grad = unique_sparse_grad.value_[k];
-      m[j] = beta1 * m[j] + (1 - beta1) * summed_grad;
-      v[j] = beta2 * v[j] + (1 - beta2) * summed_grad * summed_grad;
-      if (use_nesterov_) {
-        var[j] -= lr * (m[j] * beta1 + (1 - beta1) * summed_grad) / (std::sqrt(v[j]) + epsilon);
-      } else {
-        var[j] -= lr * m[j] / (std::sqrt(v[j]) + epsilon);
-      }
-    }
-  }
+  MultiThreadComputeParams input_params;
+  input_params.var_ = var;
+  input_params.m_ = m;
+  input_params.v_ = v;
+  input_params.lr_ = lr;
+  input_params.beta1_ = beta1;
+  input_params.beta2_ = beta2;
+  input_params.epsilon_ = epsilon;
+  input_params.use_nesterov_ = use_nesterov_;
+  input_params.sparse_grad_ = unique_sparse_grad;
+  input_params.var_first_dim_size_ = var_first_dim_size_;
+  input_params.var_outer_dim_size_ = var_outer_dim_size_;
+  const size_t kThreadNum = 16;
+  MultiThreadCompute(ComputeLazyAdam, &input_params, kThreadNum, unique_sparse_grad.indices_size_);
   return true;
 }
 }  // namespace kernel
