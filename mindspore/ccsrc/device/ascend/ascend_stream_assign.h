@@ -97,6 +97,7 @@ class AscendStreamAssign {
   void GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id, std::vector<uint32_t> *parallel_streams);
   void InsertSendRecvForIndependent(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void InsertSendRecvForHcomParallel(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void InsertSendRecvForDiffHcom(const shared_ptr<mindspore::session::KernelGraph> &graph_ptr);
   void GetNeedActiveStreams(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void ReorderIndependentOrders(const std::shared_ptr<session::KernelGraph> &graph_ptr);
 
