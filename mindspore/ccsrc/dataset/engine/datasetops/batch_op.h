@@ -193,6 +193,22 @@ class BatchOp : public ParallelOp {
   // @return Name of the current Op
   std::string Name() const override { return "BatchOp"; }
 
+  // batch the rows in src table then put it to dest table
+  // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching
+  // @param const std::unique_ptr<TensorQTable> *dest - dest_table to hold batched rows
+  // @param int32_t size - batch_size
+  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
+  // @return Status - The error code return
+  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
+                          dsize_t batch_size);
+
+  // @param table
+  // @param const PadInfo &pad_info pad info
+  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
+  // @return Status - The error code return
+  static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
+                           const std::unordered_map<std::string, int32_t> &column_name_id_map);
+
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
@@ -203,16 +219,6 @@ class BatchOp : public ParallelOp {
   // @return Status - The error code return
   Status MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
                            std::unique_ptr<DataBuffer> *db);
-
-  // batch the rows in src table then put it to dest table
-  // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching
-  // @param const std::unique_ptr<TensorQTable> *dest - dest_table to hold batched rows
-  // @param int32_t size - batch_size
-  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
-  // @return Status - The error code return
-  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
-                          dsize_t batch_size);
-
   // Function that calls pyfunc to perform map on batch
   // @param (std::pair<std::unique_ptr<TensorQTable>, batch_stats> *table_pair - contains un-batched tensor
   // @return Status - The error code return
@@ -228,13 +234,6 @@ class BatchOp : public ParallelOp {
                               const std::unordered_map<std::string, int32_t> &column_name_id_map,
                               std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
                               std::vector<std::vector<dsize_t>> *pad_shapes);
-
-  // @param table
-  // @param const PadInfo &pad_info pad info
-  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
-  // @return Status - The error code return
-  static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
-                           const std::unordered_map<std::string, int32_t> &column_name_id_map);
 
   // the number of thread pulling from the mOutConnector of the Op below
   // @return int32_t, 1
