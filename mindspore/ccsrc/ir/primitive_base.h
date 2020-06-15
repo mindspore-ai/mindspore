@@ -90,7 +90,7 @@ class Primitive : public Named {
   }
 
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
-  std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() { return evaluate_added_attrs_; }
+  const std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
 
   // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
   bool HasAttr() const { return !attrs_.empty(); }

@@ -1982,7 +1982,11 @@ class IrParser {
         MS_LOG(EXCEPTION) << "Cast to type 'PrimitivePyPtr' error";
       }
     } else {
-      ptr = std::make_shared<PrimitivePy>(id.substr(strlen("PrimitivePy::")), py_obj);
+      auto len = strlen("PrimitivePy::");
+      if (id.size() < len) {
+        return TOK_ERROR;
+      }
+      ptr = std::make_shared<PrimitivePy>(id.substr(len), py_obj);
     }
     *val_ptr = ptr;
 
@@ -1999,7 +2003,7 @@ class IrParser {
     return next;
   }
 
-  Token ParseValueGraphAndNamespace(const std::string &id, ValuePtr *val_ptr) {
+  Token ParseValueGraphAndNamespace(const std::string &id, ValuePtr *const val_ptr) {
     if (Match(id, "MultitypeFuncGraph::")) {
       std::string name = id.substr(strlen("MultitypeFuncGraph::"));
       auto mt_func_graph = std::make_shared<prim::MultitypeFuncGraph>(name);
@@ -2039,7 +2043,7 @@ class IrParser {
     }
   }
 
-  Token ParseValueBasic(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *val_ptr,
+  Token ParseValueBasic(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *const val_ptr,
                         AnfNodePtr *const node_ptr = nullptr) {
     if (id == "None") {
       *val_ptr = std::make_shared<None>();
