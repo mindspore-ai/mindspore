@@ -103,6 +103,7 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
                                                                   {kBroadcast, kBroadcastPattern},
                                                                   {kReduce, kReducePattern},
                                                                   {kDynamicFormat, kDynamicFormatPattern}};
+  MS_EXCEPTION_IF_NULL(op_info);
   op_info->set_async_flag(obj.at(kAsyncFlag));
   op_info->set_binfile_name(obj.at(kBinfileName));
   op_info->set_compute_cost(obj.at(kComputeCost));
@@ -199,6 +200,7 @@ bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType imply_type,
 
 bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,
                               size_t index) {
+  MS_EXCEPTION_IF_NULL(op_io);
   bool ret = true;
   try {
     std::vector<std::string> dtype;
@@ -218,6 +220,7 @@ bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::sha
 
 bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply_type, const OpIOType io_type,
                               const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format) {
+  MS_EXCEPTION_IF_NULL(op_info);
   bool ret = true;
   try {
     std::shared_ptr<OpIOInfo> op_io = std::make_shared<OpIOInfo>();
