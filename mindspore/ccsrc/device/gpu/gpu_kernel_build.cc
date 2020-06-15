@@ -20,12 +20,10 @@
 #include "kernel/akg/gpu/akg_gpu_kernel_build.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "operator/ops.h"
-#include "pybind11/stl.h"
 #include "session/anf_runtime_algorithm.h"
 namespace mindspore {
 namespace device {
 namespace gpu {
-namespace py = pybind11;
 void GpuBuild(const KernelGraphPtr &kernel_graph) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   bin_map->Initialize();

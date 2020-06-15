@@ -28,7 +28,7 @@ void MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph) {
   size_t kernel_index = 0;
   for (const auto &kernel : execution_order_) {
     // parse topo order of kernel
-    kernel_execution_info_.emplace(kernel.get(), kernel_index++);
+    (void)kernel_execution_info_.emplace(kernel.get(), kernel_index++);
     // parse tensor info
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -144,7 +144,7 @@ void MemSwapManager::AddSwapInfo() {
 }
 
 void MemSwapManager::AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address,
-                                    const HostAddress &host_address) {
+                                    const HostAddress &host_address) const {
   if (swap_kind == SwapKind::kDeviceToHost) {
     mem_copy_manager_->AddMemSwapOutTask(device_address, host_address);
   } else if (swap_kind == SwapKind::kHostToDevice) {
@@ -152,9 +152,11 @@ void MemSwapManager::AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &
   }
 }
 
-bool MemSwapManager::SyncMemCopyStream(SwapKind swap_kind) { return mem_copy_manager_->SyncMemCopyStream(swap_kind); }
+bool MemSwapManager::SyncMemCopyStream(SwapKind swap_kind) const {
+  return mem_copy_manager_->SyncMemCopyStream(swap_kind);
+}
 
-DeviceAddressPtr MemSwapManager::UpdateSwapQueue(SwapKind swap_kind) {
+DeviceAddressPtr MemSwapManager::UpdateSwapQueue(SwapKind swap_kind) const {
   if (swap_kind == SwapKind::kDeviceToHost) {
     return mem_copy_manager_->UpdateSwapOutQueue();
   } else {
@@ -298,7 +300,7 @@ void MemSwapManager::ReleaseHostPinnedMem() {
   host_addrs_list_.clear();
 }
 
-void MemSwapManager::ClearSwapQueue() { mem_copy_manager_->ClearSwapQueue(); }
+void MemSwapManager::ClearSwapQueue() const { mem_copy_manager_->ClearSwapQueue(); }
 
 void MemSwapManager::ResetSwapInfo() {
   ClearSwapQueue();
