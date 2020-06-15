@@ -59,6 +59,7 @@ const std::map<std::string, OperatorType> DictOpType{
 
   {PRELU, OperatorType::kRecPReLU},
 
+  {L2_NORMALIZE, OperatorType::kRecElmWiseOp},
   {TENSOR_ADD, OperatorType::kRecElmWiseOp},
   {SUB, OperatorType::kRecElmWiseOp},
   {MUL, OperatorType::kRecElmWiseOp},
