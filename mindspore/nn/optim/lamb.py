@@ -28,10 +28,10 @@ from .. import layer
 
 num_one = Tensor(np.ones([1]), mstype.float32)
 
-lamb_opt = C.MultitypeFuncGraph("lamb_opt")
+_lamb_opt = C.MultitypeFuncGraph("lamb_opt")
 
-@lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                   "Tensor", "Bool")
+@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Bool")
 def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, param, m, v,
                    gradient, decay_flag):
     """
@@ -227,7 +227,7 @@ class Lamb(Optimizer):
             warmup_lr = self.start_learning_rate * warmup_percent
             is_warmup = self.cast(self.greater(self.warmup_steps, self.global_step), mstype.float32)
             lr = (self.one - is_warmup) * lr + is_warmup * warmup_lr
-        updated_velocity = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps, lr,
+        updated_velocity = self.hyper_map(F.partial(_lamb_opt, self.beta1, self.beta2, self.eps, lr,
                                                     self.weight_decay_tensor, self.global_step),
                                           self.params, self.moments1, self.moments2, gradients, self.decay_flag)
 

@@ -21,10 +21,10 @@ from mindspore._checkparam import check_bool
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
-momentum_opt = C.MultitypeFuncGraph("momentum_opt")
+_momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 
-@momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
     """Apply momentum optimizer to the weight parameter using Tensor."""
     success = True
@@ -129,7 +129,7 @@ class Momentum(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(momentum_opt, self.opt, self.momentum), lr, gradients, params, moments)
+            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum), lr, gradients, params, moments)
         else:
-            success = self.hyper_map(F.partial(momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
+            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
         return success

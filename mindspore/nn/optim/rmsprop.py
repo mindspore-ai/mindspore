@@ -18,21 +18,21 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
-rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
-centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
+_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
+_centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 
 
-@rmsprop_opt.register("Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _rmsprop_opt(opt, decay, epsilon, momentum, learning_rate, weight, ms, mom, grad):
+@_rmsprop_opt.register("Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _rmsprop_opt_(opt, decay, epsilon, momentum, learning_rate, weight, ms, mom, grad):
     """Apply rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, ms, mom, learning_rate, grad, decay, momentum, epsilon))
     return success
 
 
-@centered_rmsprop_opt.register("Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
-                               "Tensor", "Tensor")
-def _centered_rmsprop_opt(opt, decay, epsilon, momentum, learning_rate, weight, mg, ms, mom, grad):
+@_centered_rmsprop_opt.register("Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
+                                "Tensor", "Tensor")
+def _centered_rmsprop_opt_(opt, decay, epsilon, momentum, learning_rate, weight, mg, ms, mom, grad):
     """Apply centered rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, mg, ms, mom, grad, learning_rate, decay, momentum, epsilon))
@@ -187,17 +187,17 @@ class RMSProp(Optimizer):
         lr = self.get_lr()
         if self.centered:
             if self.is_group_lr:
-                success = self.hyper_map(F.partial(centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                success = self.hyper_map(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
                                                    self.momentum), lr, params, self.mg, self.ms, self.moment, gradients)
             else:
-                success = self.hyper_map(F.partial(centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                success = self.hyper_map(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
                                                    self.momentum, lr), params, self.mg, self.ms, self.moment, gradients)
 
         else:
             if self.is_group_lr:
-                success = self.hyper_map(F.partial(rmsprop_opt, self.opt, self.decay, self.epsilon,
+                success = self.hyper_map(F.partial(_rmsprop_opt, self.opt, self.decay, self.epsilon,
                                                    self.momentum), lr, params, self.ms, self.moment, gradients)
             else:
-                success = self.hyper_map(F.partial(rmsprop_opt, self.opt, self.decay, self.epsilon,
+                success = self.hyper_map(F.partial(_rmsprop_opt, self.opt, self.decay, self.epsilon,
                                                    self.momentum, lr), params, self.ms, self.moment, gradients)
         return success

@@ -24,11 +24,11 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
-lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
+_lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
 
-@lazy_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tuple",
-                        "Tensor", "Tensor", "Tensor")
+@_lazy_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tuple",
+                         "Tensor", "Tensor", "Tensor")
 def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                          moment1, moment2):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
@@ -38,8 +38,8 @@ def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2
     return success
 
 
-@lazy_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor",
-                        "Tensor", "Tensor", "Tensor")
+@_lazy_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor",
+                         "Tensor", "Tensor", "Tensor")
 def _run_opt_with_one_number(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                              moment1, moment2):
     """Apply adam optimizer to the weight parameter using Tensor."""
@@ -189,11 +189,11 @@ class LazyAdam(Optimizer):
         self.beta2_power = self.beta2_power * self.beta2
 
         if self.is_group_lr:
-            success = self.map_(F.partial(lazy_adam_opt, self.opt, self.sparse_opt, self.beta1_power,
+            success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self.beta1_power,
                                           self.beta2_power, self.beta1, self.beta2, self.eps),
                                 lr, gradients, self.parameters, self.moment1, self.moment2)
         else:
-            success = self.map_(F.partial(lazy_adam_opt, self.opt, self.sparse_opt, self.beta1_power,
+            success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self.beta1_power,
                                           self.beta2_power, self.beta1, self.beta2, self.eps, lr),
                                 gradients, self.parameters, self.moment1, self.moment2)
         return success

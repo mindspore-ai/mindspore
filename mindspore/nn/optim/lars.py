@@ -22,12 +22,12 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator as validator
-from .optimizer import grad_scale, Optimizer
+from .optimizer import _grad_scale, Optimizer
 
-lars_opt = C.MultitypeFuncGraph("lars_opt")
+_lars_opt = C.MultitypeFuncGraph("lars_opt")
 
 
-@lars_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+@_lars_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
 def _tensor_run_opt(lars, weight_decay, learning_rate, gradient, weight, decay_flag, lars_flag):
     """Apply lars optimizer to the weight parameter."""
     if lars_flag:
@@ -119,9 +119,9 @@ class LARS(Optimizer):
         else:
             lr = self.learning_rate
         if self.reciprocal_scale != 1.0:
-            gradients = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), gradients)
+            gradients = self.hyper_map(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
-        grad_t = self.hyper_map(F.partial(lars_opt, self.lars, self.weight_decay, lr),
+        grad_t = self.hyper_map(F.partial(_lars_opt, self.lars, self.weight_decay, lr),
                                 gradients, params, self.decay_flag, self.lars_flag)
         success = self.opt(grad_t)
 

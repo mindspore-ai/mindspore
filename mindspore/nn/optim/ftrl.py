@@ -18,13 +18,13 @@ from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer, apply_decay, grad_scale
+from .optimizer import Optimizer, _apply_decay, _grad_scale
 
-ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
+_ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
-@ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple", "Tensor",
-                   "Tensor")
+@_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple", "Tensor",
+                    "Tensor")
 def _tensor_run_opt_with_sparse(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
@@ -32,8 +32,8 @@ def _tensor_run_opt_with_sparse(opt, spars_opt, learning_rate, l1, l2, lr_power,
     return success
 
 
-@ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
-                   "Tensor")
+@_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
+                    "Tensor")
 def _tensor_run_opt(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
@@ -124,9 +124,9 @@ class FTRL(Optimizer):
         linear = self.linear
         lr = self.learning_rate
         if self.weight_decay > 0.0:
-            grads = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_tf, params, grads)
+            grads = self.hyper_map(F.partial(_apply_decay, self.weight_decay), self.decay_tf, params, grads)
 
         grads = self.scale_grad(grads)
-        success = self.map_(F.partial(ftrl_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2, self.lr_power),
+        success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2, self.lr_power),
                             linear, grads, params, moments)
         return success

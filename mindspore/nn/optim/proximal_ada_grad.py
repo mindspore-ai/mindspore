@@ -20,10 +20,10 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
-proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
+_proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
 
 
-@proximal_ada_grad_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+@_proximal_ada_grad_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt(opt, learning_rate, l1, l2, gradient, weight, accum):
     """Apply proximal_ada_grad optimizer to the weight parameter."""
     success = True
@@ -94,6 +94,6 @@ class ProximalAdagrad(Optimizer):
         grads = self.decay_weight(grads)
         grads = self.scale_grad(grads)
         lr = self.learning_rate
-        success = self.hyper_map(F.partial(proximal_ada_grad_opt, self.opt, lr, self.l1, self.l2),
+        success = self.hyper_map(F.partial(_proximal_ada_grad_opt, self.opt, lr, self.l1, self.l2),
                                  grads, params, accum)
         return success
