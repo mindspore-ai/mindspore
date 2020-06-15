@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Init DeepLabv3."""
-from .deeplabv3 import ASPP, DeepLabV3, deeplabv3_resnet50
+from .deeplabv3 import ASPP, deeplabv3_resnet50
 from .backbone import *
 
 __all__ = [
-    "ASPP", "DeepLabV3", "deeplabv3_resnet50"
+    "ASPP", "deeplabv3_resnet50"
 ]
 
 __all__.extend(backbone.__all__)
