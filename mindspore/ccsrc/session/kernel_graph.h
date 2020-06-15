@@ -142,7 +142,7 @@ class KernelGraph : public FuncGraph {
   bool get_output_null() { return null_output_; }
   void set_output_null(bool is_output_null) { null_output_ = is_output_null; }
   void PrintGraphExecuteOrder() const;
-  std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() { return summary_nodes_; }
+  const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
 
  private:
