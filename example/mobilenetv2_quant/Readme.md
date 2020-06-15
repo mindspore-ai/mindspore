@@ -1,15 +1,10 @@
 # MobileNetV2 Description
 
+MobileNetV2 is a significant improvement over MobileNetV1 and pushes the state of the art for mobile visual recognition including classification, object detection and semantic segmentation.
 
-MobileNetV2 is tuned to mobile phone CPUs through a combination of hardware- aware network architecture search (NAS) complemented by the NetAdapt algorithm and then subsequently improved through novel architecture advances.Nov 20, 2019.
+MobileNetV2 builds upon the ideas from MobileNetV1, using depthwise separable convolution as efficient building blocks. However, V2 introduces two new features to the architecture: 1) linear bottlenecks between the layers, and 2) shortcut connections between the bottlenecks1.
 
-[Paper](https://arxiv.org/pdf/1905.02244) Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al. "Searching for MobileNetV2." In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324. 2019.
-
-# Model architecture
-
-The overall network architecture of MobileNetV2 is show below:
-
-[Link](https://ai.googleblog.com/2018/04/mobilenetv2-next-generation-of-on.html)
+[Paper](https://arxiv.org/pdf/1801.04381) Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al. "Searching for MobileNetV2." In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324. 2019.
 
 # Dataset
 
@@ -20,9 +15,6 @@ Dataset used: imagenet
 	- Test: 5G, 50000 images
 - Data format: RGB images.
 	- Note: Data will be processed in src/dataset.py 
-
-
-# Features
 
 
 # Environment Requirements
