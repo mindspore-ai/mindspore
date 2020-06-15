@@ -31,6 +31,7 @@
 #include "dataset/engine/datasetops/source/celeba_op.h"
 #include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/source/clue_op.h"
 #include "dataset/engine/datasetops/filter_op.h"
 #include "mindrecord/include/shard_category.h"
 #include "mindrecord/include/shard_distributed_sample.h"
@@ -72,7 +73,8 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kCelebA, &DEPipeline::ParseCelebAOp},
                                                                    {kRandomData, &DEPipeline::ParseRandomDataOp},
                                                                    {kTextFile, &DEPipeline::ParseTextFileOp},
-                                                                   {kBuildVocab, &DEPipeline::ParseBuildVocabOp}};
+                                                                   {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
+                                                                   {kClue, &DEPipeline::ParseClueOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -1210,6 +1212,7 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
   *ptr = op;
   return Status::OK();
 }
+
 Status DEPipeline::ParsePadInfo(py::handle value, PadInfo *pad_info) {
   for (auto p : py::reinterpret_borrow<py::dict>(value)) {
     if (!p.second.is_none()) {
@@ -1236,6 +1239,7 @@ Status DEPipeline::ParsePadInfo(py::handle value, PadInfo *pad_info) {
   }
   return Status::OK();
 }
+
 Status DEPipeline::ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<BuildVocabOp::Builder> builder = std::make_shared<BuildVocabOp::Builder>();
   for (auto arg : args) {
@@ -1267,5 +1271,45 @@ Status DEPipeline::ParseBuildVocabOp(const py::dict &args, std::shared_ptr<Datas
   return Status::OK();
 }
 
+Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<ClueOp::Builder> builder = std::make_shared<ClueOp::Builder>();
+  if (!args["dataset_files"].is_none()) {
+    (void)builder->SetClueFilesList(ToStringVector(args["dataset_files"]));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Error: dataset_files is missing");
+  }
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "shuffle_files") {
+        (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "num_samples") {
+        (void)builder->SetNumSamples(ToInt(value));
+      } else if (key == "num_shards") {
+        (void)builder->SetNumDevices(ToInt(value));
+      } else if (key == "shard_id") {
+        (void)builder->SetDeviceId(ToInt(value));
+      } else if (key == "cols_to_keyword") {
+        std::map<std::string, std::string> map_dict;
+        for (auto p : py::reinterpret_borrow<py::dict>(value)) {
+          if (!p.second.is_none()) {
+            map_dict.insert({ToString(p.first), ToString(p.second)});
+          } else {
+            map_dict.insert({ToString(p.first), ToString(p.first)});
+          }
+        }
+        (void)builder->SetColsKeyMap(map_dict);
+      }
+    }
+  }
+  std::shared_ptr<ClueOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
