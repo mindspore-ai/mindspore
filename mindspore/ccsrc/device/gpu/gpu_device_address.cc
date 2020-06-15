@@ -15,9 +15,7 @@
  */
 
 #include "device/gpu/gpu_device_address.h"
-
 #include <vector>
-
 #include "device/gpu/gpu_device_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/context/ms_context.h"

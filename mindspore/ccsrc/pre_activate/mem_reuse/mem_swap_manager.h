@@ -44,11 +44,12 @@ class MemSwapManager {
 
   void Init(const mindspore::session::KernelGraph *kernel_graph);
 
-  void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address, const HostAddress &host_address);
+  void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address,
+                      const HostAddress &host_address) const;
 
-  bool SyncMemCopyStream(SwapKind swap_kind);
+  bool SyncMemCopyStream(SwapKind swap_kind) const;
 
-  DeviceAddressPtr UpdateSwapQueue(SwapKind swap_kind);
+  DeviceAddressPtr UpdateSwapQueue(SwapKind swap_kind) const;
 
   // retreat to find a workable swap scheme
   bool RetreatSwapInfo();
@@ -83,7 +84,7 @@ class MemSwapManager {
 
   void ReleaseHostPinnedMem();
 
-  void ClearSwapQueue();
+  void ClearSwapQueue() const;
 
  private:
   void AddSwapInfo();
