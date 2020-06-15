@@ -25,6 +25,7 @@
 #include "device/ascend/ascend_device_address.h"
 #include "device/cpu/mpi/mpi_adapter.h"
 #include "utils/context/ms_context.h"
+#include "utils/mpi/mpi_config.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
 #include "common/trans.h"
@@ -510,19 +511,35 @@ bool AscendKernelRuntime::HcclInit() {
     MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
     return false;
   }
+  const char *identify = nullptr;
 #ifdef ENABLE_MPI
-  int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
-  const char *offset = std::getenv("RANK_OFFSET");
-  if (offset != nullptr) {
-    int rank_offset = std::stoi(offset);
-    rank_id += rank_offset;
+  std::string rank_id_tmp;
+  auto mpi_config_ptr = MpiConfig::GetInstance();
+  MS_EXCEPTION_IF_NULL(mpi_config_ptr);
+  if (mpi_config_ptr->enable_mpi()) {
+    int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
+    const char *offset = std::getenv("RANK_OFFSET");
+    if (offset != nullptr) {
+      try {
+        int rank_offset = std::stoi(offset);
+        rank_id += rank_offset;
+      } catch (std::invalid_argument) {
+        MS_LOG(EXCEPTION) << "stoi invalid argument:" << offset;
+      } catch (std::out_of_range) {
+        MS_LOG(EXCEPTION) << "stoi out_of_range:" << offset;
+      }
+    }
+    rank_id_tmp = std::to_string(rank_id);
+    identify = rank_id_tmp.c_str();
+  } else {
+    identify = std::getenv("RANK_ID");
   }
-  const char *identify = reinterpret_cast<const char *>(std::to_string(rank_id).c_str());
 #else
-  const char *identify = std::getenv("RANK_ID");
+  identify = std::getenv("RANK_ID");
 #endif
   if (identify == nullptr) {
     MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
+    free(full_path);
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << identify;

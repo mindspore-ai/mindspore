@@ -23,9 +23,10 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore._ms_mpi as mpi
 # run comand:
-# mpirun -np 3 python test_reduce_scatter.py
+# mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_reduce_scatter.py
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+context.set_mpi_config(enable_mpi=True)
 
 class Net(nn.Cell):
     def __init__(self):
@@ -46,14 +47,19 @@ class AllGatherNet(nn.Cell):
         return self.hostallgather(x)  
 
 def test_net_reduce_scatter():
-    x = np.ones(12).astype(np.float32) * 0.1
+    x = np.arange(12).astype(np.float32) * 0.1
     
     reducescatter = Net()
     rankid = mpi.get_rank_id()
     print("self rankid:", rankid)
     output = reducescatter(Tensor(x, mstype.float32))
     print("output:\n", output)
-    expect_result = np.ones(4).astype(np.float32) * 0.3
+    if rankid == 0:
+        expect_result = np.arange(4).astype(np.float32) * 0.3
+    if rankid == 1:
+        expect_result = np.arange(4, 8).astype(np.float32) * 0.3
+    if rankid == 2:
+        expect_result = np.arange(8, 12).astype(np.float32) * 0.3
     diff = abs(output.asnumpy() - expect_result)
     error = np.ones(shape=expect_result.shape) * 1.0e-6
     assert np.all(diff < error)
@@ -61,7 +67,7 @@ def test_net_reduce_scatter():
     allgather = AllGatherNet()
     allgather_output = allgather(output)
     print("allgather result:\n", allgather_output)
-    expect_allgather_result =  np.ones(12).astype(np.float32) * 0.3
+    expect_allgather_result =  np.arange(12).astype(np.float32) * 0.3
     diff = abs(allgather_output.asnumpy() - expect_allgather_result)
     error = np.ones(shape=expect_allgather_result.shape) * 1.0e-6
     assert np.all(diff < error)
