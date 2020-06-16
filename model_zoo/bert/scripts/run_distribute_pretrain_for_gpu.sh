@@ -16,30 +16,29 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
-echo "for example: bash run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
+echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR"
+echo "for example: bash run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json"
+echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
-DEVICE_ID=$1
+RANK_SIZE=$1
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
-mkdir -p ms_log 
-CUR_DIR=`pwd`
-export GLOG_log_dir=${CUR_DIR}/ms_log
-export GLOG_logtostderr=0
-python run_pretrain.py  \
-    --distribute="false" \
-    --epoch_size=$EPOCH_SIZE \
-    --device_id=$DEVICE_ID \
-    --enable_save_ckpt="true" \
-    --enable_lossscale="true" \
-    --do_shuffle="true" \
-    --enable_data_sink="true" \
-    --data_sink_steps=1 \
-    --checkpoint_path="" \
-    --save_checkpoint_steps=10000 \
-    --save_checkpoint_num=1 \
-    --data_dir=$DATA_DIR \
-    --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+mpirun --allow-run-as-root -n $RANK_SIZE \
+	python run_pretrain.py				\
+		--device_target="GPU"			\
+		--distribute="true"				\
+		--epoch_size=$EPOCH_SIZE		\
+		--enable_save_ckpt="true"		\
+		--enable_lossscale="false"		\
+		--do_shuffle="true"				\
+		--enable_data_sink="true"		\
+		--data_sink_steps=1				\
+		--checkpoint_path=""			\
+		--save_checkpoint_steps=10000	\
+		--save_checkpoint_num=1			\
+		--data_dir=$DATA_DIR			\
+		--schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+

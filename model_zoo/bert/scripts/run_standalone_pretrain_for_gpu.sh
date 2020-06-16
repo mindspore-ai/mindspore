@@ -25,16 +25,18 @@ EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
-mkdir -p ms_log 
+export CUDA_VISIBLE_DEVICES=$DEVICE_ID
+
+mkdir -p ms_log
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python run_pretrain.py  \
+    --device_target="GPU" \
     --distribute="false" \
     --epoch_size=$EPOCH_SIZE \
-    --device_id=$DEVICE_ID \
     --enable_save_ckpt="true" \
-    --enable_lossscale="true" \
+    --enable_lossscale="false" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
     --data_sink_steps=1 \
