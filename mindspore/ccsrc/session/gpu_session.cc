@@ -75,7 +75,6 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  // opt::RemoveNopNode(kernel_graph);
   runtime_instance->AssignMemory(kernel_graph);
 }
 
@@ -84,7 +83,6 @@ void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  // opt::RemoveNopNode(kernel_graph);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
 }
 
@@ -156,14 +154,16 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Optimize(graph);
   // Assign CUDA streams
   AssignStream(graph);
-  // Remove NoOp from execution graph
-  // opt::HideNopNode(graph.get());
+  // Hide NoOp from execution graph
+  opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
+  // Remove NoOp from execution graph
+  opt::RemoveNopNode(graph.get());
   // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
   MS_EXCEPTION_IF_NULL(context_);
@@ -205,6 +205,8 @@ void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_in
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
   StartKernelRT();
+  // Hide NoOp from execution graph
+  opt::HideNopNode(kernel_graph.get());
   BuildKernel(kernel_graph);
   run_op_graphs_[graph_info] = kernel_graph;
 }
@@ -213,6 +215,8 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
                             const std::vector<tensor::TensorPtr> &input_tensors) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  // Remove NoOp from execution graph
+  opt::RemoveNopNode(kernel_graph.get());
   RunOpAllocateMemory(input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
