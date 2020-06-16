@@ -323,6 +323,10 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
       MS_LOG(WARNING) << "can't find summary node's kernel_def " << node->fullname_with_scope();
     }
   }
+#ifdef MEM_REUSE_DEBUG
+  auto graph = *graph_;
+  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, &graph);
+#endif
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
