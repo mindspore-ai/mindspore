@@ -162,6 +162,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
+  // Get summary nodes.
+  GetSummaryNodes(graph.get());
   // Remove NoOp from execution graph
   opt::RemoveNopNode(graph.get());
   // Alloc memory, including static memory and dynamic memory

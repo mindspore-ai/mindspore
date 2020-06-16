@@ -190,6 +190,8 @@ void GPUKernelRuntime::InitKernelRefCount(const session::KernelGraph *graph) {
   mem_reuse_util_ptr->SetReuseRefCount();
   // Can't free the device address of graph output, so set the reference count of graph output specially.
   mem_reuse_util_ptr->SetGraphOutputRefCount();
+  // Can't free the device address of summary nodes, so set the reference count of summary nodes specially.
+  mem_reuse_util_ptr->SetSummaryNodesRefCount();
   auto graph_id = graph->graph_id();
   mem_reuse_util_map_[graph_id] = mem_reuse_util_ptr;
 }
