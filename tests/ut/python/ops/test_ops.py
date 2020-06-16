@@ -25,6 +25,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import _inner_ops as inner
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -1051,7 +1052,7 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 1, 2], Tensor(np.array([0, 1]).astype(np.int32))],
         'desc_bprop': [[2, 1, 2]]}),
     ('Range', {
-        'block': P.Range(1.0, 5.0),
+        'block': inner.Range(1.0, 5.0),
         'desc_inputs': [Tensor(np.ones([10]).astype(np.float32))],
         'desc_bprop': [[10]]}),
     ('UnsortedSegmentSum', {
@@ -1454,7 +1455,7 @@ test_case_array_ops = [
         'desc_inputs': [(Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
-        'desc_bprop': [[3,]]}),
+        'desc_bprop': [[3, ]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -1527,7 +1528,7 @@ test_case_array_ops = [
                         Tensor(np.array([0, 1, 1]).astype(np.int32))],
         'desc_bprop': [Tensor(np.array([[1, 2, 3], [4, 2, 1]]).astype(np.float32))]}),
     ('BroadcastTo', {
-        'block': P.BroadcastTo((2,3)),
+        'block': P.BroadcastTo((2, 3)),
         'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.float32))]}),
     ('InTopK', {
