@@ -28,8 +28,6 @@ namespace tbe {
 constexpr auto kProcessorAiCore = "aicore";
 TypeId DtypeToTypeId(const std::string &dtypes);
 
-std::string DtypeToString(const std::string &dtypes);
-
 std::string TypeIdToString(TypeId type_id);
 
 size_t GetDtypeNbyte(const std::string &dtypes);

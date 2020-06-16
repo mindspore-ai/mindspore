@@ -615,7 +615,7 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
     spec_shape.emplace_back(shape[2] * shape[3]);
     spec_shape.emplace_back(shape[4]);
     (*output_desc)["shape"] = spec_shape;
-  } else if (fusion_data_type == kFusionReLUGradV2 && (*output_desc)["data_type"] == "uint8") {
+  } else if (fusion_data_type == kFusionReLUGradV2) {
     std::vector<size_t> spec_shape = {};
     spec_shape.emplace_back(shape[0]);
     spec_shape.emplace_back(shape[1]);

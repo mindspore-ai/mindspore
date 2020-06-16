@@ -175,6 +175,5 @@ void TbeKernelReduceSelecter::PadScalarShape(std::vector<size_t> *shape) const {
     shape->emplace_back(1);
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
