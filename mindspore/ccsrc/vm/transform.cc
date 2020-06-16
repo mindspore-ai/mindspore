@@ -277,6 +277,11 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
     for (auto &prim : cut_list_) {
       MS_EXCEPTION_IF_NULL(prim);
       if (prim->name() == node_prim->name()) {
+        if (prim->name() == prim::kPrimBpropCut->name()) {
+          auto ms_context = MsContext::GetInstance();
+          MS_EXCEPTION_IF_NULL(ms_context);
+          ms_context->set_enable_pynative_hook(true);
+        }
         return true;
       }
     }
