@@ -19,7 +19,6 @@ from ... import nn
 from ... import ops
 from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel
-from ...nn.layer import combined
 from ...nn.layer import quant
 
 _ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
@@ -123,13 +122,13 @@ class ConvertToQuantNetwork:
             subcell = cells[name]
             if subcell == network:
                 continue
-            elif isinstance(subcell, combined.Conv2d):
+            elif isinstance(subcell, quant.Conv2dBnAct):
                 prefix = subcell.param_prefix
                 new_subcell = self._convert_conv(subcell)
                 new_subcell.update_parameters_name(prefix + '.')
                 network.insert_child_to_cell(name, new_subcell)
                 change = True
-            elif isinstance(subcell, combined.Dense):
+            elif isinstance(subcell, quant.DenseBnAct):
                 prefix = subcell.param_prefix
                 new_subcell = self._convert_dense(subcell)
                 new_subcell.update_parameters_name(prefix + '.')
@@ -159,7 +158,7 @@ class ConvertToQuantNetwork:
 
     def _convert_conv(self, subcell):
         """
-        convet conv cell to combine cell
+        convet conv cell to quant cell
         """
         conv_inner = subcell.conv
         bn_inner = subcell.batchnorm
