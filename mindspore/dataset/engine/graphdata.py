@@ -22,7 +22,7 @@ from mindspore._c_dataengine import Tensor
 
 from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_get_all_edges, \
     check_gnn_get_nodes_from_edges, check_gnn_get_all_neighbors, check_gnn_get_sampled_neighbors, \
-    check_gnn_get_neg_sampled_neighbors, check_gnn_get_node_feature
+    check_gnn_get_neg_sampled_neighbors, check_gnn_get_node_feature, check_gnn_random_walk
 
 
 class GraphData:
@@ -148,7 +148,8 @@ class GraphData:
             TypeError: If `neighbor_nums` is not list or ndarray.
             TypeError: If `neighbor_types` is not list or ndarray.
         """
-        return self._graph.get_sampled_neighbors(node_list, neighbor_nums, neighbor_types).as_array()
+        return self._graph.get_sampled_neighbors(
+            node_list, neighbor_nums, neighbor_types).as_array()
 
     @check_gnn_get_neg_sampled_neighbors
     def get_neg_sampled_neighbors(self, node_list, neg_neighbor_num, neg_neighbor_type):
@@ -174,7 +175,8 @@ class GraphData:
             TypeError: If `neg_neighbor_num` is not integer.
             TypeError: If `neg_neighbor_type` is not integer.
         """
-        return self._graph.get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type).as_array()
+        return self._graph.get_neg_sampled_neighbors(
+            node_list, neg_neighbor_num, neg_neighbor_type).as_array()
 
     @check_gnn_get_node_feature
     def get_node_feature(self, node_list, feature_types):
@@ -200,7 +202,10 @@ class GraphData:
         """
         if isinstance(node_list, list):
             node_list = np.array(node_list, dtype=np.int32)
-        return [t.as_array() for t in self._graph.get_node_feature(Tensor(node_list), feature_types)]
+        return [
+            t.as_array() for t in self._graph.get_node_feature(
+                Tensor(node_list),
+                feature_types)]
 
     def graph_info(self):
         """
@@ -212,3 +217,36 @@ class GraphData:
                 node_feature_type and edge_feature_type.
         """
         return self._graph.graph_info()
+
+    @check_gnn_random_walk
+    def random_walk(
+            self,
+            target_nodes,
+            meta_path,
+            step_home_param=1.0,
+            step_away_param=1.0,
+            default_node=-1):
+        """
+        Random walk in nodes.
+
+        Args:
+            target_nodes (list[int]): Start node list in random walk
+            meta_path (list[int]): node type for each walk step
+            step_home_param (float): return hyper parameter in node2vec algorithm
+            step_away_param (float): inout hyper parameter in node2vec algorithm
+            default_node (int): default node if no more neighbors found
+
+        Returns:
+            numpy.ndarray: array of nodes.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> data_graph = ds.GraphData('dataset_file', 2)
+            >>> nodes = data_graph.random_walk([1,2], [1,2,1,2,1])
+
+        Raises:
+            TypeError: If `target_nodes` is not list or ndarray.
+            TypeError: If `meta_path` is not list or ndarray.
+        """
+        return self._graph.random_walk(target_nodes, meta_path, step_home_param, step_away_param,
+                                       default_node).as_array()

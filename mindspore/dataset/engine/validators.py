@@ -1395,6 +1395,24 @@ def check_gnn_get_neg_sampled_neighbors(method):
     return new_method
 
 
+def check_gnn_random_walk(method):
+    """A wrapper that wrap a parameter checker to the GNN `random_walk` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("target_nodes"), 'target_nodes')
+
+        # check meta_path; required argument
+        check_gnn_list_or_ndarray(param_dict.get("meta_path"), 'meta_path')
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_aligned_list(param, param_name, membor_type):
     """Check whether the structure of each member of the list is the same."""
 

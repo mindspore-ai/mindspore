@@ -27,6 +27,13 @@
 using namespace mindspore::dataset;
 using namespace mindspore::dataset::gnn;
 
+#define print_int_vec(_i, _str)                                           \
+  do {                                                                    \
+    std::stringstream ss;                                                 \
+    std::copy(_i.begin(), _i.end(), std::ostream_iterator<int>(ss, " ")); \
+    MS_LOG(INFO) << _str << " " << ss.str();                              \
+  } while (false)
+
 class MindDataTestGNNGraph : public UT::Common {
  protected:
   MindDataTestGNNGraph() = default;
@@ -194,4 +201,30 @@ TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
   neg_neighbors.reset();
   s = graph.GetNegSampledNeighbors(node_list, 3, 3, &neg_neighbors);
   EXPECT_TRUE(s.ToString().find("Invalid node type:3") != std::string::npos);
+}
+
+TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
+  std::string path = "data/mindrecord/testGraphData/sns";
+  Graph graph(path, 1);
+  Status s = graph.Init();
+  EXPECT_TRUE(s.IsOk());
+
+  MetaInfo meta_info;
+  s = graph.GetMetaInfo(&meta_info);
+  EXPECT_TRUE(s.IsOk());
+
+  std::shared_ptr<Tensor> nodes;
+  s = graph.GetAllNodes(meta_info.node_type[0], &nodes);
+  EXPECT_TRUE(s.IsOk());
+  std::vector<NodeIdType> node_list;
+  for (auto itr = nodes->begin<NodeIdType>(); itr != nodes->end<NodeIdType>(); ++itr) {
+    node_list.push_back(*itr);
+  }
+
+  print_int_vec(node_list, "node list ");
+  std::vector<NodeType> meta_path(59, 1);
+  std::shared_ptr<Tensor> walk_path;
+  s = graph.RandomWalk(node_list, meta_path, 2.0, 0.5, -1, &walk_path);
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(walk_path->shape().ToString() == "<33,60>");
 }

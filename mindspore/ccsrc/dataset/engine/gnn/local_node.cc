@@ -39,17 +39,25 @@ Status LocalNode::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature>
   }
 }
 
-Status LocalNode::GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors) {
+Status LocalNode::GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors, bool exclude_itself) {
   std::vector<NodeIdType> neighbors;
   auto itr = neighbor_nodes_.find(neighbor_type);
   if (itr != neighbor_nodes_.end()) {
-    neighbors.resize(itr->second.size() + 1);
-    neighbors[0] = id_;
-    std::transform(itr->second.begin(), itr->second.end(), neighbors.begin() + 1,
-                   [](const std::shared_ptr<Node> node) { return node->id(); });
+    if (exclude_itself) {
+      neighbors.resize(itr->second.size());
+      std::transform(itr->second.begin(), itr->second.end(), neighbors.begin(),
+                     [](const std::shared_ptr<Node> node) { return node->id(); });
+    } else {
+      neighbors.resize(itr->second.size() + 1);
+      neighbors[0] = id_;
+      std::transform(itr->second.begin(), itr->second.end(), neighbors.begin() + 1,
+                     [](const std::shared_ptr<Node> node) { return node->id(); });
+    }
   } else {
     MS_LOG(DEBUG) << "No neighbors. node_id:" << id_ << " neighbor_type:" << neighbor_type;
-    neighbors.emplace_back(id_);
+    if (!exclude_itself) {
+      neighbors.emplace_back(id_);
+    }
   }
   *out_neighbors = std::move(neighbors);
   return Status::OK();

@@ -656,9 +656,16 @@ void bindGraphData(py::module *m) {
            THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
            return out.getRow();
          })
-    .def("graph_info", [](gnn::Graph &g) {
-      py::dict out;
-      THROW_IF_ERROR(g.GraphInfo(&out));
+    .def("graph_info",
+         [](gnn::Graph &g) {
+           py::dict out;
+           THROW_IF_ERROR(g.GraphInfo(&out));
+           return out;
+         })
+    .def("random_walk", [](gnn::Graph &g, std::vector<gnn::NodeIdType> node_list, std::vector<gnn::NodeType> meta_path,
+                           float step_home_param, float step_away_param, gnn::NodeIdType default_node) {
+      std::shared_ptr<Tensor> out;
+      THROW_IF_ERROR(g.RandomWalk(node_list, meta_path, step_home_param, step_away_param, default_node, &out));
       return out;
     });
 }

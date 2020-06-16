@@ -29,7 +29,7 @@ namespace dataset {
 namespace gnn {
 
 Graph::Graph(std::string dataset_file, int32_t num_workers)
-    : dataset_file_(dataset_file), num_workers_(num_workers), rnd_(GetRandomDevice()) {
+    : dataset_file_(dataset_file), num_workers_(num_workers), rnd_(GetRandomDevice()), random_walk_(this) {
   rnd_.seed(GetSeed());
   MS_LOG(INFO) << "num_workers:" << num_workers;
 }
@@ -240,8 +240,13 @@ Status Graph::GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, N
   return Status::OK();
 }
 
-Status Graph::RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path, float p,
-                         float q, NodeIdType default_node, std::shared_ptr<Tensor> *out) {
+Status Graph::RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
+                         float step_home_param, float step_away_param, NodeIdType default_node,
+                         std::shared_ptr<Tensor> *out) {
+  RETURN_IF_NOT_OK(random_walk_.Build(node_list, meta_path, step_home_param, step_away_param, default_node));
+  std::vector<std::vector<NodeIdType>> walks;
+  RETURN_IF_NOT_OK(random_walk_.SimulateWalk(&walks));
+  RETURN_IF_NOT_OK(CreateTensorByVector<NodeIdType>({walks}, DataType(DataType::DE_INT32), out));
   return Status::OK();
 }
 
@@ -386,6 +391,195 @@ Status Graph::GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node) {
   return Status::OK();
 }
 
+Graph::RandomWalkBase::RandomWalkBase(Graph *graph)
+    : graph_(graph), step_home_param_(1.0), step_away_param_(1.0), default_node_(-1), num_walks_(1), num_workers_(1) {}
+
+Status Graph::RandomWalkBase::Build(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
+                                    float step_home_param, float step_away_param, const NodeIdType default_node,
+                                    int32_t num_walks, int32_t num_workers) {
+  node_list_ = node_list;
+  if (meta_path.empty() || meta_path.size() > kMaxNumWalks) {
+    std::string err_msg = "Failed, meta path required between 1 and " + std::to_string(kMaxNumWalks) +
+                          ". The size of input path is " + std::to_string(meta_path.size());
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  meta_path_ = meta_path;
+  if (step_home_param < kGnnEpsilon || step_away_param < kGnnEpsilon) {
+    std::string err_msg = "Failed, step_home_param and step_away_param required greater than " +
+                          std::to_string(kGnnEpsilon) + ". step_home_param: " + std::to_string(step_home_param) +
+                          ", step_away_param: " + std::to_string(step_away_param);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  step_home_param_ = step_home_param;
+  step_away_param_ = step_away_param;
+  default_node_ = default_node;
+  num_walks_ = num_walks;
+  num_workers_ = num_workers;
+  return Status::OK();
+}
+
+Status Graph::RandomWalkBase::Node2vecWalk(const NodeIdType &start_node, std::vector<NodeIdType> *walk_path) {
+  // Simulate a random walk starting from start node.
+  auto walk = std::vector<NodeIdType>(1, start_node);  // walk is an vector
+  // walk simulate
+  while (walk.size() - 1 < meta_path_.size()) {
+    // current nodE
+    auto cur_node_id = walk.back();
+    std::shared_ptr<Node> cur_node;
+    RETURN_IF_NOT_OK(graph_->GetNodeByNodeId(cur_node_id, &cur_node));
+
+    // current neighbors
+    std::vector<NodeIdType> cur_neighbors;
+    RETURN_IF_NOT_OK(cur_node->GetAllNeighbors(meta_path_[walk.size() - 1], &cur_neighbors, true));
+    std::sort(cur_neighbors.begin(), cur_neighbors.end());
+
+    // break if no neighbors
+    if (cur_neighbors.empty()) {
+      break;
+    }
+
+    // walk by the fist node, then by the previous 2 nodes
+    std::shared_ptr<StochasticIndex> stochastic_index;
+    if (walk.size() == 1) {
+      RETURN_IF_NOT_OK(GetNodeProbability(cur_node_id, meta_path_[0], &stochastic_index));
+    } else {
+      NodeIdType prev_node_id = walk[walk.size() - 2];
+      RETURN_IF_NOT_OK(GetEdgeProbability(prev_node_id, cur_node_id, walk.size() - 2, &stochastic_index));
+    }
+    NodeIdType next_node_id = cur_neighbors[WalkToNextNode(*stochastic_index)];
+    walk.push_back(next_node_id);
+  }
+
+  while (walk.size() - 1 < meta_path_.size()) {
+    walk.push_back(default_node_);
+  }
+
+  *walk_path = std::move(walk);
+  return Status::OK();
+}
+
+Status Graph::RandomWalkBase::SimulateWalk(std::vector<std::vector<NodeIdType>> *walks) {
+  // Repeatedly simulate random walks from each node
+  std::vector<uint32_t> permutation(node_list_.size());
+  std::iota(permutation.begin(), permutation.end(), 0);
+  for (int32_t i = 0; i < num_walks_; i++) {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle(permutation.begin(), permutation.end(), std::default_random_engine(seed));
+    for (const auto &i_perm : permutation) {
+      std::vector<NodeIdType> walk;
+      RETURN_IF_NOT_OK(Node2vecWalk(node_list_[i_perm], &walk));
+      walks->push_back(walk);
+    }
+  }
+  return Status::OK();
+}
+
+Status Graph::RandomWalkBase::GetNodeProbability(const NodeIdType &node_id, const NodeType &node_type,
+                                                 std::shared_ptr<StochasticIndex> *node_probability) {
+  // Generate alias nodes
+  std::shared_ptr<Node> node;
+  graph_->GetNodeByNodeId(node_id, &node);
+  std::vector<NodeIdType> neighbors;
+  RETURN_IF_NOT_OK(node->GetAllNeighbors(node_type, &neighbors, true));
+  std::sort(neighbors.begin(), neighbors.end());
+  auto non_normalized_probability = std::vector<float>(neighbors.size(), 1.0);
+  *node_probability =
+    std::make_shared<StochasticIndex>(GenerateProbability(Normalize<float>(non_normalized_probability)));
+  return Status::OK();
+}
+
+Status Graph::RandomWalkBase::GetEdgeProbability(const NodeIdType &src, const NodeIdType &dst, uint32_t meta_path_index,
+                                                 std::shared_ptr<StochasticIndex> *edge_probability) {
+  // Get the alias edge setup lists for a given edge.
+  std::shared_ptr<Node> src_node;
+  graph_->GetNodeByNodeId(src, &src_node);
+  std::vector<NodeIdType> src_neighbors;
+  RETURN_IF_NOT_OK(src_node->GetAllNeighbors(meta_path_[meta_path_index], &src_neighbors, true));
+
+  std::shared_ptr<Node> dst_node;
+  graph_->GetNodeByNodeId(dst, &dst_node);
+  std::vector<NodeIdType> dst_neighbors;
+  RETURN_IF_NOT_OK(dst_node->GetAllNeighbors(meta_path_[meta_path_index + 1], &dst_neighbors, true));
+
+  std::sort(dst_neighbors.begin(), dst_neighbors.end());
+  std::vector<float> non_normalized_probability;
+  for (const auto &dst_nbr : dst_neighbors) {
+    if (dst_nbr == src) {
+      non_normalized_probability.push_back(1.0 / step_home_param_);  // replace 1.0 with G[dst][dst_nbr]['weight']
+      continue;
+    }
+    auto it = std::find(src_neighbors.begin(), src_neighbors.end(), dst_nbr);
+    if (it != src_neighbors.end()) {
+      // stay close, this node connect both src and dst
+      non_normalized_probability.push_back(1.0);  // replace 1.0 with G[dst][dst_nbr]['weight']
+    } else {
+      // step far away
+      non_normalized_probability.push_back(1.0 / step_away_param_);  // replace 1.0 with G[dst][dst_nbr]['weight']
+    }
+  }
+
+  *edge_probability =
+    std::make_shared<StochasticIndex>(GenerateProbability(Normalize<float>(non_normalized_probability)));
+  return Status::OK();
+}
+
+StochasticIndex Graph::RandomWalkBase::GenerateProbability(const std::vector<float> &probability) {
+  uint32_t K = probability.size();
+  std::vector<int32_t> switch_to_large_index(K, 0);
+  std::vector<float> weight(K, .0);
+  std::vector<int32_t> smaller;
+  std::vector<int32_t> larger;
+  auto random_device = GetRandomDevice();
+  std::uniform_real_distribution<> distribution(-kGnnEpsilon, kGnnEpsilon);
+  float accumulate_threshold = 0.0;
+  for (uint32_t i = 0; i < K; i++) {
+    float threshold_one = distribution(random_device);
+    accumulate_threshold += threshold_one;
+    weight[i] = i < K - 1 ? probability[i] * K + threshold_one : probability[i] * K - accumulate_threshold;
+    weight[i] < 1.0 ? smaller.push_back(i) : larger.push_back(i);
+  }
+
+  while ((!smaller.empty()) && (!larger.empty())) {
+    uint32_t small = smaller.back();
+    smaller.pop_back();
+    uint32_t large = larger.back();
+    larger.pop_back();
+    switch_to_large_index[small] = large;
+    weight[large] = weight[large] + weight[small] - 1.0;
+    weight[large] < 1.0 ? smaller.push_back(large) : larger.push_back(large);
+  }
+  return StochasticIndex(switch_to_large_index, weight);
+}
+
+uint32_t Graph::RandomWalkBase::WalkToNextNode(const StochasticIndex &stochastic_index) {
+  auto switch_to_large_index = stochastic_index.first;
+  auto weight = stochastic_index.second;
+  const uint32_t size_of_index = switch_to_large_index.size();
+
+  auto random_device = GetRandomDevice();
+  std::uniform_real_distribution<> distribution(0.0, 1.0);
+
+  // Generate random integer between [0, K)
+  uint32_t random_idx = std::floor(distribution(random_device) * size_of_index);
+
+  if (distribution(random_device) < weight[random_idx]) {
+    return random_idx;
+  }
+  return switch_to_large_index[random_idx];
+}
+
+template <typename T>
+std::vector<float> Graph::RandomWalkBase::Normalize(const std::vector<T> &non_normalized_probability) {
+  float sum_probability =
+    1.0 * std::accumulate(non_normalized_probability.begin(), non_normalized_probability.end(), 0);
+  if (sum_probability < kGnnEpsilon) {
+    sum_probability = 1.0;
+  }
+  std::vector<float> normalized_probability;
+  std::transform(non_normalized_probability.begin(), non_normalized_probability.end(),
+                 std::back_inserter(normalized_probability), [&](T value) -> float { return value / sum_probability; });
+  return normalized_probability;
+}
 }  // namespace gnn
 }  // namespace dataset
 }  // namespace mindspore

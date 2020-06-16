@@ -19,6 +19,7 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 
 DATASET_FILE = "../data/mindrecord/testGraphData/testdata"
+SOCIAL_DATA_FILE = "../data/mindrecord/testGraphData/sns"
 
 
 def test_graphdata_getfullneighbor():
@@ -172,6 +173,17 @@ def test_graphdata_generatordataset():
     assert i == 40
 
 
+def test_graphdata_randomwalk():
+    g = ds.GraphData(SOCIAL_DATA_FILE, 1)
+    nodes = g.get_all_nodes(1)
+    print(len(nodes))
+    assert len(nodes) == 33
+
+    meta_path = [1 for _ in range(39)]
+    walks = g.random_walk(nodes, meta_path)
+    assert walks.shape == (33, 40)
+
+
 if __name__ == '__main__':
     test_graphdata_getfullneighbor()
     logger.info('test_graphdata_getfullneighbor Ended.\n')
@@ -185,3 +197,5 @@ if __name__ == '__main__':
     logger.info('test_graphdata_graphinfo Ended.\n')
     test_graphdata_generatordataset()
     logger.info('test_graphdata_generatordataset Ended.\n')
+    test_graphdata_randomwalk()
+    logger.info('test_graphdata_randomwalk Ended.\n')

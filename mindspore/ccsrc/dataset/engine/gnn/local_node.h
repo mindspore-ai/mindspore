@@ -47,7 +47,8 @@ class LocalNode : public Node {
   // @param NodeType neighbor_type - type of neighbor
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
   // @return Status - The error code return
-  Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors) override;
+  Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors,
+                         bool exclude_itself = false) override;
 
   // Get the sampled neighbors of a node
   // @param NodeType neighbor_type - type of neighbor
