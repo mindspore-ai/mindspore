@@ -40,8 +40,6 @@ struct BPlusTreeTraits {
   static constexpr slot_type kLeafSlots = 256;
   // Number of slots in each inner node of the tree
   static constexpr slot_type kInnerSlots = 128;
-  // If kAppendMode is true, we will split high instead of 50/50 split
-  static constexpr bool kAppendMode = false;
 };
 
 /// Implementation of B+ tree
@@ -123,19 +121,14 @@ class BPlusTree {
   std::unique_ptr<value_type> DoUpdate(const key_type &key, const value_type &new_value);
   std::unique_ptr<value_type> DoUpdate(const key_type &key, std::unique_ptr<value_type> &&new_value);
 
-  void PopulateNumKeys();
-
-  key_type KeyAtPos(uint64_t inx);
-
   // Statistics
   struct tree_stats {
     std::atomic<uint64_t> size_;
     uint32_t leaves_;
     uint32_t inner_nodes_;
     uint32_t level_;
-    bool num_keys_array_valid_;
 
-    tree_stats() : size_(0), leaves_(0), inner_nodes_(0), level_(0), num_keys_array_valid_(false) {}
+    tree_stats() : size_(0), leaves_(0), inner_nodes_(0), level_(0) {}
   };
 
  private:
@@ -159,10 +152,6 @@ class BPlusTree {
    private:
     Node<BaseNode> lru_;
   };
-
-  uint64_t PopulateNumKeys(BaseNode *n);
-
-  key_type KeyAtPos(BaseNode *n, uint64_t inx);
 
   // This control block keeps track of all the nodes we traverse on insert.
   // To maximize concurrency, internal nodes are latched S. If a node split
@@ -255,7 +244,6 @@ class BPlusTree {
     slot_type slot_dir_[traits::kInnerSlots] = {0};
     key_type keys_[traits::kInnerSlots] = {0};
     BaseNode *data_[traits::kInnerSlots + 1] = {nullptr};
-    uint64_t num_keys_[traits::kInnerSlots + 1] = {0};
     slot_type slotuse_;
   };
 
@@ -391,7 +379,6 @@ class BPlusTree {
     Iterator operator--(int);
 
     bool operator==(const Iterator &x) const { return (x.cur_ == cur_) && (x.slot_ == slot_); }
-
     bool operator!=(const Iterator &x) const { return (x.cur_ != cur_) || (x.slot_ != slot_); }
 
    private:
@@ -441,7 +428,6 @@ class BPlusTree {
     ConstIterator operator--(int);
 
     bool operator==(const ConstIterator &x) const { return (x.cur_ == cur_) && (x.slot_ == slot_); }
-
     bool operator!=(const ConstIterator &x) const { return (x.cur_ != cur_) || (x.slot_ != slot_); }
 
    private:
@@ -451,20 +437,17 @@ class BPlusTree {
   };
 
   Iterator begin();
-
   Iterator end();
 
   ConstIterator begin() const;
-
   ConstIterator end() const;
 
   ConstIterator cbegin() const;
-
   ConstIterator cend() const;
 
   // Locate the entry with key
-  ConstIterator Search(const key_type &key) const;
-  Iterator Search(const key_type &key);
+  std::pair<ConstIterator, bool> Search(const key_type &key) const;
+  std::pair<Iterator, bool> Search(const key_type &key);
 
   value_type operator[](key_type key);
 };

@@ -286,7 +286,8 @@ typename BPlusTree<K, V, A, C, T>::ConstIterator &BPlusTree<K, V, A, C, T>::Cons
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
-typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::Search(const key_type &key) const {
+std::pair<typename BPlusTree<K, V, A, C, T>::ConstIterator, bool> BPlusTree<K, V, A, C, T>::Search(
+  const key_type &key) const {
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
     slot_type slot;
@@ -294,21 +295,15 @@ typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::Searc
     // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
     myLock->LockShared();
     IndexRc rc = Locate(myLock, false, root_, key, &leaf, &slot);
-    if (rc == IndexRc::kOk) {
-      // All locks from the tree to the parent of leaf are all gone. We still have a S lock
-      // on the leaf. The unlock will be handled by the iterator when it goes out of scope.
-      return ConstIterator(leaf, slot, true);
-    } else {
-      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
-      return cend();
-    }
+    bool find = (rc == IndexRc::kOk);
+    return std::make_pair(ConstIterator(leaf, slot, find), find);
   } else {
-    return cend();
+    return std::make_pair(cend(), false);
   }
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
-typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::Search(const key_type &key) {
+std::pair<typename BPlusTree<K, V, A, C, T>::Iterator, bool> BPlusTree<K, V, A, C, T>::Search(const key_type &key) {
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
     slot_type slot;
@@ -316,23 +311,17 @@ typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::Search(con
     // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
     myLock->LockShared();
     IndexRc rc = Locate(myLock, false, root_, key, &leaf, &slot);
-    if (rc == IndexRc::kOk) {
-      // All locks from the tree to the parent of leaf are all gone. We still have a S lock
-      // on the leaf. The unlock will be handled by the iterator when it goes out of scope.
-      return Iterator(leaf, slot, true);
-    } else {
-      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
-      return end();
-    }
+    bool find = (rc == IndexRc::kOk);
+    return std::make_pair(Iterator(leaf, slot, find), find);
   } else {
-    return end();
+    return std::make_pair(end(), false);
   }
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::value_type BPlusTree<K, V, A, C, T>::operator[](key_type key) {
-  Iterator it = Search(key);
-  return it.value();
+  auto r = Search(key);
+  return r.first.value();
 }
 
 template <typename K, typename V, typename A, typename C, typename T>

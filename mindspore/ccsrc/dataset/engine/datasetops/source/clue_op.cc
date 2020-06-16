@@ -408,8 +408,7 @@ Status ClueOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
             break;
           }
         }
-        auto file_it = filename_index_->Search(*it);
-        file_index.emplace_back(std::pair<std::string, int64_t>(file_it.value(), *it));
+        file_index.emplace_back(std::pair<std::string, int64_t>((*filename_index_)[*it], *it));
       }
     } else {
       for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
