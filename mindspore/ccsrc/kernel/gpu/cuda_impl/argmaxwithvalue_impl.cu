@@ -44,15 +44,15 @@ __global__ void ArgmaxWithValue(size_t size, const T* input, const int bound, in
 
 template <typename T, typename S>
 void CalArgmaxWithValue(size_t size, const T* input, const int bound_, const int outerSize_, const int innerSize_,
-                        int axis_, int dims_, S* index, T* output, cudaStream_t cuda_stream) {
+                        S* index, T* output, cudaStream_t cuda_stream) {
   ArgmaxWithValue<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, bound_, outerSize_, innerSize_,
                                                                      index, output);
   return;
 }
 
 template void CalArgmaxWithValue<float, int>(size_t size, const float* input, const int bound_, const int outerSize_,
-                                  const int innerSize_, int axis_, int dims_, int* index, float* output,
+                                  const int innerSize_, int* index, float* output,
                                   cudaStream_t cuda_stream);
 template void CalArgmaxWithValue<half, int>(size_t size, const half* input, const int bound_, const int outerSize_,
-                                  const int innerSize_, int axis_, int dims_, int* index, half* output,
+                                  const int innerSize_, int* index, half* output,
                                   cudaStream_t cuda_stream);
