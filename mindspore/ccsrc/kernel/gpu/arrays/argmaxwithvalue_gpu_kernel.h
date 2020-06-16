@@ -26,15 +26,7 @@ namespace kernel {
 template <typename T, typename S>
 class ArgmaxWithValueGpuKernel : public GpuKernel {
  public:
-  ArgmaxWithValueGpuKernel()
-      : input_size_(0),
-        output_size_(0),
-        workspace_size_(0),
-        axis_(0),
-        dims_(1),
-        bound_(0),
-        outerSize_(0),
-        innerSize_(0) {}
+  ArgmaxWithValueGpuKernel() : input_size_(0), output_size_(0), bound_(0), outerSize_(0), innerSize_(0) {}
   ~ArgmaxWithValueGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -46,37 +38,36 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
     S *index = GetDeviceAddress<S>(outputs, 0);
-    CalArgmaxWithValue(input_size_ / sizeof(T), input, bound_, outerSize_, innerSize_, axis_, dims_, index, output,
+    CalArgmaxWithValue(input_size_ / sizeof(T), input, bound_, outerSize_, innerSize_, index, output,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-    dims_ = shape_.size();
-
-    axis_ = GetAttr<int>(kernel_node, "axis");
-    if (axis_ < 0) {
-      axis_ += dims_;
+    int dims = shape.size();
+    int axis = GetAttr<int>(kernel_node, "axis");
+    if (axis < 0) {
+      axis += dims;
     }
     input_size_ = sizeof(T);
-    for (auto x : shape_) {
+    for (auto x : shape) {
       input_size_ *= x;
     }
     output_size_ = sizeof(S);
     for (auto x : output_shape) {
       output_size_ *= x;
     }
-    bound_ = shape_[axis_];
+    bound_ = shape[axis];
     outerSize_ = 1;
-    for (int i = axis_ - 1; i >= 0; i--) {
-      outerSize_ *= shape_[i];
+    for (int i = axis - 1; i >= 0; i--) {
+      outerSize_ *= shape[i];
     }
 
     innerSize_ = 1;
-    for (int i = axis_ + 1; i < dims_; i++) {
-      innerSize_ *= shape_[i];
+    for (int i = axis + 1; i < dims; i++) {
+      innerSize_ *= shape[i];
     }
     InitSizeLists();
     return true;
@@ -92,13 +83,9 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
  private:
   size_t input_size_;
   size_t output_size_;
-  size_t workspace_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  std::vector<size_t> shape_;
-  int axis_;
-  int dims_;
   int bound_;
   int outerSize_;
   int innerSize_;
