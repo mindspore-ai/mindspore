@@ -1523,6 +1523,10 @@ raise_set = [
         'block': (P.PReLU(), {'exception': ValueError}),
         'desc_inputs': [[2], [1]],
         'desc_bprop': [[1]]}),
+    ('SSIM', {
+        'block': (nn.SSIM(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.ones((1, 3, 8, 8)), mstype.float32),
+                        Tensor(np.ones((1, 3, 8, 8)), mstype.float32)]}),
 
 ]
 
