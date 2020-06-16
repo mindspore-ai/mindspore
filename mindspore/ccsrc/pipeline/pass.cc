@@ -79,16 +79,9 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     // Specialization
     irpass.specialize_transform_,
 
-    // Arithmetic simplifications
-    irpass.arithmetic_simplify_,
-    irpass.addn_zero_filter_,
-    irpass.adjust_all_reduce_mul_add_,
-
     // Miscellaneous
     irpass.item_tuple_eliminate_,
-    irpass.env_get_set_item_,
-    irpass.new_env_get_item_,
-    irpass.add_env_get_item_,
+    irpass.env_get_item_eliminate_,
     irpass.cast_eliminate_,
     irpass.reshape_eliminate_,
     irpass.reduce_eliminate_,
@@ -96,13 +89,20 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.transpose_eliminate_,
     irpass.minmaximum_grad_,
     irpass.get_make_ref_eliminate_,
+
+    // Arithmetic simplifications
+    irpass.arithmetic_simplify_,
+    irpass.addn_zero_filter_,
+    irpass.adjust_all_reduce_mul_add_,
+
+    // Safe inlining
+    irpass.inline_,
   });
   opt::OptPassConfig a_2 = opt::OptPassConfig({
     irpass.merge_addn_,
     irpass.float_tuple_getitem_switch_,
     irpass.float_env_getitem_switch_,
-    irpass.incorporate_getitem_,
-    irpass.incorporate_getitem_switch_,
+    irpass.incorporate_getitem_set_,
     irpass.incorporate_call_,
     irpass.incorporate_call_switch_,
     irpass.incorporate_env_getitem_,
@@ -145,7 +145,6 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.reset_defer_inline_,
     irpass.inline_,
     irpass.special_op_eliminate_,
-    irpass.stop_gradient_eliminate_,
     irpass.get_make_ref_eliminate_,
   });
   opt::OptPassConfig b_2 = opt::OptPassConfig({

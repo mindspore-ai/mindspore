@@ -401,7 +401,7 @@ TEST_F(TestOptLib, test_incorporate_getitem) {
   FuncGraphPtr after1 = getPyFun.CallAndParseRet("test_incorporate_getitem", "after1");
   FuncGraphPtr after2 = getPyFun.CallAndParseRet("test_incorporate_getitem", "after2");
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_set_});
 
   ASSERT_TRUE(CheckOpt(before1, after1, patterns));
   ASSERT_TRUE(CheckOpt(before2, after2, patterns));
@@ -411,7 +411,7 @@ TEST_F(TestOptLib, test_incorporate_getitem_through_switch) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_incorporate_getitem_through_switch", "before");
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_incorporate_getitem_through_switch", "after");
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_switch_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_set_});
   ASSERT_TRUE(CheckOpt(before, after, patterns));
 }
 

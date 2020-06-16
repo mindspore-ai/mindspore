@@ -197,6 +197,31 @@ class IncorporateGetitemSwitch : public AnfVisitor {
   std::vector<AnfNodePtr> args_{};
   internal::GetitemTransform getitem_transform_;
 };
+
+class IncorporateGetitemSet {
+ public:
+  IncorporateGetitemSet() : incorporate_getitem_(), incorporate_getitem_switch_() {
+    eliminaters_.emplace_back(incorporate_getitem_);
+    eliminaters_.emplace_back(incorporate_getitem_switch_);
+  }
+  ~IncorporateGetitemSet() = default;
+
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+    AnfNodePtr new_node;
+    for (auto &eliminater : eliminaters_) {
+      new_node = eliminater(optimizer, node);
+      if (new_node != nullptr) {
+        return new_node;
+      }
+    }
+    return nullptr;
+  }
+
+ private:
+  IncorporateGetitem incorporate_getitem_;
+  IncorporateGetitemSwitch incorporate_getitem_switch_;
+  std::vector<TransformFuncType> eliminaters_{};
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
