@@ -180,6 +180,8 @@ extern const PrimitivePtr kPrimLessEqual;
 extern const PrimitivePtr kPrimCumSum;
 extern const PrimitivePtr kPrimCumProd;
 extern const PrimitivePtr kPrimSubscalar;
+extern const PrimitivePtr kPrimInplaceAdd;
+extern const PrimitivePtr kPrimInplaceSub;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;

@@ -368,6 +368,26 @@ class ApplyRMSNet(nn.Cell):
         return out
 
 
+class InplaceAddNet(nn.Cell):
+    def __init__(self):
+        super(InplaceAddNet, self).__init__()
+        self.inplace_add = P.InplaceAdd(indices=(0, 1))
+
+    def construct(self, x, v):
+        out = self.inplace_add(x, v)
+        return out
+
+
+class InplaceSubNet(nn.Cell):
+    def __init__(self):
+        super(InplaceSubNet, self).__init__()
+        self.inplace_sub = P.InplaceSub(indices=(0, 1))
+
+    def construct(self, x, v):
+        out = self.inplace_sub(x, v)
+        return out
+
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -492,6 +512,16 @@ test_case_math_ops = [
         'block': P.Ceil(),
         'desc_inputs': [[2, 512, 56, 56]],
         'desc_bprop': [[2, 512, 56, 56]],
+        'skip': ['backward']}),
+    ('InplaceAdd', {
+        'block': InplaceAddNet(),
+        'desc_inputs': [Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)),
+                        Tensor(np.array([[0.5, 1], [1, 1.5]]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('InplaceSub', {
+        'block': InplaceSubNet(),
+        'desc_inputs': [Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)),
+                        Tensor(np.array([[0.5, 1], [1, 1.5]]).astype(np.float32))],
         'skip': ['backward']}),
     ('ACos', {
         'block': P.ACos(),
