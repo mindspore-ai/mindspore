@@ -4893,15 +4893,15 @@ class BuildVocabDataset(DatasetOp):
     text.Vocab.from_dataset()
 
     Args:
-        vocab(Vocab): vocab object
-        columns(str or list, optional): column names to get words from. It can be a list of column names.
-        (Default is None where all columns will be used. If any column isn't string type, will return error)
+        vocab(Vocab): vocab object.
+        columns(str or list, optional): column names to get words from. It can be a list of column names (Default is
+        None, all columns are used, return error if any column isn't string).
         freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
         range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-        can be None, which corresponds to 0/total_words separately (default is None, all words are included)
+        can be None, which corresponds to 0/total_words separately (default is None, all words are included).
         top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-        taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default is None
-        all words are included)
+        taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken (default is None
+        all words are included).
 
     Returns:
         BuildVocabDataset

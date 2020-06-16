@@ -51,7 +51,7 @@ def test_simple_ngram():
     """ test simple gram with only one n value"""
     plates_mottos = ["Friendly Manitoba", "Yours to Discover", "Land of Living Skies",
                      "Birthplace of the Confederation"]
-    n_gram_mottos = [[]]
+    n_gram_mottos = [[""]]
     n_gram_mottos.append(["Yours to Discover"])
     n_gram_mottos.append(['Land of Living', 'of Living Skies'])
     n_gram_mottos.append(['Birthplace of the', 'of the Confederation'])
@@ -81,6 +81,8 @@ def test_corner_cases():
         for data in dataset.create_dict_iterator():
             assert [d.decode("utf8") for d in data["text"]] == output_line, output_line
 
+    # test tensor length smaller than n
+    test_config("Lone Star", ["Lone Star", "", "", ""], [2, 3, 4, 5])
     # test empty separator
     test_config("Beautiful British Columbia", ['BeautifulBritish', 'BritishColumbia'], 2, sep="")
     # test separator with longer length
