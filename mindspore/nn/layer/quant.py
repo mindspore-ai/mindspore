@@ -214,7 +214,7 @@ class BatchNormFoldCell(Cell):
     Batch normalization folded.
 
     Args:
-        momentum (float): Momentum value should be [0, 1]. Default: 0.1.
+        momentum (float): Momentum value should be [0, 1]. Default: 0.9.
         epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
             float32 else 1e-3. Default: 1e-5.
         freeze_bn (int): Delay in steps at which computation switches from regular batch
@@ -280,6 +280,7 @@ class FakeQuantWithMinMax(Cell):
         ema (bool): Exponential Moving Average algorithm update min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool): Quantization by layer or channel. Default: False.
+        channel_axis (int): Quantization by channel axis. Default: 1.
         out_channels (int): declarate the min and max channel size, Default: 1.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
@@ -391,17 +392,17 @@ class Conv2dBatchNormQuant(Cell):
         pad_mode: (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding: (int): Implicit paddings on both sides of the input. Default: 0.
         eps (int): Parameters for BatchNormal. Default: 1e-5.
-        momentum (int): Parameters for BatchNormal op. Default: 0.9.
+        momentum (int): Parameters for BatchNormal op. Default: 0.997.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            convolution kernel. Default: 'None'.
+            convolution kernel. Default: 'normal'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            beta vector. Default: 'None'.
+            beta vector. Default: 'zeros'.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            gamma vector. Default: 'None'.
+            gamma vector. Default: 'ones'.
         mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            mean vector. Default: 'None'.
+            mean vector. Default: 'zeros'.
         var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            variance vector. Default: 'None'.
+            variance vector. Default: 'ones'.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         freeze_bn (int): Quantization freeze BatchNormal op according by global step. Default: 100000.
         fake (bool): Conv2dBatchNormQuant Cell add FakeQuantWithMinMax op or not. Default: True.
@@ -434,11 +435,11 @@ class Conv2dBatchNormQuant(Cell):
                  group=1,
                  eps=1e-5,
                  momentum=0.997,
-                 weight_init=None,
-                 beta_init=None,
-                 gamma_init=None,
-                 mean_init=None,
-                 var_init=None,
+                 weight_init='normal',
+                 beta_init='zeros',
+                 gamma_init='ones',
+                 mean_init='zeros',
+                 var_init='ones',
                  quant_delay=0,
                  freeze_bn=100000,
                  fake=True,
@@ -477,8 +478,7 @@ class Conv2dBatchNormQuant(Cell):
                                                 pad=padding,
                                                 stride=self.stride,
                                                 dilation=self.dilation)
-            if weight_init is None:
-                weight_init = initializer('normal', [1, in_channels, *self.kernel_size])
+            weight_shape = [1, in_channels, *self.kernel_size]
             channel_axis = 1
         else:
             self.conv = P.Conv2D(out_channel=out_channels,
@@ -488,24 +488,16 @@ class Conv2dBatchNormQuant(Cell):
                                  stride=self.stride,
                                  dilation=self.dilation,
                                  group=group)
-            if weight_init is None:
-                weight_init = initializer('normal', [out_channels, in_channels // group, *self.kernel_size])
+            weight_shape = [out_channels, in_channels // group, *self.kernel_size]
             channel_axis = 0
-        self.weight = Parameter(weight_init, name='weight')
+        self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
 
         # initialize batchnorm Parameter
-        if gamma_init is None:
-            gamma_init = initializer('ones', [out_channels])
-        self.gamma = Parameter(gamma_init, name='gamma')
-        if beta_init is None:
-            beta_init = initializer('zeros', [out_channels])
-        self.beta = Parameter(beta_init, name='beta')
-        if mean_init is None:
-            mean_init = initializer('zeros', [out_channels])
-        self.moving_mean = Parameter(mean_init, name='moving_mean', requires_grad=False)
-        if var_init is None:
-            var_init = initializer('ones', [out_channels])
-        self.moving_variance = Parameter(var_init, name='moving_variance', requires_grad=False)
+        self.gamma = Parameter(initializer(gamma_init, [out_channels]), name='gamma')
+        self.beta = Parameter(initializer(beta_init, [out_channels]), name='beta')
+        self.moving_mean = Parameter(initializer(mean_init, [out_channels]), name='moving_mean', requires_grad=False)
+        self.moving_variance = Parameter(initializer(var_init, [out_channels]), name='moving_variance',
+                                         requires_grad=False)
 
         # initialize fake ops
         self.fake_quant_weight = FakeQuantWithMinMax(min_init=-6,
@@ -588,8 +580,8 @@ class Conv2dQuant(Cell):
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
-            Default: None.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: None.
+            Default: 'normal'.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
@@ -619,8 +611,8 @@ class Conv2dQuant(Cell):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=None,
-                 bias_init=None,
+                 weight_init='normal',
+                 bias_init='zeros',
                  quant_delay=0,
                  num_bits=8,
                  per_channel=False,
@@ -641,15 +633,14 @@ class Conv2dQuant(Cell):
         self.group = group
         self.quant_delay = quant_delay
 
-        if weight_init is None:
-            weight_init = initializer(
-                'normal', [out_channels, in_channels // group, *self.kernel_size])
-        self.weight = Parameter(weight_init, name='weight')
-        if bias_init is None:
-            bias_init = initializer('zeros', [out_channels])
-        if has_bias:
-            self.bias = Parameter(bias_init, name='bias')
-            self.bias_add = P.BiasAdd()
+        weight_shape = [out_channels, in_channels // group, *self.kernel_size]
+        self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
+
+        self.bias_add = P.BiasAdd()
+        if check_bool(has_bias):
+            self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
+        else:
+            self.bias = None
 
         self.conv = P.Conv2D(out_channel=self.out_channels,
                              kernel_size=self.kernel_size,
@@ -738,8 +729,8 @@ class DenseQuant(Cell):
         self.has_bias = check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
-            if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
-                    weight_init.shape[1] != in_channels:
+            if weight_init.dim() != 2 or weight_init.shape()[0] != out_channels or \
+                    weight_init.shape()[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
         self.weight = Parameter(initializer(
@@ -747,7 +738,7 @@ class DenseQuant(Cell):
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
-                if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
+                if bias_init.dim() != 1 or bias_init.shape()[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
             self.bias = Parameter(initializer(

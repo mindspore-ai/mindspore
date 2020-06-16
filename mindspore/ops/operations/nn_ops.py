@@ -585,6 +585,50 @@ class FusedBatchNorm(Primitive):
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
 
 
+class BNTrainingReduce(PrimitiveWithInfer):
+    """
+    reduce sum at axis [0, 2, 3].
+
+    Inputs:
+        - **x** (Tensor)  - Tensor of shape :math:`(N, C)`.
+
+    Outputs:
+        - **sum** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **square_sum** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
+
+    def infer_shape(self, x_shape):
+        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        return ([x_shape[1]], [x_shape[1]])
+
+    def infer_dtype(self, x_type):
+        return (x_type, x_type)
+
+
+class BNTrainingUpdate(PrimitiveWithInfer):
+    """
+    primitive operator of bn_training_update's register and info descriptor
+    """
+    @prim_attr_register
+    def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
+        self.init_prim_io_names(inputs=['x', 'sum', 'square_sum', 'scale', 'b', 'mean', 'variance'],
+                                outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
+        #self.isRef = validator.check_integer('isRef', isRef, [0, 1], Rel.IN)
+        self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, 'BNTrainingUpdate')
+        self.factor = validator.check_number_range('factor', factor, 0, 1, Rel.INC_BOTH, 'BNTrainingUpdate')
+
+    def infer_shape(self, x, sum, square_sum, scale, b, mean, variance):
+        return (x, variance, variance, variance, variance)
+
+    def infer_dtype(self, x, sum, square_sum, scale, b, mean, variance):
+        return (x, variance, variance, variance, variance)
+
+
 class BatchNorm(PrimitiveWithInfer):
     r"""
     Batch Normalization for input data and updated parameters.

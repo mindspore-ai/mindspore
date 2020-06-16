@@ -50,15 +50,16 @@ def _fake_quant_per_layer_tbe():
 
 
 @fusion_manager.register("fake_quant_per_layer")
-def fake_quant_per_layer_compute(x, min_val, max_val, y, quant_min, quant_max,
+def fake_quant_per_layer_compute(x, min_val, max_val, y, quant_min, quant_max, symmetric,
                                  kernel_name="fake_quant_per_layer"):
     """FakeQuantPerLayer"""
     shape = te.lang.cce.util.shape_to_list(x.shape)
     shape_min = te.lang.cce.util.shape_to_list(min_val.shape)
     quant_min = te.lang.cce.broadcast(quant_min, shape_min, x.dtype)
     quant_max = te.lang.cce.broadcast(quant_max, shape_min, x.dtype)
-    min_val = te.lang.cce.broadcast(min_val, shape_min, x.dtype)
-    max_val = te.lang.cce.broadcast(max_val, shape_min, x.dtype)
+    if symmetric:
+        max_val = te.lang.cce.vmax(te.lang.cce.vmuls(min_val, -1.), max_val)
+        min_val = te.lang.cce.vmuls(max_val, -1.)
 
     # CalNudge(NudgeMinMax)
     scale = te.lang.cce.vdiv(te.lang.cce.vsub(
@@ -119,12 +120,8 @@ def fake_quant_per_layer(x, min_val, max_val, y,
     input_shape = (functools_reduce(lambda x, y: x * y, input_shape[:]),)
     shape_min, _, _ = util.produce_shapes(min_shape, input_shape)
 
-    if symmetric:
-        quant_min = 0 - 2 ** (num_bits - 1)
-        quant_max = 2 ** (num_bits - 1) - 1
-    else:
-        quant_min = 0
-        quant_max = 2 ** num_bits - 1
+    quant_min = 0
+    quant_max = 2 ** num_bits - 1
     if narrow_range:
         quant_min = quant_min + 1
 
@@ -132,7 +129,7 @@ def fake_quant_per_layer(x, min_val, max_val, y,
     min_data = tvm.placeholder(shape_min, name="min_data", dtype=min_dtype)
     max_data = tvm.placeholder(shape_min, name="max_data", dtype=max_dtype)
     res = fake_quant_per_layer_compute(input_data, min_data, max_data, y,
-                                       quant_min, quant_max, kernel_name)
+                                       quant_min, quant_max, symmetric, kernel_name)
 
     with tvm.target.cce():
         sch = generic.auto_schedule(res)
