@@ -378,11 +378,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AbstractBasePtr
   }
   auto real_eval = dyn_cast<BaseFuncGraphEvaluator>(eval);
 
-  if (func->context() != nullptr) {
-    if (!IsVisible(func_graph_, func->context()->func_graph())) {
-      MS_LOG(EXCEPTION) << "Func is not visible NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
-    }
-  } else {
+  if (func->context() == nullptr) {
     MS_LOG(EXCEPTION) << "Func context is nullptr NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
   }
   AnalysisContextPtr context = real_eval->MakeContext(engine_, argvals);
@@ -507,9 +503,9 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
     // First element is partial, second is func so arg is start from 2
     (void)args.insert(args.begin(), inputs.begin() + 2, inputs.end());
     func = inputs[1];
-    new_inputs = args;
-    (void)new_inputs.insert(new_inputs.begin(), func);
   }
+  new_inputs = args;
+  (void)new_inputs.insert(new_inputs.begin(), func);
 
   AbstractBasePtrList argvals;
   MS_EXCEPTION_IF_NULL(new_inputs[0]);
@@ -524,9 +520,23 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
                   << new_inputs[i]->DebugString() << ", abstract: " << new_inputs[i]->abstract()->ToString();
   }
 
-  if (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER)) {
-    auto wrapped_node = BuildSpecializedParameterNode(new_node);
-    new_inputs[0] = wrapped_node;
+  if (!func->isa<ValueNode>()) {
+    MS_LOG(DEBUG) << func->abstract()->type_name() << " | " << func->abstract()->ToString();
+    if (func->abstract()->isa<AbstractFunction>() && !func->abstract()->isa<AbstractFuncUnion>()) {
+      auto func_abs = func->abstract()->cast<AbstractFunctionPtr>();
+      EvaluatorPtr eval = engine_->GetEvaluatorFor(func_abs);
+      std::pair<AbstractBasePtrList, AbstractBasePtr> result;
+      AbstractBasePtrList empty_args;
+      auto status = FindUniqueArgvals(func_abs, eval, empty_args, &result);
+      MS_LOG(DEBUG) << "FindUniqueArgvals return status: " << status;
+      // if a node is a poly node, or an input parameter is a PartialAbstractClosure, expand it early
+      if (status == kSpecializeFindUniqueArgvalPoly ||
+          (func->isa<Parameter>() && (func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER) ||
+                                      func->abstract()->isa<PartialAbstractClosure>()))) {
+        auto wrapped_node = BuildSpecializedParameterNode(new_node);
+        new_inputs[0] = wrapped_node;
+      }
+    }
   }
 
   if (CanSpecializeNode(func)) {
