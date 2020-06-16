@@ -8,6 +8,9 @@ from mindspore.nn import WithLossCell, Momentum
 from mindspore.ops import composite as C
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+cell_hook_done = False
+var_hook_done = False
+cell_bprop_done = False
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -32,14 +35,34 @@ def weight_variable():
 
 def cell_hook_function(cell_id, grad_input, grad_output):
     print(cell_id)
+    global cell_hook_done
+    cell_hook_done = True
     assert (grad_output[0].asnumpy().shape == (32, 6, 14, 14))
     assert (grad_input[0].asnumpy().shape == (32, 16, 10, 10))
 
 
 def var_hook_function(grad_out):
     print("grad:", grad_out)
+    global var_hook_done
+    var_hook_done = True
     assert (grad_out[0].asnumpy().shape == (32, 120))
 
+
+class Block(nn.Cell):
+    def __init__(self):
+        super(Block, self).__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+    def bprop(self, x, out, dout):
+        global cell_bprop_done
+        cell_bprop_done = True
+        grad = out.asnumpy() * dout.asnumpy()
+        grad = Tensor(grad)
+        return (grad,)
 
 class LeNet5(nn.Cell):
     """
@@ -59,6 +82,7 @@ class LeNet5(nn.Cell):
         self.conv1 = conv(1, 6, 5)
         self.conv2 = conv(6, 16, 5)
         self.conv2.register_backward_hook(cell_hook_function)
+        self.block = Block()
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
         self.fc2 = fc_with_initialize(120, 84)
         self.fc3 = fc_with_initialize(84, self.num_class)
@@ -72,7 +96,7 @@ class LeNet5(nn.Cell):
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv2(x)
-        x = self.relu(x)
+        x = self.block(x)
         x = self.max_pool2d(x)
         x = self.reshape(x, (self.batch_size, -1))
         x = self.fc1(x)
@@ -110,6 +134,9 @@ def test_hook():
     loss_output = criterion(output, label)
     grads = train_network(input_data, label)
     success = optimizer(grads)
+    assert cell_hook_done
+    assert var_hook_done
+    assert cell_bprop_done
     print(loss_output.asnumpy().shape)
 
 

@@ -933,6 +933,8 @@ class TupleToArray(PrimitiveWithInfer):
         args = list()
         if isinstance(x, range):
             args.append(tuple(x))
+        else:
+            args.append(x)
         return _run_op(self, self.name, args)
 
 

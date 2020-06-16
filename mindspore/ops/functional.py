@@ -21,6 +21,7 @@ from mindspore.common._register_for_tensor import tensor_operator_registry
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
+from .._extends import builtin_operations as BP
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -155,7 +156,7 @@ stop_gradient = Primitive("stop_gradient")
 tensor_operator_registry.register('__add__', tensor_add)
 tensor_operator_registry.register('__sub__', tensor_sub)
 tensor_operator_registry.register('__mul__', tensor_mul)
-tensor_operator_registry.register('__div__', tensor_div)
+tensor_operator_registry.register('__truediv__', tensor_div)
 #ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
@@ -164,4 +165,6 @@ tensor_operator_registry.register('__lt__', tensor_lt)
 tensor_operator_registry.register('__le__', tensor_le)
 tensor_operator_registry.register('__gt__', tensor_gt)
 tensor_operator_registry.register('__ge__', tensor_ge)
-tensor_operator_registry.register('__shape__', shape)
+tensor_operator_registry.register('shape', shape)
+#support GE backend for no compare operators
+tensor_operator_registry.register('vm_compare', BP.vm_compare)

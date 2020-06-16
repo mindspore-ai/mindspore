@@ -452,5 +452,5 @@ def test_tensor_operation():
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
     res = 8 / x
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         res = x * (2, 3)
