@@ -64,6 +64,9 @@ class MsContext {
   bool enable_pynative_infer() const { return enable_pynative_infer_; }
   void set_enable_pynative_infer(bool enable_pynative_infer) { enable_pynative_infer_ = enable_pynative_infer; }
 
+  bool enable_pynative_hook() const { return enable_pynative_hook_; }
+  void set_enable_pynative_hook(bool enable_pynative_hook) { enable_pynative_hook_ = enable_pynative_hook; }
+
   bool enable_task_sink() const { return enable_task_sink_; }
 
   void set_precompile_only(bool precompile_only) { precompile_only_ = precompile_only; }
@@ -161,6 +164,7 @@ class MsContext {
   uint32_t device_id_;
   int execution_mode_;
   bool enable_pynative_infer_;
+  bool enable_pynative_hook_;
   bool save_graphs_flag_;
   std::string save_graphs_path_;
   uint32_t tsd_ref_;
