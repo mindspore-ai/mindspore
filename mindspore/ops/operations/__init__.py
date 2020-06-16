@@ -68,7 +68,6 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
                      ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
-from . import _quant_ops
 from ._quant_ops import *
 from .thor_ops import *
 
@@ -265,5 +264,4 @@ __all__ = [
     "SquareSumAll"
 ]
 
-__all__.extend(_quant_ops.__all__)
 __all__.sort()

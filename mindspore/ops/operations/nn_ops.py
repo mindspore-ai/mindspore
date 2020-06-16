@@ -586,22 +586,27 @@ class FusedBatchNorm(Primitive):
 
 class BNTrainingReduce(PrimitiveWithInfer):
     """
-    primitive operator of bn_training_reduce's register and info descriptor
+    reduce sum at axis [0, 2, 3].
+
+    Inputs:
+        - **x** (Tensor)  - Tensor of shape :math:`(N, C)`.
+
+    Outputs:
+        - **sum** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **square_sum** (Tensor) - Tensor of shape :math:`(C,)`.
+
     """
 
     @prim_attr_register
-    def __init__(self, mode=0, epsilon=1e-5, momentum=0.1):
+    def __init__(self):
         self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
-        self.mode = validator.check_integer('mode', mode, [0, 1], Rel.IN, self.name)
-        self.epsilon = validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
-        self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
 
-    def infer_shape(self, x):
-        input_shp = _infer_shape_reduce(x, (0, 2, 3), False, self.name)
-        return (input_shp, input_shp)
+    def infer_shape(self, x_shape):
+        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        return ([x_shape[1]], [x_shape[1]])
 
-    def infer_dtype(self, x):
-        return (x, x)
+    def infer_dtype(self, x_type):
+        return (x_type, x_type)
 
 
 class BNTrainingUpdate(PrimitiveWithInfer):
