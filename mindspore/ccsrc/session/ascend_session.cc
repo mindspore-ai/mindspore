@@ -779,6 +779,9 @@ void AscendSession::GetSummaryNodes(KernelGraph *graph) {
   auto graph_order = GetGraphOrder(graph->graph_id());
   for (size_t i = 0; i < graph_order.size(); i++) {
     auto child_graph = GetGraph(graph_order[i]);
+    if (child_graph == nullptr) {
+      continue;
+    }
     SessionBasic::GetSummaryNodes(child_graph.get());
     auto child_graph_summary = child_graph->summary_nodes();
     summary.insert(child_graph_summary.begin(), child_graph_summary.end());
