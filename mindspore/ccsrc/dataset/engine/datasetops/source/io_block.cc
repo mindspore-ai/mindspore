@@ -72,8 +72,9 @@ Status FilenameBlock::GetFilename(std::string *out_filename, const AutoIndexObj<
   RETURN_IF_NOT_OK(IOBlock::GetKey(&fetched_key));
 
   // Do an index lookup using that key to get the filename.
-  auto it = index.Search(fetched_key);
-  if (it != index.end()) {
+  auto r = index.Search(fetched_key);
+  if (r.second) {
+    auto &it = r.first;
     *out_filename = it.value();
   } else {
     RETURN_STATUS_UNEXPECTED("Could not find filename from index");

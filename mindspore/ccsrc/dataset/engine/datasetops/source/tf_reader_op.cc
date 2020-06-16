@@ -451,8 +451,7 @@ Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
         }
       } else {
         // Do an index lookup using that key to get the filename.
-        auto file_it = filename_index_->Search(*it);
-        std::string file_name = file_it.value();
+        std::string file_name = (*filename_index_)[*it];
         if (NeedPushFileToblockQueue(file_name, &start_offset, &end_offset, pre_count)) {
           auto ioBlock = std::make_unique<FilenameBlock>(*it, start_offset, end_offset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
