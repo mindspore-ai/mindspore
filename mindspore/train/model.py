@@ -171,6 +171,8 @@ class Model:
             self._eval_indexes = [0, 1, 2]
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            if self._optimizer:
+                self._eval_network = _VirtualDatasetCell(self._eval_network)
             self._eval_network.set_auto_parallel()
 
     def _build_predict_network(self):
