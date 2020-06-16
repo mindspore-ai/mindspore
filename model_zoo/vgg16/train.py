@@ -19,19 +19,23 @@ python train.py --data_path=$DATA_HOME --device_id=$DEVICE_ID
 import argparse
 import os
 import random
+
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import context
 from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
-from mindspore import context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
-from mindspore.model_zoo.vgg import vgg16
-from dataset import create_dataset
-from config import cifar_cfg as cfg
+from mindspore.train.model import Model, ParallelMode
+from src.config import cifar_cfg as cfg
+from src.dataset import vgg_create_dataset
+from src.vgg import vgg16
+
 random.seed(1)
 np.random.seed(1)
+
 
 def lr_steps(global_step, lr_max=None, total_epochs=None, steps_per_epoch=None):
     """Set learning rate."""
@@ -72,12 +76,13 @@ if __name__ == '__main__':
                                           mirror_mean=True)
         init()
 
-    dataset = create_dataset(args_opt.data_path, cfg.epoch_size)
+    dataset = vgg_create_dataset(args_opt.data_path, cfg.epoch_size)
     batch_num = dataset.get_dataset_size()
 
     net = vgg16(num_classes=cfg.num_classes)
     lr = lr_steps(0, lr_max=cfg.lr_init, total_epochs=cfg.epoch_size, steps_per_epoch=batch_num)
-    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), cfg.momentum, weight_decay=cfg.weight_decay)
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), cfg.momentum,
+                   weight_decay=cfg.weight_decay)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
                   amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)

@@ -15,36 +15,35 @@
 # ============================================================================
 
 if [ $# != 2 ]
-then 
+then
     echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATA_PATH]"
 exit 1
 fi
 
 if [ ! -f $1 ]
-then 
+then
     echo "error: MINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
 exit 1
-fi 
+fi
 
 if [ ! -d $2 ]
-then 
+then
     echo "error: DATA_PATH=$2 is not a directory"
 exit 1
-fi 
+fi
 
-ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export MINDSPORE_HCCL_CONFIG_PATH=$1
 
-for((i=0; i<${DEVICE_NUM}; i++))
+for((i=0;i<RANK_SIZE;i++))
 do
     export DEVICE_ID=$i
     export RANK_ID=$i
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp *.py ./train_parallel$i
-    cp *.sh ./train_parallel$i
+    cp -r src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log

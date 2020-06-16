@@ -17,14 +17,15 @@
 python eval.py --data_path=$DATA_HOME --device_id=$DEVICE_ID
 """
 import argparse
+
 import mindspore.nn as nn
+from mindspore import context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
-from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.model_zoo.vgg import vgg16
-from config import cifar_cfg as cfg
-import dataset
+from src.config import cifar_cfg as cfg
+from src.dataset import vgg_create_dataset
+from src.vgg import vgg16
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Cifar10 classification')
@@ -47,6 +48,6 @@ if __name__ == '__main__':
     param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.set_train(False)
-    dataset = dataset.create_dataset(args_opt.data_path, 1, False)
+    dataset = vgg_create_dataset(args_opt.data_path, 1, False)
     res = model.eval(dataset)
     print("result: ", res)
