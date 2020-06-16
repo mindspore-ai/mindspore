@@ -407,6 +407,11 @@ Status CocoOp::ParseAnnotationIds() {
   nlohmann::json image_list;
   RETURN_IF_NOT_OK(SearchNodeInJson(js, std::string(kJsonImages), &image_list));
   RETURN_IF_NOT_OK(ImageColumnLoad(image_list, &image_que));
+  if (task_type_ == TaskType::Detection || task_type_ == TaskType::Panoptic) {
+    nlohmann::json node_categories;
+    RETURN_IF_NOT_OK(SearchNodeInJson(js, std::string(kJsonCategories), &node_categories));
+    RETURN_IF_NOT_OK(CategoriesColumnLoad(node_categories));
+  }
   nlohmann::json annotations_list;
   RETURN_IF_NOT_OK(SearchNodeInJson(js, std::string(kJsonAnnotations), &annotations_list));
   for (auto annotation : annotations_list) {
@@ -440,11 +445,6 @@ Status CocoOp::ParseAnnotationIds() {
   for (auto img : image_que) {
     if (coordinate_map_.find(img) != coordinate_map_.end()) image_ids_.push_back(img);
   }
-  if (task_type_ == TaskType::Detection || task_type_ == TaskType::Panoptic) {
-    nlohmann::json node_categories;
-    RETURN_IF_NOT_OK(SearchNodeInJson(js, std::string(kJsonCategories), &node_categories));
-    RETURN_IF_NOT_OK(CategoriesColumnLoad(node_categories));
-  }
   num_rows_ = image_ids_.size();
   return Status::OK();
 }
@@ -472,6 +472,9 @@ Status CocoOp::DetectionColumnLoad(nlohmann::json annotation_tree, const std::st
   uint32_t category_id = 0, iscrowd = 0;
   RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoBbox), &node_bbox));
   RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoCategoryId), &category_id));
+  auto search_category = category_set_.find(category_id);
+  if (search_category == category_set_.end())
+    RETURN_STATUS_UNEXPECTED("category_id can't find in categories where category_id: " + std::to_string(category_id));
   auto node_iscrowd = annotation_tree.find(kJsonAnnoIscrowd);
   if (node_iscrowd != annotation_tree.end()) iscrowd = *node_iscrowd;
   bbox.insert(bbox.end(), node_bbox.begin(), node_bbox.end());
@@ -524,22 +527,25 @@ Status CocoOp::PanopticColumnLoad(nlohmann::json annotation_tree, const std::str
     RETURN_STATUS_UNEXPECTED("No segments_info found in annotations where image_id: " + std::to_string(image_id));
   for (auto info : *itr_segments) {
     std::vector<float> bbox;
+    uint32_t category_id = 0;
     auto itr_bbox = info.find(kJsonAnnoBbox);
     if (itr_bbox == info.end())
       RETURN_STATUS_UNEXPECTED("No bbox found in segments_info where image_id: " + std::to_string(image_id));
     bbox.insert(bbox.end(), itr_bbox->begin(), itr_bbox->end());
     coordinate_map_[image_file].push_back(bbox);
 
-    auto itr_category_id = info.find(kJsonAnnoCategoryId);
-    if (itr_category_id == info.end())
-      RETURN_STATUS_UNEXPECTED("No category_id found in segments_info where image_id: " + std::to_string(image_id));
+    RETURN_IF_NOT_OK(SearchNodeInJson(info, std::string(kJsonAnnoCategoryId), &category_id));
+    auto search_category = category_set_.find(category_id);
+    if (search_category == category_set_.end())
+      RETURN_STATUS_UNEXPECTED("category_id can't find in categories where category_id: " +
+                               std::to_string(category_id));
     auto itr_iscrowd = info.find(kJsonAnnoIscrowd);
     if (itr_iscrowd == info.end())
       RETURN_STATUS_UNEXPECTED("No iscrowd found in segments_info where image_id: " + std::to_string(image_id));
     auto itr_area = info.find(kJsonAnnoArea);
     if (itr_area == info.end())
       RETURN_STATUS_UNEXPECTED("No area found in segments_info where image_id: " + std::to_string(image_id));
-    simple_item_map_[image_file].push_back(*itr_category_id);
+    simple_item_map_[image_file].push_back(category_id);
     simple_item_map_[image_file].push_back(*itr_iscrowd);
     simple_item_map_[image_file].push_back(*itr_area);
   }
@@ -556,6 +562,7 @@ Status CocoOp::CategoriesColumnLoad(nlohmann::json categories_tree) {
     if (itr_id == category.end()) RETURN_STATUS_UNEXPECTED("No id found in categories of " + annotation_path_);
     id = *itr_id;
     label_info.push_back(id);
+    category_set_.insert(id);
 
     auto itr_name = category.find(kJsonCategoriesName);
     if (itr_name == category.end())
