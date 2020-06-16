@@ -1015,10 +1015,8 @@ class Dataset:
 
         def get_distribution(output_dataset):
             dev_id = 0
-            if isinstance(output_dataset, (MindDataset)):
-                return output_dataset.distribution, dev_id
             if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDatasetV2,
-                                           ManifestDataset, MnistDataset, VOCDataset, CelebADataset)):
+                                           ManifestDataset, MnistDataset, VOCDataset, CelebADataset, MindDataset)):
                 sampler = output_dataset.sampler
                 if isinstance(sampler, samplers.DistributedSampler):
                     dev_id = sampler.shard_id
@@ -2670,7 +2668,7 @@ class MnistDataset(MappableDataset):
         return self.sampler.is_sharded()
 
 
-class MindDataset(SourceDataset):
+class MindDataset(MappableDataset):
     """
     A source dataset that reads from shard files and database.
 
@@ -2687,11 +2685,13 @@ class MindDataset(SourceDataset):
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, sampler is exclusive
             with shuffle and block_reader). Support list: SubsetRandomSampler,
-            PkSampler.
+            PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
         padded_sample (dict, optional): Samples will be appended to dataset, which
             keys are the same as column_list.
         num_padded (int, optional): Number of padding samples.Dataset size
             plus num_padded should be divisible by num_shards.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, all samples).
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -2703,7 +2703,7 @@ class MindDataset(SourceDataset):
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
                  shuffle=None, num_shards=None, shard_id=None,
                  block_reader=False, sampler=None, padded_sample=None,
-                 num_padded=None):
+                 num_padded=None, num_samples=None):
         super().__init__(num_parallel_workers)
         if isinstance(dataset_file, list):
             self.load_dataset = False
@@ -2712,15 +2712,10 @@ class MindDataset(SourceDataset):
         self.dataset_file = dataset_file
         self.columns_list = columns_list
         self.shuffle_option = shuffle
-        self.distribution = ""
-        self.sampler = sampler
+        self.num_shards = num_shards
+        self.shard_id = shard_id
 
-        if num_shards is None or shard_id is None:
-            self.partitions = None
-        else:
-            self.partitions = [num_shards, shard_id]
-
-        if block_reader is True and self.partitions is not None:
+        if block_reader is True and num_shards is not None:
             raise ValueError("block reader not allowed true when use partitions")
 
         if block_reader is True and shuffle is True:
@@ -2730,25 +2725,21 @@ class MindDataset(SourceDataset):
             logger.warning("WARN: global shuffle is not used.")
 
         if sampler is not None:
-            if isinstance(sampler, samplers.SubsetRandomSampler) is False and \
-                    isinstance(sampler, samplers.PKSampler) is False:
+            if isinstance(sampler, (samplers.SubsetRandomSampler, samplers.PKSampler,
+                                    samplers.DistributedSampler, samplers.RandomSampler,
+                                    samplers.SequentialSampler)) is False:
                 raise ValueError("the sampler is not supported yet.")
+
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
+        self.num_samples = num_samples
 
         # sampler exclusive
         if block_reader is True and sampler is not None:
             raise ValueError("block reader not allowed true when use sampler")
 
-        if shuffle is not None and sampler is not None:
-            raise ValueError("shuffle not allowed when use sampler")
-
-        if block_reader is False and sampler is None:
-            self.shuffle_option = not bool(shuffle is False)
-
         if num_padded is None:
             num_padded = 0
 
-        self.num_shards = num_shards
-        self.shard_id = shard_id
         self.block_reader = block_reader
         self.padded_sample = padded_sample
         self.num_padded = num_padded
@@ -2766,10 +2757,8 @@ class MindDataset(SourceDataset):
         args["load_dataset"] = self.load_dataset
         args["columns_list"] = self.columns_list
         args["shuffle_option"] = self.shuffle_option
-        args["partitions"] = self.partitions
+        args["num_samples"] = self.num_samples
         args["block_reader"] = self.block_reader
-        args["num_shards"] = self.num_shards
-        args["shard_id"] = self.shard_id
         args["num_padded"] = self.num_padded
         args["padded_sample"] = padded_sample
         args["sampler"] = self.sampler
@@ -2788,14 +2777,6 @@ class MindDataset(SourceDataset):
             else:
                 dataset_file = self.dataset_file
             num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler, self.num_padded)
-            if self.partitions is not None and self.partitions[0] > 0:
-                if num_rows % self.partitions[0] == 0:
-                    num_rows = num_rows // self.partitions[0]
-                else:
-                    if self.num_padded > 0:
-                        raise RuntimeError(
-                            "Dataset size plus number of padded samples is not divisible by number of shards.")
-                    num_rows = num_rows // self.partitions[0] + 1
             return num_rows
         return self._dataset_size
 

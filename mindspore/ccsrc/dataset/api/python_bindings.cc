@@ -71,6 +71,7 @@
 #include "mindrecord/include/shard_pk_sample.h"
 #include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_sample.h"
+#include "mindrecord/include/shard_sequential_sample.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
@@ -165,8 +166,8 @@ void bindDatasetOps(py::module *m) {
                                    const int64_t num_padded) {
       int64_t count = 0;
       std::shared_ptr<mindrecord::ShardOperator> op;
-      if (py::hasattr(sampler, "_create_for_minddataset")) {
-        auto create = sampler.attr("_create_for_minddataset");
+      if (py::hasattr(sampler, "create_for_minddataset")) {
+        auto create = sampler.attr("create_for_minddataset");
         op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
       }
       THROW_IF_ERROR(MindRecordOp::CountTotalRows(paths, load_dataset, op, &count, num_padded));
@@ -486,7 +487,9 @@ void bindSamplerOps(py::module *m) {
     .def("add_child",
          [](std::shared_ptr<Sampler> self, std::shared_ptr<Sampler> child) { THROW_IF_ERROR(self->AddChild(child)); });
 
-  (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator");
+  (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator")
+    .def("add_child", [](std::shared_ptr<mindrecord::ShardOperator> self,
+                         std::shared_ptr<mindrecord::ShardOperator> child) { self->SetChildOp(child); });
 
   (void)py::class_<DistributedSampler, Sampler, std::shared_ptr<DistributedSampler>>(*m, "DistributedSampler")
     .def(py::init<int64_t, int64_t, int64_t, bool, uint32_t>());
@@ -516,6 +519,22 @@ void bindSamplerOps(py::module *m) {
       } else {
         return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal);
       }
+    }));
+
+  (void)py::class_<mindrecord::ShardDistributedSample, mindrecord::ShardSample,
+                   std::shared_ptr<mindrecord::ShardDistributedSample>>(*m, "MindrecordDistributedSampler")
+    .def(py::init<int64_t, int64_t, bool, uint32_t>());
+
+  (void)py::class_<mindrecord::ShardShuffle, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardShuffle>>(
+    *m, "MindrecordRandomSampler")
+    .def(py::init([](int64_t num_samples, bool replacement, bool reshuffle_each_epoch) {
+      return std::make_shared<mindrecord::ShardShuffle>(GetSeed(), num_samples, replacement, reshuffle_each_epoch);
+    }));
+
+  (void)py::class_<mindrecord::ShardSequentialSample, mindrecord::ShardSample,
+                   std::shared_ptr<mindrecord::ShardSequentialSample>>(*m, "MindrecordSequentialSampler")
+    .def(py::init([](int num_samples, int start_index) {
+      return std::make_shared<mindrecord::ShardSequentialSample>(num_samples, start_index);
     }));
 
   (void)py::class_<WeightedRandomSampler, Sampler, std::shared_ptr<WeightedRandomSampler>>(*m, "WeightedRandomSampler")

@@ -141,7 +141,12 @@ class BuiltinSampler:
         c_child_sampler = None
         if self.child_sampler is not None:
             c_child_sampler = self.child_sampler.create()
+        return c_child_sampler
 
+    def create_child_for_minddataset(self):
+        c_child_sampler = None
+        if self.child_sampler is not None:
+            c_child_sampler = self.child_sampler.create_for_minddataset()
         return c_child_sampler
 
     def is_shuffled(self):
@@ -262,6 +267,12 @@ class DistributedSampler(BuiltinSampler):
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
+    def create_for_minddataset(self):
+        c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle, self.seed)
+        c_child_sampler = self.create_child_for_minddataset()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
     def is_shuffled(self):
         if self.child_sampler is None:
             return self.shuffle
@@ -318,7 +329,7 @@ class PKSampler(BuiltinSampler):
 
         self.num_val = num_val
         self.shuffle = shuffle
-        self.class_column = class_column # work for minddataset
+        self.class_column = class_column  # work for minddataset
         super().__init__(num_samples)
 
     def create(self):
@@ -340,12 +351,14 @@ class PKSampler(BuiltinSampler):
 
         return self.child_sampler.is_sharded()
 
-    def _create_for_minddataset(self):
+    def create_for_minddataset(self):
         if not self.class_column or not isinstance(self.class_column, str):
             raise ValueError("class_column should be a not empty string value, \
                     but got class_column={}".format(class_column))
-        return cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle)
-
+        c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle)
+        c_child_sampler = self.create_child_for_minddataset()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
 
 class RandomSampler(BuiltinSampler):
     """
@@ -387,6 +400,13 @@ class RandomSampler(BuiltinSampler):
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.RandomSampler(num_samples, self.replacement, self.reshuffle_each_epoch)
         c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def create_for_minddataset(self):
+        num_samples = self.num_samples if self.num_samples is not None else 0
+        c_sampler = cde.MindrecordRandomSampler(num_samples, self.replacement, self.reshuffle_each_epoch)
+        c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -437,6 +457,14 @@ class SequentialSampler(BuiltinSampler):
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.SequentialSampler(num_samples, start_index)
         c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def create_for_minddataset(self):
+        start_index = self.start_index if self.start_index is not None else 0
+        num_samples = self.num_samples if self.num_samples is not None else 0
+        c_sampler = cde.MindrecordSequentialSampler(num_samples, start_index)
+        c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -501,8 +529,11 @@ class SubsetRandomSampler(BuiltinSampler):
 
         return self.child_sampler.is_sharded()
 
-    def _create_for_minddataset(self):
-        return cde.MindrecordSubsetRandomSampler(self.indices)
+    def create_for_minddataset(self):
+        c_sampler = cde.MindrecordSubsetRandomSampler(self.indices)
+        c_child_sampler = self.create_child_for_minddataset()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
 
     def get_num_samples(self):
         num_samples = super().get_num_samples()
