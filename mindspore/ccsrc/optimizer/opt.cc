@@ -110,6 +110,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
   auto seen = NewSeenGeneration();
   // 1024 is for the initial capacity of deque
   std::deque<AnfNodePtr> todo(1024);
+  todo.clear();
   todo.push_back(root_node);
   bool changes = false;
 
