@@ -26,8 +26,6 @@ if (ENABLE_CPU)
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/allgather_cpu_kernel.cc")
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/reduce_scatter_cpu_kernel.cc")
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/embedding_look_up_comm_grad_cpu_kernel.cc")
-        list(REMOVE_ITEM CPU_SRC_LIST "cpu/embedding_look_up_cpu_kernel.cc")
-        list(REMOVE_ITEM CPU_SRC_LIST "cpu/sub_cpu_kernel.cc")
     endif ()
 endif ()
 
