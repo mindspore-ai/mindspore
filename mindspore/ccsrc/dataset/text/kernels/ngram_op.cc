@@ -56,10 +56,10 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "n gram needs to be a positive number.\n");
     int32_t start_ind = l_len_ - std::min(l_len_, n - 1);
     int32_t end_ind = offsets.size() - r_len_ + std::min(r_len_, n - 1);
-    if (end_ind - start_ind < n) {
+    if (end_ind - start_ind <= n) {
       res.emplace_back(std::string());  // push back empty string
     } else {
-      if (end_ind - n < 0) RETURN_STATUS_UNEXPECTED("loop condition error!");
+      CHECK_FAIL_RETURN_UNEXPECTED(end_ind - n >= 0, "Incorrect loop condition");
 
       for (int i = start_ind; i < end_ind - n; i++) {
         res.emplace_back(str_buffer.substr(offsets[i], offsets[i + n] - offsets[i] - separator_.size()));
