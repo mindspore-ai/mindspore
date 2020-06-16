@@ -1482,8 +1482,11 @@ def check_numpyslicesdataset(method):
         # check data; required argument
         data = param_dict.get('data')
         if not isinstance(data, (list, tuple, dict, np.ndarray)):
-            raise TypeError("Unsupported data type: {}, only support some common python data type, \
-                            like list, tuple, dict, and numpy array.".format(type(data)))
+            raise TypeError("Unsupported data type: {}, only support some common python data type, "
+                            "like list, tuple, dict, and numpy array.".format(type(data)))
+        if isinstance(data, tuple) and not isinstance(data[0], (list, np.ndarray)):
+            raise TypeError("Unsupported data type: when input is tuple, only support some common python "
+                            "data type, like tuple of lists and tuple of numpy arrays.")
         if not data:
             raise ValueError("Input data is empty.")
 
@@ -1497,20 +1500,17 @@ def check_numpyslicesdataset(method):
             if isinstance(data, dict):
                 data_column = len(list(data.keys()))
                 if column_num != data_column:
-                    raise ValueError("Num of column is {0}, but required is {1}.".format(column_num, data_column))
+                    raise ValueError("Num of input column names is {0}, but required is {1}."
+                                     .format(column_num, data_column))
 
-            # Consider input is a tuple of dict
-            elif isinstance(data[0], dict):
-                data_column = sum(len(list(data[i].keys())) for i in range(len(data)))
-                if column_num != data_column:
-                    raise ValueError("Num of column is {0}, but required is {1}.".format(column_num, data_column))
-
-            elif isinstance(data[0], tuple) or isinstance(data, tuple):
+            elif isinstance(data, tuple):
                 if column_num != len(data):
-                    raise ValueError("Num of column is {0}, but required is {1}.".format(column_num, len(data)))
+                    raise ValueError("Num of input column names is {0}, but required is {1}."
+                                     .format(column_num, len(data)))
             else:
                 if column_num != 1:
-                    raise ValueError("Num of column is {0}, but required is {1} as data is list.".format(column_num, 1))
+                    raise ValueError("Num of input column names is {0}, but required is {1} as data is list."
+                                     .format(column_num, 1))
 
         return method(*args, **kwargs)
 
