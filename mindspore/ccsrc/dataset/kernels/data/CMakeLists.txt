@@ -5,4 +5,5 @@ add_library(kernels-data OBJECT
     one_hot_op.cc
     type_cast_op.cc
     to_float16_op.cc
-    fill_op.cc)
+    fill_op.cc
+    slice_op.cc)

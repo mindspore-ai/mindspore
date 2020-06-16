@@ -916,6 +916,61 @@ Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vect
   CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
   return Status::OK();
 }
+Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
+  CHECK_FAIL_RETURN_UNEXPECTED(shape_.Rank() == 1, "Currently Slice work with rank 1 tensors only.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!indices.empty(), "Indices are empty, generated tensor would be empty.");
+  if (type_.IsNumeric()) {
+    return SliceNumeric(out, indices);
+  } else {
+    return SliceString(out, indices);
+  }
+}
+Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
+  RETURN_IF_NOT_OK(
+    CreateTensor(out, TensorImpl::kFlexible, TensorShape({static_cast<dsize_t>(indices.size())}), type_));
+  (*out)->GetMutableBuffer();
+  dsize_t out_index = 0;
+  dsize_t dim_length = shape_[0];
+  dsize_t type_size = type_.SizeInBytes();
+  dsize_t src_start = handleNeg(indices[0], dim_length);
+  uchar *dst_addr = (*out)->data_;
+  dsize_t count = 1;
+
+  for (dsize_t i = 0; i < indices.size(); i++) {
+    dsize_t cur_index = handleNeg(indices[i], dim_length);
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      cur_index >= 0 && cur_index < dim_length,
+      "Index " + std::to_string(indices[i]) + " is out of bounds [0," + std::to_string(dim_length) + ")");
+    if (i < indices.size() - 1) {
+      dsize_t next_index = handleNeg(indices[i + 1], dim_length);
+      if (next_index == cur_index + 1) {
+        count++;
+        continue;
+      }
+    }
+    memcpy_s(dst_addr + out_index * type_size, (*out)->SizeInBytes(), data_ + src_start * type_size, count * type_size);
+    out_index += count;
+    if (i < indices.size() - 1) {
+      src_start = handleNeg(indices[i + 1], dim_length);  // next index
+    }
+    count = 1;
+  }
+  return Status::OK();
+}
+Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
+  dsize_t dim_length = shape_[0];
+  std::vector<std::string> strings;
+  for (dsize_t index : indices) {
+    dsize_t cur_index = handleNeg(index, dim_length);
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      cur_index >= 0 && cur_index < dim_length,
+      "Index " + std::to_string(index) + " is out of bounds [0," + std::to_string(dim_length) + ")");
+    std::string_view sv;
+    GetItemAt(&sv, {cur_index});
+    strings.emplace_back(sv);
+  }
+  return CreateTensor(out, strings);
+}
 
 }  // namespace dataset
 }  // namespace mindspore

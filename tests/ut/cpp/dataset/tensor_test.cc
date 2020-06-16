@@ -28,16 +28,12 @@ using namespace mindspore::dataset;
 
 namespace py = pybind11;
 
-
 class MindDataTestTensorDE : public UT::Common {
  public:
-    MindDataTestTensorDE() {}
+  MindDataTestTensorDE() {}
 
-    void SetUp() {
-      GlobalInit();
-    }
+  void SetUp() { GlobalInit(); }
 };
-
 
 TEST_F(MindDataTestTensorDE, Basics) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
@@ -167,8 +163,7 @@ TEST_F(MindDataTestTensorDE, InsertTensor) {
 
 // Test the bug of Tensor::ToString will exec failed for Tensor which store bool values
 TEST_F(MindDataTestTensorDE, BoolTensor) {
-  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2}),
-                                                       DataType(DataType::DE_BOOL));
+  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2}), DataType(DataType::DE_BOOL));
   t->SetItemAt<bool>({0}, true);
   t->SetItemAt<bool>({1}, true);
   std::string out = t->ToString();
@@ -255,14 +250,19 @@ void checkCvMat(TensorShape shape, DataType type) {
     } else {
       ASSERT_EQ(m.size[0], shape[0]);
     }
-    if (shape.Rank() == 3) { ASSERT_EQ(m.channels(), shape[2]); }
+    if (shape.Rank() == 3) {
+      ASSERT_EQ(m.channels(), shape[2]);
+    }
     ASSERT_EQ(m.dims, 2);
     ASSERT_EQ(m.size.dims(), 2);
-    if (shape.Rank() > 0) { ASSERT_EQ(m.rows, shape[0]); }
-    if (shape.Rank() > 1) { ASSERT_EQ(m.cols, shape[1]); }
+    if (shape.Rank() > 0) {
+      ASSERT_EQ(m.rows, shape[0]);
+    }
+    if (shape.Rank() > 1) {
+      ASSERT_EQ(m.cols, shape[1]);
+    }
   } else {
-    for (dsize_t i = 0; i < shape.Rank(); i++)
-      ASSERT_EQ(m.size[static_cast<int>(i)], shape[i]);
+    for (dsize_t i = 0; i < shape.Rank(); i++) ASSERT_EQ(m.size[static_cast<int>(i)], shape[i]);
     ASSERT_EQ(m.dims, shape.Rank());
     ASSERT_EQ(m.size.dims(), shape.Rank());
     ASSERT_EQ(m.rows, -1);
@@ -393,4 +393,17 @@ TEST_F(MindDataTestTensorDE, TensorIterator) {
     ctr++;
   }
   ASSERT_TRUE(ctr == 6);
+}
+
+TEST_F(MindDataTestTensorDE, TensorSlice) {
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateTensor(&t, std::vector<dsize_t>{0, 1, 2, 3, 4});
+  std::shared_ptr<Tensor> t2;
+  auto x = std::vector<dsize_t>{0, 3, 4};
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateTensor(&expected, x);
+  t->Slice(&t2, x);
+  ASSERT_EQ(*t2, *expected);
+  t->Slice(&t2, std::vector<dsize_t>{0, 1, 2, 3, 4});
+  ASSERT_EQ(*t2, *t);
 }

@@ -347,6 +347,22 @@ class Tensor {
     return ss.str();
   }
 
+  // Handle negative indices.
+  static inline dsize_t handleNeg(dsize_t index, dsize_t length) { return (index < 0) ? (index + length) : index; }
+
+  // Slice tensor bases on the given indicies. Copy the sliced data into out tensor. Only rank1 tensors are supported.
+  // Based on the type of tensor, SliceNumeric or SliceString will be called
+  // @param out Tensor
+  // @param indices vector of indices
+  // @return Status error code
+  Status Slice(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices);
+
+  // Slice numeric tensors.
+  Status SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices);
+
+  // Slice string tensors
+  Status SliceString(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices);
+
   // Constructs numpy array from input tensor
   // @param data this data is the location of python data
   // @return Status code
