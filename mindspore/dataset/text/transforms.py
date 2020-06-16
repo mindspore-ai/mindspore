@@ -28,10 +28,12 @@ from .validators import check_lookup, check_jieba_add_dict, \
 
 class Lookup(cde.LookupOp):
     """
-        Lookup operator that looks up a word to an id
+        Lookup operator that looks up a word to an id.
     Args:
         vocab(Vocab): a Vocab object.
-        unknown(int): default id to lookup a word that is out of vocab (default is None).
+        unknown(int, optional): default id to lookup a word that is out of vocab. If no argument is passed, 1 will be
+            used to be the default id which is the convention for unknown_token <unk>. Otherwise, user is strongly
+            encouraged to pass in the id for <unk> (default=None).
     """
 
     @check_lookup

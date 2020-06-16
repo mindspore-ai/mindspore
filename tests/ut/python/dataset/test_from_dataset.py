@@ -23,19 +23,21 @@ import mindspore.dataset.text as text
 def test_demo_basic_from_dataset():
     """ this is a tutorial on how from_dataset should be used in a normal use case"""
     data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
-    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None)
+    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None, special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
     data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
     res = []
     for d in data.create_dict_iterator():
         res.append(d["text"].item())
-    assert res == [4, 5, 3, 6, 7, 2]
+    assert res == [4, 5, 3, 6, 7, 2], res
 
 
 def test_demo_basic_from_dataset_with_tokenizer():
     """ this is a tutorial on how from_dataset should be used in a normal use case with tokenizer"""
     data = ds.TextFileDataset("../data/dataset/testTokenizerData/1.txt", shuffle=False)
     data = data.map(input_columns=["text"], operations=text.UnicodeCharTokenizer())
-    vocab = text.Vocab.from_dataset(data, None, freq_range=None, top_k=None)
+    vocab = text.Vocab.from_dataset(data, None, freq_range=None, top_k=None, special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
     data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
     res = []
     for d in data.create_dict_iterator():
@@ -55,7 +57,8 @@ def test_from_dataset():
 
     def test_config(freq_range, top_k):
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
-        vocab = text.Vocab.from_dataset(corpus_dataset, None, freq_range, top_k)
+        vocab = text.Vocab.from_dataset(corpus_dataset, None, freq_range, top_k, special_tokens=["<pad>", "<unk>"],
+                                        special_first=True)
         corpus_dataset = corpus_dataset.map(input_columns="text", operations=text.Lookup(vocab))
         res = []
         for d in corpus_dataset.create_dict_iterator():
@@ -87,6 +90,35 @@ def test_from_dataset():
     assert test6_res == [[4, 4, 4, 4], [3, 3, 3, 3], [2, 2, 2, 2], [1, 1, 1], [1, 1, 1], [1, 1], [1]], str(test6_res)
 
 
+def test_from_dataset_special_token():
+    """ test build vocab with generator dataset """
+
+    def gen_corpus():
+        # key: word, value: number of occurrences, reason for using letters is so their order is apparent
+        corpus = {"D": 1, "C": 1, "B": 1, "A": 1}
+        for k, v in corpus.items():
+            yield (np.array([k] * v, dtype='S'),)
+
+    def gen_input(texts):
+        for word in texts.split(" "):
+            yield (np.array(word, dtype='S'),)
+
+    def test_config(texts, top_k, special_tokens, special_first):
+        corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
+        vocab = text.Vocab.from_dataset(corpus_dataset, None, None, top_k, special_tokens, special_first)
+        data = ds.GeneratorDataset(gen_input(texts), column_names=["text"])
+        data = data.map(input_columns="text", operations=text.Lookup(vocab))
+        res = []
+        for d in data.create_dict_iterator():
+            res.append(d["text"].item())
+        return res
+
+    # test special tokens are inserted before
+    assert test_config("A B C D <pad> <unk>", 4, ["<pad>", "<unk>"], True) == [2, 3, 4, 5, 0, 1]
+    # test special tokens are inserted after
+    assert test_config("A B C D <pad> <unk>", 4, ["<pad>", "<unk>"], False) == [0, 1, 2, 3, 4, 5]
+
+
 def test_from_dataset_exceptions():
     """ test various exceptions during that are checked in validator """
 
@@ -105,8 +137,10 @@ def test_from_dataset_exceptions():
     test_config("text", (2, 3), 0, "top_k needs to be a positive integer")
     test_config([123], (2, 3), 0, "columns need to be a list of strings")
 
+
 if __name__ == '__main__':
     test_demo_basic_from_dataset()
     test_from_dataset()
     test_from_dataset_exceptions()
     test_demo_basic_from_dataset_with_tokenizer()
+    test_from_dataset_special_token()

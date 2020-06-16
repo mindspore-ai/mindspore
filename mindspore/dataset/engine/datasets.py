@@ -894,9 +894,9 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
-    def build_vocab(self, vocab, columns, freq_range, top_k):
+    def build_vocab(self, vocab, columns, freq_range, top_k, special_tokens, special_first):
         """ Internal function for building a vocab"""
-        return BuildVocabDataset(self, vocab, columns, freq_range, top_k)
+        return BuildVocabDataset(self, vocab, columns, freq_range, top_k, special_tokens, special_first)
 
     def apply(self, apply_func):
         """
@@ -4865,9 +4865,15 @@ class BuildVocabDataset(DatasetOp):
         top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
             taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken (default=None,
             all words are included).
+        special_tokens(list):  a list of strings, each one is a special token. for e.g. ["<pad>","<unk>"]
+            (default=None, no special tokens will be added).
+        special_first(bool): whether special_tokens will be prepended/appended to vocab, If special_tokens is
+            specified and special_first is set to None, special_tokens will be prepended. (default=None).
+        prefetch_size (int, optional): prefetch number of records ahead of the user's request (default=None).
     """
 
-    def __init__(self, input_dataset, vocab, columns, freq_range, top_k, prefetch_size=None):
+    def __init__(self, input_dataset, vocab, columns, freq_range, top_k, special_tokens, special_first,
+                 prefetch_size=None):
         super().__init__()
         self.columns = columns
         self.input.append(input_dataset)
@@ -4875,6 +4881,8 @@ class BuildVocabDataset(DatasetOp):
         self.vocab = vocab
         self.freq_range = freq_range
         self.top_k = top_k
+        self.special_tokens = special_tokens
+        self.special_first = special_first
         input_dataset.output.append(self)
 
     def get_args(self):
@@ -4884,6 +4892,8 @@ class BuildVocabDataset(DatasetOp):
         args["freq_range"] = self.freq_range
         args["prefetch_size"] = self.prefetch_size
         args["top_k"] = self.top_k
+        args["special_tokens"] = self.special_tokens
+        args["special_first"] = self.special_first
         return args
 
     def __deepcopy__(self, memodict):
@@ -4900,4 +4910,7 @@ class BuildVocabDataset(DatasetOp):
         new_op.freq_range = copy.deepcopy(self.freq_range, memodict)
         new_op.top_k = copy.deepcopy(self.top_k, memodict)
         new_op.vocab = self.vocab
+        new_op.special_tokens = copy.deepcopy(self.special_tokens)
+        new_op.special_first = copy.deepcopy(self.special_first)
+
         return new_op

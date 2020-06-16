@@ -1277,18 +1277,18 @@ Status DEPipeline::ParseBuildVocabOp(const py::dict &args, std::shared_ptr<Datas
         py::tuple tp = py::reinterpret_borrow<py::tuple>(value);
         if (!tp[0].is_none()) (void)builder->SetMinFreq(py::reinterpret_borrow<py::int_>(tp[0]));
         if (!tp[1].is_none()) (void)builder->SetMaxFreq(py::reinterpret_borrow<py::int_>(tp[1]));
-      }
-      if (key == "top_k") {
+      } else if (key == "top_k") {
         builder->SetTopK(py::reinterpret_borrow<py::int_>(value));
-      }
-      if (key == "columns") {
+      } else if (key == "columns") {
         (void)builder->SetColumnNames(ToStringVector(value));
-      }
-      if (key == "vocab") {
+      } else if (key == "vocab") {
         (void)builder->SetVocab(value.cast<std::shared_ptr<Vocab>>());
-      }
-      if (key == "num_parallel_workers") {
+      } else if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "special_first") {
+        (void)builder->SetSpecialFirst(ToBool(value));
+      } else if (key == "special_tokens") {
+        (void)builder->SetSpecialTokens(ToStringVector(value));
       }
     }
   }
