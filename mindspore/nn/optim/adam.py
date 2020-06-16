@@ -391,6 +391,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
             raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, self.cls_name)
+        validator.check_integer('warmup_steps', warmup_steps, 0, Rel.GE, self.cls_name)
         # turn them to scalar when me support scalar/tensor mix operations
         self.global_step = Parameter(initializer(0, [1]), name="global_step")
         self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
