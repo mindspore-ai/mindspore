@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace callbacks {
-const char PYTHON_MOD_CALLBACK_MODULE[] = "mindspore.train.callback";
+const char PYTHON_MOD_CALLBACK_MODULE[] = "mindspore.train.callback.callback";
 const char PYTHON_FUN_PROCESS_CHECKPOINT[] = "_checkpoint_cb_for_save_op";
 const char PYTHON_FUN_PROCESS_SUMMARY[] = "_summary_cb_for_save_op";
 const char kSummary[] = "Summary";

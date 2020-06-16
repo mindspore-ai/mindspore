@@ -28,7 +28,7 @@ from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import WithLossCell, TrainOneStepCell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.callback import _CheckpointManager
+from mindspore.train.callback.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
     _exec_save_checkpoint, export, _save_graph
 from ..ut_filter import non_graph_engine
