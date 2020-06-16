@@ -47,7 +47,7 @@ class EventWriter(Process):
 
     def run(self):
 
-        with Pool() as pool:
+        with Pool(min(cpu_count(), 32)) as pool:
             deq = deque()
             while True:
                 while deq and deq[0].ready():
