@@ -1,6 +1,5 @@
 """mobile net v2"""
 from mindspore import nn
-from mindspore.nn.layer import combined
 from mindspore.ops import operations as P
 
 
@@ -14,11 +13,11 @@ def _conv_bn(in_channel,
              stride=1):
     """Get a conv2d batchnorm and relu layer."""
     return nn.SequentialCell(
-        [combined.Conv2d(in_channel,
-                         out_channel,
-                         kernel_size=ksize,
-                         stride=stride,
-                         batchnorm=True)])
+        [nn.Conv2dBnAct(in_channel,
+                        out_channel,
+                        kernel_size=ksize,
+                        stride=stride,
+                        batchnorm=True)])
 
 
 class InvertedResidual(nn.Cell):
@@ -31,30 +30,30 @@ class InvertedResidual(nn.Cell):
         self.use_res_connect = self.stride == 1 and inp == oup
         if expend_ratio == 1:
             self.conv = nn.SequentialCell([
-                combined.Conv2d(hidden_dim,
-                                hidden_dim,
-                                3,
-                                stride,
-                                group=hidden_dim,
-                                batchnorm=True,
-                                activation='relu6'),
-                combined.Conv2d(hidden_dim, oup, 1, 1,
-                                batchnorm=True)
+                nn.Conv2dBnAct(hidden_dim,
+                               hidden_dim,
+                               3,
+                               stride,
+                               group=hidden_dim,
+                               batchnorm=True,
+                               activation='relu6'),
+                nn.Conv2dBnAct(hidden_dim, oup, 1, 1,
+                               batchnorm=True)
             ])
         else:
             self.conv = nn.SequentialCell([
-                combined.Conv2d(inp, hidden_dim, 1, 1,
-                                batchnorm=True,
-                                activation='relu6'),
-                combined.Conv2d(hidden_dim,
-                                hidden_dim,
-                                3,
-                                stride,
-                                group=hidden_dim,
-                                batchnorm=True,
-                                activation='relu6'),
-                combined.Conv2d(hidden_dim, oup, 1, 1,
-                                batchnorm=True)
+                nn.Conv2dBnAct(inp, hidden_dim, 1, 1,
+                               batchnorm=True,
+                               activation='relu6'),
+                nn.Conv2dBnAct(hidden_dim,
+                               hidden_dim,
+                               3,
+                               stride,
+                               group=hidden_dim,
+                               batchnorm=True,
+                               activation='relu6'),
+                nn.Conv2dBnAct(hidden_dim, oup, 1, 1,
+                               batchnorm=True)
             ])
         self.add = P.TensorAdd()
 
@@ -99,7 +98,7 @@ class MobileNetV2(nn.Cell):
 
         self.features = nn.SequentialCell(features)
         self.mean = P.ReduceMean(keep_dims=False)
-        self.classifier = combined.Dense(self.last_channel, num_class)
+        self.classifier = nn.DenseBnAct(self.last_channel, num_class)
 
     def construct(self, input_x):
         out = input_x

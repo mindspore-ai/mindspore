@@ -15,7 +15,7 @@
 """ tests for quant """
 import mindspore.context as context
 from mindspore import nn
-from mindspore.nn.layer import combined
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -37,12 +37,11 @@ class LeNet5(nn.Cell):
     def __init__(self, num_class=10):
         super(LeNet5, self).__init__()
         self.num_class = num_class
-        self.conv1 = combined.Conv2d(
-            1, 6, kernel_size=5, batchnorm=True, activation='relu6')
-        self.conv2 = combined.Conv2d(6, 16, kernel_size=5, activation='relu')
-        self.fc1 = combined.Dense(16 * 5 * 5, 120, activation='relu')
-        self.fc2 = combined.Dense(120, 84, activation='relu')
-        self.fc3 = combined.Dense(84, self.num_class)
+        self.conv1 = nn.Conv2dBnAct(1, 6, kernel_size=5, batchnorm=True, activation='relu6')
+        self.conv2 = nn.Conv2dBnAct(6, 16, kernel_size=5, activation='relu')
+        self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
+        self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
+        self.fc3 = nn.DenseBnAct(84, self.num_class)
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
         self.flattern = nn.Flatten()
 
