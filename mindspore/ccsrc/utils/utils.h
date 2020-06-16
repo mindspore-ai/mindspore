@@ -227,6 +227,7 @@ const int kValueNodeTensorMask = 2;
 
 // define special index in special node
 constexpr auto kAnfPrimitiveIndex = 0;
+constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kAnfPartialFuncGraphIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;

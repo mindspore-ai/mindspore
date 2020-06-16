@@ -60,7 +60,7 @@ static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
     MS_LOG(INFO) << "Switch " << node->DebugString() << " case " << i - kLabelSwitchLabelId << ": id " << goto_label_id;
   }
   AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue<std::vector<uint32_t>>(label_list), node.get());
-  node->set_inputs({node->input(0), node->input(1)});
+  node->set_inputs({node->input(kAnfPrimitiveIndex), node->input(kFirstDataInputIndex)});
 }
 
 static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>> graph, NotNull<uint32_t *> label_id,

@@ -780,12 +780,12 @@ void SessionBasic::Summary(KernelGraph *graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
-  GetSummaryNodes(graph);
-  auto summary_outputs = graph->summary_nodes();
-  // do not exist summary node
-  if (summary_outputs.empty()) {
+  bool exist_summary = graph->summary_node_exist();
+  if (!exist_summary) {
     return;
   }
+  GetSummaryNodes(graph);
+  auto summary_outputs = graph->summary_nodes();
   std::map<std::string, tensor::TensorPtr> params_list;
   // fetch outputs apply kernel in session & run callback functions
   for (auto &output_item : summary_outputs) {
