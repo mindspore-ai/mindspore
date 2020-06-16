@@ -54,10 +54,12 @@ class Model:
                              value would be passed to `Loss` metric, predict value and label would be passed to other
                              metric. Default: None.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
-            precision training. Supports [O0, O2]. Default: "O0".
+            precision training. Supports [O0, O2, O3]. Default: "O0".
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
+            - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
+            O2 is recommended on GPU, O3 is recommended on Ascend.
 
         loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, or else
             scale the loss by LossScaleManager. If it is set, overwrite the level setting. It's a eyword argument.
