@@ -2777,7 +2777,7 @@ class SparseApplyAdam(PrimitiveWithInfer):
         - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`. With
                               float32 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-                              has the same type as `var`. With float32 data type.
+          has the same type as `var`. With float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
@@ -2911,7 +2911,7 @@ class SparseApplyLazyAdam(PrimitiveWithInfer):
         - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`. With
                               float32 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-                              has the same type as `var`. With float32 data type.
+          has the same type as `var`. With float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
