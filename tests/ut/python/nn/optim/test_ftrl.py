@@ -57,7 +57,7 @@ def test_ftrl():
     net = Net()
     net.set_train()
     loss = nn.SoftmaxCrossEntropyWithLogits()
-    optimizer = FTRL(net.trainable_params())
+    optimizer = FTRL(net.trainable_params(), weight_decay=0.9, loss_scale=2.0)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     _executor.compile(train_network, inputs, label)
@@ -70,6 +70,6 @@ def test_spares_ftrl_compile():
     net = NetWithSparseGatherV2()
     net.set_train()
 
-    optimizer = FTRL(net.trainable_params())
+    optimizer = FTRL(net.trainable_params(), loss_scale=2.0)
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)
