@@ -17,7 +17,7 @@ import os
 import random
 from multiprocessing import Process, Queue
 import numpy as np
-import pytest
+
 from resnet import resnet50
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -173,10 +173,6 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
     q.put(loss_cb.get_loss())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
 def test_resnet_cifar_8p():
     q = Queue()
     device_num = 8
