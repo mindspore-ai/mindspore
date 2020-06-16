@@ -112,6 +112,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"square_sum_all", "square_sum_all"},
   {"cum_sum", "cumsum_d"},
   {"range", "range_d"},
+  {"lin_space", "lin_space_d"},
   {"inv_grad", "inv_grad"},
   {"apply_rms_prop", "apply_rms_prop_d"},
   {"cum_prod", "cumprod_d"},

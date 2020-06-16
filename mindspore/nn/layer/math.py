@@ -20,8 +20,11 @@ from mindspore.common.tensor import Tensor
 from ..cell import Cell
 from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 
-__all__ = ['ReduceLogSumExp', 'Range']
+
+__all__ = ['ReduceLogSumExp', 'Range', 'LinSpace']
+
 
 class ReduceLogSumExp(Cell):
     r"""
@@ -125,3 +128,48 @@ class Range(Cell):
     def construct(self):
         range_out = self.range_x(self.input_tensor)
         return range_out
+
+
+class LinSpace(Cell):
+    r"""
+    Generates values in an interval. And return the corresponding interpolation accroding to assist.
+
+    Args:
+        - **start** (Union[int, float]) - The start of interval, With shape of 0-D.
+        - **stop** (Union[int, float]) - The end of interval, With shape of 0-D.
+        - **num** (int) - ticks number in the interval, the ticks include start and stop value.
+          With shape of 0-D.
+
+    Outputs:
+        Tensor, With type same as `start`. The shape is 1-D with length of `num`.
+
+    Examples:
+        >>> linspace = nn.LinSpace()
+        >>> start = Tensor(1, mindspore.float32)
+        >>> stop = Tensor(10, mindspore.float32)
+        >>> num = Tensor(5, mindspore.int32)
+        >>> output = linspace(start, stop, num)
+        [1, 3.25, 5.5, 7.75, 10]
+    """
+
+    def __init__(self, start, stop, num):
+        super(LinSpace, self).__init__()
+        validator.check_value_type("start", start, [int, float], self.cls_name)
+        validator.check_value_type("stop", stop, [int, float], self.cls_name)
+        validator.check_value_type("num", num, [int], self.cls_name)
+        validator.check_integer("num", num, 0, Rel.GT, self.cls_name)
+
+        self.is_single = bool(num == 1)
+        self.lin_space = inner.LinSpace()
+        self.start = Tensor(start, mstype.float32)
+        self.stop = Tensor(stop, mstype.float32)
+        self.assist = Tensor(list(range(num)), mstype.float32)
+        self.num = Tensor(num, mstype.int32)
+        self.start_array = Tensor([start], mstype.float32)
+
+    def construct(self):
+        if self.is_single:
+            return self.start_array
+
+        lin_space_out = self.lin_space(self.assist, self.start, self.stop, self.num)
+        return lin_space_out
