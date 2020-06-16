@@ -62,6 +62,7 @@ class MemReuseUtil {
   void SetOutputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr);
   void SetWkMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr);
   void SetReuseRefCount();
+  void SetSummaryNodesRefCount();
   // Set the reference count of graph output specially.
   void SetGraphOutputRefCount();
   // Reset the dynamic used reference count by ref_count_.

@@ -267,6 +267,31 @@ void MemReuseUtil::SetReuseRefCount() {
   }
 }
 
+void MemReuseUtil::SetSummaryNodesRefCount() {
+  bool summary_exist = graph_->summary_node_exist();
+  if (!summary_exist) {
+    return;
+  }
+
+  auto summary_nodes = graph_->summary_nodes();
+  if (summary_nodes.empty()) {
+    return;
+  }
+
+  for (auto &node_item : summary_nodes) {
+    auto node = node_item.second.first;
+    size_t index = IntToSize(node_item.second.second);
+    MS_LOG(INFO) << "set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
+    if (kernel_output_refs_.find(node.get()) != kernel_output_refs_.end()) {
+      KernelRefCountPtr kernel_ref = kernel_output_refs_[node.get()][index];
+      kernel_ref->ref_count_ = kMaxRefCount;
+      kernel_ref->ref_count_dynamic_use_ = kMaxRefCount;
+    } else {
+      MS_LOG(WARNING) << "can't find summary node's kernel_def " << node->fullname_with_scope();
+    }
+  }
+}
+
 void MemReuseUtil::SetGraphOutputRefCount() {
   auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
@@ -305,6 +330,7 @@ void MemReuseUtil::SetAllInfo(KernelGraph *graph) {
   }
   SetKernelDefMap();
   SetReuseRefCount();
+  SetSummaryNodesRefCount();
   SetWorkSpaceList();
 #ifdef MEM_REUSE_DEBUG
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);
