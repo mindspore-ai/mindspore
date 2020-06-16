@@ -68,7 +68,11 @@ class AllReduce(PrimitiveWithInfer):
 
     Examples:
         >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
+        >>>
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
@@ -131,8 +135,11 @@ class AllGather(PrimitiveWithInfer):
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>>
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
@@ -192,9 +199,10 @@ class HostAllGather(PrimitiveWithInfer):
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> from mindspore.communication import init
+        >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
-        >>> init('nccl')
+        >>> from mindspore import Tensor
+        >>>
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -251,8 +259,12 @@ class ReduceScatter(PrimitiveWithInfer):
         ValueError: If the first dimension of input can not be divided by rank size.
 
     Examples:
+        >>> from mindspore import Tensor
         >>> from mindspore.communication import init
+        >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
+        >>>
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
@@ -309,9 +321,11 @@ class HostReduceScatter(PrimitiveWithInfer):
                     or group is not set, or rank_id not in [1, 7].
 
     Examples:
-        >>> from mindspore.communication import init
+        >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
-        >>> init('nccl')
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>>
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -375,8 +389,11 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not a integer or group is not a string.
 
     Examples:
+        >>> from mindspore import Tensor
         >>> from mindspore.communication import init
+        >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
+        >>>
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
