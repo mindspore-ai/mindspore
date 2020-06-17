@@ -23,7 +23,7 @@ from ..primitive import PrimitiveWithInfer, prim_attr_register
 
 class RandomChoiceWithMask(PrimitiveWithInfer):
     """
-    Generates a random samply as index tensor with a mask tensor from a given tensor.
+    Generates a random sample as index tensor with a mask tensor from a given tensor.
 
     The input must be a tensor of rank >= 1. If its rank >= 2, the first dimension specify the number of sample.
     The index tensor and the mask tensor have the fixed shapes. The index tensor denotes the index of the nonzero

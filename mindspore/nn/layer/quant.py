@@ -842,8 +842,8 @@ class ReLU6Quant(Cell):
     r"""
     ReLU6Quant activation function.
 
-    Add Fake Quant OP after Relu6. Not Recommand to used these cell for Fake Quant Op
-    Will climp the max range of the activation and the relu6 do the same operation.
+    Add Fake Quant OP after Relu6. Not Recommend to used these cell for Fake Quant Op
+    Will clip the max range of the activation and the relu6 do the same operation.
     For a more Detailed overview of ReLU6 op.
 
     Args:

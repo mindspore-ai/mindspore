@@ -153,7 +153,7 @@ class CheckpointConfig:
         keep_checkpoint_max (int): Maximum step to save checkpoint. Default: 5.
         keep_checkpoint_per_n_minutes (int): Keep one checkpoint every n minutes. Default: 0.
             Can't be used with keep_checkpoint_max at the same time.
-        integrated_save (bool): Whether to intergrated save in automatic model parallel scene. Default: True.
+        integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True.
             Integrated save function is only supported in automatic parallel scene, not supported in manual parallel.
 
     Raises:

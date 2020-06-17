@@ -125,7 +125,7 @@ def _construct_tensor_list(types, shapes, batch_expand_num=1):
 
 
 def _to_tensor(elem, scaling_sens=None):
-    """Conver numpy to tensor, adapt to minddata feed solution."""
+    """Convert numpy to tensor, adapt to minddata feed solution."""
     lst = []
     if not isinstance(elem, (tuple, list)):
         elem = [elem]

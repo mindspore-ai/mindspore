@@ -128,7 +128,7 @@ def _chunk_tensor(np_tensor, strategy, depth):
         depth (int): Recursion depth.
 
     Returns:
-        NDarray, the splited matrix.
+        NDarray, the split matrix.
 
     Raises:
         ValueError: If np_tensor can not be split by strategy.

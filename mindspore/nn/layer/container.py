@@ -41,9 +41,9 @@ class _CellListBase(metaclass=ABCMeta):
     The sequential cell may be iterated using the construct method using for-in statement.
     But there are some scenarios that the construct method built-in does not fit.
     For convenience, we provide an interface that indicates the sequential
-    cell may be interpretated as list of cells, so it can be accessed using
+    cell may be interpreted as list of cells, so it can be accessed using
     iterator or subscript when a sequential cell instantiate is accessed
-    by iterator or subscript , it will be interpretated as a list of cells.
+    by iterator or subscript , it will be interpreted as a list of cells.
     """
     def __init__(self):
         super(_CellListBase, self).__init__()

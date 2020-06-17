@@ -16,7 +16,7 @@
 """
 Primitive operator classes.
 
-A collection of operators to build nerual networks or computing functions.
+A collection of operators to build neural networks or computing functions.
 """
 
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,

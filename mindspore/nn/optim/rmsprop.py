@@ -89,7 +89,7 @@ class RMSProp(Optimizer):
         :math:`m_{t}` is moment, the delta of `w`, :math:`m_{t-1}` is the last moment of :math:`m_{t}`.
         :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
         :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
-        :math:`\\eta` is learning rate, represents `learning_rate`. :math:`\\nabla Q_{i}(w)` is gradientse,
+        :math:`\\eta` is learning rate, represents `learning_rate`. :math:`\\nabla Q_{i}(w)` is gradients,
         represents `gradients`.
 
     Args:

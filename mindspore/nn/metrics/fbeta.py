@@ -23,7 +23,7 @@ class Fbeta(Metric):
     r"""
     Calculates the fbeta score.
 
-    Fbeta score is a weighted mean of precison and recall.
+    Fbeta score is a weighted mean of precision and recall.
 
     .. math::
         F_\beta=\frac{(1+\beta^2) \cdot true\_positive}

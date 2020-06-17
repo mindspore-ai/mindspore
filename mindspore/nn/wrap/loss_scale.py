@@ -164,7 +164,7 @@ class TrainOneStepWithLossScaleCell(Cell):
     Cell as args. The loss scale value can be updated in both host side or device side. The
     TrainOneStepWithLossScaleCell will be compiled to be graph which takes `data`, `label`, `sens` as input
     data. The `sens` is acting as loss scaling value. If you want to update it on host side, the value should
-    be provided. If `sens` is not given, the loss scale update logic should be provied by `scale_update_cell`.
+    be provided. If `sens` is not given, the loss scale update logic should be provided by `scale_update_cell`.
     If `scale_update_cell` is not None and `sens` is provided, the `scale_update_cell` will be ignored.
 
     Args:

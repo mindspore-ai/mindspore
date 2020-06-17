@@ -398,7 +398,7 @@ class _CostModelContext:
         Set costmodel allreduce fusion allreduce bandwidth.
 
         Args:
-            allreduce_bandwidth (int): The bancwidth of AllReduce.
+            allreduce_bandwidth (int): The bandwidth of AllReduce.
 
         Raises:
             ValueError: If context handle is none.

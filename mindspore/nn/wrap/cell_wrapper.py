@@ -253,7 +253,7 @@ class _VirtualDatasetCell(Cell):
     """
     Wrap the network with virtual dataset to convert data parallel layout to model parallel layout.
 
-    _VirtualDataset is a virtual Primitive, it does not exist in the final executing graph. Inputs and outpus
+    _VirtualDataset is a virtual Primitive, it does not exist in the final executing graph. Inputs and outputs
     of _VirtualDataset are distributed in data parallel pattern, tensor redistribution Primitives is inserted
     dynamically during the graph compile process.
 

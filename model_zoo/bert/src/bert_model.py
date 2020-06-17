@@ -313,7 +313,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
     Args:
         length (int): Length of one dim for the matrix to be generated.
         depth (int): Size of each attention head.
-        max_relative_position (int): Maxmum value of relative position.
+        max_relative_position (int): Maximum value of relative position.
         initializer_range (float): Initialization value of TruncatedNormal.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
     """
