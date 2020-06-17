@@ -19,7 +19,7 @@ from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
 from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool
-from .callback.callback import _InternalCallbackParam, RunContext, _CallbackManager
+from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
