@@ -23,16 +23,26 @@ matmul_op_info = TBERegOp("MatMul") \
     .compute_cost(10) \
     .kernel_name("matmul") \
     .partial_flag(True) \
-    .attr("transpose_a", "required", "bool", "all") \
-    .attr("transpose_b", "required", "bool", "all") \
+    .attr("transpose_x1", "required", "bool", "all") \
+    .attr("transpose_x2", "required", "bool", "all") \
+    .attr("offset_x", "optional", "int", "all") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
-    .input(2, "x3", False, "optional", "all") \
+    .input(2, "bias", False, "optional", "all") \
+    .input(3, "offset_w", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.F16_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_Default, DataType.F32_FracNZ) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I8_Default,
+                  DataType.I32_Default) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.I8_Default,
+                  DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_Default, DataType.I8_Default,
+                  DataType.F32_FracNZ) \
+    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.I8_Default,
+                  DataType.F32_NHWC) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.I8_Default,
+                  DataType.F32_Default) \
+    .dtype_format(DataType.I32_NHWC, DataType.I32_NHWC, DataType.I32_NHWC, DataType.I8_Default,
+                  DataType.I32_NHWC) \
     .get_op_info()
 
 
