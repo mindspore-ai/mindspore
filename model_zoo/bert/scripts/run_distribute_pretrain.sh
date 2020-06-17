@@ -64,7 +64,7 @@ do
     --do_shuffle="true" \
     --enable_data_sink="true" \
     --data_sink_steps=100 \
-    --checkpoint_path="" \
+    --load_checkpoint_path="" \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
     --data_dir=$DATA_DIR \
