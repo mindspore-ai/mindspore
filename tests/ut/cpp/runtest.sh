@@ -32,6 +32,8 @@ export GLOG_v=2
 
 ## prepare data for dataset & mindrecord
 cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/
+## prepare album dataset, uses absolute path so has to be generated
+python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_json.py
 
 if [ $# -gt 0 ]; then 
   ./ut_tests --gtest_filter=$1

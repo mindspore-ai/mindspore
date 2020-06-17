@@ -11,10 +11,6 @@
     "id" : {
       "type": "int64",
       "rank": 0
-    },
-    "_priority" : {
-      "type": "float64",
-      "rank": 0
     }
   }
 }

@@ -393,7 +393,7 @@ build_mindspore()
       CMAKE_VERBOSE="--verbose"
     fi
     cmake --build . --target package ${CMAKE_VERBOSE} -j$THREAD_NUM
-    echo "success to build mindspore project!"
+    echo "success building mindspore project!"
 }
 
 checkndk() {

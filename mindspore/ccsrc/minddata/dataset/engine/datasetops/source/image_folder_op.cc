@@ -134,7 +134,6 @@ Status ImageFolderOp::operator()() {
       TensorRow sample_row;
       RETURN_IF_NOT_OK(sampler_buffer->PopRow(&sample_row));
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
-      if (sample_ids->type() != DataType(DataType::DE_INT64)) RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't int64");
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
         if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
         keys.push_back(*itr);
