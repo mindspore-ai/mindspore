@@ -777,19 +777,18 @@ class InplaceAdd(PrimitiveWithInfer):
     Adds v into specified rows of x. Computes y = x; y[i,] += v.
 
     Args:
-        - **indices** (Union[int, tuple]) - Indices into the left-most dimension of x, and determines which rows of x
-        to add with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+        indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
+            to add with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **input_x** (Tensor) - The first input is a tensor whose data type is number.
         - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
-        the first dimension, which must be the same as indices's size.
+          the first dimension, which must be the same as indices's size.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
 
     Examples:
-
         >>> indices = [0, 1]
         >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
@@ -837,13 +836,13 @@ class InplaceSub(PrimitiveWithInfer):
     Subtracts v into specified rows of x. Computes y = x; y[i, :] -= v; return y.
 
     Args:
-        - **indices** (Union[int, tuple]) - Indices into the left-most dimension of x, and determines which rows of x
-        to sub with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+        indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
+            to sub with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **input_x** (Tensor) - The first input is a tensor whose data type is number.
         - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
-        the first dimension, which must be the same as indices's size.
+          the first dimension, which must be the same as indices's size.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
