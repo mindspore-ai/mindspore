@@ -1,0 +1,7 @@
+Age,EmployNumber,Name,Sales,Over18
+21, 10023,john, 123.45,True
+41, 10223,tom, 12111,True
+51, 10231,bob, 8779.0,True
+86, 10053,alice, 7777,True
+26, 1053,carol, 12345.8,False
+
