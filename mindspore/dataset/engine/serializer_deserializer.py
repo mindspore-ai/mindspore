@@ -156,6 +156,9 @@ def traverse(node):
             serialize_operations(node_repr, k, v)
         elif k == 'sampler':
             serialize_sampler(node_repr, v)
+        elif k == 'padded_sample' and v:
+            v1 = {key: value for key, value in v.items() if not isinstance(value, bytes)}
+            node_repr[k] = json.dumps(v1, indent=2)
         # return schema json str if its type is mindspore.dataset.Schema
         elif k == 'schema' and isinstance(v, de.Schema):
             node_repr[k] = v.to_json()
