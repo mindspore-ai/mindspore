@@ -64,6 +64,9 @@ class GpuKernel : public KernelMod {
   }
   // expand Nd Shape to 4d (N in [0,4])
   void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<int> *dst) {
+    if (src.size() > 4) {
+      MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
+    }
     dst->push_back(src.size() < 4 ? 1 : SizeToInt(src[src.size() - 4]));
     dst->push_back(src.size() < 3 ? 1 : SizeToInt(src[src.size() - 3]));
     dst->push_back(src.size() < 2 ? 1 : SizeToInt(src[src.size() - 2]));
