@@ -43,6 +43,7 @@ std::pair<MSRStatus, vector<std::string>> ShardSegment::GetCategoryFields() {
     MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(database_paths_[0]);
+    database_paths_[0] = nullptr;
     return {FAILED, vector<std::string>{}};
   } else {
     MS_LOG(INFO) << "Get " << static_cast<int>(field_names.size()) << " records from index.";
@@ -53,6 +54,7 @@ std::pair<MSRStatus, vector<std::string>> ShardSegment::GetCategoryFields() {
     if (field_names[idx].size() < 2) {
       sqlite3_free(errmsg);
       sqlite3_close(database_paths_[0]);
+      database_paths_[0] = nullptr;
       return {FAILED, vector<std::string>{}};
     }
     candidate_category_fields_.push_back(field_names[idx][1]);
@@ -107,6 +109,7 @@ std::pair<MSRStatus, std::vector<std::tuple<int, std::string, int>>> ShardSegmen
       MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
+      db = nullptr;
       return {FAILED, std::vector<std::tuple<int, std::string, int>>()};
     } else {
       MS_LOG(INFO) << "Get " << static_cast<int>(field_count.size()) << " records from index.";

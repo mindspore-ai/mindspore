@@ -514,7 +514,7 @@ INDEX_FIELDS ShardIndexGenerator::GenerateIndexFields(const std::vector<json> &s
   return {SUCCESS, std::move(fields)};
 }
 
-MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
+MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, std::pair<MSRStatus, sqlite3 *> &db,
                                                   const std::vector<int> &raw_page_ids,
                                                   const std::map<int, int> &blob_id_to_page_id) {
   // Add index data to database
@@ -556,6 +556,7 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
     MS_LOG(ERROR) << "Close database failed";
     return FAILED;
   }
+  db.second = nullptr;
   return SUCCESS;
 }
 

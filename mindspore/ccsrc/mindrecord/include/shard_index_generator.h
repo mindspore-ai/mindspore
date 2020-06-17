@@ -91,7 +91,7 @@ class ShardIndexGenerator {
 
   INDEX_FIELDS GenerateIndexFields(const std::vector<json> &schema_detail);
 
-  MSRStatus ExecuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
+  MSRStatus ExecuteTransaction(const int &shard_no, std::pair<MSRStatus, sqlite3 *> &db,
                                const std::vector<int> &raw_page_ids, const std::map<int, int> &blob_id_to_page_id);
 
   MSRStatus CreateShardNameTable(sqlite3 *db, const std::string &shard_name);
