@@ -67,7 +67,7 @@ def test_random_perspective_op(plot=False):
         visualize_list(image_original, image_perspective)
 
 
-def skip_test_random_perspective_md5():
+def test_random_perspective_md5():
     """
     Test RandomPerspective with md5 comparison
     """
@@ -80,6 +80,7 @@ def skip_test_random_perspective_md5():
         py_vision.Decode(),
         py_vision.RandomPerspective(distortion_scale=0.3, prob=0.7,
                                     interpolation=Inter.BILINEAR),
+        py_vision.Resize(1450), # resize to a smaller size to prevent round-off error
         py_vision.ToTensor()
     ]
     transform = py_vision.ComposeOp(transforms)
@@ -123,6 +124,6 @@ def test_random_perspective_exception_prob_range():
 
 if __name__ == "__main__":
     test_random_perspective_op(plot=True)
-    skip_test_random_perspective_md5()
+    test_random_perspective_md5()
     test_random_perspective_exception_distortion_scale_range()
     test_random_perspective_exception_prob_range()
