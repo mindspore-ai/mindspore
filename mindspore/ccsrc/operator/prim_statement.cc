@@ -239,6 +239,5 @@ AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePt
   ValuePtr v = args_spec_list[0]->BuildValue();
   return std::make_shared<AbstractScalar>(!v->isa<AnyValue>());
 }
-
 }  // namespace abstract
 }  // namespace mindspore

@@ -29,7 +29,6 @@
 #include "proto/onnx.pb.h"
 
 namespace mindspore {
-
 using FloatPtr = std::shared_ptr<Float>;
 using IntPtr = std::shared_ptr<Int>;
 

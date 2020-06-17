@@ -84,6 +84,7 @@ class UndeterminedShapeType {
                          [](const auto &elem) { return FromValue(elem, false); });
     dense_shape_ = dense_shape_list;
   }
+  ~UndeterminedShapeType() = default;
   const std::string &param_name() { return param_name_; }
   const std::vector<int> &indices_shape() { return indices_shape_; }
   const TypePtr &indices_type() { return indices_type_; }
