@@ -84,7 +84,7 @@ Status PythonSampler::InitSampler() {
   return Status::OK();
 }
 
-Status PythonSampler::Reset() {
+Status PythonSampler::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(need_to_reset_, "ERROR Reset() called not at end of an epoch");
   need_to_reset_ = false;
   py::gil_scoped_acquire gil_acquire;
@@ -98,7 +98,7 @@ Status PythonSampler::Reset() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();

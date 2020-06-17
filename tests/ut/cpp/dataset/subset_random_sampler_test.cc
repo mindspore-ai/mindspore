@@ -123,7 +123,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
     ASSERT_NE(in_set.find(out[i]), in_set.end());
   }
 
-  sampler.Reset();
+  sampler.ResetSampler();
 
   ASSERT_EQ(sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), false);

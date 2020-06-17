@@ -113,7 +113,7 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
   RETURN_IF_NOT_OK(GetNextSample(&db));
   CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
   // Reset Sampler since this is the end of the epoch
-  RETURN_IF_NOT_OK(Reset());
+  RETURN_IF_NOT_OK(ResetSampler());
   return Status::OK();
 }
 

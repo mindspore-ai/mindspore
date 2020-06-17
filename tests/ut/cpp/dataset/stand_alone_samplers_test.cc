@@ -94,7 +94,7 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   sampler->GetNextSample(&db);
   db->GetTensor(&tensor, 0, 0);
   EXPECT_TRUE((*tensor) == (*label2));
-  sampler->Reset();
+  sampler->ResetSampler();
   sampler->GetNextSample(&db);
   db->GetTensor(&tensor, 0, 0);
   EXPECT_TRUE((*tensor) == (*label1));

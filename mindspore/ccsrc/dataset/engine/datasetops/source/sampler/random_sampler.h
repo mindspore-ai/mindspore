@@ -48,7 +48,7 @@ class RandomSampler : public Sampler {
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
   virtual void Print(std::ostream &out, bool show_all) const;
 

@@ -77,7 +77,7 @@ void WeightedRandomSampler::InitOnePassSampling() {
 }
 
 // Reset the internal variable to the initial state and reshuffle the indices.
-Status WeightedRandomSampler::Reset() {
+Status WeightedRandomSampler::ResetSampler() {
   sample_id_ = 0;
   buffer_id_ = 0;
   rand_gen_.seed(GetSeed());
@@ -88,7 +88,7 @@ Status WeightedRandomSampler::Reset() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();

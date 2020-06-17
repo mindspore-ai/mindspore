@@ -41,7 +41,7 @@ class SequentialSampler : public Sampler {
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
   // Op calls this to get next Buffer that contains all the sampleIds
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp

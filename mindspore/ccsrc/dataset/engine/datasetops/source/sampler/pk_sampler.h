@@ -54,7 +54,7 @@ class PKSampler : public Sampler {  // NOT YET FINISHED
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
  private:
   bool shuffle_;

@@ -207,7 +207,7 @@ void CocoOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status CocoOp::Reset() {
-  RETURN_IF_NOT_OK(sampler_->Reset());
+  RETURN_IF_NOT_OK(sampler_->ResetSampler());
   row_cnt_ = 0;
   wp_.Set();
   return Status::OK();

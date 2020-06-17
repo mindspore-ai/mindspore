@@ -409,7 +409,7 @@ void CelebAOp::Print(std::ostream &out, bool show_all) const {
 
 // Reset Sampler and wakeup Master thread (functor)
 Status CelebAOp::Reset() {
-  RETURN_IF_NOT_OK(sampler_->Reset());
+  RETURN_IF_NOT_OK(sampler_->ResetSampler());
   wp_.Set();  // wake up master thread after reset is done
   return Status::OK();
 }

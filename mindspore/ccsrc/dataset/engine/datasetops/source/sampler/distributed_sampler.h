@@ -47,7 +47,7 @@ class DistributedSampler : public Sampler {
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
   void Print(std::ostream &out, bool show_all) const override;
 

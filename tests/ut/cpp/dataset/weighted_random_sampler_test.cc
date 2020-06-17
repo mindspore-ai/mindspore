@@ -214,7 +214,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 
-  m_sampler.Reset();
+  m_sampler.ResetSampler();
   out.clear();
 
   ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
@@ -259,7 +259,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
   ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 
-  m_sampler.Reset();
+  m_sampler.ResetSampler();
   out.clear();
   freq.clear();
   freq.resize(total_samples, 0);

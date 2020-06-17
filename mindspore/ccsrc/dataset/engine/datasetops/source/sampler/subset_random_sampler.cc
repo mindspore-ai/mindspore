@@ -55,7 +55,7 @@ Status SubsetRandomSampler::InitSampler() {
 }
 
 // Reset the internal variable to the initial state.
-Status SubsetRandomSampler::Reset() {
+Status SubsetRandomSampler::ResetSampler() {
   // Reset the internal counters.
   sample_id_ = 0;
   buffer_id_ = 0;
@@ -65,7 +65,7 @@ Status SubsetRandomSampler::Reset() {
   std::shuffle(indices_.begin(), indices_.end(), rand_gen_);
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();

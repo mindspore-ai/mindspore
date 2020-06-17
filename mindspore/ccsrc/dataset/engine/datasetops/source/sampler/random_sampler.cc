@@ -91,7 +91,7 @@ Status RandomSampler::InitSampler() {
   return Status::OK();
 }
 
-Status RandomSampler::Reset() {
+Status RandomSampler::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
   next_id_ = 0;
 
@@ -106,7 +106,7 @@ Status RandomSampler::Reset() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();
