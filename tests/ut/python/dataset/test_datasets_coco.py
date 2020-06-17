@@ -22,6 +22,7 @@ KEYPOINT_FILE = "../data/dataset/testCOCO/annotations/key_point.json"
 PANOPTIC_FILE = "../data/dataset/testCOCO/annotations/panoptic.json"
 INVALID_FILE = "../data/dataset/testCOCO/annotations/invalid.json"
 LACKOFIMAGE_FILE = "../data/dataset/testCOCO/annotations/lack_of_images.json"
+INVALID_CATEGORY_ID_FILE = "../data/dataset/testCOCO/annotations/invalid_category_id.json"
 
 def test_coco_detection():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
@@ -150,7 +151,8 @@ def test_coco_panoptic():
 def test_coco_detection_classindex():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     class_index = data1.get_class_indexing()
-    assert class_index == {'person': [1], 'bicycle': [2], 'car': [3], 'cat': [4], 'dog': [5], 'monkey': [7]}
+    assert class_index == {'person': [1], 'bicycle': [2], 'car': [3], 'cat': [4], 'dog': [5], 'monkey': [6],
+                           'bag': [7], 'orange': [8]}
     num_iter = 0
     for _ in data1.__iter__():
         num_iter += 1
@@ -232,6 +234,14 @@ def test_coco_case_exception():
         assert False
     except RuntimeError as e:
         assert "Invalid node found in json" in str(e)
+
+    try:
+        data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_CATEGORY_ID_FILE, task="Detection")
+        for _ in data1.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "category_id can't find in categories" in str(e)
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_FILE, task="Detection")

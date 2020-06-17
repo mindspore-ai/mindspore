@@ -18,6 +18,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -322,6 +323,7 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   std::vector<std::pair<std::string, std::vector<int32_t>>> label_index_;
   std::map<std::string, CoordinateRow> coordinate_map_;
   std::map<std::string, std::vector<uint32_t>> simple_item_map_;
+  std::set<uint32_t> category_set_;
 };
 }  // namespace dataset
 }  // namespace mindspore
