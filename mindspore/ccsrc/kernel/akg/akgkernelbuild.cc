@@ -277,9 +277,9 @@ bool AkgKernelBuild::CreateInputDescJson(const AnfNodePtr &anf_node, nlohmann::j
       input_desc_json[kTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
       auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, real_input_index);
       if (GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
-        MS_LOG(WARNING) << "we take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
-                        << "] as const tensor, shape: [" << Vector2Str(input_shape)
-                        << "], value: " << input_desc_json[kValue];
+        MS_LOG(DEBUG) << "Take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
+                      << "] as const tensor, shape: [" << Vector2Str(input_shape)
+                      << "], value: " << input_desc_json[kValue];
 
         input_shape.clear();
       }
@@ -351,7 +351,7 @@ void GetJson(const AnfNodePtr &anf_node, const std::vector<int> &dyn_input_sizes
     }
     (*attr_json)[kValue] = data_format;
   } else {
-    MS_LOG(WARNING) << "attr type:" << type;
+    MS_LOG(WARNING) << "No valid json value for attr type: " << type;
   }
 }
 
