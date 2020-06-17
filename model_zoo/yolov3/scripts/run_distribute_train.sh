@@ -45,6 +45,9 @@ echo "After running the scipt, the network runs in the background. The log will 
 export MINDSPORE_HCCL_CONFIG_PATH=$6
 export RANK_SIZE=$1
 
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+cd $BASE_PATH/../ || exit
+
 for((i=0;i<RANK_SIZE;i++))
 do
     export DEVICE_ID=$i
@@ -56,6 +59,7 @@ do
     rm -rf LOG$i
     mkdir ./LOG$i
     cp  *.py ./LOG$i
+    cp -r ./src ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
@@ -63,7 +67,7 @@ do
 
     if [ $# == 6 ]
     then
-        taskset -c $cmdopt python ../train.py  \
+        taskset -c $cmdopt python train.py  \
         --distribute=1  \
         --lr=0.005 \
         --device_num=$RANK_SIZE  \
@@ -76,7 +80,7 @@ do
 
     if [ $# == 8 ]
     then
-        taskset -c $cmdopt python ../train.py  \
+        taskset -c $cmdopt python train.py  \
         --distribute=1  \
         --lr=0.005 \
         --device_num=$RANK_SIZE  \

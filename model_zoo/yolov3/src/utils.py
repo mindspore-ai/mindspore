@@ -15,7 +15,7 @@
 """metrics utils"""
 
 import numpy as np
-from config import ConfigYOLOV3ResNet18
+from src.config import ConfigYOLOV3ResNet18
 
 
 def calc_iou(bbox_pred, bbox_ground):

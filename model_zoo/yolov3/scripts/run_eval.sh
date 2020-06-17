@@ -20,4 +20,7 @@ echo "sh run_eval.sh DEVICE_ID CKPT_PATH MINDRECORD_DIR IMAGE_DIR ANNO_PATH"
 echo "for example: sh run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt"
 echo "=============================================================================================================="
 
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+cd $BASE_PATH/../ || exit
+
 python eval.py --device_id=$1 --ckpt_path=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5
