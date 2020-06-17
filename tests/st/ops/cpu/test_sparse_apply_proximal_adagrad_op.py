@@ -21,25 +21,19 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
 
-beta1_power = 0.9
-beta2_power = 0.999
-lr = 0.001
-beta1 = 0.9
-beta2 = 0.999
-epsilon = 1e-8
-
 
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.sparse_apply_adam = P.SparseApplyAdam()
+        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
-        self.m = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="m")
-        self.v = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="v")
+        self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="accum")
+        self.lr = 0.01
+        self.l1 = 0.0
+        self.l2 = 0.0
 
     def construct(self, grad, indices):
-        out = self.sparse_apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon,
-                                     grad, indices)
+        out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad, indices)
         return out
 
 
@@ -48,6 +42,6 @@ def test_net():
     indices = Tensor([0, 1, 2], mstype.int32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    sparse_apply_adam = Net()
-    output = sparse_apply_adam(gradient, indices)
-    print(output[0].asnumpy())
+    sparse_apply_proximal_adagrad = Net()
+    output = sparse_apply_proximal_adagrad(gradient, indices)
+    print(output.asnumpy()[0])

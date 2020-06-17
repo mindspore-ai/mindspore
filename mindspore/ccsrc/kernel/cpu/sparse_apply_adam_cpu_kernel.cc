@@ -22,6 +22,13 @@ namespace {
 constexpr size_t kSparseApplyAdamInputSize = 11;
 }  // namespace
 
+void SparseApplyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+}
+
 void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -50,7 +57,7 @@ void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != indices_size_) {
-    MS_LOG(ERROR) << "The first dimension of grad shape must be equal to indices";
+    MS_LOG(EXCEPTION) << "The first dimension of grad shape must be equal to indices";
   }
   if (AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
     use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
@@ -58,7 +65,7 @@ void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void SparseApplyAdamCPUKernel::UpdateSparseMomentum(const SparseGradient &unique_sparse_grad, float *m, float *m_t,
-                                                    float *v, float beta1, float beta2) {
+                                                    float *v, float beta1, float beta2) const {
   MS_EXCEPTION_IF_NULL(m);
   MS_EXCEPTION_IF_NULL(m_t);
   MS_EXCEPTION_IF_NULL(v);
@@ -81,7 +88,7 @@ void SparseApplyAdamCPUKernel::UpdateSparseMomentum(const SparseGradient &unique
 }
 
 bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &workspace,
                                       const std::vector<kernel::AddressPtr> & /*outputs*/) {
   if (inputs.size() < kSparseApplyAdamInputSize) {
     MS_LOG(EXCEPTION) << "Error input size!";
@@ -101,14 +108,12 @@ bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto epsilon = reinterpret_cast<float *>(inputs[8]->addr)[0];
   auto grad = reinterpret_cast<float *>(inputs[9]->addr);
   auto indices = reinterpret_cast<int *>(inputs[10]->addr);
+  auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
+  auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
 
-  std::vector<float> new_grad;
-  new_grad.reserve(indices_size_ * var_outer_dim_size_);
-  std::vector<int> new_indices;
-  new_indices.reserve(indices_size_);
-  SparseGradient unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size_});
-  DeduplicateIndexedSlices(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
-                           var_outer_dim_size_);
+  SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
+  ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
+                       var_outer_dim_size_);
   size_t total_dim_size = var_first_dim_size_ * var_outer_dim_size_;
   // Update momentum
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);

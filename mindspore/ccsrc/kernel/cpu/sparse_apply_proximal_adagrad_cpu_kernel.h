@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_ADAM_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_ADAM_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_PROXIMAL_ADAGRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_PROXIMAL_ADAGRAD_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
 #include "kernel/cpu/cpu_kernel.h"
 #include "kernel/cpu/cpu_kernel_factory.h"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyAdamCPUKernel : public CPUKernel {
+class SparseApplyProximalAdagradCPUKernel : public CPUKernel {
  public:
-  SparseApplyAdamCPUKernel() = default;
-  ~SparseApplyAdamCPUKernel() override = default;
+  SparseApplyProximalAdagradCPUKernel() = default;
+  ~SparseApplyProximalAdagradCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
@@ -35,15 +34,12 @@ class SparseApplyAdamCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void UpdateSparseMomentum(const SparseGradient &unique_sparse_grad, float *m, float *m_t, float *v, float beta1,
-                            float beta2) const;
   size_t indices_size_{0};
   size_t var_first_dim_size_{0};
   size_t var_outer_dim_size_{1};
-  bool use_nesterov_{false};
 };
 
-MS_REG_CPU_KERNEL(SparseApplyAdam,
+MS_REG_CPU_KERNEL(SparseApplyProximalAdagrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
@@ -51,16 +47,10 @@ MS_REG_CPU_KERNEL(SparseApplyAdam,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyAdamCPUKernel);
+                  SparseApplyProximalAdagradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_ADAM_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_CPU_SPARSE_APPLY_PROXIMAL_ADAGRAD_CPU_KERNEL_H_
