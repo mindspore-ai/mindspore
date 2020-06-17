@@ -50,9 +50,8 @@ class OptimizeIRPassLib {
   SubstitutionPtr reset_defer_inline_;
 
   // Env Item Eliminate
+  SubstitutionPtr env_get_item_eliminate_;
   SubstitutionPtr new_env_get_item_;
-  SubstitutionPtr add_env_get_item_;
-  SubstitutionPtr env_get_set_item_;
   SubstitutionPtr incorporate_env_getitem_;
   SubstitutionPtr incorporate_env_getitem_switch_;
 
@@ -74,7 +73,6 @@ class OptimizeIRPassLib {
 
   // Gradient irpasses
   SubstitutionPtr expand_jprim_;
-  SubstitutionPtr stop_gradient_eliminate_;
   SubstitutionPtr minmaximum_grad_;
 
   // inline
@@ -83,8 +81,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr specialize_transform_;
 
   // Incorporation
-  SubstitutionPtr incorporate_getitem_;
-  SubstitutionPtr incorporate_getitem_switch_;
+  SubstitutionPtr incorporate_getitem_set_;
   SubstitutionPtr incorporate_call_;
   SubstitutionPtr incorporate_call_switch_;
 
@@ -115,51 +112,30 @@ class InferenceOptPrepareLib {
 // predicate functions
 inline bool IsNode(const AnfNodePtr &) { return true; }
 
-inline bool IsCNode(const AnfNodePtr &node) {
-  if (node != nullptr) {
-    return node->isa<CNode>();
-  }
-  return false;
-}
+inline bool IsCNode(const AnfNodePtr &node) { return node->isa<CNode>(); }
 
-inline bool IsVNode(const AnfNodePtr &node) {
-  if (node != nullptr) {
-    return node->isa<ValueNode>();
-  }
-  return false;
-}
+inline bool IsVNode(const AnfNodePtr &node) { return node->isa<ValueNode>(); }
 
-inline bool IsParam(const AnfNodePtr &node) {
-  if (node != nullptr) {
-    return node->isa<Parameter>();
-  }
-  return false;
-}
+inline bool IsParam(const AnfNodePtr &node) { return node->isa<Parameter>(); }
 
 // Check if CNode Input 0 is Func Graph
 inline bool IsCNodeGraph(const AnfNodePtr &node) {
-  if (node == nullptr || !node->isa<CNode>()) {
+  if (!node->isa<CNode>()) {
     return false;
   }
 
   auto inp0 = node->cast<CNodePtr>()->input(0);
-  if (IsValueNode<FuncGraph>(inp0)) {
-    return true;
-  }
-  return false;
+  return IsValueNode<FuncGraph>(inp0);
 }
 
 // Check if CNode Input 0 is CNode
 inline bool IsCNodeDup(const AnfNodePtr &node) {
-  if (node == nullptr || !node->isa<CNode>()) {
+  if (!node->isa<CNode>()) {
     return false;
   }
 
   auto inp0 = node->cast<CNodePtr>()->input(0);
-  if (inp0 != nullptr && inp0->isa<CNode>()) {
-    return true;
-  }
-  return false;
+  return (inp0 != nullptr) && inp0->isa<CNode>();
 }
 }  // namespace irpass
 }  // namespace opt

@@ -44,8 +44,17 @@ SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::
       return false;
     }
 
+    auto cnode = node->cast<CNodePtr>();
+    auto inp0 = cnode->input(0);
+    auto prim0 = GetValueNode<PrimitivePtr>(inp0);
+    if (prim0 == nullptr) {
+      return false;
+    }
+
+    auto hash = prim0->Hash();
+    auto const &name = prim0->name();
     for (auto &prim : prims) {
-      if (IsPrimitiveCNode(node, prim)) {
+      if (hash == prim->Hash() && name == prim->name()) {
         return true;
       }
     }
@@ -172,7 +181,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
   }
 
 #ifdef ENABLE_PROFILE
-  MsProfile::StatTime("opt.transform", GetTime() - start);
+  MsProfile::StatTime("opt.transform." + optimizer->name(), GetTime() - start);
 #endif
   return changes;
 }

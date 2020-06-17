@@ -55,21 +55,6 @@ class ExpandJPrim : public AnfVisitor {
  private:
   ValueNodePtr x_{nullptr};
 };
-
-// stop_gradient(x) ==> x
-class StopGradientEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    x_ = nullptr;
-    AnfVisitor::Match(prim::kPrimStopGradient)(node);
-    return x_;
-  }
-
-  void Visit(const AnfNodePtr &node) override { x_ = node; }
-
- private:
-  AnfNodePtr x_{nullptr};
-};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

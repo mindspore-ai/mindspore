@@ -225,6 +225,33 @@ class EnvGetSetItem : public AnfVisitor {
   bool is_match_{false};
 };
 
+class EnvGetItemEliminater {
+ public:
+  EnvGetItemEliminater() : new_env_get_item_(), add_env_get_item_(), env_get_set_item_() {
+    eliminaters_.emplace_back(new_env_get_item_);
+    eliminaters_.emplace_back(add_env_get_item_);
+    eliminaters_.emplace_back(env_get_set_item_);
+  }
+  ~EnvGetItemEliminater() = default;
+
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+    AnfNodePtr new_node;
+    for (auto &eliminater : eliminaters_) {
+      new_node = eliminater(optimizer, node);
+      if (new_node != nullptr) {
+        return new_node;
+      }
+    }
+    return nullptr;
+  }
+
+ private:
+  NewEnvGetItem new_env_get_item_;
+  AddEnvGetItem add_env_get_item_;
+  EnvGetSetItem env_get_set_item_;
+  std::vector<TransformFuncType> eliminaters_{};
+};
+
 // {prim::kPrimEnvGetItem, {G, Xs}, C, Y}
 class IncorporateEnvGetitem : public AnfVisitor {
  public:
