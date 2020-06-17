@@ -19,12 +19,12 @@ import os
 
 import numpy as np
 
-from imdb import ImdbParser
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
+from .imdb import ImdbParser
 
 
-def create_dataset(data_home, batch_size, repeat_num=1, training=True):
+def lstm_create_dataset(data_home, batch_size, repeat_num=1, training=True):
     """Data operations."""
     ds.config.set_seed(1)
     data_dir = os.path.join(data_home, "aclImdb_train.mindrecord0")

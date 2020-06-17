@@ -14,20 +14,20 @@
 # ============================================================================
 """
 #################train lstm example on aclImdb########################
-python train.py --preprocess=true --aclimdb_path=your_imdb_path --glove_path=your_glove_path
+python eval.py --ckpt_path=./lstm-20-390.ckpt
 """
 import argparse
 import os
 
 import numpy as np
 
-from config import lstm_cfg as cfg
-from dataset import convert_to_mindrecord
-from dataset import create_dataset
+from src.config import lstm_cfg as cfg
+from src.dataset import lstm_create_dataset, convert_to_mindrecord
 from mindspore import Tensor, nn, Model, context
 from mindspore.model_zoo.lstm import SentimentNet
 from mindspore.nn import Accuracy
-from mindspore.train.callback import LossMonitor, CheckpointConfig, ModelCheckpoint, TimeMonitor
+from mindspore.train.callback import LossMonitor
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MindSpore LSTM Example')
@@ -39,8 +39,8 @@ if __name__ == '__main__':
                         help='path where the GloVe is stored.')
     parser.add_argument('--preprocess_path', type=str, default="./preprocess",
                         help='path where the pre-process data is stored.')
-    parser.add_argument('--ckpt_path', type=str, default="./",
-                        help='the path to save the checkpoint file.')
+    parser.add_argument('--ckpt_path', type=str, default=None,
+                        help='the checkpoint file path used to evaluate model.')
     parser.add_argument('--device_target', type=str, default="GPU", choices=['GPU', 'CPU'],
                         help='the target device to run, support "GPU", "CPU". Default: "GPU".')
     args = parser.parse_args()
@@ -70,14 +70,12 @@ if __name__ == '__main__':
 
     model = Model(network, loss, opt, {'acc': Accuracy()})
 
-    print("============== Starting Training ==============")
-    ds_train = create_dataset(args.preprocess_path, cfg.batch_size, cfg.num_epochs)
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="lstm", directory=args.ckpt_path, config=config_ck)
-    time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
+    print("============== Starting Testing ==============")
+    ds_eval = lstm_create_dataset(args.preprocess_path, cfg.batch_size, training=False)
+    param_dict = load_checkpoint(args.ckpt_path)
+    load_param_into_net(network, param_dict)
     if args.device_target == "CPU":
-        model.train(cfg.num_epochs, ds_train, callbacks=[time_cb, ckpoint_cb, loss_cb], dataset_sink_mode=False)
+        acc = model.eval(ds_eval, dataset_sink_mode=False)
     else:
-        model.train(cfg.num_epochs, ds_train, callbacks=[time_cb, ckpoint_cb, loss_cb])
-    print("============== Training Success ==============")
+        acc = model.eval(ds_eval)
+    print("============== Accuracy:{} ==============".format(acc))

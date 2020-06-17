@@ -98,7 +98,7 @@ parameters/options:
 ### Distribute Training
 
 ```
-Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATA_PATH]
+Usage: sh script/run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATA_PATH]
 
 parameters/options:
   MINDSPORE_HCCL_CONFIG_PATH   HCCL configuration file path.

@@ -16,13 +16,15 @@
 Data operations, will be used in train.py and eval.py
 """
 import os
+
+import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
-import mindspore.common.dtype as mstype
-from config import cifar_cfg as cfg
+from .config import cifar_cfg as cfg
 
-def create_dataset(data_home, repeat_num=1, training=True):
+
+def vgg_create_dataset(data_home, repeat_num=1, training=True):
     """Data operations."""
     ds.config.set_seed(1)
     data_dir = os.path.join(data_home, "cifar-10-batches-bin")
