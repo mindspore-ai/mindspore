@@ -75,6 +75,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"apply_adagrad", "apply_adagrad_d"},
   {"apply_adagrad_v2", "apply_adagradv2_d"},
   {"sparse_apply_adagrad", "sparse_apply_adagrad_d"},
+  {"apply_proximal_adagrad", "apply_proximal_adagrad_d"},
+  {"sparse_apply_proximal_adagrad", "sparse_apply_proximal_adagrad_d"},
   {"transpose", "transpose_d"},
   {"fill", "fill_d"},
   {"unsorted_segment_sum", "unsorted_segment_sum_d"},

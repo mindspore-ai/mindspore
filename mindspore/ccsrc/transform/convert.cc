@@ -391,7 +391,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
-    {string(kNameApplyProximalAdagrad), ADPT_DESC(ApplyProximalAdagrad)},
+    {string(kNameApplyProximalAdagrad), ADPT_DESC(ApplyProximalAdagradD)},
     {string(kNameAcosh), ADPT_DESC(Acosh)},
     {string(kNameAcoshGrad), ADPT_DESC(AcoshGrad)},
     {string(kNameFloorMod), ADPT_DESC(FloorMod)},
