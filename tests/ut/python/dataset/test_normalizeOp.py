@@ -16,39 +16,16 @@
 Testing Normalize op in DE
 """
 import numpy as np
-import matplotlib.pyplot as plt
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse, save_and_check_md5
+from util import diff_mse, save_and_check_md5, visualize_image
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
-
-
-def visualize_mse(image_de_normalized, image_np_normalized, mse, image_original):
-    """
-    visualizes the image using DE op and Numpy op
-    """
-    plt.subplot(141)
-    plt.imshow(image_original)
-    plt.title("Original image")
-
-    plt.subplot(142)
-    plt.imshow(image_de_normalized)
-    plt.title("DE normalized image")
-
-    plt.subplot(143)
-    plt.imshow(image_np_normalized)
-    plt.title("Numpy normalized image")
-
-    plt.subplot(144)
-    plt.imshow(image_de_normalized - image_np_normalized)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
 
 
 def normalize_np(image, mean, std):
@@ -137,7 +114,7 @@ def test_normalize_op_c(plot=False):
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         assert mse < 0.01
         if plot:
-            visualize_mse(image_de_normalized, image_np_normalized, mse, image_original)
+            visualize_image(image_original, image_de_normalized, mse, image_np_normalized)
         num_iter += 1
 
 
@@ -174,7 +151,7 @@ def test_normalize_op_py(plot=False):
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         assert mse < 0.01
         if plot:
-            visualize_mse(image_de_normalized, image_np_normalized, mse, image_original)
+            visualize_image(image_original, image_de_normalized, mse, image_np_normalized)
         num_iter += 1
 
 

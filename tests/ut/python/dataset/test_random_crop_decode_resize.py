@@ -15,37 +15,18 @@
 """
 Testing RandomCropDecodeResize op in DE
 """
-import matplotlib.pyplot as plt
-import numpy as np
 import cv2
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
+from util import diff_mse, visualize_image
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def visualize(a, mse, original):
-    """
-    visualizes the image using DE op and Numpy Op
-    """
-    plt.subplot(141)
-    plt.imshow(original)
-    plt.title("Original image")
-
-    plt.subplot(142)
-    plt.imshow(a)
-    plt.title("DE random_crop_decode_resize image")
-
-    plt.subplot(143)
-    plt.imshow(a - original)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
-
-
-def test_random_crop_decode_resize_op():
+def test_random_crop_decode_resize_op(plot=False):
     """
     Test RandomCropDecodeResize op
     """
@@ -66,16 +47,15 @@ def test_random_crop_decode_resize_op():
 
         if num_iter > 0:
             break
-        crop_and_resize = item1["image"]
+        crop_and_resize_de = item1["image"]
         original = item2["image"]
-        original = cv2.resize(original, (512, 256))
-        diff = crop_and_resize - original
-        mse = np.sum(np.power(diff, 2))
+        crop_and_resize_cv = cv2.resize(original, (512, 256))
+        mse = diff_mse(crop_and_resize_de, crop_and_resize_cv)
         logger.info("random_crop_decode_resize_op_{}, mse: {}".format(num_iter + 1, mse))
-        # Uncomment below line if you want to visualize images
-        # visualize(crop_and_resize, mse, original)
+        if plot:
+            visualize_image(original, crop_and_resize_de, mse, crop_and_resize_cv)
         num_iter += 1
 
 
 if __name__ == "__main__":
-    test_random_crop_decode_resize_op()
+    test_random_crop_decode_resize_op(plot=True)

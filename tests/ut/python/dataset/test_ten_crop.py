@@ -17,10 +17,10 @@ Testing TenCrop in DE
 import pytest
 import numpy as np
 
-from util import visualize, save_and_check_md5
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
 from mindspore import log as logger
+from util import visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -62,7 +62,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
         logger.info("dtype of image_2: {}".format(image_2.dtype))
 
         if plot:
-            visualize(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
+            visualize_list(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 10 images.
         assert len(image_2.shape) == 4

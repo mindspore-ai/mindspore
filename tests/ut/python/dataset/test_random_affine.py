@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import visualize, save_and_check_md5, \
+from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
@@ -62,7 +62,7 @@ def test_random_affine_op(plot=False):
         image_affine.append(image1)
         image_original.append(image2)
     if plot:
-        visualize(image_original, image_affine)
+        visualize_list(image_original, image_affine)
 
 
 def test_random_affine_md5():

@@ -20,7 +20,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore.dataset.transforms.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize, save_and_check_md5, \
+from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 
@@ -64,7 +64,7 @@ def test_random_perspective_op(plot=False):
         image_perspective.append(image1)
         image_original.append(image2)
     if plot:
-        visualize(image_original, image_perspective)
+        visualize_list(image_original, image_perspective)
 
 
 def skip_test_random_perspective_md5():

@@ -25,6 +25,11 @@ from mindspore import log as logger
 # These are the column names defined in the testTFTestAllTypes dataset
 COLUMNS = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
            "col_sint16", "col_sint32", "col_sint64"]
+# These are list of plot title in different visualize modes
+PLOT_TITLE_DICT = {
+    1: ["Original image", "Transformed image"],
+    2: ["c_transform image", "py_transform image"]
+}
 SAVE_JSON = False
 
 
@@ -206,19 +211,54 @@ def diff_me(in1, in2):
     return mse / 255 * 100
 
 
-def visualize(image_original, image_transformed):
+def visualize_list(image_list_1, image_list_2, visualize_mode=1):
     """
-    visualizes the image using DE op and Numpy op
+    visualizes a list of images using DE op
     """
-    num = len(image_transformed)
+    plot_title = PLOT_TITLE_DICT[visualize_mode]
+    num = len(image_list_1)
     for i in range(num):
         plt.subplot(2, num, i + 1)
-        plt.imshow(image_original[i])
-        plt.title("Original image")
+        plt.imshow(image_list_1[i])
+        plt.title(plot_title[0])
 
         plt.subplot(2, num, i + num + 1)
-        plt.imshow(image_transformed[i])
-        plt.title("Transformed image")
+        plt.imshow(image_list_2[i])
+        plt.title(plot_title[1])
+
+    plt.show()
+
+
+def visualize_image(image_original, image_de, mse=None, image_lib=None):
+    """
+    visualizes one example image with optional input: mse, image using 3rd party op.
+    If three images are passing in, different image is calculated by 2nd and 3rd images.
+    """
+    num = 2
+    if image_lib is not None:
+        num += 1
+    if mse is not None:
+        num += 1
+    plt.subplot(1, num, 1)
+    plt.imshow(image_original)
+    plt.title("Original image")
+
+    plt.subplot(1, num, 2)
+    plt.imshow(image_de)
+    plt.title("DE Op image")
+
+    if image_lib is not None:
+        plt.subplot(1, num, 3)
+        plt.imshow(image_lib)
+        plt.title("Lib Op image")
+        if mse is not None:
+            plt.subplot(1, num, 4)
+            plt.imshow(image_de - image_lib)
+            plt.title("Diff image,\n mse : {}".format(mse))
+    elif mse is not None:
+        plt.subplot(1, num, 3)
+        plt.imshow(image_original - image_de)
+        plt.title("Diff image,\n mse : {}".format(mse))
 
     plt.show()
 

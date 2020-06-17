@@ -15,37 +15,19 @@
 """
 Testing CutOut op in DE
 """
-import matplotlib.pyplot as plt
 import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c
 import mindspore.dataset.transforms.vision.py_transforms as f
 from mindspore import log as logger
+from util import visualize_image, diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def visualize(image_1, image_2):
-    """
-    visualizes the image using RandomErasing and Cutout
-    """
-    plt.subplot(141)
-    plt.imshow(image_1)
-    plt.title("RandomErasing")
-
-    plt.subplot(142)
-    plt.imshow(image_2)
-    plt.title("Cutout")
-
-    plt.subplot(143)
-    plt.imshow(image_1 - image_2)
-    plt.title("Difference image")
-    plt.show()
-
-
-def test_cut_out_op():
+def test_cut_out_op(plot=False):
     """
     Test Cutout
     """
@@ -87,7 +69,9 @@ def test_cut_out_op():
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
 
-        # visualize(image_1, image_2)
+        mse = diff_mse(image_1, image_2)
+        if plot:
+            visualize_image(image_1, image_2, mse)
 
 
 def test_cut_out_op_multicut():
@@ -134,5 +118,5 @@ def test_cut_out_op_multicut():
 
 
 if __name__ == "__main__":
-    test_cut_out_op()
+    test_cut_out_op(plot=True)
     test_cut_out_op_multicut()

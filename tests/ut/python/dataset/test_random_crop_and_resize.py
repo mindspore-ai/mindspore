@@ -23,7 +23,7 @@ import mindspore.dataset.transforms.vision.py_transforms as py_vision
 import mindspore.dataset.transforms.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import diff_mse, save_and_check_md5, visualize, \
+from util import diff_mse, save_and_check_md5, visualize_list, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -64,7 +64,7 @@ def test_random_crop_and_resize_op_c(plot=False):
         crop_and_resize_images.append(crop_and_resize)
         original_images.append(original)
     if plot:
-        visualize(original_images, crop_and_resize_images)
+        visualize_list(original_images, crop_and_resize_images)
 
 
 def test_random_crop_and_resize_op_py(plot=False):
@@ -106,7 +106,7 @@ def test_random_crop_and_resize_op_py(plot=False):
         crop_and_resize_images.append(crop_and_resize)
         original_images.append(original)
     if plot:
-        visualize(original_images, crop_and_resize_images)
+        visualize_list(original_images, crop_and_resize_images)
 
 
 def test_random_crop_and_resize_01():
@@ -332,7 +332,7 @@ def test_random_crop_and_resize_comp(plot=False):
         image_c_cropped.append(c_image)
         image_py_cropped.append(py_image)
     if plot:
-        visualize(image_c_cropped, image_py_cropped)
+        visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
 
 if __name__ == "__main__":

@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+Testing HWC2CHW op in DE
+"""
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse, visualize, save_and_check_md5
+from util import diff_mse, visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -55,7 +58,7 @@ def test_HWC2CHW(plot=False):
         mse = diff_mse(transposed_item, original_item.transpose(2, 0, 1))
         assert mse == 0
     if plot:
-        visualize(image, image_transposed)
+        visualize_list(image, image_transposed)
 
 
 def test_HWC2CHW_md5():
@@ -112,7 +115,7 @@ def test_HWC2CHW_comp(plot=False):
         image_c_transposed.append(c_image.transpose(1, 2, 0))
         image_py_transposed.append(py_image.transpose(1, 2, 0))
     if plot:
-        visualize(image_c_transposed, image_py_transposed)
+        visualize_list(image_c_transposed, image_py_transposed, visualize_mode=2)
 
 
 if __name__ == '__main__':

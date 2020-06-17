@@ -15,7 +15,6 @@
 """
 Testing RandomRotation op in DE
 """
-import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
@@ -23,35 +22,13 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import visualize_image, diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def visualize(a, mse, original):
-    """
-    visualizes the image using DE op and enCV
-    """
-    plt.subplot(141)
-    plt.imshow(original)
-    plt.title("Original image")
-
-    plt.subplot(142)
-    plt.imshow(a)
-    plt.title("DE random_crop_and_resize image")
-
-    plt.subplot(143)
-    plt.imshow(a - original)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
-
-
-def diff_mse(in1, in2):
-    mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
-    return mse * 100
-
-
-def test_random_rotation_op():
+def test_random_rotation_op(plot=False):
     """
     Test RandomRotation op
     """
@@ -73,17 +50,16 @@ def test_random_rotation_op():
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         if num_iter > 0:
             break
-        rotation = item1["image"]
+        rotation_de = item1["image"]
         original = item2["image"]
         logger.info("shape before rotate: {}".format(original.shape))
-        original = cv2.rotate(original, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        diff = rotation - original
-        mse = np.sum(np.power(diff, 2))
+        rotation_cv = cv2.rotate(original, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        mse = diff_mse(rotation_de, rotation_cv)
         logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
         assert mse == 0
-        # Uncomment below line if you want to visualize images
-        # visualize(rotation, mse, original)
         num_iter += 1
+    if plot:
+        visualize_image(original, rotation_de, mse, rotation_cv)
 
 
 def test_random_rotation_expand():
@@ -148,6 +124,6 @@ def test_rotation_diff():
 
 
 if __name__ == "__main__":
-    test_random_rotation_op()
+    test_random_rotation_op(True)
     test_random_rotation_expand()
     test_rotation_diff()

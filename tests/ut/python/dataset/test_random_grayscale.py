@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_md5, visualize, \
+from util import save_and_check_md5, visualize_list, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
@@ -61,7 +61,7 @@ def test_random_grayscale_valid_prob(plot=False):
         image_gray.append(image1)
         image.append(image2)
     if plot:
-        visualize(image, image_gray)
+        visualize_list(image, image_gray)
 
 def test_random_grayscale_input_grayscale_images():
     """

@@ -15,14 +15,12 @@
 """
 Testing the random vertical flip op in DE
 """
-import matplotlib.pyplot as plt
 import numpy as np
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import save_and_check_md5, visualize, diff_mse, \
+from util import save_and_check_md5, visualize_list, visualize_image, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
@@ -42,29 +40,7 @@ def v_flip(image):
     return image
 
 
-def visualize_with_mse(image_de_random_vertical, image_pil_random_vertical, mse, image_original):
-    """
-    visualizes the image using DE op and Numpy op
-    """
-    plt.subplot(141)
-    plt.imshow(image_original)
-    plt.title("Original image")
-
-    plt.subplot(142)
-    plt.imshow(image_de_random_vertical)
-    plt.title("DE random_vertical image")
-
-    plt.subplot(143)
-    plt.imshow(image_pil_random_vertical)
-    plt.title("vertically flipped image")
-
-    plt.subplot(144)
-    plt.imshow(image_de_random_vertical - image_pil_random_vertical)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
-
-
-def test_random_vertical_op():
+def test_random_vertical_op(plot=False):
     """
     Test random_vertical with default probability
     """
@@ -96,9 +72,10 @@ def test_random_vertical_op():
         diff = image_v_flipped - image_v_flipped_2
         mse = np.sum(np.power(diff, 2))
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
-        # Uncomment below line if you want to visualize images
-        # visualize_with_mse(image_v_flipped, image_v_flipped_2, mse, image)
         num_iter += 1
+        if plot:
+            visualize_image(image, image_v_flipped, mse, image_v_flipped_2)
+
 
 def test_random_vertical_valid_prob_c():
     """
@@ -121,6 +98,7 @@ def test_random_vertical_valid_prob_c():
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 
 def test_random_vertical_valid_prob_py():
     """
@@ -147,6 +125,7 @@ def test_random_vertical_valid_prob_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_vertical_invalid_prob_c():
     """
     Test RandomVerticalFlip op in c_transforms: invalid input, expect to raise error
@@ -164,6 +143,7 @@ def test_random_vertical_invalid_prob_c():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input is not" in str(e)
+
 
 def test_random_vertical_invalid_prob_py():
     """
@@ -185,6 +165,7 @@ def test_random_vertical_invalid_prob_py():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input is not" in str(e)
+
 
 def test_random_vertical_comp(plot=False):
     """
@@ -223,13 +204,13 @@ def test_random_vertical_comp(plot=False):
         mse = diff_mse(image_c, image_py)
         assert mse < 0.001
     if plot:
-        visualize(images_list_c, images_list_py)
+        visualize_list(images_list_c, images_list_py, visualize_mode=2)
 
 
 if __name__ == "__main__":
-    test_random_vertical_op()
+    test_random_vertical_op(plot=True)
     test_random_vertical_valid_prob_c()
     test_random_vertical_valid_prob_py()
     test_random_vertical_invalid_prob_c()
     test_random_vertical_invalid_prob_py()
-    test_random_vertical_comp(True)
+    test_random_vertical_comp(plot=True)

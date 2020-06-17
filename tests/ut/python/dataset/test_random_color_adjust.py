@@ -16,35 +16,16 @@
 Testing RandomColorAdjust op in DE
 """
 import pytest
-import matplotlib.pyplot as plt
 import numpy as np
-from util import diff_mse
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import diff_mse, visualize_image
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
-
-
-def visualize(first, mse, second):
-    """
-    visualizes the image using DE op and OpenCV
-    """
-    plt.subplot(141)
-    plt.imshow(first)
-    plt.title("c transformed image")
-
-    plt.subplot(142)
-    plt.imshow(second)
-    plt.title("py random_color_adjust image")
-
-    plt.subplot(143)
-    plt.imshow(first - second)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
 
 
 def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
@@ -126,7 +107,7 @@ def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturat
         assert mse < 0.01
 
         if plot:
-            visualize(c_image, mse, py_image)
+            visualize_image(c_image, py_image, mse)
 
 
 def test_random_color_adjust_op_brightness(plot=False):

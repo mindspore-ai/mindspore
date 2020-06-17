@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse, visualize, save_and_check_md5
+from util import diff_mse, visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -71,7 +71,7 @@ def test_linear_transformation_op(plot=False):
         mse = diff_mse(image1, image2)
         assert mse == 0
     if plot:
-        visualize(image, image_transformed)
+        visualize_list(image, image_transformed)
 
 def test_linear_transformation_md5_01():
     """

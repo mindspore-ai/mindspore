@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import visualize, config_get_set_seed, \
+from util import visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers, save_and_check_md5
 
 GENERATE_GOLDEN = False
@@ -63,7 +63,7 @@ def test_random_apply_op(plot=False):
         image_apply.append(image1)
         image_original.append(image2)
     if plot:
-        visualize(image_original, image_apply)
+        visualize_list(image_original, image_apply)
 
 
 def test_random_apply_md5():
