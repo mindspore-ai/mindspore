@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_NN_RELU_GRAD_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <string>
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/kernel_constants.h"
@@ -25,9 +27,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReluGradGpuKernel : public GpuKernel {
+class ActivationGradGpuKernel : public GpuKernel {
  public:
-  ReluGradGpuKernel()
+  ActivationGradGpuKernel()
       : cudnn_handle_(nullptr),
         activation_desc_(nullptr),
         mode_(CUDNN_ACTIVATION_RELU),
@@ -35,7 +37,7 @@ class ReluGradGpuKernel : public GpuKernel {
         is_null_input_(false),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         input_size_(0) {}
-  ~ReluGradGpuKernel() override { DestroyResource(); }
+  ~ActivationGradGpuKernel() override { DestroyResource(); }
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -45,8 +47,15 @@ class ReluGradGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
-    T *y = GetDeviceAddress<T>(inputs, 1);
-    T *dy = GetDeviceAddress<T>(inputs, 0);
+    T *dy = nullptr;
+    T *y = nullptr;
+    if (mode_ == CUDNN_ACTIVATION_RELU || mode_ == CUDNN_ACTIVATION_ELU) {
+      dy = GetDeviceAddress<T>(inputs, 0);
+      y = GetDeviceAddress<T>(inputs, 1);
+    } else {
+      y = GetDeviceAddress<T>(inputs, 0);
+      dy = GetDeviceAddress<T>(inputs, 1);
+    }
     T *dx = GetDeviceAddress<T>(outputs, 0);
 
     const float alpha = 1;
@@ -59,18 +68,24 @@ class ReluGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto iter = kernel_map.find(node_name);
+    if (iter == kernel_map.end()) {
+      MS_LOG(EXCEPTION) << "Kernel: " << node_name << " not support.";
+    }
+    mode_ = iter->second;
+
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ReluGradGpuKernel needs 2.";
+      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ActivationGradGpuKernel needs 2.";
       return false;
     }
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    mode_ = CUDNN_ACTIVATION_RELU;
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "ReluGradGpuKernel input is null.";
+      MS_LOG(WARNING) << "ActivationGradGpuKernel input is null.";
       InitSizeLists();
       return true;
     }
@@ -110,6 +125,10 @@ class ReluGradGpuKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(data_descriptor_), "cudnnDestroyTensorDescriptor failed");
   }
 
+  std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReluGrad", CUDNN_ACTIVATION_RELU},
+                                                             {"TanhGrad", CUDNN_ACTIVATION_TANH},
+                                                             {"ELUGrad", CUDNN_ACTIVATION_ELU},
+                                                             {"SigmoidGrad", CUDNN_ACTIVATION_SIGMOID}};
   cudnnHandle_t cudnn_handle_;
   cudnnActivationDescriptor_t activation_desc_;
   cudnnActivationMode_t mode_;
