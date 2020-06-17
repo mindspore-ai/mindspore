@@ -365,8 +365,8 @@ def test_resnet_and_resnet_thor_imagenet_4p():
     for i in range(device_num):
         os.system("rm -rf " + str(i))
     print("End training...")
-    assert acc > 0.13
-    assert cost < 21
+    assert acc > 0.15
+    assert cost < 20
 
     # THOR
     thor_acc = 0.0
@@ -381,5 +381,5 @@ def test_resnet_and_resnet_thor_imagenet_4p():
     for i in range(4, device_num + 4):
         os.system("rm -rf " + str(i))
     print("End training...")
-    assert thor_acc > 0.22
-    assert thor_cost < 22
+    assert thor_acc > 0.25
+    assert thor_cost < 21
