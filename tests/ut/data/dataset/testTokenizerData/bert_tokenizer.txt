@@ -1,0 +1,14 @@
+床前明月光
+疑是地上霜
+举头望明月
+低头思故乡
+I am making small mistakes during working hours
+😀嘿嘿😃哈哈😄大笑😁嘻嘻
+繁體字
+unused [CLS]
+unused [SEP]
+unused [UNK]
+unused [PAD]
+unused [MASK]
+12+/-28=40/-16
+Hello World!

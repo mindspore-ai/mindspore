@@ -17,10 +17,11 @@ c transforms for all text related operators
 
 import os
 import re
+import platform
 
 import mindspore._c_dataengine as cde
 
-from .utils import JiebaMode
+from .utils import JiebaMode, NormalizeForm
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_ngram
 
@@ -174,3 +175,172 @@ class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
     """
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
     """
+
+
+class WordpieceTokenizer(cde.WordpieceTokenizerOp):
+    """
+    Tokenize scalar token or 1-D tokens to subword tokens.
+
+    Args
+        vocab(Vocab): a Vocab object.
+        suffix_indicator(string, optional): Used to show that the subword is the last part of a word(default '##').
+        max_bytes_per_token(int, optional): Tokens exceeding this length will not be further split(default 100).
+        unknown_token(string, optional): When we can not found the token: if 'unknown_token' is empty string,
+            return the token directly, else return 'unknown_token'(default '[UNK]').
+    """
+
+    def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]'):
+        self.vocab = vocab
+        self.suffix_indicator = suffix_indicator
+        self.max_bytes_per_token = max_bytes_per_token
+        self.unknown_token = unknown_token
+        super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token, self.unknown_token)
+
+
+if platform.system().lower() != 'windows':
+    class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):
+        """
+        Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces(such as: ' ', '\t', '\r', '\n').
+        """
+
+
+    class UnicodeScriptTokenizer(cde.UnicodeScriptTokenizerOp):
+        """
+        Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
+
+        Args:
+            keep_whitespace(bool, optional): If or not emit whitespace tokens (default False)
+        """
+
+        def __init__(self, keep_whitespace=False):
+            self.keep_whitespace = keep_whitespace
+            super().__init__(self.keep_whitespace)
+
+
+    class CaseFold(cde.CaseFoldOp):
+        """
+        Apply case fold operation on utf-8 string tensor.
+        """
+
+
+    DE_C_INTER_NORMALIZE_FORM = {
+        NormalizeForm.NONE: cde.NormalizeForm.DE_NORMALIZE_NONE,
+        NormalizeForm.NFC: cde.NormalizeForm.DE_NORMALIZE_NFC,
+        NormalizeForm.NFKC: cde.NormalizeForm.DE_NORMALIZE_NFKC,
+        NormalizeForm.NFD: cde.NormalizeForm.DE_NORMALIZE_NFD,
+        NormalizeForm.NFKD: cde.NormalizeForm.DE_NORMALIZE_NFKD
+    }
+
+
+    class NormalizeUTF8(cde.NormalizeUTF8Op):
+        """
+        Apply normalize operation on utf-8 string tensor.
+
+        Args:
+            normalize_form(Enum, optional): Valid values are "NONE", "NFC", "NFKC", "NFD", "NFKD".
+                If set "NONE", will do nothing for input string tensor.
+                If set to any of "NFC", "NFKC", "NFD", "NFKD", will apply normalize operation(default "NFKC").
+                See http://unicode.org/reports/tr15/ for details.
+        """
+
+        def __init__(self, normalize_form=NormalizeForm.NFKC):
+            self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
+            super().__init__(self.normalize_form)
+
+
+    class RegexReplace(cde.RegexReplaceOp):
+        """
+        Replace utf-8 string tensor with 'replace' according to regular expression 'pattern'.
+        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
+
+        Args:
+            pattern(string): the regex expression patterns.
+            replace(string): the string to replace matched element.
+            replace_all(bool, optional): If False, only replace first matched element;
+                if True, replace all matched elements(default True).
+        """
+
+        def __init__(self, pattern, replace, replace_all=True):
+            self.pattern = pattern
+            self.replace = replace
+            self.replace_all = replace_all
+            super().__init__(self.pattern, self.replace, self.replace_all)
+
+
+    class RegexTokenizer(cde.RegexTokenizerOp):
+        """
+        Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
+        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
+
+        Args:
+            delim_pattern(string): The pattern of regex delimiters.
+                The original string will be split by matched elements.
+            keep_delim_pattern(string, optional): The string matched by 'delim_pattern' can be kept as a token
+                if it can be matched by 'keep_delim_pattern'. And the default value is empty string(''),
+                in this situation, delimiters will not kept as a output token.
+        """
+
+        def __init__(self, delim_pattern, keep_delim_pattern=''):
+            self.delim_pattern = delim_pattern
+            self.keep_delim_pattern = keep_delim_pattern
+            super().__init__(self.delim_pattern, self.keep_delim_pattern)
+
+
+    class BasicTokenizer(cde.BasicTokenizerOp):
+        """
+        Tokenize a scalar tensor of UTF-8 string by specific rules.
+
+        Args:
+            lower_case(bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
+                on input text to make the text to lower case and strip accents characters; If False, only apply
+                NormalizeUTF8('normalization_form' mode) operation on input text(default False).
+            keep_whitespace(bool, optional), If True, the whitespace will be kept in out tokens(default False).
+            normalization_form(Enum, optional), Used to specify a specific normlaize mode,
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default 'NONE').
+            preserve_unused_token(bool, optional), If True, do not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default True).
+        """
+
+        def __init__(self, lower_case=False, keep_whitespace=False,
+                     normalization_form=NormalizeForm.NONE, preserve_unused_token=True):
+            self.lower_case = lower_case
+            self.keep_whitespace = keep_whitespace
+            self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
+            self.preserve_unused_token = preserve_unused_token
+            super().__init__(self.lower_case, self.keep_whitespace,
+                             self.normalization_form, self.preserve_unused_token)
+
+
+    class BertTokenizer(cde.BertTokenizerOp):
+        """
+        Tokenizer used for Bert text process.
+
+        Args:
+            vocab(Vocab): a Vocab object.
+            suffix_indicator(string, optional): Used to show that the subword is the last part of a word(default '##').
+            max_bytes_per_token(int, optional): Tokens exceeding this length will not be further split(default 100).
+            unknown_token(string, optional): When we can not found the token: if 'unknown_token' is empty string,
+                return the token directly, else return 'unknown_token'(default '[UNK]').
+            lower_case(bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
+                on input text to make the text to lower case and strip accents characters; If False, only apply
+                NormalizeUTF8('normalization_form' mode) operation on input text(default False).
+            keep_whitespace(bool, optional), If True, the whitespace will be kept in out tokens(default False).
+            normalization_form(Enum, optional), Used to specify a specific normlaize mode,
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default 'NONE').
+            preserve_unused_token(bool, optional), If True, do not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default True).
+        """
+
+        def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100,
+                     unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
+                     normalization_form=NormalizeForm.NONE, preserve_unused_token=True):
+            self.vocab = vocab
+            self.suffix_indicator = suffix_indicator
+            self.max_bytes_per_token = max_bytes_per_token
+            self.unknown_token = unknown_token
+            self.lower_case = lower_case
+            self.keep_whitespace = keep_whitespace
+            self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
+            self.preserve_unused_token = preserve_unused_token
+            super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token, self.unknown_token,
+                             self.lower_case, self.keep_whitespace, self.normalization_form, self.preserve_unused_token)

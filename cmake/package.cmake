@@ -91,7 +91,20 @@ if (ENABLE_MINDDATA)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
-
+    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+        message("icu4c does not support windows system temporarily")
+    else()
+        file(GLOB_RECURSE ICU4C_LIB_LIST
+            ${icu4c_LIBPATH}/libicuuc*
+            ${icu4c_LIBPATH}/libicudata*
+            ${icu4c_LIBPATH}/libicui18n*
+        )
+        install(
+            FILES ${ICU4C_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+        )
+    endif()
 endif ()
 
 if (ENABLE_CPU)

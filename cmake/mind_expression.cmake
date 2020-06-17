@@ -54,6 +54,7 @@ elseif(ENABLE_D OR ENABLE_TESTCASES)
 endif()
 
 if (ENABLE_MINDDATA)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/icu4c.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/jpeg_turbo.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/libtiff.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/opencv.cmake)
