@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-network config setting, will be used in main.py
-"""
-from easydict import EasyDict as edict
 
-cifar_cfg = edict({
-    'num_classes': 10,
-    'lr_init': 0.1,
-    'batch_size': 128,
-    'epoch_size': 125,
-    'momentum': 0.9,
-    'weight_decay': 5e-4,
-    'buffer_size': 10,
-    'image_height': 224,
-    'image_width': 224,
-    'keep_checkpoint_max': 10
-})
+ulimit -u unlimited
+
+BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+export DEVICE_ID=0
+
+python ${BASEPATH}/../eval.py  > ./eval.log 2>&1 &

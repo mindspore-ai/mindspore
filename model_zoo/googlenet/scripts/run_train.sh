@@ -14,28 +14,24 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
-then 
-    echo "Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATA_PATH]"
+if [ $# != 1 ]
+then
+    echo "Usage: sh run_train.sh [MINDSPORE_HCCL_CONFIG_PATH]"
 exit 1
 fi
 
 if [ ! -f $1 ]
-then 
+then
     echo "error: MINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
 exit 1
-fi 
-
-if [ ! -d $2 ]
-then 
-    echo "error: DATA_PATH=$2 is not a directory"
-exit 1
-fi 
+fi
 
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-export MINDSPORE_HCCL_CONFIG_PATH=$1
+MINDSPORE_HCCL_CONFIG_PATH=$(realpath $1)
+export MINDSPORE_HCCL_CONFIG_PATH
+echo "MINDSPORE_HCCL_CONFIG_PATH=${MINDSPORE_HCCL_CONFIG_PATH}"
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do
@@ -43,11 +39,11 @@ do
     export RANK_ID=$i
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp *.py ./train_parallel$i
-    cp *.sh ./train_parallel$i
-    cd ./train_parallel$i || exit
+    cp -r ./src ./train_parallel$i
+    cp ./train.py ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
+    cd ./train_parallel$i ||exit
     env > env.log
-    python train.py --data_path=$2 --device_id=$i &> log &
+    python train.py --device_id=$i > log 2>&1 &
     cd ..
 done

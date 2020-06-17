@@ -21,7 +21,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
-from config import cifar_cfg as cfg
+from src.config import cifar_cfg as cfg
 
 
 def create_dataset(data_home, repeat_num=1, training=True):
