@@ -46,10 +46,6 @@ def test_activation_param():
     assert isinstance(output_np[0][0][0][0], (np.float32, np.float64))
 
 
-def test_activation_empty():
-    assert nn.get_activation('') is None
-
-
 # test softmax
 def test_softmax_axis():
     layer = nn.Softmax(1)

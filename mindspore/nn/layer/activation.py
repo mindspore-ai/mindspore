@@ -549,9 +549,9 @@ def get_activation(name):
     Examples:
         >>> sigmoid = nn.get_activation('sigmoid')
     """
-    if not name:
+    if name is None:
         return None
 
     if name not in _activation:
-        raise KeyError("Unknown activation type")
+        raise KeyError(f"Unknown activation type '{name}'")
     return _activation[name]()
