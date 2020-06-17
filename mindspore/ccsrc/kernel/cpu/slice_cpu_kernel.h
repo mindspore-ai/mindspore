@@ -33,6 +33,7 @@ class SliceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void ExpandAllMemberDims();
   bool CanCopyMemoryOnAxis(size_t dim) const;
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                         const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num) const;

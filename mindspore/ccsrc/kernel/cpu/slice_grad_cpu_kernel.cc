@@ -23,7 +23,6 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  CPUKernelUtils::ExpandDimsTo4(&input_shape_);
 
   begin_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, BEGIN);
   for (size_t i = 0; i < begin_.size(); i++) {
@@ -63,6 +62,14 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     }
   }
 
+  ExpandAllMemberDims();
+  CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
+  CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+}
+
+void SliceGradCPUKernel::ExpandAllMemberDims() {
+  CPUKernelUtils::ExpandDimsTo4(&input_shape_);
+
   auto output_len = output_shape_.size();
   if (output_len < 4) {
     for (size_t i = 0; i < 4 - output_len; ++i) {
@@ -72,8 +79,6 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
       end_.insert(end_.begin(), 1);
     }
   }
-  CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
-  CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
 
 bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
