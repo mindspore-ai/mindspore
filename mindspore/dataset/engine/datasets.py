@@ -187,7 +187,7 @@ class Dataset:
                 bucket for [bucket_boundaries[i], bucket_boundaries[i+1]) for each
                 0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
             bucket_batch_sizes (list of int): A list consisting of the batch sizes for
-                each buclet. Must contain len(bucket_boundaries)+1 elements.
+                each bucket. Must contain len(bucket_boundaries)+1 elements.
             element_length_function (Callable, optional): A function that takes in
                 len(column_names) arguments and returns an int. If no value is
                 provided, then len(column_names) must be 1, and the size of the first
@@ -228,7 +228,7 @@ class Dataset:
             >>>
             >>> data = data.bucket_batch_by_length(column_names, bucket_boundaries,
             >>>                                    bucket_batch_sizes,
-            >>>                                    element_length_function, pad_info),
+            >>>                                    element_length_function, pad_info,
             >>>                                    pad_to_bucket_boundary)
         """
         return BucketBatchByLengthDataset(self, column_names, bucket_boundaries, bucket_batch_sizes,
