@@ -81,32 +81,34 @@ def test_numpy_slices_dict_1():
         assert data[1] == res[i][1]
 
 
+def test_numpy_slices_dict_2():
+    logger.info("Test input data is a tuple of Dictionary structure data.")
+
+    data1, data2 = {"a": [1, 2]}, {"b": [3, 4]}
+    ds = de.NumpySlicesDataset((data1, data2), column_names=["col1", "col2"], shuffle=False)
+    res = [[1, 3], [2, 4]]
+
+    for i, data in enumerate(ds):
+        assert data[0] == res[i][0]
+        assert data[1] == res[i][1]
+
+
 def test_numpy_slices_tuple_1():
     logger.info("Test slicing a list of tuple.")
 
     np_data = [([1, 2], [3, 4]), ([11, 12], [13, 14]), ([21, 22], [23, 24])]
+    res = [[[1, 2], [11, 12], [21, 22]], [[3, 4], [13, 14], [23, 24]]]
     ds = de.NumpySlicesDataset(np_data, shuffle=False)
 
     for i, data in enumerate(ds):
-        assert np.equal(data, np_data[i]).all()
-
-    assert sum([1 for _ in ds]) == 3
-
-
-def test_numpy_slices_tuple_2():
-    logger.info("Test slicing a tuple of list.")
-
-    np_data = ([1, 2], [3, 4], [5, 6])
-    expected = [[1, 3, 5], [2, 4, 6]]
-    ds = de.NumpySlicesDataset(np_data, shuffle=False)
-
-    for i, data in enumerate(ds):
-        assert np.equal(data, expected[i]).all()
+        assert np.equal(data[0], res[i][0]).all()
+        assert np.equal(data[1], res[i][1]).all()
+        assert np.equal(data[2], res[i][2]).all()
 
     assert sum([1 for _ in ds]) == 2
 
 
-def test_numpy_slices_tuple_3():
+def test_numpy_slices_tuple_2():
     logger.info("Test reading different dimension of tuple data.")
     features, labels = np.random.sample((5, 2)), np.random.sample((5, 1))
     data = (features, labels)
@@ -189,9 +191,9 @@ if __name__ == "__main__":
     test_numpy_slices_list_3()
     test_numpy_slices_list_append()
     test_numpy_slices_dict_1()
+    test_numpy_slices_dict_2()
     test_numpy_slices_tuple_1()
     test_numpy_slices_tuple_2()
-    test_numpy_slices_tuple_3()
     test_numpy_slices_csv_value()
     test_numpy_slices_csv_dict()
     test_numpy_slices_num_samplers()
