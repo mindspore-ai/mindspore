@@ -53,7 +53,7 @@ def test_conv2d():
                          [162, 174, 186],
                          [198, 210, 222]]]]).astype(np.float32)
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", max_device_memory="0.2GB")
     conv2d = NetConv2d()
     output = conv2d(x, w)
     assert (output.asnumpy() == expect).all()

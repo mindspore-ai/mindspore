@@ -39,6 +39,7 @@ bool GPUKernelRuntime::SyncStream() { return GPUDeviceManager::GetInstance().Syn
 
 bool GPUKernelRuntime::Init() {
   if (device_init_ == true) {
+    GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
   }
   auto ret = InitDevice();

@@ -150,7 +150,7 @@ size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size) {
     alloc_mem_size = alloc_mem_size * 2;
   }
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
-  return AlignMemorySize(alloc_mem_size);
+  return alloc_mem_size;
 }
 
 bool DynamicMemPoolBestFit::IsDivide(size_t tensor_size, size_t mem_buf_size) const {
