@@ -342,6 +342,8 @@ class _Context:
         if not check_input_format(max_device_memory):
             raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
         max_device_memory_value = float(max_device_memory[:-2])
+        if max_device_memory_value == 0:
+            raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
         self._context_handle.set_max_device_memory(max_device_memory_value)
 
 def check_input_format(x):
@@ -523,7 +525,8 @@ def set_context(**kwargs):
             separated by colons; single operator can choose op_trace, op_trace cannot be combined with
             training_trace and task_trace. Default: "training_trace".
         check_bprop (bool): Whether to check bprop. Default: False.
-        max_device_memory (str): Sets the maximum memory available for device. Default: "1024GB".
+        max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
+            The format is "xxGB". Default: "1024GB".
 
     Raises:
         ValueError: If input key is not an attribute in context.

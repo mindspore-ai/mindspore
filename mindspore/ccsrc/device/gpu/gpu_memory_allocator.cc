@@ -29,16 +29,28 @@ bool GPUMemoryAllocator::Init() {
   size_t free_size = CudaDriver::free_mem_size();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  float max_device_memory = context_ptr->max_device_memory();
-  max_available_device_memory_ = FloatToSize(max_device_memory * 1024 * 1024 * 1024);
-  if (total_size > 0 && free_size > 0 && max_available_device_memory_ > 0) {
+  limited_device_memory_ = context_ptr->max_device_memory();
+  available_device_memory_ = FloatToSize(limited_device_memory_ * 1024 * 1024 * 1024);
+  if (total_size > 0 && free_size > 0 && available_device_memory_ > 0) {
     MS_LOG(INFO) << "GPU device total memory size " << total_size << ", current free memory size " << free_size
-                 << ", set max available memory size " << max_available_device_memory_;
+                 << ", set max available memory size " << available_device_memory_ << ".";
   } else {
     MS_LOG(EXCEPTION) << "GPU device memory error, total memory size " << total_size << ", current free memory size "
-                      << free_size << ", set max available memory size " << max_available_device_memory_;
+                      << free_size << ", set max available memory size " << available_device_memory_ << ".";
   }
   return true;
+}
+
+void GPUMemoryAllocator::CheckMaxDeviceMemory() const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto max_device_memory = context_ptr->max_device_memory();
+  //  Currently not support modifying the max device memory.
+  if (limited_device_memory_ != max_device_memory) {
+    MS_LOG(EXCEPTION)
+      << "Can't change context param max_device_memory in runtime, currently effective max_device_memory("
+      << limited_device_memory_ << "GB), set new max_device_memory(" << max_device_memory << "GB) failed.";
+  }
 }
 
 bool GPUMemoryAllocator::Finalize() {
@@ -73,7 +85,7 @@ size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
     MS_LOG(EXCEPTION) << "Alloc device memory[" << size << "] failed.";
   }
   total_used_device_memory_ += alloc_size;
-  max_available_device_memory_ -= alloc_size;
+  available_device_memory_ -= alloc_size;
   MS_LOG(INFO) << "Current free memory size[" << free_size - alloc_size << "], current alloc size[" << alloc_size
                << "], total used size[" << total_used_device_memory_ << "].";
   return alloc_size;
@@ -81,9 +93,7 @@ size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
 
 bool GPUMemoryAllocator::FreeDeviceMem(const DeviceMemPtr &addr) { return CudaDriver::FreeDeviceMem(addr); }
 
-size_t GPUMemoryAllocator::free_mem_size() {
-  return std::min(CudaDriver::free_mem_size(), max_available_device_memory_);
-}
+size_t GPUMemoryAllocator::free_mem_size() { return std::min(CudaDriver::free_mem_size(), available_device_memory_); }
 
 size_t GPUMemoryAllocator::total_mem_size() { return CudaDriver::total_mem_size(); }
 }  // namespace gpu
