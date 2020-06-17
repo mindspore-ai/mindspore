@@ -36,8 +36,8 @@ class Slice {
 
   std::vector<dsize_t> Indices(dsize_t length) {
     std::vector<dsize_t> indices;
-    dsize_t index = std::min(Tensor::handleNeg(start_, length), length);
-    dsize_t end_index = std::min(Tensor::handleNeg(stop_, length), length);
+    dsize_t index = std::min(Tensor::HandleNeg(start_, length), length);
+    dsize_t end_index = std::min(Tensor::HandleNeg(stop_, length), length);
     if (step_ > 0) {
       for (; index < end_index; index += step_) {
         indices.push_back(index);
@@ -80,4 +80,4 @@ class SliceOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_KERNELS_DATA_ONE_HOT_OP_H_
+#endif  // DATASET_KERNELS_DATA_SLICE_OP_H_
