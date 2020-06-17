@@ -265,7 +265,7 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyRMSPropOpName,
 };
 
-const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+const std::set<std::string> kHWSpecialFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
                                                    kOpFormat_FRAC_NZ,      kOpFormat_C1HWNCoC0,   kOpFormat_NC1HWC0_C04,
                                                    kOpFormat_FRACTAL_Z_C04};
 

@@ -70,7 +70,7 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
     auto pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
     if (AnfAlgo::IsFeatureMapInput(cnode, index) &&
-        kNeedTransFormatSet.find(pre_output_format) != kNeedTransFormatSet.end()) {
+        kHWSpecialFormatSet.find(pre_output_format) != kHWSpecialFormatSet.end()) {
       priority_matched_format = !is_init ? pre_output_format : priority_matched_format;
       is_init = true;
     }

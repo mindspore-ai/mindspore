@@ -97,7 +97,7 @@ void RectifyDoMaskKernelInfo::RectifyKernelInfo(const std::vector<CNodePtr> &do_
   std::string convert_format;
   for (const auto &do_mask : do_mask_node_list) {
     auto do_mask_data_format = AnfAlgo::GetInputFormat(do_mask, 0);
-    if (special_format.empty() && kNeedTransFormatSet.find(do_mask_data_format) != kNeedTransFormatSet.end()) {
+    if (special_format.empty() && kHWSpecialFormatSet.find(do_mask_data_format) != kHWSpecialFormatSet.end()) {
       special_format = do_mask_data_format;
     }
     if (format_counter.find(do_mask_data_format) == format_counter.end()) {
@@ -111,7 +111,7 @@ void RectifyDoMaskKernelInfo::RectifyKernelInfo(const std::vector<CNodePtr> &do_
       convert_format = kOpFormat_DEFAULT;
       break;
     }
-    if (kNeedTransFormatSet.find(do_mask_data_format) != kNeedTransFormatSet.end() &&
+    if (kHWSpecialFormatSet.find(do_mask_data_format) != kHWSpecialFormatSet.end() &&
         special_format != do_mask_data_format) {
       convert_format = kOpFormat_DEFAULT;
       break;
@@ -133,7 +133,7 @@ std::string RectifyDoMaskKernelInfo::GetConvertFormat(const std::map<std::string
     if (counter < iter.second) {
       convert_format = iter.first;
     }
-    if (counter == iter.second && kNeedTransFormatSet.find(convert_format) == kNeedTransFormatSet.end()) {
+    if (counter == iter.second && kHWSpecialFormatSet.find(convert_format) == kHWSpecialFormatSet.end()) {
       convert_format = iter.first;
     }
   }
