@@ -665,6 +665,8 @@ def check_generatordataset(method):
 
         # check column_names or schema; required argument
         column_names = param_dict.get('column_names')
+        if column_names is not None:
+            check_columns(column_names, "column_names")
         schema = param_dict.get('schema')
         if column_names is None and schema is None:
             raise ValueError("Neither columns_names not schema are provided.")
