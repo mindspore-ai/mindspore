@@ -16,6 +16,7 @@
 
 import time
 import argparse
+import random
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -26,6 +27,7 @@ from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.train.callback import Callback, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+import mindspore.dataset.engine as de
 import mindspore.communication.management as D
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore import context
@@ -36,6 +38,10 @@ from src.config import cfg, transformer_net_cfg
 from src.dataset import create_transformer_dataset
 from src.lr_schedule import create_dynamic_lr
 
+random_seed = 1
+random.seed(random_seed)
+np.random.seed(random_seed)
+de.config.set_seed(random_seed)
 
 def get_ms_timestamp():
     t = time.time()
@@ -161,7 +167,4 @@ def run_transformer_train():
     model.train(repeat_count, dataset, callbacks=callbacks, dataset_sink_mode=(args.enable_data_sink == "true"))
 
 if __name__ == '__main__':
-    random_seed = 1
-    np.random.seed(random_seed)
-
     run_transformer_train()
