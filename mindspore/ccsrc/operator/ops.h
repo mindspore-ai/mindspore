@@ -156,6 +156,7 @@ extern const PrimitivePtr kPrimAddN;
 extern const PrimitivePtr KPrimTransData;
 extern const PrimitivePtr kPrimNMSWithMask;
 extern const PrimitivePtr kPrimPad;
+extern const PrimitivePtr kPrimArgMaxWithValue;
 
 // Maths
 extern const PrimitivePtr kPrimTensorAdd;
