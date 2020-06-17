@@ -213,3 +213,40 @@ def check_slice_op(method):
         return method(self, *args)
 
     return new_method
+
+
+def check_mask_op(method):
+    """Wrapper method to check the parameters of slice."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        operator, constant, dtype = (list(args) + 3 * [None])[:3]
+        if "operator" in kwargs:
+            operator = kwargs.get("operator")
+        if "constant" in kwargs:
+            constant = kwargs.get("constant")
+        if "dtype" in kwargs:
+            dtype = kwargs.get("dtype")
+
+        if operator is None:
+            raise ValueError("operator is not provided.")
+        if constant is None:
+            raise ValueError("constant is not provided.")
+
+        from .c_transforms import Relational
+        if not isinstance(operator, Relational):
+            raise TypeError("operator is not a Relational operator enum.")
+
+        if not isinstance(constant, (str, float, bool, int)):
+            raise TypeError("constant must be either a primitive python str, float, bool, or int")
+
+        if not isinstance(dtype, typing.Type):
+            raise TypeError("dtype is not a MindSpore data type.")
+
+        kwargs["operator"] = operator
+        kwargs["constant"] = constant
+        kwargs["dtype"] = dtype
+
+        return method(self, **kwargs)
+
+    return new_method

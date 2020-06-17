@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing TypeCast op in DE
+Testing Slice op in DE
 """
 import numpy as np
 import pytest
@@ -110,6 +110,10 @@ def test_slice_exceptions():
     assert "Indices are empty, generated tensor would be empty." in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
+        slice_compare([1, 2, 3, 4, 5], slice(3, 1, 1))
+    assert "Indices are empty, generated tensor would be empty." in str(info.value)
+
+    with pytest.raises(RuntimeError) as info:
         slice_compare([1, 2, 3, 4, 5], slice(5, 10, 1))
     assert "Indices are empty, generated tensor would be empty." in str(info.value)
 
@@ -180,6 +184,10 @@ def test_slice_exceptions_str():
 
     with pytest.raises(RuntimeError) as info:
         slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(0))
+    assert "Indices are empty, generated tensor would be empty." in str(info.value)
+
+    with pytest.raises(RuntimeError) as info:
+        slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(3, 1, 1))
     assert "Indices are empty, generated tensor would be empty." in str(info.value)
 
     with pytest.raises(RuntimeError) as info:

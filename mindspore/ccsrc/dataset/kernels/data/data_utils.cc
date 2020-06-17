@@ -120,7 +120,7 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   std::unique_ptr<TypeCastOp> op(new TypeCastOp(to));
 
   std::shared_ptr<Tensor> fill_output;
-  op->Compute(fill_value, &fill_output);
+  RETURN_IF_NOT_OK(op->Compute(fill_value, &fill_output));
 
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, TensorImpl::kFlexible, input->shape(), input->type()));
 
@@ -344,6 +344,8 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
       return PadEndString(src, dst, pad_shape, "");
     }
   }
+  CHECK_FAIL_RETURN_UNEXPECTED(src->type().IsNumeric() == pad_val->type().IsNumeric(),
+                               "Source and pad_value tensors are not of the same type.");
   if (pad_val->type().IsNumeric()) {
     float val = 0;
     RETURN_IF_NOT_OK(pad_val->GetItemAt<float>(&val, {}));
@@ -451,6 +453,103 @@ Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::s
     for (dsize_t i = 0; i < count; i++) {
       dst->emplace_back(pad_value);
     }
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Tensor> &output,
+                  const std::shared_ptr<Tensor> &value_tensor, RelationalOp op) {
+  T value;
+  RETURN_IF_NOT_OK(value_tensor->GetItemAt(&value, {}));
+  auto in_itr = input->begin<T>();
+  auto out_itr = output->begin<bool>();
+  for (; in_itr != input->end<T>(); in_itr++, out_itr++) {
+    switch (op) {
+      case RelationalOp::kEqual:
+        *out_itr = (*in_itr == value);
+        break;
+      case RelationalOp::kNotEqual:
+        *out_itr = (*in_itr != value);
+        break;
+      case RelationalOp::kGreater:
+        *out_itr = (*in_itr > value);
+        break;
+      case RelationalOp::kGreaterEqual:
+        *out_itr = (*in_itr >= value);
+        break;
+      case RelationalOp::kLess:
+        *out_itr = (*in_itr < value);
+        break;
+      case RelationalOp::kLessEqual:
+        *out_itr = (*in_itr <= value);
+        break;
+      default:
+        RETURN_STATUS_UNEXPECTED("Unknown relational operator.");
+    }
+  }
+  return Status::OK();
+}
+
+Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
+            RelationalOp op) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type().IsNumeric() == value->type().IsNumeric(),
+                               "Cannot convert constant value to the type of the input tensor.");
+  CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(), "Value is not a scalar");
+
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, input->shape(), DataType(DataType::DE_BOOL)));
+
+  std::unique_ptr<TypeCastOp> value_cast_op(new TypeCastOp(input->type()));
+  std::shared_ptr<Tensor> casted_value;
+  if (input->type().IsNumeric()) {
+    RETURN_IF_NOT_OK(value_cast_op->Compute(value, &casted_value));
+  } else {
+    casted_value = value;
+  }
+
+  switch (input->type().value()) {
+    case DataType::DE_BOOL:
+      RETURN_IF_NOT_OK(MaskHelper<bool>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_INT8:
+      RETURN_IF_NOT_OK(MaskHelper<int8_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_UINT8:
+      RETURN_IF_NOT_OK(MaskHelper<uint8_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_UINT16:
+      RETURN_IF_NOT_OK(MaskHelper<uint16_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_INT16:
+      RETURN_IF_NOT_OK(MaskHelper<int16_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_UINT32:
+      RETURN_IF_NOT_OK(MaskHelper<uint32_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_INT32:
+      RETURN_IF_NOT_OK(MaskHelper<int32_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_UINT64:
+      RETURN_IF_NOT_OK(MaskHelper<uint64_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_INT64:
+      RETURN_IF_NOT_OK(MaskHelper<int64_t>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_FLOAT16:
+      RETURN_IF_NOT_OK(MaskHelper<float16>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_FLOAT32:
+      RETURN_IF_NOT_OK(MaskHelper<float>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_FLOAT64:
+      RETURN_IF_NOT_OK(MaskHelper<double>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_STRING:
+      RETURN_IF_NOT_OK(MaskHelper<std::string_view>(input, *output, casted_value, op));
+      break;
+    case DataType::DE_UNKNOWN:
+      RETURN_STATUS_UNEXPECTED("Unsupported input type.");
+      break;
   }
   return Status::OK();
 }

@@ -348,7 +348,7 @@ class Tensor {
   }
 
   // Handle negative indices.
-  static inline dsize_t handleNeg(dsize_t index, dsize_t length) { return (index < 0) ? (index + length) : index; }
+  static inline dsize_t HandleNeg(dsize_t index, dsize_t length) { return (index < 0) ? (index + length) : index; }
 
   // Slice tensor bases on the given indicies. Copy the sliced data into out tensor. Only rank1 tensors are supported.
   // Based on the type of tensor, SliceNumeric or SliceString will be called

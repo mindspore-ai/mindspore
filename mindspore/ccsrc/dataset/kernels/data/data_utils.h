@@ -119,6 +119,35 @@ Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> 
 Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::string> *dst,
                           const TensorShape &dst_shape, std::vector<dsize_t> cur_ind, size_t cur_dim,
                           const std::string &pad_value);
+
+enum class RelationalOp {
+  kEqual = 0,     // ==
+  kNotEqual,      // !=
+  kLess,          // <
+  kLessEqual,     // <=
+  kGreater,       // >
+  kGreaterEqual,  // >=
+};
+
+/// Helper method that masks the input tensor
+/// @tparam T type of the tensor
+/// @param input[in] input tensor
+/// @param output[out] output tensor
+/// @param value_tensor[in] scalar tensor value to compared with
+/// @param op[in] RelationalOp enum
+/// @return Status ok/error
+template <typename T>
+Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Tensor> &output,
+                  const std::shared_ptr<Tensor> &value_tensor, RelationalOp op);
+
+/// Mask the input tensor
+/// @param input[in] input tensor
+/// @param output[out] output tensor
+/// @param value[in] scalar tensor value to compared with
+/// @param op[in] RelationalOp enum
+/// @return Status ok/error
+Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
+            RelationalOp op);
 }  // namespace dataset
 }  // namespace mindspore
 

@@ -38,6 +38,7 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/fill_op.h"
+#include "dataset/kernels/data/mask_op.h"
 #include "dataset/kernels/data/slice_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
@@ -383,7 +384,7 @@ void bindTensorOps2(py::module *m) {
     *m, "FillOp", "Tensor operation to return tensor filled with same value as input fill value.")
     .def(py::init<std::shared_ptr<Tensor>>());
 
-  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp", "")
+  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp", "Tensor Slice operation.")
     .def(py::init<bool>())
     .def(py::init([](const py::list &py_list) {
       std::vector<dsize_t> c_list;
@@ -413,6 +414,19 @@ void bindTensorOps2(py::module *m) {
       }
       return std::make_shared<SliceOp>(c_slice);
     }));
+
+  (void)py::enum_<RelationalOp>(*m, "RelationalOp", py::arithmetic())
+    .value("EQ", RelationalOp::kEqual)
+    .value("NE", RelationalOp::kNotEqual)
+    .value("LT", RelationalOp::kLess)
+    .value("LE", RelationalOp::kLessEqual)
+    .value("GT", RelationalOp::kGreater)
+    .value("GE", RelationalOp::kGreaterEqual)
+    .export_values();
+
+  (void)py::class_<MaskOp, TensorOp, std::shared_ptr<MaskOp>>(*m, "MaskOp",
+                                                              "Tensor operation mask using relational comparator")
+    .def(py::init<RelationalOp, std::shared_ptr<Tensor>, DataType>());
 
   (void)py::class_<RandomRotationOp, TensorOp, std::shared_ptr<RandomRotationOp>>(
     *m, "RandomRotationOp",

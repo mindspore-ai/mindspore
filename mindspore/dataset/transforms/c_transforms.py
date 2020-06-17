@@ -15,10 +15,14 @@
 """
 This module c_transforms provides common operations, including OneHotOp and TypeCast.
 """
-import numpy as np
+from enum import IntEnum
+
+import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 
-from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op
+import numpy as np
+
+from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op
 from ..core.datatypes import mstype_to_detype
 
 
@@ -48,7 +52,6 @@ class Fill(cde.FillOp):
 
     @check_fill_value
     def __init__(self, fill_value):
-        print(fill_value)
         super().__init__(cde.Tensor(np.array(fill_value)))
 
 
@@ -108,3 +111,50 @@ class Slice(cde.SliceOp):
         elif dim0 is Ellipsis:
             dim0 = True
         super().__init__(dim0)
+
+
+class Relational(IntEnum):
+    EQ = 0
+    NE = 1
+    GT = 2
+    GE = 3
+    LT = 4
+    LE = 5
+
+
+DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
+                   Relational.NE: cde.RelationalOp.NE,
+                   Relational.GT: cde.RelationalOp.GT,
+                   Relational.GE: cde.RelationalOp.GE,
+                   Relational.LT: cde.RelationalOp.LT,
+                   Relational.LE: cde.RelationalOp.LE}
+
+
+class Mask(cde.MaskOp):
+    """
+    Mask content of the input tensor with the given predicate.
+    Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
+    Args:
+        operator (Relational): One of the relational operator EQ, NE LT, GT, LE or GE
+        constant (python types (str, int, float, or bool): constant to be compared to.
+            Constant will be casted to the type of the input tensor
+        dtype (optional, mindspore.dtype): type of the generated mask. Default to bool
+    Examples:
+        >>> # Data before
+        >>> # |  col1   |
+        >>> # +---------+
+        >>> # | [1,2,3] |
+        >>> # +---------+
+        >>> data = data.map(operations=Mask(Relational.EQ, 2))
+        >>> # Data after
+        >>> # |       col1         |
+        >>> # +--------------------+
+        >>> # | [False,True,False] |
+        >>> # +--------------------+
+    """
+
+    @check_mask_op
+    def __init__(self, operator, constant, dtype=mstype.bool_):
+        dtype = mstype_to_detype(dtype)
+        constant = cde.Tensor(np.array(constant))
+        super().__init__(DE_C_RELATIONAL[operator], constant, dtype)
