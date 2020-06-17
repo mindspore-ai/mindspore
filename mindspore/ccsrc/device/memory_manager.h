@@ -36,7 +36,7 @@ class MemoryManager {
 
   virtual void MallocDeviceMemory() = 0;
   virtual void FreeDeviceMemory() = 0;
-  void ResetDynamicMemory() {
+  virtual void ResetDynamicMemory() {
     total_dynamic_size_ = 0;
     dynamic_mem_offset_ = 0;
   }
