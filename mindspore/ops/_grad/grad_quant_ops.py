@@ -18,6 +18,7 @@
 from .. import operations as P
 from .grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ... import context
 
 
 @bprop_getters.register(P.FakeQuantPerLayer)
@@ -64,11 +65,20 @@ def get_bprop_batchnorm_fold(self):
 @bprop_getters.register(P.CorrectionMul)
 def get_bprop_correction_mul(self):
     """Generate bprop for CorrectionMul for Ascend and GPU"""
-    grad = P.CorrectionMulGrad(self.channel_axis)
+    grad_dx = P.CorrectionMulGrad(self.channel_axis)
+    grad_d_batch_std = P.CorrectionMulGradReduce(self.channel_axis)
 
     def bprop(x, batch_std, running_std, out, dout):
-        dx, d_batch_std = grad(dout, x, batch_std, running_std)
+        dx, d_batch_std = grad_dx(dout, x, batch_std, running_std)
         return dx, d_batch_std, zeros_like(running_std)
+
+    def bprop_npu(x, batch_std, running_std, out, dout):
+        dx, mul_dx = grad_dx(dout, x, batch_std, running_std)
+        d_batch_std = grad_d_batch_std(mul_dx)
+        return dx, d_batch_std, zeros_like(running_std)
+
+    if context.get_context('device_target') == "Ascend":
+        return bprop_npu
 
     return bprop
 

@@ -31,6 +31,7 @@ __all__ = ["FakeQuantPerLayer",
            "BatchNormFoldGrad",
            "CorrectionMul",
            "CorrectionMulGrad",
+           "CorrectionMulGradReduce",
            "BatchNormFold2",
            "BatchNormFold2Grad",
            "BatchNormFoldD",
@@ -500,7 +501,7 @@ class CorrectionMulGrad(PrimitiveWithInfer):
             from mindspore.ops._op_impl._custom_op import correction_mul_grad
         self.channel_axis = channel_axis
         self.init_prim_io_names(inputs=['dout', 'x', 'gamma', 'running_std'],
-                                outputs=['dx', 'd_gamma'])
+                                outputs=['dx', 'mul_dx'])
 
     def infer_shape(self, dout_shape, x_shape, gamma_shape, running_std_shape):
         validator.check("dout shape", dout_shape, "x_shape x", x_shape, Rel.EQ, self.name)
@@ -508,12 +509,45 @@ class CorrectionMulGrad(PrimitiveWithInfer):
                         Rel.EQ, self.name)
         validator.check("running_std_shape[0]", running_std_shape[0],
                         "dout channel size", dout_shape[self.channel_axis], Rel.EQ, self.name)
+        if context.get_context('device_target') == "Ascend":
+            return x_shape, x_shape
         return x_shape, gamma_shape
 
     def infer_dtype(self, dout_type, x_type, gamma_type, running_std_type):
         args = {"dout": dout_type, "x": x_type, "gamma": gamma_type, "running_std": running_std_type}
         validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
-        return x_type, x_type
+        if context.get_context('device_target') == "Ascend":
+            return x_type, x_type
+        return x_type, gamma_type
+
+
+class CorrectionMulGradReduce(PrimitiveWithInfer):
+    r"""
+    Performs grad reduce of CorrectionMul operation.
+
+    Examples:
+        >>> correction_mul_grad_rd = P.CorrectionMulGradReduce()
+        >>> dout = Tensor(np.array([1.5, -2.2, 0.7, -3, 1.6, 2.8]).reshape(2, 1, 1, 3), mindspore.float32)
+        >>> input_x = Tensor(np.random.randint(0, 256, (2, 1, 1, 3)), mindspore.float32)
+        >>> gamma = Tensor(np.array([0.2, -0.2, 2.5, -1.]).reshape(2, 1, 2), mindspore.float32)
+        >>> running_std = Tensor(np.array([1.2, 0.1, 0.7, 2.3]).reshape(2, 1, 2), mindspore.float32)
+        >>> result = correction_mul_grad_rd(dout, input_x, gamma, running_std)
+    """
+
+    @prim_attr_register
+    def __init__(self, channel_axis=0):
+        """init correction mul reduce layer"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import correction_mul_grad
+        self.channel_axis = channel_axis
+        self.init_prim_io_names(inputs=['mul_dx'],
+                                outputs=['d_gamma'])
+
+    def infer_shape(self, mul_dx_shape):
+        return [mul_dx_shape[self.channel_axis]]
+
+    def infer_dtype(self, mul_dx_type):
+        return mul_dx_type
 
 
 class BatchNormFold2(PrimitiveWithInfer):
