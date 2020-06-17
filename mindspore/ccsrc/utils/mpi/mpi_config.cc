@@ -17,7 +17,6 @@
 #include "utils/mpi/mpi_config.h"
 
 namespace mindspore {
-
 std::shared_ptr<MpiConfig> MpiConfig::instance_ = nullptr;
 
 std::shared_ptr<MpiConfig> MpiConfig::GetInstance() {
@@ -27,5 +26,4 @@ std::shared_ptr<MpiConfig> MpiConfig::GetInstance() {
   }
   return instance_;
 }
-
 }  // namespace mindspore
