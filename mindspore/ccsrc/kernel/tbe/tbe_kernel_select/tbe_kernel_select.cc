@@ -594,20 +594,9 @@ void TbeKernelSelect::CreateNewOpIOInfo(const mindspore::kernel::OpIOInfo &op_io
   op_io_info_new->set_need_compile(op_io_info.need_compile());
   op_io_info_new->set_reshape_type(op_io_info.reshape_type());
   op_io_info_new->set_shape(op_io_info.shape());
-  // dtype
-  std::vector<std::string> dtype_new;
-  for (size_t i = 0; i < support_format.size(); ++i) {
-    dtype_new.insert(dtype_new.end(), support_dtype.begin(), support_dtype.end());
-  }
-  op_io_info_new->set_dtypes(dtype_new);
-  // format
-  std::vector<std::string> format_new;
-  for (const auto &format : support_format) {
-    for (size_t j = 0; j < support_dtype.size(); ++j) {
-      format_new.emplace_back(format);
-    }
-  }
-  op_io_info_new->set_formats(format_new);
+  // dtype  && format
+  op_io_info_new->set_dtypes(support_dtype);
+  op_io_info_new->set_formats(support_format);
 }
 
 void TbeKernelSelect::PrintSupportedFormat(const SupportFormat &support_format) {
