@@ -48,7 +48,7 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
 Status ConfigManager::LoadFile(const std::string &settingsFile) {
   Status rc;
   if (!Path(settingsFile).Exists()) {
-    RETURN_STATUS_UNEXPECTED("File is not found");
+    RETURN_STATUS_UNEXPECTED("File is not found.");
   }
   // Some settings are mandatory, others are not (with default).  If a setting
   // is optional it will set a default value if the config is missing from the file.
@@ -59,14 +59,11 @@ Status ConfigManager::LoadFile(const std::string &settingsFile) {
     rc = FromJson(js);
   } catch (const nlohmann::json::type_error &e) {
     std::ostringstream ss;
-    ss << "Client settings failed to load:\n" << e.what();
+    ss << "Client file failed to load:\n" << e.what();
     std::string err_msg = ss.str();
     RETURN_STATUS_UNEXPECTED(err_msg);
   } catch (const std::exception &err) {
-    std::ostringstream ss;
-    ss << "Client settings failed to load:\n" << err.what();
-    std::string err_msg = ss.str();
-    RETURN_STATUS_UNEXPECTED(err_msg);
+    RETURN_STATUS_UNEXPECTED("Client file failed to load.");
   }
   return rc;
 }
