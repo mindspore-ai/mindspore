@@ -25,7 +25,6 @@ import mindspore.dataset.transforms.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.initializer import initializer
 from mindspore.dataset.transforms.vision import Inter
 from mindspore.model_zoo.lenet import LeNet5
 from mindspore.nn import Dense, TrainOneStepCell, WithLossCell
@@ -84,7 +83,7 @@ def multisteplr(total_steps, gap, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
 def test_train_lenet():
     epoch = 100
     net = LeNet()
-    momentum = initializer(Tensor(np.array([0.9]).astype(np.float32)), [1])
+    momentum = 0.9
     learning_rate = multisteplr(epoch, 30)
 
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)

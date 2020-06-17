@@ -351,6 +351,17 @@ class ApplyAdagradV2Net(nn.Cell):
         return out
 
 
+class SparseApplyAdagradNet(nn.Cell):
+    def __init__(self):
+        super(SparseApplyAdagradNet, self).__init__()
+        self.sparse_apply_adagrad = P.SparseApplyAdagrad(lr=0.01)
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+
+    def construct(self, grad, indices):
+        out = self.sparse_apply_adagrad(self.var, self.accum, grad, indices)
+        return out
+
 class ApplyRMSNet(nn.Cell):
     def __init__(self):
         super(ApplyRMSNet, self).__init__()
@@ -1181,8 +1192,8 @@ test_case_nn_ops = [
         'desc_inputs': [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
         'desc_bprop': []}),
     ('SparseApplyAdagrad', {
-        'block': P.SparseApplyAdagrad(0.5),
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
+        'block': SparseApplyAdagradNet(),
+        'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
         'desc_bprop': [[3, 3], [3, 3]],
         'skip': ['backward']}),
     ('SparseApplyFtrl', {
@@ -1331,13 +1342,6 @@ test_case_nn_ops = [
                         Tensor([[0.4, 1.2], [-0.4, -0.9]], mstype.float16), Tensor(0.85, mstype.float16),
                         Tensor([[-1.4, -0.7], [0.9, 0.7]], mstype.float16)],
         'desc_bprop': [],
-        'skip': ['backward']}),
-    ('SparseApplyAdagrad', {
-        'block': P.SparseApplyAdagrad(0.5),
-        'desc_inputs': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32),
-                        Tensor([[0.2, 0.2], [0.1, 0.4]], mstype.float32),
-                        Tensor([[0.5, 0.4], [0.6, 0.1]], mstype.float32), Tensor([1, 1], mstype.int32)],
-        'desc_bprop': [Tensor([[0.7, 0.2], [0.1, 0.07]], mstype.float32)],
         'skip': ['backward']}),
     ('DataFormatDimMap', {
         'block': P.DataFormatDimMap(),

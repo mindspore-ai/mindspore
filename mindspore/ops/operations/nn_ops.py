@@ -3184,9 +3184,9 @@ class ApplyAdadelta(PrimitiveWithInfer):
     .. math::
             accum = \rho * accum + (1 - \rho) * grad^2
     .. math::
-            update = \sqrt{accum_update + \esilon} * \rsqrt{accum + \epsilon} * grad
+            \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{grad}{\sqrt{accum + \epsilon}}
     .. math::
-            accum_update = \rho * accum_update + (1 - \rho) * update^2
+            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * update^2
     .. math::
             var -= lr * update
 
@@ -3377,11 +3377,12 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
     Args:
         lr (float): Learning rate.
+        update_slots (bool): If `True`, `accum` will be updated. Default: True.
         use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Variable to be updated. The type must be float32.
-        - **accum** (Tensor) - Accum to be updated. The shape must be the same as `var`'s shape,
+        - **var** (Parameter) - Variable to be updated. The type must be float32.
+        - **accum** (Parameter) - Accum to be updated. The shape must be the same as `var`'s shape,
           the type must be float32.
         - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape
           except first dimension, the type must be float32.
@@ -3389,21 +3390,45 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
           The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
 
     Outputs:
-        Tensor, has the same shape and type as `var`.
+        Tuple of 2 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **accum** (Tensor) - The same shape and data type as `accum`.
 
     Examples:
-        >>> var = Tensor(np.random.random((3, 3)), mindspore.float32)
-        >>> accum = Tensor(np.random.random((3, 3)), mindspore.float32)
-        >>> grad = Tensor(np.random.random((3, 3)), mindspore.float32)
-        >>> indices = Tensor(np.ones((3,), np.int32))
-        >>> sparse_apply_ada_grad = P.SparseApplyAdagrad(0.5)
-        >>> sparse_apply_ada_grad(var, accum, grad, indices)
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>> import mindspore.common.dtype as mstype
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.sparse_apply_adagrad = P.SparseApplyAdagrad(lr=1e-8)
+        >>>         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="accum")
+        >>>     def construct(self, grad, indices):
+        >>>         out = self.sparse_apply_adagrad(self.var, self.accum, grad, indices)
+        >>>         return out
+        >>> net = Net()
+        >>> grad = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+        >>> indices = Tensor([0, 1, 2], mstype.int32)
+        >>> result = net(grad, indices)
     """
 
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('accum', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1)
+    )
+
     @prim_attr_register
-    def __init__(self, lr, use_locking=False):
-        self.lr = validator.check_value_type("lr", lr, [float], self.name)
-        self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+    def __init__(self, lr, update_slots=True, use_locking=False):
+        validator.check_value_type("lr", lr, [float], self.name)
+        validator.check_number_range("lr", lr, float("-inf"), float("inf"), Rel.INC_NEITHER, self.name)
+        validator.check_value_type("update_slots", update_slots, [bool], self.name)
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, accum_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
@@ -3757,8 +3782,8 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         validator.check_value_type("l2", l2, [float], self.name)
         validator.check_value_type("lr_power", lr_power, [float], self.name)
         self.lr = validator.check_number_range("lr", lr, 0.0, float("inf"), Rel.INC_NEITHER, self.name)
-        self.l1 = validator.check_number("l1", l1, 0.0, Rel.GE, self.name)
-        self.l2 = validator.check_number("l2", l2, 0.0, Rel.GE, self.name)
+        self.l1 = validator.check_number_range("l1", l1, 0.0, float("inf"), Rel.INC_LEFT, self.name)
+        self.l2 = validator.check_number_range("l2", l2, 0.0, float("inf"), Rel.INC_LEFT, self.name)
         self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 

@@ -18,6 +18,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import check_bool
+from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
 momentum_opt = C.MultitypeFuncGraph("momentum_opt")
@@ -65,16 +66,18 @@ class Momentum(Optimizer):
               in the value of 'order_params' but not in any group will use default learning rate and default weight
               decay.
 
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported.
+        learning_rate (Union[int, float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
+                                                             Iterable or a Tensor and the dims of the Tensor is 1,
+                                                             use dynamic learning rate, then the i-th step will
+                                                             take the i-th value as the learning rate.
+                                                             When the learning_rate is float or learning_rate is a
+                                                             Tensor but the dims of the Tensor is 0, use fixed learning
+                                                             rate. Other cases are not supported. It should be equal to
+                                                             or greater than 0.0.
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0.
+            It should be at least 0.0.
+        weight_decay (int, float): Weight decay (L2 penalty). It should be equal to or greater than 0.0. Default: 0.0.
+        loss_scale (int, float): A floating point value for the loss scale. It should be greater than 0.0. Default: 1.0.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
@@ -109,6 +112,7 @@ class Momentum(Optimizer):
     """
     def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0, use_nesterov=False):
         super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        validator.check_value_type("momentum", momentum, [float], self.cls_name)
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
