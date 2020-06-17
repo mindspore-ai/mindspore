@@ -46,7 +46,7 @@ class WeightedRandomSampler : public Sampler {
   Status InitSampler() override;
 
   // Reset the internal variable to the initial state and reshuffle the indices.
-  Status Reset() override;
+  Status ResetSampler() override;
 
   // Get the sample ids.
   // @param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.

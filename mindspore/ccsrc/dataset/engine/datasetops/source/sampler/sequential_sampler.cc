@@ -77,13 +77,13 @@ Status SequentialSampler::InitSampler() {
   return Status::OK();
 }
 
-Status SequentialSampler::Reset() {
+Status SequentialSampler::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(id_count_ == num_samples_, "ERROR Reset() called early/late");
   current_id_ = start_index_;
   id_count_ = 0;
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();

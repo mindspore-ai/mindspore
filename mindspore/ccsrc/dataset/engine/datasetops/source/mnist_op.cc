@@ -204,7 +204,7 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
 
 // Reset Sampler and wakeup Master thread (functor)
 Status MnistOp::Reset() {
-  RETURN_IF_NOT_OK(sampler_->Reset());
+  RETURN_IF_NOT_OK(sampler_->ResetSampler());
   row_cnt_ = 0;
   wp_.Set();  // wake up master thread after reset is done
   return Status::OK();

@@ -89,7 +89,7 @@ Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer
   return Status::OK();
 }
 
-Status DistributedSampler::Reset() {
+Status DistributedSampler::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_buffer_, "ERROR Reset() called early/late");
   cnt_ = 0;
 
@@ -100,7 +100,7 @@ Status DistributedSampler::Reset() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();
