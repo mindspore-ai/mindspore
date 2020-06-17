@@ -156,12 +156,19 @@ def get_dataset():
 
 
 class ImageSummaryCallback:
-    def __init__(self, summaryRecord):
-        self._summaryRecord = summaryRecord
+
+    def __init__(self, summary_record):
+        self._summary_record = summary_record
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *err):
+        pass
 
     def record(self, step, train_network=None):
-        self._summaryRecord.record(step, train_network)
-        self._summaryRecord.flush()
+        self._summary_record.record(step, train_network)
+        self._summary_record.flush()
 
 
 def test_image_summary_train():
