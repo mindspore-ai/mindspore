@@ -28,6 +28,7 @@
 #include "utils/context/ms_context.h"
 #include "common/utils.h"
 #include "utils/convert_utils.h"
+#include "runtime/base.h"
 
 using std::vector;
 using Json = nlohmann::json;
@@ -159,6 +160,12 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
 
   MS_LOG(INFO) << "profiling config " << cfg;
 
+  auto ret = rtProfilerStart();
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(INFO) << "Call rtProfilerStart failed, ret:" << ret;
+    return false;
+  }
+
   // call profiling startup API
   ProfMgrCfg prof_cfg = {cfg};
   prof_handle_ = ProfMgrStartUp(&prof_cfg);
@@ -178,6 +185,12 @@ bool ProfilingManager::StopProfiling() {
   Msprof::Engine::Reporter *reporter = PluginImpl::GetPluginReporter();
   if (reporter != nullptr) {
     MS_LOG(INFO) << "report data end, ret = " << reporter->Flush();
+  }
+
+  auto rt_ret = rtProfilerStop();
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rtProfilerStop failed";
+    return false;
   }
 
   if (prof_handle_ != nullptr) {

@@ -125,6 +125,12 @@ bool AscendKernelRuntime::Init() {
   }
 #endif
 
+  // Start up profiling before rtSetDevice
+  ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
+  if (!ret) {
+    MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
+  }
+
   ret = InitDevice();
   if (!ret) {
     return ret;
@@ -132,11 +138,6 @@ bool AscendKernelRuntime::Init() {
   mem_manager_ = std::make_shared<AscendMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->MallocDeviceMemory();
-
-  ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
-  if (!ret) {
-    MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
-  }
 
   initialized_ = true;
   return ret;
