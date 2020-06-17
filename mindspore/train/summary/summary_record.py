@@ -89,6 +89,8 @@ class SummaryRecord:
                  file_suffix="_MS",
                  network=None):
 
+        self._event_writer, self._closed = None, False
+
         _check_str_by_regular(file_prefix)
         _check_str_by_regular(file_suffix)
         self.log_path = _make_directory(log_dir)
@@ -113,7 +115,6 @@ class SummaryRecord:
         self.suffix = file_suffix
         self.network = network
         self.has_graph = False
-        self._closed = False
 
         # create the summary writer file
         self.event_file_name = get_event_file_name(self.prefix, self.suffix)
@@ -121,8 +122,6 @@ class SummaryRecord:
             self.full_file_name = os.path.join(self.log_path, self.event_file_name)
         except Exception as ex:
             raise RuntimeError(ex)
-
-        self._event_writer = None
 
     def _init_event_writer(self):
         """Init event writer and write metadata."""
