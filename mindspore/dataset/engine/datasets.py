@@ -4740,41 +4740,29 @@ class _NumpySlicesDataset:
             data = self.process_dict(data)
 
         if isinstance(data, tuple):
-            self.is_tuple = True
             self.data = ()
             data_len = len(data)
             for i in range(data_len):
                 self.data = self.data + (np.array(data[i]),)
         else:
-            self.is_tuple = False
-            self.data = np.array(data)
+            self.data = (np.array(data),)
 
         # Init column_name
         if column_list is not None:
             self.column_list = column_list
         elif self.column_list is None:
             self.column_list = []
-            column_num = len(self.data) if self.is_tuple else 1
+            column_num = len(self.data)
             for i in range(column_num):
                 self.column_list.append("column_" + str(i))
 
     def __getitem__(self, index):
-        if self.is_tuple:
-            data_row = []
-            for i in range(len(self.data)):
-                data_row.append(self.data[i][index, ...])
-            data_res = tuple(data_row)
-        else:
-            data_row = self.data[index, ...]
-            data_row = [data_row]
-            data_res = tuple(data_row)
-
+        data_row = [d[index, ...] for d in self.data]
+        data_res = tuple(data_row)
         return data_res
 
     def __len__(self):
-        if self.is_tuple:
-            return len(self.data[0])
-        return len(self.data)
+        return len(self.data[0])
 
     def process_dict(self, input_data):
         """
@@ -4792,10 +4780,9 @@ class _NumpySlicesDataset:
 
         # Convert the data in dict into tuple
         data = ()
-        self.column_list = []
-        keys = input_data.keys()
+        keys = list(input_data.keys())
+        self.column_list = keys
         for key in keys:
-            self.column_list.append(key)
             value = input_data[key]
             data = data + (list(value),)
 
