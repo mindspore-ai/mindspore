@@ -33,7 +33,7 @@ Status MaskOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
   if (type_ != DataType::DE_BOOL) {
     RETURN_IF_NOT_OK(cast_->Compute(temp_output, output));
   } else {
-    *output = temp_output;
+    *output = std::move(temp_output);
   }
 
   return Status::OK();

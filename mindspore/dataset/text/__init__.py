@@ -16,12 +16,12 @@
 mindspore.dataset.text
 """
 import platform
-from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer
+from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, TruncateSequencePair
 from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm
 
 __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
-    "to_str", "to_bytes", "JiebaMode", "Vocab", "WordpieceTokenizer"
+    "to_str", "to_bytes", "JiebaMode", "Vocab", "WordpieceTokenizer", "TruncateSequencePair"
 ]
 
 if platform.system().lower() != 'windows':

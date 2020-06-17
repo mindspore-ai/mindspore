@@ -216,7 +216,7 @@ def check_slice_op(method):
 
 
 def check_mask_op(method):
-    """Wrapper method to check the parameters of slice."""
+    """Wrapper method to check the parameters of mask."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

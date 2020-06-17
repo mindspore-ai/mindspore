@@ -40,6 +40,7 @@
 #include "dataset/kernels/data/fill_op.h"
 #include "dataset/kernels/data/mask_op.h"
 #include "dataset/kernels/data/slice_op.h"
+#include "mindspore/ccsrc/dataset/text/kernels/truncate_sequence_pair_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
@@ -384,7 +385,7 @@ void bindTensorOps2(py::module *m) {
     *m, "FillOp", "Tensor operation to return tensor filled with same value as input fill value.")
     .def(py::init<std::shared_ptr<Tensor>>());
 
-  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp", "Tensor Slice operation.")
+  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp", "Tensor slice operation.")
     .def(py::init<bool>())
     .def(py::init([](const py::list &py_list) {
       std::vector<dsize_t> c_list;
@@ -425,8 +426,12 @@ void bindTensorOps2(py::module *m) {
     .export_values();
 
   (void)py::class_<MaskOp, TensorOp, std::shared_ptr<MaskOp>>(*m, "MaskOp",
-                                                              "Tensor operation mask using relational comparator")
+                                                              "Tensor mask operation using relational comparator")
     .def(py::init<RelationalOp, std::shared_ptr<Tensor>, DataType>());
+
+  (void)py::class_<TruncateSequencePairOp, TensorOp, std::shared_ptr<TruncateSequencePairOp>>(
+    *m, "TruncateSequencePairOp", "Tensor operation to truncate two tensors to a max_length")
+    .def(py::init<int64_t>());
 
   (void)py::class_<RandomRotationOp, TensorOp, std::shared_ptr<RandomRotationOp>>(
     *m, "RandomRotationOp",
