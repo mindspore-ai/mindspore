@@ -30,7 +30,7 @@ std::shared_ptr<TdtPlugin> TdtPlugin::GetInstance() {
 }
 
 TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profiling, int32_t &time) {
-  MS_LOG(INFO) << "TDT channel name is " << channel_name << ".";
+  MS_LOG(DEBUG) << "TDT channel name is " << channel_name << ".";
   std::vector<DataItem> items;
   double start_time;
   auto ret = translate(ts_row, items);
@@ -121,8 +121,8 @@ TdtStatus TdtPlugin::translate(const TensorRow &ts_row, std::vector<DataItem> &i
     data_item.dataLen_ = ts->SizeInBytes();
     data_item.dataPtr_ = std::shared_ptr<void>(reinterpret_cast<uchar *>(&(*ts->begin<uint8_t>())), [](void *elem) {});
     items.emplace_back(data_item);
-    MS_LOG(INFO) << "TDT data type is " << datatype << ", data shape is " << dataShapes << ", data length is "
-                 << ts->Size() << ".";
+    MS_LOG(DEBUG) << "TDT data type is " << datatype << ", data shape is " << dataShapes << ", data length is "
+                  << ts->Size() << ".";
   }
   return SUCCESS;
 }
