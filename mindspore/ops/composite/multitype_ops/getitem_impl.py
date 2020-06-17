@@ -164,7 +164,7 @@ def _tensor_getitem_by_number(data, number_index):
 @getitem.register("Tensor", "None")
 def _tensor_getitem_by_none(data, index):
     """
-    For none indexing , expand data with one dim
+    For none indexing , expand data with one dim.
 
     Inputs:
         data (Tensor): A tensor.

@@ -25,14 +25,14 @@ logical_or = base.MultitypeFuncGraph("logical_or")
 @logical_or.register("Number", "Number")
 def _logical_or_scala(x, y):
     """
-    Return logical or operation result of x  and y
+    Return logical or operation result of x and y.
 
     Args:
        x(Number): Number.
        y(Number): Number.
 
     Returns:
-       bool, Return logical or operation result of x  and y
+       bool, Return logical or operation result of x and y.
    """
     return F.bool_or(x.__bool__(), y.__bool__())
 
@@ -40,13 +40,13 @@ def _logical_or_scala(x, y):
 @logical_or.register("Tensor", "Tensor")
 def _logical_or_tensor(x, y):
     """
-    Return logical operation or result of x  and y
+    Return logical operation or result of x and y.
 
     Args:
        x(Tensor): Tensor.
        y(Tensor): Tensor.
 
     Returns:
-       Tensor, Return logical operation or result of x  and y
+       Tensor, Return logical operation or result of x and y.
    """
-    return  F.logical_or(x, y)
+    return F.logical_or(x, y)

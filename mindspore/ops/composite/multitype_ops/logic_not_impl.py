@@ -25,13 +25,13 @@ logical_not = base.MultitypeFuncGraph("logical_not")
 @logical_not.register("Number")
 def _logical_not_scala(x):
     """
-    Return logical not operation result of x
+    Return logical not operation result of x.
 
     Args:
        x(Number): Number.
 
     Returns:
-       bool, Return logical not operation result of x
+       bool, Return logical not operation result of x.
    """
     return F.bool_not(x.__bool__())
 
@@ -39,10 +39,24 @@ def _logical_not_scala(x):
 @logical_not.register("Tensor")
 def _logical_not_tensor(x):
     """
-    Return logical not operation result of x
+    Return logical not operation result of x.
     Args:
        x(Tensor): Tensor.
     Returns:
-       Tensor, Return logical not operation result of x
+       Tensor, Return logical not operation result of x.
    """
-    return  F.logical_not(x)
+    return F.logical_not(x)
+
+
+@logical_not.register("Tuple")
+def _logical_not_tuple(x):
+    """
+    Return logical not operation result of a tuple object.
+
+    Args:
+       x(Tuple): The input tuple.
+
+    Returns:
+       bool, Return logical not operation result of x.
+   """
+    return F.bool_not(x.__bool__())

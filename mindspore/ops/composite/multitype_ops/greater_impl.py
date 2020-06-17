@@ -48,6 +48,6 @@ def _greater_tensor(x, y):
        y(Tensor): Tensor.
 
     Returns:
-       tensor, return operation of x and y by P.Greater
+       tensor, return operation of x and y by P.Greater.
    """
     return F.tensor_gt(x, y)

@@ -1139,7 +1139,7 @@ raise_error_set = [
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
 def test_exec():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     return test_cases
 
 
