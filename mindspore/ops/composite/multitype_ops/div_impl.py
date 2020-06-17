@@ -47,8 +47,8 @@ def _div_tensor(x, y):
     Two tensors divide by element.
 
     Args:
-        x (Tensor): x
-        y (Tensor): The dtype is same as x.
+        x (Tensor): The first input tensor.
+        y (Tensor): The second input tensor.
 
     Returns:
         Tensor, has the same dtype as x.

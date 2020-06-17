@@ -34,7 +34,7 @@ def _floordiv_scalar(x, y):
 
 @floordiv.register("Tensor", "Tensor")
 def _floordiv_tensor(x, y):
-    """Returns x // y where x and y are all tensors and have save dtype."""
+    """Returns x // y where x and y are all tensors."""
     return F.tensor_floordiv(x, y)
 
 

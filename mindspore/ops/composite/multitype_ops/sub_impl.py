@@ -34,7 +34,7 @@ def _sub_scalar(x, y):
 
 @sub.register("Tensor", "Tensor")
 def _sub_tensor(x, y):
-    """Returns x - y where x and y are all tensors and have save dtype."""
+    """Returns x - y where x and y are all tensors."""
     return F.tensor_sub(x, y)
 
 

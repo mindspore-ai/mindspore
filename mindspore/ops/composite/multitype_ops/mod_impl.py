@@ -34,7 +34,7 @@ def _mod_scalar(x, y):
 
 @mod.register("Tensor", "Tensor")
 def _mod_tensor(x, y):
-    """Returns x % y where x and y are all tensors and have save dtype."""
+    """Returns x % y where x and y are all tensors."""
     return F.tensor_mod(x, y)
 
 
