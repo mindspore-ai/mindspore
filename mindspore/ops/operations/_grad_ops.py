@@ -365,33 +365,6 @@ class FusedBatchNormGrad(Primitive):
     def __call__(self, dy, x, scale, save_mean, save_inv_variance):
         raise NotImplementedError
 
-class BNTrainingReduceGrad(PrimitiveWithInfer):
-    """Gradients of FusedBatchNorm operation."""
-
-    @prim_attr_register
-    def __init__(self, epsilon=0.0001):
-        _inputs = ['grads', 'x', 'diff_scale', 'diff_offset', 'scale', 'batch_mean', 'batch_variance']
-        self.init_prim_io_names(inputs=_inputs, outputs=['y'])
-
-    def infer_shape(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
-        return grads
-
-    def infer_dtype(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
-        return grads
-
-class BNTrainingUpdateGrad(PrimitiveWithInfer):
-    """Gradients of FusedBatchNorm operation."""
-
-    @prim_attr_register
-    def __init__(self, epsilon=0.0001):
-        self.init_prim_io_names(inputs=['grads', 'x', 'batch_mean', 'batch_variance'],
-                                outputs=['diff_scale', 'diff_offset'])
-
-    def infer_shape(self, grads, x, batch_mean, batch_variance):
-        return (batch_mean, batch_variance)
-
-    def infer_dtype(self, grads, x, batch_mean, batch_variance):
-        return (batch_mean, batch_variance)
 
 class GeluGrad(PrimitiveWithInfer):
     """Gradients of Gelu operation."""

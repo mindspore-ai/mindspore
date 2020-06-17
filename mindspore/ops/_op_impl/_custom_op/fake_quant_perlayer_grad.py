@@ -78,7 +78,7 @@ def _fake_quant_per_layer_grad_tbe():
 
 
 @fusion_manager.register("fake_quant_per_layer_grad")
-def fake_quant_per_layer_grad_compute(dout, x, min_val, max_val, quant_min, quant_max,
+def fake_quant_per_layer_grad_compute(dout, x, min_val, max_val, quant_min, quant_max, symmetric,
                                       kernel_name="fake_quant_per_layer_grad"):
     """FakeQuantPerLayerGrad"""
     shape = te.lang.cce.util.shape_to_list(x.shape)
@@ -87,6 +87,10 @@ def fake_quant_per_layer_grad_compute(dout, x, min_val, max_val, quant_min, quan
     quant_max = tvm.const(quant_max, x.dtype)
     quant_min = te.lang.cce.broadcast(quant_min, shape_min)
     quant_max = te.lang.cce.broadcast(quant_max, shape_min)
+
+    if symmetric:
+        max_val = te.lang.cce.vmax(te.lang.cce.vmuls(min_val, -1.), max_val)
+        min_val = te.lang.cce.vmuls(max_val, -1.)
 
     # CalNudge(NudgeMinMax)
     scale = te.lang.cce.vdiv(te.lang.cce.vsub(
@@ -142,12 +146,8 @@ def fake_quant_per_layer_grad(dout, x, min_val, max_val, dx,
     input_shape = (functools_reduce(lambda x, y: x * y, input_shape[:]),)
     shape_min, _, _ = util.produce_shapes(min_shape, input_shape)
 
-    if symmetric:
-        quant_min = 0 - 2 ** (num_bits - 1)
-        quant_max = 2 ** (num_bits - 1) - 1
-    else:
-        quant_min = 0
-        quant_max = 2 ** num_bits - 1
+    quant_min = 0
+    quant_max = 2 ** num_bits - 1
     if narrow_range:
         quant_min = quant_min + 1
 
@@ -155,8 +155,8 @@ def fake_quant_per_layer_grad(dout, x, min_val, max_val, dx,
     input_data = tvm.placeholder(input_shape, name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_min, name="min_data", dtype=min_dtype)
     max_data = tvm.placeholder(shape_min, name="max_data", dtype=max_dtype)
-    res = fake_quant_per_layer_grad_compute(dout_data, input_data, min_data, max_data, quant_min,
-                                            quant_max, kernel_name)
+    res = fake_quant_per_layer_grad_compute(dout_data, input_data, min_data, max_data,
+                                            quant_min, quant_max, symmetric, kernel_name)
 
     with tvm.target.cce():
         sch = generic.auto_schedule(res)

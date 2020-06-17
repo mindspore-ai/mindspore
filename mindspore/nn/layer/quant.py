@@ -47,7 +47,7 @@ class BatchNormFoldCell(Cell):
     Batch normalization folded.
 
     Args:
-        momentum (float): Momentum value should be [0, 1]. Default: 0.1.
+        momentum (float): Momentum value should be [0, 1]. Default: 0.9.
         epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
             float32 else 1e-3. Default: 1e-5.
         freeze_bn (int): Delay in steps at which computation switches from regular batch
@@ -69,12 +69,11 @@ class BatchNormFoldCell(Cell):
 
     """
 
-    def __init__(self, momentum=0.9, epsilon=1e-5, freeze_bn=0, freeze_bn_ascend=True):
+    def __init__(self, momentum=0.9, epsilon=1e-5, freeze_bn=0):
         """init batch norm fold layer"""
         super(BatchNormFoldCell, self).__init__()
         self.epsilon = epsilon
         self.is_gpu = context.get_context('device_target') == "GPU"
-        self.freeze_bn_ascend = freeze_bn_ascend
         if self.is_gpu:
             self.bn_train = P.BatchNormFold(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
             self.bn_infer = P.BatchNormFold(momentum, epsilon, is_training=False, freeze_bn=freeze_bn)
@@ -89,7 +88,7 @@ class BatchNormFoldCell(Cell):
             else:
                 batch_mean, batch_std, running_mean, running_std = self.bn_infer(x, mean, variance, global_step)
         else:
-            if self.training and not self.freeze_bn_ascend:
+            if self.training:
                 x_sum, x_square_sum = self.bn_reduce(x)
                 _, batch_mean, batch_std, running_mean, running_std, mean_updated, variance_updated = \
                     self.bn_update(x, x_sum, x_square_sum, mean, variance)
@@ -226,17 +225,17 @@ class Conv2dBatchNormQuant(Cell):
         pad_mode: (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding: (int): Implicit paddings on both sides of the input. Default: 0.
         eps (int): Parameters for BatchNormal. Default: 1e-5.
-        momentum (int): Parameters for BatchNormal op. Default: 0.9.
+        momentum (int): Parameters for BatchNormal op. Default: 0.997.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            convolution kernel. Default: 'None'.
+            convolution kernel. Default: 'normal'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            beta vector. Default: 'None'.
+            beta vector. Default: 'zeros'.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            gamma vector. Default: 'None'.
+            gamma vector. Default: 'ones'.
         mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            mean vector. Default: 'None'.
+            mean vector. Default: 'zeros'.
         var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
-            variance vector. Default: 'None'.
+            variance vector. Default: 'ones'.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         freeze_bn (int): Quantization freeze BatchNormal op according by global step. Default: 100000.
         fake (bool): Conv2dBatchNormQuant Cell add FakeQuantWithMinMax op or not. Default: True.
@@ -269,19 +268,18 @@ class Conv2dBatchNormQuant(Cell):
                  group=1,
                  eps=1e-5,
                  momentum=0.997,
-                 weight_init=None,
-                 beta_init=None,
-                 gamma_init=None,
-                 mean_init=None,
-                 var_init=None,
+                 weight_init='normal',
+                 beta_init='zeros',
+                 gamma_init='ones',
+                 mean_init='zeros',
+                 var_init='ones',
                  quant_delay=0,
                  freeze_bn=100000,
                  fake=True,
                  num_bits=8,
                  per_channel=False,
                  symmetric=False,
-                 narrow_range=False,
-                 freeze_bn_ascend=True):
+                 narrow_range=False):
         """init Conv2dBatchNormQuant layer"""
         super(Conv2dBatchNormQuant, self).__init__()
         self.in_channels = in_channels
@@ -302,7 +300,6 @@ class Conv2dBatchNormQuant(Cell):
         self.symmetric = symmetric
         self.narrow_range = narrow_range
         self.is_gpu = context.get_context('device_target') == "GPU"
-        self.freeze_bn_ascend = freeze_bn_ascend
 
         # initialize convolution op and Parameter
         if context.get_context('device_target') == "Ascend" and group > 1:
@@ -314,8 +311,7 @@ class Conv2dBatchNormQuant(Cell):
                                                 pad=padding,
                                                 stride=self.stride,
                                                 dilation=self.dilation)
-            if weight_init is None:
-                weight_init = initializer('normal', [1, in_channels, *self.kernel_size])
+            weight_shape = [1, in_channels, *self.kernel_size]
             channel_axis = 1
         else:
             self.conv = P.Conv2D(out_channel=out_channels,
@@ -325,24 +321,16 @@ class Conv2dBatchNormQuant(Cell):
                                  stride=self.stride,
                                  dilation=self.dilation,
                                  group=group)
-            if weight_init is None:
-                weight_init = initializer('normal', [out_channels, in_channels // group, *self.kernel_size])
+            weight_shape = [out_channels, in_channels // group, *self.kernel_size]
             channel_axis = 0
-        self.weight = Parameter(weight_init, name='weight')
+        self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
 
         # initialize batchnorm Parameter
-        if gamma_init is None:
-            gamma_init = initializer('ones', [out_channels])
-        self.gamma = Parameter(gamma_init, name='gamma')
-        if beta_init is None:
-            beta_init = initializer('zeros', [out_channels])
-        self.beta = Parameter(beta_init, name='beta')
-        if mean_init is None:
-            mean_init = initializer('zeros', [out_channels])
-        self.moving_mean = Parameter(mean_init, name='moving_mean', requires_grad=False)
-        if var_init is None:
-            var_init = initializer('ones', [out_channels])
-        self.moving_variance = Parameter(var_init, name='moving_variance', requires_grad=False)
+        self.gamma = Parameter(initializer(gamma_init, [out_channels]), name='gamma')
+        self.beta = Parameter(initializer(beta_init, [out_channels]), name='beta')
+        self.moving_mean = Parameter(initializer(mean_init, [out_channels]), name='moving_mean', requires_grad=False)
+        self.moving_variance = Parameter(initializer(var_init, [out_channels]), name='moving_variance',
+                                         requires_grad=False)
 
         # initialize fake ops
         self.fake_quant_weight = FakeQuantWithMinMax(min_init=-6,
@@ -371,12 +359,10 @@ class Conv2dBatchNormQuant(Cell):
     def extend_repr(self):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
-                                                                        self.kernel_size, self.stride,
-                                                                        self.pad_mode, self.padding, self.dilation,
-                                                                        self.group,
-                                                                        self.fake, self.freeze_bn, self.momentum,
-                                                                        self.quant_delay)
+            'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(
+                self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                self.pad_mode, self.padding, self.dilation, self.group,
+                self.fake, self.freeze_bn, self.momentum, self.quant_delay)
         return s
 
     def construct(self, x):
@@ -401,7 +387,7 @@ class Conv2dBatchNormQuant(Cell):
                 out = self.batchnorm_fold2_infer(out, self.beta, self.gamma,
                                                  batch_std, batch_mean, running_std, running_mean, self.step)
         else:
-            if self.training and not self.freeze_bn_ascend:
+            if self.training:
                 out = self.batchnorm_fold2_train(out, self.beta, self.gamma, batch_std, batch_mean, running_std)
                 F.control_depend(out, self.assignadd(self.step, self.one))
             else:
@@ -427,8 +413,8 @@ class Conv2dQuant(Cell):
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
-            Default: None.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: None.
+            Default: 'normal'.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
@@ -458,8 +444,8 @@ class Conv2dQuant(Cell):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=None,
-                 bias_init=None,
+                 weight_init='normal',
+                 bias_init='zeros',
                  quant_delay=0,
                  num_bits=8,
                  per_channel=False,
@@ -480,15 +466,14 @@ class Conv2dQuant(Cell):
         self.group = group
         self.quant_delay = quant_delay
 
-        if weight_init is None:
-            weight_init = initializer(
-                'normal', [out_channels, in_channels // group, *self.kernel_size])
-        self.weight = Parameter(weight_init, name='weight')
-        if bias_init is None:
-            bias_init = initializer('zeros', [out_channels])
-        if has_bias:
-            self.bias = Parameter(bias_init, name='bias')
-            self.bias_add = P.BiasAdd()
+        weight_shape = [out_channels, in_channels // group, *self.kernel_size]
+        self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
+
+        self.bias_add = P.BiasAdd()
+        if check_bool(has_bias):
+            self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
+        else:
+            self.bias = None
 
         self.conv = P.Conv2D(out_channel=self.out_channels,
                              kernel_size=self.kernel_size,
@@ -518,9 +503,10 @@ class Conv2dQuant(Cell):
     def extend_repr(self):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
-                                                 self.pad_mode, self.padding, self.dilation, self.group,
-                                                 self.has_bias, self.quant_delay)
+            'has_bias={}, quant_delay={}'.format(
+                self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                self.pad_mode, self.padding, self.dilation, self.group,
+                self.has_bias, self.quant_delay)
         return s
 
 
