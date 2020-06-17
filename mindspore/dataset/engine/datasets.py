@@ -2746,8 +2746,9 @@ class MindDataset(MappableDataset):
 
     def get_args(self):
         args = super().get_args()
-        padded_sample = {}
+        padded_sample = None
         if self.padded_sample:
+            padded_sample = {}
             for k, v in self.padded_sample.items():
                 if isinstance(v, np.ndarray):
                     padded_sample[k] = v.tobytes()
