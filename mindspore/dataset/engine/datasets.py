@@ -2209,7 +2209,7 @@ class ConcatDataset(DatasetOp):
             Number, number of batches.
         """
         children_sizes = [c.get_dataset_size() for c in self.input]
-        dataset_size = np.sum(children_sizes)
+        dataset_size = sum(children_sizes)
         return dataset_size
 
 
@@ -2219,8 +2219,8 @@ class RenameDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be Renamed.
-        input_column_names (list[str]): list of names of the input columns.
-        output_column_names (list[str]): list of names of the output columns.
+        input_columns (list[str]): list of names of the input columns.
+        output_columns (list[str]): list of names of the output columns.
     """
 
     def __init__(self, input_dataset, input_columns, output_columns):
@@ -4736,58 +4736,39 @@ class _NumpySlicesDataset:
     def __init__(self, data, column_list=None):
         self.column_list = None
         # Convert dict data into tuple
-        if isinstance(data, dict) or isinstance(data[0], dict):
+        if isinstance(data, dict):
             data = self.process_dict(data)
 
-        if isinstance(data[0], tuple) or isinstance(data, tuple):
-            self.is_tuple = True
-            self.data = data
-            if isinstance(data[0], tuple):
-                for i in range(len(self.data)):
-                    self.data[i] = np.array(self.data[i])
+        if isinstance(data, tuple):
+            self.data = ()
+            data_len = len(data)
+            for i in range(data_len):
+                self.data = self.data + (np.array(data[i]),)
         else:
-            self.is_tuple = False
-            self.data = np.array(data)
+            self.data = (np.array(data),)
 
         # Init column_name
         if column_list is not None:
             self.column_list = column_list
         elif self.column_list is None:
             self.column_list = []
-            column_num = len(self.data) if self.is_tuple else 1
+            column_num = len(self.data)
             for i in range(column_num):
                 self.column_list.append("column_" + str(i))
 
     def __getitem__(self, index):
-        if self.is_tuple:
-            data_row = []
-            for i in range(len(self.data)):
-                data_row.append(self.data[i][index, ...])
-            data_res = tuple(data_row)
-        else:
-            data_row = self.data[index, ...]
-            data_row = [data_row]
-            data_res = tuple(data_row)
-
+        data_row = [d[index, ...] for d in self.data]
+        data_res = tuple(data_row)
         return data_res
 
     def __len__(self):
-        if self.is_tuple:
-            return len(self.data[0])
-        return len(self.data)
+        return len(self.data[0])
 
     def process_dict(self, input_data):
         """
         Convert the dict like data into tuple format, when input is a tuple of dict then compose it into a dict first.
         """
-        # When input is a tuple of dict, composing it
-        if isinstance(input_data, tuple) and isinstance(input_data[0], dict):
-            data_dict = {}
-            for d in input_data:
-                data_dict.update(d)
-            input_data = data_dict
-
-        # convert pandas like dict(has "values" column) into General dict
+        # Convert pandas like dict(has "values" column) into General dict
         data_keys = list(input_data.keys())
         data_col = input_data[data_keys[0]]
         if hasattr(data_col, "values"):
@@ -4798,13 +4779,12 @@ class _NumpySlicesDataset:
             input_data = new_dict
 
         # Convert the data in dict into tuple
-        data = []
-        self.column_list = []
-        keys = input_data.keys()
+        data = ()
+        keys = list(input_data.keys())
+        self.column_list = keys
         for key in keys:
-            self.column_list.append(key)
             value = input_data[key]
-            data.append(tuple(value))
+            data = data + (list(value),)
 
         return data
 
@@ -4843,7 +4823,7 @@ class NumpySlicesDataset(GeneratorDataset):
          - not allowed
 
     Args:
-        data（list, tuple or dict）Input of Given data, supported data type includes list, tuple, dict and other numpy
+        data (list, tuple or dict) Input of Given data, supported data type includes list, tuple, dict and other numpy
             format. Input data will be sliced in first dimension and generate many rows, large data is not recommend to
             load in this way as data is loading into memory.
         column_names (list[str], optional): List of column names of the dataset (default=None). If column_names not
@@ -4867,8 +4847,8 @@ class NumpySlicesDataset(GeneratorDataset):
         >>> # 2) Input data can be a dict, and column_names will be its key
         >>> data = {"a": [1, 2], "b": [3, 4]}
         >>> dataset2 = ds.NumpySlicesDataset(data)
-        >>> # 3) Input data can be a tuple (or list of tuple), and each tuple element refers to data in each column
-        >>> data = ((1, 2), (3, 4), (5, 6))
+        >>> # 3) Input data can be a tuple of lists (or numpy arrays), each tuple element refers to data in each column
+        >>> data = ([1, 2], [3, 4], [5, 6])
         >>> dataset3 = ds.NumpySlicesDataset(data, column_names=["column_1", "column_2", "column_3"])
         >>> # 4) Load data from csv file
         >>> import pandas as pd
