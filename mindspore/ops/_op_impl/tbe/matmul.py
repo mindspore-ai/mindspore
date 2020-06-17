@@ -17,7 +17,7 @@
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 matmul_op_info = TBERegOp("MatMul") \
-    .fusion_type("OPAQUE") \
+    .fusion_type("DYNAMIC") \
     .async_flag(False) \
     .binfile_name("matmul.so") \
     .compute_cost(10) \

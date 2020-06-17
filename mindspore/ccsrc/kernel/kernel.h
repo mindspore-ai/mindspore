@@ -45,6 +45,7 @@ enum FusionType {
   COMMREDUCE,
   SEGMENT,
   OPAQUE,
+  DYNAMIC,
   UNKNOWN_FUSION_TYPE = -1,
 };
 enum OpPattern {

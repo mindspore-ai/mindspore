@@ -28,8 +28,8 @@ build_in_impl_path = get_build_in_impl_path()
 # op function list
 op_build = "compile"
 op_pre_build = "pre_build"
-fusion_type_map = {'Convolution': 0, 'ElemWise': 1, 'CommReduce': 2,
-                   'Segment': 3, 'Opaque': 4}
+fusion_pattern_start_flag = "fusion_pattern_start"
+fusion_pattern_end_flag = "fusion_pattern_end"
 
 def _initialize(impl_path):
     """Initialize"""
@@ -42,7 +42,6 @@ def _initialize(impl_path):
         raise ValueError("Can not find the env TBE_IMPL_PATH")
 
     sys.path.insert(0, op_module_name)
-
 
 def build_op(build_type, json_str):
     """
@@ -169,7 +168,5 @@ def compile_with_json(json_str):
 if __name__ == "__main__":
     in_args = sys.stdin.readline()
     result = compile_with_json(in_args)
-    if result in fusion_type_map:
-        exit(fusion_type_map[result])
-    else:
-        exit(100)
+    sys.stdout.write(fusion_pattern_start_flag + str(result) + fusion_pattern_end_flag)
+    sys.stdout.flush()
