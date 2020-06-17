@@ -80,6 +80,7 @@ class AscendSession : public SessionBasic {
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
+  void RunOpMemoryClear(KernelGraph *kernel_graph) const;
   void GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void LoadTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void ExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;

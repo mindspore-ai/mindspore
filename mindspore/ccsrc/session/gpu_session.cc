@@ -86,6 +86,13 @@ void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
 }
 
+void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->RunOpClearMemory(kernel_graph);
+}
+
 void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
@@ -202,6 +209,10 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
 
 void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                          const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
+  // Check if the graph cache exists.
+  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
+    return;
+  }
   // Prepare the graph
   auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -234,7 +245,7 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   }
   py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
   py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
-  run_op_graphs_.clear();
+  RunOpClearMemory(kernel_graph.get());
   return tuple_tensors;
 }
 }  // namespace gpu

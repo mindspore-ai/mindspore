@@ -153,6 +153,34 @@ void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &inpu
   UpdateRefNodeOutputMem(graph);
 }
 
+void KernelRuntime::RunOpClearMemory(session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  // clear input parameter memory resource
+  for (const auto &input_node : graph->inputs()) {
+    MS_EXCEPTION_IF_NULL(input_node);
+    AnfAlgo::SetOutputAddr(nullptr, 0, input_node.get());
+  }
+  // clear input value node memory resource
+  for (const auto &value_node : graph->graph_value_nodes()) {
+    MS_EXCEPTION_IF_NULL(value_node);
+    AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
+  }
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    // clear output memory resource
+    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
+      AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
+    }
+    // clear workspace memory resource
+    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    auto workspace_lists = kernel_mod->GetWorkspaceSizeList();
+    for (size_t index = 0; index < workspace_lists.size(); ++index) {
+      AnfAlgo::SetWorkspaceAddr(nullptr, index, cnode.get());
+    }
+  }
+}
+
 void KernelRuntime::AssignStaticMemory(session::KernelGraph *graph) {
   AssignStaticMemoryInput(graph);
   AssignStaticMemoryValueNode(graph);

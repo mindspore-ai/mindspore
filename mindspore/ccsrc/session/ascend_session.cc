@@ -131,34 +131,6 @@ std::vector<BaseRef> GetRealArgs(const KernelGraphPtr graph, const VectorRef &ar
   return real_args;
 }
 
-void ClearRunOpMemoryResource(const KernelGraphPtr &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  // clear input parameter memory resource
-  for (const auto &input_node : kernel_graph->inputs()) {
-    MS_EXCEPTION_IF_NULL(input_node);
-    AnfAlgo::SetOutputAddr(nullptr, 0, input_node.get());
-  }
-  // clear input value node memory resource
-  for (const auto &value_node : kernel_graph->graph_value_nodes()) {
-    MS_EXCEPTION_IF_NULL(value_node);
-    AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
-  }
-  for (const auto &cnode : kernel_graph->execution_order()) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    // clear output memory resource
-    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
-      AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
-    }
-    // clear workspace memory resource
-    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    auto workspace_lists = kernel_mod->GetWorkspaceSizeList();
-    for (size_t index = 0; index < workspace_lists.size(); ++index) {
-      AnfAlgo::SetWorkspaceAddr(nullptr, index, cnode.get());
-    }
-  }
-}
-
 std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
   std::vector<CNodePtr> cnodes = {};
   size_t i = 0;
@@ -518,7 +490,7 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
   }
   py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
   py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
-  ClearRunOpMemoryResource(graph);
+  RunOpMemoryClear(graph.get());
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
   return tuple_tensors;
 }
@@ -650,6 +622,13 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
   MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::RunOpMemoryClear(KernelGraph *kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->RunOpClearMemory(kernel_graph);
 }
 
 void AscendSession::GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const {
