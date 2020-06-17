@@ -30,8 +30,8 @@ class Lookup(cde.LookupOp):
     """
         Lookup operator that looks up a word to an id
     Args:
-        vocab(Vocab): a Vocab object
-        unknown(None,int): default id to lookup a word that is out of vocab
+        vocab(Vocab): a Vocab object.
+        unknown(int): default id to lookup a word that is out of vocab (default is None).
     """
 
     @check_lookup
@@ -45,16 +45,21 @@ class Lookup(cde.LookupOp):
 class Ngram(cde.NgramOp):
     """
     TensorOp to generate n-gram from a 1-D string Tensor
-    Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an explanation of what n-gram is.
+    Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
+
     Args:
-        n(int or list):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
-        would be a 4-gram followed by a 3-gram in the same tensor.
-        left_pad(tuple, optional): ("pad_token",pad_width). Padding performed on left side of the sequence. pad_width
-        will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__". (Default is None)
-        right_pad(tuple, optional): ("pad_token",pad_width). Padding performed on right side of the sequence. pad_width
-        will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--". (Default is None)
+        n([int, list]):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
+            would be a 4-gram followed by a 3-gram in the same tensor. If number of words is not enough to make up for
+            a n-gram, an empty string would be returned. For e.g. 3 grams on ["mindspore","best"] would result in an
+            empty string be produced.
+        left_pad(tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
+            will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (Default is None).
+        right_pad(tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
+            pad_width will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--"
+            (Default is None).
         separator(str,optional): symbol used to join strings together. for e.g. if 2-gram the ["mindspore", "amazing"]
-        with separator="-" the result would be ["mindspore-amazing"]. (Default is None which means whitespace is used)
+            with separator="-" the result would be ["mindspore-amazing"] (Default is None which means whitespace is
+            used).
     """
 
     @check_ngram

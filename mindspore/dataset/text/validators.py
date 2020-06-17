@@ -24,7 +24,7 @@ from ..transforms.validators import check_uint32, check_pos_int64
 
 
 def check_lookup(method):
-    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+    """A wrapper that wrap a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -35,10 +35,10 @@ def check_lookup(method):
             unknown = kwargs.get("unknown")
         if unknown is not None:
             if not (isinstance(unknown, int) and unknown >= 0):
-                raise ValueError("unknown needs to be a non-negative integer")
+                raise ValueError("unknown needs to be a non-negative integer.")
 
         if not isinstance(vocab, cde.Vocab):
-            raise ValueError("vocab is not an instance of cde.Vocab")
+            raise ValueError("vocab is not an instance of cde.Vocab.")
 
         kwargs["vocab"] = vocab
         kwargs["unknown"] = unknown
@@ -48,7 +48,7 @@ def check_lookup(method):
 
 
 def check_from_file(method):
-    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+    """A wrapper that wrap a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -61,16 +61,16 @@ def check_from_file(method):
             vocab_size = kwargs.get("vocab_size")
 
         if not isinstance(file_path, str):
-            raise ValueError("file_path needs to be str")
+            raise ValueError("file_path needs to be str.")
 
         if delimiter is not None:
             if not isinstance(delimiter, str):
-                raise ValueError("delimiter needs to be str")
+                raise ValueError("delimiter needs to be str.")
         else:
             delimiter = ""
         if vocab_size is not None:
             if not (isinstance(vocab_size, int) and vocab_size > 0):
-                raise ValueError("vocab size needs to be a positive integer")
+                raise ValueError("vocab size needs to be a positive integer.")
         else:
             vocab_size = -1
         kwargs["file_path"] = file_path
@@ -82,7 +82,7 @@ def check_from_file(method):
 
 
 def check_from_list(method):
-    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+    """A wrapper that wrap a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -90,10 +90,10 @@ def check_from_list(method):
         if "word_list" in kwargs:
             word_list = kwargs.get("word_list")
         if not isinstance(word_list, list):
-            raise ValueError("word_list needs to be a list of words")
+            raise ValueError("word_list needs to be a list of words.")
         for word in word_list:
             if not isinstance(word, str):
-                raise ValueError("each word in word list needs to be type str")
+                raise ValueError("each word in word list needs to be type str.")
 
         kwargs["word_list"] = word_list
         return method(self, **kwargs)
@@ -102,7 +102,7 @@ def check_from_list(method):
 
 
 def check_from_dict(method):
-    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+    """A wrapper that wrap a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -110,12 +110,12 @@ def check_from_dict(method):
         if "word_dict" in kwargs:
             word_dict = kwargs.get("word_dict")
         if not isinstance(word_dict, dict):
-            raise ValueError("word_dict needs to be a list of word,id pairs")
+            raise ValueError("word_dict needs to be a list of word,id pairs.")
         for word, word_id in word_dict.items():
             if not isinstance(word, str):
-                raise ValueError("each word in word_dict needs to be type str")
+                raise ValueError("each word in word_dict needs to be type str.")
             if not (isinstance(word_id, int) and word_id >= 0):
-                raise ValueError("each word id needs to be positive integer")
+                raise ValueError("each word id needs to be positive integer.")
         kwargs["word_dict"] = word_dict
         return method(self, **kwargs)
 
@@ -135,11 +135,11 @@ def check_jieba_init(method):
             mp_path = kwargs.get("mp_path")
         if hmm_path is None:
             raise ValueError(
-                "the dict of HMMSegment in cppjieba is not provided")
+                "the dict of HMMSegment in cppjieba is not provided.")
         kwargs["hmm_path"] = hmm_path
         if mp_path is None:
             raise ValueError(
-                "the dict of MPSegment in cppjieba is not provided")
+                "the dict of MPSegment in cppjieba is not provided.")
         kwargs["mp_path"] = mp_path
         if model is not None:
             kwargs["model"] = model
@@ -160,7 +160,7 @@ def check_jieba_add_word(method):
         if "freq" in kwargs:
             freq = kwargs.get("freq")
         if word is None:
-            raise ValueError("word is not provided")
+            raise ValueError("word is not provided.")
         kwargs["word"] = word
         if freq is not None:
             check_uint32(freq)
@@ -179,7 +179,7 @@ def check_jieba_add_dict(method):
         if "user_dict" in kwargs:
             user_dict = kwargs.get("user_dict")
         if user_dict is None:
-            raise ValueError("user_dict is not provided")
+            raise ValueError("user_dict is not provided.")
         kwargs["user_dict"] = user_dict
         return method(self, **kwargs)
 
@@ -187,7 +187,7 @@ def check_jieba_add_dict(method):
 
 
 def check_from_dataset(method):
-    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+    """A wrapper that wrap a parameter checker to the original function."""
 
     # def from_dataset(cls, dataset, columns, freq_range=None, top_k=None):
     @wraps(method)
@@ -210,27 +210,27 @@ def check_from_dataset(method):
 
         for column in columns:
             if not isinstance(column, str):
-                raise ValueError("columns need to be a list of strings")
+                raise ValueError("columns need to be a list of strings.")
 
         if freq_range is None:
             freq_range = (None, None)
 
         if not isinstance(freq_range, tuple) or len(freq_range) != 2:
-            raise ValueError("freq_range needs to be either None or a tuple of 2 integers or an int and a None")
+            raise ValueError("freq_range needs to be either None or a tuple of 2 integers or an int and a None.")
 
         for num in freq_range:
             if num is not None and (not isinstance(num, int)):
-                raise ValueError("freq_range needs to be either None or a tuple of 2 integers or an int and a None")
+                raise ValueError("freq_range needs to be either None or a tuple of 2 integers or an int and a None.")
 
         if isinstance(freq_range[0], int) and isinstance(freq_range[1], int):
             if freq_range[0] > freq_range[1] or freq_range[0] < 0:
-                raise ValueError("frequency range [a,b] should be 0 <= a <= b (a,b are inclusive)")
+                raise ValueError("frequency range [a,b] should be 0 <= a <= b (a,b are inclusive).")
 
         if top_k is not None and (not isinstance(top_k, int)):
-            raise ValueError("top_k needs to be a positive integer")
+            raise ValueError("top_k needs to be a positive integer.")
 
         if isinstance(top_k, int) and top_k <= 0:
-            raise ValueError("top_k needs to be a positive integer")
+            raise ValueError("top_k needs to be a positive integer.")
 
         kwargs["dataset"] = dataset
         kwargs["columns"] = columns
@@ -243,7 +243,7 @@ def check_from_dataset(method):
 
 
 def check_ngram(method):
-    """A wrapper that wrap a parameter checker to the original function(crop operation)."""
+    """A wrapper that wrap a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -261,11 +261,11 @@ def check_ngram(method):
             n = [n]
 
         if not (isinstance(n, list) and n != []):
-            raise ValueError("n needs to be a non-empty list of positive integers")
+            raise ValueError("n needs to be a non-empty list of positive integers.")
 
         for gram in n:
             if not (isinstance(gram, int) and gram > 0):
-                raise ValueError("n in ngram needs to be a positive number\n")
+                raise ValueError("n in ngram needs to be a positive number.")
 
         if left_pad is None:
             left_pad = ("", 0)
@@ -275,20 +275,20 @@ def check_ngram(method):
 
         if not (isinstance(left_pad, tuple) and len(left_pad) == 2 and isinstance(left_pad[0], str) and isinstance(
                 left_pad[1], int)):
-            raise ValueError("left_pad needs to be a tuple of (str, int) str is pad token and int is pad_width")
+            raise ValueError("left_pad needs to be a tuple of (str, int) str is pad token and int is pad_width.")
 
         if not (isinstance(right_pad, tuple) and len(right_pad) == 2 and isinstance(right_pad[0], str) and isinstance(
                 right_pad[1], int)):
-            raise ValueError("right_pad needs to be a tuple of (str, int) str is pad token and int is pad_width")
+            raise ValueError("right_pad needs to be a tuple of (str, int) str is pad token and int is pad_width.")
 
         if not (left_pad[1] >= 0 and right_pad[1] >= 0):
-            raise ValueError("padding width need to be positive numbers")
+            raise ValueError("padding width need to be positive numbers.")
 
         if separator is None:
             separator = " "
 
         if not isinstance(separator, str):
-            raise ValueError("separator needs to be a string")
+            raise ValueError("separator needs to be a string.")
 
         kwargs["n"] = n
         kwargs["left_pad"] = left_pad

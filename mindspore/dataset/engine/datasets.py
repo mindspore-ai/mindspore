@@ -42,8 +42,8 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
-    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset,\
-    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat,\
+    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
+    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_split, check_bucket_batch_by_length, check_cluedataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
@@ -895,26 +895,7 @@ class Dataset:
         return ProjectDataset(self, columns)
 
     def build_vocab(self, vocab, columns, freq_range, top_k):
-        """
-        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-        which contains top_k most frequent words (if top_k is specified)
-        This function is not meant to be called directly by user. To build vocab, please use the function
-        text.Vocab.from_dataset()
-
-        Args:
-            vocab(Vocab): vocab object
-            columns(str or list, optional): column names to get words from. It can be a list of column names.
-            (Default is None where all columns will be used. If any column isn't string type, will return error)
-            freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-            range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-            can be None, which corresponds to 0/total_words separately (default is None, all words are included)
-            top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-            taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default is None
-            all words are included)
-
-        Returns:
-            BuildVocabDataset
-        """
+        """ Internal function for building a vocab"""
         return BuildVocabDataset(self, vocab, columns, freq_range, top_k)
 
     def apply(self, apply_func):
@@ -1468,6 +1449,7 @@ class DatasetOp(Dataset):
 
     # No need for __init__ since it is the same as the super's init
 
+
 class BucketBatchByLengthDataset(DatasetOp):
     """
     The result of applying BucketBatchByLength operator to the input dataset.
@@ -1608,7 +1590,7 @@ class BatchDataset(DatasetOp):
 
         Args:
              dataset (Dataset): dataset to be checked.
-             batchsize (int): batch size to notify.
+             batch_size (int): batch size to notify.
         """
         if isinstance(dataset, SyncWaitDataset):
             dataset.update_sync_batch_size(batch_size)
@@ -1646,7 +1628,7 @@ class BlockReleasePair:
 
     Args:
         init_release_rows (int): Number of lines to allow through the pipeline.
-        callback (function): The callback funciton that will be called when release is called.
+        callback (function): The callback function that will be called when release is called.
     """
 
     def __init__(self, init_release_rows, callback=None):
@@ -1710,7 +1692,7 @@ class SyncWaitDataset(DatasetOp):
         input_dataset (Dataset): Input dataset to apply flow control.
         num_batch (int): the number of batches without blocking at the start of each epoch.
         condition_name (str): The condition name that is used to toggle sending next row.
-        callback (function): The callback funciton that will be invoked when sync_update is called.
+        callback (function): The callback function that will be invoked when sync_update is called.
 
     Raises:
         RuntimeError: If condition name already exists.
@@ -2066,7 +2048,7 @@ class SkipDataset(DatasetOp):
     The result of applying Skip operator to the input Dataset.
 
     Args:
-        datasets (tuple): A tuple of datasets to be skipped.
+        input_dataset (tuple): A tuple of datasets to be skipped.
         count (int): Number of rows the dataset should be skipped.
     """
 
@@ -3055,7 +3037,7 @@ class GeneratorDataset(MappableDataset):
             provide either column_names or schema.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
-        schema (Schema/String, optional): Path to the json schema file or schema object (default=None). Users are
+        schema (Schema/str, optional): Path to the json schema file or schema object (default=None). Users are
             required to provide either column_names or schema. If both are provided, schema will be used.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all images).
@@ -4343,7 +4325,7 @@ class CelebADataset(MappableDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_parallel_workers (int, optional): Number of workers to read the data (default=value set in the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        dataset_type (string): one of 'all', 'train', 'valid' or 'test'.
+        dataset_type (str): one of 'all', 'train', 'valid' or 'test'.
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be
@@ -4874,18 +4856,15 @@ class BuildVocabDataset(DatasetOp):
     text.Vocab.from_dataset()
 
     Args:
-        vocab(Vocab): vocab object.
+        vocab(Vocab): text.vocab object.
         columns(str or list, optional): column names to get words from. It can be a list of column names (Default is
-        None, all columns are used, return error if any column isn't string).
+            None, all columns are used, return error if any column isn't string).
         freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-        range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-        can be None, which corresponds to 0/total_words separately (default is None, all words are included).
+            range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+            can be None, which corresponds to 0/total_words separately (default=None, all words are included).
         top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-        taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken (default is None
-        all words are included).
-
-    Returns:
-        BuildVocabDataset
+            taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken (default=None,
+            all words are included).
     """
 
     def __init__(self, input_dataset, vocab, columns, freq_range, top_k, prefetch_size=None):
