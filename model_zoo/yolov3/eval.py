@@ -19,10 +19,10 @@ import argparse
 import time
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.model_zoo.yolov3 import yolov3_resnet18, YoloWithEval
-from dataset import create_yolo_dataset, data_to_mindrecord_byte_image
-from config import ConfigYOLOV3ResNet18
-from util import metrics
+from src.yolov3 import yolov3_resnet18, YoloWithEval
+from src.dataset import create_yolo_dataset, data_to_mindrecord_byte_image
+from src.config import ConfigYOLOV3ResNet18
+from src.utils import metrics
 
 def yolo_eval(dataset_path, ckpt_path):
     """Yolov3 evaluation."""
