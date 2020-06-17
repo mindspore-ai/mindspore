@@ -169,7 +169,7 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   return true;
 }
 
-bool ProfilingManager::StopProfiling() const {
+bool ProfilingManager::StopProfiling() {
   MS_LOG(INFO) << "StopProfiling";
   if (!IsProfiling()) {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
@@ -184,8 +184,10 @@ bool ProfilingManager::StopProfiling() const {
     int result = ProfMgrStop(prof_handle_);
     if (result != 0) {
       MS_LOG(ERROR) << "ProfMgr stop return fail:" << result << ".";
+      prof_handle_ = nullptr;
       return false;
     }
+    prof_handle_ = nullptr;
   }
 
   return true;
