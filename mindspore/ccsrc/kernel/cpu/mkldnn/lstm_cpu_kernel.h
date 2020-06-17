@@ -16,6 +16,12 @@
 
 #ifndef MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_KERNEL_CPU_LSTM_CPU_KERNEL_H_
+#if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
+#define PLATFORM_86
+#endif
+#ifdef PLATFORM_86
+#include <pmmintrin.h>
+#endif
 #include <vector>
 #include <memory>
 #include "kernel/cpu/mkldnn/mkl_cpu_kernel.h"
