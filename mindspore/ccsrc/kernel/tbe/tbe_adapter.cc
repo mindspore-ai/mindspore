@@ -107,6 +107,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"r_oi_align_grad", "roi_align_grad"},
   {"i_ou", "iou"},
   {"s_gd", "sgd"},
+  {"l_rn", "lrn"},
+  {"l_rn_grad", "lrn_grad"},
   {"l_ars_update", "lars_v2_update"},
   {"n_ms_with_mask", "nms_with_mask"},
   {"square_sum_all", "square_sum_all"},

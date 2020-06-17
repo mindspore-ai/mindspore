@@ -721,3 +721,15 @@ def get_bprop_basic_lstm_cell(self):
         dw, db = basic_lstm_cell_weight_grad(F.depend(x, dxt), h, dgate)
         return dxt, dht, dct_1, dw, db
     return bprop
+
+
+@bprop_getters.register(P.LRN)
+def get_bprop_lrn(self):
+    """Grad definition for `LRN` operation."""
+    grad = G.LRNGrad(self.depth_radius, self.bias, self.alpha, self.beta)
+
+    def bprop(x, out, dout):
+        dx = grad(dout, x, out)
+        return (dx,)
+
+    return bprop

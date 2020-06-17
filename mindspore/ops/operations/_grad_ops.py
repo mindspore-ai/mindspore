@@ -1364,3 +1364,22 @@ class InvGrad(PrimitiveWithInfer):
         validator.check_type_name("dgate", x, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
         validator.check_type_name("grad", grad, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
         return x
+
+
+class LRNGrad(PrimitiveWithInfer):
+    """Computes gradients for LRN operation."""
+    @prim_attr_register
+    def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5):
+        self.init_prim_io_names(inputs=['grads', 'x', 'y'], outputs=['z'])
+        validator.check_value_type("depth_radius", depth_radius, [int], self.name)
+        validator.check_value_type("bias", bias, [float], self.name)
+        validator.check_value_type("alpha", alpha, [float], self.name)
+        validator.check_value_type("beta", beta, [float], self.name)
+
+    def infer_dtype(self, grads, x, y):
+        args = {"grads": grads, "x": x, "y": y}
+        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32,), self.name)
+        return x
+
+    def infer_shape(self, grads, x, y):
+        return x
