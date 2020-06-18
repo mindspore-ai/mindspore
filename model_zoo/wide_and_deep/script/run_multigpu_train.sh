@@ -14,22 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-# bash run_multinpu_train.sh
-execute_path=$(pwd)
+# bash run_multigpu_train.sh
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
-export RANK_SIZE=$1
-export EPOCH_SIZE=$2
-export DATASET=$3
-export RANK_TABLE_FILE=$4
-export MINDSPORE_HCCL_CONFIG_PATH=$4
+RANK_SIZE=$1
+EPOCH_SIZE=$2
+DATASET=$3
 
-for((i=0;i<$RANK_SIZE;i++));
-do
-  rm -rf ${execute_path}/device_$i/
-  mkdir ${execute_path}/device_$i/
-  cd ${execute_path}/device_$i/ || exit
-  export RANK_ID=$i
-  export DEVICE_ID=$i
-  python -s ${self_path}/../train_and_eval_distribute.py --data_path=$DATASET --epochs=$EPOCH_SIZE >train_deep$i.log 2>&1 &
-done
+mpirun --allow-run-as-root -n $RANK_SIZE                    \
+    python -s ${self_path}/../train_and_eval_distribute.py  \
+        --device_target="GPU"                               \
+        --data_path=$DATASET                                \
+        --epochs=$EPOCH_SIZE > log.txt 2>&1 &
