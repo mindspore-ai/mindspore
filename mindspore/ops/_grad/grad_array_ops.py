@@ -191,7 +191,7 @@ def get_bprop_tile(self):
     return bprop
 
 
-@bprop_getters.register(P.EmbeddingLookup)
+@bprop_getters.register(inner.EmbeddingLookup)
 def get_bprop_embedding_lookup(self):
     """Generate bprop for EmbeddingLookup"""
     host_sub = P.Sub().add_prim_attr('primitive_target', 'CPU')

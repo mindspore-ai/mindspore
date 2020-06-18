@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import _executor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
@@ -39,7 +40,7 @@ class Net(nn.Cell):
         self.offset = offset
         self.reduce_scatter_flag = reduce_scatter_flag
         self.split_num = split_num
-        self.elu = P.EmbeddingLookup()
+        self.elu = inner.EmbeddingLookup()
         self.mm = P.BatchMatMul()
 
     def construct(self, x, y):
