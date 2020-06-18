@@ -28,6 +28,9 @@ void StepConvertGraph(const KernelGraphPtr &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   bool save_ms_model = MsContext::GetInstance()->save_ms_model_flag();
   if (save_ms_model) {
+    if (kernel_graph_ptr->inputs().empty()) {
+      return;
+    }
     // set convert_mode: convert cpu info or convert Davnici
     executor::Kernel2Ms::GetInstance().set_convert_mode(executor::kConvertCpuMode);
     // convert kernel_graph to sub_ms_graph
@@ -46,6 +49,9 @@ void StepConvertWeight(const std::vector<tensor::TensorPtr> &inputs) {
   bool save_ms_model = MsContext::GetInstance()->save_ms_model_flag();
   std::string save_path = MsContext::GetInstance()->save_ms_model_path();
   if (save_ms_model) {
+    if (inputs.empty()) {
+      return;
+    }
     MS_LOG(INFO) << "save ms model is true to path " << save_path;
     if (!executor::Kernel2Ms::GetInstance().KernelInput2MS(inputs)) {
       MS_LOG(WARNING) << "convert mindspore kernel input failed";
