@@ -72,8 +72,8 @@ OpAttrFactory::OpAttrFactory() {
                 {"AddFold", AddFoldPacker},
                 {"ArgMax", ArgMaxPacker},
                 {"BatchNorm", BatchNormFoldPacker},
-                {"FakeQuantWithMinMax", FakeQuantWithMinMaxPacker},
-                {"FakeQuantWithMinMaxPerChannel", FakeQuantWithMinMaxPerChannelPacker},
+                {"FakeQuantPerLayer", FakeQuantWithMinMaxPacker},
+                {"FakeQuantPerChannel", FakeQuantWithMinMaxPerChannelPacker},
                 {"Mul", MulPacker},
                 {"MulFold", MulFoldPacker},
                 {"Squeeze", SqueezePacker}};

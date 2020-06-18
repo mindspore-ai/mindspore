@@ -402,8 +402,7 @@ bool Kernel2Ms::SetGraphOpTensors(const KernelGraphPtr &kernel_graph_ptr, const 
     auto c_name = AnfAlgo::GetCNodeName(kernel);
     auto fun = predict::convert::OpAttrFactory::GetInstance()->GetPackFun(c_name);
     if (fun == nullptr) {
-      MS_LOG(ERROR) << "get node [" << kernel->fullname_with_scope() << "] attr failed.";
-      return false;
+      MS_LOG(WARNING) << "get node [" << kernel->fullname_with_scope() << "] attr failed.";
     } else if (!fun(kernel, ms_node.get())) {
       MS_LOG(ERROR) << "set node [" << kernel->fullname_with_scope() << "] attr failed.";
       return false;
