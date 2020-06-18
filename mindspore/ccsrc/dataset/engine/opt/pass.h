@@ -57,10 +57,10 @@ class ImageFolderOp;
 // The actual implementation of the passes will be derived from here.
 class Pass : public std::enable_shared_from_this<Pass> {
  public:
-  // Run the transformation pass again the execution tree.
+  // Run the transformation pass against the execution tree.
   // @param tree - Pointer to the execution tree to be transformed.
   // @param modified - Pointer to the modified flag,
-  virtual Status Run(ExecutionTree *tree, bool *modified) { return Status::OK(); }
+  virtual Status Run(ExecutionTree *tree, bool *modified) = 0;
 };
 
 // TreePass is a basic Pass class which performs transformation on ExecutionTree directly.

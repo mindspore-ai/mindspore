@@ -148,6 +148,13 @@ class TFReaderOp : public ParallelOp {
 
     // Setter method.
     // @return Builder - setter method returns reference to the builder.
+    Builder &SetShuffleGlobal(bool shuffle_global) {
+      builder_shuffle_global_ = shuffle_global;
+      return *this;
+    }
+
+    // Setter method.
+    // @return Builder - setter method returns reference to the builder.
     Builder &SetShardEqualRows(bool shard_equal_rows) {
       builder_equal_rows_per_shard_ = shard_equal_rows;
       return *this;
@@ -165,6 +172,7 @@ class TFReaderOp : public ParallelOp {
     std::vector<std::string> builder_dataset_files_list_;
     std::vector<std::string> builder_columns_to_load_;
     bool builder_shuffle_files_;
+    bool builder_shuffle_global_;
     bool builder_equal_rows_per_shard_;
   };
 
@@ -179,11 +187,12 @@ class TFReaderOp : public ParallelOp {
   // @param op_connector_size - size of each queue in the connector that the child operator pulls from.
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
+  // @param shuffle_global - whether or not to shuffle the entire dataset.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
   TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer, int64_t total_num_rows,
              std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
              int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
-             int32_t num_devices, int32_t device_id, bool equal_rows_per_shard);
+             bool shuffle_global, int32_t num_devices, int32_t device_id, bool equal_rows_per_shard);
 
   // Default destructor
   ~TFReaderOp() = default;
@@ -231,6 +240,14 @@ class TFReaderOp : public ParallelOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "TFReaderOp"; }
+
+  // File names getter
+  // @return Vector of the input file names
+  std::vector<std::string> FileNames() { return dataset_files_list_; }
+
+  // Global shuffle flag getter
+  // @return Bool - whether this Op requires global shuffle
+  bool RequireGlobalShuffle() { return shuffle_global_; }
 
  private:
   // The entry point for when workers are launched.
@@ -372,6 +389,7 @@ class TFReaderOp : public ParallelOp {
   std::vector<std::string> columns_to_load_;
   bool finished_reading_dataset_;
   bool shuffle_files_;
+  bool shuffle_global_;
   std::unique_ptr<DataSchema> data_schema_;
   std::unique_ptr<StringIndex> filename_index_;
   bool load_io_block_queue_;

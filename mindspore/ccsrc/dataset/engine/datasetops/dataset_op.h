@@ -64,9 +64,18 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @param child - shared pointer to the child to add.
   Status AddChild(std::shared_ptr<DatasetOp> child);
 
+  // Remove a operator from our children.
+  // @param child - shared pointer to the child to remove.
+  Status RemoveChild(std::shared_ptr<DatasetOp> child);
+
   // Getter function to get a shared pointer to our child
   // @param child_index - An operator can have n children. Indicates choose which child to return.
   std::shared_ptr<DatasetOp> child(int32_t child_index) const;
+
+  // Inserts a operator as the parent current op.
+  // Inserted op will become the sole parent of the current op.
+  // The existing parent of the current op will be transferred to the inserted op.
+  Status InsertAsParent(std::shared_ptr<DatasetOp> to_add);
 
   // Creates the connector within this operator
   // @param num_producers - number of threads that write into this connector
@@ -261,7 +270,12 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Adds a parent operator to this operator
   // @notes External callers do not have access to this function.
   // @param parent - The parent node to add
-  void AddParent(const DatasetOp *parent);
+  void AddParent(DatasetOp *parent);
+
+  // Removes a parent operator from this operator
+  // @notes External callers do not have access to this function.
+  // @param parent - The parent node to remove
+  void RemoveParent(DatasetOp *parent);
 
   // A helper function for providing an assignment of the column name map.
   // This grabs the map from child 0 and assigns it into this op.
@@ -270,7 +284,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   Status AssignColMapFromChild();
 
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
-  std::vector<const DatasetOp *> parent_;                        // Parent nodes. No ownership and read-only
+  std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership
   int32_t oc_queue_size_;                                        // Capacity for each out_connector_
   int32_t operator_id_;                                          // Generated id for the node
   ExecutionTree *tree_;                                          // Back pointer to our tree.

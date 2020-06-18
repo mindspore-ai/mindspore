@@ -487,6 +487,8 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)builder->SetInColNames(in_col_names);
       } else if (key == "output_columns") {
         (void)builder->SetOutColNames(ToStringVector(value));
+      } else if (key == "columns_order") {
+        (void)builder->SetColOrder(ToStringVector(value));
       } else if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "prefetch_size") {
@@ -835,6 +837,8 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetColumnsToLoad(columns_to_load);
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        (void)builder->SetShuffleGlobal(ToBool(value));
       } else if (key == "schema_file_path" || key == "schema_json_string") {
         schema_exists = true;
       } else if (key == "num_samples") {
@@ -1225,6 +1229,8 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        (void)builder->SetShuffleGlobal(ToBool(value));
       } else if (key == "num_samples") {
         (void)builder->SetTotalRows(ToInt(value));
       } else if (key == "num_shards") {
@@ -1314,6 +1320,8 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        (void)builder->SetShuffleGlobal(ToBool(value));
       } else if (key == "num_samples") {
         (void)builder->SetNumSamples(ToInt(value));
       } else if (key == "num_shards") {

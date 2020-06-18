@@ -1910,6 +1910,7 @@ class MapDataset(DatasetOp):
         args["input_columns"] = self.input_columns
         args["operations"] = self.operations
         args["output_columns"] = self.output_columns
+        args["columns_order"] = self.columns_order
         return args
 
     def get_dataset_size(self):
@@ -3299,6 +3300,7 @@ class TFRecordDataset(SourceDataset):
         args["num_samples"] = self.num_samples
         if self.shuffle_files is not None:
             args["shuffle_files"] = self.shuffle_files
+        args["shuffle_global"] = (self.shuffle_level == Shuffle.GLOBAL)
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
@@ -4607,6 +4609,7 @@ class CLUEDataset(SourceDataset):
         args["num_samples"] = self.num_samples
         if self.shuffle_files is not None:
             args["shuffle_files"] = self.shuffle_files
+        args["shuffle_global"] = (self.shuffle_level == Shuffle.GLOBAL)
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
@@ -4697,6 +4700,7 @@ class TextFileDataset(SourceDataset):
         args["num_samples"] = self.num_samples
         if self.shuffle_files is not None:
             args["shuffle_files"] = self.shuffle_files
+        args["shuffle_global"] = (self.shuffle_level == Shuffle.GLOBAL)
         args["shuffle"] = self.shuffle_level
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id

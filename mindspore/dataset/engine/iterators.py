@@ -49,33 +49,13 @@ def alter_tree(node):
 
 
 def _alter_node(node):
-    """Performing some alteration to a dataset node. A common alteration is to insert a node."""
-    if isinstance(node, (de.TFRecordDataset, de.TextFileDataset, de.CLUEDataset)) \
-        and node.shuffle_level == de.Shuffle.GLOBAL:
-        # Remove the connection between the parent's node to the current node because we are inserting a node.
-        if node.output:
-            node.output.pop()
-        # Perform a fast scan for average rows per file
-        if isinstance(node, de.TFRecordDataset):
-            avg_rows_per_file = node.get_dataset_size(True) // len(node.dataset_files)
-        else:
-            avg_rows_per_file = node.get_dataset_size() // len(node.dataset_files)
-
-        # Shuffle between 4 files with a minimum size of 10000 rows
-        new_shuffle = node.shuffle(max(avg_rows_per_file * 4, 10000))
-        return new_shuffle
-
+    """DEPRECATED"""
+    # Please check ccsrc/dataset/engine/opt for tree transformation.
     if isinstance(node, de.MapDataset):
         if node.python_multiprocessing:
             # Bootstrap can only be performed on a copy of the original dataset node.
             # Bootstrap on original dataset node will make all iterators share the same process pool
             node.iterator_bootstrap()
-        if node.columns_order is not None:
-            # Remove the connection between the parent's node to the current node because we are inserting a node.
-            if node.output:
-                node.output.pop()
-
-            return node.project(node.columns_order)
     return node
 
 
