@@ -76,7 +76,6 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
-from ._quant_ops import *
 from .thor_ops import *
 
 __all__ = [
