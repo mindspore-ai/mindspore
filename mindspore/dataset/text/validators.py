@@ -23,6 +23,21 @@ import mindspore._c_dataengine as cde
 from ..transforms.validators import check_uint32, check_pos_int64
 
 
+def check_unique_list_of_words(words, arg_name):
+    """Check that words is a list and each element is a str without any duplication"""
+
+    if not isinstance(words, list):
+        raise ValueError(arg_name + " needs to be a list of words of type string.")
+    words_set = set()
+    for word in words:
+        if not isinstance(word, str):
+            raise ValueError("each word in " + arg_name + " needs to be type str.")
+        if word in words_set:
+            raise ValueError(arg_name + " contains duplicate word: " + word + ".")
+        words_set.add(word)
+    return words_set
+
+
 def check_lookup(method):
     """A wrapper that wrap a parameter checker to the original function."""
 
@@ -52,13 +67,17 @@ def check_from_file(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        file_path, delimiter, vocab_size = (list(args) + 3 * [None])[:3]
+        file_path, delimiter, vocab_size, special_tokens, special_first = (list(args) + 5 * [None])[:5]
         if "file_path" in kwargs:
             file_path = kwargs.get("file_path")
         if "delimiter" in kwargs:
             delimiter = kwargs.get("delimiter")
         if "vocab_size" in kwargs:
             vocab_size = kwargs.get("vocab_size")
+        if "special_tokens" in kwargs:
+            special_tokens = kwargs.get("special_tokens")
+        if "special_first" in kwargs:
+            special_first = kwargs.get("special_first")
 
         if not isinstance(file_path, str):
             raise ValueError("file_path needs to be str.")
@@ -73,9 +92,24 @@ def check_from_file(method):
                 raise ValueError("vocab size needs to be a positive integer.")
         else:
             vocab_size = -1
+
+        if special_first is None:
+            special_first = True
+
+        if not isinstance(special_first, bool):
+            raise ValueError("special_first needs to be a boolean value")
+
+        if special_tokens is None:
+            special_tokens = []
+
+        check_unique_list_of_words(special_tokens, "special_tokens")
+
         kwargs["file_path"] = file_path
         kwargs["delimiter"] = delimiter
         kwargs["vocab_size"] = vocab_size
+        kwargs["special_tokens"] = special_tokens
+        kwargs["special_first"] = special_first
+
         return method(self, **kwargs)
 
     return new_method
@@ -86,16 +120,32 @@ def check_from_list(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        word_list, = (list(args) + [None])[:1]
+        word_list, special_tokens, special_first = (list(args) + 3 * [None])[:3]
         if "word_list" in kwargs:
             word_list = kwargs.get("word_list")
-        if not isinstance(word_list, list):
-            raise ValueError("word_list needs to be a list of words.")
-        for word in word_list:
-            if not isinstance(word, str):
-                raise ValueError("each word in word list needs to be type str.")
+        if "special_tokens" in kwargs:
+            special_tokens = kwargs.get("special_tokens")
+        if "special_first" in kwargs:
+            special_first = kwargs.get("special_first")
+        if special_tokens is None:
+            special_tokens = []
+        word_set = check_unique_list_of_words(word_list, "word_list")
+        token_set = check_unique_list_of_words(special_tokens, "special_tokens")
+
+        intersect = word_set.intersection(token_set)
+
+        if intersect != set():
+            raise ValueError("special_tokens and word_list contain duplicate word :" + str(intersect) + ".")
+
+        if special_first is None:
+            special_first = True
+
+        if not isinstance(special_first, bool):
+            raise ValueError("special_first needs to be a boolean value.")
 
         kwargs["word_list"] = word_list
+        kwargs["special_tokens"] = special_tokens
+        kwargs["special_first"] = special_first
         return method(self, **kwargs)
 
     return new_method
@@ -113,9 +163,9 @@ def check_from_dict(method):
             raise ValueError("word_dict needs to be a list of word,id pairs.")
         for word, word_id in word_dict.items():
             if not isinstance(word, str):
-                raise ValueError("each word in word_dict needs to be type str.")
+                raise ValueError("Each word in word_dict needs to be type string.")
             if not (isinstance(word_id, int) and word_id >= 0):
-                raise ValueError("each word id needs to be positive integer.")
+                raise ValueError("Each word id needs to be positive integer.")
         kwargs["word_dict"] = word_dict
         return method(self, **kwargs)
 
@@ -135,11 +185,11 @@ def check_jieba_init(method):
             mp_path = kwargs.get("mp_path")
         if hmm_path is None:
             raise ValueError(
-                "the dict of HMMSegment in cppjieba is not provided.")
+                "The dict of HMMSegment in cppjieba is not provided.")
         kwargs["hmm_path"] = hmm_path
         if mp_path is None:
             raise ValueError(
-                "the dict of MPSegment in cppjieba is not provided.")
+                "The dict of MPSegment in cppjieba is not provided.")
         kwargs["mp_path"] = mp_path
         if model is not None:
             kwargs["model"] = model
@@ -171,7 +221,7 @@ def check_jieba_add_word(method):
 
 
 def check_jieba_add_dict(method):
-    """Wrapper method to check the parameters of add dict"""
+    """Wrapper method to check the parameters of add dict."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -189,10 +239,10 @@ def check_jieba_add_dict(method):
 def check_from_dataset(method):
     """A wrapper that wrap a parameter checker to the original function."""
 
-    # def from_dataset(cls, dataset, columns, freq_range=None, top_k=None):
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        dataset, columns, freq_range, top_k = (list(args) + 4 * [None])[:4]
+
+        dataset, columns, freq_range, top_k, special_tokens, special_first = (list(args) + 6 * [None])[:6]
         if "dataset" in kwargs:
             dataset = kwargs.get("dataset")
         if "columns" in kwargs:
@@ -201,6 +251,10 @@ def check_from_dataset(method):
             freq_range = kwargs.get("freq_range")
         if "top_k" in kwargs:
             top_k = kwargs.get("top_k")
+        if "special_tokens" in kwargs:
+            special_tokens = kwargs.get("special_tokens")
+        if "special_first" in kwargs:
+            special_first = kwargs.get("special_first")
 
         if columns is None:
             columns = []
@@ -232,10 +286,23 @@ def check_from_dataset(method):
         if isinstance(top_k, int) and top_k <= 0:
             raise ValueError("top_k needs to be a positive integer.")
 
+        if special_first is None:
+            special_first = True
+
+        if special_tokens is None:
+            special_tokens = []
+
+        if not isinstance(special_first, bool):
+            raise ValueError("special_first needs to be a boolean value.")
+
+        check_unique_list_of_words(special_tokens, "special_tokens")
+
         kwargs["dataset"] = dataset
         kwargs["columns"] = columns
         kwargs["freq_range"] = freq_range
         kwargs["top_k"] = top_k
+        kwargs["special_tokens"] = special_tokens
+        kwargs["special_first"] = special_first
 
         return method(self, **kwargs)
 

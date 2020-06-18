@@ -88,9 +88,23 @@ class BuildVocabOp : public ParallelOp {
       return *this;
     }
 
+    // set special tokens
+    // @param const std::vector<std::string> & col_names - name of columns to get words
+    // @return Builder & reference to builder class object
+    Builder &SetSpecialTokens(const std::vector<std::string> &tokens) {
+      builder_speical_tokens_ = tokens;
+      return *this;
+    }
+
     // set vocab object
     Builder &SetVocab(std::shared_ptr<Vocab> vocab) {
       builder_vocab_ = vocab;
+      return *this;
+    }
+
+    // set special tokens first (or last)
+    Builder &SetSpecialFirst(bool prepend) {
+      builder_special_first_ = prepend;
       return *this;
     }
 
@@ -104,13 +118,16 @@ class BuildVocabOp : public ParallelOp {
     int32_t builder_connector_size_;
     int64_t builder_min_freq_;
     int64_t builder_max_freq_;
+    bool builder_special_first_;
     std::vector<std::string> builder_col_names_;
+    std::vector<std::string> builder_speical_tokens_;
     std::shared_ptr<Vocab> builder_vocab_;
     int64_t builder_top_k_;
   };
 
   BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names, std::pair<int64_t, int64_t> freq_range,
-               int64_t top_k, int32_t num_workers, int32_t op_connector_size);
+               int64_t top_k, const std::vector<std::string> &tokens, bool prepend, int32_t num_workers,
+               int32_t op_connector_size);
 
   ~BuildVocabOp() = default;
 
@@ -137,9 +154,11 @@ class BuildVocabOp : public ParallelOp {
 
  private:
   const int32_t interval_;
+  bool special_first_;
   std::shared_ptr<Vocab> vocab_;
   std::vector<std::string> col_names_;
   std::vector<int32_t> col_ids_;
+  std::vector<std::string> special_tokens_;
   // pair = {min_f, max_f}
   // make sure that 0<= min_f < max_f <= int32_max in the builder
   std::pair<int64_t, int64_t> freq_range_;

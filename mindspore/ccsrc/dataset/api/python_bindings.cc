@@ -673,15 +673,16 @@ void bindVocabObjects(py::module *m) {
   (void)py::class_<Vocab, std::shared_ptr<Vocab>>(*m, "Vocab")
     .def(py::init<>())
     .def_static("from_list",
-                [](const py::list &words) {
+                [](const py::list &words, const py::list &special_tokens, bool special_first) {
                   std::shared_ptr<Vocab> v;
-                  THROW_IF_ERROR(Vocab::BuildFromPyList(words, &v));
+                  THROW_IF_ERROR(Vocab::BuildFromPyList(words, special_tokens, special_first, &v));
                   return v;
                 })
     .def_static("from_file",
-                [](const std::string &path, const std::string &dlm, int32_t vocab_size) {
+                [](const std::string &path, const std::string &dlm, int32_t vocab_size, const py::list &special_tokens,
+                   bool special_first) {
                   std::shared_ptr<Vocab> v;
-                  THROW_IF_ERROR(Vocab::BuildFromFile(path, dlm, vocab_size, &v));
+                  THROW_IF_ERROR(Vocab::BuildFromFile(path, dlm, vocab_size, special_tokens, special_first, &v));
                   return v;
                 })
     .def_static("from_dict", [](const py::dict &words) {

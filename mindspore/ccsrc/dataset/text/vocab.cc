@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include <fstream>
-#include <map>
+#include <unordered_set>
+#include <unordered_map>
 #include <utility>
 
 #include "dataset/text/vocab.h"
@@ -28,41 +29,38 @@ WordIdType Vocab::Lookup(const WordType &word, WordIdType default_id) const {
   return itr == word2id_.end() ? default_id : itr->second;
 }
 
-WordType Vocab::Lookup(WordIdType id) {
-  // this operation is most likely only done with since reverse lookup is only needed when training is done
-  // hence, the worst case of inserting while keep looking up isn't likely to happen
-  if (id2word_.size() != word2id_.size() && (id - kSpecialTokens::num_tokens >= id2word_.size())) {
-    id2word_.clear();
-    id2word_.reserve(word2id_.size());
-    for (auto p : word2id_) {
-      id2word_[p.second - kSpecialTokens::num_tokens] = p.first;
-    }
-  }
-  if (id < kSpecialTokens::num_tokens) {
-    return reserved_token_str_[id];
-  } else if (id - kSpecialTokens::num_tokens >= id2word_.size()) {
-    return reserved_token_str_[kSpecialTokens::unk];
-  } else {
-    return id2word_[id - kSpecialTokens::num_tokens];
-  }
-}
-
-Status Vocab::BuildFromPyList(const py::list &words, std::shared_ptr<Vocab> *vocab) {
+Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
+                              std::shared_ptr<Vocab> *vocab) {
+  // check of duplication on both words and special_tokens will be performed in python
+  // special_tokens and words both need to be unique, and shouldn't overlap
   std::unordered_map<WordType, WordIdType> word2id;
-  WordIdType word_id = kSpecialTokens::num_tokens;
+  // if special is added in front, normal words id will start from number of special tokens
+  WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
+
   for (auto word : words) {
-    const std::string s = py::str(word);
-    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(s) == word2id.end(), "duplicate word:" + s);
-    word2id[s] = word_id++;
+    word2id[py::str(word)] = word_id++;
   }
+
+  word_id = prepend_special ? 0 : word2id.size();
+
+  for (auto special_token : special_tokens) {
+    word2id[py::str(special_token)] = word_id++;
+  }
+
   *vocab = std::make_shared<Vocab>(std::move(word2id));
   return Status::OK();
 }
 
 Status Vocab::BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
-                            std::shared_ptr<Vocab> *vocab) {
+                            const py::list &special_tokens, bool prepend_special, std::shared_ptr<Vocab> *vocab) {
+  // python validator checks special_tokens doesn't contain any duplicate words
+  std::unordered_set<std::string> specials;
+  // used to check that words in file don't contain any special token that already exists
+  for (auto word : special_tokens) {
+    specials.insert(py::str(word));
+  }
+  WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;
-  WordIdType word_id = kSpecialTokens::num_tokens;
   std::fstream handle(path, std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(handle.good() && handle.is_open(), "fail to open:" + path);
   std::string word;
@@ -71,40 +69,35 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
       // if delimiter is not found, find_first_of would return std::string::npos which is -1
       word = word.substr(0, word.find_first_of(delimiter));
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(), "duplicate word:" + word);
+    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(), "duplicate word:" + word + ".");
+    CHECK_FAIL_RETURN_UNEXPECTED(specials.find(word) == specials.end(), word + " is already in special_tokens.");
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
-    if (word_id == vocab_size + kSpecialTokens::num_tokens) break;
+    if (word2id.size() == vocab_size) break;
   }
+
+  word_id = prepend_special ? 0 : word2id.size();
+
+  for (auto special_token : special_tokens) {
+    word2id[py::str(special_token)] = word_id++;
+  }
+
   *vocab = std::make_shared<Vocab>(std::move(word2id));
   return Status::OK();
 }
 
 Status Vocab::BuildFromPyDict(const py::dict &words, std::shared_ptr<Vocab> *vocab) {
   std::unordered_map<WordType, WordIdType> word2id;
-  std::map<WordIdType, WordType> id2word;
   for (auto p : words) {
-    WordIdType word_id = py::reinterpret_borrow<py::int_>(p.second);
-    if (word_id < kSpecialTokens::num_tokens) continue;  // skip id that are reserved
-    std::string word = py::str(p.first);
-    CHECK_FAIL_RETURN_UNEXPECTED(id2word.find(word_id) == id2word.end(), "duplicate id:" + word);
-    id2word[word_id] = word;
+    word2id[py::str(p.first)] = py::reinterpret_borrow<py::int_>(p.second);
   }
-
-  WordIdType cnt = kSpecialTokens::num_tokens;
-  for (auto p : id2word) {
-    CHECK_FAIL_RETURN_UNEXPECTED(p.first == cnt++, "word id needs to be continuous starting from 2");
-    word2id[p.second] = p.first;
-  }
-
   *vocab = std::make_shared<Vocab>(std::move(word2id));
   return Status::OK();
 }
-const std::vector<WordType> Vocab::reserved_token_str_ = {"<pad>", "<unk>"};
 
 void Vocab::append_word(const std::string &word) {
   if (word2id_.find(word) == word2id_.end()) {
-    word2id_[word] = word2id_.size() + kSpecialTokens::num_tokens;
+    word2id_[word] = word2id_.size();
   }
 }
 }  // namespace dataset
