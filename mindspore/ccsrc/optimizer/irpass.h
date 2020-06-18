@@ -57,6 +57,7 @@ class OptimizeIRPassLib {
 
   // Ref eliminate
   SubstitutionPtr make_ref_eliminate_;
+  SubstitutionPtr get_ref_param_eliminate_;
   SubstitutionPtr get_make_ref_eliminate_;
   SubstitutionPtr replace_refkey_by_param_;
   SubstitutionPtr replace_old_param_;

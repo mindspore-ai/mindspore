@@ -29,6 +29,7 @@
 
 #include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
+#include "debug/anf_ir_utils.h"
 #include "debug/trace.h"
 #include "optimizer/opt.h"
 #include "pipeline/resource.h"
@@ -175,6 +176,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
             func_graph->DumpFuncGraph(fg_name);
             DumpIR(fg_name + ".ir", func_graph);
+            ExportIR(fg_name + ".dat", "", func_graph);
             MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
           }
         }

@@ -81,6 +81,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // Ref eliminate
   make_ref_eliminate_ = MakeSubstitution(MakeRefEliminater(), "make_ref_eliminate", prim::kPrimMakeRef);
+  get_ref_param_eliminate_ = MakeSubstitution(GetRefParamEliminater(), "get_ref_param_eliminate",
+                                              {prim::kPrimGetRefValue, prim::kPrimGetRefOrigin});
   get_make_ref_eliminate_ = MakeSubstitution(GetMakeRefEliminater(), "get_make_ref_eliminate",
                                              {prim::kPrimGetRefKey, prim::kPrimGetRefValue, prim::kPrimGetRefOrigin});
 
