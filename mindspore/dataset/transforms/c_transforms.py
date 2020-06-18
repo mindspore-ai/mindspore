@@ -16,13 +16,13 @@
 This module c_transforms provides common operations, including OneHotOp and TypeCast.
 """
 from enum import IntEnum
+import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 
-import numpy as np
-
-from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op, check_pad_end
+from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op, \
+    check_pad_end, check_concat_type
 from ..core.datatypes import mstype_to_detype
 
 
@@ -187,3 +187,19 @@ class PadEnd(cde.PadEndOp):
         if pad_value is not None:
             pad_value = cde.Tensor(np.array(pad_value))
         super().__init__(cde.TensorShape(pad_shape), pad_value)
+
+
+class Concatenate(cde.ConcatenateOp):
+    """
+    Tensor operation to prepend and append to a tensor.
+
+    Args:
+        axis (int, optional): axis to concatenate the tensors along (Default=0).
+        prepend (np.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
+        append (np.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
+    """
+
+    @check_concat_type
+    def __init__(self, axis=0, prepend=None, append=None):
+        # add some validations here later
+        super().__init__(axis, prepend, append)
