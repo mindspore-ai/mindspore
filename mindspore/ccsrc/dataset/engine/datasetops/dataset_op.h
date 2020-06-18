@@ -217,8 +217,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
     if (!inlined()) {
       return out_connector_->size();
     }
-    // Return -1 for inlined op
-    return -1;
+    // Return child connector size for inlined op
+    return ChildOpConnectorSize();
   }
 
   // Getter function
@@ -227,8 +227,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
     if (!inlined()) {
       return out_connector_->capacity();
     }
-    // Return -1 for inlined op
-    return -1;
+    // Return child connector capacity for inlined op
+    return ChildOpConnectorCapacity();
   }
 
   // Getter function
