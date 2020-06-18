@@ -22,7 +22,7 @@ from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
 from ..parallel._utils import _set_clone_info, _CloneInfo
-from ..parallel._tensor import _get_seed
+from ..parallel._tensor import _get_slice_index
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -250,9 +250,11 @@ class Parameter:
                 raise ValueError("The length of layout must be 3! layout is {}."
                                  .format(layout))
             self.init_mode.shape = layout[2]
-            self.init_mode.seed = int(_get_seed(layout[0], layout[1]))
+            slice_index = int(_get_slice_index(layout[0], layout[1]))
+            self.default_input = self.init_mode.to_tensor(slice_index)
+        else:
+            self.default_input = self.init_mode.to_tensor()
 
-        self.default_input = self.init_mode.to_tensor()
         self.init_mode = None
         if set_sliced:
             self.sliced = True
