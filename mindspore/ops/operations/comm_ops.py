@@ -182,6 +182,9 @@ class HostAllGather(PrimitiveWithInfer):
 
     Note:
         Tensor must have the same shape and format in all processes participating in the collective.
+        HostAllGather is a host-side operator, it depends on OpenMPI and must use build option -M on
+        to enable it. Using mpirun command to run it:
+        mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_all_gather.py
 
     Args:
         group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on.
@@ -200,8 +203,12 @@ class HostAllGather(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore.nn as nn
+        >>> import mindspore.context as context
         >>> import mindspore.ops.operations as P
         >>> from mindspore import Tensor
+        >>>
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        >>> context.set_mpi_config(enable_mpi=True)
         >>>
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
@@ -308,6 +315,9 @@ class HostReduceScatter(PrimitiveWithInfer):
 
     Note:
         Tensor must have the same shape and format in all processes participating in the collective.
+        HostReduceScatter is a host-side operator, it depends on OpenMPI and must use build option
+        -M on to enable it. Using mpirun command to run it:
+        mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_reduce_scatter.py
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -322,9 +332,13 @@ class HostReduceScatter(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore.nn as nn
+        >>> import mindspore.context as context
         >>> import mindspore.ops.operations as P
         >>> from mindspore import Tensor
         >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>>
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        >>> context.set_mpi_config(enable_mpi=True)
         >>>
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
