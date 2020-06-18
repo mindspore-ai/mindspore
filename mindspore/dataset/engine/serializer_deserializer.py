@@ -156,6 +156,9 @@ def traverse(node):
             serialize_operations(node_repr, k, v)
         elif k == 'sampler':
             serialize_sampler(node_repr, v)
+        # return schema json str if its type is mindspore.dataset.Schema
+        elif k == 'schema' and isinstance(v, de.Schema):
+            node_repr[k] = v.to_json()
         elif k in set(['schema', 'dataset_files', 'dataset_dir', 'schema_file_path']):
             expand_path(node_repr, k, v)
         else:
