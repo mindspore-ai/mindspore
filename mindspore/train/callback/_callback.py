@@ -160,16 +160,25 @@ class CallbackManager(Callback):
         self._callbacks, self._stack = [], None
         if isinstance(callbacks, Callback):
             self._callbacks.append(callbacks)
-        elif callbacks is not None:
+        elif isinstance(callbacks, list):
             for cb in callbacks:
                 if not isinstance(cb, Callback):
-                    raise TypeError("%r is not an instance of %r" % (cb, Callback))
+                    raise TypeError("The 'callbacks' contains not-a-Callback item.")
                 self._callbacks.append(cb)
+        elif callbacks is not None:
+            raise TypeError("The 'callbacks' is not a Callback or a list of Callback.")
 
     def __enter__(self):
         if self._stack is None:
-            self._stack = ExitStack().__enter__()
-            self._callbacks = [self._stack.enter_context(cb) for cb in self._callbacks]
+            callbacks, self._stack = [], ExitStack().__enter__()
+            for callback in self._callbacks:
+                target = self._stack.enter_context(callback)
+                if not isinstance(target, Callback):
+                    logger.warning("Please return 'self' or a Callback as the enter target.")
+                    callbacks.append(callback)
+                else:
+                    callbacks.append(target)
+            self._callbacks = callbacks
         return self
 
     def __exit__(self, *err):
