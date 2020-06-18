@@ -200,14 +200,14 @@ class AssignSub(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.AssignSub = P.AssignSub()
-        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>>
         >>>     def construct(self, x):
         >>>         self.AssignSub(self.variable, x)
         >>>         return self.variable
         >>>
         >>> net = Net()
-        >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
+        >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
         >>> net(value)
     """
 

@@ -309,8 +309,7 @@ __all__ = [
     "DataFormatDimMap",
     "ApproximateEqual",
     "InplaceUpdate",
-    "InTopK",
-    "DataFormatDimMap"
+    "InTopK"
 ]
 
 __all__.extend(_quant_ops.__all__)
