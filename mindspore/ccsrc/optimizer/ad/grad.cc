@@ -51,7 +51,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
     }
     return user_defined;
   }
-  f->Init(f, is_top);
+  f->Init(is_top);
   f->MapObject();
   f->MapMorphism();
   auto ret = f->k_graph();

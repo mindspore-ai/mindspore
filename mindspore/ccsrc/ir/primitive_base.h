@@ -141,7 +141,10 @@ struct PrimitiveEqual {
 };
 
 struct PrimitiveHasher {
-  std::size_t operator()(PrimitivePtr const &prim) const { return prim->Hash(); }
+  std::size_t operator()(PrimitivePtr const &prim) const {
+    MS_EXCEPTION_IF_NULL(prim);
+    return prim->Hash();
+  }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_PRIMITIVE_BASE_H_

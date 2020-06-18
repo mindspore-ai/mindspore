@@ -112,15 +112,30 @@ class InferenceOptPrepareLib {
 // predicate functions
 inline bool IsNode(const AnfNodePtr &) { return true; }
 
-inline bool IsCNode(const AnfNodePtr &node) { return node->isa<CNode>(); }
+inline bool IsCNode(const AnfNodePtr &node) {
+  if (node != nullptr) {
+    return node->isa<CNode>();
+  }
+  return false;
+}
 
-inline bool IsVNode(const AnfNodePtr &node) { return node->isa<ValueNode>(); }
+inline bool IsVNode(const AnfNodePtr &node) {
+  if (node != nullptr) {
+    return node->isa<ValueNode>();
+  }
+  return false;
+}
 
-inline bool IsParam(const AnfNodePtr &node) { return node->isa<Parameter>(); }
+inline bool IsParam(const AnfNodePtr &node) {
+  if (node != nullptr) {
+    return node->isa<Parameter>();
+  }
+  return false;
+}
 
 // Check if CNode Input 0 is Func Graph
 inline bool IsCNodeGraph(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
+  if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
 
@@ -130,7 +145,7 @@ inline bool IsCNodeGraph(const AnfNodePtr &node) {
 
 // Check if CNode Input 0 is CNode
 inline bool IsCNodeDup(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
+  if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
 
