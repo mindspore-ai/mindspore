@@ -22,7 +22,7 @@ import mindspore._c_dataengine as cde
 
 import numpy as np
 
-from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op
+from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_op, check_mask_op, check_pad_end
 from ..core.datatypes import mstype_to_detype
 
 
@@ -46,7 +46,7 @@ class Fill(cde.FillOp):
     The output tensor will have the same shape and type as the input tensor.
 
     Args:
-        fill_value (python types (str, int, float, or bool)) : scalar value
+        fill_value (python types (str, bytes, int, float, or bool)) : scalar value
             to fill created tensor with.
     """
 
@@ -158,3 +158,32 @@ class Mask(cde.MaskOp):
         dtype = mstype_to_detype(dtype)
         constant = cde.Tensor(np.array(constant))
         super().__init__(DE_C_RELATIONAL[operator], constant, dtype)
+
+
+class PadEnd(cde.PadEndOp):
+    """
+    Pad input tensor according to `pad_shape`, need to have same rank.
+    Args:
+        pad_shape (list of `int`): list on integers representing the shape needed. Dimensions that set to `None` will
+            not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
+        pad_value (str, bytes, int, float, or bool, optional): value used to pad. Default to 0 or empty string in case
+            of Tensors of strings.
+    Examples:
+        >>> # Data before
+        >>> # |   col   |
+        >>> # +---------+
+        >>> # | [1,2,3] |
+        >>> # +---------|
+        >>> data = data.map(operations=PadEnd(pad_shape=[4], pad_value=10))
+        >>> # Data after
+        >>> # |    col     |
+        >>> # +------------+
+        >>> # | [1,2,3,10] |
+        >>> # +------------|
+    """
+
+    @check_pad_end
+    def __init__(self, pad_shape, pad_value=None):
+        if pad_value is not None:
+            pad_value = cde.Tensor(np.array(pad_value))
+        super().__init__(cde.TensorShape(pad_shape), pad_value)

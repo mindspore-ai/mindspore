@@ -347,8 +347,10 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
   CHECK_FAIL_RETURN_UNEXPECTED(src->type().IsNumeric() == pad_val->type().IsNumeric(),
                                "Source and pad_value tensors are not of the same type.");
   if (pad_val->type().IsNumeric()) {
+    std::shared_ptr<Tensor> float_pad_value;
+    RETURN_IF_NOT_OK(TypeCast(pad_val, &float_pad_value, DataType(DataType::DE_FLOAT32)));
     float val = 0;
-    RETURN_IF_NOT_OK(pad_val->GetItemAt<float>(&val, {}));
+    RETURN_IF_NOT_OK(float_pad_value->GetItemAt<float>(&val, {}));
     return PadEndNumeric(src, dst, pad_shape, val);
   }
   std::string_view val;

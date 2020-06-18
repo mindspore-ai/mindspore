@@ -169,8 +169,8 @@ def check_fill_value(method):
             fill_value = kwargs.get("fill_value")
         if fill_value is None:
             raise ValueError("fill_value is not provided.")
-        if not isinstance(fill_value, (str, float, bool, int)):
-            raise TypeError("fill_value must be either a primitive python str, float, bool, or int")
+        if not isinstance(fill_value, (str, float, bool, int, bytes)):
+            raise TypeError("fill_value must be either a primitive python str, float, bool, bytes or int")
         kwargs["fill_value"] = fill_value
 
         return method(self, **kwargs)
@@ -237,8 +237,8 @@ def check_mask_op(method):
         if not isinstance(operator, Relational):
             raise TypeError("operator is not a Relational operator enum.")
 
-        if not isinstance(constant, (str, float, bool, int)):
-            raise TypeError("constant must be either a primitive python str, float, bool, or int")
+        if not isinstance(constant, (str, float, bool, int, bytes)):
+            raise TypeError("constant must be either a primitive python str, float, bool, bytes or int")
 
         if not isinstance(dtype, typing.Type):
             raise TypeError("dtype is not a MindSpore data type.")
@@ -246,6 +246,38 @@ def check_mask_op(method):
         kwargs["operator"] = operator
         kwargs["constant"] = constant
         kwargs["dtype"] = dtype
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_pad_end(method):
+    """Wrapper method to check the parameters of PadEnd."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        pad_shape, pad_value = (list(args) + 2 * [None])[:2]
+        if "pad_shape" in kwargs:
+            pad_shape = kwargs.get("pad_shape")
+        if "pad_value" in kwargs:
+            pad_value = kwargs.get("pad_value")
+
+        if pad_shape is None:
+            raise ValueError("pad_shape is not provided.")
+
+        if pad_value is not None and not isinstance(pad_value, (str, float, bool, int, bytes)):
+            raise TypeError("pad_value must be either a primitive python str, float, bool, bytes or int")
+
+        if not isinstance(pad_shape, list):
+            raise TypeError("pad_shape must be a list")
+
+        for dim in pad_shape:
+            if dim is not None:
+                check_pos_int64(dim)
+
+        kwargs["pad_shape"] = pad_shape
+        kwargs["pad_value"] = pad_value
 
         return method(self, **kwargs)
 
