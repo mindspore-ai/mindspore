@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_NN_RELU_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <string>
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/kernel_constants.h"
@@ -25,9 +27,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReLUGpuFwdKernel : public GpuKernel {
+class ActivationGpuFwdKernel : public GpuKernel {
  public:
-  ReLUGpuFwdKernel()
+  ActivationGpuFwdKernel()
       : cudnn_handle_(nullptr),
         activation_desc_(nullptr),
         mode_(CUDNN_ACTIVATION_RELU),
@@ -37,7 +39,7 @@ class ReLUGpuFwdKernel : public GpuKernel {
         input_size_(0),
         output_size_(0),
         workspace_size_(0) {}
-  ~ReLUGpuFwdKernel() override { DestroyResource(); }
+  ~ActivationGpuFwdKernel() override { DestroyResource(); }
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -54,33 +56,39 @@ class ReLUGpuFwdKernel : public GpuKernel {
     const float beta = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, input,
                                                        &beta, data_descriptor_, output),
-                                "ReLUGpuFwdKernel failed");
+                                "cudnnActivationForward failed");
 
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto iter = kernel_map.find(node_name);
+    if (iter == kernel_map.end()) {
+      MS_LOG(EXCEPTION) << "Kernel: " << node_name << " not support.";
+    }
+    mode_ = iter->second;
+
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ReLUGpuFwdKernel needs 1.";
+      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ActivationGpuFwdKernel needs 1.";
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "ReLUGpuFwdKernel input is null.";
+      MS_LOG(WARNING) << "ActivationGpuFwdKernel input is null.";
       InitSizeLists();
       return true;
     }
-    mode_ = CUDNN_ACTIVATION_RELU;
     std::vector<int> shape;
     ShapeNdTo4d(input_shape, &shape);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, 0.0),
-                                "SetActivationDescriptor failed");
+                                "cudnnSetActivationDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
                                                            shape[0], shape[1], shape[2], shape[3]),
-                                "SetTensor4dDescriptor failed");
+                                "cudnnSetTensor4dDescriptor failed");
     InitSizeLists();
     return true;
   }
@@ -109,6 +117,11 @@ class ReLUGpuFwdKernel : public GpuKernel {
                                "cudnnDestroyActivationDescriptor failed");
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(data_descriptor_), "cudnnDestroyTensorDescriptor failed");
   }
+
+  std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReLU", CUDNN_ACTIVATION_RELU},
+                                                             {"Tanh", CUDNN_ACTIVATION_TANH},
+                                                             {"ELU", CUDNN_ACTIVATION_ELU},
+                                                             {"Sigmoid", CUDNN_ACTIVATION_SIGMOID}};
 
   cudnnHandle_t cudnn_handle_;
   cudnnActivationDescriptor_t activation_desc_;
