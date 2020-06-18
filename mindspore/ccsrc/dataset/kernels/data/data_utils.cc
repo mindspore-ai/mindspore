@@ -15,15 +15,19 @@
  */
 
 #include "dataset/kernels/data/data_utils.h"
+
 #include <algorithm>
+#include <limits>
 #include <string>
 #include <vector>
+
 #include "dataset/core/constants.h"
-#include "dataset/core/tensor.h"
-#include "dataset/core/tensor_shape.h"
 #include "dataset/core/data_type.h"
 #include "dataset/core/pybind_support.h"
+#include "dataset/core/tensor.h"
+#include "dataset/core/tensor_shape.h"
 #include "dataset/kernels/data/type_cast_op.h"
+#include "dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -330,7 +334,18 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   auto in_itr = input->begin<float>();
   auto out_itr = (*output)->begin<float16>();
   auto out_end = (*output)->end<float16>();
-  for (; out_itr != out_end; in_itr++, out_itr++) *out_itr = Eigen::half(*in_itr);
+
+  for (; out_itr != out_end; in_itr++, out_itr++) {
+    float element = *in_itr;
+    float float16_max = static_cast<float>(std::numeric_limits<Eigen::half>::max());
+    float float16_min = static_cast<float>(std::numeric_limits<Eigen::half>::lowest());
+    if (element > float16_max || element < float16_min) {
+      RETURN_STATUS_UNEXPECTED("Value " + std::to_string(element) + " is outside of valid float16 range [" +
+                               std::to_string(float16_max) + ", " + std::to_string(float16_min) + "].");
+    }
+
+    *out_itr = Eigen::half(*in_itr);
+  }
 
   return Status::OK();
 }

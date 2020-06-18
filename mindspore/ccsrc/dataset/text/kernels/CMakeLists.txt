@@ -18,5 +18,6 @@ add_library(text-kernels OBJECT
         ngram_op.cc
         wordpiece_tokenizer_op.cc
         truncate_sequence_pair_op.cc
+        to_number_op.cc
         ${ICU_DEPEND_FILES}
         )

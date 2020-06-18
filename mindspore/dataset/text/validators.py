@@ -19,7 +19,9 @@ validators for text ops
 from functools import wraps
 
 import mindspore._c_dataengine as cde
+import mindspore.common.dtype as mstype
 
+from mindspore._c_expression import typing
 from ..transforms.validators import check_uint32, check_pos_int64
 
 
@@ -380,6 +382,31 @@ def check_pair_truncate(method):
 
         check_pos_int64(max_length)
         kwargs["max_length"] = max_length
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_to_number(method):
+    """A wrapper that wraps a parameter check to the original function (ToNumber)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        data_type = (list(args) + [None])[0]
+        if "data_type" in kwargs:
+            data_type = kwargs.get("data_type")
+
+        if data_type is None:
+            raise ValueError("data_type is a mandatory parameter but was not provided.")
+
+        if not isinstance(data_type, typing.Type):
+            raise TypeError("data_type is not a MindSpore data type.")
+
+        if not data_type in mstype.number_type:
+            raise TypeError("data_type is not numeric data type.")
+
+        kwargs["data_type"] = data_type
 
         return method(self, **kwargs)
 
