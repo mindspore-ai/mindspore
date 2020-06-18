@@ -4869,10 +4869,10 @@ class BuildVocabDataset(DatasetOp):
         top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
             taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken (default=None,
             all words are included).
-        special_tokens(list):  a list of strings, each one is a special token. for e.g. ["<pad>","<unk>"]
-            (default=None, no special tokens will be added).
-        special_first(bool): whether special_tokens will be prepended/appended to vocab, If special_tokens is
-            specified and special_first is set to None, special_tokens will be prepended. (default=None).
+        special_tokens(list, optional):  a list of strings, each one is a special token. for example
+            special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
+        special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
+            is specified and special_first is set to None, special_tokens will be prepended. (default=None).
         prefetch_size (int, optional): prefetch number of records ahead of the user's request (default=None).
     """
 

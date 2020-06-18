@@ -10,4 +10,5 @@ add_library(kernels-data OBJECT
         slice_op.cc
         mask_op.cc
         concatenate_op.cc
+        duplicate_op.cc
         )

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -94,9 +94,10 @@ def test_from_file():
         for word in texts.split(" "):
             yield (np.array(word, dtype='S'),)
 
-    def test_config(lookup_str, special_tokens, special_first):
+    def test_config(lookup_str, vocab_size, special_tokens, special_first):
         try:
-            vocab = text.Vocab.from_file(SIMPLE_VOCAB_FILE, special_tokens=special_tokens, special_first=special_first)
+            vocab = text.Vocab.from_file(SIMPLE_VOCAB_FILE, vocab_size=vocab_size, special_tokens=special_tokens,
+                                         special_first=special_first)
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
             data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
             res = []
@@ -106,9 +107,14 @@ def test_from_file():
         except ValueError as e:
             return str(e)
 
-    assert test_config("w1 w2 w3", ["s1", "s2", "s3"], True) == [3, 4, 5]
-    assert test_config("w1 w2 w3", ["s1", "s2", "s3"], False) == [0, 1, 2]
-    assert "special_tokens contains duplicate" in test_config("w1", ["s1", "s1"], True)
+    # test special tokens are prepended
+    assert test_config("w1 w2 w3 s1 s2 s3", None, ["s1", "s2", "s3"], True) == [3, 4, 5, 0, 1, 2]
+    # test special tokens are appended
+    assert test_config("w1 w2 w3 s1 s2 s3", None, ["s1", "s2", "s3"], False) == [0, 1, 2, 8, 9, 10]
+    # test special tokens are prepended when not all words in file are used
+    assert test_config("w1 w2 w3 s1 s2 s3", 3, ["s1", "s2", "s3"], False) == [0, 1, 2, 3, 4, 5]
+    # text exception special_words contains duplicate words
+    assert "special_tokens contains duplicate" in test_config("w1", None, ["s1", "s1"], True)
 
 
 if __name__ == '__main__':

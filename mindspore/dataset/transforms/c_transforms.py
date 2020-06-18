@@ -203,3 +203,22 @@ class Concatenate(cde.ConcatenateOp):
     def __init__(self, axis=0, prepend=None, append=None):
         # add some validations here later
         super().__init__(axis, prepend, append)
+
+
+class Duplicate(cde.DuplicateOp):
+    """
+    Duplicate the input tensor to a new output tensor. The input tensor is carried over to the output list.
+        Examples:
+        >>> # Data before
+        >>> # |  x      |
+        >>> # +---------+
+        >>> # | [1,2,3] |
+        >>> # +---------+
+        >>> data = data.map(input_columns=["x"], operations=Duplicate(),
+        >>>         output_columns=["x", "y"], output_order=["x", "y"])
+        >>> # Data after
+        >>> # |  x      |  y      |
+        >>> # +---------+---------+
+        >>> # | [1,2,3] | [1,2,3] |
+        >>> # +---------+---------+
+    """

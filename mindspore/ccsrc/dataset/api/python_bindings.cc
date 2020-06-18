@@ -40,6 +40,7 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/image/bounding_box_augment_op.h"
+#include "dataset/kernels/data/duplicate_op.h"
 #include "dataset/kernels/data/fill_op.h"
 #include "dataset/kernels/data/mask_op.h"
 #include "dataset/kernels/data/pad_end_op.h"
@@ -442,6 +443,9 @@ void bindTensorOps2(py::module *m) {
   (void)py::class_<MaskOp, TensorOp, std::shared_ptr<MaskOp>>(*m, "MaskOp",
                                                               "Tensor mask operation using relational comparator")
     .def(py::init<RelationalOp, std::shared_ptr<Tensor>, DataType>());
+
+  (void)py::class_<DuplicateOp, TensorOp, std::shared_ptr<DuplicateOp>>(*m, "DuplicateOp", "Duplicate tensor.")
+    .def(py::init<>());
 
   (void)py::class_<TruncateSequencePairOp, TensorOp, std::shared_ptr<TruncateSequencePairOp>>(
     *m, "TruncateSequencePairOp", "Tensor operation to truncate two tensors to a max_length")
