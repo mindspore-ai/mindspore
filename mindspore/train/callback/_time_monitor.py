@@ -12,17 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Callback related classes and functions."""
+"""TimeMonitor Callback class."""
+
+import time
 
 from ._callback import Callback
-from ._callback import CallbackManager as _CallbackManager
-from ._callback import InternalCallbackParam as _InternalCallbackParam
-from ._callback import RunContext
-from ._checkpoint import CheckpointConfig
-from ._checkpoint import CheckpointManager as _CheckpointManager
-from ._checkpoint import ModelCheckpoint
-from ._loss_monitor import LossMonitor
-from ._summary_step import SummaryStep
-from ._time_monitor import TimeMonitor
 
-__all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint", "SummaryStep", "CheckpointConfig", "RunContext"]
+
+class TimeMonitor(Callback):
+    """Time Monitor."""
+
+    def __init__(self, data_size):
+        super(TimeMonitor, self).__init__()
+        self.data_size = data_size
+
+    def epoch_begin(self, run_context):
+        self.epoch_time = time.time()
+
+    def epoch_end(self, run_context):
+        epoch_mseconds = (time.time() - self.epoch_time) * 1000
+        per_step_mseconds = epoch_mseconds / self.data_size
+        print("epoch time: {0}, per step time: {1}".format(epoch_mseconds, per_step_mseconds), flush=True)

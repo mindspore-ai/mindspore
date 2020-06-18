@@ -26,10 +26,10 @@ from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback.callback import ModelCheckpoint, _check_file_name_prefix, RunContext, \
-    _checkpoint_cb_for_save_op, LossMonitor, _InternalCallbackParam, _chg_ckpt_file_name_if_same_exist, \
-    _CallbackManager, Callback, CheckpointConfig, _set_cur_net
-
+from mindspore.train.callback import ModelCheckpoint, RunContext, LossMonitor, _InternalCallbackParam, \
+    _CallbackManager, Callback, CheckpointConfig
+from mindspore.train.callback._callback import set_cur_net, checkpoint_cb_for_save_op
+from mindspore.train.callback._checkpoint import _check_file_name_prefix, _chg_ckpt_file_name_if_same_exist
 
 class Net(nn.Cell):
     """Net definition."""
@@ -187,7 +187,7 @@ def test_checkpoint_cb_for_save_op():
     one_param['name'] = "conv1.weight"
     one_param['data'] = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), dtype=mstype.float32)
     parameter_list.append(one_param)
-    _checkpoint_cb_for_save_op(parameter_list)
+    checkpoint_cb_for_save_op(parameter_list)
 
 
 def test_checkpoint_cb_for_save_op_update_net():
@@ -198,8 +198,8 @@ def test_checkpoint_cb_for_save_op_update_net():
     one_param['data'] = Tensor(np.ones(shape=(64, 3, 3, 3)), dtype=mstype.float32)
     parameter_list.append(one_param)
     net = Net()
-    _set_cur_net(net)
-    _checkpoint_cb_for_save_op(parameter_list)
+    set_cur_net(net)
+    checkpoint_cb_for_save_op(parameter_list)
     assert net.conv.weight.default_input.asnumpy()[0][0][0][0] == 1
 
 
