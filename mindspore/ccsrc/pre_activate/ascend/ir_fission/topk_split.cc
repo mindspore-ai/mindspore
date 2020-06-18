@@ -91,6 +91,30 @@ kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
   builder.SetOutputsDeviceType({kNumberTypeFloat16, kNumberTypeInt32});
   return builder.Build();
 }
+
+bool CheckInputNamesSize(const CNodePtr &cnode) {
+  auto input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
+  if (input_names_vec.size() < kTopkIndexK + 1) {
+    MS_LOG(INFO) << "The input k of topk has been converted to attr";
+    return false;
+  }
+  return true;
+}
+
+bool CheckOutputShape(const AnfNodePtr &node) {
+  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  if (shape.empty()) {
+    MS_LOG(INFO) << "The output shape of topk to split must not be empty";
+    return false;
+  }
+  auto last_dim = shape[shape.size() - 1];
+  const size_t kMaxFloat16 = 65500;
+  if (last_dim > kMaxFloat16) {
+    MS_LOG(INFO) << "The last dim is more than " << kMaxFloat16 << ", switch to aicpu ops.";
+    return false;
+  }
+  return true;
+}
 }  // namespace
 
 const BaseRef TopKSplit::DefinePattern() const {
@@ -107,16 +131,10 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   // set value node as topk's input
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
-  if (input_names_vec.size() < kTopkIndexK + 1) {
-    MS_LOG(INFO) << "The input k of topk has been converted to attr";
+  if (!CheckInputNamesSize(cnode)) {
     return nullptr;
   }
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  auto last_dim = shape[shape.size() - 1];
-  const size_t kMaxFloat16 = 65500;
-  if (last_dim > kMaxFloat16) {
-    MS_LOG(INFO) << "The last dim is more than 65500, switch to aicpu ops.";
+  if (!CheckOutputShape(cnode)) {
     return nullptr;
   }
   // Copy a new node to check supported.

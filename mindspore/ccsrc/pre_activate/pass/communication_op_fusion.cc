@@ -253,6 +253,13 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
     if (it.second.communication_op_nodes.size() <= 1) {
       continue;
     }
+    auto first_node = it.second.communication_op_nodes[0];
+    if (AnfAlgo::HasNodeAttr(kAttrIndex, first_node) && AnfAlgo::GetNodeAttr<int>(first_node, kAttrIndex) > 0) {
+      std::stable_sort(it.second.communication_op_nodes.begin(), it.second.communication_op_nodes.end(),
+                       [](const CNodePtr &a, const CNodePtr &b) {
+                         return AnfAlgo::GetNodeAttr<int>(a, kAttrIndex) < AnfAlgo::GetNodeAttr<int>(b, kAttrIndex);
+                       });
+    }
     size_t segment_num = 0;
     std::vector<size_t> segment_index;
     if (GetSplitSegments(it.second, &segment_num, &segment_index, it.first)) {

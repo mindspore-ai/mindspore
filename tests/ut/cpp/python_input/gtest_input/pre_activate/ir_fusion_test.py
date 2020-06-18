@@ -140,6 +140,17 @@ def test_all_reduce_fusion_all(tag):
         res = make_tuple(y1, y2, y3, y4, y5)
         return make_tuple(res)
 
+    @fns
+    def after1(x1, x2, x3, x4, x5):
+        ar = allreduce(x1, x2, x3, x4, x5)
+        y1 = tuple_getitem(ar, 0)
+        y2 = tuple_getitem(ar, 1)
+        y3 = tuple_getitem(ar, 2)
+        y4 = tuple_getitem(ar, 3)
+        y5 = tuple_getitem(ar, 4)
+        res = make_tuple(y1, y2, y3, y4, y5)
+        return make_tuple(res)
+
     return fns[tag]
 
 
