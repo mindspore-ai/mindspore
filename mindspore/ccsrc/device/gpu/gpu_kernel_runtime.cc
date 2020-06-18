@@ -228,7 +228,7 @@ void GPUKernelRuntime::ClearKernelOutputAddress(const session::KernelGraph *grap
         continue;
       }
 
-      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
+      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
       if (device_address->ptr_) {
         mem_manager_->FreeMemFromMemPool(device_address);
       }
@@ -289,7 +289,7 @@ bool GPUKernelRuntime::AddMemSwapTask(const AnfNodePtr &kernel) {
   for (auto &mem_swap_info : mem_swap_info_list) {
     auto &kernel_exec_info = mem_swap_manager_->SearchKernelExecutionInfo(mem_swap_info.kernel_);
     const HostAddress &host_address = kernel_exec_info.host_addrs_[mem_swap_info.output_idx_];
-    auto device_address = AnfAlgo::GetMutableOutputAddr(mem_swap_info.kernel_, mem_swap_info.output_idx_);
+    auto device_address = AnfAlgo::GetMutableOutputAddr(mem_swap_info.kernel_, mem_swap_info.output_idx_, false);
 
     if (mem_swap_info.swap_kind_ == SwapKind::kDeviceToHost) {
       mem_swap_manager_->AddMemSwapTask(SwapKind::kDeviceToHost, device_address, host_address);
@@ -379,7 +379,8 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
+    // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (mem_swap_manager_->trigger_swap()) {
       while (auto device_address_swap_in = mem_swap_manager_->UpdateSwapQueue(SwapKind::kHostToDevice)) {
@@ -437,7 +438,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
   }
   auto output_sizes = kernel_mod.GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
+    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, output_sizes[i])) {
       return false;
@@ -495,7 +496,7 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
   std::vector<size_t> size_list;
   DeviceAddressPtrList addr_list;
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
+    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr) {
       is_need_alloc_memory = true;
@@ -520,7 +521,7 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
+    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr) {
       is_need_alloc_memory = true;
@@ -578,7 +579,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
       MS_LOG(EXCEPTION) << "Check dynamic reference count failed.";
     }
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
-      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
+      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
       mem_manager_->FreeMemFromMemPool(device_address);
       device_address->set_status(DeviceAddressStatus::kInDevice);
     }
@@ -590,7 +591,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
       continue;
     }
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
+      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
       mem_manager_->FreeMemFromMemPool(device_address);
       device_address->set_status(DeviceAddressStatus::kInDevice);
     }
