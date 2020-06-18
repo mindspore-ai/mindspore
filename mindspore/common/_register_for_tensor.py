@@ -16,6 +16,7 @@
 """Registry the relation."""
 
 from collections import UserDict
+from .. import context
 
 
 class Registry(UserDict):
@@ -27,9 +28,16 @@ class Registry(UserDict):
 
     def get(self, obj_str):
         """Get the value by str."""
-        if isinstance(obj_str, str):
+        if not isinstance(obj_str, str):
+            raise TypeError("key for tensor registry must be string.")
+        if context.get_context("enable_ge"):
+            def wrap(*args):
+                new_args = list(args)
+                new_args.append(obj_str)
+                return self["vm_compare"](*new_args)
+            obj = wrap
+        else:
             obj = self[obj_str]
         return obj
-
 
 tensor_operator_registry = Registry()

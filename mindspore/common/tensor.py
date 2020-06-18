@@ -19,7 +19,6 @@ from .._c_expression import Tensor as Tensor_
 from .._c_expression import MetaTensor
 from .._checkparam import check_type, check_typename
 from . import dtype as mstype
-from .. import context
 from ._register_for_tensor import tensor_operator_registry
 
 __all__ = ['Tensor', 'MetaTensor']
@@ -76,17 +75,19 @@ class Tensor(Tensor_):
         return out
 
     def __eq__(self, other):
-        if not isinstance(other, Tensor):
+        if not isinstance(other, (int, float, Tensor)):
             return False
-        #  The GE backend don't support single `Equal` operator execution.
         #  bool type is not supported for `Equal` operator in backend.
-        if context.get_context("enable_ge") or self.dtype == mstype.bool_ or other.dtype == mstype.bool_:
+        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
             return Tensor(np.array(self.asnumpy() == other.asnumpy()))
         return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
-        if not isinstance(other, Tensor):
+        if not isinstance(other, (int, float, Tensor)):
             return True
+        #  bool type is not supported for `NotEqual` operator in backend.
+        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
+            return Tensor(np.array(self.asnumpy() != other.asnumpy()))
         return tensor_operator_registry.get('__ne__')(self, other)
 
     def __hash__(self):
@@ -105,7 +106,7 @@ class Tensor(Tensor_):
         return out
 
     def __radd__(self, other):
-        out = tensor_operator_registry.get('__add__')(other, self)
+        out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __imul__(self, other):
@@ -113,15 +114,15 @@ class Tensor(Tensor_):
         return out
 
     def __rmul__(self, other):
-        out = tensor_operator_registry.get('__mul__')(other, self)
+        out = tensor_operator_registry.get('__mul__')(self, other)
         return out
 
     def __truediv__(self, other):
-        out = tensor_operator_registry.get('__div__')(self, other)
+        out = tensor_operator_registry.get('__truediv__')(self, other)
         return out
 
     def __rtruediv__(self, other):
-        out = tensor_operator_registry.get('__div__')(other, self)
+        out = tensor_operator_registry.get('__truediv__')(other, self)
         return out
 
     def __sub__(self, other):
@@ -160,7 +161,7 @@ class Tensor(Tensor_):
         return out
 
     def __len__(self):
-        out = tensor_operator_registry.get('__shape__')(self)
+        out = tensor_operator_registry.get('shape')(self)
         if not out:
             return 1
         return out[0]

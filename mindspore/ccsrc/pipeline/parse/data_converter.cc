@@ -41,6 +41,35 @@ using TensorPtr = mindspore::tensor::TensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
 
+FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
+  std::vector<std::string> results = data_converter::GetObjKey(obj);
+  std::string obj_key = results[0];
+  py::function bprop_func = py::getattr(obj, CUSTOM_BPROP_NAME);
+
+  auto bprop_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> outputs;
+
+  auto fake_bprop = std::make_shared<PrimitivePy>("bprop_cut", py::object());
+  fake_bprop->set_hook(bprop_func);
+  (void)fake_bprop->AddAttr(CUSTOM_BPROP_NAME, MakeValue(true));
+  outputs.push_back(NewValueNode(fake_bprop));
+
+  py::object code_obj = py::getattr(bprop_func, "__code__");
+  size_t inputs_num = py::cast<int>(py::getattr(code_obj, "co_argcount")) - 3;
+  for (size_t i = 0; i < inputs_num; ++i) {
+    auto param = bprop_graph->add_parameter();
+    outputs.push_back(param);
+  }
+  auto p1 = bprop_graph->add_parameter();
+  auto p2 = bprop_graph->add_parameter();
+  outputs.push_back(p1);
+  outputs.push_back(p2);
+
+  bprop_graph->set_output(bprop_graph->NewCNode(outputs));
+  data_converter::SetObjGraphValue(obj_key, bprop_graph);
+  return bprop_graph;
+}
+
 namespace {
 bool ConvertTuple(const py::object &obj, ValuePtr *const data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python tuple";
@@ -231,35 +260,6 @@ bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
   return true;
 }
 
-FuncGraphPtr ConvertToBpropCut(py::object obj) {
-  std::vector<std::string> results = data_converter::GetObjKey(obj);
-  std::string obj_key = results[0];
-  py::function bprop_func = py::getattr(obj, "bprop");
-
-  FuncGraphPtr bprop_graph = std::make_shared<FuncGraph>();
-  std::vector<AnfNodePtr> outputs;
-
-  auto fake_bprop = std::make_shared<PrimitivePy>("bprop_cut", py::object());
-  fake_bprop->set_hook(bprop_func);
-  (void)fake_bprop->AddAttr("bprop", MakeValue(true));
-  outputs.push_back(NewValueNode(fake_bprop));
-
-  py::object code_obj = py::getattr(bprop_func, "__code__");
-  size_t inputs_num = py::cast<int>(py::getattr(code_obj, "co_argcount")) - 3;
-  for (size_t i = 0; i < inputs_num; ++i) {
-    auto param = bprop_graph->add_parameter();
-    outputs.push_back(param);
-  }
-  auto p1 = bprop_graph->add_parameter();
-  auto p2 = bprop_graph->add_parameter();
-  outputs.push_back(p1);
-  outputs.push_back(p2);
-
-  bprop_graph->set_output(bprop_graph->NewCNode(outputs));
-  data_converter::SetObjGraphValue(obj_key, bprop_graph);
-  return bprop_graph;
-}
-
 bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
   FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
   if (func_graph == nullptr) {
@@ -267,7 +267,7 @@ bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
     return false;
   }
   // if the cell object has specified bprop, it has user-defined bprop function parse and record it
-  if (py::hasattr(obj, "bprop")) {
+  if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
     FuncGraphPtr bprop_graph = nullptr;
     bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
     if (enable_bprop_debug) {
@@ -276,7 +276,7 @@ bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
       bprop_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
     }
     if (bprop_graph != nullptr) {
-      (void)func_graph->transforms().insert(std::make_pair("bprop", FuncGraphTransform(bprop_graph)));
+      (void)func_graph->transforms().insert(std::make_pair(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph)));
       (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
       func_graph->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
     }

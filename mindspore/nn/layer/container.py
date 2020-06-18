@@ -140,6 +140,11 @@ class SequentialCell(Cell):
     def __len__(self):
         return len(self._cells)
 
+    def set_grad(self, flag=True):
+        self.requires_grad = flag
+        for cell in self._cells.values():
+            cell.set_grad(flag)
+
     def construct(self, input_data):
         for cell in self.cell_list:
             input_data = cell(input_data)
@@ -245,6 +250,11 @@ class CellList(_CellListBase, Cell):
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell
         return self
+
+    def set_grad(self, flag=True):
+        self.requires_grad = flag
+        for cell in self._cells.values():
+            cell.set_grad(flag)
 
     def construct(self, *inputs):
         raise NotImplementedError

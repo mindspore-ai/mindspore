@@ -112,7 +112,7 @@ class GradOperation(GradOperation_):
         grad_ = GradOperation('grad', self.get_all, self.get_by_list, self.sens_param)
         if self.grad_fn is None or self.fn != fn:
             if self.get_by_list:
-                if context.get_context("mode") == context.GRAPH_MODE or fn.bprop_debug:
+                if context.get_context("mode") == context.GRAPH_MODE:
                     @ms_function(obj=fn)
                     def after_grad(*args):
                         return grad_(fn, weights)(*args)

@@ -113,6 +113,24 @@ def bool_or(x, y):
     """Implement `bool_or`."""
     return x or y
 
+def vm_compare(*args):
+    """Implement `vm_compare` for tensor."""
+    obj_str = args[-1]
+    if obj_str == "shape":
+        fn = getattr(args[0].asnumpy(), obj_str)
+        return fn
+    if len(args) == 2:
+        fn = getattr(args[0].asnumpy(), obj_str)
+        return Tensor(fn())
+    if isinstance(args[0], Tensor):
+        fn = getattr(args[0].asnumpy(), obj_str)
+        y = args[1].asnumpy() if isinstance(args[1], Tensor) else args[1]
+    else:
+        obj_str = "__r" + obj_str[2:]
+        fn = getattr(args[1].asnumpy(), obj_str)
+        y = args[0]
+    return Tensor(np.array(fn(y)))
+
 
 def make_list(*xs):
     """Implement `make_list`."""

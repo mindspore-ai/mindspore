@@ -45,7 +45,7 @@ enum PynativeStatusCode {
   PYNATIVE_UNKNOWN_STATE = 0XFF
 };
 
-enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_INPUT_MASK, PY_ARGS_NUM };
+enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
   PrimitivePyPtr py_primitive;

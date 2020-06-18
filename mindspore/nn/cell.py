@@ -819,4 +819,4 @@ class Cell:
 
         """
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
-        self._enable_hook = True
+        self.enable_hook = True

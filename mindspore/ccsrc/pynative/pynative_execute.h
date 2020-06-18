@@ -44,7 +44,7 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 
 py::tuple RunOp(const py::args &args);
 
-void ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *out_args);
+py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *out_args);
 
 void ClearPyNativeSession();
 
@@ -83,7 +83,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, int index) {
     graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, index);
   }
-  AnfNodePtr MakeCNode(const py::args &args, const py::tuple &out);
+  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out);
   py::object Run(const py::tuple &args, const py::object &phase);
 
   void Pushp();

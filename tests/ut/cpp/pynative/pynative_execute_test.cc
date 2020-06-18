@@ -63,8 +63,7 @@ OpExecInfoPtr ConstructOpExecInfo() {
 
   auto conv_obj = prim::GetPythonOps("conv2d_prim", "gtest_input.pynative");
   py::none py_none;
-  py::tuple op_mask = py::make_tuple(0, 1);
-  return GenerateOpExecInfo(py::make_tuple(conv_obj, op_name, op_inputs, op_mask));
+  return GenerateOpExecInfo(py::make_tuple(conv_obj, op_name, op_inputs));
 }
 
 TEST_F(TestPynativeExecute, TestRunOpInVM) {
@@ -79,7 +78,7 @@ TEST_F(TestPynativeExecute, TestRunOp) {
   py::none py_none;
   auto op_exec_info_ptr = ConstructOpExecInfo();
   py::tuple outputs = pynative::RunOp(py::make_tuple(op_exec_info_ptr->py_primitive, op_exec_info_ptr->op_name,
-                                                     op_exec_info_ptr->op_inputs, op_exec_info_ptr->inputs_mask));
+                                                     op_exec_info_ptr->op_inputs));
   if (outputs.size() == 0) {
     FAIL();
   } else {
