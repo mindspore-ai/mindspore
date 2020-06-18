@@ -35,5 +35,14 @@ MS_REG_GPU_KERNEL_ONE(
   TanhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   ActivationGradGpuKernel, half)
+
+MS_REG_GPU_KERNEL_ONE(
+  SigmoidGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ActivationGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  SigmoidGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  ActivationGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
