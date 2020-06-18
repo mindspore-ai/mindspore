@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "ir/visitor.h"
 #include "ir/func_graph.h"
+#include "ir/visitor.h"
 
 namespace mindspore {
-AnfNodePtr AnfVisitor::operator()(const opt::OptimizerPtr &, const AnfNodePtr &) { return nullptr; }
 void AnfVisitor::Visit(const AnfNodePtr &node) { node->accept(this); }
 
 void AnfVisitor::Visit(const CNodePtr &cnode) {
