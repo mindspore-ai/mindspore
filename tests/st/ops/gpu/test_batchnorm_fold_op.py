@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.ops import operations as P
+from mindspore.ops.operations import _quant_ops as Q
 
 context.set_context(device_target='GPU')
 
@@ -28,7 +28,7 @@ context.set_context(device_target='GPU')
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.op = P.BatchNormFold(momentum=0.9, freeze_bn=10)
+        self.op = Q.BatchNormFold(momentum=0.9, freeze_bn=10)
 
     @ms_function
     def construct(self, x, mean, variance, current_step):
