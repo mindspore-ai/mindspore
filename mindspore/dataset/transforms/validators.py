@@ -15,7 +15,9 @@
 """Validators for TensorOps.
 """
 from functools import wraps
+import numpy as np
 
+import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 # POS_INT_MIN is used to limit values from starting from 0
@@ -230,10 +232,11 @@ def check_mask_op(method):
 
         if operator is None:
             raise ValueError("operator is not provided.")
+
+        from .c_transforms import Relational
         if constant is None:
             raise ValueError("constant is not provided.")
 
-        from .c_transforms import Relational
         if not isinstance(operator, Relational):
             raise TypeError("operator is not a Relational operator enum.")
 
@@ -278,6 +281,49 @@ def check_pad_end(method):
 
         kwargs["pad_shape"] = pad_shape
         kwargs["pad_value"] = pad_value
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_concat_type(method):
+    """Wrapper method to check the parameters of concatenation op."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        axis, prepend, append = (list(args) + 3 * [None])[:3]
+        if "prepend" in kwargs:
+            prepend = kwargs.get("prepend")
+        if "append" in kwargs:
+            append = kwargs.get("append")
+        if "axis" in kwargs:
+            axis = kwargs.get("axis")
+
+        if not isinstance(axis, (type(None), int)):
+            raise TypeError("axis type is not valid, must be None or an integer.")
+
+        if isinstance(axis, type(None)):
+            axis = 0
+
+        if axis not in (None, 0, -1):
+            raise ValueError("only 1D concatenation supported.")
+
+        if not isinstance(prepend, (type(None), np.ndarray)):
+            raise ValueError("prepend type is not valid, must be None for no prepend tensor or a numpy array.")
+
+        if not isinstance(append, (type(None), np.ndarray)):
+            raise ValueError("append type is not valid, must be None for no append tensor or a numpy array.")
+
+        if isinstance(prepend, np.ndarray):
+            prepend = cde.Tensor(prepend)
+
+        if isinstance(append, np.ndarray):
+            append = cde.Tensor(append)
+
+        kwargs["axis"] = axis
+        kwargs["prepend"] = prepend
+        kwargs["append"] = append
 
         return method(self, **kwargs)
 

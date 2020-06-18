@@ -17,6 +17,7 @@
 
 #include "dataset/api/de_pipeline.h"
 #include "dataset/kernels/no_op.h"
+#include "dataset/kernels/data/concatenate_op.h"
 #include "dataset/kernels/data/one_hot_op.h"
 #include "dataset/kernels/image/center_crop_op.h"
 #include "dataset/kernels/image/cut_out_op.h"
@@ -433,6 +434,11 @@ void bindTensorOps2(py::module *m) {
   (void)py::class_<TruncateSequencePairOp, TensorOp, std::shared_ptr<TruncateSequencePairOp>>(
     *m, "TruncateSequencePairOp", "Tensor operation to truncate two tensors to a max_length")
     .def(py::init<int64_t>());
+
+  (void)py::class_<ConcatenateOp, TensorOp, std::shared_ptr<ConcatenateOp>>(*m, "ConcatenateOp",
+                                                                            "Tensor operation concatenate tensors.")
+    .def(py::init<int8_t, std::shared_ptr<Tensor>, std::shared_ptr<Tensor>>(), py::arg("axis"),
+         py::arg("prepend").none(true), py::arg("append").none(true));
 
   (void)py::class_<RandomRotationOp, TensorOp, std::shared_ptr<RandomRotationOp>>(
     *m, "RandomRotationOp",

@@ -555,5 +555,80 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   }
   return Status::OK();
 }
+
+Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
+                   std::shared_ptr<Tensor> append) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Rank() == 1, "Only 1D tensors supported");
+  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0 || axis == -1, "Only concatenation along the last dimension supported");
+
+  Tensor::HandleNeg(axis, input[0]->shape().Rank());
+  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Only axis=0 is supported");
+
+  std::shared_ptr<Tensor> out;
+  if (prepend != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(prepend->shape().Rank() == 1, "Only 1D tensors supported");
+    RETURN_IF_NOT_OK(ConcatenateHelper(prepend, &out, axis, input[0]));
+  } else {
+    out = input[0];
+  }
+  for (dsize_t i = 1; i < input.size(); i++) {
+    std::shared_ptr<Tensor> out_t;
+    CHECK_FAIL_RETURN_UNEXPECTED(input[i]->shape().Rank() == 1, "Only 1D tensors supported");
+    RETURN_IF_NOT_OK(ConcatenateHelper(out, &out_t, axis, input[i]));
+    out = out_t;
+  }
+  std::shared_ptr<Tensor> out_t;
+  if (append != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(append->shape().Rank() == 1, "Only 1D tensors supported");
+    RETURN_IF_NOT_OK(ConcatenateHelper(out, &out_t, axis, append));
+  } else {
+    out_t = out;
+  }
+  output->push_back(out_t);
+
+  return Status::OK();
+}
+
+Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int8_t axis,
+                         std::shared_ptr<Tensor> append) {
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == append->type(), "Tensor types do not match");
+
+  TensorShape t({});
+
+  for (dsize_t i = 0; i < input->shape().Rank(); i++) {
+    if (i != axis) {
+      t = t.AppendDim(input->shape()[i]);
+    } else {
+      dsize_t new_shape = input->shape()[i] + append->shape()[i];
+
+      t = t.AppendDim(new_shape);
+    }
+  }
+  std::shared_ptr<Tensor> out;
+
+  if (input->type().IsNumeric()) {
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, TensorImpl::kFlexible, t, input->type()));
+
+    RETURN_IF_NOT_OK(out->Concatenate({0}, input));
+    RETURN_IF_NOT_OK(out->Concatenate({input->shape()[0]}, append));
+    *output = out;
+  } else {
+    std::vector<std::string> strings;
+
+    auto itr = input->begin<std::string_view>();
+    for (; itr != input->end<std::string_view>(); itr++) {
+      strings.emplace_back(*itr);
+    }
+    itr = append->begin<std::string_view>();
+    for (; itr != append->end<std::string_view>(); itr++) {
+      strings.emplace_back(*itr);
+    }
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, strings, t));
+
+    *output = out;
+  }
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

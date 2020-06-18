@@ -23,6 +23,7 @@
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/data_type.h"
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 
 namespace mindspore {
 namespace dataset {
@@ -148,6 +149,14 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
 /// @return Status ok/error
 Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
             RelationalOp op);
+
+Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
+                   std::shared_ptr<Tensor> append);
+
+// helper for concat, always append to the input, and pass that to the output
+Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int8_t axis,
+                         std::shared_ptr<Tensor> append);
+
 }  // namespace dataset
 }  // namespace mindspore
 

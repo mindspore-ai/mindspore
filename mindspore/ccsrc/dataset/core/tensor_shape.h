@@ -94,7 +94,7 @@ class TensorShape {
   // @return
   TensorShape PrependDim(dsize_t dim) const;
 
-  // Insert a new dim at the end of the shape. For example,  <2,4> --> PrependDim(4) --> <2,4,4>
+  // Insert a new dim at the end of the shape. For example,  <2,4> --> AppendDim(4) --> <2,4,4>
   // @param dim
   // @return
   TensorShape AppendDim(dsize_t dim) const;
