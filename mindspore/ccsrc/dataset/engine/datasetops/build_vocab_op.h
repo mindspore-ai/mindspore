@@ -112,6 +112,8 @@ class BuildVocabOp : public ParallelOp {
   BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names, std::pair<int64_t, int64_t> freq_range,
                int64_t top_k, int32_t num_workers, int32_t op_connector_size);
 
+  ~BuildVocabOp() = default;
+
   Status WorkerEntry(int32_t worker_id) override;
 
   // collect the work product from each worker

@@ -28,7 +28,7 @@ class DatasetIteratorTracing : public Tracing {
   DatasetIteratorTracing() = default;
 
   // Destructor
-  ~DatasetIteratorTracing() = default;
+  ~DatasetIteratorTracing() override = default;
 
   // Record tracing data
   // @return Status - The error code return
@@ -40,7 +40,7 @@ class DatasetIteratorTracing : public Tracing {
   // @return Status - The error code return
   Status SaveToFile() override;
 
-  Status Init(const std::string &dir_path, const std::string &device_id);
+  Status Init(const std::string &dir_path, const std::string &device_id) override;
 
  private:
   std::vector<std::string> value_;

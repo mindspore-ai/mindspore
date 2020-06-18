@@ -35,13 +35,13 @@ class TensorRow {
   static constexpr row_id_type kDefaultRowId = -1;  // Default row id
 
   // Type definitions
-  typedef dsize_t size_type;
-  typedef std::shared_ptr<Tensor> value_type;
-  typedef std::shared_ptr<Tensor> &reference;
-  typedef const std::shared_ptr<Tensor> &const_reference;
-  typedef std::vector<std::shared_ptr<Tensor>> vector_type;
-  typedef std::vector<std::shared_ptr<Tensor>>::iterator iterator;
-  typedef std::vector<std::shared_ptr<Tensor>>::const_iterator const_iterator;
+  using size_type = dsize_t;
+  using value_type = std::shared_ptr<Tensor>;
+  using reference = std::shared_ptr<Tensor> &;
+  using const_reference = const std::shared_ptr<Tensor> &;
+  using vector_type = std::vector<std::shared_ptr<Tensor>>;
+  using iterator = std::vector<std::shared_ptr<Tensor>>::iterator;
+  using const_iterator = std::vector<std::shared_ptr<Tensor>>::const_iterator;
 
   TensorRow() noexcept;
 

@@ -33,6 +33,8 @@ class Monitor {
 
   Monitor() = default;
 
+  ~Monitor() = default;
+
   // Functor for Perf Monitor main loop.
   // This function will be the entry point of Mindspore::Dataset::Task
   Status operator()();

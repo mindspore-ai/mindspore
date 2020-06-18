@@ -351,7 +351,7 @@ vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const
     // Write this int to destination blob
     uint64_t u_n = *reinterpret_cast<uint64_t *>(&i_n);
     auto temp_bytes = UIntToBytesLittle(u_n, dst_int_type);
-    for (uint64_t j = 0; j < (kUnsignedOne << dst_int_type); j++) {
+    for (uint64_t j = 0; j < (kUnsignedOne << static_cast<uint8_t>(dst_int_type)); j++) {
       dst_bytes[i_dst++] = temp_bytes[j];
     }
 
@@ -406,7 +406,10 @@ MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<
 
   auto data = reinterpret_cast<const unsigned char *>(array_data.get());
   *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
-  memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes);
+  int ret_code = memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes);
+  if (ret_code != 0) {
+    MS_LOG(ERROR) << "Failed to copy data!";
+  }
 
   return SUCCESS;
 }
@@ -444,7 +447,8 @@ int64_t ShardColumn::BytesLittleToMinIntType(const std::vector<uint8_t> &bytes_a
                                              const IntegerType &src_i_type, IntegerType *dst_i_type) {
   uint64_t u_temp = 0;
   for (uint64_t i = 0; i < (kUnsignedOne << static_cast<uint8_t>(src_i_type)); i++) {
-    u_temp = (u_temp << kBitsOfByte) + bytes_array[pos + (kUnsignedOne << src_i_type) - kUnsignedOne - i];
+    u_temp = (u_temp << kBitsOfByte) +
+             bytes_array[pos + (kUnsignedOne << static_cast<uint8_t>(src_i_type)) - kUnsignedOne - i];
   }
 
   int64_t i_out;

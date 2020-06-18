@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 ClueOp::Builder::Builder()
     : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(0), builder_shuffle_files_(false) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
@@ -545,6 +544,5 @@ Status ClueOp::CountAllFileRows(const std::vector<std::string> &files, int64_t *
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

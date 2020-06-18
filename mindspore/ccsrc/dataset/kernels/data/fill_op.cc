@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status FillOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   Status s = Fill(input, output, fill_value_);

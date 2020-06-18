@@ -264,7 +264,6 @@ class ClueOp : public ParallelOp {
   bool load_jagged_connector_;
   ColKeyMap cols_to_keyword_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // DATASET_ENGINE_DATASETOPS_SOURCE_CLUE_OP_H_
