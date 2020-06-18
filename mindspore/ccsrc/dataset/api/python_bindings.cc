@@ -30,6 +30,7 @@
 #include "dataset/kernels/image/random_crop_and_resize_op.h"
 #include "dataset/kernels/image/random_crop_op.h"
 #include "dataset/kernels/image/random_horizontal_flip_op.h"
+#include "dataset/kernels/image/random_horizontal_flip_bbox_op.h"
 #include "dataset/kernels/image/random_resize_op.h"
 #include "dataset/kernels/image/random_rotation_op.h"
 #include "dataset/kernels/image/random_vertical_flip_op.h"
@@ -37,6 +38,7 @@
 #include "dataset/kernels/image/resize_bilinear_op.h"
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
+#include "dataset/kernels/image/bounding_box_augment_op.h"
 #include "dataset/kernels/data/fill_op.h"
 #include "dataset/kernels/data/slice_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
@@ -343,6 +345,11 @@ void bindTensorOps1(py::module *m) {
     .def(py::init<std::vector<std::shared_ptr<TensorOp>>, int32_t>(), py::arg("operations"),
          py::arg("NumOps") = UniformAugOp::kDefNumOps);
 
+  (void)py::class_<BoundingBoxAugOp, TensorOp, std::shared_ptr<BoundingBoxAugOp>>(
+    *m, "BoundingBoxAugOp", "Tensor operation to apply a transformation on a random choice of bounding boxes.")
+    .def(py::init<std::shared_ptr<TensorOp>, float>(), py::arg("transform"),
+         py::arg("ratio") = BoundingBoxAugOp::defRatio);
+
   (void)py::class_<ResizeBilinearOp, TensorOp, std::shared_ptr<ResizeBilinearOp>>(
     *m, "ResizeBilinearOp",
     "Tensor operation to resize an image using "
@@ -357,6 +364,11 @@ void bindTensorOps1(py::module *m) {
   (void)py::class_<RandomHorizontalFlipOp, TensorOp, std::shared_ptr<RandomHorizontalFlipOp>>(
     *m, "RandomHorizontalFlipOp", "Tensor operation to randomly flip an image horizontally.")
     .def(py::init<float>(), py::arg("probability") = RandomHorizontalFlipOp::kDefProbability);
+
+  (void)py::class_<RandomHorizontalFlipWithBBoxOp, TensorOp, std::shared_ptr<RandomHorizontalFlipWithBBoxOp>>(
+    *m, "RandomHorizontalFlipWithBBoxOp",
+    "Tensor operation to randomly flip an image horizontally, while flipping bounding boxes.")
+    .def(py::init<float>(), py::arg("probability") = RandomHorizontalFlipWithBBoxOp::kDefProbability);
 }
 
 void bindTensorOps2(py::module *m) {

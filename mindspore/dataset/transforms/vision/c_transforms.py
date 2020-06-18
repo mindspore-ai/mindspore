@@ -45,7 +45,7 @@ import mindspore._c_dataengine as cde
 from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp
+    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, check_bounding_box_augment_cpp
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -163,6 +163,21 @@ class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
         super().__init__(prob)
 
 
+class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
+    """
+    Flip the input image horizontally, randomly with a given probability.
+    Maintains data integrity by also flipping bounding boxes in an object detection pipeline.
+
+    Args:
+        prob (float): Probability of the image being flipped (default=0.5).
+    """
+
+    @check_prob
+    def __init__(self, prob=0.5):
+        self.prob = prob
+        super().__init__(prob)
+
+
 class RandomVerticalFlip(cde.RandomVerticalFlipOp):
     """
     Flip the input image vertically, randomly with a given probability.
@@ -175,6 +190,21 @@ class RandomVerticalFlip(cde.RandomVerticalFlipOp):
     def __init__(self, prob=0.5):
         self.prob = prob
         super().__init__(prob)
+
+
+class BoundingBoxAug(cde.BoundingBoxAugOp):
+    """
+    Flip the input image vertically, randomly with a given probability.
+
+    Args:
+        transform: C++ operation (python OPs are not accepted).
+        ratio (float): Ratio of bounding boxes to apply augmentation on. Range: [0,1] (default=1).
+    """
+    @check_bounding_box_augment_cpp
+    def __init__(self, transform, ratio=0.3):
+        self.ratio = ratio
+        self.transform = transform
+        super().__init__(transform, ratio)
 
 
 class Resize(cde.ResizeOp):

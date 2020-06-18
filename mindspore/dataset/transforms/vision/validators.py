@@ -852,6 +852,32 @@ def check_uniform_augment_cpp(method):
     return new_method
 
 
+def check_bounding_box_augment_cpp(method):
+    """Wrapper method to check the parameters of BoundingBoxAugment cpp op."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        transform, ratio = (list(args) + 2 * [None])[:2]
+        if "transform" in kwargs:
+            transform = kwargs.get("transform")
+        if "ratio" in kwargs:
+            ratio = kwargs.get("ratio")
+        if ratio is not None:
+            check_value(ratio, [0., 1.])
+            kwargs["ratio"] = ratio
+        else:
+            ratio = 0.3
+        if not isinstance(ratio, float) and not isinstance(ratio, int):
+            raise ValueError("Ratio should be an int or float.")
+        if not isinstance(transform, TensorOp):
+            raise ValueError("Transform can only be a C++ operation.")
+        kwargs["transform"] = transform
+        kwargs["ratio"] = ratio
+        return method(self, **kwargs)
+
+    return new_method
+
+
 def check_uniform_augment_py(method):
     """Wrapper method to check the parameters of python UniformAugment op."""
 
