@@ -15,6 +15,7 @@
 """Dataset help for minddata dataset"""
 from mindspore._checkparam import check_bool
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode
+from mindspore.train.dataset_helper import _send_data
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, \
     _to_full_shapes
 from mindspore.train.parallel_utils import ParallelMode
@@ -69,7 +70,13 @@ class _DatasetIter:
                 self.loop_size = dataset.get_dataset_size()
             else:
                 self.loop_size = dataset.__loop_size__
-            dataset.__ME_INITED__ = _exec_datagraph(dataset, self.loop_size).queue_name
+            dataset.__TRANSFER_DATASET__ = _exec_datagraph(dataset, self.loop_size)
+            dataset.__ME_INITED__ = dataset.__TRANSFER_DATASET__.queue_name
+
+            if not hasattr(dataset, '__no_send__'):
+                _send_data(dataset)
+        else:
+            _send_data(dataset)
 
         self.ind = 0
         self.dataset = dataset
