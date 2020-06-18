@@ -276,7 +276,7 @@ void bindTensor(py::module *m) {
     .def("get_op_connector_size", &ConfigManager::op_connector_size)
     .def("get_seed", &ConfigManager::seed)
     .def("get_monitor_sampling_interval", &ConfigManager::monitor_sampling_interval)
-    .def("load", [](ConfigManager &c, std::string s) { (void)c.LoadFile(s); });
+    .def("load", [](ConfigManager &c, std::string s) { THROW_IF_ERROR(c.LoadFile(s)); });
 
   (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor", py::buffer_protocol())
     .def(py::init([](py::array arr) {
