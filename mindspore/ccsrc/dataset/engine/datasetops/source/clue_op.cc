@@ -31,7 +31,11 @@
 namespace mindspore {
 namespace dataset {
 ClueOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(0), builder_shuffle_files_(false) {
+    : builder_device_id_(0),
+      builder_num_devices_(1),
+      builder_num_samples_(0),
+      builder_shuffle_files_(false),
+      builder_shuffle_global_(false) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
@@ -62,8 +66,8 @@ Status ClueOp::Builder::Build(std::shared_ptr<ClueOp> *op) {
 
   std::shared_ptr<ClueOp> clue_op = std::make_shared<ClueOp>(
     builder_num_workers_, builder_rows_per_buffer_, builder_num_samples_, builder_worker_connector_size_, ck_map,
-    builder_clue_files_list_, builder_op_connector_size_, builder_shuffle_files_, builder_num_devices_,
-    builder_device_id_);
+    builder_clue_files_list_, builder_op_connector_size_, builder_shuffle_files_, builder_shuffle_global_,
+    builder_num_devices_, builder_device_id_);
   RETURN_IF_NOT_OK(clue_op->Init());
   *op = std::move(clue_op);
 
@@ -83,7 +87,7 @@ std::vector<std::string> ClueOp::Builder::split(const std::string &s, char delim
 
 ClueOp::ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
                ColKeyMap cols_to_keyword, std::vector<std::string> clue_files_list, int32_t op_connector_size,
-               bool shuffle_files, int32_t num_device, int32_t device_id)
+               bool shuffle_files, bool shuffle_global, int32_t num_device, int32_t device_id)
     : ParallelOp(num_workers, op_connector_size),
       rows_per_buffer_(rows_per_buffer),
       num_rows_per_shard_(0),
@@ -94,6 +98,7 @@ ClueOp::ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples
       load_jagged_connector_(true),
       cols_to_keyword_(cols_to_keyword),
       shuffle_files_(shuffle_files),
+      shuffle_global_(shuffle_global),
       finished_reading_dataset_(false),
       num_devices_(num_device),
       device_id_(device_id),

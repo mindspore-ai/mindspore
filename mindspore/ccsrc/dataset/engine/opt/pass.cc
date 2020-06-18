@@ -37,10 +37,18 @@ namespace mindspore {
 namespace dataset {
 
 // Driver method for TreePass
-Status TreePass::Run(ExecutionTree *tree, bool *modified) { return this->RunOnTree(tree, modified); }
+Status TreePass::Run(ExecutionTree *tree, bool *modified) {
+  if (!tree || !modified) {
+    return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
+  }
+  return this->RunOnTree(tree, modified);
+}
 
 // Driver method for NodePass
 Status NodePass::Run(ExecutionTree *tree, bool *modified) {
+  if (!tree || !modified) {
+    return Status(StatusCode::kUnexpectedError, "Null pointer passed to NodePass");
+  }
   std::shared_ptr<DatasetOp> root = tree->root();
   if (traversalOrder_ == Order::DFS) {
     // DFS
