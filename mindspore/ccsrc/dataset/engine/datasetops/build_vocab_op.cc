@@ -141,6 +141,11 @@ Status BuildVocabOp::CollectorThread() {
     }
   }
   int64_t num_words = std::min(static_cast<int64_t>(words.size()), top_k_);
+  if (num_words == 0) {
+    MS_LOG(WARNING) << "No word falls in the frequency range: (" << freq_range_.first << "," << freq_range_.second
+                    << ") vocab would be empty (except for special tokens).";
+  }
+
   // this would take the top-k most frequent words
   std::partial_sort(words.begin(), words.begin() + num_words, words.end(),
                     [this](const std::string &w1, const std::string &w2) {

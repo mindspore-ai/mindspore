@@ -323,9 +323,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
 // if mRecursive == false, don't go into folder of folders
 Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(dir);
-  if (dir_itr == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error encountered when indexing files");
-  }
+  RETURN_UNEXPECTED_IF_NULL(dir_itr);
   while (dir_itr->hasNext()) {
     Path subdir = dir_itr->next();
     if (subdir.IsDirectory()) {

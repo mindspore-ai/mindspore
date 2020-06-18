@@ -32,6 +32,5 @@ __all__ = ["config", "ConfigurationManager", "zip",
            "ImageFolderDatasetV2", "MnistDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
-           "VOCDataset", "CocoDataset", "TextFileDataset", "BuildVocabDataset", "Schema", "Schema",
-           "DistributedSampler", "PKSampler",
-           "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler"]
+           "VOCDataset", "CocoDataset", "TextFileDataset", "Schema", "DistributedSampler",
+           "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler"]

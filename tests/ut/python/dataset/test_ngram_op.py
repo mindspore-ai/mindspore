@@ -16,7 +16,7 @@
 Testing Ngram in mindspore.dataset
 """
 import mindspore.dataset as ds
-import mindspore.dataset.text as nlp
+import mindspore.dataset.text as text
 import numpy as np
 
 
@@ -39,7 +39,7 @@ def test_multiple_ngrams():
             yield (np.array(line.split(" "), dtype='S'),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
-    dataset = dataset.map(input_columns=["text"], operations=nlp.Ngram([1, 2, 3], ("_", 2), ("_", 2), " "))
+    dataset = dataset.map(input_columns=["text"], operations=text.Ngram([1, 2, 3], ("_", 2), ("_", 2), " "))
 
     i = 0
     for data in dataset.create_dict_iterator():
@@ -61,7 +61,7 @@ def test_simple_ngram():
             yield (np.array(line.split(" "), dtype='S'),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
-    dataset = dataset.map(input_columns=["text"], operations=nlp.Ngram(3, separator=None))
+    dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=None))
 
     i = 0
     for data in dataset.create_dict_iterator():
@@ -73,11 +73,11 @@ def test_corner_cases():
     """ testing various corner cases and exceptions"""
 
     def test_config(input_line, output_line, n, l_pad=None, r_pad=None, sep=None):
-        def gen(text):
-            yield (np.array(text.split(" "), dtype='S'),)
+        def gen(texts):
+            yield (np.array(texts.split(" "), dtype='S'),)
 
         dataset = ds.GeneratorDataset(gen(input_line), column_names=["text"])
-        dataset = dataset.map(input_columns=["text"], operations=nlp.Ngram(n, l_pad, r_pad, separator=sep))
+        dataset = dataset.map(input_columns=["text"], operations=text.Ngram(n, l_pad, r_pad, separator=sep))
         for data in dataset.create_dict_iterator():
             assert [d.decode("utf8") for d in data["text"]] == output_line, output_line
 
