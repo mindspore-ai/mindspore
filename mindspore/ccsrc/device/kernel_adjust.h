@@ -51,7 +51,7 @@ class KernelAdjust {
     static KernelAdjust instance;
     return instance;
   }
-  void Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph);
   void InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);

@@ -103,6 +103,7 @@ bool KernelRuntime::RunTask(const session::KernelGraph *graph) {
 }
 
 bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
+  MS_EXCEPTION_IF_NULL(kernel);
   if (AnfAlgo::OutputAddrExist(kernel, index)) {
     return true;
   }
@@ -217,6 +218,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       auto device_address =
         CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_EXCEPTION_IF_NULL(device_address);
+      MS_EXCEPTION_IF_NULL(mem_manager_);
       auto ret = mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
       if (!ret) {
         MS_LOG(EXCEPTION) << "Malloc device memory failed.";
@@ -618,6 +620,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
     auto real_input = AnfAlgo::GetRealInputIndex(kernel, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input);
+    MS_EXCEPTION_IF_NULL(device_address);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(input);
     input->addr = device_address->ptr_;

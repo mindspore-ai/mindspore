@@ -37,9 +37,9 @@
 namespace mindspore {
 namespace device {
 using device::ascend::ProfilingUtils;
-void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  const std::vector<CNodePtr> &origin_cnode_list = kernel_graph_ptr->execution_order();
+void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  const std::vector<CNodePtr> &origin_cnode_list = kernel_graph->execution_order();
   std::vector<CNodePtr> momentum_list;
   std::vector<CNodePtr> other_list;
   for (const auto &cnode : origin_cnode_list) {
@@ -52,7 +52,7 @@ void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_g
   std::vector<CNodePtr> new_order_list;
   new_order_list.insert(new_order_list.end(), other_list.begin(), other_list.end());
   new_order_list.insert(new_order_list.end(), momentum_list.begin(), momentum_list.end());
-  kernel_graph_ptr->set_execution_order(new_order_list);
+  kernel_graph->set_execution_order(new_order_list);
 }
 
 void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {

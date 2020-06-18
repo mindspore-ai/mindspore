@@ -257,6 +257,7 @@ void MemReuseUtil::SetKernelDefMap() {
 
 void MemReuseUtil::SetKernelDefInputs() {
   for (const auto &kernel : graph_->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
     auto key = kernel.get();
     // find kernel_def according to cnode addr
     auto iter = kernel_map_.find(key);
@@ -364,6 +365,7 @@ void MemReuseUtil::SetGraphOutputRefCount() {
 void MemReuseUtil::ResetDynamicUsedRefCount() {
   for (auto iter = kernel_output_refs_.begin(); iter != kernel_output_refs_.end(); ++iter) {
     for (auto &ref_count : iter->second) {
+      MS_EXCEPTION_IF_NULL(ref_count);
       ref_count->ref_count_dynamic_use_ = ref_count->ref_count_;
     }
   }
