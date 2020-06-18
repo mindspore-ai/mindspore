@@ -16,12 +16,20 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore.common.api import _executor
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore import Tensor, context
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+class GradWrap(nn.Cell):
+    def __init__(self, network):
+        super(GradWrap, self).__init__()
+        self.network = network
+
+    def construct(self, x, y):
+        return C.grad_all(self.network)(x, y)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -68,6 +76,33 @@ def test_embeddinglookup_reducescatter_true():
     reduce_scatter_flag = True
     split_num = 8
     net = NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num))
+    net.set_auto_parallel()
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    _executor.compile(net, x, y)
+
+
+def test_embeddinglookup_reducescatter_false_grad():
+    shape = [8, 8]
+    offset = 8
+    reduce_scatter_flag = False
+    split_num = 1
+    net = GradWrap(NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num)))
+    net.set_auto_parallel()
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    _executor.compile(net, x, y)
+
+
+def test_embeddinglookup_reducescatter_true_grad():
+    context.set_context(save_graphs=True)
+    shape = [64, 8]
+    offset = 8
+    reduce_scatter_flag = True
+    split_num = 8
+    net = GradWrap(NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num)))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
