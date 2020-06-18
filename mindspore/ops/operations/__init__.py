@@ -58,7 +58,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
                      DropoutDoMask, DropoutGrad, Dropout,
-                     DropoutGenMask, Flatten, FusedBatchNorm,
+                     DropoutGenMask, Flatten, FusedBatchNorm, BNTrainingReduce, BNTrainingUpdate,
                      Gelu, Elu,
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss,
                      LogSoftmax,
@@ -76,7 +76,6 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
-from . import _quant_ops
 from ._quant_ops import *
 from .thor_ops import *
 
@@ -101,6 +100,9 @@ __all__ = [
     'Conv2D',
     'Flatten',
     'MaxPoolWithArgmax',
+    'FusedBatchNorm',
+    'BNTrainingReduce',
+    'BNTrainingUpdate',
     'BatchNorm',
     'MaxPool',
     'TopK',
@@ -311,5 +313,4 @@ __all__ = [
     "InTopK"
 ]
 
-__all__.extend(_quant_ops.__all__)
 __all__.sort()

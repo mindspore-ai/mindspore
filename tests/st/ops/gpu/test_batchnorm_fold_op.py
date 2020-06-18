@@ -28,7 +28,7 @@ context.set_context(device_target='GPU')
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.op = P.BatchNormFold(freeze_bn=10)
+        self.op = P.BatchNormFold(momentum=0.9, freeze_bn=10)
 
     @ms_function
     def construct(self, x, mean, variance, current_step):
@@ -40,8 +40,8 @@ def np_result(x, mean, var, momentum, epsilon):
     np_mean = x.mean(axis=(0, 2, 3))
     np_var = x.var(axis=(0, 2, 3))
     n = x.shape[0] * x.shape[2] * x.shape[3]
-    mean_update = momentum * np_mean + (1 - momentum) * mean
-    var_update = momentum * np_var * n / (n - 1) + (1 - momentum) * var
+    mean_update = (1 - momentum) * np_mean + momentum * mean
+    var_update = (1 - momentum) * np_var * n / (n - 1) + momentum * var
     np_var = np.sqrt(np_var + epsilon)
     delay_mean = mean.copy()
     delay_std = np.sqrt(var + epsilon)

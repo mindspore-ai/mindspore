@@ -36,7 +36,6 @@ __all__ = ["FakeQuantPerLayer",
            "BatchNormFold2Grad",
            "BatchNormFoldD",
            "BatchNormFoldGradD",
-           "BNTrainingReduce",
            "BatchNormFold2_D",
            "BatchNormFold2GradD",
            "BatchNormFold2GradReduce",
@@ -334,7 +333,7 @@ class BatchNormFold(PrimitiveWithInfer):
     Batch normalization folded.
 
     Args:
-        momentum (float): Momentum value should be [0, 1]. Default: 0.1.
+        momentum (float): Momentum value should be [0, 1]. Default: 0.9.
         epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
             float32 else 1e-3. Default: 1e-5.
         is_training (bool): In training mode set True, else set False. Default: True.
@@ -366,7 +365,7 @@ class BatchNormFold(PrimitiveWithInfer):
     channel_axis = 1
 
     @prim_attr_register
-    def __init__(self, momentum=0.1, epsilon=1e-5, is_training=True, freeze_bn=0):
+    def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
         """init batch norm fold layer"""
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
@@ -729,32 +728,6 @@ class BatchNormFoldGradD(PrimitiveWithInfer):
         args = {"input type": x_type}
         validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
         return x_type
-
-
-class BNTrainingReduce(PrimitiveWithInfer):
-    """
-    reduce sum at axis [0, 2, 3].
-
-    Inputs:
-        - **x** (Tensor)  - Tensor of shape :math:`(N, C)`.
-
-    Outputs:
-        - **x_sum** (Tensor) - Tensor has the same shape as x.
-        - **x_square_sum** (Tensor) - Tensor has the same shape as x.
-
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """init _BNTrainingReduce layer"""
-        self.init_prim_io_names(inputs=['x'],
-                                outputs=['x_sum', 'x_square_sum'])
-
-    def infer_shape(self, x_shape):
-        return [x_shape[1]], [x_shape[1]]
-
-    def infer_dtype(self, x_type):
-        return x_type, x_type
 
 
 class BatchNormFold2_D(PrimitiveWithInfer):
