@@ -69,13 +69,11 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     // trans input_format to hwcn
     new_transdata_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
                                         false, prim::KPrimTransData->name());
-    RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, AnfAlgo::GetOutputDeviceDataType(new_transdata_node, 0),
-                           new_transdata_node);
+    RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transdata_node);
     // trans hwcn to default_format
     new_transpose_node =
       NewTransOpNode(func_graph, new_transdata_node, kernel_select_, false, prim::kPrimTranspose->name());
-    RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, AnfAlgo::GetOutputDeviceDataType(new_transpose_node, 0),
-                           new_transpose_node);
+    RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transpose_node);
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{3, 2, 0, 1}), new_transpose_node);
     new_replace_node = new_transpose_node;
   } else {
@@ -83,14 +81,12 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     new_transpose_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
                                         false, prim::kPrimTranspose->name());
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{2, 3, 1, 0}), new_transpose_node);
-    RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, AnfAlgo::GetOutputDeviceDataType(new_transpose_node, 0),
-                           new_transpose_node);
+    RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
 
     // trans hwcn to output_format
     new_transdata_node =
       NewTransOpNode(func_graph, new_transpose_node, kernel_select_, false, prim::KPrimTransData->name());
-    RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, AnfAlgo::GetOutputDeviceDataType(new_transdata_node, 0),
-                           new_transdata_node);
+    RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node);
     new_replace_node = new_transdata_node;
   }
   FuncGraphManagerPtr manager = func_graph->manager();
