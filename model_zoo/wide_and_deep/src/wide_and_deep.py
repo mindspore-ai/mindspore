@@ -82,7 +82,7 @@ class DenseLayer(nn.Cell):
     """
 
     def __init__(self, input_dim, output_dim, weight_bias_init, act_str,
-                 keep_prob=0.7, scale_coef=1.0, convert_dtype=True, drop_out=False):
+                 keep_prob=0.7, use_activation=True, convert_dtype=True, drop_out=False):
         super(DenseLayer, self).__init__()
         weight_init, bias_init = weight_bias_init
         self.weight = init_method(
@@ -93,9 +93,7 @@ class DenseLayer(nn.Cell):
         self.bias_add = P.BiasAdd()
         self.cast = P.Cast()
         self.dropout = Dropout(keep_prob=keep_prob)
-        self.mul = P.Mul()
-        self.realDiv = P.RealDiv()
-        self.scale_coef = scale_coef
+        self.use_activation = use_activation
         self.convert_dtype = convert_dtype
         self.drop_out = drop_out
 
@@ -110,20 +108,23 @@ class DenseLayer(nn.Cell):
         return act_func
 
     def construct(self, x):
-        x = self.act_func(x)
         if self.training and self.drop_out:
             x = self.dropout(x)
-        x = self.mul(x, self.scale_coef)
         if self.convert_dtype:
             x = self.cast(x, mstype.float16)
             weight = self.cast(self.weight, mstype.float16)
+            bias = self.cast(self.bias, mstype.float16)
             wx = self.matmul(x, weight)
+            wx = self.bias_add(wx, bias)
+            if self.use_activation:
+                wx = self.act_func(wx)
             wx = self.cast(wx, mstype.float32)
         else:
             wx = self.matmul(x, self.weight)
-        wx = self.realDiv(wx, self.scale_coef)
-        output = self.bias_add(wx, self.bias)
-        return output
+            wx = self.bias_add(wx, self.bias)
+            if self.use_activation:
+                wx = self.act_func(wx)
+        return wx
 
 
 class WideDeepModel(nn.Cell):
@@ -185,7 +186,7 @@ class WideDeepModel(nn.Cell):
                                         self.all_dim_list[5],
                                         self.weight_bias_init,
                                         self.deep_layer_act,
-                                        convert_dtype=True, drop_out=config.dropout_flag)
+                                        use_activation=False, convert_dtype=True, drop_out=config.dropout_flag)
 
         self.gather_v2 = P.GatherV2()
         self.mul = P.Mul()
@@ -270,7 +271,7 @@ class TrainStepWrap(nn.Cell):
         sens (Number): The adjust parameter. Default: 1000.0
     """
 
-    def __init__(self, network, sens=1000.0):
+    def __init__(self, network, sens=1024.0):
         super(TrainStepWrap, self).__init__()
         self.network = network
         self.network.set_train()

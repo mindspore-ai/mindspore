@@ -26,7 +26,7 @@ def argparse_init():
     parser.add_argument("--batch_size", type=int, default=16000)
     parser.add_argument("--eval_batch_size", type=int, default=16000)
     parser.add_argument("--field_size", type=int, default=39)
-    parser.add_argument("--vocab_size", type=int, default=184965)
+    parser.add_argument("--vocab_size", type=int, default=200000)
     parser.add_argument("--emb_dim", type=int, default=80)
     parser.add_argument("--deep_layer_dim", type=int, nargs='+', default=[1024, 512, 256, 128])
     parser.add_argument("--deep_layer_act", type=str, default='relu')
@@ -50,7 +50,7 @@ class WideDeepConfig():
         self.batch_size = 16000
         self.eval_batch_size = 16000
         self.field_size = 39
-        self.vocab_size = 184965
+        self.vocab_size = 200000
         self.emb_dim = 80
         self.deep_layer_dim = [1024, 512, 256, 128]
         self.deep_layer_act = 'relu'
