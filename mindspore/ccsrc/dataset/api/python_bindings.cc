@@ -39,6 +39,7 @@
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/fill_op.h"
 #include "dataset/kernels/data/mask_op.h"
+#include "dataset/kernels/data/pad_end_op.h"
 #include "dataset/kernels/data/slice_op.h"
 #include "mindspore/ccsrc/dataset/text/kernels/truncate_sequence_pair_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
@@ -444,6 +445,10 @@ void bindTensorOps2(py::module *m) {
          py::arg("interpolation") = RandomRotationOp::kDefInterpolation,
          py::arg("expand") = RandomRotationOp::kDefExpand, py::arg("fillR") = RandomRotationOp::kDefFillR,
          py::arg("fillG") = RandomRotationOp::kDefFillG, py::arg("fillB") = RandomRotationOp::kDefFillB);
+
+  (void)py::class_<PadEndOp, TensorOp, std::shared_ptr<PadEndOp>>(
+    *m, "PadEndOp", "Tensor operation to pad end of tensor with a pad value.")
+    .def(py::init<TensorShape, std::shared_ptr<Tensor>>());
 }
 
 void bindTensorOps3(py::module *m) {

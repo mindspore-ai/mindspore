@@ -27,6 +27,7 @@ SET(DE_UT_SRCS
     memory_pool_test.cc
     normalize_op_test.cc
     one_hot_op_test.cc
+    pad_end_op_test.cc
     path_test.cc
     project_op_test.cc
     queue_test.cc
@@ -74,6 +75,8 @@ SET(DE_UT_SRCS
     gnn_graph_test.cc
     coco_op_test.cc
     fill_op_test.cc
+    mask_test.cc
+    trucate_pair_test.cc
     )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})
