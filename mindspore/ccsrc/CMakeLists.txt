@@ -131,7 +131,7 @@ if (ENABLE_GE)
     else ()
         target_link_libraries(mindspore ge_client)
     endif ()
-    target_link_libraries(mindspore graph tsdclient)
+    target_link_libraries(mindspore graph tsdclient datatransfer)
 endif()
 
 if (ENABLE_D)
