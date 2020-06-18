@@ -7,4 +7,5 @@ add_library(kernels-data OBJECT
         to_float16_op.cc
         fill_op.cc
         slice_op.cc
-        mask_op.cc)
+        mask_op.cc
+        )

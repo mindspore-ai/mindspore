@@ -23,7 +23,7 @@ import mindspore._c_dataengine as cde
 
 from .utils import JiebaMode, NormalizeForm
 from .validators import check_lookup, check_jieba_add_dict, \
-    check_jieba_add_word, check_jieba_init, check_ngram
+    check_jieba_add_word, check_jieba_init, check_ngram, check_pair_truncate
 
 
 class Lookup(cde.LookupOp):
@@ -344,3 +344,31 @@ if platform.system().lower() != 'windows':
             self.preserve_unused_token = preserve_unused_token
             super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token, self.unknown_token,
                              self.lower_case, self.keep_whitespace, self.normalization_form, self.preserve_unused_token)
+
+
+class TruncateSequencePair(cde.TruncateSequencePairOp):
+    """
+    Truncate a pair of rank-1 tensors such that the total length is less than max_length.
+
+    This operation takes two input tensors and returns two output Tenors.
+
+    Args:
+        max_length(int): Maximum length required.
+
+    Examples:
+        >>> # Data before
+        >>> # |  col1   |  col2   |
+        >>> # +---------+---------|
+        >>> # | [1,2,3] | [4,5]   |
+        >>> # +---------+---------+
+        >>> data = data.map(operations=TruncateSequencePair(4))
+        >>> # Data after
+        >>> # |  col1   |  col2   |
+        >>> # +---------+---------+
+        >>> # | [1,2]   | [4,5]   |
+        >>> # +---------+---------+
+    """
+
+    @check_pair_truncate
+    def __init__(self, max_length):
+        super().__init__(max_length)

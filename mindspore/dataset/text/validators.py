@@ -20,7 +20,7 @@ from functools import wraps
 
 import mindspore._c_dataengine as cde
 
-from ..transforms.validators import check_uint32
+from ..transforms.validators import check_uint32, check_pos_int64
 
 
 def check_lookup(method):
@@ -294,6 +294,25 @@ def check_ngram(method):
         kwargs["left_pad"] = left_pad
         kwargs["right_pad"] = right_pad
         kwargs["separator"] = separator
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_pair_truncate(method):
+    """Wrapper method to check the parameters of number of pair truncate."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        max_length = (list(args) + [None])[0]
+        if "max_length" in kwargs:
+            max_length = kwargs.get("max_length")
+        if max_length is None:
+            raise ValueError("max_length is not provided.")
+
+        check_pos_int64(max_length)
+        kwargs["max_length"] = max_length
 
         return method(self, **kwargs)
 
