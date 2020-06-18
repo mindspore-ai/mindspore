@@ -177,14 +177,21 @@ bool MsContext::OpenTsd() {
   }
 
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-
+#if (defined(ENABLE_TDTQUE) && defined(ENABLE_GE))
+  int32_t initStatus = tdt::TdtHostInit(device_id);
+  if (initStatus != TDT_OK_CODE) {
+    MS_LOG(EXCEPTION) << "Init tsd failed, status = " << initStatus << ".";
+    return false;
+  }
+  tdt_print_ = std::thread(TensorPrint());
+#endif
   TDT_StatusT status = tdt::TsdClient::GetInstance()->Open(device_id, rank_size);
   if (status != TDT_OK) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " is occupied, open tsd failed, status = " << status << ".";
     return false;
   }
   tsd_ref_++;
-#ifdef ENABLE_TDTQUE
+#if (defined(ENABLE_TDTQUE) && !defined(ENABLE_GE))
   int32_t initStatus = tdt::TdtHostInit(device_id);
   if (initStatus != TDT_OK_CODE) {
     MS_LOG(EXCEPTION) << "Init tsd failed, status = " << initStatus << ".";
