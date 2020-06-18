@@ -171,11 +171,11 @@ class Optimizer(Cell):
         params = self.parameters
         if self.is_group:
             if self.exec_weight_decay:
-                gradients = self.hyper_map(F.partial(apply_decay), self.weight_decay, self.decay_flags,
+                gradients = self.hyper_map(F.partial(_apply_decay), self.weight_decay, self.decay_flags,
                                            params, gradients)
         else:
             if self.weight_decay > 0:
-                gradients = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_flags,
+                gradients = self.hyper_map(F.partial(_apply_decay, self.weight_decay), self.decay_flags,
                                            params, gradients)
 
         return gradients
@@ -196,7 +196,7 @@ class Optimizer(Cell):
 
         """
         if self.reciprocal_scale != 1.0:
-            gradients = self.map_(F.partial(grad_scale, self.reciprocal_scale), gradients)
+            gradients = self.map_(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
         return gradients
 
@@ -390,10 +390,10 @@ class Optimizer(Cell):
 
 op_add = P.AddN()
 
-apply_decay = C.MultitypeFuncGraph("apply_decay")
+_apply_decay = C.MultitypeFuncGraph("apply_decay")
 
 
-@apply_decay.register("Number", "Bool", "Tensor", "Tensor")
+@_apply_decay.register("Number", "Bool", "Tensor", "Tensor")
 def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
     if if_apply:
@@ -401,10 +401,10 @@ def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
     return gradient
 
 
-grad_scale = C.MultitypeFuncGraph("grad_scale")
+_grad_scale = C.MultitypeFuncGraph("grad_scale")
 
 
-@grad_scale.register("Number", "Tensor")
+@_grad_scale.register("Number", "Tensor")
 def tensor_grad_scale(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
@@ -412,7 +412,7 @@ def tensor_grad_scale(scale, grad):
     return grad * scale
 
 
-@grad_scale.register("Number", "Tuple")
+@_grad_scale.register("Number", "Tuple")
 def tensor_grad_scale_with_sparse(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:

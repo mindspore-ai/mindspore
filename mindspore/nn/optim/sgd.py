@@ -20,10 +20,10 @@ import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
-sgd_opt = C.MultitypeFuncGraph("sgd_opt")
+_sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
 
-@sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
     """Apply sgd optimizer to the weight parameter using Tensor."""
     success = True
@@ -154,7 +154,7 @@ class SGD(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(sgd_opt, self.opt, self.momentum), lr, gradients, params, accum, stat)
+            success = self.hyper_map(F.partial(_sgd_opt, self.opt, self.momentum), lr, gradients, params, accum, stat)
         else:
-            success = self.hyper_map(F.partial(sgd_opt, self.opt, self.momentum, lr), gradients, params, accum, stat)
+            success = self.hyper_map(F.partial(_sgd_opt, self.opt, self.momentum, lr), gradients, params, accum, stat)
         return success
