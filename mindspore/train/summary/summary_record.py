@@ -181,7 +181,7 @@ class SummaryRecord:
 
         data = _get_summary_tensor_data()
         if not data:
-            logger.error("The step(%r) does not have record data.", step)
+            logger.info("The step(%r) does not have record data.", step)
             return False
         if self.queue_max_size > 0 and len(data) > self.queue_max_size:
             logger.error("The size of data record is %r, which is greater than queue_max_size %r.", len(data),
