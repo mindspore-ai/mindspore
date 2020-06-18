@@ -28,17 +28,60 @@ class MindDataTestRandomCropAndResizeOp : public UT::CVOP::CVOpCommon {
  public:
   MindDataTestRandomCropAndResizeOp() : CVOpCommon() {}
 };
+TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
+  MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
+  TensorShape s_in = input_tensor_->shape();
+  std::shared_ptr<Tensor> output_tensor;
+  int h_out = 1024;
+  int w_out = 2048;
+  float aspect_lb = 2;
+  float aspect_ub = 2.5;
+  float scale_lb = 0.2;
+  float scale_ub = 2.0;
 
-TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest) {
+  TensorShape s_out({h_out, w_out, s_in[2]});
+
+  auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  Status s;
+  for (auto i = 0; i < 100; i++) {
+    s = op->Compute(input_tensor_, &output_tensor);
+    EXPECT_TRUE(s.IsOk());
+  }
+
+  MS_LOG(INFO) << "RandomCropAndResizeOp simple test finished";
+}
+TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
+  MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
+  TensorShape s_in = input_tensor_->shape();
+  std::shared_ptr<Tensor> output_tensor;
+  int h_out = 1024;
+  int w_out = 2048;
+  float aspect_lb = 1;
+  float aspect_ub = 1.5;
+  float scale_lb = 0.2;
+  float scale_ub = 2.0;
+
+  TensorShape s_out({h_out, w_out, s_in[2]});
+
+  auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  Status s;
+  for (auto i = 0; i < 100; i++) {
+    s = op->Compute(input_tensor_, &output_tensor);
+    EXPECT_TRUE(s.IsOk());
+  }
+
+  MS_LOG(INFO) << "RandomCropAndResizeOp simple test finished";
+}
+TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
   int w_out = 2048;
   float aspect_lb = 0.2;
-  float aspect_ub = 5;
-  float scale_lb = 0.0001;
-  float scale_ub = 1.0;
+  float aspect_ub = 3;
+  float scale_lb = 0.2;
+  float scale_ub = 2.0;
 
   TensorShape s_out({h_out, w_out, s_in[2]});
 

@@ -57,7 +57,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     else:
         transform_img = [
             V_C.Decode(),
-            V_C.Resize((256, 256)),
+            V_C.Resize(256),
             V_C.CenterCrop(image_size),
             V_C.Normalize(mean=mean, std=std),
             V_C.HWC2CHW()
