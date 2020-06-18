@@ -28,7 +28,7 @@ namespace ascend {
 class TaskDescReporter : public DescReporter {
  public:
   TaskDescReporter(int device_id, const std::string &file_name, std::vector<CNodePtr> cnode_list)
-      : DescReporter(device_id, file_name, std::move(cnode_list)) {}
+      : DescReporter(device_id, file_name), cnode_list_(std::move(cnode_list)) {}
   ~TaskDescReporter() override = default;
   void ReportData() override;
   void set_task_ids(const std::vector<uint32_t> &task_ids) { task_ids_ = task_ids; }
@@ -38,6 +38,7 @@ class TaskDescReporter : public DescReporter {
   std::vector<uint32_t> task_ids_;
   std::vector<uint32_t> stream_ids_;
   void CheckStreamTaskValid(uint32_t task_id, uint32_t stream_id);
+  std::vector<CNodePtr> cnode_list_;
 };
 }  // namespace ascend
 }  // namespace device

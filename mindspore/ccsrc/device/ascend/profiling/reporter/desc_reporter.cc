@@ -56,8 +56,8 @@ void DescReporter::ReportByLine(const std::string &data, const std::string &file
   }
 }
 
-void DescReporter::ReportData() {
-  for (const auto &desc : prof_desc_) {
+void DescReporter::ReportAllLine() {
+  for (const auto &desc : prof_desc_list_) {
     auto data = desc->ToString();
     ReportByLine(data, file_name_);
   }

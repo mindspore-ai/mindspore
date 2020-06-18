@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PROFILING_UTILS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_PROFILING_UTILS_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,6 +24,7 @@
 #include <unordered_map>
 #include "session/kernel_graph.h"
 #include "utils/contract.h"
+#include "device/ascend/profiling/reporter/profiling_desc.h"
 
 namespace mindspore {
 namespace device {
@@ -104,7 +106,7 @@ class ProfilingUtils {
                                 NotNull<session::KernelGraph *> graph_ptr,
                                 NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
 
-  static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
+  static std::map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
 
   inline static constexpr char kProfiling[] = "Profiling";
   inline static constexpr char kNotify[] = "notify";
@@ -126,10 +128,12 @@ class ProfilingUtils {
                                      NotNull<std::set<std::string> *> getnext_outputs);
 
   static bool ValidComputeGraph(NotNull<const session::KernelGraph *> graph_ptr);
+  static void SaveProfilingPoint(uint32_t graph_id, const std::string &node_name, uint32_t point_id);
 
   // graph id --> (kernel name list)
-  static std::unordered_map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
-  static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name_;
+  static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
+  static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
+  static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
   static uint32_t custom_node_index_;
 };
 }  // namespace ascend

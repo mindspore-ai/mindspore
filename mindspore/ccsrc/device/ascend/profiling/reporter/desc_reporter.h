@@ -32,16 +32,17 @@ namespace ascend {
 class DescReporter {
  public:
   virtual ~DescReporter() = 0;
-  DescReporter(int device_id, std::string file_name, std::vector<CNodePtr> cnode_list)
-      : device_id_(device_id), file_name_(std::move(file_name)), cnode_list_(std::move(cnode_list)) {}
-  virtual void ReportData();
+  DescReporter(int device_id, std::string file_name) : device_id_(device_id), file_name_(std::move(file_name)) {}
+
+  virtual void ReportData() = 0;
 
  protected:
   void ReportByLine(const std::string &data, const std::string &file_name) const;
+  void ReportAllLine();
+
   int device_id_;
   std::string file_name_;
-  std::vector<CNodePtr> cnode_list_;
-  std::vector<std::shared_ptr<ProfDesc>> prof_desc_;
+  std::vector<std::shared_ptr<ProfDesc>> prof_desc_list_;
 };
 }  // namespace ascend
 }  // namespace device
