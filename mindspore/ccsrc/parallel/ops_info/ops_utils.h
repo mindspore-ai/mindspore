@@ -55,6 +55,7 @@ constexpr char REDUCE_OP_SUM[] = "sum";
 constexpr char REDUCE_OP_MAX[] = "max";
 constexpr char REDUCE_OP_MIN[] = "min";
 constexpr char OP_PATH[] = "mindspore.ops.operations";
+constexpr char INNER_OP_PATH[] = "mindspore.ops.operations._inner_ops";
 constexpr char GET_OP_FUNCTION_PATH[] = "mindspore.parallel._utils";
 constexpr char GET_OP_FUNCTION[] = "_get_python_op";
 constexpr char KEEP_DIMS[] = "keep_dims";

@@ -70,6 +70,7 @@ class GatherV2PInfo : public OperatorInfo {
   Group group_;
   bool reduce_scatter_flag_ = false;
   int32_t split_num_ = 1;
+  bool host_reduce_scatter_ = false;
 };
 
 class SparseGatherV2Info : public GatherV2PInfo {
