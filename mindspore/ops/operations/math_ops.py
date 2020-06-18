@@ -584,6 +584,8 @@ class MatMul(PrimitiveWithInfer):
     def infer_dtype(self, x, y):
         args = {"x": x, "y": y}
         validator.check_tensor_type_same(args, mstype.float_type + mstype.int_type, self.name)
+        if x.element_type() == mstype.int8:
+            return mstype.tensor_type(mstype.int32)
         return x
 
 

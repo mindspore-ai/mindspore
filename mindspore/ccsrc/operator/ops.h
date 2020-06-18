@@ -228,6 +228,8 @@ extern const PrimitivePtr kPrimActivation;
 extern const PrimitivePtr kPrimZerosLike;
 extern const PrimitivePtr kPrimFakeBprop;
 extern const PrimitivePtr kPrimBpropCut;
+extern const PrimitivePtr kPrimFakeQuantPerLayer;
+extern const PrimitivePtr kPrimFakeQuantPerChannel;
 
 // Other Miscellaneous
 extern const PrimitivePtr kPrimIdentity;

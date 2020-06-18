@@ -43,11 +43,12 @@ class Primitive(Primitive_):
         >>> # init a Primitive obj with attr1=1 and attr2=2
         >>> add = Add(attr1=1, attr2=2)
     """
+    _repr_ignore_list = ['input_names', 'output_names']
 
     def __init__(self, name):
         self.name = name
         self.attrs = {}
-        self.init_attrs = {}
+        self.init_attrs = {"name": name}
         Primitive_.__init__(self, name, self)
         if hasattr(self.__class__, '__mindspore_signature__'):
             sig = self._fill_signature(self.__class__.__mindspore_signature__)
@@ -165,6 +166,16 @@ class Primitive(Primitive_):
     def __setstate__(self, d):
         self.__dict__.update(d)
 
+    def __deepcopy__(self, memo):
+        return type(self)(**self.init_attrs)
+
+    def __repr__(self):
+        attr = ', '.join([f'{k}={self.attrs[k]}'for k in self.attrs if not k in Primitive._repr_ignore_list])
+        info_str = f'Prim[{self.name}]'
+        if attr:
+            info_str += f'<{attr}>'
+        return info_str
+
     def init_prim_io_names(self, inputs, outputs):
         """
         Initializes inputs and outpus name of Tensor or attributes.
@@ -185,8 +196,8 @@ class PrimitiveWithInfer(Primitive):
 
     There are four method can be overide to define the infer logic of the primitive: __infer__(), infer_shape(),
     infer_dtype(), and infer_value(). If __infer__() is defined in primitive, the __infer__() has highest priority
-    to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describle shape
-    and type infer logic. The infer_value() is used for constant propogation.
+    to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe shape
+    and type infer logic. The infer_value() is used for constant propagation.
 
     Args:
         name (str): Name for current Primitive.
@@ -288,6 +299,7 @@ def prim_attr_register(fn):
         bound_args.apply_defaults()
         arguments = bound_args.arguments
         del arguments['self']
+        del self.init_attrs['name']
         for name in arguments:
             value = arguments[name]
             self.add_prim_attr(name, value)

@@ -800,7 +800,7 @@ class Conv2D(PrimitiveWithInfer):
     def infer_shape(self, x_shape, w_shape):
         validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
         validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
-        validator.check("x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
+        validator.check(f"x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
 
@@ -846,6 +846,8 @@ class Conv2D(PrimitiveWithInfer):
         args = {'x': x_dtype, 'w': w_dtype}
         valid_types = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
         validator.check_tensor_type_same(args, valid_types, self.name)
+        if x_dtype.element_type() == mstype.int8:
+            return mstype.tensor_type(mstype.int32)
         return x_dtype
 
 

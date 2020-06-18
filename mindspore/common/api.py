@@ -526,6 +526,11 @@ class _Executor:
         phase = 'export' + '.' + str(net.create_time)
         export_graph(file_name, file_format, phase)
 
+    def fetch_info_for_quant_export(self, exec_id):
+        """Get graph proto from pipeline."""
+        if self._executor.has_compiled(exec_id) is False:
+            return None
+        return self._executor.fetch_info_for_quant_export(exec_id)
 
 _executor = _Executor()
 _pynative_exec = _PynativeExecutor()

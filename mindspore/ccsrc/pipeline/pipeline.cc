@@ -281,6 +281,75 @@ ExecutorPy::~ExecutorPy() {
   ConfigManager::GetInstance().ResetConfig();
 }
 
+std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchInfoForQuantExport(
+  const std::string &phase_s) {
+  FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
+  std::map<std::string, std::pair<PrimitivePyPtr, std::string>> fake_quant_table;
+  auto filter = [](AnfNodePtr node) {
+    return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul));
+  };
+  std::vector<AnfNodePtr> nodes = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  auto is_quant_cnode = [](AnfNodePtr node) {
+    return IsPrimitiveCNode(node, prim::kPrimFakeQuantPerLayer) ||
+           IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel);
+  };
+  for (auto node : nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr || cnode->size() != 3) {
+      continue;
+    }
+    auto x = cnode->input(1);
+    auto weight = cnode->input(2);
+    if (!is_quant_cnode(weight)) {
+      continue;
+    }
+    // get parameter weight's name
+    cnode = weight->cast<CNodePtr>();
+    auto weight_node = cnode->input(2);
+    if (!weight_node->isa<Parameter>()) {
+      continue;
+    }
+    auto weight_name = weight_node->cast<ParameterPtr>()->name();
+    // find the fakequant from input
+    int count = 0;
+    int max_depth = 5;
+    while (!is_quant_cnode(x)) {
+      if (count >= max_depth) {
+        break;
+      }
+      cnode = x->cast<CNodePtr>();
+      if (cnode == nullptr || cnode->size() <= 1) {
+        break;
+      }
+      x = cnode->input(1);
+      count += 1;
+    }
+    // get the fakequant parameter minq's name
+    if (!is_quant_cnode(x)) {
+      continue;
+    }
+    cnode = x->cast<CNodePtr>();
+    if (cnode == nullptr || cnode->size() != 4) {
+      continue;
+    }
+    auto fakequant_min_node = cnode->input(2);
+    if (!fakequant_min_node->isa<Parameter>()) {
+      continue;
+    }
+    auto fakequant_min_node_name = fakequant_min_node->cast<ParameterPtr>()->name();
+    auto quant_op_value = cnode->input(0)->cast<ValueNodePtr>()->value();
+    if (!quant_op_value->isa<PrimitivePy>()) {
+      continue;
+    }
+    auto quant_op = quant_op_value->cast<PrimitivePyPtr>();
+    fake_quant_table[weight_name] = std::make_pair(quant_op, fakequant_min_node_name);
+  }
+
+  return fake_quant_table;
+}
+
 void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
   // save the graph to ExecutorPy
   FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();

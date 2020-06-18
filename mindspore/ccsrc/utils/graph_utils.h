@@ -39,6 +39,7 @@ namespace mindspore {
 enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
 
 using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;
+using FilterFunc = std::function<bool(const AnfNodePtr &)>;
 using SuccFunc = std::function<std::vector<AnfNodePtr>(AnfNodePtr)>;
 using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr &, const IncludeFunc &)>;
 
@@ -57,6 +58,9 @@ IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node);
 std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
 std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
 std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
+
+std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
+                                                        const FilterFunc &filter);
 
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
                                  const IncludeFunc &include = AlwaysInclude);
