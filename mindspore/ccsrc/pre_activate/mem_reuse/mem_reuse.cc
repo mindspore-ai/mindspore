@@ -228,7 +228,8 @@ KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t
                       << AnfAlgo::GetInputTensorNum(kernel);
   }
   auto input_node = kernel->input(input_idx + 1);
-  auto kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+  // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+  auto kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
   if (IsPrimitive(kernel_input.first, prim::kPrimMakeTuple)) {
     MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << input_idx << " is MakeTuple";
   }
@@ -269,7 +270,8 @@ void MemReuseUtil::SetKernelDefInputs() {
       if (ref_ptr != nullptr) {
         // set the inputs of this kernel_def
         auto input_node = AnfAlgo::GetInputNode(kernel, i);
-        auto input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+        // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+        auto input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
         if (IsPrimitive(input.first, prim::kPrimMakeTuple)) {
           MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
         }

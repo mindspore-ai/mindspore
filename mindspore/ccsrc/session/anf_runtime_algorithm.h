@@ -121,14 +121,16 @@ class AnfRuntimeAlgorithm {
   // get output select data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputDeviceDataType(const AnfNodePtr &node, size_t input_idx);
   // get output device addr of anf_node
-  static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx);
+  static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
   // get mutable output device addr of anf_node
-  static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx);
+  static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
   // check whether output addr is exist or not
   static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx);
   // get address from prev node,input_index is the input index of current node related to prev node
-  static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &node, size_t input_idx);
-  static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx);
+  static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &node, size_t input_idx,
+                                                    bool visit_nop_node = true);
+  static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
+                                                       bool visit_nop_node = true);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
   // set workspace device addr of anf_node
