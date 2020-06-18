@@ -26,20 +26,10 @@ constexpr auto kRanksGroup = "group";
 constexpr auto kAllGatherInputNum = 1;
 }  // namespace
 
-AllGatherCPUKernel::AllGatherCPUKernel() : input_data_number_(0) {}
-
 void AllGatherCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kAllGatherInputNum) {
     MS_LOG(EXCEPTION) << "allgather input num:" << input_num;
-  }
-  for (size_t i = 0; i < input_num; ++i) {
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-    size_t count = 1;
-    for (size_t j = 0; j < shape.size(); j++) {
-      count *= IntToSize(shape[j]);
-    }
-    input_data_number_ += count;
   }
 
   auto ranks_group = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kRanksGroup);
@@ -55,8 +45,9 @@ bool AllGatherCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  auto input_data_num = inputs[0]->size / sizeof(float);
 
-  return device::cpu::MPIAdapter::Instance().AllGather(input_addr, output_addr, ranks_group_, input_data_number_);
+  return device::cpu::MPIAdapter::Instance().AllGather(input_addr, output_addr, ranks_group_, input_data_num);
 }
 }  // namespace kernel
 }  // namespace mindspore
