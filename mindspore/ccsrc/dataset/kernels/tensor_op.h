@@ -43,6 +43,36 @@
     }                                               \
   } while (false)
 
+#define BOUNDING_BOX_CHECK(input)                                                           \
+  do {                                                                                      \
+    uint32_t num_of_features = input[1]->shape()[1];                                        \
+    if (num_of_features < 4) {                                                              \
+      return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
+                    "Bounding boxes should be have at least 4 features");                   \
+    }                                                                                       \
+    uint32_t num_of_boxes = input[1]->shape()[0];                                           \
+    uint32_t img_h = input[0]->shape()[0];                                                  \
+    uint32_t img_w = input[0]->shape()[1];                                                  \
+    for (uint32_t i = 0; i < num_of_boxes; i++) {                                           \
+      uint32_t min_x = 0;                                                                   \
+      uint32_t min_y = 0;                                                                   \
+      uint32_t b_w = 0;                                                                     \
+      uint32_t b_h = 0;                                                                     \
+      input[1]->GetItemAt<uint32_t>(&min_x, {i, 0});                                        \
+      input[1]->GetItemAt<uint32_t>(&min_y, {i, 1});                                        \
+      input[1]->GetItemAt<uint32_t>(&b_w, {i, 2});                                          \
+      input[1]->GetItemAt<uint32_t>(&b_h, {i, 3});                                          \
+      if ((min_x + b_w > img_w) || (min_y + b_h > img_h)) {                                 \
+        return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,              \
+                      "At least one of the bounding boxes is out of bounds of the image."); \
+      }                                                                                     \
+      if (static_cast<int>(min_x) < 0 || static_cast<int>(min_y) < 0) {                     \
+        return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,              \
+                      "At least one of the bounding boxes has negative min_x or min_y.");   \
+      }                                                                                     \
+    }                                                                                       \
+  } while (false)
+
 namespace mindspore {
 namespace dataset {
 // A class that does a computation on  a Tensor
