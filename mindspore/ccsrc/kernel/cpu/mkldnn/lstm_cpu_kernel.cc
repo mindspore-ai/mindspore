@@ -81,11 +81,11 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = formatted_md(dst_dims, tag::tnc);
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
-  dnnl::lstm_forward::desc desc =
-    dnnl::lstm_forward::desc(dnnl::prop_kind::forward_training, direction, src_desc, src_h_desc, src_c_desc,
-                             formatted_md(weights_dims_, tag::any), formatted_md(weights_h_dims_, tag::any), bias_desc,
-                             dst_desc, dst_h_desc, dst_c_desc);
-  prim_desc_ = dnnl::lstm_forward::primitive_desc(desc, eng);
+  auto desc = std::make_shared<dnnl::lstm_forward::desc>(dnnl::prop_kind::forward_training, direction, src_desc,
+                                                         src_h_desc, src_c_desc, formatted_md(weights_dims_, tag::any),
+                                                         formatted_md(weights_h_dims_, tag::any), bias_desc, dst_desc,
+                                                         dst_h_desc, dst_c_desc);
+  prim_desc_ = dnnl::lstm_forward::primitive_desc(*desc, eng);
   primitive_ = std::make_shared<dnnl::lstm_forward>(prim_desc_);
   AddArgument(DNNL_ARG_SRC_LAYER, src_desc);
   AddArgument(DNNL_ARG_SRC_ITER, src_h_desc);
@@ -117,7 +117,11 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   if (has_bias_) {
     bias_memory.set_data_handle(reinterpret_cast<float *>(inputs[3]->addr) + weight_size_ + weight_h_size_);
   } else {
-    std::memset(bias_memory.get_data_handle(), 0, prim_desc_.bias_desc().get_size());
+    auto ret =
+      memset_s(bias_memory.get_data_handle(), prim_desc_.bias_desc().get_size(), 0, prim_desc_.bias_desc().get_size());
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "bias memset error";
+    }
   }
   // set handle
   SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[0]->addr);
