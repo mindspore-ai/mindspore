@@ -632,7 +632,7 @@ void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradie
     }
     last_index = index;
   }
-  unique_grad->indices_size_ = unique_indices_size;
+  unique_grad->indices_size_ = unique_indices_size + 1;
 }
 }  // namespace kernel
 }  // namespace mindspore

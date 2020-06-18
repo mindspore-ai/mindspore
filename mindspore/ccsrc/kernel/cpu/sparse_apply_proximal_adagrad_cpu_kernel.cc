@@ -13,35 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/cpu/sparse_apply_ftrl_cpu_kernel.h"
+#include "kernel/cpu/sparse_apply_proximal_adagrad_cpu_kernel.h"
 #include "kernel/common_utils.h"
 #include "device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSparseApplyFtrlInputSize = 5;
+constexpr size_t kSparseApplyProximalAdagradInputSize = 7;
 }  // namespace
 
-void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
 }
 
-void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   std::vector<size_t> accum_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  std::vector<size_t> linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-  std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+  std::vector<size_t> lr_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  std::vector<size_t> l1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+  std::vector<size_t> l2_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+  std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+  std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
   if (!IsSameShape(var_shape, accum_shape)) {
     MS_LOG(EXCEPTION) << "var and accum should have the same shape";
-  }
-  if (!IsSameShape(var_shape, linear_shape)) {
-    MS_LOG(EXCEPTION) << "var and linear should have the same shape";
   }
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "var must be at least 1D";
@@ -60,36 +59,31 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (grad_shape[0] != indices_size_) {
     MS_LOG(EXCEPTION) << "The first dimension of grad shape must be equal to indices";
   }
-  lr_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "lr");
-  if (lr_ <= 0) {
-    MS_LOG(EXCEPTION) << "lr should be a positive scalar";
+  if (!lr_shape.empty()) {
+    MS_LOG(EXCEPTION) << "lr is not a scalar";
   }
-  l1_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "l1");
-  if (l1_ < 0) {
-    MS_LOG(EXCEPTION) << "l1 should be a non-negative scalar";
+  if (!l1_shape.empty()) {
+    MS_LOG(EXCEPTION) << "l1 is not a scalar";
   }
-  l2_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "l2");
-  if (l2_ < 0) {
-    MS_LOG(EXCEPTION) << "l2 should be a non-negative scalar";
-  }
-  lr_power_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "lr_power");
-  if (lr_power_ > 0) {
-    MS_LOG(EXCEPTION) << "lr_power should be a non-positive scalar";
+  if (!l2_shape.empty()) {
+    MS_LOG(EXCEPTION) << "l2 is not a scalar";
   }
 }
 
-bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> & /*outputs*/) {
-  if (inputs.size() < kSparseApplyFtrlInputSize) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &workspace,
+                                                 const std::vector<kernel::AddressPtr> & /*outputs*/) {
+  if (inputs.size() < kSparseApplyProximalAdagradInputSize) {
+    MS_LOG(EXCEPTION) << "Wrong input size!";
   }
 
   auto var = reinterpret_cast<float *>(inputs[0]->addr);
   auto accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto linear = reinterpret_cast<float *>(inputs[2]->addr);
-  auto grad = reinterpret_cast<float *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<int *>(inputs[4]->addr);
+  auto lr = reinterpret_cast<float *>(inputs[2]->addr)[0];
+  auto l1 = reinterpret_cast<float *>(inputs[3]->addr)[0];
+  auto l2 = reinterpret_cast<float *>(inputs[4]->addr)[0];
+  auto grad = reinterpret_cast<float *>(inputs[5]->addr);
+  auto indices = reinterpret_cast<int *>(inputs[6]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
   auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
@@ -104,23 +98,16 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
     size_t start_index = var_outer_dim_size_ * index;
     size_t end_index = start_index + var_outer_dim_size_;
     for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
-      auto summed_grad = unique_sparse_grad.value_[k];
-      auto accum_new = accum[j] + summed_grad * summed_grad;
-      if (lr_power_ == -0.5) {
-        linear[j] += summed_grad - (std::sqrt(accum_new) - std::sqrt(accum[j])) / lr_ * var[j];
+      accum[j] += grad[k] * grad[k];
+      auto learning_rate = lr * (1 / std::sqrt(accum[j]));
+      auto prox_v = var[j];
+      prox_v -= grad[k] * learning_rate;
+      if (l1 > 0) {
+        var[j] = Sign(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1, static_cast<float>(0.0)) /
+                 (1 + l2 * learning_rate);
       } else {
-        linear[j] += summed_grad - (std::pow(accum_new, -lr_power_) - std::pow(accum[j], -lr_power_)) / lr_ * var[j];
+        var[j] = prox_v / (1 + l2 * learning_rate);
       }
-      auto x = Sign(linear[j]) * l1_ - linear[j];
-      float y;
-      if (lr_power_ == -0.5) {
-        y = std::sqrt(accum_new) / lr_ + 2 * l2_;
-      } else {
-        y = std::pow(accum_new, -lr_power_) / lr_ + 2 * l2_;
-      }
-      auto pre_shrink = x / y;
-      var[j] = std::fabs(linear[j]) > l1_ ? pre_shrink : 0;
-      accum[j] = accum_new;
     }
   }
   return true;
