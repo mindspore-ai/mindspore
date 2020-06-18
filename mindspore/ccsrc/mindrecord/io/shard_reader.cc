@@ -115,6 +115,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
       MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
+      db = nullptr;
       return FAILED;
     } else {
       MS_LOG(DEBUG) << "Get " << static_cast<int>(name.size()) << " records from index.";
@@ -123,6 +124,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
         MS_LOG(ERROR) << "DB file can not match file " << file;
         sqlite3_free(errmsg);
         sqlite3_close(db);
+        db = nullptr;
         return FAILED;
       }
     }
@@ -220,7 +222,11 @@ void ShardReader::FileStreamsOperator() {
   }
   for (int i = static_cast<int>(database_paths_.size()) - 1; i >= 0; --i) {
     if (database_paths_[i] != nullptr) {
-      (void)sqlite3_close(database_paths_[i]);
+      auto ret = sqlite3_close(database_paths_[i]);
+      if (ret != SQLITE_OK) {
+        MS_LOG(ERROR) << "Close db failed. Error code: " << ret << ".";
+      }
+      database_paths_[i] = nullptr;
     }
   }
 }
@@ -348,6 +354,7 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
     MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(db);
+    db = nullptr;
     return FAILED;
   }
   MS_LOG(INFO) << "Get " << static_cast<int>(labels.size()) << " records from shard " << shard_id << " index.";
@@ -401,6 +408,7 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
   if (ret != SQLITE_OK) {
     sqlite3_free(errmsg);
     sqlite3_close(db);
+    db = nullptr;
     MS_LOG(ERROR) << "Error in select sql statement, sql:" << common::SafeCStr(sql) << ", error: " << errmsg;
     return;
   }
@@ -525,6 +533,7 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
     MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(db);
+    db = nullptr;
     return std::vector<std::vector<uint64_t>>();
   } else {
     MS_LOG(DEBUG) << "Get " << static_cast<int>(image_offsets.size()) << "records from index.";
@@ -664,6 +673,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabelsFromPage(
       MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
+      db = nullptr;
       return {FAILED, {}};
     }
     MS_LOG(DEBUG) << "Get " << label_offsets.size() << "records from index.";
@@ -700,6 +710,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
         MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
         sqlite3_free(errmsg);
         sqlite3_close(db);
+        db = nullptr;
         return {FAILED, {}};
       } else {
         MS_LOG(DEBUG) << "Get " << static_cast<int>(labels.size()) << "records from index.";
