@@ -22,9 +22,16 @@ from .optimizer import Optimizer
 
 _proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
 
+@_proximal_ada_grad_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tuple", "Tensor", "Tensor")
+def _tensor_run_opt_with_sparse(opt, sparse_opt, learning_rate, l1, l2, gradient, weight, accum):
+    """Apply sparse proximal_ada_grad optimizer to the weight parameter."""
+    success = True
+    success = F.depend(success, sparse_opt(weight, accum, learning_rate, l1, l2, gradient[1], gradient[0]))
+    return success
 
-@_proximal_ada_grad_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(opt, learning_rate, l1, l2, gradient, weight, accum):
+
+@_proximal_ada_grad_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _tensor_run_opt(opt, sparse_opt, learning_rate, l1, l2, gradient, weight, accum):
     """Apply proximal_ada_grad optimizer to the weight parameter."""
     success = True
     success = F.depend(success, opt(weight, accum, learning_rate, l1, l2, gradient))
@@ -49,6 +56,11 @@ class ProximalAdagrad(Optimizer):
     ProximalAdagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
+
+    Note:
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
+        `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
+        behavior is currently performed on the CPU, weight decay is not supported.
 
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
@@ -87,6 +99,7 @@ class ProximalAdagrad(Optimizer):
         self.weight_decay = weight_decay
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyProximalAdagrad(use_locking=use_locking)
+        self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
 
     def construct(self, grads):
         params = self.parameters
@@ -94,6 +107,6 @@ class ProximalAdagrad(Optimizer):
         grads = self.decay_weight(grads)
         grads = self.scale_grad(grads)
         lr = self.learning_rate
-        success = self.hyper_map(F.partial(_proximal_ada_grad_opt, self.opt, lr, self.l1, self.l2),
-                                 grads, params, accum)
+        success = self.map_(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2),
+                            grads, params, accum)
         return success
