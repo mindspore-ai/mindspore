@@ -20,6 +20,7 @@ import os
 import pickle as pkl
 import numpy as np
 import scipy.sparse as sp
+from mindspore import log as logger
 
 # parse args from command line parameter 'graph_api_args'
 #     args delimiter is ':'
@@ -58,7 +59,7 @@ def yield_nodes(task_id=0):
     Yields:
         data (dict): data row which is dict.
     """
-    print("Node task is {}".format(task_id))
+    logger.info("Node task is {}".format(task_id))
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally']
     objects = []
     for name in names:
@@ -98,7 +99,7 @@ def yield_nodes(task_id=0):
         line_count += 1
         node_ids.append(i)
         yield node
-    print('Processed {} lines for nodes.'.format(line_count))
+    logger.info('Processed {} lines for nodes.'.format(line_count))
 
 
 def yield_edges(task_id=0):
@@ -108,21 +109,21 @@ def yield_edges(task_id=0):
     Yields:
         data (dict): data row which is dict.
     """
-    print("Edge task is {}".format(task_id))
+    logger.info("Edge task is {}".format(task_id))
     with open("{}/ind.{}.graph".format(CITESEER_PATH, dataset_str), 'rb') as f:
         graph = pkl.load(f, encoding='latin1')
         line_count = 0
         for i in graph:
             for dst_id in graph[i]:
                 if not i in node_ids:
-                    print('Source node {} does not exist.'.format(i))
+                    logger.info('Source node {} does not exist.'.format(i))
                     continue
                 if not dst_id in node_ids:
-                    print('Destination node {} does not exist.'.format(
+                    logger.info('Destination node {} does not exist.'.format(
                         dst_id))
                     continue
                 edge = {'id': line_count,
                         'src_id': i, 'dst_id': dst_id, 'type': 0}
                 line_count += 1
                 yield edge
-        print('Processed {} lines for edges.'.format(line_count))
+        logger.info('Processed {} lines for edges.'.format(line_count))

@@ -319,7 +319,7 @@ class PKSampler(BuiltinSampler):
             raise ValueError("num_val should be a positive integer value, but got num_val={}".format(num_val))
 
         if num_class is not None:
-            raise NotImplementedError
+            raise NotImplementedError("Not support specify num_class")
 
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle should be a boolean value, but got shuffle={}".format(shuffle))
@@ -551,8 +551,8 @@ class WeightedRandomSampler(BuiltinSampler):
 
     Args:
         weights (list[float]): A sequence of weights, not necessarily summing up to 1.
-        num_samples (int): Number of elements to sample (default=None, all elements).
-        replacement (bool, optional): If True, put the sample ID back for the next draw (default=True).
+        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        replacement (bool): If True, put the sample ID back for the next draw (default=True).
 
     Examples:
         >>> import mindspore.dataset as ds

@@ -164,7 +164,7 @@ if __name__ == "__main__":
     num_features, feature_data_types, feature_shapes = mr_api.edge_profile
     graph_map_schema.set_edge_feature_profile(num_features, feature_data_types, feature_shapes)
 
-    graph_schema = graph_map_schema.get_schema()
+    graph_schema = graph_map_schema.get_schema
 
     # init writer
     writer = init_writer(graph_schema)

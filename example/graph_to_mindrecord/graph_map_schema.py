@@ -16,6 +16,7 @@
 Graph data convert tool for MindRecord.
 """
 import numpy as np
+from mindspore import log as logger
 
 __all__ = ['GraphMapSchema']
 
@@ -41,6 +42,7 @@ class GraphMapSchema:
             "edge_feature_index": {"type": "int32", "shape": [-1]}
         }
 
+    @property
     def get_schema(self):
         """
         Get schema
@@ -52,6 +54,7 @@ class GraphMapSchema:
         Set node features profile
         """
         if num_features != len(features_data_type) or num_features != len(features_shape):
+            logger.info("Node feature profile is not match.")
             raise ValueError("Node feature profile is not match.")
 
         self.num_node_features = num_features
@@ -66,6 +69,7 @@ class GraphMapSchema:
         Set edge features profile
         """
         if num_features != len(features_data_type) or num_features != len(features_shape):
+            logger.info("Edge feature profile is not match.")
             raise ValueError("Edge feature profile is not match.")
 
         self.num_edge_features = num_features
@@ -83,6 +87,10 @@ class GraphMapSchema:
         Returns:
             graph data with union schema
         """
+        if node is None:
+            logger.info("node cannot be None.")
+            raise ValueError("node cannot be None.")
+
         node_graph = {"first_id": node["id"], "second_id": 0, "third_id": 0, "attribute": 'n', "type": node["type"],
                       "node_feature_index": []}
         for i in range(self.num_node_features):
@@ -117,6 +125,10 @@ class GraphMapSchema:
         Returns:
             graph data with union schema
         """
+        if edge is None:
+            logger.info("edge cannot be None.")
+            raise ValueError("edge cannot be None.")
+
         edge_graph = {"first_id": edge["id"], "second_id": edge["src_id"], "third_id": edge["dst_id"], "attribute": 'e',
                       "type": edge["type"], "edge_feature_index": []}
 

@@ -48,7 +48,7 @@ class AutoIndexObj : public BPlusTree<int64_t, T, A> {
   // @return
   Status insert(const value_type &val, key_type *key = nullptr) {
     key_type my_inx = inx_.fetch_add(1);
-    if (key) {
+    if (key != nullptr) {
       *key = my_inx;
     }
     return my_tree::DoInsert(my_inx, val);

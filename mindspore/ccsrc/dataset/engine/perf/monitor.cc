@@ -26,6 +26,7 @@ Monitor::Monitor(ExecutionTree *tree) : tree_(tree) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   sampling_interval_ = cfg->monitor_sampling_interval();
   max_samples_ = 0;
+  cur_row_ = 0;
 }
 
 Status Monitor::operator()() {

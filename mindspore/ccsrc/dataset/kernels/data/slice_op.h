@@ -34,6 +34,8 @@ class Slice {
   Slice(dsize_t start, dsize_t stop) : start_(start), stop_(stop), step_(1) {}
   explicit Slice(dsize_t stop) : start_(0), stop_(stop), step_(1) {}
 
+  ~Slice() = default;
+
   std::vector<dsize_t> Indices(dsize_t length) {
     std::vector<dsize_t> indices;
     dsize_t index = std::min(Tensor::HandleNeg(start_, length), length);

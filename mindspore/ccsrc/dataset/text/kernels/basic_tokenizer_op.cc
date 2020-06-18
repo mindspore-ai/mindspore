@@ -49,6 +49,7 @@ BasicTokenizerOp::BasicTokenizerOp(bool lower_case, bool keep_whitespace, Normal
       preserve_unused_token_(preserve_unused_token),
       case_fold_(std::make_unique<CaseFoldOp>()),
       nfd_normalize_(std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfd)),
+      normalization_form_(normalization_form),
       common_normalize_(std::make_unique<NormalizeUTF8Op>(normalization_form)),
       replace_accent_chars_(std::make_unique<RegexReplaceOp>("\\p{Mn}", "")),
       replace_control_chars_(std::make_unique<RegexReplaceOp>("\\p{Cc}|\\p{Cf}", " ")) {

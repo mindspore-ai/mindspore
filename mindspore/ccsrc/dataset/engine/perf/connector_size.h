@@ -44,7 +44,7 @@ class ConnectorSize : public Sampling {
  public:
   explicit ConnectorSize(ExecutionTree *tree) : tree_(tree) {}
 
-  ~ConnectorSize() = default;
+  ~ConnectorSize() override = default;
 
   // Driver function for connector size sampling.
   // This function samples the connector size of every nodes within the ExecutionTree

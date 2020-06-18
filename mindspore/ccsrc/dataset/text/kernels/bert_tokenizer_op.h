@@ -28,14 +28,14 @@ namespace mindspore {
 namespace dataset {
 class BertTokenizerOp : public TensorOp {
  public:
-  BertTokenizerOp(const std::shared_ptr<Vocab> &vocab,
-                  const std::string &suffix_indicator = WordpieceTokenizerOp::kDefSuffixIndicator,
-                  const int &max_bytes_per_token = WordpieceTokenizerOp::kDefMaxBytesPerToken,
-                  const std::string &unknown_token = WordpieceTokenizerOp::kDefUnknownToken,
-                  bool lower_case = BasicTokenizerOp::kDefLowerCase,
-                  bool keep_whitespace = BasicTokenizerOp::kDefKeepWhitespace,
-                  NormalizeForm normalization_form = BasicTokenizerOp::kDefNormalizationForm,
-                  bool preserve_unused_token = BasicTokenizerOp::kDefPreserveUnusedToken)
+  explicit BertTokenizerOp(const std::shared_ptr<Vocab> &vocab,
+                           const std::string &suffix_indicator = WordpieceTokenizerOp::kDefSuffixIndicator,
+                           const int &max_bytes_per_token = WordpieceTokenizerOp::kDefMaxBytesPerToken,
+                           const std::string &unknown_token = WordpieceTokenizerOp::kDefUnknownToken,
+                           bool lower_case = BasicTokenizerOp::kDefLowerCase,
+                           bool keep_whitespace = BasicTokenizerOp::kDefKeepWhitespace,
+                           NormalizeForm normalization_form = BasicTokenizerOp::kDefNormalizationForm,
+                           bool preserve_unused_token = BasicTokenizerOp::kDefPreserveUnusedToken)
       : wordpiece_tokenizer_(vocab, suffix_indicator, max_bytes_per_token, unknown_token),
         basic_tokenizer_(lower_case, keep_whitespace, normalization_form, preserve_unused_token) {}
 
