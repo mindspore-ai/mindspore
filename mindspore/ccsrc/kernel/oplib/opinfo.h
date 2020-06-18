@@ -95,12 +95,7 @@ class OpInfo {
   OpImplyType imply_type() const { return imply_type_; }
   std::string impl_path() const { return impl_path_; }
   std::string fusion_type() const { return fusion_type_; }
-  bool async_flag() const { return async_flag_; }
-  std::string binfile_name() const { return binfile_name_; }
-  int compute_cost() const { return compute_cost_; }
   std::string kernel_name() const { return kernel_name_; }
-  bool partial_flag() const { return partial_flag_; }
-  bool dynamic_format() const { return dynamic_format_; }
   OpPattern op_pattern() const { return op_pattern_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
@@ -116,13 +111,10 @@ class OpInfo {
   void set_compute_cost(const int compute_cost) { compute_cost_ = compute_cost; }
   void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   void set_partial_flag(const bool partial_flag) { partial_flag_ = partial_flag; }
-  void set_dynamic_format(const bool dynamic_format) { dynamic_format_ = dynamic_format; }
   void set_op_pattern(const OpPattern op_pattern) { op_pattern_ = op_pattern; }
   void add_attrs_ptr(const std::shared_ptr<OpAttr> &attr) { attrs_ptr_.push_back(attr); }
   void add_inputs_ptr(const std::shared_ptr<OpIOInfo> &input) { inputs_ptr_.push_back(input); }
   void add_outputs_ptr(const std::shared_ptr<OpIOInfo> &output) { outputs_ptr_.push_back(output); }
-  void set_inputs_ptr(const std::vector<std::shared_ptr<OpIOInfo>> &inputs) { inputs_ptr_ = inputs; }
-  void set_outputs_ptr(const std::vector<std::shared_ptr<OpIOInfo>> &outputs) { outputs_ptr_ = outputs; }
   bool is_ref() const { return !ref_infos_.empty(); }
   bool has_ref_index(size_t out_index) const { return ref_infos_.find(out_index) != ref_infos_.end(); }
   void add_ref_pair(size_t out_index, size_t in_index) { (void)ref_infos_.emplace(out_index, in_index); }
