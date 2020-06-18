@@ -63,7 +63,7 @@ const std::unordered_map<std::string, size_t> type_nbyte_maps = {
 
 const std::unordered_map<std::string, FusionType> fusion_type_maps = {
   {"CONVLUTION", FusionType::CONVLUTION}, {"ELEMWISE", FusionType::ELEMWISE}, {"COMMREDUCE", FusionType::COMMREDUCE},
-  {"SEGMENT", FusionType::SEGMENT},       {"OPAQUE", FusionType::OPAQUE},
+  {"SEGMENT", FusionType::SEGMENT},       {"DYNAMIC", FusionType::DYNAMIC},   {"OPAQUE", FusionType::OPAQUE},
 };
 
 TypeId DtypeToTypeId(const std::string &dtypes) {

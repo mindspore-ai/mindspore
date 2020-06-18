@@ -205,6 +205,20 @@ void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::stri
   if (task_iter == pre_task_map_.end()) {
     MS_EXCEPTION(ArgumentError) << "can find pre task_id:" << task_id;
   }
+  auto node = task_iter->second;
+  auto builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+  std::string start_flag = "fusion_pattern_start";
+  std::string end_flag = "fusion_pattern_end";
+  int start = pre_build_result.find(start_flag);
+  int end = pre_build_result.find(end_flag);
+  if (start != -1 && end != -1) {
+    std::string result = pre_build_result.substr(start + start_flag.size(), end - start - start_flag.size());
+    transform(result.begin(), result.end(), result.begin(), ::toupper);
+    FusionType fusion_type = tbe::GetFusionType(result);
+    builder->SetFusionType(fusion_type);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+  }
   (void)pre_task_map_.erase(task_iter);
 }
 

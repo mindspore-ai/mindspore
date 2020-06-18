@@ -73,7 +73,8 @@ static bool KernelPreBuildParallelCompile(const mindspore::session::KernelGraph 
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
     switch (kernel_type) {
       case KernelType::TBE_KERNEL: {
-        if (AnfAlgo::GetKernelMod(anf_node) == nullptr) {
+        if (AnfAlgo::GetKernelMod(anf_node) == nullptr &&
+            AnfAlgo::GetFusionType(anf_node) == kernel::FusionType::DYNAMIC) {
           tbe_nodes.push_back(anf_node);
         }
         break;
