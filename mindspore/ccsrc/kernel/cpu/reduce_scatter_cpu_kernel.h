@@ -33,7 +33,6 @@ class ReduceScatterCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t output_data_number_;
   std::string op_type_;
   std::vector<int> ranks_group_;
 };

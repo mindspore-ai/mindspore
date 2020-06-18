@@ -24,18 +24,9 @@ namespace {
 constexpr auto kRanksGroup = "group";
 }  // namespace
 
-ReduceScatterCPUKernel::ReduceScatterCPUKernel() : output_data_number_(0), op_type_(device::cpu::kOpTypeSum) {}
+ReduceScatterCPUKernel::ReduceScatterCPUKernel() : op_type_(device::cpu::kOpTypeSum) {}
 
 void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t i = 0; i < output_num; ++i) {
-    auto shape = AnfAlgo::GetOutputInferShape(kernel_node, i);
-    size_t size = 1;
-    for (size_t j = 0; j < shape.size(); j++) {
-      size *= IntToSize(shape[j]);
-    }
-    output_data_number_ += size;
-  }
   auto op = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("op");
   if (op != nullptr) {
     op_type_ = GetValue<std::string>(op);
@@ -54,8 +45,9 @@ bool ReduceScatterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
                                     const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  auto output_data_num = outputs[0]->size / sizeof(float);
 
-  return device::cpu::MPIAdapter::Instance().ReduceScatter(input_addr, output_addr, ranks_group_, output_data_number_,
+  return device::cpu::MPIAdapter::Instance().ReduceScatter(input_addr, output_addr, ranks_group_, output_data_num,
                                                            op_type_);
 }
 }  // namespace kernel

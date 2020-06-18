@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 class AllGatherCPUKernel : public CPUKernel {
  public:
-  AllGatherCPUKernel();
+  AllGatherCPUKernel() = default;
   ~AllGatherCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -33,7 +33,6 @@ class AllGatherCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t input_data_number_;
   std::vector<int> ranks_group_;
 };
 
