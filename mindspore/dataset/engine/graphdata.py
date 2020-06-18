@@ -214,7 +214,7 @@ class GraphData:
 
         Returns:
             Dict: Meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
-                node_feature_type and edge_feature_type.
+            node_feature_type and edge_feature_type.
         """
         return self._graph.graph_info()
 
