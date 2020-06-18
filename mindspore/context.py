@@ -490,7 +490,6 @@ def set_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        If need to config graph max memory size and variable max memory size, one must make sure:
 
     Args:
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE.
