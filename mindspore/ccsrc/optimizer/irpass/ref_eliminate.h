@@ -46,6 +46,26 @@ class MakeRefEliminater : public AnfVisitor {
   AnfNodePtr y_{nullptr};
 };
 
+// {prim::kPrimGetRefValue, Parameter} -> Parameter
+// {prim::kPrimGetRefOrigin, Parameter} -> Parameter
+class GetRefParamEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    x_ = nullptr;
+    AnfVisitor::Match(prim::kPrimGetRefOrigin, {IsParam})(node);
+    if (x_ != nullptr) {
+      return x_;
+    }
+    AnfVisitor::Match(prim::kPrimGetRefValue, {IsParam})(node);
+    return x_;
+  }
+
+  void Visit(const AnfNodePtr &node) override { x_ = node; }
+
+ private:
+  AnfNodePtr x_{nullptr};
+};
+
 // {prim::kPrimGetRefKey, {prim::kPrimMakeRef, X, Y, Z}} -> X
 // {prim::kPrimGetRefValue, {prim::kPrimMakeRef, X, Y, Z}} -> Y
 // {prim::kPrimGetRefOrigin, {prim::kPrimMakeRef, X, Y, Z}} -> Z
