@@ -25,5 +25,12 @@ MS_REG_GPU_KERNEL_ONE(GeluGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       GeLUGpuGradKernel, float)
+MS_REG_GPU_KERNEL_ONE(GeluGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      GeLUGpuGradKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
