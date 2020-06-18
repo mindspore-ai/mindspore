@@ -76,7 +76,7 @@ class Net(nn.Cell):
                  weight='normal',
                  bias='zeros',
                  has_bias=True,
-                 activation=''):
+                 activation=None):
         super(Net, self).__init__()
         self.dense = nn.Dense(input_channels,
                               output_channels,
