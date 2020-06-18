@@ -29,10 +29,11 @@ from .common.exceptions import *
 from .shardutils import SUCCESS, FAILED
 from .tools.cifar10_to_mr import Cifar10ToMR
 from .tools.cifar100_to_mr import Cifar100ToMR
+from .tools.csv_to_mr import CsvToMR
 from .tools.imagenet_to_mr import ImageNetToMR
 from .tools.mnist_to_mr import MnistToMR
 from .tools.tfrecord_to_mr import TFRecordToMR
 
 __all__ = ['FileWriter', 'FileReader', 'MindPage',
-           'Cifar10ToMR', 'Cifar100ToMR', 'ImageNetToMR', 'MnistToMR', 'TFRecordToMR',
+           'Cifar10ToMR', 'Cifar100ToMR', 'CsvToMR', 'ImageNetToMR', 'MnistToMR', 'TFRecordToMR',
            'SUCCESS', 'FAILED']
