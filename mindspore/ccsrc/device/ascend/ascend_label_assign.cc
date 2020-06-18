@@ -140,7 +140,7 @@ uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> gr
   std::lock_guard<std::mutex> lock(label_num_mutex_);
   auto iter = label_num_.find(graph.get());
   if (iter == label_num_.end()) {
-    MS_LOG(WARNING) << "Graph " << graph->ToString() << " has not assigned label.";
+    MS_LOG(INFO) << "Graph " << graph->ToString() << " has not assigned label.";
     return 1;
   }
   return iter->second;
