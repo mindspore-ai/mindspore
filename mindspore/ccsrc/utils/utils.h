@@ -25,6 +25,7 @@
 #include <set>
 
 #include "utils/log_adapter.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
@@ -269,6 +270,8 @@ const std::set<std::string> kOptOperatorSet = {
 const std::set<std::string> kHWSpecialFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
                                                    kOpFormat_FRAC_NZ,      kOpFormat_C1HWNCoC0,   kOpFormat_NC1HWC0_C04,
                                                    kOpFormat_FRACTAL_Z_C04};
+
+const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {

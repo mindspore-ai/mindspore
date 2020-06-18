@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include <set>
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
@@ -189,6 +190,9 @@ bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
 
 // Get attr which is bool from cnode
 bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
+
+// Check node's data type is in supported data type set
+bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_

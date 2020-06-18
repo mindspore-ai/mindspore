@@ -88,6 +88,9 @@ const AnfNodePtr LambNextMVWithDecayRule::Process(const FuncGraphPtr &func_graph
                                                   const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   AnfNodePtr mul4 = GetAnfNodeByVar(equiv, mul4_var_);
   MS_EXCEPTION_IF_NULL(mul4);
   // Get add3 and match the add3 pattern
