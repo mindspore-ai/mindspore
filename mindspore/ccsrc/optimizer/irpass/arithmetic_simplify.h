@@ -101,24 +101,24 @@ class CheckTensorConstant {
         if (fabs(data2[i] - check_value_) > FLT_EPSILON) {
           return false;
         }
-        return true;
       }
+      return true;
     } else if (tensor_type == TypeId::kNumberTypeFloat64) {
       double *data2 = reinterpret_cast<double *>(tensor_ptr->data_c());
       for (int i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > DBL_EPSILON) {
           return false;
         }
-        return true;
       }
+      return true;
     } else if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
       int *data2 = reinterpret_cast<int *>(tensor_ptr->data_c());
       for (int i = 0; i < tensor_ptr->DataSize(); i++) {
         if (data2[i] != check_value_) {
           return false;
         }
-        return true;
       }
+      return true;
     }
     // Un-support Data Types
     return false;
