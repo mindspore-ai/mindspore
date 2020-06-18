@@ -774,7 +774,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
-  bool exist_summary = ExistSummaryNode(graph);
+  bool exist_summary = graph->summary_node_exist();
   if (!exist_summary) {
     return;
   }
