@@ -47,6 +47,7 @@ bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   MS_EXCEPTION_IF_NULL(build_manger);
   for (const auto &anf_node : anf_nodes) {
     // gen kernel json
+    MS_EXCEPTION_IF_NULL(anf_node);
     nlohmann::json kernel_json;
     TbeKernelJsonCreator creator(OP_PRE_COMPILE);
     if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {

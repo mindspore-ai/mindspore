@@ -68,6 +68,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, in
   } else if (flag == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   } else if (flag == kReuseDynamicMem) {
+    MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
   }
   return ptr;
@@ -75,6 +76,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, in
 
 uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, int flag, size_t size) {
   if (flag == kReuseDynamicMem) {
+    MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     return mem_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
   }
   return MallocDynamicMem(size, false);
