@@ -285,7 +285,7 @@ class Model:
 
             if self._parameter_broadcast:
                 self._train_network.set_broadcast_flag()
-
+            train_dataset.__no_send__ = True
             train_dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                                         is_train=True,
                                                                         phase='train',
@@ -302,6 +302,7 @@ class Model:
 
             self._eval_network.set_train(False)
             self._eval_network.phase = 'eval'
+            valid_dataset.__no_send__ = True
             valid_dataset_helper, eval_network = self._exec_preprocess(self._eval_network,
                                                                        is_train=False,
                                                                        phase='eval',
