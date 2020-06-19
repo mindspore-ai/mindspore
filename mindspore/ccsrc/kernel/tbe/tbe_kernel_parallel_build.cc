@@ -212,8 +212,12 @@ void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::stri
   std::string end_flag = "fusion_pattern_end";
   int start = pre_build_result.find(start_flag);
   int end = pre_build_result.find(end_flag);
-  if (start != -1 && end != -1) {
+  if (start != -1 && end != -1 && end >= start) {
     std::string result = pre_build_result.substr(start + start_flag.size(), end - start - start_flag.size());
+    if (result == "") {
+      (void)pre_task_map_.erase(task_iter);
+      return;
+    }
     transform(result.begin(), result.end(), result.begin(), ::toupper);
     FusionType fusion_type = tbe::GetFusionType(result);
     builder->SetFusionType(fusion_type);
