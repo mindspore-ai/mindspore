@@ -22,6 +22,8 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as ops
 
 
+# Extensive testing of PadEnd is already done in batch with Pad test cases
+
 def pad_compare(array, pad_shape, pad_value, res):
     data = ds.NumpySlicesDataset([array])
     if pad_value is not None:
@@ -31,8 +33,6 @@ def pad_compare(array, pad_shape, pad_value, res):
     for d in data:
         np.testing.assert_array_equal(res, d[0])
 
-
-# Extensive testing of PadEnd is already done in batch with Pad test cases
 
 def test_pad_end_basics():
     pad_compare([1, 2], [3], -1, [1, 2, -1])
@@ -56,6 +56,10 @@ def test_pad_end_exceptions():
     with pytest.raises(RuntimeError) as info:
         pad_compare([b"1", b"2", b"3", b"4", b"5"], [2], 1, [])
     assert "Source and pad_value tensors are not of the same type." in str(info.value)
+
+    with pytest.raises(TypeError) as info:
+        pad_compare([3, 4, 5], ["2"], 1, [])
+    assert "a value in the list is not an integer." in str(info.value)
 
 
 if __name__ == "__main__":
