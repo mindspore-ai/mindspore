@@ -45,6 +45,10 @@
 
 #define BOUNDING_BOX_CHECK(input)                                                           \
   do {                                                                                      \
+    if (input[1]->shape().Size() < 2) {                                                     \
+      return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
+                    "Bounding boxes shape should have at least two dims");                  \
+    }                                                                                       \
     uint32_t num_of_features = input[1]->shape()[1];                                        \
     if (num_of_features < 4) {                                                              \
       return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \

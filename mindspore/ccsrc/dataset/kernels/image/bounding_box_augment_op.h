@@ -24,33 +24,35 @@
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
 #include "dataset/util/status.h"
+#include "dataset/util/random.h"
 
 namespace mindspore {
 namespace dataset {
-class BoundingBoxAugOp : public TensorOp {
+class BoundingBoxAugmentOp : public TensorOp {
  public:
   // Default values, also used by python_bindings.cc
-  static const float defRatio;
+  static const float kDefRatio;
 
   // Constructor for BoundingBoxAugmentOp
   // @param std::shared_ptr<TensorOp> transform transform: C++ opration to apply on select bounding boxes
   // @param float ratio: ratio of bounding boxes to have the transform applied on
-  BoundingBoxAugOp(std::shared_ptr<TensorOp> transform, float ratio);
+  BoundingBoxAugmentOp(std::shared_ptr<TensorOp> transform, float ratio);
 
-  ~BoundingBoxAugOp() override = default;
+  ~BoundingBoxAugmentOp() override = default;
 
   // Provide stream operator for displaying it
-  friend std::ostream &operator<<(std::ostream &out, const BoundingBoxAugOp &so) {
+  friend std::ostream &operator<<(std::ostream &out, const BoundingBoxAugmentOp &so) {
     so.Print(out);
     return out;
   }
 
-  void Print(std::ostream &out) const override { out << "BoundingBoxAugOp"; }
+  void Print(std::ostream &out) const override { out << "BoundingBoxAugmentOp"; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
  private:
   float ratio_;
+  std::mt19937 rnd_;
   std::shared_ptr<TensorOp> transform_;
 };
 }  // namespace dataset

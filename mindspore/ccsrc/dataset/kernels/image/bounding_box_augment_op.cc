@@ -23,12 +23,14 @@
 
 namespace mindspore {
 namespace dataset {
-const float BoundingBoxAugOp::defRatio = 0.3;
+const float BoundingBoxAugmentOp::kDefRatio = 0.3;
 
-BoundingBoxAugOp::BoundingBoxAugOp(std::shared_ptr<TensorOp> transform, float ratio)
-    : ratio_(ratio), transform_(std::move(transform)) {}
+BoundingBoxAugmentOp::BoundingBoxAugmentOp(std::shared_ptr<TensorOp> transform, float ratio)
+    : ratio_(ratio), transform_(std::move(transform)) {
+  rnd_.seed(GetSeed());
+}
 
-Status BoundingBoxAugOp::Compute(const TensorRow &input, TensorRow *output) {
+Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   BOUNDING_BOX_CHECK(input);  // check if bounding boxes are valid
   uint32_t num_of_boxes = input[1]->shape()[0];
@@ -37,8 +39,7 @@ Status BoundingBoxAugOp::Compute(const TensorRow &input, TensorRow *output) {
   std::vector<uint32_t> selected_boxes;
   for (uint32_t i = 0; i < num_of_boxes; i++) boxes[i] = i;
   // sample bboxes according to ratio picked by user
-  std::random_device rd;
-  std::sample(boxes.begin(), boxes.end(), std::back_inserter(selected_boxes), num_to_aug, std::mt19937(rd()));
+  std::sample(boxes.begin(), boxes.end(), std::back_inserter(selected_boxes), num_to_aug, rnd_);
   std::shared_ptr<Tensor> crop_out;
   std::shared_ptr<Tensor> res_out;
   std::shared_ptr<CVTensor> input_restore = CVTensor::AsCVTensor(input[0]);
