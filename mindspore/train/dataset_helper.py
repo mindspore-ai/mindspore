@@ -24,6 +24,14 @@ from ..nn.wrap import GetNextSingleOp
 from ..parallel._utils import _get_device_num, _get_global_rank, _get_parallel_mode
 
 
+def _send_data(dataset):
+    """Engine dataset to write data to tdt queue."""
+    if not hasattr(dataset, '__has_sent__'):
+        exec_dataset = dataset.__TRANSFER_DATASET__
+        exec_dataset.send()
+        dataset.__has_sent__ = True
+
+
 class DatasetHelper:
     """
     Help function to use the Minddata dataset.
@@ -82,7 +90,13 @@ class _DatasetIter:
                 self.loop_size = dataset.get_dataset_size()
             else:
                 self.loop_size = dataset.__loop_size__
-            dataset.__ME_INITED__ = _exec_datagraph(dataset, self.loop_size).queue_name
+            dataset.__TRANSFER_DATASET__ = _exec_datagraph(dataset, self.loop_size)
+            dataset.__ME_INITED__ = dataset.__TRANSFER_DATASET__.queue_name
+
+            if not hasattr(dataset, '__no_send__'):
+                _send_data(dataset)
+        else:
+            _send_data(dataset)
 
         self.ind = 0
         self.dataset = dataset

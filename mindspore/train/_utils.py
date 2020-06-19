@@ -16,11 +16,10 @@
 import os
 import numpy as np
 from mindspore.common.tensor import Tensor
-from mindspore.common.dtype import dtype_to_nptype
+from mindspore.common.dtype import dtype_to_nptype, pytype_to_dtype
 from mindspore.common import dtype as mstype
 from mindspore import log as logger
 from mindspore.common.api import _executor
-from mindspore.common.dtype import pytype_to_dtype
 
 
 def _convert_type(types):
@@ -63,9 +62,6 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
                            dataset_shapes,
                            input_indexs,
                            phase=phase)
-
-    # engine dataset to write data to tdt queue
-    exec_dataset.send()
     return exec_dataset
 
 
