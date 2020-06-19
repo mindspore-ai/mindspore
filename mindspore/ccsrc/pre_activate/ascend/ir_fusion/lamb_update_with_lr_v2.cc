@@ -42,6 +42,9 @@ const AnfNodePtr LambUpdateWithLrV2::Process(const FuncGraphPtr &func_graph, con
                                              const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   auto prim = std::make_shared<Primitive>(kLambUpdateWithLrV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
   (void)std::transform(input_varptr_.begin(), input_varptr_.end(), std::back_inserter(inputs),

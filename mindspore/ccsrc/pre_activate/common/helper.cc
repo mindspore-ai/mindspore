@@ -765,5 +765,15 @@ bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {
   MS_EXCEPTION_IF_NULL(cnode);
   return AnfAlgo::HasNodeAttr(attr_name, cnode) && AnfAlgo::GetNodeAttr<bool>(node, attr_name);
 }
+
+bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set) {
+  MS_EXCEPTION_IF_NULL(node);
+  TypeId data_type = AnfAlgo::GetOutputInferDataType(node, 0);
+  if (supported_data_type_set.find(data_type) != supported_data_type_set.end()) {
+    return true;
+  }
+  MS_LOG(DEBUG) << "Not supported data type. Node:" << node->DebugString();
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore

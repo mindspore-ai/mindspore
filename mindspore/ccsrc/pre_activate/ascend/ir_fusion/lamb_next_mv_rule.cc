@@ -108,6 +108,9 @@ bool LambNextMVRule::IsShareNodes(const EquivPtr &equiv1, const EquivPtr &equiv2
 
 const AnfNodePtr LambNextMVRule::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const EquivPtr &equiv) const {
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   std::vector<AnfNodePtr> old_pattern_outputs;
   if (!IsRuleMatched(func_graph, node, equiv, &old_pattern_outputs)) {
     return nullptr;
