@@ -65,7 +65,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     else:
         trans = [
             C.Decode(),
-            C.Resize((256, 256)),
+            C.Resize(256),
             C.CenterCrop(image_size),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
