@@ -36,7 +36,9 @@ class SubCPUKernel : public CPUKernel {
   int offset_;
 };
 
-MS_REG_CPU_KERNEL(Sub, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SubCPUKernel);
+MS_REG_CPU_KERNEL(
+  Sub, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  SubCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
