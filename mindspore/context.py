@@ -381,8 +381,8 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
-                 parameter_broadcast=bool, strategy_ckpt_load_file=str, strategy_ckpt_save_file=str,
-                 full_batch=bool)
+                 auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
+                 strategy_ckpt_save_file=str, full_batch=bool)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -414,6 +414,12 @@ def set_auto_parallel_context(**kwargs):
                        setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
+        auto_parallel_search_mode (str): There are two kinds of search modes, "recursive_programming"
+                     and "dynamic_programming".
+
+                     - recursive_programming: Recursive programming search mode.
+
+                     - dynamic_programming: Dynamic programming search mode.
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
