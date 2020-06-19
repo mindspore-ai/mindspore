@@ -122,8 +122,8 @@ class SameTypeShape(PrimitiveWithInfer):
     Checks whether data type and shape of two tensors are the same.
 
     Raises:
-        TypeError - If data type not the same.
-        ValueError - If shape of two tensors not the same.
+        TypeError: If data type not the same.
+        ValueError: If shape of two tensors not the same.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
