@@ -50,11 +50,20 @@ class RandomCropOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "RandomCropOp: " << crop_height_ << " " << crop_width_; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  Status ImagePadding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *pad_image, int32_t *t_pad_top,
+                      int32_t *t_pad_bottom, int32_t *t_pad_left, int32_t *t_pad_right, int32_t *padded_image_w,
+                      int32_t *padded_image_h, bool *crop_further);
+
+  void GenRandomXY(int *x, int *y, int32_t *padded_image_w, int32_t *padded_image_h);
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
- private:
+ protected:
   int32_t crop_height_ = 0;
   int32_t crop_width_ = 0;
+
+ private:
   int32_t pad_top_ = 0;
   int32_t pad_bottom_ = 0;
   int32_t pad_left_ = 0;

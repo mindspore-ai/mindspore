@@ -56,13 +56,16 @@
 #include "dataset/kernels/image/pad_op.h"
 #include "dataset/kernels/image/random_color_adjust_op.h"
 #include "dataset/kernels/image/random_crop_and_resize_op.h"
+#include "dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
 #include "dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "dataset/kernels/image/random_crop_op.h"
+#include "dataset/kernels/image/random_crop_with_bbox_op.h"
 #include "dataset/kernels/image/random_horizontal_flip_bbox_op.h"
 #include "dataset/kernels/image/random_horizontal_flip_op.h"
 #include "dataset/kernels/image/random_resize_op.h"
 #include "dataset/kernels/image/random_rotation_op.h"
 #include "dataset/kernels/image/random_vertical_flip_op.h"
+#include "dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 #include "dataset/kernels/image/rescale_op.h"
 #include "dataset/kernels/image/resize_bilinear_op.h"
 #include "dataset/kernels/image/resize_op.h"
@@ -381,6 +384,12 @@ void bindTensorOps2(py::module *m) {
     *m, "RandomVerticalFlipOp", "Tensor operation to randomly flip an image vertically.")
     .def(py::init<float>(), py::arg("probability") = RandomVerticalFlipOp::kDefProbability);
 
+  (void)py::class_<RandomVerticalFlipWithBBoxOp, TensorOp, std::shared_ptr<RandomVerticalFlipWithBBoxOp>>(
+    *m, "RandomVerticalFlipWithBBoxOp",
+    "Tensor operation to randomly flip an image vertically"
+    " and adjust bounding boxes.")
+    .def(py::init<float>(), py::arg("probability") = RandomVerticalFlipWithBBoxOp::kDefProbability);
+
   (void)py::class_<RandomCropOp, TensorOp, std::shared_ptr<RandomCropOp>>(*m, "RandomCropOp",
                                                                           "Gives random crop of specified size "
                                                                           "Takes crop size")
@@ -391,6 +400,20 @@ void bindTensorOps2(py::module *m) {
          py::arg("padIfNeeded") = RandomCropOp::kDefPadIfNeeded, py::arg("fillR") = RandomCropOp::kDefFillR,
          py::arg("fillG") = RandomCropOp::kDefFillG, py::arg("fillB") = RandomCropOp::kDefFillB);
   (void)py::class_<HwcToChwOp, TensorOp, std::shared_ptr<HwcToChwOp>>(*m, "ChannelSwapOp").def(py::init<>());
+
+  (void)py::class_<RandomCropWithBBoxOp, TensorOp, std::shared_ptr<RandomCropWithBBoxOp>>(*m, "RandomCropWithBBoxOp",
+                                                                                          "Gives random crop of given "
+                                                                                          "size + adjusts bboxes "
+                                                                                          "Takes crop size")
+    .def(py::init<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, BorderType, bool, uint8_t, uint8_t, uint8_t>(),
+         py::arg("cropHeight"), py::arg("cropWidth"), py::arg("padTop") = RandomCropWithBBoxOp::kDefPadTop,
+         py::arg("padBottom") = RandomCropWithBBoxOp::kDefPadBottom,
+         py::arg("padLeft") = RandomCropWithBBoxOp::kDefPadLeft,
+         py::arg("padRight") = RandomCropWithBBoxOp::kDefPadRight,
+         py::arg("borderType") = RandomCropWithBBoxOp::kDefBorderType,
+         py::arg("padIfNeeded") = RandomCropWithBBoxOp::kDefPadIfNeeded,
+         py::arg("fillR") = RandomCropWithBBoxOp::kDefFillR, py::arg("fillG") = RandomCropWithBBoxOp::kDefFillG,
+         py::arg("fillB") = RandomCropWithBBoxOp::kDefFillB);
 
   (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
     *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")
@@ -487,6 +510,20 @@ void bindTensorOps3(py::module *m) {
          py::arg("aspectUb") = RandomCropAndResizeOp::kDefAspectUb,
          py::arg("interpolation") = RandomCropAndResizeOp::kDefInterpolation,
          py::arg("maxIter") = RandomCropAndResizeOp::kDefMaxIter);
+
+  (void)py::class_<RandomCropAndResizeWithBBoxOp, TensorOp, std::shared_ptr<RandomCropAndResizeWithBBoxOp>>(
+    *m, "RandomCropAndResizeWithBBoxOp",
+    "Tensor operation to randomly crop an image (with BBoxes) and resize to a given size."
+    "Takes output height and width and"
+    "optional parameters for lower and upper bound for aspect ratio (h/w) and scale,"
+    "interpolation mode, and max attempts to crop")
+    .def(py::init<int32_t, int32_t, float, float, float, float, InterpolationMode, int32_t>(), py::arg("targetHeight"),
+         py::arg("targetWidth"), py::arg("scaleLb") = RandomCropAndResizeWithBBoxOp::kDefScaleLb,
+         py::arg("scaleUb") = RandomCropAndResizeWithBBoxOp::kDefScaleUb,
+         py::arg("aspectLb") = RandomCropAndResizeWithBBoxOp::kDefAspectLb,
+         py::arg("aspectUb") = RandomCropAndResizeWithBBoxOp::kDefAspectUb,
+         py::arg("interpolation") = RandomCropAndResizeWithBBoxOp::kDefInterpolation,
+         py::arg("maxIter") = RandomCropAndResizeWithBBoxOp::kDefMaxIter);
 
   (void)py::class_<RandomColorAdjustOp, TensorOp, std::shared_ptr<RandomColorAdjustOp>>(
     *m, "RandomColorAdjustOp",

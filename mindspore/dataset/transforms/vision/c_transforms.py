@@ -149,6 +149,54 @@ class RandomCrop(cde.RandomCropOp):
         super().__init__(*size, *padding, border_type, pad_if_needed, *fill_value)
 
 
+class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
+    """
+    Crop the input image at a random location, and adjust bounding boxes
+
+    Args:
+        size (int or sequence): The output size of the cropped image.
+            If size is an int, a square crop of size (size, size) is returned.
+            If size is a sequence of length 2, it should be (height, width).
+        padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+            If padding is not None, pad image firstly with padding values.
+            If a single number is provided, it pads all borders with this value.
+            If a tuple or list of 2 values are provided, it pads the (left and top)
+            with the first value and (right and bottom) with the second value.
+            If 4 values are provided as a list or tuple,it pads the left, top, right and bottom respectively.
+        pad_if_needed (bool, optional): Pad the image if either side is smaller than
+            the given output size (default=False).
+        fill_value (int or tuple, optional): The pixel intensity of the borders if
+            the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
+            fill R, G, B channels respectively.
+        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
+            [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
+
+            - Border.CONSTANT, means it fills the border with constant values.
+
+            - Border.EDGE, means it pads with the last value on the edge.
+
+            - Border.REFLECT, means it reflects the values on the edge omitting the last
+              value of edge.
+
+            - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
+              value of edge.
+    """
+
+    @check_random_crop
+    def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
+        self.size = size
+        self.padding = padding
+        self.pad_if_needed = pad_if_needed
+        self.fill_value = fill_value
+        self.padding_mode = padding_mode.value
+        if padding is None:
+            padding = (0, 0, 0, 0)
+        if isinstance(fill_value, int):  # temporary fix
+            fill_value = tuple([fill_value] * 3)
+        border_type = DE_C_BORDER_TYPE[padding_mode]
+        super().__init__(*size, *padding, border_type, pad_if_needed, *fill_value)
+
+
 class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
     """
     Flip the input image horizontally, randomly with a given probability.
@@ -181,6 +229,20 @@ class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
 class RandomVerticalFlip(cde.RandomVerticalFlipOp):
     """
     Flip the input image vertically, randomly with a given probability.
+
+    Args:
+        prob (float): Probability of the image being flipped (default=0.5).
+    """
+
+    @check_prob
+    def __init__(self, prob=0.5):
+        self.prob = prob
+        super().__init__(prob)
+
+
+class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
+    """
+    Flip the input image vertically and adjust bounding boxes, randomly with a given probability.
 
     Args:
         prob (float): Probability of the image being flipped (default=0.5).
@@ -235,6 +297,42 @@ class Resize(cde.ResizeOp):
             super().__init__(size, interpolation=interpoltn)
         else:
             super().__init__(*size, interpoltn)
+
+
+class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
+    """
+    Crop the input image to a random size and aspect ratio and adjust the Bounding Boxes accordingly
+
+    Args:
+        size (int or sequence): The size of the output image.
+            If size is an int, a square crop of size (size, size) is returned.
+            If size is a sequence of length 2, it should be (height, width).
+        scale (tuple, optional): Range (min, max) of respective size of the original
+            size to be cropped (default=(0.08, 1.0)).
+        ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped
+            (default=(3. / 4., 4. / 3.)).
+        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
+
+            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+
+            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+
+            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+
+        max_attempts (int, optional): The maximum number of attempts to propose a valid
+            crop_area (default=10). If exceeded, fall back to use center_crop instead.
+    """
+    @check_random_resize_crop
+    def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
+                 interpolation=Inter.BILINEAR, max_attempts=10):
+        self.size = size
+        self.scale = scale
+        self.ratio = ratio
+        self.interpolation = interpolation
+        self.max_attempts = max_attempts
+        interpoltn = DE_C_INTER_MODE[interpolation]
+        super().__init__(*size, *scale, *ratio, interpoltn, max_attempts)
 
 
 class RandomResizedCrop(cde.RandomCropAndResizeOp):
