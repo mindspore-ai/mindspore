@@ -33,6 +33,7 @@ class RectifyDoMaskKernelInfo : public PatternProcessPass {
 
  private:
   void RectifyKernelInfo(const std::vector<CNodePtr> &do_mask_node_list) const;
+  AnfNodePtr RectifyKernelInfoInPynativeProcess(const AnfNodePtr &node) const;
   std::string GetConvertFormat(const std::map<std::string, size_t> &format_counter) const;
   void RectifyDropOutDoMaskKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const std::string &format) const;
 };

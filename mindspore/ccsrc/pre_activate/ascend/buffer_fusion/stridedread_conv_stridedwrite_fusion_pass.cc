@@ -37,14 +37,12 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
   MS_EXCEPTION_IF_NULL(manager);
   std::unordered_set<AnfNodePtr> record{cnode};
   auto write_input = cnode->input(1);
-
   if (CheckEltWiseNode(manager.get(), write_input)) {
     (void)record.insert(write_input);
     auto input_cnode = write_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
     write_input = input_cnode->input(1);
   }
-
   MS_EXCEPTION_IF_NULL(write_input);
   if (!write_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(write_input) ||
       fusion_id_allocator->HasFusionIdAttr(write_input)) {
@@ -63,7 +61,6 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
         fusion_id_allocator->HasFusionIdAttr(conv_input)) {
       return;
     }
-
     if (AnfAlgo::GetCNodeName(conv_input) == kStridedReadOpName) {
       (void)record.insert(conv_input);
       candidate_fusion->push_back(record);
