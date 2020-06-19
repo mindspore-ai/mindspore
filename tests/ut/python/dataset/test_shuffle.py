@@ -154,7 +154,7 @@ def test_shuffle_exception_01():
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "buffer_size" in str(e)
+        assert "Input buffer_size is not within the required interval of (2 to 2147483647)" in str(e)
 
 
 def test_shuffle_exception_02():
@@ -172,7 +172,7 @@ def test_shuffle_exception_02():
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "buffer_size" in str(e)
+        assert "Input buffer_size is not within the required interval of (2 to 2147483647)" in str(e)
 
 
 def test_shuffle_exception_03():
@@ -190,7 +190,7 @@ def test_shuffle_exception_03():
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "buffer_size" in str(e)
+        assert "Input buffer_size is not within the required interval of (2 to 2147483647)" in str(e)
 
 
 def test_shuffle_exception_05():

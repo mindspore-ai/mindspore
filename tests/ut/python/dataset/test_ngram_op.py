@@ -15,9 +15,9 @@
 """
 Testing Ngram in mindspore.dataset
 """
+import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
-import numpy as np
 
 
 def test_multiple_ngrams():
@@ -61,7 +61,7 @@ def test_simple_ngram():
             yield (np.array(line.split(" "), dtype='S'),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
-    dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=None))
+    dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=" "))
 
     i = 0
     for data in dataset.create_dict_iterator():
@@ -72,7 +72,7 @@ def test_simple_ngram():
 def test_corner_cases():
     """ testing various corner cases and exceptions"""
 
-    def test_config(input_line, output_line, n, l_pad=None, r_pad=None, sep=None):
+    def test_config(input_line, output_line, n, l_pad=("", 0), r_pad=("", 0), sep=" "):
         def gen(texts):
             yield (np.array(texts.split(" "), dtype='S'),)
 
@@ -93,7 +93,7 @@ def test_corner_cases():
     try:
         test_config("Yours to Discover", "", [0, [1]])
     except Exception as e:
-        assert "ngram needs to be a positive number" in str(e)
+        assert "Argument gram[1] with value [1] is not of type (<class 'int'>,)" in str(e)
     # test empty n
     try:
         test_config("Yours to Discover", "", [])

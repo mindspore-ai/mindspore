@@ -190,7 +190,7 @@ def test_random_horizontal_flip_with_bbox_invalid_prob_c():
                                 operations=[test_op])  # Add column for "annotation"
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input is not" in str(error)
+        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(error)
 
 
 def test_random_horizontal_flip_with_bbox_invalid_bounds_c():

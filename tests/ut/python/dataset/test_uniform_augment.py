@@ -169,7 +169,9 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "operations" in str(e)
+        assert "Argument tensor_op_5 with value" \
+               " <mindspore.dataset.transforms.vision.py_transforms.Invert" in str(e)
+        assert "is not of type (<class 'mindspore._c_dataengine.TensorOp'>,)" in str(e)
 
 
 def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
@@ -209,7 +211,7 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "num_ops" in str(e)
+        assert "Input num_ops must be greater than 0" in str(e)
 
 
 def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
@@ -229,7 +231,7 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "integer" in str(e)
+        assert "Argument num_ops with value 2.5 is not of type (<class 'int'>,)" in str(e)
 
 
 def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):

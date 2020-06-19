@@ -98,7 +98,7 @@ class Ngram(cde.NgramOp):
     """
 
     @check_ngram
-    def __init__(self, n, left_pad=None, right_pad=None, separator=None):
+    def __init__(self, n, left_pad=("", 0), right_pad=("", 0), separator=" "):
         super().__init__(ngrams=n, l_pad_len=left_pad[1], r_pad_len=right_pad[1], l_pad_token=left_pad[0],
                          r_pad_token=right_pad[0], separator=separator)
 

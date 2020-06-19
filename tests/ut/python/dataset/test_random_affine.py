@@ -103,7 +103,7 @@ def test_random_affine_exception_negative_degrees():
         _ = py_vision.RandomAffine(degrees=-15)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "If degrees is a single number, it cannot be negative."
+        assert str(e) == "Input degrees is not within the required interval of (0 to inf)."
 
 
 def test_random_affine_exception_translation_range():
@@ -115,7 +115,7 @@ def test_random_affine_exception_translation_range():
         _ = py_vision.RandomAffine(degrees=15, translate=(0.1, 1.5))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "translation values should be between 0 and 1"
+        assert str(e) == "Input translate at 1 is not within the required interval of (0.0 to 1.0)."
 
 
 def test_random_affine_exception_scale_value():
@@ -127,7 +127,7 @@ def test_random_affine_exception_scale_value():
         _ = py_vision.RandomAffine(degrees=15, scale=(0.0, 1.1))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "scale values should be positive"
+        assert str(e) == "Input scale[0] must be greater than 0."
 
 
 def test_random_affine_exception_shear_value():
@@ -139,7 +139,7 @@ def test_random_affine_exception_shear_value():
         _ = py_vision.RandomAffine(degrees=15, shear=-5)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "If shear is a single number, it must be positive."
+        assert str(e) == "Input shear must be greater than 0."
 
 
 def test_random_affine_exception_degrees_size():
@@ -165,7 +165,9 @@ def test_random_affine_exception_translate_size():
         _ = py_vision.RandomAffine(degrees=15, translate=(0.1))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "translate should be a list or tuple of length 2."
+        assert str(
+            e) == "Argument translate with value 0.1 is not of type (<class 'list'>," \
+                  " <class 'tuple'>)."
 
 
 def test_random_affine_exception_scale_size():
@@ -178,7 +180,8 @@ def test_random_affine_exception_scale_size():
         _ = py_vision.RandomAffine(degrees=15, scale=(0.5))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "scale should be a list or tuple of length 2."
+        assert str(e) == "Argument scale with value 0.5 is not of type (<class 'tuple'>," \
+                         " <class 'list'>)."
 
 
 def test_random_affine_exception_shear_size():
@@ -191,7 +194,7 @@ def test_random_affine_exception_shear_size():
         _ = py_vision.RandomAffine(degrees=15, shear=(-5, 5, 10))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "shear should be a list or tuple and it must be of length 2 or 4."
+        assert str(e) == "shear must be of length 2 or 4."
 
 
 if __name__ == "__main__":
