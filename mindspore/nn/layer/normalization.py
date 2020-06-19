@@ -18,8 +18,6 @@ from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
-from mindspore.common.tensor import Tensor
-import mindspore.common.dtype as mstype
 import mindspore.context as context
 from mindspore._checkparam import check_bool, check_typename
 from mindspore._extends import cell_attr_register
@@ -85,13 +83,12 @@ class _BatchNorm(Cell):
         self.reshape = P.Reshape()
         self.is_ascend = context.get_context("device_target") == "Ascend"
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
-
+        self.momentum = 1.0 - momentum
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
-            self.momentum = Tensor(1.0 - momentum, mstype.float32)
         else:
             self.is_ge_backend = False
-            self.momentum = 1.0 - momentum
+
         if self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
             self.bn_train = P.BatchNorm(is_training=True,
                                         epsilon=self.eps)

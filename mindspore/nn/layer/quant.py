@@ -729,8 +729,8 @@ class DenseQuant(Cell):
         self.has_bias = check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
-            if weight_init.dim() != 2 or weight_init.shape()[0] != out_channels or \
-                    weight_init.shape()[1] != in_channels:
+            if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
+                    weight_init.shape[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
         self.weight = Parameter(initializer(
@@ -738,7 +738,7 @@ class DenseQuant(Cell):
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
-                if bias_init.dim() != 1 or bias_init.shape()[0] != out_channels:
+                if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
             self.bias = Parameter(initializer(
@@ -780,8 +780,14 @@ class DenseQuant(Cell):
 
         return str_info
 
+class _QuantActivation(Cell):
+    r"""
+    Base class for Quant activation function. Add Fake Quant OP after activation OP.
+    """
+    def get_origin(self):
+        raise NotImplementedError
 
-class ReLUQuant(Cell):
+class ReLUQuant(_QuantActivation):
     r"""
     ReLUQuant activation function. Add Fake Quant OP after Relu OP.
 
@@ -828,8 +834,11 @@ class ReLUQuant(Cell):
         x = self.fake_quant_act(x)
         return x
 
+    def get_origin(self):
+        return self.relu
 
-class ReLU6Quant(Cell):
+
+class ReLU6Quant(_QuantActivation):
     r"""
     ReLU6Quant activation function.
 
@@ -878,8 +887,10 @@ class ReLU6Quant(Cell):
         x = self.fake_quant_act(x)
         return x
 
+    def get_origin(self):
+        return self.relu6
 
-class HSwishQuant(Cell):
+class HSwishQuant(_QuantActivation):
     r"""
     HSwishQuant activation function. Add Fake Quant OP after HSwish OP.
 
@@ -935,8 +946,10 @@ class HSwishQuant(Cell):
         x = self.fake_quant_act_after(x)
         return x
 
+    def get_origin(self):
+        return self.act
 
-class HSigmoidQuant(Cell):
+class HSigmoidQuant(_QuantActivation):
     r"""
     HSigmoidQuant activation function. Add Fake Quant OP before and after HSigmoid OP.
 
@@ -991,6 +1004,8 @@ class HSigmoidQuant(Cell):
         x = self.fake_quant_act_after(x)
         return x
 
+    def get_origin(self):
+        return self.act
 
 class TensorAddQuant(Cell):
     r"""
@@ -1083,3 +1098,77 @@ class MulQuant(Cell):
         x = self.mul(x1, x2)
         x = self.fake_quant_act(x)
         return x
+
+
+class QuantBlock(Cell):
+    r"""
+    A quant block of Conv/Dense, activation layer for Ascend deploy.
+
+    Calculate Conv or Dense in Int8, with AscendQuant and AscendDeQuant.
+
+    Notes:
+        This block is only for deploy, and not trainable.
+
+    Args:
+        in_channels (int): The number of channels in the input space.
+        out_channels (int): The number of channels in the output space.
+        weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
+            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
+            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
+        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        batchnorm (bool): Specifies to used batchnorm or not. Default: None.
+        activation (string): Specifies activation type. The optional values are as following:
+            'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
+            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
+
+    Outputs:
+        Tensor of shape :math:`(N, out\_channels)`.
+
+    Examples:
+        >>> net = nn.Dense(3, 4)
+        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
+        >>> net(input)
+    """
+
+    def __init__(self,
+                 core_op,
+                 weight,
+                 quant_op,
+                 dequant_op,
+                 dequant_scale,
+                 bias=None,
+                 activation=None):
+        super(QuantBlock, self).__init__()
+        self.core_op = core_op
+        self.weight = weight
+        self.quant = quant_op
+        self.dequant = dequant_op
+        self.dequant_scale = dequant_scale
+        self.bias = bias
+        self.has_bias = bias is None
+        self.activation = activation
+        self.has_act = activation is None
+
+    def construct(self, x):
+        x = self.quant(x)
+        x = self.core_op(x, self.weight)
+        if self.has_bias:
+            output = self.bias_add(output, self.bias)
+        if self.has_act:
+            x = self.activation(x)
+        x = self.dequant(x, self.dequant_scale)
+        return x
+
+    def extend_repr(self):
+        str_info = f'quant={self.quant}, core_op={type(self.core_op)}'
+        if self.has_bias:
+            str_info = str_info + f', bias={self.bias}'
+        if self.has_act:
+            str_info = str_info + f', activation={self.activation}'
+        str_info = str_info + f', dequant={self.dequant}'
+        return str_info

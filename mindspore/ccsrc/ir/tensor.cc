@@ -487,6 +487,19 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                              }));
                          (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
                            .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
+                           .def(py::pickle(
+                             [](const MetaTensor &t) {  // __getstate__
+                               /* Return a tuple that fully encodes the state of the object */
+                               return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
+                             },
+                             [](const py::tuple &t) {  // __setstate__
+                               if (t.size() != 2) {
+                                 throw std::runtime_error("Invalid state!");
+                               }
+                               /* Create a new C++ instance */
+                               MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<std::vector<int>>());
+                               return tensor;
+                             }))
                            .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
                            .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
                            .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");

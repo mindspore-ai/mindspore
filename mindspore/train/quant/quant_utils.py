@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""quantization utils."""
+"""Quantization utils."""
 
 import numpy as np
 
@@ -24,22 +24,19 @@ def cal_quantization_params(input_min,
                             symmetric=False,
                             narrow_range=False):
     r"""
-    calculate quantization params for scale and zero point.
+    Calculate quantization params for scale and zero point.
 
     Args:
-        input_min (int, list): The dimension of channel or 1.
-        input_max (int, list): The dimension of channel or 1.
+        input_min (numpy.ndarray): The dimension of channel or 1.
+        input_max (numpy.ndarray): The dimension of channel or 1.
         data_type (numpy type) : Can ben numpy int8, numpy uint8.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
-    Outputs:
-        scale (int, list): quantization param.
-        zero point (int, list): quantization param.
-
-    Examples:
-        >>> scale, zp = cal_quantization_params([1, 2, 1], [-2, 0, -1], 8, False, False)
+    Returns:
+        scale (numpy.ndarray): quantization param.
+        zero point (numpy.ndarray): quantization param.
     """
     input_max = np.maximum(0.0, input_max)
     input_min = np.minimum(0.0, input_min)
@@ -92,27 +89,103 @@ def weight2int(data,
                scale,
                zero_point):
     r"""
-    calculate int8/uint8 weight from fp32. the formula is defined as:
+    Calculate int8/uint8 weight from fp32. the formula is defined as:
 
     .. math::
-
         int8/uint8 = round(float/scale) + offset
 
     Args:
-        data (int, list): The dimension of channel or 1. Should be NCHW.
-        scale (int, list): The dimension of channel or 1.
-        zero_point (int, list): The dimension of channel or 1.
+        data (numpy.ndarray): The dimension of channel or 1. Should be NCHW.
+        scale (numpy.ndarray): The dimension of channel or 1.
+        zero_point (numpy.ndarray): The dimension of channel or 1.
 
-    Outputs:
-        weight (int, list): The dimension of channel or 1.
-
-    Examples:
-        >>> weight = weight2int([1, 2, 1], 1, 0)
+    Returns:
+        weight (numpy.ndarray): The dimension of channel or 1.
     """
     if scale.shape != zero_point.shape:
         raise ValueError("scale and zero_point should have the same shape.")
     if scale.shape[0] > 0:
-        scale = scale.reshape(1, -1, 1, 1)
-        zero_point = zero_point.reshape(1, -1, 1, 1)
+        scale = scale.reshape(1, -1)
+        zero_point = zero_point.reshape(1, -1)
 
     return np.round((data/scale) + zero_point)
+
+
+def scale_zp_from_fack_quant_cell(cell, data_type):
+    r"""
+    Get calculate quantization params for scale and zero point From `FakeQuantWithMinMax`.
+
+    Args:
+        cell (Cell): `mindspore.nn.layer.FakeQuantWithMinMax`
+        data_type (numpy type): Can ben `numpy.int8` or `numpy.uint8`.
+
+    Returns:
+        scale (numpy.ndarray): quantization param.
+        zero point (numpy.ndarray): quantization param.
+    """
+    minq = cell.minq.data.asnumpy()
+    maxq = cell.maxq.data.asnumpy()
+    op = cell.fake_quant
+
+    scale, zp = cal_quantization_params(
+        minq, maxq, data_type,
+        num_bits=op.num_bits,
+        symmetric=op.symmetric,
+        narrow_range=op.narrow_range)
+    return scale, zp
+
+
+def scale_zp_from_data(op, minq, maxq, data_type):
+    r"""
+    Get calculate quantization params for scale and zero point.
+
+    Calculate from `FakeQuantWithMinMax`'s Parameter or Fake quant primitive.
+
+    Args:
+        op (Primitive): Fake quant primitive `mindspore.ops.operation.FakeQuantPerLayer` or
+            `mindspore.ops.operation.FakeQuantPerChannel`
+        minq (Parameter): Parameter `minq` of `mindspore.nn.layer.FakeQuantWithMinMax`
+        maxq (Parameter): Parameter `maxq` of `mindspore.nn.layer.FakeQuantWithMinMax`
+        data_type (numpy type): Can ben `numpy.int8` or `numpy.uint8`.
+
+    Returns:
+        scale (numpy.ndarray): quantization param.
+        zero point (numpy.ndarray): quantization param.
+    """
+    minq = minq.data.asnumpy()
+    maxq = maxq.data.asnumpy()
+
+    scale, zp = cal_quantization_params(
+        minq, maxq, data_type,
+        num_bits=op.num_bits,
+        symmetric=op.symmetric,
+        narrow_range=op.narrow_range)
+    return scale, zp
+
+
+def fold_batchnorm(weight, cell_quant):
+    r"""
+    Fold the batchnorm in `Conv2dBatchNormQuant` to weight.
+
+    Calculate from `FakeQuantWithMinMax`'s Parameter or Fake quant primitive.
+
+    Args:
+        weight (numpy.ndarray): Weight of `cell_quant`.
+        cell_quant (Cell): Object of `mindspore.nn.layer.Conv2dBatchNormQuant`.
+
+    Returns:
+        weight (numpy.ndarray): Folded weight.
+        bias (numpy.ndarray): Folded bias.
+    """
+    variance = cell_quant.moving_variance.data.asnumpy()
+    mean = cell_quant.moving_mean.data.asnumpy()
+    gamma = cell_quant.gamma.data.asnumpy()
+    beta = cell_quant.beta.data.asnumpy()
+    epsilon = cell_quant.eps
+    sigma = np.sqrt(variance + epsilon)
+    gamma = gamma.reshape(-1, 1, 1, 1)
+    sigma = sigma.reshape(-1, 1, 1, 1)
+    mean = mean.reshape(-1, 1, 1, 1)
+    weight = weight * gamma / sigma
+    bias = beta - gamma * mean / sigma
+    return weight, bias

@@ -14,12 +14,23 @@
 # ============================================================================
 """aware quantization."""
 
+import copy
 import re
-from ... import nn
-from ... import ops
+
+import numpy as np
+
+from ... import log as logger
+from ... import nn, ops
 from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel
+from ...common import Tensor
+from ...common import dtype as mstype
+from ...common.api import _executor
 from ...nn.layer import quant
+from ...ops import functional as F
+from ...ops.operations import _inner_ops as inner
+from ...train import serialization
+from . import quant_utils
 
 _ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
                    nn.ReLU6: quant.ReLU6Quant,
@@ -27,25 +38,21 @@ _ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
                    nn.HSwish: quant.HSwishQuant}
 
 
-class _AddFakeQuantInputOutput(nn.Cell):
+class _AddFakeQuantInput(nn.Cell):
     """
     Add FakeQuant at input and output of the Network. Only support one input and one output case.
     """
 
     def __init__(self, network, quant_delay=0):
-        super(_AddFakeQuantInputOutput, self).__init__(auto_prefix=False)
+        super(_AddFakeQuantInput, self).__init__(auto_prefix=False)
         self.network = network
         self.fake_quant_input = quant.FakeQuantWithMinMax(
             min_init=-6, max_init=6, quant_delay=quant_delay, ema=True)
         self.fake_quant_input.update_parameters_name('fake_quant_input')
-        self.fake_quant_output = quant.FakeQuantWithMinMax(
-            min_init=-6, max_init=6, quant_delay=quant_delay, ema=True)
-        self.fake_quant_output.update_parameters_name('fake_quant_output')
 
     def construct(self, data):
         data = self.fake_quant_input(data)
         output = self.network(data)
-        output = self.fake_quant_output(output)
         return output
 
 
@@ -99,6 +106,8 @@ class ConvertToQuantNetwork:
         self.per_channel = validator.check_bool("per channel", per_channel)
         self.symmetric = validator.check_bool("symmetric", symmetric)
         self.narrow_range = validator.check_bool("narrow range", narrow_range)
+        self._convert_method_map = {quant.Conv2dBnAct: self._convert_conv,
+                                    quant.DenseBnAct: self._convert_dense}
 
     def _convert_op_name(self, name):
         pattern = re.compile(r'([A-Z]{1})')
@@ -110,6 +119,7 @@ class ConvertToQuantNetwork:
     def run(self):
         self.network.update_cell_prefix()
         network = self._convert_subcells2quant(self.network)
+        network = _AddFakeQuantInput(network)
         return network
 
     def _convert_subcells2quant(self, network):
@@ -122,15 +132,9 @@ class ConvertToQuantNetwork:
             subcell = cells[name]
             if subcell == network:
                 continue
-            elif isinstance(subcell, quant.Conv2dBnAct):
+            elif isinstance(subcell, (quant.Conv2dBnAct, quant.DenseBnAct)):
                 prefix = subcell.param_prefix
-                new_subcell = self._convert_conv(subcell)
-                new_subcell.update_parameters_name(prefix + '.')
-                network.insert_child_to_cell(name, new_subcell)
-                change = True
-            elif isinstance(subcell, quant.DenseBnAct):
-                prefix = subcell.param_prefix
-                new_subcell = self._convert_dense(subcell)
+                new_subcell = self._convert_method_map[type(subcell)](subcell)
                 new_subcell.update_parameters_name(prefix + '.')
                 network.insert_child_to_cell(name, new_subcell)
                 change = True
@@ -199,10 +203,12 @@ class ConvertToQuantNetwork:
                                            symmetric=self.symmetric,
                                            narrow_range=self.narrow_range)
         subcell.conv = conv_inner
-        if subcell.activation is not None:
+        if subcell.has_act and subcell.activation is not None:
             subcell.activation = self._convert_activation(subcell.activation)
         else:
-            subcell = _AddFakeQuantAfterSubCell(subcell)
+            subcell.has_act = True
+            subcell.activation = _AddFakeQuantAfterSubCell(F.identity, num_bits=self.act_bits,
+                                                           quant_delay=self.quant_delay)
         return subcell
 
     def _convert_dense(self, subcell):
@@ -217,8 +223,12 @@ class ConvertToQuantNetwork:
                                        per_channel=self.per_channel,
                                        num_bits=self.weight_bits)
         subcell.dense = dense_inner
-        if subcell.activation is not None:
+        if subcell.has_act and subcell.activation is not None:
             subcell.activation = self._convert_activation(subcell.activation)
+        else:
+            subcell.has_act = True
+            subcell.activation = _AddFakeQuantAfterSubCell(F.identity, num_bits=self.act_bits,
+                                                           quant_delay=self.quant_delay)
         return subcell
 
     def _convert_activation(self, activation):
@@ -227,6 +237,147 @@ class ConvertToQuantNetwork:
             raise ValueError(
                 "Unsupported activation in auto Quant: ", act_class)
         return _ACTIVATION_MAP[act_class](num_bits=self.act_bits, quant_delay=self.quant_delay)
+
+
+class ExportQuantNetworkDeploy:
+    """
+    Convert quantization aware network to deploy network.
+
+    Args:
+        network (Cell): MindSpore network produced by `convert_quant_network`.
+        inputs (Tensor): Inputs of the `network`.
+
+    Returns:
+        Cell, converted network.
+    """
+    __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
+
+    def __init__(self,
+                 network,
+                 *inputs):
+        network = validator.check_isinstance('network', network, (nn.Cell,))
+        self.data_type = mstype.int8
+        self.network = copy.deepcopy(network)
+        self.all_paramters = {p.name: p for p in self.network.get_parameters()}
+        self.get_inputs_table(inputs)
+
+    def get_inputs_table(self, inputs):
+        """Get the support info for quant export."""
+        phase_name = 'export_quant'
+        graph_id, _ = _executor.compile(self.network, *inputs, phase=phase_name, do_convert=False)
+        self.quant_info_table = _executor.fetch_info_for_quant_export(graph_id)
+
+    def run(self):
+        """Start to convert."""
+        self.network.update_cell_prefix()
+        network = self.network
+        if isinstance(network, _AddFakeQuantInput):
+            network = network.network
+        network = self._convert_quant2deploy(network)
+        return network
+
+    def _get_quant_block(self, cell_core, activation, fake_quant_a_out):
+        """convet network's quant subcell to deploy subcell"""
+        # Calculate the scale and zero point
+        w_minq_name = cell_core.fake_quant_weight.minq.name
+        np_type = mstype.dtype_to_nptype(self.data_type)
+        scale_w, zp_w = quant_utils.scale_zp_from_fack_quant_cell(cell_core.fake_quant_weight, np_type)
+        scale_a_out, _ = quant_utils.scale_zp_from_fack_quant_cell(fake_quant_a_out, np_type)
+        info = self.quant_info_table.get(w_minq_name, None)
+        if info:
+            fack_quant_a_in_op, minq_name = info
+            maxq = self.all_paramters[minq_name[:-4] + "maxq"]
+            minq = self.all_paramters[minq_name]
+            scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
+        else:
+            logger.warning(f"Do not find `fake_quant` from input with `fack_quant.minq` {w_minq_name}")
+            return None
+
+        # Build the `Quant` `Dequant` op.
+        # AscendQuant only support perlayer version. Need check here.
+        quant_op = inner.AscendQuant(float(scale_a_in), float(zp_a_in))
+        sqrt_mode = False
+        scale_deq = scale_a_out * scale_w
+        if scale_deq < 2 ** -14:
+            scale_deq = np.sqrt(scale_deq)
+            sqrt_mode = True
+        dequant_op = inner.AscendDequant(sqrt_mode)
+
+        # get op
+        op_core = cell_core.matmul if isinstance(cell_core, quant.DenseQuant) else cell_core.conv
+        if isinstance(activation, _AddFakeQuantAfterSubCell):
+            activation = activation.subcell
+        elif hasattr(activation, "get_origin"):
+            activation = activation.get_origin()
+
+        # get the `weight` and `bias`
+        weight = cell_core.weight.data.asnumpy()
+        bias = None
+        if isinstance(cell_core, (quant.DenseQuant, quant.Conv2dQuant)):
+            if cell_core.has_bias:
+                bias = cell_core.bias.data.asnumpy()
+        elif isinstance(cell_core, quant.Conv2dBatchNormQuant):
+            weight, bias = quant_utils.fold_batchnorm(weight, cell_core)
+
+        # apply the quant
+        weight = Tensor(quant_utils.weight2int(weight, scale_w, zp_w), self.data_type)
+        if bias is not None:
+            bias = Tensor(scale_a_in * scale_w * bias, mstype.int32)
+        scale_deq = Tensor(scale_deq, mstype.float16)
+        block = quant.QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
+        return block
+
+    def _convert_quant2deploy(self, network):
+        """Convet network's all quant subcell to deploy subcell."""
+        cells = network.name_cells()
+        change = False
+        for name in cells:
+            subcell = cells[name]
+            if subcell == network:
+                continue
+            cell_core = None
+            fake_quant_act = None
+            activation = None
+            if isinstance(subcell, quant.Conv2dBnAct):
+                cell_core = subcell.conv
+                activation = subcell.activation
+                fake_quant_act = activation.fake_quant_act
+            elif isinstance(subcell, quant.DenseBnAct):
+                cell_core = subcell.dense
+                activation = subcell.activation
+                fake_quant_act = activation.fake_quant_act
+            if cell_core is not None:
+                new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
+                if new_subcell:
+                    prefix = subcell.param_prefix
+                    new_subcell.update_parameters_name(prefix + '.')
+                    network.insert_child_to_cell(name, new_subcell)
+                    change = True
+            elif isinstance(subcell, _AddFakeQuantAfterSubCell):
+                op = subcell.subcell
+                if op.name in ConvertToQuantNetwork.__quant_op_name__ and isinstance(op, ops.Primitive):
+                    network.__delattr__(name)
+                    network.__setattr__(name, op)
+                    change = True
+            else:
+                self._convert_quant2deploy(subcell)
+        if isinstance(network, nn.SequentialCell) and change:
+            network.cell_list = list(network.cells())
+        return network
+
+
+def export_geir(network, *inputs, file_name):
+    """
+    Exports MindSpore quant predict model to deploy with GEIR.
+
+    Args:
+        network (Cell): MindSpore network produced by `convert_quant_network`.
+        inputs (Tensor): Inputs of the `network`.
+        file_name (str): File name of model to export.
+    """
+    exporter = ExportQuantNetworkDeploy(network, *inputs)
+    deploy_net = exporter.run()
+    serialization.export(deploy_net, *inputs, file_name=file_name, file_format="GEIR")
 
 
 def convert_quant_network(network,
