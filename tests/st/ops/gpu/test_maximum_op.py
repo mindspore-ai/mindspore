@@ -222,3 +222,27 @@ def test_broadcast_diff_dims():
     output_ms = net(Tensor(x1_np), Tensor(x2_np), Tensor(dy_np))
     assert np.allclose(output_ms[0].asnumpy(), expect_dx1)
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_maximum_int():
+    x = Tensor(np.array([[1, 2, 3]]).astype(np.int32))
+    y = Tensor(np.array([[2]]).astype(np.int32))
+    expect = [[2, 2, 3]]
+    error = np.ones(shape=[1, 3]) * 1.0e-5
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    max_op = Net()
+    output = max_op(x, y)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    max_op_2 = Net()
+    output = max_op_2(x, y)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
