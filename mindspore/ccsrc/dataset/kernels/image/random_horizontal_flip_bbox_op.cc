@@ -29,20 +29,19 @@ Status RandomHorizontalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow
   BOUNDING_BOX_CHECK(input);
   if (distribution_(rnd_)) {
     // To test bounding boxes algorithm, create random bboxes from image dims
-    size_t numOfBBoxes = input[1]->shape()[0];     // set to give number of bboxes
-    float imgCenter = (input[0]->shape()[1] / 2);  // get the center of the image
+    size_t num_of_boxes = input[1]->shape()[0];     // set to give number of bboxes
+    float img_center = (input[0]->shape()[1] / 2);  // get the center of the image
 
-    for (int i = 0; i < numOfBBoxes; i++) {
+    for (int i = 0; i < num_of_boxes; i++) {
       uint32_t b_w = 0;  // bounding box width
       uint32_t min_x = 0;
       // get the required items
       input[1]->GetItemAt<uint32_t>(&min_x, {i, 0});
       input[1]->GetItemAt<uint32_t>(&b_w, {i, 2});
       // do the flip
-      float diff = imgCenter - min_x;          // get distance from min_x to center
-      uint32_t refl_min_x = diff + imgCenter;  // get reflection of min_x
-      uint32_t new_min_x = refl_min_x - b_w;   // subtract from the reflected min_x to get the new one
-
+      float diff = img_center - min_x;          // get distance from min_x to center
+      uint32_t refl_min_x = diff + img_center;  // get reflection of min_x
+      uint32_t new_min_x = refl_min_x - b_w;    // subtract from the reflected min_x to get the new one
       input[1]->SetItemAt<uint32_t>({i, 0}, new_min_x);
     }
     (*output).push_back(nullptr);

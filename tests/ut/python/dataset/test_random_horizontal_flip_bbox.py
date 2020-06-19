@@ -16,12 +16,12 @@
 Testing the random horizontal flip with bounding boxes op in DE
 """
 from enum import Enum
-from mindspore import log as logger
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+import mindspore.log as logger
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
 
 GENERATE_GOLDEN = False
 
@@ -38,57 +38,42 @@ class BoxType(Enum):
     OnEdge = 4
     WrongShape = 5
 
-
-class AddBadAnnotation:  # pylint: disable=too-few-public-methods
+def add_bad_annotation(img, bboxes, box_type):
     """
-    Used to add erroneous bounding boxes to object detection pipelines.
-    Usage:
-    >>> # Adds a box that covers the whole image. Good for testing edge cases
-    >>> de = de.map(input_columns=["image", "annotation"],
-    >>>            output_columns=["image", "annotation"],
-    >>>            operations=AddBadAnnotation(BoxType.OnEdge))
+    Used to generate erroneous bounding box examples on given img.
+    :param img: image where the bounding boxes are.
+    :param bboxes: in [x_min, y_min, w, h, label, truncate, difficult] format
+    :param box_type: type of bad box
+    :return: bboxes with bad examples added
     """
+    height = img.shape[0]
+    width = img.shape[1]
+    if box_type == BoxType.WidthOverflow:
+        # use box that overflows on width
+        return img, np.array([[0, 0, width + 1, height, 0, 0, 0]]).astype(np.uint32)
 
-    def __init__(self, box_type):
-        self.box_type = box_type
+    if box_type == BoxType.HeightOverflow:
+        # use box that overflows on height
+        return img, np.array([[0, 0, width, height + 1, 0, 0, 0]]).astype(np.uint32)
 
-    def __call__(self, img, bboxes):
-        """
-        Used to generate erroneous bounding box examples on given img.
-        :param img: image where the bounding boxes are.
-        :param bboxes: in [x_min, y_min, w, h, label, truncate, difficult] format
-        :return: bboxes with bad examples added
-        """
-        height = img.shape[0]
-        width = img.shape[1]
-        if self.box_type == BoxType.WidthOverflow:
-            # use box that overflows on width
-            return img, np.array([[0, 0, width + 1, height, 0, 0, 0]]).astype(np.uint32)
+    if box_type == BoxType.NegativeXY:
+        # use box with negative xy
+        return img, np.array([[-10, -10, width, height, 0, 0, 0]]).astype(np.uint32)
 
-        if self.box_type == BoxType.HeightOverflow:
-            # use box that overflows on height
-            return img, np.array([[0, 0, width, height + 1, 0, 0, 0]]).astype(np.uint32)
+    if box_type == BoxType.OnEdge:
+        # use box that covers the whole image
+        return img, np.array([[0, 0, width, height, 0, 0, 0]]).astype(np.uint32)
 
-        if self.box_type == BoxType.NegativeXY:
-            # use box with negative xy
-            return img, np.array([[-10, -10, width, height, 0, 0, 0]]).astype(np.uint32)
-
-        if self.box_type == BoxType.OnEdge:
-            # use box that covers the whole image
-            return img, np.array([[0, 0, width, height, 0, 0, 0]]).astype(np.uint32)
-
-        if self.box_type == BoxType.WrongShape:
-            # use box that covers the whole image
-            return img, np.array([[0, 0, width - 1]]).astype(np.uint32)
-        return img, bboxes
+    if box_type == BoxType.WrongShape:
+        # use box that covers the whole image
+        return img, np.array([[0, 0, width - 1]]).astype(np.uint32)
+    return img, bboxes
 
 
 def h_flip(image):
     """
     Apply the random_horizontal
     """
-
-    # with the seed provided in this test case, it will always flip.
     # that's why we flip here too
     image = image[:, ::-1, :]
     return image
@@ -111,7 +96,7 @@ def check_bad_box(data, box_type, expected_error):
         data = data.map(input_columns=["image", "annotation"],
                         output_columns=["image", "annotation"],
                         columns_order=["image", "annotation"],
-                        operations=AddBadAnnotation(box_type))  # Add column for "annotation"
+                        operations=lambda img, bboxes: add_bad_annotation(img, bboxes, box_type))
         # map to apply ops
         data = data.map(input_columns=["image", "annotation"],
                         output_columns=["image", "annotation"],

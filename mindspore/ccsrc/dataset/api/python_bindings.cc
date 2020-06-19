@@ -353,10 +353,10 @@ void bindTensorOps1(py::module *m) {
     .def(py::init<std::vector<std::shared_ptr<TensorOp>>, int32_t>(), py::arg("operations"),
          py::arg("NumOps") = UniformAugOp::kDefNumOps);
 
-  (void)py::class_<BoundingBoxAugOp, TensorOp, std::shared_ptr<BoundingBoxAugOp>>(
-    *m, "BoundingBoxAugOp", "Tensor operation to apply a transformation on a random choice of bounding boxes.")
+  (void)py::class_<BoundingBoxAugmentOp, TensorOp, std::shared_ptr<BoundingBoxAugmentOp>>(
+    *m, "BoundingBoxAugmentOp", "Tensor operation to apply a transformation on a random choice of bounding boxes.")
     .def(py::init<std::shared_ptr<TensorOp>, float>(), py::arg("transform"),
-         py::arg("ratio") = BoundingBoxAugOp::defRatio);
+         py::arg("ratio") = BoundingBoxAugmentOp::kDefRatio);
 
   (void)py::class_<ResizeBilinearOp, TensorOp, std::shared_ptr<ResizeBilinearOp>>(
     *m, "ResizeBilinearOp",

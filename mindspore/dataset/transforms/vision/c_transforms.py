@@ -254,13 +254,16 @@ class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
         super().__init__(prob)
 
 
-class BoundingBoxAug(cde.BoundingBoxAugOp):
+class BoundingBoxAugment(cde.BoundingBoxAugmentOp):
     """
-    Flip the input image vertically, randomly with a given probability.
+    Apply a given image transform on a random selection of bounding box regions
+    of a given image.
 
     Args:
-        transform: C++ operation (python OPs are not accepted).
-        ratio (float): Ratio of bounding boxes to apply augmentation on. Range: [0,1] (default=1).
+        transform: C++ transformation function to be applied on random selection
+            of bounding box regions of a given image.
+        ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
+            Range: [0,1] (default=0.3).
     """
     @check_bounding_box_augment_cpp
     def __init__(self, transform, ratio=0.3):
