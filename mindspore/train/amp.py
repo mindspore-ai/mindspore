@@ -127,7 +127,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             - O2: Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
             - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
-            O2 is recommended on GPU, O3 is recommemded on Ascend.
+
+            O2 is recommended on GPU, O3 is recommended on Ascend.
 
         cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32`.
             If set to `mstype.float16`, use `float16` mode to train. If set, overwrite the level setting.
