@@ -32,9 +32,12 @@ class TaskDescReporter : public DescReporter {
   ~TaskDescReporter() override = default;
   void ReportData() override;
   void set_task_ids(const std::vector<uint32_t> &task_ids) { task_ids_ = task_ids; }
+  void set_stream_ids(const std::vector<uint32_t> &stream_ids) { stream_ids_ = stream_ids; }
 
  private:
   std::vector<uint32_t> task_ids_;
+  std::vector<uint32_t> stream_ids_;
+  void CheckStreamTaskValid(uint32_t task_id, uint32_t stream_id);
 };
 }  // namespace ascend
 }  // namespace device
