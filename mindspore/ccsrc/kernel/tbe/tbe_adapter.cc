@@ -90,6 +90,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"lamb_next_mv_with_decay", "lamb_next_m_v_with_decay"},
   {"lamb_next_mv", "lamb_next_m_v"},
   {"split", "split_d"},
+  {"split_v", "split_v_d"},
   {"resize_nearest_neighbor", "resize_nearest_neighbor_v2_d"},
   {"resize_nearest_neighbor_grad", "resize_nearest_neighbor_v2_grad_d"},
   {"pad", "pad_d"},

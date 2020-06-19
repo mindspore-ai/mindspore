@@ -72,6 +72,7 @@ constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kFlattenGradOpName = "FlattenGrad";
 constexpr auto kExpandDimsOpName = "ExpandDims";
 constexpr auto kSplitOpName = "Split";
+constexpr auto kSplitVOpName = "SplitV";
 constexpr auto kSparseApplyAdagradOpName = "SparseApplyAdagrad";
 constexpr auto kMomentumOpName = "Momentum";
 constexpr auto kApplyMomentumOpName = "ApplyMomentum";
@@ -211,6 +212,10 @@ constexpr auto kAttrWaitEvent = "wait_event";
 constexpr auto kAttrRecordEventStream = "record_event_stream";
 constexpr auto kAttrWaitEventStream = "wait_event_stream";
 constexpr auto kAttrIndex = "index";
+constexpr auto kAttrSplitDim = "split_dim";
+constexpr auto kAttrNumSplit = "num_split";
+constexpr auto kAttrOutputNum = "output_num";
+constexpr auto kAttrSizeSplits = "size_splits";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
