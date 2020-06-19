@@ -673,6 +673,10 @@ def get_bprop_broadcast_to(self):
 
     def bprop(x, out, dout):
         x_shape = shape_op(x)
+        dout_shape = shape_op(dout)
+
+        if x_shape == dout_shape:
+            return (dout,)
         _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
         reduced_grad = reduce_keep_dim(dout, reduction_axes)
         dx = reshape(reduced_grad, x_shape)
