@@ -494,6 +494,21 @@ def test_elim_transpose(tag):
 
     return fns[tag]
 
+def test_elim_depend_value(tag):
+    """ test_elim_depend_value """
+    fns = FnDict()
+    depend = P.Depend()
+
+    @fns
+    def before(x):
+        return depend(x, None)
+
+    @fns
+    def after(x):
+        return x
+
+    return fns[tag]
+
 
 def test_elim_tile_multiply_one(tag):
     """ test_elim_tile_multiply_one """

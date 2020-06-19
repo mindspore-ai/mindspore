@@ -24,9 +24,11 @@
 
 #include "optimizer/optimizer.h"
 #include "optimizer/irpass.h"
+#include "ir/optimizer_caller.h"
 #include "optimizer/irpass/prim_eliminate.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
+#include "ir/pattern_matcher.h"
 
 namespace mindspore {
 namespace opt {
@@ -191,6 +193,17 @@ class ZeroLikeFillZero : public AnfVisitor {
   AnfNodePtr y_{nullptr};
   PrimitivePtr PrimFill_, PrimShape_, PrimDType_;
 };
+
+// {prim::kPrimDepend, X, ValueCond}->X
+class DependValueElim : public OptimizerCaller {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    PatternNode<AnfNodePtr> x, cond;
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x, cond), x, IsVNode(cond.GetNode(node)));
+    return nullptr;
+  }
+};
+
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

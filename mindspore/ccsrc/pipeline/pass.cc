@@ -108,6 +108,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.incorporate_env_getitem_,
     irpass.incorporate_env_getitem_switch_,
     irpass.new_env_get_item_,
+    irpass.depend_value_elim_,
   });
   opt::OptPassConfig a_3 = opt::OptPassConfig({
     irpass.same_eliminate_,
