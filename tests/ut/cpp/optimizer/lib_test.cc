@@ -257,6 +257,14 @@ TEST_F(TestOptLib, test_elim_transpose) {
   ASSERT_TRUE(CheckOpt(before, after, patterns));
 }
 
+TEST_F(TestOptLib, test_elim_depend_value) {
+  FuncGraphPtr before = getPyFun.CallAndParseRet("test_elim_depend_value", "before");
+  FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_depend_value", "after");
+
+  auto patterns = std::vector<SubstitutionPtr>({irpass.depend_value_elim_});
+  ASSERT_TRUE(CheckOpt(before, after, patterns));
+}
+
 TEST_F(TestOptLib, test_elim_tile_multiply_one) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_elim_tile_multiply_one", "before");
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_tile_multiply_one", "after");
