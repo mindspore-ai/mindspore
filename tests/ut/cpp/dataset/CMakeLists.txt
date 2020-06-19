@@ -17,6 +17,7 @@ SET(DE_UT_SRCS
         circular_pool_test.cc
         client_config_test.cc
         connector_test.cc
+        cut_out_op_test.cc
         datatype_test.cc
         decode_op_test.cc
         execution_tree_test.cc
@@ -28,6 +29,7 @@ SET(DE_UT_SRCS
         normalize_op_test.cc
         one_hot_op_test.cc
         pad_end_op_test.cc
+        pad_op_test.cc
         path_test.cc
         project_op_test.cc
         queue_test.cc
