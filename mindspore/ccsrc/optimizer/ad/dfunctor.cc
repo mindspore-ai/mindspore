@@ -54,8 +54,8 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
   dout_ = tape_->add_parameter();
 }
 
-void DFunctor::Init(const DFunctorPtr &functor, bool is_top) {
-  func_graph_to_functor_[primal_graph_] = functor;
+void DFunctor::Init(bool is_top) {
+  func_graph_to_functor_[primal_graph_] = shared_from_this();
   is_top_ = is_top;
   if (is_top) {
     scope_ = primal_graph_->scope();
@@ -371,7 +371,7 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     primal->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
 
     auto functor = std::make_shared<DFunctor>(primal, resources_);
-    functor->Init(functor);
+    functor->Init();
     functor->k_graph_ = fg;
 
     return fg;
@@ -394,7 +394,7 @@ AnfNodePtr DFunctor::MapToK(const FuncGraphPtr &primal) {
   }
 
   auto functor = std::make_shared<DFunctor>(primal, resources_);
-  functor->Init(functor);
+  functor->Init();
   functor->MapObject();
   functor->MapMorphism();
 
