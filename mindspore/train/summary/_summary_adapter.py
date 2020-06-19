@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Generate the summary event which conform to proto format."""
-import socket
+import platform
 import time
 
 import numpy as np
@@ -51,7 +51,7 @@ def get_event_file_name(prefix, suffix):
     _check_str_by_regular(suffix)
     file_name = ""
     time_second = str(int(time.time()))
-    hostname = socket.gethostname()
+    hostname = platform.node()
 
     if prefix is not None:
         file_name = file_name + prefix

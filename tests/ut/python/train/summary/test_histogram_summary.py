@@ -84,21 +84,6 @@ def test_histogram_multi_summary():
                 event = reader.read_event()
                 assert event.summary.value[0].histogram.count == size
 
-
-def test_histogram_summary_scalar_tensor():
-    """Test histogram summary, input is a scalar tensor."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-            test_data = _wrap_test_data(Tensor(1))
-            _cache_summary_tensor_data(test_data)
-            test_writer.record(step=1)
-
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
-        with SummaryReader(file_name) as reader:
-            event = reader.read_event()
-            assert event.summary.value[0].histogram.count == 1
-
-
 def test_histogram_summary_empty_tensor():
     """Test histogram summary, input is an empty tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:

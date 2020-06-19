@@ -21,9 +21,9 @@ from mindspore import log as logger
 
 from ..._c_expression import Tensor
 from ..._checkparam import _check_str_by_regular
-from .._utils import _make_directory
-from ._event_writer import EventWriter
-from ._summary_adapter import get_event_file_name, package_graph_event, package_init_event
+from .._utils import _make_directory, _check_to_numpy, _check_lineage_value
+from ._summary_adapter import get_event_file_name, package_graph_event
+from ._writer_pool import WriterPool
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrencies happening.
@@ -53,16 +53,20 @@ def _get_summary_tensor_data():
         return data
 
 
+def _dictlist():
+    from collections import defaultdict
+    return defaultdict(list)
+
+
 class SummaryRecord:
     """
-    SummaryRecord is used to record the summary value.
+    SummaryRecord is used to record the summary data and lineage data.
 
     Note:
-        The API will create an event file in a given directory and add summaries and events to it.
-        It writes the event log to a file by executing the record method. In addition,
-        if the SummaryRecord object is created and the summary operator is used in the network,
-        even if the record method is not called, the event in the cache will be written to the
-        file at the end of execution. Make sure to close the SummaryRecord object at the end.
+        The API will create a summary file and a lineage file lazily in a given directory and writes data to them.
+        It writes the data to files by executing the record method. In addition to record the data bubbled up from
+        the network by defining the summary operators, SummaryRecord also supports to record extra data which
+        can be added by calling add_value. Finally, make sure to close the SummaryRecord object at the end.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -89,10 +93,12 @@ class SummaryRecord:
                  file_suffix="_MS",
                  network=None):
 
-        self._event_writer, self._closed = None, False
+        self._closed, self._mode = False, 'train'
+        self._data_pool = _dictlist()
 
         _check_str_by_regular(file_prefix)
         _check_str_by_regular(file_suffix)
+
         self.log_path = _make_directory(log_dir)
 
         if not isinstance(queue_max_size, int) or not isinstance(flush_time, int):
@@ -123,16 +129,12 @@ class SummaryRecord:
         except Exception as ex:
             raise RuntimeError(ex)
 
-    def _init_event_writer(self):
-        """Init event writer and write metadata."""
-        event_writer = EventWriter(self.full_file_name, self.flush_time)
-        event_writer.write(package_init_event().SerializeToString())
-        return event_writer
+        self._event_writer = WriterPool(log_dir,
+                                        summary=self.full_file_name,
+                                        lineage=get_event_file_name('events', '_lineage'))
 
     def __enter__(self):
         """Enter the context manager."""
-        if not self._event_writer:
-            self._event_writer = self._init_event_writer()
         if self._closed:
             raise ValueError('SummaryRecord has been closed.')
         return self
@@ -140,6 +142,76 @@ class SummaryRecord:
     def __exit__(self, extype, exvalue, traceback):
         """Exit the context manager."""
         self.close()
+
+    def set_mode(self, mode):
+        """
+        Set the mode for the recorder to be aware. The mode is set 'train' by default.
+
+        Args:
+            mode (str): The mode to set, which should be 'train' or 'eval'.
+
+        Raises:
+            ValueError: When the mode is not recognized.
+
+        Examples:
+            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>>     summary_record.set_mode('eval')
+        """
+        mode_spec = 'train', 'eval'
+        if mode not in mode_spec:
+            raise ValueError(f'{repr(mode)} is not a recognized mode.')
+        self._mode = mode
+
+    def add_value(self, plugin, name, value):
+        """
+        Add value to be record later on.
+
+        When the plugin is 'tensor', 'scalar', 'image' or 'histogram',
+        the name should be the tag name, and the value should be a Tensor.
+
+        When the plugin plugin is 'graph', the value should be a GraphProto.
+
+        When the plugin 'dataset_graph', 'train_lineage', 'eval_lineage',
+        or 'custom_lineage_data', the value should be a proto message.
+
+
+        Args:
+            plugin (str): The plugin for the value.
+            name (str): The name for the value.
+            value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo]): \
+                The value to store.
+
+                - GraphProto: The 'value' should be a serialized string this type when the plugin is 'graph'.
+                - Tensor: The 'value' should be this type when the plugin is 'scalar', 'image', 'tensor' or 'histogram'.
+                - TrainLineage: The 'value' should be this type when the plugin is 'train_lineage'.
+                - EvaluationLineage: The 'value' should be this type when the plugin is 'eval_lineage'.
+                - DatasetGraph: The 'value' should be this type when the plugin is 'dataset_graph'.
+                - UserDefinedInfo: The 'value' should be this type when the plugin is 'custom_lineage_data'.
+
+        Raises:
+            ValueError: When the name is not valid.
+            TypeError: When the value is not a Tensor.
+
+        Examples:
+            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>>     summary_record.add_value('scalar', 'loss', Tensor(0.1))
+        """
+        if plugin in ('tensor', 'scalar', 'image', 'histogram'):
+            if not name or not isinstance(name, str):
+                raise ValueError(f'{repr(name)} is not a valid tag name.')
+            if not isinstance(value, Tensor):
+                raise TypeError(f'Expect the value to be Tensor, but got {type(value).__name__}')
+            np_value = _check_to_numpy(plugin, value)
+            self._data_pool[plugin].append(dict(tag=name, mode=self._mode, value=np_value))
+
+        elif plugin in ('train_lineage', 'eval_lineage', 'dataset_graph', 'custom_lineage_data'):
+            _check_lineage_value(plugin, value)
+            self._data_pool[plugin].append(dict(mode=self._mode, value=value.SerializeToString()))
+        elif plugin == 'graph':
+            package_graph_event(value)
+            self._data_pool[plugin].append(dict(mode=self._mode, value=value))
+        else:
+            raise ValueError(f'No such plugin of {repr(plugin)}')
 
     def record(self, step, train_network=None):
         """
@@ -149,12 +221,12 @@ class SummaryRecord:
             step (int): Represents training step number.
             train_network (Cell): The network that called the callback.
 
+        Returns:
+            bool, whether the record process is successful or not.
+
         Examples:
             >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.record(step=2)
-
-        Returns:
-            bool, whether the record process is successful or not.
         """
         logger.info("SummaryRecord step is %r.", step)
         if self._closed:
@@ -163,10 +235,6 @@ class SummaryRecord:
         if not isinstance(step, int) or isinstance(step, bool):
             raise ValueError("`step` should be int")
         # Set the current summary of train step
-        if not self._event_writer:
-            self._event_writer = self._init_event_writer()
-            logger.warning('SummaryRecord should be used as context manager for a with statement.')
-
         if self.network is not None and not self.has_graph:
             graph_proto = self.network.get_func_graph_proto()
             if graph_proto is None and train_network is not None:
@@ -174,39 +242,48 @@ class SummaryRecord:
             if graph_proto is None:
                 logger.error("Failed to get proto for graph")
             else:
-                self._event_writer.write(package_graph_event(graph_proto).SerializeToString())
+                self._event_writer.write({'graph': [{'step': step, 'value': graph_proto}]})
                 self.has_graph = True
                 if not _summary_tensor_cache:
                     return True
 
-        data = _get_summary_tensor_data()
-        if not data:
-            logger.info("The step(%r) does not have record data.", step)
-            return False
-        if self.queue_max_size > 0 and len(data) > self.queue_max_size:
-            logger.error("The size of data record is %r, which is greater than queue_max_size %r.", len(data),
-                         self.queue_max_size)
+        if self._mode == 'train':
+            self._add_summary_tensor_data()
 
-        # process the data
-        result = self._data_convert(data)
-        if not result:
-            logger.error("The step(%r) summary data is invalid.", step)
-            return False
-        self._event_writer.write((result, step))
-        logger.debug("Send the summary data to scheduler for saving, step = %d", step)
+        self._event_writer.write(self._consume_data_pool(step))
         return True
+
+    def _add_summary_tensor_data(self):
+        summary_data = _get_summary_tensor_data()
+        if not summary_data:
+            logger.debug(f'No summary data bubbled from the network.')
+        for name, tensor in summary_data.items():
+            tag, plugin = SummaryRecord._parse_from(name)
+            if (tag, plugin) == (None, None):
+                logger.warning("The name(%r) is invalid, expected 'TAG[:TYPE]'.", name)
+            else:
+                self.add_value(plugin.lower(), tag, tensor)
+
+    def _consume_data_pool(self, step):
+        try:
+            for values in self._data_pool.values():
+                for value in values:
+                    value['step'] = step
+            return self._data_pool
+        finally:
+            self._data_pool = _dictlist()
 
     @property
     def log_dir(self):
         """
         Get the full path of the log file.
 
+        Returns:
+            str, the full path of log file.
+
         Examples:
             >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     print(summary_record.log_dir)
-
-        Returns:
-            String, the full path of log file.
         """
         return self.full_file_name
 
@@ -235,46 +312,19 @@ class SummaryRecord:
         """
         if not self._closed and self._event_writer:
             # event writer flush and close
+            logger.info('Please wait it may take quite some time to finish writing and closing.')
             self._event_writer.close()
             self._closed = True
 
     def __del__(self) -> None:
         self.close()
 
-    def _data_convert(self, summary):
-        """Convert the data."""
-        # convert the summary to numpy
-        result = []
-        for name, data in summary.items():
-            # confirm the data is valid
-            summary_tag, summary_type = SummaryRecord._parse_from(name)
-            if summary_tag is None:
-                logger.error("The data type is invalid, name = %r, tensor = %r", name, data)
-                return None
-            if isinstance(data, Tensor):
-                result.append({'name': summary_tag, 'data': data.asnumpy(), '_type': summary_type})
-            else:
-                logger.error("The data type is invalid, name = %r, tensor = %r", name, data)
-                return None
-
-        return result
-
     @staticmethod
     def _parse_from(name: str = None):
-        """
-        Parse the tag and type from name.
-
-        Args:
-            name (str): Format: TAG[:TYPE].
-
-        Returns:
-            Tuple, (summary_tag, summary_type).
-        """
-        if name is None:
-            logger.error("The name is None")
+        """Parse the tag and type from name."""
+        if not isinstance(name, str):
             return None, None
         match = re.match(r'(.+)\[:(.+)\]', name)
         if match:
             return match.groups()
-        logger.error("The name(%r) format is invalid, expected 'TAG[:TYPE]'.", name)
         return None, None

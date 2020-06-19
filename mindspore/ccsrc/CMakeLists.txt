@@ -79,6 +79,7 @@ if (ENABLE_DUMP_PROTO)
     file(GLOB_RECURSE PROTO_PY RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "utils/anf_ir.proto"
         "utils/summary.proto"
+        "utils/lineage.proto"
         "utils/checkpoint.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
