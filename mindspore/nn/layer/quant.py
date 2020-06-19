@@ -32,7 +32,7 @@ from .activation import get_activation
 from ..cell import Cell
 from . import conv, basic
 from ..._checkparam import ParamValidator as validator
-
+from ...ops.operations import _quant_ops as Q
 
 __all__ = [
     'Conv2dBnAct',
@@ -242,11 +242,11 @@ class BatchNormFoldCell(Cell):
         self.epsilon = epsilon
         self.is_gpu = context.get_context('device_target') == "GPU"
         if self.is_gpu:
-            self.bn_train = P.BatchNormFold(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
-            self.bn_infer = P.BatchNormFold(momentum, epsilon, is_training=False, freeze_bn=freeze_bn)
+            self.bn_train = Q.BatchNormFold(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
+            self.bn_infer = Q.BatchNormFold(momentum, epsilon, is_training=False, freeze_bn=freeze_bn)
         else:
             self.bn_reduce = P.BNTrainingReduce()
-            self.bn_update = P.BatchNormFoldD(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
+            self.bn_update = Q.BatchNormFoldD(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
 
     def construct(self, x, mean, variance, global_step):
         if self.is_gpu:
@@ -337,11 +337,11 @@ class FakeQuantWithMinMax(Cell):
 
         # init fake quant relative op
         if per_channel:
-            quant_fun = partial(P.FakeQuantPerChannel, channel_axis=self.channel_axis)
-            ema_fun = partial(P.FakeQuantMinMaxPerChannelUpdate, channel_axis=self.channel_axis)
+            quant_fun = partial(Q.FakeQuantPerChannel, channel_axis=self.channel_axis)
+            ema_fun = partial(Q.FakeQuantMinMaxPerChannelUpdate, channel_axis=self.channel_axis)
         else:
-            quant_fun = P.FakeQuantPerLayer
-            ema_fun = P.FakeQuantMinMaxPerLayerUpdate
+            quant_fun = Q.FakeQuantPerLayer
+            ema_fun = Q.FakeQuantMinMaxPerLayerUpdate
 
         if self.is_ascend:
             self.fake_quant = quant_fun(num_bits=self.num_bits,
@@ -510,13 +510,13 @@ class Conv2dBatchNormQuant(Cell):
                                                      symmetric=symmetric,
                                                      narrow_range=narrow_range)
         self.batchnorm_fold = BatchNormFoldCell(epsilon=eps, momentum=momentum, freeze_bn=freeze_bn)
-        self.correct_mul = P.CorrectionMul(channel_axis)
+        self.correct_mul = Q.CorrectionMul(channel_axis)
         if context.get_context('device_target') == "Ascend":
-            self.batchnorm_fold2_train = P.BatchNormFold2_D(freeze_bn=freeze_bn)
-            self.batchnorm_fold2_infer = P.BatchNormFold2_D(freeze_bn=0)
+            self.batchnorm_fold2_train = Q.BatchNormFold2_D(freeze_bn=freeze_bn)
+            self.batchnorm_fold2_infer = Q.BatchNormFold2_D(freeze_bn=0)
         elif context.get_context('device_target') == "GPU":
-            self.batchnorm_fold2_train = P.BatchNormFold2(freeze_bn=freeze_bn)
-            self.batchnorm_fold2_infer = P.BatchNormFold2(freeze_bn=0)
+            self.batchnorm_fold2_train = Q.BatchNormFold2(freeze_bn=freeze_bn)
+            self.batchnorm_fold2_infer = Q.BatchNormFold2(freeze_bn=0)
         else:
             raise ValueError("Unsupported platform: {}".format(context.get_context('device_target')))
         self.step = Parameter(initializer('normal', [1], dtype=mstype.int32), name='step', requires_grad=False)

@@ -253,7 +253,7 @@ def convert_quant_network(network,
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
-    returns:
+    Returns:
         Cell, Network which has change to aware quantization training network.
     """
     net = ConvertToQuantNetwork(
