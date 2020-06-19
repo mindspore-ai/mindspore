@@ -30,7 +30,7 @@ void SubCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void sub_task(int *in_addr, int *out_addr, size_t lens, int offset) {
+void sub_task(const int *in_addr, int *out_addr, size_t lens, int offset) {
   for (size_t i = 0; i < lens; i++) {
     out_addr[i] = in_addr[i] - offset;
   }
@@ -55,7 +55,7 @@ bool SubCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
       output_addr[i] = input_addr[i] - offset_;
     }
   } else {
-    size_t thread_num = 4;
+    const size_t thread_num = 4;
     std::thread threads[4];
     size_t process_lens = (lens + thread_num - 1) / thread_num;
     size_t process_offset = 0;

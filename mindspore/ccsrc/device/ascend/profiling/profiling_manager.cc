@@ -121,7 +121,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     MS_LOG(ERROR) << "Register profiling Engine failed.";
     return false;
   }
-
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const string prof_options_str = context->profiling_options();
@@ -130,7 +129,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     MS_LOG(WARNING) << "Profiling is enabled, but profiling option is not set!";
     return true;
   }
-
   // current one docker only use one device`
   Json p_device;
   // JOBID
@@ -149,7 +147,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   // only one device, but sProfMgrStartUp API require for device list
   Json devices;
   devices[0] = p_device;
-
   Json startCfg;
   startCfg["startCfg"] = devices;
 
@@ -157,9 +154,7 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   std::stringstream ss;
   ss << startCfg;
   std::string cfg = ss.str();
-
   MS_LOG(INFO) << "profiling config " << cfg;
-
   auto ret = rtProfilerStart();
   if (ret != RT_ERROR_NONE) {
     MS_LOG(INFO) << "Call rtProfilerStart failed, ret:" << ret;
