@@ -895,7 +895,6 @@ class Dataset:
         return ProjectDataset(self, columns)
 
     def build_vocab(self, vocab, columns, freq_range, top_k, special_tokens, special_first):
-        """ Internal function for building a vocab"""
         return BuildVocabDataset(self, vocab, columns, freq_range, top_k, special_tokens, special_first)
 
     def apply(self, apply_func):
