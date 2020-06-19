@@ -43,7 +43,8 @@ class NetWithSparseGatherV2(nn.Cell):
     """ NetWithSparseGatherV2 definition """
     def __init__(self):
         super(NetWithSparseGatherV2, self).__init__()
-        self.weight1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="weight1", sparse_grad=True)
+        self.weight1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)),
+                                 name="weight1", sparse_grad="sparse_key_w1")
         self.weight2 = Parameter(Tensor(np.ones([2, 1, 2]).astype((np.float32))), name="weight2")
         self.axis = 0
         self.gather = P.SparseGatherV2()

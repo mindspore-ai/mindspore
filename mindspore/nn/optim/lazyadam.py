@@ -92,9 +92,10 @@ class LazyAdam(Optimizer):
         applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
 
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
-        `sparse_grad` of `Parameter` being set as True. The sparse behavior, to be notice, is not equivalent to the
+        `sparse_grad` of `Parameter` being set. The sparse behavior, to be notice, is not equivalent to the
         original Adam algorithm, as only the current indices parames will be updated. The sparse feature is under
-        continuous development. The sparse behavior is currently performed on the CPU, weight decay is not supported.
+        continuous development. The sparse behavior is currently performed on the CPU, weight decay is
+        not supported.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,

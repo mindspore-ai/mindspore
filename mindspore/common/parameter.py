@@ -51,9 +51,9 @@ class Parameter:
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
             broadcast and gradients communication would not be applied on parameters. Default: False.
-        sparse_grad (bool): True if the parameter's gradient is sparse. Default: False.
+        sparse_grad (str): Set if the parameter's gradient is sparse. Default: empty.
     """
-    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False, sparse_grad=False):
+    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False, sparse_grad=""):
         self.set_parameter_data(default_input)
         self.name = name
         self.requires_grad = requires_grad
@@ -181,9 +181,9 @@ class Parameter:
         return self._sparse_grad
 
     @sparse_grad.setter
-    def sparse_grad(self, value=True):
-        if not isinstance(value, bool):
-            raise TypeError("`sparse_grad` parameter must be bool type")
+    def sparse_grad(self, value=""):
+        if not isinstance(value, str):
+            raise TypeError("`sparse_grad` parameter must be str type")
         self._sparse_grad = value
 
     @property

@@ -154,8 +154,8 @@ def test_AdamWeightDecaySparse():
     class NetWithSparseGatherV2(nn.Cell):
         def __init__(self):
             super(NetWithSparseGatherV2, self).__init__()
-            self.w1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="w1", sparse_grad=True)
-            self.w2 = Parameter(Tensor(np.ones([2, 1, 2]).astype(np.float32)), name="w2")
+            self.w1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="w1", sparse_grad="sparse_key_w1")
+            self.w2 = Parameter(Tensor(np.ones([2, 1, 2]).astype(np.float32)), name="w2", sparse_grad="sparse_key_w2")
             self.gatherv2 = P.SparseGatherV2()
             self.axis = 0
         def construct(self, indices):
