@@ -115,6 +115,16 @@ class Tensor {
   static Status CreateTensor(std::shared_ptr<Tensor> *, TensorImpl tensor_impl, const TensorShape &shape, DataType type,
                              const unsigned char *data = nullptr);
 
+  /// Create a copy of the input tensor
+  /// \param out [out] output tensor to be generated
+  /// \param in [in] orginal tensor to be copied
+  /// \return Status
+  static Status CreateTensor(std::shared_ptr<Tensor> *out, const std::shared_ptr<Tensor> &in) {
+    const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
+    *out = std::allocate_shared<Tensor>(*alloc, in->shape(), in->type(), in->GetBuffer(), in->SizeInBytes());
+    return Status::OK();
+  }
+
   // A static factory method to create a Tensor from a given py::array.
   // @param ptr output argument to hold the created Tensor
   // @param arr py::array
