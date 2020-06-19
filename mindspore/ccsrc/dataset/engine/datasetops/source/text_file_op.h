@@ -264,6 +264,10 @@ class TextFileOp : public ParallelOp {
   // @return Status - the error code returned.
   Status PostEndOfEpoch(int32_t queue_index);
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t device_id_;
   int32_t num_devices_;
   int64_t rows_per_buffer_;

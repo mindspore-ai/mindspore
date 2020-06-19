@@ -219,6 +219,10 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status CountDatasetInfo();
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t rows_per_buffer_;
   int64_t io_block_pushed_;
   int64_t row_cnt_;

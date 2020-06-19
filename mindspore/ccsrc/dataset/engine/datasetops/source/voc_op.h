@@ -263,6 +263,10 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   bool decode_;
   int64_t row_cnt_;
   int64_t buf_cnt_;

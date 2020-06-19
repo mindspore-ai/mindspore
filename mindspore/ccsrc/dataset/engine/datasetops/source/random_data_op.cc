@@ -53,9 +53,6 @@ Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
     RETURN_IF_NOT_OK((*out_op)->GenerateSchema());
   }
 
-  // Extract the column name mapping from the schema and save it in the class.
-  RETURN_IF_NOT_OK((*out_op)->data_schema_->GetColumnNameMap(&((*out_op)->column_name_id_map_)));
-
   return Status::OK();
 }
 
@@ -403,6 +400,16 @@ Status RandomDataOp::Reset() {
   guys_out_ = 0;
   epoch_sync_wait_post_.Set();
 
+  return Status::OK();
+}
+
+Status RandomDataOp::ComputeColMap() {
+  // Extract the column name mapping from the schema and save it in the class.
+  if (column_name_id_map_.empty()) {
+    RETURN_IF_NOT_OK(data_schema_->GetColumnNameMap(&(column_name_id_map_)));
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

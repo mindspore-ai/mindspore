@@ -258,15 +258,18 @@ class MapOp : public ParallelOp {
   // @param col_name_id_map The column name to index mapping obtained from child operator
   void CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name_id_map);
 
-  // Private function that initialize some internal data structure used by WorkerEntry()
-  // @param in_buf A raw pointer to the DataBuffer. A raw pointer is fine because this function does not manage memory
-  //     and is not shared with other threads.
-  Status WorkerEntryInit(const DataBuffer *in_buf);
-
   // Validating if each of the input_columns exists in the DataBuffer.
   // @param - the column map to check
   // @return - status return code
   Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map);
+
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
+  // Private function for initializing private variables such as in_columns_, out_columns_.
+  // @return - Status
+  Status InitPrivateVariable(std::unordered_map<std::string, int32_t> *col_name_id_map);
 };
 }  // namespace dataset
 }  // namespace mindspore

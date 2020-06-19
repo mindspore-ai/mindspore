@@ -66,12 +66,6 @@ Status ConcatOp::operator()() {
   std::unique_ptr<DataBuffer> buf;
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
 
-  // Obtain columns_name_id_map from child_[0]
-  column_name_id_map_ = child_[0]->column_name_id_map();
-  if (column_name_id_map_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
-  }
-
   int eof_count = 0;
   while (eof_count != children_num_) {
     for (int i = 0; i < children_num_; i++) {
@@ -115,17 +109,13 @@ Status ConcatOp::Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf) {
   buf->GetRow(0, &new_row);
 
   if (id == 0) {
-    // Obtain the column name, data type and data rank in child[0]
-    column_name_id_ = child_[id]->column_name_id_map();
+    // Obtain the data type and data rank in child[0]
     for (auto item : new_row) {
       data_type_.push_back(item->type());
       data_rank_.push_back(item->Rank());
     }
   } else {
-    // Compare the column name, data type and data rank with these in child[0]
-    if (child_[id]->column_name_id_map() != column_name_id_) {
-      RETURN_STATUS_UNEXPECTED("The column name or column order is not the same with previous dataset.");
-    }
+    // Compare the data type and data rank with these in child[0]
     int32_t index = 0;
     for (auto item : new_row) {
       if ((item->type() != data_type_[index]) || item->Rank() != data_rank_[index++]) {
@@ -139,6 +129,26 @@ Status ConcatOp::Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf) {
 Status ConcatOp::PrepareNodePostAction() {
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
   tree_->AddToRepeatStack(shared_from_this());
+  return Status::OK();
+}
+
+// We need to overwrite the super class ComputeColMap here because the number of children is more than 1.
+Status ConcatOp::ComputeColMap() {
+  if (column_name_id_map_.empty()) {
+    // Obtain columns_name_id_map from child_[0]
+    column_name_id_map_ = child_[0]->column_name_id_map();
+    if (column_name_id_map_.empty()) {
+      RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
+    }
+    // Verify all children have the same column name map
+    for (int32_t i = 0; i < child_.size(); ++i) {
+      if (child_[i]->column_name_id_map() != column_name_id_map_) {
+        RETURN_STATUS_UNEXPECTED("The column name or column order is not the same with previous dataset.");
+      }
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

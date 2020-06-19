@@ -112,13 +112,6 @@ Status ClueOp::Init() {
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(clue_files_list_.size() / num_workers_) + 1);
   io_block_queues_.Init(num_workers_, safe_queue_size);
 
-  // Set the column name mapping (base class field)
-  int count = 0;
-  for (auto &p : cols_to_keyword_) {
-    column_name_id_map_[p.first] = count;
-    count++;
-  }
-
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
   jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
@@ -546,6 +539,20 @@ Status ClueOp::CountAllFileRows(const std::vector<std::string> &files, int64_t *
   RETURN_IF_NOT_OK(Builder().SetClueFilesList(files).Build(&op));
   for (auto file : files) {
     *count += op->CountTotalRows(file);
+  }
+  return Status::OK();
+}
+
+Status ClueOp::ComputeColMap() {
+  // Set the column name mapping (base class field)
+  if (column_name_id_map_.empty()) {
+    int count = 0;
+    for (auto &p : cols_to_keyword_) {
+      column_name_id_map_[p.first] = count;
+      count++;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
 }

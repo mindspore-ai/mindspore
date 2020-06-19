@@ -73,10 +73,6 @@ MnistOp::MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folde
       rows_per_buffer_(rows_per_buffer),
       sampler_(std::move(sampler)),
       data_schema_(std::move(data_schema)) {
-  // set the column name map (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   io_block_queues_.Init(num_workers, queue_size);
 }
 
@@ -430,6 +426,18 @@ Status MnistOp::CountTotalRows(const std::string &dir, int64_t *count) {
     label_reader.close();
   }
 
+  return Status::OK();
+}
+
+Status MnistOp::ComputeColMap() {
+  // set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

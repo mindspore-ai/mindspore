@@ -234,6 +234,10 @@ class MindRecordOp : public ParallelOp {
 
   Status FetchBlockBuffer(const int32_t &buffer_id);
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t rows_per_buffer_;                                // The number of requested rows per buffer.
   std::vector<std::string> dataset_file_;                  // dataset files
   bool load_dataset_;                                      // load dataset from single file or not

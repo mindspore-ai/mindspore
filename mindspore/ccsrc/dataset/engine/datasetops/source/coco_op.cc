@@ -129,10 +129,6 @@ CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, 
       rows_per_buffer_(rows_per_buffer),
       sampler_(std::move(sampler)),
       data_schema_(std::move(data_schema)) {
-  // Set the column name map (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   io_block_queues_.Init(num_workers_, queue_size);
 }
 
@@ -625,6 +621,18 @@ Status CocoOp::GetClassIndexing(const std::string &dir, const std::string &file,
   RETURN_IF_NOT_OK(Builder().SetDir(dir).SetFile(file).SetTask(task).Build(&op));
   RETURN_IF_NOT_OK(op->ParseAnnotationIds());
   *output_class_indexing = op->label_index_;
+  return Status::OK();
+}
+
+Status CocoOp::ComputeColMap() {
+  // Set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

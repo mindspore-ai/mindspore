@@ -39,8 +39,7 @@ DatasetOp::DatasetOp(int32_t op_connector_size)
       tree_(nullptr),
       state_(OpState::kDeOpIdle),
       op_ctrl_flags_(kDeOpNone),
-      out_connector_(nullptr),
-      first_fetch_(true) {
+      out_connector_(nullptr) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.
 }
@@ -240,6 +239,10 @@ Status DatasetOp::PrepareNodePostAction() {
     RETURN_IF_NOT_OK(out_connector_->Register(tree_->AllTasks()));
   }
   RETURN_IF_NOT_OK(this->RegisterWorkerConnectors());
+
+  // Generate the column name map for the current op.
+  RETURN_IF_NOT_OK(this->ComputeColMap());
+
   return Status::OK();
 }
 
@@ -262,30 +265,21 @@ std::string DatasetOp::ColumnNameMapAsString() const {
   return outStr;
 }
 
-// A helper function for providing assignment of the column name map.
-// This grabs the map from child 0 and assigns it into this op.
-// Can only be used if number of children is 1.
-Status DatasetOp::AssignColMapFromChild() {
+// Computing the assignment of the column name map.
+// This just inherits the column map from its first child, can only be used if the number of children is 1.
+// Operations changing the column map must overwrite this function.
+Status DatasetOp::ComputeColMap() {
   if (child_.size() > 1) {
     RETURN_STATUS_UNEXPECTED("Assigning column name map from child only works for single-child operators.");
   }
-  // Assign the correct column name map to this op by taking it from the input child.
-  // This must be done AFTER the first fetch, but only needs to be done once by the first worker to
-  // do the first fetch.
-  if (first_fetch_) {
-    // If there was a single worker, or this is being called from a master thread in a parallel op,
-    // then the mutex is not really needed here, although it's harmless.
-    std::unique_lock<std::mutex> lock(column_name_map_mutex_);
-    // If the map has not been set up yet, then we are the first one in to set it up. The first_fetch_ (dirty read)
-    // bool allows us to avoid acquiring the lock if the map has already been set.
+  if (column_name_id_map_.empty()) {
+    column_name_id_map_ = child_[0]->column_name_id_map();
     if (column_name_id_map_.empty()) {
-      column_name_id_map_ = child_[0]->column_name_id_map();
-      first_fetch_ = false;
-      if (column_name_id_map_.empty()) {
-        RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
-      }
+      RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
     }
-    MS_LOG(DEBUG) << "Setting column map after first fetch:\n" << DatasetOp::ColumnNameMapAsString();
+    MS_LOG(DEBUG) << "Setting column map:\n" << DatasetOp::ColumnNameMapAsString();
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
 }

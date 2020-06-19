@@ -78,10 +78,6 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
       buf_cnt_(0),
       sampler_ind_(0),
       dirname_offset_(0) {
-  // Set the column name map (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
   image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
   io_block_queues_.Init(num_workers_, queue_size);
@@ -417,6 +413,18 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
 Status ImageFolderOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(std::static_pointer_cast<ImageFolderOp>(shared_from_this()), modified);
+}
+
+Status ImageFolderOp::ComputeColMap() {
+  // Set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

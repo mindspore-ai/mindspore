@@ -277,11 +277,12 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @param parent - The parent node to remove
   void RemoveParent(DatasetOp *parent);
 
-  // A helper function for providing an assignment of the column name map.
-  // This grabs the map from child 0 and assigns it into this op.
-  // Can only be used if number of children is 1.
+  // Compute the current op's column map using its child's column map.
+  // Get called during the tree post-prepare phase in PrepareNodePostAction.
+  // This base implementation just inherits the map from child 0, and can only be used if the number of children is 1.
+  // Operations changing the column map it inherits from the child must overwrite this function.
   // @return - Status
-  Status AssignColMapFromChild();
+  virtual Status ComputeColMap();
 
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership
@@ -292,7 +293,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   uint32_t op_ctrl_flags_;                                       // Flags for the operator
   std::unique_ptr<DbConnector> out_connector_;                   // Output Connector
   std::unordered_map<std::string, int32_t> column_name_id_map_;  // Mapping between col index and col name
-  bool first_fetch_;                                             // For use when setting column map
   std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map
 
  private:

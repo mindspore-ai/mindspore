@@ -94,12 +94,6 @@ void GeneratorOp::Dealloc() noexcept {
 Status GeneratorOp::Init() {
   // Reset BufferID
   buffer_id_ = 0;
-  // Setup column names map (base class field)
-  if (column_name_id_map_.empty()) {
-    for (int i = 0; i < column_names_.size(); ++i) {
-      column_name_id_map_[column_names_[i]] = i;
-    }
-  }
   Status ret;
   {
     // Acquire Python GIL
@@ -256,6 +250,18 @@ Status GeneratorOp::Reset() {
 Status GeneratorOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(std::static_pointer_cast<GeneratorOp>(shared_from_this()), modified);
+}
+
+Status GeneratorOp::ComputeColMap() {
+  // Setup column names map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int i = 0; i < column_names_.size(); ++i) {
+      column_name_id_map_[column_names_[i]] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

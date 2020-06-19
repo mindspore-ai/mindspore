@@ -250,6 +250,10 @@ class RandomDataOp : public ParallelOp {
     return ++buffer_id_;
   }
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t buffer_id_;
   int64_t rows_per_buffer_;
   int64_t total_rows_;

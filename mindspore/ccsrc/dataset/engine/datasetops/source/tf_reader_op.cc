@@ -195,11 +195,6 @@ Status TFReaderOp::Init() {
     RETURN_IF_NOT_OK(CreateSchema(dataset_files_list_[0], columns_to_load_));
   }
 
-  // Construct the column name map for this operator (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
-
   if (total_rows_ == 0) {
     total_rows_ = data_schema_->num_rows();
   }
@@ -1014,6 +1009,18 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
 Status TFReaderOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(std::static_pointer_cast<TFReaderOp>(shared_from_this()), modified);
+}
+
+Status TFReaderOp::ComputeColMap() {
+  // Construct the column name map for this operator (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

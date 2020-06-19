@@ -226,6 +226,10 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int64_t buf_cnt_;
   int64_t row_cnt_;
   WaitPost wp_;

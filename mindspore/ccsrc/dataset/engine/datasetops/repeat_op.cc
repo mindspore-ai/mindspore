@@ -123,8 +123,6 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   if (buf->eof()) {
     RETURN_IF_NOT_OK(EofReceived(worker_id));
   }
-  // Update the column name map if needed
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
   *p_buffer = std::move(buf);
   return Status::OK();
 }
