@@ -344,6 +344,15 @@ def test_clue_wsc():
         })
     assert len(buffer) == 3
 
+def test_clue_to_device():
+    """
+    Test CLUE with to_device
+    """
+    TRAIN_FILE = '../data/dataset/testCLUE/afqmc/train.json'
+    data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=False)
+    data = data.to_device()
+    data.send()
+
 
 if __name__ == "__main__":
     test_clue()

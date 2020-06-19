@@ -89,6 +89,10 @@ def test_textline_dataset_get_datasetsize():
     size = data.get_dataset_size()
     assert size == 3
 
+def test_textline_dataset_to_device():
+    data = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    data = data.to_device()
+    data.send()
 
 if __name__ == "__main__":
     test_textline_dataset_one_file()

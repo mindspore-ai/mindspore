@@ -1002,7 +1002,7 @@ class Dataset:
                 if isinstance(sampler, samplers.DistributedSampler):
                     dev_id = sampler.shard_id
                 return "", dev_id
-            if isinstance(output_dataset, TFRecordDataset):
+            if isinstance(output_dataset, (TFRecordDataset, TextFileDataset, CLUEDataset)):
                 if output_dataset.shard_id is not None:
                     dev_id = output_dataset.shard_id
                 return "", dev_id
