@@ -2,7 +2,7 @@
 
 ## Description
 
-Training AlexNet with CIFAR-10 dataset in MindSpore.
+Training AlexNet with dataset in MindSpore.
 
 This is the simple tutorial for training AlexNet in MindSpore.
 
@@ -10,19 +10,19 @@ This is the simple tutorial for training AlexNet in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the CIFAR-10 dataset, the directory structure is as follows:
+- Download the dataset, the directory structure is as follows:
 
 ```
-├─cifar-10-batches-bin
+├─10-batches-bin
 │
-└─cifar-10-verify-bin
+└─10-verify-bin
 ```
 
 ## Running the example
 
 ```python
 # train AlexNet, hyperparameter setting in config.py
-python train.py --data_path cifar-10-batches-bin
+python train.py --data_path 10-batches-bin
 ```
 
 You will get the loss value of each step as following:
@@ -38,8 +38,8 @@ epoch: 1 step: 1538, loss is 1.0221305
 
 Then, evaluate AlexNet according to network model
 ```python
-# evaluate AlexNet, 1 epoch training accuracy is up to 51.1%; 10 epoch training accuracy is up to 81.2%
-python eval.py --data_path cifar-10-verify-bin --ckpt_path checkpoint_alexnet-1_1562.ckpt
+# evaluate AlexNet
+python eval.py --data_path 10-verify-bin --ckpt_path checkpoint_alexnet-1_1562.ckpt
 ```
 
 ## Note
