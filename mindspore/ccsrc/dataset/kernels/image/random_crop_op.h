@@ -51,11 +51,24 @@ class RandomCropOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+  // Function breaks out the compute function's image padding functionality and makes available to other Ops
+  // Using this class as a base - restructrued to allow for RandomCropWithBBox Augmentation Op
+  // @param input: Input is the original Image
+  // @param pad_image: Pointer to new Padded image
+  // @param t_pad_top: Total Top Padding - Based on input and value calculated in function if required
+  // @param t_pad_bottom: Total bottom Padding - Based on input and value calculated in function if required
+  // @param t_pad_left: Total left Padding - Based on input and value calculated in function if required
+  // @param t_pad_right: Total right Padding - Based on input and value calculated in function if required
+  // @param padded_image_w: Final Width of the 'pad_image'
+  // @param padded_image_h: Final Height of the 'pad_image'
+  // @param crop_further: Whether image required cropping after padding - False if new padded image matches required
+  // dimensions
   Status ImagePadding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *pad_image, int32_t *t_pad_top,
                       int32_t *t_pad_bottom, int32_t *t_pad_left, int32_t *t_pad_right, int32_t *padded_image_w,
                       int32_t *padded_image_h, bool *crop_further);
 
-  void GenRandomXY(int *x, int *y, int32_t *padded_image_w, int32_t *padded_image_h);
+  // Function breaks X,Y generation functionality out of original compute function and makes available to other Ops
+  void GenRandomXY(int *x, int *y, const int32_t &padded_image_w, const int32_t &padded_image_h);
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 

@@ -151,7 +151,7 @@ class RandomCrop(cde.RandomCropOp):
 
 class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
     """
-    Crop the input image at a random location, and adjust bounding boxes
+    Crop the input image at a random location and adjust bounding boxes for crop area
 
     Args:
         size (int or sequence): The output size of the cropped image.
@@ -242,10 +242,10 @@ class RandomVerticalFlip(cde.RandomVerticalFlipOp):
 
 class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
     """
-    Flip the input image vertically and adjust bounding boxes, randomly with a given probability.
+    Flip the input image vertically, randomly with a given probability and adjust bounding boxes as well
 
     Args:
-        prob (float): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image being flipped (default=0.5).
     """
 
     @check_prob
