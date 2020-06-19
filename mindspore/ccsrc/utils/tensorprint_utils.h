@@ -23,6 +23,8 @@
 #include "tdt/tsd_client.h"
 #include "tdt/tdt_host_interface.h"
 #include "tdt/data_common.h"
+#include "proto/print.pb.h"
+#include "utils/context/ms_context.h"
 #endif
 namespace mindspore {
 class TensorPrint {

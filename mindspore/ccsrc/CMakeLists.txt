@@ -80,6 +80,7 @@ if (ENABLE_DUMP_PROTO)
         "utils/anf_ir.proto"
         "utils/summary.proto"
         "utils/checkpoint.proto"
+        "utils/print.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 

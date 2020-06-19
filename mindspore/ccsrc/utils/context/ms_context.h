@@ -147,6 +147,8 @@ class MsContext {
   std::string profiling_options() const { return profiling_options_; }
   bool check_bprop_flag() const { return check_bprop_flag_; }
   void set_check_bprop_flag(bool check_bprop_flag) { check_bprop_flag_ = check_bprop_flag; }
+  void set_print_file_path(const std::string &file) { print_file_path_ = file; }
+  const std::string &print_file_path() const { return print_file_path_; }
 
   float max_device_memory() const { return max_device_memory_; }
   void set_max_device_memory(float max_device_memory) { max_device_memory_ = max_device_memory; }
@@ -192,6 +194,7 @@ class MsContext {
   std::string profiling_options_;
   bool check_bprop_flag_;
   float max_device_memory_;
+  std::string print_file_path_;
 };
 
 }  // namespace mindspore

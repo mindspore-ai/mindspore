@@ -21,6 +21,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import log as logger
 from mindspore.train.checkpoint_pb2 import Checkpoint
+from mindspore.train.print_pb2 import Print
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
@@ -30,11 +31,15 @@ from mindspore._checkparam import check_input_data
 
 __all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export"]
 
-tensor_to_ms_type = {"Int8": mstype.int8, "Int16": mstype.int16, "Int32": mstype.int32, "Int64": mstype.int64,
-                     "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64}
+tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
+                     "Int32": mstype.int32, "Uint32": mstype.uint32, "Int64": mstype.int64, "Uint64": mstype.uint64,
+                     "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64,
+                     "Bool": mstype.bool_}
 
-tensor_to_np_type = {"Int8": np.int8, "Int16": np.int16, "Int32": np.int32, "Int64": np.int64,
-                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64}
+tensor_to_np_type = {"Int8": np.int8, "Uint8": np.uint8, "Int16": np.int16, "Uint16": np.uint16,
+                     "Int32": np.int32, "Uint32": np.uint32, "Int64": np.int64, "Uint64": np.uint64,
+                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
+
 
 def _special_process_par(par, new_par):
     """
@@ -442,3 +447,64 @@ def export(net, *inputs, file_name, file_format='GEIR'):
     # restore network training mode
     if is_training:
         net.set_train(mode=True)
+
+
+def parse_print(print_file_name):
+    """
+    Loads Print data from a specified file.
+
+    Args:
+        print_file_name (str): The file name of save print data.
+
+    Returns:
+        List, element of list is Tensor.
+
+    Raises:
+        ValueError: Print file is incorrect.
+    """
+    if not os.path.realpath(print_file_name):
+        raise ValueError("Please input the correct print file name.")
+
+    if os.path.getsize(print_file_name) == 0:
+        raise ValueError("The print file may be empty, please make sure enter the correct file name.")
+
+    logger.info("Execute load print process.")
+    print_list = Print()
+
+    try:
+        with open(print_file_name, "rb") as f:
+            pb_content = f.read()
+        print_list.ParseFromString(pb_content)
+    except BaseException as e:
+        logger.error("Failed to read the print file %s, please check the correct of the file.", print_file_name)
+        raise ValueError(e.__str__())
+
+    tensor_list = []
+
+    try:
+        for print_ in print_list.value:
+            # String type
+            if print_.HasField("desc"):
+                tensor_list.append(print_.desc)
+            elif print_.HasField("tensor"):
+                dims = print_.tensor.dims
+                data_type = print_.tensor.tensor_type
+                data = print_.tensor.tensor_content
+                np_type = tensor_to_np_type[data_type]
+                param_data = np.fromstring(data, np_type)
+                ms_type = tensor_to_ms_type[data_type]
+                param_dim = []
+                for dim in dims:
+                    param_dim.append(dim)
+                if param_dim:
+                    param_value = param_data.reshape(param_dim)
+                    tensor_list.append(Tensor(param_value, ms_type))
+                # Scale type
+                else:
+                    tensor_list.append(Tensor(param_data, ms_type))
+
+    except BaseException as e:
+        logger.error("Failed to load the print file %s.", print_list)
+        raise RuntimeError(e.__str__())
+
+    return tensor_list
