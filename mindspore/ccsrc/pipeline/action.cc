@@ -281,8 +281,12 @@ bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPa
 
 bool PynativeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kPynativePasses); }
 
-static bool IsCtrlSink() {
+static bool IsCtrlSink(const FuncGraphPtr &graph) {
   auto ms_ctx = MsContext::GetInstance();
+  if (ms_ctx->execution_mode() != kGraphMode) {
+    return false;
+  }
+
   std::string device_target = ms_ctx->device_target();
   if (device_target != kAscendDevice) {
     return false;
@@ -292,12 +296,7 @@ static bool IsCtrlSink() {
     return false;
   }
 
-  const char *enable_ctrl_sink = std::getenv("ENABLE_CTRL_SINK");
-  if (enable_ctrl_sink == nullptr) {
-    return false;
-  }
-  std::string enable_ctrl_sink_str(enable_ctrl_sink);
-  if (enable_ctrl_sink_str == "0") {
+  if (graph != nullptr && CompileGraphs::ContainMixedTarget(graph)) {
     return false;
   }
 
@@ -310,7 +309,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   }
   FuncGraphPtr func_graph = res->func_graph();
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
-  if (IsCtrlSink()) {
+  if (IsCtrlSink(func_graph)) {
     res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
     return true;
   }
@@ -322,7 +321,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (compile->ContainMixedTarget(func_graph)) {
+  if (CompileGraphs::ContainMixedTarget(func_graph)) {
     bc_ptr->set_is_multi_graph_sink(false);
     context_ptr->set_loop_sink_flag(false);
   } else if (context_ptr->execution_mode() != kPynativeMode) {
@@ -340,7 +339,7 @@ bool ExecuteAction(const ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
 
-  if (IsCtrlSink()) {
+  if (IsCtrlSink(nullptr)) {
     if (!res->results()[kOutput].is<GraphId>()) {
       MS_LOG(EXCEPTION) << "Execute args error";
     }

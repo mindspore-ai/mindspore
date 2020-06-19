@@ -857,6 +857,7 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
 }
 
 bool CompileGraphs::ContainMixedTarget(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto graph_manager = graph->manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
   FuncGraphSet graphs = graph_manager->func_graphs();

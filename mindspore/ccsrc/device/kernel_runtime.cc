@@ -283,18 +283,37 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto graph_inputs = graph->inputs();
   auto graph_valid_input = graph->valid_inputs();
-  for (size_t i = 0; i < graph_inputs.size(); i++) {
+  std::vector<AnfNodePtr> need_alloc_nodes;
+  for (size_t i = 0; i < graph_inputs.size(); ++i) {
     auto item = graph_inputs[i];
     MS_EXCEPTION_IF_NULL(item);
-    if (!item->isa<Parameter>()) {
+    if (i < graph_valid_input.size() && !graph_valid_input[i]) {
       continue;
     }
-    if (i < graph_valid_input.size() && !graph_valid_input[i]) {
+
+    if (AnfAlgo::CheckPrimitiveType(item, prim::kPrimMakeTuple)) {
+      auto outs = AnfAlgo::GetAllOutput(item);
+      for (auto &out : outs) {
+        MS_EXCEPTION_IF_NULL(out);
+        if (!out->isa<Parameter>()) {
+          continue;
+        }
+        if (NodeOutputDeviceAddressExist(out, 0)) {
+          continue;
+        }
+        need_alloc_nodes.push_back(out);
+      }
+    }
+    if (!item->isa<Parameter>()) {
       continue;
     }
     if (NodeOutputDeviceAddressExist(item, 0)) {
       continue;
     }
+    need_alloc_nodes.push_back(item);
+  }
+
+  for (auto &item : need_alloc_nodes) {
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);

@@ -75,7 +75,6 @@ std::vector<TaskInfoPtr> LabelSwitchKernel::GenTask(const std::vector<AddressPtr
 
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> LabelSwitchDesc::GetKernelInfo() {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> label_switch_build_info{};
-
   vector<string> input_format{kOpFormat_DEFAULT, kOpFormat_DEFAULT};
   vector<TypeId> input_type{kNumberTypeUInt32, kNumberTypeBool};
   if (input_format.size() != input_type.size()) {

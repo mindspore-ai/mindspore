@@ -43,12 +43,28 @@ void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
 
 std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   auto item_with_index = AnfAlgo::VisitKernelWithReturnType(call_node, 0);
-  MS_EXCEPTION_IF_NULL(item_with_index.first);
-  if (!AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimCall)) {
-    return {item_with_index.first};
+  AnfNodePtr node = item_with_index.first;
+  MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    auto outputs = AnfAlgo::GetAllOutput(node);
+    std::set<AnfNodePtr> memo;
+    std::vector<AnfNodePtr> new_output;
+    for (auto &output : outputs) {
+      if (memo.find(output) != memo.end()) {
+        continue;
+      }
+      memo.insert(output);
+      new_output.push_back(output);
+    }
+    if (new_output.size() == 1 && AnfAlgo::CheckPrimitiveType(new_output[0], prim::kPrimCall)) {
+      node = new_output[0];
+    }
+  }
+  if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
+    return {node};
   }
   std::vector<AnfNodePtr> real_inputs;
-  auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(item_with_index.first->cast<CNodePtr>());
+  auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(node->cast<CNodePtr>());
   for (const auto &child_graph : child_graphs) {
     if (child_graph->get_output_null()) {
       continue;
@@ -623,18 +639,25 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
     (void)node_output_edges_.erase(old_anf_node);
   }
   // update graph inputs in child graph
-  auto it_real_inputs = real_inputs_.find(old_anf_node);
+  auto it_real_inputs = std::find_if(real_inputs_.begin(), real_inputs_.end(),
+                                     [&old_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
+                                       return n.first == old_anf_node.get();
+                                     });
   if (it_real_inputs != real_inputs_.end()) {
+    // erase old parameter in map
+    auto old_args = it_real_inputs->second;
+    real_inputs_.erase(it_real_inputs);
     // insert new parameter to map
-    auto iter = real_inputs_.find(new_anf_node);
+    auto iter = std::find_if(real_inputs_.begin(), real_inputs_.end(),
+                             [&new_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
+                               return n.first == new_anf_node.get();
+                             });
     if (iter != real_inputs_.end()) {
       MS_LOG(WARNING) << new_anf_node->DebugString() << " already exist in real inputs, will be rewrited.";
-      iter->second = it_real_inputs->second;
+      iter->second = old_args;
     } else {
-      real_inputs_[new_anf_node.get()] = it_real_inputs->second;
+      real_inputs_.emplace_back(new_anf_node, old_args);
     }
-    // erase old parameter in map
-    real_inputs_.erase(old_anf_node);
   }
 }
 
@@ -676,57 +699,33 @@ void KernelGraph::SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &ar
   MS_LOG(INFO) << "parameter: " << parameter->DebugString() << ", real input : " << arg->DebugString();
   MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(arg);
-  if (real_inputs_.find(parameter) == real_inputs_.end()) {
-    real_inputs_[parameter] = std::vector<AnfNodePtr>();
-  }
-  auto &args = real_inputs_[parameter];
-  (void)args.push_back(arg);
-}
-
-std::vector<AnfNodePtr> KernelGraph::GetRealInput(const AnfNodePtr &parameter) {
-  MS_EXCEPTION_IF_NULL(parameter);
-  auto iter = real_inputs_.find(parameter);
+  auto iter = std::find_if(
+    real_inputs_.begin(), real_inputs_.end(),
+    [&parameter](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool { return n.first == parameter; });
   if (iter != real_inputs_.end()) {
-    return iter->second;
+    auto &args = iter->second;
+    args.push_back(arg);
+  } else {
+    real_inputs_.emplace_back(parameter, std::vector<AnfNodePtr>(1, arg));
   }
-  MS_LOG(EXCEPTION) << parameter->DebugString() << " not found.";
 }
 
 void KernelGraph::UpdateCallRealInput() {
   MS_LOG(INFO) << "Update graph id: " << graph_id_;
-  std::map<AnfNodePtr, std::vector<AnfNodePtr>> real_inputs_map;
+  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_map;
   for (auto &it : real_inputs_) {
     auto parameter = it.first;
     MS_EXCEPTION_IF_NULL(parameter);
     auto real_inputs = it.second;
     std::vector<AnfNodePtr> new_real_inputs;
-    std::set<AnfNodePtr> erase_real_inputs;
     for (auto &real_input : real_inputs) {
       // if real input is a call node ,find the child graph output act as the new real input
       auto item_with_index = AnfAlgo::VisitKernelWithReturnType(real_input, 0);
       MS_EXCEPTION_IF_NULL(item_with_index.first);
-      if (AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimCall)) {
-        (void)erase_real_inputs.insert(item_with_index.first);
-        new_real_inputs = GetCallRealOutputs(item_with_index.first);
-        continue;
-      }
+      auto tmp_real_input = GetCallRealOutputs(item_with_index.first);
+      std::copy(tmp_real_input.begin(), tmp_real_input.end(), std::back_inserter(new_real_inputs));
     }
-    for (auto &erase_node : erase_real_inputs) {
-      MS_LOG(INFO) << "paramter: " << parameter->DebugString() << " erase real input:" << erase_node->DebugString();
-      for (auto iter = real_inputs.begin(); iter != real_inputs.end();) {
-        if (*iter == erase_node) {
-          iter = real_inputs.erase(iter);
-        } else {
-          ++iter;
-        }
-      }
-    }
-    for (auto &new_real_input : new_real_inputs) {
-      MS_LOG(INFO) << "paramter: " << parameter->DebugString()
-                   << " insert real input:" << new_real_input->DebugString();
-      (void)real_inputs.push_back(new_real_input);
-    }
-    real_inputs_map[parameter] = real_inputs;
+    real_inputs_map.emplace_back(parameter, new_real_inputs);
   }
   real_inputs_ = real_inputs_map;
 }
