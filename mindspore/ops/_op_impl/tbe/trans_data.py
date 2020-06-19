@@ -58,7 +58,7 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F32_HWCN, DataType.F32_FracZ) \
     .dtype_format(DataType.F32_HWCN, DataType.F32_C1HWNCoC0) \
     .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_HWCN) \
-    .dtype_format(DataType.F32_Default, DataType.F32_NCHW) \
+    .dtype_format(DataType.F32_Default, DataType.F32_HWCN) \
     .dtype_format(DataType.F32_HWCN, DataType.F32_Default) \
     .get_op_info()
 
