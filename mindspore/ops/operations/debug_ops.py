@@ -191,7 +191,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         f (Function): MindSpore's Function. Callback function.
 
     Inputs:
-        - **input_x** (Tensor) - The graph node to attach to.
+        - **input_x** (Any) - The graph node to attach to.
 
     Outputs:
         Tensor, returns `input_x` directly. `InsertGradientOf` does not affect the forward result.
