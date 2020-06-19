@@ -70,7 +70,7 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
         >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
-        >>> output_tensor = P.FakeQuantPerLayer(num_bits=8)(input_tensor, min_tensor, max_tensor)
+        >>> output_tensor = FakeQuantPerLayer(num_bits=8)(input_tensor, min_tensor, max_tensor)
     """
     support_quant_bit = [4, 7, 8]
 
@@ -130,7 +130,7 @@ class FakeQuantPerLayerGrad(PrimitiveWithInfer):
     Performs grad of FakeQuantPerLayerGrad operation.
 
     Examples:
-        >>> fake_min_max_grad = P.FakeQuantPerLayerGrad()
+        >>> fake_min_max_grad = FakeQuantPerLayerGrad()
         >>> dout = Tensor(np.array([[-2.3, 1.2], [5.7, 0.2]]), mindspore.float32)
         >>> input_x = Tensor(np.array([[18, -23], [0.2, 6]]), mindspore.float32)
         >>> _min = Tensor(np.array([-4]), mindspore.float32)
@@ -207,7 +207,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         - Tensor, has the same type as input.
 
     Examples:
-        >>> fake_quant = P.FakeQuantPerChannel()
+        >>> fake_quant = FakeQuantPerChannel()
         >>> input_x = Tensor(np.array([3, 4, 5, -2, -3, -1]).reshape(3, 2), mindspore.float32)
         >>> _min = Tensor(np.linspace(-2, 2, 12).reshape(3, 2, 2), mindspore.float32)
         >>> _max = Tensor(np.linspace(8, 12, 12).reshape(3, 2, 2), mindspore.float32)
@@ -276,7 +276,7 @@ class FakeQuantPerChannelGrad(PrimitiveWithInfer):
     Performs grad of FakeQuantPerChannelGrad operation.
 
     Examples:
-        >>> fqmmpc_grad = P.FakeQuantPerChannelGrad()
+        >>> fqmmpc_grad = FakeQuantPerChannelGrad()
         >>> input_x = Tensor(np.random.randint(-4, 4, (2, 3, 4)), mindspore.float32)
         >>> dout = Tensor(np.random.randint(-2, 2, (2, 3, 4)), mindspore.float32)
         >>> _min = Tensor(np.random.randint(-8, 2, (2, 3, 4)), mindspore.float32)
@@ -885,7 +885,7 @@ class FakeQuantMinMaxPerLayerUpdate(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
         >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
-        >>> output_tensor = P.FakeQuantWithMinMax(num_bits=8)(input_tensor, min_tensor, max_tensor)
+        >>> output_tensor = FakeQuantWithMinMax(num_bits=8)(input_tensor, min_tensor, max_tensor)
     """
     support_quant_bit = [4, 7, 8]
 
@@ -959,7 +959,7 @@ class FakeQuantMinMaxPerChannelUpdate(PrimitiveWithInfer):
         >>> x = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
         >>> min = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
         >>> max = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
-        >>> output_tensor = P.FakeQuantWithMinMax(num_bits=8)(x, min, max)
+        >>> output_tensor = FakeQuantWithMinMax(num_bits=8)(x, min, max)
     """
     support_quant_bit = [4, 7, 8]
 
