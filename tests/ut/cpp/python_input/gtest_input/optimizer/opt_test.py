@@ -875,7 +875,6 @@ def test_merge_addn(tag):
     """ test_merge_addn """
     fns = FnDict()
     addn = P.AddN()
-    AddN = P.AddN
 
     @fns
     def before(x, y, z, a):
@@ -883,7 +882,7 @@ def test_merge_addn(tag):
 
     @fns
     def after(x, y, z, a):
-        return AddN()((a, x, y, z))
+        return addn((a, x, y, z))
 
     return fns[tag]
 
@@ -892,7 +891,6 @@ def test_addn_zero(tag):
     """ test_addn_zero """
     fns = FnDict()
     addn = P.AddN()
-    AddN = P.AddN
     zero_tensor = Primitive('ZerosLike')
 
     @fns
@@ -901,7 +899,7 @@ def test_addn_zero(tag):
 
     @fns
     def after(x, y, z, a):
-        return AddN()((a, z))
+        return addn((a, z))
 
     @fns
     def before_2(x, y, z, a):
