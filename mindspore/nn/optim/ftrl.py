@@ -73,7 +73,7 @@ class FTRL(Optimizer):
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
         `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
-        behavior is currently performed on the CPU, weight decay and loss scale is not supported.
+        behavior is currently performed on the CPU, weight decay is not supported.
 
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
