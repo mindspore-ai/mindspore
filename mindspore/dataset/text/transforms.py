@@ -18,13 +18,14 @@ c transforms for all text related operators
 import os
 import re
 import platform
+import numpy as np
 
 import mindspore._c_dataengine as cde
 
-from .utils import JiebaMode, NormalizeForm
+from .utils import JiebaMode, NormalizeForm, to_str
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_ngram, check_pair_truncate, \
-    check_to_number
+    check_to_number, check_python_tokenizer
 from ..core.datatypes import mstype_to_detype
 
 
@@ -406,3 +407,25 @@ class ToNumber(cde.ToNumberOp):
         data_type = mstype_to_detype(data_type)
         self.data_type = str(data_type)
         super().__init__(data_type)
+
+
+class PythonTokenizer:
+    """
+    Callable class to be used for user-defined string tokenizer.
+    Args:
+        tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
+
+    Examples:
+        >>> def my_tokenizer(line):
+        >>>     return line.split()
+        >>> data = data.map(operations=PythonTokenizer(my_tokenizer))
+    """
+
+    @check_python_tokenizer
+    def __init__(self, tokenizer):
+        self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
+
+    def __call__(self, in_array):
+        in_array = to_str(in_array)
+        tokens = self.tokenizer(in_array)
+        return tokens
