@@ -268,7 +268,7 @@ def filter_valid_data(image_dir, anno_path):
     return image_files, image_anno_dict
 
 
-def data_to_mindrecord_byte_image(image_dir, anno_path, mindrecord_dir, prefix="yolo.mindrecord", file_num=8):
+def data_to_mindrecord_byte_image(image_dir, anno_path, mindrecord_dir, prefix, file_num):
     """Create MindRecord file by image_dir and anno_path."""
     mindrecord_path = os.path.join(mindrecord_dir, prefix)
     writer = FileWriter(mindrecord_path, file_num)
