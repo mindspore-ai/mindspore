@@ -94,10 +94,10 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
   return Status::OK();
 }
 
-void RandomCropOp::GenRandomXY(int *x, int *y, int32_t *padded_image_w, int32_t *padded_image_h) {
+void RandomCropOp::GenRandomXY(int *x, int *y, const int32_t &padded_image_w, const int32_t &padded_image_h) {
   // GenCropPoints for cropping
-  *x = std::uniform_int_distribution<int>(0, *padded_image_w - crop_width_)(rnd_);
-  *y = std::uniform_int_distribution<int>(0, *padded_image_h - crop_height_)(rnd_);
+  *x = std::uniform_int_distribution<int>(0, padded_image_w - crop_width_)(rnd_);
+  *y = std::uniform_int_distribution<int>(0, padded_image_h - crop_height_)(rnd_);
 }
 
 Status RandomCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -119,7 +119,7 @@ Status RandomCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   }
 
   int x, y;
-  GenRandomXY(&x, &y, &padded_image_w, &padded_image_h);
+  GenRandomXY(&x, &y, padded_image_w, padded_image_h);
   return Crop(pad_image, output, x, y, crop_width_, crop_height_);
 }
 

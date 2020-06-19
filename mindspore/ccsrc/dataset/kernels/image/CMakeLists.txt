@@ -15,8 +15,8 @@ add_library(kernels-image OBJECT
     random_crop_op.cc
     random_crop_with_bbox_op.cc
     random_horizontal_flip_op.cc
-        random_horizontal_flip_bbox_op.cc
-        bounding_box_augment_op.cc
+    random_horizontal_flip_bbox_op.cc
+    bounding_box_augment_op.cc
     random_resize_op.cc
     random_rotation_op.cc
     random_vertical_flip_op.cc

@@ -230,12 +230,12 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 // Updates and checks bounding boxes for new cropped region of image
 // @param bboxList: A tensor contaning bounding box tensors
 // @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-// @param CB_Xmin: Images's CropBox Xmin coordinate
-// @param CB_Xmin: Images's CropBox Ymin coordinate
-// @param CB_Xmax: Images's CropBox Xmax coordinate - (Xmin + width)
-// @param CB_Xmax: Images's CropBox Ymax coordinate - (Ymin + height)
-void UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int *CB_Xmin, int *CB_Ymin, int *CB_Xmax,
-                         int *CB_Ymax);
+// @param CB_Xmin: Image's CropBox Xmin coordinate
+// @param CB_Xmin: Image's CropBox Ymin coordinate
+// @param CB_Xmax: Image's CropBox Xmax coordinate - (Xmin + width)
+// @param CB_Xmax: Image's CropBox Ymax coordinate - (Ymin + height)
+Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int CB_Xmin, int CB_Ymin, int CB_Xmax,
+                           int CB_Ymax);
 
 // Updates bounding boxes with required Top and Left padding
 // Top and Left padding amounts required to adjust bboxs min X,Y values according to padding 'push'
@@ -244,7 +244,7 @@ void UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, i
 // @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
 // @param pad_top: Total amount of padding applied to image top
 // @param pad_left: Total amount of padding applied to image left side
-void PadBBoxes(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *pad_top, int32_t *pad_left);
+Status PadBBoxes(std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left);
 
 // Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
 // For e.g those that remain after a crop
@@ -255,8 +255,8 @@ void PadBBoxes(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *pa
 // @param target_width_: required height of image post resize
 // @param orig_width: current width of image pre resize
 // @param orig_height: current height of image pre resize
-void UpdateBBoxesForResize(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *target_width_,
-                           int32_t *target_height_, int *orig_width, int *orig_height);
+Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size_t &bboxCount, int32_t target_width_,
+                             int32_t target_height_, int orig_width, int orig_height);
 
 }  // namespace dataset
 }  // namespace mindspore

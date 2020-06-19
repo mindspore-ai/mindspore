@@ -42,16 +42,17 @@ Status RandomCropAndResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow 
   int crop_height = 0;
   int crop_width = 0;
 
-  (void)RandomCropAndResizeOp::GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
+  RETURN_IF_NOT_OK(RandomCropAndResizeOp::GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width));
 
   int maxX = x + crop_width;  // max dims of selected CropBox on image
   int maxY = y + crop_height;
 
-  UpdateBBoxesForCrop(&(*output)[1], &bboxCount, &x, &y, &maxX, &maxY);  // IMAGE_UTIL
+  RETURN_IF_NOT_OK(UpdateBBoxesForCrop(&(*output)[1], &bboxCount, x, y, maxX, maxY));  // IMAGE_UTIL
   RETURN_IF_NOT_OK(CropAndResize(input[0], &(*output)[0], x, y, crop_height, crop_width, target_height_, target_width_,
                                  interpolation_));
 
-  UpdateBBoxesForResize(&(*output)[1], &bboxCount, &target_width_, &target_height_, &crop_width, &crop_height);
+  RETURN_IF_NOT_OK(
+    UpdateBBoxesForResize((*output)[1], bboxCount, target_width_, target_height_, crop_width, crop_height));
   return Status::OK();
 }
 }  // namespace dataset

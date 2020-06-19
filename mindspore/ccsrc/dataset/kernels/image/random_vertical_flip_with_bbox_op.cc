@@ -37,12 +37,12 @@ Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *
       uint32_t boxCorner_y = 0;
       uint32_t boxHeight = 0;
       uint32_t newBoxCorner_y = 0;
-      input[1]->GetUnsignedIntAt(&boxCorner_y, {i, 1});  // get min y of bbox
-      input[1]->GetUnsignedIntAt(&boxHeight, {i, 3});    // get height of bbox
+      RETURN_IF_NOT_OK(input[1]->GetUnsignedIntAt(&boxCorner_y, {i, 1}));  // get min y of bbox
+      RETURN_IF_NOT_OK(input[1]->GetUnsignedIntAt(&boxHeight, {i, 3}));    // get height of bbox
 
       // subtract (curCorner + height) from (max) for new Corner position
       newBoxCorner_y = (imHeight - 1) - (boxCorner_y + boxHeight);
-      input[1]->SetItemAt({i, 1}, newBoxCorner_y);
+      RETURN_IF_NOT_OK(input[1]->SetItemAt({i, 1}, newBoxCorner_y));
     }
 
     (*output).push_back(nullptr);
