@@ -886,8 +886,6 @@ void PynativeExecutor::Clean() {
   MS_LOG(INFO) << "Clean all res";
   Clear();
   grad_flag_ = false;
-  graph_map_.clear();
-  cell_graph_map_.clear();
   df_builder_ = nullptr;
   ad::CleanRes();
   pipeline::ReclaimOptimizer();
