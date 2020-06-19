@@ -98,7 +98,7 @@ Status DataBuffer::GetTensor(std::shared_ptr<Tensor> *ptr, int32_t row_id, int32
 
 // Remove me!! Callers should fetch rows via pop
 Status DataBuffer::GetRow(int32_t row_id, TensorRow *ptr) const {
-  if (row_id < tensor_table_->size()) {
+  if (tensor_table_ && !tensor_table_->empty() && row_id < tensor_table_->size()) {
     *ptr = tensor_table_->at(row_id);
   } else {
     std::string err_msg = "rowId for mTensorTable out of range: " + std::to_string(row_id);
