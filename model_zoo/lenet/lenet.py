@@ -50,11 +50,10 @@ class LeNet5(nn.Cell):
         >>> LeNet(num_class=10)
 
     """
-    def __init__(self, num_class=10):
+    def __init__(self, num_class=10, channel=1):
         super(LeNet5, self).__init__()
         self.num_class = num_class
-        self.batch_size = 32
-        self.conv1 = conv(1, 6, 5)
+        self.conv1 = conv(channel, 6, 5)
         self.conv2 = conv(6, 16, 5)
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
         self.fc2 = fc_with_initialize(120, 84)

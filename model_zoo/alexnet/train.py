@@ -20,14 +20,14 @@ python train.py --data_path /YourDataPath
 
 import argparse
 from config import alexnet_cfg as cfg
-from dataset import create_dataset
+from dataset import create_dataset_mnist
 from generator_lr import get_lr
+from alexnet import AlexNet
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import Tensor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
-from mindspore.model_zoo.alexnet import AlexNet
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 
 
@@ -50,9 +50,9 @@ if __name__ == "__main__":
     model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})  # test
 
     print("============== Starting Training ==============")
-    ds_train = create_dataset(args.data_path,
-                              cfg.batch_size,
-                              cfg.epoch_size)
+    ds_train = create_dataset_mnist(args.data_path,
+                                    cfg.batch_size,
+                                    cfg.epoch_size)
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)

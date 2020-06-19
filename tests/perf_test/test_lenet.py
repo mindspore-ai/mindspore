@@ -17,12 +17,12 @@
 
 import numpy as np
 
+from lenet import LeNet5
 import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import _executor
-from mindspore.model_zoo.lenet import LeNet
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -61,7 +61,7 @@ def test_compile():
 
 def test_compile_grad():
     """Compile forward and backward graph"""
-    net = LeNet(num_class=num_class)
+    net = LeNet5(num_class=num_class)
     inp = Tensor(np.array(np.random.randn(batch_size,
                                           channel,
                                           height,
