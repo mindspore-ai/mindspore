@@ -232,13 +232,17 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
 
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     RETURN_IF_NOT_OK(MallocForGPUData(&items, curr_row));
-    auto ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
+    BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
       for (int i = 0; i < items.size(); i++) {
         free(items[i].data_ptr_);
       }
-      MS_LOG(WARNING) << "Retry pushing data...";
-      continue;
+      if (ret == BlockQueueStatus_T::ERROR_INPUT) {
+        return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "invalid input Data, please check it.");
+      } else {
+        MS_LOG(WARNING) << "Retry pushing data...";
+        continue;
+      }
     } else {
       break;
     }

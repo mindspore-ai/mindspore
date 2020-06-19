@@ -25,11 +25,11 @@
 
 #ifdef ENABLE_TDTQUE
 #include "dataset/engine/tdt/tdt_plugin.h"
-
 #endif
 
 #ifdef ENABLE_GPUQUE
 #include "device/gpu/gpu_buffer_mgr.h"
+using mindspore::device::BlockQueueStatus_T;
 using mindspore::device::GpuBufferMgr;
 #endif
 
