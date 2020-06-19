@@ -140,6 +140,10 @@ class MsContext {
     variable_memory_max_size_ = variable_memory_max_size;
   }
 
+  const std::string &variable_memory_max_size() const { return variable_memory_max_size_; }
+
+  const std::string &graph_memory_max_size() const { return graph_memory_max_size_; }
+
   void set_enable_profiling(bool flag) { profiling_mode_ = flag; }
   bool enable_profiling() const { return profiling_mode_; }
 

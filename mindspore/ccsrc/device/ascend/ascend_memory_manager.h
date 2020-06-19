@@ -32,6 +32,8 @@ class AscendMemoryManager : public MemoryManager {
  private:
   uint8_t *device_mem_pool_base_{nullptr};
   uint64_t device_mem_pool_size_{0};
+
+  uint64_t GetDeviceMemSizeFromContext();
 };
 }  // namespace ascend
 }  // namespace device
