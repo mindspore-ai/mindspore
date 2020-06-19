@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 mul = P.Mul()
-reduce_sum = P.ReduceSum()
+reduce_sum = P.ReduceSum(keep_dims=True)
 sub = P.Sub()
 confusion_softmax_grad = Primitive('ConfusionSoftmaxGrad')
 make_tuple = Primitive('make_tuple')
