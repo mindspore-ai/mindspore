@@ -80,6 +80,17 @@ class NetWork_3(Cell):
         return res
 
 
+class NetWorkOutOfBounds(Cell):
+    """ NetWork_3 definition """
+
+    def __init__(self):
+        super(NetWorkOutOfBounds, self).__init__()
+        self.addN = P.AddN()
+
+    def construct(self, tensor_tuple):
+        return tensor_tuple[100]
+
+
 test_cases = [
     ('SlicePositive', {
         'block': NetWork_1(),
@@ -104,16 +115,23 @@ test_cases = [
 test_cases_for_verify_exception = [
     ('SliceStartCross', {
         'block': (NetWork_3(), {'exception': RuntimeError}),
-        'desc_inputs': [*(Tensor(np.ones([2, 3, 4], np.int32)),
-                          Tensor(np.zeros([2, 3, 4], np.int32)),
-                          Tensor(np.ones([2, 3, 4], np.int32)))],
+        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.zeros([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32))],
     }),
     ('SliceStepZero', {
         'block': (NetWork_3(), {'exception': RuntimeError}),
-        'desc_inputs': [*(Tensor(np.ones([2, 3, 4], np.int32)),
-                          Tensor(np.zeros([2, 3, 4], np.int32)),
-                          Tensor(np.ones([2, 3, 4], np.int32)))],
+        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
+                        Tensor(np.zeros([2, 3, 4], np.int32)),
+                        Tensor(np.ones([2, 3, 4], np.int32))],
     }),
+    ('SliceOutOfBounds', {
+        'block': (NetWorkOutOfBounds(), {'exception': IndexError}),
+        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)))],
+    }),
+
 ]
 
 
