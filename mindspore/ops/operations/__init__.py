@@ -19,6 +19,7 @@ Primitive operator classes.
 A collection of operators to build nerual networks or computing functions.
 """
 
+from .image_ops import (CropAndResize)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
@@ -287,7 +288,8 @@ __all__ = [
     "BesselI1e",
     "Atan",
     "Atanh",
-    "BasicLSTMCell"
+    "BasicLSTMCell",
+    "CropAndResize"
 ]
 
 __all__.extend(_quant_ops.__all__)
