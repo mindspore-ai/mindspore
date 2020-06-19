@@ -16,6 +16,7 @@
 #include "dataset/kernels/image/image_utils.h"
 #include <opencv2/imgproc/types_c.h>
 #include <algorithm>
+#include <vector>
 #include <stdexcept>
 #include <utility>
 #include <opencv2/imgcodecs.hpp>
@@ -722,6 +723,102 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Unexpected error in pad");
+  }
+}
+// -------- BBOX OPERATIONS -------- //
+void UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int *CB_Xmin, int *CB_Ymin, int *CB_Xmax,
+                         int *CB_Ymax) {
+  // PASS LIST, COUNT OF BOUNDING BOXES
+  // Also PAss X/Y Min/Max of image cropped region - normally obtained from 'GetCropBox' functions
+  uint32_t bb_Xmin_t, bb_Ymin_t, bb_Xmax_t, bb_Ymax_t;
+
+  std::vector<int> correctInd;
+  std::vector<uint32_t> copyVals;
+  dsize_t bboxDim = (*bboxList)->shape()[1];
+  bool retFlag = false;  // true unless overlap found
+  for (int i = 0; i < *bboxCount; i++) {
+    int bb_Xmin, bb_Xmax, bb_Ymin, bb_Ymax;
+    (*bboxList)->GetUnsignedIntAt(&bb_Xmin_t, {i, 0});
+    (*bboxList)->GetUnsignedIntAt(&bb_Ymin_t, {i, 1});
+    (*bboxList)->GetUnsignedIntAt(&bb_Xmax_t, {i, 2});
+    (*bboxList)->GetUnsignedIntAt(&bb_Ymax_t, {i, 3});
+    bb_Xmin = bb_Xmin_t;
+    bb_Ymin = bb_Ymin_t;
+    bb_Xmax = bb_Xmax_t;
+    bb_Ymax = bb_Ymax_t;
+    bb_Xmax = bb_Xmin + bb_Xmax;
+    bb_Ymax = bb_Ymin + bb_Ymax;
+    // check for image / BB overlap
+    if (((bb_Xmin > *CB_Xmax) || (bb_Ymin > *CB_Ymax)) || ((bb_Xmax < *CB_Xmin) || (bb_Ymax < *CB_Ymin))) {
+      retFlag = true;  // no overlap found
+    }
+    if (retFlag) {  // invalid bbox no longer within image region - reset to zero
+      continue;
+    }
+    // Update this bbox and select it to move to the final output tensor
+    correctInd.push_back(i);
+    // adjust BBox corners by bringing into new CropBox if beyond
+    // Also reseting/adjusting for boxes to lie within CropBox instead of Image - subtract CropBox Xmin/YMin
+    bb_Xmin = bb_Xmin - (std::min(0, (bb_Xmin - *CB_Xmin)) + *CB_Xmin);
+    bb_Xmax = bb_Xmax - (std::max(0, (bb_Xmax - *CB_Xmax)) + *CB_Xmin);
+    bb_Ymin = bb_Ymin - (std::min(0, (bb_Ymin - *CB_Ymin)) + *CB_Ymin);
+    bb_Ymax = bb_Ymax - (std::max(0, (bb_Ymax - *CB_Ymax)) + *CB_Ymin);
+    // reset min values and calculate width/height from Box corners
+    (*bboxList)->SetItemAt({i, 0}, (uint32_t)(bb_Xmin));
+    (*bboxList)->SetItemAt({i, 1}, (uint32_t)(bb_Ymin));
+    (*bboxList)->SetItemAt({i, 2}, (uint32_t)(bb_Xmax - bb_Xmin));
+    (*bboxList)->SetItemAt({i, 3}, (uint32_t)(bb_Ymax - bb_Ymin));
+  }
+  // create new tensor and copy over bboxes still valid to the image
+  // bboxes outside of new cropped region are ignored - empty tensor returned in case of none
+  *bboxCount = correctInd.size();
+  uint32_t temp;
+  for (auto slice : correctInd) {  // for every index in the loop
+    for (int ix = 0; ix < bboxDim; ix++) {
+      (*bboxList)->GetUnsignedIntAt(&temp, {slice, ix});
+      copyVals.push_back(temp);
+    }
+  }
+  std::shared_ptr<Tensor> retV;
+  Tensor::CreateTensor(&retV, copyVals, TensorShape({(dsize_t)bboxCount, bboxDim}));
+  (*bboxList) = retV;  // reset pointer
+}
+
+void PadBBoxes(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *pad_top, int32_t *pad_left) {
+  uint32_t xMin = 0;
+  uint32_t yMin = 0;
+  for (int i = 0; i < *bboxCount; i++) {
+    (*bboxList)->GetUnsignedIntAt(&xMin, {i, 0});
+    (*bboxList)->GetUnsignedIntAt(&yMin, {i, 1});
+    xMin = xMin + (uint32_t)(*pad_left);  // should not be negative
+    yMin = yMin + (uint32_t)(*pad_top);
+    (*bboxList)->SetItemAt({i, 0}, xMin);
+    (*bboxList)->SetItemAt({i, 1}, yMin);
+  }
+}
+
+void UpdateBBoxesForResize(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *target_width_,
+                           int32_t *target_height_, int *orig_width, int *orig_height) {
+  uint32_t bb_Xmin, bb_Ymin, bb_Xwidth, bb_Ywidth;
+  // cast to float to preseve fractional
+  double W_aspRatio = (*target_width_ * 1.0) / (*orig_width * 1.0);
+  double H_aspRatio = (*target_height_ * 1.0) / (*orig_height * 1.0);
+  for (int i = 0; i < *bboxCount; i++) {
+    // for each bounding box
+    (*bboxList)->GetUnsignedIntAt(&bb_Xmin, {i, 0});
+    (*bboxList)->GetUnsignedIntAt(&bb_Ymin, {i, 1});
+    (*bboxList)->GetUnsignedIntAt(&bb_Xwidth, {i, 2});
+    (*bboxList)->GetUnsignedIntAt(&bb_Ywidth, {i, 3});
+    // update positions and widths
+    bb_Xmin = bb_Xmin * W_aspRatio;
+    bb_Ymin = bb_Ymin * H_aspRatio;
+    bb_Xwidth = bb_Xwidth * W_aspRatio;
+    bb_Ywidth = bb_Ywidth * H_aspRatio;
+    // reset bounding box values
+    (*bboxList)->SetItemAt({i, 0}, (uint32_t)bb_Xmin);
+    (*bboxList)->SetItemAt({i, 1}, (uint32_t)bb_Ymin);
+    (*bboxList)->SetItemAt({i, 2}, (uint32_t)bb_Xwidth);
+    (*bboxList)->SetItemAt({i, 3}, (uint32_t)bb_Ywidth);
   }
 }
 }  // namespace dataset

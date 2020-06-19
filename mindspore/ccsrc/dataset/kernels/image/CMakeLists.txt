@@ -10,14 +10,17 @@ add_library(kernels-image OBJECT
     pad_op.cc
     random_color_adjust_op.cc
     random_crop_decode_resize_op.cc
+    random_crop_and_resize_with_bbox_op.cc
     random_crop_and_resize_op.cc
     random_crop_op.cc
+    random_crop_with_bbox_op.cc
     random_horizontal_flip_op.cc
         random_horizontal_flip_bbox_op.cc
         bounding_box_augment_op.cc
     random_resize_op.cc
     random_rotation_op.cc
     random_vertical_flip_op.cc
+    random_vertical_flip_with_bbox_op.cc
     rescale_op.cc
     resize_bilinear_op.cc
     resize_op.cc

@@ -225,7 +225,39 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
 Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
+
+// -------- BBOX OPERATIONS -------- //
+// Updates and checks bounding boxes for new cropped region of image
+// @param bboxList: A tensor contaning bounding box tensors
+// @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
+// @param CB_Xmin: Images's CropBox Xmin coordinate
+// @param CB_Xmin: Images's CropBox Ymin coordinate
+// @param CB_Xmax: Images's CropBox Xmax coordinate - (Xmin + width)
+// @param CB_Xmax: Images's CropBox Ymax coordinate - (Ymin + height)
+void UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int *CB_Xmin, int *CB_Ymin, int *CB_Xmax,
+                         int *CB_Ymax);
+
+// Updates bounding boxes with required Top and Left padding
+// Top and Left padding amounts required to adjust bboxs min X,Y values according to padding 'push'
+// Top/Left since images 0,0 coordinate is taken from top left
+// @param bboxList: A tensor contaning bounding box tensors
+// @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
+// @param pad_top: Total amount of padding applied to image top
+// @param pad_left: Total amount of padding applied to image left side
+void PadBBoxes(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *pad_top, int32_t *pad_left);
+
+// Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
+// For e.g those that remain after a crop
+// @param bboxList: A tensor contaning bounding box tensors
+// @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
+// @param bboxList: A tensor contaning bounding box tensors
+// @param target_width_: required width of image post resize
+// @param target_width_: required height of image post resize
+// @param orig_width: current width of image pre resize
+// @param orig_height: current height of image pre resize
+void UpdateBBoxesForResize(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int32_t *target_width_,
+                           int32_t *target_height_, int *orig_width, int *orig_height);
+
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
