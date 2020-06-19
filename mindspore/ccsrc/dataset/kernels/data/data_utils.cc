@@ -576,7 +576,7 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
   CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Rank() == 1, "Only 1D tensors supported");
   CHECK_FAIL_RETURN_UNEXPECTED(axis == 0 || axis == -1, "Only concatenation along the last dimension supported");
 
-  Tensor::HandleNeg(axis, input[0]->shape().Rank());
+  axis = Tensor::HandleNeg(axis, input[0]->shape().Rank());
   CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Only axis=0 is supported");
 
   std::shared_ptr<Tensor> out;

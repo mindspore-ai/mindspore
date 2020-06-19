@@ -233,10 +233,10 @@ def check_mask_op(method):
         if operator is None:
             raise ValueError("operator is not provided.")
 
-        from .c_transforms import Relational
         if constant is None:
             raise ValueError("constant is not provided.")
 
+        from .c_transforms import Relational
         if not isinstance(operator, Relational):
             raise TypeError("operator is not a Relational operator enum.")
 
@@ -270,14 +270,17 @@ def check_pad_end(method):
             raise ValueError("pad_shape is not provided.")
 
         if pad_value is not None and not isinstance(pad_value, (str, float, bool, int, bytes)):
-            raise TypeError("pad_value must be either a primitive python str, float, bool, bytes or int")
+            raise TypeError("pad_value must be either a primitive python str, float, bool, int or bytes.")
 
         if not isinstance(pad_shape, list):
             raise TypeError("pad_shape must be a list")
 
         for dim in pad_shape:
             if dim is not None:
-                check_pos_int64(dim)
+                if isinstance(dim, int):
+                    check_pos_int64(dim)
+                else:
+                    raise TypeError("a value in the list is not an integer.")
 
         kwargs["pad_shape"] = pad_shape
         kwargs["pad_value"] = pad_value

@@ -166,8 +166,8 @@ class PadEnd(cde.PadEndOp):
     Args:
         pad_shape (list of `int`): list on integers representing the shape needed. Dimensions that set to `None` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
-        pad_value (str, bytes, int, float, or bool, optional): value used to pad. Default to 0 or empty string in case
-            of Tensors of strings.
+        pad_value (python types (str, bytes, int, float, or bool), optional): value used to pad. Default to 0 or empty
+            string in case of Tensors of strings.
     Examples:
         >>> # Data before
         >>> # |   col   |
