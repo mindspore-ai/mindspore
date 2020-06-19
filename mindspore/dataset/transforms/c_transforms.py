@@ -79,12 +79,13 @@ class Slice(cde.SliceOp):
     (Currently only rank 1 Tensors are supported)
 
     Args:
-     *slices: Maximum n number of objects to slice a tensor of rank n.
-         One object in slices can be one of:
+        *slices(Variable length argument list): Maximum `n` number of arguments to slice a tensor of rank `n`.
+            One object in slices can be one of:
              1.  int: slice this index only. Negative index is supported.
              2.  slice object: slice the generated indices from the slice object. Similar to `start:stop:step`.
              3.  None: slice the whole dimension. Similar to `:` in python indexing.
              4.  Ellipses ...: slice all dimensions between the two slices.
+
     Examples:
      >>> # Data before
      >>> # |   col   |
@@ -134,11 +135,13 @@ class Mask(cde.MaskOp):
     """
     Mask content of the input tensor with the given predicate.
     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
+
     Args:
         operator (Relational): One of the relational operator EQ, NE LT, GT, LE or GE
         constant (python types (str, int, float, or bool): constant to be compared to.
             Constant will be casted to the type of the input tensor
         dtype (optional, mindspore.dtype): type of the generated mask. Default to bool
+
     Examples:
         >>> # Data before
         >>> # |  col1   |
@@ -163,11 +166,13 @@ class Mask(cde.MaskOp):
 class PadEnd(cde.PadEndOp):
     """
     Pad input tensor according to `pad_shape`, need to have same rank.
+
     Args:
         pad_shape (list of `int`): list on integers representing the shape needed. Dimensions that set to `None` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
         pad_value (python types (str, bytes, int, float, or bool), optional): value used to pad. Default to 0 or empty
             string in case of Tensors of strings.
+
     Examples:
         >>> # Data before
         >>> # |   col   |
@@ -201,21 +206,25 @@ class Concatenate(cde.ConcatenateOp):
 
     @check_concat_type
     def __init__(self, axis=0, prepend=None, append=None):
-        # add some validations here later
+        if prepend is not None:
+            prepend = cde.Tensor(np.array(prepend))
+        if append is not None:
+            append = cde.Tensor(np.array(append))
         super().__init__(axis, prepend, append)
 
 
 class Duplicate(cde.DuplicateOp):
     """
     Duplicate the input tensor to a new output tensor. The input tensor is carried over to the output list.
-        Examples:
+
+    Examples:
         >>> # Data before
         >>> # |  x      |
         >>> # +---------+
         >>> # | [1,2,3] |
         >>> # +---------+
         >>> data = data.map(input_columns=["x"], operations=Duplicate(),
-        >>>         output_columns=["x", "y"], output_order=["x", "y"])
+        >>>         output_columns=["x", "y"], columns_order=["x", "y"])
         >>> # Data after
         >>> # |  x      |  y      |
         >>> # +---------+---------+

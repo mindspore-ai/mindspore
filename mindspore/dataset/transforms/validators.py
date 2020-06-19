@@ -17,7 +17,6 @@
 from functools import wraps
 import numpy as np
 
-import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 # POS_INT_MIN is used to limit values from starting from 0
@@ -243,12 +242,13 @@ def check_mask_op(method):
         if not isinstance(constant, (str, float, bool, int, bytes)):
             raise TypeError("constant must be either a primitive python str, float, bool, bytes or int")
 
-        if not isinstance(dtype, typing.Type):
-            raise TypeError("dtype is not a MindSpore data type.")
+        if dtype is not None:
+            if not isinstance(dtype, typing.Type):
+                raise TypeError("dtype is not a MindSpore data type.")
+            kwargs["dtype"] = dtype
 
         kwargs["operator"] = operator
         kwargs["constant"] = constant
-        kwargs["dtype"] = dtype
 
         return method(self, **kwargs)
 
@@ -269,8 +269,10 @@ def check_pad_end(method):
         if pad_shape is None:
             raise ValueError("pad_shape is not provided.")
 
-        if pad_value is not None and not isinstance(pad_value, (str, float, bool, int, bytes)):
-            raise TypeError("pad_value must be either a primitive python str, float, bool, int or bytes.")
+        if pad_value is not None:
+            if not isinstance(pad_value, (str, float, bool, int, bytes)):
+                raise TypeError("pad_value must be either a primitive python str, float, bool, int or bytes")
+            kwargs["pad_value"] = pad_value
 
         if not isinstance(pad_shape, list):
             raise TypeError("pad_shape must be a list")
@@ -283,7 +285,6 @@ def check_pad_end(method):
                     raise TypeError("a value in the list is not an integer.")
 
         kwargs["pad_shape"] = pad_shape
-        kwargs["pad_value"] = pad_value
 
         return method(self, **kwargs)
 
@@ -303,30 +304,22 @@ def check_concat_type(method):
         if "axis" in kwargs:
             axis = kwargs.get("axis")
 
-        if not isinstance(axis, (type(None), int)):
-            raise TypeError("axis type is not valid, must be None or an integer.")
+        if axis is not None:
+            if not isinstance(axis, int):
+                raise TypeError("axis type is not valid, must be an integer.")
+            if axis not in (0, -1):
+                raise ValueError("only 1D concatenation supported.")
+            kwargs["axis"] = axis
 
-        if isinstance(axis, type(None)):
-            axis = 0
+        if prepend is not None:
+            if not isinstance(prepend, (type(None), np.ndarray)):
+                raise ValueError("prepend type is not valid, must be None for no prepend tensor or a numpy array.")
+            kwargs["prepend"] = prepend
 
-        if axis not in (None, 0, -1):
-            raise ValueError("only 1D concatenation supported.")
-
-        if not isinstance(prepend, (type(None), np.ndarray)):
-            raise ValueError("prepend type is not valid, must be None for no prepend tensor or a numpy array.")
-
-        if not isinstance(append, (type(None), np.ndarray)):
-            raise ValueError("append type is not valid, must be None for no append tensor or a numpy array.")
-
-        if isinstance(prepend, np.ndarray):
-            prepend = cde.Tensor(prepend)
-
-        if isinstance(append, np.ndarray):
-            append = cde.Tensor(append)
-
-        kwargs["axis"] = axis
-        kwargs["prepend"] = prepend
-        kwargs["append"] = append
+        if append is not None:
+            if not isinstance(append, (type(None), np.ndarray)):
+                raise ValueError("append type is not valid, must be None for no append tensor or a numpy array.")
+            kwargs["append"] = append
 
         return method(self, **kwargs)
 

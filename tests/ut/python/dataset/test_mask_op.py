@@ -62,7 +62,7 @@ def mask_compare(array, op, constant, dtype=mstype.bool_):
         np.testing.assert_array_equal(array, d[0])
 
 
-def test_int_comparison():
+def test_mask_int_comparison():
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -74,7 +74,7 @@ def test_int_comparison():
         mask_compare([1, 2, 3, 4, 5], ops.Relational.GE, 3, k)
 
 
-def test_float_comparison():
+def test_mask_float_comparison():
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -86,7 +86,7 @@ def test_float_comparison():
         mask_compare([1.5, 2.5, 3., 4.5, 5.5], ops.Relational.GE, 3, k)
 
 
-def test_float_comparison2():
+def test_mask_float_comparison2():
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -98,7 +98,7 @@ def test_float_comparison2():
         mask_compare([1, 2, 3, 4, 5], ops.Relational.GE, 3.5, k)
 
 
-def test_string_comparison():
+def test_mask_string_comparison():
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -125,8 +125,8 @@ def test_mask_exceptions_str():
 
 
 if __name__ == "__main__":
-    test_int_comparison()
-    test_float_comparison()
-    test_float_comparison2()
-    test_string_comparison()
+    test_mask_int_comparison()
+    test_mask_float_comparison()
+    test_mask_float_comparison2()
+    test_mask_string_comparison()
     test_mask_exceptions_str()
