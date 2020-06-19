@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace tensor {
+static uint64_t count = 0;
 void DataBuf2Contiguous(const py::array &src, py::array *const dest) {
   if (dest == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to copy data to a contiguous buffer as dest is nullptr!";
@@ -208,7 +209,7 @@ void Tensor::init(const py::array &input, const TypeId &data_type) {
     data_ = input;
   }
   dirty_ = true;
-  id_ = std::to_string((uintptr_t)(this));
+  id_ = std::to_string((uintptr_t)(this)) + std::to_string(count++);
 }
 
 void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {
@@ -255,7 +256,7 @@ void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *co
       MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
       break;
   }
-  id_ = std::to_string((uintptr_t)(this));
+  id_ = std::to_string((uintptr_t)(this)) + std::to_string(count++);
 }
 
 TypePtr Tensor::SetDtype(const TypePtr type_ptr) {
