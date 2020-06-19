@@ -24,9 +24,11 @@ namespace opt {
 class ConfusionSoftmaxGradRule : public PatternProcessPass {
  public:
   explicit ConfusionSoftmaxGradRule(bool multigraph = true)
-      : PatternProcessPass("confusion_softmax_grad_rule", multigraph),
-        input0_(std::make_shared<Var>()),
-        input1_(std::make_shared<Var>()) {}
+      : PatternProcessPass("confusion_softmax_grad_rule", multigraph) {
+    input0_ = std::make_shared<Var>();
+    input1_ = std::make_shared<Var>();
+    reduce_sum_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimReduceSum->name()));
+  }
   ~ConfusionSoftmaxGradRule() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
@@ -34,6 +36,7 @@ class ConfusionSoftmaxGradRule : public PatternProcessPass {
  private:
   VarPtr input0_;
   VarPtr input1_;
+  VarPtr reduce_sum_;
 };
 }  // namespace opt
 }  // namespace mindspore
