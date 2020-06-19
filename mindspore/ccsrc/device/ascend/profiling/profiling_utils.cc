@@ -302,7 +302,7 @@ bool ProfilingUtils::ValidComputeGraph(NotNull<const session::KernelGraph *> gra
   return false;
 }
 
-void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
+void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
                                          NotNull<const session::KernelGraph *> graph) {
   if (!ValidComputeGraph(graph)) {
     MS_LOG(WARNING) << "Not a valid compute graph:" << graph->graph_id();
@@ -319,6 +319,7 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
   MS_EXCEPTION_IF_NULL(context);
   TaskDescReporter task_reporter(context->device_id(), "vm.task_desc_info", ret->second);
   task_reporter.set_task_ids(task_ids);
+  task_reporter.set_stream_ids(stream_ids);
   task_reporter.ReportData();
 
   GraphDescReporter graph_reporter(context->device_id(), "vm.graph_desc_info", ret->second);

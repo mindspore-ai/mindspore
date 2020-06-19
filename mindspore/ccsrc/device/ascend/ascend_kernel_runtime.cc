@@ -367,7 +367,8 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   }
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(task_ids, NOT_NULL(graph));
+    auto stream_ids = ge::model_runner::ModelRunner::Instance().GetStreamIdList(model_iter->first);
+    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
   }
   return true;
 }

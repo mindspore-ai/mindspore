@@ -87,7 +87,8 @@ class ProfilingUtils {
   // Mapping task_id and kernel name for device to generate the time cost of specific kernel.
   // Device calculate the time cost of the task which is marked by task id.
   // But we need data of (kernel name , time cost)
-  static void ReportProfilingData(const std::vector<uint32_t> &task_ids, NotNull<const session::KernelGraph *> graph);
+  static void ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
+                                  NotNull<const session::KernelGraph *> graph);
 
   // Get profiling trace point from envs.
   // export PROFILING_FP_START='full name of the first cnode to execute'

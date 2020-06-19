@@ -40,6 +40,11 @@ const std::vector<uint32_t> &ModelRunner::GetTaskIdList(uint32_t model_id) const
   static std::vector<uint32_t> task_id_list;
   return task_id_list;
 }
+
+const std::vector<uint32_t> &ModelRunner::GetStreamIdList(uint32_t model_id) const {
+  static std::vector<uint32_t> stream_id_list;
+  return stream_id_list;
+}
 }  // namespace model_runner
 }  // namespace ge
 
