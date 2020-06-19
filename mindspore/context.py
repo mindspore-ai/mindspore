@@ -346,6 +346,15 @@ class _Context:
             raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
         self._context_handle.set_max_device_memory(max_device_memory_value)
 
+    @property
+    def print_file_path(self):
+        return None
+
+    @print_file_path.setter
+    def print_file_path(self, file):
+        self._context_handle.set_print_file_path(file)
+
+
 def check_input_format(x):
     import re
     pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
@@ -479,7 +488,7 @@ def reset_auto_parallel_context():
                  save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
-                 check_bprop=bool, max_device_memory=str)
+                 check_bprop=bool, max_device_memory=str, print_file_path=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.

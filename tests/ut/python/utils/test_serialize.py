@@ -16,8 +16,9 @@
 import os
 import stat
 import time
-import pytest
+
 import numpy as np
+import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -33,7 +34,7 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint, load
     _exec_save_checkpoint, export, _save_graph
 from ..ut_filter import non_graph_engine
 
-context.set_context(mode=context.GRAPH_MODE)
+context.set_context(mode=context.GRAPH_MODE, print_file_path="print.pb")
 
 
 class Net(nn.Cell):
@@ -327,8 +328,52 @@ def test_binary_export():
     export(net, input_data, file_name="./me_binary_export.pb", file_format="BINARY")
 
 
+class PrintNet(nn.Cell):
+    def __init__(self):
+        super(PrintNet, self).__init__()
+        self.print = P.Print()
+
+    def construct(self, int8, uint8, int16, uint16, int32, uint32, int64, uint64, flt16, flt32, flt64, bool_,
+                  scale1, scale2):
+        self.print('============tensor int8:==============', int8)
+        self.print('============tensor uint8:==============', uint8)
+        self.print('============tensor int16:==============', int16)
+        self.print('============tensor uint16:==============', uint16)
+        self.print('============tensor int32:==============', int32)
+        self.print('============tensor uint32:==============', uint32)
+        self.print('============tensor int64:==============', int64)
+        self.print('============tensor uint64:==============', uint64)
+        self.print('============tensor float16:==============', flt16)
+        self.print('============tensor float32:==============', flt32)
+        self.print('============tensor float64:==============', flt64)
+        self.print('============tensor bool:==============', bool_)
+        self.print('============tensor scale1:==============', scale1)
+        self.print('============tensor scale2:==============', scale2)
+        return int8, uint8, int16, uint16, int32, uint32, int64, uint64, flt16, flt32, flt64, bool_, scale1, scale2
+
+
+def test_print():
+    print_net = PrintNet()
+    int8 = Tensor(np.random.randint(100, size=(10, 10), dtype="int8"))
+    uint8 = Tensor(np.random.randint(100, size=(10, 10), dtype="uint8"))
+    int16 = Tensor(np.random.randint(100, size=(10, 10), dtype="int16"))
+    uint16 = Tensor(np.random.randint(100, size=(10, 10), dtype="uint16"))
+    int32 = Tensor(np.random.randint(100, size=(10, 10), dtype="int32"))
+    uint32 = Tensor(np.random.randint(100, size=(10, 10), dtype="uint32"))
+    int64 = Tensor(np.random.randint(100, size=(10, 10), dtype="int64"))
+    uint64 = Tensor(np.random.randint(100, size=(10, 10), dtype="uint64"))
+    float16 = Tensor(np.random.rand(224, 224).astype(np.float16))
+    float32 = Tensor(np.random.rand(224, 224).astype(np.float32))
+    float64 = Tensor(np.random.rand(224, 224).astype(np.float64))
+    bool_ = Tensor(np.arange(-10, 10, 2).astype(np.bool_))
+    scale1 = Tensor(np.array(1))
+    scale2 = Tensor(np.array(0.1))
+    print_net(int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, float64, bool_, scale1,
+              scale2)
+
+
 def teardown_module():
-    files = ['parameters.ckpt', 'new_ckpt.ckpt', 'empty.ckpt']
+    files = ['parameters.ckpt', 'new_ckpt.ckpt', 'empty.ckpt', 'print.pb']
     for item in files:
         file_name = './' + item
         if not os.path.exists(file_name):
