@@ -15,6 +15,7 @@
 """math"""
 import math
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.tensor import Tensor
 from ..cell import Cell
 from ...common import dtype as mstype
@@ -114,7 +115,7 @@ class Range(Cell):
             limit = float(limit)
         if isinstance(delta, int):
             delta = float(delta)
-        self.range_x = P.Range(start, limit, delta)
+        self.range_x = inner.Range(start, limit, delta)
         if limit is None:
             length_input = math.ceil(start / delta)
         else:

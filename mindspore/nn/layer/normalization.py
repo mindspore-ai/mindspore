@@ -375,7 +375,7 @@ class GlobalBatchNorm(_BatchNorm):
 
     Args:
         num_features (int): `C` from an expected input of size (N, C, H, W).
-        device_num_each_group (int): The number of devices in each group.
+        device_num_each_group (int): The number of devices in each group. Default: 1.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.

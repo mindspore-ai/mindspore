@@ -673,7 +673,7 @@ class BatchNorm(PrimitiveWithInfer):
         >>> mean = Tensor(np.ones([64]), mindspore.float32)
         >>> variance = Tensor(np.ones([64]), mindspore.float32)
         >>> batch_norm = P.BatchNorm()
-        >>> output = batch_norm(input_x, scale, bias, mean, variance
+        >>> output = batch_norm(input_x, scale, bias, mean, variance)
     """
 
     @prim_attr_register
