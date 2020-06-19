@@ -88,15 +88,15 @@ if __name__ == '__main__':
     if not os.path.isdir(args_opt.mindrecord_dir):
         os.makedirs(args_opt.mindrecord_dir)
 
-    prefix = "yolo.mindrecord"
-    mindrecord_file = os.path.join(args_opt.mindrecord_dir, prefix + "0")
+    yolo_prefix = "yolo.mindrecord"
+    mindrecord_file = os.path.join(args_opt.mindrecord_dir, yolo_prefix + "0")
     if not os.path.exists(mindrecord_file):
         if os.path.isdir(args_opt.image_dir) and os.path.exists(args_opt.anno_path):
             print("Create Mindrecord")
             data_to_mindrecord_byte_image(args_opt.image_dir,
                                           args_opt.anno_path,
                                           args_opt.mindrecord_dir,
-                                          prefix=prefix,
+                                          prefix=yolo_prefix,
                                           file_num=8)
             print("Create Mindrecord Done, at {}".format(args_opt.mindrecord_dir))
         else:

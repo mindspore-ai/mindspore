@@ -23,7 +23,9 @@ import mindspore._c_dataengine as cde
 
 from .utils import JiebaMode, NormalizeForm
 from .validators import check_lookup, check_jieba_add_dict, \
-    check_jieba_add_word, check_jieba_init, check_ngram, check_pair_truncate
+    check_jieba_add_word, check_jieba_init, check_ngram, check_pair_truncate, \
+    check_to_number
+from ..core.datatypes import mstype_to_detype
 
 
 class Lookup(cde.LookupOp):
@@ -379,3 +381,28 @@ class TruncateSequencePair(cde.TruncateSequencePairOp):
     @check_pair_truncate
     def __init__(self, max_length):
         super().__init__(max_length)
+
+
+class ToNumber(cde.ToNumberOp):
+    """
+    Tensor operation to convert every element of a string tensor to a number.
+
+    Strings are casted according to the rules specified in the following links:
+    https://en.cppreference.com/w/cpp/string/basic_string/stof,
+    https://en.cppreference.com/w/cpp/string/basic_string/stoul,
+    except that any strings which represent negative numbers cannot be casted to an
+    unsigned integer type.
+
+    Args:
+        data_type (mindspore.dtype): mindspore.dtype to be casted to. Must be
+            a numeric type.
+
+    Raises:
+        RuntimeError: If strings are invalid to cast, or are out of range after being casted.
+    """
+
+    @check_to_number
+    def __init__(self, data_type):
+        data_type = mstype_to_detype(data_type)
+        self.data_type = str(data_type)
+        super().__init__(data_type)
