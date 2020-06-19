@@ -32,4 +32,4 @@ class TimeMonitor(Callback):
     def epoch_end(self, run_context):
         epoch_mseconds = (time.time() - self.epoch_time) * 1000
         per_step_mseconds = epoch_mseconds / self.data_size
-        print("epoch time: {0}, per step time: {1}".format(epoch_mseconds, per_step_mseconds), flush=True)
+        print("Epoch time: {:5.3f}, per step time: {:5.3f}".format(epoch_mseconds, per_step_mseconds), flush=True)

@@ -279,7 +279,7 @@ class FakeQuantWithMinMax(Cell):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         ema (bool): Exponential Moving Average algorithm update min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        per_channel (bool): Quantization by layer or channel. Default: False.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         channel_axis (int): Quantization by channel axis. Default: 1.
         out_channels (int): declarate the min and max channel size, Default: 1.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
@@ -407,7 +407,7 @@ class Conv2dBatchNormQuant(Cell):
         freeze_bn (int): Quantization freeze BatchNormal op according by global step. Default: 100000.
         fake (bool): Conv2dBatchNormQuant Cell add FakeQuantWithMinMax op or not. Default: True.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -584,7 +584,7 @@ class Conv2dQuant(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -694,7 +694,7 @@ class DenseQuant(Cell):
         activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
-        per_channel (bool): FakeQuantWithMinMax Parameters. Default: False.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -797,6 +797,7 @@ class ReLUQuant(_QuantActivation):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -816,6 +817,7 @@ class ReLUQuant(_QuantActivation):
                  num_bits=8,
                  quant_delay=0,
                  ema_decay=0.999,
+                 per_channel=False,
                  symmetric=False,
                  narrow_range=False):
         super(ReLUQuant, self).__init__()
@@ -824,6 +826,7 @@ class ReLUQuant(_QuantActivation):
                                                   num_bits=num_bits,
                                                   quant_delay=quant_delay,
                                                   ema=True,
+                                                  per_channel=per_channel,
                                                   ema_decay=ema_decay,
                                                   symmetric=symmetric,
                                                   narrow_range=narrow_range)
@@ -850,6 +853,7 @@ class ReLU6Quant(_QuantActivation):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -869,6 +873,7 @@ class ReLU6Quant(_QuantActivation):
                  num_bits=8,
                  quant_delay=0,
                  ema_decay=0.999,
+                 per_channel=False,
                  symmetric=False,
                  narrow_range=False):
         super(ReLU6Quant, self).__init__()
@@ -877,6 +882,7 @@ class ReLU6Quant(_QuantActivation):
                                                   num_bits=num_bits,
                                                   quant_delay=quant_delay,
                                                   ema=True,
+                                                  per_channel=per_channel,
                                                   ema_decay=ema_decay,
                                                   symmetric=symmetric,
                                                   narrow_range=narrow_range)
@@ -900,6 +906,7 @@ class HSwishQuant(_QuantActivation):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -919,6 +926,7 @@ class HSwishQuant(_QuantActivation):
                  num_bits=8,
                  quant_delay=0,
                  ema_decay=0.999,
+                 per_channel=False,
                  symmetric=False,
                  narrow_range=False):
         super(HSwishQuant, self).__init__()
@@ -927,6 +935,7 @@ class HSwishQuant(_QuantActivation):
                                                          num_bits=num_bits,
                                                          quant_delay=quant_delay,
                                                          ema=True,
+                                                         per_channel=per_channel,
                                                          ema_decay=ema_decay,
                                                          symmetric=symmetric,
                                                          narrow_range=narrow_range)
@@ -935,6 +944,7 @@ class HSwishQuant(_QuantActivation):
                                                         num_bits=num_bits,
                                                         quant_delay=quant_delay,
                                                         ema=True,
+                                                        per_channel=per_channel,
                                                         ema_decay=ema_decay,
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range)
@@ -959,6 +969,7 @@ class HSigmoidQuant(_QuantActivation):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -978,6 +989,7 @@ class HSigmoidQuant(_QuantActivation):
                  num_bits=8,
                  quant_delay=0,
                  ema_decay=0.999,
+                 per_channel=False,
                  symmetric=False,
                  narrow_range=False):
         super(HSigmoidQuant, self).__init__()
@@ -986,6 +998,7 @@ class HSigmoidQuant(_QuantActivation):
                                                          num_bits=num_bits,
                                                          quant_delay=quant_delay,
                                                          ema=True,
+                                                         per_channel=per_channel,
                                                          symmetric=symmetric,
                                                          narrow_range=narrow_range)
         self.fake_quant_act_after = FakeQuantWithMinMax(min_init=-6,
@@ -993,6 +1006,7 @@ class HSigmoidQuant(_QuantActivation):
                                                         num_bits=num_bits,
                                                         quant_delay=quant_delay,
                                                         ema=True,
+                                                        per_channel=per_channel,
                                                         ema_decay=ema_decay,
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range)
@@ -1017,6 +1031,7 @@ class TensorAddQuant(Cell):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -1037,6 +1052,7 @@ class TensorAddQuant(Cell):
                  num_bits=8,
                  quant_delay=0,
                  ema_decay=0.999,
+                 per_channel=False,
                  symmetric=False,
                  narrow_range=False):
         super(TensorAddQuant, self).__init__()
@@ -1045,6 +1061,7 @@ class TensorAddQuant(Cell):
                                                   num_bits=num_bits,
                                                   quant_delay=quant_delay,
                                                   ema=True,
+                                                  per_channel=per_channel,
                                                   ema_decay=ema_decay,
                                                   symmetric=symmetric,
                                                   narrow_range=narrow_range)
@@ -1066,6 +1083,7 @@ class MulQuant(Cell):
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         quant_delay (int): Quantization delay parameters according by global step. Default: 0.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
 
@@ -1081,6 +1099,7 @@ class MulQuant(Cell):
                  num_bits=8,
                  quant_delay=0,
                  ema_decay=0.999,
+                 per_channel=False,
                  symmetric=False,
                  narrow_range=False):
         super(MulQuant, self).__init__()
@@ -1089,6 +1108,7 @@ class MulQuant(Cell):
                                                   num_bits=num_bits,
                                                   quant_delay=quant_delay,
                                                   ema=True,
+                                                  per_channel=per_channel,
                                                   ema_decay=ema_decay,
                                                   symmetric=symmetric,
                                                   narrow_range=narrow_range)

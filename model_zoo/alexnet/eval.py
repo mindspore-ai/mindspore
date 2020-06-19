@@ -54,4 +54,4 @@ if __name__ == "__main__":
                                    cfg.batch_size,
                                    status="test")
     acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
-    print("============== Accuracy:{} ==============".format(acc))
+    print("============== {} ==============".format(acc))
