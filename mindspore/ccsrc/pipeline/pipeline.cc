@@ -540,6 +540,9 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::value_error &ex) {
     ReleaseResource(phase);
     throw py::value_error(ex);
+  } catch (const py::index_error &ex) {
+    ReleaseResource(phase);
+    throw py::index_error(ex);
   } catch (const std::exception &ex) {
     ReleaseResource(phase);
     // re-throw this exception to Python interpreter to handle it
