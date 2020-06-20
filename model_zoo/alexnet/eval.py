@@ -45,7 +45,7 @@ if __name__ == "__main__":
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
     repeat_size = cfg.epoch_size
     opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
-    model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})  # test
+    model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})
 
     print("============== Starting Testing ==============")
     param_dict = load_checkpoint(args.ckpt_path)

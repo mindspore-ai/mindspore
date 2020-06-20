@@ -43,19 +43,17 @@ if __name__ == "__main__":
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
+    ds_train = create_dataset_mnist(args.data_path, cfg.batch_size, cfg.epoch_size)
     network = AlexNet(cfg.num_classes)
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
-    lr = Tensor(get_lr(0, cfg.learning_rate, cfg.epoch_size, cfg.save_checkpoint_steps))
+    lr = Tensor(get_lr(0, cfg.learning_rate, cfg.epoch_size, ds_train.get_dataset_size()))
     opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
-    model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})  # test
-
-    print("============== Starting Training ==============")
-    ds_train = create_dataset_mnist(args.data_path,
-                                    cfg.batch_size,
-                                    cfg.epoch_size)
+    model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_alexnet", directory=args.ckpt_path, config=config_ck)
+
+    print("============== Starting Training ==============")
     model.train(cfg.epoch_size, ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
                 dataset_sink_mode=args.dataset_sink_mode)
