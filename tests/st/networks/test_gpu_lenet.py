@@ -203,4 +203,4 @@ def test_train_and_eval_lenet():
     print("============== Starting Testing ==============")
     ds_eval = create_dataset(os.path.join('/home/workspace/mindspore_dataset/mnist', "test"), 32, 1)
     acc = model.eval(ds_eval, dataset_sink_mode=True)
-    print("============== Accuracy:{} ==============".format(acc))
+    print("============== {} ==============".format(acc))

@@ -117,6 +117,7 @@ def test_loss_monitor_sink_mode():
     """Test loss monitor sink mode."""
     cb_params = _InternalCallbackParam()
     cb_params.cur_epoch_num = 4
+    cb_params.epoch_num = 4
     cb_params.cur_step_num = 2
     cb_params.batch_num = 2
     cb_params.net_outputs = Tensor(2.0)
@@ -138,6 +139,7 @@ def test_loss_monitor_normal_mode():
     run_context = RunContext(cb_params)
     loss_cb = LossMonitor(1)
     cb_params.cur_epoch_num = 4
+    cb_params.epoch_num = 4
     cb_params.cur_step_num = 1
     cb_params.batch_num = 1
     cb_params.net_outputs = Tensor(2.0)

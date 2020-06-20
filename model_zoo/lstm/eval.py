@@ -78,4 +78,4 @@ if __name__ == '__main__':
         acc = model.eval(ds_eval, dataset_sink_mode=False)
     else:
         acc = model.eval(ds_eval)
-    print("============== Accuracy:{} ==============".format(acc))
+    print("============== {} ==============".format(acc))
