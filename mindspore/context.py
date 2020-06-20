@@ -424,7 +424,7 @@ def set_auto_parallel_context(**kwargs):
 
                      - auto_parallel: Achieving parallelism automatically.
         auto_parallel_search_mode (str): There are two kinds of search modes, "recursive_programming"
-                     and "dynamic_programming".
+                     and "dynamic_programming". Default: "dynamic_programming".
 
                      - recursive_programming: Recursive programming search mode.
 
