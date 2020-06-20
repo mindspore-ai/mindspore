@@ -34,5 +34,21 @@ MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       BroadcastOpGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(MinimumGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      BroadcastOpGradGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(MaximumGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      BroadcastOpGradGpuKernel, int)
 }  // namespace kernel
 }  // namespace mindspore

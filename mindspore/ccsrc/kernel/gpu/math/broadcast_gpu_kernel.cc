@@ -90,5 +90,11 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   TensorAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int, int)
+MS_REG_GPU_KERNEL_TWO(
+  Minimum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  BroadcastOpGpuKernel, int, int)
+MS_REG_GPU_KERNEL_TWO(
+  Maximum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  BroadcastOpGpuKernel, int, int)
 }  // namespace kernel
 }  // namespace mindspore

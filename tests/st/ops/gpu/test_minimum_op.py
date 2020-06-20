@@ -218,3 +218,21 @@ def test_broadcast_diff_dims():
     output_ms = net(Tensor(x1_np), Tensor(x2_np), Tensor(dy_np))
     assert np.allclose(output_ms[0].asnumpy(), expect_dx1)
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_broadcast_int32():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target='GPU')
+
+    x1_np = np.random.rand(3, 4).astype(np.int32)
+    x2_np = np.random.rand(3, 4).astype(np.int32)
+    dy_np = np.random.rand(3, 4).astype(np.int32)
+
+    net = Grad(MinimumNet())
+    output_ms = net(Tensor(x1_np), Tensor(x2_np), Tensor(dy_np))
+    output0_np = np.where(x1_np < x2_np, dy_np, 0)
+    output1_np = np.where(x1_np < x2_np, 0, dy_np)
+    assert np.allclose(output_ms[0].asnumpy(), output0_np)
+    assert np.allclose(output_ms[1].asnumpy(), output1_np)
