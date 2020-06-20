@@ -282,6 +282,8 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   AdjustKernel(graph);
   // assign stream
   AssignStream(graph);
+  // insert profiling point
+  device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
   // build kernel
   BuildKernel(graph);
   // alloc mem
