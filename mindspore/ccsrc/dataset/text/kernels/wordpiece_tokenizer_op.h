@@ -48,8 +48,6 @@ class WordpieceTokenizerOp : public TensorOp {
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
  protected:
-  void PadTokens(const std::vector<std::vector<std::string>> &tokens, const std::string &padded_str,
-                 std::vector<std::string> *out_padded_tokens, int *out_cols) const;
   Status AddSubword(const std::string &input_token, const int start, const int end,
                     std::vector<std::string> *out_token) const;
   Status FoundNoToken(const std::string &input_token, std::vector<std::string> *out_tokens) const;

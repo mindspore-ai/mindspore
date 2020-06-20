@@ -32,23 +32,6 @@ WordpieceTokenizerOp::WordpieceTokenizerOp(const std::shared_ptr<Vocab> &vocab, 
       max_bytes_per_token_(max_bytes_per_token),
       unknown_token_(unknown_token) {}
 
-void WordpieceTokenizerOp::PadTokens(const std::vector<std::vector<std::string>> &tokens, const std::string &padded_str,
-                                     std::vector<std::string> *out_padded_tokens, int *out_cols) const {
-  int rows = tokens.size();
-  int max_cols = 0;
-  for (int i = 0; i < rows; i++) {
-    max_cols = std::max(max_cols, static_cast<int>(tokens[i].size()));
-  }
-  out_padded_tokens->resize(rows * max_cols, padded_str);
-  for (int i = 0; i < rows; i++) {
-    int index = i * max_cols;
-    for (int j = 0; j < tokens[i].size(); j++) {
-      (*out_padded_tokens)[index++] = tokens[i][j];
-    }
-  }
-  *out_cols = max_cols;
-}
-
 Status WordpieceTokenizerOp::LookupWord(const std::string &input_token, const RuneStrArray &runes, const int start,
                                         bool *out_found, int *out_end) const {
   CHECK_FAIL_RETURN_UNEXPECTED(start >= 0 && start < input_token.size(), "Out of range");
@@ -117,20 +100,16 @@ Status WordpieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::
   if (input->Rank() > 1 || input->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("The input tensor should be scalar or 1-D string tensor");
   }
-  std::vector<std::vector<std::string>> out_tokens(input->Size());
-  int i = 0;
+  std::vector<std::string> out_tokens;
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
-    RETURN_IF_NOT_OK(GetTokens(std::string(*iter), &out_tokens[i++]));
+    std::vector<std::string> temp_tokens;
+    RETURN_IF_NOT_OK(GetTokens(std::string(*iter), &temp_tokens));
+    out_tokens.insert(out_tokens.end(), temp_tokens.begin(), temp_tokens.end());
   }
-  std::vector<std::string> padded_tokens;
-  int cols = 0;
-  PadTokens(out_tokens, "<pad>", &padded_tokens, &cols);
-  std::vector<dsize_t> shapes;
-  if (input->Rank() == 1) {
-    shapes.push_back(out_tokens.size());
+  if (out_tokens.empty()) {
+    out_tokens.emplace_back("");
   }
-  shapes.push_back(cols);
-  *output = std::make_shared<Tensor>(std::move(padded_tokens), TensorShape(shapes));
+  *output = std::make_shared<Tensor>(out_tokens, TensorShape({(dsize_t)out_tokens.size()}));
   return Status::OK();
 }
 
