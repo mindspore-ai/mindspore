@@ -22,7 +22,8 @@ from ._checkpoint import CheckpointConfig
 from ._checkpoint import CheckpointManager as _CheckpointManager
 from ._checkpoint import ModelCheckpoint
 from ._loss_monitor import LossMonitor
-from ._summary_step import SummaryStep
 from ._time_monitor import TimeMonitor
+from ._summary_collector import SummaryCollector
 
-__all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint", "SummaryStep", "CheckpointConfig", "RunContext"]
+__all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
+           "SummaryCollector", "CheckpointConfig", "RunContext"]

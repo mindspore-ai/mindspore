@@ -20,8 +20,8 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Model, context
 from mindspore import Tensor
+from mindspore.train.callback import Callback
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback import SummaryStep
 from ..ut_filter import non_graph_engine
 from ....dataset_mock import MindData
 
@@ -174,7 +174,7 @@ class TestGraphMode:
         model.train(1, dataset)
 
 
-class CallbackTest:
+class CallbackTest(Callback):
     """ CallbackTest definition """
 
     def __init__(self):
@@ -186,19 +186,19 @@ class CallbackTest:
     def __exit__(self, *err):
         pass
 
-    def record(self, step, *args):
-        print(step, args)
+    def step_end(self, run_context):
+        cb_params = run_context.original_args()
+        print(cb_params.cur_epoch_num, cb_params.cur_step_num)
 
 
 def test_train_callback(test_with_simu):
     """ test_train_callback """
     dataset = get_dataset()
     model = get_model()
-    fn = CallbackTest()
-    summary_recode = SummaryStep(fn, 2)
+    callback = CallbackTest()
     if test_with_simu:
         return
-    model.train(2, dataset, callbacks=summary_recode)
+    model.train(2, dataset, callbacks=callback)
 
 
 log = logging.getLogger("test")
