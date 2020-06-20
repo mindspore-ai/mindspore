@@ -127,8 +127,7 @@ class KernelGraph : public FuncGraph {
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
   // get real inputs
-  const std::map<AnfNodePtr, std::vector<AnfNodePtr>> &real_inputs() const { return real_inputs_; }
-  std::vector<AnfNodePtr> GetRealInput(const AnfNodePtr &parameter);
+  const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs() const { return real_inputs_; }
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
   // used to dump ir
   std::string ToString() const override;
@@ -197,7 +196,7 @@ class KernelGraph : public FuncGraph {
   // parameter graph
   std::shared_ptr<KernelGraph> parent_graph_;
   // record real parameters,inputs_ is the formal parameters
-  std::map<AnfNodePtr, std::vector<AnfNodePtr>> real_inputs_;
+  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;

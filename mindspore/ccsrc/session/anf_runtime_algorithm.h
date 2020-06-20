@@ -189,6 +189,7 @@ class AnfRuntimeAlgorithm {
   static bool IsSwitchCall(const CNodePtr &call_node);
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
+  static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

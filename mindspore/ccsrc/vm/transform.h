@@ -124,7 +124,7 @@ class CompileGraphs {
   void Compile(const FuncGraphPtr &func_graph);
   FinalVMPtr Link(const FuncGraphPtr &func_graph);
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
-  bool ContainMixedTarget(const FuncGraphPtr &graph);
+  static bool ContainMixedTarget(const FuncGraphPtr &graph);
 
  private:
   InstSet insts_;

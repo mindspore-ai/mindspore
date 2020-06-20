@@ -996,5 +996,23 @@ bool AnfRuntimeAlgorithm::IsScalarOutput(const CNodePtr &cnode, size_t index) {
   }
   return shape.size() == kShape1dDims && shape[0] == 1;
 }
+
+void AnfRuntimeAlgorithm::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
+  std::vector<CNodePtr> all_opt_list;
+  std::vector<CNodePtr> non_opt_list;
+
+  for (const auto &node : *node_list) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(node)) != kOptOperatorSet.end()) {
+      all_opt_list.emplace_back(node);
+    } else {
+      non_opt_list.emplace_back(node);
+    }
+  }
+  node_list->clear();
+  std::copy(non_opt_list.begin(), non_opt_list.end(), std::back_inserter(*node_list));
+  std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
+}
+
 }  // namespace session
 }  // namespace mindspore

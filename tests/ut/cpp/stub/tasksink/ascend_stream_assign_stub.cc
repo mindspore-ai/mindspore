@@ -26,11 +26,11 @@ void AscendLabelAssign::AssignLabel(NotNull<std::shared_ptr<session::KernelGraph
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> graph) { return 1; }
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<std::shared_ptr<session::KernelGraph>> graph) { return 1; }
 
-void AscendStreamAssign::AssignStreamNew(const KernelGraphPtr &graph) { return; }
-
-uint32_t AscendStreamAssign::GetTotalStreamNum() const { return 1; }
+void AscendStreamAssign::AssignStream(const KernelGraphPtr &graph) { return; }
 
 void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) { return; }
+
+void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) { return; }
 
 namespace tasksink {
 bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *const task_info_list,
@@ -39,7 +39,6 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
 }
 }  // namespace tasksink
 }  // namespace ascend
-void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
 bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return true; }
 bool KernelAdjust::NeedInsertSwitch() { return true; }

@@ -550,7 +550,6 @@ void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_
 
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  device::KernelAdjust::GetInstance().Reorder(kernel_graph);
   opt::HideNopNode(kernel_graph.get());
   // Insert CLearZero op
   // prepare for next step from json get atomic info
@@ -583,7 +582,7 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
 
 void AscendSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  device::ascend::AscendStreamAssign::GetInstance().AssignStreamNew(kernel_graph);
+  device::ascend::AscendStreamAssign::GetInstance().AssignStream(kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1539,6 +1538,11 @@ void AscendSession::SplitGraphs(NotNull<KernelGraphPtr> root_graph) {
     RecurseSplitGraph(root_graph, NOT_NULL(&memo));
   }
   memo.clear();
+  // add maketuple to the end of the last child graph to suit old process
+  auto output_graph = root_graph->child_graph_order().empty() ? root_graph : root_graph->child_graph_order().back();
+  auto make_tuple = output_graph->NewCNode(
+    {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), output_graph->output()});
+  output_graph->set_output(make_tuple);
   // replace the real input if the real input is a call
   RecurseToUpdateCallRealInput(root_graph, NOT_NULL(&memo));
 }
