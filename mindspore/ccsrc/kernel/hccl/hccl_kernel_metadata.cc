@@ -23,6 +23,8 @@
 namespace mindspore {
 namespace kernel {
 void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
+  const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16,
+                                                 kNumberTypeFloat32, kNumberTypeInt16};
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -30,27 +32,27 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }
-
-  std::vector<std::string> inputs_format{};
-  std::vector<TypeId> inputs_type{};
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
-    inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index));
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index));
+  for (const auto &type : kHcclSupportTypes) {
+    std::vector<std::string> inputs_format{};
+    std::vector<TypeId> inputs_type{};
+    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+      inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index));
+      inputs_type.push_back(type);
+    }
+    std::vector<std::string> outputs_format;
+    std::vector<TypeId> outputs_type;
+    for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
+      outputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, output_index));
+      outputs_type.push_back(type);
+    }
+    auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
+    builder.SetInputsFormat(inputs_format);
+    builder.SetInputsDeviceType(inputs_type);
+    builder.SetOutputsFormat(outputs_format);
+    builder.SetOutputsDeviceType(outputs_type);
+    builder.SetKernelType(HCCL_KERNEL);
+    kernel_info_list->push_back(builder.Build());
   }
-
-  std::vector<std::string> outputs_format;
-  std::vector<TypeId> outputs_type;
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
-    outputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, output_index));
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
-  }
-  auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
-  builder.SetInputsFormat(inputs_format);
-  builder.SetInputsDeviceType(inputs_type);
-  builder.SetOutputsFormat(outputs_format);
-  builder.SetOutputsDeviceType(outputs_type);
-  builder.SetKernelType(HCCL_KERNEL);
-  kernel_info_list->push_back(builder.Build());
 }
 }  // namespace kernel
 }  // namespace mindspore
