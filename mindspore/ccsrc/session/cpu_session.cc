@@ -63,7 +63,8 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Bind input output address";
-  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
+  std::vector<tensor::TensorPtr> need_sync_outputs;
+  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs, &need_sync_outputs);
   MS_LOG(INFO) << "Run graph start";
   predictmodel::StepConvertWeight(inputs);
   auto execution_order = kernel_graph->execution_order();
@@ -81,6 +82,9 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   bool ret = runtime_.Run(kernel_graph.get());
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
+  }
+  for (auto output : need_sync_outputs) {
+    (void)output->data_sync();
   }
 
   if (enable_summary) {
