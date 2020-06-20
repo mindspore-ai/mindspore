@@ -61,7 +61,7 @@ struct PrimitiveTotalEqual {
   }
 };
 
-using Registry = std::unordered_map<PrimitivePtr, FuncGraphPtr, PrimitiveHasher, PrimitiveTotalEqual>;
+using Registry = std::unordered_map<PrimitivePtr, FuncGraphPtr, PrimitiveHasher>;
 class KPrim;
 extern KPrim g_k_prims;
 class DFunctor;
