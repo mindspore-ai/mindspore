@@ -25,3 +25,4 @@ from .squeeze import _squeeze_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .pack import _pack_aicpu
+from .normal import _normal_aicpu

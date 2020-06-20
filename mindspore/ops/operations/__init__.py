@@ -53,7 +53,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh)
 
-from .random_ops import (RandomChoiceWithMask)
+from .random_ops import (RandomChoiceWithMask, Normal)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -163,6 +163,7 @@ __all__ = [
     'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
+    'Normal',
     'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',

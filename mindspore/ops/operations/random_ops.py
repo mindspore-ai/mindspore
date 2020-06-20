@@ -64,3 +64,47 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({'x': x_dtype}, [mstype.bool_], self.name)
         return (mstype.int32, mstype.bool_)
+
+
+class Normal(PrimitiveWithInfer):
+    """
+    Generates random samples from a normal(Gaussian) distribution.
+
+    Args:
+        seed (int): Random seed. Default: 0.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of output tensor. Only constant value is allowed.
+        - **mean** (Tensor) - The mean of the distribution, with float32 data type.
+        - **stddev** (Tensor) - The standard deviation of the distribution, with float32 data type.
+
+    Outputs:
+        Tensor, with the given shape from the specific distribution and float32 data type.
+
+    Examples:
+        >>> normal = P.Normal()
+        >>> mean = Tensor(0., mstype.float32)
+        >>> stddev = Tensor(1., mstype.float32)
+        >>> out = normal((32, 3, 3), mean, stddev)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init Normal"""
+        validator.check_value_type("seed", seed, [int], self.name)
+
+    def __infer__(self, shape, mean, stddev):
+        shape_value = shape["value"]
+        if shape_value is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_value, [tuple], self.name)
+        for i, shape_i in enumerate(shape_value):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GE, self.name)
+
+        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"stddev": stddev["dtype"]}, [mstype.float32], self.name)
+
+        out = {"shape": shape_value,
+               "dtype": mstype.float32,
+               "value": None}
+        return out
