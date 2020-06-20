@@ -98,10 +98,11 @@ bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::Addre
     size_t start_index = var_outer_dim_size_ * index;
     size_t end_index = start_index + var_outer_dim_size_;
     for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
-      accum[j] += grad[k] * grad[k];
+      auto summed_grad = unique_sparse_grad.value_[k];
+      accum[j] += summed_grad * summed_grad;
       auto learning_rate = lr * (1 / std::sqrt(accum[j]));
       auto prox_v = var[j];
-      prox_v -= grad[k] * learning_rate;
+      prox_v -= summed_grad * learning_rate;
       if (l1 > 0) {
         var[j] = Sign(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1, static_cast<float>(0.0)) /
                  (1 + l2 * learning_rate);
