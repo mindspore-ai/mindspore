@@ -203,6 +203,8 @@ class Parameter:
         return self.default_input / other
 
     def __setitem__(self, index, value):
+        default_input = self.default_input
+        default_input[index] = value
         return self
 
     def set_parameter_data(self, data):

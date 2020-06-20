@@ -150,6 +150,8 @@ class Tensor(Tensor_):
         return out
 
     def __setitem__(self, index, value):
+        out = tensor_operator_registry.get('__setitem__')(self, index, value)
+        self.assign_value(out)
         return self
 
     def __gt__(self, other):
