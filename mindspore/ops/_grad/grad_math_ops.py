@@ -1044,6 +1044,6 @@ def get_bprop_inv(self):
     inv_grad = G.InvGrad()
 
     def bprop(x, out, dout):
-        dx = inv_grad(x, dout)
+        dx = inv_grad(out, dout)
         return (dx,)
     return bprop

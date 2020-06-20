@@ -2644,7 +2644,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
             The length of block_shape is M correspoding to the number of spatial dimensions.
         crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that input_shape[i+2]*block_size[i] >= crops[i][0]+crops[i][1].
+            input dimension i+2. It is required that input_shape[i+2]*block_size[i] > crops[i][0]+crops[i][1].
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
