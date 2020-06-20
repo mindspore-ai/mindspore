@@ -32,7 +32,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_list;
   (void)std::copy_if(kernel_info_list->begin(), kernel_info_list->end(), std::back_inserter(filtered_list),
-                     [&](const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info) {
+                     [&kernel_node](const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info) {
                        return AnfAlgo::GetOutputTensorNum(kernel_node) == kernel_build_info->GetOutputNum() &&
                               AnfAlgo::GetInputTensorNum(kernel_node) == kernel_build_info->GetInputNum();
                      });
@@ -43,15 +43,16 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     MS_LOG(INFO) << "All kernel Info list does not match any kernel info ";
     for (size_t index = 0; index < kernel_info_list->size(); ++index) {
       std::ostringstream buffer;
-      MS_EXCEPTION_IF_NULL(kernel_info_list->at(index));
-      if (AnfAlgo::GetOutputTensorNum(kernel_node) != kernel_info_list->at(index)->GetOutputNum()) {
+      auto kernel_info = kernel_info_list->at(index);
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      if (AnfAlgo::GetOutputTensorNum(kernel_node) != kernel_info->GetOutputNum()) {
         buffer << "Kernel node's output size [" << AnfAlgo::GetOutputTensorNum(kernel_node) << "]"
-               << " cannot match the kernel's output size [" << kernel_info_list->at(index)->GetOutputNum() << "]";
+               << " cannot match the kernel's output size [" << kernel_info->GetOutputNum() << "]";
       } else {
         buffer << "Kernel node's output size [" << AnfAlgo::GetInputTensorNum(kernel_node) << "]"
-               << " cannot match the kernel's output size [" << kernel_info_list->at(index)->GetInputNum() << "]";
+               << " cannot match the kernel's output size [" << kernel_info->GetInputNum() << "]";
       }
-      MS_LOG(INFO) << "kernel [ " << index << " ] :" << kernel_info_list->at(index)->ToString() << buffer.str();
+      MS_LOG(INFO) << "kernel [ " << index << " ] :" << kernel_info->ToString() << buffer.str();
     }
     kernel_info_list->clear();
     MS_LOG(INFO) << "node" << kernel_node->DebugString() << "'s output size : ["
