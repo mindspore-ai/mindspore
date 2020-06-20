@@ -103,7 +103,7 @@ def test_tree_copy():
     itr = data1.create_tuple_iterator()
 
     assert id(data1) != id(itr.dataset)
-    assert id(data) != id(itr.dataset.input[0])
+    assert id(data) != id(itr.dataset.children[0])
     assert id(data1.operations[0]) == id(itr.dataset.operations[0])
 
     itr.release()
