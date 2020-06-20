@@ -249,9 +249,8 @@ class Parameter:
             if len(layout) != 3:
                 raise ValueError("The length of layout must be 3! layout is {}."
                                  .format(layout))
-            self.init_mode.shape = layout[2]
             slice_index = int(_get_slice_index(layout[0], layout[1]))
-            self.default_input = self.init_mode.to_tensor(slice_index)
+            self.default_input = self.init_mode.to_tensor(slice_index, layout[2])
         else:
             self.default_input = self.init_mode.to_tensor()
 
