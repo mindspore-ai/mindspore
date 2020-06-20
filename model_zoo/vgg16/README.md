@@ -73,12 +73,13 @@ train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
 ### Training
 ```
 usage: train.py [--device_target TARGET][--data_path DATA_PATH]
-                [--device_id DEVICE_ID]
+                [--device_id DEVICE_ID][--pre_trained PRE_TRAINED]
 
 parameters/options:
   --device_target       the training backend type, default is Ascend.
   --data_path           the storage path of dataset
   --device_id           the device which used to train model.
+  --pre_trained         the pretrained checkpoint file path.
 
 ```
 
