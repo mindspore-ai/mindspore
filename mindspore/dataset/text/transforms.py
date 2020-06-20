@@ -188,7 +188,7 @@ class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
 
 class WordpieceTokenizer(cde.WordpieceTokenizerOp):
     """
-    Tokenize scalar token or 1-D tokens to subword tokens.
+    Tokenize scalar token or 1-D tokens to 1-D subword tokens.
 
     Args
         vocab(Vocab): a Vocab object.

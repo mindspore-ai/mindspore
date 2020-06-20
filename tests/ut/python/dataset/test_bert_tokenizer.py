@@ -35,38 +35,24 @@ test_paras = [
     dict(
         first=1,
         last=4,
-        expect_str=[[['床'], ['前'], ['明'], ['月'], ['光']],
-                    [['疑'], ['是'], ['地'], ['上'], ['霜']],
-                    [['举'], ['头'], ['望'], ['明'], ['月']],
-                    [['低'], ['头'], ['思'], ['故'], ['乡']]],
+        expect_str=[['床', '前', '明', '月', '光'],
+                    ['疑', '是', '地', '上', '霜'],
+                    ['举', '头', '望', '明', '月'],
+                    ['低', '头', '思', '故', '乡']],
         vocab_list=vocab_bert
     ),
     # test english text
     dict(
         first=5,
         last=5,
-        expect_str=[[['i', pad],
-                     ["am", pad],
-                     ['mak', '##ing'],
-                     ['small', pad],
-                     ['mistake', '##s'],
-                     ['during', pad],
-                     ['work', '##ing'],
-                     ['hour', '##s']]],
+        expect_str=[['i', 'am', 'mak', '##ing', 'small', 'mistake', '##s', 'during', 'work', '##ing', 'hour', '##s']],
         lower_case=True,
         vocab_list=vocab_bert
     ),
     dict(
         first=5,
         last=5,
-        expect_str=[[['I', pad],
-                     ["am", pad],
-                     ['mak', '##ing'],
-                     ['small', pad],
-                     ['mistake', '##s'],
-                     ['during', pad],
-                     ['work', '##ing'],
-                     ['hour', '##s']]],
+        expect_str=[['I', "am", 'mak', '##ing', 'small', 'mistake', '##s', 'during', 'work', '##ing', 'hour', '##s']],
         lower_case=False,
         vocab_list=vocab_bert
     ),
@@ -75,8 +61,8 @@ test_paras = [
         first=6,
         last=7,
         expect_str=[
-            [['😀'], ['嘿'], ['嘿'], ['😃'], ['哈'], ['哈'], ['😄'], ['大'], ['笑'], ['😁'], ['嘻'], ['嘻']],
-            [['繁'], ['體'], ['字']]],
+            ['😀', '嘿', '嘿', '😃', '哈', '哈', '😄', '大', '笑', '😁', '嘻', '嘻'],
+            ['繁', '體', '字']],
         normalization_form=nlp.utils.NormalizeForm.NFKC,
         vocab_list=vocab_bert
     ),
@@ -85,11 +71,11 @@ test_paras = [
         first=8,
         last=12,
         expect_str=[
-            [['[UNK]'], ['[CLS]']],
-            [['[UNK]'], ['[SEP]']],
-            [['[UNK]'], ['[UNK]']],
-            [['[UNK]'], ['[PAD]']],
-            [['[UNK]'], ['[MASK]']],
+            ['[UNK]', '[CLS]'],
+            ['[UNK]', '[SEP]'],
+            ['[UNK]', '[UNK]'],
+            ['[UNK]', '[PAD]'],
+            ['[UNK]', '[MASK]'],
         ],
         lower_case=False,
         vocab_list=vocab_bert,
@@ -99,7 +85,7 @@ test_paras = [
     dict(
         first=13,
         last=13,
-        expect_str=[[['12'], ['+'], ['/'], ['-'], ['28'], ['='], ['40'], ['/'], ['-'], ['16']]],
+        expect_str=[['12', '+', '/', '-', '28', '=', '40', '/', '-', '16']],
         preserve_unused_token=True,
         vocab_list=vocab_bert
     ),
@@ -107,9 +93,7 @@ test_paras = [
     dict(
         first=8,
         last=8,
-        expect_str=[
-            [['[UNK]'], [' '], ['[CLS]']],
-        ],
+        expect_str=[['[UNK]', ' ', '[CLS]']],
         lower_case=False,
         vocab_list=vocab_bert,
         preserve_unused_token=True,
@@ -118,9 +102,7 @@ test_paras = [
     dict(
         first=8,
         last=8,
-        expect_str=[
-            [['unused'], [' '], ['[CLS]']],
-        ],
+        expect_str=[['unused', ' ', '[CLS]']],
         lower_case=False,
         vocab_list=vocab_bert,
         preserve_unused_token=True,
@@ -130,9 +112,7 @@ test_paras = [
     dict(
         first=8,
         last=8,
-        expect_str=[
-            [['unused'], [' '], ['['], ['CLS'], [']']],
-        ],
+        expect_str=[['unused', ' ', '[', 'CLS', ']']],
         lower_case=False,
         vocab_list=vocab_bert,
         preserve_unused_token=False,
