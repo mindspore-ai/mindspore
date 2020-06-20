@@ -791,7 +791,7 @@ class InplaceAdd(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as input.
 
     Examples:
-        >>> indices = [0, 1]
+        >>> indices = (0, 1)
         >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> inplaceAdd = P.InplaceAdd(indices)
@@ -850,7 +850,7 @@ class InplaceSub(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as input.
 
     Examples:
-        >>> indices = [0, 1]
+        >>> indices = (0, 1)
         >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> inplaceSub = P.InplaceSub(indices)
