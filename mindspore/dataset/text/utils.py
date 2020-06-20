@@ -25,7 +25,9 @@ from .validators import check_from_file, check_from_list, check_from_dict, check
 
 class Vocab(cde.Vocab):
     """
-        Vocab object that is used to lookup a word. It contains a map that maps each word(str) to an id (int)
+    Vocab object that is used to lookup a word.
+
+    It contains a map that maps each word(str) to an id (int).
     """
 
     @classmethod
@@ -33,29 +35,32 @@ class Vocab(cde.Vocab):
     def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None, special_tokens=None,
                      special_first=None):
         """
-        Build a vocab from a dataset. This would collect all unique words in a dataset and return a vocab within
+        Build a vocab from a dataset.
+
+        This would collect all unique words in a dataset and return a vocab within
         the frequency range specified by user in freq_range. User would be warned if no words fall into the frequency.
         Words in vocab are ordered from highest frequency to lowest frequency. Words with the same frequency would be
         ordered lexicographically.
 
         Args:
             dataset(Dataset): dataset to build vocab from.
-            columns([str, list], optional): column names to get words from. It can be a list of column names.
-                (Default=None where all columns will be used. If any column isn't string type, will return error)
+            columns(list of str, optional): column names to get words from. It can be a list of column names.
+                (default=None, where all columns will be used. If any column isn't string type, will return error).
             freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency=0 is the same as
                 min_frequency=1. max_frequency > total_words is the same as max_frequency = total_words.
                 min_frequency/max_frequency can be None, which corresponds to 0/total_words separately
                 (default=None, all words are included).
             top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-                taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default=None
+                taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default=None,
                 all words are included).
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab. If special_tokens
                 is specified and special_first is set to None, special_tokens will be prepended. (default=None).
-        return:
-            text.Vocab: Vocab object built from dataset.
+
+        Returns:
+            Vocab, Vocab object built from dataset.
         """
 
         vocab = Vocab()
@@ -69,7 +74,8 @@ class Vocab(cde.Vocab):
     @check_from_list
     def from_list(cls, word_list, special_tokens=None, special_first=None):
         """
-            build a vocab object from a list of word.
+        Build a vocab object from a list of word.
+
         Args:
             word_list(list): a list of string where each element is a word of type string.
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
@@ -77,34 +83,40 @@ class Vocab(cde.Vocab):
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
                 is specified and special_first is set to None, special_tokens will be prepended. (default=None).
         """
+
         return super().from_list(word_list, special_tokens, special_first)
 
     @classmethod
     @check_from_file
     def from_file(cls, file_path, delimiter=None, vocab_size=None, special_tokens=None, special_first=None):
         """
-            build a vocab object from a list of word.
+        Build a vocab object from a list of word.
+
         Args:
-            file_path(str): path to the file which contains the vocab list.
-            delimiter(str, optional): a delimiter to break up each line in file, the first element is taken to be
+            file_path (str): path to the file which contains the vocab list.
+            delimiter (str, optional): a delimiter to break up each line in file, the first element is taken to be
                 the word (default=None).
-            vocab_size(int, optional): number of words to read from file_path (default=None, all words are taken).
-            special_tokens(list, optional):  a list of strings, each one is a special token. for example
+            vocab_size (int, optional): number of words to read from file_path (default=None, all words are taken).
+            special_tokens (list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to None, special_tokens will be prepended. (default=None).
+            special_first (bool, optional): whether special_tokens will be prepended/appended to vocab,
+                If special_tokens is specified and special_first is set to None,
+                special_tokens will be prepended. (default=None).
         """
+
         return super().from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
 
     @classmethod
     @check_from_dict
     def from_dict(cls, word_dict):
         """
-            build a vocab object from a dict.
+        Build a vocab object from a dict.
+
         Args:
-            word_dict(dict): dict contains word, id pairs where word should be str and id int. id is recommended to
-            start from 0 and be continuous. ValueError will be raised if id is negative.
+            word_dict (dict): dict contains word, id pairs where word should be str and id int. id is recommended to
+                start from 0 and be continuous. ValueError will be raised if id is negative.
         """
+
         return super().from_dict(word_dict)
 
 
@@ -113,11 +125,11 @@ def to_str(array, encoding='utf8'):
     Convert numpy array of `bytes` to array of `str` by decoding each element based on charset `encoding`.
 
     Args:
-        array (numpy array): Array of type `bytes` representing strings.
+        array (numpy.ndarray): Array of type `bytes` representing strings.
         encoding (string): Indicating the charset for decoding.
-    Returns:
-        Numpy array of `str`.
 
+    Returns:
+        numpy.ndarray, numpy array of `str`.
     """
 
     if not isinstance(array, np.ndarray):
@@ -131,11 +143,11 @@ def to_bytes(array, encoding='utf8'):
     Convert numpy array of `str` to array of `bytes` by encoding each element based on charset `encoding`.
 
     Args:
-        array (numpy array): Array of type `str` representing strings.
-        encoding (string): Indicating the charset for encoding.
-    Returns:
-        Numpy array of `bytes`.
+        array (numpy.ndarray): Array of type `str` representing strings.
+        encoding (str): Indicating the charset for encoding.
 
+    Returns:
+        numpy.ndarray, numpy array of `bytes`.
     """
 
     if not isinstance(array, np.ndarray):

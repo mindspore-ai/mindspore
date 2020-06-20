@@ -30,7 +30,8 @@ from ..core.datatypes import mstype_to_detype
 
 class Lookup(cde.LookupOp):
     """
-        Lookup operator that looks up a word to an id.
+    Lookup operator that looks up a word to an id.
+
     Args:
         vocab(Vocab): a Vocab object.
         unknown(int, optional): default id to lookup a word that is out of vocab. If no argument is passed, 1 will be
@@ -48,21 +49,22 @@ class Lookup(cde.LookupOp):
 
 class Ngram(cde.NgramOp):
     """
-    TensorOp to generate n-gram from a 1-D string Tensor
+    TensorOp to generate n-gram from a 1-D string Tensor.
+
     Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
 
     Args:
-        n([int, list]):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
+        n (list of int):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
             would be a 4-gram followed by a 3-gram in the same tensor. If number of words is not enough to make up for
             a n-gram, an empty string would be returned. For e.g. 3 grams on ["mindspore","best"] would result in an
             empty string be produced.
-        left_pad(tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
-            will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (Default is None).
-        right_pad(tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
+        left_pad (tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
+            will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (default=None).
+        right_pad (tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
             pad_width will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--"
-            (Default is None).
-        separator(str,optional): symbol used to join strings together. for e.g. if 2-gram the ["mindspore", "amazing"]
-            with separator="-" the result would be ["mindspore-amazing"] (Default is None which means whitespace is
+            (default=None).
+        separator (str, optional): symbol used to join strings together. for e.g. if 2-gram the ["mindspore", "amazing"]
+            with separator="-" the result would be ["mindspore-amazing"] (default=None, which means whitespace is
             used).
     """
 
@@ -86,11 +88,12 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
     Args:
         hmm_path (str): the dictionary file is used by  HMMSegment algorithm,
             the dictionary can be obtained on the official website of cppjieba.
-        mp_path(str): the dictionary file is used by MPSegment algorithm,
+        mp_path (str): the dictionary file is used by MPSegment algorithm,
             the dictionary can be obtained on the official website of cppjieba.
-        mode (Enum):  [Default "MIX"], "MP" model will tokenize with MPSegment algorithm,
+        mode (JiebaMode, optional): "MP" model will tokenize with MPSegment algorithm,
             "HMM" mode will tokenize with Hiddel Markov Model Segment algorithm,
-            "MIX" model will tokenize with a mix of MPSegment and HMMSegment algorithm.
+            "MIX" model will tokenize with a mix of MPSegment and HMMSegment algorithm
+            (default="MIX").
     """
 
     @check_jieba_init
@@ -104,13 +107,15 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
     @check_jieba_add_word
     def add_word(self, word, freq=None):
         """
-        Add user defined word to JiebaTokenizer's dictionary
+        Add user defined word to JiebaTokenizer's dictionary.
+
         Args:
-            word(required, string): The word to be added to the JiebaTokenizer instance.
+            word (str): The word to be added to the JiebaTokenizer instance.
                 The added word will not be written into the built-in dictionary on disk.
-            freq(optional, int): The frequency of the word to be added, The higher the frequency,
-                the better change the word will be tokenized(default None, use default frequency).
+            freq (int, optional): The frequency of the word to be added, The higher the frequency,
+                the better change the word will be tokenized(default=None, use default frequency).
         """
+
         if freq is None:
             super().add_word(word, 0)
         else:
@@ -119,15 +124,20 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
     @check_jieba_add_dict
     def add_dict(self, user_dict):
         """
-        Add user defined word to JiebaTokenizer's dictionary
+        Add user defined word to JiebaTokenizer's dictionary.
+
         Args:
-            user_dict(path/dict):Dictionary to be added, file path or Python dictionary,
-            Python Dict format: {word1:freq1, word2:freq2,...}
-            Jieba dictionary format : word(required), freq(optional), such as:
-                word1 freq1
-                word2
-                word3 freq3
+            user_dict (str or dict): Dictionary to be added, file path or Python dictionary,
+                Python Dict format: {word1:freq1, word2:freq2,...}.
+                Jieba dictionary format : word(required), freq(optional), such as:
+
+                .. code-block::
+
+                    word1 freq1
+                    word2
+                    word3 freq3
         """
+
         if isinstance(user_dict, str):
             self.__add_dict_py_file(user_dict)
         elif isinstance(user_dict, dict):
@@ -190,12 +200,12 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
     """
     Tokenize scalar token or 1-D tokens to subword tokens.
 
-    Args
-        vocab(Vocab): a Vocab object.
-        suffix_indicator(string, optional): Used to show that the subword is the last part of a word(default '##').
-        max_bytes_per_token(int, optional): Tokens exceeding this length will not be further split(default 100).
-        unknown_token(string, optional): When we can not found the token: if 'unknown_token' is empty string,
-            return the token directly, else return 'unknown_token'(default '[UNK]').
+    Args:
+        vocab (Vocab): a Vocab object.
+        suffix_indicator (str, optional): Used to show that the subword is the last part of a word(default '##').
+        max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split(default 100).
+        unknown_token (str, optional): When we can not found the token: if 'unknown_token' is empty string,
+            return the token directly, else return 'unknown_token'(default='[UNK]').
     """
 
     def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]'):
@@ -209,7 +219,7 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
 if platform.system().lower() != 'windows':
     class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):
         """
-        Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces(such as: ' ', '\t', '\r', '\n').
+        Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces(such as: ' ', '\\\\t', '\\\\r', '\\\\n').
         """
 
 
@@ -218,7 +228,7 @@ if platform.system().lower() != 'windows':
         Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
 
         Args:
-            keep_whitespace(bool, optional): If or not emit whitespace tokens (default False)
+            keep_whitespace (bool, optional): If or not emit whitespace tokens (default=False).
         """
 
         def __init__(self, keep_whitespace=False):
@@ -246,9 +256,9 @@ if platform.system().lower() != 'windows':
         Apply normalize operation on utf-8 string tensor.
 
         Args:
-            normalize_form(Enum, optional): Valid values are "NONE", "NFC", "NFKC", "NFD", "NFKD".
+            normalize_form (NormalizeForm, optional): Valid values are "NONE", "NFC", "NFKC", "NFD", "NFKD".
                 If set "NONE", will do nothing for input string tensor.
-                If set to any of "NFC", "NFKC", "NFD", "NFKD", will apply normalize operation(default "NFKC").
+                If set to any of "NFC", "NFKC", "NFD", "NFKD", will apply normalize operation(default="NFKC").
                 See http://unicode.org/reports/tr15/ for details.
         """
 
@@ -260,13 +270,14 @@ if platform.system().lower() != 'windows':
     class RegexReplace(cde.RegexReplaceOp):
         """
         Replace utf-8 string tensor with 'replace' according to regular expression 'pattern'.
+
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
         Args:
-            pattern(string): the regex expression patterns.
-            replace(string): the string to replace matched element.
+            pattern(str): the regex expression patterns.
+            replace(str): the string to replace matched element.
             replace_all(bool, optional): If False, only replace first matched element;
-                if True, replace all matched elements(default True).
+                if True, replace all matched elements(default=True).
         """
 
         def __init__(self, pattern, replace, replace_all=True):
@@ -279,13 +290,14 @@ if platform.system().lower() != 'windows':
     class RegexTokenizer(cde.RegexTokenizerOp):
         """
         Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
+
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
         Args:
-            delim_pattern(string): The pattern of regex delimiters.
+            delim_pattern(str): The pattern of regex delimiters.
                 The original string will be split by matched elements.
-            keep_delim_pattern(string, optional): The string matched by 'delim_pattern' can be kept as a token
-                if it can be matched by 'keep_delim_pattern'. And the default value is empty string(''),
+            keep_delim_pattern(str, optional): The string matched by 'delim_pattern' can be kept as a token
+                if it can be matched by 'keep_delim_pattern'. And the default value is empty str(''),
                 in this situation, delimiters will not kept as a output token.
         """
 
@@ -302,12 +314,12 @@ if platform.system().lower() != 'windows':
         Args:
             lower_case(bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
                 on input text to make the text to lower case and strip accents characters; If False, only apply
-                NormalizeUTF8('normalization_form' mode) operation on input text(default False).
-            keep_whitespace(bool, optional), If True, the whitespace will be kept in out tokens(default False).
-            normalization_form(Enum, optional), Used to specify a specific normlaize mode,
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default 'NONE').
-            preserve_unused_token(bool, optional), If True, do not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default True).
+                NormalizeUTF8('normalization_form' mode) operation on input text(default=False).
+            keep_whitespace(bool, optional): If True, the whitespace will be kept in out tokens(default=False).
+            normalization_form(NormalizeForm, optional): Used to specify a specific normlaize mode,
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default='NONE').
+            preserve_unused_token(bool, optional): If True, do not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
         """
 
         def __init__(self, lower_case=False, keep_whitespace=False,
@@ -326,18 +338,18 @@ if platform.system().lower() != 'windows':
 
         Args:
             vocab(Vocab): a Vocab object.
-            suffix_indicator(string, optional): Used to show that the subword is the last part of a word(default '##').
-            max_bytes_per_token(int, optional): Tokens exceeding this length will not be further split(default 100).
-            unknown_token(string, optional): When we can not found the token: if 'unknown_token' is empty string,
-                return the token directly, else return 'unknown_token'(default '[UNK]').
+            suffix_indicator(str, optional): Used to show that the subword is the last part of a word(default='##').
+            max_bytes_per_token(int, optional): Tokens exceeding this length will not be further split(default=100).
+            unknown_token(str, optional): When we can not found the token: if 'unknown_token' is empty string,
+                return the token directly, else return 'unknown_token'(default='[UNK]').
             lower_case(bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
                 on input text to make the text to lower case and strip accents characters; If False, only apply
-                NormalizeUTF8('normalization_form' mode) operation on input text(default False).
-            keep_whitespace(bool, optional), If True, the whitespace will be kept in out tokens(default False).
-            normalization_form(Enum, optional), Used to specify a specific normlaize mode,
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default 'NONE').
-            preserve_unused_token(bool, optional), If True, do not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default True).
+                NormalizeUTF8('normalization_form' mode) operation on input text(default=False).
+            keep_whitespace(bool, optional): If True, the whitespace will be kept in out tokens(default=False).
+            normalization_form(NormalizeForm, optional): Used to specify a specific normlaize mode,
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default='NONE').
+            preserve_unused_token(bool, optional): If True, do not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
         """
 
         def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100,
