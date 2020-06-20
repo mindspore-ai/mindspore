@@ -2489,7 +2489,7 @@ class BatchToSpace(PrimitiveWithInfer):
     dimension and block_size with given amount to crop from dimension, respectively.
 
     Args:
-        block_size (int): The block size of dividing block with value >= 1.
+        block_size (int): The block size of dividing block with value >= 2.
         crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
@@ -2523,7 +2523,7 @@ class BatchToSpace(PrimitiveWithInfer):
     def __init__(self, block_size, crops):
         """Init BatchToSpace"""
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, '', 1, Rel.GE, self.name)
+        validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
         validator.check('crops shape', np.array(crops).shape, '', (2, 2))
         for elem in itertools.chain(*crops):
