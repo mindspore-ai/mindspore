@@ -74,8 +74,8 @@ void GatherV2CPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &
                                          size_t dim2, float **output_addr, size_t *buff_size) {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
-
-  for (size_t i = 0; i < output_shape_[axis_]; ++i) {
+  size_t elem_num = inputs[1]->size / 4;
+  for (size_t i = 0; i < elem_num; ++i) {
     size_t index = IntToSize(indices_addr[i]);
     size_t pos = 0;
     if (axis_ == 3) {
