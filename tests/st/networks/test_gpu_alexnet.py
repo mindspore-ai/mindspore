@@ -86,6 +86,6 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
     for i in range(0, epoch):
         data = Tensor(np.ones([batch_size, 3, 227, 227]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
-        loss = train_network(data, label)
+        loss = train_network(data, label).asnumpy()
         losses.append(loss)
-    assert (losses[-1].asnumpy() < 0.01)
+    assert losses[-1] < 0.01

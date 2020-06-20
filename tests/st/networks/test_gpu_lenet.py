@@ -144,9 +144,9 @@ def test_train_lenet():
     for i in range(epoch):
         data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([net.batch_size]).astype(np.int32))
-        loss = train_network(data, label)
+        loss = train_network(data, label).asnumpy()
         losses.append(loss)
-    print(losses)
+    assert losses[-1] < 0.01
 
 
 def create_dataset(data_path, batch_size=32, repeat_size=1,
