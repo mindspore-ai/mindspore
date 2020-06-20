@@ -40,6 +40,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.device_target == "CPU":
+        args.dataset_sink_mode = False
+
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     ds_train = create_dataset(os.path.join(args.data_path, "train"),
                               cfg.batch_size,
