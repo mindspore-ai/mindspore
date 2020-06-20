@@ -72,7 +72,8 @@ result: {'acc': 0.83}
 ```
 usage: train.py [--preprocess {true,false}] [--aclimdb_path ACLIMDB_PATH]
                 [--glove_path GLOVE_PATH] [--preprocess_path PREPROCESS_PATH]
-                [--ckpt_path CKPT_PATH] [--device_target {GPU,CPU}]
+                [--ckpt_path CKPT_PATH] [--pre_trained PRE_TRAINED]
+                [--device_target {GPU,CPU}]
 
 parameters/options:
   --preprocess          whether to preprocess data.
@@ -80,6 +81,7 @@ parameters/options:
   --glove_path          path where the GloVe is stored.
   --preprocess_path     path where the pre-process data is stored.
   --ckpt_path           the path to save the checkpoint file.
+  --pre_trained         the pretrained checkpoint file path.
   --device_target       the target device to run, support "GPU", "CPU".
 ```
 
