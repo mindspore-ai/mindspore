@@ -79,7 +79,7 @@ class BatchNormFoldCell(Cell):
             self.bn_train = Q.BatchNormFold(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
             self.bn_infer = Q.BatchNormFold(momentum, epsilon, is_training=False, freeze_bn=freeze_bn)
         else:
-            self.bn_reduce = Q.BNTrainingReduce()
+            self.bn_reduce = P.BNTrainingReduce()
             self.bn_update = Q.BatchNormFoldD(momentum, epsilon, is_training=True, freeze_bn=freeze_bn)
 
     def construct(self, x, mean, variance, global_step):
