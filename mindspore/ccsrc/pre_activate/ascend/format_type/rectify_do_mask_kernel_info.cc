@@ -44,18 +44,7 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->execution_mode() == kPynativeMode) {
-    if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutDoMask->name()) {
-      return nullptr;
-    }
-    auto do_mask_input_format = AnfAlgo::GetInputFormat(node, 0);
-    if (do_mask_input_format != kOpFormat_DEFAULT) {
-      auto builder =
-        std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
-      builder->SetInputFormat(kOpFormat_DEFAULT, 0);
-      builder->SetOutputFormat(kOpFormat_DEFAULT, 0);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-    }
-    return nullptr;
+    return RectifyKernelInfoInPynativeProcess(node);
   }
   if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutGenMask->name()) {
     return nullptr;
@@ -139,6 +128,7 @@ std::string RectifyDoMaskKernelInfo::GetConvertFormat(const std::map<std::string
   }
   return convert_format;
 }
+
 void RectifyDoMaskKernelInfo::RectifyDropOutDoMaskKernelInfo(const std::vector<CNodePtr> &do_mask_node_list,
                                                              const std::string &format) const {
   for (const auto &do_mask : do_mask_node_list) {
@@ -150,5 +140,24 @@ void RectifyDoMaskKernelInfo::RectifyDropOutDoMaskKernelInfo(const std::vector<C
   }
 }
 
+AnfNodePtr RectifyDoMaskKernelInfo::RectifyKernelInfoInPynativeProcess(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return nullptr;
+  }
+  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutDoMask->name()) {
+    return nullptr;
+  }
+  auto do_mask_input_format = AnfAlgo::GetInputFormat(node, 0);
+  if (do_mask_input_format != kOpFormat_DEFAULT) {
+    auto builder =
+      std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+    builder->SetInputFormat(kOpFormat_DEFAULT, 0);
+    builder->SetOutputFormat(kOpFormat_DEFAULT, 0);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+  }
+  return nullptr;
+}
 }  // namespace opt
 }  // namespace mindspore
