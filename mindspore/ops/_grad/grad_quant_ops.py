@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Generate bprop for aware quantization ops"""
+"""Generate bprop for quantization aware ops"""
 
 from .. import operations as P
 from ..operations import _quant_ops as Q
@@ -133,9 +133,9 @@ def get_bprop_batchnorm_fold2_(self):
     return bprop
 
 
-@bprop_getters.register(Q.FakeQuantMinMaxPerLayerUpdate)
+@bprop_getters.register(Q.MinMaxUpdatePerLayer)
 def get_bprop_fakequant_with_minmax_per_layer_update(self):
-    """Generate bprop for FakeQuantMinMaxPerLayerUpdate for Ascend"""
+    """Generate bprop for MinMaxUpdatePerLayer for Ascend"""
 
     def bprop(x, x_min, x_max, out, dout):
         return zeros_like(x), zeros_like(x_min), zeros_like(x_max)
@@ -143,9 +143,9 @@ def get_bprop_fakequant_with_minmax_per_layer_update(self):
     return bprop
 
 
-@bprop_getters.register(Q.FakeQuantMinMaxPerChannelUpdate)
+@bprop_getters.register(Q.MinMaxUpdatePerChannel)
 def get_bprop_fakequant_with_minmax_per_channel_update(self):
-    """Generate bprop for FakeQuantMinMaxPerChannelUpdate for Ascend"""
+    """Generate bprop for MinMaxUpdatePerChannel for Ascend"""
 
     def bprop(x, x_min, x_max, out, dout):
         return zeros_like(x), zeros_like(x_min), zeros_like(x_max)

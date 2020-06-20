@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""FakeQuantMinMaxPerChannelUpdate op"""
+"""MinMaxUpdatePerChannel op"""
 import te.lang.cce
 from te import tvm
 from te.platform.fusion_manager import fusion_manager
@@ -23,7 +23,7 @@ from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 
-fake_quant_min_max_per_channel_update_op_info = TBERegOp("FakeQuantMinMaxPerChannelUpdate") \
+fake_quant_min_max_per_channel_update_op_info = TBERegOp("MinMaxUpdatePerChannel") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("fake_quant_min_max_per_channel_update.so") \

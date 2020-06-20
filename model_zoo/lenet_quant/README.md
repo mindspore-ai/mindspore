@@ -2,13 +2,13 @@
 
 ## Description
 
-Training LeNet with MNIST dataset in MindSpore with quantization aware trainging.
+Training LeNet with MNIST dataset in MindSpore with quantization aware training.
 
 This is the simple and basic tutorial for constructing a network in MindSpore with quantization aware.
 
 In this tutorial, you will:
 
-1. Train a Mindspore fusion model for MNIST from scratch using `nn.Conv2dBnAct` and `nn.DenseBnAct`.
+1. Train a MindSpore fusion model for MNIST from scratch using `nn.Conv2dBnAct` and `nn.DenseBnAct`.
 2. Fine tune the fusion model by applying the quantization aware training auto network converter API `convert_quant_network`, after the network convergence then export a quantization aware model checkpoint file.
 3. Use the quantization aware model to create an actually quantized model for the Ascend inference backend.
 4. See the persistence of accuracy in inference backend and a 4x smaller model. To see the latency benefits on mobile, try out the Ascend inference backend examples.
@@ -24,10 +24,10 @@ Install MindSpore base on the ascend device and GPU device from [MindSpore](http
 ```python
 pip uninstall -y mindspore-ascend
 pip uninstall -y mindspore-gpu
-pip install mindspore-ascend-0.4.0.whl
+pip install mindspore-ascend.whl
 ```
 
-then you will get the following display
+Then you will get the following display
 
 
 ```bash
@@ -87,7 +87,7 @@ class LeNet5(nn.Cell):
         return x
 ```
 
-get the MNIST from scratch dataset.
+Get the MNIST from scratch dataset.
 
 ```Python
 ds_train = create_dataset(os.path.join(args.data_path, "train"), 
@@ -97,7 +97,7 @@ step_size = ds_train.get_dataset_size()
 
 ### Train model
 
-Load teh Lenet fusion network, traing network using loss `nn.SoftmaxCrossEntropyWithLogits` with optimization `nn.Momentum`.
+Load the Lenet fusion network, training network using loss `nn.SoftmaxCrossEntropyWithLogits` with optimization `nn.Momentum`.
 
 ```Python
 # Define the network
@@ -133,7 +133,7 @@ After all the following we will get the loss value of each step as following:
 >>> Epoch: [ 10/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
 ```
 
-To save your time, just run this command.
+Also, you can just run this command instead.
 
 ```python
 python train.py --data_path MNIST_Data --device_target Ascend
@@ -165,17 +165,17 @@ Note that the resulting model is quantization aware but not quantized (e.g. the 
 # define funsion network
 network = LeNet5Fusion(cfg.num_classes)
 
-# load aware quantizaiton network checkpoint
+# load quantization aware network checkpoint
 param_dict = load_checkpoint(args.ckpt_path)
 load_param_into_net(network, param_dict)
 
-# convert funsion netwrok to aware quantizaiton network
+# convert funsion netwrok to quantization aware network
 network = quant.convert_quant_network(network)
 ```
 
 ### load checkpoint
 
-after convert to quantization aware network, we can load the checkpoint file.
+After convert to quantization aware network, we can load the checkpoint file.
 
 ```python
 config_ck = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
@@ -186,7 +186,7 @@ model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
 ### train quantization aware model
 
-To save your time, just run this command.
+Also, you can just run this command instread.
 
 ```python
 python train_quant.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
@@ -210,18 +210,18 @@ Procedure of quantization aware model evaluation is different from normal. Becau
 # define funsion network
 network = LeNet5Fusion(cfg.num_classes)
 
-# load aware quantizaiton network checkpoint
+# load quantization aware network checkpoint
 param_dict = load_checkpoint(args.ckpt_path)
 load_param_into_net(network, param_dict)
 
-# convert funsion netwrok to aware quantizaiton network
+# convert funsion netwrok to quantization aware network
 network = quant.convert_quant_network(network 
 ```
 
-To save your time, just run this command.
+Also, you can just run this command insread.
 
 ```python
-python eval.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
+python eval_quant.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
 ```
 
 The top1 accuracy would display on shell.

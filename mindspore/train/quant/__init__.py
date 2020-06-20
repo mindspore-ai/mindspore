@@ -15,10 +15,10 @@
 """
 quantization.
 
-User can use aware quantization to train a model. Mindspore supports quantization aware training,
+User can use quantization aware to train a model. MindSpore supports quantization aware training,
 which models quantization errors in both the forward and backward passes using fake-quantization
 ops. Note that the entire computation is carried out in floating point. At the end of quantization
-aware training, Mindspore provides conversion functions to convert the trained model into lower precision.
+aware training, MindSpore provides conversion functions to convert the trained model into lower precision.
 """
 
 from .quant import convert_quant_network

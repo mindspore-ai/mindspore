@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-#include "kernel/gpu/quant/fake_quant_per_channel_grad_gpu_kernel.h"
-#include "kernel/gpu/cuda_impl/fake_quant_per_channel_impl.cuh"
+#include "kernel/gpu/quant/fake_quant_perchannel_grad_gpu_kernel.h"
+#include "kernel/gpu/cuda_impl/fake_quant_perchannel_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 FakeQuantPerChannelGradGpuKernel::FakeQuantPerChannelGradGpuKernel()
     : input_size_(0),
-      min_size_(0),
-      max_size_(0),
-      output_size_(0),
-      workspace_size_(0),
       num_bits_(0),
       quant_min_(0),
       quant_max_(0),
-      channel_out_(0),
+      num_channels_(0),
       quant_delay_(0),
       global_step_(0),
       narrow_range_(false),
@@ -64,42 +60,34 @@ bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
   }
 
   symmetric_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("symmetric"));
-  if (symmetric_) {
-    quant_min_ = 0 - (1 << (num_bits_ - 1));
-    quant_max_ = (1 << (num_bits_ - 1)) - 1;
-  } else {
-    quant_min_ = 0;
-    quant_max_ = (1 << num_bits_) - 1;
-  }
-
   narrow_range_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("narrow_range"));
+
+  // quant min and max value
+  quant_min_ = 0;
+  quant_max_ = (1 << num_bits_) - 1;
   if (narrow_range_) {
     quant_min_++;
   }
 
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  channel_out_ = SizeToInt(input_shape[0]);
-  min_size_ = sizeof(float) * channel_out_;
-  max_size_ = sizeof(float) * channel_out_;
+  num_channels_ = SizeToInt(input_shape[0]);
   input_size_ = sizeof(float);
   for (size_t i = 0; i < input_shape.size(); i++) {
     input_size_ *= input_shape[i];
   }
-  output_size_ = input_size_;
-
   InitSizeLists();
   return true;
 }
 
 void FakeQuantPerChannelGradGpuKernel::InitSizeLists() {
-  input_size_list_.push_back(input_size_);  // gradient
-  input_size_list_.push_back(input_size_);  // input
-  input_size_list_.push_back(min_size_);    // min
-  input_size_list_.push_back(max_size_);    // max
-  output_size_list_.push_back(output_size_);
-  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // scale in channel
-  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // min in channel
-  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // max in channel
+  input_size_list_.push_back(input_size_);                        // gradient
+  input_size_list_.push_back(input_size_);                        // input
+  input_size_list_.push_back(sizeof(float) * num_channels_);      // min
+  input_size_list_.push_back(sizeof(float) * num_channels_);      // max
+  output_size_list_.push_back(input_size_);                       // output
+  workspace_size_list_.push_back(sizeof(float) * num_channels_);  // scale in channel
+  workspace_size_list_.push_back(sizeof(float) * num_channels_);  // min in channel
+  workspace_size_list_.push_back(sizeof(float) * num_channels_);  // max in channel
 }
 
 bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
@@ -111,9 +99,9 @@ bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inp
   float *input = GetDeviceAddress<float>(inputs, 1);
   float *input_min = GetDeviceAddress<float>(inputs, 2);
   float *input_max = GetDeviceAddress<float>(inputs, 3);
-  float *d_scale = GetDeviceAddress<float>(workspace, 0);
-  float *d_nudge_min = GetDeviceAddress<float>(workspace, 1);
-  float *d_nudge_max = GetDeviceAddress<float>(workspace, 2);
+  float *scale = GetDeviceAddress<float>(workspace, 0);
+  float *nudge_min = GetDeviceAddress<float>(workspace, 1);
+  float *nudge_max = GetDeviceAddress<float>(workspace, 2);
 
   if (gradient == nullptr) {
     MS_LOG(EXCEPTION) << "FakeQuantPerChannelGradGpuKernel gradient is null";
@@ -130,9 +118,9 @@ bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inp
 
   int total_size = input_size_ / sizeof(float);
   if (global_step_ >= quant_delay_) {
-    CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, d_nudge_min, d_nudge_max, d_scale, channel_out_,
+    CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, num_channels_,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeQuantizePerChannelGrad(input, gradient, output, total_size, channel_out_, d_nudge_min, d_nudge_max,
+    CalFakeQuantizePerChannelGrad(input, gradient, output, total_size, num_channels_, nudge_min, nudge_max,
                                   reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,

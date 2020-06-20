@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Aware quantization."""
+"""Quantization aware."""
 
 from functools import partial
 import numpy as np
@@ -172,7 +172,7 @@ class DenseBnAct(Cell):
         Tensor of shape :math:`(N, out\_channels)`.
 
     Examples:
-        >>> net = nn.Dense(3, 4)
+        >>> net = nn.DenseBnAct(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net(input)
     """
@@ -271,7 +271,7 @@ class BatchNormFoldCell(Cell):
 
 class FakeQuantWithMinMax(Cell):
     r"""
-    Aware Quantization op. This OP provide Fake quantization observer function on data with min and max.
+    Quantization aware op. This OP provide Fake quantization observer function on data with min and max.
 
     Args:
         min_init (int, float): The dimension of channel or 1(layer). Default: -6.
@@ -338,22 +338,30 @@ class FakeQuantWithMinMax(Cell):
         # init fake quant relative op
         if per_channel:
             quant_fun = partial(Q.FakeQuantPerChannel, channel_axis=self.channel_axis)
-            ema_fun = partial(Q.FakeQuantMinMaxPerChannelUpdate, channel_axis=self.channel_axis)
+            ema_fun = partial(Q.MinMaxUpdatePerChannel, channel_axis=self.channel_axis)
         else:
             quant_fun = Q.FakeQuantPerLayer
-            ema_fun = Q.FakeQuantMinMaxPerLayerUpdate
+            ema_fun = Q.MinMaxUpdatePerLayer
 
         if self.is_ascend:
             self.fake_quant = quant_fun(num_bits=self.num_bits,
                                         symmetric=self.symmetric,
                                         narrow_range=self.narrow_range)
         else:
-            self.fake_quant = quant_fun(num_bits=self.num_bits,
-                                        ema=self.ema,
-                                        ema_decay=ema_decay,
-                                        quant_delay=quant_delay,
-                                        symmetric=self.symmetric,
-                                        narrow_range=self.narrow_range)
+            self.fake_quant_train = quant_fun(num_bits=self.num_bits,
+                                              ema=self.ema,
+                                              ema_decay=ema_decay,
+                                              quant_delay=quant_delay,
+                                              symmetric=self.symmetric,
+                                              narrow_range=self.narrow_range,
+                                              training=True)
+            self.fake_quant_infer = quant_fun(num_bits=self.num_bits,
+                                              ema=self.ema,
+                                              ema_decay=ema_decay,
+                                              quant_delay=quant_delay,
+                                              symmetric=self.symmetric,
+                                              narrow_range=self.narrow_range,
+                                              training=False)
         self.ema_update = ema_fun(num_bits=self.num_bits,
                                   ema=self.ema,
                                   ema_decay=self.ema_decay,
@@ -368,15 +376,23 @@ class FakeQuantWithMinMax(Cell):
         return s
 
     def construct(self, x):
-        if self.is_ascend and self.training:
-            min_up, max_up = self.ema_update(x, self.minq, self.maxq)
-            out = self.fake_quant(x, min_up, max_up)
-            P.Assign()(self.minq, min_up)
-            P.Assign()(self.maxq, max_up)
+        if self.is_ascend:
+            if self.training:
+                min_up, max_up = self.ema_update(x, self.minq, self.maxq)
+                out = self.fake_quant(x, min_up, max_up)
+                P.Assign()(self.minq, min_up)
+                P.Assign()(self.maxq, max_up)
+            else:
+                out = self.fake_quant(x, self.minq, self.maxq)
         else:
-            out = self.fake_quant(x, self.minq, self.maxq)
+            if self.training:
+                min_up, max_up = self.ema_update(x, self.minq, self.maxq)
+                out = self.fake_quant_train(x, min_up, max_up)
+                P.Assign()(self.minq, min_up)
+                P.Assign()(self.maxq, max_up)
+            else:
+                out = self.fake_quant_infer(x, self.minq, self.maxq)
         return out
-
 
 class Conv2dBatchNormQuant(Cell):
     r"""

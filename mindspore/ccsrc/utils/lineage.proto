@@ -28,7 +28,7 @@ message LineageEvent {
 
   oneof what {
     // An event file was started, with the specified version.
-    // Now version is "Mindspore.Event:1"
+    // Now version is "MindSpore.Event:1"
     string version = 3;
 
     // Train lineage

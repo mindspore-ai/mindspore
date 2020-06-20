@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # define funsion network
     network = LeNet5Fusion(cfg.num_classes)
-    # convert funsion netwrok to aware quantizaiton network
+    # convert funsion netwrok to quantization aware network
     network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
 
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
-    # load aware quantizaiton network checkpoint
+    # load quantization aware network checkpoint
     param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
 

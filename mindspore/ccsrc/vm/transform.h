@@ -32,7 +32,7 @@
 #include "vm/segment_runner.h"
 #include "vm/backend.h"
 
-// mindspore namespace is the top level namespace of Mindsporeession project.
+// mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
 extern const char kMsVm[];

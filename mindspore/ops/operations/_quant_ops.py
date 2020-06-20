@@ -25,8 +25,8 @@ __all__ = ["FakeQuantPerLayer",
            "FakeQuantPerLayerGrad",
            "FakeQuantPerChannel",
            "FakeQuantPerChannelGrad",
-           "FakeQuantMinMaxPerLayerUpdate",
-           "FakeQuantMinMaxPerChannelUpdate",
+           "MinMaxUpdatePerLayer",
+           "MinMaxUpdatePerChannel",
            "BatchNormFold",
            "BatchNormFoldGrad",
            "CorrectionMul",
@@ -47,11 +47,11 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
     Simulate the quantize and dequantize operations in training time.
 
     Args:
-        num_bits (int) : Number bits for aware quantilization. Default: 8.
+        num_bits (int) : Number bits for quantization aware. Default: 8.
         ema (bool): Use EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
-            simulate aware quantize funcion. After delay step in training time begin simulate the aware
+            simulate quantization aware funcion. After delay step in training time begin simulate the aware
             quantize funcion. Default: 0.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
@@ -834,12 +834,12 @@ class BatchNormFold2GradReduce(PrimitiveWithInfer):
         return dout_type, dout_type
 
 
-class FakeQuantMinMaxPerLayerUpdate(PrimitiveWithInfer):
+class MinMaxUpdatePerLayer(PrimitiveWithInfer):
     r"""
     Update min and max value for fake quant per layer op.
 
     Args:
-        num_bits (int) : Number bits for aware quantilization. Default: 8.
+        num_bits (int) : Number bits for quantization aware. Default: 8.
         ema (bool): Use EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
@@ -858,14 +858,14 @@ class FakeQuantMinMaxPerLayerUpdate(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
         >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
-        >>> output_tensor = FakeQuantWithMinMax(num_bits=8)(input_tensor, min_tensor, max_tensor)
+        >>> output_tensor = MinMaxUpdatePerLayer(num_bits=8)(input_tensor, min_tensor, max_tensor)
     """
     support_quant_bit = [4, 7, 8]
 
     @prim_attr_register
     def __init__(self, num_bits=8, ema=False, ema_decay=0.999, symmetric=False, narrow_range=False,
                  training=True):
-        """init FakeQuantMinMaxPerLayerUpdate OP"""
+        """init MinMaxUpdatePerLayer OP"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import fake_quant_minmax_perlayer_update
         if num_bits not in self.support_quant_bit:
@@ -907,12 +907,12 @@ class FakeQuantMinMaxPerLayerUpdate(PrimitiveWithInfer):
         return min_type, max_type
 
 
-class FakeQuantMinMaxPerChannelUpdate(PrimitiveWithInfer):
+class MinMaxUpdatePerChannel(PrimitiveWithInfer):
     r"""
      Update min and max value for fake quant per layer op.
 
     Args:
-        num_bits (int) : Number bits for aware quantilization. Default: 8.
+        num_bits (int) : Number bits for quantization aware. Default: 8.
         ema (bool): Use EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
@@ -932,14 +932,14 @@ class FakeQuantMinMaxPerChannelUpdate(PrimitiveWithInfer):
         >>> x = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
         >>> min = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
         >>> max = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
-        >>> output_tensor = FakeQuantWithMinMax(num_bits=8)(x, min, max)
+        >>> output_tensor = MinMaxUpdatePerChannel(num_bits=8)(x, min, max)
     """
     support_quant_bit = [4, 7, 8]
 
     @prim_attr_register
     def __init__(self, num_bits=8, ema=False, ema_decay=0.999, symmetric=False, narrow_range=False,
                  training=True, channel_axis=1):
-        """init FakeQuantPerChannelUpdate OP for Ascend"""
+        """init MinMaxUpdatePerChannel OP for Ascend"""
         if context.get_context('device_target') == "Ascend":
             from mindspore.ops._op_impl._custom_op import fake_quant_minmax_perchannel_update
         if num_bits not in self.support_quant_bit:
