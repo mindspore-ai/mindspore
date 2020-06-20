@@ -2,7 +2,7 @@
 
 ## Description
 
-Training LeNet with MNIST dataset in MindSpore.
+Training LeNet with dataset in MindSpore.
 
 This is the simple and basic tutorial for constructing a network in MindSpore.
 
@@ -10,10 +10,10 @@ This is the simple and basic tutorial for constructing a network in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the MNIST dataset, the directory structure is as follows:
+- Download the dataset, the directory structure is as follows:
 
 ```
-└─MNIST_Data
+└─Data
     ├─test
     │      t10k-images.idx3-ubyte
     │      t10k-labels.idx1-ubyte
@@ -27,7 +27,7 @@ This is the simple and basic tutorial for constructing a network in MindSpore.
 
 ```python
 # train LeNet, hyperparameter setting in config.py
-python train.py --data_path MNIST_Data
+python train.py --data_path Data
 ```
 
 You will get the loss value of each step as following:
@@ -43,8 +43,8 @@ epoch: 1 step: 1741, loss is 0.05018193
 
 Then, evaluate LeNet according to network model
 ```python
-# evaluate LeNet, after 1 epoch training, the accuracy is up to 96.5%
-python eval.py --data_path MNIST_Data --ckpt_path checkpoint_lenet-1_1875.ckpt
+# evaluate LeNet
+python eval.py --data_path Data --ckpt_path checkpoint_lenet-1_1875.ckpt
 ```
 
 ## Note

@@ -19,10 +19,10 @@ python train.py --data_path /YourDataPath
 """
 
 import argparse
-from config import alexnet_cfg as cfg
-from dataset import create_dataset_mnist
-from generator_lr import get_lr
-from alexnet import AlexNet
+from src.config import alexnet_cfg as cfg
+from src.dataset import create_dataset_mnist
+from src.generator_lr import get_lr
+from src.alexnet import AlexNet
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import Tensor

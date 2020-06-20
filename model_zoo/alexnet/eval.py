@@ -19,9 +19,9 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 """
 
 import argparse
-from config import alexnet_cfg as cfg
-from dataset import create_dataset_mnist
-from alexnet import AlexNet
+from src.config import alexnet_cfg as cfg
+from src.dataset import create_dataset_mnist
+from src.alexnet import AlexNet
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net

@@ -20,9 +20,9 @@ python train.py --data_path /YourDataPath
 
 import os
 import argparse
-from config import mnist_cfg as cfg
-from dataset import create_dataset
-from lenet import LeNet5
+from src.config import mnist_cfg as cfg
+from src.dataset import create_dataset
+from src.lenet import LeNet5
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
@@ -31,10 +31,10 @@ from mindspore.nn.metrics import Accuracy
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
+    parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
     parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
                         help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--data_path', type=str, default="./MNIST_Data",
+    parser.add_argument('--data_path', type=str, default="./Data",
                         help='path where the dataset is saved')
     parser.add_argument('--dataset_sink_mode', type=bool, default=True, help='dataset_sink_mode is False or True')
 
