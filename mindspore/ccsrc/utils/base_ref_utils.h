@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-#include "minnie/tensor_minnie.h"
+#include <vector>
+#include <memory>
+#include "utils/base_ref.h"
+#include "include/ms_tensor.h"
 
+#ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
+#define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 namespace mindspore {
-namespace tensor {
-TensorMinnie &TensorMinnie::operator=(const TensorMinnie &tensor) {
-  if (&tensor == this) {
-    return *this;
-  }
-  this->tensor_addr_ = tensor.tensor_addr();
-  this->tensor_size_ = tensor.tensor_size();
-  return *this;
-}
+std::vector<std::shared_ptr<inference::MSTensor>> TransformBaseRefToMSTensor(const BaseRef &base_ref);
 
-bool TensorMinnie::operator==(const TensorMinnie &tensor) {
-  return tensor_addr_ == tensor.tensor_addr() && tensor_size_ == tensor.tensor_size();
-}
-}  // namespace tensor
+std::vector<std::vector<std::shared_ptr<inference::MSTensor>>> TransformVectorRefToMultiTensor(
+  const VectorRef &vector_ref);
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H

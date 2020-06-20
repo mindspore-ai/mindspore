@@ -237,3 +237,29 @@ if (ENABLE_MINDDATA)
     add_subdirectory(mindrecord)
     add_subdirectory(dataset)
 endif ()
+
+# build inference
+set(LOAD_ONNX_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_converter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_model_parser.cc
+        )
+add_library(inference SHARED
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/session.cc
+        ${LOAD_ONNX_SRC}
+        )
+target_link_libraries(inference PRIVATE ${PYTHON_LIB} ${SECUREC_LIBRARY}
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
+
+if (ENABLE_CPU)
+    target_link_libraries(inference PRIVATE mindspore::dnnl mindspore::mkldnn)
+endif ()
+
+if (USE_GLOG)
+    target_link_libraries(inference PRIVATE mindspore::glog)
+else()
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        target_link_options(inference PRIVATE -Wl,-init,mindspore_log_init)
+    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
+    endif ()
+endif()

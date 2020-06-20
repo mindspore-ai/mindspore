@@ -17,6 +17,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 #include "kernel/oplib/oplib.h"
+#include "kernel/oplib/oploader.h"
 #include "pipeline/pipeline.h"
 #include "operator/composite/composite.h"
 #include "ir/signature.h"
@@ -45,6 +46,7 @@ using PrimitivePy = mindspore::PrimitivePy;
 using MetaFuncGraph = mindspore::MetaFuncGraph;
 using EventWriter = mindspore::summary::EventWriter;
 using OpLib = mindspore::kernel::OpLib;
+using OpInfoLoaderPy = mindspore::kernel::OpInfoLoaderPy;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 
@@ -325,4 +327,8 @@ PYBIND11_MODULE(_c_expression, m) {
               "Finalize gpu collective communication mode.");
 
 #endif
+
+  (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
+    .def(py::init())
+    .def("get_all_ops_info", &OpInfoLoaderPy::GetAllOpsInfo, "get all ops info.");
 }

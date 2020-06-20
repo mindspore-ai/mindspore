@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <numeric>
+#include <utility>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -505,4 +506,68 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                            .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
                        }));
 }  // namespace tensor
+
+namespace inference {
+MSTensor *MSTensor::CreateTensor(TypeId data_type, const std::vector<int> &shape) {
+  return new Tensor(data_type, shape);
+}
+
+Tensor::Tensor() { this->tensor_impl_ = std::make_shared<tensor::Tensor>(); }
+
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape) {
+  this->tensor_impl_ = std::make_shared<tensor::Tensor>(data_type, shape);
+}
+
+Tensor::Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr) { this->tensor_impl_ = std::move(tensor_ptr); }
+
+TypeId Tensor::data_type() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->data_type();
+}
+
+TypeId Tensor::set_data_type(TypeId data_type) {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->set_data_type(data_type);
+}
+
+std::vector<int> Tensor::shape() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->shape();
+}
+
+size_t Tensor::set_shape(const std::vector<int> &shape) {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->set_shape(shape);
+}
+
+int Tensor::DimensionSize(size_t index) const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->DimensionSize(index);
+}
+
+int Tensor::ElementsNum() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->ElementsNum();
+}
+
+std::size_t Tensor::hash() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->hash();
+}
+
+std::shared_ptr<tensor::Tensor> Tensor::tensor() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_;
+}
+
+size_t Tensor::Size() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->data().nbytes();
+}
+
+void *Tensor::MutableData() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->data_c(true);
+}
+}  // namespace inference
 }  // namespace mindspore
