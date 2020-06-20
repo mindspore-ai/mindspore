@@ -71,6 +71,16 @@ class GraphDesc : public ProfDesc {
   std::vector<DataElement> output_data_list_;
   [[nodiscard]] static std::string DataShapeToString(const std::vector<size_t> &shape);
 };
+
+class PointDesc : public ProfDesc {
+ public:
+  PointDesc(std::string op_name, uint32_t point_id) : ProfDesc(std::move(op_name)), point_id_(point_id) {}
+  ~PointDesc() override = default;
+  std::string ToString() override;
+
+ private:
+  uint32_t point_id_;
+};
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

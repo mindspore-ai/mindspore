@@ -31,7 +31,7 @@ void TaskDescReporter::ReportData() {
 
   size_t task_index = 0;
   for (const auto &node : cnode_list_) {
-    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AUTO_DIFF_KERNEL) {
       MS_LOG(WARNING) << "Skip non tbe kernel";
       ++task_index;
       continue;
@@ -44,10 +44,10 @@ void TaskDescReporter::ReportData() {
     CheckStreamTaskValid(task_index, task_index);
     auto desc_ptr = std::make_shared<TaskDesc>(node->fullname_with_scope(), task_ids_[task_index],
                                                ascend_kernel_mod->block_dim(), stream_ids_[task_index]);
-    prof_desc_.emplace_back(desc_ptr);
+    prof_desc_list_.emplace_back(desc_ptr);
     ++task_index;
   }
-  DescReporter::ReportData();
+  ReportAllLine();
 }
 
 void TaskDescReporter::CheckStreamTaskValid(uint32_t task_id, uint32_t stream_id) {

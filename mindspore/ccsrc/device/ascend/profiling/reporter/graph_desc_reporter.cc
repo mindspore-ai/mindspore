@@ -24,7 +24,7 @@ namespace device {
 namespace ascend {
 void GraphDescReporter::ReportData() {
   for (const auto &node : cnode_list_) {
-    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AUTO_DIFF_KERNEL) {
       MS_LOG(WARNING) << "Skip non tbe kernel";
       continue;
     }
@@ -57,9 +57,9 @@ void GraphDescReporter::ReportData() {
     }
 
     auto graph_desc = std::make_shared<GraphDesc>(op_name, op_type, input_data_list, output_data_list);
-    prof_desc_.emplace_back(graph_desc);
+    prof_desc_list_.emplace_back(graph_desc);
   }
-  DescReporter::ReportData();
+  ReportAllLine();
 }
 }  // namespace ascend
 }  // namespace device

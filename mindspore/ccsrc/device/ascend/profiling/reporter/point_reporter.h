@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_REPORTER_GRAPH_DESC_REPORTER_H_
-#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_REPORTER_GRAPH_DESC_REPORTER_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_REPORTER_POINT_REPORTER_H_
+#define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_REPORTER_POINT_REPORTER_H_
 
-#include <utility>
+#include <memory>
 #include <string>
-#include <vector>
 #include "device/ascend/profiling/reporter/desc_reporter.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-class GraphDescReporter : public DescReporter {
+class PointReporter : public DescReporter {
  public:
-  GraphDescReporter(uint32_t device_id, const std::string &file_name, std::vector<CNodePtr> cnode_list)
-      : DescReporter(device_id, file_name), cnode_list_(std::move(cnode_list)) {}
-  ~GraphDescReporter() override = default;
+  PointReporter(uint32_t device_id, const std::string &file_name) : DescReporter(device_id, file_name) {}
+  ~PointReporter() override = default;
   void ReportData() override;
-
- private:
-  std::vector<CNodePtr> cnode_list_;
+  void AddReportData(const std::shared_ptr<ProfDesc> &prof_desc);
 };
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_REPORTER_GRAPH_DESC_REPORTER_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_PROFILING_REPORTER_POINT_REPORTER_H_
