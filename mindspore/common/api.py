@@ -400,7 +400,7 @@ class _Executor:
         key = generate_key(phase, dic)
         self.phase_prefix = str(key[1])
         if phase == 'export':
-            phase = phase + '.' + str(obj.create_time)
+            phase = phase + '.' + self.phase_prefix + '.' + str(obj.create_time)
         else:
             phase = self.phase_prefix + phase + '.' + str(obj.create_time)
         enable_debug_runtime = context.get_context("enable_debug_runtime")
