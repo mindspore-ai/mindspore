@@ -34,6 +34,23 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 const size_t INIT_NODE_REF = 1;
+namespace {
+TypeId GetCPUSupportOutputTypeId(const TypeId type_id) {
+  TypeId support_type_id = type_id;
+  if (type_id == kNumberTypeUInt32) {
+    support_type_id = kNumberTypeInt32;
+  }
+  if (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
+      type_id == kNumberTypeFloat64) {
+    support_type_id = kNumberTypeFloat32;
+  }
+  if (support_type_id != kNumberTypeInt32 && support_type_id != kNumberTypeFloat32) {
+    MS_LOG(EXCEPTION) << "Check output type failed.";
+  }
+  return support_type_id;
+}
+}  // namespace
+
 void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
   AssignValueNodeAddress(kernel_graph);
   AssignInputNodeAddress(kernel_graph);
@@ -149,16 +166,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const AnfNodePtr &input_node, siz
     std::vector<int> temp_shape;
     (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
     TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
-    if (type_id == kNumberTypeUInt32) {
-      type_id = kNumberTypeInt32;
-    }
-    if (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
-        type_id == kNumberTypeFloat64) {
-      type_id = kNumberTypeFloat32;
-    }
-    if (type_id != kNumberTypeInt32 && type_id != kNumberTypeFloat32) {
-      MS_LOG(EXCEPTION) << "Check output type failed.";
-    }
+    type_id = GetCPUSupportOutputTypeId(type_id);
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     MS_EXCEPTION_IF_NULL(tensor);
     if (address->ref_count_ > 0 && address->ptr_ != nullptr) {

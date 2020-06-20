@@ -303,15 +303,12 @@ void AscendStreamAssign::InsertSendRecvForDiffHcom(const shared_ptr<mindspore::s
       fusion_hcom_index.emplace_back(i);
     }
   }
-
   if (fusion_hcom_index.size() < 2) {
     MS_LOG(INFO) << "fusion hcom size is less than 2, no need insert event between them";
     return;
   }
-
   uint32_t first_index = fusion_hcom_index[0];
   uint32_t last_index = fusion_hcom_index[fusion_hcom_index.size() - 1];
-
   uint32_t cur_event_id = total_event_num_;
   uint32_t pre_hcom_stream_id = UINT32_MAX;
   std::copy(cnode_ptr_list.begin(), cnode_ptr_list.begin() + first_index, std::back_inserter(orders));
@@ -322,13 +319,11 @@ void AscendStreamAssign::InsertSendRecvForDiffHcom(const shared_ptr<mindspore::s
       orders.emplace_back(cur_cnode);
       continue;
     }
-
     auto cur_hcom_stream_id = AnfAlgo::GetStreamId(cur_cnode);
     if (cur_hcom_stream_id == pre_hcom_stream_id) {
       orders.emplace_back(cur_cnode);
       continue;
     }
-
     if (i == first_index) {
       // first fusion hcom
       orders.emplace_back(cur_cnode);
@@ -348,15 +343,12 @@ void AscendStreamAssign::InsertSendRecvForDiffHcom(const shared_ptr<mindspore::s
       auto send = CreateSendApplyKernel(graph_ptr, cur_event_id, cur_hcom_stream_id);
       orders.emplace_back(send);
     }
-
     pre_hcom_stream_id = cur_hcom_stream_id;
   }
-
   std::copy(cnode_ptr_list.begin() + last_index + 1, cnode_ptr_list.end(), std::back_inserter(orders));
   graph_ptr->set_execution_order(orders);
   total_event_num_ = cur_event_id;
-  MS_LOG(INFO) << "after indsert between allreduce, total event nums[" << total_event_num_ << "]";
-  MS_LOG(INFO) << "end";
+  MS_LOG(INFO) << "after indsert between allreduce, total event nums[" << total_event_num_ << "]\n end";
 }
 
 void AscendStreamAssign::InsertSendRecvForHcomParallel(const shared_ptr<mindspore::session::KernelGraph> &graph_ptr) {
@@ -826,7 +818,6 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
   std::vector<CNodePtr> exe_orders;
   std::vector<CNodePtr> independents;
   std::vector<CNodePtr> others;
-
   auto cnode_ptr_list = graph_ptr->execution_order();
   MS_LOG(INFO) << "before reorder, graph orders size:" << cnode_ptr_list.size();
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
@@ -838,19 +829,16 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
       others.emplace_back(cur_cnode_ptr);
     }
   }
-
   if (others.empty()) {
     std::copy(independents.begin(), independents.end(), std::back_inserter(exe_orders));
     graph_ptr->set_execution_order(exe_orders);
     return;
   }
-
   if (independents.empty()) {
     std::copy(others.begin(), others.end(), std::back_inserter(exe_orders));
     graph_ptr->set_execution_order(exe_orders);
     return;
   }
-
   std::vector<CNodePtr> processed;
   for (size_t i = 0; i < others.size(); i++) {
     auto begin = others.begin() + i;
@@ -862,7 +850,6 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
       if (it != processed.end()) {
         continue;
       }
-
       auto res = FindTargetOp(begin, end, cur_independent);
       if (res != end) {
         flag = true;
@@ -872,12 +859,10 @@ void AscendStreamAssign::ReorderIndependentOrders(const shared_ptr<mindspore::se
         break;
       }
     }
-
     if (!flag) {
       exe_orders.emplace_back(*begin);
     }
   }
-
   MS_LOG(INFO) << "after reorder, graph orders size:" << exe_orders.size();
   graph_ptr->set_execution_order(exe_orders);
 }

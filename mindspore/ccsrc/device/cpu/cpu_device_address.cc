@@ -33,7 +33,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const std::vector<int> & /*shape*/, size
   }
 
   if (type == type_id_) {
-    auto ret_code = memcpy_s(host_ptr, size, ptr_, size);
+    auto ret_code = memcpy_s(host_ptr, size, ptr_, size_);
     if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
       return false;

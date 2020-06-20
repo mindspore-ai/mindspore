@@ -52,6 +52,38 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 static const size_t PRAMATER_OUTPUT_INDEX = 0;
+namespace {
+std::string GetRankId() {
+  std::string rank_id_str;
+#ifdef ENABLE_MPI
+  auto mpi_config_ptr = MpiConfig::GetInstance();
+  MS_EXCEPTION_IF_NULL(mpi_config_ptr);
+  if (mpi_config_ptr->enable_mpi()) {
+    int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
+    const char *offset = std::getenv("RANK_OFFSET");
+    if (offset != nullptr) {
+      try {
+        int rank_offset = std::stoi(offset);
+        rank_id += rank_offset;
+      } catch (std::invalid_argument) {
+        MS_LOG(EXCEPTION) << "stoi invalid argument:" << offset;
+      } catch (std::out_of_range) {
+        MS_LOG(EXCEPTION) << "stoi out_of_range:" << offset;
+      }
+    }
+    rank_id_str = std::to_string(rank_id);
+  } else {
+    rank_id_str = std::getenv("RANK_ID");
+  }
+#else
+  rank_id_str = std::getenv("RANK_ID");
+#endif
+  if (rank_id_str.empty()) {
+    MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
+  }
+  return rank_id_str;
+}
+}  // namespace
 
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
@@ -498,7 +530,6 @@ bool AscendKernelRuntime::HcclInit() {
   if (!context_ptr->IsTsdOpened()) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
-
   MS_LOG(INFO) << "do hcom init";
   auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
@@ -508,44 +539,14 @@ bool AscendKernelRuntime::HcclInit() {
     }
     return false;
   }
+  std::string rank_id_str = GetRankId();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
     MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
     return false;
   }
-  const char *identify = nullptr;
-#ifdef ENABLE_MPI
-  std::string rank_id_tmp;
-  auto mpi_config_ptr = MpiConfig::GetInstance();
-  MS_EXCEPTION_IF_NULL(mpi_config_ptr);
-  if (mpi_config_ptr->enable_mpi()) {
-    int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
-    const char *offset = std::getenv("RANK_OFFSET");
-    if (offset != nullptr) {
-      try {
-        int rank_offset = std::stoi(offset);
-        rank_id += rank_offset;
-      } catch (std::invalid_argument) {
-        MS_LOG(EXCEPTION) << "stoi invalid argument:" << offset;
-      } catch (std::out_of_range) {
-        MS_LOG(EXCEPTION) << "stoi out_of_range:" << offset;
-      }
-    }
-    rank_id_tmp = std::to_string(rank_id);
-    identify = rank_id_tmp.c_str();
-  } else {
-    identify = std::getenv("RANK_ID");
-  }
-#else
-  identify = std::getenv("RANK_ID");
-#endif
-  if (identify == nullptr) {
-    MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
-    free(full_path);
-    return false;
-  }
-  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << identify;
-  hcclResult_t res = hcom_init(full_path, identify);
+  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
+  hcclResult_t res = hcom_init(full_path, rank_id_str.c_str());
   free(full_path);
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "hcom init failed, res is " << static_cast<int>(res);
