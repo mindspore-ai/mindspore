@@ -251,6 +251,16 @@ def test_coco_case_exception():
     except RuntimeError as e:
         assert "json.exception.parse_error" in str(e)
 
+    try:
+        sampler = ds.PKSampler(3)
+        data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_FILE, task="Detection", sampler=sampler)
+        for _ in data1.__iter__():
+            pass
+        assert False
+    except ValueError as e:
+        assert "CocoDataset doesn't support PKSampler" in str(e)
+
+
 if __name__ == '__main__':
     test_coco_detection()
     test_coco_stuff()

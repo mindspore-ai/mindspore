@@ -560,6 +560,9 @@ def check_cocodataset(method):
 
         check_param_type(nreq_param_bool, param_dict, bool)
 
+        sampler = param_dict.get('sampler')
+        if sampler is not None and isinstance(sampler, samplers.PKSampler):
+            raise ValueError("CocoDataset doesn't support PKSampler")
         check_sampler_shuffle_shard_options(param_dict)
 
         return method(*args, **kwargs)

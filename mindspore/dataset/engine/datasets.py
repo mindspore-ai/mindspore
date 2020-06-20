@@ -997,7 +997,8 @@ class Dataset:
         def get_distribution(output_dataset):
             dev_id = 0
             if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDatasetV2,
-                                           ManifestDataset, MnistDataset, VOCDataset, CelebADataset, MindDataset)):
+                                           ManifestDataset, MnistDataset, VOCDataset, CocoDataset, CelebADataset,
+                                           MindDataset)):
                 sampler = output_dataset.sampler
                 if isinstance(sampler, samplers.DistributedSampler):
                     dev_id = sampler.shard_id
@@ -4172,8 +4173,8 @@ class CocoDataset(MappableDataset):
         - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
           ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
 
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. CocoDataset doesn't support
+    PKSampler. Table below shows what input args are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
