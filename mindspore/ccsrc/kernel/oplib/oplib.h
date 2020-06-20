@@ -29,7 +29,12 @@ class OpLib {
   OpLib() = default;
   virtual ~OpLib() = default;
   bool RegOp(const std::string &json_string, const std::string &impl_path);
+  static void RegOpInfo(std::shared_ptr<OpInfo> opinfo) {
+    op_info_.emplace_back(opinfo);
+    return;
+  }
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type);
+  static const std::vector<std::shared_ptr<OpInfo>> &GetAllOpsInfo() { return op_info_; }
 
  protected:
   static std::vector<std::shared_ptr<OpInfo>> op_info_;

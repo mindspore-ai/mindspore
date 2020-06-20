@@ -27,6 +27,7 @@
 #include "Eigen/Core"
 #include "device/device_address.h"
 #include "ir/meta_tensor.h"
+#include "include/ms_tensor.h"
 #include "utils/log_adapter.h"
 
 namespace py = pybind11;
@@ -218,6 +219,11 @@ class Tensor : public MetaTensor {
   // return The pointer to the object
   void *data_c(bool writable = false);
 
+  // brief Get Tensor data byte-size for c++ type
+  //
+  // return byte size of Tensor data
+  size_t Size() const { return this->data().nbytes(); }
+
   // brief Get data type from tensor data.
   //
   // param buf The buffer info of the py::array data.
@@ -269,10 +275,45 @@ class Tensor : public MetaTensor {
   std::string id_{""};
   DeviceAddressPtr device_address_{nullptr};
 };
-
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 }  // namespace tensor
+
+namespace inference {
+class Tensor : public MSTensor {
+ public:
+  Tensor();
+
+  Tensor(TypeId data_type, const std::vector<int> &shape);
+
+  explicit Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr);
+
+  ~Tensor() = default;
+
+  TypeId data_type() const override;
+
+  TypeId set_data_type(const TypeId data_type) override;
+
+  std::vector<int> shape() const override;
+
+  size_t set_shape(const std::vector<int> &shape) override;
+
+  int DimensionSize(size_t index) const override;
+
+  int ElementsNum() const override;
+
+  std::size_t hash() const override;
+
+  std::shared_ptr<tensor::Tensor> tensor() const;
+
+  size_t Size() const override;
+
+  void *MutableData() const override;
+
+ protected:
+  std::shared_ptr<tensor::Tensor> tensor_impl_;
+};
+}  // namespace inference
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_IR_TENSOR_H_

@@ -90,6 +90,30 @@ class OpIOInfo {
 class OpInfo {
  public:
   OpInfo() = default;
+  OpInfo(const OpInfo &opinfo) {
+    op_name_ = opinfo.op_name();
+    imply_type_ = opinfo.imply_type();
+
+    impl_path_ = opinfo.impl_path();
+    fusion_type_ = opinfo.fusion_type();
+    async_flag_ = opinfo.async_flag_;
+    binfile_name_ = opinfo.binfile_name_;
+    compute_cost_ = opinfo.compute_cost_;
+    kernel_name_ = opinfo.kernel_name();
+    partial_flag_ = opinfo.partial_flag_;
+    dynamic_format_ = opinfo.dynamic_format_;
+    op_pattern_ = opinfo.op_pattern();
+    for (auto attr : opinfo.attrs_ptr()) {
+      attrs_ptr_.push_back(std::make_shared<OpAttr>(*attr));
+    }
+    for (auto input : opinfo.inputs_ptr()) {
+      inputs_ptr_.push_back(std::make_shared<OpIOInfo>(*input));
+    }
+    for (auto output : opinfo.outputs_ptr()) {
+      outputs_ptr_.push_back(std::make_shared<OpIOInfo>(*output));
+    }
+    ref_infos_ = opinfo.ref_infos();
+  }
   ~OpInfo() = default;
   std::string op_name() const { return op_name_; }
   OpImplyType imply_type() const { return imply_type_; }

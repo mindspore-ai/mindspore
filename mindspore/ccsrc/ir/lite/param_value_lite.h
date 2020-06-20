@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_MINNIE_H_
-#define MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_MINNIE_H_
+#ifndef MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_LITE_H_
+#define MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_LITE_H_
 
 #include <memory>
 
 #include "ir/anf.h"
 
 namespace mindspore {
-class ParamValueMinnie : public ParamValue {
+class ParamValueLite : public ParamValue {
  public:
-  ParamValueMinnie() : tensor_addr_(nullptr), tensor_size_(0) {}
-  virtual ~ParamValueMinnie() = default;
+  ParamValueLite() : tensor_addr_(nullptr), tensor_size_(0) {}
+  virtual ~ParamValueLite() = default;
 
   size_t tensor_size() const { return tensor_size_; }
   void set_tensor_size(size_t size) { tensor_size_ = size; }
@@ -38,6 +38,6 @@ class ParamValueMinnie : public ParamValue {
   size_t tensor_size_;
 };
 
-using ParamValueMinniePtr = std::shared_ptr<ParamValueMinnie>;
+using ParamValueLitePtr = std::shared_ptr<ParamValueLite>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_MINNIE_H_
+#endif  // MINDSPORE_CCSRC_MINNIE_PARAM_VALUE_LITE_H_
