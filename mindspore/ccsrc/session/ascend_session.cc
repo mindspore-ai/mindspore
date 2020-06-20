@@ -303,7 +303,7 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   // adjust kernel
   AdjustKernel(root_graph);
   // assign stream
-  AssignStream(root_graph);
+  AssignStream(NOT_NULL(root_graph));
   // insert profiling point
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
   // build kernel
@@ -375,7 +375,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
   // Assign streams for control sink and hccl and so on
-  AssignStream(graph);
+  AssignStream(NOT_NULL(graph));
 
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
   // build kernel if node is cnode
@@ -627,7 +627,7 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+void AscendSession::AssignStream(NotNull<KernelGraphPtr> kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   device::ascend::AscendStreamAssign::GetInstance().AssignStream(kernel_graph);
   MS_LOG(INFO) << "Finish!";

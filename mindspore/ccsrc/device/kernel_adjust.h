@@ -38,12 +38,8 @@ constexpr auto kIterLoopParamName = "iter_loop";
 constexpr auto kZeroParamName = "zero";
 constexpr auto kOneParamName = "one";
 constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
+constexpr uint32_t kSecondStreamSwitchLabel = 2;
 
-const uint32_t kFirstStreamSwitchLabel = 0;
-const uint32_t kGetNextLabel = 1;
-const uint32_t kSecondStreamSwitchLabel = 2;
-const uint32_t kInvalidEventId = UINT32_MAX;
-const uint32_t kFirstEventId = kInvalidEventId / 2;
 namespace device {
 class KernelAdjust {
  public:
