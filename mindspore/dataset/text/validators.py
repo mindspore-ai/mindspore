@@ -403,7 +403,7 @@ def check_to_number(method):
         if not isinstance(data_type, typing.Type):
             raise TypeError("data_type is not a MindSpore data type.")
 
-        if not data_type in mstype.number_type:
+        if data_type not in mstype.number_type:
             raise TypeError("data_type is not numeric data type.")
 
         kwargs["data_type"] = data_type
