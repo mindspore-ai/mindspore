@@ -538,8 +538,8 @@ bool AscendKernelRuntime::HcclInit() {
     config_path_str = std::getenv("RANK_TABLE_FILE");
     if (config_path_str == nullptr) {
       MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+      return false;
     }
-    return false;
   }
   std::string rank_id_str = GetRankId();
   auto full_path = realpath(config_path_str, nullptr);
