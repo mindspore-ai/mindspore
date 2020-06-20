@@ -229,7 +229,8 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
     if (param_node->has_default()) {
       auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
       AbstractBasePtr ptr = abstract::FromValue(parse::data_converter::PyDataToValue(param_value->value()), true);
-      auto sparse_grad = py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "sparse_grad"));
+      auto sparse_grad =
+        py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), "sparse_grad"));
       ptr->set_sparse_grad(sparse_grad);
 
       parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);

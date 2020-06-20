@@ -241,6 +241,7 @@ class HyperMap(HyperMap_):
             return func(*args_list)
         return tuple(map(hypermap, *args_list))
 
+
 class Map(Map_):
     """
     Map will apply the set operation on input sequences.
@@ -271,37 +272,12 @@ class Map(Map_):
             Map_.__init__(self)
 
     def __call__(self, *args):
-        func = args[0]
-        count = 0
-        count_max = 1
-        args_list = args[1:]
-        if self.ops is not None:
-            func = self.ops
-            args_list = args
-        for item in args_list:
-            if isinstance(item, (tuple, list)):
-                count_max = len(item)
-                break
-
-        def get_item(x):
-            nonlocal count
-            if isinstance(x, (tuple, list)):
-                return x[count]
-            return x
-
-        for i in range(count_max):
-            true_args = tuple(map(get_item, args_list))
-            func(*true_args)
-            count = i + 1
-        return True
-
-    def register(self, *type_names):
-        """Register a function for the given type string."""
-
-        def deco(fn):
-            self.register_fn(type_names, fn)
-            return fn
-        return deco
+        func = self.ops
+        args_list = args
+        if self.ops is None:
+            func = args[0]
+            args_list = args[1:]
+        return tuple(map(func, *args_list))
 
 
 class _ListAppend(ListAppend_):
