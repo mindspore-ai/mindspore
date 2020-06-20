@@ -826,7 +826,6 @@ PYBIND11_MODULE(_c_dataengine, m) {
   (void)py::class_<DatasetOp, std::shared_ptr<DatasetOp>>(m, "DatasetOp");
 
   (void)py::enum_<OpName>(m, "OpName", py::arithmetic())
-    .value("STORAGE", OpName::kStorage)
     .value("SHUFFLE", OpName::kShuffle)
     .value("BATCH", OpName::kBatch)
     .value("BUCKETBATCH", OpName::kBucketBatch)

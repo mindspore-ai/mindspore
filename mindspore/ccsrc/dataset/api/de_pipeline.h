@@ -37,7 +37,6 @@ using DsOpPtr = std::shared_ptr<DatasetOp>;
 
 // enum for the dataset operator names
 enum OpName {
-  kStorage = 0,
   kShuffle,
   kMindrecord,
   kBatch,
@@ -104,8 +103,6 @@ class DEPipeline {
   int GetBatchSize() const;
 
   int GetRepeatCount() const;
-
-  Status ParseStorageOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
@@ -180,9 +177,6 @@ class DEPipeline {
   std::shared_ptr<ExecutionTree> tree_;
 
   std::unique_ptr<DatasetIterator> iterator_;
-
-  // Validate required args passed to storage op.
-  Status ValidateArgStorageOp(const py::dict &args);
 
   static Status ParsePadInfo(py::handle value, PadInfo *pad_info);
 

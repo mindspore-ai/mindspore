@@ -45,7 +45,7 @@ class PythonSampler : public Sampler {
   Status ResetSampler() override;
 
   // Op calls this to get next Buffer that contains all the sampleIds
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
+  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
   // @return - The error code return
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;

@@ -37,7 +37,7 @@ class SkipOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new SkipOp object
     Status Build(std::shared_ptr<SkipOp> *);
 
    private:

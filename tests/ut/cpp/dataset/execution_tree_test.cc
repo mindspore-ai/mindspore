@@ -18,7 +18,7 @@
 #include "dataset/core/client.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
-#include "dataset/engine/datasetops/source/storage_op.h"
+#include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "dataset/util/de_error.h"
@@ -103,17 +103,17 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
   Status rc;
   auto my_tree = std::make_shared<ExecutionTree>();
 
-  std::string dataset_path = datasets_root_path_ + "/testDataset1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  std::string dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(2)
       .SetNumWorkers(2)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
 
-  my_tree->AssociateNode(my_storage_op);
-  my_tree->AssignRoot(my_storage_op);
+  my_tree->AssociateNode(my_tfreader_op);
+  my_tree->AssignRoot(my_tfreader_op);
 
   // prepare the tree
   my_tree->Prepare();

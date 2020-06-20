@@ -39,11 +39,11 @@ class MindDataTestShuffleOp : public UT::DatasetOpTesting {
 // - RowsPerBuffer buffer setting of 2 divides evenly into total rows.
 // - Shuffle size is multiple of rows per buffer.
 //
-// Tree:  shuffle over storage
+// Tree:  shuffle over TFReader
 //
 //    ShuffleOp
 //        |
-//    StorageOp
+//    TFReaderOp
 //
 TEST_F(MindDataTestShuffleOp, TestShuffleBasic1) {
   Status rc;
@@ -53,16 +53,16 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic1) {
   auto my_tree = std::make_shared<ExecutionTree>();
 
   std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/testDataset1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(1)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op);
+  rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   std::shared_ptr<ShuffleOp> my_shuffle_op;
   rc = ShuffleOp::Builder().SetRowsPerBuffer(2).SetShuffleSize(4).Build(&my_shuffle_op);
@@ -71,7 +71,7 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic1) {
   EXPECT_TRUE(rc.IsOk());
 
   // Set children/root layout.
-  rc = my_shuffle_op->AddChild(my_storage_op);
+  rc = my_shuffle_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
@@ -112,11 +112,11 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic1) {
 // - Shuffle size is not a multiple of rows per buffer.
 // - User has provided a non-default seed value.
 //
-// Tree: shuffle over storage
+// Tree: shuffle over TFReader
 //
 //    ShuffleOp
 //       |
-//    StorageOp
+//    TFReaderOp
 //
 TEST_F(MindDataTestShuffleOp, TestShuffleBasic2) {
   Status rc;
@@ -126,16 +126,16 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic2) {
   auto my_tree = std::make_shared<ExecutionTree>();
 
   std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/testDataset1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(3)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(2)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   ASSERT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op);
+  rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   std::shared_ptr<ShuffleOp> my_shuffle_op;
   rc = ShuffleOp::Builder().SetShuffleSize(4).SetShuffleSeed(100).SetRowsPerBuffer(3).Build(&my_shuffle_op);
@@ -144,7 +144,7 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic2) {
   EXPECT_TRUE(rc.IsOk());
 
   // Set children/root layout.
-  rc = my_shuffle_op->AddChild(my_storage_op);
+  rc = my_shuffle_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
@@ -183,11 +183,11 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic2) {
 // - Shuffle size captures the entire dataset size (actually sets a value that is larger than the
 //   amount of rows in the dataset.
 //
-// Tree: shuffle over storage
+// Tree: shuffle over TFReader
 //
 //    ShuffleOp
 //        |
-//    StorageOp
+//    TFReaderOp
 //
 TEST_F(MindDataTestShuffleOp, TestShuffleBasic3) {
   Status rc;
@@ -197,16 +197,16 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic3) {
   auto my_tree = std::make_shared<ExecutionTree>();
 
   std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/testDataset1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(3)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(2)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  my_tree->AssociateNode(my_storage_op);
+  my_tree->AssociateNode(my_tfreader_op);
   std::shared_ptr<ShuffleOp> my_shuffle_op;
   rc = ShuffleOp::Builder().SetShuffleSize(100).SetRowsPerBuffer(3).Build(&my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
@@ -214,7 +214,7 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic3) {
   EXPECT_TRUE(rc.IsOk());
 
   // Set children/root layout.
-  rc = my_shuffle_op->AddChild(my_storage_op);
+  rc = my_shuffle_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
@@ -255,13 +255,13 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic3) {
 // - shuffle seed is given, and subsequent epochs will change the seed each time.
 // - Repeat count of 2
 //
-// Tree: Repeat over shuffle over storage
+// Tree: Repeat over shuffle over TFReader
 //
 //    Repeat
 //       |
 //    shuffle
 //       |
-//    StorageOp
+//    TFReaderOp
 //
 TEST_F(MindDataTestShuffleOp, TestRepeatShuffle) {
   Status rc;
@@ -271,16 +271,16 @@ TEST_F(MindDataTestShuffleOp, TestRepeatShuffle) {
   auto my_tree = std::make_shared<ExecutionTree>();
 
   std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/testDataset1";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(3)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(2)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op);
+  rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   std::shared_ptr<ShuffleOp> my_shuffle_op;
   rc = ShuffleOp::Builder()
@@ -302,7 +302,7 @@ TEST_F(MindDataTestShuffleOp, TestRepeatShuffle) {
   // Set children/root layout.
   rc = my_repeat_op->AddChild(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_shuffle_op->AddChild(my_storage_op);
+  rc = my_shuffle_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());

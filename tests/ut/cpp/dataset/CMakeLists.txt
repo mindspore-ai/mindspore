@@ -48,7 +48,6 @@ SET(DE_UT_SRCS
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
-        storage_op_test.cc
         task_manager_test.cc
         tensor_test.cc
         tensor_string_test.cc

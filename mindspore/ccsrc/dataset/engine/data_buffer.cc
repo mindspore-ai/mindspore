@@ -17,45 +17,12 @@
 #include "dataset/util/allocator.h"
 #include "dataset/core/global_context.h"
 #include "dataset/core/tensor.h"
-#include "dataset/engine/datasetops/source/storage_client.h"
-#include "dataset/engine/datasetops/source/tf_buffer.h"
 
 namespace mindspore {
 namespace dataset {
 // Name: Constructor #1
 // Description: This is the main constructor that is used for making a buffer
 DataBuffer::DataBuffer(int32_t id, BufferFlags flags) : buffer_id_(id), tensor_table_(nullptr), buffer_flags_(flags) {}
-
-// Name: CreateDataBuffer()
-// Description: A static factory method to create the appropriate type of derived class
-//              buffer.  Returns the base class reference for DataBuffer.
-Status DataBuffer::CreateDataBuffer(
-  int32_t id,                                     // In: The id for the new buffer
-  std::shared_ptr<StorageClient> storage_client,  // In: The storage client that is related to this buffer type
-  std::unique_ptr<DataBuffer> *ptr) {
-  std::unique_ptr<DataBuffer> new_data_buffer;
-  try {
-    DatasetType ds_type = storage_client->schema()->dataset_type();
-    switch (ds_type) {
-      case DatasetType::kTf: {
-        // This type of buffer is for TF record data.
-        // Allocate derived class version for a TF buffers
-        new_data_buffer = std::make_unique<TFBuffer>(id, kDeBFlagNone, storage_client);
-        break;
-      }
-      default: {
-        std::string errMsg("Invalid buffer type");
-        RETURN_STATUS_UNEXPECTED(errMsg);
-      }
-    }
-  } catch (std::bad_alloc &e) {
-    return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, e.what());
-  } catch (std::exception &e) {
-    RETURN_STATUS_UNEXPECTED(e.what());
-  }
-  *ptr = std::move(new_data_buffer);
-  return Status::OK();
-}
 
 // Name: print()
 // Description: A function that prints info about the DataBuffer (base class version)

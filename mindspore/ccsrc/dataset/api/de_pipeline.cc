@@ -48,7 +48,6 @@ namespace dataset {
 using pFunction = Status (DEPipeline::*)(const py::dict &, std::shared_ptr<DatasetOp> *);
 
 static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {
-  {kStorage, &DEPipeline::ParseStorageOp},
   {kShuffle, &DEPipeline::ParseShuffleOp},
   {kMindrecord, &DEPipeline::ParseMindRecordOp},
   {kMap, &DEPipeline::ParseMapOp},
@@ -298,70 +297,6 @@ Status DEPipeline::SetBatchParameters(const py::dict &args) {
     }
   }
 
-  return Status::OK();
-}
-
-Status DEPipeline::ValidateArgStorageOp(const py::dict &args) {
-  // Required arguments
-  if (((args.contains("dataset_files") && args["dataset_files"].is_none()) || args["schema"].is_none()) &&
-      ((args.contains("dataset_dir") && args["dataset_dir"].is_none()) ||
-       (args["schema"].is_none() && args["schema_json_string"].is_none()))) {
-    std::string err_msg = "Error: at least one of dataset_files or schema_file is missing";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  return Status::OK();
-}
-
-Status DEPipeline::ParseStorageOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
-  RETURN_IF_NOT_OK(ValidateArgStorageOp(args));
-  std::shared_ptr<StorageOp::Builder> builder;
-  if (args.contains("dataset_files") && !args["dataset_files"].is_none()) {
-    builder = std::make_shared<StorageOp::Builder>();
-    (void)builder->SetDatasetFileList(ToStringVector(args["dataset_files"]));
-    (void)builder->SetSchemaFile(ToString(args["schema"]));
-  } else if (args.contains("dataset_dir") && !args["dataset_dir"].is_none()) {
-    builder = std::make_shared<StorageOp::Builder>();
-    (void)builder->SetDatasetFilesDir(ToString(args["dataset_dir"]));
-    if (!args["schema"].is_none()) {
-      (void)builder->SetSchemaFile(ToString(args["schema"]));
-    } else if (!args["schema_json_string"].is_none()) {
-      std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-      std::string s = ToString(args["schema_json_string"]);
-      RETURN_IF_NOT_OK(schema->LoadSchemaString(s, std::vector<std::string>()));
-      (void)builder->SetNumRows(schema->num_rows());
-      (void)builder->SetSchema(std::move(schema));
-    }
-  }
-
-  // Optional arguments
-  for (auto arg : args) {
-    std::string key = py::str(arg.first);
-    py::handle value = arg.second;
-    if (!value.is_none()) {
-      if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
-      } else if (key == "prefetch_size") {
-        (void)builder->SetOpConnectorSize(ToInt(value));
-      } else if (key == "columns_list") {
-        (void)builder->SetColumnsToLoad(ToStringVector(value));
-      } else if (key == "distribution") {
-        (void)builder->SetDataDistributionFile(ToString(value));
-      } else if (key == "labels_filename") {
-        (void)builder->setLabelsFileName(ToString(value));
-      } else if (key == "dataset_usage") {
-        (void)builder->SetDatasetUsage(ToString(value));
-      }
-    }
-  }
-  (void)builder->SetBatchSize(temp_batch_size_);
-  (void)builder->SetDropRemainder(temp_drop_remainder_);
-
-  std::shared_ptr<StorageOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  num_rows_ = op->num_rows();
-  num_classes_ = op->num_classes();
-  *ptr = op;
   return Status::OK();
 }
 

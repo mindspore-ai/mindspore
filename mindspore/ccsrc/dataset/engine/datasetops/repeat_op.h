@@ -42,7 +42,7 @@ class RepeatOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new RepeatOp object
     Status Build(std::shared_ptr<RepeatOp> *);
 
    private:

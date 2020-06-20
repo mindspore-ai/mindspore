@@ -91,7 +91,8 @@ class MindDataTestMapOp : public UT::DatasetOpTesting {
  public:
     void SetUp() override {
       DatasetOpTesting::SetUp();
-      dataset_path_ = datasets_root_path_ + "" + "/testDataset2";
+      dataset_path_ = datasets_root_path_ + "" + "/testDataset2/testDataset2.data";
+      schema_path_ = datasets_root_path_ + "" + "/testDataset2/datasetSchema.json";
 
       GlobalInit();
 
@@ -99,22 +100,28 @@ class MindDataTestMapOp : public UT::DatasetOpTesting {
       my_tree_ = std::make_shared<ExecutionTree>();
     }
 
-    std::shared_ptr<StorageOp> CreateStorageOp() {
-      std::shared_ptr<StorageOp> my_storage_op;
-      StorageOp::Builder builder;
-      builder.SetDatasetFilesDir(dataset_path_)
+    std::shared_ptr<TFReaderOp> CreateTFReaderOp() {
+      std::shared_ptr<TFReaderOp> my_tfreader_op;
+      TFReaderOp::Builder builder;
+      builder.SetDatasetFilesList({dataset_path_})
           .SetColumnsToLoad({"image", "label", "A", "B"})
           .SetRowsPerBuffer(2)
           .SetWorkerConnectorSize(2)
           .SetNumWorkers(2);
-      Status rc = builder.Build(&my_storage_op);
+
+      std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+      schema->LoadSchemaFile(schema_path_, {});
+      builder.SetDataSchema(std::move(schema));
+
+      Status rc = builder.Build(&my_tfreader_op);
       EXPECT_TRUE(rc.IsOk());
-      return my_storage_op;
+      return my_tfreader_op;
     }
 
     std::shared_ptr<ExecutionTree> my_tree_;
  private:
     std::string dataset_path_;
+    std::string schema_path_;
 };
 
 std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int64_t conns, std::string path,
@@ -124,7 +131,7 @@ std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int6
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 // TestByPosition scenario:
-//    StorageOp reads a dataset that have column ordering |image|label|A|B|.
+//    TFReaderOp reads a dataset that have column ordering |image|label|A|B|.
 //    A TensorOp that does nothing picks the label column and output a column also named label.
 //    Thus, based on the new MapOp behaviour, the column ordering will be |image|label|A|B|.
 //    Verify the column ordering based on the Tensor properties matching to that of in the schema file.
@@ -132,10 +139,10 @@ TEST_F(MindDataTestMapOp, TestByPosition) {
   Status rc;
   MS_LOG(INFO) << "Doing TestByPosition.";
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total
   // of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_no_op = std::make_shared<mindspore::dataset::test::NoOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -144,13 +151,14 @@ TEST_F(MindDataTestMapOp, TestByPosition) {
   MapOp::Builder builder;
   builder.SetInColNames({"label"})
       .SetOutColNames({})
+      .SetColOrder({"image", "label", "A", "B"})
       .SetTensorFuncs(std::move(my_func_list))
       .SetNumWorkers(100);
   rc = builder.Build(&my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_map_op->AddChild(my_storage_op);
+  rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssignRoot(my_map_op);
   EXPECT_TRUE(rc.IsOk());
@@ -192,7 +200,7 @@ TEST_F(MindDataTestMapOp, TestByPosition) {
 }
 
 // TestAsMap scenario:
-//    StorageOp reads a dataset that have column ordering |image|label|A|B|.
+//    TFReaderOp reads a dataset that have column ordering |image|label|A|B|.
 //    A TensorOp that does nothing picks the "image" column and produces a column named "X".
 //    Thus, based on the new MapOp behaviour, the column ordering will be |X|label|A|B|.
 //    Verify that the "image" column is removed and "X" column is added.
@@ -200,9 +208,9 @@ TEST_F(MindDataTestMapOp, TestAsMap) {
   Status rc;
   MS_LOG(INFO) << "Doing TestAsMap.";
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total of 10 rows.
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_no_op = std::make_shared<mindspore::dataset::test::NoOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -216,7 +224,7 @@ TEST_F(MindDataTestMapOp, TestAsMap) {
   rc = builder.Build(&my_map_op);
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_map_op->AddChild(my_storage_op);
+  rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
   // Assign the tree root
@@ -243,7 +251,7 @@ TEST_F(MindDataTestMapOp, TestAsMap) {
 }
 
 // Test3to1 scenario:
-//    StorageOp reads a dataset that have column ordering |image|label|A|B|.
+//    TFReaderOp reads a dataset that have column ordering |image|label|A|B|.
 //    A 3-to-1 TensorOp picks the columns [image, A, B] and produce a column named "X".
 //    Thus, based on the new MapOp behaviour, the column ordering will be |X|label|.
 //    Verify that the only columns "X" and "label" exist.
@@ -251,9 +259,9 @@ TEST_F(MindDataTestMapOp, Test3to1) {
   Status rc;
   MS_LOG(INFO) << "Doing Test3to1.";
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total of 10 rows.
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_op = std::make_shared<mindspore::dataset::test::ThreeToOneOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -268,7 +276,7 @@ TEST_F(MindDataTestMapOp, Test3to1) {
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_map_op->AddChild(my_storage_op);
+  rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssignRoot(my_map_op);
   EXPECT_TRUE(rc.IsOk());
@@ -295,7 +303,7 @@ TEST_F(MindDataTestMapOp, Test3to1) {
 }
 
 // Test1to3 scenario:
-//    StorageOp reads a dataset that have column ordering |image|label|A|B|.
+//    TFReaderOp reads a dataset that have column ordering |image|label|A|B|.
 //    A 1-to-3 TensorOp picks the columns [image] and produce a column named [X, Y, Z].
 //    Thus, based on the new MapOp behaviour, the column ordering will be |X|Y|Z|label|A|B|.
 //    Verify that the only columns X, Y, Z are added (to the front) and followed by columns label, A, B..
@@ -303,9 +311,9 @@ TEST_F(MindDataTestMapOp, Test1to3) {
   Status rc;
   MS_LOG(INFO) << "Doing Test1to3.";
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total of 10 rows.
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_op = std::make_shared<mindspore::dataset::test::OneToThreeOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -316,12 +324,25 @@ TEST_F(MindDataTestMapOp, Test1to3) {
       .SetOutColNames({"X", "Y", "Z"})
       .SetTensorFuncs(std::move(my_func_list))
       .SetNumWorkers(1);
+
+
+  // ProjectOp
+  std::vector<std::string> columns_to_project = {"X", "Y", "Z", "label", "A", "B"};
+  std::shared_ptr<ProjectOp> my_project_op = std::make_shared<ProjectOp>(columns_to_project);
+  rc = my_tree_->AssociateNode(my_project_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree_->AssignRoot(my_project_op);
+  ASSERT_TRUE(rc.IsOk());
+
   rc = builder.Build(&my_map_op);
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_map_op->AddChild(my_storage_op);
+
+  rc = my_project_op->AddChild(my_map_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree_->AssignRoot(my_map_op);
+
+  rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->Prepare();
   EXPECT_TRUE(rc.IsOk());
@@ -371,7 +392,7 @@ TEST_F(MindDataTestMapOp, Test1to3) {
 }
 
 // TestMultiTensorOp scenario:
-//    StorageOp reads a dataset that have column ordering |image|label|A|B|.
+//    TFReaderOp reads a dataset that have column ordering |image|label|A|B|.
 //    A series of 3-to-1 and 1-to-3 TensorOps are applied to [image, A, B] and
 //    produce final output columns [X, Y, Z].
 //    Based on the new MapOp behaviour, the column ordering will be |X|Y|Z|label|.
@@ -379,9 +400,9 @@ TEST_F(MindDataTestMapOp, TestMultiTensorOp) {
   Status rc;
   MS_LOG(INFO) << "Doing TestMultiTensorOp.";
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total of 10 rows.
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_op1 = std::make_shared<mindspore::dataset::test::ThreeToOneOp>();
   auto my_op2 = std::make_shared<mindspore::dataset::test::OneToThreeOp>();
@@ -398,7 +419,7 @@ TEST_F(MindDataTestMapOp, TestMultiTensorOp) {
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_map_op->AddChild(my_storage_op);
+  rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssignRoot(my_map_op);
   EXPECT_TRUE(rc.IsOk());
@@ -431,15 +452,15 @@ TEST_F(MindDataTestMapOp, TestMultiTensorOp) {
   }
 }
 
-TEST_F(MindDataTestMapOp, TestStorageRepeatMap) {
+TEST_F(MindDataTestMapOp, TestTFReaderRepeatMap) {
   Status rc;
-  MS_LOG(INFO) << "Doing TestStorageRepeatMap.";
+  MS_LOG(INFO) << "Doing TestTFReaderRepeatMap.";
   uint32_t num_repeats = 3;
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total
   // of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_no_op = std::make_shared<mindspore::dataset::test::NoOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -465,7 +486,7 @@ TEST_F(MindDataTestMapOp, TestStorageRepeatMap) {
   rc = my_map_op->AddChild(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
-  rc = my_repeat_op->AddChild(my_storage_op);
+  rc = my_repeat_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
   rc = my_tree_->AssignRoot(my_map_op);
@@ -493,15 +514,15 @@ TEST_F(MindDataTestMapOp, TestStorageRepeatMap) {
   ASSERT_EQ(row_count, 10 * num_repeats);
 }
 
-TEST_F(MindDataTestMapOp, TestStorageMapRepeat) {
+TEST_F(MindDataTestMapOp, TestTFReaderMapRepeat) {
   Status rc;
-  MS_LOG(INFO) << "Doing TestStorageMapRepeat.";
+  MS_LOG(INFO) << "Doing TestTFReaderMapRepeat.";
   uint32_t num_repeats = 3;
 
-  // Note: The above storage config yields 5 buffers, each with 2 rows, for a total
+  // Note: The above TFReader config yields 5 buffers, each with 2 rows, for a total
   // of 10 rows.
-  auto my_storage_op = this->CreateStorageOp();
-  rc = my_tree_->AssociateNode(my_storage_op);
+  auto my_tfreader_op = this->CreateTFReaderOp();
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto my_no_op = std::make_shared<mindspore::dataset::test::NoOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -527,7 +548,7 @@ TEST_F(MindDataTestMapOp, TestStorageMapRepeat) {
   rc = my_repeat_op->AddChild(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
-  rc = my_map_op->AddChild(my_storage_op);
+  rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
   rc = my_tree_->AssignRoot(my_repeat_op);
@@ -554,23 +575,23 @@ TEST_F(MindDataTestMapOp, TestStorageMapRepeat) {
   ASSERT_EQ(row_count, 10 * num_repeats);
 }
 
-TEST_F(MindDataTestMapOp, Storage_Decode_Repeat_Resize) {
+TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
   Status rc;
-  MS_LOG(INFO) << "Doing Storage_Decode_Repeat_Resize.";
+  MS_LOG(INFO) << "Doing TFReader_Decode_Repeat_Resize.";
   uint32_t num_repeats = 2;
 
-  std::string dataset_path_ = datasets_root_path_ + "/" + "test_tf_file_3_images";
-  std::shared_ptr<StorageOp> my_storage_op;
-  StorageOp::Builder sobuilder;
-  sobuilder.SetDatasetFilesDir(dataset_path_)
+  std::string dataset_path_ = datasets_root_path_ + "/" + "test_tf_file_3_images/train-0000-of-0001.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  TFReaderOp::Builder sobuilder;
+  sobuilder.SetDatasetFilesList({dataset_path_})
     .SetColumnsToLoad({"image", "label"})
     .SetRowsPerBuffer(2)
     .SetWorkerConnectorSize(2)
     .SetNumWorkers(2);
-  rc = sobuilder.Build(&my_storage_op);
+  rc = sobuilder.Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
-  rc = my_tree_->AssociateNode(my_storage_op);
+  rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   auto decode_op = std::make_shared<DecodeOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
@@ -608,7 +629,7 @@ TEST_F(MindDataTestMapOp, Storage_Decode_Repeat_Resize) {
   rc = my_tree_->AssociateNode(my_map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
-  rc = my_map_decode_op->AddChild(my_storage_op);
+  rc = my_map_decode_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
   rc = my_repeat_op->AddChild(my_map_decode_op);

@@ -16,6 +16,7 @@
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 
 #include <algorithm>
+#include <fstream>
 #include <future>
 #include <iomanip>
 #include <memory>
@@ -32,8 +33,6 @@
 #include "dataset/engine/connector.h"
 #include "dataset/engine/data_schema.h"
 #include "dataset/engine/datasetops/source/io_block.h"
-#include "dataset/engine/datasetops/source/storage_client.h"
-#include "dataset/engine/datasetops/source/tf_client.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/jagged_connector.h"

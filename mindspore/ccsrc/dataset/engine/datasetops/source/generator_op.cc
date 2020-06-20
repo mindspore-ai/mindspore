@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace dataset {
 GeneratorOp::Builder::Builder() {
-  // Some arguments to the StorageOp constructor have a default argument that is taken
+  // Some arguments to the GeneratorOp constructor have a default argument that is taken
   // from the client config.
   build_buffer_size_ = kCfgRowsPerBuffer;
   build_op_connector_size_ = kCfgOpConnectorSize;

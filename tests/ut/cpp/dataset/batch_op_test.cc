@@ -54,10 +54,10 @@ std::shared_ptr<de::RepeatOp> Repeat(int repeat_cnt = 1) {
   return op;
 }
 
-std::shared_ptr<de::StorageOp> Storage(std::string schema, int rows_per_buf = 2, int num_works = 8) {
-  std::shared_ptr<de::StorageOp> so;
-  de::StorageOp::Builder builder;
-  builder.SetDatasetFilesDir(schema).SetRowsPerBuffer(rows_per_buf).SetNumWorkers(num_works);
+std::shared_ptr<de::TFReaderOp> TFReader(std::string schema, int rows_per_buf = 2, int num_works = 8) {
+  std::shared_ptr<de::TFReaderOp> so;
+  de::TFReaderOp::Builder builder;
+  builder.SetDatasetFilesList({schema}).SetRowsPerBuffer(rows_per_buf).SetNumWorkers(num_works);
   Status rc = builder.Build(&so);
   return so;
 }
@@ -77,9 +77,9 @@ std::shared_ptr<de::ExecutionTree> Build(std::vector<std::shared_ptr<de::Dataset
 }
 
 TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
-  std::string schema_file = datasets_root_path_ + "/testBatchDataset";
+  std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({Storage(schema_file), Batch(12)});
+  auto tree = Build({TFReader(schema_file), Batch(12)});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -108,9 +108,9 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
 }
 
 TEST_F(MindDataTestBatchOp, TestRepeatBatchDropTrue) {
-  std::string schema_file = datasets_root_path_ + "/testBatchDataset";
+  std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({Storage(schema_file), Repeat(2), Batch(7, true, 99)});
+  auto tree = Build({TFReader(schema_file), Repeat(2), Batch(7, true, 99)});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -153,9 +153,9 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropTrue) {
 }
 
 TEST_F(MindDataTestBatchOp, TestRepeatBatchDropFalse) {
-  std::string schema_file = datasets_root_path_ + "/testBatchDataset";
+  std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({Storage(schema_file), Repeat(2), Batch(7, false, 99)});
+  auto tree = Build({TFReader(schema_file), Repeat(2), Batch(7, false, 99)});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -205,9 +205,9 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropFalse) {
 }
 
 TEST_F(MindDataTestBatchOp, TestBatchDropFalseRepeat) {
-  std::string schema_file = datasets_root_path_ + "/testBatchDataset";
+  std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({Storage(schema_file), Batch(7, false, 99), Repeat(2)});
+  auto tree = Build({TFReader(schema_file), Batch(7, false, 99), Repeat(2)});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -251,9 +251,9 @@ TEST_F(MindDataTestBatchOp, TestBatchDropFalseRepeat) {
 }
 
 TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
-  std::string schema_file = datasets_root_path_ + "/testBatchDataset";
+  std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({Storage(schema_file), Batch(5, true, 99), Repeat(2)});
+  auto tree = Build({TFReader(schema_file), Batch(5, true, 99), Repeat(2)});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -297,7 +297,7 @@ TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
 }
 
 TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
-  std::string schema_file = datasets_root_path_ + "/testBatchDataset";
+  std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   std::shared_ptr<BatchOp> op;
   PadInfo m;
   std::shared_ptr<Tensor> pad_value;
@@ -305,7 +305,7 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
   pad_value->SetItemAt<float>({}, -1);
   m.insert({"col_1d", std::make_pair(TensorShape({4}), pad_value)});
   de::BatchOp::Builder(12).SetDrop(false).SetPaddingMap(m, true).Build(&op);
-  auto tree = Build({Storage(schema_file), op});
+  auto tree = Build({TFReader(schema_file), op});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
