@@ -44,15 +44,10 @@ class MinMaxUpdatePerChannelGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  int num_bits_;
-  float quant_min_;
-  float quant_max_;
   int quant_num_;
   bool ema_;
   float ema_decay_;
   int num_channels_;
-  bool narrow_range_;
-  bool symmetric_;
 };
 }  // namespace kernel
 }  // namespace mindspore

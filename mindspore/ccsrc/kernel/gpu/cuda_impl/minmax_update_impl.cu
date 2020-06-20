@@ -23,35 +23,24 @@
 #include "device/gpu/cuda_common.h"
 
 __global__ void UpdateInputMinMaxPerLayerWithEMA(const float *input_min, const float *input_max, float *output_min,
-                                                 float *output_max, const float min, const float max, const float decay,
-                                                 const float symmetric) {
+                                                 float *output_max, const float min, const float max,
+                                                 const float decay) {
   output_min[0] = decay * (min) + (1 - decay) * (input_min[0]);
   output_min[0] = input_min[0] > 0 ? 0 : input_min[0];
   output_max[0] = decay * (max) + (1 - decay) * (input_max[0]);
   output_max[0] = input_max[0] < 0 ? 0 : input_max[0];
-
-  if (symmetric) {
-    output_max[0] = abs(output_min[0]) < output_max[0] ? output_max[0] : -output_min[0];
-    output_min[0] = abs(output_min[0]) < output_max[0] ? -output_max[0] : output_min[0];
-  }
   return;
 }
 
-__global__ void UpdateInputMinMaxPerLayer(float *output_min, float *output_max, const float min, const float max,
-                                          const float symmetric) {
+__global__ void UpdateInputMinMaxPerLayer(float *output_min, float *output_max, const float min, const float max) {
   output_min[0] = min > 0 ? 0 : min;
   output_max[0] = max < 0 ? 0 : max;
-
-  if (symmetric) {
-    output_max[0] = abs(output_min[0]) < output_max[0] ? output_max[0] : -output_min[0];
-    output_min[0] = abs(output_min[0]) < output_max[0] ? -output_max[0] : output_min[0];
-  }
   return;
 }
 
 __global__ void UpdateInputMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min,
                                             float *output_max, int channels, int per_channel_nums, bool ema,
-                                            float ema_decay, bool symmetric) {
+                                            float ema_decay) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channels; i += blockDim.x * gridDim.x) {
     thrust::pair<float *, float *> sum =
       thrust::minmax_element(thrust::device, input + i * per_channel_nums, input + per_channel_nums * (i + 1));
@@ -64,27 +53,21 @@ __global__ void UpdateInputMinMaxPerChannel(float *input, float *input_min, floa
     }
     output_min[i] = input_min[i] > 0 ? 0 : input_min[i];
     output_max[i] = input_max[i] < 0 ? 0 : input_max[i];
-
-    if (symmetric) {
-      output_max[i] = abs(output_min[i]) < output_max[i] ? output_max[i] : -output_min[i];
-      output_min[i] = abs(output_min[i]) < output_max[i] ? -output_max[i] : output_min[i];
-    }
   }
   return;
 }
 
 void CalMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
                          const int total_num, const int channel_num, const float ema_decay, const bool ema,
-                         const bool symmetric, cudaStream_t cuda_stream) {
+                         cudaStream_t cuda_stream) {
   int per_channel_num = total_num / channel_num;
   UpdateInputMinMaxPerChannel<<<GET_BLOCKS(channel_num), GET_THREADS, 0, cuda_stream>>>(
-    input, input_min, input_max, output_min, output_max, channel_num, per_channel_num, ema, ema_decay, symmetric);
+    input, input_min, input_max, output_min, output_max, channel_num, per_channel_num, ema, ema_decay);
   return;
 }
 
 void CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
-                       const int total_num, const float ema_decay, const bool ema, const bool symmetric,
-                       cudaStream_t cuda_stream) {
+                       const int total_num, const float ema_decay, const bool ema, cudaStream_t cuda_stream) {
   float minel = 0.f;
   float maxel = 0.f;
   auto policy = thrust::cuda::par.on(cuda_stream);
@@ -96,9 +79,9 @@ void CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *
 
   if (ema) {
     UpdateInputMinMaxPerLayerWithEMA<<<1, 1, 0, cuda_stream>>>(input_min, input_max, output_min, output_max, minel,
-                                                               maxel, ema_decay, symmetric);
+                                                               maxel, ema_decay);
   } else {
-    UpdateInputMinMaxPerLayer<<<1, 1, 0, cuda_stream>>>(output_min, output_max, minel, maxel, symmetric);
+    UpdateInputMinMaxPerLayer<<<1, 1, 0, cuda_stream>>>(output_min, output_max, minel, maxel);
   }
   return;
 }

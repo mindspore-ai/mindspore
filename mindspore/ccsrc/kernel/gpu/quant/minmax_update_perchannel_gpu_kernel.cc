@@ -24,16 +24,7 @@
 namespace mindspore {
 namespace kernel {
 MinMaxUpdatePerChannelGpuKernel::MinMaxUpdatePerChannelGpuKernel()
-    : input_size_(0),
-      num_bits_(0),
-      quant_min_(0),
-      quant_max_(0),
-      quant_num_(1),
-      ema_(false),
-      ema_decay_(0),
-      num_channels_(0),
-      narrow_range_(false),
-      symmetric_(false) {}
+    : input_size_(0), quant_num_(1), ema_(false), ema_decay_(0), num_channels_(0) {}
 
 const std::vector<size_t> &MinMaxUpdatePerChannelGpuKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -54,22 +45,8 @@ bool MinMaxUpdatePerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuant GpuKernel OP needs 1 output.";
   }
 
-  num_bits_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("num_bits"));
   ema_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema"));
   ema_decay_ = GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema_decay"));
-  symmetric_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("symmetric"));
-  narrow_range_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("narrow_range"));
-
-  if (num_bits_ <= 2 || num_bits_ >= 16) {
-    MS_LOG(EXCEPTION) << "Attr \'num_bits\' " << num_bits_ << " is out of range, expected between 2 and 16.";
-  }
-
-  // quant min and max
-  quant_min_ = 0;
-  quant_max_ = (1 << num_bits_) - 1;
-  if (narrow_range_) {
-    quant_min_++;
-  }
 
   // init size
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -110,7 +87,7 @@ bool MinMaxUpdatePerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inpu
 
   // calculate the input min and max according by the parameter ema and ema_decay.
   CalMinMaxPerChannel(input, input_min, input_max, output_min, output_max, input_size_ / sizeof(float), num_channels_,
-                      ema_decay_, ema_, symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
+                      ema_decay_, ema_, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 

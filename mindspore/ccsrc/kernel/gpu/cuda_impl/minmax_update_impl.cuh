@@ -21,10 +21,9 @@
 
 void CalMinMaxPerChannel(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
                          const int total_num, const int channel_num, const float ema_decay, const bool ema,
-                         const bool symmetric, cudaStream_t cuda_stream);
+                         cudaStream_t cuda_stream);
 
 void CalMinMaxPerLayer(float *input, float *input_min, float *input_max, float *output_min, float *output_max,
-                       const int size, const float ema_decay, const bool ema, const bool symmetric,
-                       cudaStream_t cuda_stream);
+                       const int size, const float ema_decay, const bool ema, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_MIN_MAX_UPDATE_IMPL_H_

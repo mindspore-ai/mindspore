@@ -1,4 +1,3 @@
-
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,20 +21,15 @@ from topi import generic
 from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-
-fake_quant_min_max_per_channel_update_op_info = TBERegOp("MinMaxUpdatePerChannel") \
+minmax_update_perchannel_op_info = TBERegOp("MinMaxUpdatePerChannel") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("fake_quant_min_max_per_channel_update.so") \
+    .binfile_name("minmax_update_perchannel.so") \
     .compute_cost(10) \
-    .kernel_name("fake_quant_min_max_per_channel_update") \
+    .kernel_name("minmax_update_perchannel") \
     .partial_flag(True) \
     .attr("ema", "optional", "bool", "all") \
     .attr("ema_decay", "optional", "float", "all") \
-    .attr("symmetric", "optional", "bool", "all") \
-    .attr("narrow_range", "optional", "bool", "all") \
-    .attr("training", "optional", "bool", "all") \
-    .attr("num_bits", "optional", "int", "all") \
     .attr("channel_axis", "optional", "int", "all") \
     .input(0, "x", None, "required", None) \
     .input(1, "min", None, "required", None) \
@@ -47,43 +41,46 @@ fake_quant_min_max_per_channel_update_op_info = TBERegOp("MinMaxUpdatePerChannel
     .get_op_info()
 
 
-@op_info_register(fake_quant_min_max_per_channel_update_op_info)
-def _fake_quant_min_max_per_channel_update_tbe():
-    """FakeQuantPerChannelUpdate TBE register"""
+@op_info_register(minmax_update_perchannel_op_info)
+def _minmax_update_perchannel_tbe():
+    """MinMaxUpdatePerChannel TBE register"""
     return
 
 
-@fusion_manager.register("fake_quant_min_max_per_channel_update")
-def fake_quant_min_max_per_channel_update_compute(x, min_val, max_val,
-                                                  ema, ema_decay, quant_min, quant_max, training, channel_axis,
-                                                  kernel_name="fake_quant_min_max_per_channel_update"):
-    """FakeQuantPerChannelUpdate compute"""
+@fusion_manager.register("minmax_update_perchannel")
+def minmax_update_perchannel_compute(x, min_val, max_val,
+                                     ema, ema_decay, channel_axis):
+    """MinMaxUpdatePerChannel compute"""
     shape_min = te.lang.cce.util.shape_to_list(min_val.shape)
 
     if not ema:
         ema_decay = 0.0
-    if training:
-        # CalMinMax
+
+    # CalMinMax
+    if channel_axis == 0:
+        axis = [1, 2, 3, 4]
+    else:
         axis = [0, 2, 3]
-        x_min = te.lang.cce.reduce_min(x, axis=axis)
-        x_max = te.lang.cce.reduce_max(x, axis=axis)
-        x_min = te.lang.cce.broadcast(x_min, shape_min)
-        x_max = te.lang.cce.broadcast(x_max, shape_min)
-        min_val = te.lang.cce.vadd(te.lang.cce.vmuls(
-            min_val, ema_decay), te.lang.cce.vmuls(x_min, (1 - ema_decay)))
-        max_val = te.lang.cce.vadd(te.lang.cce.vmuls(
-            max_val, ema_decay), te.lang.cce.vmuls(x_max, (1 - ema_decay)))
-        min_val = te.lang.cce.vmins(min_val, 0)
-        max_val = te.lang.cce.vmaxs(max_val, 0)
+
+    x_min = te.lang.cce.reduce_min(x, axis=axis)
+    x_max = te.lang.cce.reduce_max(x, axis=axis)
+    x_min = te.lang.cce.broadcast(x_min, shape_min)
+    x_max = te.lang.cce.broadcast(x_max, shape_min)
+    min_val = te.lang.cce.vadd(te.lang.cce.vmuls(
+        min_val, ema_decay), te.lang.cce.vmuls(x_min, (1 - ema_decay)))
+    max_val = te.lang.cce.vadd(te.lang.cce.vmuls(
+        max_val, ema_decay), te.lang.cce.vmuls(x_max, (1 - ema_decay)))
+    min_val = te.lang.cce.vmins(min_val, 0)
+    max_val = te.lang.cce.vmaxs(max_val, 0)
 
     return [min_val, max_val]
 
 
-@util.check_input_type(dict, dict, dict, dict, dict, bool, float, bool, bool, bool, int, int, str)
-def fake_quant_min_max_per_channel_update(x, min_val, max_val, min_up, max_up,
-                                          ema, ema_decay, symmetric, narrow_range, training, num_bits, channel_axis,
-                                          kernel_name="fake_quant_min_max_per_channel_update"):
-    """FakeQuantPerLayer op"""
+@util.check_input_type(dict, dict, dict, dict, dict, bool, float, int, str)
+def minmax_update_perchannel(x, min_val, max_val, min_up, max_up,
+                             ema, ema_decay, channel_axis,
+                             kernel_name="minmax_update_perchannel"):
+    """MinMaxUpdatePerChannel op"""
     x_shape = x.get("ori_shape")
     x_format = x.get("format")
     x_dtype = x.get("dtype")
@@ -108,21 +105,15 @@ def fake_quant_min_max_per_channel_update(x, min_val, max_val, min_up, max_up,
     util.check_dtype_rule(min_dtype, check_list)
     util.check_dtype_rule(max_dtype, check_list)
 
-    if symmetric:
-        quant_min = 0 - 2 ** (num_bits - 1)
-        quant_max = 2 ** (num_bits - 1) - 1
+    if channel_axis == 0:
+        shape_c = min_val.get("ori_shape")
     else:
-        quant_min = 0
-        quant_max = 2 ** num_bits - 1
-    if narrow_range:
-        quant_min = quant_min + 1
-
-    shape_c = [min_val.get("shape")[1], min_val.get("shape")[-1]]
+        shape_c = [min_val.get("shape")[1], min_val.get("shape")[-1]]
     input_data = tvm.placeholder(x.get("shape"), name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_c, name="min_val", dtype=x_dtype)
     max_data = tvm.placeholder(shape_c, name="max_val", dtype=x_dtype)
-    res_list = fake_quant_min_max_per_channel_update_compute(input_data, min_data, max_data,
-                                                             ema, ema_decay, quant_min, quant_max, training, channel_axis, kernel_name)
+    res_list = minmax_update_perchannel_compute(input_data, min_data, max_data,
+                                                ema, ema_decay, channel_axis)
 
     with tvm.target.cce():
         sch = generic.auto_schedule(res_list)
