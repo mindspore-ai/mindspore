@@ -75,7 +75,6 @@ class Slice(cde.SliceOp):
     Slice operation to extract a tensor out using the given n slices.
 
     The functionality of Slice is similar to NumPy indexing feature.
-
     (Currently only rank 1 Tensors are supported)
 
     Args:
@@ -87,17 +86,17 @@ class Slice(cde.SliceOp):
              4.  Ellipses ...: slice all dimensions between the two slices.
 
     Examples:
-     >>> # Data before
-     >>> # |   col   |
-     >>> # +---------+
-     >>> # | [1,2,3] |
-     >>> # +---------|
-     >>> data = data.map(operations=Slice(slice(1,3))) # slice indices 1 and 2 only
-     >>> # Data after
-     >>> # |    col     |
-     >>> # +------------+
-     >>> # |    [1,2]   |
-     >>> # +------------|
+        >>> # Data before
+        >>> # |   col   |
+        >>> # +---------+
+        >>> # | [1,2,3] |
+        >>> # +---------|
+        >>> data = data.map(operations=Slice(slice(1,3))) # slice indices 1 and 2 only
+        >>> # Data after
+        >>> # |    col     |
+        >>> # +------------+
+        >>> # |    [1,2]   |
+        >>> # +------------|
     """
 
     @check_slice_op
