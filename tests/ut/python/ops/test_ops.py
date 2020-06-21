@@ -1594,6 +1594,11 @@ test_case_array_ops = [
                         Tensor(np.arange(16).reshape(2, 4, 2).astype(np.float32))],
         'skip': ['backward'],
     }),
+    ('ReverseSequence', {
+        'block': P.ReverseSequence(1, 0),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)),
+                        Tensor(np.array([1, 2, 3]).astype(np.int32))],
+        'desc_bprop': [[3, 3]]}),
 ]
 
 test_case_other_ops = [

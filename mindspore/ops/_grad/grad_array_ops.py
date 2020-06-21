@@ -682,3 +682,14 @@ def get_bprop_broadcast_to(self):
         dx = reshape(reduced_grad, x_shape)
         return (dx,)
     return bprop
+
+
+@bprop_getters.register(P.ReverseSequence)
+def get_bprop_reverse_sequence(self):
+    """Generate bprop for ReverseSequence"""
+    reverse_sequence_grad = P.ReverseSequence(batch_dim=self.batch_dim_, seq_dim=self.seq_dim_)
+
+    def bprop(x, seq_lengths, out, dout):
+        dx = reverse_sequence_grad(dout, seq_lengths)
+        return dx, zeros_like(seq_lengths)
+    return bprop
