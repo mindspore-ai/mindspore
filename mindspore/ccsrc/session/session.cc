@@ -124,7 +124,7 @@ MultiTensor Session::RunGraph(uint32_t graph_id, const std::vector<std::shared_p
                  });
   if (has_error) {
     MS_LOG(ERROR) << "Init Tensor failed, returning empty result";
-    std::vector<std::vector<std::shared_ptr<inference::MSTensor>>> multiTensor;
+    std::vector<std::shared_ptr<inference::MSTensor>> multiTensor;
     return multiTensor;
   }
   VectorRef outputs;
@@ -135,6 +135,9 @@ MultiTensor Session::RunGraph(uint32_t graph_id, const std::vector<std::shared_p
 
 int Session::Init(const std::string &device, uint32_t device_id) {
   RegAllOp();
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_execution_mode(kGraphMode);
+  ms_context->set_device_target(kAscendDevice);
   session_impl_ = session::SessionFactory::Get().Create(device);
   if (session_impl_ == nullptr) {
     MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << device << " is available.";

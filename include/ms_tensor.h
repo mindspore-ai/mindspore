@@ -63,7 +63,7 @@ class MS_API MSTensor {
   // return A pointer points to data in MSTensor.
   virtual void *MutableData() const = 0;
 };
-using MultiTensor = std::vector<std::vector<std::shared_ptr<inference::MSTensor>>>;
+using MultiTensor = std::vector<std::shared_ptr<inference::MSTensor>>;
 }  // namespace inference
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_MS_TENSOR_H_

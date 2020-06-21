@@ -41,6 +41,7 @@ const int kPynativeMode = 1;
 const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";
+const char kDavinciInferenceDevice[] = "AscendInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};

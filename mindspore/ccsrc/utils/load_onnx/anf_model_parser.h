@@ -29,6 +29,7 @@ namespace lite {
 using int32 = int32_t;
 using int64 = int64_t;
 using uint64 = uint64_t;
+using float16 = Eigen::half;
 class MSANFModelParser {
  public:
   MSANFModelParser() = default;
@@ -38,17 +39,17 @@ class MSANFModelParser {
   bool MSANFParseModelConfigureInfo(const onnx::ModelProto &model_proto);
 
   std::string GetProducerName() { return producer_name_; }
-  std::string GetProducerVersion() { return producer_version_; }
+  int GetProducerVersion() { return model_version_; }
   int GetIrVersion() { return ir_version_; }
-  int GetOpsetVersion() { return opset_version_; }
 
  private:
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto);
   bool BuildParameterForFuncGraph(const ParameterPtr &node, const onnx::ValueInfoProto &value_proto);
-  bool BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::NodeProto &node_proto,
-                              const onnx::GraphProto &importProto, const bool &ret_flag);
+  CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::NodeProto &node_proto);
+  bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+                               const CNodePtr &cnode_ptr);
   bool GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
                                  const onnx::TensorProto &attr_tensor);
@@ -63,15 +64,13 @@ class MSANFModelParser {
   bool GetAttrValueForValueNode(const string &ref_attr_name, const std::string &value_node_name,
                                 const onnx::TensorProto &attr_tensor);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
+  AbstractBasePtr GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
 
   std::string producer_name_;
-  std::string producer_version_;
-  int ir_version_{};
-  int opset_version_{};
+  int model_version_;
+  int ir_version_;
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
   std::map<std::string, onnx::TensorProto> default_para_map_;
-
-  AbstractBasePtr GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
 };
 }  // namespace lite
 }  // namespace mindspore

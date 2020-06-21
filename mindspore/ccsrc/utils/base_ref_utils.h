@@ -22,9 +22,6 @@
 #ifndef MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 #define MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H
 namespace mindspore {
-std::vector<std::shared_ptr<inference::MSTensor>> TransformBaseRefToMSTensor(const BaseRef &base_ref);
-
-std::vector<std::vector<std::shared_ptr<inference::MSTensor>>> TransformVectorRefToMultiTensor(
-  const VectorRef &vector_ref);
+std::vector<std::shared_ptr<inference::MSTensor>> TransformVectorRefToMultiTensor(const VectorRef &base_ref);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_BASE_REF_UTILS_H

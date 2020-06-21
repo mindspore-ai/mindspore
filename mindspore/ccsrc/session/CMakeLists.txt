@@ -23,6 +23,7 @@ if (ENABLE_D)
     file(GLOB_RECURSE _D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ascend_session.cc"
         "ascend_control_parser.cc"
+        "ascend_inference_session.cc"
         )
     list(APPEND _SESSION_SRC_LIST ${_D_SRC_LIST})
 endif ()

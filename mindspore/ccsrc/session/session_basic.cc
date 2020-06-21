@@ -610,6 +610,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
       auto new_cnode = CreateNewCNode(cnode, graph.get());
       MS_EXCEPTION_IF_NULL(new_cnode);
       new_cnode->set_abstract(cnode->abstract());
+      new_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
       new_cnode->set_scope(cnode->scope());
       graph->FrontBackendlMapAdd(node, new_cnode);
       if (AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimReturn)) {
