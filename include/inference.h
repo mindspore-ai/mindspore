@@ -37,6 +37,8 @@ class MS_API MSSession {
 };
 
 std::shared_ptr<FuncGraph> MS_API LoadModel(const char *model_buf, size_t size, const std::string &device);
+
+void MS_API ExitInference();
 }  // namespace inference
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_MS_SESSION_H
