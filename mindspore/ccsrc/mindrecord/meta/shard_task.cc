@@ -24,6 +24,19 @@ using mindspore::MsLogLevel::DEBUG;
 
 namespace mindspore {
 namespace mindrecord {
+ShardTask::ShardTask() : categories(1) {}
+
+ShardTask::ShardTask(const ShardTask &other)
+    : categories(other.categories), permutation_(other.permutation_), task_list_(other.task_list_) {}
+
+ShardTask &ShardTask::operator=(const ShardTask &other) {
+  ShardTask tmp(other);
+  std::swap(categories, tmp.categories);
+  permutation_.swap(tmp.permutation_);
+  task_list_.swap(tmp.task_list_);
+  return *this;
+}
+
 void ShardTask::MakePerm() {
   permutation_ = std::vector<int>(task_list_.size());
   for (uint32_t i = 0; i < task_list_.size(); i++) {

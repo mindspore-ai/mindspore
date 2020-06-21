@@ -44,8 +44,8 @@ class ShardDistributedSample : public ShardSample {
  private:
   bool shuffle_;
   int no_of_padded_samples_;
-
-  bool init_judgment_;  // we should judge the (num_sample + num_padded) % num_shards == 0 in first time
+  bool first_epoch_;  // check  (num_sample + num_padded) % num_shards == 0 in first epoch
+  ShardTask task_;    // maintain the input tasks in first epoch
 };
 }  // namespace mindrecord
 }  // namespace mindspore
