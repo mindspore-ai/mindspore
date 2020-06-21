@@ -38,6 +38,18 @@ std::shared_ptr<FuncGraph> LoadModel(const char *model_buf, size_t size, const s
   return anf_graph;
 }
 
+void ExitInference() {
+  auto ms_context = MsContext::GetInstance();
+  if (ms_context == nullptr) {
+    MS_LOG(ERROR) << "Get Context failed!";
+    return;
+  }
+  if (!ms_context->CloseTsd()) {
+    MS_LOG(ERROR) << "Inference CloseTsd failed!";
+    return;
+  }
+}
+
 std::shared_ptr<MSSession> MSSession::CreateSession(const std::string &device, uint32_t device_id) {
   auto session = std::make_shared<inference::Session>();
   auto ret = session->Init(device, device_id);
@@ -101,11 +113,14 @@ void Session::RegAllOp() {
 
 uint32_t Session::CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr) {
   MS_ASSERT(session_impl_ != nullptr);
-  return session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
+  auto graph_id = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
+  py::gil_scoped_release gil_release;
+  return graph_id;
 }
 
 MultiTensor Session::RunGraph(uint32_t graph_id, const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) {
   std::vector<tensor::TensorPtr> inTensors;
+  inTensors.resize(inputs.size());
   bool has_error = false;
   std::transform(inputs.begin(), inputs.end(), inTensors.begin(),
                  [&has_error](const std::shared_ptr<inference::MSTensor> &tensor_ptr) -> tensor::TensorPtr {
@@ -144,6 +159,14 @@ int Session::Init(const std::string &device, uint32_t device_id) {
     return -1;
   }
   session_impl_->Init(device_id);
+  if (ms_context == nullptr) {
+    MS_LOG(ERROR) << "Get Context failed!";
+    return -1;
+  }
+  if (!ms_context->OpenTsd()) {
+    MS_LOG(ERROR) << "Session init OpenTsd failed!";
+    return -1;
+  }
   return 0;
 }
 

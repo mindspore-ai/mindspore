@@ -53,6 +53,7 @@ usage()
   echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
   echo "    -I Compile predict, default off"
   echo "    -K Compile with AKG, default off"
+  echo "    -s Enable serving module, default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -92,9 +93,9 @@ checkopts()
   USE_GLOG="on"
   PREDICT_PLATFORM=""
   ENABLE_AKG="off"
-
+  ENABLE_SERVING="off"
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:s' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -235,6 +236,10 @@ checkopts()
         ENABLE_AKG="on"
         echo "enable compile with akg"
         ;;
+      s)
+        ENABLE_SERVING="on"
+        echo "enable serving"
+        ;;
       *)
         echo "Unknown option ${opt}!"
         usage
@@ -314,6 +319,10 @@ build_mindspore()
     if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
     fi
+    if [[ "X$ENABLE_SERVING" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SERVING=ON"
+    fi
+
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..
