@@ -60,7 +60,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetInputsFormat({"NC1HWC0"});
   builder1.SetInputsDeviceType({kFloat32->type_id()});
@@ -68,7 +68,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder1.SetOutputsDeviceType({kFloat32->type_id()});
   builder1.SetFusionType(kernel::FusionType::ELEMWISE);
   builder1.SetProcessor(kernel::Processor::AICORE);
-  builder1.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder1.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto& node : node_list) {
     if (node == nullptr) {
@@ -122,7 +122,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_multiple_output) {
   builder1.SetOutputsDeviceType({kFloat32->type_id()});
   builder1.SetFusionType(kernel::FusionType::ELEMWISE);
   builder1.SetProcessor(kernel::Processor::AICORE);
-  builder1.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder1.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto& node : node_list) {
     if (node == nullptr) {

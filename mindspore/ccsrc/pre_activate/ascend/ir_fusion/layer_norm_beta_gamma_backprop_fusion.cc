@@ -121,6 +121,9 @@ const AnfNodePtr LayerNormBetaGammaBackpropFusion::Process(const FuncGraphPtr &f
   if (node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
+  if (AnfAlgo::IsGraphKernel(node)) {
+    return nullptr;
+  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<CNodePtr> cast_nodes;

@@ -39,7 +39,7 @@ if(ENABLE_GPU)
             "device/gpu/*.cu"
             "kernel/gpu/*.cu"
             "kernel/akg/gpu/*.cc"
-            "kernel/akg/akgkernelbuild.cc"
+            "kernel/akg/akg_kernel_build.cc"
             "kernel/akg/akg_kernel_attrs_process.cc"
             )
 

@@ -399,8 +399,8 @@ void FuncGraph::ReleaseFullOrderToEffectOrder() {
         depend_inputs.push_back(*iter);
       }
     }
-    set_flags(GRAPH_FLAG_HAS_EFFECT, false);
-    set_flags(GRAPH_FLAG_EFFECT_PATIAL_ORDER, true);
+    set_flag(GRAPH_FLAG_HAS_EFFECT, false);
+    set_flag(GRAPH_FLAG_EFFECT_PATIAL_ORDER, true);
     if (!depend_inputs.empty()) {
       SetEffectDepends(depend_inputs);
     }

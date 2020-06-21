@@ -334,8 +334,8 @@ ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairL
 
 FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
   ptrGraph->debug_info()->set_name("hyper_map");
 
   AnfNodePtr ptrFnArg = nullptr;
@@ -389,7 +389,7 @@ FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tu
   MS_EXCEPTION_IF_NULL(a_tuple);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("tail");
   AnfNodePtr ptrTup = ret->add_parameter();
 
@@ -409,7 +409,7 @@ FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr &a_list
   MS_EXCEPTION_IF_NULL(a_list);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("tail");
   AnfNodePtr ptrList = ret->add_parameter();
 
@@ -481,10 +481,10 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
     grads.push_back(b->NewCNode({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
   }
 
-  b->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   b->set_output(b->NewCNode(grads));
 
-  fg->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg->set_output(fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeTuple));
   return fg;
@@ -504,7 +504,7 @@ FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
                                     const std::vector<AnfNodePtr> &params_list, const std::vector<AnfNodePtr> &args,
                                     bool applyJ) {
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
   auto weights_node = weights;
   if (weights == nullptr && !args.empty()) {
@@ -625,7 +625,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   std::ostringstream ss;
   ss << "grad{" << nparam << "}";
-  dfBuilder->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  dfBuilder->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   dfBuilder->debug_info()->set_name(ss.str());
   ParameterPtr param_graph = dfBuilder->add_parameter();
 
@@ -671,7 +671,7 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
   }
 
   FuncGraphPtr fg_ptr = std::make_shared<FuncGraph>();
-  fg_ptr->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fg_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg_ptr->debug_info()->set_name("list_map");
   AnfNodePtr fn = fg_ptr->add_parameter();
 
@@ -741,7 +741,7 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
   // cond = reduce(lambda a, b: g.apply(P.bool_and, a, b), hasnexts)
   FuncGraphPtr fgtrue_ptr = std::make_shared<FuncGraph>();
   fgtrue_ptr->debug_info()->set_name("ftrue");
-  fgtrue_ptr->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fgtrue_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
   CNodePtr fgtrue_output_cnode = fgtrue_ptr->NewCNode({NewValueNode(fgnext_ptr), fn, resl});
   auto inputs = fgtrue_output_cnode->inputs();
@@ -751,7 +751,7 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
 
   FuncGraphPtr fgfalse_ptr = std::make_shared<FuncGraph>();
   fgfalse_ptr->debug_info()->set_name("ffalse");
-  fgfalse_ptr->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fgfalse_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fgfalse_ptr->set_output(resl);
 
   AnfNodePtr output_cnode = fg_ptr->NewCNode({NewValueNode(prim::kPrimSwitch), NewValueNode(std::string("cond")),
@@ -808,7 +808,7 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
   }
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   AnfNodePtr p_tup_a = ret->add_parameter();
   AnfNodePtr p_tup_b = ret->add_parameter();
 
@@ -912,7 +912,7 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   GenerateTupleSliceParameter(tuple, slice, &start_index, &stop_index, &step_value);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   AnfNodePtr p_tuple = ret->add_parameter();
   (void)ret->add_parameter();
 
@@ -941,7 +941,7 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   AbstractBasePtrList branches = branches_abs->elements();
   if (branches.size() > 0 && branches[0] != nullptr && branches[0]->isa<AbstractFunction>()) {
     FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-    ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+    ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
     AnfNodePtr functions = ret_graph->add_parameter();
     auto index = ret_graph->add_parameter();
 

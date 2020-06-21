@@ -62,6 +62,10 @@ std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const Incl
 std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
                                                         const FilterFunc &filter);
 
+class FuncGraphManager;
+using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
+std::vector<AnfNodePtr> DeepUsersSearch(const AnfNodePtr &root, const IncludeFunc &include,
+                                        const FuncGraphManagerPtr &mng);
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
                                  const IncludeFunc &include = AlwaysInclude);
 

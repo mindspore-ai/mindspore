@@ -59,6 +59,12 @@ extern const PrimitivePtr kPrimBoolNot;
 extern const PrimitivePtr kPrimBoolAnd;
 extern const PrimitivePtr kPrimBoolOr;
 extern const PrimitivePtr kPrimBoolEq;
+extern const PrimitivePtr kPrimGreater;
+extern const PrimitivePtr kPrimGreaterEqual;
+extern const PrimitivePtr kPrimLess;
+extern const PrimitivePtr kPrimLessEqual;
+extern const PrimitivePtr kPrimEqual;
+extern const PrimitivePtr kPrimNotEqual;
 
 // Type introspection
 extern const PrimitivePtr kPrimTypeOf;
@@ -157,6 +163,10 @@ extern const PrimitivePtr KPrimTransData;
 extern const PrimitivePtr kPrimNMSWithMask;
 extern const PrimitivePtr kPrimPad;
 extern const PrimitivePtr kPrimArgMaxWithValue;
+extern const PrimitivePtr kPrimRealDiv;
+extern const PrimitivePtr kPrimSqrt;
+extern const PrimitivePtr kPrimReciprocal;
+extern const PrimitivePtr kPrimExpandDims;
 
 // Maths
 extern const PrimitivePtr kPrimTensorAdd;
@@ -183,9 +193,11 @@ extern const PrimitivePtr kPrimCumProd;
 extern const PrimitivePtr kPrimSubscalar;
 extern const PrimitivePtr kPrimInplaceAdd;
 extern const PrimitivePtr kPrimInplaceSub;
+extern const PrimitivePtr kPrimPow;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
+extern const PrimitivePtr kPrimSoftmax;
 extern const PrimitivePtr kPrimLogSoftmax;
 extern const PrimitivePtr kPrimLogSoftmaxGrad;
 extern const PrimitivePtr kPrimApplyCenteredRMSProp;
@@ -263,6 +275,7 @@ extern const PrimitivePtr kPrimInDict;
 extern const PrimitivePtr kPrimNotInDict;
 extern const PrimitivePtr kPrimMixedPrecisionCast;
 extern const PrimitivePtr kPrimIsConsant;
+extern const PrimitivePtr kPrimEquivFormat;
 
 // Comm ops
 extern const PrimitivePtr kPrimAllReduce;

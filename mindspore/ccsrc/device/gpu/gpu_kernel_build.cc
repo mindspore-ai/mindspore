@@ -16,7 +16,7 @@
 #include "device/gpu/gpu_kernel_build.h"
 #include <string>
 #include "kernel/kernel.h"
-#include "kernel/akg/akgkernelbuild.h"
+#include "kernel/akg/akg_kernel_build.h"
 #include "kernel/akg/gpu/akg_gpu_kernel_build.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "operator/ops.h"
@@ -37,7 +37,7 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
       continue;
     }
 
-    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AUTO_DIFF_KERNEL) {
+    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
       auto gpu_kernel_ptr = kernel::AkgGpuKernelBuild(kernel);
       if (!gpu_kernel_ptr) {
         MS_LOG(EXCEPTION) << "Build akg kernel op[" << kernel_name << "] failed";

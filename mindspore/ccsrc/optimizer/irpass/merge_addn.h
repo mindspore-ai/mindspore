@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #include "optimizer/irpass.h"
 #include "optimizer/optimizer.h"
@@ -195,6 +196,131 @@ class AddNZeroFilter : public AnfVisitor {
   ValuePtr PrimAddN_;
   std::vector<AnfNodePtr> filtered_Xs_{}, Xs_{};
   bool has_zero_like_{false};
+};
+
+// {PrimAddN, {kPrimMakeTuple, Xs}}
+// Akg don't support AddN(ValueNode, Tensor, ...), converted to TensorAdd.
+// case0: AddN(inputs)(inputs size < 2) -> error
+// case1: AddN(inputs)(all inputs is ValueNode) -> error
+// case2: AddN(inputs)(inputs size = 2) -> TensorAdd(Tensor, Tensor)
+// case3: AddN(ValueNode, Tensor, Tensor, ...)(has one ValueNode input)
+//   -> TensorAdd(ValueNode, AddN(Tensor, Tensor, ...))
+class AddNEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
+    MS_EXCEPTION_IF_NULL(fg);
+    auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    if (fg->recursive()) {
+      return nullptr;
+    }
+
+    auto new_fg = TransformableClone(fg, std::make_shared<TraceTransform>("fg"));
+    mng->AddFuncGraph(new_fg);
+    need_update_ = false;
+    bool changed = false;
+    do {
+      changed = false;
+      changed |= Process(new_fg);
+    } while (changed);
+
+    if (!need_update_) {
+      return nullptr;
+    } else {
+      auto new_sx = inputs;
+      new_sx[0] = NewValueNode(new_fg);
+      return node->func_graph()->NewCNode(new_sx);
+    }
+  }
+
+  bool Process(const FuncGraphPtr &func_graph) {
+    auto mng = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    auto nodes = TopoSort(func_graph->output());
+    bool changed = false;
+
+    for (size_t i = 0; i < nodes.size(); ++i) {
+      auto node = nodes[i];
+      if (!IsPrimitiveCNode(node, prim::kPrimAddN)) {
+        continue;
+      }
+
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto &tuple_input = cnode->input(1);
+      MS_EXCEPTION_IF_NULL(tuple_input);
+      auto tuple_input_cnode = tuple_input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_input_cnode);
+      auto &tuple_inputs = tuple_input_cnode->inputs();
+      if (tuple_inputs.size() < 3) {
+        // case0: inputs size < 2, error
+        MS_EXCEPTION(ArgumentError) << "Inputs size of AddN less than 2. " << cnode->DebugString(2);
+      }
+
+      int valuenode_num =
+        std::accumulate(tuple_inputs.begin() + 1, tuple_inputs.end(), 0, [](int accumulator, const AnfNodePtr &node) {
+          if (IsValueNode<tensor::Tensor>(node)) {
+            return accumulator + 1;
+          } else {
+            return accumulator;
+          }
+        });
+      if (IntToSize(valuenode_num) == tuple_inputs.size()) {
+        // case1: all inputs is ValueNode, error
+        MS_EXCEPTION(ArgumentError) << "All inputs of AddN is ValueNode. " << cnode->DebugString(2);
+      }
+
+      if (tuple_inputs.size() == 3) {
+        // case2: inputs size = 2, -> TensorAdd(Tensor, Tensor)
+        MS_LOG(DEBUG) << "Replace AddN with two inputs with TensorAdd. " << cnode->DebugString(2);
+        ValuePtr prim_tensoradd = prim::GetPythonOps("TensorAdd", "mindspore.ops.operations");
+        std::vector<AnfNodePtr> new_xs{func_graph->NewCNode({NewValueNode(prim_tensoradd)}), tuple_inputs[1],
+                                       tuple_inputs[2]};
+        mng->Replace(node, func_graph->NewCNode(new_xs));
+        changed = true;
+        continue;
+      }
+
+      auto first_valuenode = std::find_if(tuple_inputs.begin() + 1, tuple_inputs.end(),
+                                          [](const AnfNodePtr &node) { return IsValueNode<tensor::Tensor>(node); });
+      if (first_valuenode == tuple_inputs.end()) {
+        // no ValueNode input found.
+        continue;
+      } else {
+        // case3: has one ValueNode input -> TensorAdd(ValueNode, AddN(Tensor, Tensor, ...))
+        std::vector<AnfNodePtr> make_tuple_new_xs{
+          NewValueNode(prim::kPrimMakeTuple),
+        };
+        std::for_each(tuple_inputs.begin() + 1, tuple_inputs.end(),
+                      [&make_tuple_new_xs, &first_valuenode](const AnfNodePtr &node) {
+                        if (node != *first_valuenode) {
+                          make_tuple_new_xs.push_back(node);
+                        }
+                      });
+        ValuePtr prim_addn = prim::GetPythonOps("AddN", "mindspore.ops.operations");
+        auto new_addn = func_graph->NewCNode(
+          {func_graph->NewCNode({NewValueNode(prim_addn)}), func_graph->NewCNode(make_tuple_new_xs)});
+        ValuePtr prim_tensoradd = prim::GetPythonOps("TensorAdd", "mindspore.ops.operations");
+        auto new_add =
+          func_graph->NewCNode({func_graph->NewCNode({NewValueNode(prim_tensoradd)}), *first_valuenode, new_addn});
+        (void)mng->Replace(node, new_add);
+        changed = true;
+        continue;
+      }
+    }
+
+    need_update_ |= changed;
+    return changed;
+  }
+
+ private:
+  bool need_update_{false};
 };
 }  // namespace irpass
 }  // namespace opt

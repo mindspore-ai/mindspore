@@ -192,6 +192,9 @@ constexpr auto kAttrEventId = "event_id";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
+constexpr auto kAttrMultiples = "multiples";
+constexpr auto kAttrFixPrecision = "fix_precision";
+constexpr auto kAttrOutputPrecision = "output_precision";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
 constexpr auto kAttrN = "n";
@@ -216,6 +219,7 @@ constexpr auto kAttrSplitDim = "split_dim";
 constexpr auto kAttrNumSplit = "num_split";
 constexpr auto kAttrOutputNum = "output_num";
 constexpr auto kAttrSizeSplits = "size_splits";
+constexpr auto kAttrOutputDefault = "output_default";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

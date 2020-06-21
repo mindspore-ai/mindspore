@@ -17,7 +17,7 @@
 #include <fstream>
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "kernel/kernel.h"
-#include "kernel/akg/akgkernelbuild.h"
+#include "kernel/akg/akg_kernel_build.h"
 #include "nlohmann/json.hpp"
 #include "securec/include/securec.h"
 #include "pipeline/parse/python_adapter.h"

@@ -37,6 +37,7 @@
 #include "ir/scalar.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/draw.h"
 #include "common/utils.h"
 #include "pre_activate/common/helper.h"
 #include "device/kernel_runtime_manager.h"
@@ -48,7 +49,7 @@ namespace mindspore {
 namespace session {
 const size_t kInvalidIndex = SIZE_MAX;
 namespace {
-void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order) {
+void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::string &tag = "") {
   MS_LOG(INFO) << "Dump execution_order size " << execution_order.size();
   MS_LOG(INFO) << "[index][stream_label][graph_id][node string]";
   int i = 0;
@@ -60,6 +61,24 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order) {
                  << "[" << cnode->DebugString() << "]";
     i++;
   }
+
+  std::stringstream buf;
+  buf << "================== execution order ==================\n";
+  if (!tag.empty()) {
+    buf << tag << "\n";
+  }
+  buf << "execution_order size: " << execution_order.size() << "\n";
+  i = 0;
+  for (auto &cnode : execution_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    buf << i << ":\n";
+    buf << "\t" << cnode->DebugString() << "\n";
+    buf << "\t" << AnfAlgo::GetStreamDistinctionLabel(cnode.get()) << "\n";
+    buf << "\t" << AnfAlgo::GetGraphId(cnode.get()) << "\n";
+    i++;
+  }
+  buf << "================== execution order ==================\n";
+  // std::cout << buf.str() << std::endl;
 }
 
 void DumpGraphInputArgs(const VectorRef &args) {
@@ -380,8 +399,28 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   MS_EXCEPTION_IF_NULL(child_graph);
   MS_LOG(INFO) << "CompileChildGraph " << child_graph->ToString();
   opt::AscendBackendIRFusionOptimization(child_graph);
+  opt::AscendBackendFuseBasicOpt(child_graph, true);
+  opt::AscendBackendGraphKernelOpt(child_graph, true);
+  child_graph->SetExecOrderByDefault();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path =
+      save_graphs_path + "/" + "select_kernel_before" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
+    DumpIR(file_path, child_graph);
+  }
   // select kernel build info
   SelectKernel(*child_graph);
+  if (save_graphs) {
+    std::string file_path =
+      save_graphs_path + "/" + "select_kernel_after" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
+    DumpIR(file_path, child_graph);
+  }
   // convert kernel Graph to model
   predictmodel::StepConvertGraph(child_graph);
   // optimize graph
@@ -545,6 +584,9 @@ void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_
   device::ascend::KernelPreBuild(kernel_graph.get());
   MS_LOG(INFO) << "HardwareOptimize start!";
   opt::AscendBackendOptimization(kernel_graph);
+  opt::AscendGraphKernelCommonProcess(kernel_graph);
+  opt::AscendBackendFuseBasicOpt(kernel_graph, false);
+  opt::AscendBackendAddAtomicClean(kernel_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   MS_LOG(INFO) << "HardwareOptimize Finish!";

@@ -151,7 +151,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_check_bprop_flag", &mindspore::MsContext::set_check_bprop_flag, "Set whether to check bprop.")
     .def("get_max_device_memory", &mindspore::MsContext::max_device_memory, "Get deivce memory max size.")
     .def("set_max_device_memory", &mindspore::MsContext::set_max_device_memory, "Set deivce memory max size.")
-    .def("set_print_file_path", &mindspore::MsContext::set_print_file_path, "Set path to print.");
+    .def("set_print_file_path", &mindspore::MsContext::set_print_file_path, "Set path to print.")
+    .def("set_enable_graph_kernel", &mindspore::MsContext::set_enable_graph_kernel,
+         "Set the GraphKernel switch to on or off.")
+    .def("get_enable_graph_kernel", &mindspore::MsContext::enable_graph_kernel, "Get the value of GraphKernel switch.");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")

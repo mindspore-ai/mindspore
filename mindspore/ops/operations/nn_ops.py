@@ -830,9 +830,9 @@ class Conv2D(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
             h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                    / stride_h
+                / stride_h
             w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                    / stride_w
+                / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -953,9 +953,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
             h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                    / stride_h
+                / stride_h
             w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                    / stride_w
+                / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 

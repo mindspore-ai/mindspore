@@ -645,9 +645,9 @@ TEST_F(AnfRuntimeAlgorithmTest, GetKernelType) {
   auto d_kernel_info = add->kernel_info();
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
-  builder.SetKernelType(AUTO_DIFF_KERNEL);
+  builder.SetKernelType(AKG_KERNEL);
   d_kernel_info->set_select_kernel_build_info(builder.Build());
-  EXPECT_EQ(AnfAlgo::GetKernelType(add), AUTO_DIFF_KERNEL);
+  EXPECT_EQ(AnfAlgo::GetKernelType(add), AKG_KERNEL);
   EXPECT_THROW(AnfAlgo::GetKernelType(nullptr), std::runtime_error);
 }
 

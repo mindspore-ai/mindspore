@@ -35,7 +35,7 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   MS_EXCEPTION_IF_NULL(arg0_list);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("append");
   AnfNodePtr arg0_node = ret->add_parameter();
 

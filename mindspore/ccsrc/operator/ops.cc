@@ -50,6 +50,12 @@ const PrimitivePtr kPrimBoolNot = std::make_shared<Primitive>("bool_not");
 const PrimitivePtr kPrimBoolAnd = std::make_shared<Primitive>("bool_and");
 const PrimitivePtr kPrimBoolOr = std::make_shared<Primitive>("bool_or");
 const PrimitivePtr kPrimBoolEq = std::make_shared<Primitive>("bool_eq");
+const PrimitivePtr kPrimGreater = std::make_shared<Primitive>("Greater");
+const PrimitivePtr kPrimGreaterEqual = std::make_shared<Primitive>("GreaterEqual");
+const PrimitivePtr kPrimLess = std::make_shared<Primitive>("Less");
+const PrimitivePtr kPrimLessEqual = std::make_shared<Primitive>("LessEqual");
+const PrimitivePtr kPrimEqual = std::make_shared<Primitive>("Equal");
+const PrimitivePtr kPrimNotEqual = std::make_shared<Primitive>("NotEqual");
 
 // Type introspection
 const PrimitivePtr kPrimTypeOf = std::make_shared<Primitive>("typeof");
@@ -166,17 +172,20 @@ const PrimitivePtr kPrimMul = std::make_shared<Primitive>("Mul");
 const PrimitivePtr kPrimMinimum = std::make_shared<Primitive>("Minimum");
 const PrimitivePtr kPrimMaximum = std::make_shared<Primitive>("Maximum");
 const PrimitivePtr kPrimSquare = std::make_shared<Primitive>("Square");
-const PrimitivePtr kPrimEqual = std::make_shared<Primitive>("Equal");
-const PrimitivePtr kPrimLess = std::make_shared<Primitive>("Less");
-const PrimitivePtr kPrimLessEqual = std::make_shared<Primitive>("LessEqual");
 const PrimitivePtr kPrimCumSum = std::make_shared<Primitive>("CumSum");
 const PrimitivePtr kPrimCumProd = std::make_shared<Primitive>("CumProd");
 const PrimitivePtr kPrimSubscalar = std::make_shared<Primitive>("Subscalar");
 const PrimitivePtr kPrimInplaceAdd = std::make_shared<Primitive>("InplaceAdd");
 const PrimitivePtr kPrimInplaceSub = std::make_shared<Primitive>("InplaceSub");
+const PrimitivePtr kPrimPow = std::make_shared<Primitive>("Pow");
+const PrimitivePtr kPrimRealDiv = std::make_shared<Primitive>("RealDiv");
+const PrimitivePtr kPrimSqrt = std::make_shared<Primitive>("Sqrt");
+const PrimitivePtr kPrimReciprocal = std::make_shared<Primitive>("Reciprocal");
+const PrimitivePtr kPrimExpandDims = std::make_shared<Primitive>("ExpandDims");
 
 // NN
 const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
+const PrimitivePtr kPrimSoftmax = std::make_shared<Primitive>("Softmax");
 const PrimitivePtr kPrimLogSoftmax = std::make_shared<Primitive>("LogSoftmax");
 const PrimitivePtr kPrimLogSoftmaxGrad = std::make_shared<Primitive>("LogSoftmaxGrad");
 const PrimitivePtr kPrimTanh = std::make_shared<Primitive>("Tanh");
@@ -253,6 +262,7 @@ const PrimitivePtr kPrimInDict = std::make_shared<Primitive>("in_dict");
 const PrimitivePtr kPrimNotInDict = std::make_shared<Primitive>("not_in_dict");
 const PrimitivePtr kPrimMixedPrecisionCast = std::make_shared<Primitive>("mixed_precision_cast");
 const PrimitivePtr kPrimIsConsant = std::make_shared<Primitive>("is_constant");
+const PrimitivePtr kPrimEquivFormat = std::make_shared<Primitive>("EquivFormat");
 
 // Comm ops
 const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

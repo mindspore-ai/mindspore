@@ -347,7 +347,7 @@ static int TypeStrToDstType(const std::string &type_str) {
     ret = 4;
   } else if (type_str == "UInt64") {
     ret = 10;
-  } else if (type_str == "Bool_") {
+  } else if (type_str == "Bool") {
     ret = 12;
   } else {
     MS_LOG(INFO) << "Error type str is invailed: " << type_str;

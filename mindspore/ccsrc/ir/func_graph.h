@@ -74,6 +74,7 @@ using FuncGraphMap = OrderedMap<FuncGraphPtr, int>;
 const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_CORE[] = "core";
+const char FUNC_GRAPH_ATTR_GRAPH_KERNEL[] = "graph_kernel";
 const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
 
 namespace abstract {
@@ -195,10 +196,19 @@ class FuncGraph : public FuncGraphBase {
   void set_is_generate(bool generated) { is_generated_ = generated; }
   bool is_generated() const { return is_generated_; }
 
-  bool has_flag(const std::string &flag);
-  std::unordered_map<std::string, bool> &flags() { return flags_; }
-  void set_flags(const std::unordered_map<std::string, bool> &flags) { flags_ = flags; }
-  void set_flags(const std::string &key, const bool value) { flags_[key] = value; }
+  std::unordered_map<std::string, ValuePtr> &attrs() { return attrs_; }
+  void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+    for (auto &attr : attrs) {
+      attrs_[attr.first] = attr.second;
+    }
+  }
+  bool has_flag(const std::string &key);
+  void set_flag(const std::string &key, bool flag) { attrs_[key] = MakeValue(flag); }
+  void erase_flag(const std::string &key) { (void)attrs_.erase(key); }
+
+  bool has_attr(const std::string &key);
+  ValuePtr get_attr(const std::string &key);
+  void set_attr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
 
   std::unordered_map<std::string, FuncGraphTransform> &transforms() { return transforms_; }
   void set_transforms(const std::unordered_map<std::string, FuncGraphTransform> &transforms) {
@@ -317,7 +327,7 @@ class FuncGraph : public FuncGraphBase {
 
   std::unordered_map<AnfNodePtr, AnfNodePtr> &make_ref_params() { return make_ref_params_; }
 
-  std::unordered_map<std::string, bool> flags_;
+  std::unordered_map<std::string, ValuePtr> attrs_;
   std::unordered_map<std::string, FuncGraphTransform> transforms_;
   // parameter default value
   std::map<std::string, AnfNodePtr> parameter_default_value_;

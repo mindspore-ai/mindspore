@@ -157,6 +157,9 @@ class MsContext {
   float max_device_memory() const { return max_device_memory_; }
   void set_max_device_memory(float max_device_memory) { max_device_memory_ = max_device_memory; }
 
+  void set_enable_graph_kernel(bool enable_graph_kernel) { enable_graph_kernel_ = enable_graph_kernel; }
+  bool enable_graph_kernel() const { return enable_graph_kernel_; }
+
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
   void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
@@ -199,6 +202,7 @@ class MsContext {
   bool check_bprop_flag_;
   float max_device_memory_;
   std::string print_file_path_;
+  bool enable_graph_kernel_;
 };
 
 }  // namespace mindspore

@@ -41,6 +41,8 @@
 #include "optimizer/irpass/incorporate_call.h"
 #include "optimizer/irpass/grad_var_prepare.h"
 #include "optimizer/irpass/param_replace.h"
+#include "optimizer/irpass/mark_interface_fusion.h"
+#include "optimizer/opt.h"
 
 namespace mindspore {
 namespace opt {
@@ -48,7 +50,7 @@ namespace irpass {
 OptimizeIRPassLib::OptimizeIRPassLib() {
   arithmetic_simplify_ = MakeSubstitution(ArithmeticSimplify(), "arithmetic_simplify",
                                           {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimTensorAdd,
-                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul});
+                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
   special_op_eliminate_ =
     MakeSubstitution(SpecialOpEliminater(), "special_op_eliminate",
                      {prim::kPrimInsertGradientOf, prim::kPrimStopGradient, prim::kPrimHookBackward,
@@ -90,7 +92,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   replace_refkey_by_param_ =
     MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>, opt::FORCE_RENORM);
   replace_old_param_ = MakeSubstitution(ReplaceOldParam(), "replace_old_param", IsParam);
-
   // Gradient transforms
   expand_jprim_ = MakeSubstitution(ExpandJPrim(), "expand_jprim", prim::kPrimJ);
   minmaximum_grad_ = MakeSubstitution(MinMaximumGrad(), "minmaximum_grad", prim::kPrimTupleGetItem);
@@ -115,6 +116,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Incorporation
   incorporate_getitem_set_ =
     MakeSubstitution(IncorporateGetitemSet(), "incorporate_getitem_set", prim::kPrimTupleGetItem);
+  incorporate_getitem_from_param_ =
+    MakeSubstitution(IncorporateGetitemFromParam(), "incorporate_getitem_from_param", IsCNodeGraphKernel);
   incorporate_call_ = MakeSubstitution(IncorporateCall(), "incorporate_call", IsCNodeDup);
   incorporate_call_switch_ = MakeSubstitution(IncorporateCallSwitch(), "incorporate_call_switch", IsCNodeDup);
 
@@ -124,6 +127,17 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // Convert
   print_tuple_wrapper_ = MakeSubstitution(PrintTupleWrapper(), "print_tuple_wrapper", prim::kPrimPrint);
+
+  // Unused parameter eliminate
+  unused_parameter_eliminate_ =
+    MakeSubstitution(UnusedParasEliminater(), "unused_parameter_eliminate", IsCNodeGraphKernel);
+  unused_output_eliminate_ = MakeSubstitution(UnusedOutputEliminater(), "unused_output_eliminate", IsCNodeGraphKernel);
+
+  // AddN eliminate
+  addn_eliminate_ = MakeSubstitution(AddNEliminater(), "addn_eliminate", IsCNodeGraphKernel);
+
+  // Mark interface fusion
+  mark_interface_fusion_ = MakeSubstitution(MarkInterfaceFusion(), "mark_interface_fusion", prim::kPrimSelect);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

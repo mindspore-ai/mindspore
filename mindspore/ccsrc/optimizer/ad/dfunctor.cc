@@ -45,10 +45,19 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
     : primal_graph_(primal_graph), resources_(resources), need_cut_(false), is_top_(false) {
   TraceManager::DebugTrace(std::make_shared<TraceGradFprop>(primal_graph->debug_info()));
   k_graph_ = std::make_shared<FuncGraph>();
+  if (primal_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+    std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+    k_graph_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
+  }
   TraceManager::EndTrace();
 
   TraceManager::DebugTrace(std::make_shared<TraceGradBprop>(primal_graph->debug_info()));
   tape_ = std::make_shared<FuncGraph>();
+  // Add "_Grad" postfix
+  if (primal_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+    std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) + "_Grad";
+    tape_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
+  }
   TraceManager::EndTrace();
 
   dout_ = tape_->add_parameter();
@@ -368,7 +377,7 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     (void)primal->transforms().insert(std::make_pair("grad", FuncGraphTransform(fg)));
     (void)fg->transforms().insert(std::make_pair("primal", FuncGraphTransform(primal)));
     // Reset defer_inline to enable successive inlining
-    primal->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
+    primal->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
 
     auto functor = std::make_shared<DFunctor>(primal, resources_);
     functor->Init();

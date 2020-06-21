@@ -18,10 +18,12 @@
 #include <memory>
 #include <utility>
 #include <unordered_map>
+#include <unordered_set>
 #include "session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "pre_activate/common/helper.h"
 #include "operator/ops.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -125,13 +127,7 @@ void EliminateRedundantOp::Init() {
     kTransDataOpName, std::pair<std::string, ConditionFunc>(kTransDataOpName, TransDataOpEliminateCondition)));
 }
 
-const AnfNodePtr EliminateRedundantOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                               const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr || func_graph == nullptr) {
-    return nullptr;
-  }
+const AnfNodePtr EliminateRedundantOp::DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   // match the first name
   auto name1 = AnfAlgo::GetCNodeName(cnode);
   auto it = redundant_process_map_.find(name1);
@@ -159,6 +155,36 @@ const AnfNodePtr EliminateRedundantOp::Process(const FuncGraphPtr &func_graph, c
   }
 
   return ProcessMatchedNodes(func_graph, cnode, prev_cnode, &pass_vector);
+}
+
+const AnfNodePtr EliminateRedundantOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                               const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr || func_graph == nullptr) {
+    return nullptr;
+  }
+
+  if (AnfAlgo::IsGraphKernel(node)) {
+    // do eliminate for ops in graph kernel.
+    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    auto mng = sub_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    std::vector<AnfNodePtr> todo;
+    kernel::GetValidKernelNodes(sub_graph, &todo);
+    for (auto &t : todo) {
+      CNodePtr t_cnode = t->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(t_cnode);
+      auto t_new_node = DoEliminate(sub_graph, t_cnode);
+      if (t_new_node != nullptr && t_new_node != t) {
+        (void)mng->Replace(t, t_new_node);
+      }
+    }
+    return node;
+  }
+  // do eliminate for single op.
+  return DoEliminate(func_graph, cnode);
 }
 }  // namespace opt
 }  // namespace mindspore

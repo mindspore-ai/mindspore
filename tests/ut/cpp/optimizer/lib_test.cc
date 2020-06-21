@@ -583,6 +583,5 @@ TEST_F(TestOptLib, test_adjust_allreduce_mul_add) {
   ASSERT_TRUE(CheckOpt(before2l, after2, patterns));
   ASSERT_TRUE(CheckOpt(before2r, after2, patterns));
 }
-
 }  // namespace opt
 }  // namespace mindspore

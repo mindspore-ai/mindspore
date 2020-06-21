@@ -15,6 +15,7 @@
 
 """Operators for math."""
 
+import copy
 import numpy as np
 from ... import context
 from ..._c_expression import signature_rw as sig_rw
@@ -142,6 +143,15 @@ class TensorAdd(_MathBinaryOp):
         [5,7,9]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x + y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class AssignAdd(PrimitiveWithInfer):
     """
@@ -255,6 +265,7 @@ class _Reduce(PrimitiveWithInfer):
         return output
 
     def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
+        """ return meta infos of input parameters """
         axis_v = axis['value']
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
@@ -263,9 +274,26 @@ class _Reduce(PrimitiveWithInfer):
         if axis_v is None:
             raise ValueError(f"For {self.name}, axis must be const.")
         input_shp = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
+        value = None
+        if input_x['value'] is not None:
+            prim_map = {
+                'ReduceSum': np.sum,
+                'ReduceMax': np.max,
+                'ReduceMin': np.min,
+            }
+            np_reduce_func = prim_map.get(self.name, None)
+
+            if np_reduce_func is not None:
+                value = input_x['value'].asnumpy()
+                if not axis_v:
+                    axis_v = [i for i in range(len(input_x['shape']))]
+                    axis_v = tuple(axis_v)
+                value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
+                value = np.array(value)
+                value = Tensor(value)
         return {'shape': input_shp,
                 'dtype': input_x['dtype'],
-                'value': None}
+                'value': value}
 
     def __infer__(self, input_x, axis):
         return self.do_infer(input_x, axis)
@@ -333,6 +361,12 @@ class ReduceSum(_Reduce):
         >>> op = P.ReduceSum(keep_dims=True)
         >>> output = op(input_x, 1)
     """
+
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """init ReduceSum"""
+        super(ReduceSum, self).__init__(keep_dims)
+        self.__setattr_flag__ = True
 
 
 class ReduceAll(_Reduce):
@@ -402,6 +436,12 @@ class ReduceMax(_Reduce):
         >>> op = P.ReduceMax(keep_dims=True)
         >>> output = op(input_x, 1)
     """
+
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """ReduceMax"""
+        super(ReduceMax, self).__init__(keep_dims)
+        self.__setattr_flag__ = True
 
 
 class ReduceMin(_Reduce):
@@ -743,6 +783,20 @@ class AddN(PrimitiveWithInfer):
         validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), cls_name)
         return inputs[0]
 
+    def infer_value(self, inputs):
+        if inputs is None:
+            return None
+
+        for x in inputs:
+            if x is None:
+                return None
+
+        added = copy.deepcopy(inputs[0].asnumpy())
+        for x in inputs[1:]:
+            added += x.asnumpy()
+        out = np.array(added, inputs[0].asnumpy().dtype)
+        return Tensor(out)
+
 
 class Neg(PrimitiveWithInfer):
     """
@@ -772,6 +826,13 @@ class Neg(PrimitiveWithInfer):
     def infer_dtype(self, input_x):
         validator.check_tensor_type_same({"input_x": input_x}, mstype.number_type, self.name)
         return input_x
+
+    def infer_value(self, input_x):
+        if input_x is not None:
+            input_x = input_x.asnumpy()
+            return Tensor(-input_x)
+
+        return None
 
 
 class InplaceAdd(PrimitiveWithInfer):
@@ -920,6 +981,15 @@ class Sub(_MathBinaryOp):
         [-3, -3, -3]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x - y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class Mul(_MathBinaryOp):
     """
@@ -978,6 +1048,7 @@ class Square(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Square"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -985,6 +1056,14 @@ class Square(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = x * x
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Rsqrt(PrimitiveWithInfer):
@@ -1007,6 +1086,7 @@ class Rsqrt(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Rsqrt"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -1014,6 +1094,14 @@ class Rsqrt(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = 1.0 / np.sqrt(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Sqrt(PrimitiveWithInfer):
@@ -1036,6 +1124,7 @@ class Sqrt(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Sqrt"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -1043,6 +1132,14 @@ class Sqrt(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = np.sqrt(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Reciprocal(PrimitiveWithInfer):
@@ -1073,6 +1170,14 @@ class Reciprocal(PrimitiveWithInfer):
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
         return x
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = 1.0 / x
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Pow(_MathBinaryOp):
@@ -1109,6 +1214,15 @@ class Pow(_MathBinaryOp):
         [1.0, 16.0, 64.0]
     """
 
+    def infer_value(self, x, power):
+        if x is not None and power is not None:
+            x = x.asnumpy()
+            power = power.asnumpy()
+            out = np.power(x, power)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class Exp(PrimitiveWithInfer):
     """
@@ -1138,6 +1252,14 @@ class Exp(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_subclass("x", x_type, mstype.tensor, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = np.exp(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Expm1(PrimitiveWithInfer):
@@ -1241,6 +1363,14 @@ class Log(PrimitiveWithInfer):
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
         return x
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = np.log(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Log1p(PrimitiveWithInfer):
@@ -1360,6 +1490,15 @@ class Minimum(_MathBinaryOp):
         [1.0, 2.0, 3.0]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.minimum(x, y)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class Maximum(_MathBinaryOp):
     """
@@ -1389,6 +1528,14 @@ class Maximum(_MathBinaryOp):
         [4.0, 5.0, 6.0]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.maximum(x, y)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 class RealDiv(_MathBinaryOp):
     """
@@ -1923,6 +2070,13 @@ class Greater(_LogicBinaryOp):
         >>> greater(input_x, input_y)
         [False, True, False]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.greater(x, y))
+            return Tensor(out)
+        return None
 
 
 class GreaterEqual(_LogicBinaryOp):
@@ -1951,6 +2105,13 @@ class GreaterEqual(_LogicBinaryOp):
         >>> greater_equal(input_x, input_y)
         [True, True, False]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.greater_equal(x, y))
+            return Tensor(out)
+        return None
 
 
 class Less(_LogicBinaryOp):
@@ -1979,6 +2140,13 @@ class Less(_LogicBinaryOp):
         >>> less(input_x, input_y)
         [False, False, True]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.less(x, y))
+            return Tensor(out)
+        return None
 
 
 class LessEqual(_LogicBinaryOp):
@@ -2007,6 +2175,13 @@ class LessEqual(_LogicBinaryOp):
         >>> less_equal(input_x, input_y)
         [True, False, True]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.less_equal(x, y))
+            return Tensor(out)
+        return None
 
 
 class LogicalNot(PrimitiveWithInfer):
@@ -2517,6 +2692,7 @@ class Abs(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Abs"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2587,7 +2763,8 @@ class Round(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        """init Round"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2679,7 +2856,6 @@ class Atan2(_MathBinaryOp):
          [[0. 0.7853982]]
     """
 
-
 class SquareSumAll(PrimitiveWithInfer):
     """
     Returns square sum all of a tensor element-wise
@@ -2705,6 +2881,7 @@ class SquareSumAll(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init SquareSumAll"""
+
     def infer_shape(self, x_shape, y_shape):
         validator.check("x1_shape", x_shape, "x2_shape", y_shape, Rel.EQ, self.name)
         return [], []
@@ -2891,3 +3068,41 @@ class Invert(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.int16, mstype.uint16], self.name)
         return x_dtype
+
+
+class Eps(PrimitiveWithInfer):
+    """
+    Creates a tensor filled with `input_x` dtype minimum val.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same type and shape as `input_x`, but filled with `input_x` dtype minimum val.
+
+    Examples:
+        >>> out = P.Eps()(input_x)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Eps"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
+
+    def __infer__(self, input_x):
+        valid_types = [mstype.float16, mstype.float32]
+        validator.check_tensor_type_same({'input_x': input_x['dtype']}, valid_types, self.name)
+
+        x_nptype = mstype.dtype_to_nptype(input_x['dtype'].element_type())
+        if x_nptype == np.float16:
+            min_val = 2 ** (-14)
+        else:
+            min_val = 2 ** (-16)
+
+        res = np.full(input_x['shape'], min_val, x_nptype)
+        out = {
+            'value': Tensor(res),
+            'shape': input_x['shape'],
+            'dtype': input_x['dtype'],
+        }
+        return out

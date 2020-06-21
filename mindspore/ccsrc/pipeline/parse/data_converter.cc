@@ -278,7 +278,7 @@ bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
     if (bprop_graph != nullptr) {
       (void)func_graph->transforms().insert(std::make_pair(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph)));
       (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
-      func_graph->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
     }
   }
   *data = func_graph;

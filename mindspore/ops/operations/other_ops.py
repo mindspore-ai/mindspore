@@ -53,7 +53,7 @@ class Assign(PrimitiveWithInfer):
     )
     @prim_attr_register
     def __init__(self):
-        pass
+        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
 
     def infer_shape(self, variable, value):
         return variable

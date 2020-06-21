@@ -111,9 +111,15 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer) 
   }
 
   buffer << "#IR entry      : @" << graph->ToString() << "." << graph->debug_info()->get_id() << std::endl;
-  buffer << "#flags         :" << std::endl;
-  for (const auto &flag : graph->flags()) {
-    buffer << flag.first << " : " << flag.second << std::endl;
+  buffer << "#attrs         :" << std::endl;
+  for (const auto &attr : graph->attrs()) {
+    buffer << attr.first << " : ";
+    if (attr.second->isa<BoolImm>()) {
+      buffer << GetValue<bool>(attr.second);
+    } else if (attr.second->isa<StringImm>()) {
+      buffer << GetValue<std::string>(attr.second);
+    }
+    buffer << std::endl;
   }
 }
 
@@ -417,10 +423,16 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   fout << std::endl;
 
   for (const auto &sg : *sub_graphs) {
-    fout << "subgraph flag:" << std::endl;
+    fout << "subgraph attr:" << std::endl;
     MS_EXCEPTION_IF_NULL(sg.first);
-    for (const auto &flag : sg.first->flags()) {
-      fout << flag.first << " : " << flag.second << std::endl;
+    for (const auto &attr : sg.first->attrs()) {
+      fout << attr.first << " : ";
+      if (attr.second->isa<BoolImm>()) {
+        fout << GetValue<bool>(attr.second);
+      } else if (attr.second->isa<StringImm>()) {
+        fout << GetValue<std::string>(attr.second);
+      }
+      fout << std::endl;
     }
     fout << "subgraph @" << sg.first->ToString() << ".";
     fout << sg.first->debug_info()->get_id() << "(";

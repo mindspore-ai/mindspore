@@ -84,6 +84,7 @@ class OptimizeIRPassLib {
 
   // Incorporation
   SubstitutionPtr incorporate_getitem_set_;
+  SubstitutionPtr incorporate_getitem_from_param_;
   SubstitutionPtr incorporate_call_;
   SubstitutionPtr incorporate_call_switch_;
 
@@ -92,6 +93,16 @@ class OptimizeIRPassLib {
 
   // Convert
   SubstitutionPtr print_tuple_wrapper_;
+
+  // Unused parameter eliminate
+  SubstitutionPtr unused_parameter_eliminate_;
+  SubstitutionPtr unused_output_eliminate_;
+
+  // AddN eliminate
+  SubstitutionPtr addn_eliminate_;
+
+  // Fusion
+  SubstitutionPtr mark_interface_fusion_;
 };
 
 // the collection of irpass for resolve action
@@ -143,6 +154,23 @@ inline bool IsCNodeGraph(const AnfNodePtr &node) {
 
   auto inp0 = node->cast<CNodePtr>()->input(0);
   return IsValueNode<FuncGraph>(inp0);
+}
+
+// Check if CNode Input 0 is Func Graph of graph kernel.
+inline bool IsCNodeGraphKernel(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+
+  auto inp0 = node->cast<CNodePtr>()->input(0);
+  if (IsValueNode<FuncGraph>(inp0)) {
+    auto fg = GetValueNode<FuncGraphPtr>(inp0);
+    if (fg == nullptr) {
+      return false;
+    }
+    return fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+  }
+  return false;
 }
 
 // Check if CNode Input 0 is CNode
