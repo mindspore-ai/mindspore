@@ -1392,14 +1392,15 @@ void ShardReader::ShuffleTask() {
 
     if (std::dynamic_pointer_cast<ShardShuffle>(op)) {
       if (SUCCESS != (*op)(tasks_)) {
-        MS_LOG(WARNING) << "Reshuffle reader tasks failed.";
+        MS_LOG(WARNING) << "Redo randomSampler failed.";
       }
     } else if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
-      if (SUCCESS != op->PreExecute(tasks_)) {
-        MS_LOG(WARNING) << "Distribute reshuffle reader tasks failed.";
+      if (SUCCESS != (*op)(tasks_)) {
+        MS_LOG(WARNING) << "Redo distributeSampler failed.";
       }
     }
   }
+  if (tasks_.permutation_.empty()) tasks_.MakePerm();
 }
 
 }  // namespace mindrecord

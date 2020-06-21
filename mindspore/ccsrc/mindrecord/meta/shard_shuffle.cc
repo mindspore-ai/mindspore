@@ -24,6 +24,7 @@ ShardShuffle::ShardShuffle(uint32_t seed, ShuffleType shuffle_type)
     : shuffle_seed_(seed), shuffle_type_(shuffle_type) {}
 
 MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
+  shuffle_seed_++;
   if (tasks.categories < 1) {
     return FAILED;
   }
@@ -46,7 +47,6 @@ MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
       }
     }
   }
-  shuffle_seed_++;
   return SUCCESS;
 }
 }  // namespace mindrecord
