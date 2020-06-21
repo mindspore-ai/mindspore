@@ -26,7 +26,6 @@ namespace mindspore {
 namespace lite {
 class AnfConverter {
  public:
-  static int TestFuncGraphBuild(const FuncGraphPtr &graph);
   static std::shared_ptr<FuncGraph> RunAnfConverter(const std::string &file_path);
   static std::shared_ptr<FuncGraph> RunAnfConverter(const char *buf, const size_t buf_size);
 

@@ -96,8 +96,6 @@ std::shared_ptr<FuncGraph> AnfConverter::RunAnfConverter(const std::string &file
   ReadOnnxFromBinary(modelFile, &model_);
   MSANFModelParser model_parser;
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(model_);
-  MS_EXCEPTION_IF_NULL(dstgraph_ptr);
-  TestFuncGraphBuild(dstgraph_ptr);
   return dstgraph_ptr;
 }
 
@@ -111,33 +109,7 @@ std::shared_ptr<FuncGraph> AnfConverter::RunAnfConverter(const char *buf, const 
   }
   MSANFModelParser model_parser;
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(model_);
-  MS_EXCEPTION_IF_NULL(dstgraph_ptr);
-  TestFuncGraphBuild(dstgraph_ptr);
   return dstgraph_ptr;
-}
-
-int AnfConverter::TestFuncGraphBuild(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto node_return = graph->get_return();
-  std::vector<AnfNodePtr> node_list = TopoSort(node_return);
-  MS_LOG(INFO) << "node_list size is : " << node_list.size();
-  for (auto &node : node_list) {
-    if (node->isa<CNode>()) {
-      auto node_CN = node->cast<CNodePtr>();
-      MS_LOG(INFO) << "CN node: " << node_CN->input(0)->ToString() << ", input size :" << node_CN->size();
-    } else if (node->isa<Parameter>()) {
-      auto node_Para = node->cast<ParameterPtr>();
-      if (node_Para->has_default()) {
-        MS_LOG(INFO) << "Parameter node: " << node_Para->name() << "has default value!";
-      } else {
-        MS_LOG(INFO) << "Parameter node: " << node_Para->name();
-      }
-    } else if (node->isa<ValueNode>()) {
-      auto node_Value = node->cast<ValueNodePtr>();
-      MS_LOG(INFO) << "Value node: " << node_Value->ToString();
-    }
-  }
-  return 0;
 }
 }  // namespace lite
 }  // namespace mindspore

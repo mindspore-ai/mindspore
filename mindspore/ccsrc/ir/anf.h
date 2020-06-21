@@ -217,6 +217,7 @@ class CNode : public AnfNode {
   void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
 
   std::string fullname_with_scope() override;
+  void set_fullname_with_scope(const std::string full_name) { fullname_with_scope_ = full_name; }
   std::string DebugString(int recursive_level = 1) const override;
   std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
 

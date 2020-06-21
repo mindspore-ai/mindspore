@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
+#include "utils/load_onnx/anf_model_parser.h"
 #include <functional>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include "utils/load_onnx/anf_model_parser.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/tensor.h"
 #include "ir/param_value_py.h"
 #include "operator/ops.h"
+#include "pipeline/static_analysis/abstract_value.h"
 #include "proto/onnx.pb.h"
 #include "utils/log_adapter.h"
 
@@ -33,6 +34,8 @@ namespace mindspore {
 namespace lite {
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kCNodeShapeAttr[] = "shape";
+static constexpr char kCNodeShape1Attr[] = "shape1";
+static constexpr char kCNodeShape2Attr[] = "shape2";
 enum ParseForm : int {
   FORM_PARSE_TYPE = 0,
   FORM_PARSE_SCALAR = 1,
@@ -56,14 +59,15 @@ static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
   void ParseAttrInScalar_##type##_##valuetype(const PrimitivePtr &prim, const std::string &attr_name, \
                                               const onnx::TensorProto &attr_tensor) {                 \
     MS_EXCEPTION_IF_NULL(prim);                                                                       \
-    std::vector<valuetype> attr_value_vec;                                                            \
+    std::vector<ValuePtr> attr_value_vec;                                                             \
     for (int i = 0; i < attr_tensor.type##_data_size(); ++i) {                                        \
-      attr_value_vec.push_back(static_cast<valuetype>(attr_tensor.type##_data(i)));                   \
+      auto value = static_cast<valuetype>(attr_tensor.type##_data(i));                                \
+      attr_value_vec.push_back(MakeValue<valuetype>(value));                                          \
     }                                                                                                 \
     if (attr_value_vec.size() == 1) {                                                                 \
-      prim->AddAttr(attr_name, MakeValue<valuetype>(attr_value_vec[0]));                              \
+      prim->AddAttr(attr_name, attr_value_vec[0]);                                                    \
     } else {                                                                                          \
-      prim->AddAttr(attr_name, MakeValue<std::vector<valuetype>>(attr_value_vec));                    \
+      prim->AddAttr(attr_name, std::make_shared<ValueList>(attr_value_vec));                          \
     }                                                                                                 \
   }
 
@@ -247,17 +251,12 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c(true));
   memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
-  if (attr_tensor_type == onnx::TensorProto_DataType_FLOAT) {
-    auto *data_valuennode = reinterpret_cast<float *>(tensor_info->data_c());
-    MS_EXCEPTION_IF_NULL(data_valuennode);
-    auto new_value_node = std::make_shared<ValueNode>(MakeValue(*data_valuennode));
-    anfnode_build_map_[value_node_name] = new_value_node;
-  } else {
-    auto *data_valuenode = reinterpret_cast<int32 *>(tensor_info->data_c());
-    MS_EXCEPTION_IF_NULL(data_valuenode);
-    auto new_value_node = std::make_shared<ValueNode>(MakeValue(*data_valuenode));
-    anfnode_build_map_[value_node_name] = new_value_node;
-  }
+  auto new_value_node = NewValueNode(MakeValue(tensor_info));
+  MS_EXCEPTION_IF_NULL(new_value_node);
+  auto tensor_abstract = tensor_info->ToAbstract();
+  MS_EXCEPTION_IF_NULL(tensor_abstract);
+  new_value_node->set_abstract(tensor_abstract);
+  anfnode_build_map_[value_node_name] = new_value_node;
   return true;
 }
 
@@ -315,7 +314,9 @@ bool MSANFModelParser::ObtainValueNodeInTypeForm(const std::string &value_node_n
     MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
     return false;
   }
-  auto new_value_node = std::make_shared<ValueNode>(TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]));
+  auto new_value_node = NewValueNode(TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]));
+  abstract::AbstractTypePtr abs_type = std::make_shared<abstract::AbstractType>(std::make_shared<TypeType>());
+  new_value_node->set_abstract(abs_type);
   anfnode_build_map_[value_node_name] = new_value_node;
   return true;
 }
@@ -361,31 +362,45 @@ AbstractBasePtr MSANFModelParser::GetAbstractForCNode(const onnx::AttributeProto
   tensor::TensorPtr tensor_info =
     std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor.data_type()], shape_vec);
   MS_EXCEPTION_IF_NULL(tensor_info);
-  return tensor_info->ToAbstract();
+  auto abstract = tensor_info->ToAbstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  return abstract;
 }
 
-bool MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::NodeProto &node_proto,
-                                              const onnx::GraphProto &importProto, const bool &ret_flag) {
+CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                                                  const onnx::NodeProto &node_proto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
   if (!node_proto.has_op_type()) {
     MS_LOG(ERROR) << "Get CNode op_type failed!";
-    return false;
+    return nullptr;
   }
   const std::string &node_name = node_proto.output(0);
+  const std::string &fullname_with_scope = node_proto.domain();
   const std::string &node_type = node_proto.op_type();
   PrimitivePtr prim = std::make_shared<Primitive>(node_type);
   MS_EXCEPTION_IF_NULL(prim);
+  prim->set_instance_name(node_type);
 
-  AbstractBasePtr abstract;
+  AbstractBasePtr abstract = nullptr;
+  AbstractBasePtr abstract_first = nullptr;
+  AbstractBasePtr abstract_second = nullptr;
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
     const onnx::AttributeProto &attr_proto = node_proto.attribute(i);
     if (attr_proto.name() == kCNodeShapeAttr) {
       abstract = GetAbstractForCNode(attr_proto);
       continue;
     }
+    if (attr_proto.name() == kCNodeShape1Attr) {
+      abstract_first = GetAbstractForCNode(attr_proto);
+      continue;
+    }
+    if (attr_proto.name() == kCNodeShape2Attr) {
+      abstract_second = GetAbstractForCNode(attr_proto);
+      continue;
+    }
     if (!GetAttrValueForCNode(prim, attr_proto)) {
       MS_LOG(ERROR) << "Get CNode attr failed!";
-      return false;
+      return nullptr;
     }
   }
 
@@ -396,16 +411,64 @@ bool MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGrap
     const std::string &input_name = node_proto.input(i);
     if (anfnode_build_map_.find(input_name) == anfnode_build_map_.end()) {
       MS_LOG(ERROR) << node_name << " input " << i << input_name << "can't find in nodes have parsed";
-      return false;
+      return nullptr;
     }
     inputs.push_back(anfnode_build_map_[input_name]);
   }
   CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
-  cnode_ptr->set_abstract(abstract);
-  if (ret_flag) {
+  if (node_type == "LayerNorm") {
+    AbstractBasePtrList elem;
+    elem.push_back(abstract);
+    elem.push_back(abstract_first);
+    elem.push_back(abstract_second);
+    cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+  } else if (node_type == "ArgMaxWithValue") {
+    AbstractBasePtrList elem;
+    elem.push_back(abstract);
+    elem.push_back(abstract_first);
+    cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+  } else if (nullptr == abstract) {
+    AbstractBasePtrList elem;
+    for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
+      elem.push_back(cnode_ptr->input(index)->abstract());
+    }
+    cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+  } else {
+    cnode_ptr->set_abstract(abstract);
+  }
+  cnode_ptr->set_fullname_with_scope(fullname_with_scope);
+  anfnode_build_map_[node_name] = cnode_ptr;
+  return cnode_ptr;
+}
+
+bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+                                               const CNodePtr &cnode_ptr) {
+  MS_EXCEPTION_IF_NULL(outputFuncGraph);
+  MS_EXCEPTION_IF_NULL(cnode_ptr);
+  std::vector<AnfNodePtr> inputs;
+  if (importProto.output_size() > 1) {
+    inputs.clear();
+    inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+    AbstractBasePtrList elem;
+    for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
+      const onnx::ValueInfoProto &output_node = importProto.output(out_size);
+      const std::string &out_tuple = output_node.name();
+      inputs.push_back(anfnode_build_map_[out_tuple]);
+      elem.push_back(anfnode_build_map_[out_tuple]->abstract());
+    }
+    auto maketuple_ptr = outputFuncGraph->NewCNode(inputs);
+    maketuple_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+    inputs.clear();
+    inputs.push_back(NewValueNode(prim::kPrimReturn));
+    inputs.push_back(maketuple_ptr);
+    auto return_node = outputFuncGraph->NewCNode(inputs);
+    MS_EXCEPTION_IF_NULL(return_node);
+    outputFuncGraph->set_return(return_node);
+    MS_LOG(INFO) << "Construct funcgraph finined, all success.";
+  } else {
     const onnx::ValueInfoProto &output_node = importProto.output(0);
-    const ::onnx::TypeProto &output_typeproto = output_node.type();
+    const onnx::TypeProto &output_typeproto = output_node.type();
     int output_type = output_typeproto.tensor_type().elem_type();
     std::vector<int> output_shape;
     for (int i = 0; i < output_typeproto.tensor_type().shape().dim_size(); ++i) {
@@ -417,20 +480,19 @@ bool MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGrap
     inputs.push_back(NewValueNode(prim::kPrimReturn));
     inputs.push_back(cnode_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
+    MS_EXCEPTION_IF_NULL(return_node);
     return_node->set_abstract(tensor_return->ToAbstract());
     outputFuncGraph->set_return(return_node);
     MS_LOG(INFO) << "Construct funcgraph finined, all success!";
   }
-  anfnode_build_map_[node_name] = cnode_ptr;
   return true;
 }
 
 bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  bool return_flag = false;
   MS_LOG(INFO) << "The CNdoe size : " << importProto.node_size();
+  CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
-    return_flag = (i == importProto.node_size() - 1) ? true : return_flag;
     const onnx::NodeProto &node_proto = importProto.node(i);
     const std::string &node_type = node_proto.op_type();
     if (node_type == kConstantValueNode) {
@@ -440,11 +502,14 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, 
       }
       continue;
     }
-    if (!BuildCNodeForFuncGraph(outputFuncGraph, node_proto, importProto, return_flag)) {
+    cnode_ptr = BuildCNodeForFuncGraph(outputFuncGraph, node_proto);
+    if (cnode_ptr == nullptr) {
       MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: : " << i;
       return false;
     }
   }
+
+  BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr);
   return true;
 }
 
@@ -472,12 +537,12 @@ bool MSANFModelParser::MSANFParseModelConfigureInfo(const onnx::ModelProto &mode
   producer_name_ = model_proto.producer_name();
   MS_LOG(INFO) << "producer_name :" << producer_name_;
 
-  if (!model_proto.has_producer_version()) {
+  if (!model_proto.has_model_version()) {
     MS_LOG(ERROR) << "Parse model producer version from pb file failed!";
     return false;
   }
-  producer_version_ = model_proto.producer_version();
-  MS_LOG(INFO) << "producer_version : " << producer_version_;
+  model_version_ = model_proto.model_version();
+  MS_LOG(INFO) << "producer_version : " << model_version_;
 
   if (!model_proto.has_ir_version()) {
     MS_LOG(ERROR) << "Parse model version from pb file failed!";
@@ -485,14 +550,6 @@ bool MSANFModelParser::MSANFParseModelConfigureInfo(const onnx::ModelProto &mode
   }
   ir_version_ = model_proto.ir_version();
   MS_LOG(INFO) << "ir_version :" << ir_version_;
-
-  const onnx::OperatorSetIdProto &opset_proto = model_proto.opset_import(0);
-  if (!opset_proto.has_version()) {
-    MS_LOG(ERROR) << "Parse opset version from pb file failed!";
-    return false;
-  }
-  opset_version_ = opset_proto.version();
-  MS_LOG(INFO) << "opset_version : " << opset_version_;
   return true;
 }
 
@@ -501,7 +558,6 @@ FuncGraphPtr MSANFModelParser::Parse(const onnx::ModelProto &model_proto) {
   MS_EXCEPTION_IF_NULL(dstGraph);
   if (!MSANFParseModelConfigureInfo(model_proto)) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
-    return nullptr;
   }
   const onnx::GraphProto &graphBuild = model_proto.graph();
   if (!BuildFuncGraph(dstGraph, graphBuild)) {
