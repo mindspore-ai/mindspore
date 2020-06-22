@@ -798,6 +798,64 @@ class AddN(PrimitiveWithInfer):
         return Tensor(out)
 
 
+class AccumulateNV2(PrimitiveWithInfer):
+    """
+    Computes accumulation of all input tensors element-wise.
+
+    AccumulateNV2 is like AddN with a significant difference: AccumulateNV2 won't
+    wait for all of its inputs to be ready before beginning to sum. That is to say,
+    AccumulateNV2 will be able to save memory when inputs are ready at different
+    times since minimum temporary storage is proportional to the output size rather
+    than the inputs size.
+
+    Inputs:
+        - **input_x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
+          is made up of multiple tensors whose dtype is number to be added together.
+
+    Outputs:
+        Tensor, has the same shape and dtype as each entry of the `input_x`.
+
+    Examples:
+        >>> class NetAccumulateNV2(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(NetAccumulateNV2, self).__init__()
+        >>>         self.accumulateNV2 = P.AccumulateNV2()
+        >>>
+        >>>     def construct(self, *z):
+        >>>         return self.accumulateNV2(z)
+        >>>
+        >>> net = NetAccumulateNV2()
+        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.float32)
+        >>> net(input_x, input_y, input_x, input_y)
+        Tensor([10., 14., 18.], shape=(3,), dtype=mindspore.float32)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.__setattr_flag__ = True
+        self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
+
+    def infer_shape(self, inputs):
+        cls_name = self.name
+        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        self.add_prim_attr('n', len(inputs))
+        shp0 = inputs[0]
+        for i, shp in enumerate(inputs):
+            validator.check(f"shape of inputs[{i}]", shp, 'shape of inputs[0]', shp0, Rel.EQ, cls_name)
+        return shp0
+
+    def infer_dtype(self, inputs):
+        cls_name = self.name
+        validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
+        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        args = {}
+        for i, dtype in enumerate(inputs):
+            args[f"inputs[{i}]"] = dtype
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), cls_name)
+        return inputs[0]
+
+
 class Neg(PrimitiveWithInfer):
     """
     Returns a tensor with negative values of the input tensor element-wise.

@@ -82,6 +82,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {"Abs", OperatorType::kRecElmWiseOp},
   {"Acosh", OperatorType::kRecElmWiseOp},
   {"AddN", OperatorType::kRecElmWiseOp},
+  {"AccumulateNV2", OperatorType::kRecElmWiseOp},
   {"Atan2", OperatorType::kRecElmWiseOp},
   {"Erf", OperatorType::kRecElmWiseOp},
   {"Floor", OperatorType::kRecElmWiseOp},
