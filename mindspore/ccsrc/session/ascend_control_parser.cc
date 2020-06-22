@@ -224,9 +224,6 @@ NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr
   // 3. topological sort
   kg->SetExecOrderByDefault();
   const std::vector<CNodePtr> &nodes = kg->execution_order();
-  if (nodes.empty()) {
-    MS_LOG(EXCEPTION) << "KernelGraph " << kg->ToString() << " has no cnodes!";
-  }
   // 4. insert first_label
   CNodePtr start_label;
   if (last_node != nullptr && last_label != nullptr) {
