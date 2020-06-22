@@ -579,8 +579,10 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   return graph;
 }
 
-std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphPtr &func_graph) {
+std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphPtr &func_graph,
+                                                                std::vector<KernelGraphPtr> *all_out_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
   auto graph = NewKernelGraph();
   front_backend_graph_map_[func_graph] = graph;
@@ -607,7 +609,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
         if (front_backend_graph_map_.find(child_graph) != front_backend_graph_map_.end()) {
           is_trace_back = true;
         } else {
-          (void)ConstructKernelGraph(child_graph);
+          (void)ConstructKernelGraph(child_graph, all_out_graph);
         }
         (void)CreateValueNodeKernelGraph(node, graph.get());
       }
@@ -634,7 +636,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
   }
-  opt::BackendCommonOptimization(graph);
+  all_out_graph->push_back(graph);
   return graph;
 }
 
