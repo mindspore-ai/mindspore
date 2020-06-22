@@ -677,7 +677,7 @@ class SummaryCollector(Callback):
             return output_dataset.dataset_dir
         if isinstance(output_dataset, dataset_files_set):
             return output_dataset.dataset_files[0]
-        return self._get_dataset_path(output_dataset.input[0])
+        return self._get_dataset_path(output_dataset.children[0])
 
     @staticmethod
     def _get_ckpt_file_path(cb_params):
