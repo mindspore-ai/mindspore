@@ -577,6 +577,52 @@ void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGr
   unique_grad->indices_size_ = unique_indices_size;
 }
 
+struct WorkerParamsForReduceSparseGradient {
+  size_t slice_start_{0};
+  size_t slice_end_{0};
+  size_t max_length_{0};
+  size_t outer_dim_{0};
+  std::vector<std::pair<int, size_t>> *sorted_indices_{nullptr};
+  std::vector<size_t> *slice_positions_{nullptr};
+  float *src_value_{nullptr};
+  SparseGradient *unique_grad_{nullptr};
+};
+
+void WorkerForReduceSparseGradient(WorkerParamsForReduceSparseGradient param) {
+  MS_EXCEPTION_IF_NULL(param.sorted_indices_);
+  MS_EXCEPTION_IF_NULL(param.slice_positions_);
+  MS_EXCEPTION_IF_NULL(param.src_value_);
+  MS_EXCEPTION_IF_NULL(param.unique_grad_);
+  auto outer_dim = param.outer_dim_;
+  auto &sorted_indices = *(param.sorted_indices_);
+  auto &slice_positions = *(param.slice_positions_);
+  auto unique_grad = param.unique_grad_;
+  for (size_t slice_id = param.slice_start_; slice_id < param.slice_end_; ++slice_id) {
+    size_t cur_pos = slice_positions[slice_id];
+    int index = sorted_indices[cur_pos].first;
+    unique_grad->indices_[slice_id] = index;
+    size_t start_index = slice_id * outer_dim;
+    auto ret_code = memcpy_s(unique_grad->value_ + start_index, (param.max_length_ - start_index) * sizeof(float),
+                             param.src_value_ + sorted_indices[cur_pos].second, outer_dim * sizeof(float));
+    if (ret_code != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to copy data!";
+    }
+    cur_pos++;
+    size_t end_pos;
+    if (slice_id + 1 < slice_positions.size()) {
+      end_pos = slice_positions[slice_id + 1];
+    } else {
+      end_pos = sorted_indices.size();
+    }
+    while (cur_pos < end_pos) {
+      for (size_t i = 0; i < outer_dim; ++i) {
+        unique_grad->value_[start_index + i] += param.src_value_[sorted_indices[cur_pos].second + i];
+      }
+      cur_pos++;
+    }
+  }
+}
+
 void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
                           size_t outer_dim) {
   MS_EXCEPTION_IF_NULL(origin_sparse_grad.value_);
@@ -584,47 +630,50 @@ void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradie
   MS_EXCEPTION_IF_NULL(unique_grad);
   MS_EXCEPTION_IF_NULL(unique_grad->value_);
   MS_EXCEPTION_IF_NULL(unique_grad->indices_);
-  size_t unique_indices_size = 0;
   std::vector<std::pair<int, size_t>> sorted_indices;
   sorted_indices.reserve(origin_sparse_grad.indices_size_);
   for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
     int index = origin_sparse_grad.indices_[i];
-    if (index < 0 || IntToSize(index) >= first_dim) {
-      continue;
+    if (index >= 0 && IntToSize(index) < first_dim) {
+      sorted_indices.emplace_back(std::pair<int, size_t>(index, i * outer_dim));
     }
-    sorted_indices.emplace_back(std::pair<int, size_t>(index, i * outer_dim));
   }
   std::sort(
     sorted_indices.begin(), sorted_indices.end(),
     [](const std::pair<int, size_t> &left, const std::pair<int, size_t> &right) { return left.first < right.first; });
-
   int last_index = 0;
-  size_t indices_size = sorted_indices.size();
-  size_t start_index = 0;
-  size_t end_index = outer_dim;
-  size_t dst_len = indices_size * outer_dim;
-  for (size_t i = 0; i < indices_size; ++i) {
-    int index = sorted_indices[i].first;
-    if (i == 0 || last_index != index) {
-      if (i > 0 && last_index != index) {
-        unique_indices_size++;
-        start_index += outer_dim;
-        end_index += outer_dim;
-      }
-      unique_grad->indices_[unique_indices_size] = index;
-      auto ret_code = memcpy_s(unique_grad->value_ + start_index, dst_len - start_index,
-                               origin_sparse_grad.value_ + sorted_indices[i].second, outer_dim);
-      if (ret_code != EOK) {
-        MS_LOG(EXCEPTION) << "Failed to copy data!";
-      }
-    } else {
-      for (size_t j = start_index, k = sorted_indices[i].second; j < end_index; ++j, ++k) {
-        unique_grad->value_[j] += origin_sparse_grad.value_[k];
-      }
+  std::vector<size_t> slice_positions;
+  for (size_t i = 0; i < sorted_indices.size(); ++i) {
+    if (i == 0 || last_index != sorted_indices[i].first) {
+      slice_positions.emplace_back(i);
     }
-    last_index = index;
+    last_index = sorted_indices[i].first;
   }
-  unique_grad->indices_size_ = unique_indices_size + 1;
+  size_t thread_num = 8;
+  if (slice_positions.size() < thread_num) {
+    thread_num = slice_positions.size();
+  }
+  size_t stride = (slice_positions.size() + thread_num - 1) / thread_num;
+  thread_num = (slice_positions.size() + stride - 1) / stride;
+  std::vector<std::thread> threads;
+  size_t max_length = sorted_indices.size() * outer_dim;
+  for (size_t i = 0; i < thread_num; ++i) {
+    size_t slice_start = i * stride;
+    size_t slice_end = 0;
+    if (i == thread_num - 1) {
+      slice_end = slice_positions.size();
+    } else {
+      slice_end = slice_start + stride;
+    }
+    WorkerParamsForReduceSparseGradient params{
+      slice_start, slice_end, max_length, outer_dim, &sorted_indices, &slice_positions, origin_sparse_grad.value_,
+      unique_grad};
+    threads.emplace_back(std::thread(WorkerForReduceSparseGradient, params));
+  }
+  for (size_t i = 0; i < thread_num; ++i) {
+    threads[i].join();
+  }
+  unique_grad->indices_size_ = slice_positions.size();
 }
 
 std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index) {
