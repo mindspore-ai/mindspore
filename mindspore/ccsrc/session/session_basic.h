@@ -48,11 +48,7 @@ using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 
 class SessionBasic {
  public:
-  SessionBasic() : device_id_(0) {
-    graphs_ = {};
-    run_op_graphs_ = {};
-    summary_callback_ = nullptr;
-  }
+  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {}
 
   virtual void Init(uint32_t device_id) { device_id_ = device_id; }
 
