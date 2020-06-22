@@ -20,7 +20,6 @@
 #include <memory>
 #include "kernel/cpu/cpu_kernel.h"
 #include "kernel/cpu/cpu_kernel_factory.h"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,8 +34,6 @@ class SparseApplyAdamCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void UpdateSparseMomentum(const SparseGradient &unique_sparse_grad, float *m, float *m_t, float *v, float beta1,
-                            float beta2) const;
   size_t indices_size_{0};
   size_t var_first_dim_size_{0};
   size_t var_outer_dim_size_{1};

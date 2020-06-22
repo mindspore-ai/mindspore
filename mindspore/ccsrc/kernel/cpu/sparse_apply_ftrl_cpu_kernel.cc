@@ -21,6 +21,47 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSparseApplyFtrlInputSize = 5;
+
+void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+  MS_EXCEPTION_IF_NULL(input_params);
+  auto var = input_params->var_;
+  auto accum = input_params->accum_;
+  auto linear = input_params->linear_;
+  auto lr = input_params->lr_;
+  auto l1 = input_params->l1_;
+  auto l2 = input_params->l2_;
+  auto lr_power = input_params->lr_power_;
+  auto unique_sparse_grad = input_params->sparse_grad_;
+  auto var_first_dim_size = input_params->var_first_dim_size_;
+  auto var_outer_dim_size = input_params->var_outer_dim_size_;
+  for (size_t i = start; i < end; ++i) {
+    int index = unique_sparse_grad.indices_[i];
+    if (index < 0 || IntToSize(index) >= var_first_dim_size) {
+      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
+    }
+    size_t start_index = var_outer_dim_size * index;
+    size_t end_index = start_index + var_outer_dim_size;
+    for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
+      auto summed_grad = unique_sparse_grad.value_[k];
+      auto accum_new = accum[j] + summed_grad * summed_grad;
+      if (lr_power == -0.5) {
+        linear[j] += summed_grad - (std::sqrt(accum_new) - std::sqrt(accum[j])) / lr * var[j];
+      } else {
+        linear[j] += summed_grad - (std::pow(accum_new, -lr_power) - std::pow(accum[j], -lr_power)) / lr * var[j];
+      }
+      auto x = Sign(linear[j]) * l1 - linear[j];
+      float y;
+      if (lr_power == -0.5) {
+        y = std::sqrt(accum_new) / lr + 2 * l2;
+      } else {
+        y = std::pow(accum_new, -lr_power) / lr + 2 * l2;
+      }
+      auto pre_shrink = x / y;
+      var[j] = std::fabs(linear[j]) > l1 ? pre_shrink : 0;
+      accum[j] = accum_new;
+    }
+  }
+}
 }  // namespace
 
 void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
@@ -96,33 +137,19 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
                        var_outer_dim_size_);
 
-  for (size_t i = 0; i < unique_sparse_grad.indices_size_; ++i) {
-    int index = unique_sparse_grad.indices_[i];
-    if (index < 0 || IntToSize(index) >= var_first_dim_size_) {
-      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
-    }
-    size_t start_index = var_outer_dim_size_ * index;
-    size_t end_index = start_index + var_outer_dim_size_;
-    for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
-      auto summed_grad = unique_sparse_grad.value_[k];
-      auto accum_new = accum[j] + summed_grad * summed_grad;
-      if (lr_power_ == -0.5) {
-        linear[j] += summed_grad - (std::sqrt(accum_new) - std::sqrt(accum[j])) / lr_ * var[j];
-      } else {
-        linear[j] += summed_grad - (std::pow(accum_new, -lr_power_) - std::pow(accum[j], -lr_power_)) / lr_ * var[j];
-      }
-      auto x = Sign(linear[j]) * l1_ - linear[j];
-      float y;
-      if (lr_power_ == -0.5) {
-        y = std::sqrt(accum_new) / lr_ + 2 * l2_;
-      } else {
-        y = std::pow(accum_new, -lr_power_) / lr_ + 2 * l2_;
-      }
-      auto pre_shrink = x / y;
-      var[j] = std::fabs(linear[j]) > l1_ ? pre_shrink : 0;
-      accum[j] = accum_new;
-    }
-  }
+  MultiThreadComputeParams input_params;
+  input_params.var_ = var;
+  input_params.accum_ = accum;
+  input_params.linear_ = linear;
+  input_params.lr_ = lr_;
+  input_params.l1_ = l1_;
+  input_params.l2_ = l2_;
+  input_params.lr_power_ = lr_power_;
+  input_params.sparse_grad_ = unique_sparse_grad;
+  input_params.var_first_dim_size_ = var_first_dim_size_;
+  input_params.var_outer_dim_size_ = var_outer_dim_size_;
+  const size_t kThreadNum = 16;
+  MultiThreadCompute(ComputeFtrl, &input_params, kThreadNum, unique_sparse_grad.indices_size_);
   return true;
 }
 }  // namespace kernel

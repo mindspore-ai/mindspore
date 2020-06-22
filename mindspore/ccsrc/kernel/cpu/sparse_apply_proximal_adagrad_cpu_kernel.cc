@@ -21,6 +21,39 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSparseApplyProximalAdagradInputSize = 7;
+
+void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+  MS_EXCEPTION_IF_NULL(input_params);
+  auto var = input_params->var_;
+  auto accum = input_params->accum_;
+  auto lr = input_params->lr_;
+  auto l1 = input_params->l1_;
+  auto l2 = input_params->l2_;
+  auto unique_sparse_grad = input_params->sparse_grad_;
+  auto var_first_dim_size = input_params->var_first_dim_size_;
+  auto var_outer_dim_size = input_params->var_outer_dim_size_;
+  for (size_t i = start; i < end; ++i) {
+    int index = unique_sparse_grad.indices_[i];
+    if (index < 0 || IntToSize(index) >= var_first_dim_size) {
+      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
+    }
+    size_t start_index = var_outer_dim_size * index;
+    size_t end_index = start_index + var_outer_dim_size;
+    for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
+      auto summed_grad = unique_sparse_grad.value_[k];
+      accum[j] += summed_grad * summed_grad;
+      auto learning_rate = lr * (1 / std::sqrt(accum[j]));
+      auto prox_v = var[j];
+      prox_v -= summed_grad * learning_rate;
+      if (l1 > 0) {
+        var[j] = Sign(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1, static_cast<float>(0.0)) /
+                 (1 + l2 * learning_rate);
+      } else {
+        var[j] = prox_v / (1 + l2 * learning_rate);
+      }
+    }
+  }
+}
 }  // namespace
 
 void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
@@ -90,27 +123,17 @@ bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::Addre
   ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
                        var_outer_dim_size_);
 
-  for (size_t i = 0; i < unique_sparse_grad.indices_size_; ++i) {
-    int index = unique_sparse_grad.indices_[i];
-    if (index < 0 || IntToSize(index) >= var_first_dim_size_) {
-      MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
-    }
-    size_t start_index = var_outer_dim_size_ * index;
-    size_t end_index = start_index + var_outer_dim_size_;
-    for (size_t j = start_index, k = var_outer_dim_size_ * i; j < end_index; ++j, ++k) {
-      auto summed_grad = unique_sparse_grad.value_[k];
-      accum[j] += summed_grad * summed_grad;
-      auto learning_rate = lr * (1 / std::sqrt(accum[j]));
-      auto prox_v = var[j];
-      prox_v -= summed_grad * learning_rate;
-      if (l1 > 0) {
-        var[j] = Sign(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1, static_cast<float>(0.0)) /
-                 (1 + l2 * learning_rate);
-      } else {
-        var[j] = prox_v / (1 + l2 * learning_rate);
-      }
-    }
-  }
+  MultiThreadComputeParams input_params;
+  input_params.var_ = var;
+  input_params.accum_ = accum;
+  input_params.lr_ = lr;
+  input_params.l1_ = l1;
+  input_params.l2_ = l2;
+  input_params.sparse_grad_ = unique_sparse_grad;
+  input_params.var_first_dim_size_ = var_first_dim_size_;
+  input_params.var_outer_dim_size_ = var_outer_dim_size_;
+  const size_t kThreadNum = 16;
+  MultiThreadCompute(ComputeProximalAdagrad, &input_params, kThreadNum, unique_sparse_grad.indices_size_);
   return true;
 }
 }  // namespace kernel
