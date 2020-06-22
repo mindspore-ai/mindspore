@@ -19,6 +19,9 @@
 #ifndef MINDSPORE_CCSRC_IR_DTYPE_TYPE_ID_H_
 #define MINDSPORE_CCSRC_IR_DTYPE_TYPE_ID_H_
 
+#include <unordered_map>
+#include <string>
+
 namespace mindspore {
 //
 // Supported meta type
@@ -77,5 +80,12 @@ enum TypeId : int {
   kNumberTypeFloat64,
   kNumberTypeEnd
 };
+//
+// TypeId name map
+//
+const std::unordered_map<TypeId, std::string> type_name_map = {
+  {kNumberTypeBool, "Bool"},       {kNumberTypeInt8, "Int8"},       {kNumberTypeUInt8, "UInt8"},
+  {kNumberTypeInt16, "Int16"},     {kNumberTypeInt32, "Int32"},     {kNumberTypeInt64, "Int64"},
+  {kNumberTypeFloat16, "Float16"}, {kNumberTypeFloat32, "Float32"}, {kNumberTypeFloat64, "Float64"}};
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_DTYPE_TYPE_ID_H_
