@@ -19,13 +19,16 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <stdlib.h>
 #endif
+#include <chrono>
 #include <limits>
 #include <memory>
 #include <random>
 #include <string>
+#include <thread>
 
 #include "dataset/core/config_manager.h"
 #include "dataset/core/global_context.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -35,6 +38,17 @@ inline std::mt19937 GetRandomDevice() {
   rand_s(&number);
   std::mt19937 random_device{static_cast<uint32_t>(number)};
 #else
+  int i = 0;
+  while (i < 5) {
+    try {
+      std::mt19937 random_device{std::random_device("/dev/urandom")()};
+      return random_device;
+    } catch (const std::exception& e) {
+      MS_LOG(WARNING) << "Get std::random_device failed, retry: " << i << ", error: " << e.what();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      i++;
+    }
+  }
   std::mt19937 random_device{std::random_device("/dev/urandom")()};
 #endif
   return random_device;

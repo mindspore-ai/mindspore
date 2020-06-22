@@ -270,6 +270,39 @@ def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_c
         epoch2 = []
         epoch3 = []
 
+def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoch(add_and_remove_cv_file):
+    """tutorial for cv minddataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    num_shards = 3
+    epoch_result = [[["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],    # save partition 0 result
+                    [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],    # save partition 1 result
+                    [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]]]    # svae partition 2 result
+
+    for partition_id in range(num_shards):
+        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                                  num_shards=num_shards, shard_id=partition_id)
+
+        data_set = data_set.repeat(3)
+
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            logger.info("-------------- partition : {} ------------------------".format(partition_id))
+            logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
+            logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
+            # total 3 partition, 4 result per epoch, total 12 result
+            epoch_result[partition_id][int(num_iter / 4)][num_iter % 4] = item["file_name"]    # save epoch result
+            num_iter += 1
+        assert num_iter == 12
+        assert epoch_result[partition_id][0] not in (epoch_result[partition_id][1], epoch_result[partition_id][2])
+        assert epoch_result[partition_id][1] not in (epoch_result[partition_id][0], epoch_result[partition_id][2])
+        assert epoch_result[partition_id][2] not in (epoch_result[partition_id][1], epoch_result[partition_id][0])
+        epoch_result[partition_id][0].sort()
+        epoch_result[partition_id][1].sort()
+        epoch_result[partition_id][2].sort()
+        assert epoch_result[partition_id][0] != epoch_result[partition_id][1]
+        assert epoch_result[partition_id][1] != epoch_result[partition_id][2]
+        assert epoch_result[partition_id][2] != epoch_result[partition_id][0]
 
 def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
