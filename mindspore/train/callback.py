@@ -16,7 +16,6 @@
 
 import os
 import stat
-import shutil
 import time
 import numpy as np
 
@@ -625,8 +624,6 @@ class ModelCheckpoint(Callback):
             global _save_dir
             _save_dir = self._directory
             cur_file = os.path.join(self._directory, cur_ckpoint_file)
-            tmp_ckpt_file_name_for_cur_process = str(os.getpid()) + "-" + 'parameters.ckpt'
-            gen_file = os.path.join(_save_dir, tmp_ckpt_file_name_for_cur_process)
             self._last_time_for_keep = time.time()
             self._last_triggered_step = cb_params.cur_step_num
 
@@ -634,10 +631,8 @@ class ModelCheckpoint(Callback):
                 _set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
 
-            _exec_save_checkpoint(cb_params.train_network, gen_file, self._config.integrated_save)
+            _exec_save_checkpoint(cb_params.train_network, cur_file, self._config.integrated_save)
 
-            if os.path.exists(gen_file):
-                shutil.move(gen_file, cur_file)
             self._latest_ckpt_file_name = cur_file
 
     @property

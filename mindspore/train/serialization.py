@@ -15,6 +15,7 @@
 """Model and parameters serialization."""
 import os
 import stat
+from threading import Thread
 import numpy as np
 
 import mindspore.nn as nn
@@ -96,7 +97,23 @@ def _update_param(param, new_param):
         param.set_parameter_data(type(param.data)(new_param.data))
 
 
-def save_checkpoint(parameter_list, ckpoint_file_name):
+def asyn_thread(fun):
+    def wrapper(*args, **kwargs):
+        thr = Thread(target=fun, args=args, kwargs=kwargs)
+        thr.start()
+    return wrapper
+
+
+@asyn_thread
+def asyn_save_fun(ckpoint_file_name, checkpoint_list):
+    logger.info("Asynchronous execute save checkpoint into file.")
+    with open(ckpoint_file_name, "wb") as f:
+        f.write(checkpoint_list.SerializeToString())
+        os.chmod(ckpoint_file_name, stat.S_IRUSR)
+    logger.info("Asynchronous save checkpoint into file process finish.")
+
+
+def save_checkpoint(parameter_list, ckpoint_file_name, asyn_exec=False):
     """
     Saves checkpoint info to a specified file.
 
@@ -104,6 +121,7 @@ def save_checkpoint(parameter_list, ckpoint_file_name):
         parameter_list (list): Parameters list, each element is a dict
                                like {"name":xx, "type":xx, "shape":xx, "data":xx}.
         ckpoint_file_name (str): Checkpoint file name.
+        asyn_exec (bool): Whether asynchronous execute save checkpoint into file.
 
     Raises:
         RuntimeError: Failed to save the Checkpoint file.
@@ -127,10 +145,12 @@ def save_checkpoint(parameter_list, ckpoint_file_name):
             else:
                 for dim in param['data'].shape():
                     param_tensor.dims.append(dim)
-
-        with open(ckpoint_file_name, "wb") as f:
-            f.write(checkpoint_list.SerializeToString())
-        os.chmod(ckpoint_file_name, stat.S_IRUSR)
+        if asyn_exec:
+            asyn_save_fun(ckpoint_file_name, checkpoint_list)
+        else:
+            with open(ckpoint_file_name, "wb") as f:
+                f.write(checkpoint_list.SerializeToString())
+            os.chmod(ckpoint_file_name, stat.S_IRUSR)
 
     except BaseException as e:
         logger.error("Failed to save the checkpoint file %s.", ckpoint_file_name)
@@ -298,7 +318,7 @@ def _save_graph(network, file_name):
         os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
 
 
-def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True):
+def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True, asyn_save=False):
     """
     Saves checkpoint for 'ms' backend.
 
@@ -329,7 +349,7 @@ def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True
         each_param["data"] = param_data
         param_list.append(each_param)
 
-    save_checkpoint(param_list, ckpoint_file_name)
+    save_checkpoint(param_list, ckpoint_file_name, asyn_save)
 
 
 def _get_merged_param_data(net, param_name, param_data):
