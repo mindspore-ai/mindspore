@@ -454,11 +454,4 @@ fi
 cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
 cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
 
-if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
-    so_lib_dir=${BUILD_PATH}/package/mindspore/lib
-    akg_build_dir=${BUILD_PATH}/mindspore/akg/mindspore/ccsrc/akg
-    mkdir -p ${so_lib_dir}
-    cp ${akg_build_dir}/*.so ${so_lib_dir}
-fi
-
 echo "---------------- mindspore: build end   ----------------"
