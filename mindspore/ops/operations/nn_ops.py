@@ -2157,10 +2157,10 @@ class ResizeBilinear(PrimitiveWithInfer):
         Tensor, resized image. Tensor of shape `(N_i, ..., N_n, new_height, new_width)` in `float32`.
 
     Examples:
-        >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.int32)
+        >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> resize_bilinear = P.ResizeBilinear((5, 5))
         >>> result = resize_bilinear(tensor)
-        >>> assert result.shape == (5, 5)
+        >>> assert result.shape == (1, 1, 5, 5)
     """
 
     @prim_attr_register
@@ -2176,6 +2176,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, input_dtype):
+        validator.check_tensor_type_same({'input_dtype': input_dtype}, [mstype.float16, mstype.float32], self.name)
         return mstype.tensor_type(mstype.float32)
 
 

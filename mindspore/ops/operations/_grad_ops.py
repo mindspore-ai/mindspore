@@ -1066,6 +1066,8 @@ class StridedSliceGrad(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['dy', 'shapex', 'begin', 'end', 'strides'], outputs=['output'])
 
     def __infer__(self, dy, shapex, begin, end, strides):
+        args = {"shapex": shapex['dtype'],"begin": begin['dtype'],"end": end['dtype'],"strides": strides['dtype']}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return {'shape': shapex['value'],
                 'dtype': dy['dtype'],
                 'value': None}
