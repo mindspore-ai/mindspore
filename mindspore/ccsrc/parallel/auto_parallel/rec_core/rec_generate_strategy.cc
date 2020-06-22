@@ -135,17 +135,6 @@ std::vector<std::vector<int32_t>> PreparePReLU(const std::shared_ptr<Graph> &gra
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareBatchNorm(const std::shared_ptr<Graph> &graph,
-                                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                   const size_t iter_graph, const size_t iter_ops) {
-  std::vector<std::vector<int32_t>> strategies = MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
-  for (size_t i = 1; i < strategies.size(); i++) {
-    strategies[i][0] = strategies[0][1];
-  }
-  strategies[1][0] = 1;
-  return strategies;
-}
-
 std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vector<int32_t>> &s) {
   std::vector<std::vector<int32_t>> strategies;
   strategies.push_back(*s);
@@ -155,10 +144,15 @@ std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vect
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<std::vector<int32_t>> &s) {
-  std::vector<std::vector<int32_t>> strategies;
+std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &graph,
+                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                const size_t iter_graph, const size_t iter_ops) {
+  std::vector<std::vector<int32_t>> strategies = MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
+  strategies[0][0] = strategies[0][1];
+  strategies[0][1] = 1;
+  graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = graph->nodes[iter_graph].tensor_parm.tensor_str.str_w;
+  graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = 1.0;
   std::vector<int32_t> s_empty = {};
-  strategies.push_back(*s);
   strategies.push_back(s_empty);
   strategies.push_back(s_empty);
   return strategies;
@@ -287,8 +281,8 @@ std::vector<std::vector<int32_t>> PrepareStrategy(const std::shared_ptr<Graph> &
     return PrepareMatMul(graph, ops, iter_graph, iter_ops);
   } else if (type == PRELU) {
     return PreparePReLU(graph, ops, iter_graph, iter_ops);
-  } else if (type == BATCH_NORM) {
-    return PrepareBatchNorm(graph, ops, iter_graph, iter_ops);
+  } else if (type == ONEHOT) {
+    return PrepareOneHot(graph, ops, iter_graph, iter_ops);
   } else if (type == SOFTMAX || type == LOG_SOFTMAX || type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS ||
              type == SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
@@ -513,9 +507,6 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
   if (ops[iter_ops]->type() == BIAS_ADD) {
     return PrepareBiasAdd(s_ptr);
   }
-  if (ops[iter_ops]->type() == ONEHOT) {
-    return PrepareOneHot(s_ptr);
-  }
   if (ops[iter_ops]->type() == GATHERV2) {
     return PrepareGatherV2(s_ptr);
   }
@@ -559,7 +550,7 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> grap
     std::vector<std::vector<int32_t>> stra;
     std::vector<int32_t> s;
     size_t incoming_op_index = FindIndexOfOperatorIncoming(input_tensor_names, iter_ops);
-    if (incoming_op_index != SIZE_MAX && ops[iter_ops]->type() != ONEHOT) {
+    if (incoming_op_index != SIZE_MAX) {
       auto iter_graph = index_list->at(incoming_op_index);
       if (iter_graph != SIZE_MAX) {
         s = CopyIncomingOperatorOutputStrategy(graph, ops, iter_ops, iter_graph);
@@ -640,7 +631,7 @@ std::vector<int32_t> CopyOutgoingOperatorInputStrategy(const std::vector<std::sh
   }
 
   if (outgoing_op_index != SIZE_MAX && iter_op_inputs != SIZE_MAX) {
-    for (size_t k = 0; k < ops[outgoing_op_index]->selected_strategy()->GetInputDim()[iter_op_inputs].size(); ++k) {
+    for (size_t k = 0; k < ops[iter_ops]->outputs_tensor_info()[0].shape().size(); ++k) {
       s.push_back(ops[outgoing_op_index]->selected_strategy()->GetInputDim()[iter_op_inputs][k]);
     }
   }

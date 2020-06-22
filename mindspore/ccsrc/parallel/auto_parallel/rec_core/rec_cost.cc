@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace parallel {
-#define DOUBLE_MAX (std::numeric_limits<double>::max)()
 
 // Compute redistributed cost
 double CostRedis(const Graph::NodeType &node,
@@ -621,75 +620,50 @@ StrategyRec CostCommon::ChoseStr(const std::vector<double> &cost_op, StrategyRec
       break;
 
     default:
-      MS_LOG(EXCEPTION) << "Failure: CostBiasAdd failed.";
+      MS_LOG(EXCEPTION) << "Failure: Common failed.";
   }
   return str;
 }
 
-// Get weight for BN
-double CostBatchNorm::GetMinCostIn(const OperatorRec &op) {
-  int tensor = static_cast<int>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h) *
-               static_cast<int>(op.arguments[0].tensor_shape.shape_n * op.arguments[0].tensor_str.str_n) *
-               static_cast<int>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w) *
-               static_cast<int>(op.arguments[0].tensor_shape.shape_c * op.arguments[0].tensor_str.str_c);
-
-  std::vector<double> cost_in;
-  cost_in.push_back(StrDimB(tensor) * 1.2);
-  cost_in.push_back(DOUBLE_MAX);
-  cost_in.push_back(StrDimH(tensor) * 1.2);
-  cost_in.push_back(StrDimW(tensor) * 1.2);
-
-  return *min_element(cost_in.begin(), cost_in.end());
-}
-
-// Get optimal strategy for BN
-StrategyRec CostBatchNorm::GetOptimalStr(const Graph::NodeType &node,
-                                         const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                                         const Graph &graph) {
+// Get optimal strategy for BatchParallel OPs
+StrategyRec CostBatchParallel::GetOptimalStr(const Graph::NodeType &node) {
   const OperatorRec &op = node.apply;
-
-  int tensor_filter_n = static_cast<int>(op.arguments[1].tensor_shape.shape_n * op.arguments[1].tensor_str.str_n);
-  int tensor_filter_c = static_cast<int>(op.arguments[1].tensor_shape.shape_c * op.arguments[1].tensor_str.str_c);
-  int tensor_filter_h = static_cast<int>(op.arguments[1].tensor_shape.shape_h * op.arguments[1].tensor_str.str_h);
-  int tensor_filter_w = static_cast<int>(op.arguments[1].tensor_shape.shape_w * op.arguments[1].tensor_str.str_w);
-
-  int tensor_filter = tensor_filter_h * tensor_filter_w * tensor_filter_n * tensor_filter_c;
-
-  int output_tensor_h = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h);
-  int output_tensor_w = static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w);
-  int output_tensor_n = static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n);
+  int tensor_n = static_cast<int>(op.arguments[0].tensor_shape.shape_n * op.arguments[0].tensor_str.str_n);
+  int tensor_c = static_cast<int>(op.arguments[0].tensor_shape.shape_c * op.arguments[0].tensor_str.str_c);
+  int tensor_h = static_cast<int>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h);
+  int tensor_w = static_cast<int>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w);
 
   std::vector<double> cost_op;
-  std::vector<std::vector<float>> mode;
 
-  if (output_tensor_n < 2 || output_tensor_n % 2 != 0) {
+  if (tensor_n < 2 || tensor_n % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
-    cost_op.push_back(StrDimB(tensor_filter) + CostRedis(node, node_name_to_strategy,
-                                                         mode = {{0.5, 1, 1, 1}, {1, 1, 1, 1}, {0.5, 1, 1, 1}}, graph));
+    cost_op.push_back(cost_in_);
   }
 
-  cost_op.push_back(DOUBLE_MAX);
-
-  if (output_tensor_h < 2 || output_tensor_h % 2 != 0) {
+  if (tensor_c < 2 || tensor_c % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
-    cost_op.push_back(StrDimH(tensor_filter) + CostRedis(node, node_name_to_strategy,
-                                                         mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}}, graph));
+    cost_op.push_back(cost_in_);
   }
 
-  if (output_tensor_w < 2 || output_tensor_w % 2 != 0) {
+  if (tensor_h < 2 || tensor_h % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
-    cost_op.push_back(StrDimW(tensor_filter) + CostRedis(node, node_name_to_strategy,
-                                                         mode = {{1, 1, 1, 0.5}, {1, 1, 1, 1}, {1, 1, 1, 0.5}}, graph));
+    cost_op.push_back(cost_in_);
+  }
+
+  if (tensor_w < 2 || tensor_w % 2 != 0) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    cost_op.push_back(cost_in_);
   }
 
   return ChoseStr(cost_op, node.apply.str);
 }
 
-// Chose strategy for BatchNorm
-StrategyRec CostBatchNorm::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
+// Chose strategy for BatchParallel op
+StrategyRec CostBatchParallel::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
   uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
@@ -700,36 +674,32 @@ StrategyRec CostBatchNorm::ChoseStr(const std::vector<double> &cost_op, Strategy
       str.inputTensor[0].str_n /= 2.0;
       str.outputTensor.str_n /= 2.0;
       str.cut_counter += 1;
-      str.cost = str.cost + cost_in_b_;
+      str.cost = str.cost + cost_in_;
       break;
 
     case 1:
       str.inputTensor[0].str_c /= 2.0;
-      str.inputTensor[1].str_c /= 2.0;
-      str.inputTensor[2].str_c /= 2.0;
-      str.inputTensor[3].str_c /= 2.0;
-      str.inputTensor[4].str_c /= 2.0;
       str.outputTensor.str_c /= 2.0;
       str.cut_counter += 1;
-      str.cost = str.cost + cost_in_c_;
+      str.cost = str.cost + cost_in_;
       break;
 
     case 2:
       str.inputTensor[0].str_h /= 2.0;
       str.outputTensor.str_h /= 2.0;
       str.cut_counter += 1;
-      str.cost = str.cost + cost_in_h_;
+      str.cost = str.cost + cost_in_;
       break;
 
     case 3:
       str.inputTensor[0].str_w /= 2.0;
       str.outputTensor.str_w /= 2.0;
       str.cut_counter += 1;
-      str.cost = str.cost + cost_in_w_;
+      str.cost = str.cost + cost_in_;
       break;
 
     default:
-      MS_LOG(EXCEPTION) << "Failure: CostBatchNorm failed.";
+      MS_LOG(EXCEPTION) << "Failure: CostBatchParallel failed.";
   }
   return str;
 }
