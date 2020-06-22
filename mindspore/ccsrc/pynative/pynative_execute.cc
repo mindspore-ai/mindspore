@@ -937,6 +937,11 @@ void PynativeExecutor::Clear(const std::string &flag) {
   if (flag == "resource") {
     MS_LOG(INFO) << "Clear res";
     Clean();
+    // Maybe exit in the pynative runing op, so need reset pynative flag.
+    auto ms_context = MsContext::GetInstance();
+    if (ms_context != nullptr) {
+      ms_context->set_enable_pynative_infer(false);
+    }
     return;
   }
   MS_LOG(INFO) << "Clear";
