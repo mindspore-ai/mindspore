@@ -8,11 +8,11 @@ MobileNetV2 builds upon the ideas from MobileNetV1, using depthwise separable co
 
 # Dataset
 
-Dataset used: imagenet
+Dataset used: imagenet2012
 
-- Dataset size: ~125G, 1.2W colorful images in 1000 classes
-	- Train: 120G, 1.2W images
-	- Test: 5G, 50000 images
+- Dataset size: ~125G
+	- Train: 120G, 1281167 images: 1000 directories
+	- Test: 5G, 50000 images: images should be classified into 1000 directories firstly, just like train images
 - Data format: RGB images.
 	- Note: Data will be processed in src/dataset.py 
 
@@ -139,4 +139,4 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 | Model for inference        |                               |                           |                      |
 
 # ModelZoo Homepage  
- [Link](https://gitee.com/mindspore/mindspore/tree/master/mindspore/model_zoo)  
+ [Link](https://gitee.com/mindspore/mindspore/tree/master/mindspore/model_zoo)
