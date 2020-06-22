@@ -51,7 +51,7 @@ Parameters for both training and inference can be set in config.py.
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
-"epoch_size": 110,                 # only valid for taining, which is always 1 for inference 
+"epoch_size": 120,                 # only valid for taining, which is always 1 for inference 
 "pretrained_epoch_size": 90,       # epoch size that model has been trained before load pretrained checkpoint
 "buffer_size": 1000,              # number of queue size in data preprocessing
 "image_height": 224,              # image height
@@ -65,7 +65,7 @@ Parameters for both training and inference can be set in config.py.
 "label_smooth": True,             # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
 "lr_init": 0,                     # initial learning rate
-"lr_max": 0.1,                    # maximum learning rate
+"lr_max": 0.005,                    # maximum learning rate
 ```
 
 ## Running the example

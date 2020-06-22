@@ -47,7 +47,6 @@ Dataset used: imagenet
   ├── eval.py
 ```
 
-Notation: Current hyperparameters only test on 4 cards while training, if want to use 8 cards for training, should change parameters like learning rate in 'src/config.py'.
 
 ## Training process
 

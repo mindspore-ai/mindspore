@@ -91,11 +91,15 @@ def fake_quant_min_max_per_channel_update(x, min_val, max_val, min_up, max_up,
     min_dtype = min_val.get("dtype")
     max_shape = max_val.get("ori_shape")
     max_dtype = max_val.get("dtype")
-
+    # for Dense weight quant, 2d[co,ci] -> 4d[1,co,ci,1], channel_axis_ need change to 1.
+    if channel_axis == 0 and x_shape[0] != min_shape[0] and x_shape[1] == min_shape[0]:
+        channel_axis_ = 1
+    else:
+        channel_axis_ = channel_axis
     util.check_kernel_name(kernel_name)
     util.check_shape_rule(x_shape)
-    util.check_shape_rule(min_shape, 1, 1, x_shape[channel_axis])
-    util.check_shape_rule(max_shape, 1, 1, x_shape[channel_axis])
+    util.check_shape_rule(min_shape, 1, 1, x_shape[channel_axis_])
+    util.check_shape_rule(max_shape, 1, 1, x_shape[channel_axis_])
     util.check_tensor_shape_size(x_shape)
     util.check_tensor_shape_size(min_shape)
     util.check_tensor_shape_size(max_shape)
@@ -122,7 +126,7 @@ def fake_quant_min_max_per_channel_update(x, min_val, max_val, min_up, max_up,
     min_data = tvm.placeholder(shape_c, name="min_val", dtype=x_dtype)
     max_data = tvm.placeholder(shape_c, name="max_val", dtype=x_dtype)
     res_list = fake_quant_min_max_per_channel_update_compute(input_data, min_data, max_data,
-                                                             ema, ema_decay, quant_min, quant_max, training, channel_axis, kernel_name)
+                                                             ema, ema_decay, quant_min, quant_max, training, channel_axis_, kernel_name)
 
     with tvm.target.cce():
         sch = generic.auto_schedule(res_list)

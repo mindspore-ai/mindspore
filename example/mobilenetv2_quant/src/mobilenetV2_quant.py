@@ -20,7 +20,8 @@ from mindspore.ops.operations import TensorAdd
 __all__ = ['mobilenet_v2_quant']
 
 _ema_decay = 0.999
-_symmetric = False
+_symmetric = True
+_per_channel = True
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -77,10 +78,10 @@ class ConvBNReLU(nn.Cell):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
         conv = nn.Conv2dBatchNormQuant(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
-                                       group=groups)
+                                       group=groups, per_channel=_per_channel, symmetric=_symmetric)
         layers = [conv, nn.ReLU()]
         self.features = nn.SequentialCell(layers)
-        self.fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=_symmetric, min_init=0)
+        self.fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, min_init=0)
 
     def construct(self, x):
         output = self.features(x)
@@ -119,12 +120,13 @@ class InvertedResidual(nn.Cell):
             # dw
             ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
             # pw-linear
-            nn.Conv2dBatchNormQuant(hidden_dim, oup, kernel_size=1, stride=1, pad_mode='pad', padding=0, group=1),
-            nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=_symmetric)
+            nn.Conv2dBatchNormQuant(hidden_dim, oup, kernel_size=1, stride=1, pad_mode='pad', padding=0, group=1,
+                                    per_channel=_per_channel, symmetric=_symmetric),
+            nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)
         ])
         self.conv = nn.SequentialCell(layers)
         self.add = TensorAdd()
-        self.add_fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=_symmetric)
+        self.add_fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)
 
     def construct(self, x):
         identity = x
@@ -175,7 +177,7 @@ class MobileNetV2Quant(nn.Cell):
         # building first layer
         input_channel = _make_divisible(input_channel * width_mult, round_nearest)
         self.out_channels = _make_divisible(last_channel * max(1.0, width_mult), round_nearest)
-        self.input_fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=_symmetric)
+        self.input_fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)
         features = [ConvBNReLU(3, input_channel, stride=2)]
         # building inverted residual blocks
         for t, c, n, s in self.cfgs:
@@ -189,8 +191,12 @@ class MobileNetV2Quant(nn.Cell):
         # make it nn.CellList
         self.features = nn.SequentialCell(features)
         # mobilenet head
-        head = ([GlobalAvgPooling(), nn.Dense(self.out_channels, num_classes, has_bias=True)] if not has_dropout else
-                [GlobalAvgPooling(), nn.Dropout(0.2), nn.Dense(self.out_channels, num_classes, has_bias=True)])
+        head = ([GlobalAvgPooling(),
+                 nn.DenseQuant(self.out_channels, num_classes, has_bias=True, per_channel=_per_channel,
+                               symmetric=_symmetric)] if not has_dropout else
+                [GlobalAvgPooling(), nn.Dropout(0.2),
+                 nn.DenseQuant(self.out_channels, num_classes, has_bias=True, per_channel=_per_channel,
+                               symmetric=_symmetric)])
         self.head = nn.SequentialCell(head)
 
     def construct(self, x):
