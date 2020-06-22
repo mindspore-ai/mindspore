@@ -1932,7 +1932,7 @@ class Eye(PrimitiveWithInfer):
     Inputs:
         - **n** (int) - Number of rows of returned tensor
         - **m** (int) - Number of columns of returned tensor
-        - **t** (mindspore.dtype) - Mindspore's dtype, The data type of the returned tensor.
+        - **t** (mindspore.dtype) - MindSpore's dtype, The data type of the returned tensor.
 
     Outputs:
         Tensor, a tensor with ones on the diagonal and zeros elsewhere.

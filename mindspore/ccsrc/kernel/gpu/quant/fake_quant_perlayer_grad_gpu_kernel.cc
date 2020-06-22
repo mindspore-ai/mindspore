@@ -14,33 +14,30 @@
  * limitations under the License.
  */
 
-#include "kernel/gpu/quant/fake_quant_grad_gpu_kernel.h"
-#include "kernel/gpu/cuda_impl/fake_quant_impl.cuh"
+#include "kernel/gpu/quant/fake_quant_perlayer_grad_gpu_kernel.h"
+#include "kernel/gpu/cuda_impl/fake_quant_perlayer_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-FakeQuantGradGpuKernel::FakeQuantGradGpuKernel()
+FakeQuantPerLayerGradGpuKernel::FakeQuantPerLayerGradGpuKernel()
     : input_size_(0),
-      min_size_(0),
-      max_size_(0),
-      output_size_(0),
       workspace_size_(0),
       num_bits_(0),
       quant_min_(0),
       quant_max_(0),
-      quant_size_(0),
+      quant_num_(1),
       quant_delay_(0),
       global_step_(0),
       narrow_range_(false),
       symmetric_(false) {}
 
-const std::vector<size_t> &FakeQuantGradGpuKernel::GetInputSizeList() const { return input_size_list_; }
+const std::vector<size_t> &FakeQuantPerLayerGradGpuKernel::GetInputSizeList() const { return input_size_list_; }
 
-const std::vector<size_t> &FakeQuantGradGpuKernel::GetOutputSizeList() const { return output_size_list_; }
+const std::vector<size_t> &FakeQuantPerLayerGradGpuKernel::GetOutputSizeList() const { return output_size_list_; }
 
-const std::vector<size_t> &FakeQuantGradGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
+const std::vector<size_t> &FakeQuantPerLayerGradGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-bool FakeQuantGradGpuKernel::Init(const CNodePtr &kernel_node) {
+bool FakeQuantPerLayerGradGpuKernel::Init(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 4) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but FakeQuantGrad GpuKernel OP needs 4 output.";
@@ -62,87 +59,66 @@ bool FakeQuantGradGpuKernel::Init(const CNodePtr &kernel_node) {
   }
 
   symmetric_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("symmetric"));
-  if (symmetric_) {
-    quant_min_ = 0 - (1 << (num_bits_ - 1));
-    quant_max_ = (1 << (num_bits_ - 1)) - 1;
-  } else {
-    quant_min_ = 0;
-    quant_max_ = (1 << num_bits_) - 1;
-  }
-
   narrow_range_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("narrow_range"));
+
+  // quant min and max value
+  quant_min_ = 0;
+  quant_max_ = (1 << num_bits_) - 1;
   if (narrow_range_) {
     quant_min_++;
   }
 
-  if (quant_size_ == 0) {
-    quant_size_ = 1;
-  }
+  // init size
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    quant_size_ *= SizeToInt(input_shape[i]);
+    quant_num_ *= SizeToInt(input_shape[i]);
   }
-
   input_size_ = sizeof(float);
-  min_size_ = sizeof(float);
-  max_size_ = sizeof(float);
   for (size_t i = 0; i < input_shape.size(); i++) {
     input_size_ *= input_shape[i];
   }
-  output_size_ = input_size_;
-
   InitSizeLists();
   return true;
 }
 
-void FakeQuantGradGpuKernel::InitSizeLists() {
-  input_size_list_.push_back(input_size_);  // gradient
-  input_size_list_.push_back(input_size_);  // input
-  input_size_list_.push_back(min_size_);    // min
-  input_size_list_.push_back(max_size_);    // max
-  output_size_list_.push_back(output_size_);
+void FakeQuantPerLayerGradGpuKernel::InitSizeLists() {
+  input_size_list_.push_back(input_size_);        // gradient
+  input_size_list_.push_back(input_size_);        // input
+  input_size_list_.push_back(sizeof(float));      // min
+  input_size_list_.push_back(sizeof(float));      // max
+  output_size_list_.push_back(input_size_);       // output
+  workspace_size_list_.push_back(sizeof(float));  // scale
+  workspace_size_list_.push_back(sizeof(float));  // nudge_min
+  workspace_size_list_.push_back(sizeof(float));  // nudge_max
 }
 
-bool FakeQuantGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeQuantPerLayerGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *gradient = GetDeviceAddress<float>(inputs, 0);
   float *input = GetDeviceAddress<float>(inputs, 1);
   float *input_min = GetDeviceAddress<float>(inputs, 2);
   float *input_max = GetDeviceAddress<float>(inputs, 3);
+  float *scale = GetDeviceAddress<float>(workspace, 0);
+  float *nudge_min = GetDeviceAddress<float>(workspace, 1);
+  float *nudge_max = GetDeviceAddress<float>(workspace, 2);
 
   if (gradient == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantGradGpuKernel gradient is null";
+    MS_LOG(EXCEPTION) << "FakeQuantPerLayerGradGpuKernel gradient is null";
   }
   if (input == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantGradGpuKernel input is null.";
+    MS_LOG(EXCEPTION) << "FakeQuantPerLayerGradGpuKernel input is null.";
   }
-  if (input_min == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantGradGpuKernel input min is null.";
-  }
-  if (input_max == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantGradGpuKernel input max is null.";
+  if (input_min == nullptr || input_max == nullptr) {
+    MS_LOG(EXCEPTION) << "FakeQuantPerLayerGradGpuKernel input min or max is null.";
   }
 
   if (global_step_ >= quant_delay_) {
-    float *d_scale = nullptr;
-    float *d_nudge_min = nullptr;
-    float *d_nudge_max = nullptr;
-    int size = sizeof(float);
-    // Allocate space for device copies
-    CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_scale), size), "Malloc gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_nudge_min), size), "Malloc gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_nudge_max), size), "Malloc gpu memory failed");
-
-    CalNudge(input_min, input_max, quant_min_, quant_max_, d_nudge_min, d_nudge_max, d_scale,
+    CalNudge(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale,
              reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeQuantizeGrad(input, gradient, output, quant_size_, d_nudge_min, d_nudge_max,
+    CalFakeQuantizeGrad(input, gradient, output, quant_num_, nudge_min, nudge_max,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    // Cleanup
-    CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_scale), "Free gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_min), "Free gpu memory failed");
-    CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_max), "Free gpu memory failed");
   } else {
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -152,6 +128,6 @@ bool FakeQuantGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const
   return true;
 }
 
-MS_REG_GPU_KERNEL(FakeQuantPerLayerGrad, FakeQuantGradGpuKernel)
+MS_REG_GPU_KERNEL(FakeQuantPerLayerGrad, FakeQuantPerLayerGradGpuKernel)
 }  // namespace kernel
 }  // namespace mindspore

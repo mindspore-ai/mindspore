@@ -36,7 +36,7 @@ class Monitor {
   ~Monitor() = default;
 
   // Functor for Perf Monitor main loop.
-  // This function will be the entry point of Mindspore::Dataset::Task
+  // This function will be the entry point of mindspore::Dataset::Task
   Status operator()();
 
   int64_t GetSamplingInterval() { return sampling_interval_; }

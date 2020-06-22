@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_GPUKERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_GPUKERNEL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PER_CHANNEL_GPUKERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PER_CHANNEL_GPUKERNEL_H_
 
 #include <vector>
 #include "kernel/gpu/gpu_kernel.h"
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeQuantGpuKernel : public GpuKernel {
+class FakeQuantPerChannelGpuKernel : public GpuKernel {
  public:
-  FakeQuantGpuKernel();
-  ~FakeQuantGpuKernel() = default;
+  FakeQuantPerChannelGpuKernel();
+  ~FakeQuantPerChannelGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
@@ -39,28 +39,25 @@ class FakeQuantGpuKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
+  void CalFakeQuantize(float *input, float *output, float *input_min, float *input_max, float *nudge_min,
+                       float *nudge_max, float *scale, void *stream_ptr);
+
   size_t input_size_;
-  size_t min_size_;
-  size_t max_size_;
-  size_t output_size_;
-  size_t workspace_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
+  int num_channels_;
   int num_bits_;
+  bool training_;
+  bool symmetric_;
+  bool narrow_range_;
+  int quant_delay_;
   float quant_min_;
   float quant_max_;
-  int quant_num_;
-  int quant_delay_;
-  bool ema_;
-  float ema_decay_;
   int global_step_;
-  bool training_;
-  bool narrow_range_;
-  bool symmetric_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_GPUKERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PER_CHANNEL_GPUKERNEL_H_

@@ -19,7 +19,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/reduce.h>
 #include <thrust/pair.h>
-#include "fake_quant_per_channel_impl.cuh"
+#include "fake_quant_perchannel_impl.cuh"
 #include "device/gpu/cuda_common.h"
 
 /**
@@ -111,44 +111,6 @@ void CalFakeQuantizePerChannel(const float *input, float *output, const int tota
                                cudaStream_t cuda_stream) {
   FakeQuantizePerChannel<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(
     input, output, total_size, channel_size, nudge_min, nudge_max, scale, symmetric);
-}
-
-/**
- * UpdateInputMinMaxPerChannel or UpdateInputMinMaxPerChannel With EMA.
- * @param input_min
- * @param input_max
- * @param min
- * @param max
- * @return
- */
-__global__ void UpdateInputMinMaxPerChannel(float *input_min, float *input_max, float *input, int channels,
-                                            int per_channel_nums, bool ema, float ema_decay) {
-  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channels; i += blockDim.x * gridDim.x) {
-    thrust::pair<float *, float *> sum =
-      thrust::minmax_element(thrust::device, input + i * per_channel_nums, input + per_channel_nums * (i + 1));
-    if (ema) {
-      input_min[i] = ema_decay * sum.first[0] + (1 - ema_decay) * input_min[i];
-      input_max[i] = ema_decay * sum.second[0] + (1 - ema_decay) * input_max[i];
-    } else {
-      input_min[i] = sum.first[0];
-      input_max[i] = sum.second[0];
-    }
-    input_min[i] = input_min[i] > 0 ? 0 : input_min[i];
-    input_max[i] = input_max[i] < 0 ? 0 : input_max[i];
-  }
-}
-
-__global__ void UpdateInputMinMaxPerChannelWithEMA(float *input_min, float *input_max, float min, float max,
-                                                   const float decay) {
-  *input_min = decay * (min) + (1 - decay) * (*input_min);
-  *input_max = decay * (max) + (1 - decay) * (*input_max);
-}
-
-void CalMinMaxPerChannel(float *input, float *input_min, float *input_max, const int total_size, const int channel_size,
-                         const float ema_decay, const bool ema, cudaStream_t cuda_stream) {
-  int per_channel_num = total_size / channel_size;
-  UpdateInputMinMaxPerChannel<<<GET_BLOCKS(channel_size), GET_THREADS, 0, cuda_stream>>>(
-    input_min, input_max, input, channel_size, per_channel_num, ema, ema_decay);
 }
 
 __global__ void FakeQuantizePerChannelGrad(const float *input, const float *gradient, float *output,

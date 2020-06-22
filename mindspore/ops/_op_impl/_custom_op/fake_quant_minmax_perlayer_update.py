@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""FakeQuantMinMaxPerLayerUpdate op"""
+"""MinMaxUpdatePerLayer op"""
 from functools import reduce as functools_reduce
 import te.lang.cce
 from te import tvm
@@ -23,7 +23,7 @@ from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 
-fake_quant_minmax_update_op_info = TBERegOp("FakeQuantMinMaxPerLayerUpdate") \
+fake_quant_minmax_update_op_info = TBERegOp("MinMaxUpdatePerLayer") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("fake_quant_minmax_update.so") \
@@ -48,14 +48,14 @@ fake_quant_minmax_update_op_info = TBERegOp("FakeQuantMinMaxPerLayerUpdate") \
 
 @op_info_register(fake_quant_minmax_update_op_info)
 def _fake_quant_minmax_update_tbe():
-    """FakeQuantMinMaxPerLayerUpdate TBE register"""
+    """MinMaxUpdatePerLayer TBE register"""
     return
 
 
 @fusion_manager.register("fake_quant_minmax_update")
 def fake_quant_minmax_update_compute(x, min_val, max_val, ema, ema_decay, quant_min, quant_max, training,
                                      kernel_name="fake_quant_minmax_update"):
-    """FakeQuantMinMaxPerLayerUpdate compute"""
+    """MinMaxUpdatePerLayer compute"""
     shape = te.lang.cce.util.shape_to_list(x.shape)
     shape_min = te.lang.cce.util.shape_to_list(min_val.shape)
     min_val = te.lang.cce.broadcast(min_val, shape_min, x.dtype)

@@ -18,7 +18,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/pair.h>
 #include "device/gpu/cuda_common.h"
-#include "fake_quant_impl.cuh"
+#include "fake_quant_perlayer_impl.cuh"
 
 __global__ void FakeQuantize(const float *input, float *output, const int size, const float *nudge_min,
                              const float *nudge_max, const float *scale) {

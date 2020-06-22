@@ -18,14 +18,14 @@
 import sys
 
 
-class _MindsporeTestFrameworkkeyword:
+class _MindSporeTestFrameworkkeyword:
     def __setattr__(self, name, value):
         if name in self.__dict__:
             raise TypeError("can not rebind keyword (%s)" % name)
         self.__dict__[name] = value
 
 
-keyword = _MindsporeTestFrameworkkeyword()
+keyword = _MindSporeTestFrameworkkeyword()
 
 keyword.function = "function"
 keyword.inputs = "inputs"

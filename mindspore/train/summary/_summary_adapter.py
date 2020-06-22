@@ -30,7 +30,7 @@ MS_IMAGE_TENSOR_FORMAT = 'NCHW'
 # Set the Event mark
 EVENT_FILE_NAME_MARK = ".out.events.summary."
 # Set the init event of version and mark
-EVENT_FILE_INIT_VERSION_MARK = "Mindspore.Event:"
+EVENT_FILE_INIT_VERSION_MARK = "MindSpore.Event:"
 EVENT_FILE_INIT_VERSION = 1
 
 F32_MIN, F32_MAX = np.finfo(np.float32).min, np.finfo(np.float32).max

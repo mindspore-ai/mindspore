@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_GRAD_GPUKERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_GRAD_GPUKERNEL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PERLAYER_GRAD_GPUKERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PERLAYER_GRAD_GPUKERNEL_H_
 
 #include <vector>
 #include "kernel/gpu/gpu_kernel.h"
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeQuantGradGpuKernel : public GpuKernel {
+class FakeQuantPerLayerGradGpuKernel : public GpuKernel {
  public:
-  FakeQuantGradGpuKernel();
-  ~FakeQuantGradGpuKernel() = default;
+  FakeQuantPerLayerGradGpuKernel();
+  ~FakeQuantPerLayerGradGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
@@ -40,9 +40,6 @@ class FakeQuantGradGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  size_t min_size_;
-  size_t max_size_;
-  size_t output_size_;
   size_t workspace_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
@@ -51,7 +48,7 @@ class FakeQuantGradGpuKernel : public GpuKernel {
   int num_bits_;
   float quant_min_;
   float quant_max_;
-  int quant_size_;
+  int quant_num_;
   int quant_delay_;
   int global_step_;
   bool narrow_range_;
@@ -60,4 +57,4 @@ class FakeQuantGradGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_GRAD_GPUKERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PERLAYER_GRAD_GPUKERNEL_H_

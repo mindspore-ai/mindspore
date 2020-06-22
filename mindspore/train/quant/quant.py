@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""aware quantization."""
+"""quantization aware."""
 
 import copy
 import re
 
 import numpy as np
+import mindspore.context as context
 
 from ... import log as logger
 from ... import nn, ops
@@ -234,7 +235,7 @@ class ConvertToQuantNetwork:
             subcell.has_act = True
             subcell.activation = _AddFakeQuantAfterSubCell(F.identity,
                                                            num_bits=self.act_bits,
-                                                           quant_delay=self.act_delay,
+                                                           quant_delay=self.act_qdelay,
                                                            per_channel=self.act_channel,
                                                            symmetric=self.act_symmetric,
                                                            narrow_range=self.act_range)
@@ -403,29 +404,30 @@ def convert_quant_network(network,
                           narrow_range=(False, False)
                           ):
     r"""
-    Create aware quantizaiton training network.
+    Create quantization aware training network.
 
     Args:
         network (Cell): Obtain a pipeline through network for saving graph summary.
-        quant_delay (int): Number of steps after which weights and activations are quantized during
-            eval. The first element represent weights and second element represent data flow. Default: [0, 0]
+        quant_delay (int or tuple): Number of steps after which weights and activations are quantized during
+            eval. The first element represent weights and second element represent data flow. Default: (0, 0)
         bn_fold (bool): Flag to used bn fold ops for simulation inference operation. Default: False.
         freeze_bn (int): Number of steps after which BatchNorm OP parameters used total mean and variance. Default: 0.
-        num_bits (list of int): Number of bits to use for quantizing weights and activations. The first
-            element represent weights and second element represent data flow. Default: [8, 8]
-        per_channel (list of bool):  Quantization granularity based on layer or on channel. If `True`
+        num_bits (int or tuple): Number of bits to use for quantizing weights and activations. The first
+            element represent weights and second element represent data flow. Default: (8, 8)
+        per_channel (int or tuple):  Quantization granularity based on layer or on channel. If `True`
             then base on per channel otherwise base on per layer. The first element represent weights
-            and second element represent data flow. Default: [False, False]
-        symmetric (list of bool): Quantization algorithm use symmetric or not. If `True` then base on
+            and second element represent data flow. Default: (False, False)
+        symmetric (int or tuple): Quantization algorithm use symmetric or not. If `True` then base on
             symmetric otherwise base on assymmetric. The first element represent weights and second
-            element represent data flow. Default: [False, False]
-        narrow_range (list of bool): Quantization algorithm use narrow range or not. If `True` then base
+            element represent data flow. Default: (False, False)
+        narrow_range (int or tuple): Quantization algorithm use narrow range or not. If `True` then base
             on narrow range otherwise base on off narrow range. The first element represent weights and
-            second element represent data flow. Default: [False, False]
+            second element represent data flow. Default: (False, False)
 
     Returns:
-        Cell, Network which has change to aware quantization training network cell.
+        Cell, Network which has change to quantization aware training network cell.
     """
+    support_device = ["Ascend", "GPU"]
     def convert2list(name, value):
         if not isinstance(value, list) and not isinstance(value, tuple):
             value = [value]
@@ -438,6 +440,9 @@ def convert_quant_network(network,
     per_channel = convert2list("per channel", per_channel)
     symmetric = convert2list("symmetric", symmetric)
     narrow_range = convert2list("narrow range", narrow_range)
+
+    if context.get_context('device_target') not in support_device:
+        raise KeyError("Not support {} backend.".format(context.get_context('device_target')))
 
     net = ConvertToQuantNetwork(network=network,
                                 quant_delay=quant_delay,

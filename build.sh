@@ -248,7 +248,7 @@ checkopts()
   done
 }
 checkopts "$@"
-echo "---------------- mindspore: build start ----------------"
+echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
 if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
