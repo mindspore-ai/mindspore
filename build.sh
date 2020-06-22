@@ -92,7 +92,7 @@ checkopts()
   COMPILE_PREDICT="off"
   USE_GLOG="on"
   PREDICT_PLATFORM=""
-  ENABLE_AKG="off"
+  ENABLE_AKG="on"
   ENABLE_SERVING="off"
   # Process the options
   while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:s' opt
