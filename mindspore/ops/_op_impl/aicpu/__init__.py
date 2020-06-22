@@ -14,6 +14,7 @@
 
 """aicpu ops"""
 from .init_data_set_queue import _init_data_set_queue_aicpu
+from .embedding_lookup import _embedding_lookup_aicpu
 from .dropout_genmask import _dropout_genmask_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
