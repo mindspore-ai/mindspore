@@ -23,7 +23,7 @@ config = ed({
     "loss_scale": 1024,
     "momentum": 0.9,
     "weight_decay": 1e-4,
-    "epoch_size": 110,
+    "epoch_size": 120,
     "pretrained_epoch_size": 90,
     "buffer_size": 1000,
     "image_height": 224,
@@ -37,6 +37,6 @@ config = ed({
     "use_label_smooth": True,
     "label_smooth_factor": 0.1,
     "lr_init": 0,
-    "lr_max": 0.1
+    "lr_max": 0.005
 
 })

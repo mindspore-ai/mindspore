@@ -22,6 +22,7 @@ from mindspore.nn import FakeQuantWithMinMax, Conv2dBatchNormQuant
 _ema_decay = 0.999
 _symmetric = False
 _fake = True
+_per_channel = True
 
 def _weight_variable(shape, factor=0.01):
     init_value = np.random.randn(*shape).astype(np.float32) * factor
@@ -85,7 +86,7 @@ class ConvBNReLU(nn.Cell):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
         conv = Conv2dBatchNormQuant(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
-                                    group=groups, fake=_fake)
+                                    group=groups, fake=_fake, per_channel=_per_channel, symmetric=_symmetric)
         layers = [conv, nn.ReLUQuant()] if _fake else [conv, nn.ReLU()]
         self.features = nn.SequentialCell(layers)
 
@@ -119,10 +120,13 @@ class ResidualBlock(nn.Cell):
         channel = out_channel // self.expansion
         self.conv1 = ConvBNReLU(in_channel, channel, kernel_size=1, stride=1)
         self.conv2 = ConvBNReLU(channel, channel, kernel_size=3, stride=stride)
-        self.conv3 = nn.SequentialCell([Conv2dBatchNormQuant(channel, out_channel, fake=_fake,
+        self.conv3 = nn.SequentialCell([Conv2dBatchNormQuant(channel, out_channel, fake=_fake, per_channel=_per_channel,
+                                                             symmetric=_symmetric,
                                                              kernel_size=1, stride=1, pad_mode='same', padding=0),
                                         FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=False)
                                         ]) if _fake else Conv2dBatchNormQuant(channel, out_channel, fake=_fake,
+                                                                              per_channel=_per_channel,
+                                                                              symmetric=_symmetric,
                                                                               kernel_size=1, stride=1,
                                                                               pad_mode='same', padding=0)
 
@@ -134,18 +138,22 @@ class ResidualBlock(nn.Cell):
 
         if self.down_sample:
             self.down_sample_layer = nn.SequentialCell([Conv2dBatchNormQuant(in_channel, out_channel,
+                                                                             per_channel=_per_channel,
+                                                                             symmetric=_symmetric,
                                                                              kernel_size=1, stride=stride,
                                                                              pad_mode='same', padding=0),
                                                         FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay,
                                                                             symmetric=False)
                                                         ]) if _fake else Conv2dBatchNormQuant(in_channel, out_channel,
                                                                                               fake=_fake,
+                                                                                              per_channel=_per_channel,
+                                                                                              symmetric=_symmetric,
                                                                                               kernel_size=1,
                                                                                               stride=stride,
                                                                                               pad_mode='same',
                                                                                               padding=0)
         self.add = P.TensorAdd()
-        self.fake = FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=False)
+        self.relu = nn.ReLUQuant() if _fake else P.ReLU()
 
     def construct(self, x):
         identity = x
@@ -157,9 +165,7 @@ class ResidualBlock(nn.Cell):
             identity = self.down_sample_layer(identity)
 
         out = self.add(out, identity)
-        out = P.ReLU()(out)
-        if _fake:
-            out = self.fake(out)
+        out = self.relu(out)
 
         return out
 
