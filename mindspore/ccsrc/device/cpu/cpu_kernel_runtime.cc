@@ -147,20 +147,18 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &k
   auto &input_node = kernel_with_index.first;
   auto index = kernel_with_index.second;
   MS_EXCEPTION_IF_NULL(input_node);
-  if (input_node->isa<CNode>() && AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
-    auto cnode = input_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    VectorRef ret;
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
-      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(cnode->input(i), 0);
-      auto out = CreatTensorForOutput(item_with_index, input_map, bound_addresses, need_sync_outputs);
-      ret.push_back(out);
-    }
-    return ret;
-  }
   if (input_node->isa<CNode>()) {
     auto node = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(node);
+    if (AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
+      VectorRef ret;
+      for (size_t i = 1; i < node->inputs().size(); i++) {
+        auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
+        auto out = CreatTensorForOutput(item_with_index, input_map, bound_addresses, need_sync_outputs);
+        ret.push_back(out);
+      }
+      return ret;
+    }
     size_t output_size = AnfAlgo::GetOutputTensorNum(node);
     if (index >= output_size) {
       MS_LOG(EXCEPTION) << "Invalid input index " << index;

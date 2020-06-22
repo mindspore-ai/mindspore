@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <thread>
 #include <nlohmann/json.hpp>
 #include "kernel/kernel.h"
 #include "kernel/oplib/opinfo.h"
