@@ -16,6 +16,8 @@
 #include "dataset/util/path.h"
 
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <new>
 #include <sstream>
 #include <utility>
@@ -26,7 +28,7 @@
 
 namespace mindspore {
 namespace dataset {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 char Path::separator_ = '\\';
 #else
 char Path::separator_ = '/';
@@ -132,7 +134,7 @@ Status Path::CreateDirectory() {
 #if defined(_WIN32) || defined(_WIN64)
     int rc = mkdir(common::SafeCStr(path_));
 #else
-    int rc = mkdir(common::SafeCStr(path_), 0700);
+    int rc = mkdir(common::SafeCStr(path_), S_IRUSR | S_IWUSR | S_IXUSR);
 #endif
     if (rc) {
       std::ostringstream oss;
@@ -182,6 +184,111 @@ Status Path::CreateDirectories() {
   return Status::OK();
 }
 
+Status Path::Remove() {
+  if (Exists()) {
+    if (IsDirectory()) {
+      errno_t err = rmdir(common::SafeCStr(path_));
+      if (err == -1) {
+        std::ostringstream oss;
+        oss << "Unable to delete directory " << path_ << ". Errno = " << errno;
+        RETURN_STATUS_UNEXPECTED(oss.str());
+      }
+    } else {
+      errno_t err = unlink(common::SafeCStr(path_));
+      if (err == -1) {
+        std::ostringstream oss;
+        oss << "Unable to delete file " << path_ << ". Errno = " << errno;
+        RETURN_STATUS_UNEXPECTED(oss.str());
+      }
+    }
+  }
+  return Status::OK();
+}
+
+Status Path::CreateFile(int *file_descriptor) { return OpenFile(file_descriptor, true); }
+
+Status Path::OpenFile(int *file_descriptor, bool create) {
+  int fd;
+  if (file_descriptor == nullptr) {
+    RETURN_STATUS_UNEXPECTED("null pointer");
+  }
+  if (IsDirectory()) {
+    std::ostringstream oss;
+    oss << "Unable to create file " << path_ << " which is a directory.";
+    RETURN_STATUS_UNEXPECTED(oss.str());
+  }
+  // Convert to canonical form.
+  if (strlen(common::SafeCStr(path_)) > PATH_MAX) {
+    RETURN_STATUS_UNEXPECTED(strerror(errno));
+  }
+  char canonical_path[PATH_MAX + 1] = {0x00};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(canonical_path, common::SafeCStr(path_), PATH_MAX) == nullptr) {
+#else
+  if (realpath(common::SafeCStr(path_), canonical_path) == nullptr) {
+#endif
+    if (errno == ENOENT && create) {
+      // File doesn't exist and we are to create it. Let's break it down.
+      auto file_part = Basename();
+      auto parent_part = ParentPath();
+#if defined(_WIN32) || defined(_WIN64)
+      if (_fullpath(canonical_path, common::SafeCStr(parent_part), PATH_MAX) == nullptr) {
+#else
+      if (realpath(common::SafeCStr(parent_part), canonical_path) == nullptr) {
+#endif
+        RETURN_STATUS_UNEXPECTED(strerror(errno));
+      }
+      auto cur_inx = strlen(canonical_path);
+      if ((cur_inx + file_part.length() + 1) > PATH_MAX) {
+        RETURN_STATUS_UNEXPECTED(strerror(errno));
+      }
+      canonical_path[cur_inx++] = separator_;
+      if (strncpy_s(canonical_path + cur_inx, PATH_MAX - cur_inx, common::SafeCStr(file_part), file_part.length()) !=
+          EOK) {
+        RETURN_STATUS_UNEXPECTED(strerror(errno));
+      }
+    } else {
+      RETURN_STATUS_UNEXPECTED(strerror(errno));
+    }
+  }
+  if (create) {
+    fd = open(canonical_path, O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+  } else {
+    fd = open(canonical_path, O_RDWR);
+  }
+  if (fd == -1) {
+    RETURN_STATUS_UNEXPECTED(strerror(errno));
+  }
+  *file_descriptor = fd;
+  return Status::OK();
+}
+
+Status Path::CloseFile(int fd) const {
+  if (close(fd) < 0) {
+    RETURN_STATUS_UNEXPECTED(strerror(errno));
+  }
+  return Status::OK();
+}
+
+Status Path::TruncateFile(int fd) const {
+  int rc;
+  rc = ftruncate(fd, 0);
+  if (rc == 0) {
+    return Status::OK();
+  } else {
+    RETURN_STATUS_UNEXPECTED(strerror(errno));
+  }
+}
+
+std::string Path::Basename() {
+  std::size_t found = path_.find_last_of(separator_);
+  if (found != std::string::npos) {
+    return path_.substr(found + 1);
+  } else {
+    return path_;
+  }
+}
+
 std::shared_ptr<Path::DirIterator> Path::DirIterator::OpenDirectory(Path *f) {
   auto it = new (std::nothrow) DirIterator(f);
 
@@ -208,7 +315,7 @@ Path::DirIterator::~DirIterator() {
 
 Path::DirIterator::DirIterator(Path *f) : dir_(f), dp_(nullptr), entry_(nullptr) {
   MS_LOG(DEBUG) << "Open directory " << f->toString() << ".";
-  dp_ = opendir(common::SafeCStr(f->toString()));
+  dp_ = opendir(f->toString().c_str());
 }
 
 bool Path::DirIterator::hasNext() {
@@ -225,5 +332,10 @@ bool Path::DirIterator::hasNext() {
 }
 
 Path Path::DirIterator::next() { return (*(this->dir_) / Path(entry_->d_name)); }
+
+std::ostream &operator<<(std::ostream &os, const Path &s) {
+  os << s.path_;
+  return os;
+}
 }  // namespace dataset
 }  // namespace mindspore

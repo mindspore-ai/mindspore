@@ -44,20 +44,6 @@ class MemoryPool {
   virtual ~MemoryPool() {}
 };
 
-// Used by unique_ptr
-template <typename T>
-class Deleter {
- public:
-  explicit Deleter(std::shared_ptr<MemoryPool> &mp) : mp_(mp) {}
-
-  ~Deleter() = default;
-
-  void operator()(T *ptr) const { mp_->Deallocate(ptr); }
-
- private:
-  std::shared_ptr<MemoryPool> mp_;
-};
-
 Status DeMalloc(std::size_t s, void **p, bool);
 }  // namespace dataset
 }  // namespace mindspore
