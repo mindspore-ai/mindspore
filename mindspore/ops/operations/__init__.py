@@ -19,6 +19,7 @@ Primitive operator classes.
 A collection of operators to build nerual networks or computing functions.
 """
 
+from .image_ops import (CropAndResize)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
@@ -30,7 +31,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Squeeze, StridedSlice, Tile, TensorScatterUpdate,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
-                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate)
+                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -79,6 +80,8 @@ from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
 from .thor_ops import *
 
 __all__ = [
+    'ReverseSequence',
+    'CropAndResize',
     'TensorAdd',
     'Argmax',
     'Argmin',
