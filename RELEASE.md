@@ -1,3 +1,74 @@
+# Release 0.5.0-beta
+
+## Major Features and Improvements
+
+### Ascend 910 Training and Inference Framework
+* New models
+    * ResNext50: a simple, highly modularized network architecture using aggregated resdiual transformations for image classification on ImageNet 2012 dataset.
+    * MASS: a pre-training method for sequence to sequence based language generation tasks on Text Summarization and Conversational Response Generation using News Crawls 2007-2017 dataset, Gigaword corpus and Cornell movie dialog corpus.
+    * Transformer: a neural network architecture for language understanding on WMT 2014 English-German dataset.
+    * GCN：Graph Convolutional Networks for the task of classification of nodes in a graph on Cora and Citeseer datasets.
+    * GAT：an attention-based graph neural network for node classification on Cora and CiteSeer dataset.
+* Frontend and user interface
+    * Support tensor value and assignment of mixed tensor index in graph mode.
+    * Support tensor comparison, len operator, constexpr syntax, value and assignment of tensor index in pynative mode.
+    * Support converting MindSpore IR to pb format for infer model.
+    * Support print operator to write data directly on the hard disk.
+    * Add the double recursive programming solution for very high speed parallel strategy search in automatic parallel.
+    * User interfaces change log
+      * Allow the learning rate of AdamWeightDecayDynamicLR and Lamb to be 0([!1826](https://gitee.com/mindspore/mindspore/pulls/1826))
+      * Restricting the entire network input parameter is Tensor([!1967](https://gitee.com/mindspore/mindspore/pulls/1967))
+      * Turn shape and dtype into attributes instead of interfaces([!1919](https://gitee.com/mindspore/mindspore/pulls/1919))
+      * Delete multitypefungraph([!2116](https://gitee.com/mindspore/mindspore/pulls/2116))
+      * Refactor the callback module in an encapsulated way, use _CallbackManager instead of _build_callbacks([!2236](https://gitee.com/mindspore/mindspore/pulls/2236))
+      * Delete EmbeddingLookup([!2163](https://gitee.com/mindspore/mindspore/pulls/2163))
+      * Checkpoint add model_type([!2517](https://gitee.com/mindspore/mindspore/pulls/2517))
+* Executor and performance optimization
+    * Heterogeneous execution on CPU and Ascend devices supported, and is verified in Wide&Deep model.
+    * Quantitative training of MobileNetV2, Lenet and Resnet50 on Ascend-910 are supported.
+    * Support new fusion architecture, which can do fusion optimization across graphs and kernels to improve execution speed.
+* Data processing, augmentation, and save format
+    * Support data processing pipeline performance profiling.
+    * Support public dataset loading, such as CLUE and Coco.
+    * Support more text processing, such as more tokenizers and vocab data.
+    * Support MindRecord padded data.
+### Other Hardware Support
+* GPU platform
+    * New model supported: Bert / Wide&Deep.
+    * Support setting max device memory.
+* CPU platform
+    * New model supported: LSTM.
+
+## Bugfixes
+* Models
+    * Bert, Move Bert from `example` to `model_zoo`, optimize network for better performance. ([!1902](https://gitee.com/mindspore/mindspore/pulls/1902))
+    * VGG16, Move VGG16 from `example` to `model_zoo`, optimize network for better accuracy. ([!2645](https://gitee.com/mindspore/mindspore/pulls/2645))
+    * Alexnet, modify parameter setting to improve accuracy ([!1364](https://gitee.com/mindspore/mindspore/pulls/2370))
+* Python API
+    * Fix bug in auto cast([!1766](https://gitee.com/mindspore/mindspore/pulls/1766))
+    * Fix bug of register_backward_hook([!2148](https://gitee.com/mindspore/mindspore/pulls/2148))
+    * Fix bug of tuple args in pynative mode([!1878](https://gitee.com/mindspore/mindspore/pulls/1878))
+    * Fix bug of checking numbers of arguments and graph parameters([!1701](https://gitee.com/mindspore/mindspore/pulls/1701))
+* Executor
+    * Fix bug of loading input data repeatedly in pynative mode([!1966](https://gitee.com/mindspore/mindspore/pulls/1966))
+    * Fix bug of list cannot be used as input in pynative mode([!1765](https://gitee.com/mindspore/mindspore/pulls/1765))
+    * Fix bug of kernel select ([!2103](https://gitee.com/mindspore/mindspore/pulls/2103))
+    * Fix bug of pattern matching for batchnorm fusion in the case of auto mix precision.([!1851](https://gitee.com/mindspore/mindspore/pulls/1851))
+    * Fix bug of generate hccl's kernel info.([!2393](https://gitee.com/mindspore/mindspore/mindspore/pulls/2393))
+* GPU platform
+    * Fix bug of summary feature invalid([!2173](https://gitee.com/mindspore/mindspore/pulls/2173))
+* Data processing
+    * Fix bug of Cifar dataset reading([!2096](https://gitee.com/mindspore/mindspore/pulls/2096))
+    * Fix bug of C++ behavior in RandomCropAndResize([!2026](https://gitee.com/mindspore/mindspore/pulls/2026))
+    * Fix the bug of mindrecord shuffle([!2420](https://gitee.com/mindspore/mindspore/pulls/2420))
+
+## Contributors
+Thanks goes to these wonderful people:
+
+Alexey Shevlyakov, avakh, baihuawei, BowenK, buxue, caifubi, caojian05, Cathy Wong, changzherui, chenfei, chengxianbin, chenhaozhe, chenjianping, chentingting, chenzomi, chujinjin, Danish Farid, dayschan, dengwentao, dinghao, etone-chan, fangzehua, fary86, geekun, Giancarlo Colmenares, gong chen, gukecai, guohongzilong, hangangqiang, heleiwang, hesham, He Wei, hexia, hongxing, huangdongrun, huanghui, islam_amin, Jamie Nisbet, Jesse Lee, jiangjinsheng, jiangzhiwen, jinyaohui, jjfeing, jojobugfree, Jonathan Yan, jonyguo, Junhan Hu, Kang, kingfo, kouzhenzhong, kpy, kswang, laiyongqiang, leopz, liangzelang, lichenever, lihongkang, Li Hongzhang, lilei, limingqi107, lirongzhen1, liubuyu, liuchongming74, liuwenhao4, liuxiao, Lixia Chen, liyanliu, liyong, lizhenyu, lvliang, Mahdi, Margaret_wangrui, meixiaowei, ms_yan, nhussain, ougongchang, panfengfeng, panyifeng, peilinwang, Peilin Wang, pkuliuliu, qianlong, rick_sanchez, shibeiji, Shida He, shijianning, simson, sunsuodong, suteng, Tinazhang, Tron Zhang, unknown, VectorSL, wandongdong, wangcong, wangdongxu, wangdongxu6, wanghua, wangnan39, Wei Luning, wenchunjiang, wenkai, wilfChen, WilliamLian, wukesong, Xian Weizhao, Xiaoda Zhang, xiefangqi, xulei2020, xunxue, xutianchun, Yang, yanghaitao, yanghaitao1, yanghaoran, yangjie, yangjie159, YangLuo, Yanjun Peng, yankai, yanzhenxiang2020, yao_yf, Yi Huaijie, yoonlee666, yuchaojie, yujianfeng, zhangzhongpeng, zhangdengcheng, Zhang Qinghua, zhangyinxia, zhangz0911gm, zhaojichen, zhaoting, zhaozhenlong, zhoufeng, zhouneng, zhousiyi, Zirui Wu, Ziyan, zjun, ZPaC, lihongzhang, wangdongxu
+
+Contributions of any kind are welcome!
+
 # Release 0.3.0-alpha
 
 ## Major Features and Improvements
