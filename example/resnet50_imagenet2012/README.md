@@ -14,7 +14,7 @@ This is an example of training ResNet-50 with ImageNet2012 dataset in MindSpore.
 > ```
 > .  
 > ├── ilsvrc                  # train dataset
-> └── ilsvrc_eval             # infer dataset
+> └── ilsvrc_eval             # infer dataset: images should be classified into 1000 directories firstly, just like train images
 > ```
 
 
