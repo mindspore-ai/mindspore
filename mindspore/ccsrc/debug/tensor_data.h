@@ -51,25 +51,13 @@ class TensorData {
 
   int GetExecutionOrder() { return this->execution_order; }
 
-  int SetExecutionOrder(int execution_order) {
-    this->execution_order = execution_order;
-    return true;
-  }
+  void SetExecutionOrder(int execution_order) { this->execution_order = execution_order; }
 
-  int SetName(const std::string &name) {
-    this->name = name;
-    return true;
-  }
+  void SetName(const std::string &name) { this->name = name; }
 
-  bool SetTensor(mindspore::tensor::TensorPtr out_tensor) {
-    this->tensor_ptr = out_tensor;
-    return true;
-  }
+  void SetTensor(mindspore::tensor::TensorPtr out_tensor) { this->tensor_ptr = out_tensor; }
 
-  bool SetSlot(size_t slot) {
-    this->slot = slot;
-    return true;
-  }
+  void SetSlot(size_t slot) { this->slot = slot; }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_DATA_H_

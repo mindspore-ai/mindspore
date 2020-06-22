@@ -37,8 +37,8 @@ DebugServices &DebugServices::operator=(const DebugServices &other) {
 
 DebugServices::~DebugServices() { delete tensor_loader_; }
 
-void DebugServices::add_watchpoint(unsigned int id, unsigned int watch_condition,
-                                   const std::vector<std::tuple<std::string, bool>> &check_node_list) {
+void DebugServices::AddWatchpoint(unsigned int id, unsigned int watch_condition,
+                                  const std::vector<std::tuple<std::string, bool>> &check_node_list) {
   std::lock_guard<std::mutex> lg(lock_);
 
   watchpoint_t watchpoint_item;
@@ -57,14 +57,14 @@ void DebugServices::add_watchpoint(unsigned int id, unsigned int watch_condition
   watchpoint_table[id] = watchpoint_item;
 }
 
-void DebugServices::remove_watchpoint(unsigned int id) {
+void DebugServices::RemoveWatchpoint(unsigned int id) {
   std::lock_guard<std::mutex> lg(lock_);
   watchpoint_table.erase(id);
 }
 
-void DebugServices::check_watchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
-                                      std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
-                                      std::vector<int> *condition, std::vector<unsigned int> *wacthpoint_id) {
+void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
+                                     std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
+                                     std::vector<int> *condition, std::vector<unsigned int> *wacthpoint_id) {
   std::lock_guard<std::mutex> lg(lock_);
 
   std::vector<std::shared_ptr<TensorData>> tensor_list = tensor_loader_->GetTensor();
@@ -171,9 +171,9 @@ void DebugServices::check_watchpoints(std::vector<std::string> *name, std::vecto
   }
 }
 
-void DebugServices::read_nodes_tensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
-                                       std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
-                                       std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape) {
+void DebugServices::ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
+                                     std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
+                                     std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape) {
   std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> result_list;
   tensor_loader_->SearchTensors(name, &result_list);
 
@@ -189,6 +189,28 @@ void DebugServices::read_nodes_tensors(std::vector<std::string> name, std::vecto
   }
 }
 
-TensorLoader *DebugServices::get_tensor_loader() const { return tensor_loader_; }
+bool DebugServices::IsWatchPoint(std::string kernel_name,
+                                 std::unordered_map<unsigned int, watchpoint_t> watchpoint_table) {
+  bool ret = false;
+  for (auto w_table_item : watchpoint_table) {
+    auto check_node_list = std::get<1>(w_table_item).check_node_list;
+    for (auto check_node : check_node_list) {
+      std::string w_name = std::get<0>(check_node);
+      bool w_type = std::get<1>(check_node);
+      if ((w_type == true &&
+           ((kernel_name.find(w_name) != string::npos && kernel_name.rfind(w_name, 0) == 0) || w_name == "*")) ||
+          (w_type == false && kernel_name == w_name)) {
+        ret = true;
+        return ret;
+      }
+    }
+  }
+  return ret;
+}
+
+TensorLoader *DebugServices::tensor_loader() const { return tensor_loader_; }
+std::unordered_map<unsigned int, DebugServices::watchpoint_t> DebugServices::GetWatchpointTable() {
+  return watchpoint_table;
+}
 
 }  // namespace mindspore

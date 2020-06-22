@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #ifdef ENABLE_D
 #include "runtime/device/ascend/ascend_stream_assign.h"
+#endif
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#include "debug/debug_services.h"
 #endif
 
 namespace mindspore {
@@ -75,6 +78,15 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
   MS_EXCEPTION_IF_NULL(mem_buf);
   auto kernel_prev = mem_buf->used_kernel_;
   MS_EXCEPTION_IF_NULL(kernel_prev);
+#ifdef ENABLE_DEBUGGER
+  auto debugger_ = mindspore::Debugger::GetInstance();
+  DebugServices *debug_services = debugger_->debug_services();
+  auto watchpoint_table = debug_services->GetWatchpointTable();
+  std::string current_kernel_name = kernel_curr->scope_full_name();
+  if (debug_services->IsWatchPoint(current_kernel_name, watchpoint_table)) {
+    return false;
+  }
+#endif
   auto curr_stream_id = kernel_curr->stream_id();
   auto prev_stream_id = kernel_prev->stream_id();
   if (curr_stream_id == prev_stream_id) {

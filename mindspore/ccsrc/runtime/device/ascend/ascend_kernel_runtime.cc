@@ -311,15 +311,24 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
 namespace {
 void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
+  // trans_flag: "true" means tensor values will be transfered to host format, otherwise not.
   bool trans_flag = false;
   const auto &apply_kernels = graph->execution_order();
   // for kernels, execution order starts from 1
   int exec_order = 1;
+  auto debugger_ = mindspore::Debugger::GetInstance();
+  DebugServices *debug_services = debugger_->debug_services();
+  auto watchpoint_table = debug_services->GetWatchpointTable();
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
     auto node_name = AnfAlgo::GetCNodeName(node);
     std::string kernel_name = node->fullname_with_scope();
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
+    if (debugger_->partial_memory()) {
+      if (!debug_services->IsWatchPoint(kernel_name, watchpoint_table)) {
+        continue;
+      }
+    }
     for (size_t j = 0; j < output_size; ++j) {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
       auto type = AnfAlgo::GetOutputInferDataType(node, j);
@@ -347,6 +356,7 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
 
 void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
+  // trans_flag: "true" means tensor values will be transfered to host format, otherwise not.
   bool trans_flag = false;
   const auto &parameters = graph->inputs();
   // for parameters, set its execution order to be 0;

@@ -76,6 +76,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool debugger_enabled() const;
 
+  bool partial_memory();
+
  private:
   // private constructor for singleton
   Debugger();
@@ -129,6 +131,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   int32_t num_step_;
   bool debugger_enabled_;
   bool is_dataset_graph_;
+  bool partial_memory_;
   std::mutex access_lock_;
 
   // singleton
