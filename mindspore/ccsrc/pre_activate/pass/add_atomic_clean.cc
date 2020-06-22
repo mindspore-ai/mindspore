@@ -70,8 +70,8 @@ CNodePtr CreateTbeAtomicCleanNode(const std::shared_ptr<session::KernelGraph> &k
   builder->SetKernelType(KernelType::TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clean_zero.get());
   auto clean_size = CalCleanSize(pre_node);
-  AnfAlgo::SetNodeAttr(kAttrAutomicAddMemSize, MakeValue(clean_size), clean_zero);
-  AnfAlgo::SetNodeAttr(kAttrAutomicOutputIndexs, MakeValue(g_output_idx), clean_zero);
+  AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clean_zero);
+  AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(g_output_idx), clean_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), clean_zero.get());
   return clean_zero;
 }

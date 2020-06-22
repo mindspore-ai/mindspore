@@ -70,50 +70,6 @@ const std::unordered_map<std::string, FusionType> fusion_type_maps = {
   {"SEGMENT", FusionType::SEGMENT},       {"OPAQUE", FusionType::OPAQUE},
 };
 
-bool IsAtomicNode(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto parameters_indexs = kernel_mod->GenParameters();
-  if (parameters_indexs.empty()) {
-    return false;
-  }
-  auto atomic_flag = false;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
-  size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
-  if (input_num + workspace_num + output_num > parameters_indexs.size()) {
-    size_t lossNum = (input_num + workspace_num + output_num) - parameters_indexs.size();
-    for (size_t i = 0; i < lossNum; i++) {
-      parameters_indexs.push_back(0);
-    }
-  }
-  std::vector<int> clean_output_indexs;
-  // in parameters data sort as input->workspace->output
-  size_t index = 0;
-  while (index < output_num) {
-    if (parameters_indexs[input_num + workspace_num + index] == 1) {
-      atomic_flag = true;
-      clean_output_indexs.push_back(SizeToInt(index));
-    }
-    index++;
-  }
-  if (atomic_flag) {
-    AnfAlgo::SetNodeAttr(kAttrAutomicOutputIndexs, MakeValue(clean_output_indexs), kernel_node);
-  }
-  for (size_t i = 0; i < workspace_num; ++i) {
-    if (parameters_indexs[input_num + i] == 1) {
-      atomic_flag = true;
-      AnfAlgo::SetNodeAttr(kAttrAutomicWorkspaceSize,
-                           MakeValue(std::accumulate(workspace_size_list.begin(), workspace_size_list.end(), 0)),
-                           kernel_node);
-      break;
-    }
-  }
-  return atomic_flag;
-}
-
 void KernelMeta::Initialize() {
   kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(getpid()) + "/";
   // remove old kernel cache
