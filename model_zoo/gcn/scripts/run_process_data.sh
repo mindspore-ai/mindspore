@@ -40,7 +40,8 @@ else
 fi
 MINDRECORD_PATH=`pwd`/data_mr
 
-rm -f $MINDRECORD_PATH/*
+rm -f $MINDRECORD_PATH/$DATASET_NAME
+rm -f $MINDRECORD_PATH/$DATASET_NAME.db
 
 cd ../../../example/graph_to_mindrecord || exit
 

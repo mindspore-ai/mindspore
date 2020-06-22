@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
 from mindspore.nn.layer.activation import get_activation
-from src.metrics import Loss, Accuracy
+from model_zoo.gcn.src.metrics import Loss, Accuracy
 
 
 def glorot(shape):
