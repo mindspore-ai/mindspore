@@ -327,9 +327,6 @@ class ParseAst {
 
   bool IsClassMember(const py::object &node);
 
-  // update the graph flags
-  bool UpdateFuncGraphFlags(const FuncGraphPtr &func_graph);
-
  private:
   // save obj,eg: class instance or function
   py::object obj_;
@@ -349,6 +346,9 @@ class ParseAst {
   std::string function_filename_;
   int function_line_offset_;
 };
+
+// update the graph flags
+bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
 

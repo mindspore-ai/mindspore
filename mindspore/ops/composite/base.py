@@ -30,16 +30,16 @@ from ...common.parameter import Parameter
 __all__ = [EnvInstance_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
 
 
-def add_flags(fn, **flags):
+def add_flags(fn=None, **flags):
     """
-    An interface to add flag for a function.
+    An decorator to add flag for a function.
 
     Note:
         Only supports bool value.
 
     Args:
-        fn (Function): Function or cell to add flag.
-        flags (bool): Flags use kwargs.
+        fn (Function): Function or cell to add flag. Default: None.
+        flags (dict): Flags use kwargs. Default: None.
 
     Returns:
         Function, the fn added flags.
@@ -47,11 +47,17 @@ def add_flags(fn, **flags):
     Examples:
         >>> add_flags(net, predit=True)
     """
-    # need set the attr and access on c++
-    if not hasattr(fn, "_mindspore_flags"):
-        fn._mindspore_flags = {}
-    fn._mindspore_flags.update({**flags})
-    return fn
+    def deco(fn):
+        # need set the attr and access on c++
+        if not hasattr(fn, "_mindspore_flags"):
+            fn._mindspore_flags = {}
+
+        fn._mindspore_flags.update({**flags})
+        return fn
+    ret = deco
+    if fn is not None:
+        ret = deco(fn)
+    return ret
 
 
 def core(fn=None, **flags):

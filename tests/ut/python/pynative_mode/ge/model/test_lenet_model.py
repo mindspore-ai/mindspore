@@ -14,13 +14,13 @@
 # ============================================================================
 """ test_lenet_model """
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.nn import WithGradCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from ....ut_filter import non_graph_engine
 
 
 class LeNet5(nn.Cell):
@@ -47,7 +47,7 @@ class LeNet5(nn.Cell):
         return x
 
 
-@non_graph_engine
+@pytest.mark.skip(reason="need ge backend")
 def test_lenet_pynative_train_net():
     """ test_lenet_pynative_train_net """
     data = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
