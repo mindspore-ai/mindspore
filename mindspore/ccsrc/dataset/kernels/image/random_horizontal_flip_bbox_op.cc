@@ -29,8 +29,8 @@ Status RandomHorizontalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow
   BOUNDING_BOX_CHECK(input);
   if (distribution_(rnd_)) {
     // To test bounding boxes algorithm, create random bboxes from image dims
-    size_t num_of_boxes = input[1]->shape()[0];     // set to give number of bboxes
-    float img_center = (input[0]->shape()[1] / 2);  // get the center of the image
+    size_t num_of_boxes = input[1]->shape()[0];      // set to give number of bboxes
+    float img_center = (input[0]->shape()[1] / 2.);  // get the center of the image
 
     for (int i = 0; i < num_of_boxes; i++) {
       uint32_t b_w = 0;  // bounding box width

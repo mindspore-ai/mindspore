@@ -50,7 +50,7 @@ def check_filename(path):
         Exception: when error
     """
     if not isinstance(path, str):
-        raise ValueError("path: {} is not string".format(path))
+        raise TypeError("path: {} is not string".format(path))
     filename = os.path.basename(path)
 
     # '#', ':', '|', ' ', '}', '"', '+', '!', ']', '[', '\\', '`',
@@ -143,7 +143,7 @@ def check_sampler_shuffle_shard_options(param_dict):
     num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
 
     if sampler is not None and not isinstance(sampler, (samplers.BuiltinSampler, samplers.Sampler)):
-        raise ValueError("sampler is not a valid Sampler type.")
+        raise TypeError("sampler is not a valid Sampler type.")
 
     if sampler is not None:
         if shuffle is not None:
@@ -328,13 +328,13 @@ def check_vocdataset(method):
         if task is None:
             raise ValueError("task is not provided.")
         if not isinstance(task, str):
-            raise ValueError("task is not str type.")
+            raise TypeError("task is not str type.")
         # check mode; required argument
         mode = param_dict.get('mode')
         if mode is None:
             raise ValueError("mode is not provided.")
         if not isinstance(mode, str):
-            raise ValueError("mode is not str type.")
+            raise TypeError("mode is not str type.")
 
         imagesets_file = ""
         if task == "Segmentation":
@@ -388,7 +388,7 @@ def check_cocodataset(method):
         if task is None:
             raise ValueError("task is not provided.")
         if not isinstance(task, str):
-            raise ValueError("task is not str type.")
+            raise TypeError("task is not str type.")
 
         if task not in {'Detection', 'Stuff', 'Panoptic', 'Keypoint'}:
             raise ValueError("Invalid task type")
@@ -556,7 +556,7 @@ def check_generatordataset(method):
 
 def check_batch_size(batch_size):
     if not (isinstance(batch_size, int) or (callable(batch_size))):
-        raise ValueError("batch_size should either be an int or a callable.")
+        raise TypeError("batch_size should either be an int or a callable.")
     if callable(batch_size):
         sig = ins.signature(batch_size)
         if len(sig.parameters) != 1:
@@ -706,6 +706,7 @@ def check_batch(method):
 
 def check_sync_wait(method):
     """check the input arguments of sync_wait."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -773,7 +774,7 @@ def check_filter(method):
         param_dict = make_param_dict(method, args, kwargs)
         predicate = param_dict.get("predicate")
         if not callable(predicate):
-            raise ValueError("Predicate should be a python function or a callable python object.")
+            raise TypeError("Predicate should be a python function or a callable python object.")
 
         nreq_param_int = ['num_parallel_workers']
         check_param_type(nreq_param_int, param_dict, int)
@@ -865,7 +866,7 @@ def check_zip_dataset(method):
             raise ValueError("datasets is not provided.")
 
         if not isinstance(ds, (tuple, datasets.Dataset)):
-            raise ValueError("datasets is not tuple or of type Dataset.")
+            raise TypeError("datasets is not tuple or of type Dataset.")
 
         return method(*args, **kwargs)
 
@@ -885,7 +886,7 @@ def check_concat(method):
             raise ValueError("datasets is not provided.")
 
         if not isinstance(ds, (list, datasets.Dataset)):
-            raise ValueError("datasets is not list or of type Dataset.")
+            raise TypeError("datasets is not list or of type Dataset.")
 
         return method(*args, **kwargs)
 
@@ -964,7 +965,7 @@ def check_add_column(method):
         de_type = param_dict.get("de_type")
         if de_type is not None:
             if not isinstance(de_type, typing.Type) and not check_valid_detype(de_type):
-                raise ValueError("Unknown column type.")
+                raise TypeError("Unknown column type.")
         else:
             raise TypeError("Expected non-empty string.")
 

@@ -101,6 +101,9 @@ class BucketBatchByLengthOp : public PipelineOp {
                         std::vector<int32_t> bucket_batch_sizes, py::function element_length_function, PadInfo pad_info,
                         bool pad_to_bucket_boundary, bool drop_remainder, int32_t op_connector_size);
 
+  // Destructor
+  ~BucketBatchByLengthOp() = default;
+
   // Might need to batch remaining buckets after receiving eoe, so override this method.
   // @param int32_t workerId
   // @return Status - The error code returned

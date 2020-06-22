@@ -35,9 +35,9 @@ class BasicTokenizerOp : public TensorOp {
   static const bool kDefKeepWhitespace;
   static const NormalizeForm kDefNormalizationForm;
   static const bool kDefPreserveUnusedToken;
-  BasicTokenizerOp(bool lower_case = kDefLowerCase, bool keep_whitespace = kDefKeepWhitespace,
-                   NormalizeForm normalization_form = kDefNormalizationForm,
-                   bool preserve_unused_token = kDefPreserveUnusedToken);
+  explicit BasicTokenizerOp(bool lower_case = kDefLowerCase, bool keep_whitespace = kDefKeepWhitespace,
+                            NormalizeForm normalization_form = kDefNormalizationForm,
+                            bool preserve_unused_token = kDefPreserveUnusedToken);
 
   ~BasicTokenizerOp() override = default;
 

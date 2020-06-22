@@ -61,7 +61,7 @@ class Shuffle(str, Enum):
 @check_zip
 def zip(datasets):
     """
-    Zips the datasets in the input tuple of datasets.
+    Zip the datasets in the input tuple of datasets.
 
     Args:
         datasets (tuple of class Dataset): A tuple of datasets to be zipped together.
@@ -152,7 +152,7 @@ class Dataset:
 
     def get_args(self):
         """
-        Returns attributes (member variables) related to the current class.
+        Return attributes (member variables) related to the current class.
 
         Must include all arguments passed to the __init__() of the current class, excluding 'input_dataset'.
 
@@ -239,7 +239,7 @@ class Dataset:
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
               input_columns=None, pad_info=None):
         """
-        Combines batch_size number of consecutive rows into batches.
+        Combine batch_size number of consecutive rows into batches.
 
         For any child node, a batch is treated as a single row.
         For any column, all the elements within that column must have the same shape.
@@ -340,7 +340,7 @@ class Dataset:
 
     def flat_map(self, func):
         """
-        Maps `func` to each row in dataset and flatten the result.
+        Map `func` to each row in dataset and flatten the result.
 
         The specified `func` is a function that must take one 'Ndarray' as input
         and return a 'Dataset'.
@@ -370,6 +370,7 @@ class Dataset:
         """
         dataset = None
         if not hasattr(func, '__call__'):
+            logger.error("func must be a function.")
             raise TypeError("func must be a function.")
 
         for row_data in self:
@@ -379,6 +380,7 @@ class Dataset:
                 dataset += func(row_data)
 
         if not isinstance(dataset, Dataset):
+            logger.error("flat_map must return a Dataset object.")
             raise TypeError("flat_map must return a Dataset object.")
         return dataset
 
@@ -386,7 +388,7 @@ class Dataset:
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
             num_parallel_workers=None, python_multiprocessing=False):
         """
-        Applies each operation in operations to this dataset.
+        Apply each operation in operations to this dataset.
 
         The order of operations is determined by the position of each operation in operations.
         operations[0] will be applied first, then operations[1], then operations[2], etc.
@@ -570,7 +572,7 @@ class Dataset:
     @check_repeat
     def repeat(self, count=None):
         """
-        Repeats this dataset count times. Repeat indefinitely if the count is None or -1.
+        Repeat this dataset count times. Repeat indefinitely if the count is None or -1.
 
         Note:
             The order of using repeat and batch reflects the number of batches. Recommend that
@@ -662,13 +664,16 @@ class Dataset:
         dataset_size = self.get_dataset_size()
 
         if dataset_size is None or dataset_size <= 0:
-            raise RuntimeError("dataset size unknown, unable to split.")
+            raise RuntimeError("dataset_size is unknown, unable to split.")
+
+        if not isinstance(sizes, list):
+            raise RuntimeError("sizes should be a list.")
 
         all_int = all(isinstance(item, int) for item in sizes)
         if all_int:
             sizes_sum = sum(sizes)
             if sizes_sum != dataset_size:
-                raise RuntimeError("sum of split sizes {} is not equal to dataset size {}."
+                raise RuntimeError("Sum of split sizes {} is not equal to dataset size {}."
                                    .format(sizes_sum, dataset_size))
             return sizes
 
@@ -676,7 +681,7 @@ class Dataset:
         for item in sizes:
             absolute_size = int(round(item * dataset_size))
             if absolute_size == 0:
-                raise RuntimeError("split percentage {} is too small.".format(item))
+                raise RuntimeError("Split percentage {} is too small.".format(item))
             absolute_sizes.append(absolute_size)
 
         absolute_sizes_sum = sum(absolute_sizes)
@@ -694,7 +699,7 @@ class Dataset:
                     break
 
         if sum(absolute_sizes) != dataset_size:
-            raise RuntimeError("sum of calculated split sizes {} is not equal to dataset size {}."
+            raise RuntimeError("Sum of calculated split sizes {} is not equal to dataset size {}."
                                .format(absolute_sizes_sum, dataset_size))
 
         return absolute_sizes
@@ -702,7 +707,7 @@ class Dataset:
     @check_split
     def split(self, sizes, randomize=True):
         """
-        Splits the dataset into smaller, non-overlapping datasets.
+        Split the dataset into smaller, non-overlapping datasets.
 
         This is a general purpose split function which can be called from any operator in the pipeline.
         There is another, optimized split function, which will be called automatically if ds.split is
@@ -759,10 +764,10 @@ class Dataset:
             >>> train, test = data.split([0.9, 0.1])
         """
         if self.is_shuffled():
-            logger.warning("dataset is shuffled before split.")
+            logger.warning("Dataset is shuffled before split.")
 
         if self.is_sharded():
-            raise RuntimeError("dataset should not be sharded before split.")
+            raise RuntimeError("Dataset should not be sharded before split.")
 
         absolute_sizes = self._get_absolute_split_sizes(sizes)
         splits = []
@@ -788,7 +793,7 @@ class Dataset:
     @check_zip_dataset
     def zip(self, datasets):
         """
-        Zips the datasets in the input tuple of datasets. Columns in the input datasets must not have the same name.
+        Zip the datasets in the input tuple of datasets. Columns in the input datasets must not have the same name.
 
         Args:
             datasets (tuple or class Dataset): A tuple of datasets or a single class Dataset
@@ -845,7 +850,7 @@ class Dataset:
     @check_rename
     def rename(self, input_columns, output_columns):
         """
-        Renames the columns in input datasets.
+        Rename the columns in input datasets.
 
         Args:
             input_columns (list[str]): list of names of the input columns.
@@ -871,7 +876,7 @@ class Dataset:
     @check_project
     def project(self, columns):
         """
-        Projects certain columns in input datasets.
+        Project certain columns in input datasets.
 
         The specified columns will be selected from the dataset and passed down
         the pipeline in the order specified. The other columns are discarded.
@@ -936,7 +941,7 @@ class Dataset:
 
     def device_que(self, prefetch_size=None):
         """
-        Returns a transferredDataset that transfer data through device.
+        Return a transferredDataset that transfer data through device.
 
         Args:
             prefetch_size (int, optional): prefetch number of records ahead of the
@@ -953,7 +958,7 @@ class Dataset:
 
     def to_device(self, num_batch=None):
         """
-        Transfers data through CPU, GPU or Ascend devices.
+        Transfer data through CPU, GPU or Ascend devices.
 
         Args:
             num_batch (int, optional): limit the number of batch to be sent to device (default=None).
@@ -988,7 +993,7 @@ class Dataset:
             raise TypeError("Please set device_type in context")
 
         if device_type not in ('Ascend', 'GPU', 'CPU'):
-            raise ValueError("only support CPU, Ascend, GPU")
+            raise ValueError("Only support CPU, Ascend, GPU")
 
         if num_batch is None or num_batch == 0:
             raise ValueError("num_batch is None or 0.")
@@ -1089,7 +1094,7 @@ class Dataset:
 
     def _get_pipeline_info(self):
         """
-        Gets pipeline information.
+        Get pipeline information.
         """
         device_iter = TupleIterator(self)
         self._output_shapes = device_iter.get_output_shapes()
@@ -1344,7 +1349,7 @@ class MappableDataset(SourceDataset):
     @check_split
     def split(self, sizes, randomize=True):
         """
-        Splits the dataset into smaller, non-overlapping datasets.
+        Split the dataset into smaller, non-overlapping datasets.
 
         There is the optimized split function, which will be called automatically when the dataset
         that calls this function is a MappableDataset.
@@ -1411,10 +1416,10 @@ class MappableDataset(SourceDataset):
             >>> train.use_sampler(train_sampler)
         """
         if self.is_shuffled():
-            logger.warning("dataset is shuffled before split.")
+            logger.warning("Dataset is shuffled before split.")
 
         if self.is_sharded():
-            raise RuntimeError("dataset should not be sharded before split.")
+            raise RuntimeError("Dataset should not be sharded before split.")
 
         absolute_sizes = self._get_absolute_split_sizes(sizes)
         splits = []
@@ -1633,7 +1638,7 @@ class BlockReleasePair:
 
     def __init__(self, init_release_rows, callback=None):
         if isinstance(init_release_rows, int) and init_release_rows <= 0:
-            raise ValueError("release_rows  need to be greater than 0.")
+            raise ValueError("release_rows need to be greater than 0.")
         self.row_count = -init_release_rows
         self.cv = threading.Condition()
         self.callback = callback
@@ -2699,10 +2704,10 @@ class MindDataset(MappableDataset):
         self.shard_id = shard_id
 
         if block_reader is True and num_shards is not None:
-            raise ValueError("block reader not allowed true when use partitions")
+            raise ValueError("block_reader not allowed true when use partitions")
 
         if block_reader is True and shuffle is True:
-            raise ValueError("block reader not allowed true when use shuffle")
+            raise ValueError("block_reader not allowed true when use shuffle")
 
         if block_reader is True:
             logger.warning("WARN: global shuffle is not used.")
@@ -2711,14 +2716,14 @@ class MindDataset(MappableDataset):
             if isinstance(sampler, (samplers.SubsetRandomSampler, samplers.PKSampler,
                                     samplers.DistributedSampler, samplers.RandomSampler,
                                     samplers.SequentialSampler)) is False:
-                raise ValueError("the sampler is not supported yet.")
+                raise ValueError("The sampler is not supported yet.")
 
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
 
         # sampler exclusive
         if block_reader is True and sampler is not None:
-            raise ValueError("block reader not allowed true when use sampler")
+            raise ValueError("block_reader not allowed true when use sampler")
 
         if num_padded is None:
             num_padded = 0
@@ -2770,7 +2775,7 @@ class MindDataset(MappableDataset):
         if value >= 0:
             self._dataset_size = value
         else:
-            raise ValueError('set dataset_size with negative value {}'.format(value))
+            raise ValueError('Set dataset_size with negative value {}'.format(value))
 
     def is_shuffled(self):
         if self.shuffle_option is None:
@@ -2872,7 +2877,7 @@ def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker):
 
 def _fetch_py_sampler_indices(sampler, num_samples):
     """
-    Indices fetcher for python sampler.
+    Indice fetcher for python sampler.
     """
     if num_samples is not None:
         sampler_iter = iter(sampler)
@@ -3163,7 +3168,7 @@ class GeneratorDataset(MappableDataset):
         if value >= 0:
             self._dataset_size = value
         else:
-            raise ValueError('set dataset_size with negative value {}'.format(value))
+            raise ValueError('Set dataset_size with negative value {}'.format(value))
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
@@ -3313,7 +3318,7 @@ class TFRecordDataset(SourceDataset):
         if value >= 0:
             self._dataset_size = value
         else:
-            raise ValueError('set dataset_size with negative value {}'.format(value))
+            raise ValueError('Set dataset_size with negative value {}'.format(value))
 
     def is_shuffled(self):
         return self.shuffle_files
@@ -4382,7 +4387,9 @@ class CelebADataset(MappableDataset):
             try:
                 with open(attr_file, 'r') as f:
                     num_rows = int(f.readline())
-            except Exception:
+            except FileNotFoundError:
+                raise RuntimeError("attr_file not found.")
+            except BaseException:
                 raise RuntimeError("Get dataset size failed from attribution file.")
             rows_per_shard = get_num_rows(num_rows, self.num_shards)
             if self.num_samples is not None:

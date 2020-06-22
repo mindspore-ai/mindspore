@@ -323,7 +323,7 @@ std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob)
 }
 
 vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const IntegerType &int_type) {
-  uint64_t i_size = kUnsignedOne << int_type;
+  uint64_t i_size = kUnsignedOne << static_cast<uint8_t>(int_type);
   // Get number of elements
   uint64_t src_n_int = src_bytes.size() / i_size;
   // Calculate bitmap size (bytes)
@@ -344,7 +344,7 @@ vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const
     // Initialize destination data type
     IntegerType dst_int_type = kInt8Type;
     // Shift to next int position
-    uint64_t pos = i * (kUnsignedOne << int_type);
+    uint64_t pos = i * (kUnsignedOne << static_cast<uint8_t>(int_type));
     // Narrow down this int
     int64_t i_n = BytesLittleToMinIntType(src_bytes, pos, int_type, &dst_int_type);
 

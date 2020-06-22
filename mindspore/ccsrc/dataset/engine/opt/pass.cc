@@ -37,7 +37,7 @@ namespace dataset {
 
 // Driver method for TreePass
 Status TreePass::Run(ExecutionTree *tree, bool *modified) {
-  if (!tree || !modified) {
+  if (tree == nullptr || modified == nullptr) {
     return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
   }
   return this->RunOnTree(tree, modified);
@@ -45,7 +45,7 @@ Status TreePass::Run(ExecutionTree *tree, bool *modified) {
 
 // Driver method for NodePass
 Status NodePass::Run(ExecutionTree *tree, bool *modified) {
-  if (!tree || !modified) {
+  if (tree == nullptr || modified == nullptr) {
     return Status(StatusCode::kUnexpectedError, "Null pointer passed to NodePass");
   }
   std::shared_ptr<DatasetOp> root = tree->root();
