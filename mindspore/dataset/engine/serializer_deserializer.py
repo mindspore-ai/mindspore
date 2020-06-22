@@ -182,11 +182,11 @@ def traverse(node):
             node_repr['shard_id'] = None
 
     # Leaf node doesn't have input attribute.
-    if not node.input:
+    if not node.children:
         return node_repr
 
     # Recursively traverse the child and assign it to the current node_repr['children'].
-    for child in node.input:
+    for child in node.children:
         node_repr["children"].append(traverse(child))
 
     return node_repr
@@ -226,11 +226,11 @@ def construct_pipeline(node):
     # Instantiate python Dataset object based on the current dictionary element
     dataset = create_node(node)
     # Initially it is not connected to any other object.
-    dataset.input = []
+    dataset.children = []
 
     # Construct the children too and add edge between the children and parent.
     for child in node['children']:
-        dataset.input.append(construct_pipeline(child))
+        dataset.children.append(construct_pipeline(child))
 
     return dataset
 
