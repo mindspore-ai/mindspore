@@ -33,8 +33,8 @@ Status SliceOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   // if slice object was provided, indices should be empty. Generate indices from the slice object.
   if (slice_.valid() && indices_.empty()) {
     dsize_t len = input->shape()[0];
-    indices_ = slice_.Indices(len);
-    return input->Slice(output, indices_);
+    std::vector<dsize_t> indices = slice_.Indices(len);
+    return input->Slice(output, indices);
   }
 
   // if indices are not empty, slices should be invalid, use indices_ to slice
