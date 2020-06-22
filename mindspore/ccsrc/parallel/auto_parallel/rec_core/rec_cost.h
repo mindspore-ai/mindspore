@@ -222,6 +222,12 @@ class CostBatchParallel {
 
 class CostBatchNorm : public CostBatchParallel {};
 class CostOneHot : public CostBatchParallel {};
+class CostPRelu : public CostBatchParallel {};
+class CostSoftmax : public CostBatchParallel {};
+
+class CostSoftmaxCrossEntropyWithLogits : public CostBatchParallel {
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_COST_H_

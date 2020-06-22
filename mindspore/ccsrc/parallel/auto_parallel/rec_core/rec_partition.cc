@@ -76,15 +76,16 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot) {
+  } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot ||
+             op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecSoftmax ||
+             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
+             op.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
     // For BatchParallel op
     auto cost_ptr = std::make_shared<CostBatchParallel>();
 
     return cost_ptr->GetMaxCostIn();
-  } else if (op.op_type == OperatorType::kRecUnkownType || op.op_type == OperatorType::kRecPReLU ||
-             op.op_type == OperatorType::kRecSoftmax ||
-             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
-    // For unprocessed type
+  } else if (op.op_type == OperatorType::kRecUnkownType) {
+    // For Unkown type
     return 0.0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
@@ -170,14 +171,18 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot) {
+  } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
+             node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
+             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
     // For BatchParallel type
     auto cost_ptr = std::make_shared<CostBatchParallel>();
     return cost_ptr->GetOptimalStr(node);
-  } else if (node.apply.op_type == OperatorType::kRecUnkownType || node.apply.op_type == OperatorType::kRecPReLU ||
-             node.apply.op_type == OperatorType::kRecSoftmax ||
-             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
-    // For unprocessed type
+  } else if (node.apply.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
+    // For SoftmaxCrossEntropyWithLogits type
+    auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
+    return cost_ptr->GetOptimalStr(node);
+  } else if (node.apply.op_type == OperatorType::kRecUnkownType) {
+    // For Unkown type
     StrategyRec default_strategy;
     return default_strategy;
   } else {
