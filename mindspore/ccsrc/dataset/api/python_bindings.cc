@@ -609,10 +609,23 @@ void bindTokenizerOps(py::module *m) {
     *m, "UnicodeCharTokenizerOp", "Tokenize a scalar tensor of UTF-8 string to Unicode characters.")
     .def(py::init<>());
   (void)py::class_<LookupOp, TensorOp, std::shared_ptr<LookupOp>>(*m, "LookupOp",
-                                                                  "Tensor operation to LookUp each word")
-    .def(py::init<std::shared_ptr<Vocab>, WordIdType>(), py::arg("vocab"), py::arg("unknown"))
-    .def(py::init<std::shared_ptr<Vocab>>(), py::arg("vocab"));
-  (void)py::class_<NgramOp, TensorOp, std::shared_ptr<NgramOp>>(*m, "NgramOp", "TensorOp performs ngram mapping")
+                                                                  "Tensor operation to LookUp each word.")
+    .def(py::init([](std::shared_ptr<Vocab> vocab, const py::object &py_word) {
+      if (vocab == nullptr) {
+        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "vocab object type is incorrect or null."));
+      }
+      if (py_word.is_none()) {
+        return std::make_shared<LookupOp>(vocab, Vocab::kNoTokenExists);
+      }
+      std::string word = py::reinterpret_borrow<py::str>(py_word);
+      WordIdType default_id = vocab->Lookup(word);
+      if (default_id == Vocab::kNoTokenExists) {
+        THROW_IF_ERROR(
+          Status(StatusCode::kUnexpectedError, "default unknown token:" + word + " doesn't exist in vocab."));
+      }
+      return std::make_shared<LookupOp>(vocab, default_id);
+    }));
+  (void)py::class_<NgramOp, TensorOp, std::shared_ptr<NgramOp>>(*m, "NgramOp", "TensorOp performs ngram mapping.")
     .def(py::init<const std::vector<int32_t> &, int32_t, int32_t, const std::string &, const std::string &,
                   const std::string &>(),
          py::arg("ngrams"), py::arg("l_pad_len"), py::arg("r_pad_len"), py::arg("l_pad_token"), py::arg("r_pad_token"),

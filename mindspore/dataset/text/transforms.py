@@ -63,17 +63,13 @@ class Lookup(cde.LookupOp):
 
     Args:
         vocab(Vocab): a Vocab object.
-        unknown(int, optional): default id to lookup a word that is out of vocab. If no argument is passed, 1 will be
-            used to be the default id which is the convention for unknown_token <unk>. Otherwise, user is strongly
-            encouraged to pass in the id for <unk> (default=None).
+        unknown_token(str, optional): word to use for lookup if the word being looked up is out of Vocabulary (oov).
+            If unknown_token is oov, runtime error will be thrown (default=None).
     """
 
     @check_lookup
-    def __init__(self, vocab, unknown=None):
-        if unknown is None:
-            super().__init__(vocab)
-        else:
-            super().__init__(vocab, unknown)
+    def __init__(self, vocab, unknown_token=None):
+        super().__init__(vocab, unknown_token)
 
 
 class Ngram(cde.NgramOp):

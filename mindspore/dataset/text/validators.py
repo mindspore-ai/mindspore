@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
-from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, check_positive, \
+from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
     INT32_MAX, check_value
 
 
@@ -44,11 +44,11 @@ def check_lookup(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [vocab, unknown], _ = parse_user_args(method, *args, **kwargs)
+        [vocab, unknown_token], _ = parse_user_args(method, *args, **kwargs)
 
-        if unknown is not None:
-            type_check(unknown, (int,), "unknown")
-            check_positive(unknown)
+        if unknown_token is not None:
+            type_check(unknown_token, (str,), "unknown_token")
+
         type_check(vocab, (cde.Vocab,), "vocab is not an instance of cde.Vocab.")
 
         return method(self, *args, **kwargs)
