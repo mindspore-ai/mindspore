@@ -35,7 +35,8 @@ inline __device__ void MeanAndVarAccumulation(T *mean, T *var, T *num, const T &
 
 template <typename T>
 inline __device__ void MeanAndVarMerge(T *m1, T *v1, T *n1, const T &m2, const T &v2, const T &n2) {
-  if (n2 == 0) {
+  T zero = 0;
+  if (n2 == zero) {
     return;
   }
 
@@ -112,6 +113,17 @@ inline __device__ void LayerNorm(const int &row, const int &col_dim, const int &
   }
 }
 
+template <>
+inline __device__ void LayerNorm(const int &row, const int &col_dim, const int &param_dim, const half *x,
+                                 const half *share_mem, const half *gamma, const half *beta, const half epsilon,
+                                 half *y) {
+  for (int col = threadIdx.x; col < col_dim; col += blockDim.x) {
+    int pos = row * col_dim + col;
+    int i = pos % param_dim;
+    y[pos] = (x[pos] - share_mem[0]) / hsqrt(share_mem[1] + epsilon) * gamma[i] + beta[i];
+  }
+}
+
 template <typename T>
 __global__ void LayerNormKernel(const int row_dim, const int col_dim, const int param_dim, const T epsilon, const T *x,
                                 const T *gamma, const T *beta, T *y, T *mean_addr, T *var_addr) {
@@ -120,14 +132,14 @@ __global__ void LayerNormKernel(const int row_dim, const int col_dim, const int 
     T var = 0;
     T num = 0;
     const T *block_addr = x + row * col_dim;
-    extern __shared__ T share_mem[];
+    DynamicSharedMem<T> share_mem;
 
     ThreadReduce(col_dim, block_addr, &mean, &var, &num);
     WarpReduce(&mean, &var, &num);
-    BlockReduce(col_dim, &mean, &var, &num, mean_addr, var_addr, share_mem);
+    BlockReduce(col_dim, &mean, &var, &num, mean_addr, var_addr, share_mem.addr());
 
     __syncthreads();
-    LayerNorm(row, col_dim, param_dim, x, share_mem, gamma, beta, epsilon, y);
+    LayerNorm(row, col_dim, param_dim, x, share_mem.addr(), gamma, beta, epsilon, y);
   }
 }
 
@@ -137,12 +149,15 @@ void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim, con
   const dim3 block(row_dim);
   const dim3 thread(256);
   // keep the mean/var/num after warp reduce
-  int share_mem =
+  int share_mem_size =
     ((col_dim + NUM_PER_THREAD_REDUCE - 1) / NUM_PER_THREAD_REDUCE + WARP_SIZE - 1) / WARP_SIZE * 3 * sizeof(T);
-  LayerNormKernel<<<block, thread, share_mem, stream>>>(row_dim, col_dim, param_dim, epsilon, x, gamma, beta, y, mean,
-                                                        var);
+  LayerNormKernel<<<block, thread, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x, gamma, beta, y,
+                                                             mean, var);
 }
 
 template void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim, const float &epsilon,
                         const float *x, const float *gamma, const float *beta, float *y, float *mean, float *var,
+                        cudaStream_t stream);
+template void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim, const half &epsilon,
+                        const half *x, const half *gamma, const half *beta, half *y, half *mean, half *var,
                         cudaStream_t stream);

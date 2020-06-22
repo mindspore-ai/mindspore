@@ -15,25 +15,38 @@
  */
 
 #include "momentum_impl.cuh"
-template <typename T>
-__global__ void MomentumUpdateVariableKernel(const size_t size, T *variable, T *accumulation, const T *learning_rate,
-                                             const T *gradient, const T *momentum) {
+template <typename T, typename S>
+__global__ void MomentumUpdateVariableKernel(const size_t size, T *variable, T *accumulation, const S *learning_rate,
+                                             const T *gradient, const S *momentum) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
     accumulation[i] = momentum[0] * accumulation[i] + gradient[i];
     variable[i] -= learning_rate[0] * accumulation[i];
   }
   return;
 }
-template <typename T>
-void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const T *learning_rate, const T *gradient,
-                            const T *momentum, cudaStream_t cuda_stream) {
+template <>
+__global__ void MomentumUpdateVariableKernel(const size_t size, half *variable, half *accumulation,
+                                             const float *learning_rate, const half *gradient,
+                                             const float *momentum) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
+    accumulation[i] = __float2half(momentum[0]) * accumulation[i] + gradient[i];
+    variable[i] -= __float2half(learning_rate[0]) * accumulation[i];
+  }
+  return;
+}
+template <typename T, typename S>
+void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const S *learning_rate, const T *gradient,
+                            const S *momentum, cudaStream_t cuda_stream) {
   MomentumUpdateVariableKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, variable, accumulation,
                                                                                   learning_rate, gradient, momentum);
   return;
 }
-template void MomentumUpdateVariable<float>(const size_t size, float *variable, float *accumulation,
-                                            const float *learning_rate, const float *gradient, const float *momentum,
-                                            cudaStream_t cuda_stream);
-template void MomentumUpdateVariable<half>(const size_t size, half *variable, half *accumulation,
-                                           const half *learning_rate, const half *gradient, const half *momentum,
-                                           cudaStream_t cuda_stream);
+template void MomentumUpdateVariable<float, float>(const size_t size, float *variable, float *accumulation,
+                                                   const float *learning_rate, const float *gradient,
+                                                   const float *momentum, cudaStream_t cuda_stream);
+template void MomentumUpdateVariable<half, half>(const size_t size, half *variable, half *accumulation,
+                                                 const half *learning_rate, const half *gradient,
+                                                 const half *momentum, cudaStream_t cuda_stream);
+template void MomentumUpdateVariable<half, float>(const size_t size, half *variable, half *accumulation,
+                                                  const float *learning_rate, const half *gradient,
+                                                  const float *momentum, cudaStream_t cuda_stream);
