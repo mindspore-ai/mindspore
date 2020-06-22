@@ -27,7 +27,7 @@ ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, int
     : ShardSample(1, num_shards, shard_id),
       shuffle_(shuffle),
       no_of_padded_samples_(no_of_padded_samples),
-      init_judgment_(false) {
+      first_epoch_(true) {
   shuffle_op_ = std::make_shared<ShardShuffle>(seed, kShuffleSample);
 }
 
@@ -54,14 +54,19 @@ int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_
 
 MSRStatus ShardDistributedSample::PreExecute(ShardTask &tasks) {
   auto total_no = tasks.Size();
-  if (no_of_padded_samples_ > 0 && init_judgment_ == false) {  // we only judge this in first time
-    init_judgment_ = true;
+  if (no_of_padded_samples_ > 0 && first_epoch_) {
     if (total_no % denominator_ != 0) {
       MS_LOG(ERROR) << "Dataset size plus number of padded samples is not divisible by number of shards. "
                     << "task size: " << total_no << ", number padded: " << no_of_padded_samples_
                     << ", denominator: " << denominator_;
       return FAILED;
     }
+  }
+  if (first_epoch_) {
+    first_epoch_ = false;
+    task_ = tasks;
+  } else {
+    tasks = task_;
   }
   if (shuffle_ == true) {
     if (SUCCESS != (*shuffle_op_)(tasks)) {

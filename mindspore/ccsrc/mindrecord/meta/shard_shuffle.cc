@@ -43,6 +43,7 @@ int64_t ShardShuffle::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
 }
 
 MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
+  if (reshuffle_each_epoch_) shuffle_seed_++;
   if (tasks.categories < 1) {
     return FAILED;
   }
@@ -81,7 +82,6 @@ MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
       }
     }
   }
-  if (reshuffle_each_epoch_) shuffle_seed_++;
   return SUCCESS;
 }
 }  // namespace mindrecord

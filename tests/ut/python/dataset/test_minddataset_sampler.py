@@ -586,6 +586,13 @@ def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
     assert epoch2_dataset not in (epoch1_dataset, epoch3_dataset)
     assert epoch3_dataset not in (epoch1_dataset, epoch2_dataset)
 
+    epoch1_dataset.sort()
+    epoch2_dataset.sort()
+    epoch3_dataset.sort()
+    assert epoch1_dataset != epoch2_dataset
+    assert epoch2_dataset != epoch3_dataset
+    assert epoch3_dataset != epoch1_dataset
+
 
 def get_data(dir_name, sampler=False):
     """

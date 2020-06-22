@@ -468,6 +468,64 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
     partitions(5, 5, 3)
     partitions(9, 8, 2)
 
+
+def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_result_per_epoch(add_and_remove_nlp_file):
+    columns_list = ["input_ids", "id", "rating"]
+
+    padded_sample = {}
+    padded_sample['id'] = "-1"
+    padded_sample['input_ids'] = np.array([-1,-1,-1,-1], dtype=np.int64)
+    padded_sample['rating'] = 1.0
+    num_readers = 4
+    repeat_size = 3
+
+    def partitions(num_shards, num_padded, dataset_size):
+        num_padded_iter = 0
+        num_iter = 0
+
+        epoch_result = [[["" for i in range(dataset_size)] for i in range(repeat_size)] for i in range(num_shards)]
+
+        for partition_id in range(num_shards):
+            data_set = ds.MindDataset(NLP_FILE_NAME + "0", columns_list, num_readers,
+                                      num_shards=num_shards,
+                                      shard_id=partition_id,
+                                      padded_sample=padded_sample,
+                                      num_padded=num_padded)
+            assert data_set.get_dataset_size() == dataset_size
+            data_set = data_set.repeat(repeat_size)
+            inner_num_iter = 0
+            for item in data_set.create_dict_iterator():
+                logger.info("-------------- item[id]: {} ------------------------".format(item["id"]))
+                logger.info("-------------- item[rating]: {} --------------------".format(item["rating"]))
+                logger.info("-------------- item[input_ids]: {}, shape: {} -----------------"
+                    .format(item["input_ids"], item["input_ids"].shape))
+                if item['id'] == bytes('-1', encoding='utf-8'):
+                    num_padded_iter += 1
+                    assert item['id'] == bytes(padded_sample['id'], encoding='utf-8')
+                    assert (item['input_ids'] == padded_sample['input_ids']).all()
+                    assert (item['rating'] == padded_sample['rating']).all()
+                # save epoch result
+                epoch_result[partition_id][int(inner_num_iter / dataset_size)][inner_num_iter % dataset_size] = item["id"]
+                num_iter += 1
+                inner_num_iter += 1
+            assert epoch_result[partition_id][0] not in (epoch_result[partition_id][1], epoch_result[partition_id][2])
+            assert epoch_result[partition_id][1] not in (epoch_result[partition_id][0], epoch_result[partition_id][2])
+            assert epoch_result[partition_id][2] not in (epoch_result[partition_id][1], epoch_result[partition_id][0])
+            if dataset_size > 2:
+                epoch_result[partition_id][0].sort()
+                epoch_result[partition_id][1].sort()
+                epoch_result[partition_id][2].sort()
+                assert epoch_result[partition_id][0] != epoch_result[partition_id][1]
+                assert epoch_result[partition_id][1] != epoch_result[partition_id][2]
+                assert epoch_result[partition_id][2] != epoch_result[partition_id][0]
+        assert num_padded_iter == num_padded * repeat_size
+        assert num_iter == dataset_size * num_shards * repeat_size
+
+    partitions(4, 6, 4)
+    partitions(5, 5, 3)
+    partitions(9, 8, 2)
+
+
 def get_data(dir_name):
     """
     usage: get data from imagenet dataset
