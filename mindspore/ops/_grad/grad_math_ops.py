@@ -21,6 +21,7 @@ from mindspore.ops import _selected_grad_ops as SG
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
+from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
@@ -1048,4 +1049,14 @@ def get_bprop_inv(self):
     def bprop(x, out, dout):
         dx = inv_grad(out, dout)
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(inner.LinSpace)
+def get_bprop_lin_space(self):
+    """Grad definition for `LinSpace` operation."""
+
+    def bprop(assist, start, stop, num, out, dout):
+        return zeros_like(assist), zeros_like(start), zeros_like(stop), zeros_like(num)
+
     return bprop

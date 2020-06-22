@@ -1599,6 +1599,14 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)),
                         Tensor(np.array([1, 2, 3]).astype(np.int32))],
         'desc_bprop': [[3, 3]]}),
+    ('LinSpace', {
+        'block': inner.LinSpace(),
+        'desc_inputs': [Tensor([5, 5.5], mstype.float32),
+                        Tensor(1, mstype.float32),
+                        Tensor(10, mstype.float32),
+                        Tensor(5, mstype.int32)],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_other_ops = [
