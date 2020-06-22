@@ -411,3 +411,25 @@ def check_to_number(method):
         return method(self, **kwargs)
 
     return new_method
+
+
+def check_python_tokenizer(method):
+    """A wrapper that wraps a parameter check to the original function (PythonTokenizer)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        tokenizer = (list(args) + [None])[0]
+        if "tokenizer" in kwargs:
+            tokenizer = kwargs.get("tokenizer")
+
+        if tokenizer is None:
+            raise ValueError("tokenizer is a mandatory parameter.")
+
+        if not callable(tokenizer):
+            raise TypeError("tokenizer is not a callable python function")
+
+        kwargs["tokenizer"] = tokenizer
+
+        return method(self, **kwargs)
+
+    return new_method
