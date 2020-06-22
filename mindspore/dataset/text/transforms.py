@@ -12,9 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-c transforms for all text related operators
-"""
+The module text.transforms is inheritted from _c_dataengine
+which is implemented basing on icu4c and cppjieba in C++.
+It's a high performance module to process nlp text.
+Users can use Vocab to build their own dictionary,
+use appropriate tokenizers to split sentences into different tokens,
+and use Lookup to find the index of tokens in Vocab.
 
+.. Note::
+    Constructor's arguments for every class in this module must be saved into the
+    class attributes (self.xxx) to support save() and load().
+
+Examples:
+    >>> import mindspore.dataset as ds
+    >>> import mindspore.dataset.text as text
+    >>> dataset_file = "path/to/text_file_path"
+    >>> # sentences as line data saved in a file
+    >>> dataset = ds.TextFileDataset(dataset_file, shuffle=False)
+    >>> # tokenize sentence to unicode characters
+    >>> tokenizer = text.UnicodeCharTokenizer()
+    >>> # load vocabulary form list
+    >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+    >>> # lookup is an operation for mapping tokens to ids
+    >>> lookup = text.Lookup(vocab)
+    >>> dataset = dataset.map(operations=[tokenizer, lookup])
+    >>> for i in dataset.create_dict_iterator():
+    >>>     print(i)
+    >>> # if text line in dataset_file is:
+    >>> # 深圳欢迎您
+    >>> # then the output will be:
+    >>> # {'text': array([0, 1, 2, 3, 4], dtype=int32)}
+"""
 import os
 import re
 import platform
@@ -203,8 +231,8 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
 
     Args:
         vocab (Vocab): a Vocab object.
-        suffix_indicator (str, optional): Used to show that the subword is the last part of a word(default '##').
-        max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split(default 100).
+        suffix_indicator (str, optional): Used to show that the subword is the last part of a word(default='##').
+        max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split(default=100).
         unknown_token (str, optional): When we can not found the token: if 'unknown_token' is empty string,
             return the token directly, else return 'unknown_token'(default='[UNK]').
     """
@@ -299,7 +327,7 @@ if platform.system().lower() != 'windows':
                 The original string will be split by matched elements.
             keep_delim_pattern(str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. And the default value is empty str(''),
-                in this situation, delimiters will not kept as a output token.
+                in this situation, delimiters will not kept as a output token(default='').
         """
 
         def __init__(self, delim_pattern, keep_delim_pattern=''):
