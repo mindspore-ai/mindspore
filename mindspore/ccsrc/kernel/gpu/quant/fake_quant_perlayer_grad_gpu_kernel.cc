@@ -115,10 +115,10 @@ bool FakeQuantPerLayerGradGpuKernel::Launch(const std::vector<AddressPtr> &input
   }
 
   if (global_step_ >= quant_delay_) {
-    CalNudge(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeQuantizeGrad(input, gradient, output, quant_num_, nudge_min, nudge_max,
-                        reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalNudgePerLayer(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, symmetric_,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalFakeQuantPerLayerGrad(input, gradient, output, quant_num_, nudge_min, nudge_max,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),

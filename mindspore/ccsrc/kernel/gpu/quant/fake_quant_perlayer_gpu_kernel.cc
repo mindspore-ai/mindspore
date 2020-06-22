@@ -117,10 +117,10 @@ bool FakeQuantPerLayerGpuKernel::Launch(const std::vector<AddressPtr> &inputs, c
     // control flow for quant_delay
     if (global_step_ >= quant_delay_) {
       // real launch
-      CalNudge(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalFakeQuantize(input, output, quant_num_, nudge_min, nudge_max, scale, symmetric_,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalNudgePerLayer(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, symmetric_,
+                       reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalFakeQuantPerLayer(input, output, quant_num_, nudge_min, nudge_max, scale,
+                           reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -129,10 +129,10 @@ bool FakeQuantPerLayerGpuKernel::Launch(const std::vector<AddressPtr> &inputs, c
     global_step_++;
   } else {
     // real launch
-    CalNudge(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeQuantize(input, output, quant_num_, nudge_min, nudge_max, scale, symmetric_,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalNudgePerLayer(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, symmetric_,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalFakeQuantPerLayer(input, output, quant_num_, nudge_min, nudge_max, scale,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
   return true;

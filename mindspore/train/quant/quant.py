@@ -150,7 +150,7 @@ class ConvertToQuantNetwork:
             prefix = name
             add_quant = _AddFakeQuantAfterSubCell(prim_op,
                                                   num_bits=self.act_bits,
-                                                  quant_delay=self.act_delay,
+                                                  quant_delay=self.act_qdelay,
                                                   per_channel=self.act_channel,
                                                   symmetric=self.act_symmetric,
                                                   narrow_range=self.act_range)
@@ -408,19 +408,19 @@ def convert_quant_network(network,
 
     Args:
         network (Cell): Obtain a pipeline through network for saving graph summary.
-        quant_delay (int or tuple): Number of steps after which weights and activations are quantized during
-            eval. The first element represent weights and second element represent data flow. Default: (0, 0)
         bn_fold (bool): Flag to used bn fold ops for simulation inference operation. Default: False.
         freeze_bn (int): Number of steps after which BatchNorm OP parameters used total mean and variance. Default: 0.
-        num_bits (int or tuple): Number of bits to use for quantizing weights and activations. The first
+        quant_delay (int, list or tuple): Number of steps after which weights and activations are quantized during
+            eval. The first element represent weights and second element represent data flow. Default: (0, 0)
+        num_bits (int, list or tuple): Number of bits to use for quantizing weights and activations. The first
             element represent weights and second element represent data flow. Default: (8, 8)
-        per_channel (int or tuple):  Quantization granularity based on layer or on channel. If `True`
+        per_channel (bool, list or tuple):  Quantization granularity based on layer or on channel. If `True`
             then base on per channel otherwise base on per layer. The first element represent weights
             and second element represent data flow. Default: (False, False)
-        symmetric (int or tuple): Quantization algorithm use symmetric or not. If `True` then base on
-            symmetric otherwise base on assymmetric. The first element represent weights and second
+        symmetric (bool, list or tuple): Quantization algorithm use symmetric or not. If `True` then base on
+            symmetric otherwise base on asymmetric. The first element represent weights and second
             element represent data flow. Default: (False, False)
-        narrow_range (int or tuple): Quantization algorithm use narrow range or not. If `True` then base
+        narrow_range (bool, list or tuple): Quantization algorithm use narrow range or not. If `True` then base
             on narrow range otherwise base on off narrow range. The first element represent weights and
             second element represent data flow. Default: (False, False)
 

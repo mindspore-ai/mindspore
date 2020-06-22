@@ -17,11 +17,10 @@
 #include <thrust/extrema.h>
 #include <thrust/device_vector.h>
 #include <thrust/pair.h>
-#include "device/gpu/cuda_common.h"
 #include "fake_quant_perlayer_impl.cuh"
 
-__global__ void FakeQuantize(const float *input, float *output, const int size, const float *nudge_min,
-                             const float *nudge_max, const float *scale) {
+__global__ void FakeQuantPerLayer(const float *input, float *output, const int size, const float *nudge_min,
+                                  const float *nudge_max, const float *scale) {
   float input_x = 0.f;
   int nudge_input = 0;
 
@@ -43,8 +42,8 @@ __global__ void FakeQuantize(const float *input, float *output, const int size, 
   return;
 }
 
-__global__ void FakeQuantizeGrad(const float *input, const float *gradient, float *output, const int size,
-                                 const float *nudge_min, const float *nudge_max) {
+__global__ void FakeQuantPerLayerGrad(const float *input, const float *gradient, float *output, const int size,
+                                      const float *nudge_min, const float *nudge_max) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
     if (input[i] < nudge_min[0] || input[i] > nudge_max[0]) {
       output[i] = 0;
@@ -55,12 +54,18 @@ __global__ void FakeQuantizeGrad(const float *input, const float *gradient, floa
   return;
 }
 
-__global__ void NudgeMinMax(const float *input_min, const float *input_max, const float quant_min,
-                            const float quant_max, float *nudge_min, float *nudge_max, float *scale) {
+__global__ void NudgeMinMaxPerLayer(float *input_min, float *input_max, const float quant_min, const float quant_max,
+                                    float *nudge_min, float *nudge_max, float *scale, const bool symmetric) {
   float zp_from_min = 0.f;
   scale[0] = 0.f;
   nudge_max[0] = 0.f;
   nudge_min[0] = 0.f;
+
+  if (symmetric) {
+    input_max[0] = abs(input_min[0]) < input_max[0] ? input_max[0] : -input_min[0];
+    input_min[0] = abs(input_min[0]) < input_max[0] ? -input_max[0] : input_min[0];
+  }
+
   if ((quant_max - quant_min) == 0 || (input_max[0] - input_min[0]) == 0) {
     scale[0] = 0.f;
     zp_from_min = 0.f;
@@ -83,53 +88,24 @@ __global__ void NudgeMinMax(const float *input_min, const float *input_max, cons
   return;
 }
 
-__global__ void UpdateInputMinMaxWithEMA(float *input_min, float *input_max, const float min, const float max,
-                                         const float decay) {
-  input_min[0] = decay * (min) + (1 - decay) * (input_min[0]);
-  input_min[0] = input_min[0] > 0 ? 0 : input_min[0];
-  input_max[0] = decay * (max) + (1 - decay) * (input_max[0]);
-  input_max[0] = input_max[0] < 0 ? 0 : input_max[0];
+void CalFakeQuantPerLayer(const float *input, float *output, const int size, const float *nudge_min,
+                          const float *nudge_max, const float *scale, cudaStream_t cuda_stream) {
+  FakeQuantPerLayer<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, output, size, nudge_min, nudge_max,
+                                                                       scale);
   return;
 }
 
-__global__ void UpdateInputMinMax(float *input_min, float *input_max, const float min, const float max) {
-  input_min[0] = min > 0 ? 0 : min;
-  input_max[0] = max < 0 ? 0 : max;
-}
-
-void CalFakeQuantize(const float *input, float *output, const int size, const float *nudge_min, const float *nudge_max,
-                     const float *scale, bool symmetric, cudaStream_t cuda_stream) {
-  FakeQuantize<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, output, size, nudge_min, nudge_max, scale);
+void CalFakeQuantPerLayerGrad(const float *input, const float *gradient, float *output, const int size,
+                              const float *nudge_min, const float *nudge_max, cudaStream_t cuda_stream) {
+  FakeQuantPerLayerGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, gradient, output, size, nudge_min,
+                                                                           nudge_max);
   return;
 }
 
-void CalFakeQuantizeGrad(const float *input, const float *gradient, float *output, const int size,
-                         const float *nudge_min, const float *nudge_max, cudaStream_t cuda_stream) {
-  FakeQuantizeGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(input, gradient, output, size, nudge_min,
-                                                                      nudge_max);
-  return;
-}
-
-void CalNudge(const float *input_min, const float *input_max, const float quant_min, const float quant_max,
-              float *nudge_min, float *nudge_max, float *scale, cudaStream_t cuda_stream) {
-  NudgeMinMax<<<1, 1, 0, cuda_stream>>>(input_min, input_max, quant_min, quant_max, nudge_min, nudge_max, scale);
-  return;
-}
-
-void CalMinMax(float *input, float *input_min, float *input_max, const int size, const float ema_decay, const bool ema,
-               cudaStream_t cuda_stream) {
-  float minel = 0.f;
-  float maxel = 0.f;
-  auto policy = thrust::cuda::par.on(cuda_stream);
-  thrust::pair<thrust::device_ptr<float>, thrust::device_ptr<float>> tuple;
-  tuple = thrust::minmax_element(policy, thrust::device_pointer_cast(input), thrust::device_pointer_cast(input) + size);
-  minel = tuple.first[0];
-  maxel = tuple.second[0];
-
-  if (ema) {
-    UpdateInputMinMaxWithEMA<<<1, 1, 0, cuda_stream>>>(input_min, input_max, minel, maxel, ema_decay);
-  } else {
-    UpdateInputMinMax<<<1, 1, 0, cuda_stream>>>(input_min, input_max, minel, maxel);
-  }
+void CalNudgePerLayer(float *input_min, float *input_max, const float quant_min, const float quant_max,
+                      float *nudge_min, float *nudge_max, float *scale, const bool symmetric,
+                      cudaStream_t cuda_stream) {
+  NudgeMinMaxPerLayer<<<1, 1, 0, cuda_stream>>>(input_min, input_max, quant_min, quant_max, nudge_min, nudge_max, scale,
+                                                symmetric);
   return;
 }
