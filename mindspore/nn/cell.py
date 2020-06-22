@@ -822,7 +822,7 @@ class GraphKernel(Cell):
     """
     Base class for GraphKernel.
 
-    A `GraphKernel` a composite of basic primitives and can be compiled into a fused kernel automaticly when
+    A `GraphKernel` a composite of basic primitives and can be compiled into a fused kernel automatically when
     context.set_context(enable_graph_kernel=True).
 
     Examples:
