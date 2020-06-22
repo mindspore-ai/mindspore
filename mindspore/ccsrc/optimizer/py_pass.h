@@ -1,0 +1,56 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
+#define MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
+#include <string>
+#include <memory>
+#include <unordered_map>
+
+#include "ir/anf.h"
+#include "pybind_api/api_register.h"
+#include "pybind_api/export_flags.h"
+
+namespace mindspore {
+namespace opt {
+namespace python_pass {
+class PythonPass;
+using PythonPassPtr = std::shared_ptr<PythonPass>;
+using NodeEquiv = std::unordered_map<std::string, AnfNodePtr>;
+using NodeEquivPtr = std::shared_ptr<NodeEquiv>;
+
+class PythonPass {
+ public:
+  explicit PythonPass(const std::string &name, const py::function &src, const py::function &dst,
+                      bool run_only_once = false, bool multigraph = true);
+  ~PythonPass() = default;
+  bool Run(const FuncGraphPtr &func_graph);
+  std::string name() const { return name_; }
+  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node);
+
+ private:
+  void Build(const py::function &src, const py::function &dst);
+  AnfNodePtr src_node_ = nullptr;
+  AnfNodePtr dst_node_ = nullptr;
+  const std::string name_;
+  bool run_only_once_;
+  bool multigraph_ = true;
+};
+
+using PythonPassPtr = std::shared_ptr<PythonPass>;
+}  // namespace python_pass
+}  // namespace opt
+}  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_OPTIMIZER_PASS_H_
