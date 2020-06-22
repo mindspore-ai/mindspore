@@ -246,6 +246,7 @@ constexpr auto kTupleGetItemInputSize = 3;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;
+constexpr auto kControlDependMode = "depend_mode";
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
