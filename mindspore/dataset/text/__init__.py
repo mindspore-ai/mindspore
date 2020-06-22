@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-mindspore.dataset.text
+This module is to support text processing for nlp. It includes two parts:
+transforms and utils. transforms is a high performance
+nlp text processing module which is developed with icu4c and cppjieba.
+utils provides some general methods for nlp text processing.
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, TruncateSequencePair, \

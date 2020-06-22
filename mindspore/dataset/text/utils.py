@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Some basic function for text
+The module text.utils provides some general methods for nlp text processing.
+For example, you can use Vocab to build a dictionary,
+use to_bytes and to_str to encode and decode strings into a specified format.
 """
 from enum import IntEnum
 
@@ -52,12 +54,12 @@ class Vocab(cde.Vocab):
                 min_frequency/max_frequency can be None, which corresponds to 0/total_words separately
                 (default=None, all words are included).
             top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-                taken. top_k is taken after freq_range. If not enough top_k, all words will be taken. (default=None,
+                taken. top_k is taken after freq_range. If not enough top_k, all words will be taken (default=None,
                 all words are included).
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab. If special_tokens
-                is specified and special_first is set to None, special_tokens will be prepended. (default=None).
+                is specified and special_first is set to None, special_tokens will be prepended (default=None).
 
         Returns:
             Vocab, Vocab object built from dataset.
@@ -81,7 +83,7 @@ class Vocab(cde.Vocab):
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to None, special_tokens will be prepended. (default=None).
+                is specified and special_first is set to None, special_tokens will be prepended (default=None).
         """
 
         return super().from_list(word_list, special_tokens, special_first)
@@ -101,7 +103,7 @@ class Vocab(cde.Vocab):
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first (bool, optional): whether special_tokens will be prepended/appended to vocab,
                 If special_tokens is specified and special_first is set to None,
-                special_tokens will be prepended. (default=None).
+                special_tokens will be prepended (default=None).
         """
 
         return super().from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
@@ -157,12 +159,14 @@ def to_bytes(array, encoding='utf8'):
 
 
 class JiebaMode(IntEnum):
+    """An enumeration for JiebaTokenizer, effective enumeration types are MIX, MP, HMM."""
     MIX = 0
     MP = 1
     HMM = 2
 
 
 class NormalizeForm(IntEnum):
+    """An enumeration for NormalizeUTF8, effective enumeration types are NONE, NFC, NFKC, NFD, NFKD."""
     NONE = 0
     NFC = 1
     NFKC = 2
