@@ -3016,9 +3016,10 @@ class Inv(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          Must be one of the following types: float16, float32, int32.
 
     Outputs:
-        Tensor, has the same shape as `input_x`.
+        Tensor, has the same shape and data type as `input_x`.
 
     Examples:
         >>> inv = P.Inv()
@@ -3036,8 +3037,7 @@ class Inv(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.float16, mstype.float32,
-                                                                mstype.int32, mstype.int8,
-                                                                mstype.uint8], self.name)
+                                                                mstype.int32], self.name)
         return x_dtype
 
 
