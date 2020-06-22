@@ -102,6 +102,7 @@ class AscendSession : public SessionBasic {
   void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims);
   // split graphs with recurse from root graph
   void SplitGraphs(NotNull<KernelGraphPtr> root_graph);
+  void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);
   void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
   std::vector<AnfNodePtr> ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
