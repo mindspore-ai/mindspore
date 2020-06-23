@@ -380,7 +380,7 @@ class PReLU(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> input_x = Tensor(np.random.rand(1, 10, 4, 4), mindspore.float32)
         >>> prelu = nn.PReLU()
         >>> prelu(input_x)
 
