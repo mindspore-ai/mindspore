@@ -55,7 +55,7 @@ def get_adj_features_labels(data_dir):
     adj = adj + adj.T.multiply(adj.T > adj) + sp.eye(nodes_num)
     nor_adj = normalize_adj(adj)
     nor_adj = np.array(nor_adj.todense())
-    return nor_adj, features, labels_onehot
+    return nor_adj, features, labels_onehot, labels
 
 
 def get_mask(total, begin, end):

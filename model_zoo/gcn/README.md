@@ -36,9 +36,9 @@ sh run_process_data.sh [SRC_PATH] [DATASET_NAME]
 >> Launch
 ```
 #Generate dataset in mindrecord format for cora
-sh run_process_data.sh cora
+sh run_process_data.sh ./data cora
 #Generate dataset in mindrecord format for citeseer
-sh run_process_data.sh citeseer
+sh run_process_data.sh ./data citeseer
 ```
 
 ## Structure
@@ -111,3 +111,5 @@ Optimization Finished!
 Test set results: cost= 1.00983 accuracy= 0.81300 time= 0.39083
 ...
 ```
+
+

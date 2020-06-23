@@ -17,9 +17,9 @@ import time
 import pytest
 import numpy as np
 from mindspore import context
-from src.gcn import GCN, LossAccuracyWrapper, TrainNetWrapper
-from src.config import ConfigGCN
-from src.dataset import get_adj_features_labels, get_mask
+from model_zoo.gcn.src.gcn import GCN, LossAccuracyWrapper, TrainNetWrapper
+from model_zoo.gcn.src.config import ConfigGCN
+from model_zoo.gcn.src.dataset import get_adj_features_labels, get_mask
 
 
 DATA_DIR = '/home/workspace/mindspore_dataset/cora/cora_mr/cora_mr'
@@ -37,22 +37,23 @@ def test_gcn():
     print("test_gcn begin")
     np.random.seed(SEED)
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend", save_graphs=True)
+                        device_target="Ascend", save_graphs=False)
     config = ConfigGCN()
-    adj, feature, label = get_adj_features_labels(DATA_DIR)
+    config.dropout = 0.0
+    adj, feature, label_onehot, _ = get_adj_features_labels(DATA_DIR)
 
-    nodes_num = label.shape[0]
+    nodes_num = label_onehot.shape[0]
     train_mask = get_mask(nodes_num, 0, TRAIN_NODE_NUM)
     eval_mask = get_mask(nodes_num, TRAIN_NODE_NUM, TRAIN_NODE_NUM + EVAL_NODE_NUM)
     test_mask = get_mask(nodes_num, nodes_num - TEST_NODE_NUM, nodes_num)
 
-    class_num = label.shape[1]
+    class_num = label_onehot.shape[1]
     gcn_net = GCN(config, adj, feature, class_num)
     gcn_net.add_flags_recursive(fp16=True)
 
-    eval_net = LossAccuracyWrapper(gcn_net, label, eval_mask, config.weight_decay)
-    test_net = LossAccuracyWrapper(gcn_net, label, test_mask, config.weight_decay)
-    train_net = TrainNetWrapper(gcn_net, label, train_mask, config)
+    eval_net = LossAccuracyWrapper(gcn_net, label_onehot, eval_mask, config.weight_decay)
+    test_net = LossAccuracyWrapper(gcn_net, label_onehot, test_mask, config.weight_decay)
+    train_net = TrainNetWrapper(gcn_net, label_onehot, train_mask, config)
 
     loss_list = []
     for epoch in range(config.epochs):
