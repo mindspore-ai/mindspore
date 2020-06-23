@@ -67,7 +67,7 @@ def test_qat_lenet():
     img = Tensor(np.ones((32, 1, 32, 32)).astype(np.float32))
     net = LeNet5()
     net = qat.convert_quant_network(
-        net, quant_delay=0, bn_fold=False, freeze_bn=10000, num_bits=8)
+        net, freeze_bn=10000, num_bits=8)
     # should load the checkpoint. mock here
     for param in net.get_parameters():
         param.init_data()
