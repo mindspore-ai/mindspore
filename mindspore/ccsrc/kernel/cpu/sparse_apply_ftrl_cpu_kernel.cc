@@ -29,7 +29,7 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
   auto linear = input_params->linear_;
   auto lr = input_params->lr_;
   auto l1 = input_params->l1_;
-  auto l2 = input_params->l2_;
+  auto l2_plus = 2 * input_params->l2_;
   auto lr_power = input_params->lr_power_;
   auto unique_sparse_grad = input_params->sparse_grad_;
   auto var_first_dim_size = input_params->var_first_dim_size_;
@@ -44,21 +44,18 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
     for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
       auto summed_grad = unique_sparse_grad.value_[k];
       auto accum_new = accum[j] + summed_grad * summed_grad;
-      if (lr_power == -0.5) {
-        linear[j] += summed_grad - (std::sqrt(accum_new) - std::sqrt(accum[j])) / lr * var[j];
-      } else {
-        linear[j] += summed_grad - (std::pow(accum_new, -lr_power) - std::pow(accum[j], -lr_power)) / lr * var[j];
-      }
-      auto x = Sign(linear[j]) * l1 - linear[j];
       float y;
       if (lr_power == -0.5) {
-        y = std::sqrt(accum_new) / lr + 2 * l2;
+        y = std::sqrt(accum_new);
+        linear[j] += summed_grad - (y - std::sqrt(accum[j])) / lr * var[j];
       } else {
-        y = std::pow(accum_new, -lr_power) / lr + 2 * l2;
+        y = std::pow(accum_new, -lr_power);
+        linear[j] += summed_grad - (y - std::pow(accum[j], -lr_power)) / lr * var[j];
       }
-      auto pre_shrink = x / y;
-      var[j] = std::fabs(linear[j]) > l1 ? pre_shrink : 0;
       accum[j] = accum_new;
+      auto x = Sign(linear[j]) * l1 - linear[j];
+      y = y / lr + l2_plus;
+      var[j] = std::fabs(linear[j]) > l1 ? x / y : 0;
     }
   }
 }
