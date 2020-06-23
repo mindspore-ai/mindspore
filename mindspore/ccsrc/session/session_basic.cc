@@ -429,7 +429,12 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
   std::vector<AnfNodePtr> cnode_inputs;
   auto attr_input = cnode->input(kAnfPrimitiveIndex);
   MS_EXCEPTION_IF_NULL(attr_input);
-  if (IsValueNode<FuncGraph>(attr_input)) {
+  if (AnfAlgo::IsGraphKernel(cnode)) {
+    auto fg = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
+    MS_EXCEPTION_IF_NULL(fg);
+    auto new_fg = BasicClone(fg);
+    cnode_inputs.push_back(std::make_shared<ValueNode>(new_fg));
+  } else if (IsValueNode<FuncGraph>(attr_input)) {
     // create primitive of cnode:call
     cnode_inputs = {graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())))};
     // create a ValueNode<KernelGraph> as input of cnode:call
