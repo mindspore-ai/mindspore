@@ -538,11 +538,16 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     MS_EXCEPTION_IF_NULL(depend_node);
     std::vector<AnfNodePtr> prior_nodes = {prior_node};
     std::vector<AnfNodePtr> depend_nodes = {depend_node};
-    MS_LOG(INFO) << "Prior node[" << prior_node->DebugString() << "], depend node[" << depend_node->DebugString();
-    if (prior_node->isa<Parameter>()) {
+    int depend_mode = 0;
+    if (AnfAlgo::HasNodeAttr(kControlDependMode, cnode)) {
+      depend_mode = AnfAlgo::GetNodeAttr<int>(cnode, kControlDependMode);
+    }
+    MS_LOG(INFO) << "Prior node[" << prior_node->DebugString() << "], depend node[" << depend_node->DebugString()
+                 << "], depend_mode :" << depend_mode << ".";
+    if (prior_node->isa<Parameter>() && depend_mode == 1) {
       prior_nodes = GetOutputNodes(prior_node);
     }
-    if (depend_node->isa<Parameter>()) {
+    if (depend_node->isa<Parameter>() && depend_mode == 1) {
       depend_nodes = GetOutputNodes(depend_node);
     }
     for (auto &first_node : prior_nodes) {
