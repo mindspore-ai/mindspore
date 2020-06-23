@@ -26,6 +26,7 @@
 #include "device/cpu/cpu_device_address.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
+#include "utils/profile.h"
 #include "common/utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "session/session_basic.h"
@@ -270,6 +271,9 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
 
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
+#ifdef ENABLE_PROFILE
+    double start_time = GetTime();
+#endif
     std::vector<kernel::AddressPtr> kernel_inputs;
     std::vector<kernel::AddressPtr> kernel_workspaces;
     std::vector<kernel::AddressPtr> kernel_outputs;
@@ -297,6 +301,10 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
     if (!ret) {
       MS_LOG(EXCEPTION) << "Launch kernel failed.";
     }
+#ifdef ENABLE_PROFILE
+    double cost_time = GetTime() - start_time;
+    MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
+#endif
   }
   return true;
 }

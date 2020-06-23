@@ -112,10 +112,10 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
       auto tensor_address = tensor->device_address();
       bool need_sync = false;
       if (ms_context->enable_pynative_infer()) {
-        if (tensor_address.get() == nullptr || tensor_address != device_address) {
+        if (tensor_address == nullptr || tensor_address != device_address) {
           need_sync = true;
         }
-      } else if (tensor->is_dirty()) {
+      } else if (tensor->is_dirty() || tensor_address == nullptr) {
         need_sync = true;
       } else if (tensor_address != device_address) {
         if (tensor_address->DeviceType() == device_address->DeviceType()) {
