@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr char kKeepDims[] = "keep_dims";
 constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
 constexpr size_t kInputIndex_0 = 0;
@@ -148,12 +147,12 @@ void TbeKernelReduceSelecter::GetReduceAttrAxis() {
 }
 
 void TbeKernelReduceSelecter::GetReduceAttrKeepDim() {
-  if (!AnfAlgo::HasNodeAttr(kKeepDims, cnode_ptr_)) {
+  if (!AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode_ptr_)) {
     MS_LOG(INFO) << "This node does't have keep_attr.";
     keep_dims_ = false;
     return;
   }
-  keep_dims_ = AnfAlgo::GetNodeAttr<bool>(cnode_ptr_, kKeepDims);
+  keep_dims_ = AnfAlgo::GetNodeAttr<bool>(cnode_ptr_, kAttrKeepDims);
 }
 
 void TbeKernelReduceSelecter::AssignSupportFormat(const std::string &support_format_str,

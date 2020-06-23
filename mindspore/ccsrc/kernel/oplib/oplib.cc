@@ -293,8 +293,10 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
   const auto &output_infos = op_info->outputs_ptr();
   const auto &input_infos = op_info->inputs_ptr();
   for (size_t out_index = 0; out_index < output_infos.size(); out_index++) {
+    MS_EXCEPTION_IF_NULL(output_infos[out_index]);
     const auto &out_name = output_infos[out_index]->name();
     for (size_t in_index = 0; in_index < input_infos.size(); in_index++) {
+      MS_EXCEPTION_IF_NULL(input_infos[in_index]);
       const auto &in_name = input_infos[in_index]->name();
       if (out_name == in_name) {
         if (op_info->has_ref_index(out_index)) {

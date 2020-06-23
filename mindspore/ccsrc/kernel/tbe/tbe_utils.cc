@@ -59,14 +59,14 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
     MS_LOG(INFO) << "json file exist, no need to create.";
     return;
   }
-  std::ofstream filewrite;
-  filewrite.open(path);
-  if (!filewrite.is_open()) {
+  std::ofstream file_write;
+  file_write.open(path);
+  if (!file_write.is_open()) {
     return;
   }
-  filewrite << info << std::endl;
-  filewrite.close();
-  if (nullptr == realpath(path.c_str(), real_path)) {
+  file_write << info << std::endl;
+  file_write.close();
+  if (realpath(path.c_str(), real_path) == nullptr) {
     MS_LOG(INFO) << "dir: " << path << "does not exit.";
     return;
   }
@@ -144,12 +144,12 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   auto kernel_json_info = kernel_pack.kernel_json_info();
 
   *block_dim = kernel_json_info.block_dim;
-  string funcname = kernel_json_info.kernel_name;
+  string func_name = kernel_json_info.kernel_name;
   string magic = kernel_json_info.magic;
 
   if (!force_reload) {
     // use the cached object.
-    auto iter = info_table_.find(funcname);
+    auto iter = info_table_.find(func_name);
     if (iter != info_table_.end()) {
       auto kernelmeta = iter->second;
       *block_dim = kernelmeta->block_dim_;
@@ -157,23 +157,24 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     }
   }
   void *module = nullptr;
-  if (0 != BinaryRegister((*kernel_pack.GetKernel()), &module, magic)) {
+  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic) != 0) {
     MS_LOG(INFO) << "Call runtime BinaryRegister error.";
     return 0;
   }
   // to diff different funcs.
-  uintptr_t funcstub = ++kernel_stub_gen_;
+  uintptr_t func_stub = ++kernel_stub_gen_;
   if (RT_ERROR_NONE !=
-      rtFunctionRegister(module, reinterpret_cast<void *>(funcstub), funcname.c_str(), funcname.c_str(), 0)) {
+      rtFunctionRegister(module, reinterpret_cast<void *>(func_stub), func_name.c_str(), func_name.c_str(), 0)) {
     MS_LOG(INFO) << "Call runtime rtFunctionRegister error.";
     return 0;
   }
   // cache the registered kernelmeta.
-  info_table_[funcname] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{funcstub, *block_dim});
-  return funcstub;
+  info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{func_stub, *block_dim});
+  return func_stub;
 }
 
 std::string KernelManager::GetStubFuncName(const KernelPackPtr &kernel_pack) {
+  MS_EXCEPTION_IF_NULL(kernel_pack);
   auto kernel_json_info = kernel_pack->kernel_json_info();
   return kernel_json_info.kernel_name;
 }
