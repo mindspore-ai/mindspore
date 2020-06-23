@@ -19,8 +19,7 @@
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/util/task_manager.h"
-#include "dataset/engine/opt/pre/map_column_reorder.h"
-#include "dataset/engine/opt/pre/global_shuffle.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/engine/perf/profiling.h"
 #include "dataset/engine/perf/monitor.h"
 
@@ -42,6 +41,10 @@ ExecutionTree::~ExecutionTree() { (void)tg_->ServiceStop(); }
 // provides it with a link to the tree. A node cannot form any relationships (parent/child) with
 // other nodes unless they are associated with the same tree.
 Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
+  // If we are already a part of the tree, no-op
+  if (op->tree_ == this) {
+    return Status::OK();
+  }
   if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding) {
     std::string err_msg =
       "Invalid tree state for adding a node. Current state: " + std::to_string(static_cast<int>(tree_state_)) +
@@ -211,8 +214,7 @@ Status ExecutionTree::PrepareTreePreAction() {
   bool modified = false;
   std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
-  pre_actions.push_back(std::make_unique<MapColumnReorder>());
-  pre_actions.push_back(std::make_unique<GlobalShufflePass>());
+  // example: pre_actions.push_back(new SomePass());
   // Apply pre action passes
   for (auto &pass : pre_actions) {
     RETURN_IF_NOT_OK(pass->Run(this, &modified));

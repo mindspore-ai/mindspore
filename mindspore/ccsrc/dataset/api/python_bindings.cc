@@ -116,9 +116,9 @@ void bindDEPipeline(py::module *m) {
     .def(
       "AddNodeToTree",
       [](DEPipeline &de, const OpName &op_name, const py::dict &args) {
-        DsOpPtr op;
-        THROW_IF_ERROR(de.AddNodeToTree(op_name, args, &op));
-        return op;
+        py::dict out;
+        THROW_IF_ERROR(de.AddNodeToTree(op_name, args, &out));
+        return out;
       },
       py::return_value_policy::reference)
     .def_static("AddChildToParentNode",
