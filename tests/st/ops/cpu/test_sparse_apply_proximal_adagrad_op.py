@@ -38,10 +38,20 @@ class Net(nn.Cell):
 
 
 def test_net():
-    gradient = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+    gradient = Tensor(np.ones([3, 3, 3]).astype(np.float32))
     indices = Tensor([0, 1, 2], mstype.int32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     sparse_apply_proximal_adagrad = Net()
-    output = sparse_apply_proximal_adagrad(gradient, indices)
-    print(output[0].asnumpy())
+    sparse_apply_proximal_adagrad(gradient, indices)
+    print(sparse_apply_proximal_adagrad.var.default_input)
+    expect_var = np.array([[[0.9929289, 0.9929289, 0.9929289],
+                            [0.9929289, 0.9929289, 0.9929289],
+                            [0.9929289, 0.9929289, 0.9929289]],
+                           [[0.9929289, 0.9929289, 0.9929289],
+                            [0.9929289, 0.9929289, 0.9929289],
+                            [0.9929289, 0.9929289, 0.9929289]],
+                           [[0.9929289, 0.9929289, 0.9929289],
+                            [0.9929289, 0.9929289, 0.9929289],
+                            [0.9929289, 0.9929289, 0.9929289]]]).astype(np.float32)
+    assert np.all(sparse_apply_proximal_adagrad.var.default_input.asnumpy() == expect_var)
