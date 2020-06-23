@@ -63,12 +63,14 @@
 #include "dataset/kernels/image/random_horizontal_flip_bbox_op.h"
 #include "dataset/kernels/image/random_horizontal_flip_op.h"
 #include "dataset/kernels/image/random_resize_op.h"
+#include "dataset/kernels/image/random_resize_with_bbox_op.h"
 #include "dataset/kernels/image/random_rotation_op.h"
 #include "dataset/kernels/image/random_vertical_flip_op.h"
 #include "dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 #include "dataset/kernels/image/rescale_op.h"
 #include "dataset/kernels/image/resize_bilinear_op.h"
 #include "dataset/kernels/image/resize_op.h"
+#include "dataset/kernels/image/resize_with_bbox_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/no_op.h"
 #include "dataset/text/kernels/jieba_tokenizer_op.h"
@@ -347,6 +349,18 @@ void bindTensorOps1(py::module *m) {
     *m, "ResizeOp", "Tensor operation to resize an image. Takes height, width and mode")
     .def(py::init<int32_t, int32_t, InterpolationMode>(), py::arg("targetHeight"),
          py::arg("targetWidth") = ResizeOp::kDefWidth, py::arg("interpolation") = ResizeOp::kDefInterpolation);
+
+  (void)py::class_<ResizeWithBBoxOp, TensorOp, std::shared_ptr<ResizeWithBBoxOp>>(
+    *m, "ResizeWithBBoxOp", "Tensor operation to resize an image. Takes height, width and mode.")
+    .def(py::init<int32_t, int32_t, InterpolationMode>(), py::arg("targetHeight"),
+         py::arg("targetWidth") = ResizeWithBBoxOp::kDefWidth,
+         py::arg("interpolation") = ResizeWithBBoxOp::kDefInterpolation);
+
+  (void)py::class_<RandomResizeWithBBoxOp, TensorOp, std::shared_ptr<RandomResizeWithBBoxOp>>(
+    *m, "RandomResizeWithBBoxOp",
+    "Tensor operation to resize an image using a randomly selected interpolation. Takes height and width.")
+    .def(py::init<int32_t, int32_t>(), py::arg("targetHeight"),
+         py::arg("targetWidth") = RandomResizeWithBBoxOp::kDefTargetWidth);
 
   (void)py::class_<UniformAugOp, TensorOp, std::shared_ptr<UniformAugOp>>(
     *m, "UniformAugOp", "Tensor operation to apply random augmentation(s).")
