@@ -1888,7 +1888,7 @@ class Cosh(PrimitiveWithInfer):
 
 class Asinh(PrimitiveWithInfer):
     """
-    Compute inverse hyperbolic cosine of x element-wise.
+    Compute inverse hyperbolic sine of x element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -2645,7 +2645,7 @@ class Sin(PrimitiveWithInfer):
 
 class Asin(PrimitiveWithInfer):
     """
-    Computes arccosine of input element-wise.
+    Computes arcsine of input element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
