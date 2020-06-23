@@ -23,7 +23,7 @@
 #include "kernel/gpu/cuda_impl/momentum_impl.cuh"
 namespace mindspore {
 namespace kernel {
-template <typename T>
+template <typename T, typename S>
 class MomentumGpuKernel : public GpuKernel {
  public:
   MomentumGpuKernel()
@@ -37,9 +37,9 @@ class MomentumGpuKernel : public GpuKernel {
               void *stream_ptr) override {
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
-    T *learning_rate = GetDeviceAddress<T>(inputs, 2);
+    S *learning_rate = GetDeviceAddress<S>(inputs, 2);
     T *gradient = GetDeviceAddress<T>(inputs, 3);
-    T *momentum = GetDeviceAddress<T>(inputs, 4);
+    S *momentum = GetDeviceAddress<S>(inputs, 4);
     MomentumUpdateVariable(inputs[0]->size / sizeof(T), variable, accumulation, learning_rate, gradient, momentum,
                            reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
@@ -53,9 +53,9 @@ class MomentumGpuKernel : public GpuKernel {
 
     variable_size_ = sizeof(T);
     accumulation_size_ = sizeof(T);
-    learning_rate_size_ = sizeof(T);
+    learning_rate_size_ = sizeof(S);
     gradient_size_ = sizeof(T);
-    momentum_size_ = sizeof(T);
+    momentum_size_ = sizeof(S);
 
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < variable_shape.size(); i++) {
