@@ -47,6 +47,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {REDUCE_MIN, OperatorType::kRecReduce},
   {REDUCE_MEAN, OperatorType::kRecReduce},
   {GATHERV2, OperatorType::kRecGatherV2},
+  {ARGMAXWITHVALUE, OperatorType::kRecArgWithValue},
+  {ARGMINWITHVALUE, OperatorType::kRecArgWithValue},
 
   {RELU, OperatorType::kRecReLU},
   {"ReLU6", OperatorType::kRecReLU},
@@ -59,6 +61,7 @@ const std::map<std::string, OperatorType> DictOpType{
 
   {PRELU, OperatorType::kRecPReLU},
 
+  {TRANSPOSE, OperatorType::kRecElmWiseOp},
   {L2_NORMALIZE, OperatorType::kRecElmWiseOp},
   {TENSOR_ADD, OperatorType::kRecElmWiseOp},
   {SUB, OperatorType::kRecElmWiseOp},
@@ -123,12 +126,12 @@ void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, s
 size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_names,
                                   const std::string &input_name);
 
-void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
-                   const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list);
+void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
+                   const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list);
 
-std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
-                                      const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
-                                      const std::shared_ptr<std::vector<size_t>> index_list);
+std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
+                                      const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
+                                      const std::shared_ptr<std::vector<size_t>> &index_list);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_
