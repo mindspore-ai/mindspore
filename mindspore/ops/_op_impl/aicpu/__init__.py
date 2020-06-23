@@ -32,3 +32,4 @@ from .reverse_sequence import _reverse_sequence_aicpu
 from .pack import _pack_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
 from .cast import _cast_aicpu
+from .mirror_pad import _mirror_pad_aicpu
