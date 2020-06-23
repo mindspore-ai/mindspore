@@ -24,6 +24,7 @@ _symmetric = False
 _fake = True
 _per_channel = True
 
+
 def _weight_variable(shape, factor=0.01):
     init_value = np.random.randn(*shape).astype(np.float32) * factor
     return Tensor(init_value)
@@ -65,6 +66,7 @@ def _fc(in_channel, out_channel):
     weight = _weight_variable(weight_shape)
     return nn.Dense(in_channel, out_channel, has_bias=True, weight_init=weight, bias_init=0)
 
+
 class ConvBNReLU(nn.Cell):
     """
     Convolution/Depthwise fused with Batchnorm and ReLU block definition.
@@ -82,6 +84,7 @@ class ConvBNReLU(nn.Cell):
     Examples:
         >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
+
     def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
@@ -93,6 +96,7 @@ class ConvBNReLU(nn.Cell):
     def construct(self, x):
         output = self.features(x)
         return output
+
 
 class ResidualBlock(nn.Cell):
     """
@@ -152,8 +156,8 @@ class ResidualBlock(nn.Cell):
                                                                                               stride=stride,
                                                                                               pad_mode='same',
                                                                                               padding=0)
-        self.add = P.TensorAdd()
-        self.relu = nn.ReLUQuant() if _fake else P.ReLU()
+        self.add = nn.TensorAddQuant()
+        self.relu = P.ReLU()
 
     def construct(self, x):
         identity = x
@@ -231,7 +235,9 @@ class ResNet(nn.Cell):
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.flatten = nn.Flatten()
-        self.end_point = nn.Dense(out_channels[3], num_classes, has_bias=True)
+        self.end_point = nn.DenseQuant(out_channels[3], num_classes, has_bias=True, per_channel=_per_channel,
+                                       symmetric=_symmetric)
+        self.output_fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)
 
     def _make_layer(self, block, layer_num, in_channel, out_channel, stride):
         """
@@ -273,7 +279,7 @@ class ResNet(nn.Cell):
         out = self.mean(c5, (2, 3))
         out = self.flatten(out)
         out = self.end_point(out)
-
+        out = self.output_fake(out)
         return out
 
 
@@ -296,6 +302,7 @@ def resnet50_quant(class_num=10):
                   [256, 512, 1024, 2048],
                   [1, 2, 2, 2],
                   class_num)
+
 
 def resnet101_quant(class_num=1001):
     """

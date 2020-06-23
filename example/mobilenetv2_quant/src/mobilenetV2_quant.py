@@ -193,10 +193,12 @@ class MobileNetV2Quant(nn.Cell):
         # mobilenet head
         head = ([GlobalAvgPooling(),
                  nn.DenseQuant(self.out_channels, num_classes, has_bias=True, per_channel=_per_channel,
-                               symmetric=_symmetric)] if not has_dropout else
+                               symmetric=_symmetric),
+                 nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)] if not has_dropout else
                 [GlobalAvgPooling(), nn.Dropout(0.2),
                  nn.DenseQuant(self.out_channels, num_classes, has_bias=True, per_channel=_per_channel,
-                               symmetric=_symmetric)])
+                               symmetric=_symmetric),
+                 nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)])
         self.head = nn.SequentialCell(head)
 
     def construct(self, x):
