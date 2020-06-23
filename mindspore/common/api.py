@@ -523,7 +523,7 @@ class _Executor:
             file_format (str): MindSpore currently support 'GEIR' and 'ONNX' format for exported model
         """
         from .._c_expression import export_graph
-        phase = 'export' + '.' + str(net.create_time)
+        phase = 'export' + '.' + self.phase_prefix + '.' + str(net.create_time)
         export_graph(file_name, file_format, phase)
 
 
