@@ -45,7 +45,7 @@ class SwitchSimplify : public OptimizerCaller {
     };
 
     MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), SwitchSimplLambda,
-                            IsValueNode<BoolImm>(cond.GetNode(node)));
+                            cond.CheckFunc(IsValueNode<BoolImm>, node));
 
     return nullptr;
   }
@@ -61,7 +61,7 @@ class FloatTupleGetItemSwitch : public OptimizerCaller {
                      PPrimitive(prim::kPrimTupleGetItem, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x),
                      PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimTupleGetItem, true_br, x),
                                 PPrimitive(prim::kPrimTupleGetItem, false_br, x)),
-                     IsVNode(x.GetNode(node)));
+                     x.CheckFunc(IsVNode, node));
     return nullptr;
   }
 };
@@ -72,11 +72,10 @@ class FloatEnvGetItemSwitch : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> cond, true_br, false_br, x, x2;
-    MATCH_REPLACE_IF(node,
-                     PPrimitive(prim::kPrimEnvGetItem, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x, x2),
-                     PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimEnvGetItem, true_br, x, x2),
-                                PPrimitive(prim::kPrimEnvGetItem, false_br, x, x2)),
-                     IsNode(x.GetNode(node)) && IsNode(x2.GetNode(node)));
+    MATCH_REPLACE(node,
+                  PPrimitive(prim::kPrimEnvGetItem, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x, x2),
+                  PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimEnvGetItem, true_br, x, x2),
+                             PPrimitive(prim::kPrimEnvGetItem, false_br, x, x2)));
 
     return nullptr;
   }
@@ -142,9 +141,9 @@ class ConvertSwitchReplacement : public OptimizerCaller {
       return nnode;
     };
 
-    MATCH_REPLACE_LAMBDA_IF(node_, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), ConvertSwitchLambda,
-                            IsNode(cond.GetNode(node_)) && IsValueNode<FuncGraph>(true_br.GetNode(node_)) &&
-                              IsValueNode<FuncGraph>(false_br.GetNode(node_)));
+    MATCH_REPLACE_LAMBDA_IF(
+      node_, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), ConvertSwitchLambda,
+      true_br.CheckFunc(IsValueNode<FuncGraph>, node_) && false_br.CheckFunc(IsValueNode<FuncGraph>, node_));
 
     return nullptr;
   }
