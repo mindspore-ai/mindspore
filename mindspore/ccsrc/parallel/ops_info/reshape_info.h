@@ -97,6 +97,7 @@ class ReshapeInfo : public OperatorInfo {
   TensorLayout output_layout_;
   bool input_layout_set_flag_;
   bool output_layout_set_flag_;
+  bool is_generating_costs_;
   std::string pre_operator_name_;
   std::string next_operator_name_;
 };

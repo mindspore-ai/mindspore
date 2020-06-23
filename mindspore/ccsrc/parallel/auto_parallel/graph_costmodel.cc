@@ -1406,7 +1406,9 @@ Status CostGraph::InitSelectedStrategy() {
         int32_t next_index = reshape_info->next_operator_index();
         reshape_info->SetOutputLayout((*next_iter)->next_operator()->inputs_tensor_info()[next_index].tensor_layout());
       }
-      return reshape_info->Init(nullptr);
+      if (reshape_info->Init(nullptr) != SUCCESS) {
+        return FAILED;
+      }
     }
   }
   return SUCCESS;
