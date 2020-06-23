@@ -2,9 +2,8 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(HelloWorld C CXX)
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
+add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 
 find_package(Threads REQUIRED)
 
