@@ -161,6 +161,8 @@ constexpr auto kNMSWithMaskOpName = "NMSWithMask";
 constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
 constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
+constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
+constexpr auto kFusedAdamName = "FusedAdam";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
