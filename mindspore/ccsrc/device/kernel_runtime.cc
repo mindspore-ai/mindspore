@@ -676,8 +676,8 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);
   auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
   // set clean output address
-  if (AnfAlgo::HasNodeAttr(kAttrAutomicOutputIndexs, pre_node)) {
-    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAutomicOutputIndexs);
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
     for (auto index : clean_output_indexs) {
       auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
@@ -690,10 +690,10 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
     MS_LOG(INFO) << "AtomicAddClean clean output size:" << clean_output_indexs.size();
   }
   // set clean workspace address
-  if (AnfAlgo::HasNodeAttr(kAttrAutomicWorkspaceSize, pre_node)) {
-    auto clean_workspaces = AnfAlgo::GetNodeAttr<int>(pre_node, kAttrAutomicWorkspaceSize);
-    if (clean_workspaces != 0) {
-      auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, 0);
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+    auto clean_workspaces_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+    for (const auto &index : clean_workspaces_indexs) {
+      auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, index);
       kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(workspace);
       workspace->addr = device_address->ptr_;
@@ -701,7 +701,6 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
       workspace->size = device_address->size_;
       kernel_inputs->emplace_back(workspace);
     }
-    MS_LOG(INFO) << "AtomicAddClean clean workspace size" << clean_workspaces;
   }
 }
 

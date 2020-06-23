@@ -65,6 +65,7 @@ constexpr auto kVTypeBool = "bool";
 constexpr auto kVTypeFloat = "float";
 constexpr auto kVTypeListInt = "listInt";
 constexpr auto kVTypeInt32 = "Int32";
+constexpr auto kVTypeListUInt64 = "listUInt64";
 constexpr auto kVTypeListFloat = "listFloat";
 constexpr auto kVTypeListListInt = "listListInt";
 constexpr auto kJValue = "value";
@@ -442,6 +443,9 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
     } else {
       attr_value = GetValue<std::vector<float>>(value);
     }
+    (*attr_obj)[kJValue] = attr_value;
+  } else if (type == kVTypeListUInt64) {
+    auto attr_value = GetValue<std::vector<size_t>>(value);
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeListListInt) {
     auto attr_value = GetValue<std::vector<std::vector<int>>>(value);
