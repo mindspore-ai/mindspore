@@ -209,10 +209,10 @@ Status ExecutionTree::Prepare() {
 
 Status ExecutionTree::PrepareTreePreAction() {
   bool modified = false;
-  std::vector<Pass *> pre_actions;
+  std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
-  pre_actions.push_back(new MapColumnReorder());
-  pre_actions.push_back(new GlobalShufflePass());
+  pre_actions.push_back(std::make_unique<MapColumnReorder>());
+  pre_actions.push_back(std::make_unique<GlobalShufflePass>());
   // Apply pre action passes
   for (auto &pass : pre_actions) {
     RETURN_IF_NOT_OK(pass->Run(this, &modified));
