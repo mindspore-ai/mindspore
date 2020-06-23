@@ -36,7 +36,7 @@ class AllGatherCPUKernel : public CPUKernel {
   std::vector<int> ranks_group_;
 };
 
-MS_REG_CPU_KERNEL(HostAllGather, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+MS_REG_CPU_KERNEL(_HostAllGather, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   AllGatherCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

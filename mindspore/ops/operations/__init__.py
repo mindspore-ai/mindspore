@@ -35,7 +35,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
-                       HostAllGather, HostReduceScatter)
+                       _HostAllGather, _HostReduceScatter)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Debug, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
@@ -244,10 +244,8 @@ __all__ = [
     'UnsortedSegmentSum',
     'UnsortedSegmentMin',
     "AllGather",
-    "HostAllGather",
     "AllReduce",
     "ReduceScatter",
-    "HostReduceScatter",
     "Broadcast",
     "ReduceOp",
     'ScalarCast',
