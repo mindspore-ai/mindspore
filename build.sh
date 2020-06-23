@@ -50,7 +50,7 @@ usage()
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
-  echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
+  echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
   echo "    -I Compile predict, default off"
   echo "    -K Compile with AKG, default off"
   echo "    -s Enable serving module, default off"
@@ -89,7 +89,7 @@ checkopts()
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
   ENABLE_MPI="off"
-  CUDA_VERSION="9.2"
+  CUDA_VERSION="10.1"
   COMPILE_PREDICT="off"
   USE_GLOG="on"
   PREDICT_PLATFORM=""
@@ -192,6 +192,10 @@ checkopts()
         if [[ "X$OPTARG" != "X9.2" && "X$OPTARG" != "X10.1" ]]; then
           echo "Invalid value ${OPTARG} for option -V"
           usage
+          exit 1
+        fi
+        if [[ "X$OPTARG" == "X9.2" ]]; then
+          echo "Unsupported CUDA version 9.2"
           exit 1
         fi
         CUDA_VERSION="$OPTARG"
