@@ -32,11 +32,12 @@ class LeNet5(nn.Cell):
 
     def __init__(self, num_class=10, channel=1):
         super(LeNet5, self).__init__()
+        self.type = "fusion"
         self.num_class = num_class
 
         # change `nn.Conv2d` to `nn.Conv2dBnAct`
-        self.conv1 = nn.Conv2dBnAct(channel, 6, 5, activation='relu')
-        self.conv2 = nn.Conv2dBnAct(6, 16, 5, activation='relu')
+        self.conv1 = nn.Conv2dBnAct(channel, 6, 5, pad_mode='valid', activation='relu')
+        self.conv2 = nn.Conv2dBnAct(6, 16, 5, pad_mode='valid', activation='relu')
         # change `nn.Dense` to `nn.DenseBnAct`
         self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
         self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
