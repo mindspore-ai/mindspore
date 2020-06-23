@@ -91,3 +91,16 @@ def test_gelu_neg():
     y_ms = net(x_ms)
 
     assert np.allclose(y_np, y_ms.asnumpy())
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gelu_4d_fp16():
+    x_np = np.random.random((32, 3, 224, 224)).astype(np.float16)
+    y_np = GeluCompute(x_np)
+
+    x_ms = Tensor(x_np)
+    net = GeluNet()
+    y_ms = net(x_ms)
+
+    assert np.allclose(y_np, y_ms.asnumpy(), rtol=1e-3)
