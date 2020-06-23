@@ -18,7 +18,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <iostream>
 
-#include "serving/ms_service.grpc.pb.h"
+#include "./ms_service.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -31,7 +31,7 @@ using ms_serving::PredictRequest;
 // Logic and data behind the server's behavior.
 class MSServiceImpl final : public MSService::Service {
   Status Predict(ServerContext *context, const PredictRequest *request, PredictReply *reply) override {
-    cout << "server eval" << endl;
+    std::cout << "server eval" << std::endl;
     return Status::OK;
   }
 };

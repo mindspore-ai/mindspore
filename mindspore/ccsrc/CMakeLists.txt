@@ -247,7 +247,7 @@ add_library(inference SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/session/session.cc
         ${LOAD_ONNX_SRC}
         )
-target_link_libraries(inference PRIVATE ${PYTHON_LIBRARY} ${SECUREC_LIBRARY}
+target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
         -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
 
 if (ENABLE_CPU)
