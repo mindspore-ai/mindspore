@@ -58,9 +58,9 @@ bool RuntimeUtils::HcomDistribute(const std::shared_ptr<HcclTaskInfo> &task_info
   if (task_info->hccl_type() == kBroadcastOpName) {
     // call hcom broadcast interface to run op
     const string tag_broadcast = kHcomBroadcast + std::to_string(task_counter++) + kUnderline + std::to_string(0);
-    ret = hcom_broadcast(tag_broadcast.c_str(), reinterpret_cast<void *>(task_info->input_data_addr()),
-                         static_cast<u64>(task_info->count()), static_cast<hcclDataType_t>(task_info->data_type()),
-                         static_cast<u32>(task_info->root_id()), hccl_group.c_str(), stream);
+    ret = hcom_broadcast(tag_broadcast.c_str(), task_info->input_data_addr(), static_cast<u64>(task_info->count()),
+                         static_cast<hcclDataType_t>(task_info->data_type()), static_cast<u32>(task_info->root_id()),
+                         hccl_group.c_str(), stream);
     if (ret != HCCL_SUCCESS) {
       MS_LOG(ERROR) << "hcom_broadcast fail, return ret: " << static_cast<int>(ret);
       return false;
@@ -68,9 +68,9 @@ bool RuntimeUtils::HcomDistribute(const std::shared_ptr<HcclTaskInfo> &task_info
   } else if (task_info->hccl_type() == kAllGatherOpName) {
     // call hcom allgather interface to run op
     const string tag_all_gather = kHcomAllGather + std::to_string(task_counter++) + kUnderline + std::to_string(0);
-    ret = hcom_all_gather(tag_all_gather.c_str(), reinterpret_cast<void *>(task_info->input_data_addr()),
-                          reinterpret_cast<void *>(task_info->output_data_addr()), static_cast<u64>(task_info->count()),
-                          static_cast<hcclDataType_t>(task_info->data_type()), hccl_group.c_str(), stream);
+    ret = hcom_all_gather(tag_all_gather.c_str(), task_info->input_data_addr(), task_info->output_data_addr(),
+                          static_cast<u64>(task_info->count()), static_cast<hcclDataType_t>(task_info->data_type()),
+                          hccl_group.c_str(), stream);
     if (ret != HCCL_SUCCESS) {
       MS_LOG(ERROR) << "hcom_all_gather fail, return ret: " << ret;
       return false;
@@ -78,9 +78,8 @@ bool RuntimeUtils::HcomDistribute(const std::shared_ptr<HcclTaskInfo> &task_info
   } else if (task_info->hccl_type() == kAllReduceOpName) {
     // call hcom allreduce interface to run op
     const string tag_all_reduce = kHcomAllReduce + std::to_string(task_counter++) + kUnderline + std::to_string(0);
-    ret = hcom_all_reduce(tag_all_reduce.c_str(), reinterpret_cast<void *>(task_info->input_data_addr()),
-                          reinterpret_cast<void *>(task_info->output_data_addr()), static_cast<u64>(task_info->count()),
-                          static_cast<hcclDataType_t>(task_info->data_type()),
+    ret = hcom_all_reduce(tag_all_reduce.c_str(), task_info->input_data_addr(), task_info->output_data_addr(),
+                          static_cast<u64>(task_info->count()), static_cast<hcclDataType_t>(task_info->data_type()),
                           static_cast<hcclRedOp_t>(task_info->op_type()), hccl_group.c_str(), stream);
     if (ret != HCCL_SUCCESS) {
       MS_LOG(ERROR) << "hcom_all_reduce fail, return ret: " << ret;
@@ -90,8 +89,7 @@ bool RuntimeUtils::HcomDistribute(const std::shared_ptr<HcclTaskInfo> &task_info
     // call hcom reducescatter interface to run op
     const string tag_reduce_scatter =
       kHcomReduceScatter + std::to_string(task_counter++) + kUnderline + std::to_string(0);
-    ret = hcom_reduce_scatter(tag_reduce_scatter.c_str(), reinterpret_cast<void *>(task_info->input_data_addr()),
-                              reinterpret_cast<void *>(task_info->output_data_addr()),
+    ret = hcom_reduce_scatter(tag_reduce_scatter.c_str(), task_info->input_data_addr(), task_info->output_data_addr(),
                               static_cast<u64>(task_info->count()), static_cast<hcclDataType_t>(task_info->data_type()),
                               static_cast<hcclRedOp_t>(task_info->op_type()), hccl_group.c_str(), stream);
     if (ret != HCCL_SUCCESS) {

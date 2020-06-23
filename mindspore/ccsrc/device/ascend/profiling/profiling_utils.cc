@@ -33,6 +33,10 @@ constexpr char kCustomNode[] = "PROFILING_CUSTOM_";
 constexpr char kFpStartNode[] = "PROFILING_FP_START";
 constexpr char kBpEndNode[] = "PROFILING_BP_END";
 constexpr char kIterEndNode[] = "PROFILING_ITER_END";
+// PROFILING_CUSTOM_LOGID_START 3
+constexpr uint64_t kProfilingFpStartLogId = 1;
+constexpr uint64_t kProfilingBpEndLogId = 2;
+constexpr uint64_t kProfilingIterEndLogId = 255;
 std::map<uint32_t, std::vector<CNodePtr>> ProfilingUtils::graph_profiling_cnode_;
 std::map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
 std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> ProfilingUtils::graph_point_;

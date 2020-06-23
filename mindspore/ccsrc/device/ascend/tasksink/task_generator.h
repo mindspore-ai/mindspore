@@ -48,6 +48,7 @@ class TaskGenerator {
 
  private:
   static void LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressPtrList *kernel_inputs);
+  static void LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, AddressPtrList *kernel_inputs);
   static bool LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_id, std::vector<TaskInfoPtr> *task_info_list);
   static bool LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
                               uint32_t graph_id);
