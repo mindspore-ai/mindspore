@@ -51,8 +51,8 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   size_t input_split_lens = input_size / split_num_ / sizeof(float_t);
   size_t output_split_lens = output_size / split_num_ / sizeof(float_t);
   for (int i = 0; i < split_num_; i++) {
-    device::cpu::MPIAdapter::Instance().AllGather(input_addr + i * input_split_lens,
-                                                  output_addr + i * output_split_lens, rank_group, input_split_lens);
+    device::cpu::MPIAdapter::Instance()->AllGather(input_addr + i * input_split_lens,
+                                                   output_addr + i * output_split_lens, rank_group, input_split_lens);
   }
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();

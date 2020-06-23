@@ -104,7 +104,7 @@ def _get_mpi_config(attr_key):
         Object, The value of given attribute key.
 
     Raises:
-        ValueError: If input key is not an attribute in context.
+        ValueError: If input key is not an attribute in config.
     """
     if not hasattr(_mpi_config(), attr_key):
         raise ValueError("Get context keyword %s is not recognized!" % attr_key)
