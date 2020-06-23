@@ -26,8 +26,8 @@ import os
 import pickle
 
 ######## mindrecord_schema begin ##########
-mindrecord_schema = {"label": {"type": "int64"},
-                     "data": {"type": "bytes"},
+mindrecord_schema = {"label": {"type": "int32"},
+                     "image": {"type": "bytes"},
                      "file_name": {"type": "string"}}
 ######## mindrecord_schema end ##########
 
@@ -121,5 +121,5 @@ def mindrecord_dict_data(task_id):
         if not image_bytes:
             print("The image file: {} is invalid.".format(file_name))
             continue
-        data["data"] = image_bytes
+        data["image"] = image_bytes
         yield data
