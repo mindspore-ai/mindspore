@@ -44,4 +44,4 @@ def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     sparse_apply_proximal_adagrad = Net()
     output = sparse_apply_proximal_adagrad(gradient, indices)
-    print(output.asnumpy()[0])
+    print(output[0].asnumpy())
