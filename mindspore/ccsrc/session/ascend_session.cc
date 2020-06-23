@@ -18,6 +18,7 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include <string>
 #include <list>
 #include "operator/ops.h"
 #include "ir/tensor.h"
@@ -45,6 +46,7 @@
 #include "kernel/tbe/tbe_python_funcs.h"
 #include "utils/config_manager.h"
 #include "utils/base_ref_extends.h"
+#include "debug/tensor_load.h"
 
 namespace mindspore {
 namespace session {
@@ -450,6 +452,12 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   LoadInputData(kernel_graph, inputs);
   // convert inputs to model
   predictmodel::StepConvertWeight(inputs);
+#ifdef ENABLE_DEBUGGER
+  // debugger pre-execution processing
+  if (debugger_) {
+    debugger_->PreExecute(kernel_graph);
+  }
+#endif
   {
     py::gil_scoped_release release;
     // run task on device
@@ -459,8 +467,20 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   UpdateOutputs(kernel_graph, outputs, inputs);
   // summary
   Summary(kernel_graph.get());
+#ifdef ENABLE_DEBUGGER
+  // load tensor from device for debugger
+  if (debugger_ && debugger_->debugger_enabled()) {
+    LoadTensor(kernel_graph);
+  }
+#endif
   // dump used for debug
   Dump(kernel_graph);
+#ifdef ENABLE_DEBUGGER
+  // debugger post-execution processing
+  if (debugger_) {
+    debugger_->PostExecute();
+  }
+#endif
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -755,6 +775,22 @@ void AscendSession::ExportChildGraphs(const GraphId graph_id) {
     }
   }
 #endif
+}
+
+void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_LOG(INFO) << "Start!";
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+#ifdef ENABLE_DEBUGGER
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  DebugServices *debug_services = debugger_->get_debug_services();
+  TensorLoader *tensor_loader = debug_services->get_tensor_loader();
+  tensor_loader->EmptyTensor();
+  uint32_t iter_num = tensor_loader->GetIterNum();
+  tensor_loader->set_iter_num(++iter_num);
+  (void)runtime_instance->LoadData(kernel_graph.get(), debugger_.get());
+#endif
+  MS_LOG(INFO) << "Finish!";
 }
 
 GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {

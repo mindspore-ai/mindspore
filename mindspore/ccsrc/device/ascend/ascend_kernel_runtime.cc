@@ -41,6 +41,7 @@
 #include "kernel/tbe/tbe_python_funcs.h"
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
 #include "device/ascend/ascend_memory_manager.h"
+#include "debug/tensor_load.h"
 
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
@@ -289,6 +290,91 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
   DumpOutput(graph, dump_path, dump_conf);
   // dump parameters
   DumpParameters(graph, dump_path, dump_conf);
+#endif
+  return true;
+}
+
+#ifdef ENABLE_DEBUGGER
+namespace {
+void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  bool trans_flag = false;
+  const auto &apply_kernels = graph->execution_order();
+  // for kernels, execution order starts from 1
+  int exec_order = 1;
+  for (const auto &node : apply_kernels) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    std::string kernel_name = node->fullname_with_scope();
+    auto output_size = AnfAlgo::GetOutputTensorNum(node);
+    for (size_t j = 0; j < output_size; ++j) {
+      auto addr = AnfAlgo::GetOutputAddr(node, j);
+      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+      auto format = kOpFormat_DEFAULT;
+      string tensor_name = kernel_name + ':' + std::to_string(j);
+      auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
+      std::vector<int> int_shapes;
+      if (trans_flag) {
+        int_shapes = trans::GetRuntimePaddingShape(node, j);
+      } else {
+        auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
+        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                             [](size_t inner_item) { return SizeToInt(inner_item); });
+      }
+      auto ret = ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, j, debugger);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost: flag:" << trans_flag << ", tensor_name:" << tensor_name
+                      << ", host_format:" << format << ".!";
+      }
+    }
+    exec_order = exec_order + 1;
+  }
+}
+
+void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  bool trans_flag = false;
+  const auto &parameters = graph->inputs();
+  // for parameters, set its execution order to be 0;
+  int exec_order = 0;
+  for (auto &item : parameters) {
+    if (!item->isa<Parameter>()) {
+      continue;
+    }
+    std::string parameter_name = item->fullname_with_scope();
+    auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
+    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
+    string tensor_name = parameter_name + ':' + "0";
+    auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
+    std::vector<int> int_shapes;
+    if (trans_flag) {
+      int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
+    } else {
+      auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+    }
+    auto ret = ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, 0, debugger);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost Failed: flag:" << trans_flag << ", path:" << tensor_name
+                    << ", host_format:" << format << ".!";
+    }
+  }
+}
+}  // namespace
+#endif
+
+bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+#ifdef ENABLE_DEBUGGER
+  MS_LOG(INFO) << "start load step";
+  uint32_t cur_iter = 0;
+  MS_LOG(INFO) << "cur iter is " << cur_iter;
+  // load output
+  LoadOutput(graph, debugger);
+  // load parameters
+  LoadParameters(graph, debugger);
 #endif
   return true;
 }

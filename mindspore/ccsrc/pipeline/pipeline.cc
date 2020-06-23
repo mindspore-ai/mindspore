@@ -443,7 +443,10 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   std::string backend = MsContext::GetInstance()->backend_policy();
   if (use_vm && backend != "ge") {
     // Create backend and session
-    resource->results()[kBackend] = compile::CreateBackend();
+    auto backend_ptr = compile::CreateBackend();
+    // Connect session to debugger
+    backend_ptr->SetDebugger();
+    resource->results()[kBackend] = backend_ptr;
     p_actions = VmPipeline();
   } else {
     p_actions = GePipeline();

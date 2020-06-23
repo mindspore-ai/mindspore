@@ -10,6 +10,15 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
 )
 
+if (ENABLE_DEBUGGER)
+    list(APPEND _DEBUG_SRC_LIST 
+        "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/debugger/grpc_client.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/debugger/proto_exporter.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
+        )
+endif (ENABLE_DEBUGGER)
+
 if (ENABLE_DUMP_E2E)
     list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/e2e_dump.cc")
 endif (ENABLE_DUMP_E2E)

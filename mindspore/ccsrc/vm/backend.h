@@ -69,6 +69,8 @@ class Backend {
   bool is_switch_call() const { return is_switch_call_; }
   void set_simu_flag(bool simu) { simu_flag_ = simu; }
 
+  virtual void SetDebugger() {}
+
  protected:
   std::string name_;
   LinkFuncType convert_fn_;
@@ -108,6 +110,10 @@ class MsBackend : public Backend {
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
   void CreateOtherSession(const std::string &target);
+
+#ifdef ENABLE_DEBUGGER
+  void SetDebugger() override;
+#endif
 
  private:
   session::SessionPtr target_sess_;

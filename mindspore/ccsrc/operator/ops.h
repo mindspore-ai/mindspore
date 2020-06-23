@@ -276,6 +276,7 @@ extern const PrimitivePtr kPrimNotInDict;
 extern const PrimitivePtr kPrimMixedPrecisionCast;
 extern const PrimitivePtr kPrimIsConsant;
 extern const PrimitivePtr kPrimEquivFormat;
+extern const PrimitivePtr kPrimDebug;
 
 // Comm ops
 extern const PrimitivePtr kPrimAllReduce;

@@ -371,6 +371,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimImageSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary)},
+    {prim::kPrimDebug->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorAdd->name(),
      std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})),
                                      std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})))},

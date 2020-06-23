@@ -21,5 +21,21 @@
 #include "utils/symbolic.h"
 
 namespace mindspore {
-namespace abstract {}  // namespace abstract
+namespace abstract {
+AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor(value)
+  const std::string op_name = primitive->name();
+
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto tensor_value = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+
+  int tensor_rank = SizeToInt(tensor_value->shape()->shape().size());
+  if (tensor_rank == 0) {
+    MS_LOG(EXCEPTION) << op_name << " summary evaluator second arg should be an tensor, but got a scalar, rank is 0";
+  }
+
+  return std::make_shared<AbstractTuple>(AbstractBasePtrList({tensor_value->Broaden()}));
+}
+}  // namespace abstract
 }  // namespace mindspore

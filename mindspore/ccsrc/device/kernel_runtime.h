@@ -27,6 +27,9 @@
 #ifdef ENABLE_DUMP_E2E
 #include "debug/e2e_dump.h"
 #endif
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 #include "session/kernel_graph.h"
 #include "session/anf_runtime_algorithm.h"
 #include "kernel/kernel.h"
@@ -34,11 +37,15 @@
 #include "device/memory_manager.h"
 
 using mindspore::tensor::Tensor;
+using std::vector;
 using TensorPtr = std::shared_ptr<Tensor>;
 using mindspore::kernel::AddressPtr;
 using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
 
 namespace mindspore {
+#ifndef ENABLE_DEBUGGER
+class Debugger;
+#endif
 namespace device {
 class KernelRuntime {
  public:
@@ -50,6 +57,7 @@ class KernelRuntime {
   void RunOpClearMemory(session::KernelGraph *graph);
   virtual bool Run(session::KernelGraph *graph);
   virtual bool DumpData(session::KernelGraph *graph);
+  virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
   virtual bool RunTask(const session::KernelGraph *graph);
   virtual bool GenTask(const session::KernelGraph *graph);
   bool LaunchKernel(const session::KernelGraph *graph);
