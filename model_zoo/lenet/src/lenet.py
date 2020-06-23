@@ -43,11 +43,12 @@ class LeNet5(nn.Cell):
 
     Args:
         num_class (int): Num classes. Default: 10.
+        channel (int): Num channels. Default: 1.
 
     Returns:
         Tensor, output tensor
     Examples:
-        >>> LeNet(num_class=10)
+        >>> LeNet(num_class=10, channel=1)
 
     """
     def __init__(self, num_class=10, channel=1):
