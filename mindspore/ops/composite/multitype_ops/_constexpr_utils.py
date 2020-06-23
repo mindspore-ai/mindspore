@@ -339,6 +339,8 @@ def check_tensors_dtype_same(data_dtype, value_dtype, op_name):
 @constexpr
 def generate_broadcast_shape(shapes, op_name):
     """Generate broadcast shape for a tuple of shape."""
+    if not shapes:
+        return ()
     broadcast_shape = shapes[0]
     for i, shape in enumerate(shapes):
         logger.debug(f"Broadcasts the {i}th tensor, the shape is {shape}.")
@@ -541,6 +543,11 @@ def generate_index_info_from_tuple_of_mixed_tensors(data_shape,
                               slice_indexes[slice_count].step)
             # Use list to represent slicing result.
             indexes_info[pos] = list(range(data_shape[pos]))[slice_obj]
+            if not indexes_info[pos]:
+                raise IndexError("An empty slice is not supported, got {}:{}:{}".format(
+                    slice_indexes[slice_count].start,
+                    slice_indexes[slice_count].stop,
+                    slice_indexes[slice_count].step))
             slice_count += 1
         elif isinstance(ele_type, mstype.ellipsis_type):
             if ellipsis_num != 0:

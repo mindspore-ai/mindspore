@@ -646,7 +646,7 @@ class TensorAssignWithSlice2(Cell):
 class TensorAssignWithSlice(Cell):
     def __init__(self):
         super(TensorAssignWithSlice, self).__init__()
-        self.c = 2
+        self.c = 2.0
 
     def construct(self, a, b, ck):
         a[1:3, ::] = b
@@ -661,7 +661,47 @@ class TensorAssignWithSlice(Cell):
         return z
 
 
-def test_tensor_assign():
+def test_tensor_assign_slice_value_1():
+    net = TensorAssignWithSlice()
+    a = np.arange(60).reshape(3, 4, 5)
+    ck = np.arange(60).reshape(3, 4, 5)
+    b = np.array([1]).astype(np.float32)  # Tensor([1], dtype=mstype.float32)
+    tb = Tensor(b, dtype=mstype.float32)
+    ta = Tensor(a, dtype=mstype.float32)
+    tck = Tensor(ck, dtype=mstype.float32)
+    out = net(ta, tb, tck)
+    a[1:3, ::] = b
+    a[2:3:, 3:] = b
+    a[::] = b
+    a[::] = 2.0
+    a[::, ::] = b
+    a[::, ::] = 2.0
+    a[2:3:, 0:, 4:1:-1] = b
+    a[2:3:, 0:, 4:1:-1] = 2.0
+    z = a + ck
+    assert np.all(z == out.asnumpy())
+
+
+def test_tensor_assign_slice_value_2():
+    net2 = TensorAssignWithSlice2()
+    a = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    ck = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    b = np.array([1]).astype(np.float32)  # Tensor([1], dtype=mstype.float32)
+    tb = Tensor(b, dtype=mstype.float32)
+    ta = Tensor(a, dtype=mstype.float32)
+    tck = Tensor(ck, dtype=mstype.float32)
+    out = net2(ta, tb, tck)
+    a[1:5] = b
+    a[3:4] = 5
+    a[-1:1:-1] = b
+    a[-1:3:-1] = 5
+    a[::] = b
+    a[::] = 9
+    z = a + ck
+    assert np.all(z == out.asnumpy())
+
+
+def test_tensor_assign_exception():
     net = TensorAssignWithSlice()
     net2 = TensorAssignWithSlice2()
     net_e1 = TensorAssignWithSliceError1()
@@ -677,8 +717,6 @@ def test_tensor_assign():
     Tc = Tensor([], dtype=mstype.float32)
     t = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     tck = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
-    net(Ta, b, Tck)
-    net2(t, b, tck)
     # Error for A[Slice] = Number
     # 1. A[Slice] = Number,  Slice error
     with pytest.raises(IndexError):
@@ -744,9 +782,6 @@ def test_tensor_assign():
     # 2. A[::, 1:, ...] = scalar/tensor
     net = TensorAssignWithTupleEllipsis()
     net(Ta, b)
-    Tc = Tensor(1, mstype.float32)
-    with pytest.raises(ValueError):
-        net(Ta, Tc)
     with pytest.raises(ValueError):
         net(Ta, Tb)
 
@@ -765,7 +800,7 @@ class TensorAssignWithTupleEllipsis(Cell):
         super(TensorAssignWithTupleEllipsis, self).__init__()
 
     def construct(self, a, b):
-        a[:2, ...] = 1
+        a[:2, ...] = 1.0
         a[1:, ...] = b
         return a
 
@@ -955,3 +990,16 @@ def Xtest_tensor_slice_reduce_out_of_bounds_positive():
     with pytest.raises(ValueError) as ex:
         net(input_tensor)
     assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)
+
+
+def test_tensor_range():
+    a = np.arange(4*5*6).reshape(4, 5, 6).astype(np.float32)
+    ta = Tensor(a, mstype.float32)
+    ms_out = []
+    for item in ta:
+        ms_out.append(item)
+    np_out = []
+    for item in a:
+        np_out.append(item)
+    for i, elem in enumerate(ms_out):
+        assert np.all(elem.asnumpy() == np_out[i])
