@@ -38,6 +38,7 @@ enum OperatorType {
   kRecBiasAdd,
   kRecSoftmax,
   kRecSparseSoftmaxCrossEntropyWithLogits,
+  kRecSoftmaxCrossEntropyWithLogits,
   kRecOneHot,
   kRecLog,
   kRecExp,

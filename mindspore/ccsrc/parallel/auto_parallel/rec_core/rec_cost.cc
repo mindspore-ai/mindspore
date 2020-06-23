@@ -703,5 +703,48 @@ StrategyRec CostBatchParallel::ChoseStr(const std::vector<double> &cost_op, Stra
   }
   return str;
 }
+
+// Chose strategy for CostSoftmaxCrossEntropyWithLogits
+StrategyRec CostSoftmaxCrossEntropyWithLogits::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
+  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
+    return str;
+  }
+
+  switch (min_position) {
+    case 0:
+      str.inputTensor[0].str_n /= 2.0;
+      str.inputTensor[1].str_n /= 2.0;
+      str.cut_counter += 1;
+      str.cost = str.cost + cost_in_;
+      break;
+
+    case 1:
+      str.inputTensor[0].str_c /= 2.0;
+      str.inputTensor[1].str_c /= 2.0;
+      str.cut_counter += 1;
+      str.cost = str.cost + cost_in_;
+      break;
+
+    case 2:
+      str.inputTensor[0].str_h /= 2.0;
+      str.inputTensor[1].str_h /= 2.0;
+      str.outputTensor.str_w /= 2.0;
+      str.cut_counter += 1;
+      str.cost = str.cost + cost_in_;
+      break;
+
+    case 3:
+      str.inputTensor[0].str_w /= 2.0;
+      str.inputTensor[1].str_w /= 2.0;
+      str.cut_counter += 1;
+      str.cost = str.cost + cost_in_;
+      break;
+
+    default:
+      MS_LOG(EXCEPTION) << "Failure: CostSoftmax failed.";
+  }
+  return str;
+}
 }  // namespace parallel
 }  // namespace mindspore

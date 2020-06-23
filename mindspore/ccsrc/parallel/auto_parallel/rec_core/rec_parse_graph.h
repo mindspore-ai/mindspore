@@ -67,7 +67,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {REAL_DIV, OperatorType::kRecElmWiseOp},
   {SOFTMAX, OperatorType::kRecSoftmax},
   {LOG_SOFTMAX, OperatorType::kRecSoftmax},
-  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmax},
+  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
   {SQRT, OperatorType::kRecElmWiseOp},
   {NEG, OperatorType::kRecElmWiseOp},
   {POW, OperatorType::kRecElmWiseOp},

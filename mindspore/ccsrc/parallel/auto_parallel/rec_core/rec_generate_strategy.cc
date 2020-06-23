@@ -127,14 +127,6 @@ std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &gr
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PreparePReLU(const std::shared_ptr<Graph> &graph,
-                                               const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                               const size_t iter_graph, const size_t iter_ops) {
-  std::vector<std::vector<int32_t>> strategies = MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
-  strategies[1][0] = 1;
-  return strategies;
-}
-
 std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vector<int32_t>> &s) {
   std::vector<std::vector<int32_t>> strategies;
   strategies.push_back(*s);
@@ -161,6 +153,32 @@ std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &gr
 std::vector<std::vector<int32_t>> PrepareGatherV2(const std::shared_ptr<std::vector<int32_t>> &s) {
   std::vector<std::vector<int32_t>> strategies;
   strategies.push_back(*s);
+  return strategies;
+}
+
+std::vector<std::vector<int32_t>> PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                     const size_t iter_ops, std::vector<int32_t> s) {
+  int32_t axis = 0;
+  auto iter = ops[iter_ops]->attrs().find(AXIS);
+  if (iter != ops[iter_ops]->attrs().end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int32Imm>()) {
+      axis = iter->second->cast<Int32ImmPtr>()->value();
+    } else {
+      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " : The value of axis is not int.";
+    }
+  }
+
+  int32_t axis_index = axis;
+  if (axis < 0) {
+    size_t input_dim = ops[iter_ops]->inputs_tensor_info()[0].shape().size();
+    axis_index = static_cast<int32_t>(input_dim) + axis;
+  }
+
+  s[IntToSize(axis_index)] = 1;
+
+  std::vector<std::vector<int32_t>> strategies;
+  strategies.push_back(s);
   return strategies;
 }
 
@@ -279,13 +297,8 @@ std::vector<std::vector<int32_t>> PrepareStrategy(const std::shared_ptr<Graph> &
 
   if (type == MATMUL) {
     return PrepareMatMul(graph, ops, iter_graph, iter_ops);
-  } else if (type == PRELU) {
-    return PreparePReLU(graph, ops, iter_graph, iter_ops);
   } else if (type == ONEHOT) {
     return PrepareOneHot(graph, ops, iter_graph, iter_ops);
-  } else if (type == SOFTMAX || type == LOG_SOFTMAX || type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS ||
-             type == SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
-    return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
   } else {
     return MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
   }
@@ -509,6 +522,9 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
   }
   if (ops[iter_ops]->type() == GATHERV2) {
     return PrepareGatherV2(s_ptr);
+  }
+  if (ops[iter_ops]->type() == L2_NORMALIZE) {
+    return PrepareL2Normalize(ops, iter_ops, basic_stra);
   }
 
   for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_tensor_info().size();

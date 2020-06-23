@@ -250,12 +250,22 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
 
     new_graph->nodes.push_back(graph->nodes[i]);
     auto *node_in = &new_graph->nodes[index_list->at(i)].node_in;
-    for (size_t j = 0; j < node_in->size(); j++) {
-      node_in->at(j) = index_list->at(node_in->at(j));
+    for (size_t j = node_in->size(); j > 0; j--) {
+      bool IsEliminated = (index_list->at(node_in->at(j - 1)) == SIZE_MAX);
+      if (IsEliminated) {
+        node_in->erase(node_in->begin() + j - 1);
+      } else {
+        node_in->at(j - 1) = index_list->at(node_in->at(j - 1));
+      }
     }
     auto *node_out = &new_graph->nodes[index_list->at(i)].node_out;
-    for (size_t j = 0; j < node_out->size(); j++) {
-      node_out->at(j) = index_list->at(node_out->at(j));
+    for (size_t j = node_out->size(); j > 0; j--) {
+      bool IsEliminated = (index_list->at(node_out->at(j - 1)) == SIZE_MAX);
+      if (IsEliminated) {
+        node_out->erase(node_out->begin() + j - 1);
+      } else {
+        node_out->at(j - 1) = index_list->at(node_out->at(j - 1));
+      }
     }
   }
   return new_graph;
