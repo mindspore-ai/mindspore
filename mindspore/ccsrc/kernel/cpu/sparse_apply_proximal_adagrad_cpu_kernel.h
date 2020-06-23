@@ -48,6 +48,7 @@ MS_REG_CPU_KERNEL(SparseApplyProximalAdagrad,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   SparseApplyProximalAdagradCPUKernel);
 }  // namespace kernel
