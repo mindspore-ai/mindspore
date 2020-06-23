@@ -39,7 +39,6 @@ constexpr auto kDtype = "dtype";
 constexpr auto kFormat = "format";
 constexpr auto kPrefixInput = "input";
 constexpr auto kPrefixOutput = "output";
-constexpr char kDynInputKey[] = "dyn_input_sizes";
 constexpr char kParamTypeDynamic[] = "dynamic";
 constexpr char kParamTypeRequre[] = "required";
 constexpr char kParamTypeOptional[] = "optional";
@@ -87,8 +86,8 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(primitive);
   std::vector<int> dyn_input_sizes;
-  if (primitive->HasAttr(kDynInputKey)) {
-    dyn_input_sizes = GetValue<std::vector<int>>(primitive->GetAttr(kDynInputKey));
+  if (primitive->HasAttr(kAttrDynInputSizes)) {
+    dyn_input_sizes = GetValue<std::vector<int>>(primitive->GetAttr(kAttrDynInputSizes));
   }
   // get real input/output num
   size_t real_input_tensor_num = AnfAlgo::GetInputTensorNum(cnode_ptr_);

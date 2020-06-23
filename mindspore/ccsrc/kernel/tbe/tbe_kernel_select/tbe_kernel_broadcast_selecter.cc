@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr char kDynInputKey[] = "dyn_input_sizes";
 constexpr size_t kInputIndex_0 = 0;
 constexpr size_t kChannelN = 0;
 constexpr size_t kChannelC = 1;
@@ -34,9 +33,9 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
   output_num_ = 0;
   input_shapes_.clear();
   output_shapes_.clear();
-  if (AnfAlgo::HasNodeAttr(kDynInputKey, cnode_ptr_)) {
+  if (AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode_ptr_)) {
     MS_LOG(INFO) << "This broadcast node has dynamic input.";
-    auto dynamic_size_vec = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode_ptr_, kDynInputKey);
+    auto dynamic_size_vec = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode_ptr_, kAttrDynInputSizes);
     if (dynamic_size_vec.empty() || dynamic_size_vec[0] < 2) {
       MS_LOG(EXCEPTION) << "dynamic attr set error, please check.";
     }
