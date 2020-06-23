@@ -149,14 +149,37 @@ Status Graph::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType
   return Status::OK();
 }
 
+Status Graph::CheckSamplesNum(NodeIdType samples_num) {
+  NodeIdType all_nodes_number =
+    std::accumulate(node_type_map_.begin(), node_type_map_.end(), 0,
+                    [](NodeIdType t1, const auto &t2) -> NodeIdType { return t1 + t2.second.size(); });
+  if ((samples_num < 1) || (samples_num > all_nodes_number)) {
+    std::string err_msg = "Wrong samples number, should be between 1 and " + std::to_string(all_nodes_number) +
+                          ", got " + std::to_string(samples_num);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
+
 Status Graph::GetSampledNeighbors(const std::vector<NodeIdType> &node_list,
                                   const std::vector<NodeIdType> &neighbor_nums,
                                   const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");
   CHECK_FAIL_RETURN_UNEXPECTED(neighbor_nums.size() == neighbor_types.size(),
                                "The sizes of neighbor_nums and neighbor_types are inconsistent.");
+  for (const auto &num : neighbor_nums) {
+    RETURN_IF_NOT_OK(CheckSamplesNum(num));
+  }
+  for (const auto &type : neighbor_types) {
+    if (node_type_map_.find(type) == node_type_map_.end()) {
+      std::string err_msg = "Invalid neighbor type:" + std::to_string(type);
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
   std::vector<std::vector<NodeIdType>> neighbors_vec(node_list.size());
   for (size_t node_idx = 0; node_idx < node_list.size(); ++node_idx) {
+    std::shared_ptr<Node> input_node;
+    RETURN_IF_NOT_OK(GetNodeByNodeId(node_list[node_idx], &input_node));
     neighbors_vec[node_idx].emplace_back(node_list[node_idx]);
     std::vector<NodeIdType> input_list = {node_list[node_idx]};
     for (size_t i = 0; i < neighbor_nums.size(); ++i) {
@@ -204,6 +227,12 @@ Status Graph::NegativeSample(const std::vector<NodeIdType> &data, const std::uno
 Status Graph::GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
                                      NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");
+  RETURN_IF_NOT_OK(CheckSamplesNum(samples_num));
+  if (node_type_map_.find(neg_neighbor_type) == node_type_map_.end()) {
+    std::string err_msg = "Invalid neighbor type:" + std::to_string(neg_neighbor_type);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
   std::vector<std::vector<NodeIdType>> neighbors_vec;
   neighbors_vec.resize(node_list.size());
   for (size_t node_idx = 0; node_idx < node_list.size(); ++node_idx) {
@@ -266,7 +295,7 @@ Status Graph::GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::ve
   if (!nodes || nodes->Size() == 0) {
     RETURN_STATUS_UNEXPECTED("Input nodes is empty");
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Inpude feature_types is empty");
+  CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Input feature_types is empty");
   TensorRow tensors;
   for (const auto &f_type : feature_types) {
     std::shared_ptr<Feature> default_feature;
