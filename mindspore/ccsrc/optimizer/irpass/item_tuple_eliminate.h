@@ -70,6 +70,45 @@ class GetitemEliminater : public AnfVisitor {
   CNodePtr tuple_{nullptr};
 };
 
+// (a, b, c, ...)[0] => a
+// (a, b, c, ...)[1] => b
+// {prim::kPrimTupleGetItem, C1, C}
+class GetitemConstEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsVNode, IsVNode})(node);
+
+    if (is_match_) {
+      return NewValueNode((*tuple_)[id_]);
+    }
+    return nullptr;
+  }
+
+  void Visit(const ValueNodePtr &vnode) override {
+    if (IsValueNode<ValueTuple>(vnode)) {
+      tuple_ = GetValueNode<ValueTuplePtr>(vnode);
+    }
+    if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
+      id_ = IntToSize(GetValue<int>(vnode->value()));
+      if (tuple_->size() > id_) {
+        is_match_ = true;
+      }
+    }
+  }
+
+  void Reset() {
+    id_ = 0;
+    tuple_ = nullptr;
+    is_match_ = false;
+  }
+
+ private:
+  bool is_match_{false};
+  size_t id_{0};
+  ValueTuplePtr tuple_{nullptr};
+};
+
 // setitem((a, b, c, ...), 0, z) => (z, b, c, ...)
 // setitem((a, b, c, ...), 1, z) => (a, z, c, ...)
 // {prim::kPrimTupleSetItem, {prim::kPrimMakeTuple, Xs}, C, Z}
@@ -225,8 +264,13 @@ class GetitemDependReorder : public AnfVisitor {
 class ItemTupleEliminater {
  public:
   ItemTupleEliminater()
-      : get_item_eliminater_(), set_item_eliminater_(), get_set_item_eliminater_(), get_item_depend_reorder_() {
+      : get_item_eliminater_(),
+        get_item_const_eliminater_(),
+        set_item_eliminater_(),
+        get_set_item_eliminater_(),
+        get_item_depend_reorder_() {
     eliminaters_.emplace_back(get_item_eliminater_);
+    eliminaters_.emplace_back(get_item_const_eliminater_);
     eliminaters_.emplace_back(set_item_eliminater_);
     eliminaters_.emplace_back(get_set_item_eliminater_);
     eliminaters_.emplace_back(get_item_depend_reorder_);
@@ -246,6 +290,7 @@ class ItemTupleEliminater {
 
  private:
   GetitemEliminater get_item_eliminater_;
+  GetitemConstEliminater get_item_const_eliminater_;
   SetitemEliminater set_item_eliminater_;
   GetSetitemEliminater get_set_item_eliminater_;
   GetitemDependReorder get_item_depend_reorder_;

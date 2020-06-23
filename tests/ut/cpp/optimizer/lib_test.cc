@@ -20,9 +20,12 @@
 
 #include "common/py_func_graph_fetcher.h"
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
+#include "ir/value.h"
 #include "ir/visitor.h"
+#include "operator/ops.h"
 #include "optimizer/irpass.h"
 #include "pipeline/resource.h"
 #include "debug/draw.h"
@@ -343,9 +346,26 @@ TEST_F(TestOptLib, test_tuple_getitem) {
   FuncGraphPtr after_0 = getPyFun.CallAndParseRet("test_tuple_getitem", "after_0");
   FuncGraphPtr after_1 = getPyFun.CallAndParseRet("test_tuple_getitem", "after_1");
 
+  FuncGraphPtr make_get_const = std::make_shared<FuncGraph>();
+  auto value_node_1 = NewValueNode(1);
+  auto value_node_2 = NewValueNode(2);
+  std::vector<int> vec{1, 2};
+  auto value_node_tuple = NewValueNode(MakeValue(vec));
+  std::vector<AnfNodePtr> node_list{
+    NewValueNode(prim::kPrimTupleGetItem),
+    value_node_tuple,
+    value_node_1
+  };
+  auto get_item = make_get_const->NewCNode(node_list);
+  make_get_const->set_output(get_item);
+
+  FuncGraphPtr after_2 = std::make_shared<FuncGraph>();
+  after_2->set_output(value_node_2);
+
   auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_eliminate_});
   ASSERT_TRUE(CheckOpt(make_get_0, after_0, patterns));
   ASSERT_TRUE(CheckOpt(make_get_1, after_1, patterns));
+  ASSERT_TRUE(CheckOpt(make_get_const, after_2, patterns));
 }
 
 TEST_F(TestOptLib, test_tuple_setitem) {
