@@ -16,28 +16,27 @@
 
 #include "optimizer/opt.h"
 
+#include <algorithm>
+#include <deque>
 #include <memory>
 #include <unordered_set>
-#include <deque>
-#include <algorithm>
 
 #include "ir/anf.h"
 #include "ir/manager.h"
-#include "utils/ordered_set.h"
-
-#include "utils/log_adapter.h"
 #include "optimizer/optimizer.h"
+#include "utils/log_adapter.h"
+#include "utils/ordered_set.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name, const PrimitivePtr &prim,
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name, const PrimitivePtr &prim,
                                  const RenormAction &renorm_action) {
   auto fn = [prim](const AnfNodePtr &node) -> bool { return IsPrimitiveCNode(node, prim); };
   return std::make_shared<Substitution>(transform, name, fn, renorm_action);
 }
 
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
                                  const std::vector<PrimitivePtr> &prims, const RenormAction &renorm_action) {
   auto fn = [prims](const AnfNodePtr &node) -> bool {
     if (!node->isa<CNode>()) {
@@ -64,16 +63,16 @@ SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::
   return std::make_shared<Substitution>(transform, name, fn, renorm_action);
 }
 
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
                                  const PredicateFuncType &predicate, const RenormAction &renorm_action) {
   return std::make_shared<Substitution>(transform, name, predicate, renorm_action);
 }
 
-AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) const {
+AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
 #ifdef ENABLE_PROFILE
   double t = GetTime();
 #endif
-  AnfNodePtr result = transform_(optimizer, node);
+  AnfNodePtr result = (*transform_)(optimizer, node);
 #ifdef ENABLE_PROFILE
   if (optimizer != nullptr) {
     auto time = GetTime();

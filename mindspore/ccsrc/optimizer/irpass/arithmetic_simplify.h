@@ -17,15 +17,16 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ARITHMETIC_SIMPLIFY_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ARITHMETIC_SIMPLIFY_H_
 
-#include <vector>
-#include <memory>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
-#include "optimizer/optimizer.h"
-#include "optimizer/irpass.h"
-#include "optimizer/irpass/prim_eliminate.h"
+#include "ir/optimizer_caller.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
+#include "optimizer/irpass.h"
+#include "optimizer/irpass/prim_eliminate.h"
+#include "optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
@@ -739,17 +740,17 @@ class AdjustAllReduceMulAdd : public AnfVisitor {
   FuncGraphPtr all_reduce_fg_{nullptr};
 };
 
-class ArithmeticSimplify {
+class ArithmeticSimplify : public OptimizerCaller {
  public:
   ArithmeticSimplify()
-      : multiply_by_zero_or_one_(),
-        tensor_multiply_by_one_(),
-        add_by_zero_(),
-        tensor_add_by_zero_(),
-        identity_(prim::kPrimIdentity),
-        opt_update_zero_tensor_(),
-        constant_duplicate_mul_(),
-        power_one_() {
+      : multiply_by_zero_or_one_(std::make_shared<MultiplyByZeroOrOne>()),
+        tensor_multiply_by_one_(std::make_shared<TensorMultiplyByOne>()),
+        add_by_zero_(std::make_shared<AddByZero>()),
+        tensor_add_by_zero_(std::make_shared<TensorAddByZero>()),
+        identity_(std::make_shared<PrimEliminater>(prim::kPrimIdentity)),
+        opt_update_zero_tensor_(std::make_shared<OptUpdateZeroTensor>()),
+        constant_duplicate_mul_(std::make_shared<ConstantDuplicateMul>()),
+        power_one_(std::make_shared<PowerOneEliminate>()) {
     eliminaters_.emplace_back(multiply_by_zero_or_one_);
     eliminaters_.emplace_back(tensor_multiply_by_one_);
     eliminaters_.emplace_back(add_by_zero_);
@@ -761,10 +762,10 @@ class ArithmeticSimplify {
   }
   ~ArithmeticSimplify() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
-      new_node = eliminater(optimizer, node);
+      new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -773,15 +774,9 @@ class ArithmeticSimplify {
   }
 
  private:
-  MultiplyByZeroOrOne multiply_by_zero_or_one_;
-  TensorMultiplyByOne tensor_multiply_by_one_;
-  AddByZero add_by_zero_;
-  TensorAddByZero tensor_add_by_zero_;
-  PrimEliminater identity_;
-  OptUpdateZeroTensor opt_update_zero_tensor_;
-  ConstantDuplicateMul constant_duplicate_mul_;
-  PowerOneEliminate power_one_;
-  std::vector<TransformFuncType> eliminaters_{};
+  OptimizerCallerPtr multiply_by_zero_or_one_, tensor_multiply_by_one_, add_by_zero_, tensor_add_by_zero_, identity_,
+    opt_update_zero_tensor_, constant_duplicate_mul_, power_one_;
+  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 
 // Arithmetic Simplifications should be done after step_parallel.
@@ -789,15 +784,17 @@ class ArithmeticSimplify {
 // with shape(weight), but after step_parallel, shape of weight may be changed, so the
 // shape of the constant tensor should also be changed. So this pass is seperated from
 // ArithmeticSimplify and deferred until step_parallel.
-class ArithmeticSimplify2 {
+class ArithmeticSimplify2 : public OptimizerCaller {
  public:
-  ArithmeticSimplify2() : tensor_multiply_by_zero_() { eliminaters_.emplace_back(tensor_multiply_by_zero_); }
+  ArithmeticSimplify2() : tensor_multiply_by_zero_(std::make_shared<TensorMultiplyByZero>()) {
+    eliminaters_.emplace_back(tensor_multiply_by_zero_);
+  }
   ~ArithmeticSimplify2() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
-      new_node = eliminater(optimizer, node);
+      new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -806,8 +803,8 @@ class ArithmeticSimplify2 {
   }
 
  private:
-  TensorMultiplyByZero tensor_multiply_by_zero_;
-  std::vector<TransformFuncType> eliminaters_{};
+  OptimizerCallerPtr tensor_multiply_by_zero_;
+  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 }  // namespace irpass
 }  // namespace opt

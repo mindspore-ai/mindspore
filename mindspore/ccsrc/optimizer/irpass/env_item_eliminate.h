@@ -17,18 +17,19 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ENV_ITEM_ELIMINATE_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ENV_ITEM_ELIMINATE_H_
 
-#include <vector>
-#include <utility>
 #include <algorithm>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "optimizer/irpass.h"
-#include "optimizer/optimizer.h"
-#include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
+#include "ir/optimizer_caller.h"
+#include "ir/visitor.h"
 #include "operator/ops.h"
+#include "optimizer/irpass.h"
+#include "optimizer/optimizer.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {
@@ -225,19 +226,22 @@ class EnvGetSetItem : public AnfVisitor {
   bool is_match_{false};
 };
 
-class EnvGetItemEliminater {
+class EnvGetItemEliminater : public OptimizerCaller {
  public:
-  EnvGetItemEliminater() : new_env_get_item_(), add_env_get_item_(), env_get_set_item_() {
+  EnvGetItemEliminater()
+      : new_env_get_item_(std::make_shared<NewEnvGetItem>()),
+        add_env_get_item_(std::make_shared<AddEnvGetItem>()),
+        env_get_set_item_(std::make_shared<EnvGetSetItem>()) {
     eliminaters_.emplace_back(new_env_get_item_);
     eliminaters_.emplace_back(add_env_get_item_);
     eliminaters_.emplace_back(env_get_set_item_);
   }
   ~EnvGetItemEliminater() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
-      new_node = eliminater(optimizer, node);
+      new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -246,10 +250,8 @@ class EnvGetItemEliminater {
   }
 
  private:
-  NewEnvGetItem new_env_get_item_;
-  AddEnvGetItem add_env_get_item_;
-  EnvGetSetItem env_get_set_item_;
-  std::vector<TransformFuncType> eliminaters_{};
+  OptimizerCallerPtr new_env_get_item_, add_env_get_item_, env_get_set_item_;
+  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 
 // {prim::kPrimEnvGetItem, {G, Xs}, C, Y}
