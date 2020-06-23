@@ -102,16 +102,14 @@ class Tensor(Tensor_):
         return out
 
     def __iadd__(self, other):
-        out = self.__add__(other)
-        return out
+        return self.__add__(other)
 
     def __radd__(self, other):
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __imul__(self, other):
-        out = self.__mul__(other)
-        return out
+        return self.__mul__(other)
 
     def __rmul__(self, other):
         out = tensor_operator_registry.get('__mul__')(self, other)
@@ -130,8 +128,7 @@ class Tensor(Tensor_):
         return out
 
     def __isub__(self, other):
-        out = self.__sub__(other)
-        return out
+        return self.__sub__(other)
 
     def __rsub__(self, other):
         out = tensor_operator_registry.get('__sub__')(other, self)
@@ -167,6 +164,18 @@ class Tensor(Tensor_):
         if not out:
             return 1
         return out[0]
+
+    def __mod__(self, other):
+        return tensor_operator_registry.get('__mod__')(self, other)
+
+    def __imod__(self, other):
+        return self.__mod__(other)
+
+    def __floordiv__(self, other):
+        return tensor_operator_registry.get('__floordiv__')(self, other)
+
+    def __ifloordiv__(self, other):
+        return self.__floordiv__(other)
 
     def __str__(self):
         if self.dtype == mstype.type_none:

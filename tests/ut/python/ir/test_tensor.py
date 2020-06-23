@@ -24,12 +24,14 @@ import pytest
 import mindspore as ms
 import mindspore.common.api as me
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from ..ut_filter import non_graph_engine
 
 ndarr = np.ones((2, 3))
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_tensor_flatten():
@@ -452,5 +454,11 @@ def test_tensor_operation():
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
     res = 8 / x
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = x % 3
+    assert np.all(res.asnumpy() == np.ones((3, 3)))
+    res = x // 3
+    assert np.all(res.asnumpy() == np.ones((3, 3)))
+    x %= 3
+    assert np.all(x.asnumpy() == np.ones((3, 3)))
     with pytest.raises(ValueError):
         res = x * (2, 3)
