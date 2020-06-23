@@ -1612,6 +1612,25 @@ test_case_array_ops = [
                         Tensor(5, mstype.int32)],
         'skip': ['backward'],
     }),
+    ('MatrixDiag', {
+        'block': inner.MatrixDiag(),
+        'desc_inputs': [Tensor(np.array([1, -1]), mstype.float32),
+                        Tensor(np.arange(-12, 0).reshape(3, 2, 2), mstype.float32)],
+        'skip': ['backward'],
+    }),
+    ('MatrixDiagPart', {
+        'block': inner.MatrixDiagPart(),
+        'desc_inputs': [Tensor(np.arange(12).reshape(3, 2, 2), mstype.float32),
+                        Tensor(np.arange(-12, 0).reshape(3, 2, 2), mstype.float32)],
+        'skip': ['backward'],
+    }),
+    ('MatrixSetDiag', {
+        'block': inner.MatrixSetDiag(),
+        'desc_inputs': [Tensor(np.arange(12).reshape(3, 2, 2), mstype.float32),
+                        Tensor(np.arange(6).reshape(3, 2), mstype.float32),
+                        Tensor(np.arange(-12, 0).reshape(3, 2, 2), mstype.float32)],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_other_ops = [

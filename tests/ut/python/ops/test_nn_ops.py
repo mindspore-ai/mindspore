@@ -370,6 +370,7 @@ def test_conv2d_same_primitive():
             super(Conv2DSameNet, self).__init__()
             self.conv1 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
             self.conv2 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
+
         def construct(self, x, y):
             r1 = self.conv1(x)
             r2 = self.conv2(y)
@@ -575,6 +576,22 @@ test_cases = [
         'desc_inputs': [Tensor(np.ones([1, 3, 4, 4], np.float32)),
                         Tensor(np.ones([1, 3, 4, 4], np.float32)),
                         Tensor(np.ones(3, np.float32))],
+    }),
+    ('MatrixDiag', {
+        'block': nn.MatrixDiag(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.float32))],
+        'skip': ['backward']
+    }),
+    ('MatrixDiagPart', {
+        'block': nn.MatrixDiagPart(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32))],
+        'skip': ['backward']
+    }),
+    ('MatrixSetDiag', {
+        'block': nn.MatrixSetDiag(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)),
+                        Tensor(np.array([1, 2]).astype(np.float32))],
+        'skip': ['backward']
     }),
 ]
 

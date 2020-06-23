@@ -264,3 +264,6 @@ from .inplace_update import _inplace_update_tbe
 from .splitv import _split_v_tbe
 from .in_top_k import _in_top_k_tbe
 from .lin_space import _lin_space_tbe
+from .matrix_diag import _matrix_diag_tbe
+from .matrix_diag_part import _matrix_diag_part_tbe
+from .matrix_set_diag import _matrix_set_diag_tbe

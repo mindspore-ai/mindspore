@@ -124,7 +124,10 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"a_cos_grad", "acos_grad"},
   {"histogram_fixed_width", "histogram_fixed_width_d"},
   {"broadcast_to", "broadcast_to_d"},
-  {"inplace_update", "inplace_update_d"}};
+  {"inplace_update", "inplace_update_d"},
+  {"matrix_diag", "matrix_diag_d"},
+  {"matrix_diag_part", "matrix_diag_part_d"},
+  {"matrix_set_diag", "matrix_set_diag_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {

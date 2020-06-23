@@ -31,9 +31,12 @@ from mindspore.ops import _selected_ops
 from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 
 
-__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold']
+__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
+           'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
+
 
 class Dropout(Cell):
     r"""
@@ -527,3 +530,112 @@ class Unfold(Cell):
         ret = self.extract_image_patches(x_transpose)
         ret_transpose = self.transpose(ret, self.format_NCHW)
         return ret_transpose
+
+
+@constexpr
+def _get_matrix_diag_assist(x_shape, x_dtype):
+    validator.check_integer("x rank", len(x_shape), 1, Rel.GE, "_get_matrix_diag_assist")
+    base_eye = np.eye(x_shape[-1], x_shape[-1]).reshape(-1)
+    assist = np.tile(base_eye, x_shape[:-1]).reshape(x_shape + (x_shape[-1],))
+    return Tensor(assist, x_dtype)
+
+
+@constexpr
+def _get_matrix_diag_part_assist(x_shape, x_dtype):
+    validator.check_integer("x rank", len(x_shape), 2, Rel.GE, "_get_matrix_diag_part_assist")
+    base_eye = np.eye(x_shape[-2], x_shape[-1]).reshape(-1)
+    assist = np.tile(base_eye, x_shape[:-2]).reshape(x_shape)
+    return Tensor(assist, x_dtype)
+
+
+class MatrixDiag(Cell):
+    """
+    Returns a batched diagonal tensor with a given batched diagonal values.
+
+    Inputs:
+        - **x** (Tensor) - The diagonal values. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+
+    Outputs:
+        Tensor, same type as input `x`. The shape should be x.shape + (x.shape[-1], ).
+
+    Examples:
+        >>> x = Tensor(np.array([1, -1]), mstype.float32)
+        >>> matrix_diag = nn.MatrixDiag()
+        >>> result = matrix_diag(x)
+        [[1.   0.]
+         [0.  -1.]]
+    """
+    def __init__(self):
+        super(MatrixDiag, self).__init__()
+        self.matrix_diag = inner.MatrixDiag()
+        self.dtype = P.DType()
+
+    def construct(self, input_x):
+        x_shape = F.shape(input_x)
+        x_dtype = self.dtype(input_x)
+        assist = _get_matrix_diag_assist(x_shape, x_dtype)
+        out_matrix_diag = self.matrix_diag(input_x, assist)
+        return out_matrix_diag
+
+
+class MatrixDiagPart(Cell):
+    r"""
+    Returns the batched diagonal part of a batched tensor.
+
+    Inputs:
+        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+
+    Outputs:
+        Tensor, same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
+
+    Examples:
+        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> matrix_diag_part = nn.MatrixDiagPart()
+        >>> result = matrix_diag_part(x)
+        [[-1., 1.], [-1., 1.], [-1., 1.]]
+    """
+    def __init__(self):
+        super(MatrixDiagPart, self).__init__()
+        self.matrix_diag_part = inner.MatrixDiagPart()
+        self.dtype = P.DType()
+
+    def construct(self, input_x):
+        x_shape = F.shape(input_x)
+        x_dtype = self.dtype(input_x)
+        assist = _get_matrix_diag_part_assist(x_shape, x_dtype)
+        out_matrix_diag_part = self.matrix_diag_part(input_x, assist)
+        return out_matrix_diag_part
+
+
+class MatrixSetDiag(Cell):
+    r"""
+    Modify the batched diagonal part of a batched tensor.
+
+    Inputs:
+        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+        - **diagonal** (Tensor) - The diagonal values.
+
+    Outputs:
+        Tensor, same type as input `x`. The shape same as `x`.
+
+    Examples:
+        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
+        >>> matrix_set_diag = nn.MatrixSetDiag()
+        >>> result = matrix_set_diag(x, diagonal)
+        [[[-1, 0], [0, 2]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+    """
+    def __init__(self):
+        super(MatrixSetDiag, self).__init__()
+        self.matrix_set_diag = inner.MatrixSetDiag()
+        self.dtype = P.DType()
+
+    def construct(self, input_x, diagonal):
+        x_shape = F.shape(input_x)
+        x_dtype = self.dtype(input_x)
+        assist = _get_matrix_diag_part_assist(x_shape, x_dtype)
+        out_matrix_set_diag = self.matrix_set_diag(input_x, diagonal, assist)
+        return out_matrix_set_diag

@@ -367,3 +367,144 @@ class LinSpace(PrimitiveWithInfer):
         args = {"assist": assist, "start": start, "stop": stop}
         validator.check_tensor_type_same(args, (mstype.float32,), self.name)
         return assist
+
+
+class MatrixDiag(PrimitiveWithInfer):
+    """
+    Returns a batched diagonal tensor with a given batched diagonal values.
+
+    Inputs:
+        - **x** (Tensor) - A tensor which to be element-wise multi by `assist`. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+        - **assist** (Tensor) - A eye tensor of the same type as `x`. It's rank must greater than or equal to 2 and
+          it's last dimension must equal to the second to last dimension.
+
+    Outputs:
+        Tensor, has the same type and shape as input `assist`.
+
+    Examples:
+        >>> x = Tensor(np.array([1, -1]), mstype.float32)
+        >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
+        >>> matrix_diag = P.MatrixDiag()
+        >>> result = matrix_diag(x, assist)
+        [[[-12.   11.]
+          [-10.    9.]]
+         [[ -8.    7.]
+          [ -6.    5.]]
+         [[ -4.    3.]
+          [ -2.    1.]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init MatrixDiag"""
+
+    def infer_dtype(self, x_dtype, assist_dtype):
+        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        args = {"x": x_dtype, "assist": assist_dtype}
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        return x_dtype
+
+    def infer_shape(self, x_shape, assist_shape):
+        validator.check_integer("assist rank", len(assist_shape), 2, Rel.GE, self.name)
+        validator.check('rank of x', len(x_shape)+1,
+                        'rank of assist', len(assist_shape), Rel.LE, self.name)
+        validator.check('assist\'s penultimate dimension', assist_shape[-2], 'assist\'s last dimension',
+                        assist_shape[-1], Rel.EQ, self.name)
+
+        r_end_dim = -len(x_shape)
+        r_idx = -1
+        while r_idx >= r_end_dim:
+            if x_shape[r_idx] != 1:
+                validator.check("reverse x dim %d" % r_idx, x_shape[r_idx], "reverse assist dim %d" %
+                                assist_shape[r_idx-1], assist_shape[r_idx-1], Rel.EQ, self.name)
+            r_idx = r_idx - 1
+
+        return assist_shape
+
+
+class MatrixDiagPart(PrimitiveWithInfer):
+    r"""
+    Returns the batched diagonal part of a batched tensor.
+
+    Inputs:
+        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+        - **assist** (Tensor) - A eye tensor of the same type as `x`. With shape same as `x`.
+
+    Outputs:
+        Tensor, data type same as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
+
+    Examples:
+        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
+        >>> matrix_diag_part = P.MatrixDiagPart()
+        >>> result = matrix_diag_part(x, assist)
+        [[12., -9.], [8., -5.], [4., -1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init MatrixDiagPart"""
+
+    def infer_dtype(self, x_dtype, assist_dtype):
+        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        args = {"x": x_dtype, "assist": assist_dtype}
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        return x_dtype
+
+    def infer_shape(self, x_shape, assist_shape):
+        validator.check_integer("x rank", len(x_shape), 2, Rel.GE, self.name)
+        validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
+
+        if assist_shape[-2] < assist_shape[-1]:
+            out_shape = assist_shape[:-1]
+        else:
+            out_shape = assist_shape[:-2] + assist_shape[-1:]
+        return out_shape
+
+
+class MatrixSetDiag(PrimitiveWithInfer):
+    r"""
+    Modify the batched diagonal part of a batched tensor.
+
+    Inputs:
+        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+        - **assist** (Tensor) - A eye tensor of the same type as `x`. With shape same as `x`.
+        - **diagonal** (Tensor) - The diagonal values.
+
+    Outputs:
+        Tensor, data type same as input `x`. The shape same as `x`.
+
+    Examples:
+        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
+        >>> matrix_set_diag = P.MatrixSetDiag()
+        >>> result = matrix_set_diag(x, diagonal)
+        [[[-1, 0], [0, 2]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init MatrixSetDiag"""
+
+    def infer_dtype(self, x_dtype, diagonal_dtype, assist_dtype):
+        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        args = {"x": x_dtype, "diagonal": diagonal_dtype, "assist": assist_dtype}
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        return x_dtype
+
+    def infer_shape(self, x_shape, diagonal_shape, assist_shape):
+        validator.check_integer("x rank", len(x_shape), 2, Rel.GE, self.name)
+        validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
+
+        if x_shape[-2] < x_shape[-1]:
+            validator.check("x shape excluding the last dimension", x_shape[:-1], "diagnoal shape",
+                            diagonal_shape, Rel.EQ, self.name)
+        else:
+            validator.check("x shape excluding the second to last dimension", x_shape[:-2]+x_shape[-1:],
+                            "diagonal shape", diagonal_shape, Rel.EQ, self.name)
+
+        return assist_shape
