@@ -577,64 +577,43 @@ class Range(PrimitiveWithInfer):
 class EmbeddingLookup(PrimitiveWithInfer):
     """
     Returns a slice of input tensor based on the specified indices and axis. This Primitive has the similar
-    functionality as GatherV2, but has three more inputs: `offset`, `reduce_scatter_flag` and `split_num`.
+    functionality as GatherV2, but has one more inputs: `offset`.
+    This primitive runs on the acipu devices.
 
     Inputs:
-        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
           The Tensor slice, instead of the entire Tensor.
-        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. Must be in the range
-          `[0, input_param.shape()[axis])`.
-        - **axis** (int) - Specifies the dimension index to gather indices.
-        - **offset** (int) - Specifies the offset value of this `input_params` slice. Thus the real indices
-          are equal to `input_indices` minus `offset`.
-        - **reduce_scatter_flag** (bool) - Specifies whether perform reduce_scatter on host or not.
-        - **split_num** (int) - Specifies the number of partitions of the reduce_scatter produces. This variable
-          is used only if `reduce_scatter_flag` is True.
+        - **indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Values can be out of range of `params`,
+          and the exceeding part will be filled with 0 in the output.
+          The indices to do lookup operation whose data type should be mindspore.int32 or mindspore.int64.
+        - **offset** (int) - Specifies the offset value of this `params` slice. Thus the real indices
+          are equal to `indices` minus `offset`.
 
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
     Examples:
-        >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
-        >>> axis = 0
+        >>> params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
         >>> offset = 4
-        >>> reduce_scatter_flag = False
-        >>> split_num = 1
-        >>> out = P.EmbeddingLookup()(input_params, input_indices, axis, offset, reduce_scatter_flag, split_num)
+        >>> out = P.EmbeddingLookup()(params, indices, offset)
         [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
     """
     @prim_attr_register
     def __init__(self):
         """init index_select"""
-        self.__setattr_flag__ = True
-        self.init_prim_io_names(inputs=['params', 'indices', 'axis', 'offset', 'reduce_scatter_flag', 'split_num'],
+        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
                                 outputs=['output'])
-        self.add_prim_attr('target', 'CPU')
 
-    def __infer__(self, params, indices, axis, offset, reduce_scatter_flag=False, split_num=2):
+    def __infer__(self, params, indices, offset):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
-        validator.check_subclass("axis", axis['dtype'], mstype.int_, self.name)
+        valid_types = (mstype.int32, mstype.int64)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, valid_types, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
-        validator.check_subclass("split_num", split_num['dtype'], mstype.int_, self.name)
-        if split_num['value'] < 1:
-            raise ValueError("The parameter 'split_num' must be positive, but got %d." % split_num)
-        axis_v = axis['value']
         params_shp = params['shape']
-        rank = len(params_shp)
-        validator.check_int_range("axis", axis_v, -rank, rank, Rel.INC_LEFT, self.name)
-        if axis_v < 0:
-            axis_v += rank
-        out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
-        if reduce_scatter_flag:
-            # partition the tensor along the dimension 0.
-            if out_shape[0] % split_num['value'] != 0:
-                raise ValueError("The dimension 0 of the shape: %d, is not divisible by split_num: %d." %
-                                 (out_shape[0], split_num['value']))
-            out_shape[0] = out_shape[0] // split_num['value']
+        out_shape = indices['shape'] + params_shp[1:]
         out = {'shape': out_shape,
                'dtype': params['dtype'],
                'value': None}
