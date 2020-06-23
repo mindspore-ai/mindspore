@@ -18,6 +18,8 @@ from ._callback import Callback
 from ._callback import CallbackManager as _CallbackManager
 from ._callback import InternalCallbackParam as _InternalCallbackParam
 from ._callback import RunContext
+from ._callback import checkpoint_cb_for_save_op as _checkpoint_cb_for_save_op
+from ._callback import set_cur_net as _set_cur_net
 from ._checkpoint import CheckpointConfig
 from ._checkpoint import CheckpointManager as _CheckpointManager
 from ._checkpoint import ModelCheckpoint
