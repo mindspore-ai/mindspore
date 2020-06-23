@@ -182,13 +182,11 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
                     {'order_params': net.trainable_params()}]
 
     if config.use_lars:
-        momentum = nn.Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
+        momentum = nn.Momentum(group_params, lr, config.momentum,
+                               weight_decay=config.weight_decay, loss_scale=config.loss_scale,
                                use_nesterov=config.use_nesterov)
-        opt = nn.LARS(momentum, epsilon=config.lars_epsilon, hyperpara=config.lars_coefficient,
-                      weight_decay=config.weight_decay,
-                      decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name,
-                      lars_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name,
-                      loss_scale=config.loss_scale)
+        opt = nn.LARS(momentum, epsilon=config.lars_epsilon, coefficient=config.lars_coefficient,
+                      lars_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name)
 
     else:
         opt = nn.Momentum(group_params, lr, config.momentum,
