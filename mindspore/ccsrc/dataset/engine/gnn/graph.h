@@ -226,6 +226,8 @@ class Graph {
   Status NegativeSample(const std::vector<NodeIdType> &input_data, const std::unordered_set<NodeIdType> &exclude_data,
                         int32_t samples_num, std::vector<NodeIdType> *out_samples);
 
+  Status CheckSamplesNum(NodeIdType samples_num);
+
   std::string dataset_file_;
   int32_t num_workers_;  // The number of worker threads
   std::mt19937 rnd_;
