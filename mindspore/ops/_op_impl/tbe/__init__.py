@@ -267,3 +267,5 @@ from .lin_space import _lin_space_tbe
 from .matrix_diag import _matrix_diag_tbe
 from .matrix_diag_part import _matrix_diag_part_tbe
 from .matrix_set_diag import _matrix_set_diag_tbe
+from .lrn import _lrn_tbe
+from .lrn_grad import _lrn_grad_tbe

@@ -68,7 +68,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
-                     SmoothL1Loss, Softmax, Softplus,
+                     SmoothL1Loss, Softmax, Softplus, LRN,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
@@ -316,7 +316,8 @@ __all__ = [
     "DataFormatDimMap",
     "ApproximateEqual",
     "InplaceUpdate",
-    "InTopK"
+    "InTopK",
+    "LRN"
 ]
 
 __all__.sort()

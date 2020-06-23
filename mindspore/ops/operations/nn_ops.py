@@ -4252,3 +4252,44 @@ class InTopK(PrimitiveWithInfer):
         validator.check("x2", len(x2_shape), "", 1, Rel.EQ, self.name)
         validator.check("size of x2", x2_shape[0], "x1's first dimension", x1_shape[0], Rel.EQ, self.name)
         return x2_shape
+
+
+class LRN(PrimitiveWithInfer):
+    r"""
+    Local Response Normalization
+
+    Args:
+        depth_radius (int): Half-width of the 1-D normalization window. Shape of 0-D.
+        bias (float): An offset (usually positive to avoid dividing by 0).
+        alpha (float): A scale factor, usually positive.
+        beta (float): An exponent.
+        norm_region (str): Specify normalization region. Options: "ACROSS_CHANNELS", "WITHIN_CHANNEL".
+                           Default: "ACROSS_CHANNELS".
+
+    Inputs:
+        - **x** (Tensor) - A 4D Tensor with float16 or float32 data type.
+
+    Outputs:
+        Tensor, With shape and data type same as the input tensor.
+
+    Examples:
+        >>> x = Tensor(np.random.rand(1, 10, 4, 4)), mindspore.float32)
+        >>> lrn = P.LRN()
+        >>> lrn(x)
+    """
+    @prim_attr_register
+    def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
+        """Init LRN"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type("depth_radius", depth_radius, [int], self.name)
+        validator.check_value_type("bias", bias, [float], self.name)
+        validator.check_value_type("alpha", alpha, [float], self.name)
+        validator.check_value_type("beta", beta, [float], self.name)
+        validator.check_value_type("norm_region", norm_region, [str], self.name)
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32,), self.name)
+        return x_dtype
+
+    def infer_shape(self, x_shape):
+        return x_shape
