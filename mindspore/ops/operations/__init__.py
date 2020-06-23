@@ -54,7 +54,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps)
 
-from .random_ops import (RandomChoiceWithMask, Normal)
+from .random_ops import (RandomChoiceWithMask, Normal, RandomCategorical)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -69,6 +69,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
                      SmoothL1Loss, Softmax, Softplus,
+                     RNNTLoss,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
@@ -77,6 +78,8 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
+from . import _quant_ops
+from ._quant_ops import *
 from .thor_ops import *
 
 __all__ = [
@@ -168,6 +171,7 @@ __all__ = [
     'Tanh',
     'RandomChoiceWithMask',
     'Normal',
+    'RandomCategorical',
     'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',
@@ -198,6 +202,7 @@ __all__ = [
     'SmoothL1Loss',
     'L2Loss',
     'CTCLoss',
+    'RNNTLoss',
     'ReduceAll',
     'ScalarToArray',
     'ScalarToTensor',
@@ -302,6 +307,7 @@ __all__ = [
     "ApplyCenteredRMSProp",
     "SpaceToBatchND",
     "BatchToSpaceND",
+    "ReverseSequence",
     "SquareSumAll",
     "BitwiseAnd",
     "BitwiseOr",
@@ -315,7 +321,8 @@ __all__ = [
     "DataFormatDimMap",
     "ApproximateEqual",
     "InplaceUpdate",
-    "InTopK"
+    "InTopK",
+    "CropAndResize"
 ]
 
 __all__.sort()

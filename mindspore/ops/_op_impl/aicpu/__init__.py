@@ -14,6 +14,7 @@
 
 """aicpu ops"""
 from .init_data_set_queue import _init_data_set_queue_aicpu
+from .embedding_lookup import _embedding_lookup_aicpu
 from .dropout_genmask import _dropout_genmask_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
@@ -29,3 +30,6 @@ from .normal import _normal_aicpu
 from .ctcloss import _ctcloss_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
+from .rnnt_loss import _rnnt_loss_aicpu
+from .random_categorical import _random_categorical_aicpu
+from .cast import _cast_aicpu

@@ -342,7 +342,6 @@ class Optimizer(Cell):
                     current_dynamic_lr = self.gather(self.learning_rate[i], self.global_step, 0)
                     lr += (current_dynamic_lr,)
                 F.control_depend(lr, self.assignadd(self.global_step, 1))
-
         else:
             lr = self.learning_rate
             if self.dynamic_lr:
