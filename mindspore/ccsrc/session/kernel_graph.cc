@@ -43,7 +43,8 @@ void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
 }
 
 std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
-  auto item_with_index = AnfAlgo::VisitKernelWithReturnType(call_node, 0);
+  auto item_with_index =
+    AnfAlgo::VisitKernelWithReturnType(call_node, 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple});
   AnfNodePtr node = item_with_index.first;
   MS_EXCEPTION_IF_NULL(node);
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
@@ -773,9 +774,7 @@ void KernelGraph::UpdateCallRealInput() {
     std::vector<AnfNodePtr> new_real_inputs;
     for (auto &real_input : real_inputs) {
       // if real input is a call node ,find the child graph output act as the new real input
-      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(real_input, 0);
-      MS_EXCEPTION_IF_NULL(item_with_index.first);
-      auto tmp_real_input = GetCallRealOutputs(item_with_index.first);
+      auto tmp_real_input = GetCallRealOutputs(real_input);
       std::copy(tmp_real_input.begin(), tmp_real_input.end(), std::back_inserter(new_real_inputs));
     }
     real_inputs_map.emplace_back(parameter, new_real_inputs);
