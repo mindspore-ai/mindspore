@@ -275,7 +275,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Removes a parent operator from this operator
   // @notes External callers do not have access to this function.
   // @param parent - The parent node to remove
-  void RemoveParent(DatasetOp *parent);
+  void RemoveParent(const DatasetOp *parent);
 
   // Compute the current op's column map using its child's column map.
   // Get called during the tree post-prepare phase in PrepareNodePostAction.
