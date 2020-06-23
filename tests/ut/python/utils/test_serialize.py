@@ -111,19 +111,19 @@ def test_save_checkpoint():
         os.chmod('./parameters.ckpt', stat.S_IWRITE)
         os.remove('./parameters.ckpt')
 
-    ckpoint_file_name = os.path.join(_cur_dir, './parameters.ckpt')
-    save_checkpoint(parameter_list, ckpoint_file_name)
+    ckpt_file_name = os.path.join(_cur_dir, './parameters.ckpt')
+    save_checkpoint(parameter_list, ckpt_file_name)
 
 
 def test_load_checkpoint_error_filename():
-    ckpoint_file_name = 1
+    ckpt_file_name = 1
     with pytest.raises(ValueError):
-        load_checkpoint(ckpoint_file_name)
+        load_checkpoint(ckpt_file_name)
 
 
 def test_load_checkpoint():
-    ckpoint_file_name = os.path.join(_cur_dir, './parameters.ckpt')
-    par_dict = load_checkpoint(ckpoint_file_name)
+    ckpt_file_name = os.path.join(_cur_dir, './parameters.ckpt')
+    par_dict = load_checkpoint(ckpt_file_name)
 
     assert len(par_dict) == 3
     assert par_dict['param_test'].name == 'param_test'
@@ -136,17 +136,17 @@ def test_checkpoint_manager():
     """ test_checkpoint_manager """
     ckp_mgr = _CheckpointManager()
 
-    ckpoint_file_name = os.path.join(_cur_dir, './test1.ckpt')
-    with open(ckpoint_file_name, 'w'):
-        os.chmod(ckpoint_file_name, stat.S_IWUSR | stat.S_IRUSR)
+    ckpt_file_name = os.path.join(_cur_dir, './test1.ckpt')
+    with open(ckpt_file_name, 'w'):
+        os.chmod(ckpt_file_name, stat.S_IWUSR | stat.S_IRUSR)
 
     ckp_mgr.update_ckpoint_filelist(_cur_dir, "test")
     assert ckp_mgr.ckpoint_num == 1
 
-    ckp_mgr.remove_ckpoint_file(ckpoint_file_name)
+    ckp_mgr.remove_ckpoint_file(ckpt_file_name)
     ckp_mgr.update_ckpoint_filelist(_cur_dir, "test")
     assert ckp_mgr.ckpoint_num == 0
-    assert not os.path.exists(ckpoint_file_name)
+    assert not os.path.exists(ckpt_file_name)
 
     another_file_name = os.path.join(_cur_dir, './test2.ckpt')
     another_file_name = os.path.realpath(another_file_name)
@@ -283,7 +283,7 @@ def test_exec_save_checkpoint():
 
     loss_net = WithLossCell(net, loss)
     train_network = TrainOneStepCell(loss_net, opt)
-    _exec_save_checkpoint(train_network, ckpoint_file_name="./new_ckpt.ckpt")
+    _exec_save_checkpoint(train_network, ckpt_file_name="./new_ckpt.ckpt")
 
     load_checkpoint("new_ckpt.ckpt")
 

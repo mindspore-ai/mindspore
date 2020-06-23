@@ -23,7 +23,6 @@ import argparse
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.quant import quant
@@ -48,20 +47,21 @@ if __name__ == "__main__":
     ds_eval = create_dataset(os.path.join(args.data_path, "test"), cfg.batch_size, 1)
     step_size = ds_eval.get_dataset_size()
 
-    # define funsion network
+    # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
-    # convert funsion netwrok to quantization aware network
+    # convert fusion netwrok to quantization aware network
     network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
 
+    # define loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    # define network optimization
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
+
+    # call back and monitor
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     # load quantization aware network checkpoint
-    param_dict = load_checkpoint(args.ckpt_path)
+    param_dict = load_checkpoint(args.ckpt_path, model_type="quant")
     load_param_into_net(network, param_dict)
 
     print("============== Starting Testing ==============")
