@@ -37,7 +37,7 @@ class ReduceScatterCPUKernel : public CPUKernel {
   std::vector<int> ranks_group_;
 };
 
-MS_REG_CPU_KERNEL(HostReduceScatter, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+MS_REG_CPU_KERNEL(_HostReduceScatter, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ReduceScatterCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

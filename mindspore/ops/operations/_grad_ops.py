@@ -1166,7 +1166,7 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     Perform the gradient for the communication part of EmbeddingLookup operator.
 
     This works ONLY when 'reduce_scatter_flag' is True in 'EmbeddingLookup'. Roughly speaking,
-    this primitive is implemented by StridedSlice --> HostAllGather --> Concat. This primitive runs on host.
+    this primitive is implemented by StridedSlice --> _HostAllGather --> Concat. This primitive runs on host.
     """
     @prim_attr_register
     def __init__(self):
@@ -1177,8 +1177,8 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
         """
         This primitive is implemented by three steps:
             1) Split the 'dy' along dimension 0 into 'split_num' parts.
-            2) For each part, perform HostAllGather((0, 1, 2, 3, 4, 5, 6, 7)) on the host.
-            3) After HostAllGather, there are still 'split_num' parts in each process. Then, perform Concat on them
+            2) For each part, perform _HostAllGather((0, 1, 2, 3, 4, 5, 6, 7)) on the host.
+            3) After _HostAllGather, there are still 'split_num' parts in each process. Then, perform Concat on them
               along dimension 0.
 
         The output shape of this primitive: shape(output)[0] == shape(dy)[0] * 8

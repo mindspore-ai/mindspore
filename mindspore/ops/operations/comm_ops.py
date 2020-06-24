@@ -176,13 +176,13 @@ class AllGather(PrimitiveWithInfer):
         raise NotImplementedError
 
 
-class HostAllGather(PrimitiveWithInfer):
+class _HostAllGather(PrimitiveWithInfer):
     """
     Gathers tensors from the specified communication group on host.
 
     Note:
         Tensor must have the same shape and format in all processes participating in the collective.
-        HostAllGather is a host-side operator, it depends on OpenMPI and must use build option -M on
+        _HostAllGather is a host-side operator, it depends on OpenMPI and must use build option -M on
         to enable it. Using mpirun command to run it:
         mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_all_gather.py
 
@@ -199,27 +199,6 @@ class HostAllGather(PrimitiveWithInfer):
     Outputs:
         Tensor. If the number of devices in the group is N,
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
-
-    Examples:
-        >>> import mindspore.nn as nn
-        >>> import mindspore.context as context
-        >>> import mindspore.ops.operations as P
-        >>> from mindspore import Tensor
-        >>>
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-        >>> context.set_mpi_config(enable_mpi=True)
-        >>>
-        >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.hostallgather = P.HostAllGather(group=(0, 1, 2, 3))
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.hostallgather(x)
-        >>>
-        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
-        >>> net = Net()
-        >>> output = net(input_)
     """
 
     @prim_attr_register
@@ -308,13 +287,13 @@ class ReduceScatter(PrimitiveWithInfer):
         raise NotImplementedError
 
 
-class HostReduceScatter(PrimitiveWithInfer):
+class _HostReduceScatter(PrimitiveWithInfer):
     """
     Reduces and scatters tensors from the specified communication group on host.
 
     Note:
         Tensor must have the same shape and format in all processes participating in the collective.
-        HostReduceScatter is a host-side operator, it depends on OpenMPI and must use build option
+        _HostReduceScatter is a host-side operator, it depends on OpenMPI and must use build option
         -M on to enable it. Using mpirun command to run it:
         mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_reduce_scatter.py
 
@@ -328,28 +307,6 @@ class HostReduceScatter(PrimitiveWithInfer):
                    or elements of group are not int.
         ValueError: If the first dimension of input can not be divided by group size,
                     or group is not set, or rank_id not in [0, 7].
-
-    Examples:
-        >>> import mindspore.nn as nn
-        >>> import mindspore.context as context
-        >>> import mindspore.ops.operations as P
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.comm_ops import ReduceOp
-        >>>
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-        >>> context.set_mpi_config(enable_mpi=True)
-        >>>
-        >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.hostreducescatter = P.HostReduceScatter(ReduceOp.SUM, group=[0, 1, 2, 3])
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.hostreducescatter(x)
-        >>>
-        >>> input_ = Tensor(np.ones([8, 8]).astype(np.float32))
-        >>> net = Net()
-        >>> output = net(input_)
     """
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=None):
