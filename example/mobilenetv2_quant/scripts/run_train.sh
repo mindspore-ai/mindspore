@@ -22,9 +22,9 @@ run_ascend()
     exit 1
     fi
 
-    if [ ! -d $5 ]
+    if [ ! -d $5 ] && [ ! -f $5 ]
     then
-        echo "error: DATASET_PATH=$5 is not a directory"
+        echo "error: DATASET_PATH=$5 is not a directory or file"
     exit 1
     fi
 
