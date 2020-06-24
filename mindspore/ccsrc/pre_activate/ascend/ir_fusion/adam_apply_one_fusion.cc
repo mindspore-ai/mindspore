@@ -109,6 +109,9 @@ const AnfNodePtr AdamApplyOneFusion::Process(const FuncGraphPtr &func_graph, con
                                              const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   auto new_node = CreateAdamApplyOneNode(func_graph, equiv);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(node->scope());

@@ -24,7 +24,7 @@ relu_grad_v2_op_info = TBERegOp("ReluGradV2") \
     .kernel_name("relu_grad_v2") \
     .partial_flag(True) \
     .input(0, "gradients", False, "required", "all") \
-    .input(1, "mask", False, "rerequired", "all") \
+    .input(1, "mask", False, "required", "all") \
     .output(0, "backprops", True, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.U8_Default, DataType.F16_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.U8_Default, DataType.F32_5HD) \

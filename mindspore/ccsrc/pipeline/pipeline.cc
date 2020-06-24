@@ -59,6 +59,7 @@ using mindspore::abstract::AbstractTuplePtr;
 
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
+const char IR_TYPE_BINARY[] = "binary_ir";
 
 ExecutorPyPtr ExecutorPy::executor_ = nullptr;
 std::mutex ExecutorPy::instance_lock_;
@@ -212,6 +213,14 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
     return proto_str;
   }
 
+  if (ir_type == IR_TYPE_BINARY) {
+    std::string proto_str = GetBinaryProtoString(fg_ptr);
+    if (proto_str.empty()) {
+      MS_LOG(EXCEPTION) << "Graph proto is empty.";
+    }
+    return proto_str;
+  }
+
   MS_LOG(EXCEPTION) << "Unknown ir type: " << ir_type;
 }
 
@@ -236,9 +245,7 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
 }
 
 void ExecutorPy::DelNetRes(const std::string &id) {
-#ifdef ENABLE_GE
   FinalizeBackend();
-#endif
   if (executor_ != nullptr) {
     bool flag = false;
     auto tmp_info = info_;
@@ -270,6 +277,75 @@ void ExecutorPy::ClearRes() {
 ExecutorPy::~ExecutorPy() {
   MS_LOG(INFO) << "Release Executor!";
   ConfigManager::GetInstance().ResetConfig();
+}
+
+std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchInfoForQuantExport(
+  const std::string &phase_s) {
+  FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
+  std::map<std::string, std::pair<PrimitivePyPtr, std::string>> fake_quant_table;
+  auto filter = [](AnfNodePtr node) {
+    return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul));
+  };
+  std::vector<AnfNodePtr> nodes = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  auto is_quant_cnode = [](AnfNodePtr node) {
+    return IsPrimitiveCNode(node, prim::kPrimFakeQuantPerLayer) ||
+           IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel);
+  };
+  for (auto node : nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr || cnode->size() != 3) {
+      continue;
+    }
+    auto x = cnode->input(1);
+    auto weight = cnode->input(2);
+    if (!is_quant_cnode(weight)) {
+      continue;
+    }
+    // get parameter weight's name
+    cnode = weight->cast<CNodePtr>();
+    auto weight_node = cnode->input(2);
+    if (!weight_node->isa<Parameter>()) {
+      continue;
+    }
+    auto weight_name = weight_node->cast<ParameterPtr>()->name();
+    // find the fakequant from input
+    int count = 0;
+    int max_depth = 5;
+    while (!is_quant_cnode(x)) {
+      if (count >= max_depth) {
+        break;
+      }
+      cnode = x->cast<CNodePtr>();
+      if (cnode == nullptr || cnode->size() <= 1) {
+        break;
+      }
+      x = cnode->input(1);
+      count += 1;
+    }
+    // get the fakequant parameter minq's name
+    if (!is_quant_cnode(x)) {
+      continue;
+    }
+    cnode = x->cast<CNodePtr>();
+    if (cnode == nullptr || cnode->size() != 4) {
+      continue;
+    }
+    auto fakequant_min_node = cnode->input(2);
+    if (!fakequant_min_node->isa<Parameter>()) {
+      continue;
+    }
+    auto fakequant_min_node_name = fakequant_min_node->cast<ParameterPtr>()->name();
+    auto quant_op_value = cnode->input(0)->cast<ValueNodePtr>()->value();
+    if (!quant_op_value->isa<PrimitivePy>()) {
+      continue;
+    }
+    auto quant_op = quant_op_value->cast<PrimitivePyPtr>();
+    fake_quant_table[weight_name] = std::make_pair(quant_op, fakequant_min_node_name);
+  }
+
+  return fake_quant_table;
 }
 
 void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
@@ -462,6 +538,9 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::value_error &ex) {
     ReleaseResource(phase);
     throw py::value_error(ex);
+  } catch (const py::index_error &ex) {
+    ReleaseResource(phase);
+    throw py::index_error(ex);
   } catch (const std::exception &ex) {
     ReleaseResource(phase);
     // re-throw this exception to Python interpreter to handle it
@@ -506,7 +585,6 @@ void RunPipelineAction(const ActionItem &action, pipeline::ResourcePtr resource,
 
   // when in loading anf ir mode, action `parse` do nothing
   if (action.first == "parse") {
-    parse::PythonAdapter::SetPythonEnvFlag(true);
     return;
   }
 
@@ -566,6 +644,7 @@ void Pipeline::Run() {
           draw::Draw(base_name + ".dot", graph);
           // generate IR file in human readable format
           DumpIR(base_name + ".ir", graph);
+
           // generate IR file in a heavily commented format, which can also be reloaded
           if (action.first != "parse") {
             ExportIR(base_name + ".dat", std::to_string(i), graph);
@@ -608,24 +687,27 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "End";
 }
 
-void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list) {
+void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
   std::size_t size = args.size();
 
   for (std::size_t i = 0; i < size; i++) {
     py::object arg = args[i];
     auto ms_context = MsContext::GetInstance();
     if (ms_context->backend_policy() == kMsConvert && py::isinstance<py::array>(arg)) {
-      MS_LOG(EXCEPTION) << "Args[" << i << "] is numpy array, not tensor";
+      MS_LOG(EXCEPTION) << "The " << i << "th arg is numpy array, not tensor.";
     }
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(arg, &converted);
     if (!succ) {
-      MS_LOG(EXCEPTION) << "Args convert error";
+      MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
+    }
+    if (MsContext::GetInstance()->execution_mode() == 0 && !converted->isa<tensor::Tensor>()) {
+      MS_EXCEPTION(TypeError) << "For 'graph mode', the " << i << "th arg: " << converted->ToString()
+                              << " is not tensor.";
     }
     arg_list->push_back(converted);
   }
 
-  ResourcePtr res = GetResource(phase);
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -645,6 +727,10 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
       (*arg_list).push_back(p_value);
     }
   }
+}
+
+void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list) {
+  ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
 py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
@@ -775,7 +861,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   MS_EXCEPTION_IF_NULL(convert_fn);
   // Convert CNodeList to LinConvertResult.
   ConfigManager::GetInstance().set_iter_num(1);
-  auto runner = convert_fn({app_init});
+  auto runner = convert_fn({app_init}, "");
   if (MsContext::GetInstance()->execution_mode() != kPynativeMode) {
     backend->Link(runner.graph_id);
   }
@@ -874,6 +960,8 @@ void ClearResAtexit() {
   compile::ClearConvertCache();
   pipeline::GetMethodMap().clear();
   pipeline::ExecutorPy::ClearRes();
+  pipeline::ReclaimOptimizer();
+  pynative::PynativeExecutor::GetInstance()->ClearRes();
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::DfGraphConvertor::get_adpt_map().clear();

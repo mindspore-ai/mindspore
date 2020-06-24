@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
+
+import numpy as np
 import pytest
 
 import mindspore.context as context
@@ -24,17 +25,65 @@ import mindspore.dataset.transforms.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.initializer import initializer
 from mindspore.dataset.transforms.vision import Inter
-from mindspore.model_zoo.lenet import LeNet5
 from mindspore.nn import Dense, TrainOneStepCell, WithLossCell
 from mindspore.nn.metrics import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor
+from mindspore.common.initializer import TruncatedNormal
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+
+def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
+    """weight initial for conv layer"""
+    weight = weight_variable()
+    return nn.Conv2d(in_channels, out_channels,
+                     kernel_size=kernel_size, stride=stride, padding=padding,
+                     weight_init=weight, has_bias=False, pad_mode="valid")
+
+
+def fc_with_initialize(input_channels, out_channels):
+    """weight initial for fc layer"""
+    weight = weight_variable()
+    bias = weight_variable()
+    return nn.Dense(input_channels, out_channels, weight, bias)
+
+
+def weight_variable():
+    """weight initial"""
+    return TruncatedNormal(0.02)
+
+
+class LeNet5(nn.Cell):
+    def __init__(self, num_class=10, channel=1):
+        super(LeNet5, self).__init__()
+        self.num_class = num_class
+        self.conv1 = conv(channel, 6, 5)
+        self.conv2 = conv(6, 16, 5)
+        self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
+        self.fc2 = fc_with_initialize(120, 84)
+        self.fc3 = fc_with_initialize(84, self.num_class)
+        self.relu = nn.ReLU()
+        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.flatten = nn.Flatten()
+
+    def construct(self, x):
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        return x
 
 
 class LeNet(nn.Cell):
@@ -83,7 +132,7 @@ def multisteplr(total_steps, gap, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
 def test_train_lenet():
     epoch = 100
     net = LeNet()
-    momentum = initializer(Tensor(np.array([0.9]).astype(np.float32)), [1])
+    momentum = 0.9
     learning_rate = multisteplr(epoch, 30)
 
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
@@ -95,9 +144,9 @@ def test_train_lenet():
     for i in range(epoch):
         data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([net.batch_size]).astype(np.int32))
-        loss = train_network(data, label)
+        loss = train_network(data, label).asnumpy()
         losses.append(loss)
-    print(losses)
+    assert losses[-1] < 0.01
 
 
 def create_dataset(data_path, batch_size=32, repeat_size=1,
@@ -154,4 +203,4 @@ def test_train_and_eval_lenet():
     print("============== Starting Testing ==============")
     ds_eval = create_dataset(os.path.join('/home/workspace/mindspore_dataset/mnist', "test"), 32, 1)
     acc = model.eval(ds_eval, dataset_sink_mode=True)
-    print("============== Accuracy:{} ==============".format(acc))
+    print("============== {} ==============".format(acc))

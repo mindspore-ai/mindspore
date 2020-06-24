@@ -17,6 +17,7 @@
 @Desc   : test_dictionary
 """
 import numpy as np
+import pytest
 
 from mindspore import Tensor, context
 from mindspore.nn import Cell
@@ -89,7 +90,9 @@ def test_dict_set_or_get_item():
             return ret
 
     net = DictNet()
-    assert net() == (88, 99, 4, 5, 6)
+    with pytest.raises(TypeError) as ex:
+        net()
+    assert "'self.dict_' should be a Parameter" in str(ex.value)
 
 
 def test_dict_set_or_get_item_2():
@@ -135,7 +138,9 @@ def test_dict_set_or_get_item_3():
             return self.dict_["x"]
 
     net = DictNet()
-    assert net() == Tensor(np.ones([4, 2, 3], np.float32))
+    with pytest.raises(TypeError) as ex:
+        net()
+    assert "'self.dict_' should be a Parameter" in str(ex.value)
 
 
 def test_dict_set_item():

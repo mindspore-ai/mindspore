@@ -23,6 +23,7 @@
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/opt/pass.h"
+#include "dataset/kernels/data/data_utils.h"
 
 using float16 = Eigen::half;
 
@@ -53,7 +54,7 @@ Status BatchOp::Builder::SanityCheck() {
 
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
                  const std::vector<std::string> &cols_to_map, py::function batch_size_func, py::function batch_map_func,
-                 std::map<std::string, std::pair<TensorShape, float>> pad_map)
+                 PadInfo pad_map)
     : ParallelOp(num_workers, op_queue_size),
       start_batch_size_(batch_size),
       drop_(drop),
@@ -75,10 +76,6 @@ Status BatchOp::operator()() {
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-  for (const auto &t : new_row) {
-    CHECK_FAIL_RETURN_UNEXPECTED(t->type().IsNumeric(),
-                                 "[Batch ERROR] Batch does not support Tensor of type string yet.");
-  }
   RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());  // must come after the first fetch above
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
@@ -134,49 +131,57 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *source_table,
-                          const std::unique_ptr<TensorQTable> *dest_table, size_t batch_size) {
-  if ((*source_table)->size() < batch_size || (*source_table)->size() == 0) {
-    RETURN_STATUS_UNEXPECTED("[Internal Batch ERROR] Insufficient rows in source_table\n");
+Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
+                          dsize_t batch_size) {
+  if ((*src)->size() != batch_size) {
+    RETURN_STATUS_UNEXPECTED("[Internal Batch ERROR] Source table size does not match the batch_size");
   }
-  TensorRow row = std::move((*source_table)->front());
-  (*source_table)->pop_front();
+
   if (batch_size == 1) {
-    for (std::shared_ptr<Tensor> tensor : row) {
+    TensorRow row = std::move((*src)->front());
+    (*src)->pop_front();
+    (*dest)->push_back(row);
+    for (const auto &tensor : (*dest)->front()) {
       RETURN_IF_NOT_OK(tensor->ExpandDim(0));
     }
-    (*dest_table)->push_back(row);
-  } else {  // batch_size > 1
-    std::vector<TensorShape> row_shapes;
-    TensorRow batched_row;
-    for (size_t i = 0; i < row.size(); i++) {  // Handle the first row popped
-      row_shapes.push_back(row[i]->shape());
-      std::shared_ptr<Tensor> ts;
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(
-        &ts, TensorImpl::kFlexible, row[i]->shape().PrependDim(static_cast<int64_t>(batch_size)), row[i]->type()));
-      batched_row.emplace_back(ts);
-      RETURN_IF_NOT_OK(batched_row[i]->InsertTensor(std::vector<dsize_t>(1, 0), row[i]));  // {j} = 0
-    }
-    for (size_t j = 1; j < batch_size; j++) {  // Handle the rest of the rows
-      row = std::move((*source_table)->front());
-      (*source_table)->pop_front();
-      for (size_t i = 0; i < row.size(); i++) {
-        if (row[i]->shape() == row_shapes[i]) {  // check the newly popped rows have the same dim as the first
-          RETURN_IF_NOT_OK(batched_row[i]->InsertTensor(std::vector<dsize_t>(1, j), row[i]));
+    return Status::OK();
+  }
+
+  TensorRow batched_row;
+  auto num_columns = (*src)->front().size();
+  for (size_t i = 0; i < num_columns; i++) {
+    std::shared_ptr<Tensor> first_tensor = (*src)->at(0).at(i);  // first row, column i
+    TensorShape first_shape = first_tensor->shape();
+    DataType first_type = first_tensor->type();
+    TensorShape new_shape = first_shape.PrependDim(static_cast<int64_t>(batch_size));
+
+    std::shared_ptr<Tensor> new_tensor;
+    if (first_type.IsNumeric()) {  // numeric tensor
+      RETURN_IF_NOT_OK(Tensor::CreateTensor(&new_tensor, TensorImpl::kFlexible, new_shape, first_type));
+      dsize_t j = 0;
+      for (auto row : **src) {
+        std::shared_ptr<Tensor> old_tensor = row.at(i);  // row j, column i
+        if (old_tensor->shape() == first_shape) {        // check the newly popped rows have the same dim as the first
+          RETURN_IF_NOT_OK(new_tensor->InsertTensor({j++}, old_tensor));
         } else {
-          std::string column_name;
-          for (auto itr : column_name_id_map_) {
-            if (static_cast<size_t>(itr.second) == i) {
-              column_name = itr.first;
-              break;
-            }
-          }
-          RETURN_STATUS_UNEXPECTED("[Batch ERROR] Inconsistent TensorShapes of Column " + column_name);
+          RETURN_STATUS_UNEXPECTED("[Batch ERROR] Inconsistent TensorShapes of Column " + std::to_string(i));
         }
       }
+    } else {  // handle string column differently
+      std::vector<std::string> strings;
+      for (dsize_t j = 0; j < batch_size; j++) {
+        std::shared_ptr<Tensor> old_tensor = (*src)->at(j).at(i);
+        for (auto itr = old_tensor->begin<std::string_view>(); itr != old_tensor->end<std::string_view>(); itr++) {
+          strings.emplace_back(*itr);
+        }
+      }
+      RETURN_IF_NOT_OK(Tensor::CreateTensor(&new_tensor, strings, new_shape));
     }
-    (*dest_table)->emplace_back(batched_row);
+    batched_row.emplace_back(new_tensor);
   }
+
+  (*dest)->emplace_back(batched_row);
+
   return Status::OK();
 }
 
@@ -202,8 +207,8 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
                                   std::unique_ptr<DataBuffer> *db) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
-  if (!pyfunc_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
-  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair));                           // do padding if needed
+  if (!pyfunc_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));               // pass it through pyfunc
+  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));  // do padding if needed
   (*db) = std::make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
   std::unique_ptr<TensorQTable> dest_table = std::make_unique<TensorQTable>();
   RETURN_IF_NOT_OK(BatchRows(&table_pair.first, &dest_table, table_pair.first->size()));
@@ -333,74 +338,27 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
   return Status(StatusCode::kOK);
 }
 
-Status BatchOp::PadTensor(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> *dst,
-                          const std::vector<dsize_t> &pad_shape, float pad_val) {
-  CHECK_FAIL_RETURN_UNEXPECTED(src != nullptr && dst != nullptr, "tensor can't be nullptr");
-  if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
-    (*dst) = src;  // if no padding, copy the pointer
-  } else {
-    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(dst, TensorImpl::kFlexible, TensorShape(pad_shape), src->type()));
-    auto tensor_type = src->type().value();
-    if (pad_val == 0) {  // if pad with zero, don't care what type it is
-      RETURN_IF_NOT_OK((*dst)->Zero());
-    } else if (tensor_type == DataType::DE_INT8) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int8_t>(pad_val));
-    } else if (tensor_type == DataType::DE_BOOL) {
-      RETURN_IF_NOT_OK((*dst)->Fill<bool>(pad_val));
-    } else if (tensor_type == DataType::DE_UINT8) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint8_t>(pad_val));
-    } else if (tensor_type == DataType::DE_INT16) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int16_t>(pad_val));
-    } else if (tensor_type == DataType::DE_FLOAT16) {
-      RETURN_IF_NOT_OK((*dst)->Fill<float16>(static_cast<float16>(pad_val)));
-    } else if (tensor_type == DataType::DE_UINT16) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint16_t>(pad_val));
-    } else if (tensor_type == DataType::DE_INT32) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int32_t>(pad_val));
-    } else if (tensor_type == DataType::DE_UINT32) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint32_t>(pad_val));
-    } else if (tensor_type == DataType::DE_INT64) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int64_t>(pad_val));
-    } else if (tensor_type == DataType::DE_UINT64) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint64_t>(pad_val));
-    } else if (tensor_type == DataType::DE_FLOAT32) {
-      RETURN_IF_NOT_OK((*dst)->Fill<float>(pad_val));
-    } else if (tensor_type == DataType::DE_FLOAT64) {
-      RETURN_IF_NOT_OK((*dst)->Fill<double>(pad_val));
-    } else {
-      RETURN_STATUS_UNEXPECTED("Incorrect/Unknown tensor type");
-    }
-    std::vector<dsize_t> cur_ind(src->Rank(), 0), src_s(src->Rank(), 1), dst_s(src->Rank(), 1);
-    for (dsize_t i = src->Rank() - 2; i >= 0; i--) {
-      src_s[i] = src->shape()[i + 1] * src_s[i + 1];
-      dst_s[i] = pad_shape[i + 1] * dst_s[i + 1];
-    }
-    RETURN_IF_NOT_OK(PadHelper(src, *dst, cur_ind, src_s, dst_s, 0));
-  }
-  return Status::OK();
-}  // namespace dataset
-
-Status BatchOp::PadColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
-  RETURN_UNEXPECTED_IF_NULL(table_pair);  // placeholder for now, might need this in the future
-  CHECK_FAIL_RETURN_UNEXPECTED(table_pair->first->front().size() == column_name_id_map_.size(),
-                               "col_name_map mismatch");
-  std::vector<float> pad_vals(column_name_id_map_.size(), 0);  // value to pad each column's tensor with, default 0
+Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
+                           const std::unordered_map<std::string, int32_t> &column_name_id_map) {
+  RETURN_UNEXPECTED_IF_NULL(table);  // placeholder for now, might need this in the future
+  CHECK_FAIL_RETURN_UNEXPECTED((*table)->front().size() == column_name_id_map.size(), "col_name_map mismatch");
+  std::vector<std::shared_ptr<Tensor>> pad_vals(column_name_id_map.size(),
+                                                0);  // value to pad each column's tensor with, default 0
   std::set<int32_t> pad_cols;
   // padded_shape provided by user, maximum shapes of current batch of tensors
-  std::vector<std::vector<dsize_t>> pad_shapes(column_name_id_map_.size()), max_shapes(column_name_id_map_.size());
-  RETURN_IF_NOT_OK(UnpackPadInfo(&pad_cols, &pad_vals, &pad_shapes));
+  std::vector<std::vector<dsize_t>> pad_shapes(column_name_id_map.size()), max_shapes(column_name_id_map.size());
+  RETURN_IF_NOT_OK(UnpackPadInfo(pad_info, column_name_id_map, &pad_cols, &pad_vals, &pad_shapes));
 
   // init each shape in max_shape to {-1,-1...} init each unspecified shape in pad_shape to -1 as well
   for (size_t col_id : pad_cols) {
-    max_shapes[col_id] = std::vector<dsize_t>(table_pair->first->front()[col_id]->Rank(), -1);
+    max_shapes[col_id] = std::vector<dsize_t>((*table)->front()[col_id]->Rank(), -1);
     if (pad_shapes[col_id].empty()) pad_shapes[col_id] = max_shapes[col_id];  // fill pad shape with -1
     CHECK_FAIL_RETURN_UNEXPECTED(pad_shapes[col_id].size() == max_shapes[col_id].size(), "wrong rank in pad_shape");
   }
 
   // calculate maximum shape for each column that needs to be padded
-  for (const TensorRow &row : *(table_pair->first)) {  // iterator each row in a batch
-    for (size_t col_id : pad_cols) {                   // iterator each tensor in a row
+  for (const TensorRow &row : **table) {  // iterator each row in a batch
+    for (size_t col_id : pad_cols) {      // iterator each tensor in a row
       CHECK_FAIL_RETURN_UNEXPECTED(row[col_id]->Rank() == max_shapes[col_id].size(),
                                    "Tensor to be padded together need to have the same rank");
       for (size_t dim = 0; dim < row[col_id]->Rank(); dim++) {  // pick the largest number in each dimension
@@ -417,54 +375,33 @@ Status BatchOp::PadColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   }
 
   // call pad on each tensor that needs to be padded
-  for (TensorRow &row : *(table_pair->first)) {
+  for (TensorRow &row : **table) {
     for (size_t col_id : pad_cols) {
       std::shared_ptr<Tensor> pad_tensor;
-      RETURN_IF_NOT_OK(PadTensor(row[col_id], &pad_tensor, pad_shapes[col_id], pad_vals[col_id]));
+      RETURN_IF_NOT_OK(PadEnd(row[col_id], &pad_tensor, pad_shapes[col_id], pad_vals[col_id]));
       row[col_id] = pad_tensor;
     }
   }
   return Status::OK();
 }
 
-Status BatchOp::UnpackPadInfo(std::set<int32_t> *pad_cols, std::vector<float> *pad_vals,
+Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
+                              const std::unordered_map<std::string, int32_t> &column_name_id_map,
+                              std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
                               std::vector<std::vector<dsize_t>> *pad_shapes) {
-  if (pad_info_.empty()) {  // if pad_info empty, pad every columns automatically
-    for (dsize_t col_id = 0; col_id < column_name_id_map_.size(); col_id++) {
+  if (pad_info.empty()) {  // if pad_info empty, pad every columns automatically
+    for (dsize_t col_id = 0; col_id < column_name_id_map.size(); col_id++) {
       pad_cols->insert(col_id);
     }
   } else {
-    for (auto p : pad_info_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(column_name_id_map_.find(p.first) != column_name_id_map_.end(),
-                                   "no column exists with name:" + p.first);
-      dsize_t col_id = static_cast<dsize_t>(column_name_id_map_[p.first]);
+    for (const auto &p : pad_info) {
+      auto location = column_name_id_map.find(p.first);
+      CHECK_FAIL_RETURN_UNEXPECTED(location != column_name_id_map.end(), "no column exists with name:" + p.first);
+      auto col_id = static_cast<dsize_t>(location->second);
       CHECK_FAIL_RETURN_UNEXPECTED(col_id < pad_vals->size() && col_id < pad_shapes->size(), "col_id out of bound");
       pad_cols->insert(col_id);
       (*pad_vals)[col_id] = p.second.second;              // set pad values
       (*pad_shapes)[col_id] = p.second.first.AsVector();  // empty vector if shape is unknown
-    }
-  }
-  return Status::OK();
-}
-
-Status BatchOp::PadHelper(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> dst, std::vector<dsize_t> cur_ind,
-                          const std::vector<dsize_t> &src_s, const std::vector<dsize_t> &dst_s, size_t cur_dim) {
-  if (cur_dim == src->Rank() - 1) {  // if this is the last dimension, copy the data
-    uint8_t type_size = src->type().SizeInBytes();
-    size_t len = std::min(src->shape()[cur_dim], dst->shape()[cur_dim]) * type_size;
-    dsize_t src_flat_ind = 0, dst_flat_ind = 0;
-    for (size_t i = 0; i < src->Rank(); i++) {
-      src_flat_ind += src_s[i] * cur_ind[i];
-      dst_flat_ind += dst_s[i] * cur_ind[i];
-    }
-    unsigned char *src_addr = src->GetMutableBuffer() + src_flat_ind * type_size;
-    unsigned char *dst_addr = dst->GetMutableBuffer() + dst_flat_ind * type_size;
-    CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
-  } else {  // not the last dimension, keep doing recursion
-    dsize_t min_ind = std::min(dst->shape()[cur_dim], src->shape()[cur_dim]);
-    for (dsize_t i = 0; i < min_ind; i++) {
-      cur_ind[cur_dim] = i;
-      RETURN_IF_NOT_OK(PadHelper(src, dst, cur_ind, src_s, dst_s, cur_dim + 1));
     }
   }
   return Status::OK();

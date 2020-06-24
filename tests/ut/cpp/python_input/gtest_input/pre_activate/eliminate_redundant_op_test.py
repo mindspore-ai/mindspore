@@ -22,7 +22,7 @@ four2five = Primitive('Four2Five')
 five2four = Primitive('Five2Four')
 transdata = Primitive("TransData")
 cast = Primitive('Cast')
-depend = Primitive('depend')
+depend = P.Depend()
 
 
 class FnDict:

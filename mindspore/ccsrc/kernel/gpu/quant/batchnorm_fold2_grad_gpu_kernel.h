@@ -39,9 +39,7 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
   ~BatchNormFold2GradGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

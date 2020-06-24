@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+Testing CenterCrop op in DE
+"""
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse, visualize, save_and_check_md5
+from util import diff_mse, visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -49,7 +52,7 @@ def test_center_crop_op(height=375, width=375, plot=False):
         image_cropped.append(item1["image"].copy())
         image.append(item2["image"].copy())
     if plot:
-        visualize(image, image_cropped)
+        visualize_list(image, image_cropped)
 
 
 def test_center_crop_md5(height=375, width=375):
@@ -93,17 +96,17 @@ def test_center_crop_comp(height=375, width=375, plot=False):
     transform = py_vision.ComposeOp(transforms)
     data2 = data2.map(input_columns=["image"], operations=transform())
 
-    image_cropped = []
-    image = []
+    image_c_cropped = []
+    image_py_cropped = []
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         # Note: The images aren't exactly the same due to rounding error
         assert diff_mse(py_image, c_image) < 0.001
-        image_cropped.append(c_image.copy())
-        image.append(py_image.copy())
+        image_c_cropped.append(c_image.copy())
+        image_py_cropped.append(py_image.copy())
     if plot:
-        visualize(image, image_cropped)
+        visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
 
 # pylint: disable=unnecessary-lambda
@@ -141,9 +144,9 @@ def test_crop_grayscale(height=375, width=375):
 
 
 if __name__ == "__main__":
-    test_center_crop_op(600, 600, True)
+    test_center_crop_op(600, 600, plot=True)
     test_center_crop_op(300, 600)
     test_center_crop_op(600, 300)
     test_center_crop_md5()
-    test_center_crop_comp(True)
+    test_center_crop_comp(plot=True)
     test_crop_grayscale()

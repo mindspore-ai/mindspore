@@ -56,9 +56,9 @@ TEST_F(TestHWAllReduceFusion, test_fusion_all) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
-  for (auto& node : node_list) {
+  for (auto &node : node_list) {
     if (node == nullptr) {
       continue;
     }
@@ -97,9 +97,9 @@ TEST_F(TestHWAllReduceFusion, test_fusion_group) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
-  for (auto& node : node_list) {
+  for (auto &node : node_list) {
     if (node == nullptr) {
       continue;
     }
@@ -138,10 +138,10 @@ TEST_F(TestHWAllReduceFusion, test_fusion_op) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetFusionType(kernel::FusionType::ELEMWISE);
   builder.SetProcessor(kernel::Processor::AICORE);
-  builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
   int count = 0;
-  for (auto& node : node_list) {
+  for (auto &node : node_list) {
     if (node == nullptr) {
       continue;
     }
@@ -168,6 +168,53 @@ TEST_F(TestHWAllReduceFusion, test_fusion_op) {
   EXPECT_NE(new_graph, nullptr);
   // check result
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_all_reduce_fusion_group", "after2");
+  EXPECT_NE(g_after, nullptr);
+  EXPECT_TRUE(CheckEqualGraph(new_graph, g_after));
+}
+
+TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
+  getPyFun_.SetDoResolve(true);
+  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_all_reduce_fusion_all", "before");
+  EXPECT_NE(g, nullptr);
+  std::vector<int> shp_x{1, 64, 112, 112};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
+  auto func_graph = GetKernelGraph(g, args_spec_list);
+  EXPECT_NE(func_graph, nullptr);
+  auto ret = func_graph->get_return();
+  auto make_tuple = ret->input(1);
+  auto make_tuple1 = make_tuple->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+  for (size_t i = 1; i < make_tuple1->inputs().size(); ++i) {
+    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(SizeToInt(i)), make_tuple1->input(i));
+  }
+  // set kernel build info
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetInputsFormat({"NC1HWC0"});
+  builder.SetOutputsFormat({"NC1HWC0"});
+  builder.SetInputsDeviceType({kFloat32->type_id()});
+  builder.SetOutputsDeviceType({kFloat32->type_id()});
+  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetProcessor(kernel::Processor::AICORE);
+  builder.SetKernelType(KernelType::AKG_KERNEL);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (node == nullptr) {
+      continue;
+    }
+    if ((node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
+      node->set_kernel_info(std::make_shared<device::KernelInfo>());
+      AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
+    }
+  }
+  // do all reduce fusion
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AllReduceFusion>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(func_graph);
+  EXPECT_NE(new_graph, nullptr);
+  // check result
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_all_reduce_fusion_all", "after1");
   EXPECT_NE(g_after, nullptr);
   EXPECT_TRUE(CheckEqualGraph(new_graph, g_after));
 }

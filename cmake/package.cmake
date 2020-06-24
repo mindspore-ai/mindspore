@@ -91,7 +91,20 @@ if (ENABLE_MINDDATA)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
-
+    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+        message("icu4c does not support windows system temporarily")
+    else()
+        file(GLOB_RECURSE ICU4C_LIB_LIST
+            ${icu4c_LIBPATH}/libicuuc*
+            ${icu4c_LIBPATH}/libicudata*
+            ${icu4c_LIBPATH}/libicui18n*
+        )
+        install(
+            FILES ${ICU4C_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+        )
+    endif()
 endif ()
 
 if (ENABLE_CPU)
@@ -109,19 +122,20 @@ if (ENABLE_CPU)
     )
 endif ()
 
+if (ENABLE_MPI)
+    install(
+        TARGETS _ms_mpi
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+endif ()
+
 if (ENABLE_GPU)
-    if (ENABLE_MPI)
-        install(
-            TARGETS _ms_mpi
-            DESTINATION ${INSTALL_BASE_DIR}
-            COMPONENT mindspore
-        )
         install(
             TARGETS gpu_collective
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
-    endif ()
     install(
         TARGETS gpu_queue
         DESTINATION ${INSTALL_LIB_DIR}
@@ -220,6 +234,16 @@ if (ENABLE_GPU)
             COMPONENT mindspore
         )
     endif ()
+endif ()
+
+if (ENABLE_D AND ENABLE_AKG)
+    set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
+    install(
+        DIRECTORY
+            ${AKG_PATH}/akg
+        DESTINATION ${INSTALL_PY_DIR}/..
+        COMPONENT mindspore
+    )
 endif ()
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)

@@ -37,24 +37,6 @@
 namespace mindspore {
 namespace device {
 using device::ascend::ProfilingUtils;
-void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  const std::vector<CNodePtr> &origin_cnode_list = kernel_graph_ptr->execution_order();
-  std::vector<CNodePtr> momentum_list;
-  std::vector<CNodePtr> other_list;
-  for (const auto &cnode : origin_cnode_list) {
-    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
-      momentum_list.emplace_back(cnode);
-    } else {
-      other_list.emplace_back(cnode);
-    }
-  }
-  std::vector<CNodePtr> new_order_list;
-  new_order_list.insert(new_order_list.end(), other_list.begin(), other_list.end());
-  new_order_list.insert(new_order_list.end(), momentum_list.begin(), momentum_list.end());
-  kernel_graph_ptr->set_execution_order(new_order_list);
-}
-
 void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const std::vector<CNodePtr> &origin_cnode_list = kernel_graph_ptr->execution_order();
@@ -78,23 +60,6 @@ bool KernelAdjust::NeedInsertSwitch() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   return (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() &&
           ConfigManager::GetInstance().iter_num() > 1);
-}
-
-uint32_t KernelAdjust::FindFirstStreamSwitchLabel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  auto cnode_ptr_list = kernel_graph_ptr->execution_order();
-  CNodePtr cur_cnode_ptr = nullptr;
-  uint32_t label = kInvalidDistincLabel;
-  for (uint32_t i = 0; i < cnode_ptr_list.size(); ++i) {
-    cur_cnode_ptr = cnode_ptr_list[i];
-    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamSwitchOpName) {
-      label = AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get());
-      break;
-    }
-  }
-
-  return label;
 }
 
 CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
@@ -138,6 +103,8 @@ CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::Kern
 }
 
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  device::ascend::AscendStreamMng &stream_manager = device::ascend::AscendStreamMng::GetInstance();
+  stream_manager.Reset();
   if (!NeedInsertSwitch()) {
     return;
   }
@@ -166,68 +133,62 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   if (orders.empty()) {
     MS_LOG(EXCEPTION) << "graph execution order is empty";
   }
-  uint32_t first_cnode_stream_label = AnfAlgo::GetStreamDistinctionLabel(orders[0].get());
 
   std::vector<CNodePtr> exec_order;
-  CNodePtr first_stream_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
-  MS_EXCEPTION_IF_NULL(first_stream_switch_app);
-  AnfAlgo::SetStreamDistinctionLabel(kFirstStreamSwitchLabel, first_stream_switch_app.get());
-  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(kGetNextLabel), first_stream_switch_app);
 
-  CNodePtr second_stream_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
-  MS_EXCEPTION_IF_NULL(second_stream_switch_app);
-  AnfAlgo::SetStreamDistinctionLabel(kSecondStreamSwitchLabel, second_stream_switch_app.get());
-  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(first_cnode_stream_label), second_stream_switch_app);
-  // add attr "stream_need_active"
-  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), second_stream_switch_app);
+  // getnext loop process
+  // getnext loop stream switch op
+  CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
+  MS_EXCEPTION_IF_NULL(getnext_switch_app);
+  uint32_t getnext_switch_stream_id = stream_manager.ApplyNewStream();
+  AnfAlgo::SetStreamId(getnext_switch_stream_id, getnext_switch_app.get());
+  exec_order.push_back(getnext_switch_app);
 
-  CNodePtr first_stream_active_app = CreateStreamActiveOp(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(first_stream_active_app);
-  AnfAlgo::SetStreamDistinctionLabel(first_cnode_stream_label, first_stream_active_app.get());
-  std::vector<uint32_t> first_active_streams = {kFirstStreamSwitchLabel};
-  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(first_active_streams),
-                       first_stream_active_app);
-
-  CNodePtr second_stream_active_app = CreateStreamActiveOp(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(second_stream_active_app);
-  // specific deal for common ctrl stream policy
-  uint32_t first_common_stream_switch_label = FindFirstStreamSwitchLabel(kernel_graph_ptr);
-  if (first_common_stream_switch_label == kInvalidDistincLabel) {
-    AnfAlgo::SetStreamDistinctionLabel(first_cnode_stream_label, second_stream_active_app.get());
-  } else {
-    AnfAlgo::SetStreamDistinctionLabel(first_common_stream_switch_label, second_stream_active_app.get());
-  }
-
-  std::vector<uint32_t> second_active_streams = {kSecondStreamSwitchLabel};
-  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(second_active_streams),
-                       second_stream_active_app);
-
-  CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input);
-  MS_EXCEPTION_IF_NULL(assign_add_one);
-  AnfAlgo::SetStreamDistinctionLabel(first_cnode_stream_label, assign_add_one.get());
-
-  CNodePtr send = CreateSendApplyKernel(kernel_graph_ptr, kFirstEventId);
-  AnfAlgo::SetStreamDistinctionLabel(kGetNextLabel, send.get());
-  CNodePtr recv = CreateRecvApplyKernel(kernel_graph_ptr, kFirstEventId);
-  AnfAlgo::SetStreamDistinctionLabel(first_cnode_stream_label, recv.get());
-
-  // reorder graph orders
-  exec_order.push_back(first_stream_switch_app);
+  // getnext op
+  uint32_t getnext_stream_id = stream_manager.ApplyNewStream();
   size_t i = 0;
   for (; i < orders.size(); i++) {
     auto node = orders[i];
     exec_order.push_back(node);
-    AnfAlgo::SetStreamDistinctionLabel(kGetNextLabel, exec_order[exec_order.size() - 1].get());
+    AnfAlgo::SetStreamId(getnext_stream_id, exec_order[exec_order.size() - 1].get());
     if (AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
       break;
     }
   }
 
+  // update getnext loop stream switch true_branch_stream attr
+  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(getnext_stream_id), getnext_switch_app);
+
+  // getnext loop send
+  CNodePtr send = CreateSendApplyKernel(kernel_graph_ptr, kFirstEventId);
+  AnfAlgo::SetStreamId(getnext_stream_id, send.get());
   exec_order.push_back(send);
-  exec_order.push_back(second_stream_switch_app);
+
+  // fpbp loop process
+  // fpbp loop stream switch
+  CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
+  MS_EXCEPTION_IF_NULL(fpbp_switch_app);
+  uint32_t fpbp_switch_stream_id = stream_manager.ApplyNewStream();
+  AnfAlgo::SetStreamId(fpbp_switch_stream_id, fpbp_switch_app.get());
+  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
+  exec_order.push_back(fpbp_switch_app);
+
+  // fpbp loop recv
+  CNodePtr recv = CreateRecvApplyKernel(kernel_graph_ptr, kFirstEventId);
+  uint32_t fpbp_stream_id = stream_manager.ApplyNewStream();
+  AnfAlgo::SetStreamId(fpbp_stream_id, recv.get());
   exec_order.push_back(recv);
+
+  // update fpbp loop stream switch true_branch_stream attr
+  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(fpbp_stream_id), fpbp_switch_app);
+
+  // fpbp loop AssignAdd
+  CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input);
+  MS_EXCEPTION_IF_NULL(assign_add_one);
+  AnfAlgo::SetStreamId(fpbp_stream_id, assign_add_one.get());
   exec_order.push_back(assign_add_one);
 
+  // fpbp memcpy
   std::vector<CNodePtr> memcpy_list;
   std::vector<CNodePtr> before_list;
   std::vector<CNodePtr> after_list;
@@ -244,12 +205,28 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
       before_list.emplace_back(cur_cnode);
     }
   }
-
   (void)std::copy(before_list.begin(), before_list.end(), std::back_inserter(exec_order));
   (void)std::copy(memcpy_list.begin(), memcpy_list.end(), std::back_inserter(exec_order));
-  exec_order.push_back(first_stream_active_app);
+
+  // stream active to activate getnext loop
+  CNodePtr getnext_active_app = CreateStreamActiveOp(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(getnext_active_app);
+  std::vector<uint32_t> getnext_active_streams = {getnext_switch_stream_id};
+  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(getnext_active_streams),
+                       getnext_active_app);
+  exec_order.push_back(getnext_active_app);
+
+  // fpbp loop other ops
   (void)std::copy(after_list.begin(), after_list.end(), std::back_inserter(exec_order));
-  exec_order.push_back(second_stream_active_app);
+
+  // stream active to activate fpbp loop
+  CNodePtr fpbp_active_app = CreateStreamActiveOp(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(fpbp_active_app);
+  // specific deal for common ctrl stream policy
+  std::vector<uint32_t> fpbp_active_streams = {fpbp_switch_stream_id};
+  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(fpbp_active_streams), fpbp_active_app);
+  exec_order.push_back(fpbp_active_app);
+
   kernel_graph_ptr->set_execution_order(exec_order);
 }
 

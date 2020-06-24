@@ -107,8 +107,15 @@ class TextFileOp : public ParallelOp {
 
     // Setter method.
     // @return Builder - setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
+    Builder &SetShuffleGlobal(bool shuffle_global) {
+      builder_shuffle_global_ = shuffle_global;
+      return *this;
+    }
+
+    // Setter method.
+    // @return Builder - setter method returns reference to the builder.
+    Builder &SetTotalRows(int64_t total_rows) {
+      builder_total_rows_ = total_rows;
       return *this;
     }
 
@@ -118,10 +125,11 @@ class TextFileOp : public ParallelOp {
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int64_t builder_rows_per_buffer_;
-    int64_t builder_num_samples_;
+    int64_t builder_total_rows_;
     int32_t builder_worker_connector_size_;
     std::vector<std::string> builder_text_files_list_;
     bool builder_shuffle_files_;
+    bool builder_shuffle_global_;
     std::unique_ptr<DataSchema> builder_schema_;
   };
 
@@ -135,10 +143,11 @@ class TextFileOp : public ParallelOp {
   // @param op_connector_size - size of each queue in the connector that the child operator pulls from.
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
+  // @param shuffle_global - whether or not to shuffle the entire dataset.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
-  TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
+  TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
              std::unique_ptr<DataSchema>, std::vector<std::string> text_files_list, int32_t op_connector_size,
-             bool shuffle_files, int32_t num_devices, int32_t device_id);
+             bool shuffle_files, bool shuffle_global, int32_t num_devices, int32_t device_id);
 
   // Default destructor
   ~TextFileOp() = default;
@@ -168,6 +177,18 @@ class TextFileOp : public ParallelOp {
   // @param count - number of rows.
   // @return Status - the error coed returned.
   static Status CountAllFileRows(const std::vector<std::string> &files, int64_t *count);
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "TextFileOp"; }
+
+  // File names getter
+  // @return Vector of the input file names
+  std::vector<std::string> FileNames() { return text_files_list_; }
+
+  // Global shuffle flag getter
+  // @return Bool - whether this Op requires global shuffle
+  bool RequireGlobalShuffle() { return shuffle_global_; }
 
  private:
   // The entry point for when workers are launched.
@@ -246,9 +267,10 @@ class TextFileOp : public ParallelOp {
   int32_t device_id_;
   int32_t num_devices_;
   int64_t rows_per_buffer_;
-  int64_t num_samples_;
+  int64_t total_rows_;
   std::vector<std::string> text_files_list_;
   bool shuffle_files_;
+  bool shuffle_global_;
   std::unique_ptr<DataSchema> data_schema_;
   int64_t all_num_rows_;
   int64_t num_rows_per_shard_;

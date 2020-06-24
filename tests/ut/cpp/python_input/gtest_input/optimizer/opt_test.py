@@ -494,6 +494,21 @@ def test_elim_transpose(tag):
 
     return fns[tag]
 
+def test_elim_depend_value(tag):
+    """ test_elim_depend_value """
+    fns = FnDict()
+    depend = P.Depend()
+
+    @fns
+    def before(x):
+        return depend(x, None)
+
+    @fns
+    def after(x):
+        return x
+
+    return fns[tag]
+
 
 def test_elim_tile_multiply_one(tag):
     """ test_elim_tile_multiply_one """
@@ -636,7 +651,7 @@ def test_tuple_get_set_item(tag):
 def test_partial(tag):
     """ test_partial """
     fns = FnDict()
-    partail = Primitive('partial')
+    partail = P.Partial()
 
     def f(x, y):
         return scalar_add(x, y)
@@ -655,7 +670,7 @@ def test_partial(tag):
 def test_replace_applicator(tag):
     """ test_replace_applicator """
     fns = FnDict()
-    partail = Primitive('partial')
+    partail = P.Partial()
 
     def app1(x, y):
         return scalar_add(x, y)
@@ -878,7 +893,7 @@ def test_addn_zero(tag):
     fns = FnDict()
     addn = P.AddN()
     AddN = P.AddN
-    zero_tensor = Primitive('zeros_like_tensor')
+    zero_tensor = Primitive('ZerosLike')
 
     @fns
     def before_1(x, y, z, a):
@@ -1046,8 +1061,8 @@ def test_print_tuple_wrapper(tag):
 # pylint: disable=unnecessary-semicolon
 def test_constant_duplicate_mul(tag):
     fns = FnDict()
-    Mul = Primitive('Mul');
-    Sqrt = Primitive('Sqrt');
+    Mul = Primitive('Mul')
+    Sqrt = Primitive('Sqrt')
 
     x = Tensor(np.array([[2, 2], [2, 3]]).astype('float32'))
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
@@ -1072,5 +1087,46 @@ def test_constant_duplicate_mul(tag):
     @fns
     def after():
         return Mul(Sqrt(x), Mul(tensor1, tensor2))
+
+    return fns[tag]
+
+
+def test_adjust_allreduce_mul_add(tag):
+    fns = FnDict()
+    Mul = Primitive('Mul')
+    AddN = Primitive('AddN')
+    AllReduce = Primitive('AllReduce')
+
+    @fns
+    def beforell(x, y, z):
+        return AddN((z, Mul(y, AllReduce(x))))
+
+    @fns
+    def beforelr(x, y, z):
+        return AddN((z, Mul(AllReduce(x), y)))
+
+    @fns
+    def beforerl(x, y, z):
+        return AddN((Mul(y, AllReduce(x)), z))
+
+    @fns
+    def beforerr(x, y, z):
+        return AddN((Mul(AllReduce(x), y), z))
+
+    @fns
+    def after1(x, y, z):
+        return Mul(AllReduce(AddN((z, x))), y)
+
+    @fns
+    def before2r(x, y, z):
+        return AddN((Mul(AllReduce(x), y), Mul(z, z)))
+
+    @fns
+    def before2l(x, y, z):
+        return AddN((Mul(z, z), Mul(AllReduce(x), y)))
+
+    @fns
+    def after2(x, y, z):
+        return Mul(AllReduce(AddN((Mul(z, z), x))), y)
 
     return fns[tag]

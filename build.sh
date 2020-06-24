@@ -49,10 +49,11 @@ usage()
   echo "    -Q Enable dump memory, default off"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
-  echo "    -M Enable MPI and NCCL for GPU training, default on"
+  echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
   echo "    -I Compile predict, default off"
   echo "    -K Compile with AKG, default off"
+  echo "    -s Enable serving module, default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -86,15 +87,15 @@ checkopts()
   ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
-  ENABLE_MPI="on"
+  ENABLE_MPI="off"
   CUDA_VERSION="9.2"
   COMPILE_PREDICT="off"
   USE_GLOG="on"
   PREDICT_PLATFORM=""
-  ENABLE_AKG="off"
-
+  ENABLE_AKG="on"
+  ENABLE_SERVING="off"
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:s' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -168,6 +169,7 @@ checkopts()
         if [[ "X$OPTARG" == "Xgpu" ]]; then
           ENABLE_GPU="on"
           ENABLE_CPU="on"
+          ENABLE_MPI="on"
         elif [[ "X$OPTARG" == "Xd" || "X$OPTARG" == "Xascend" ]]; then
           ENABLE_D="on"
           ENABLE_CPU="on"
@@ -234,6 +236,10 @@ checkopts()
         ENABLE_AKG="on"
         echo "enable compile with akg"
         ;;
+      s)
+        ENABLE_SERVING="on"
+        echo "enable serving"
+        ;;
       *)
         echo "Unknown option ${opt}!"
         usage
@@ -242,9 +248,12 @@ checkopts()
   done
 }
 checkopts "$@"
-echo "---------------- mindspore: build start ----------------"
+echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
+if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
+    git submodule update --init --recursive akg
+fi
 
 build_exit()
 {
@@ -307,9 +316,13 @@ build_mindspore()
     if [[ "X$USE_GLOG" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DUSE_GLOG=ON"
     fi
-    if [[ "X$ENABLE_AKG" = "Xon" ]]; then
+    if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
     fi
+    if [[ "X$ENABLE_SERVING" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SERVING=ON"
+    fi
+
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..

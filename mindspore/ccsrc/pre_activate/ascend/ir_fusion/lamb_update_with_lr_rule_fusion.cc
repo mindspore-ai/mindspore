@@ -50,6 +50,9 @@ const AnfNodePtr LambUpdateWithLRRuleFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   auto input0 = utils::cast<AnfNodePtr>((*equiv)[input0_]);
   auto input1 = utils::cast<AnfNodePtr>((*equiv)[input1_]);
   auto input2 = utils::cast<AnfNodePtr>((*equiv)[input2_]);

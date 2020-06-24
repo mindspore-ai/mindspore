@@ -20,9 +20,9 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common.initializer import initializer
-from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
@@ -358,7 +358,7 @@ class StateNet(nn.Cell):
         self.assign = P.Assign()
 
     def construct(self, x):
-        x = Primitive('depend')(x, self.assign(self.s1, x + self.s1))
+        x = F.depend(x, self.assign(self.s1, x + self.s1))
         self.s1 = self.sub(self.s1, x)
         self.s2 = self.sub(self.s2, x)
         return x
@@ -370,6 +370,7 @@ def test_conv2d_same_primitive():
             super(Conv2DSameNet, self).__init__()
             self.conv1 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
             self.conv2 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
+
         def construct(self, x, y):
             r1 = self.conv1(x)
             r2 = self.conv2(y)
@@ -575,6 +576,22 @@ test_cases = [
         'desc_inputs': [Tensor(np.ones([1, 3, 4, 4], np.float32)),
                         Tensor(np.ones([1, 3, 4, 4], np.float32)),
                         Tensor(np.ones(3, np.float32))],
+    }),
+    ('MatrixDiag', {
+        'block': nn.MatrixDiag(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.float32))],
+        'skip': ['backward']
+    }),
+    ('MatrixDiagPart', {
+        'block': nn.MatrixDiagPart(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32))],
+        'skip': ['backward']
+    }),
+    ('MatrixSetDiag', {
+        'block': nn.MatrixSetDiag(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)),
+                        Tensor(np.array([1, 2]).astype(np.float32))],
+        'skip': ['backward']
     }),
 ]
 

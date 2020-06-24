@@ -37,9 +37,12 @@ constexpr auto kSharedName = "shared_name";
 constexpr auto kShapes = "shapes";
 constexpr auto kTypes = "types";
 constexpr auto kQueueName = "queue_name";
-
-constexpr auto kSeed = "Seed0";
-constexpr auto kSeed2 = "Seed1";
+constexpr auto kSeed = "seed";
+constexpr auto kSeed0 = "Seed0";
+constexpr auto kSeed1 = "Seed1";
+constexpr auto kSeed2 = "seed2";
+constexpr auto kTopK = "TopK";
+constexpr auto kTopKV2 = "TopKV2";
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message

@@ -15,18 +15,27 @@
  */
 
 #include "device/ascend/kernel_select_ascend.h"
+
 #include <string>
 #include <vector>
 #include <memory>
 #include <utility>
+#include <algorithm>
 #include <map>
-#include "kernel/oplib/oplib.h"
-#include "kernel/kernel_query.h"
-#include "session/anf_runtime_algorithm.h"
-#include "kernel/kernel_build_info.h"
-#include "utils/context/ms_context.h"
-#include "operator/ops.h"
+#include <unordered_map>
+#include <unordered_set>
+
+#include "common/utils.h"
 #include "debug/anf_ir_dump.h"
+#include "operator/ops.h"
+#include "ir/func_graph.h"
+#include "utils/context/ms_context.h"
+#include "session/anf_runtime_algorithm.h"
+#include "device/kernel_info.h"
+#include "kernel/common_utils.h"
+#include "kernel/kernel_query.h"
+#include "kernel/oplib/oplib.h"
+#include "kernel/kernel_build_info.h"
 
 namespace mindspore {
 namespace device {
@@ -45,7 +54,6 @@ enum MatchCountPriority : int {
   MATCH_COUNT_PRIORITY_END
 };
 
-const size_t kMaxCount = 0xffffffff;
 const int kUnSupportMixedDataTypeIndex = -1;
 
 bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfo &kernel_build_info) {
@@ -73,7 +81,7 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
     auto pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
     if (AnfAlgo::IsFeatureMapInput(cnode, index) &&
-        kNeedTransFormatSet.find(pre_output_format) != kNeedTransFormatSet.end()) {
+        kHWSpecialFormatSet.find(pre_output_format) != kHWSpecialFormatSet.end()) {
       priority_matched_format = !is_init ? pre_output_format : priority_matched_format;
       is_init = true;
     }
@@ -91,14 +99,14 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   return priority_matched_format;
 }
 /**
- * compare two vector by priority, select a better vector, like compare two num, first compare highest num location,
+ * Compare two vector by priority, select a better vector, like compare two num, first compare highest num location,
  * if equal then next num location
  * example:[3,1,1,1] > [2,2,2,2] > [2,2,1,2] > [2,1,1,3]
  */
 bool PriorityChooseItem(const std::vector<int> &cur_item, std::vector<int> *best_item) {
   MS_EXCEPTION_IF_NULL(best_item);
   if (cur_item.size() != best_item->size()) {
-    MS_LOG(ERROR) << "item size should be same!";
+    MS_LOG(ERROR) << "Item size should be same!";
     return false;
   }
   // Update the best_item by comparing the cur_item and best_item
@@ -124,12 +132,23 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
   }
   auto pri_match_format = GetPriorityMatchFormat(kernel_node);
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+    auto input_anf_node = kernel_node->input(input_index + 1);
+    // we do not take ValueNode into consideration in graph kernel.
+    if (kernel_build_info.kernel_type() == KernelType::AKG_KERNEL) {
+      if (input_anf_node->isa<ValueNode>() && AnfAlgo::GetOutputDeviceDataType(input_anf_node, 0) == kTypeUnknown) {
+        continue;
+      }
+    }
     auto base_score = AnfAlgo::IsFeatureMapInput(kernel_node, input_index) ? kFeatureMapBaseScore : kWegihtBaseScore;
     if (kernel_build_info.GetInputFormat(input_index) == AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index)) {
       (*cur_kernelinfo_match_counts)[MATCH_FORMAT_COUNT] += base_score;
     }
-    if (kernel_build_info.GetInputDeviceType(input_index) ==
-        AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index)) {
+    // we match output fix precision first.
+    auto prev_device_type = AnfAlgo::GetPrevNodeOutputPrecision(kernel_node, input_index);
+    if (prev_device_type == kTypeUnknown) {
+      prev_device_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
+    }
+    if (kernel_build_info.GetInputDeviceType(input_index) == prev_device_type) {
       (*cur_kernelinfo_match_counts)[MATCH_DTYPE_COUNT] += base_score;
     }
     if (kernel_build_info.GetInputFormat(input_index) == pri_match_format) {
@@ -145,40 +164,6 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     if (kernel_build_info.GetOutputDeviceType(output_index) ==
         AnfAlgo::GetOutputInferDataType(kernel_node, output_index)) {
       (*cur_kernelinfo_match_counts)[MATCH_OUTPUT_DTYPE_COUNT] += 1;
-    }
-  }
-}
-
-void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
-    auto input_kernel_node = AnfAlgo::GetInputNode(kernel_node, input_index);
-    MS_EXCEPTION_IF_NULL(input_kernel_node);
-    auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
-    MS_EXCEPTION_IF_NULL(input_with_index.first);
-    auto real_input_node = input_with_index.first;
-    if (real_input_node->isa<CNode>()) {
-      continue;
-    }
-    std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder =
-      std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    bool is_ref = false;
-    auto op_info = mindspore::kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel::kTBE);
-    if (op_info != nullptr) {
-      is_ref = op_info->is_ref();
-    }
-    MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-    if (MsContext::GetInstance()->execution_mode() == kPynativeMode &&
-        AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown) {
-      continue;
-    }
-    // we set special device info of a input tensor.
-    if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
-      std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
-      builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
-      builder->SetOutputsDeviceType(output_type);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
     }
   }
 }
@@ -221,6 +206,7 @@ void AddNodeInputDataType(const CNodePtr &kernel_node, size_t input_index,
                           std::vector<TypeId> *node_mix_precision_datatype) {
   AnfNodePtr cur_input = AnfAlgo::GetInputNode(kernel_node, input_index);
   MS_EXCEPTION_IF_NULL(cur_input);
+  MS_EXCEPTION_IF_NULL(node_mix_precision_datatype);
   TypeId input_origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index);
   AddSupportMixedPrecisionDataTypeIndex(input_origin_type, node_mix_precision_datatype_index);
   node_mix_precision_datatype->push_back(input_origin_type);
@@ -229,6 +215,7 @@ void AddNodeInputDataType(const CNodePtr &kernel_node, size_t input_index,
 void AddNodeOutputDataType(const CNodePtr &kernel_node, size_t output_index,
                            std::vector<int> *node_mix_precision_datatype_index,
                            std::vector<TypeId> *node_mix_precision_datatype) {
+  MS_EXCEPTION_IF_NULL(node_mix_precision_datatype);
   auto output_origin_type = AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
   AddSupportMixedPrecisionDataTypeIndex(output_origin_type, node_mix_precision_datatype_index);
   node_mix_precision_datatype->push_back(output_origin_type);
@@ -239,12 +226,12 @@ void CheckDataTypeInputs(const std::vector<int> &node_mix_precision_datatype_ind
                          const std::map<size_t, std::vector<TypeId>> &kernel_support_datatypes,
                          std::map<size_t, std::vector<int>> *kernel_match_datatype_idx) {
   if (node_mix_precision_datatype_index.size() != node_mix_precision_datatype.size()) {
-    MS_LOG(EXCEPTION) << "node datatype index size " << node_mix_precision_datatype_index.size() << " != datatype size "
+    MS_LOG(EXCEPTION) << "Node datatype index size " << node_mix_precision_datatype_index.size() << " != datatype size "
                       << node_mix_precision_datatype.size();
   }
   MS_EXCEPTION_IF_NULL(kernel_match_datatype_idx);
   if (kernel_support_datatypes.size() != kernel_match_datatype_idx->size()) {
-    MS_LOG(EXCEPTION) << "kernel datatype index size " << kernel_match_datatype_idx->size() << " != datatype size "
+    MS_LOG(EXCEPTION) << "Kernel datatype index size " << kernel_match_datatype_idx->size() << " != datatype size "
                       << kernel_support_datatypes.size();
   }
 }
@@ -265,10 +252,10 @@ bool RaiseDataTypePrecisionSelect(const std::vector<int> &node_mix_precision_dat
       if (node_mix_precision_datatype_index[i] == kUnSupportMixedDataTypeIndex) {
         auto find_iter = kernel_support_datatypes.find(iter->first);
         if (find_iter == kernel_support_datatypes.end()) {
-          MS_LOG(EXCEPTION) << "kernel datatype index:%lu can not be found " << iter->first;
+          MS_LOG(EXCEPTION) << "Kernel datatype index:%lu can not be found " << iter->first;
         }
         if (i >= find_iter->second.size()) {
-          MS_LOG(EXCEPTION) << "node index " << i << "kernel datatype size " << find_iter->second.size();
+          MS_LOG(EXCEPTION) << "Node index " << i << "kernel datatype size " << find_iter->second.size();
         }
         if (node_mix_precision_datatype[i] != find_iter->second[i]) {
           iter = kernel_match_datatype_idx->erase(iter);
@@ -279,7 +266,7 @@ bool RaiseDataTypePrecisionSelect(const std::vector<int> &node_mix_precision_dat
       }
       auto datatype_indexes = iter->second;
       if (i >= datatype_indexes.size()) {
-        MS_LOG(EXCEPTION) << "node datatype index: " << i << " kernel support size " << datatype_indexes.size();
+        MS_LOG(EXCEPTION) << "Node datatype index: " << i << " kernel support size " << datatype_indexes.size();
       }
       if (datatype_indexes[i] < node_mix_precision_datatype_index[i]) {
         iter = kernel_match_datatype_idx->erase(iter);
@@ -293,8 +280,12 @@ bool RaiseDataTypePrecisionSelect(const std::vector<int> &node_mix_precision_dat
 
 bool CanDataTypeReduce(const std::vector<int> &datatype_indexes, int check_index,
                        const std::vector<int> &node_mix_precision_datatype_index) {
-  return datatype_indexes[check_index] != kUnSupportMixedDataTypeIndex &&
-         datatype_indexes[check_index] <= node_mix_precision_datatype_index[check_index];
+  auto check_index_tmp = IntToSize(check_index);
+  if (check_index_tmp < datatype_indexes.size() && check_index_tmp < node_mix_precision_datatype_index.size()) {
+    return datatype_indexes[check_index] != kUnSupportMixedDataTypeIndex &&
+           datatype_indexes[check_index] <= node_mix_precision_datatype_index[check_index];
+  }
+  MS_LOG(EXCEPTION) << "Check index " << check_index << "is outof range";
 }
 
 bool RaiseOrReduceDataTypePrecisionSelect(const std::vector<int> &node_mix_precision_datatype_index,
@@ -313,10 +304,10 @@ bool RaiseOrReduceDataTypePrecisionSelect(const std::vector<int> &node_mix_preci
       if (node_mix_precision_datatype_index[i] == kUnSupportMixedDataTypeIndex) {
         auto find_iter = kernel_support_datatypes.find(iter->first);
         if (find_iter == kernel_support_datatypes.end()) {
-          MS_LOG(EXCEPTION) << "kernel datatype index:%lu can not be found " << iter->first;
+          MS_LOG(EXCEPTION) << "Kernel datatype index:%lu can not be found " << iter->first;
         }
         if (i >= find_iter->second.size()) {
-          MS_LOG(EXCEPTION) << "node index " << i << " >= kernel datatype size " << find_iter->second.size();
+          MS_LOG(EXCEPTION) << "Node index " << i << " >= kernel datatype size " << find_iter->second.size();
         }
         if (node_mix_precision_datatype[i] != find_iter->second[i]) {
           iter = kernel_match_datatype_idx->erase(iter);
@@ -327,7 +318,7 @@ bool RaiseOrReduceDataTypePrecisionSelect(const std::vector<int> &node_mix_preci
       }
       auto datatype_indexes = iter->second;
       if (i >= datatype_indexes.size()) {
-        MS_LOG(EXCEPTION) << "index " << i << "> kernel datatype indexes size " << datatype_indexes.size();
+        MS_LOG(EXCEPTION) << "Index " << i << "> kernel datatype indexes size " << datatype_indexes.size();
       }
       if (!CanDataTypeReduce(datatype_indexes, i, node_mix_precision_datatype_index)) {
         iter = kernel_match_datatype_idx->erase(iter);
@@ -397,9 +388,9 @@ void PrintRaiseOrReducePrecisionSelectedInfo(const CNodePtr &cnode,
   std::ostringstream buffer;
   buffer << cnode->DebugString();
   if (precision_reduce) {
-    buffer << " reduce precision, node datatype: \n";
+    buffer << " Reduce precision, node datatype: \n";
   } else {
-    buffer << " raise precision, node datatype: \n";
+    buffer << " Raise precision, node datatype: \n";
   }
   PrintInputAndOutputInferType(buffer, cnode);
   buffer << ", select kernel:" << selected_kernel_build_info->ToString();
@@ -415,8 +406,8 @@ std::shared_ptr<kernel::KernelBuildInfo> ChooseMatchedKernelInfo(
   size_t selected_index = 0;
   for (size_t info_index = 0; info_index < kernel_info_list.size(); ++info_index) {
     std::vector<int> cur_kernel_info_match_counts = {0, 0, 0, 0, 0};
-    auto kernel_build_info = *(kernel_info_list[info_index]);
-    std::shared_ptr<kernel::KernelBuildInfo> kernel_info_ptr = kernel_info_list[info_index];
+    auto kernel_info_ptr = kernel_info_list[info_index];
+    MS_EXCEPTION_IF_NULL(kernel_info_ptr);
     UpdateCurMatchCounts(*kernel_info_ptr, kernel_node, &cur_kernel_info_match_counts);
     // Currently the selection policy is the match format count first, and then is datatype counts.
     if (PriorityChooseItem(cur_kernel_info_match_counts, &most_match_counts)) {
@@ -467,6 +458,51 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
 }
 }  // namespace
 
+void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+    auto input_kernel_node = AnfAlgo::GetInputNode(kernel_node, input_index);
+    MS_EXCEPTION_IF_NULL(input_kernel_node);
+    auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
+    MS_EXCEPTION_IF_NULL(input_with_index.first);
+    auto real_input_node = input_with_index.first;
+    if (real_input_node->isa<CNode>()) {
+      continue;
+    }
+    if (real_input_node->isa<Parameter>() && !AnfAlgo::IsParameterWeight(real_input_node->cast<ParameterPtr>())) {
+      continue;
+    }
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    if (IsValueNode<tensor::Tensor>(input_kernel_node) &&
+        AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) == kTypeUnknown) {
+      std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
+      builder->SetOutputsFormat(output_format);
+      std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+      builder->SetOutputsDeviceType(output_type);
+      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
+      continue;
+    }
+    // we set special device info of a input tensor.
+    bool is_ref = false;
+    auto op_info = kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel::kTBE);
+    if (op_info != nullptr) {
+      is_ref = op_info->is_ref();
+    }
+    MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+    if (MsContext::GetInstance()->execution_mode() == kPynativeMode &&
+        AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown) {
+      continue;
+    }
+    if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
+      std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
+      builder->SetOutputsFormat(output_format);
+      std::vector<TypeId> output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+      builder->SetOutputsDeviceType(output_type);
+      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
+    }
+  }
+}
+
 KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
                                         const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -498,11 +534,17 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   return select_status;
 }
 
-KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
+KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel::KernelQuery(kernel_node, &kernel_info_list);
+  if (AnfAlgo::IsGraphKernel(kernel_node)) {
+    auto func_graph = GetValueNode<FuncGraphPtr>(kernel_node->input(kAnfPrimitiveIndex));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    SelectGraphKernelInfo(kernel_node, func_graph);
+    return kStatusAllMatched;
+  }
+  kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
   // If aicore not find valid kernel info reloading aicpu kernel info list to find it
   if (select_status == kNoMatched) {
@@ -516,12 +558,12 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
   if (select_status == kNoMatched) {
     std::ostringstream buffer;
     PrintInputAndOutputInferType(buffer, kernel_node);
-    MS_LOG(WARNING) << ">>> candidates kernel info list:";
+    MS_LOG(WARNING) << ">>> Candidates kernel info list:";
     for (size_t index = 0; index < kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "kernel [" << index << "] :" << kernel_info_list[index]->ToString();
+      MS_LOG(WARNING) << "Kernel [" << index << "] :" << kernel_info_list[index]->ToString();
     }
     for (size_t index = 0; index < aicpu_kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "kernel [" << (kernel_info_list.size() + index)
+      MS_LOG(WARNING) << "Kernel [" << (kernel_info_list.size() + index)
                       << "] :" << aicpu_kernel_info_list[index]->ToString();
     }
     MS_LOG(WARNING) << " <<<";

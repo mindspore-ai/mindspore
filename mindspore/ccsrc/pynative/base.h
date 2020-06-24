@@ -45,7 +45,7 @@ enum PynativeStatusCode {
   PYNATIVE_UNKNOWN_STATE = 0XFF
 };
 
-enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_INPUT_MASK, PY_ARGS_NUM };
+enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
   PrimitivePyPtr py_primitive;
@@ -57,9 +57,9 @@ struct OpExecInfo {
   py::dict op_attrs;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
+OpExecInfoPtr GenerateOpExecInfo(const py::args &args, py::list *const out_args);
 
-const std::set<std::string> ignore_infer_prim = {"partial", "make_ref"};
+const std::set<std::string> ignore_infer_prim = {"make_ref"};
 }  // namespace pynative
 }  // namespace mindspore
 

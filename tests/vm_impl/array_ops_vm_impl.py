@@ -18,6 +18,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
 
@@ -45,7 +46,7 @@ def vm_impl_dType(self):
 
     def vm_impl(x):
         # update the src type
-        return x.dtype()
+        return x.dtype
 
     return vm_impl
 
@@ -225,7 +226,7 @@ def vm_impl_slice(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P._grad_ops.ConcatOffset)
+@vm_impl_getters.register(G.ConcatOffset)
 def vm_impl_concatOffset(self):
     """Generate vm_impl function for ConcatOffset"""
 
@@ -275,5 +276,29 @@ def vm_impl_square(self):
     def vm_impl(x):
         x = x.asnumpy()
         return Tensor(x * x)
+
+    return vm_impl
+
+@vm_impl_getters.register(P.ZerosLike)
+def vm_impl_zeros_like(self):
+    """Generate vm_impl function for ZerosLike"""
+    def vm_impl(x):
+        return Tensor(np.zeros_like(x.asnumpy()))
+
+@vm_impl_getters.register(P.Partial)
+def vm_impl_partial(self):
+    """Generate vm_impl function for Partial"""
+    def vm_impl(*args):
+        func = args[0].__call__
+        partial_func = functools.partial(func, *args[1:])
+        return partial_func
+
+    return vm_impl
+
+@vm_impl_getters.register(P.Depend)
+def vm_impl_depend(self):
+    """Generate vm_impl function for Depend"""
+    def vm_impl(value, expr):
+        return value
 
     return vm_impl

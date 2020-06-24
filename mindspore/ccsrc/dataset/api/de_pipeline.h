@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -36,10 +37,10 @@ using DsOpPtr = std::shared_ptr<DatasetOp>;
 
 // enum for the dataset operator names
 enum OpName {
-  kStorage = 0,
   kShuffle,
   kMindrecord,
   kBatch,
+  kBucketBatch,
   kBarrier,
   kCache,
   kRepeat,
@@ -58,11 +59,14 @@ enum OpName {
   kMnist,
   kManifest,
   kVoc,
+  kCoco,
   kCifar10,
   kCifar100,
   kCelebA,
   kRandomData,
-  kTextFile
+  kTextFile,
+  kBuildVocab,
+  kClue
 };
 
 // The C++ binder class that we expose to the python script.
@@ -100,13 +104,13 @@ class DEPipeline {
 
   int GetRepeatCount() const;
 
-  Status ParseStorageOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
-
   Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
-  Status CheckMindRecordPartitionInfo(const py::dict &args, std::vector<int> *ptr);
-
   Status ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status BuildMindrecordSamplerChain(const py::handle &handle,
+                                     std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators,
+                                     int num_padded);
 
   Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
@@ -117,6 +121,8 @@ class DEPipeline {
   Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseBucketBatchByLengthOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
@@ -142,6 +148,8 @@ class DEPipeline {
 
   Status ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
+  Status ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
   Status ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseCifar100Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
@@ -160,14 +168,17 @@ class DEPipeline {
 
   Status ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
+  Status ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
  private:
   // Execution tree that links the dataset operators.
   std::shared_ptr<ExecutionTree> tree_;
 
   std::unique_ptr<DatasetIterator> iterator_;
 
-  // Validate required args passed to storage op.
-  Status ValidateArgStorageOp(const py::dict &args);
+  static Status ParsePadInfo(py::handle value, PadInfo *pad_info);
 
   int batch_size_;
   int repeat_num_;

@@ -35,3 +35,5 @@ from .logical_not import LogicalNot, gpu_schedule_LogicalNot
 from .logical_and import LogicalAnd, gpu_schedule_LogicalAnd
 from .sub import Sub, gpu_schedule_Sub
 from .less_equal import LessEqual, gpu_schedule_LessEqual
+from .notequal import NotEqual, gpu_schedule_NotEqual
+from .greater_equal import GreaterEqual, gpu_schedule_GreaterEqual

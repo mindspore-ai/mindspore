@@ -1,0 +1,3 @@
+{"target": {"span1_index": 0, "span1_text": "小明", "span2_index": 4, "span2_text": "他"}, "idx": 0, "text": "小明呢，他在哪？"}
+{"target": {"span1_index": 0, "span1_text": "小红", "span2_index": 9, "span2_text": "他"}, "idx": 1, "text": "小红刚刚看到小明，他在操场"}
+{"target": {"span1_index": 6, "span1_text": "小张", "span2_index": 8, "span2_text": "你"}, "idx": 2, "text": "等小明回来，小张你叫他交作业"}

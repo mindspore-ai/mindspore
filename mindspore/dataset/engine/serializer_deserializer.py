@@ -156,17 +156,37 @@ def traverse(node):
             serialize_operations(node_repr, k, v)
         elif k == 'sampler':
             serialize_sampler(node_repr, v)
+        elif k == 'padded_sample' and v:
+            v1 = {key: value for key, value in v.items() if not isinstance(value, bytes)}
+            node_repr[k] = json.dumps(v1, indent=2)
+        # return schema json str if its type is mindspore.dataset.Schema
+        elif k == 'schema' and isinstance(v, de.Schema):
+            node_repr[k] = v.to_json()
         elif k in set(['schema', 'dataset_files', 'dataset_dir', 'schema_file_path']):
             expand_path(node_repr, k, v)
         else:
             node_repr[k] = v
 
+    # If a sampler exists in this node, then the following 4 arguments must be set to None:
+    #    num_samples, shard_id, num_shards, shuffle
+    # These arguments get moved into the sampler itself, so they are no longer needed to
+    # be set at the dataset level.
+    if 'sampler' in node_args.keys():
+        if 'num_samples' in node_repr.keys():
+            node_repr['num_samples'] = None
+        if 'shuffle' in node_repr.keys():
+            node_repr['shuffle'] = None
+        if 'num_shards' in node_repr.keys():
+            node_repr['num_shards'] = None
+        if 'shard_id' in node_repr.keys():
+            node_repr['shard_id'] = None
+
     # Leaf node doesn't have input attribute.
-    if not node.input:
+    if not node.children:
         return node_repr
 
     # Recursively traverse the child and assign it to the current node_repr['children'].
-    for child in node.input:
+    for child in node.children:
         node_repr["children"].append(traverse(child))
 
     return node_repr
@@ -206,11 +226,11 @@ def construct_pipeline(node):
     # Instantiate python Dataset object based on the current dictionary element
     dataset = create_node(node)
     # Initially it is not connected to any other object.
-    dataset.input = []
+    dataset.children = []
 
     # Construct the children too and add edge between the children and parent.
     for child in node['children']:
-        dataset.input.append(construct_pipeline(child))
+        dataset.children.append(construct_pipeline(child))
 
     return dataset
 
@@ -284,6 +304,12 @@ def create_node(node):
         pyobj = pyclass(node['dataset_dir'], node.get('task'), node.get('mode'), node.get('class_indexing'),
                         node.get('num_samples'), node.get('num_parallel_workers'), node.get('shuffle'),
                         node.get('decode'), sampler, node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'CocoDataset':
+        sampler = construct_sampler(node.get('sampler'))
+        pyobj = pyclass(node['dataset_dir'], node.get('annotation_file'), node.get('task'), node.get('num_samples'),
+                        node.get('num_parallel_workers'), node.get('shuffle'), node.get('decode'), sampler,
+                        node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'CelebADataset':
         sampler = construct_sampler(node.get('sampler'))

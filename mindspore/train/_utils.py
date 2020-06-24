@@ -14,14 +14,17 @@
 # ============================================================================
 """Train utility."""
 import os
+from collections.abc import Iterable
+
 import numpy as np
+
 from mindspore.common.tensor import Tensor
-from mindspore.common.dtype import dtype_to_nptype
+from mindspore.common.dtype import dtype_to_nptype, pytype_to_dtype
 from mindspore.common import dtype as mstype
 from mindspore import log as logger
 from mindspore.common.api import _executor
-from mindspore.common.dtype import pytype_to_dtype
 
+from .lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
 
 def _convert_type(types):
     """
@@ -64,8 +67,6 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
                            input_indexs,
                            phase=phase)
 
-    # engine dataset to write data to tdt queue
-    exec_dataset.send()
     return exec_dataset
 
 
@@ -157,8 +158,8 @@ def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
             data = Tensor(data)
         if not isinstance(data, Tensor):
             raise ValueError("elements in tensors must be Tensor")
-        shape_ = data.shape()
-        type_ = data.dtype()
+        shape_ = data.shape
+        type_ = data.dtype
         new_shape = ()
         batchsize_per_device = 1
         for i, item in enumerate(shape_):
@@ -196,3 +197,56 @@ def _to_full_shapes(shapes, device_num):
                 new_shape += (item,)
         new_shapes.append(new_shape)
     return new_shapes
+
+
+def _check_to_numpy(plugin, tensor):
+    """Check the tensor and return a numpy.ndarray."""
+    np_value = tensor.asnumpy()
+    if plugin == 'scalar':
+        if np_value.size == 1:
+            return np_value
+        raise ValueError('The tensor holds more than one value, but the scalar plugin expects on value.')
+    if plugin == 'image':
+        if np_value.ndim == 4:
+            return np_value
+        raise ValueError('The tensor seems not to hold a valid image.')
+    if plugin in ('tensor', 'histogram'):
+        if np_value.ndim > 0:
+            return np_value
+        raise ValueError('The tensor should not be empty.')
+    return np_value
+
+
+def _check_lineage_value(plugin, value):
+    """Check the lineage value."""
+    def raises(plugin, prototype):
+        raise TypeError(f'Plugin {repr(plugin)} expects a {prototype.__name__} value.')
+
+    if plugin == 'dataset_graph' and not isinstance(value, DatasetGraph):
+        raises(plugin, DatasetGraph)
+
+    if plugin == 'eval_lineage' and not isinstance(value, EvaluationLineage):
+        raises(plugin, EvaluationLineage)
+
+    if plugin == 'train_lineage' and not isinstance(value, TrainLineage):
+        raises(plugin, TrainLineage)
+
+    if plugin == 'custom_lineage_data' and not isinstance(value, UserDefinedInfo):
+        raises(plugin, UserDefinedInfo)
+
+
+def check_value_type(arg_name, arg_value, valid_types):
+    """Checks whether a value is instance of some types."""
+    valid_types = tuple(valid_types) if isinstance(valid_types, Iterable) else (valid_types,)
+    is_valid = True
+
+    # bool is subclass of int, so for a bool value, we need to extra check
+    if isinstance(arg_value, int) and isinstance(arg_value, bool) and bool not in valid_types:
+        is_valid = False
+
+    if not isinstance(arg_value, valid_types):
+        is_valid = False
+
+    if not is_valid:
+        raise TypeError(f'For `{arg_name}` the type should be a valid type of {[t.__name__ for t in valid_types]}, '
+                        f'bug got {type(arg_value).__name__}.')

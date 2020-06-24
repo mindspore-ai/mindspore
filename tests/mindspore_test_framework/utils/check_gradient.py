@@ -18,8 +18,8 @@
 
 from typing import Callable, List, Any
 
-import mindspore._c_expression as _c_expression
 import numpy as np
+import mindspore._c_expression as _c_expression
 
 from mindspore import ParameterTuple
 from mindspore import Tensor

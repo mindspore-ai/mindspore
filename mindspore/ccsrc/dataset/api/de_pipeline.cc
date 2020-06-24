@@ -19,56 +19,64 @@
 #include <map>
 
 #include "common/utils.h"
-#include "dataset/kernels/py_func_op.h"
-#include "dataset/engine/datasetops/source/image_folder_op.h"
-#include "dataset/engine/datasetops/source/mnist_op.h"
-#include "dataset/engine/datasetops/source/voc_op.h"
 #include "dataset/core/tensor.h"
 #include "dataset/engine/dataset_iterator.h"
-#include "dataset/engine/datasetops/source/manifest_op.h"
-#include "dataset/engine/datasetops/source/cifar_op.h"
+#include "dataset/engine/datasetops/bucket_batch_by_length_op.h"
+#include "dataset/engine/datasetops/filter_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
+#include "dataset/engine/datasetops/source/cifar_op.h"
+#include "dataset/engine/datasetops/source/clue_op.h"
+#include "dataset/engine/datasetops/source/coco_op.h"
+#include "dataset/engine/datasetops/source/image_folder_op.h"
+#include "dataset/engine/datasetops/source/manifest_op.h"
+#include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
-#include "dataset/engine/datasetops/filter_op.h"
-#include "mindrecord/include/shard_category.h"
-#include "mindrecord/include/shard_sample.h"
-#include "mindrecord/include/shard_shuffle.h"
+#include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/kernels/py_func_op.h"
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
-#include "utils/log_adapter.h"
+#include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_distributed_sample.h"
+#include "mindrecord/include/shard_sample.h"
+#include "mindrecord/include/shard_shuffle.h"
 #include "pybind11/stl.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
 using pFunction = Status (DEPipeline::*)(const py::dict &, std::shared_ptr<DatasetOp> *);
 
-static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &DEPipeline::ParseStorageOp},
-                                                                   {kShuffle, &DEPipeline::ParseShuffleOp},
-                                                                   {kMindrecord, &DEPipeline::ParseMindRecordOp},
-                                                                   {kMap, &DEPipeline::ParseMapOp},
-                                                                   {kFilter, &DEPipeline::ParseFilterOp},
-                                                                   {kBatch, &DEPipeline::ParseBatchOp},
-                                                                   {kBarrier, &DEPipeline::ParseBarrierOp},
-                                                                   {kRepeat, &DEPipeline::ParseRepeatOp},
-                                                                   {kSkip, &DEPipeline::ParseSkipOp},
-                                                                   {kZip, &DEPipeline::ParseZipOp},
-                                                                   {kConcat, &DEPipeline::ParseConcatOp},
-                                                                   {kRename, &DEPipeline::ParseRenameOp},
-                                                                   {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
-                                                                   {kGenerator, &DEPipeline::ParseGeneratorOp},
-                                                                   {kTfReader, &DEPipeline::ParseTFReaderOp},
-                                                                   {kProject, &DEPipeline::ParseProjectOp},
-                                                                   {kTake, &DEPipeline::ParseTakeOp},
-                                                                   {kImageFolder, &DEPipeline::ParseImageFolderOp},
-                                                                   {kMnist, &DEPipeline::ParseMnistOp},
-                                                                   {kManifest, &DEPipeline::ParseManifestOp},
-                                                                   {kVoc, &DEPipeline::ParseVOCOp},
-                                                                   {kCifar10, &DEPipeline::ParseCifar10Op},
-                                                                   {kCifar100, &DEPipeline::ParseCifar100Op},
-                                                                   {kCelebA, &DEPipeline::ParseCelebAOp},
-                                                                   {kRandomData, &DEPipeline::ParseRandomDataOp},
-                                                                   {kTextFile, &DEPipeline::ParseTextFileOp}};
+static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {
+  {kShuffle, &DEPipeline::ParseShuffleOp},
+  {kMindrecord, &DEPipeline::ParseMindRecordOp},
+  {kMap, &DEPipeline::ParseMapOp},
+  {kFilter, &DEPipeline::ParseFilterOp},
+  {kBatch, &DEPipeline::ParseBatchOp},
+  {kBucketBatch, &DEPipeline::ParseBucketBatchByLengthOp},
+  {kBarrier, &DEPipeline::ParseBarrierOp},
+  {kRepeat, &DEPipeline::ParseRepeatOp},
+  {kSkip, &DEPipeline::ParseSkipOp},
+  {kZip, &DEPipeline::ParseZipOp},
+  {kConcat, &DEPipeline::ParseConcatOp},
+  {kRename, &DEPipeline::ParseRenameOp},
+  {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
+  {kGenerator, &DEPipeline::ParseGeneratorOp},
+  {kTfReader, &DEPipeline::ParseTFReaderOp},
+  {kProject, &DEPipeline::ParseProjectOp},
+  {kTake, &DEPipeline::ParseTakeOp},
+  {kImageFolder, &DEPipeline::ParseImageFolderOp},
+  {kMnist, &DEPipeline::ParseMnistOp},
+  {kManifest, &DEPipeline::ParseManifestOp},
+  {kVoc, &DEPipeline::ParseVOCOp},
+  {kCoco, &DEPipeline::ParseCocoOp},
+  {kCifar10, &DEPipeline::ParseCifar10Op},
+  {kCifar100, &DEPipeline::ParseCifar100Op},
+  {kCelebA, &DEPipeline::ParseCelebAOp},
+  {kRandomData, &DEPipeline::ParseRandomDataOp},
+  {kTextFile, &DEPipeline::ParseTextFileOp},
+  {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
+  {kClue, &DEPipeline::ParseClueOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -292,70 +300,6 @@ Status DEPipeline::SetBatchParameters(const py::dict &args) {
   return Status::OK();
 }
 
-Status DEPipeline::ValidateArgStorageOp(const py::dict &args) {
-  // Required arguments
-  if (((args.contains("dataset_files") && args["dataset_files"].is_none()) || args["schema"].is_none()) &&
-      ((args.contains("dataset_dir") && args["dataset_dir"].is_none()) ||
-       (args["schema"].is_none() && args["schema_json_string"].is_none()))) {
-    std::string err_msg = "Error: at least one of dataset_files or schema_file is missing";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  return Status::OK();
-}
-
-Status DEPipeline::ParseStorageOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
-  RETURN_IF_NOT_OK(ValidateArgStorageOp(args));
-  std::shared_ptr<StorageOp::Builder> builder;
-  if (args.contains("dataset_files") && !args["dataset_files"].is_none()) {
-    builder = std::make_shared<StorageOp::Builder>();
-    (void)builder->SetDatasetFileList(ToStringVector(args["dataset_files"]));
-    (void)builder->SetSchemaFile(ToString(args["schema"]));
-  } else if (args.contains("dataset_dir") && !args["dataset_dir"].is_none()) {
-    builder = std::make_shared<StorageOp::Builder>();
-    (void)builder->SetDatasetFilesDir(ToString(args["dataset_dir"]));
-    if (!args["schema"].is_none()) {
-      (void)builder->SetSchemaFile(ToString(args["schema"]));
-    } else if (!args["schema_json_string"].is_none()) {
-      std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-      std::string s = ToString(args["schema_json_string"]);
-      RETURN_IF_NOT_OK(schema->LoadSchemaString(s, std::vector<std::string>()));
-      (void)builder->SetNumRows(schema->num_rows());
-      (void)builder->SetSchema(std::move(schema));
-    }
-  }
-
-  // Optional arguments
-  for (auto arg : args) {
-    std::string key = py::str(arg.first);
-    py::handle value = arg.second;
-    if (!value.is_none()) {
-      if (key == "num_parallel_workers") {
-        (void)builder->SetNumWorkers(ToInt(value));
-      } else if (key == "prefetch_size") {
-        (void)builder->SetOpConnectorSize(ToInt(value));
-      } else if (key == "columns_list") {
-        (void)builder->SetColumnsToLoad(ToStringVector(value));
-      } else if (key == "distribution") {
-        (void)builder->SetDataDistributionFile(ToString(value));
-      } else if (key == "labels_filename") {
-        (void)builder->setLabelsFileName(ToString(value));
-      } else if (key == "dataset_usage") {
-        (void)builder->SetDatasetUsage(ToString(value));
-      }
-    }
-  }
-  (void)builder->SetBatchSize(temp_batch_size_);
-  (void)builder->SetDropRemainder(temp_drop_remainder_);
-
-  std::shared_ptr<StorageOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  num_rows_ = op->num_rows();
-  num_classes_ = op->num_classes();
-  *ptr = op;
-  return Status::OK();
-}
-
 Status DEPipeline::ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<ShuffleOp::Builder> builder = std::make_shared<ShuffleOp::Builder>();
   if (!args["buffer_size"].is_none()) {
@@ -382,35 +326,27 @@ Status DEPipeline::ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetO
   return Status::OK();
 }
 
-Status DEPipeline::CheckMindRecordPartitionInfo(const py::dict &args, std::vector<int> *in_partitions) {
-  if (args["partitions"].is_none()) {
-    std::string err_msg = "Error: partitions is not set (None)";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  py::list list = py::reinterpret_borrow<py::list>(args["partitions"]);
-  for (auto l : list) {
-    if (!l.is_none()) {
-      in_partitions->push_back(ToInt(l));
+Status DEPipeline::BuildMindrecordSamplerChain(const py::handle &handle,
+                                               std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators,
+                                               int num_padded) {
+  auto sampler = py::reinterpret_borrow<py::object>(handle);
+  auto create = sampler.attr("create_for_minddataset");
+  auto op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+  std::stack<std::shared_ptr<mindrecord::ShardOperator>> stack_ops;
+  while (op != nullptr) {
+    auto sampler_op = std::dynamic_pointer_cast<mindrecord::ShardDistributedSample>(op);
+    if (sampler_op && num_padded > 0) {
+      sampler_op->SetNumPaddedSamples(num_padded);
+      stack_ops.push(sampler_op);
+    } else {
+      stack_ops.push(op);
     }
+    op = op->GetChildOp();
   }
-
-  if (in_partitions->size() != 2) {
-    std::string err_msg = "Error: partitions is invalid or not set.";
-    RETURN_STATUS_UNEXPECTED(err_msg);
+  while (!stack_ops.empty()) {
+    operators->push_back(stack_ops.top());
+    stack_ops.pop();
   }
-
-  constexpr int kMaxPartitions = 64;
-  if (in_partitions->at(0) <= 0 || in_partitions->at(0) > kMaxPartitions) {
-    std::string err_msg = "Error: partitions is invalid or not set.";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  if (in_partitions->at(1) < 0 || in_partitions->at(1) >= in_partitions->at(0)) {
-    std::string err_msg = "Error: partitions is invalid or not set.";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
   return Status::OK();
 }
 
@@ -438,6 +374,10 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
     (void)builder->SetColumnsToLoad(in_col_names);
   }
 
+  if (!args["padded_sample"].is_none()) {
+    (void)builder->SetPaddedSample(args["padded_sample"]);
+    (void)builder->SetNumToPadSamples(ToInt(args["num_padded"]));
+  }
   std::vector<std::shared_ptr<mindrecord::ShardOperator>> operators;
   for (auto arg : args) {
     std::string key = py::str(arg.first);
@@ -447,25 +387,14 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
         (void)builder->SetNumMindRecordWorkers(ToInt(value));
       } else if (key == "block_reader" && ToBool(value) == true) {
         (void)builder->SetBlockReader();
-      } else if (key == "global_shuffle" && ToBool(value) == true) {
-        uint32_t seed = args["partitions"].is_none() ? GetSeed() : 0;
-        operators.push_back(std::make_shared<mindrecord::ShardShuffle>(seed));
       } else if (key == "sampler") {
-        auto create = py::reinterpret_borrow<py::object>(value).attr("_create_for_minddataset");
-        std::shared_ptr<mindrecord::ShardOperator> sample_op =
-          create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
-        operators.push_back(sample_op);
+        int num_padded = 0;
+        if (!args["num_padded"].is_none()) {
+          num_padded = ToInt(args["num_padded"]);
+        }
+        RETURN_IF_NOT_OK(BuildMindrecordSamplerChain(value, &operators, num_padded));
       }
     }
-  }
-
-  std::vector<int> in_partitions;
-  if (!args["partitions"].is_none()) {
-    auto ret = CheckMindRecordPartitionInfo(args, &in_partitions);
-    if (Status::OK() != ret) {
-      return ret;
-    }
-    operators.push_back(std::make_shared<mindrecord::ShardSample>(1, in_partitions[0], in_partitions[1]));
   }
 
   if (!operators.empty()) {
@@ -493,6 +422,8 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)builder->SetInColNames(in_col_names);
       } else if (key == "output_columns") {
         (void)builder->SetOutColNames(ToStringVector(value));
+      } else if (key == "columns_order") {
+        (void)builder->SetColOrder(ToStringVector(value));
       } else if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "prefetch_size") {
@@ -642,24 +573,64 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
         (void)builder->SetColumnsToMap(ToStringVector(value));
       }
       if (key == "pad_info") {
-        std::map<std::string, std::pair<TensorShape, float>> pad_info;
-        for (auto p : py::reinterpret_borrow<py::dict>(value)) {
-          if (!p.second.is_none()) {
-            py::tuple tp = py::reinterpret_borrow<py::tuple>(p.second);
-            CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == 2, "tuple in pad_info must be (list,int) or (list,float)");
-            TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
-            float pad_val = tp[1].is_none() ? 0 : ToFloat(tp[1]);
-            (void)pad_info.insert({ToString(p.first), {shape, pad_val}});
-          } else {  // tuple is None
-            (void)pad_info.insert({ToString(p.first), {TensorShape({}), 0}});
-          }
-        }
+        PadInfo pad_info;
+        RETURN_IF_NOT_OK(ParsePadInfo(value, &pad_info));
         (void)builder->SetPaddingMap(pad_info, true);
       }
     }
   }
 
   std::shared_ptr<BatchOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseBucketBatchByLengthOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::vector<std::string> mandatory_arguments = {"length_dependent_columns", "bucket_boundaries",
+                                                  "bucket_batch_sizes"};
+  for (auto name : mandatory_arguments) {
+    if (args[name.c_str()].is_none()) {
+      std::string err_msg = "Error: " + name + " is not set.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+
+  std::shared_ptr<BucketBatchByLengthOp::Builder> builder = std::make_shared<BucketBatchByLengthOp::Builder>(
+    ToStringVector(args[mandatory_arguments[0].c_str()]), ToIntVector(args[mandatory_arguments[1].c_str()]),
+    ToIntVector(args[mandatory_arguments[2].c_str()]));
+
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "length_dependent_columns") {
+        (void)builder->SetLengthDependentColumns(ToStringVector(value));
+      }
+      if (key == "bucket_boundaries") {
+        (void)builder->SetBucketBoundaries(ToIntVector(value));
+      }
+      if (key == "bucket_batch_sizes") {
+        (void)builder->SetBucketBatchSizes(ToIntVector(value));
+      }
+      if (key == "element_length_function") {
+        (void)builder->SetElementLengthFunction(value.cast<py::function>());
+      }
+      if (key == "pad_info") {
+        PadInfo pad_info;
+        RETURN_IF_NOT_OK(ParsePadInfo(value, &pad_info));
+        (void)builder->SetPadInfo(pad_info);
+      }
+      if (key == "pad_to_bucket_boundary") {
+        (void)builder->SetPadToBucketBoundary(ToBool(value));
+      }
+      if (key == "drop_remainder") {
+        (void)builder->SetDropRemainder(ToBool(value));
+      }
+    }
+  }
+
+  std::shared_ptr<BucketBatchByLengthOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();
@@ -801,6 +772,8 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetColumnsToLoad(columns_to_load);
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        (void)builder->SetShuffleGlobal(ToBool(value));
       } else if (key == "schema_file_path" || key == "schema_json_string") {
         schema_exists = true;
       } else if (key == "num_samples") {
@@ -856,9 +829,7 @@ Status DEPipeline::ParseImageFolderOp(const py::dict &args, std::shared_ptr<Data
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -893,9 +864,7 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -922,6 +891,16 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  if (args["task"].is_none()) {
+    std::string err_msg = "Error: No task specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (args["mode"].is_none()) {
+    std::string err_msg = "Error: No mode specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
   std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
   (void)builder->SetTask(ToString(args["task"]));
@@ -930,9 +909,7 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -946,6 +923,47 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
     }
   }
   std::shared_ptr<VOCOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["dataset_dir"].is_none()) {
+    std::string err_msg = "Error: No dataset path specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (args["annotation_file"].is_none()) {
+    std::string err_msg = "Error: No annotation_file specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (args["task"].is_none()) {
+    std::string err_msg = "Error: No task specified";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  std::shared_ptr<CocoOp::Builder> builder = std::make_shared<CocoOp::Builder>();
+  (void)builder->SetDir(ToString(args["dataset_dir"]));
+  (void)builder->SetFile(ToString(args["annotation_file"]));
+  (void)builder->SetTask(ToString(args["task"]));
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("create");
+        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        (void)builder->SetSampler(std::move(sampler));
+      } else if (key == "decode") {
+        (void)builder->SetDecode(ToBool(value));
+      }
+    }
+  }
+  std::shared_ptr<CocoOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();
@@ -966,9 +984,7 @@ Status DEPipeline::ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetO
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -1001,9 +1017,7 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -1039,10 +1053,12 @@ Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<Datas
       (void)builder.SetNumWorkers(ToInt(value));
     } else if (key == "schema_file_path" || key == "schema_json_string") {
       schema_exists = true;
-    } else if (key == "num_samples") {
-      (void)builder.SetTotalRows(ToInt(value));
     } else if (key == "columns_list") {
       columns_to_load = ToStringVector(value);
+    } else if (key == "num_samples") {
+      // This is not sampling here. The random data op needs to know how much data to
+      // generate. It does not currently support sampling.
+      (void)builder.SetTotalRows(ToInt(value));
     }
   }
   if (schema_exists) {
@@ -1077,9 +1093,7 @@ Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp>
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
-      } else if (key == "num_parallel_workers") {
+      if (key == "num_parallel_workers") {
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
@@ -1121,8 +1135,6 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
         (void)builder->SetDecode(ToBool(value));
       } else if (key == "extensions") {
         (void)builder->SetExtensions(ToStringSet(value));
-      } else if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
       } else if (key == "dataset_type") {
         (void)builder->SetDatasetType(ToString(value));
       }
@@ -1152,8 +1164,10 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetNumWorkers(ToInt(value));
       } else if (key == "shuffle_files") {
         (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        (void)builder->SetShuffleGlobal(ToBool(value));
       } else if (key == "num_samples") {
-        (void)builder->SetNumSamples(ToInt(value));
+        (void)builder->SetTotalRows(ToInt(value));
       } else if (key == "num_shards") {
         (void)builder->SetNumDevices(ToInt(value));
       } else if (key == "shard_id") {
@@ -1162,6 +1176,107 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
     }
   }
   std::shared_ptr<TextFileOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParsePadInfo(py::handle value, PadInfo *pad_info) {
+  for (auto p : py::reinterpret_borrow<py::dict>(value)) {
+    if (!p.second.is_none()) {
+      auto tp = py::reinterpret_borrow<py::tuple>(p.second);
+      CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == 2, "tuple in pad_info must be (list,int) or (list,float)");
+      TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
+      std::shared_ptr<Tensor> pad_val = nullptr;
+      if (py::isinstance<py::str>(tp[1])) {
+        std::string pad_val_string = tp[1].is_none() ? "" : ToString(tp[1]);
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          Tensor::CreateTensor(&pad_val, std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar()),
+          "Cannot create pad_value Tensor");
+      } else {
+        float pad_val_float = tp[1].is_none() ? 0 : ToFloat(tp[1]);
+        CHECK_FAIL_RETURN_UNEXPECTED(Tensor::CreateTensor(&pad_val, TensorImpl::kFlexible, TensorShape::CreateScalar(),
+                                                          DataType(DataType::DE_FLOAT32)),
+                                     "Cannot create pad_value Tensor");
+        pad_val->SetItemAt<float>({}, pad_val_float);
+      }
+      (void)pad_info->insert({ToString(p.first), {shape, pad_val}});
+    } else {  // tuple is None
+      (void)pad_info->insert({ToString(p.first), {TensorShape({}), nullptr}});
+    }
+  }
+  return Status::OK();
+}
+
+Status DEPipeline::ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<BuildVocabOp::Builder> builder = std::make_shared<BuildVocabOp::Builder>();
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "freq_range") {
+        py::tuple tp = py::reinterpret_borrow<py::tuple>(value);
+        if (!tp[0].is_none()) (void)builder->SetMinFreq(py::reinterpret_borrow<py::int_>(tp[0]));
+        if (!tp[1].is_none()) (void)builder->SetMaxFreq(py::reinterpret_borrow<py::int_>(tp[1]));
+      } else if (key == "top_k") {
+        builder->SetTopK(py::reinterpret_borrow<py::int_>(value));
+      } else if (key == "columns") {
+        (void)builder->SetColumnNames(ToStringVector(value));
+      } else if (key == "vocab") {
+        (void)builder->SetVocab(value.cast<std::shared_ptr<Vocab>>());
+      } else if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "special_first") {
+        (void)builder->SetSpecialFirst(ToBool(value));
+      } else if (key == "special_tokens") {
+        (void)builder->SetSpecialTokens(ToStringVector(value));
+      }
+    }
+  }
+  std::shared_ptr<BuildVocabOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<ClueOp::Builder> builder = std::make_shared<ClueOp::Builder>();
+  if (!args["dataset_files"].is_none()) {
+    (void)builder->SetClueFilesList(ToStringVector(args["dataset_files"]));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Error: dataset_files is missing");
+  }
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "shuffle_files") {
+        (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        (void)builder->SetShuffleGlobal(ToBool(value));
+      } else if (key == "num_samples") {
+        (void)builder->SetNumSamples(ToInt(value));
+      } else if (key == "num_shards") {
+        (void)builder->SetNumDevices(ToInt(value));
+      } else if (key == "shard_id") {
+        (void)builder->SetDeviceId(ToInt(value));
+      } else if (key == "cols_to_keyword") {
+        std::map<std::string, std::string> map_dict;
+        for (auto p : py::reinterpret_borrow<py::dict>(value)) {
+          if (!p.second.is_none()) {
+            map_dict.insert({ToString(p.first), ToString(p.second)});
+          } else {
+            map_dict.insert({ToString(p.first), ToString(p.first)});
+          }
+        }
+        (void)builder->SetColsKeyMap(map_dict);
+      }
+    }
+  }
+  std::shared_ptr<ClueOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();

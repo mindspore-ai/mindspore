@@ -20,6 +20,9 @@
 
 #include <algorithm>
 #include <map>
+#include <queue>
+#include <stack>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -30,6 +33,7 @@
 #include "utils/graph_utils.h"
 #include "utils/context/ms_context.h"
 #include "debug/trace.h"
+#include "debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace compile {
@@ -46,6 +50,200 @@ const std::vector<PrimitivePtr> &GetMsNonlinearOps() {
                                                              prim::kPrimBpropCut};
   return ms_nonlinear_ops;
 }
+
+namespace {
+std::string GetCNodeTarget(const AnfNodePtr &node) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string default_target = context_ptr->device_target();
+  if (!node->isa<CNode>()) {
+    return default_target;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto attr_input = cnode->input(kAnfPrimitiveIndex);
+  if (attr_input == nullptr) {
+    return default_target;
+  }
+  auto value_node = attr_input->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return default_target;
+  }
+  auto value = value_node->value();
+  if (value == nullptr) {
+    return default_target;
+  }
+  if (!value->isa<Primitive>()) {
+    return default_target;
+  }
+  auto primitive = value->cast<PrimitivePtr>();
+  auto att_target = primitive->GetAttr("primitive_target");
+  if (att_target != nullptr) {
+    if (!att_target->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
+    auto target = GetValue<std::string>(att_target);
+    if (kTargetSet.find(target) == kTargetSet.end()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
+    return target;
+  }
+  return default_target;
+}
+
+bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string last_target = context_ptr->device_target();
+  for (auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      std::string cur_target = GetCNodeTarget(node);
+      if (last_target != cur_target) {
+        return true;
+      }
+      last_target = cur_target;
+    }
+  }
+  return false;
+}
+
+void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref) {
+  std::queue<AnfNodePtr> queue;
+  queue.push(graph->get_return());
+  std::set<AnfNodePtr> visited;
+  while (!queue.empty()) {
+    auto &node = queue.front();
+    queue.pop();
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    for (auto &input : cnode->inputs()) {
+      auto iter = nodes_ref->find(input);
+      if (iter != nodes_ref->end()) {
+        iter->second++;
+      } else {
+        (void)nodes_ref->insert(std::pair<AnfNodePtr, size_t>(input, 1));
+      }
+      if (visited.find(input) != visited.end()) {
+        continue;
+      }
+      visited.insert(input);
+      queue.push(input);
+    }
+  }
+}
+
+bool IsGetItemNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto &inputs = cnode->inputs();
+    if (inputs.empty()) {
+      MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
+    }
+    if (!IsValueNode<Primitive>(inputs[0])) {
+      return true;
+    }
+    PrimitivePtr node_prim = GetValueNode<PrimitivePtr>(inputs[0]);
+    return node_prim->name() == prim::kPrimTupleGetItem->name();
+  }
+  return false;
+}
+
+std::vector<AnfNodePtr> ReorderGetItemNode(const std::vector<AnfNodePtr> &nodes) {
+  std::vector<AnfNodePtr> result;
+  std::map<size_t, std::vector<AnfNodePtr>> insert_positions;
+  std::map<AnfNodePtr, size_t> node_positions;
+  for (auto &node : nodes) {
+    if (IsGetItemNode(node)) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto &inputs = cnode->inputs();
+      if (inputs.size() < 2) {
+        MS_LOG(EXCEPTION) << "Invalid get item node";
+      }
+      auto &parent = inputs[1];
+      auto iter = node_positions.find(parent);
+      if (iter != node_positions.end()) {
+        size_t position = iter->second;
+        auto iter_nodes = insert_positions.find(position);
+        if (iter_nodes != insert_positions.end()) {
+          iter_nodes->second.push_back(node);
+        } else {
+          (void)insert_positions.insert(
+            std::pair<size_t, std::vector<AnfNodePtr>>(position, std::vector<AnfNodePtr>{node}));
+        }
+        continue;
+      }
+    }
+    result.emplace_back(node);
+    node_positions[node] = result.size();
+  }
+
+  size_t insert_num = 0;
+  for (auto &item : insert_positions) {
+    size_t position = item.first + insert_num;
+    (void)result.insert(result.begin() + position, item.second.begin(), item.second.end());
+    insert_num += item.second.size();
+  }
+  return result;
+}
+
+std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &default_target) {
+  std::vector<AnfNodePtr> result;
+  std::stack<AnfNodePtr> to_visit;
+  std::stack<AnfNodePtr> next_to_visit;
+  std::map<AnfNodePtr, size_t> nodes_ref;
+  CalcNodeRefCount(graph, &nodes_ref);
+  std::string handle_target = default_target;
+  std::string next_target = "";
+  to_visit.push(graph->get_return());
+  while (!to_visit.empty() || !next_to_visit.empty()) {
+    if (to_visit.empty()) {
+      to_visit.swap(next_to_visit);
+      handle_target = next_target;
+    }
+    auto &node = to_visit.top();
+    MS_EXCEPTION_IF_NULL(node);
+    to_visit.pop();
+    result.emplace_back(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto node_inputs = cnode->inputs();
+    std::reverse(node_inputs.begin(), node_inputs.end());
+    for (auto &input : node_inputs) {
+      auto iter = nodes_ref.find(input);
+      if (iter != nodes_ref.end()) {
+        iter->second--;
+        if (iter->second != 0) {
+          continue;
+        }
+      }
+      if (!input->isa<CNode>()) {
+        to_visit.push(input);
+        continue;
+      }
+      std::string input_target = GetCNodeTarget(input);
+      if (input_target == handle_target) {
+        to_visit.push(input);
+      } else if (next_to_visit.empty() || input_target == next_target) {
+        next_to_visit.push(input);
+        next_target = input_target;
+      } else {
+        MS_LOG(EXCEPTION) << "only support two different target";
+      }
+    }
+  }
+  std::reverse(result.begin(), result.end());
+  return ReorderGetItemNode(result);
+}
+}  // namespace
 
 CompileGraph::CompileGraph(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list)
     : backend_(backend), cut_list_(cut_list) {
@@ -72,6 +270,14 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
     }
 
     AnfNodePtr fn = inputs[0];
+    MS_EXCEPTION_IF_NULL(fn);
+    if (IsValueNode<FuncGraph>(fn)) {
+      auto fg = GetValueNode<FuncGraphPtr>(fn);
+      if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+        return false;
+      }
+    }
+
     if (!IsValueNode<Primitive>(fn)) {
       return true;
     }
@@ -80,6 +286,11 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
     for (auto &prim : cut_list_) {
       MS_EXCEPTION_IF_NULL(prim);
       if (prim->name() == node_prim->name()) {
+        if (prim->name() == prim::kPrimBpropCut->name()) {
+          auto ms_context = MsContext::GetInstance();
+          MS_EXCEPTION_IF_NULL(ms_context);
+          ms_context->set_enable_pynative_hook(true);
+        }
         return true;
       }
     }
@@ -102,24 +313,33 @@ VectorRef CompileGraph::SplitNodes(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   VectorRef splits;
   VectorRef split;
-  std::vector<AnfNodePtr> nodes = TopoSort(graph->get_return());
-
+  auto nodes = TopoSort(graph->get_return());
+  if (ContainMultiTarget(nodes)) {
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    std::string default_target = context_ptr->device_target();
+    nodes = SplitSort(graph, default_target);
+  }
+  std::string last_target;
   MS_LOG(DEBUG) << "Split all nodes size:" << nodes.size();
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (IsCut(node)) {
-      MS_LOG(DEBUG) << "Cut node:" << node->DebugString(10) << ", size:" << split.size();
       if (split.size() != 0) {
         splits.push_back(split);
       }
       splits.push_back(node);
       split.clear();
-    } else if (!(node->isa<ValueNode>() || node->isa<Parameter>())) {
+    } else if (node->isa<CNode>()) {
+      std::string cur_target = GetCNodeTarget(node);
+      if (cur_target != last_target && !last_target.empty() && split.size() != 0) {
+        splits.push_back(split);
+        split.clear();
+      }
+      last_target = cur_target;
       split.push_back(node);
-      MS_LOG(DEBUG) << "Insert node:" << node->DebugString(10) << ", size:" << split.size();
     }
   }
-  MS_LOG(DEBUG) << "Split node size :" << splits.size();
   return splits;
 }
 
@@ -200,14 +420,14 @@ void CompileGraph::PushParameters(const FuncGraphPtr &graph) {
   }
 }
 
-int CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &node_list) {
+int CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &node_list, const std::string &target) {
   MS_LOG(DEBUG) << "LinConvert start";
   LinConvertResult result;
 
   if (backend_->simu_flag()) {
     result = backend_->GetMultiGraphRun(graph);
   } else {
-    result = lin_convert_(node_list);
+    result = lin_convert_(node_list, target);
   }
 
   if (result.run == nullptr) {
@@ -316,7 +536,12 @@ bool CompileGraph::SplitGraph(const FuncGraphPtr &graph) {
       auto vec_ref = utils::cast<VectorRef>(split);
       (void)std::transform(vec_ref.begin(), vec_ref.end(), std::back_inserter(args),
                            [](const BaseRef &v) { return utils::cast<AnfNodePtr>(v); });
-      ret = LinConvert(graph, args);
+      if (args.size() > 0) {
+        std::string cur_target = GetCNodeTarget(args[0]);
+        ret = LinConvert(graph, args, cur_target);
+      } else {
+        ret = LinConvert(graph, args);
+      }
       MS_LOG(DEBUG) << "End a extern LinConvert";
       if (ret == RET_FAILED) {
         return false;
@@ -348,7 +573,6 @@ InstSet CompileGraph::GenMultiGraphsSinkInst(const FuncGraphPtr &graph) {
 
 InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(DEBUG) << "Compile start graph: " << graph->ToString();
 
   Reset();
   PushParameters(graph);
@@ -574,16 +798,11 @@ CompileGraphs::CompileGraphs(const BackendPtr &backend, const std::vector<Primit
 // Convert graphs to unlinked instructions.
 void CompileGraphs::Compile(const FuncGraphPtr &graph) {
   MS_LOG(DEBUG) << "Start";
-  auto graph_manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(graph_manager);
-  FuncGraphSet graphs = graph_manager->func_graphs();
-  for (auto &g : graphs) {
-    mapping_[g] = static_cast<int>(insts_.size());
-    if (transform_ != nullptr) {
-      InstSet insts = transform_->Run(g);
-      if (!insts.empty()) {
-        (void)insts_.insert(insts_.end(), insts.begin(), insts.end());
-      }
+  mapping_[graph] = static_cast<int>(insts_.size());
+  if (transform_ != nullptr) {
+    InstSet insts = transform_->Run(graph);
+    if (!insts.empty()) {
+      (void)insts_.insert(insts_.end(), insts.begin(), insts.end());
     }
   }
   MS_LOG(DEBUG) << "End";
@@ -628,13 +847,34 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   Reset();
   MS_LOG(DEBUG) << "Begin parameter:" << graph->parameters().size();
 
-  (void)WrapPrimitives(graph);
-  Compile(graph);
+  FuncGraphPtr prim_graph = WrapPrimitives(graph);
+  Compile(prim_graph);
+  MS_EXCEPTION_IF_NULL(prim_graph);
+  FuncGraphSet graphs = prim_graph->manager()->func_graphs();
+  for (auto g : graphs) {
+    if (g != graph && g != nullptr && !(g->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL))) {
+      Compile(g);
+    }
+  }
 
   FinalVMPtr rt = Link(graph);
   Reset();
   MS_LOG(DEBUG) << "End";
   return rt;
+}
+
+bool CompileGraphs::ContainMixedTarget(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(graph_manager);
+  FuncGraphSet graphs = graph_manager->func_graphs();
+  for (auto &g : graphs) {
+    auto nodes = TopoSort(g->get_return());
+    if (ContainMultiTarget(nodes)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 BackendPtr CreateBackend() {

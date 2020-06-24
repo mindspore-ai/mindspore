@@ -66,6 +66,12 @@ std::string GraphDesc::ToString() {
   return desc;
 }
 
+std::string PointDesc::ToString() {
+  std::string desc;
+  desc.append(std::to_string(point_id_)).append(" ").append(op_name_).append("\n");
+  return desc;
+}
+
 std::string GraphDesc::DataShapeToString(const std::vector<size_t> &shape) {
   std::ostringstream oss;
   oss << "\"";

@@ -24,6 +24,19 @@ using mindspore::MsLogLevel::DEBUG;
 
 namespace mindspore {
 namespace mindrecord {
+ShardTask::ShardTask() : categories(1) {}
+
+ShardTask::ShardTask(const ShardTask &other)
+    : categories(other.categories), permutation_(other.permutation_), task_list_(other.task_list_) {}
+
+ShardTask &ShardTask::operator=(const ShardTask &other) {
+  ShardTask tmp(other);
+  std::swap(categories, tmp.categories);
+  permutation_.swap(tmp.permutation_);
+  task_list_.swap(tmp.task_list_);
+  return *this;
+}
+
 void ShardTask::MakePerm() {
   permutation_ = std::vector<int>(task_list_.size());
   for (uint32_t i = 0; i < task_list_.size(); i++) {
@@ -31,16 +44,18 @@ void ShardTask::MakePerm() {
   }
 }
 
-void ShardTask::InsertTask(int shard_id, int group_id, const std::vector<uint64_t> &offset, const json &label) {
+void ShardTask::InsertTask(TaskType task_type, int shard_id, int group_id, const std::vector<uint64_t> &offset,
+                           const json &label) {
   MS_LOG(DEBUG) << "Into insert task, shard_id: " << shard_id << ", group_id: " << group_id
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
-  task_list_.emplace_back(std::make_tuple(shard_id, group_id), offset, label);
+  task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id), offset, label);
 }
 
-void ShardTask::InsertTask(std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> task) {
-  MS_LOG(DEBUG) << "Into insert task, shard_id: " << std::get<0>(std::get<0>(task))
-                << ", group_id: " << std::get<1>(std::get<0>(task)) << ", label: " << std::get<2>(task).dump()
+void ShardTask::InsertTask(std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> task) {
+  MS_LOG(DEBUG) << "Into insert task, shard_id: " << std::get<0>(std::get<1>(task))
+                << ", group_id: " << std::get<1>(std::get<1>(task)) << ", label: " << std::get<3>(task).dump()
                 << ", size of task_list_: " << task_list_.size() << ".";
+
   task_list_.push_back(std::move(task));
 }
 
@@ -52,24 +67,25 @@ uint32_t ShardTask::SizeOfRows() const {
   if (task_list_.size() == 0) return static_cast<uint32_t>(0);
 
   // 1 task is 1 page
-  auto sum_num_rows = [](int x, std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> y) {
-    return x + std::get<1>(y)[0];
+  auto sum_num_rows = [](int x, std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> y) {
+    return x + std::get<2>(y)[0];
   };
   uint32_t nRows = std::accumulate(task_list_.begin(), task_list_.end(), 0, sum_num_rows);
   return nRows;
 }
 
-std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetTaskByID(size_t id) {
+std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetTaskByID(size_t id) {
   MS_ASSERT(id < task_list_.size());
   return task_list_[id];
 }
 
-std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetRandomTask() {
+std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetRandomTask() {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
   return task_list_[dis(gen)];
 }
+
 ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements) {
   ShardTask res;
   if (category_tasks.empty()) return res;

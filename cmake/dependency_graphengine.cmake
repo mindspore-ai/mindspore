@@ -36,6 +36,7 @@ elseif (DEFINED ENV{D_LINK_PATH})
     find_library(hccl libhccl.so ${GE_LIB_PATH})
     find_library(cce libcce.so ${GE_LIB_PATH})
     find_library(resource libresource.so ${GE_LIB_PATH})
+    find_library(error_manager liberror_manager.so ${GE_LIB_PATH})
 else()
     # Ascend mode
     if(DEFINED ENV{ASCEND_CUSTOM_PATH})
@@ -54,6 +55,7 @@ else()
     find_library(msprof libmsprof.so ${ASCEND_RUNTIME_PATH})
     find_library(register libregister.so ${ASCEND_RUNTIME_PATH})
     find_library(resource libresource.so ${ASCEND_RUNTIME_PATH})
+    find_library(error_manager liberror_manager.so ${ASCEND_RUNTIME_PATH})
 endif()
 
 # compile libraries from following directories

@@ -19,9 +19,10 @@
 @Desc  : test parse the object's method
 """
 import logging
+from dataclasses import dataclass
+
 import numpy as np
 import pytest
-from dataclasses import dataclass
 
 import mindspore.nn as nn
 from mindspore import context
@@ -29,6 +30,8 @@ from mindspore._extends.parse.standard_method import ms_len
 from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import core
+from mindspore.ops.primitive import constexpr
+from mindspore.ops import functional as F
 from ..ut_filter import non_graph_engine
 
 
@@ -417,3 +420,18 @@ def test_range():
     """ test_range """
     res = range_spec(10, 10)
     return res
+
+def test_expr():
+    """ test const expr """
+    a = (1, 2)
+    @constexpr
+    def tuple_len(x):
+        assert len(x) == 2
+    tuple_len(a)
+
+
+def test_tuple_to_array():
+    """ test range tuple to array """
+    range_x = range(10)
+    res = F.tuple_to_array(range_x)
+    print(res)

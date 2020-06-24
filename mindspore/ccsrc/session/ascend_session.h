@@ -67,8 +67,8 @@ class AscendSession : public SessionBasic {
   void SetActive(GraphId, GraphId) override;
   // compile child graph when session have multiple child graphs
   void CompileChildGraph(const KernelGraphPtr &child_graph);
-  void GetSummaryNodes(const KernelGraph *graph,
-                       std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) override;
+  void RecurseGetSummaryNodes(KernelGraph *graph, std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
+  void GetSummaryNodes(KernelGraph *graph);
 
  private:
   void InitRuntimeResource();
@@ -81,6 +81,7 @@ class AscendSession : public SessionBasic {
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
+  void RunOpMemoryClear(KernelGraph *kernel_graph) const;
   void GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void LoadTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void ExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -101,12 +102,14 @@ class AscendSession : public SessionBasic {
   void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims);
   // split graphs with recurse from root graph
   void SplitGraphs(NotNull<KernelGraphPtr> root_graph);
+  void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);
   void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
   std::vector<AnfNodePtr> ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
                                                 const std::vector<CNodePtr> &list);
   void RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo);
   void RecurseSplitGraph(NotNull<KernelGraphPtr> graph, const NotNull<std::set<KernelGraphPtr> *> memo);
+  AnfNodePtr BindNewCallToNewGraph(NotNull<KernelGraphPtr> graph, const std::vector<CNodePtr> &child_graph_list);
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
@@ -148,6 +151,7 @@ class AscendSession : public SessionBasic {
   AnfNodePtr CreateFakeOutput(GraphId final_graph_id, const AnfNodePtr &true_output);
   // sync intial tensors' data to device
   void SyncInitialTenosrToDevice();
+  void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
 
   // member variables
   // key is final_graph_id,value is child graph execute order of final graph

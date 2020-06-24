@@ -89,11 +89,8 @@ class Primitive : public Named {
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
 
-  void set_hook(const py::function &hook) { hook_ = hook; }
-  py::function hook() const { return hook_; }
-
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
-  std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() { return evaluate_added_attrs_; }
+  const std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
 
   // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
   bool HasAttr() const { return !attrs_.empty(); }
@@ -124,7 +121,6 @@ class Primitive : public Named {
 
  private:
   std::string instance_name_;
-  py::function hook_;
   bool is_base_;
   bool has_signature_;
   PrimType prim_type_;
@@ -145,7 +141,10 @@ struct PrimitiveEqual {
 };
 
 struct PrimitiveHasher {
-  std::size_t operator()(PrimitivePtr const &prim) const { return prim->Hash(); }
+  std::size_t operator()(PrimitivePtr const &prim) const {
+    MS_EXCEPTION_IF_NULL(prim);
+    return prim->Hash();
+  }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_PRIMITIVE_BASE_H_

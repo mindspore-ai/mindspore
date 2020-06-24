@@ -64,35 +64,35 @@ def test_mul():
     diff0 = output0.asnumpy() - expect0
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
 
     output1 = mul(x1, y1)
     expect1 = np.multiply(x1_np, y1_np)
     diff1 = output1.asnumpy() - expect1
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
 
     output2 = mul(x2, y2)
     expect2 = np.multiply(x2_np, y2_np)
     diff2 = output2.asnumpy() - expect2
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
-    assert output2.shape() == expect2.shape
+    assert output2.shape == expect2.shape
 
     output3 = mul(x3, y3)
     expect3 = np.multiply(x3_np, y3_np)
     diff3 = output3.asnumpy() - expect3
     error3 = np.ones(shape=expect3.shape) * 1.0e-5
     assert np.all(diff3 < error3)
-    assert output3.shape() == expect3.shape
+    assert output3.shape == expect3.shape
 
     output4 = mul(x4, y4)
     expect4 = np.multiply(x4_np, y4_np)
     diff4 = output4.asnumpy() - expect4
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
     assert np.all(diff4 < error4)
-    assert output4.shape() == expect4.shape
+    assert output4.shape == expect4.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     mul = NetMul()
@@ -101,32 +101,32 @@ def test_mul():
     diff0 = output0.asnumpy() - expect0
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
 
     output1 = mul(x1, y1)
     expect1 = np.multiply(x1_np, y1_np)
     diff1 = output1.asnumpy() - expect1
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
 
     output2 = mul(x2, y2)
     expect2 = np.multiply(x2_np, y2_np)
     diff2 = output2.asnumpy() - expect2
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
-    assert output2.shape() == expect2.shape
+    assert output2.shape == expect2.shape
 
     output3 = mul(x3, y3)
     expect3 = np.multiply(x3_np, y3_np)
     diff3 = output3.asnumpy() - expect3
     error3 = np.ones(shape=expect3.shape) * 1.0e-5
     assert np.all(diff3 < error3)
-    assert output3.shape() == expect3.shape
+    assert output3.shape == expect3.shape
 
     output4 = mul(x4, y4)
     expect4 = np.multiply(x4_np, y4_np)
     diff4 = output4.asnumpy() - expect4
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
     assert np.all(diff4 < error4)
-    assert output4.shape() == expect4.shape
+    assert output4.shape == expect4.shape

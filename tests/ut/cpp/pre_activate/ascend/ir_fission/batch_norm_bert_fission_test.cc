@@ -80,6 +80,7 @@ TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_no_fission) {
     args_spec_list.push_back(y_abstract);
   }
   auto kg = GetKernelGraph(g, args_spec_list);
+  auto origin_graph = std::make_shared<session::KernelGraph>(*kg);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -87,7 +88,7 @@ TEST_F(TestHWBatchNormBertFission, test_fused_batch_norm_no_fission) {
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
-  EXPECT_TRUE(CheckEqualGraph(kg, new_graph));
+  EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
 }
 }  // namespace opt
 }  // namespace mindspore

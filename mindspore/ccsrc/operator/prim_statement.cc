@@ -110,7 +110,8 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
 
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<AnyValue>()) {
+  // for tensor as condition, keeps both true and false branch.
+  if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
     MS_EXCEPTION_IF_NULL(tb);
     return tb->Join(fb);
   }
@@ -227,6 +228,16 @@ AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr
   // statement: x not in t
   // Inputs: x, t
   return std::make_shared<AbstractScalar>(!IsInDict(primitive, args_spec_list));
+}
+AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
+  // statement: isconstant(x)
+  // Inputs: x
+  if (args_spec_list.size() != 1) {
+    MS_LOG(EXCEPTION) << "IsConstant requires args input size = 1";
+  }
+  ValuePtr v = args_spec_list[0]->BuildValue();
+  return std::make_shared<AbstractScalar>(!v->isa<AnyValue>());
 }
 }  // namespace abstract
 }  // namespace mindspore

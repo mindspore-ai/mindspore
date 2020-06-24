@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <vector>
 #include <utility>
@@ -229,7 +230,12 @@ Status Tensor::CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::arr
   }
   arr.resize({arr.size()});  // flatten the py::array so we can iterate once
   std::vector<std::string> strings;
-  std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::bytes>(s)); });
+
+  if (arr.dtype().kind() == 'U') {
+    std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::str>(s)); });
+  } else {
+    std::for_each(arr.begin(), arr.end(), [&strings](const auto &s) { strings.emplace_back(py::cast<py::bytes>(s)); });
+  }
 
   arr.resize(shape);  // resize arr back to the original shape
 
@@ -303,6 +309,50 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::Byte
                             const TensorShape &shape) {
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *ptr = std::allocate_shared<Tensor>(*alloc, bytes_list, shape);
+  return Status::OK();
+}
+
+Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const std::string &file_path) {
+  std::ifstream fs;
+  fs.open(file_path, std::ios::binary | std::ios::in);
+  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + file_path);
+  int64_t num_bytes = fs.seekg(0, std::ios::end).tellg();
+  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Fail to find size of file");
+  RETURN_IF_NOT_OK(
+    Tensor::CreateTensor(ptr, TensorImpl::kFlexible, TensorShape{num_bytes}, DataType(DataType::DE_UINT8)));
+  int64_t written_bytes = fs.read(reinterpret_cast<char *>((*ptr)->GetMutableBuffer()), num_bytes).gcount();
+  CHECK_FAIL_RETURN_UNEXPECTED(written_bytes == num_bytes && fs.good(), "Error in writing to tensor");
+  fs.close();
+  return Status::OK();
+}
+
+Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::BytesList &bytes_list,
+                            const TensorShape &shape, const DataType &type, dsize_t pad_size) {
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(ptr, TensorImpl::kFlexible, shape, type));
+
+  unsigned char *current_tensor_addr = (*ptr)->GetMutableBuffer();
+  int64_t tensor_bytes_remaining = bytes_list.value_size() * pad_size;
+
+  for (int i = 0; i < bytes_list.value_size(); i++) {
+    // read string data into tensor
+    const std::string &current_element = bytes_list.value(i);
+    int return_code =
+      memcpy_s(current_tensor_addr, tensor_bytes_remaining, common::SafeCStr(current_element), current_element.size());
+
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed when reading bytesList element into Tensor");
+
+    current_tensor_addr += current_element.size();
+    tensor_bytes_remaining -= current_element.size();
+
+    // pad
+    int64_t chars_to_pad = pad_size - current_element.size();
+    return_code = memset_s(current_tensor_addr, tensor_bytes_remaining, static_cast<int>(' '), chars_to_pad);
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed when padding Tensor");
+
+    current_tensor_addr += chars_to_pad;
+    tensor_bytes_remaining -= chars_to_pad;
+  }
+
   return Status::OK();
 }
 
@@ -539,11 +589,13 @@ Status Tensor::StartAddrOfIndex(std::vector<dsize_t> ind, uchar **start_addr_of_
   if (type() == DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("StartAddrOfIndex does not support string tensors yet.");
   }
+
   dsize_t flat_ind;
   std::vector<dsize_t> t_shape = shape().AsVector();
   std::vector<dsize_t> r(t_shape.begin() + ind.size(), t_shape.end());
   *remaining = TensorShape(r);
   ind.resize(this->Rank(), 0);  //  same as -> while (ind.size() < this->Rank()) ind.push_back(0);
+
   RETURN_IF_NOT_OK(shape_.ToFlatIndex(ind, &flat_ind));
   // check if GetBuffer() returns null, we should flag this as an error, this sanity check will only
   // be true is the tensor failed to allocate memory.
@@ -580,6 +632,39 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
       }
     } else {
       RETURN_STATUS_UNEXPECTED("Failed to create memory for Tensor.");
+    }
+  }
+}
+
+Status Tensor::Concatenate(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &tensor) {
+  std::string err_msg;
+  err_msg += (index.size() != 1) ? "[Tensor] only supports 1d concatenation \n" : "";
+  err_msg += (type() == DataType::DE_STRING) ? "[Tensor] Cannot batch tensors of type string\n" : "";
+  err_msg += (!shape().known() || !tensor->shape().known()) ? "[Tensor] unknown shape\n" : "";
+
+  err_msg +=
+    (index.at(0) + tensor->shape().NumOfElements() > this->shape().NumOfElements()) ? "[Tensor] incorrect index\n" : "";
+  err_msg += tensor->type().SizeInBytes() != this->type().SizeInBytes() ? "[Tensor] incorrect datatype\n" : "";
+  uchar *start_addr_of_ind = nullptr;
+
+  TensorShape remaining_shape = tensor->shape();
+  StartAddrOfIndex(index, &start_addr_of_ind, &remaining_shape);
+  err_msg += (start_addr_of_ind == nullptr) ? "Failed to create memory for Tensor.\n" : "";
+
+  if (!err_msg.empty()) {
+    MS_LOG(DEBUG) << "Insert tensor message: " << err_msg;
+
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  } else {
+    int ret_code =
+      memcpy_s(start_addr_of_ind, tensor->SizeInBytes(), tensor->GetMutableBuffer(), tensor->SizeInBytes());
+
+    if (ret_code == 0) {
+      return Status::OK();
+    } else {
+      err_msg += "[Tensor] error in memcpy_s when inserting tensor\n";
+      MS_LOG(DEBUG) << "Tensor message: " << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
 }
@@ -649,7 +734,7 @@ Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {
 Status Tensor::GetItemAt(std::string_view *o, const std::vector<dsize_t> &index) const {
   RETURN_UNEXPECTED_IF_NULL(data_);
   RETURN_UNEXPECTED_IF_NULL(o);
-  CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Type is not DE_STRING");
+  CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Tensor type is not a string");
 
   uchar *start = nullptr;
   offset_t length = 0;
@@ -699,6 +784,8 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   for (; itr != end<std::string_view>(); itr++) {
     max = std::max((*itr).length(), max);
   }
+  // if all strings are empty, numpy stores a byte for each string |S1
+  max = (max == 0 ? 1 : max);
   uint64_t total_size = shape_.NumOfElements() * max;
   char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
   if (tmp_data == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
@@ -708,8 +795,10 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   itr = begin<std::string_view>();
   uint64_t i = 0;
   for (; itr != end<std::string_view>(); itr++, i++) {
-    ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
+    if (!(*itr).empty()) {
+      ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
+    }
   }
   auto strides = shape_.Strides();
   std::transform(strides.begin(), strides.end(), strides.begin(), [&max](const auto &s) { return s * max; });
@@ -846,6 +935,78 @@ Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length
   *string_start = data_ + start;
   *length = offset_ptr[index + 1] - start - 1;  // -1 to skip the \0 from the string length
   return Status::OK();
+}
+Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vector<dsize_t> &index) {
+  CHECK_FAIL_RETURN_UNEXPECTED(src->type() == type_, "Source Tensor has a different type");
+  CHECK_FAIL_RETURN_UNEXPECTED(index.back() == 0, "Last dim in index should be 0");
+
+  uint8_t type_size = type_.SizeInBytes();
+  size_t len = std::min(src->shape()[-1], shape_[-1]) * type_size;
+  dsize_t src_flat_ind = 0, dst_flat_ind = 0;
+  RETURN_IF_NOT_OK(src->shape().ToFlatIndex(index, &src_flat_ind));
+  RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &dst_flat_ind));
+
+  const unsigned char *src_addr = src->GetBuffer() + src_flat_ind * type_size;
+  unsigned char *dst_addr = GetMutableBuffer() + dst_flat_ind * type_size;
+  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
+  return Status::OK();
+}
+Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
+  CHECK_FAIL_RETURN_UNEXPECTED(shape_.Rank() == 1, "Currently Slice work with rank 1 tensors only.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!indices.empty(), "Indices are empty, generated tensor would be empty.");
+  if (type_.IsNumeric()) {
+    return SliceNumeric(out, indices);
+  } else {
+    return SliceString(out, indices);
+  }
+}
+Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
+  RETURN_IF_NOT_OK(
+    CreateTensor(out, TensorImpl::kFlexible, TensorShape({static_cast<dsize_t>(indices.size())}), type_));
+  (*out)->GetMutableBuffer();
+  dsize_t out_index = 0;
+  dsize_t dim_length = shape_[0];
+  dsize_t type_size = type_.SizeInBytes();
+  dsize_t src_start = HandleNeg(indices[0], dim_length);
+  uchar *dst_addr = (*out)->data_;
+  dsize_t count = 1;
+
+  for (dsize_t i = 0; i < indices.size(); i++) {
+    dsize_t cur_index = HandleNeg(indices[i], dim_length);
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      cur_index >= 0 && cur_index < dim_length,
+      "Index " + std::to_string(indices[i]) + " is out of bounds [0," + std::to_string(dim_length) + ")");
+    if (i < indices.size() - 1) {
+      dsize_t next_index = HandleNeg(indices[i + 1], dim_length);
+      if (next_index == cur_index + 1) {
+        count++;
+        continue;
+      }
+    }
+    int return_code = memcpy_s(dst_addr + out_index * type_size, (*out)->SizeInBytes(), data_ + src_start * type_size,
+                               count * type_size);
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed in SliceNumeric");
+    out_index += count;
+    if (i < indices.size() - 1) {
+      src_start = HandleNeg(indices[i + 1], dim_length);  // next index
+    }
+    count = 1;
+  }
+  return Status::OK();
+}
+Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices) {
+  dsize_t dim_length = shape_[0];
+  std::vector<std::string> strings;
+  for (dsize_t index : indices) {
+    dsize_t cur_index = HandleNeg(index, dim_length);
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      cur_index >= 0 && cur_index < dim_length,
+      "Index " + std::to_string(index) + " is out of bounds [0," + std::to_string(dim_length) + ")");
+    std::string_view sv;
+    GetItemAt(&sv, {cur_index});
+    strings.emplace_back(sv);
+  }
+  return CreateTensor(out, strings);
 }
 
 }  // namespace dataset

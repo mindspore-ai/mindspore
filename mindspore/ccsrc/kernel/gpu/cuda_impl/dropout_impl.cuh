@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_DROPOUT_H_
 
 #include "device/gpu/cuda_common.h"
-void DropoutForward(const float *input, float *mask, float *output, size_t num_count, float drop_prob,
+void DropoutForward(const float *input, float *mask, float *output, size_t num_count, float keep_prob,
                     cudaStream_t cuda_stream);
-void DropoutBackward(const float *dy, const float *mask, float *dx, size_t num_count, float drop_prob,
+void DropoutBackward(const float *dy, const float *mask, float *dx, size_t num_count, float keep_prob,
                      cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_DROPOUT_H_

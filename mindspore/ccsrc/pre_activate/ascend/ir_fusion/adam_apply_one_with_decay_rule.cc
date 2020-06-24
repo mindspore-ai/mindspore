@@ -146,7 +146,9 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   if (graph == nullptr || node == nullptr || equiv == nullptr) {
     return nullptr;
   }
-
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   std::vector<AnfNodePtr> inputs = GetFusionNodeInputs(equiv);
   auto fusion_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fusion_node);

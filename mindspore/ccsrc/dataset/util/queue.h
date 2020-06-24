@@ -230,6 +230,8 @@ class QueueList {
 
   std::unique_ptr<Queue<T>> &operator[](const int index) { return queue_list_[index]; }
 
+  const std::unique_ptr<Queue<T>> &operator[](const int index) const { return queue_list_[index]; }
+
   ~QueueList() = default;
 
  private:

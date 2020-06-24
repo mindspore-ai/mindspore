@@ -21,7 +21,7 @@ import mindspore.dataset.transforms.vision.py_transforms as py_vision
 import mindspore.dataset.transforms.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_md5, visualize, config_get_set_seed, \
+from util import save_and_check_md5, visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers
 
 
@@ -57,7 +57,7 @@ def test_random_crop_op_c(plot=False):
         image_cropped.append(image1)
         image.append(image2)
     if plot:
-        visualize(image, image_cropped)
+        visualize_list(image, image_cropped)
 
 def test_random_crop_op_py(plot=False):
     """
@@ -91,7 +91,7 @@ def test_random_crop_op_py(plot=False):
         crop_images.append(crop)
         original_images.append(original)
     if plot:
-        visualize(original_images, crop_images)
+        visualize_list(original_images, crop_images)
 
 def test_random_crop_01_c():
     """
@@ -280,6 +280,7 @@ def test_random_crop_04_py():
         data.create_dict_iterator().get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Crop size" in str(e)
 
 def test_random_crop_05_c():
     """
@@ -533,7 +534,7 @@ def test_random_crop_comp(plot=False):
         image_c_cropped.append(c_image)
         image_py_cropped.append(py_image)
     if plot:
-        visualize(image_c_cropped, image_py_cropped)
+        visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
 
 if __name__ == "__main__":

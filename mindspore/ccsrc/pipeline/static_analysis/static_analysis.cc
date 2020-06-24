@@ -308,6 +308,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
     return evaluator;
   }
+  if (prim->Hash() == prim::kPrimMixedPrecisionCast->Hash() && prim->name() == prim::kPrimMixedPrecisionCast->name()) {
+    evaluator = std::make_shared<MixedPrecisionCastEvaluator>(prim);
+    return evaluator;
+  }
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
@@ -464,6 +468,85 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
   return ExecuteMultipleEvaluators(evaluators, out_conf, args_conf_list);
 }
 
+void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator) {
+  auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
+  if (fg_eval == nullptr) {
+    return;
+  }
+  auto fg = fg_eval->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto undetermined_fgs = fg->recursive_graphs();
+  if (undetermined_fgs) {
+    auto fg_parent = fg->parent();
+    MS_EXCEPTION_IF_NULL(fg_parent);
+    fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
+    MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString();
+  }
+}
+
+EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators,
+                                                   const EvaluatorPtr &eval, const AbstractBasePtrList &args_spec_list,
+                                                   const EvalTraceRevIter &it, bool *continue_flag) {
+  *continue_flag = false;
+  // Find latest entry function to handle nested recursion.
+  EvaluatorPtr latest_entry = eval;
+  auto latest_entry_iter = eval_trace_.rbegin();
+  for (auto r_it = eval_trace_.rbegin(); *r_it != *it;) {
+    auto it_temp = std::find(evaluators.begin(), evaluators.end(), r_it->first);
+    if (it_temp != evaluators.end()) {
+      latest_entry = *it_temp;
+      latest_entry_iter = r_it;
+      break;
+    }
+    latest_entry_iter = ++r_it;
+  }
+  if (latest_entry != eval) {
+    MS_LOG(DEBUG) << "Continue Evaluator " << eval->ToString();
+    *continue_flag = true;
+    return latest_entry;
+  }
+
+  bool has_undetermined = false;
+  // Check whether sub loop has untraced undetermined evaluator.
+  std::set<std::pair<EvaluatorPtr, AbstractBasePtrList>> undetermined_evals;
+  for (auto r_it = eval_trace_.rbegin(); r_it != latest_entry_iter; r_it++) {
+    undetermined_evals.insert(*r_it);
+  }
+  MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
+
+  for (auto u_eval : undetermined_evals) {
+    MS_LOG(DEBUG) << u_eval.first->ToString() << " check undetermined.";
+    if (!undetermined_evals.count(std::make_pair(multi_poss_[u_eval.first], args_spec_list))) {
+      MS_LOG(DEBUG) << u_eval.first->ToString() << " has undetermined.";
+      has_undetermined = true;
+      break;
+    }
+  }
+  if (has_undetermined == false) {
+    MS_LOG(DEBUG) << eval->ToString() << " has no undetermined.";
+    *continue_flag = true;
+    return latest_entry;
+  }
+
+  return latest_entry;
+}
+
+EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_specs) {
+  if (out_specs.size() == 0) {
+    MS_LOG(EXCEPTION) << "There is an endless loop for evaluator.";
+  }
+
+  if (out_specs.size() == 1) {
+    MS_EXCEPTION_IF_NULL(out_specs[0]);
+    // If only one result derived, then broaden it to avoid wrong constant propagation.
+    return std::make_shared<EvalResult>(out_specs[0]->Broaden(), std::make_shared<AttrValueMap>());
+  }
+  auto joined_spec = AbstractJoin(out_specs);
+  MS_EXCEPTION_IF_NULL(joined_spec);
+  MS_LOG(DEBUG) << "Multiple evaluators joined: " << joined_spec->ToString();
+  return std::make_shared<EvalResult>(joined_spec, std::make_shared<AttrValueMap>());
+}
+
 EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators,
                                                         const AnfNodeConfigPtr &out_conf,
                                                         const ConfigPtrList &args_conf_list) {
@@ -479,18 +562,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
                          return conf->GetEvaluatedValue()->abstract();
                        });
   for (auto eval : evaluators) {
-    auto fg_eval = eval->cast<FuncGraphEvaluatorPtr>();
-    if (fg_eval) {
-      auto fg = fg_eval->func_graph();
-      MS_EXCEPTION_IF_NULL(fg);
-      auto undetermined_fgs = fg->recursive_graphs();
-      if (undetermined_fgs) {
-        auto fg_parent = fg->parent();
-        MS_EXCEPTION_IF_NULL(fg_parent);
-        fg_parent->set_flags(kFuncGraphFlagUndetermined, true);
-        MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString();
-      }
-    }
+    SetUndeterminedFlag(eval);
 
     auto current_inf = std::make_pair(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
@@ -510,40 +582,9 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
         multi_poss_.clear();
       }
     } else if (it != eval_trace_.rbegin()) {
-      // Find latest entry function to handle nested recursion.
-      EvaluatorPtr latest_entry = eval;
-      auto latest_entry_iter = eval_trace_.rbegin();
-      for (auto r_it = eval_trace_.rbegin(); *r_it != *it;) {
-        auto it_temp = std::find(evaluators.begin(), evaluators.end(), r_it->first);
-        if (it_temp != evaluators.end()) {
-          latest_entry = *it_temp;
-          latest_entry_iter = r_it;
-          break;
-        }
-        latest_entry_iter = ++r_it;
-      }
-      if (latest_entry != eval) {
-        MS_LOG(DEBUG) << "Continue Evaluator " << eval->ToString();
-        continue;
-      }
-
-      bool has_undetermined = false;
-      // Check whether sub loop has untraced undetermined evaluator.
-      std::set<std::pair<EvaluatorPtr, AbstractBasePtrList>> undetermined_evals;
-      for (auto r_it = eval_trace_.rbegin(); r_it != latest_entry_iter; r_it++) {
-        undetermined_evals.insert(*r_it);
-      }
-      MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
-      for (auto u_eval : undetermined_evals) {
-        MS_LOG(DEBUG) << u_eval.first->ToString() << " check undetermined.";
-        if (!undetermined_evals.count(std::make_pair(multi_poss_[u_eval.first], args_spec_list))) {
-          MS_LOG(DEBUG) << u_eval.first->ToString() << " has undetermined.";
-          has_undetermined = true;
-          break;
-        }
-      }
-      if (has_undetermined == false) {
-        MS_LOG(DEBUG) << eval->ToString() << " has no undetermined.";
+      bool continue_flag = false;
+      auto latest_entry = HandleNestedRecursion(evaluators, eval, args_spec_list, it, &continue_flag);
+      if (continue_flag) {
         continue;
       }
 
@@ -558,19 +599,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
       }
     }
   }
-  if (out_specs.size() == 0) {
-    MS_LOG(EXCEPTION) << "There is an endless loop for evaluator.";
-  }
 
-  if (out_specs.size() == 1) {
-    MS_EXCEPTION_IF_NULL(out_specs[0]);
-    // If only one result derived, then broaden it to avoid wrong constant propagation.
-    return std::make_shared<EvalResult>(out_specs[0]->Broaden(), std::make_shared<AttrValueMap>());
-  }
-  auto joined_spec = AbstractJoin(out_specs);
-  MS_EXCEPTION_IF_NULL(joined_spec);
-  MS_LOG(DEBUG) << "Multiple evaluators joined: " << joined_spec->ToString();
-  return std::make_shared<EvalResult>(joined_spec, std::make_shared<AttrValueMap>());
+  return ProcessEvalResults(out_specs);
 }
 
 EvalResultPtr AnfNodeConfig::GetEvaluatedValue() {

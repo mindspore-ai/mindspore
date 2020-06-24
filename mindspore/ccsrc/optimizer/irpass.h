@@ -35,6 +35,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr arithmetic_simplify_;
   SubstitutionPtr special_op_eliminate_;
   SubstitutionPtr zero_like_fill_zero_;
+  SubstitutionPtr adjust_all_reduce_mul_add_;
 
   //  ops eliminate
   SubstitutionPtr item_tuple_eliminate_;
@@ -47,16 +48,17 @@ class OptimizeIRPassLib {
   SubstitutionPtr same_eliminate_;
   SubstitutionPtr check_bprop_eliminate_;
   SubstitutionPtr reset_defer_inline_;
+  SubstitutionPtr depend_value_elim_;
 
   // Env Item Eliminate
+  SubstitutionPtr env_get_item_eliminate_;
   SubstitutionPtr new_env_get_item_;
-  SubstitutionPtr add_env_get_item_;
-  SubstitutionPtr env_get_set_item_;
   SubstitutionPtr incorporate_env_getitem_;
   SubstitutionPtr incorporate_env_getitem_switch_;
 
   // Ref eliminate
   SubstitutionPtr make_ref_eliminate_;
+  SubstitutionPtr get_ref_param_eliminate_;
   SubstitutionPtr get_make_ref_eliminate_;
   SubstitutionPtr replace_refkey_by_param_;
   SubstitutionPtr replace_old_param_;
@@ -73,7 +75,6 @@ class OptimizeIRPassLib {
 
   // Gradient irpasses
   SubstitutionPtr expand_jprim_;
-  SubstitutionPtr stop_gradient_eliminate_;
   SubstitutionPtr minmaximum_grad_;
 
   // inline
@@ -82,8 +83,8 @@ class OptimizeIRPassLib {
   SubstitutionPtr specialize_transform_;
 
   // Incorporation
-  SubstitutionPtr incorporate_getitem_;
-  SubstitutionPtr incorporate_getitem_switch_;
+  SubstitutionPtr incorporate_getitem_set_;
+  SubstitutionPtr incorporate_getitem_from_param_;
   SubstitutionPtr incorporate_call_;
   SubstitutionPtr incorporate_call_switch_;
 
@@ -92,6 +93,16 @@ class OptimizeIRPassLib {
 
   // Convert
   SubstitutionPtr print_tuple_wrapper_;
+
+  // Unused parameter eliminate
+  SubstitutionPtr unused_parameter_eliminate_;
+  SubstitutionPtr unused_output_eliminate_;
+
+  // AddN eliminate
+  SubstitutionPtr addn_eliminate_;
+
+  // Fusion
+  SubstitutionPtr mark_interface_fusion_;
 };
 
 // the collection of irpass for resolve action
@@ -142,8 +153,22 @@ inline bool IsCNodeGraph(const AnfNodePtr &node) {
   }
 
   auto inp0 = node->cast<CNodePtr>()->input(0);
+  return IsValueNode<FuncGraph>(inp0);
+}
+
+// Check if CNode Input 0 is Func Graph of graph kernel.
+inline bool IsCNodeGraphKernel(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+
+  auto inp0 = node->cast<CNodePtr>()->input(0);
   if (IsValueNode<FuncGraph>(inp0)) {
-    return true;
+    auto fg = GetValueNode<FuncGraphPtr>(inp0);
+    if (fg == nullptr) {
+      return false;
+    }
+    return fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
   }
   return false;
 }
@@ -155,10 +180,7 @@ inline bool IsCNodeDup(const AnfNodePtr &node) {
   }
 
   auto inp0 = node->cast<CNodePtr>()->input(0);
-  if (inp0 != nullptr && inp0->isa<CNode>()) {
-    return true;
-  }
-  return false;
+  return (inp0 != nullptr) && inp0->isa<CNode>();
 }
 }  // namespace irpass
 }  // namespace opt

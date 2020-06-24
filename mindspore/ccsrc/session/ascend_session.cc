@@ -29,6 +29,7 @@
 #include "device/ascend/ascend_kernel_runtime.h"
 #include "device/ascend/ascend_device_address.h"
 #include "pre_activate/ascend/ascend_backend_optimization.h"
+#include "pre_activate/common/common_backend_optimization.h"
 #include "device/kernel_adjust.h"
 #include "device/ascend/ascend_stream_assign.h"
 #include "device/ascend/ascend_label_assign.h"
@@ -37,6 +38,7 @@
 #include "ir/scalar.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/draw.h"
 #include "common/utils.h"
 #include "pre_activate/common/helper.h"
 #include "device/kernel_runtime_manager.h"
@@ -48,7 +50,7 @@ namespace mindspore {
 namespace session {
 const size_t kInvalidIndex = SIZE_MAX;
 namespace {
-void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order) {
+void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::string &tag = "") {
   MS_LOG(INFO) << "Dump execution_order size " << execution_order.size();
   MS_LOG(INFO) << "[index][stream_label][graph_id][node string]";
   int i = 0;
@@ -60,6 +62,24 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order) {
                  << "[" << cnode->DebugString() << "]";
     i++;
   }
+
+  std::stringstream buf;
+  buf << "================== execution order ==================\n";
+  if (!tag.empty()) {
+    buf << tag << "\n";
+  }
+  buf << "execution_order size: " << execution_order.size() << "\n";
+  i = 0;
+  for (auto &cnode : execution_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    buf << i << ":\n";
+    buf << "\t" << cnode->DebugString() << "\n";
+    buf << "\t" << AnfAlgo::GetStreamDistinctionLabel(cnode.get()) << "\n";
+    buf << "\t" << AnfAlgo::GetGraphId(cnode.get()) << "\n";
+    i++;
+  }
+  buf << "================== execution order ==================\n";
+  // std::cout << buf.str() << std::endl;
 }
 
 void DumpGraphInputArgs(const VectorRef &args) {
@@ -104,6 +124,7 @@ std::vector<BaseRef> GetRealArgs(const KernelGraphPtr graph, const VectorRef &ar
         if (abstract->isa<abstract::AbstractTuple>() &&
             !AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
           auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+          MS_EXCEPTION_IF_NULL(tuple_abstract);
           real_args_size += tuple_abstract->size();
           continue;
         }
@@ -129,34 +150,6 @@ std::vector<BaseRef> GetRealArgs(const KernelGraphPtr graph, const VectorRef &ar
                     << " not equal";
   }
   return real_args;
-}
-
-void ClearRunOpMemoryResource(const KernelGraphPtr &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  // clear input parameter memory resource
-  for (const auto &input_node : kernel_graph->inputs()) {
-    MS_EXCEPTION_IF_NULL(input_node);
-    AnfAlgo::SetOutputAddr(nullptr, 0, input_node.get());
-  }
-  // clear input value node memory resource
-  for (const auto &value_node : kernel_graph->graph_value_nodes()) {
-    MS_EXCEPTION_IF_NULL(value_node);
-    AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
-  }
-  for (const auto &cnode : kernel_graph->execution_order()) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    // clear output memory resource
-    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
-      AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
-    }
-    // clear workspace memory resource
-    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    auto workspace_lists = kernel_mod->GetWorkspaceSizeList();
-    for (size_t index = 0; index < workspace_lists.size(); ++index) {
-      AnfAlgo::SetWorkspaceAddr(nullptr, index, cnode.get());
-    }
-  }
 }
 
 std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
@@ -206,39 +199,32 @@ static std::vector<std::vector<CNodePtr>> GetChildList(const std::vector<CNodePt
   return ret;
 }
 
+static void BindCallArgsWithParameter(const std::vector<AnfNodePtr> &parameters, const std::vector<AnfNodePtr> &args,
+                                      KernelGraph *child_graph) {
+  MS_EXCEPTION_IF_NULL(child_graph);
+  MS_LOG(INFO) << "Start bind parameter of child graph:" << child_graph->graph_id();
+  if (args.empty()) {
+    return;
+  }
+  if (parameters.size() != args.size()) {
+    MS_LOG(EXCEPTION) << "Graph:" << child_graph->graph_id() << " parameters size:" << parameters.size()
+                      << " and args size:" << args.size() << " not equal!";
+  }
+  child_graph->SetExecOrderByDefault();
+  for (size_t i = 0; i < parameters.size(); i++) {
+    if (args[i] == parameters[i]) {
+      child_graph->SetRealInput(parameters[i], args[i]);
+      MS_LOG(INFO) << "Parameter and arg are same.";
+      continue;
+    }
+    child_graph->SetRealInput(parameters[i], args[i]);
+  }
+}
+
 // if a call has kernel input, it's a child graph split from ME, so these kernel input should be set into real input of
 // graph.For example, call input = (prim,graph,kernel1,kernel2),then real_input = [kernel1,kernel2]
 static void UpdateRealInput(NotNull<KernelGraphPtr> graph) {
   auto call_nodes = graph->FindNodeByPrimitive(prim::kPrimCall);
-  auto bind_call_arg_with_parameter = [&](const std::vector<AnfNodePtr> &parameters,
-                                          const std::vector<AnfNodePtr> &args, KernelGraph *child_graph) -> void {
-    MS_EXCEPTION_IF_NULL(child_graph);
-    MS_LOG(INFO) << "start bind parameter of child graph:" << child_graph->graph_id();
-    if (args.empty()) {
-      return;
-    }
-    if (parameters.size() != args.size()) {
-      MS_LOG(EXCEPTION) << "graph:" << child_graph->graph_id() << " parameters size:" << parameters.size()
-                        << " and args size:" << args.size() << " not equal!";
-    }
-    child_graph->SetExecOrderByDefault();
-    for (size_t i = 0; i < parameters.size(); i++) {
-      if (args[i] == parameters[i]) {
-        child_graph->SetRealInput(parameters[i], args[i]);
-        MS_LOG(INFO) << "Parameter and arg are same";
-        continue;
-      }
-      // if arg is a parameter ,then reuse this parameter
-      if (args[i]->isa<Parameter>()) {
-        MS_LOG(INFO) << "Parameter:" << parameters[i]->DebugString() << " of graph:" << child_graph->graph_id()
-                     << " reuse parameter:" << args[i]->DebugString()
-                     << " of graph:" << AnfAlgo::GetGraphId(args[i].get());
-        child_graph->ReplaceNode(parameters[i], args[i]);
-        continue;
-      }
-      child_graph->SetRealInput(parameters[i], args[i]);
-    }
-  };
   for (auto &call_node : call_nodes) {
     MS_EXCEPTION_IF_NULL(call_node);
     auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(call_node);
@@ -247,7 +233,7 @@ static void UpdateRealInput(NotNull<KernelGraphPtr> graph) {
       std::vector<AnfNodePtr> real_args =
         std::vector<AnfNodePtr>(call_node->inputs().begin() + 2, call_node->inputs().end());
       std::vector<AnfNodePtr> child_inputs = child_graphs[0]->inputs();
-      bind_call_arg_with_parameter(child_inputs, real_args, child_graphs[0].get());
+      BindCallArgsWithParameter(child_inputs, real_args, child_graphs[0].get());
       call_node->set_inputs(std::vector<AnfNodePtr>(call_node->inputs().begin(), call_node->inputs().begin() + 2));
     } else if (child_graphs.size() == 2) {
       auto get_partial_args = [&](size_t input_index) -> std::vector<AnfNodePtr> {
@@ -264,8 +250,8 @@ static void UpdateRealInput(NotNull<KernelGraphPtr> graph) {
           std::vector<AnfNodePtr>(partial_cnode->inputs().begin(), partial_cnode->inputs().begin() + 2));
         return ret;
       };
-      bind_call_arg_with_parameter(child_graphs[0]->inputs(), get_partial_args(2), child_graphs[0].get());
-      bind_call_arg_with_parameter(child_graphs[1]->inputs(), get_partial_args(3), child_graphs[1].get());
+      BindCallArgsWithParameter(child_graphs[0]->inputs(), get_partial_args(2), child_graphs[0].get());
+      BindCallArgsWithParameter(child_graphs[1]->inputs(), get_partial_args(3), child_graphs[1].get());
     }
   }
 }
@@ -273,7 +259,7 @@ static void UpdateRealInput(NotNull<KernelGraphPtr> graph) {
 static void RecurseToUpdateCallRealInput(NotNull<KernelGraphPtr> graph,
                                          const NotNull<std::set<KernelGraphPtr> *> memo) {
   memo->insert(graph.get());
-  MS_LOG(INFO) << "start graph id:" << graph->graph_id();
+  MS_LOG(INFO) << "Start graph id:" << graph->graph_id();
   for (auto &child_graph : graph->child_graph_order()) {
     if (memo->find(child_graph) != memo->end()) {
       MS_LOG(INFO) << "Child graph:" << child_graph->graph_id()
@@ -298,35 +284,55 @@ GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrL
 
 GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "start";
-  auto graph = ConstructKernelGraph(func_graph);
+  std::vector<KernelGraphPtr> all_graphs;
+  auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
+  BackendOptimization(all_graphs);
   // split switch
-  SplitGraphs(NOT_NULL(graph));
+  SplitGraphs(NOT_NULL(root_graph));
   // insert goto labels and label_sets
-  LinkChildGraphs(NOT_NULL(graph));
+  LinkChildGraphs(NOT_NULL(root_graph));
   // resource initialize
   InitRuntimeResource();
   // assign label
-  AssignLabel(NOT_NULL(graph));
-  // recurse compile child graph
+  AssignLabel(NOT_NULL(root_graph));
+  // recurse compile child root_graph
   std::set<KernelGraphPtr> memo;
-  RecurseCompileGraph(NOT_NULL(graph), NOT_NULL(&memo));
-  // root graph valiate,include genearte execute order and so on
-  RootGraphExecutorValidate(NOT_NULL(graph));
+  RecurseCompileGraph(NOT_NULL(root_graph), NOT_NULL(&memo));
+  // root root_graph valiate,include genearte execute order and so on
+  RootGraphExecutorValidate(NOT_NULL(root_graph));
   // adjust kernel
-  AdjustKernel(graph);
+  AdjustKernel(root_graph);
   // assign stream
-  AssignStream(graph);
+  AssignStream(root_graph);
+  // insert profiling point
+  device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
   // build kernel
-  BuildKernel(graph);
+  BuildKernel(root_graph);
   // alloc mem
-  MemoryAlloc(graph.get());
+  MemoryAlloc(root_graph.get());
   // task generate
-  GenerateTaskInfo(graph);
+  GenerateTaskInfo(root_graph);
   // load task into device
-  LoadTask(graph);
-  // return the graph id to backend
-  auto graph_id = graph->graph_id();
+  LoadTask(root_graph);
+  // return the root_graph id to backend
+  auto graph_id = root_graph->graph_id();
   return graph_id;
+}
+
+void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto graph_order = GetGraphOrder(kernel_graph->graph_id());
+  for (auto graph_id : graph_order) {
+    auto child_graph = GetGraph(graph_id);
+    if (child_graph == nullptr) {
+      continue;
+    }
+    if (child_graph->summary_node_exist()) {
+      kernel_graph->set_summary_node_exist(true);
+      return;
+    }
+  }
+  kernel_graph->set_summary_node_exist(false);
 }
 
 void AscendSession::BuildGraph(GraphId graph_id) {
@@ -344,6 +350,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
     InsertAllAssigns();
     // insert switch and active to child graph
     MergeSwitchCompile();
+    SetFinalGraphSummaryFlag(graph);
     // OptChildGraphs
     auto graph_order = GetGraphOrder(final_graph_id_);
     auto &graph_type = GetGraphOrderType(final_graph_id_);
@@ -355,6 +362,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
       auto child_graph = GetGraph(graph_order[i]);
       CompileChildGraph(child_graph);
     }
+    GetSummaryNodes(graph.get());
     // merge child graph
     MergeGraphExecOrder();
   } else {
@@ -394,8 +402,28 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   MS_EXCEPTION_IF_NULL(child_graph);
   MS_LOG(INFO) << "CompileChildGraph " << child_graph->ToString();
   opt::AscendBackendIRFusionOptimization(child_graph);
+  opt::AscendBackendFuseBasicOpt(child_graph, true);
+  opt::AscendBackendGraphKernelOpt(child_graph, true);
+  child_graph->SetExecOrderByDefault();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path =
+      save_graphs_path + "/" + "select_kernel_before" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
+    DumpIR(file_path, child_graph);
+  }
   // select kernel build info
   SelectKernel(*child_graph);
+  if (save_graphs) {
+    std::string file_path =
+      save_graphs_path + "/" + "select_kernel_after" + "_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
+    DumpIR(file_path, child_graph);
+  }
   // convert kernel Graph to model
   predictmodel::StepConvertGraph(child_graph);
   // optimize graph
@@ -411,7 +439,6 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
                              VectorRef *const outputs) {
   MS_LOG(INFO) << "start";
   auto kernel_graph = GetGraph(graph_id);
-  DumpIR("./run_graph.ir", kernel_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // if none of child graph and no anf output exists
   if (!kernel_graph->executable()) {
@@ -512,7 +539,7 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
   }
   py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
   py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
-  ClearRunOpMemoryResource(graph);
+  RunOpMemoryClear(graph.get());
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
   return tuple_tensors;
 }
@@ -531,13 +558,17 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
     }
     MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();
   }
-  if (raise_precision_count > 0) {
-    MS_LOG(WARNING) << "There has " << raise_precision_count
-                    << " node/nodes used raise precision to selected the kernel!";
-  }
-  if (reduce_precision_count > 0) {
-    MS_LOG(WARNING) << "There has " << reduce_precision_count
-                    << " node/nodes used reduce precision to selected the kernel!";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->execution_mode() == kGraphMode) {
+    if (raise_precision_count > 0) {
+      MS_LOG(WARNING) << "There has " << raise_precision_count
+                      << " node/nodes used raise precision to selected the kernel!";
+    }
+    if (reduce_precision_count > 0) {
+      MS_LOG(WARNING) << "There has " << reduce_precision_count
+                      << " node/nodes used reduce precision to selected the kernel!";
+    }
   }
   MS_LOG(INFO) << "Finish!";
 }
@@ -553,8 +584,12 @@ void AscendSession::InitRuntimeResource() {
 }
 
 void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  device::ascend::KernelPreBuild(kernel_graph.get());
   MS_LOG(INFO) << "HardwareOptimize start!";
   opt::AscendBackendOptimization(kernel_graph);
+  opt::AscendGraphKernelCommonProcess(kernel_graph);
+  opt::AscendBackendFuseBasicOpt(kernel_graph, false);
+  opt::AscendBackendAddAtomicClean(kernel_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   MS_LOG(INFO) << "HardwareOptimize Finish!";
@@ -562,7 +597,6 @@ void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_
 
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  device::KernelAdjust::GetInstance().Reorder(kernel_graph);
   opt::HideNopNode(kernel_graph.get());
   // Insert CLearZero op
   // prepare for next step from json get atomic info
@@ -595,7 +629,7 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
 
 void AscendSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  device::ascend::AscendStreamAssign::GetInstance().AssignStreamNew(kernel_graph);
+  device::ascend::AscendStreamAssign::GetInstance().AssignStream(kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -640,6 +674,13 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
   MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::RunOpMemoryClear(KernelGraph *kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->RunOpClearMemory(kernel_graph);
 }
 
 void AscendSession::GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -698,14 +739,15 @@ void AscendSession::ExportChildGraphs(const GraphId graph_id) {
     save_graphs_path = ".";
   }
   if (graph_id == final_graph_id_) {
-    auto &graph_order = GetGraphOrder(final_graph_id_);
-    auto &graph_type = GetGraphOrderType(final_graph_id_);
+    const auto &graph_order = GetGraphOrder(final_graph_id_);
+    const auto &graph_type = GetGraphOrderType(final_graph_id_);
     for (size_t i = 0; i < graph_order.size(); i++) {
       if (graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START) {
         continue;
       }
-      auto child_graph = GetGraph(graph_order[i]);
+      const auto child_graph = GetGraph(graph_order[i]);
       MS_LOG(DEBUG) << "Start export child graph " << graph_order[i];
+      MS_EXCEPTION_IF_NULL(child_graph);
       std::string file_path = save_graphs_path + "/graph_build_" + std::to_string(child_graph->graph_id()) + ".ir";
       DumpIR(file_path, child_graph, true);
       DumpIRProto(child_graph, "vm_build_" + std::to_string(child_graph->graph_id()));
@@ -755,29 +797,47 @@ GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {
   return final_graph_id_;
 }
 
-void AscendSession::GetSummaryNodes(const KernelGraph *graph,
-                                    std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) {
-  MS_LOG(DEBUG) << "Update summary Start";
+void AscendSession::RecurseGetSummaryNodes(KernelGraph *graph,
+                                           std::map<std::string, std::pair<AnfNodePtr, int>> *summary) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(summary);
-  summary->clear();
   // if final graph have no child graph
   auto graph_order_iter = graph_execute_orders_.find(graph->graph_id());
   if (graph_order_iter == graph_execute_orders_.end()) {
-    SessionBasic::GetSummaryNodes(graph, summary);
+    SessionBasic::GetSummaryNodes(graph);
+    auto summary_nodes = graph->summary_nodes();
+    (*summary).insert(summary_nodes.begin(), summary_nodes.end());
     return;
   }
   // for every child graph, find summary nodes
   auto graph_order = GetGraphOrder(graph->graph_id());
   for (size_t i = 0; i < graph_order.size(); i++) {
     auto child_graph = GetGraph(graph_order[i]);
-    SessionBasic::GetSummaryNodes(child_graph.get(), summary);
+    if (child_graph == nullptr) {
+      continue;
+    }
+    SessionBasic::GetSummaryNodes(child_graph.get());
+    auto child_graph_summary = child_graph->summary_nodes();
+    (*summary).insert(child_graph_summary.begin(), child_graph_summary.end());
+    RecurseGetSummaryNodes(child_graph.get(), summary);
   }
-  MS_LOG(DEBUG) << "Update summary end size: " << (*summary).size();
+  graph->set_summary_nodes(*summary);
+}
+
+void AscendSession::GetSummaryNodes(KernelGraph *graph) {
+  MS_LOG(DEBUG) << "Update summary Start";
+  MS_EXCEPTION_IF_NULL(graph);
+  auto summary_nodes = graph->summary_nodes();
+  std::map<std::string, std::pair<AnfNodePtr, int>> summary;
+  summary.insert(summary_nodes.begin(), summary_nodes.end());
+  RecurseGetSummaryNodes(graph, &summary);
+  graph->set_summary_nodes(summary);
+  MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
 
 AnfNodePtr AscendSession::CreateFakeOutput(GraphId fake_graph_id, const AnfNodePtr &true_output) {
   auto fake_graph = GetGraph(fake_graph_id);
+  MS_EXCEPTION_IF_NULL(fake_graph);
   auto output_item_with_index = AnfAlgo::VisitKernelWithReturnType(true_output, 0);
   auto create_parameter = [&](const AbstractBasePtr &abstract) -> AnfNodePtr {
     auto parameter = fake_graph->NewParameter();
@@ -798,7 +858,7 @@ AnfNodePtr AscendSession::CreateFakeOutput(GraphId fake_graph_id, const AnfNodeP
     if (abstract->isa<abstract::AbstractTuple>()) {
       auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(tuple_abstract);
-      MS_LOG(INFO) << "tuple_size [" << tuple_abstract->size() << "]";
+      MS_LOG(INFO) << "Tuple size [" << tuple_abstract->size() << "]";
       return create_parameter((*tuple_abstract)[output_idx]);
     }
     return create_parameter(cnode->abstract());
@@ -990,6 +1050,7 @@ void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, 
   if (false_graph_id != kInvalidGraphId) {
     // false graph and condition in graph same stream
     auto condition_graph = GetGraph(cond_graph_id);
+    MS_EXCEPTION_IF_NULL(condition_graph);
     SetStreamDistinctionLabel(GetGraph(false_graph_id), condition_graph->stream_distinction_label(), true);
     // if false graph is a condition graph and has been switch compiled before,it's false should be updated again
     auto cond_it = switches_.find(false_graph_id);
@@ -997,6 +1058,9 @@ void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, 
       cond_graph_id = cond_it->first;
       false_graph_id = cond_it->second.second;
       condition_graph = GetGraph(cond_graph_id);
+      if (condition_graph == nullptr) {
+        continue;
+      }
       SetStreamDistinctionLabel(GetGraph(false_graph_id), condition_graph->stream_distinction_label(), true);
       cond_it = switches_.find(false_graph_id);
     }
@@ -1133,7 +1197,7 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, GraphId 
     MS_EXCEPTION_IF_NULL(backend_arg);
     MS_LOG(INFO) << "Reuse node [" << backend_arg->DebugString() << "], old node[" << backend_parameter->DebugString()
                  << "] will be replaced.";
-    to_graph->ReplaceNode(backend_parameter, backend_arg);
+    to_graph->ReplaceNode(NOT_NULL(backend_parameter), NOT_NULL(backend_arg));
     return;
   }
   MS_LOG(INFO) << "Assign of node" << backend_arg->DebugString() << " of graph " << from_graph_id << " to node"
@@ -1429,22 +1493,44 @@ void AscendSession::SyncInitialTenosrToDevice() {
   }
 }
 
-std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
-                                                             const std::vector<CNodePtr> &list) {
-  MS_EXCEPTION_IF_NULL(new_kernel_graph);
-  MS_LOG(INFO) << "start contruct splited kernel graph:" << new_kernel_graph->graph_id();
+static void ConstructSplitedGraphOutput(const KernelGraphPtr &new_kernel_graph, const std::vector<CNodePtr> &list) {
   // count the output of every anf node
   std::set<AnfNodePtr> has_output_nodes;
   for (auto &anf_node : list) {
+    MS_EXCEPTION_IF_NULL(anf_node);
     for (auto &input : anf_node->inputs()) {
       (void)has_output_nodes.insert(input);
     }
   }
+
+  auto make_tuple_primitve = NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()));
+  std::vector<AnfNodePtr> make_tuple_inputs = {make_tuple_primitve};
+  int output_idx = 0;
+  MS_EXCEPTION_IF_NULL(new_kernel_graph);
+  for (auto &anf_node : list) {
+    if (AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimReturn)) {
+      new_kernel_graph->set_return(anf_node);
+    }
+    if (has_output_nodes.find(anf_node) == has_output_nodes.end()) {
+      MS_LOG(INFO) << "Output[" << output_idx++ << "]:" << anf_node->DebugString();
+      make_tuple_inputs.push_back(anf_node);
+    }
+  }
+  if (new_kernel_graph->get_return() == nullptr) {
+    new_kernel_graph->set_output(new_kernel_graph->NewCNode(make_tuple_inputs));
+  }
+}
+
+std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
+                                                             const std::vector<CNodePtr> &list) {
+  MS_EXCEPTION_IF_NULL(new_kernel_graph);
+  MS_LOG(INFO) << "start contruct splited kernel graph:" << new_kernel_graph->graph_id();
   MS_LOG(INFO) << "Construct input of kernel graph:" << new_kernel_graph->graph_id();
   std::vector<AnfNodePtr> call_node_inputs;
   std::vector<AnfNodePtr> new_graph_inputs;
   // create new parameter from cnode
   for (auto &anf_node : list) {
+    MS_EXCEPTION_IF_NULL(anf_node);
     auto cnode = anf_node->cast<CNodePtr>();
     for (size_t input_idx = 1; input_idx < cnode->inputs().size(); input_idx++) {
       auto input = cnode->inputs()[input_idx];
@@ -1479,24 +1565,19 @@ std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPt
   MS_EXCEPTION_IF_NULL(graph_inputs);
   graph_inputs->clear();
   std::copy(new_graph_inputs.begin(), new_graph_inputs.end(), std::back_inserter(*graph_inputs));
+
   MS_LOG(INFO) << "Construct output of kernel graph:" << new_kernel_graph->graph_id();
-  auto make_tuple_primitve = NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()));
-  std::vector<AnfNodePtr> make_tuple_inputs = {make_tuple_primitve};
-  int output_idx = 0;
-  for (auto &anf_node : list) {
-    if (AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimReturn)) {
-      new_kernel_graph->set_return(anf_node);
-    }
-    if (has_output_nodes.find(anf_node) == has_output_nodes.end()) {
-      MS_LOG(INFO) << "output[" << output_idx++ << "]:" << anf_node->DebugString();
-      make_tuple_inputs.push_back(anf_node);
-    }
-  }
-  if (new_kernel_graph->get_return() == nullptr) {
-    new_kernel_graph->set_output(new_kernel_graph->NewCNode(make_tuple_inputs));
-  }
+  ConstructSplitedGraphOutput(new_kernel_graph, list);
   MS_LOG(INFO) << "end";
   return call_node_inputs;
+}
+
+void AscendSession::BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs) {
+  MS_LOG(INFO) << "Start BackendCommonOptimization";
+  for (auto &graph : all_graphs) {
+    opt::BackendCommonOptimization(graph);
+  }
+  MS_LOG(INFO) << "End.";
 }
 
 void AscendSession::SplitGraphs(NotNull<KernelGraphPtr> root_graph) {
@@ -1512,43 +1593,50 @@ void AscendSession::SplitGraphs(NotNull<KernelGraphPtr> root_graph) {
     RecurseSplitGraph(root_graph, NOT_NULL(&memo));
   }
   memo.clear();
+  // add maketuple to the end of the last child graph to suit old process
+  auto output_graph = root_graph->child_graph_order().empty() ? root_graph : root_graph->child_graph_order().back();
+  auto make_tuple = output_graph->NewCNode(
+    {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), output_graph->output()});
+  output_graph->set_output(make_tuple);
   // replace the real input if the real input is a call
   RecurseToUpdateCallRealInput(root_graph, NOT_NULL(&memo));
 }
 
+AnfNodePtr AscendSession::BindNewCallToNewGraph(NotNull<KernelGraphPtr> graph,
+                                                const std::vector<CNodePtr> &child_graph_list) {
+  // if child graph list only has a call ,then return the exist call
+  if (child_graph_list.size() == 1 && AnfAlgo::CheckPrimitiveType(child_graph_list[0], prim::kPrimCall)) {
+    return child_graph_list[0];
+  }
+  // create new child graph
+  auto child_graph = NewKernelGraph();
+  MS_EXCEPTION_IF_NULL(child_graph);
+  // create new value node to bind child graph
+  auto graph_value_node = graph->NewValueNode(NewValueNode(child_graph));
+  std::vector<AnfNodePtr> new_call_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())),
+                                            graph_value_node};
+  // set the graph id of all node of child graph
+  for (auto &child_graph_node : child_graph_list) {
+    AnfAlgo::SetGraphId(child_graph->graph_id(), child_graph_node.get());
+  }
+  auto call_node_args = ConstructSplitedGraph(child_graph, child_graph_list);
+  std::copy(call_node_args.begin(), call_node_args.end(), std::back_inserter(new_call_input));
+  auto new_call = graph->NewCNode(new_call_input);
+  AnfAlgo::SetNodeAttr("graph_id", MakeValue(graph->graph_id()), new_call);
+  return new_call;
+}
+
 void AscendSession::SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims) {
-  MS_LOG(INFO) << "start,graph_id:" << graph->graph_id();
+  MS_LOG(INFO) << "Start,graph_id:" << graph->graph_id();
   auto apply_list = GetCNodes(TopoSort(graph->get_return()));
   // update the root graph child graph order
   AscendControlParser::UpdateChildGraphOrder(graph);
   // get child list from current graph
   std::vector<std::vector<CNodePtr>> child_graph_lists = GetChildList(apply_list, cut_prims);
-  auto bind_new_call_to_new_graph = [&](std::vector<CNodePtr> child_graph_list) -> AnfNodePtr {
-    // if child graph list only has a call ,then return the exist call
-    if (child_graph_list.size() == 1 && AnfAlgo::CheckPrimitiveType(child_graph_list[0], prim::kPrimCall)) {
-      return child_graph_list[0];
-    }
-    // create new child graph
-    auto child_graph = NewKernelGraph();
-    MS_EXCEPTION_IF_NULL(child_graph);
-    // create new value node to bind child graph
-    auto graph_value_node = graph->NewValueNode(NewValueNode(child_graph));
-    std::vector<AnfNodePtr> new_call_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())),
-                                              graph_value_node};
-    // set the graph id of all node of child graph
-    for (auto &child_graph_node : child_graph_list) {
-      AnfAlgo::SetGraphId(child_graph->graph_id(), child_graph_node.get());
-    }
-    auto call_node_args = ConstructSplitedGraph(child_graph, child_graph_list);
-    std::copy(call_node_args.begin(), call_node_args.end(), std::back_inserter(new_call_input));
-    auto new_call = graph->NewCNode(new_call_input);
-    AnfAlgo::SetNodeAttr("graph id", MakeValue(graph->graph_id()), new_call);
-    return new_call;
-  };
   if (child_graph_lists.size() > 1) {
     std::list<AnfNodePtr> depend_input = {};
     for (size_t call_index = 0; call_index < child_graph_lists.size(); call_index++) {
-      auto call_node = bind_new_call_to_new_graph(child_graph_lists[call_index]);
+      auto call_node = BindNewCallToNewGraph(graph, child_graph_lists[call_index]);
       MS_EXCEPTION_IF_NULL(call_node);
       // if call node is the last call of true graph,no need create child graph after that
       auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(call_node->cast<CNodePtr>());
@@ -1605,6 +1693,5 @@ void AscendSession::RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const Not
     RecurseCompileGraph(NOT_NULL(child_graph), memo);
   }
 }
-
 }  // namespace session
 }  // namespace mindspore

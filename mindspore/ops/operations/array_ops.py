@@ -28,12 +28,14 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
+from ...common.parameter import Parameter
 from ..operations.math_ops import _infer_shape_reduce
 from .._utils import get_concat_offset
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register, _run_op
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
+from ..._c_expression import typing
 
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):
     validator.check_value_type('keep_dims', keep_dims, [bool], prim_name)
@@ -81,12 +83,17 @@ class ExpandDims(PrimitiveWithInfer):
         axis_v = axis['value']
         rank = len(x_shape)
         validator.check_int_range('axis', axis_v, -rank - 1, rank, Rel.INC_BOTH, self.name)
+        value = None
+        if x['value'] is not None:
+            value = x['value'].asnumpy()
+            value = np.expand_dims(value, axis_v)
+            value = Tensor(value)
         if axis_v < 0:
             axis_v = rank + 1 + axis_v
         x_shape.insert(axis_v, 1)
         out = {'shape': x_shape,
                'dtype': x['dtype'],
-               'value': None}
+               'value': value}
         return out
 
 
@@ -122,7 +129,8 @@ class SameTypeShape(PrimitiveWithInfer):
     Checks whether data type and shape of two tensors are the same.
 
     Raises:
-        ValueError: If not the same.
+        TypeError: If data type not the same.
+        ValueError: If shape of two tensors not the same.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -144,10 +152,10 @@ class SameTypeShape(PrimitiveWithInfer):
 
     def __call__(self, x, y):
         """run in PyNative mode"""
-        validator.check_subclass('x', x.dtype(), mstype.tensor, self.name)
-        validator.check_subclass('y', y.dtype(), mstype.tensor, self.name)
-        validator.check('x dtype', x.dtype(), 'y dtype', y.dtype(), Rel.EQ, self.name, TypeError)
-        validator.check('x shape', x.shape(), 'y shape', y.shape(), Rel.EQ, self.name)
+        validator.check_value_type('x', x, Tensor, self.name)
+        validator.check_value_type('y', y, Tensor, self.name)
+        validator.check('x dtype', x.dtype, 'y dtype', y.dtype, Rel.EQ, self.name, TypeError)
+        validator.check('x shape', x.shape, 'y shape', y.shape, Rel.EQ, self.name)
         return x
 
     def __infer__(self, x, y):
@@ -183,6 +191,18 @@ class Cast(PrimitiveWithInfer):
         # if primitive need setattr in __infer__ need add this flag
         """init Cast"""
         self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
+
+    def check_elim(self, x, dtype):
+        if  isinstance(x, (Tensor, numbers.Number, Parameter)):
+            if isinstance(x, Tensor) and x.dtype == dtype:
+                return (True, x)
+            if isinstance(x, numbers.Number):
+                return (True, Tensor(x, dtype=dtype))
+            if isinstance(x, Parameter):
+                data = x.default_input
+                if data.dtype == dtype:
+                    return (True, x)
+        return (False, None)
 
     def __infer__(self, x, t):
         src_type = x['dtype']
@@ -490,7 +510,7 @@ class GatherV2(PrimitiveWithInfer):
           The original Tensor.
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Must be in the range
-          `[0, input_param.shape()[axis])`.
+          `[0, input_param.shape[axis])`.
         - **axis** (int) - Specifies the dimension index to gather indices.
 
     Outputs:
@@ -525,99 +545,27 @@ class GatherV2(PrimitiveWithInfer):
         return out
 
 
-class Range(PrimitiveWithInfer):
-    r"""
-    Creates a sequence of numbers.
-    Set `input_x` as :math:`x_i` for each element, `output` as follows:
-
-    .. math::
-        \text{output}(x_i) = x_i * \text{delta} + \text{start}
-
-    Args:
-        start (float): If `limit` is `None`, the value acts as limit in the range and first entry
-            defaults to `0`. Otherwise, it acts as first entry in the range.
-        limit (float): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`.
-        delta (float): Increment of the range. Default: 1.0.
+class SparseGatherV2(GatherV2):
+    """
+    Returns a slice of input tensor based on the specified indices and axis.
 
     Inputs:
-        - **input_x** (Tensor) - The assistant data. A `1-D` tensor of type float32 or int32.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `input_x`.
-
-    Examples:
-        >>> range = P.Range(1.0, 8.0, 2.0)
-        >>> x = Tensor(np.array([1, 2, 3, 2]), mindspore.int32)
-        >>> range(x)
-        [3, 5, 7, 5]
-    """
-
-    @prim_attr_register
-    def __init__(self, start, limit=None, delta=1.0):
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        self.delta = validator.check_value_type("delta", delta, [float], self.name)
-        validator.check_value_type("start", start, [float], self.name)
-        if limit is None:
-            self.start = 0.0
-            self.limit = start
-            self.add_prim_attr("start", self.start)
-            self.add_prim_attr("limit", self.limit)
-        else:
-            validator.check_value_type("limit", limit, [float], self.name)
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.float32, mstype.int32], self.name)
-        return x_dtype
-
-
-class EmbeddingLookup(PrimitiveWithInfer):
-    """
-    Returns a slice of input tensor based on the specified indices and axis. This Primitive has the similar
-    functionality as GatherV2, but has one more inputs: `offset`.
-    This primitive runs on the acipu devices.
-
-    Inputs:
-        - **params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The Tensor slice, instead of the entire Tensor.
-        - **indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. Values can be out of range of `params`,
-          and the exceeding part will be filled with 0 in the output.
-          The indices to do lookup operation whose data type should be mindspore.int32 or mindspore.int64.
-        - **offset** (int) - Specifies the offset value of this `params` slice. Thus the real indices
-          are equal to `indices` minus `offset`.
-
+        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The original Tensor.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Must be in the range
+          `[0, input_param.shape[axis])`.
+        - **axis** (int) - Specifies the dimension index to gather indices.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
     Examples:
-        >>> params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
-        >>> indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
-        >>> offset = 4
-        >>> out = P.EmbeddingLookup()(params, indices, offset)
-        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
+        >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
+        >>> axis = 1
+        >>> out = P.GatherV2()(input_params, input_indices, axis)
     """
-    @prim_attr_register
-    def __init__(self):
-        """init index_select"""
-        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
-                                outputs=['output'])
-
-    def __infer__(self, params, indices, offset):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        valid_types = (mstype.int32, mstype.int64)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, valid_types, self.name)
-        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
-        params_shp = params['shape']
-        out_shape = indices['shape'] + params_shp[1:]
-        out = {'shape': out_shape,
-               'dtype': params['dtype'],
-               'value': None}
-        return out
 
 
 class Split(PrimitiveWithInfer):
@@ -629,7 +577,7 @@ class Split(PrimitiveWithInfer):
         output_num (int): The number of output tensors. Default: 1.
 
     Raises:
-        ValueError: If axis is out of the range [-len(input_x.shape()), len(input_x.shape())),
+        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)),
             or if the output_num is less than or equal to 0, or if the
             dimension which to split cannot be evenly divided by output_num.
 
@@ -919,8 +867,15 @@ class TupleToArray(PrimitiveWithInfer):
             ret = np.array(x, np.int32)
         else:
             ret = np.array(x, np.float32)
-
         return Tensor(ret)
+
+    def __call__(self, x):
+        args = list()
+        if isinstance(x, range):
+            args.append(tuple(x))
+        else:
+            args.append(x)
+        return _run_op(self, self.name, args)
 
 
 class ScalarToArray(PrimitiveWithInfer):
@@ -1000,7 +955,7 @@ class InvertPermutation(PrimitiveWithInfer):
         - **input_x** (Union(tuple[int], Tensor[int])) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
-          If the input is Tensor, it must be 1-d and the dtype is int.
+          If the input is Tensor, it must be 1-d and the dtype is int. Only constant value is allowed.
 
 
     Outputs:
@@ -1020,6 +975,8 @@ class InvertPermutation(PrimitiveWithInfer):
     def __infer__(self, x):
         x_shp = x['shape']
         x_value = x['value']
+        if x_value is None:
+            raise ValueError(f'For \'{self.name}\' the input value must be const.')
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
         if mstype.issubclass_(x['dtype'], mstype.tensor):
             validator.check('x dimension', len(x_shp), '', 1, Rel.EQ, self.name)
@@ -1027,6 +984,12 @@ class InvertPermutation(PrimitiveWithInfer):
             x_value = [int(i) for i in x_value.asnumpy()]
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
+
+        for i in range(1, len(z)):
+            if z[i-1] == z[i]:
+                raise ValueError(f"For {self.name}, {z[i]} is duplicated in the input.")
+        validator.check(f'value min', min(x_value), '', 0, Rel.EQ, self.name)
+        validator.check(f'value max', max(x_value), '', len(x_value)-1, Rel.EQ, self.name)
 
         y = [None] * len(x_value)
         for i, value in enumerate(x_value):
@@ -1273,14 +1236,20 @@ class Tile(PrimitiveWithInfer):
         """init Tile"""
         self.init_prim_io_names(inputs=['x', 'multiples'], outputs=['output'])
 
+    def check_elim(self, base_tensor, multiplier):
+        if (not isinstance(base_tensor, Tensor)) or (not isinstance(multiplier, tuple)):
+            raise TypeError("Expecting (Tensor, tuple), got: ({}, {})".format(base_tensor, multiplier))
+        if all(v == 1 for v in multiplier):
+            return (True, base_tensor)
+        return (False, None)
+
     def __infer__(self, x, multiples):
         multiples_v = multiples['value']
         x_shp = x['shape']
         validator.check_value_type("shape", multiples_v, [tuple], self.name)
         for i, multiple in enumerate(multiples_v):
             validator.check_value_type("multiples[%d]" % i, multiple, [int], self.name)
-        valid_types = [mstype.int16, mstype.int32, mstype.bool_, mstype.float16, mstype.float32]
-        validator.check_tensor_type_same({'x': x['dtype']}, valid_types, self.name)
+        validator.check_value_type("x[\'dtype\']", x["dtype"], typing.TensorType, self.name)
         len_sub = len(multiples_v) - len(x_shp)
         multiples_w = None
         if len_sub == 0:
@@ -1323,7 +1292,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Examples:
-        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float)
+        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
         >>> num_segments = 4
         >>> P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
@@ -1556,7 +1525,7 @@ class Unpack(PrimitiveWithInfer):
         A tuple of Tensors, the shape of each objects is same.
 
     Raises:
-        ValueError: If axis is out of the range [-len(input_x.shape()), len(input_x.shape())).
+        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
 
     Examples:
         >>> unpack = P.Unpack()
@@ -1697,6 +1666,7 @@ class Select(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+        self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
 
     def infer_shape(self, cond_shape, x_shape, y_shape):
         if cond_shape != x_shape or x_shape != y_shape:
@@ -1711,6 +1681,16 @@ class Select(PrimitiveWithInfer):
         if x_type != y_type:
             raise TypeError('\'%s\' the x_type %s must be the same as y_type %s.' % (self.name, x_type, y_type))
         return x_type
+
+    def infer_value(self, cond, x, y):
+        if cond is not None and x is not None and y is not None:
+            cond = cond.asnumpy()
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.where(cond, x, y)
+            return Tensor(out)
+        return None
+
 
 
 class StridedSlice(PrimitiveWithInfer):
@@ -1762,7 +1742,7 @@ class StridedSlice(PrimitiveWithInfer):
         >>>                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
         >>> slice = P.StridedSlice()
         >>> output = slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
-        >>> output.shape()
+        >>> output.shape
         (1, 1, 3)
         >>> output
         [[[3, 3, 3]]]
@@ -1886,7 +1866,7 @@ class Diag(PrimitiveWithInfer):
         if x is None:
             return None
         # do constant-folding only when x rank is 1
-        if len(x.shape()) != 1:
+        if len(x.shape) != 1:
             return None
         ret = np.diag(x.asnumpy())
         return Tensor(ret)
@@ -1938,7 +1918,7 @@ class DiagPart(PrimitiveWithInfer):
         if x is None:
             return None
         # do constant-folding only when x rank is 2
-        if len(x.shape()) != 2:
+        if len(x.shape) != 2:
             return None
         ret = np.diag(x.asnumpy())
         return Tensor(ret)
@@ -1952,7 +1932,7 @@ class Eye(PrimitiveWithInfer):
     Inputs:
         - **n** (int) - Number of rows of returned tensor
         - **m** (int) - Number of columns of returned tensor
-        - **t** (mindspore.dtype) - Mindspore's dtype, The data type of the returned tensor.
+        - **t** (mindspore.dtype) - MindSpore's dtype, The data type of the returned tensor.
 
     Outputs:
         Tensor, a tensor with ones on the diagonal and zeros elsewhere.
@@ -1983,7 +1963,7 @@ class ScatterNd(PrimitiveWithInfer):
     Creates an empty tensor, and set values by scattering the update tensor depending on indices.
 
     Inputs:
-        - **indices** (Tensor) - The index of scattering in the new tensor.
+        - **indices** (Tensor) - The index of scattering in the new tensor. With int32 data type.
         - **update** (Tensor) - The source Tensor to be scattered.
         - **shape** (tuple[int]) - Define the shape of the output tensor. Has the same type as indices.
 
@@ -2006,7 +1986,7 @@ class ScatterNd(PrimitiveWithInfer):
     def __infer__(self, indices, update, shape):
         shp = shape['value']
         validator.check_subclass("update_dtype", update['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, [mstype.int32], self.name)
         validator.check_value_type("shape", shp, [tuple], self.name)
         for i, x in enumerate(shp):
             validator.check_integer("shape[%d]" % i, x, 0, Rel.GT, self.name)
@@ -2099,6 +2079,47 @@ class GatherNd(PrimitiveWithInfer):
         return x_dtype
 
 
+class TensorScatterUpdate(PrimitiveWithInfer):
+    """
+    Update tensor value by using input indices and value.
+
+    Using given values to update tensor value, along with the input indices.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor.
+        - **indices** (Tensor) - The index of input tensor whose data type is int32.
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and update.shape = indices.shape + input_x.shape[1:].
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
+        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> op = P.TensorScatterUpdate()
+        >>> output = op(input_x, indices, update)
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Init TensorScatterUpdate"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+
+    def infer_shape(self, x_shape, indices_shape, value_shape):
+        validator.check('the dimension of x', len(x_shape),
+                        'the dimension of indices', indices_shape[-1], Rel.GE)
+        if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
+            raise ValueError("For 'TensorScatterUpdate', input value are not match with input indices.")
+        return x_shape
+
+    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        args = {"x": x_dtype, "value": value_dtype}
+        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        return x_dtype
+
+
 class ScatterUpdate(PrimitiveWithInfer):
     """
     Update tensor value by using input indices and value.
@@ -2110,7 +2131,7 @@ class ScatterUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-        - **indices** (Tensor) - The index of input tensor.
+        - **indices** (Tensor) - The index of input tensor. With int32 data type.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and update.shape = indices.shape + input_x.shape[1:].
 
@@ -2118,9 +2139,11 @@ class ScatterUpdate(PrimitiveWithInfer):
         Tensor, has the same shape and type as `input_x`.
 
     Examples:
-        >>> input_x = mindspore.Parameter(Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32))
+        >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
+        >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> np_update = np.array([[[1.0, 2.2, 1.0], [2.0, 1.2, 1.0]], [[2.0, 2.2, 1.0], [3.0, 1.2, 1.0]]])
+        >>> update = Tensor(np_update, mindspore.float32)
         >>> op = P.ScatterUpdate()
         >>> output = op(input_x, indices, update)
     """
@@ -2132,15 +2155,16 @@ class ScatterUpdate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Init ScatterUpdate"""
+        validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
         if indices_shape + x_shape[1:] != value_shape:
-            raise ValueError('Input value are not match with input indices.')
+            raise ValueError("For 'ScatterUpdate', input value are not match with input indices.")
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
+        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
         args = {"x": x_dtype, "value": value_dtype}
         validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
@@ -2157,14 +2181,15 @@ class ScatterNdUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-        - **indices** (Tensor) - The index of input tensor.
+        - **indices** (Tensor) - The index of input tensor, with int32 data type.
         - **update** (Tensor) - The tensor to add to the input tensor, has the same type as input.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
     Examples:
-        >>> input_x = mindspore.Parameter(Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32))
+        >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
+        >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> op = P.ScatterNdUpdate()
@@ -2178,17 +2203,18 @@ class ScatterNdUpdate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Init ScatterNdUpdate"""
+        validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
         validator.check('the dimension of x', len(x_shape),
                         'the dimension of indices', indices_shape[-1], Rel.GE)
         if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
-            raise ValueError('Input value are not match with input indices.')
+            raise ValueError("For 'ScatterNdUpdate', input value are not match with input indices.")
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
+        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
         args = {"x": x_dtype, "value": value_dtype}
         validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
@@ -2204,7 +2230,8 @@ class ScatterMax(PrimitiveWithInfer):
     """
     Update the value of the input tensor through the max operation.
 
-    Using given values to update tensor value through the max operation, along with the input indices,.
+    Using given values to update tensor value through the max operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
@@ -2216,7 +2243,7 @@ class ScatterMax(PrimitiveWithInfer):
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
-        Tensor, has the same shape and data type as `input_x`.
+        Parameter, the updated `input_x`.
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
@@ -2249,6 +2276,7 @@ class ScatterAdd(PrimitiveWithInfer):
     Update the value of the input tensor through the add operation.
 
     Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -2260,7 +2288,7 @@ class ScatterAdd(PrimitiveWithInfer):
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
-        Tensor, has the same shape and data type as `input_x`.
+        Parameter, the updated `input_x`.
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
@@ -2460,8 +2488,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         validator.check_integer('rank of input_x', len(x_shape), 4, Rel.EQ, self.name)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
-            padded = out_shape[i + 2] + self.paddings[i][0] + \
-                     self.paddings[i][1]
+            padded = out_shape[i + 2] + self.paddings[i][0] + self.paddings[i][1]
             if padded % self.block_size != 0:
                 raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
                                  f'block_size {self.block_size}')
@@ -2479,7 +2506,7 @@ class BatchToSpace(PrimitiveWithInfer):
     dimension and block_size with given amount to crop from dimension, respectively.
 
     Args:
-        block_size (int): The block size of dividing block with value >= 1.
+        block_size (int): The block size of dividing block with value >= 2.
         crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
@@ -2513,7 +2540,7 @@ class BatchToSpace(PrimitiveWithInfer):
     def __init__(self, block_size, crops):
         """Init BatchToSpace"""
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, '', 1, Rel.GE, self.name)
+        validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
         validator.check('crops shape', np.array(crops).shape, '', (2, 2))
         for elem in itertools.chain(*crops):
@@ -2592,6 +2619,8 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
         for elem in block_shape:
             validator.check('block_shape element', elem, '', 1, Rel.GE, self.name)
+            validator.check_value_type('block_shape element', elem, [int], self.name)
+
         self.block_shape = block_shape
 
         validator.check('paddings shape', np.array(paddings).shape, '', (block_rank, 2), Rel.EQ, self.name)
@@ -2634,7 +2663,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
             The length of block_shape is M correspoding to the number of spatial dimensions.
         crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that input_shape[i+2]*block_size[i] >= crops[i][0]+crops[i][1].
+            input dimension i+2. It is required that input_shape[i+2]*block_shape[i] > crops[i][0]+crops[i][1].
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2670,6 +2699,8 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
         for elem in block_shape:
             validator.check('block_shape element', elem, '', 1, Rel.GE, self.name)
+            validator.check_value_type('block_shape element', elem, [int], self.name)
+
         self.block_shape = block_shape
 
         validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), Rel.EQ, self.name)
@@ -2701,32 +2732,144 @@ class BatchToSpaceND(PrimitiveWithInfer):
         return out_shape
 
 
+class BroadcastTo(PrimitiveWithInfer):
+    """
+    Broadcasts input tensor to a given shape.
+    Input shape can be broadcast to target shape if for each dimension pair they are either equal or input is one.
+    When input shape is broadcast to target shape, it starts with the trailing dimensions.
+
+    Args:
+        shape (tuple): The target shape to broadcast.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, with the given `shape` and the same data type as `input_x`.
+
+    Examples:
+        >>> shape = (2, 3)
+        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> broadcast_to = P.BroadcastTo(shape)
+        >>> broadcast_to(input_x)
+        [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
+    """
+
+    @prim_attr_register
+    def __init__(self, shape):
+        """Init BroadcastTo"""
+        validator.check_value_type("shape", shape, (tuple), self.name)
+        validator.check("shape length", len(shape), "", 0, Rel.GT, self.name)
+        for i in shape:
+            validator.check_integer("shape element", i, 0, Rel.GT, self.name)
+        self.shape = shape
+
+    def infer_shape(self, x_shape):
+        validator.check("input_x shape length", len(x_shape), "target shape", len(self.shape), Rel.LE, self.name)
+
+        reversed_x_shape = tuple(reversed(x_shape))
+        reversed_target = tuple(reversed(self.shape))
+        for i, v in enumerate(reversed_x_shape):
+            if v not in (reversed_target[i], 1):
+                raise ValueError(f"Not supported shapes for broadcast, "
+                                 f"x_shape: {tuple(x_shape)}, target shape {self.shape}.")
+        return self.shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
+        return x_dtype
+
+
+class InplaceUpdate(PrimitiveWithInfer):
+    r"""
+    Updates specified rows with values in `v`.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`.
+
+    Inputs:
+        - **x** (Tensor) - A tensor which to be inplace updated. It can be of the following data types:
+          float32, float16, int32.
+        - **v** (Tensor) - A tensor of the same type as `x`. Same dimension size as `x` except
+          the first dimension, which must be the same as the size of `indices`.
+
+    Outputs:
+        Tensor, with the same type and shape as the input `x`.
+
+    Examples:
+        >>> x = Tensor(np.arange(24).reshape(3, 4, 2), mindspore.float32)
+        >>> v = Tensor(np.arange(-8, 8).reshape(2, 4, 2), mindspore.float32)
+        >>> inplace_update = P.InplaceUpdate((0, 2))
+        >>> result = inplace_update(x, v)
+        [[[-8.  -7.]
+          [-6.  -5.]
+          [-4.  -3.]
+          [-2.  -1.]]
+         [[ 8.   9.]
+          [10.  11.]
+          [12.  13.]
+          [14.  15.]]
+         [[ 0.   1.]
+          [ 2.   3.]
+          [ 4.   5.]
+          [ 6.   7.]]]
+    """
+    @prim_attr_register
+    def __init__(self, indices):
+        """Init InplaceUpdate"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'v'], outputs=['y'])
+        validator.check_value_type("indices", indices, [int, tuple], self.name)
+        if isinstance(indices, int):
+            self.add_prim_attr('indices', (indices,))
+        for item in self.indices:
+            validator.check_value_type("item of indices", item, [int], self.name)
+
+    def infer_dtype(self, x_dtype, v_dtype):
+        valid_type = [mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(
+            {
+                "x": x_dtype,
+                "v": v_dtype
+            }, valid_type, self.name)
+
+        return x_dtype
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+
+        x_rank = len(x_shape)
+        for idx in range(x_rank)[1:]:
+            validator.check("x dim %d" % idx, x_shape[idx], 'v dim %d' % idx, v_shape[idx], Rel.EQ, self.name)
+
+        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                        Rel.EQ, self.name)
+
+        return x_shape
+
+
 class ReverseSequence(PrimitiveWithInfer):
     """
     Reverses variable length slices.
 
-    Note:
-        If the specified axis is a negative number, the index is counted
-        backward from the end and starts at 1.
-
-    Raises:
-        ValueError: If axis is not an integer or not in the valid range.
     Args:
-        seq_dim (int): The dimension which is partially reversed. Required.
-        batch_dim (int): The dimension along which reversal is performed. Default: 0
+        seq_dim (int): The dimension along which reversal is performed. Required.
+        batch_dim (int): The input is sliced along this dimmension. Default: 0.
 
     Inputs:
-        - **x** (Tensor) - The input to reverse.
-        - **seq_lengths** (int) - Must be 1-D vector with types: int32, int64
+        - **x** (Tensor) - The input to reverse, support all number types including bool.
+        - **seq_lengths** (Tensor) - Must be 1-D vector with types: int32, int64.
 
     Outputs:
-        Reversed tensor with the same shape and data type as x.
+        Reversed tensor with the same shape and data type as input.
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
         >>> seq_lengths = Tensor(np.array([1, 2, 3]))
         >>> reverse_sequence = P.ReverseSequence(seq_dim=1)
         >>> output = reverse_sequence(x, seq_lengths)
+        [[1 2 3]
+         [5 4 6]
+         [9 8 7]]
     """
 
     @prim_attr_register
@@ -2748,5 +2891,6 @@ class ReverseSequence(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x, seq_lengths):
+        validator.check_tensor_type_same({"x_dtype": x}, mstype.number_type + (mstype.bool_,), self.name)
         validator.check_tensor_type_same({"seq_lengths_dtype": seq_lengths}, [mstype.int32, mstype.int64], self.name)
         return x

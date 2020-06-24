@@ -28,9 +28,7 @@ softplus_grad_op_info = TBERegOp("SoftplusGrad") \
     .input(1, "features", False, "required", "all") \
     .output(0, "backprops", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
 
 

@@ -40,7 +40,7 @@ class TakeOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new TakeOp object
     Status Build(std::shared_ptr<TakeOp> *);
 
    private:
@@ -89,6 +89,10 @@ class TakeOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "TakeOp"; }
 
  private:
   int32_t max_takes_;   // The number of takes that the user requested

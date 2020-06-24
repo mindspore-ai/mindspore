@@ -19,8 +19,8 @@ import json
 import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
-import tokenization
-from sample_process import label_generation, process_one_example_p
+from . import tokenization
+from .sample_process import label_generation, process_one_example_p
 from .evaluation_config import cfg
 from .CRF import postprocess
 

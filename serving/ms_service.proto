@@ -1,0 +1,48 @@
+// ms_service.proto
+syntax = "proto3";
+
+package ms_serving;
+
+service MSService {
+    rpc Predict(PredictRequest) returns (PredictReply) {}
+    rpc Test(PredictRequest) returns (PredictReply) {}
+}
+
+message PredictRequest {
+    repeated Tensor data = 1;
+}
+
+message PredictReply {
+    repeated Tensor result = 1;
+}
+enum DataType {
+  MS_UNKNOWN = 0;
+  MS_BOOL = 1;
+  MS_INT8 = 2;
+  MS_UINT8 = 3;
+  MS_INT16 = 4;
+  MS_UINT16 = 5;
+  MS_INT32 = 6;
+  MS_UINT32 = 7;
+  MS_INT64 = 8;
+  MS_UINT64 = 9;
+  MS_FLOAT16 = 10;
+  MS_FLOAT32 = 11;
+  MS_FLOAT64 = 12;
+}
+
+message TensorShape {
+  repeated int64 dims = 1;
+};
+
+message Tensor {
+  // tensor shape info
+  TensorShape tensor_shape = 1;
+
+  // tensor content data type
+  DataType tensor_type = 2;
+
+  // tensor data
+  bytes data = 3;
+}
+

@@ -20,6 +20,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as data_trans
 from mindspore import log as logger
+from util import diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -55,7 +56,7 @@ def test_one_hot():
         assert len(item1) == len(item2)
         label1 = item1["label"]
         label2 = one_hot(item2["label"][0], depth)
-        mse = np.sum(label1 - label2)
+        mse = diff_mse(label1, label2)
         logger.info("DE one_hot: {}, Numpy one_hot: {}, diff: {}".format(label1, label2, mse))
         num_iter += 1
 

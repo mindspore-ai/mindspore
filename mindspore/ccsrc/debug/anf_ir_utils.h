@@ -91,12 +91,12 @@ class AnfExporter {
   std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph);
   std::string GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                              const std::map<AnfNodePtr, int> &apply_map);
-  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+  virtual void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
   void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
                         OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map);
 
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
-  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
+  virtual void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
 
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};
@@ -118,6 +118,8 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
+
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_

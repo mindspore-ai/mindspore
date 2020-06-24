@@ -102,6 +102,22 @@ class UnpackGraphEvaluator : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class MixedPrecisionCastEvaluator : public Evaluator {
+ public:
+  explicit MixedPrecisionCastEvaluator(const PrimitivePtr primitive)
+      : Evaluator("MixedPrecisionCastEvaluator"), prim_(primitive) {}
+  ~MixedPrecisionCastEvaluator() override = default;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
+                    AnfNodeConfigPtr out_config = nullptr) override;
+
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
+  }
+
+ private:
+  PrimitivePtr prim_;
+};
+
 bool IsInWhiteList(PrimitivePtr primitive);
 StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
@@ -184,6 +200,8 @@ AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &,
                                    const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                    const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -206,9 +224,9 @@ AbstractBasePtr InferImplGeluGrad(const AnalysisEnginePtr &, const PrimitivePtr 
                                   const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplRelu(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list);
-AbstractBasePtr InferImplZerosLikeTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list);

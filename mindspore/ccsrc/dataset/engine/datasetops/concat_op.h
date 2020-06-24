@@ -40,7 +40,7 @@ class ConcatOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new ConcatOp object
     Status Build(std::shared_ptr<ConcatOp> *);
 
    private:
@@ -80,6 +80,10 @@ class ConcatOp : public PipelineOp {
   // @notes Derived versions of this function should always call it's superclass version first
   // before providing their own implementations.
   Status PrepareNodePostAction() override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ConcatOp"; }
 
  private:
   Status Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf);

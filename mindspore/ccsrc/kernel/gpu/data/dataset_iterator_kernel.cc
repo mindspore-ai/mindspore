@@ -96,7 +96,8 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
   }
 
   for (size_t i = 0; i < output_size_list_.size(); i++) {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(outputs[i]->addr, addr, output_size_list_[i], cudaMemcpyDeviceToDevice,
+    void *output_addr = GetDeviceAddress<void>(outputs, i);
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(output_addr, addr, output_size_list_[i], cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream)),
                                "Cuda Memcpy Failed");
     addr = reinterpret_cast<unsigned char *>(addr) + output_size_list_[i];

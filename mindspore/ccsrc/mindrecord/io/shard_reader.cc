@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_reader.h"
 #include "common/utils.h"
 
@@ -45,6 +46,7 @@ ShardReader::ShardReader() {
   row_id_ = 0;
   num_blocks_ = 0;
   block_reader_ = false;
+  num_padded_ = 0;
 }
 
 std::pair<MSRStatus, std::vector<std::string>> ShardReader::GetMeta(const std::string &file_path, json &meta_data) {
@@ -113,6 +115,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
       MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
+      db = nullptr;
       return FAILED;
     } else {
       MS_LOG(DEBUG) << "Get " << static_cast<int>(name.size()) << " records from index.";
@@ -121,6 +124,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
         MS_LOG(ERROR) << "DB file can not match file " << file;
         sqlite3_free(errmsg);
         sqlite3_close(db);
+        db = nullptr;
         return FAILED;
       }
     }
@@ -218,7 +222,11 @@ void ShardReader::FileStreamsOperator() {
   }
   for (int i = static_cast<int>(database_paths_.size()) - 1; i >= 0; --i) {
     if (database_paths_[i] != nullptr) {
-      (void)sqlite3_close(database_paths_[i]);
+      auto ret = sqlite3_close(database_paths_[i]);
+      if (ret != SQLITE_OK) {
+        MS_LOG(ERROR) << "Close db failed. Error code: " << ret << ".";
+      }
+      database_paths_[i] = nullptr;
     }
   }
 }
@@ -346,6 +354,7 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
     MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(db);
+    db = nullptr;
     return FAILED;
   }
   MS_LOG(INFO) << "Get " << static_cast<int>(labels.size()) << " records from shard " << shard_id << " index.";
@@ -399,6 +408,7 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
   if (ret != SQLITE_OK) {
     sqlite3_free(errmsg);
     sqlite3_close(db);
+    db = nullptr;
     MS_LOG(ERROR) << "Error in select sql statement, sql:" << common::SafeCStr(sql) << ", error: " << errmsg;
     return;
   }
@@ -523,6 +533,7 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
     MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(db);
+    db = nullptr;
     return std::vector<std::vector<uint64_t>>();
   } else {
     MS_LOG(DEBUG) << "Get " << static_cast<int>(image_offsets.size()) << "records from index.";
@@ -662,6 +673,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabelsFromPage(
       MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
+      db = nullptr;
       return {FAILED, {}};
     }
     MS_LOG(DEBUG) << "Get " << label_offsets.size() << "records from index.";
@@ -698,6 +710,7 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
         MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
         sqlite3_free(errmsg);
         sqlite3_close(db);
+        db = nullptr;
         return {FAILED, {}};
       } else {
         MS_LOG(DEBUG) << "Get " << static_cast<int>(labels.size()) << "records from index.";
@@ -790,23 +803,51 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
 }
 
 MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
-                                      const std::shared_ptr<ShardOperator> &op, int64_t *count) {
+                                      const std::shared_ptr<ShardOperator> &ops, int64_t *count, const int num_padded) {
   if (SUCCESS != Init(file_paths, load_dataset)) {
     return FAILED;
   }
   int64_t num_samples = num_rows_;
-  if (std::dynamic_pointer_cast<ShardCategory>(op)) {
-    auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
-    std::string category_field = category_op->GetCategoryField();
-    auto num_classes = GetNumClasses(category_field);
-    num_samples = category_op->GetNumSamples(num_rows_, num_classes);
-  } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
-    num_samples = op->GetNumSamples(num_rows_, 0);
-  } else {
+  bool root = true;
+  std::stack<std::shared_ptr<ShardOperator>> stack_ops;
+  std::shared_ptr<ShardOperator> op(ops);
+  while (op != nullptr) {
+    stack_ops.push(op);
+    op = op->GetChildOp();
   }
-  if (-1 == num_samples) {
-    MS_LOG(ERROR) << "Failed to get dataset size.";
-    return FAILED;
+  while (!stack_ops.empty()) {
+    op = stack_ops.top();
+    stack_ops.pop();
+    if (std::dynamic_pointer_cast<ShardShuffle>(op)) {
+      num_samples = op->GetNumSamples(num_samples, 0);
+      if (num_padded > 0 && root == true) {
+        num_samples += num_padded;
+        MS_LOG(DEBUG) << "Padding samples work on shuffle sampler.";
+        root = false;
+      }
+    } else if (std::dynamic_pointer_cast<ShardCategory>(op)) {
+      auto category_op = std::dynamic_pointer_cast<ShardCategory>(op);
+      std::string category_field = category_op->GetCategoryField();
+      auto num_classes = GetNumClasses(category_field);
+      num_samples = category_op->GetNumSamples(num_samples, num_classes);
+    } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
+      if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
+        auto sampler_op = std::dynamic_pointer_cast<ShardDistributedSample>(op);
+        if (root == true) {
+          sampler_op->SetNumPaddedSamples(num_padded);
+          num_samples = op->GetNumSamples(num_samples, 0);
+          if (-1 == num_samples) {
+            MS_LOG(ERROR) << "Dataset size plus number of padded samples is not divisible by number of shards.";
+            return FAILED;
+          }
+          root = false;
+        }
+      } else {
+        num_samples = op->GetNumSamples(num_samples, 0);
+      }
+    } else {
+      if (num_padded > 0) num_samples += num_padded;
+    }
   }
   *count = num_samples;
   return SUCCESS;
@@ -814,7 +855,8 @@ MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths
 
 MSRStatus ShardReader::Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer,
                             const std::vector<std::string> &selected_columns,
-                            const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader) {
+                            const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader,
+                            int num_padded) {
   // Open file and set header by ShardReader
   auto ret = Init(file_paths, load_dataset);
   if (SUCCESS != ret) {
@@ -844,6 +886,7 @@ MSRStatus ShardReader::Open(const std::vector<std::string> &file_paths, bool loa
   // Initialize argument
   shard_count_ = static_cast<int>(file_paths_.size());
   n_consumer_ = n_consumer;
+  num_padded_ = num_padded;
 
   operators_ = operators;
 
@@ -935,7 +978,7 @@ MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int,
     auto shard_id = std::get<0>(rg);
     auto group_id = std::get<1>(rg);
     auto n_Rows = std::get<3>(rg);
-    tasks_.InsertTask(shard_id, group_id, std::vector<uint64_t>{n_Rows}, json{});
+    tasks_.InsertTask(TaskType::kCommonTask, shard_id, group_id, std::vector<uint64_t>{n_Rows}, json{});
   }
   return SUCCESS;
 }
@@ -986,7 +1029,7 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::vector<std::tuple<int, i
       auto number_of_rows = offsets.size();
       for (uint32_t iStart = 0; iStart < number_of_rows; iStart += 1) {
         if (category_index < num_elements) {
-          categoryTasks[categoryNo].InsertTask(shard_id, group_id, std::get<4>(details)[iStart],
+          categoryTasks[categoryNo].InsertTask(TaskType::kCommonTask, shard_id, group_id, std::get<4>(details)[iStart],
                                                std::get<5>(details)[iStart]);
           category_index++;
         }
@@ -1014,7 +1057,7 @@ MSRStatus ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, i
   if (shard_count_ <= kMaxShardCount) {
     for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
       for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
-        tasks_.InsertTask(offsets[shard_id][i][0], offsets[shard_id][i][1],
+        tasks_.InsertTask(TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
                           std::vector<uint64_t>{offsets[shard_id][i][2], offsets[shard_id][i][3]},
                           local_columns[shard_id][i]);
       }
@@ -1044,6 +1087,11 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
       if (SUCCESS != CreateTasksByRow(row_group_summary, operators)) {
         return FAILED;
       }
+      if (num_padded_ > 0) {
+        for (int i = 0; i < num_padded_; ++i) {
+          tasks_.InsertTask(TaskType::kPaddedTask, 0, 0, {}, json());
+        }
+      }
     } else {
       if (SUCCESS != CreateTasksByCategory(row_group_summary, operators[category_operator])) {
         return FAILED;
@@ -1070,18 +1118,27 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
 TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_id) {
   // All tasks are done
   if (task_id >= static_cast<int>(tasks_.Size())) {
-    return std::make_pair(FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>());
+    return std::make_pair(FAILED,
+                          std::make_pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>()));
   }
 
   // Pick up task from task list
   auto task = tasks_.GetTaskByID(tasks_.permutation_[task_id]);
 
-  auto shard_id = std::get<0>(std::get<0>(task));
-  auto group_id = std::get<1>(std::get<0>(task));
-  auto addr = std::get<1>(task);
+  // check task type
+  auto task_type = std::get<0>(task);
+  if (task_type == TaskType::kPaddedTask) {
+    return std::make_pair(SUCCESS,
+                          std::make_pair(TaskType::kPaddedTask, std::vector<std::tuple<std::vector<uint8_t>, json>>()));
+  }
+
+  auto shard_id = std::get<0>(std::get<1>(task));
+  auto group_id = std::get<1>(std::get<1>(task));
+  auto addr = std::get<2>(task);
   const auto &ret = shard_header_->GetPageByGroupId(group_id, shard_id);
   if (SUCCESS != ret.first) {
-    return std::make_pair(FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>());
+    return std::make_pair(FAILED,
+                          std::make_pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>()));
   }
   const std::shared_ptr<Page> &page = ret.second;
 
@@ -1093,7 +1150,8 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     MS_LOG(ERROR) << "File seekg failed";
     file_streams_random_[consumer_id][shard_id]->close();
-    return std::make_pair(FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>());
+    return std::make_pair(FAILED,
+                          std::make_pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>()));
   }
 
   auto &io_read =
@@ -1101,14 +1159,15 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
   if (!io_read.good() || io_read.fail() || io_read.bad()) {
     MS_LOG(ERROR) << "File read failed";
     file_streams_random_[consumer_id][shard_id]->close();
-    return std::make_pair(FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>());
+    return std::make_pair(FAILED,
+                          std::pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>()));
   }
 
   // Deliver batch data to output map
   std::vector<std::tuple<std::vector<uint8_t>, json>> batch;
-  batch.emplace_back(std::move(images), std::move(std::get<2>(task)));
+  batch.emplace_back(std::move(images), std::move(std::get<3>(task)));
 
-  return std::make_pair(SUCCESS, std::move(batch));
+  return std::make_pair(SUCCESS, std::make_pair(TaskType::kCommonTask, std::move(batch)));
 }
 
 MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
@@ -1133,7 +1192,7 @@ MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
     if (SUCCESS != ret.first) {
       return FAILED;
     }
-    const auto &batch = ret.second;
+    const auto &batch = (ret.second).second;
     // Hanging if maximum map size exceeded
     //   otherwise, set batch data in map
     {
@@ -1193,8 +1252,8 @@ MSRStatus ShardReader::ConsumerByBlock(int consumer_id) {
     // Pick up task from task list
     auto task = tasks_.GetTaskByID(tasks_.permutation_[task_id]);
 
-    auto shard_id = std::get<0>(std::get<0>(task));
-    auto group_id = std::get<1>(std::get<0>(task));
+    auto shard_id = std::get<0>(std::get<1>(task));
+    auto group_id = std::get<1>(std::get<1>(task));
     auto row_group_brief = ReadRowGroupBrief(group_id, shard_id, selected_columns_);
     if (SUCCESS != std::get<0>(row_group_brief)) {
       return FAILED;
@@ -1302,17 +1361,17 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
   return *res;
 }
 
-std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNextById(const int64_t &task_id,
-                                                                             const int32_t &consumer_id) {
+std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>> ShardReader::GetNextById(
+  const int64_t &task_id, const int32_t &consumer_id) {
   if (interrupt_) {
-    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+    return std::make_pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>());
   }
   if (block_reader_) {
-    return GetBlockNext();
+    return std::make_pair(TaskType::kCommonTask, GetBlockNext());
   }
   const auto &ret = ConsumerOneTask(task_id, consumer_id);
   if (SUCCESS != ret.first) {
-    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+    return std::make_pair(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>());
   }
   return std::move(ret.second);
 }
@@ -1364,12 +1423,26 @@ void ShardReader::Reset() {
 }
 
 void ShardReader::ShuffleTask() {
+  if (block_reader_) return;
+  // exist shuffle and distributed sampler in ops, skip shuffle
+  bool has_sharding = false;
   for (const auto &op : operators_) {
-    if (block_reader_ || !std::dynamic_pointer_cast<ShardShuffle>(op)) continue;
-    if (SUCCESS != (*op)(tasks_)) {
-      MS_LOG(WARNING) << "Reshuffle reader tasks failed.";
+    if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
+      has_sharding = true;
     }
   }
+  for (const auto &op : operators_) {
+    if (std::dynamic_pointer_cast<ShardShuffle>(op) && has_sharding == false) {
+      if (SUCCESS != (*op)(tasks_)) {
+        MS_LOG(WARNING) << "Redo randomSampler failed.";
+      }
+    } else if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
+      if (SUCCESS != (*op)(tasks_)) {
+        MS_LOG(WARNING) << "Redo distributeSampler failed.";
+      }
+    }
+  }
+  if (tasks_.permutation_.empty()) tasks_.MakePerm();
 }
 
 }  // namespace mindrecord

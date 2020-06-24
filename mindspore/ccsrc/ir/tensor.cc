@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <numeric>
+#include <utility>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -28,9 +29,8 @@
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
-
 namespace tensor {
-
+static uint64_t count = 0;
 void DataBuf2Contiguous(const py::array &src, py::array *const dest) {
   if (dest == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to copy data to a contiguous buffer as dest is nullptr!";
@@ -81,6 +81,7 @@ Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
     : MetaTensor(tensor), device_address_(tensor.device_address_) {
   init(tensor.data_, data_type);
   dirty_ = tensor.is_dirty();
+  id_ = tensor.id();
 }
 
 Tensor &Tensor::operator=(const Tensor &tensor) {
@@ -89,7 +90,12 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
     dirty_ = tensor.is_dirty();
     device_address_ = tensor.device_address();
     data_ = tensor.data_;
+    id_ = tensor.id();
   }
+  return *this;
+}
+Tensor &Tensor::AssignValue(const Tensor &tensor) {
+  *this = tensor;
   return *this;
 }
 
@@ -208,6 +214,7 @@ void Tensor::init(const py::array &input, const TypeId &data_type) {
     data_ = input;
   }
   dirty_ = true;
+  id_ = std::to_string((uintptr_t)(this)) + std::to_string(count++);
 }
 
 void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {
@@ -254,6 +261,7 @@ void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *co
       MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
       break;
   }
+  id_ = std::to_string((uintptr_t)(this)) + std::to_string(count++);
 }
 
 TypePtr Tensor::SetDtype(const TypePtr type_ptr) {
@@ -382,6 +390,28 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                            .def(py::init<py::tuple, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
                            .def(py::init<Tensor, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
                            .def_readonly(PYTHON_TENSOR_FLAG, &Tensor::parse_info_)
+                           .def_property_readonly("dtype", &Tensor::Dtype, R"mydelimiter(
+                             Get the tensor's data type.
+
+                             Returns:
+                                 type, the data type of tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
+                                 >>> data.dtype
+                                 Int32
+                             )mydelimiter")
+                           .def_property_readonly("shape", &Tensor::GetPyTupleShape, R"mydelimiter(
+                             Get the tensor's shape.
+
+                             Returns:
+                                 tuple[int], the shape of tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((3, 3)))
+                                 >>> data.shape()
+                                 (3, 3)
+                             )mydelimiter")
                            .def("asnumpy", &Tensor::data_sync, R"mydelimiter(
                              Convert tensor to numpy.ndarray.
 
@@ -435,17 +465,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.dim()
                                  2
                              )mydelimiter")
-                           .def("dtype", &Tensor::Dtype, R"mydelimiter(
-                             Get the tensor's data type.
-
-                             Returns:
-                                 type, the data type of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
-                                 >>> data.dtype()
-                                 Int32
-                             )mydelimiter")
                            .def("set_dtype", &Tensor::SetDtype, R"mydelimiter(
                              Set the tensor's data type.
 
@@ -457,16 +476,18 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.set_dtype(mindspore.int32)
                                  mindspore.int32
                              )mydelimiter")
-                           .def("shape", &Tensor::GetPyTupleShape, R"mydelimiter(
-                             Get the tensor's shape.
+                           .def("assign_value", &Tensor::AssignValue, R"mydelimiter(
+                             Assign another tensor value to this.
 
-                             Returns:
-                                 tuple[int], the shape of tensor.
+                             Arg:
+                                 value (:class:`mindspore.tensor`): The value tensor.
 
                              Examples:
-                                 >>> data = mindspore.Tensor(np.ones((3, 3)))
-                                 >>> data.shape()
-                                 (3, 3)
+                                 >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
+                                 >>> data2 = mindspore.Tensor(np.ones((2, 2), np.float32))
+                                 >>> data.assign_value(data2)
+                                 >>> data.shape
+                                 (2, 2)
                              )mydelimiter")
                            .def("__str__", &Tensor::ToString)
                            .def("__repr__", &Tensor::ToStringRepr)
@@ -485,10 +506,86 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                              }));
                          (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
                            .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
+                           .def(py::pickle(
+                             [](const MetaTensor &t) {  // __getstate__
+                               /* Return a tuple that fully encodes the state of the object */
+                               return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
+                             },
+                             [](const py::tuple &t) {  // __setstate__
+                               if (t.size() != 2) {
+                                 throw std::runtime_error("Invalid state!");
+                               }
+                               /* Create a new C++ instance */
+                               MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<std::vector<int>>());
+                               return tensor;
+                             }))
                            .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
-                           .def("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
-                           .def("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
+                           .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
+                           .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
                        }));
-
 }  // namespace tensor
+
+namespace inference {
+MSTensor *MSTensor::CreateTensor(TypeId data_type, const std::vector<int> &shape) {
+  return new Tensor(data_type, shape);
+}
+
+Tensor::Tensor() { this->tensor_impl_ = std::make_shared<tensor::Tensor>(); }
+
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape) {
+  this->tensor_impl_ = std::make_shared<tensor::Tensor>(data_type, shape);
+}
+
+Tensor::Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr) { this->tensor_impl_ = std::move(tensor_ptr); }
+
+TypeId Tensor::data_type() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->data_type();
+}
+
+TypeId Tensor::set_data_type(TypeId data_type) {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->set_data_type(data_type);
+}
+
+std::vector<int> Tensor::shape() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->shape();
+}
+
+size_t Tensor::set_shape(const std::vector<int> &shape) {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->set_shape(shape);
+}
+
+int Tensor::DimensionSize(size_t index) const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->DimensionSize(index);
+}
+
+int Tensor::ElementsNum() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->ElementsNum();
+}
+
+std::size_t Tensor::hash() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->hash();
+}
+
+std::shared_ptr<tensor::Tensor> Tensor::tensor() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_;
+}
+
+size_t Tensor::Size() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->data().nbytes();
+}
+
+void *Tensor::MutableData() const {
+  MS_ASSERT(this->tensor_impl_ != nullptr);
+  return this->tensor_impl_->data_c(true);
+}
+}  // namespace inference
 }  // namespace mindspore

@@ -1,0 +1,3 @@
+{"sentence1": "每个人都有权利", "sentence2": "每个人都有福利", "label": "neutral"}
+{"sentence1": "有时候我喜欢他，但我也喜欢看到有人打他", "sentence2": "说实话，我有点喜欢他，但还是喜欢看到有人打他。", "label": "entailment"}
+{"sentence1": "我最喜欢的餐馆是离你最近的一家", "sentence2": "我最喜欢的餐馆离你家至少一百英里远。", "label": "contradiction"}

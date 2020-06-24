@@ -15,13 +15,6 @@
 """tbe common"""
 import json
 import os
-from attrdict import AttrDict
-
-class ParamType(AttrDict):
-    Required = "required"
-    Dynamic = "dynamic"
-    Optional = "optional"
-
 
 class TBEException(Exception):
     """tbe exception class"""
@@ -112,7 +105,7 @@ def get_input_output(io_info, args):
                 if len(item) > 1:
                     arg.append(info)
                 else:
-                    if info['param_type'] == ParamType.Dynamic:
+                    if info['param_type'] == 'dynamic':
                         arg.append(info)
                         args.append(arg)
                     else:

@@ -22,12 +22,12 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator as validator
-from .optimizer import grad_scale, Optimizer
+from .optimizer import _grad_scale, Optimizer
 
-lars_opt = C.MultitypeFuncGraph("lars_opt")
+_lars_opt = C.MultitypeFuncGraph("lars_opt")
 
 
-@lars_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+@_lars_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
 def _tensor_run_opt(lars, weight_decay, learning_rate, gradient, weight, decay_flag, lars_flag):
     """Apply lars optimizer to the weight parameter."""
     if lars_flag:
@@ -59,13 +59,13 @@ class LARS(Optimizer):
         optimizer (Optimizer): MindSpore optimizer for which to wrap and modify gradients.
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
         hyperpara (float): Trust coefficient for calculating the local learning rate. Default: 0.001.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
         decay_filter (Function): A function to determine whether apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
         lars_filter (Function): A function to determine whether apply lars algorithm. Default:
                                 lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params` in optimizer, the shape is
@@ -94,7 +94,7 @@ class LARS(Optimizer):
         self.learning_rate = optimizer.learning_rate
         self.lars = P.LARSUpdate(epsilon, hyperpara, use_clip)
         self.reciprocal_scale = 1.0 / loss_scale
-        self.weight_decay = weight_decay * loss_scale
+        self.weight_decay = weight_decay
         self.cast = P.Cast()
         self.decay_flag = tuple(decay_filter(x) for x in self.parameters)
         self.lars_flag = tuple(lars_filter(x) for x in self.parameters)
@@ -119,9 +119,9 @@ class LARS(Optimizer):
         else:
             lr = self.learning_rate
         if self.reciprocal_scale != 1.0:
-            gradients = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), gradients)
+            gradients = self.hyper_map(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
-        grad_t = self.hyper_map(F.partial(lars_opt, self.lars, self.weight_decay, lr),
+        grad_t = self.hyper_map(F.partial(_lars_opt, self.lars, self.weight_decay, lr),
                                 gradients, params, self.decay_flag, self.lars_flag)
         success = self.opt(grad_t)
 

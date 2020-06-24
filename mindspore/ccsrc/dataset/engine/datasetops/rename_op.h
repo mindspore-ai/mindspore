@@ -67,7 +67,7 @@ class RenameOp : public PipelineOp {
     }
 
     // The builder "build" method creates the ZipOp dataset Operator.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new RenameOp object
     Status Build(std::shared_ptr<RenameOp> *);
 
    private:
@@ -115,6 +115,10 @@ class RenameOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "RenameOp"; }
 
  protected:
   // Rename core functionality

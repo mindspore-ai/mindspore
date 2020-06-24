@@ -19,8 +19,8 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
-from util import visualize, save_and_check_md5
 from mindspore import log as logger
+from util import visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -62,7 +62,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
         logger.info("dtype of image_2: {}".format(image_2.dtype))
 
         if plot:
-            visualize(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
+            visualize_list(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 10 images.
         assert len(image_2.shape) == 4
@@ -123,7 +123,7 @@ def test_ten_crop_list_size_error_msg():
     logger.info("test_ten_crop_list_size_error_msg")
 
     with pytest.raises(TypeError) as info:
-        transforms = [
+        _ = [
             vision.Decode(),
             vision.TenCrop([200, 200, 200]),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
@@ -139,7 +139,7 @@ def test_ten_crop_invalid_size_error_msg():
     logger.info("test_ten_crop_invalid_size_error_msg")
 
     with pytest.raises(ValueError) as info:
-        transforms = [
+        _ = [
             vision.Decode(),
             vision.TenCrop(0),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
@@ -148,7 +148,7 @@ def test_ten_crop_invalid_size_error_msg():
     assert error_msg == str(info.value)
 
     with pytest.raises(ValueError) as info:
-        transforms = [
+        _ = [
             vision.Decode(),
             vision.TenCrop(-10),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images

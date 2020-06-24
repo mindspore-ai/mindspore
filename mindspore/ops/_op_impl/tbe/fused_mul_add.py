@@ -27,6 +27,7 @@ fused_mul_add_op_info = TBERegOp("FusedMulAdd") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "x3", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD) \
     .dtype_format(DataType.I32_FracZ, DataType.I32_FracZ, DataType.I32_FracZ, DataType.I32_FracZ) \

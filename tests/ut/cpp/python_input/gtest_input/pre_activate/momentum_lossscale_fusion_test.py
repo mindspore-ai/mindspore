@@ -47,6 +47,6 @@ def test_momentum_lossscale_fusion(tag):
 
     @fns
     def after(input0, input1, input2, input3, input4):
-        return make_tuple(tuple_getitem(FusedMulApplyMomentum(input0, input1, input2, input3, input4, constant), 0))
+        return make_tuple(FusedMulApplyMomentum(input0, input1, input2, input3, input4, constant))
 
     return fns[tag]

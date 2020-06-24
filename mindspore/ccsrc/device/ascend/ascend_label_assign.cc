@@ -33,11 +33,9 @@ static void UpdateLabelGoto(NotNull<CNodePtr> node) {
   if (node->size() <= kLabelGotoLabelId) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " has invalid input size " << node->size();
   }
-  auto label_set = AnfAlgo::GetCNodePrimitive(node->input(kLabelGotoLabelId));
-  MS_EXCEPTION_IF_NULL(label_set);
-  auto value = label_set->GetAttr(kAttrLabelIndex);
-  MS_EXCEPTION_IF_NULL(value);
-  uint32_t goto_label_id = GetValue<uint32_t>(value);
+
+  auto input = node->input(kLabelGotoLabelId);
+  uint32_t goto_label_id = AnfAlgo::GetNodeAttr<uint32_t>(input, kAttrLabelIndex);
   AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(goto_label_id), node.get());
   MS_LOG(INFO) << "Node " << node->DebugString() << " goto label id " << goto_label_id;
   node->set_inputs({node->input(0)});
@@ -57,16 +55,12 @@ static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
       break;
     }
 
-    auto label_set = AnfAlgo::GetCNodePrimitive(input);
-    MS_EXCEPTION_IF_NULL(label_set);
-    auto value = label_set->GetAttr(kAttrLabelIndex);
-    MS_EXCEPTION_IF_NULL(value);
-    uint32_t goto_label_id = GetValue<uint32_t>(value);
+    uint32_t goto_label_id = AnfAlgo::GetNodeAttr<uint32_t>(input, kAttrLabelIndex);
     label_list.push_back(goto_label_id);
     MS_LOG(INFO) << "Switch " << node->DebugString() << " case " << i - kLabelSwitchLabelId << ": id " << goto_label_id;
   }
   AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue<std::vector<uint32_t>>(label_list), node.get());
-  node->set_inputs({node->input(0), node->input(1)});
+  node->set_inputs({node->input(kAnfPrimitiveIndex), node->input(kFirstDataInputIndex)});
 }
 
 static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>> graph, NotNull<uint32_t *> label_id,
@@ -154,8 +148,8 @@ uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> gr
   std::lock_guard<std::mutex> lock(label_num_mutex_);
   auto iter = label_num_.find(graph.get());
   if (iter == label_num_.end()) {
-    MS_LOG(WARNING) << "Graph " << graph->ToString() << " has not assigned label.";
-    return 1;
+    MS_LOG(DEBUG) << "Graph " << graph->ToString() << " has not assigned label, defalut is 0.";
+    return 0;
   }
   return iter->second;
 }

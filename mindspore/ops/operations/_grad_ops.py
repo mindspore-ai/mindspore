@@ -21,6 +21,7 @@ from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
 from ...common import dtype as mstype
+from .. import functional as F
 
 
 class AbsGrad(PrimitiveWithInfer):
@@ -404,6 +405,33 @@ class FusedBatchNormGrad(Primitive):
     def __call__(self, dy, x, scale, save_mean, save_inv_variance):
         raise NotImplementedError
 
+class BNTrainingReduceGrad(PrimitiveWithInfer):
+    """Gradients of FusedBatchNorm operation."""
+
+    @prim_attr_register
+    def __init__(self, epsilon=0.0001):
+        _inputs = ['grads', 'x', 'diff_scale', 'diff_offset', 'scale', 'batch_mean', 'batch_variance']
+        self.init_prim_io_names(inputs=_inputs, outputs=['y'])
+
+    def infer_shape(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
+        return grads
+
+    def infer_dtype(self, grads, x, diff_scale, diff_offset, scale, batch_mean, batch_variance):
+        return grads
+
+class BNTrainingUpdateGrad(PrimitiveWithInfer):
+    """Gradients of FusedBatchNorm operation."""
+
+    @prim_attr_register
+    def __init__(self, epsilon=0.0001):
+        self.init_prim_io_names(inputs=['grads', 'x', 'batch_mean', 'batch_variance'],
+                                outputs=['diff_scale', 'diff_offset'])
+
+    def infer_shape(self, grads, x, batch_mean, batch_variance):
+        return (batch_mean, batch_variance)
+
+    def infer_dtype(self, grads, x, batch_mean, batch_variance):
+        return (batch_mean, batch_variance)
 
 class GeluGrad(PrimitiveWithInfer):
     """Gradients of Gelu operation."""
@@ -1065,6 +1093,18 @@ class StridedSliceGrad(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['dy', 'shapex', 'begin', 'end', 'strides'], outputs=['output'])
 
     def __infer__(self, dy, shapex, begin, end, strides):
+        args = {"dy": dy['dtype']}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+
+        for idx, item in enumerate(shapex['value']):
+            validator.check_value_type("shapex[%d]" % idx, item, [int], self.name)
+        for idx, item in enumerate(begin['value']):
+            validator.check_value_type("begin[%d]" % idx, item, [int], self.name)
+        for idx, item in enumerate(end['value']):
+            validator.check_value_type("end[%d]" % idx, item, [int], self.name)
+        for idx, item in enumerate(strides['value']):
+            validator.check_value_type("strides[%d]" % idx, item, [int], self.name)
+
         return {'shape': shapex['value'],
                 'dtype': dy['dtype'],
                 'value': None}
@@ -1118,6 +1158,37 @@ class MirrorPadGrad(PrimitiveWithInfer):
         validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
         return {'shape': x['shape'],
                 'dtype': dout['dtype'],
+                'value': None}
+
+
+class EmbeddingLookupCommGrad(PrimitiveWithInfer):
+    """
+    Perform the gradient for the communication part of EmbeddingLookup operator.
+
+    This works ONLY when 'reduce_scatter_flag' is True in 'EmbeddingLookup'. Roughly speaking,
+    this primitive is implemented by StridedSlice --> HostAllGather --> Concat. This primitive runs on host.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['dy', 'split_num'], outputs=['output'])
+        self.add_prim_attr('primitive_target', 'CPU')
+
+    def __infer__(self, dy, split_num):
+        """
+        This primitive is implemented by three steps:
+            1) Split the 'dy' along dimension 0 into 'split_num' parts.
+            2) For each part, perform HostAllGather((0, 1, 2, 3, 4, 5, 6, 7)) on the host.
+            3) After HostAllGather, there are still 'split_num' parts in each process. Then, perform Concat on them
+              along dimension 0.
+
+        The output shape of this primitive: shape(output)[0] == shape(dy)[0] * 8
+        """
+        dy_shape = tuple(dy['shape'])
+        split_num_value = split_num['value']
+        validator.check_value_type("split_num_value", split_num_value, [int], self.name)
+        dy_shape_all = F.tuple_setitem(dy_shape, 0, dy_shape[0] * 8)
+        return {'shape': dy_shape_all,
+                'dtype': dy['dtype'],
                 'value': None}
 
 
@@ -1276,3 +1347,20 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
         validator.check_type_name("dgate", dgate_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("w", w_dtype, [mstype.float16, mstype.float32], self.name)
         return (dgate_dtype, dgate_dtype)
+
+
+class InvGrad(PrimitiveWithInfer):
+    """Computes gradients for inv operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x, grad):
+        validator.check("x_shape", x, "grad_shape", grad, Rel.EQ, self.name)
+        return x
+
+    def infer_dtype(self, x, grad):
+        validator.check_type_name("dgate", x, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
+        validator.check_type_name("grad", grad, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
+        return x

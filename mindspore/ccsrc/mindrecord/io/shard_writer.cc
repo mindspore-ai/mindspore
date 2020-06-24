@@ -90,7 +90,7 @@ MSRStatus ShardWriter::OpenDataFiles(bool append) {
       fs->close();
 
       // open the mindrecord file to write
-      fs->open(common::SafeCStr(file), std::ios::out | std::ios::binary);
+      fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
         MS_LOG(ERROR) << "MindRecord file could not opened.";
         return FAILED;

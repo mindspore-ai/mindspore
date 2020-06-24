@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <memory>
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
+#include "pre_activate/common/helper.h"
+
 namespace mindspore {
 namespace memreuse {
 bool MemReuseUtil::InitDynamicOutputKernelRef() {
@@ -226,7 +228,11 @@ KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t
                       << AnfAlgo::GetInputTensorNum(kernel);
   }
   auto input_node = kernel->input(input_idx + 1);
-  auto kernel_input = AnfAlgo::VisitKernel(input_node, 0);
+  // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+  auto kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+  if (IsPrimitive(kernel_input.first, prim::kPrimMakeTuple)) {
+    MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << input_idx << " is MakeTuple";
+  }
   auto result = GetRef(kernel_input.first, SizeToInt(kernel_input.second));
   return result;
 }
@@ -252,6 +258,7 @@ void MemReuseUtil::SetKernelDefMap() {
 
 void MemReuseUtil::SetKernelDefInputs() {
   for (const auto &kernel : graph_->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
     auto key = kernel.get();
     // find kernel_def according to cnode addr
     auto iter = kernel_map_.find(key);
@@ -264,7 +271,11 @@ void MemReuseUtil::SetKernelDefInputs() {
       if (ref_ptr != nullptr) {
         // set the inputs of this kernel_def
         auto input_node = AnfAlgo::GetInputNode(kernel, i);
-        auto input = AnfAlgo::VisitKernel(input_node, 0);
+        // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+        auto input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+        if (IsPrimitive(input.first, prim::kPrimMakeTuple)) {
+          MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
+        }
         auto input_key = (input.first).get();
         auto input_iter = kernel_map_.find(input_key);
         if (input_iter == kernel_map_.end()) {
@@ -292,10 +303,47 @@ void MemReuseUtil::SetReuseRefCount() {
   }
 }
 
+void MemReuseUtil::SetSummaryNodesRefCount() {
+  bool summary_exist = graph_->summary_node_exist();
+  if (!summary_exist) {
+    return;
+  }
+
+  auto summary_nodes = graph_->summary_nodes();
+  if (summary_nodes.empty()) {
+    return;
+  }
+
+  for (auto &node_item : summary_nodes) {
+    auto node = node_item.second.first;
+    size_t index = IntToSize(node_item.second.second);
+    MS_LOG(INFO) << "set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
+    if (kernel_output_refs_.find(node.get()) != kernel_output_refs_.end()) {
+      KernelRefCountPtr kernel_ref = kernel_output_refs_[node.get()][index];
+      kernel_ref->ref_count_ = kMaxRefCount;
+      kernel_ref->ref_count_dynamic_use_ = kMaxRefCount;
+    } else {
+      MS_LOG(WARNING) << "can't find summary node's kernel_def " << node->fullname_with_scope();
+    }
+  }
+#ifdef MEM_REUSE_DEBUG
+  auto graph = *graph_;
+  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, &graph);
+#endif
+}
+
 void MemReuseUtil::SetGraphOutputRefCount() {
+  auto is_all_nop_node = opt::IsAllNopNode(graph_);
   auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
-    auto kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0);
+    session::KernelWithIndex kernel_input;
+    if (is_all_nop_node) {
+      // The graph does not remove the nop node.
+      kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, false);
+    } else {
+      // The graph removes the nop node.
+      kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+    }
     MS_EXCEPTION_IF_NULL(kernel_input.first);
     if (!kernel_input.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_input.first)) {
       continue;
@@ -319,6 +367,7 @@ void MemReuseUtil::SetGraphOutputRefCount() {
 void MemReuseUtil::ResetDynamicUsedRefCount() {
   for (auto iter = kernel_output_refs_.begin(); iter != kernel_output_refs_.end(); ++iter) {
     for (auto &ref_count : iter->second) {
+      MS_EXCEPTION_IF_NULL(ref_count);
       ref_count->ref_count_dynamic_use_ = ref_count->ref_count_;
     }
   }
@@ -330,6 +379,7 @@ void MemReuseUtil::SetAllInfo(KernelGraph *graph) {
   }
   SetKernelDefMap();
   SetReuseRefCount();
+  SetSummaryNodesRefCount();
   SetWorkSpaceList();
 #ifdef MEM_REUSE_DEBUG
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);

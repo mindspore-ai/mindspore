@@ -95,6 +95,13 @@ class MapOp : public ParallelOp {
 
     // Setter method.
     // @return Builder setter method returns reference to the builder.
+    Builder &SetColOrder(const std::vector<std::string> &col_order_) {
+      build_col_order_ = col_order_;
+      return *this;
+    }
+
+    // Setter method.
+    // @return Builder setter method returns reference to the builder.
     Builder &SetNumWorkers(int32_t num_workers) {
       build_num_workers_ = num_workers;
       return *this;
@@ -123,6 +130,7 @@ class MapOp : public ParallelOp {
     std::vector<std::string> build_in_col_names_;
     std::vector<std::string> build_out_col_names_;
     std::vector<std::shared_ptr<TensorOp>> build_tensor_funcs_;
+    std::vector<std::string> build_col_order_;
     int32_t build_num_workers_;
     int32_t build_op_connector_size_;
     bool build_perf_mode_;  // Default true.
@@ -137,11 +145,12 @@ class MapOp : public ParallelOp {
   // @param in_col_names A list of input column names (should match the input/output \p tensorFuncs).
   // @param out_col_names A list of output column names (should match the input/output \p tensorFuncs).
   // @param tensor_funcs A list of TensorOp pointers for MapOp to apply to each data.
+  // @param columns_order names A full list of column names (should match the whole dataset view post \p tensorFuncs).
   // @param num_workers The number of worker threads.
   // @param op_connector_size The size of each queue in the connector.
   MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-        std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size,
-        bool perf_mode);
+        std::vector<std::shared_ptr<TensorOp>> tensor_funcs, const std::vector<std::string> &columns_order,
+        int32_t num_workers, int32_t op_connector_size, bool perf_mode);
 
   // Destructor
   ~MapOp() = default;
@@ -177,6 +186,14 @@ class MapOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "MapOp"; }
+
+  // Columns order getter
+  // @return The post map columns order
+  std::vector<std::string> const &ColumnsOrder() const { return columns_order_; }
+
  private:
   // Local queues where worker threads can pop from.
   // Popping directly from the Connector can block if the previous designated threads haven't pop.
@@ -197,6 +214,9 @@ class MapOp : public ParallelOp {
 
   // Indices of the columns to process.
   std::vector<size_t> to_process_indices_;
+
+  // Variable to store the column_order of all columns post tensorOps
+  std::vector<std::string> columns_order_;
 
   // Performance mode is when the main thread creates local queues, pulls databuffers from the previous
   // op's Connector and distributes them to the local queues. Workers pull from the local queues.

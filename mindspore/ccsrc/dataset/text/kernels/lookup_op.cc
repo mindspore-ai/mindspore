@@ -24,6 +24,7 @@ LookupOp::LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id)
     : vocab_(vocab), default_id_(default_id), type_(DataType("int32")) {}
 
 Status LookupOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   RETURN_UNEXPECTED_IF_NULL(vocab_);
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "None String Tensor");
   std::vector<WordIdType> word_ids;

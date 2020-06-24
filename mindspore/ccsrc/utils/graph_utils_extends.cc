@@ -26,6 +26,7 @@
 #include <fstream>
 
 #include "ir/visitor.h"
+#include "ir/manager.h"
 #include "ir/func_graph.h"
 #include "debug/label.h"
 #include "utils/log_adapter.h"
@@ -37,7 +38,8 @@ namespace mindspore {
 namespace {
 class DeepFirstSearcher : public AnfVisitor {
  public:
-  explicit DeepFirstSearcher(const IncludeFunc &include) : include_(include) {}
+  explicit DeepFirstSearcher(const IncludeFunc &include, const FilterFunc &filter = nullptr)
+      : include_(include), filter_(filter) {}
   ~DeepFirstSearcher() override = default;
 
   std::vector<AnfNodePtr> Search(const AnfNodePtr &root) {
@@ -61,8 +63,9 @@ class DeepFirstSearcher : public AnfVisitor {
     if (incl == EXCLUDE) {
       return;
     }
-
-    res_.push_back(node);
+    if (filter_ == nullptr || !filter_(node)) {
+      res_.push_back(node);
+    }
     if (incl == FOLLOW) {
       AnfVisitor::Visit(node);
     }
@@ -71,6 +74,7 @@ class DeepFirstSearcher : public AnfVisitor {
  private:
   size_t seen_{0};
   IncludeFunc include_;
+  FilterFunc filter_;
   std::vector<AnfNodePtr> res_{};
 };
 
@@ -158,10 +162,34 @@ class DeepLinkedGraphSearcher : public DeepFirstSearcher {
 
   void Visit(const ValueNodePtr &) override {}
 };
+
+class DeepUsersSearcher : public DeepFirstSearcher {
+ public:
+  explicit DeepUsersSearcher(const IncludeFunc &include, const FuncGraphManagerPtr &mng)
+      : DeepFirstSearcher(include), mng_(mng) {}
+  ~DeepUsersSearcher() override = default;
+
+  void Visit(const CNodePtr &cnode) override {
+    auto &users = mng_->node_users()[cnode];
+    for (auto iter = users.begin(); iter != users.end(); ++iter) {
+      DeepFirstSearcher::Visit(iter->first);
+    }
+  }
+  void Visit(const ValueNodePtr &) override {}
+
+ private:
+  FuncGraphManagerPtr mng_;
+};
 }  // namespace
 
+// include for if expand the node the search, filter for if put the node to results.
 std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepScopedGraphSearcher(include).Search(root);
+}
+
+std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
+                                                        const FilterFunc &filter) {
+  return DeepFirstSearcher(include, filter).Search(root);
 }
 
 std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
@@ -170,5 +198,10 @@ std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const Includ
 
 std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepLinkedGraphSearcher(include).Search(root);
+}
+
+std::vector<AnfNodePtr> DeepUsersSearch(const AnfNodePtr &root, const IncludeFunc &include,
+                                        const FuncGraphManagerPtr &mng) {
+  return DeepUsersSearcher(include, mng).Search(root);
 }
 }  // namespace mindspore

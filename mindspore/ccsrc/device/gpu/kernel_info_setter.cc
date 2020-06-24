@@ -82,11 +82,16 @@ std::string SupportedTypeList(const CNodePtr &kernel_node) {
   (void)ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list);
   for (size_t i = 0; i < kernel_info_list.size(); i++) {
     auto supported_akg_type = kernel_info_list[i]->GetAllInputDeviceTypes();
-    std::string supported_akg_type_list = "[";
+    auto supported_akg_type_out = kernel_info_list[i]->GetAllOutputDeviceTypes();
+    std::string supported_akg_type_list = "in[";
     for (auto type : supported_akg_type) {
       supported_akg_type_list = supported_akg_type_list + mindspore::kernel::TypeId2String(type);
     }
-    supported_type_lists = supported_type_lists + supported_akg_type_list + "] ";
+    supported_type_lists = supported_type_lists + supported_akg_type_list + "], out[";
+    for (auto type : supported_akg_type_out) {
+      supported_akg_type_list = supported_akg_type_list + mindspore::kernel::TypeId2String(type);
+    }
+    supported_type_lists += "]; ";
   }
   return supported_type_lists;
 }
@@ -179,7 +184,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
 
   if (!result) {
     result = SelectAkgKernel(kernel_node, builder->Build());
-    kernel_type = AUTO_DIFF_KERNEL;
+    kernel_type = AKG_KERNEL;
   }
 
   if (!result) {

@@ -38,6 +38,7 @@ enum OperatorType {
   kRecBiasAdd,
   kRecSoftmax,
   kRecSparseSoftmaxCrossEntropyWithLogits,
+  kRecSoftmaxCrossEntropyWithLogits,
   kRecOneHot,
   kRecLog,
   kRecExp,
@@ -47,7 +48,9 @@ enum OperatorType {
   kRecDiv,
   kRecSqueeze,
   kRecCast,
-  kRecReduce
+  kRecReduce,
+  kRecPReLU,
+  kRecGatherV2
 };
 
 enum InfoType { kApplication, kConstant };
@@ -67,6 +70,7 @@ class Graph {
     std::vector<size_t> node_in;
     // Nodes that point from this node
     std::vector<size_t> node_out;
+    std::vector<size_t> node_in_aux;
     // Node Type Info: Application or Constant. Defined in enum <InfoType> .
     InfoType info;
     // Operator info. Defined in struct <OperatorRec> .

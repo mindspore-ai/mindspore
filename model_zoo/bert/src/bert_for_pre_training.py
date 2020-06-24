@@ -27,12 +27,12 @@ from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
+from mindspore.ops import _selected_ops
 from .bert_model import BertModel
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
 
-_nn_clip_by_norm = nn.ClipByNorm()
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 
 
@@ -57,7 +57,7 @@ def _clip_grad(clip_type, clip_value, grad):
         new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
                                    F.cast(F.tuple_to_array((clip_value,)), dt))
     else:
-        new_grad = _nn_clip_by_norm(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
 
 
@@ -131,7 +131,7 @@ class GetNextSentenceOutput(nn.Cell):
     """
     def __init__(self, config):
         super(GetNextSentenceOutput, self).__init__()
-        self.log_softmax = P.LogSoftmax()
+        self.log_softmax = _selected_ops.LogSoftmax()
         self.weight_init = TruncatedNormal(config.initializer_range)
         self.dense = nn.Dense(config.hidden_size, 2,
                               weight_init=self.weight_init, has_bias=True).to_float(config.compute_type)

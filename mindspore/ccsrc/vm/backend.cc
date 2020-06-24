@@ -39,14 +39,14 @@ LinConvertResult MsBackend::GetMultiGraphRun(const FuncGraphPtr &g) {
   multi_result_.inputs = g->parameters();
   final_output_ = NewValueNode("fake_output");
   multi_result_.outputs = {final_output_};
-  GraphId final_g = sess_->GetFinalRunGraph();
+  GraphId final_g = target_sess_->GetFinalRunGraph();
 
   multi_result_.run = std::make_shared<RunFunc>(
-    [final_g, this](const VectorRef &args) -> VectorRef { return MsRunGraph(final_g, args); });
+    [final_g, this](const VectorRef &args) -> VectorRef { return MsRunGraph(final_g, args, ""); });
   return multi_result_;
 }
 
-LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst) {
+LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::string &target) {
   MS_LOG(DEBUG) << "MsConvert";
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   auto cached = g_ConvertCache.find(lst);
@@ -64,17 +64,25 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst) {
   result.inputs = inputs;
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
-  auto graph_id = sess_->CompileGraph(lst, outputs);
-  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
-    sess_->BuildGraph(graph_id);
+  GraphId graph_id = kInvalidGraphId;
+  if (target != target_device_ && !target.empty()) {
+    CreateOtherSession(target);
+    graph_id = other_sess_->CompileGraph(lst, outputs);
+  } else {
+    graph_id = target_sess_->CompileGraph(lst, outputs);
   }
+
   if (MsContext::GetInstance()->precompile_only()) {
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return result;
   }
-
+  if (target != target_device_ && !target.empty()) {
+    other_sess_->BuildGraph(graph_id);
+  } else if (!is_multi_graph_sink_) {
+    target_sess_->BuildGraph(graph_id);
+  }
   result.run = std::make_shared<RunFunc>(
-    [graph_id, this](const VectorRef &args) -> VectorRef { return MsRunGraph(graph_id, args); });
+    [graph_id, target, this](const VectorRef &args) -> VectorRef { return MsRunGraph(graph_id, args, target); });
   MS_EXCEPTION_IF_NULL(result.run);
 
   result.simu_run = std::make_shared<RunFunc>(
@@ -92,7 +100,7 @@ void MsBackend::SetSwitchActive(const BaseRef &c, bool cond) {
 
   GraphId cond_g = kInvalidGraphId;
   if (utils::isa<AnfNodePtr>(c)) {
-    cond_g = sess_->GetGraphIdByNode(utils::cast<AnfNodePtr>(c));
+    cond_g = target_sess_->GetGraphIdByNode(utils::cast<AnfNodePtr>(c));
   } else {
     MS_LOG(EXCEPTION) << "cond not a anf node:" << c.ToString();
   }
@@ -116,7 +124,7 @@ void MsBackend::SetSwitchActive(const BaseRef &c, bool cond) {
     MS_LOG(DEBUG) << "invoke set active:" << active_g;
   }
   MS_LOG(DEBUG) << "switch set active:" << active_g << ", " << cond_g;
-  sess_->SetActive(active_g, cond_g);
+  target_sess_->SetActive(active_g, cond_g);
 }
 
 void MsBackend::SetSwitchGraph() {
@@ -135,12 +143,12 @@ void MsBackend::SetSwitchGraph() {
       }
       GraphId cond_g = kInvalidGraphId;
       if (utils::isa<AnfNodePtr>(curr_switch_)) {
-        cond_g = sess_->GetGraphIdByNode(utils::cast<AnfNodePtr>(curr_switch_));
+        cond_g = target_sess_->GetGraphIdByNode(utils::cast<AnfNodePtr>(curr_switch_));
       } else {
         MS_LOG(EXCEPTION) << "cond not a anf node:" << curr_switch_.ToString();
       }
       MS_LOG(DEBUG) << "switch compile:" << cond_g << ", " << true_g << ", " << false_g;
-      sess_->SwitchCompile(cond_g, true_g, false_g, utils::cast<AnfNodePtr>(curr_switch_));
+      target_sess_->SwitchCompile(cond_g, true_g, false_g, utils::cast<AnfNodePtr>(curr_switch_));
     }
     is_switch_call_ = false;
     MS_LOG(DEBUG) << "end SetSwitchGraph:" << curr_cond << ", " << is_switch_call_;
@@ -202,7 +210,7 @@ void MsBackend::RecallGraphInput(const FuncGraphPtr &func_graph, const VectorRef
         old_args[i] = args[it->second];
       }
     }
-    sess_->SetChildGraphInput(graph, old_args);
+    target_sess_->SetChildGraphInput(graph, old_args);
   }
   graph_inputs_.erase(c);
 }
@@ -211,7 +219,7 @@ void MsBackend::RecallGraphInput(const FuncGraphPtr &func_graph, const VectorRef
 VectorRef MsBackend::MsSimuRunGraph(const GraphId &g, const VectorRef &args) {
   MS_LOG(DEBUG) << "set graph input:" << g;
   // switch maybe twice
-  sess_->SetChildGraphInput(g, args);
+  target_sess_->SetChildGraphInput(g, args);
 
   if (is_switch_call_) {
     if (!curr_switch_.is_null()) {
@@ -236,7 +244,7 @@ VectorRef MsBackend::MsSimuRunGraph(const GraphId &g, const VectorRef &args) {
   return VectorRef(outputs);
 }
 
-VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args) {
+VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
   MS_LOG(DEBUG) << "start ms graph run:" << args.size() << ", g:" << g;
   // Run graph
   std::vector<tensor::TensorPtr> inputs;
@@ -271,7 +279,12 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args) {
 
   VectorRef outputs;
   // call ms rungraph (graphId, input ,output)
-  sess_->RunGraph(g, inputs, &outputs);
+  if (target != target_device_ && !target.empty()) {
+    other_sess_->RunGraph(g, inputs, &outputs);
+  } else {
+    target_sess_->RunGraph(g, inputs, &outputs);
+  }
+
   MS_LOG(DEBUG) << "RunGraph finished:" << outputs.size();
   return outputs;
 }
@@ -300,17 +313,17 @@ void MsBackend::SimulateRun(FinalVMPtr rt, FuncGraphPtr root) {
   (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args),
                        [](const AnfNodePtr &v) { return v; });
   MS_LOG(DEBUG) << "Simulate start";
-  (void)sess_->SetFinalGraphInput(parameters);
+  (void)target_sess_->SetFinalGraphInput(parameters);
   BaseRef output = rt->Eval(VectorRef(args));
-  sess_->SetFinalGraphOutput(output);
+  target_sess_->SetFinalGraphOutput(output);
   MS_LOG(DEBUG) << "Simulate Eval end";
 }
 
 void MsBackend::Link(GraphId graph_id) {
   if (graph_id == kInvalidGraphId) {
-    graph_id = sess_->GetFinalRunGraph();
+    graph_id = target_sess_->GetFinalRunGraph();
   }
-  sess_->BuildGraph(graph_id);
+  target_sess_->BuildGraph(graph_id);
 }
 
 Backend::Backend(const std::string &name) : name_(name) {
@@ -322,16 +335,30 @@ Backend::Backend(const std::string &name) : name_(name) {
 }
 
 MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_t device_id) : Backend(name) {
-  convert_fn_ = std::bind(&MsBackend::MsConvert, this, std::placeholders::_1);
-  sess_ = session::SessionFactory::Get().Create(target);
-  if (sess_ == nullptr) {
+  convert_fn_ = std::bind(&MsBackend::MsConvert, this, std::placeholders::_1, std::placeholders::_2);
+  target_sess_ = session::SessionFactory::Get().Create(target);
+  if (target_sess_ == nullptr) {
     MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
   }
-  sess_->Init(device_id);
-  sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
+  target_sess_->Init(device_id);
+  target_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
+  target_device_ = target;
 }
 
-GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return sess_->CompileGraph(fg); }
+void MsBackend::CreateOtherSession(const std::string &target) {
+  if (other_sess_ != nullptr && other_device_ == target) {
+    return;
+  }
+  other_sess_ = session::SessionFactory::Get().Create(target);
+  if (other_sess_ == nullptr) {
+    MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
+  }
+  other_sess_->Init(0);
+  other_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
+  other_device_ = target;
+}
+
+GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraph(fg); }
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
 

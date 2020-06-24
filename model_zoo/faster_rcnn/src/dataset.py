@@ -23,6 +23,8 @@ from numpy import random
 import mmcv
 import mindspore.dataset as de
 import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.transforms.c_transforms as CC
+import mindspore.common.dtype as mstype
 from mindspore.mindrecord import FileWriter
 from src.config import config
 
@@ -229,6 +231,21 @@ def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return  (img_data, img_shape, flipped, gt_label, gt_num)
 
+def flipped_generation(img, img_shape, gt_bboxes, gt_label, gt_num):
+    """flipped generation"""
+    img_data = img
+    flipped = gt_bboxes.copy()
+    _, w, _ = img_data.shape
+
+    flipped[..., 0::4] = w - gt_bboxes[..., 2::4] - 1
+    flipped[..., 2::4] = w - gt_bboxes[..., 0::4] - 1
+
+    return  (img_data, img_shape, flipped, gt_label, gt_num)
+
+def image_bgr_rgb(img, img_shape, gt_bboxes, gt_label, gt_num):
+    img_data = img[:, :, ::-1]
+    return  (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """transpose operation for image"""
     img_data = img.transpose(2, 0, 1).copy()
@@ -264,9 +281,10 @@ def preprocess_fn(image, box, is_training):
             input_data = rescale_column(*input_data)
         else:
             input_data = resize_column_test(*input_data)
-        input_data = imnormalize_column(*input_data)
 
-        output_data = transpose_column(*input_data)
+        input_data = image_bgr_rgb(*input_data)
+
+        output_data = input_data
         return output_data
 
     def _data_aug(image, box, is_training):
@@ -289,24 +307,24 @@ def preprocess_fn(image, box, is_training):
         if not is_training:
             return _infer_data(image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert)
 
-        flip = (np.random.rand() < config.flip_ratio)
-        photo = (np.random.rand() < config.photo_ratio)
-        expand = (np.random.rand() < config.expand_ratio)
         input_data = image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert
 
+        expand = (np.random.rand() < config.expand_ratio)
         if expand:
             input_data = expand_column(*input_data)
+
         if config.keep_ratio:
             input_data = rescale_column(*input_data)
         else:
             input_data = resize_column(*input_data)
+
+        photo = (np.random.rand() < config.photo_ratio)
         if photo:
             input_data = photo_crop_column(*input_data)
-        input_data = imnormalize_column(*input_data)
-        if flip:
-            input_data = flip_column(*input_data)
 
-        output_data = transpose_column(*input_data)
+        input_data = image_bgr_rgb(*input_data)
+
+        output_data = input_data
         return output_data
 
     return _data_aug(image, box, is_training)
@@ -423,19 +441,46 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, repeat_num=12, devi
     ds = ds.map(input_columns=["image"], operations=decode)
     compose_map_func = (lambda image, annotation: preprocess_fn(image, annotation, is_training))
 
+    hwc_to_chw = C.HWC2CHW()
+    normalize_op = C.Normalize((123.675, 116.28, 103.53), (58.395, 57.12, 57.375))
+    horizontally_op = C.RandomHorizontalFlip(1)
+    type_cast0 = CC.TypeCast(mstype.float32)
+    type_cast1 = CC.TypeCast(mstype.float16)
+    type_cast2 = CC.TypeCast(mstype.int32)
+    type_cast3 = CC.TypeCast(mstype.bool_)
+
     if is_training:
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
                     columns_order=["image", "image_shape", "box", "label", "valid_num"],
-                    operations=compose_map_func, python_multiprocessing=True, num_parallel_workers=num_parallel_workers)
-        ds = ds.batch(batch_size, drop_remainder=True)
-        ds = ds.repeat(repeat_num)
+                    operations=compose_map_func, num_parallel_workers=4)
+
+        ds = ds.map(input_columns=["image"], operations=[normalize_op, type_cast0],
+                    num_parallel_workers=num_parallel_workers)
+
+        flip = (np.random.rand() < config.flip_ratio)
+        if flip:
+            ds = ds.map(input_columns=["image"], operations=[horizontally_op],
+                        num_parallel_workers=num_parallel_workers)
+            ds = ds.map(input_columns=["image", "image_shape", "box", "label", "valid_num"],
+                        operations=flipped_generation, num_parallel_workers=4)
     else:
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
                     columns_order=["image", "image_shape", "box", "label", "valid_num"],
                     operations=compose_map_func,
                     num_parallel_workers=num_parallel_workers)
-        ds = ds.batch(batch_size, drop_remainder=True)
-        ds = ds.repeat(repeat_num)
+
+        ds = ds.map(input_columns=["image"], operations=[normalize_op, type_cast0],
+                    num_parallel_workers=num_parallel_workers)
+
+    # transpose_column from python to c
+    ds = ds.map(input_columns=["image"], operations=[hwc_to_chw, type_cast1])
+    ds = ds.map(input_columns=["image_shape"], operations=[type_cast1])
+    ds = ds.map(input_columns=["box"], operations=[type_cast1])
+    ds = ds.map(input_columns=["label"], operations=[type_cast2])
+    ds = ds.map(input_columns=["valid_num"], operations=[type_cast3])
+    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.repeat(repeat_num)
+
     return ds

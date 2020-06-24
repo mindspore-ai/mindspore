@@ -61,6 +61,9 @@ const AnfNodePtr LambNextRightRule::Process(const FuncGraphPtr &func_graph, cons
                                             const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   auto new_node = CreateLambNextRightNode(func_graph, equiv);
   MS_EXCEPTION_IF_NULL(new_node);
   // Set abstract of new node

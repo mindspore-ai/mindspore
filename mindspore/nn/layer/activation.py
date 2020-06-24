@@ -20,7 +20,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
+from mindspore.ops import _selected_ops
 from ..cell import Cell
+
 
 __all__ = ['Softmax',
            'LogSoftmax',
@@ -73,7 +75,7 @@ class Softmax(Cell):
 
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
-        self.softmax = P.Softmax(axis)
+        self.softmax = _selected_ops.Softmax(axis)
 
     def construct(self, x):
         return self.softmax(x)
@@ -110,7 +112,7 @@ class LogSoftmax(Cell):
 
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()
-        self.log_softmax = P.LogSoftmax(axis)
+        self.log_softmax = _selected_ops.LogSoftmax(axis)
 
     def construct(self, x):
         return self.log_softmax(x)
@@ -249,11 +251,11 @@ class LeakyReLU(Cell):
         self.alpha = alpha
 
     def construct(self, x):
-        alpha = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
+        alpha_array = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
         if self.alpha <= 1:
-            out = P.Maximum()(alpha * x, x)
+            out = P.Maximum()(alpha_array * x, x)
         else:
-            out = P.Minimum()(alpha * x, x)
+            out = P.Minimum()(alpha_array * x, x)
         return out
 
 
@@ -286,7 +288,7 @@ class Tanh(Cell):
 
     def __init__(self):
         super(Tanh, self).__init__()
-        self.tanh = P.Tanh()
+        self.tanh = _selected_ops.Tanh()
 
     def construct(self, x):
         return self.tanh(x)
@@ -318,7 +320,7 @@ class GELU(Cell):
 
     def __init__(self):
         super(GELU, self).__init__()
-        self.gelu = P.Gelu()
+        self.gelu = _selected_ops.Gelu()
 
     def construct(self, x):
         return self.gelu(x)
@@ -378,7 +380,7 @@ class PReLU(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> input_x = Tensor(np.random.rand(1, 10, 4, 4), mindspore.float32)
         >>> prelu = nn.PReLU()
         >>> prelu(input_x)
 
@@ -503,6 +505,7 @@ class LogSigmoid(Cell):
         [-3.1326166e-01, -1.2692806e-01, -4.8587345e-02]
 
     """
+
     def __init__(self):
         super(LogSigmoid, self).__init__()
         self.mul = P.Mul()
@@ -549,9 +552,9 @@ def get_activation(name):
     Examples:
         >>> sigmoid = nn.get_activation('sigmoid')
     """
-    if not name:
+    if name is None:
         return None
 
     if name not in _activation:
-        raise KeyError("Unknown activation type")
+        raise KeyError(f"Unknown activation type '{name}'")
     return _activation[name]()

@@ -44,6 +44,7 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
       break;
     }
   }
+  MS_EXCEPTION_IF_NULL(eltwise_input);
   if (!eltwise_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(eltwise_input) ||
       fusion_id_allocator->HasFusionIdAttr(eltwise_input)) {
     return;
@@ -73,6 +74,7 @@ void SegmentEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGra
                                                         FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
+  std::reverse(node_list.begin(), node_list.end());
   for (auto &node : node_list) {
     if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {

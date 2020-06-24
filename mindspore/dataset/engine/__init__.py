@@ -28,10 +28,9 @@ from .serializer_deserializer import serialize, deserialize, show, compare
 from .samplers import *
 from ..core.configuration import config, ConfigurationManager
 
-
 __all__ = ["config", "ConfigurationManager", "zip",
            "ImageFolderDatasetV2", "MnistDataset",
-           "MindDataset", "GeneratorDataset", "TFRecordDataset",
+           "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
-           "VOCDataset", "TextFileDataset", "Schema", "DistributedSampler", "PKSampler",
-           "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler"]
+           "VOCDataset", "CocoDataset", "TextFileDataset", "Schema", "DistributedSampler",
+           "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler"]

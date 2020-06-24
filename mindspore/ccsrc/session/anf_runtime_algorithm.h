@@ -54,6 +54,8 @@ class AnfRuntimeAlgorithm {
   static PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
   // check whether anf node is a node of 'primitive_type',such as make_tuple is a cnode of kPrimMakeTuple
   static bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
+  // get cnode primitive
+  static FuncGraphPtr GetCNodeFuncGraphPtr(const AnfNodePtr &node);
   // get kernel_name of anf node
   static std::string GetCNodeName(const AnfNodePtr &node);
   // get detail info of anf node
@@ -121,14 +123,16 @@ class AnfRuntimeAlgorithm {
   // get output select data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputDeviceDataType(const AnfNodePtr &node, size_t input_idx);
   // get output device addr of anf_node
-  static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx);
+  static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
   // get mutable output device addr of anf_node
-  static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx);
+  static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
   // check whether output addr is exist or not
   static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx);
   // get address from prev node,input_index is the input index of current node related to prev node
-  static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &node, size_t input_idx);
-  static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx);
+  static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &node, size_t input_idx,
+                                                    bool visit_nop_node = true);
+  static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
+                                                       bool visit_nop_node = true);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
   // set workspace device addr of anf_node
@@ -159,6 +163,8 @@ class AnfRuntimeAlgorithm {
   static bool IsRealKernel(const AnfNodePtr &node);
   // checkout whether the anf node is a real kernel that is a cnode and can run on device
   static bool IsRealCNodeKernel(const AnfNodePtr &node);
+  // checkout whether the anf node is a graph kernel.
+  static bool IsGraphKernel(const AnfNodePtr &node);
   // check parameter is weight or data
   static bool IsParameterWeight(const ParameterPtr &node);
   // set stream id of kernel,which will be set in stream assign and be used in stream generate
@@ -185,6 +191,14 @@ class AnfRuntimeAlgorithm {
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
   static std::vector<KernelGraphPtr> GetCallNodeKernelGraph(const CNodePtr &call_node);
   static bool IsSwitchCall(const CNodePtr &call_node);
+  static bool IsScalarInput(const CNodePtr &cnode, size_t index);
+  static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
+  static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
+  static bool IsWhileTrueGraph(const KernelGraphPtr &child_graph);
+  // get fix output precision of cnode.
+  static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
+  // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
+  static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

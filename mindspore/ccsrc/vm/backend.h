@@ -91,8 +91,8 @@ class MsBackend : public Backend {
   MsBackend(const std::string &name, const std::string &target, uint32_t device_id);
   ~MsBackend() override = default;
 
-  LinConvertResult MsConvert(const AnfNodePtrList &lst);
-  VectorRef MsRunGraph(const GraphId &g, const VectorRef &args);
+  LinConvertResult MsConvert(const AnfNodePtrList &lst, const std::string &target = "");
+  VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
   VectorRef MsSimuRunGraph(const GraphId &g, const VectorRef &args);
   void SimulateRun(FinalVMPtr rt, FuncGraphPtr root) override;
@@ -107,9 +107,13 @@ class MsBackend : public Backend {
   LinConvertResult GetMultiGraphRun(const FuncGraphPtr &g) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
+  void CreateOtherSession(const std::string &target);
 
  private:
-  session::SessionPtr sess_;
+  session::SessionPtr target_sess_;
+  session::SessionPtr other_sess_;
+  std::string target_device_;
+  std::string other_device_;
   std::unordered_map<BaseRef, CondGraph, BaseRefHash> simu_cond_map_;
   std::unordered_map<GraphId, LinConvertResult> graph_id_map_;
   std::unordered_map<BaseRef, std::list<std::pair<GraphId, VectorRef>>, BaseRefHash> graph_inputs_;

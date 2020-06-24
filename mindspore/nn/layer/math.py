@@ -15,12 +15,16 @@
 """math"""
 import math
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.tensor import Tensor
 from ..cell import Cell
 from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 
-__all__ = ['ReduceLogSumExp', 'Range']
+
+__all__ = ['ReduceLogSumExp', 'Range', 'LinSpace']
+
 
 class ReduceLogSumExp(Cell):
     r"""
@@ -79,8 +83,8 @@ class Range(Cell):
         start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
             defaults to `0`. Otherwise, it acts as first entry in the range.
         limit (Union[int, float]): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`.
-        delta (Union[int, float]): Increment of the range. Default: 1.
+            while set the first entry of the range to `0`. It can not be equal to `start`.
+        delta (Union[int, float]): Increment of the range. It can not be equal to zero. Default: 1.
 
     Outputs:
         Tensor, the dtype is int if the dtype of `start`, `limit` and `delta` all are int. Otherwise, dtype is float.
@@ -93,10 +97,12 @@ class Range(Cell):
 
     def __init__(self, start, limit=None, delta=1):
         super(Range, self).__init__()
-        validator.check_value_type("start", start, [int, float], None)
-        validator.check_value_type("delta", delta, [int, float], None)
+        validator.check_value_type("start", start, [int, float], self.cls_name)
+        validator.check_value_type("delta", delta, [int, float], self.cls_name)
+        if delta == 0:
+            raise ValueError("The input of `delta` can not be equal to zero.")
         if limit is not None:
-            validator.check_value_type("limit", limit, [int, float], None)
+            validator.check_value_type("limit", limit, [int, float], self.cls_name)
             if isinstance(start, int) and isinstance(limit, int) and isinstance(delta, int):
                 self.dtype = mstype.int32
             else:
@@ -112,7 +118,7 @@ class Range(Cell):
             limit = float(limit)
         if isinstance(delta, int):
             delta = float(delta)
-        self.range_x = P.Range(start, limit, delta)
+        self.range_x = inner.Range(start, limit, delta)
         if limit is None:
             length_input = math.ceil(start / delta)
         else:
@@ -122,3 +128,48 @@ class Range(Cell):
     def construct(self):
         range_out = self.range_x(self.input_tensor)
         return range_out
+
+
+class LinSpace(Cell):
+    r"""
+    Generates values in an interval. And return the corresponding interpolation accroding to assist.
+
+    Args:
+        - **start** (Union[int, float]) - The start of interval, With shape of 0-D.
+        - **stop** (Union[int, float]) - The end of interval, With shape of 0-D.
+        - **num** (int) - ticks number in the interval, the ticks include start and stop value.
+          With shape of 0-D.
+
+    Outputs:
+        Tensor, With type same as `start`. The shape is 1-D with length of `num`.
+
+    Examples:
+        >>> linspace = nn.LinSpace()
+        >>> start = Tensor(1, mindspore.float32)
+        >>> stop = Tensor(10, mindspore.float32)
+        >>> num = Tensor(5, mindspore.int32)
+        >>> output = linspace(start, stop, num)
+        [1, 3.25, 5.5, 7.75, 10]
+    """
+
+    def __init__(self, start, stop, num):
+        super(LinSpace, self).__init__()
+        validator.check_value_type("start", start, [int, float], self.cls_name)
+        validator.check_value_type("stop", stop, [int, float], self.cls_name)
+        validator.check_value_type("num", num, [int], self.cls_name)
+        validator.check_integer("num", num, 0, Rel.GT, self.cls_name)
+
+        self.is_single = bool(num == 1)
+        self.lin_space = inner.LinSpace()
+        self.start = Tensor(start, mstype.float32)
+        self.stop = Tensor(stop, mstype.float32)
+        self.assist = Tensor(list(range(num)), mstype.float32)
+        self.num = Tensor(num, mstype.int32)
+        self.start_array = Tensor([start], mstype.float32)
+
+    def construct(self):
+        if self.is_single:
+            return self.start_array
+
+        lin_space_out = self.lin_space(self.assist, self.start, self.stop, self.num)
+        return lin_space_out

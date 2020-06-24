@@ -68,7 +68,7 @@ class BiasAddGradGpuKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     InitResource();
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto num_dims = dy_shape.size();
     if (num_dims < 2) {

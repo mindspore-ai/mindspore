@@ -103,6 +103,7 @@ const char kNameReLU6[] = "ReLU6";
 const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
 const char kNameEluGrad[] = "EluGrad";
+const char kNameTensorScatterUpdate[] = "TensorScatterUpdate";
 const char kNameScatterUpdate[] = "ScatterUpdate";
 const char kNameScatterNdUpdate[] = "ScatterNdUpdate";
 const char kNameScatterMax[] = "ScatterMax";
@@ -182,6 +183,7 @@ const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
 const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
+const char kNameApplyProximalAdagrad[] = "ApplyProximalAdagrad";
 const char kNameAcosh[] = "Acosh";
 const char kNameAcoshGrad[] = "AcoshGrad";
 const char kNameFloorMod[] = "FloorMod";
@@ -203,6 +205,8 @@ const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
 const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
+const char kNameAscendQuant[] = "AscendQuant";
+const char kNameAscendDequant[] = "AscendDequant";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -211,7 +215,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameIOU), ADPT_DESC(Iou)},
     {string(kNameGreaterEqual), ADPT_DESC(GreaterEqual)},
     {string(kNameSlice), ADPT_DESC(SliceD)},
-    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
+    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentumD)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
     {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
@@ -260,6 +264,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameResizeBilinear), ADPT_DESC(ResizeBilinearV2D)},
     {string(kNameZerosLike), ADPT_DESC(ZerosLike)},
     {string(kNameOnesLike), ADPT_DESC(OnesLike)},
+    {string(kNameTensorScatterUpdate), ADPT_DESC(TensorScatterUpdate)},
     {string(kNameScatterUpdate), ADPT_DESC(ScatterUpdate)},
     {string(kNameScatterNdUpdate), ADPT_DESC(ScatterNdUpdate)},
     {string(kNameScatterMax), ADPT_DESC(ScatterMax)},
@@ -386,6 +391,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
+    {string(kNameApplyProximalAdagrad), ADPT_DESC(ApplyProximalAdagradD)},
     {string(kNameAcosh), ADPT_DESC(Acosh)},
     {string(kNameAcoshGrad), ADPT_DESC(AcoshGrad)},
     {string(kNameFloorMod), ADPT_DESC(FloorMod)},
@@ -393,7 +399,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
     {string(kNameRound), ADPT_DESC(Round)},
-    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)},
+    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrlD)},
     {string(kNameDiag), ADPT_DESC(Diag)},
     {string(kNameDiagPart), ADPT_DESC(DiagPart)},
     {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},
@@ -404,10 +410,12 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
     {string(kNameRange), ADPT_DESC(RangeD)},
-    {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)}};
+    {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)},
+    {string(kNameAscendQuant), ADPT_DESC(AscendQuant)},
+    {string(kNameAscendDequant), ADPT_DESC(AscendDequant)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
-  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdam);
+  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);
 #endif
   return adpt_map;
 }
@@ -957,8 +965,8 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
     for (unsigned int i = 1; i < c->inputs().size(); i++) {
       TraceOutput(c->input(i));
     }
-  } else if (name == "depend") {
-    if (c->inputs().size() < 3) {  // "depend" primitive have 3 inputs
+  } else if (name == "Depend") {
+    if (c->inputs().size() < 3) {  // "Depend" primitive have 3 inputs
       MS_LOG(EXCEPTION) << "length of inputs is " << c->inputs().size() << ", which is less than 3";
     }
     TraceOutput(c->input(1));
@@ -1181,7 +1189,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   auto &inputs = node->inputs();
   for (size_t i = 1; i < inputs.size(); i++) {
     auto pred = inputs[i];
-    while (pred->isa<CNode>() && GetCNodeFuncName(pred->cast<CNodePtr>()) == "depend") {
+    while (pred->isa<CNode>() && GetCNodeFuncName(pred->cast<CNodePtr>()) == "Depend") {
       pred = pred->cast<CNodePtr>()->input(1);
     }
     // skip the None input
@@ -1360,7 +1368,7 @@ AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, unsigned in
 
 AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().size() < 3) {  // "depend" primitive have 3 inputs
+  if (cnode->inputs().size() < 3) {  // "Depend" primitive have 3 inputs
     MS_LOG(EXCEPTION) << "length of inputs of depend is less than 3";
   }
   return cnode->inputs()[1];
@@ -1481,7 +1489,7 @@ AnfNodePtr DfGraphConvertor::GetRealOpNode(AnfNodePtr node) {
   // depend apply inputs: depend,output,depended_node
   if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
     auto depend_inputs = node->cast<CNodePtr>()->inputs();
-    if (depend_inputs.size() != 3) {  // "depend" primitive have 3 inputs
+    if (depend_inputs.size() != 3) {  // "Depend" primitive have 3 inputs
       MS_LOG(ERROR) << "depend input items not correct";
       error_ = FAILED;
       return node;
@@ -1698,7 +1706,7 @@ void DfGraphConvertor::ConvertControlDependNode(const CNodePtr node) {
 
 bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) {
   // ignore apply node of return
-  if (name == "return" || name == "depend") {
+  if (name == "return" || name == "Depend") {
     return false;
   }
 

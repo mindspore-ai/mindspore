@@ -21,7 +21,8 @@
 #include <vector>
 #include "device/ascend/kernel_select_ascend.h"
 #include "kernel/kernel_query.h"
-#include "kernel/tbe/tbe_kernel_select.h"
+#include "kernel/oplib/oplib.h"
+#include "session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -37,11 +38,11 @@ class SupportedChecker {
  public:
   SupportedChecker() = default;
   virtual ~SupportedChecker() = default;
-  virtual bool CheckAiCoreSupported(const AnfNodePtr &anf_node,
+  virtual bool CheckAICoreSupported(const AnfNodePtr &anf_node,
                                     const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
     return kernel::IsSupportedByAICore(anf_node, select_kernel_build_info);
   }
-  virtual bool CheckAiCpuSupported(const AnfNodePtr &anf_node,
+  virtual bool CheckAICPUSupported(const AnfNodePtr &anf_node,
                                    const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
     return kernel::IsSupportedByAICPU(anf_node, select_kernel_build_info);
   }
@@ -56,9 +57,20 @@ class KernelQuery {
                      std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
     kernel::KernelQuery(kernel_node, kernel_info_list);
   }
+  virtual bool IsTbeRef(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      return false;
+    }
+    auto op_info = mindspore::kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(node), kernel::kTBE);
+    if (op_info != nullptr) {
+      return op_info->is_ref();
+    }
+    return false;
+  }
 };
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
-void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format, const TypeId device_type,
+void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
                             const AnfNodePtr &trans_data, const std::vector<kernel::Axis> &reshape_type = {});
 
 CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,

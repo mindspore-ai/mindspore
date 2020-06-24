@@ -12,33 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-import matplotlib.pyplot as plt
+"""
+Testing UniformAugment in DE
+"""
 import numpy as np
 
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
+from util import visualize_list
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
-
-
-def visualize(image_original, image_ua):
-    """
-    visualizes the image using DE op and Numpy op
-    """
-    num = len(image_ua)
-    for i in range(num):
-        plt.subplot(2, num, i + 1)
-        plt.imshow(image_original[i])
-        plt.title("Original image")
-
-        plt.subplot(2, num, i + num + 1)
-        plt.imshow(image_ua[i])
-        plt.title("DE UniformAugment image")
-
-    plt.show()
 
 
 def test_uniform_augment(plot=False, num_ops=2):
@@ -102,7 +87,7 @@ def test_uniform_augment(plot=False, num_ops=2):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
     if plot:
-        visualize(images_original, images_ua)
+        visualize_list(images_original, images_ua)
 
 
 def test_cpp_uniform_augment(plot=False, num_ops=2):
@@ -157,7 +142,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
                                   np.transpose(image, (0, 2, 3, 1)),
                                   axis=0)
     if plot:
-        visualize(images_original, images_ua)
+        visualize_list(images_original, images_ua)
 
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
@@ -226,6 +211,7 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_ops" in str(e)
 
+
 def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
     """
     Test UniformAugment invalid float number of ops
@@ -244,6 +230,7 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "integer" in str(e)
+
 
 def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     """
@@ -273,8 +260,8 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
 
 
 if __name__ == "__main__":
-    test_uniform_augment(num_ops=1)
-    test_cpp_uniform_augment(num_ops=1)
+    test_uniform_augment(num_ops=1, plot=True)
+    test_cpp_uniform_augment(num_ops=1, plot=True)
     test_cpp_uniform_augment_exception_pyops(num_ops=1)
     test_cpp_uniform_augment_exception_large_numops(num_ops=6)
     test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)

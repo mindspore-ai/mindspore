@@ -42,7 +42,7 @@ class RepeatOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new RepeatOp object
     Status Build(std::shared_ptr<RepeatOp> *);
 
    private:
@@ -123,6 +123,10 @@ class RepeatOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "RepeatOp"; }
 
  private:
   int32_t max_repeats_;                              // The number of repeats that the user requested

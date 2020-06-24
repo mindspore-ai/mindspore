@@ -18,7 +18,9 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 #include <string>
+#include <set>
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
@@ -65,6 +67,7 @@ constexpr size_t kBNGrad3OutputNum = 1;
 constexpr size_t kBNTrainingReduceOutputNum = 2;
 constexpr size_t kBNTrainingUpdateOutputNum = 5;
 constexpr size_t kBNTrainingUpdateV2OutputNum = 3;
+constexpr size_t kBNTrainingUpdateV3OutputNum = 5;
 constexpr size_t kBNTrainingUpdateGradOutputNum = 2;
 
 constexpr size_t kSingleOutputNum = 1;
@@ -94,6 +97,7 @@ constexpr size_t kBiasAddInputNum = 3;
 constexpr size_t kTopkInputNum = 3;
 constexpr size_t kLarsV2InputNum = 5;
 constexpr size_t kFusedMulApplyMomentumOutputNum = 2;
+constexpr size_t kSplitInputNum = 2;
 
 enum FusedBatchNormInput {
   kX = 1,
@@ -152,6 +156,8 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
 
 tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
 
+bool IsAllNopNode(const session::KernelGraph *const graph);
+
 bool IsNopNode(const AnfNodePtr &node);
 
 void HideNopNode(session::KernelGraph *const graph);
@@ -161,6 +167,9 @@ void RemoveNopNode(session::KernelGraph *const graph);
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
 
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                             const AnfNodePtr &node);
 
 void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs);
 
@@ -176,6 +185,15 @@ bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &va
 
 // Get anf_node from equiv by var_node
 AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
+
+// Compare tuple getitem's index, return bool[n1's index < n2's index]
+bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
+
+// Get attr which is bool from cnode
+bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
+
+// Check node's data type is in supported data type set
+bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_

@@ -27,6 +27,7 @@
 #include "Eigen/Core"
 #include "device/device_address.h"
 #include "ir/meta_tensor.h"
+#include "include/ms_tensor.h"
 #include "utils/log_adapter.h"
 
 namespace py = pybind11;
@@ -34,9 +35,7 @@ namespace py = pybind11;
 using float16 = Eigen::half;
 
 namespace pybind11 {
-
 namespace detail {
-
 // Similar to enums in `pybind11/numpy.h`. Determined by doing:
 // python3 -c 'import numpy as np; print(np.dtype(np.float16).num)'
 constexpr int NPY_FLOAT16 = 23;
@@ -85,7 +84,6 @@ template <>
 struct type_caster<float16> : public npy_scalar_caster<float16> {
   static constexpr auto name = "float16";
 };
-
 }  // namespace detail
 }  // namespace pybind11
 
@@ -93,10 +91,9 @@ using mindspore::device::DeviceAddress;
 using DeviceAddressPtr = std::shared_ptr<mindspore::device::DeviceAddress>;
 // brief mindspore namespace.
 //
-// mindspore namespace is the top level namespace of Mindsporeession project.
+// mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
-
 // brief mindspore::tensor namespace
 //
 // A sub namespace in ME to support tensor related definition.
@@ -177,6 +174,9 @@ class Tensor : public MetaTensor {
   // It is different from 'operator==' which just compare shape/type/address, it do real value comparison.
   bool ValueEqual(const Tensor &other) const;
 
+  // assgin value to this tensor
+  Tensor &AssignValue(const Tensor &tensor);
+
   bool operator==(const Value &other) const override {
     if (other.isa<Tensor>()) {
       auto other_ = static_cast<const Tensor &>(other);
@@ -218,6 +218,11 @@ class Tensor : public MetaTensor {
   // param writable true if writable, false if read only
   // return The pointer to the object
   void *data_c(bool writable = false);
+
+  // brief Get Tensor data byte-size for c++ type
+  //
+  // return byte size of Tensor data
+  size_t Size() const { return this->data().nbytes(); }
 
   // brief Get data type from tensor data.
   //
@@ -263,16 +268,52 @@ class Tensor : public MetaTensor {
   DeviceAddressPtr device_address() const { return device_address_; }
   void set_device_address(const DeviceAddressPtr &device_address) { device_address_ = device_address; }
   py::array data_sync();
+  std::string id() const { return id_; }
 
  private:
   bool dirty_{true};
+  std::string id_{""};
   DeviceAddressPtr device_address_{nullptr};
 };
-
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
-
 }  // namespace tensor
+
+namespace inference {
+class Tensor : public MSTensor {
+ public:
+  Tensor();
+
+  Tensor(TypeId data_type, const std::vector<int> &shape);
+
+  explicit Tensor(std::shared_ptr<tensor::Tensor> tensor_ptr);
+
+  ~Tensor() = default;
+
+  TypeId data_type() const override;
+
+  TypeId set_data_type(const TypeId data_type) override;
+
+  std::vector<int> shape() const override;
+
+  size_t set_shape(const std::vector<int> &shape) override;
+
+  int DimensionSize(size_t index) const override;
+
+  int ElementsNum() const override;
+
+  std::size_t hash() const override;
+
+  std::shared_ptr<tensor::Tensor> tensor() const;
+
+  size_t Size() const override;
+
+  void *MutableData() const override;
+
+ protected:
+  std::shared_ptr<tensor::Tensor> tensor_impl_;
+};
+}  // namespace inference
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_IR_TENSOR_H_

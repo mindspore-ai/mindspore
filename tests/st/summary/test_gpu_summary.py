@@ -75,7 +75,7 @@ class TestGpuSummary:
         if not os.path.exists(self.summary_dir):
             os.mkdir(self.summary_dir)
 
-    def teardown_emthod(self):
+    def teardown_method(self):
         """Run after method."""
         if os.path.exists(self.summary_dir):
             shutil.rmtree(self.summary_dir)

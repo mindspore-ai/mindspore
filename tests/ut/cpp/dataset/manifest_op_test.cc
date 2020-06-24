@@ -23,6 +23,7 @@
 #include "dataset/core/client.h"
 #include "dataset/core/global_context.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
+#include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "dataset/util/de_error.h"
 #include "dataset/util/status.h"
@@ -42,14 +43,13 @@ std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<ManifestOp> Manifest(int32_t num_works, int32_t rows, int32_t conns, const std::string &file,
-                                     std::string usage = "train", std::unique_ptr<Sampler> sampler = nullptr,
-                                     std::map<std::string, int32_t> map = {}, uint64_t num_samples = 0,
-                                     bool decode = false) {
+                                     std::string usage = "train", std::shared_ptr<Sampler> sampler = nullptr,
+                                     std::map<std::string, int32_t> map = {}, bool decode = false) {
   std::shared_ptr<ManifestOp> so;
   ManifestOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works).SetManifestFile(file).SetRowsPerBuffer(
       rows).SetOpConnectorSize(conns).SetSampler(std::move(sampler)).SetClassIndex(map).SetDecode(decode)
-      .SetNumSamples(num_samples).SetUsage(usage).Build(&so);
+      .SetUsage(usage).Build(&so);
   return so;
 }
 
@@ -86,7 +86,8 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
 
 TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
   std::vector<int64_t> indices({1});
-  std::unique_ptr<Sampler> sampler = std::make_unique<SubsetRandomSampler>(indices);
+  int64_t num_samples = 0;
+  std::shared_ptr<Sampler> sampler = std::make_shared<SubsetRandomSampler>(num_samples, indices);
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   // Expect 6 samples for label 0 and 1
   auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(sampler))});
@@ -145,7 +146,10 @@ TEST_F(MindDataTestManifest, MindDataTestManifestClassIndex) {
 
 TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
-  auto tree = Build({Manifest(16, 2, 32, file, "train", nullptr, {}, 1), Repeat(4)});
+  int64_t num_samples = 1;
+  int64_t start_index = 0;
+  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(seq_sampler), {}), Repeat(4)});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -171,7 +175,10 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
 
 TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
-  auto tree = Build({Manifest(16, 2, 32, file, "eval", nullptr, {}, 1)});
+  int64_t num_samples = 1;
+  int64_t start_index = 0;
+  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);  
+  auto tree = Build({Manifest(16, 2, 32, file, "eval", std::move(seq_sampler), {})});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {

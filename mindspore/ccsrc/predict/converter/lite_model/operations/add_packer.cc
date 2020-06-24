@@ -25,7 +25,6 @@ bool AddPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op) {
   }
   std::unique_ptr<AddT> attr(new AddT());
   MS_EXCEPTION_IF_NULL(attr);
-  attr->format = predict::DataFormatType::DataFormatType_NCHW;
   ms_op->name = c_node_ptr->fullname_with_scope();
   ms_op->attr.type = OpT_Add;
   ms_op->attr.value = attr.release();

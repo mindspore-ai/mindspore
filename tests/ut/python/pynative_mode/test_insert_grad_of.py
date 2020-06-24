@@ -21,7 +21,6 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import ms_function
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.utils.bprop_util import bprop
 from ....mindspore_test_framework.utils.debug_util import PrintShapeTypeCell, PrintGradShapeTypeCell

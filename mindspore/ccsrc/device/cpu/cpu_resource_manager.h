@@ -19,6 +19,7 @@
 #include <vector>
 #include <unordered_map>
 #include "session/kernel_graph.h"
+#include "session/session_basic.h"
 #include "device/device_address.h"
 #include "device/cpu/cpu_simple_mem_plan.h"
 namespace mindspore {
@@ -31,10 +32,12 @@ class CPUResourceManager {
 
   void MemPlan(const session::KernelGraph *graph);
   void MemMalloc(const session::KernelGraph *graph);
-  void ResetAddressRefCount(const session::KernelGraph *graph);
+  void IncreaseAddressRefCount(const session::KernelGraph *graph);
   void DecreaseAddressRefCount(const AnfNodePtr &kernel);
   void *MemMalloc(size_t mem_size);
   void MemFree(void *ptr);
+  void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
+  void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
  private:
   void MemFree();

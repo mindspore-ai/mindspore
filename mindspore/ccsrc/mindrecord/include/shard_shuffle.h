@@ -26,12 +26,20 @@ class ShardShuffle : public ShardOperator {
  public:
   explicit ShardShuffle(uint32_t seed = 0, ShuffleType shuffle_type = kShuffleCategory);
 
+  ShardShuffle(uint32_t seed, int64_t no_of_samples, bool replacement, bool reshuffle_each_epoch,
+               ShuffleType shuffle_type = kShuffleSample);
+
   ~ShardShuffle() override{};
 
   MSRStatus Execute(ShardTask &tasks) override;
 
+  int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
+
  private:
   uint32_t shuffle_seed_;
+  int64_t no_of_samples_;
+  bool replacement_;
+  bool reshuffle_each_epoch_;
   ShuffleType shuffle_type_;
 };
 }  // namespace mindrecord

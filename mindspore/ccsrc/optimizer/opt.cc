@@ -44,8 +44,17 @@ SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::
       return false;
     }
 
+    auto cnode = node->cast<CNodePtr>();
+    auto inp0 = cnode->input(0);
+    auto prim0 = GetValueNode<PrimitivePtr>(inp0);
+    if (prim0 == nullptr) {
+      return false;
+    }
+
+    auto hash = prim0->Hash();
+    auto const &name = prim0->name();
     for (auto &prim : prims) {
-      if (IsPrimitiveCNode(node, prim)) {
+      if (hash == prim->Hash() && name == prim->name()) {
         return true;
       }
     }
@@ -88,7 +97,7 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
   return result;
 }
 
-inline bool isTraversable(const AnfNodePtr &node) {
+static bool isTraversable(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
   }
@@ -110,6 +119,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
   auto seen = NewSeenGeneration();
   // 1024 is for the initial capacity of deque
   std::deque<AnfNodePtr> todo(1024);
+  todo.clear();
   todo.push_back(root_node);
   bool changes = false;
 
@@ -171,7 +181,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
   }
 
 #ifdef ENABLE_PROFILE
-  MsProfile::StatTime("opt.transform", GetTime() - start);
+  MsProfile::StatTime("opt.transform." + optimizer->name(), GetTime() - start);
 #endif
   return changes;
 }

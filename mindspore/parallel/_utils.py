@@ -20,10 +20,26 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
 def _get_parallel_mode():
+    """Get parallel mode."""
     return auto_parallel_context().get_parallel_mode()
 
 
+def _get_full_batch():
+    """Get whether to use full_batch."""
+    return auto_parallel_context().get_full_batch()
+
+
+def _need_to_full():
+    """Check whether to convert input to full shape or tensor."""
+    parallel_mode = _get_parallel_mode()
+    full_batch = _get_full_batch()
+    need = ((parallel_mode in ("semi_auto_parallel", "auto_parallel"))
+            and (not full_batch))
+    return need
+
+
 def _get_mirror_mean():
+    """Get if using mirror_mean."""
     return auto_parallel_context().get_mirror_mean()
 
 

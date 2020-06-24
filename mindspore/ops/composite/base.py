@@ -18,15 +18,16 @@
 """Basic composite operations."""
 from functools import partial
 
-from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, MultitypeFuncGraph_, Tail_, TensorSlice_, \
+from mindspore import context
+from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
                              TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
-from ...common.api import ms_function
+from ...common.api import ms_function, _pynative_exec, _wrap_func
 from .. import functional as F
-from .. import operations as P
 from ...common.parameter import Parameter
 
-__all__ = [EnvInstance_, TensorSlice_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
+
+__all__ = [EnvInstance_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
 
 
 def add_flags(fn, **flags):
@@ -105,14 +106,35 @@ class GradOperation(GradOperation_):
         GradOperation_.__init__(self, name, get_all, get_by_list, sens_param)
         self.grad_fn = None
         self.fn = None
+        self.need_forward = False
 
     def __call__(self, fn, weights=None):
         grad_ = GradOperation('grad', self.get_all, self.get_by_list, self.sens_param)
         if self.grad_fn is None or self.fn != fn:
             if self.get_by_list:
-                @ms_function(obj=fn)
-                def after_grad(*args):
-                    return grad_(fn, weights)(*args)
+                if context.get_context("mode") == context.GRAPH_MODE:
+                    @ms_function(obj=fn)
+                    def after_grad(*args):
+                        return grad_(fn, weights)(*args)
+                else:
+                    @_wrap_func
+                    def after_grad(*args):
+                        if fn.is_run and not fn.requires_grad:
+                            raise ValueError("obj must set_grad.")
+                        if not fn.is_run:
+                            self.need_forward = True
+                            print("already has forward run before grad by user")
+                        if self.need_forward:
+                            fn.set_grad()
+                            if self.sens_param:
+                                f_args = args[:-1]
+                                fn(*f_args)
+                            else:
+                                fn(*args)
+                        _pynative_exec.grad(grad_, fn, weights, *args)
+                        out = _pynative_exec(*args)
+                        _pynative_exec.clear()
+                        return out
             else:
                 @ms_function(obj=fn)
                 def after_grad(*args):
@@ -219,6 +241,45 @@ class HyperMap(HyperMap_):
             return func(*args_list)
         return tuple(map(hypermap, *args_list))
 
+
+class Map(Map_):
+    """
+    Map will apply the set operation on input sequences.
+
+    Which will apply the operations of every elements of the sequence.
+
+    Args:
+        ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
+            the operations should be putted in the first input of the instance.
+
+    Inputs:
+        - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
+          and each row of the sequences. e.g. If args length is 2, and for `i` in length of each sequence
+          `(args[0][i], args[1][i])` will be the input of the operation.
+
+          If `ops` is not `None`, the first input is the operation, and the other is inputs.
+
+    Outputs:
+        sequence, the output will be same type and same length of sequence from input and the value of each element
+        is the result of operation apply each row of element. e.g. `operation(args[0][i], args[1][i])`.
+    """
+
+    def __init__(self, ops=None):
+        self.ops = ops
+        if ops:
+            Map_.__init__(self, ops)
+        else:
+            Map_.__init__(self)
+
+    def __call__(self, *args):
+        func = self.ops
+        args_list = args
+        if self.ops is None:
+            func = args[0]
+            args_list = args[1:]
+        return tuple(map(func, *args_list))
+
+
 class _ListAppend(ListAppend_):
     """
     A metafuncgraph class that append one element to list.
@@ -274,33 +335,4 @@ env_get = MultitypeFuncGraph("env_get")
 @env_get.register("EnvType", "Tensor")
 def _tensor_env_get(env, parameter):
     """Used to get env."""
-    return F.env_getitem(env, F.ref_to_embed(parameter), F.zeros_like_tensor(parameter))
-
-
-_mp_cast_helper = MultitypeFuncGraph('mixed_precision_cast_helper')
-
-
-@_mp_cast_helper.register("TypeType", "Number")
-@core
-def _mixed_precision_cast_helper_1(type_, x):
-    """if x is float cast to type."""
-    # type_ is place holder
-    return x
-
-
-@_mp_cast_helper.register("TypeType", "Tensor")
-@core
-def _mixed_precision_cast_helper_2(type_, x):
-    """if x is float cast to type."""
-    if F.issubclass_(F.dtype(x), mstype.float_):
-        return P.Cast()(x, type_)
-    return x
-
-@_mp_cast_helper.register("TypeType", "Tuple")
-@core
-def _mixed_precision_cast_helper_3(type_, x):
-    """if x is a tuple"""
-    t = ()
-    for item in x:
-        t = t + (_mp_cast_helper(type_, item),)
-    return t
+    return F.env_getitem(env, F.ref_to_embed(parameter), F.zeros_like(parameter))

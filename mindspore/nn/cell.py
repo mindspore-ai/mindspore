@@ -19,7 +19,7 @@ from collections import OrderedDict
 from mindspore import log as logger
 from .. import context
 from ..common import dtype as mstype
-from ..common.api import _executor
+from ..common.api import _executor, _pynative_exec
 from .._checkparam import _check_str_by_regular
 from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend
@@ -60,6 +60,7 @@ class Cell:
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self.training = False
+        self.requires_grad = False
         self.pynative = False
         self._param_prefix = ''
         self._auto_prefix = auto_prefix
@@ -79,6 +80,15 @@ class Cell:
         self._backward_hook = None
         self.enable_hook = False
         self._bprop_debug = False
+        self._is_run = False
+
+    @property
+    def is_run(self):
+        return self._is_run
+
+    @is_run.setter
+    def is_run(self, value):
+        self._is_run = value
 
     @property
     def create_time(self):
@@ -176,6 +186,7 @@ class Cell:
         raise AttributeError("'{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
+        _pynative_exec.clear("resource")
         if hasattr(self, "_create_time"):
             _executor.del_net_res(str(self._create_time))
 
@@ -192,9 +203,26 @@ class Cell:
             out = self.compile_and_run(*inputs)
             return out
         self.init_parameters_data()
-        output = self.construct(*inputs)
+        orign_grad = []
+        if self.requires_grad is True:
+            _pynative_exec.set_grad_flag(True)
+            _pynative_exec.new_graph(self, *inputs)
+            for cell in self.cells():
+                orign_grad.append(cell.requires_grad)
+                cell.set_grad(True)
+        else:
+            _pynative_exec.set_grad_flag(False)
+        if self.enable_hook:
+            output = self._hook_construct(*inputs)
+        else:
+            output = self.construct(*inputs)
         if isinstance(output, Parameter):
             output = output.data
+        if self.requires_grad is True:
+            _pynative_exec.end_graph(self, output, *inputs)
+            for i, cell in enumerate(self.cells()):
+                cell.set_grad(orign_grad[i])
+        self._is_run = True
         return output
 
     def __setattr__(self, name, value):
@@ -227,9 +255,12 @@ class Cell:
                 value.update_parameters_name(name + '.')
             cells[name] = value
         elif params and name in params:
-            if value is not None:
+            if isinstance(value, Tensor) and self._params[name] is not None:
+                self._params[name].set_parameter_data(value)
+            elif value is not None:
                 raise TypeError("Expected type in (Parameter, ParameterTuple), but got {}.".format(type(value)))
-            self.insert_param_to_cell(name, None)
+            else:
+                self.insert_param_to_cell(name, None)
         elif cells and name in cells:
             if value is not None:
                 raise TypeError("Expected type is cell, but got {}.".format(type(value)))
@@ -278,7 +309,7 @@ class Cell:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
                 if self.parameters_dict()[key].sliced:
-                    logger.info("Param %s is already sliced.", key)
+                    logger.debug("Param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -291,7 +322,7 @@ class Cell:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
                 if params[key].sliced:
-                    logger.info("Param %s is already sliced.", key)
+                    logger.debug("Param %s is already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -457,7 +488,7 @@ class Cell:
             if not auto_parallel_mode:
                 param.init_data()
             elif param.name not in self.parameter_layout_dict:
-                logger.info("Layout dict does not contain the key %s.", param.name)
+                logger.debug("Layout dict does not contain the key %s.", param.name)
                 param.init_data(set_sliced=True)
             else:
                 layout = self.parameter_layout_dict[param.name]
@@ -676,9 +707,6 @@ class Cell:
         return cells
 
     def add_flags(self, **flags):
-        for x in flags:
-            if not isinstance(flags[x], bool):
-                raise TypeError(f"Flags (f{x}) must be bool but {type(flags[x])}.")
         if not hasattr(self, "_mindspore_flags"):
             self._mindspore_flags = {}
         self._mindspore_flags.update({**flags})
@@ -722,6 +750,10 @@ class Cell:
         self.add_flags_recursive(**flags)
         return self
 
+    def set_grad(self, mode=True):
+        self.requires_grad = mode
+        return self
+
     def set_train(self, mode=True):
         """
         Sets the cell to training mode.
@@ -762,9 +794,9 @@ class Cell:
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def _hook_construct(self, inputs):
+    def _hook_construct(self, *inputs):
         """Hook construct method to replace original construct method when hook function enabled."""
-        inputs = self._backward_hook(inputs)
+        inputs = self._backward_hook(*inputs)
         inputs = self.construct(inputs)
         outputs = self._backward_hook(inputs)
         return outputs
@@ -784,4 +816,28 @@ class Cell:
 
         """
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
-        self._enable_hook = True
+        self.enable_hook = True
+
+class GraphKernel(Cell):
+    """
+    Base class for GraphKernel.
+
+    A `GraphKernel` a composite of basic primitives and can be compiled into a fused kernel automaticly when
+    context.set_context(enable_graph_kernel=True).
+
+    Examples:
+        >>> class Relu(GraphKernel):
+        >>>    def __init__(self):
+        >>>        super(Relu, self).__init__()
+        >>>        self.max = P.Maximum()
+        >>>
+        >>>    def construct(self, x):
+        >>>        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
+    """
+    def __init__(self, auto_prefix=True, pips=None):
+        super(GraphKernel, self).__init__(auto_prefix, pips)
+        class_name = self.__class__.__name__
+        self.add_flags(graph_kernel=class_name)
+
+    def construct(self):
+        raise NotImplementedError

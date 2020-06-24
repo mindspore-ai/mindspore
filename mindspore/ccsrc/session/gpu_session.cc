@@ -22,6 +22,7 @@
 #include "pre_activate/common/pass_manager.h"
 #include "pre_activate/common/helper.h"
 #include "pre_activate/pass/communication_op_fusion.h"
+#include "pre_activate/pass/getitem_tuple.h"
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"
@@ -51,9 +52,11 @@ void GPUSession::StartKernelRT() const {
 }
 
 void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
+  pm->AddPass(std::make_shared<opt::GetitemTuple>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -72,7 +75,6 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  // opt::RemoveNopNode(kernel_graph);
   runtime_instance->AssignMemory(kernel_graph);
 }
 
@@ -81,8 +83,14 @@ void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  // opt::RemoveNopNode(kernel_graph);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+}
+
+void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->RunOpClearMemory(kernel_graph);
 }
 
 void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
@@ -101,17 +109,19 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
       auto pk_node = input_node->cast<ParameterPtr>();
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
+      auto tensor_address = tensor->device_address();
       bool need_sync = false;
       if (ms_context->enable_pynative_infer()) {
-        if (tensor->device_address().get() == nullptr || tensor->device_address() != device_address) {
+        if (tensor_address.get() == nullptr || tensor_address != device_address) {
           need_sync = true;
         }
-      } else {
-        if (tensor->is_dirty()) {
+      } else if (tensor->is_dirty()) {
+        need_sync = true;
+      } else if (tensor_address != device_address) {
+        if (tensor_address->DeviceType() == device_address->DeviceType()) {
+          AnfAlgo::SetOutputAddr(tensor_address, 0, pk_node.get());
+        } else {
           need_sync = true;
-        } else if (tensor->device_address() != device_address) {
-          AnfAlgo::SetOutputAddr(tensor->device_address(), 0, pk_node.get());
-          need_sync = false;
         }
       }
       if (need_sync) {
@@ -140,6 +150,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   // Construct graph, if successfully, graph_sum_ + 1
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
+  MS_EXCEPTION_IF_NULL(graph);
   // Select kernel build info
   SelectKernel(graph);
   // Convert kernel Graph to model
@@ -150,14 +161,18 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Optimize(graph);
   // Assign CUDA streams
   AssignStream(graph);
-  // Remove NoOp from execution graph
-  // opt::HideNopNode(graph.get());
+  // Hide NoOp from execution graph
+  opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
+  // Get summary nodes.
+  GetSummaryNodes(graph.get());
+  // Remove NoOp from execution graph
+  opt::RemoveNopNode(graph.get());
   // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
   MS_EXCEPTION_IF_NULL(context_);
@@ -194,11 +209,17 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
 
 void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                          const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
+  // Check if the graph cache exists.
+  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
+    return;
+  }
   // Prepare the graph
   auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
   StartKernelRT();
+  // Hide NoOp from execution graph
+  opt::HideNopNode(kernel_graph.get());
   BuildKernel(kernel_graph);
   run_op_graphs_[graph_info] = kernel_graph;
 }
@@ -207,6 +228,8 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
                             const std::vector<tensor::TensorPtr> &input_tensors) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  // Remove NoOp from execution graph
+  opt::RemoveNopNode(kernel_graph.get());
   RunOpAllocateMemory(input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
@@ -222,7 +245,7 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   }
   py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
   py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
-  run_op_graphs_.clear();
+  RunOpClearMemory(kernel_graph.get());
   return tuple_tensors;
 }
 }  // namespace gpu

@@ -104,9 +104,21 @@ class MindRecordOp : public ParallelOp {
       return *this;
     }
 
+    Builder &SetNumToPadSamples(int64_t num_padded) {
+      build_num_padded_ = num_padded;
+      return *this;
+    }
+
+    Builder &SetPaddedSample(const py::handle &sample) {
+      build_sample_ = sample;
+      return *this;
+    }
+
     Status SanityCheck() const;
 
     static int32_t num_mind_record_workers() { return kDefaultMindRecordWorkers; }
+
+    mindrecord::json ToJson(const py::handle &obj);
 
    private:
     static constexpr int32_t kDefaultMindRecordWorkers = 4;
@@ -121,6 +133,9 @@ class MindRecordOp : public ParallelOp {
     std::vector<std::string> build_columns_to_load_;
     std::vector<std::shared_ptr<ShardOperator>> build_operators_;
     bool build_block_reader_;
+    int64_t build_num_padded_;
+    py::handle build_sample_;
+    std::map<std::string, std::string> build_sample_bytes_;
   };
 
   // Constructor of the MindRecordOp.
@@ -133,7 +148,9 @@ class MindRecordOp : public ParallelOp {
   // @param operators - ShardOperators for Shuffle, Category, Sample
   MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::vector<std::string> dataset_file,
                bool load_dataset, int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
-               const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader);
+               const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader,
+               int64_t num_padded_, const mindrecord::json &sample_json,
+               const std::map<std::string, std::string> &sample_bytes_);
 
   // Destructor
   ~MindRecordOp() override;
@@ -178,7 +195,7 @@ class MindRecordOp : public ParallelOp {
   int32_t num_rows() const { return num_rows_; }
 
   static Status CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
-                               const std::shared_ptr<ShardOperator> &op, int64_t *count);
+                               const std::shared_ptr<ShardOperator> &op, int64_t *count, int64_t num_padded);
 
   // Getter method
   int32_t rows_per_buffer() const { return rows_per_buffer_; }
@@ -201,6 +218,10 @@ class MindRecordOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "MindRecordOp"; }
+
  private:
   Status GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_buffer, int64_t buffer_id, int32_t worker_id);
 
@@ -209,7 +230,7 @@ class MindRecordOp : public ParallelOp {
   // @param columns_blob - the blob data received from the reader
   // @param columns_json - the data for fields received from the reader
   Status LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
-                       const mindrecord::json &columns_json);
+                       const mindrecord::json &columns_json, const mindrecord::TaskType task_type);
 
   Status FetchBlockBuffer(const int32_t &buffer_id);
 
@@ -225,6 +246,10 @@ class MindRecordOp : public ParallelOp {
   int32_t num_rows_;                                       // One more than the last row id in the range for this cache
   std::atomic<int32_t> ended_worker_;
   std::atomic<int32_t> buffer_water_mark_;
+
+  int64_t num_padded_;
+  mindrecord::json sample_json_;
+  std::map<std::string, std::string> sample_bytes_;
 
   std::unique_ptr<DataSchema> data_schema_;  // Data schema for column typing
   std::vector<std::string> columns_blob_;    // Blob Columns to load from dataset

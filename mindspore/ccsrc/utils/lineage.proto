@@ -1,0 +1,129 @@
+// Copyright 2020 Huawei Technologies Co., Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mindspore.irpb;
+option cc_enable_arenas = true;
+
+
+// Event Protocol buffer, Top define
+message LineageEvent {
+  // Timestamp
+  required double wall_time = 1;
+
+  // The step of train.
+  optional int64 step = 2;
+
+  oneof what {
+    // An event file was started, with the specified version.
+    // Now version is "MindSpore.Event:1"
+    string version = 3;
+
+    // Train lineage
+    TrainLineage train_lineage = 6;
+
+    // Evaluation lineage
+    EvaluationLineage evaluation_lineage = 7;
+
+    // Dataset graph
+    DatasetGraph dataset_graph = 9;
+
+    // User defined info
+    UserDefinedInfo user_defined_info = 10;
+  }
+}
+
+// User defined info
+message UserDefinedInfo{
+    // repeated user defined info
+    repeated UserDefinedInfo user_info = 1;
+
+    // key/value which contains both scalar and dict
+    map<string, UserDefinedInfo> map_dict = 2;
+    map<string, int32> map_int32 = 3;
+    map<string, string>  map_str = 4;
+    map<string, double>  map_double = 5;
+}
+
+// TrainLineage records infos of a train.
+message TrainLineage{
+    message HyperParameters{
+        optional string optimizer = 1;
+        optional float learning_rate = 2;
+        optional string loss_function = 3;
+        optional int32 epoch = 4;
+        optional string parallel_mode = 5;
+        optional int32 device_num = 6;
+        optional int32 batch_size = 8;
+    }
+
+    message TrainDataset{
+        optional string train_dataset_path = 1;
+        optional int32 train_dataset_size = 2;
+    }
+
+    message Algorithm{
+        optional string network = 1;
+        optional float loss = 2;
+    }
+
+    message Model{
+        optional string path = 3;
+        optional int64 size = 4;
+    }
+
+    optional HyperParameters hyper_parameters = 1;
+    optional TrainDataset train_dataset = 2;
+    optional Algorithm algorithm = 3;
+    optional Model model = 4;
+}
+
+//EvalLineage records infos of evaluation.
+message EvaluationLineage{
+    message ValidDataset{
+        optional string valid_dataset_path = 1;
+        optional int32 valid_dataset_size = 2;
+    }
+
+    optional string metric = 2;
+    optional ValidDataset valid_dataset = 3;
+}
+
+
+// DatasetGraph
+message DatasetGraph {
+    repeated DatasetGraph children = 1;
+    optional OperationParameter parameter = 2;
+    repeated Operation operations = 3;
+    optional Operation sampler = 4;
+}
+
+message Operation {
+    optional OperationParameter operationParam = 1;
+    repeated int32 size = 2;
+    repeated float weights = 3;
+}
+
+message OperationParameter{
+    map<string, string> mapStr = 1;
+    map<string, StrList> mapStrList = 2;
+    map<string, bool> mapBool = 3;
+    map<string, int32> mapInt = 4;
+    map<string, double> mapDouble = 5;
+}
+
+message StrList {
+    repeated string strValue = 1;
+}

@@ -44,7 +44,7 @@ class ChooseInitParameterWithInput(nn.Cell):
         self.x = Parameter(Tensor(np.ones(2), dtype=mstype.int32), name='x')
 
     @ms_function
-    def construct(self, input):
+    def construct(self, input_data):
         return self.x
 
 
@@ -57,7 +57,7 @@ def test_choose_init_param():
 
 def test_choose_param_with_input():
     choose = ChooseInitParameterWithInput()
-    input = Tensor(np.zeros(2), dtype=mstype.int32)
+    input_data = Tensor(np.zeros(2), dtype=mstype.int32)
     expect = Tensor(np.ones(2), dtype=mstype.int32)
-    out = choose(input)
+    out = choose(input_data)
     assert np.allclose(expect.asnumpy(), out.asnumpy())

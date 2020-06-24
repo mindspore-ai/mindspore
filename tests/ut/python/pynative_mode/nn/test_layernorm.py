@@ -23,7 +23,7 @@ from mindspore import dtype as mstype
 
 def test_check_layer_norm_1():
     x = Tensor(np.ones([20, 5, 10, 10]), mstype.float32)
-    shape1 = x.shape()[1:]
+    shape1 = x.shape[1:]
     m = nn.LayerNorm(shape1, -1, 1)
     with pytest.raises(NotImplementedError):
         m(x)
@@ -31,7 +31,7 @@ def test_check_layer_norm_1():
 
 def test_check_layer_norm_2():
     x = Tensor(np.ones([20, 5, 10, 10]), mstype.float32)
-    shape1 = x.shape()[1:]
+    shape1 = x.shape[1:]
     m = nn.LayerNorm(shape1, begin_params_axis=1)
     with pytest.raises(NotImplementedError):
         m(x)

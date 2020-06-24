@@ -1,9 +1,12 @@
 set(protobuf_USE_STATIC_LIBS ON)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
-else()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+else()
+    set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
 endif()
+
 set(protobuf_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 set(_ms_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})

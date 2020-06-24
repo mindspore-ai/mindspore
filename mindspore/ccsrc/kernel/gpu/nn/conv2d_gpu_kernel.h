@@ -191,7 +191,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_desc_), "cudnnDestroyTensorDescriptor failed");
   }
   bool CheckParam(const CNodePtr &kernel_node) {
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but conv2d needs 2 inputs.";

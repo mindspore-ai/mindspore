@@ -35,6 +35,7 @@ bool SymbolResolveAction(const ResourcePtr &res);
 bool AbstractSpecializeAction(const ResourcePtr &res);
 bool GeOptimizeAction(const ResourcePtr &res);
 bool VmOptimizeAction(const ResourcePtr &res);
+bool PynativeOptimizeAction(const ResourcePtr &res);
 bool TaskEmitAction(const ResourcePtr &res);
 bool ExecuteAction(const ResourcePtr &res);
 

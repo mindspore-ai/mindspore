@@ -44,13 +44,13 @@ class Tensor(Tensor_):
         >>> # init a tensor with input data
         >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> assert isinstance(t1, Tensor)
-        >>> assert t1.shape() == (1, 2, 3)
-        >>> assert t1.dtype() == mindspore.float32
+        >>> assert t1.shape == (1, 2, 3)
+        >>> assert t1.dtype == mindspore.float32
         >>>
         >>> # init a tensor with a float scalar
         >>> t2 = Tensor(0.1)
         >>> assert isinstance(t2, Tensor)
-        >>> assert t2.dtype() == mindspore.float64
+        >>> assert t2.dtype == mindspore.float64
     """
 
     def __init__(self, input_data, dtype=None):
@@ -71,38 +71,42 @@ class Tensor(Tensor_):
         return str(self.__str__())
 
     def __add__(self, other):
-        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __eq__(self, other):
-        if not isinstance(other, Tensor):
+        if not isinstance(other, (int, float, Tensor)):
             return False
-        return Tensor(np.array(self.asnumpy() == other.asnumpy()))
+        #  bool type is not supported for `Equal` operator in backend.
+        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
+            return Tensor(np.array(self.asnumpy() == other.asnumpy()))
+        return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
-        if not isinstance(other, Tensor):
+        if not isinstance(other, (int, float, Tensor)):
             return True
-        return Tensor(np.array(self.asnumpy() != other.asnumpy()))
+        #  bool type is not supported for `NotEqual` operator in backend.
+        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
+            return Tensor(np.array(self.asnumpy() != other.asnumpy()))
+        return tensor_operator_registry.get('__ne__')(self, other)
 
     def __hash__(self):
         return hash(id(self))
 
     def __mul__(self, other):
-        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__mul__')(self, other)
         return out
 
     def __neg__(self):
-        return Tensor(-self.asnumpy())
+        out = tensor_operator_registry.get('__neg__')(self)
+        return out
 
     def __iadd__(self, other):
         out = self.__add__(other)
         return out
 
     def __radd__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
-        out = tensor_operator_registry.get('__add__')(other, self)
+        out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __imul__(self, other):
@@ -110,23 +114,19 @@ class Tensor(Tensor_):
         return out
 
     def __rmul__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
-        out = tensor_operator_registry.get('__mul__')(other, self)
+        out = tensor_operator_registry.get('__mul__')(self, other)
         return out
 
     def __truediv__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
-        out = tensor_operator_registry.get('__div__')(self, other)
+        out = tensor_operator_registry.get('__truediv__')(self, other)
         return out
 
     def __rtruediv__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
-        out = tensor_operator_registry.get('__div__')(other, self)
+        out = tensor_operator_registry.get('__truediv__')(other, self)
         return out
 
     def __sub__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
-        out = self.__add__(-other)
+        out = tensor_operator_registry.get('__sub__')(self, other)
         return out
 
     def __isub__(self, other):
@@ -134,12 +134,42 @@ class Tensor(Tensor_):
         return out
 
     def __rsub__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
-        out = tensor_operator_registry.get('__add__')(other, Tensor(-self.asnumpy()))
+        out = tensor_operator_registry.get('__sub__')(other, self)
         return out
 
+    def __lt__(self, other):
+        out = tensor_operator_registry.get('__lt__')(self, other)
+        return out
+
+    def __le__(self, other):
+        out = tensor_operator_registry.get('__le__')(self, other)
+        return out
+
+    def __getitem__(self, index):
+        out = tensor_operator_registry.get('__getitem__')(self, index)
+        return out
+
+    def __setitem__(self, index, value):
+        out = tensor_operator_registry.get('__setitem__')(self, index, value)
+        self.assign_value(out)
+        return self
+
+    def __gt__(self, other):
+        out = tensor_operator_registry.get('__gt__')(self, other)
+        return out
+
+    def __ge__(self, other):
+        out = tensor_operator_registry.get('__ge__')(self, other)
+        return out
+
+    def __len__(self):
+        out = tensor_operator_registry.get('shape')(self)
+        if not out:
+            return 1
+        return out[0]
+
     def __str__(self):
-        if self.dtype() == mstype.type_none:
+        if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
         return str(self.asnumpy())
 

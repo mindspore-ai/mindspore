@@ -35,19 +35,11 @@ class MindDataTestWeightedRandomSampler : public UT::Common {
  public:
   class DummyRandomAccessOp : public RandomAccessOp {
    public:
-    DummyRandomAccessOp(uint64_t num_rows) : num_rows_(num_rows) {};
-    Status GetNumSamples(int64_t *num) const {
-      *num = num_rows_;
-      return Status::OK();
+    DummyRandomAccessOp(uint64_t num_rows) {
+      // row count is in base class as protected member
+      // GetNumRowsInDataset does not need an override, the default from base class is fine.
+      num_rows_ = num_rows;
     }
-
-    Status GetNumRowsInDataset(int64_t *num) const {
-      *num = num_rows_;
-      return Status::OK();
-    }
-
-   private:
-    uint64_t num_rows_;
   };
 };
 
@@ -59,14 +51,14 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = true
-  WeightedRandomSampler m_sampler(weights, num_samples, true);
+  WeightedRandomSampler m_sampler(num_samples, weights, true);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
@@ -77,7 +69,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotReplacement) {
 
   ASSERT_EQ(num_samples, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 }
 
@@ -89,14 +81,14 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = replacement
-  WeightedRandomSampler m_sampler(weights, num_samples, false);
+  WeightedRandomSampler m_sampler(num_samples, weights, false);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
@@ -113,7 +105,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
     }
   }
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 }
 
@@ -125,14 +117,14 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferReplacement) {
   std::vector<double> weights(total_samples, std::rand() % 100);
 
   // create sampler with replacement = replacement
-  WeightedRandomSampler m_sampler(weights, num_samples, true, samples_per_buffer);
+  WeightedRandomSampler m_sampler(num_samples, weights, true, samples_per_buffer);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   int epoch = 0;
   while (!db->eoe()) {
     epoch++;
@@ -143,7 +135,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferReplacement) {
       }
     }
     db.reset();
-    ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+    ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   }
 
   ASSERT_EQ(epoch, (num_samples + samples_per_buffer - 1) / samples_per_buffer);
@@ -161,14 +153,14 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferNoReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = replacement
-  WeightedRandomSampler m_sampler(weights, num_samples, false, samples_per_buffer);
+  WeightedRandomSampler m_sampler(num_samples, weights, false, samples_per_buffer);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   int epoch = 0;
   while (!db->eoe()) {
     epoch++;
@@ -180,7 +172,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferNoReplacement) {
       }
     }
     db.reset();
-    ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+    ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   }
 
   // Without replacement, each sample only drawn once.
@@ -202,14 +194,14 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = true
-  WeightedRandomSampler m_sampler(weights, num_samples, true);
+  WeightedRandomSampler m_sampler(num_samples, weights, true);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
@@ -219,13 +211,13 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   }
   ASSERT_EQ(num_samples, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 
-  m_sampler.Reset();
+  m_sampler.ResetSampler();
   out.clear();
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
@@ -235,7 +227,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   }
   ASSERT_EQ(num_samples, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 }
 
@@ -247,14 +239,14 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = true
-  WeightedRandomSampler m_sampler(weights, num_samples, false);
+  WeightedRandomSampler m_sampler(num_samples, weights, false);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
@@ -264,16 +256,16 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
   }
   ASSERT_EQ(num_samples, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 
-  m_sampler.Reset();
+  m_sampler.ResetSampler();
   out.clear();
   freq.clear();
   freq.resize(total_samples, 0);
   MS_LOG(INFO) << "Resetting sampler";
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   db->PopRow(&row);
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
@@ -290,6 +282,6 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
     }
   }
 
-  ASSERT_EQ(m_sampler.GetNextBuffer(&db), Status::OK());
+  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
   ASSERT_EQ(db->eoe(), true);
 }

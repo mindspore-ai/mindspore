@@ -27,25 +27,28 @@
 namespace mindspore {
 namespace dataset {
 //  Constructor.
-WeightedRandomSampler::WeightedRandomSampler(const std::vector<double> &weights, int64_t num_samples, bool replacement,
+WeightedRandomSampler::WeightedRandomSampler(int64_t num_samples, const std::vector<double> &weights, bool replacement,
                                              int64_t samples_per_buffer)
-    : Sampler(samples_per_buffer),
+    : Sampler(num_samples, samples_per_buffer),
       weights_(weights),
       replacement_(replacement),
       sample_id_(0),
-      buffer_id_(0),
-      user_num_samples_(num_samples) {}
+      buffer_id_(0) {}
 
 // Initialized this Sampler.
 Status WeightedRandomSampler::InitSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && user_num_samples_, "num_samples & num_rows need to be positive");
+  // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
+  // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
+  if (num_samples_ == 0 || num_samples_ > num_rows_) {
+    num_samples_ = num_rows_;
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && num_samples_, "num_samples & num_rows need to be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0, "samples_per_buffer<=0\n");
-  num_samples_ = user_num_samples_;
 
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
 
-  samples_per_buffer_ = (samples_per_buffer_ > user_num_samples_) ? user_num_samples_ : samples_per_buffer_;
+  samples_per_buffer_ = (samples_per_buffer_ > num_samples_) ? num_samples_ : samples_per_buffer_;
 
   if (!replacement_) {
     exp_dist_ = std::make_unique<std::exponential_distribution<>>(1);
@@ -67,14 +70,14 @@ void WeightedRandomSampler::InitOnePassSampling() {
   }
 
   // Partial sort the first `numSamples` elements.
-  std::partial_sort(val_idx.begin(), val_idx.begin() + user_num_samples_, val_idx.end());
-  for (int64_t i = 0; i < user_num_samples_; i++) {
+  std::partial_sort(val_idx.begin(), val_idx.begin() + num_samples_, val_idx.end());
+  for (int64_t i = 0; i < num_samples_; i++) {
     onepass_ids_.push_back(val_idx[i].second);
   }
 }
 
 // Reset the internal variable to the initial state and reshuffle the indices.
-Status WeightedRandomSampler::Reset() {
+Status WeightedRandomSampler::ResetSampler() {
   sample_id_ = 0;
   buffer_id_ = 0;
   rand_gen_.seed(GetSeed());
@@ -85,28 +88,28 @@ Status WeightedRandomSampler::Reset() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();
 }
 
 // Get the sample ids.
-Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status WeightedRandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
                   "number of samples weights is more than num of rows. Might generate id out of bound OR other errors");
   }
 
-  if (!replacement_ && (weights_.size() < static_cast<size_t>(user_num_samples_))) {
+  if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {
     RETURN_STATUS_UNEXPECTED("Without replacement, sample weights less than numSamples");
   }
 
-  if (sample_id_ == user_num_samples_) {
+  if (sample_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
@@ -114,15 +117,15 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
 
     int64_t last_id = sample_id_ + samples_per_buffer_;
     // Handling the return all samples at once, and when last draw is not a full batch.
-    if (last_id > user_num_samples_) {
-      last_id = user_num_samples_;
+    if (last_id > num_samples_) {
+      last_id = num_samples_;
     }
 
     // Allocate tensor.
     RETURN_IF_NOT_OK(CreateSamplerTensor(&outputIds, last_id - sample_id_));
 
     // Initialize tensor.
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(outputIds->GetMutableBuffer());
+    auto id_ptr = outputIds->begin<int64_t>();
     // Assign the data to tensor element.
     while (sample_id_ < last_id) {
       int64_t genId;

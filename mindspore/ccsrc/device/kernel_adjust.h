@@ -39,9 +39,9 @@ constexpr auto kZeroParamName = "zero";
 constexpr auto kOneParamName = "one";
 constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
 
-const uint32_t kFirstStreamSwitchLabel = kInvalidDistincLabel - 1;
-const uint32_t kGetNextLabel = kInvalidDistincLabel - 2;
-const uint32_t kSecondStreamSwitchLabel = kInvalidDistincLabel - 3;
+const uint32_t kFirstStreamSwitchLabel = 0;
+const uint32_t kGetNextLabel = 1;
+const uint32_t kSecondStreamSwitchLabel = 2;
 const uint32_t kInvalidEventId = UINT32_MAX;
 const uint32_t kFirstEventId = kInvalidEventId / 2;
 namespace device {
@@ -51,7 +51,7 @@ class KernelAdjust {
     static KernelAdjust instance;
     return instance;
   }
-  void Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+
   void InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
@@ -65,7 +65,6 @@ class KernelAdjust {
   void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
-  uint32_t FindFirstStreamSwitchLabel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void CreateSwitchOpParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 std::map<std::string, mindspore::ParameterPtr> *switch_loop_input);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,

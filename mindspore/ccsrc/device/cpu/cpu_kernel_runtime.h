@@ -20,9 +20,12 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <set>
 #include "device/kernel_runtime.h"
 #include "session/kernel_graph.h"
+#include "session/session_basic.h"
 #include "device/cpu/cpu_resource_manager.h"
+#include "session/anf_runtime_algorithm.h"
 #include "utils/any.h"
 namespace mindspore {
 namespace device {
@@ -36,7 +39,9 @@ class CPUKernelRuntime : public KernelRuntime {
   bool Run(session::KernelGraph *graph) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void BindInputOutput(const session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
-                       VectorRef *outputs);
+                       VectorRef *outputs, std::vector<tensor::TensorPtr> *need_sync_outputs);
+  void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
+  void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
  protected:
   bool SyncStream() override { return true; };
@@ -44,8 +49,10 @@ class CPUKernelRuntime : public KernelRuntime {
                                        TypeId type_id) override;
 
  private:
-  BaseRef CreatTensorForOutput(const AnfNodePtr &input_node, size_t index,
-                               const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map);
+  BaseRef CreatTensorForOutput(const session::KernelWithIndex &kernel_with_index,
+                               const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map,
+                               std::set<DeviceAddressPtr> *bound_addresses,
+                               std::vector<tensor::TensorPtr> *need_sync_outputs);
   void AssignValueNodeAddress(session::KernelGraph *kernel_graph);
   void AssignInputNodeAddress(const session::KernelGraph *kernel_graph);
   void AssignKernelOutputAddress(const session::KernelGraph *kernel_graph);

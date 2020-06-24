@@ -25,11 +25,11 @@
 
 #ifdef ENABLE_TDTQUE
 #include "dataset/engine/tdt/tdt_plugin.h"
-
 #endif
 
 #ifdef ENABLE_GPUQUE
 #include "device/gpu/gpu_buffer_mgr.h"
+using mindspore::device::BlockQueueStatus_T;
 using mindspore::device::GpuBufferMgr;
 #endif
 
@@ -139,6 +139,10 @@ class DeviceQueueOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "DeviceQueueOp"; }
 
  private:
   //  Name: checkExceptions(DataBuffer);

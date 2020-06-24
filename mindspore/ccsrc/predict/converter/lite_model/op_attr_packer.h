@@ -48,7 +48,7 @@ class OpAttrFactory {
   std::unordered_map<std::string, OpAttrPackFun> pack_funs_;
 };
 
-mindspore::predict::DataFormatType GetAttrFormat(const std::string &format);
+mindspore::predict::Format GetAttrFormat(const std::string &format);
 
 mindspore::predict::PadMode GetAttrPadMode(const std::string &pad_mode);
 }  // namespace convert

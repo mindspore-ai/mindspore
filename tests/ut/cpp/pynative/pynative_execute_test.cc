@@ -35,7 +35,7 @@ class TestPynativeExecute : public UT::Common {
   TestPynativeExecute() {}
 };
 
-inline ValuePtr PyAttrValue(const py::object& obj) {
+inline ValuePtr PyAttrValue(const py::object &obj) {
   ValuePtr converted_ret;
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
@@ -63,8 +63,9 @@ OpExecInfoPtr ConstructOpExecInfo() {
 
   auto conv_obj = prim::GetPythonOps("conv2d_prim", "gtest_input.pynative");
   py::none py_none;
-  py::tuple op_mask = py::make_tuple(0, 1);
-  return GenerateOpExecInfo(py::make_tuple(conv_obj, op_name, op_inputs, op_mask));
+  py::args args = py::make_tuple(conv_obj, op_name, op_inputs);
+  py::list args_input = args[PY_INPUTS];
+  return GenerateOpExecInfo(args, &args_input);
 }
 
 TEST_F(TestPynativeExecute, TestRunOpInVM) {
@@ -78,8 +79,8 @@ TEST_F(TestPynativeExecute, TestRunOpInVM) {
 TEST_F(TestPynativeExecute, TestRunOp) {
   py::none py_none;
   auto op_exec_info_ptr = ConstructOpExecInfo();
-  py::tuple outputs = pynative::RunOp(py::make_tuple(op_exec_info_ptr->py_primitive, op_exec_info_ptr->op_name,
-                                                     op_exec_info_ptr->op_inputs, op_exec_info_ptr->inputs_mask));
+  py::tuple outputs = pynative::RunOp(
+    py::make_tuple(op_exec_info_ptr->py_primitive, op_exec_info_ptr->op_name, op_exec_info_ptr->op_inputs));
   if (outputs.size() == 0) {
     FAIL();
   } else {

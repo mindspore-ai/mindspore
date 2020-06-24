@@ -15,8 +15,9 @@
 """Validators for TensorOps.
 """
 from functools import wraps
-from mindspore._c_expression import typing
+import numpy as np
 
+from mindspore._c_expression import typing
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -159,6 +160,25 @@ def check_num_classes(method):
     return new_method
 
 
+def check_fill_value(method):
+    """Wrapper method to check the parameters of fill value."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        fill_value = (list(args) + [None])[0]
+        if "fill_value" in kwargs:
+            fill_value = kwargs.get("fill_value")
+        if fill_value is None:
+            raise ValueError("fill_value is not provided.")
+        if not isinstance(fill_value, (str, float, bool, int, bytes)):
+            raise TypeError("fill_value must be either a primitive python str, float, bool, bytes or int")
+        kwargs["fill_value"] = fill_value
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
 def check_de_type(method):
     """Wrapper method to check the parameters of data type."""
 
@@ -173,6 +193,133 @@ def check_de_type(method):
         if not isinstance(data_type, typing.Type):
             raise TypeError("data_type is not a MindSpore data type.")
         kwargs["data_type"] = data_type
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_slice_op(method):
+    """Wrapper method to check the parameters of slice."""
+
+    @wraps(method)
+    def new_method(self, *args):
+        for i, arg in enumerate(args):
+            if arg is not None and arg is not Ellipsis and not isinstance(arg, (int, slice, list)):
+                raise TypeError("Indexing of dim " + str(i) + "is not of valid type")
+            if isinstance(arg, list):
+                for a in arg:
+                    if not isinstance(a, int):
+                        raise TypeError("Index " + a + " is not an int")
+        return method(self, *args)
+
+    return new_method
+
+
+def check_mask_op(method):
+    """Wrapper method to check the parameters of mask."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        operator, constant, dtype = (list(args) + 3 * [None])[:3]
+        if "operator" in kwargs:
+            operator = kwargs.get("operator")
+        if "constant" in kwargs:
+            constant = kwargs.get("constant")
+        if "dtype" in kwargs:
+            dtype = kwargs.get("dtype")
+
+        if operator is None:
+            raise ValueError("operator is not provided.")
+
+        if constant is None:
+            raise ValueError("constant is not provided.")
+
+        from .c_transforms import Relational
+        if not isinstance(operator, Relational):
+            raise TypeError("operator is not a Relational operator enum.")
+
+        if not isinstance(constant, (str, float, bool, int, bytes)):
+            raise TypeError("constant must be either a primitive python str, float, bool, bytes or int")
+
+        if dtype is not None:
+            if not isinstance(dtype, typing.Type):
+                raise TypeError("dtype is not a MindSpore data type.")
+            kwargs["dtype"] = dtype
+
+        kwargs["operator"] = operator
+        kwargs["constant"] = constant
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_pad_end(method):
+    """Wrapper method to check the parameters of PadEnd."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        pad_shape, pad_value = (list(args) + 2 * [None])[:2]
+        if "pad_shape" in kwargs:
+            pad_shape = kwargs.get("pad_shape")
+        if "pad_value" in kwargs:
+            pad_value = kwargs.get("pad_value")
+
+        if pad_shape is None:
+            raise ValueError("pad_shape is not provided.")
+
+        if pad_value is not None:
+            if not isinstance(pad_value, (str, float, bool, int, bytes)):
+                raise TypeError("pad_value must be either a primitive python str, float, bool, int or bytes")
+            kwargs["pad_value"] = pad_value
+
+        if not isinstance(pad_shape, list):
+            raise TypeError("pad_shape must be a list")
+
+        for dim in pad_shape:
+            if dim is not None:
+                if isinstance(dim, int):
+                    check_pos_int64(dim)
+                else:
+                    raise TypeError("a value in the list is not an integer.")
+
+        kwargs["pad_shape"] = pad_shape
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_concat_type(method):
+    """Wrapper method to check the parameters of concatenation op."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        axis, prepend, append = (list(args) + 3 * [None])[:3]
+        if "prepend" in kwargs:
+            prepend = kwargs.get("prepend")
+        if "append" in kwargs:
+            append = kwargs.get("append")
+        if "axis" in kwargs:
+            axis = kwargs.get("axis")
+
+        if axis is not None:
+            if not isinstance(axis, int):
+                raise TypeError("axis type is not valid, must be an integer.")
+            if axis not in (0, -1):
+                raise ValueError("only 1D concatenation supported.")
+            kwargs["axis"] = axis
+
+        if prepend is not None:
+            if not isinstance(prepend, (type(None), np.ndarray)):
+                raise ValueError("prepend type is not valid, must be None for no prepend tensor or a numpy array.")
+            kwargs["prepend"] = prepend
+
+        if append is not None:
+            if not isinstance(append, (type(None), np.ndarray)):
+                raise ValueError("append type is not valid, must be None for no append tensor or a numpy array.")
+            kwargs["append"] = append
 
         return method(self, **kwargs)
 

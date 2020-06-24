@@ -147,8 +147,8 @@ TEST_F(TestOptLib, test_inline_new_closure) {
 TEST_F(TestOptLib, test_inline_while) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_inline_while", "before");
   auto patterns = std::vector<SubstitutionPtr>({irpass.inline_});
-  FuncGraphPtr after_ = RunSubs(before, patterns);
-  ASSERT_TRUE(CheckOpt(before, before, patterns));
+  FuncGraphPtr after = RunSubs(before, patterns);
+  ASSERT_TRUE(CheckOpt(before, after, patterns, true));
 }
 
 TEST_F(TestOptLib, test_arithmetic) {
@@ -219,6 +219,7 @@ TEST_F(TestOptLib, test_elim_reshape_same_shape) {
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
+    before->output()->set_abstract(x_abstract);
   }
   auto patterns = std::vector<SubstitutionPtr>({irpass.reshape_eliminate_});
   ASSERT_TRUE(CheckOpt(before, after, patterns));
@@ -253,6 +254,14 @@ TEST_F(TestOptLib, test_elim_transpose) {
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_transpose", "after");
 
   auto patterns = std::vector<SubstitutionPtr>({irpass.transpose_eliminate_});
+  ASSERT_TRUE(CheckOpt(before, after, patterns));
+}
+
+TEST_F(TestOptLib, test_elim_depend_value) {
+  FuncGraphPtr before = getPyFun.CallAndParseRet("test_elim_depend_value", "before");
+  FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_depend_value", "after");
+
+  auto patterns = std::vector<SubstitutionPtr>({irpass.depend_value_elim_});
   ASSERT_TRUE(CheckOpt(before, after, patterns));
 }
 
@@ -400,7 +409,7 @@ TEST_F(TestOptLib, test_incorporate_getitem) {
   FuncGraphPtr after1 = getPyFun.CallAndParseRet("test_incorporate_getitem", "after1");
   FuncGraphPtr after2 = getPyFun.CallAndParseRet("test_incorporate_getitem", "after2");
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_set_});
 
   ASSERT_TRUE(CheckOpt(before1, after1, patterns));
   ASSERT_TRUE(CheckOpt(before2, after2, patterns));
@@ -410,7 +419,7 @@ TEST_F(TestOptLib, test_incorporate_getitem_through_switch) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_incorporate_getitem_through_switch", "before");
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_incorporate_getitem_through_switch", "after");
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_switch_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.incorporate_getitem_set_});
   ASSERT_TRUE(CheckOpt(before, after, patterns));
 }
 
@@ -555,6 +564,24 @@ TEST_F(TestOptLib, test_constant_duplicate_mul) {
   ASSERT_TRUE(CheckOpt(beforelr, after, patterns));
   ASSERT_TRUE(CheckOpt(beforerl, after, patterns));
   ASSERT_TRUE(CheckOpt(beforerr, after, patterns));
+}
+
+TEST_F(TestOptLib, test_adjust_allreduce_mul_add) {
+  FuncGraphPtr beforell = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforell");
+  FuncGraphPtr beforelr = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforelr");
+  FuncGraphPtr beforerl = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforerl");
+  FuncGraphPtr beforerr = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforerr");
+  FuncGraphPtr after1 = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "after1");
+  FuncGraphPtr before2r = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "before2r");
+  FuncGraphPtr before2l = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "before2l");
+  FuncGraphPtr after2 = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "after2");
+  auto patterns = std::vector<SubstitutionPtr>({irpass.adjust_all_reduce_mul_add_});
+  ASSERT_TRUE(CheckOpt(beforell, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforelr, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforerl, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforerr, after1, patterns));
+  ASSERT_TRUE(CheckOpt(before2l, after2, patterns));
+  ASSERT_TRUE(CheckOpt(before2r, after2, patterns));
 }
 }  // namespace opt
 }  // namespace mindspore

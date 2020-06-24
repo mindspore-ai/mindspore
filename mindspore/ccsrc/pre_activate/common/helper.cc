@@ -16,6 +16,7 @@
 
 #include "pre_activate/common/helper.h"
 #include <string>
+#include <utility>
 #include <unordered_set>
 #include <algorithm>
 #include <map>
@@ -45,6 +46,7 @@ bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodeP
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   std::map<AnfNodePtr, std::set<AnfNodePtr>> control_depend_map;
   for (auto &nd : node_list) {
+    MS_EXCEPTION_IF_NULL(nd);
     if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
       auto control_depend = nd->cast<CNodePtr>();
       auto prior_node = control_depend->input(kControlDependPriorIndex);
@@ -100,9 +102,12 @@ bool UnVisited(const BaseRef &n) {
       auto prim_py = value->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(prim_py);
       return !prim_py->HasAttr(kAttrVisited);
-    } else {
-      return false;
+    } else if (IsValueNode<FuncGraph>(in)) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(in);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      return !func_graph->has_flag(kAttrVisited);
     }
+    return false;
   }
   return false;
 }
@@ -157,6 +162,7 @@ const AnfNodePtr EliminateDependTransop(const FuncGraphPtr &func_graph, const An
   MS_EXCEPTION_IF_NULL(func_graph);
 
   auto transop_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kTransOpInputNum);
+  MS_EXCEPTION_IF_NULL(transop_cnode);
   auto depend_cnode = CheckAnfNodeIfCNodeAndInputSize(transop_cnode->input(kCastInputNum - 1), kDependInputNum);
   auto prev_transop_cnode = CheckAnfNodeIfCNodeAndInputSize(depend_cnode->input(1), kTransOpInputNum);
   MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependInputNum - 1));
@@ -185,9 +191,12 @@ bool Visited(const BaseRef &n) {
       auto prim_py = value->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(prim_py);
       return prim_py->HasAttr(kAttrVisited);
-    } else {
-      return false;
+    } else if (IsValueNode<FuncGraph>(in)) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(in);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      return func_graph->has_flag(kAttrVisited);
     }
+    return false;
   }
   return false;
 }
@@ -381,7 +390,7 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
 bool IsNopNode(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->device_target() != kAscendDevice) {
+  if (context_ptr->device_target() != kAscendDevice && context_ptr->device_target() != kGPUDevice) {
     return false;
   }
   static std::unordered_set<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
@@ -473,15 +482,36 @@ void RemoveNopNode(session::KernelGraph *const graph) {
   }
 }
 
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                             const AnfNodePtr &node) {
+  auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    MS_LOG(EXCEPTION) << "node has no output in manager";
+  }
+  auto output_info_list = iter->second;
+  for (const auto &output_info : output_info_list) {
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimControlDepend->name()) {
+      continue;
+    }
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
+        output_info.second == kDependAttachNodeIndex) {
+      continue;
+    }
+    output_node_list->push_back(output_info);
+  }
+  return output_node_list;
+}
+
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  if (manager->node_users().find(node) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
-  }
-  return manager->node_users()[node].size() > 1;
+  auto output_node_list = GetRealNodeUsedList(graph, node);
+  MS_EXCEPTION_IF_NULL(output_node_list);
+  return output_node_list->size() > 1;
 }
 
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
@@ -545,14 +575,22 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
     auto a_node = utils::cast<AnfNodePtr>(a);
     auto b_node = utils::cast<AnfNodePtr>(b);
+    MS_EXCEPTION_IF_NULL(a_node);
+    MS_EXCEPTION_IF_NULL(b_node);
     if (IsValueNode<Primitive>(a_node) && IsValueNode<Primitive>(b_node)) {
       auto a_value_node = a_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(a_value_node);
       auto a_value = a_value_node->value();
+      MS_EXCEPTION_IF_NULL(a_value);
       auto a_prim = a_value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(a_prim);
 
       auto b_value_node = b_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(b_value_node);
       auto b_value = b_value_node->value();
+      MS_EXCEPTION_IF_NULL(b_value);
       auto b_prim = b_value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(b_prim);
 
       return a_prim->name() == b_prim->name();
     } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
@@ -703,6 +741,45 @@ AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
     MS_LOG(EXCEPTION) << "Cast fail! Maybe var is not a anf node";
   }
   return res;
+}
+
+bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
+  MS_EXCEPTION_IF_NULL(n1);
+  MS_EXCEPTION_IF_NULL(n2);
+  auto n1_cnode = n1->cast<CNodePtr>();
+  auto n2_cnode = n2->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(n1_cnode);
+  MS_EXCEPTION_IF_NULL(n2_cnode);
+  auto index_input1 = n1_cnode->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(index_input1);
+  auto value_node1 = index_input1->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node1);
+  auto index_input2 = n2_cnode->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(index_input2);
+  auto value_node2 = index_input2->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node2);
+  return GetValue<int>(value_node1->value()) < GetValue<int>(value_node2->value());
+}
+
+bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(INFO) << "node is not a cnode";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  return AnfAlgo::HasNodeAttr(attr_name, cnode) && AnfAlgo::GetNodeAttr<bool>(node, attr_name);
+}
+
+bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set) {
+  MS_EXCEPTION_IF_NULL(node);
+  TypeId data_type = AnfAlgo::GetOutputInferDataType(node, 0);
+  if (supported_data_type_set.find(data_type) != supported_data_type_set.end()) {
+    return true;
+  }
+  MS_LOG(DEBUG) << "Not supported data type. Node:" << node->DebugString();
+  return false;
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.ops import operations as P
+from mindspore.ops.operations import _quant_ops as Q
 
 context.set_context(device_target='GPU')
 
@@ -28,7 +28,7 @@ context.set_context(device_target='GPU')
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.op = P.CorrectionMul()
+        self.op = Q.CorrectionMul()
 
     @ms_function
     def construct(self, x, batch_var, moving_var):
@@ -50,4 +50,4 @@ def test_correction_mul():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(diff > error * -1)
-    assert output.shape() == expect.shape
+    assert output.shape == expect.shape

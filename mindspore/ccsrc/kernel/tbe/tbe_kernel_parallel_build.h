@@ -26,6 +26,7 @@
 #include <nlohmann/json.hpp>
 namespace mindspore {
 namespace kernel {
+bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes);
 bool TbeOpParallelBuild(std::vector<AnfNodePtr> anf_nodes);
 
 struct KernelBuildTaskInfo {
@@ -42,6 +43,7 @@ class ParallelBuildManager {
   ParallelBuildManager();
   ~ParallelBuildManager();
   int32_t StartCompileOp(const nlohmann::json &kernel_json) const;
+  void SavePreTaskInfo(int32_t task_id, const AnfNodePtr &anf_node);
   void SaveTaskInfo(int32_t task_id, const AnfNodePtr &anf_node, const std::string &json_name,
                     const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                     int32_t scope_id = 0);
@@ -52,8 +54,10 @@ class ParallelBuildManager {
                      const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                      AnfNode *node) const;
 
-  bool WaitOne(int *task_id, char **task_result) const;
+  bool WaitOne(int *task_id, char **task_result, char **pre_build_result) const;
+  bool IsAllPreTaskFinish() const;
   bool IsAllTaskFinish() const;
+  void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
   std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, bool set_kernel_mod = true);
   KernelModPtr GenKernelMod(const string &json_name, const string &processor,
                             const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
@@ -62,6 +66,7 @@ class ParallelBuildManager {
 
  private:
   PyObject *tbe_parallel_compiler_;
+  std::map<int32_t, AnfNodePtr> pre_task_map_;
   std::map<int32_t, KernelBuildTaskInfo> task_map_;
   std::vector<KernelBuildTaskInfo> same_op_list_;
 };

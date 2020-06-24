@@ -15,6 +15,7 @@
 
 """Operators for math."""
 
+import copy
 import numpy as np
 from ... import context
 from ..._c_expression import signature_rw as sig_rw
@@ -119,18 +120,20 @@ class TensorAdd(_MathBinaryOp):
     Adds two input tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> add = P.TensorAdd()
@@ -139,6 +142,15 @@ class TensorAdd(_MathBinaryOp):
         >>> add(input_x, input_y)
         [5,7,9]
     """
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x + y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class AssignAdd(PrimitiveWithInfer):
@@ -198,14 +210,14 @@ class AssignSub(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.AssignSub = P.AssignSub()
-        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>>
         >>>     def construct(self, x):
         >>>         self.AssignSub(self.variable, x)
         >>>         return self.variable
         >>>
         >>> net = Net()
-        >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
+        >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
         >>> net(value)
     """
 
@@ -253,15 +265,35 @@ class _Reduce(PrimitiveWithInfer):
         return output
 
     def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
+        """ return meta infos of input parameters """
         axis_v = axis['value']
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
         validator.check_tensor_type_same(args, valid_dtype, self.name)
 
+        if axis_v is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
         input_shp = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
+        value = None
+        if input_x['value'] is not None:
+            prim_map = {
+                'ReduceSum': np.sum,
+                'ReduceMax': np.max,
+                'ReduceMin': np.min,
+            }
+            np_reduce_func = prim_map.get(self.name, None)
+
+            if np_reduce_func is not None:
+                value = input_x['value'].asnumpy()
+                if not axis_v:
+                    axis_v = [i for i in range(len(input_x['shape']))]
+                    axis_v = tuple(axis_v)
+                value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
+                value = np.array(value)
+                value = Tensor(value)
         return {'shape': input_shp,
                 'dtype': input_x['dtype'],
-                'value': None}
+                'value': value}
 
     def __infer__(self, input_x, axis):
         return self.do_infer(input_x, axis)
@@ -329,6 +361,12 @@ class ReduceSum(_Reduce):
         >>> op = P.ReduceSum(keep_dims=True)
         >>> output = op(input_x, 1)
     """
+
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """init ReduceSum"""
+        super(ReduceSum, self).__init__(keep_dims)
+        self.__setattr_flag__ = True
 
 
 class ReduceAll(_Reduce):
@@ -399,6 +437,12 @@ class ReduceMax(_Reduce):
         >>> output = op(input_x, 1)
     """
 
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """ReduceMax"""
+        super(ReduceMax, self).__init__(keep_dims)
+        self.__setattr_flag__ = True
+
 
 class ReduceMin(_Reduce):
     """
@@ -445,8 +489,9 @@ class ReduceProd(_Reduce):
                           Default : False, don't keep these reduced dimensions.
 
     Inputs:
-         - **input_x** (Tensor[Number]) - The input tensor.
-         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+        - **input_x** (Tensor[Number]) - The input tensor.
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed.
 
     Outputs:
         Tensor, has the same dtype as the 'input_x'.
@@ -474,8 +519,9 @@ class CumProd(PrimitiveWithInfer):
         reverse (bool): If True, reverse the result along axis. Default: False
 
     Inputs:
-         - **input_x** (Tensor[Number]) - The input tensor.
-         - **axis** (int) - The dimensions to compute the cumulative product.
+        - **input_x** (Tensor[Number]) - The input tensor.
+        - **axis** (int) - The dimensions to compute the cumulative product.
+          Only constant value is allowed.
 
     Outputs:
         Tensor, has the same shape and dtype as the 'input_x'.
@@ -506,6 +552,10 @@ class CumProd(PrimitiveWithInfer):
         validator.check_tensor_type_same({'x': x_type}, mstype.number_type, cls_name)
         validator.check_subclass("axis", axis_type, mstype.int_, cls_name)
         return x_type
+
+    def infer_value(self, x, axis):
+        if axis is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
 
 
 class MatMul(PrimitiveWithInfer):
@@ -574,6 +624,8 @@ class MatMul(PrimitiveWithInfer):
     def infer_dtype(self, x, y):
         args = {"x": x, "y": y}
         validator.check_tensor_type_same(args, mstype.float_type + mstype.int_type, self.name)
+        if x.element_type() == mstype.int8:
+            return mstype.tensor_type(mstype.int32)
         return x
 
 
@@ -662,6 +714,8 @@ class CumSum(PrimitiveWithInfer):
     def __infer__(self, x, axis):
         cls_name = self.name
         x_shp = x['shape']
+        if axis['value'] is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
         validator.check_value_type('axis', axis['value'], [int], cls_name)
         valid_types = [mstype.uint8, mstype.int8, mstype.int32, mstype.float16, mstype.float32]
         validator.check_tensor_type_same({'x': x['dtype']}, valid_types, cls_name)
@@ -701,6 +755,85 @@ class AddN(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
+
+    def check_elim(self, inputs):
+        if len(inputs) != 1:
+            return (False, None)
+        if isinstance(inputs[0], Tensor):
+            return (True, inputs[0])
+        raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
+
+    def infer_shape(self, inputs):
+        cls_name = self.name
+        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        self.add_prim_attr('n', len(inputs))
+        shp0 = inputs[0]
+        for i, shp in enumerate(inputs):
+            validator.check(f"shape of inputs[{i}]", shp, 'shape of inputs[0]', shp0, Rel.EQ, cls_name)
+        return shp0
+
+    def infer_dtype(self, inputs):
+        cls_name = self.name
+        validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
+        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
+        args = {}
+        for i, dtype in enumerate(inputs):
+            args[f"inputs[{i}]"] = dtype
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), cls_name)
+        return inputs[0]
+
+    def infer_value(self, inputs):
+        if inputs is None:
+            return None
+
+        for x in inputs:
+            if x is None:
+                return None
+
+        added = copy.deepcopy(inputs[0].asnumpy())
+        for x in inputs[1:]:
+            added += x.asnumpy()
+        out = np.array(added, inputs[0].asnumpy().dtype)
+        return Tensor(out)
+
+
+class AccumulateNV2(PrimitiveWithInfer):
+    """
+    Computes accumulation of all input tensors element-wise.
+
+    AccumulateNV2 is like AddN with a significant difference: AccumulateNV2 won't
+    wait for all of its inputs to be ready before beginning to sum. That is to say,
+    AccumulateNV2 will be able to save memory when inputs are ready at different
+    times since minimum temporary storage is proportional to the output size rather
+    than the inputs size.
+
+    Inputs:
+        - **input_x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
+          is made up of multiple tensors whose dtype is number to be added together.
+
+    Outputs:
+        Tensor, has the same shape and dtype as each entry of the `input_x`.
+
+    Examples:
+        >>> class NetAccumulateNV2(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(NetAccumulateNV2, self).__init__()
+        >>>         self.accumulateNV2 = P.AccumulateNV2()
+        >>>
+        >>>     def construct(self, *z):
+        >>>         return self.accumulateNV2(z)
+        >>>
+        >>> net = NetAccumulateNV2()
+        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.float32)
+        >>> net(input_x, input_y, input_x, input_y)
+        Tensor([10., 14., 18.], shape=(3,), dtype=mindspore.float32)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
     def infer_shape(self, inputs):
@@ -752,24 +885,151 @@ class Neg(PrimitiveWithInfer):
         validator.check_tensor_type_same({"input_x": input_x}, mstype.number_type, self.name)
         return input_x
 
+    def infer_value(self, input_x):
+        if input_x is not None:
+            input_x = input_x.asnumpy()
+            return Tensor(-input_x)
+
+        return None
+
+
+class InplaceAdd(PrimitiveWithInfer):
+    """
+    Adds v into specified rows of x. Computes y = x; y[i,] += v.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
+            to add with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+
+    Inputs:
+        - **input_x** (Tensor) - The first input is a tensor whose data type is number.
+        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
+          the first dimension, which must be the same as indices's size.
+
+    Outputs:
+        Tensor, has the same shape and dtype as input.
+
+    Examples:
+        >>> indices = (0, 1)
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceAdd = P.InplaceAdd(indices)
+        >>> inplaceAdd(input_x, input_v)
+        [[1.5 3.]
+         [4. 5.5]
+         [5. 6.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, indices):
+        """init InplaceAdd"""
+        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
+        self.indices = indices
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+        if isinstance(self.indices, int):
+            validator.check("size of indices", 1, "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            if self.indices < 0 or self.indices >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {self.indices}.')
+        else:
+            validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            for i in self.indices:
+                if i < 0 or i >= x_shape[0]:
+                    raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        if len(x_shape) > 1:
+            validator.check("x's ith dimension", x_shape[1:], "v's ith dimension", v_shape[1:],
+                            Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, v_dtype):
+        args = {'x': x_dtype, 'v': v_dtype}
+        valid_type = [mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_value_type('indices', self.indices, [tuple, int], self.name)
+        return x_dtype
+
+
+class InplaceSub(PrimitiveWithInfer):
+    """
+    Subtracts v into specified rows of x. Computes y = x; y[i, :] -= v; return y.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
+            to sub with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+
+    Inputs:
+        - **input_x** (Tensor) - The first input is a tensor whose data type is number.
+        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
+          the first dimension, which must be the same as indices's size.
+
+    Outputs:
+        Tensor, has the same shape and dtype as input.
+
+    Examples:
+        >>> indices = (0, 1)
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceSub = P.InplaceSub(indices)
+        >>> inplaceSub(input_x, input_v)
+        [[0.5 1.]
+         [2. 2.5]
+         [5. 6.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, indices):
+        """init InplaceSub"""
+        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
+        self.indices = indices
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+        if isinstance(self.indices, int):
+            validator.check("size of indices", 1, "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            if self.indices < 0 or self.indices >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {self.indices}.')
+        else:
+            validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                            Rel.EQ, self.name)
+            for i in self.indices:
+                if i < 0 or i >= x_shape[0]:
+                    raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        if len(x_shape) > 1:
+            validator.check("x's ith dimension", x_shape[1:], "v's ith dimension", v_shape[1:],
+                            Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, v_dtype):
+        args = {'x': x_dtype, 'v': v_dtype}
+        valid_type = [mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_value_type('indices', self.indices, [tuple, int], self.name)
+        return x_dtype
+
 
 class Sub(_MathBinaryOp):
     """
     Subtracts the second input tensor from the first input tensor element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -779,24 +1039,35 @@ class Sub(_MathBinaryOp):
         [-3, -3, -3]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x - y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class Mul(_MathBinaryOp):
     """
     Multiplies two tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -835,6 +1106,7 @@ class Square(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Square"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -842,6 +1114,14 @@ class Square(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = x * x
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Rsqrt(PrimitiveWithInfer):
@@ -864,6 +1144,7 @@ class Rsqrt(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Rsqrt"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -871,6 +1152,14 @@ class Rsqrt(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = 1.0 / np.sqrt(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Sqrt(PrimitiveWithInfer):
@@ -893,6 +1182,7 @@ class Sqrt(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Sqrt"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -900,6 +1190,14 @@ class Sqrt(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
         return x_type
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = np.sqrt(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Reciprocal(PrimitiveWithInfer):
@@ -931,33 +1229,34 @@ class Reciprocal(PrimitiveWithInfer):
         validator.check_subclass("x", x, mstype.tensor, self.name)
         return x
 
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = 1.0 / x
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class Pow(_MathBinaryOp):
     """
     Computes a tensor to the power of the second input.
 
-    The first input must be a tensor, and the second input should be a tensor or a number.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be the same.
-    When the inputs are one tensor and one scalar, the scalar could not be a parameter,
-    only could be a constant, and the type of the scalar is the same as the data type of the tensor.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
-
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor.
-        - **input_y** (Union[Tensor, Number]) - The exponent part. If exponent is a tensor, its shape must be able to
-          broadcast to the shape of the `input_x`.
-
-    Outputs:
-        Tensor, has the same shape as the `input_x`.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -972,6 +1271,15 @@ class Pow(_MathBinaryOp):
         >>> pow(input_x, input_y)
         [1.0, 16.0, 64.0]
     """
+
+    def infer_value(self, x, power):
+        if x is not None and power is not None:
+            x = x.asnumpy()
+            power = power.asnumpy()
+            out = np.power(x, power)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Exp(PrimitiveWithInfer):
@@ -1003,6 +1311,88 @@ class Exp(PrimitiveWithInfer):
         validator.check_subclass("x", x_type, mstype.tensor, self.name)
         return x_type
 
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = np.exp(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
+
+class Expm1(PrimitiveWithInfer):
+    """
+    Returns exponential then minus 1 of a tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
+        >>> expm1 = P.Expm1()
+        >>> expm1(input_x)
+        [ 0.,  1.71828183,  6.3890561 , 53.59815003]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Exp"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        return x_type
+
+
+class HistogramFixedWidth(PrimitiveWithInfer):
+    """
+    Returns a rank 1 histogram counting the number of entries in values that fall into every bin. The bins are equal
+    width and determined by the arguments range and nbins.
+
+    Args:
+        dtype (string): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
+        nbins (Tensor): Number of histogram bins, the type is int32.
+
+    Inputs:
+        - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
+        - **range** (Tensor) - Must have the same type as x. Shape [2] Tensor of same dtype as x.
+        x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
+
+    Outputs:
+        Tensor, the type is int32.
+
+    Examples:
+        >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
+        >>> range = Tensor([0.0, 5.0], mindspore.float16)
+        >>> hist = P.HistogramFixedWidth(5)
+        >>> hist(x, range)
+        [2 1 1 0 2]
+    """
+
+    @prim_attr_register
+    def __init__(self, nbins, dtype='int32'):
+        self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
+        valid_values = ['int32', 'int64']
+        self.dtype = validator.check_string("dtype", dtype, valid_values, self.name)
+        self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
+
+    def infer_shape(self, x_shape, range_shape):
+        return (self.nbins,)
+
+    def infer_dtype(self, x_dtype, range_dtype):
+        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
+        valid_types = (mstype.float16, mstype.float32, mstype.int32)
+        validator.check_tensor_type_same({"x": x_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"range": range_dtype}, valid_types, self.name)
+        y_dtype = mstype.int32
+        return y_dtype
+
 
 class Log(PrimitiveWithInfer):
     """
@@ -1031,6 +1421,14 @@ class Log(PrimitiveWithInfer):
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
         return x
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            out = np.log(x)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Log1p(PrimitiveWithInfer):
@@ -1127,18 +1525,20 @@ class Minimum(_MathBinaryOp):
     Computes the element-wise minimum of input tensors.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -1148,24 +1548,35 @@ class Minimum(_MathBinaryOp):
         [1.0, 2.0, 3.0]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.minimum(x, y)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class Maximum(_MathBinaryOp):
     """
     Computes the element-wise maximum of input tensors.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -1175,24 +1586,34 @@ class Maximum(_MathBinaryOp):
         [4.0, 5.0, 6.0]
     """
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.maximum(x, y)
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 class RealDiv(_MathBinaryOp):
     """
     Divide the first input tensor by the second input tensor in floating-point type element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1217,18 +1638,20 @@ class Div(_MathBinaryOp):
     Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
         ValueError: When `input_x` and `input_y` are not the same dtype.
@@ -1248,23 +1671,67 @@ class Div(_MathBinaryOp):
         return None
 
 
+class DivNoNan(_MathBinaryOp):
+    """
+    Computes a safe divide which returns 0 if the y is zero.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Raises:
+        ValueError: When `input_x` and `input_y` are not the same dtype.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([0., 0., 0., 2.0, 3.0]), mindspore.float32)
+        >>> div_no_nan = P.DivNoNan()
+        >>> div_no_nan(input_x, input_y)
+        [0., 0., 0., 2.5, 2.0]
+    """
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            with np.errstate(divide='ignore', invalid='ignore'):
+                out = np.true_divide(x, y)
+                out[~np.isfinite(out)] = 0
+            return out
+        return None
+
+
 class FloorDiv(_MathBinaryOp):
     """
     Divide the first input tensor by the second input tensor element-wise and rounds down to the closest integer.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1309,18 +1776,20 @@ class FloorMod(_MathBinaryOp):
     Compute element-wise remainder of division.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -1329,6 +1798,35 @@ class FloorMod(_MathBinaryOp):
         >>> floor_mod(input_x, input_y)
         [2, 1, 2]
     """
+
+
+class Ceil(PrimitiveWithInfer):
+    """
+    Round a tensor up to the closest integer element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor. Its element data type must be float.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
+        >>> ceil_op = P.Ceil()
+        >>> ceil_op(input_x)
+        [2.0, 3.0, -1.0]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({"x": x_dtype}, mstype.float_type, self.name)
+        return x_dtype
 
 
 class Acosh(PrimitiveWithInfer):
@@ -1359,6 +1857,35 @@ class Acosh(PrimitiveWithInfer):
         return x_dtype
 
 
+class Cosh(PrimitiveWithInfer):
+    """
+    Computes hyperbolic cosine of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> cosh = P.Cosh()
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = cosh(input_x)
+        [1.0289385 1.364684 1.048436 1.4228927]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Cosh"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
 class Asinh(PrimitiveWithInfer):
     """
     Compute inverse hyperbolic cosine of x element-wise.
@@ -1376,10 +1903,38 @@ class Asinh(PrimitiveWithInfer):
         [-2.3212, 1.1976, 1.8184, 5.2983]
     """
 
-
     @prim_attr_register
     def __init__(self):
         """init Asinh"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.name)
+        return x_dtype
+
+
+class Sinh(PrimitiveWithInfer):
+    """
+    Computes hyperbolic sine of input element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> sinh = P.Sinh()
+        >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = sinh(input_x)
+        [0.6604918 0.28367308 0.44337422 0.6604918]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Sinh"""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -1409,19 +1964,17 @@ class Equal(_LogicBinaryOp):
     Computes the equivalence between two tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar, the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a tensor whose data type is number or bool, or
-          a number or a bool object.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input tensor whose data type is same as 'input_x' or
-          a number or a bool object.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -1438,6 +1991,44 @@ class Equal(_LogicBinaryOp):
 
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.name)
+
+
+class ApproximateEqual(_LogicBinaryOp):
+    """
+    Returns the truth value of abs(x1-x2) < tolerance element-wise.
+
+    Args:
+        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
+
+    Inputs:
+        - **x1** (Tensor) - A tensor. Must be one of the following types: float32, float16.
+        - **x2** (Tensor) - A tensor of the same type and shape as 'x1'.
+
+    Outputs:
+        Tensor, the shape is same as the shape of 'x1', and the data type is bool.
+
+    Examples:
+        >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> x2 = Tensor(np.array([2, 4, 6]), mindspore.float32)
+        >>> approximate_equal = P.ApproximateEqual(2.)
+        >>> result = approximate_equal(x1, x2)
+        [True  True  False]
+    """
+
+    @prim_attr_register
+    def __init__(self, tolerance=1e-05):
+        """Init ApproximateEqual"""
+        validator.check_value_type("tolerance", tolerance, [float], self.name)
+
+    def infer_shape(self, x_shape, y_shape):
+        validator.check("x_shape", x_shape, "y_shape", y_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        args_dtype = {"x": x_dtype, "y": y_dtype}
+        valid_type = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same(args_dtype, valid_type, prim_name=self.name)
+        return mstype.tensor_type(mstype.bool_)
 
 
 class EqualCount(PrimitiveWithInfer):
@@ -1482,19 +2073,17 @@ class NotEqual(_LogicBinaryOp):
     Computes the non-equivalence of two tensors element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar, the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number, bool]) - The first input is a tensor whose data type is number or bool, or
-          a number or a bool object.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input tensor whose data type is same as `input_x` or
-          a number or a bool object.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -1518,18 +2107,19 @@ class Greater(_LogicBinaryOp):
     Computes the boolean value of :math:`x > y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1538,6 +2128,13 @@ class Greater(_LogicBinaryOp):
         >>> greater(input_x, input_y)
         [False, True, False]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.greater(x, y))
+            return Tensor(out)
+        return None
 
 
 class GreaterEqual(_LogicBinaryOp):
@@ -1545,18 +2142,19 @@ class GreaterEqual(_LogicBinaryOp):
     Computes the boolean value of :math:`x >= y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1565,6 +2163,13 @@ class GreaterEqual(_LogicBinaryOp):
         >>> greater_equal(input_x, input_y)
         [True, True, False]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.greater_equal(x, y))
+            return Tensor(out)
+        return None
 
 
 class Less(_LogicBinaryOp):
@@ -1572,18 +2177,19 @@ class Less(_LogicBinaryOp):
     Computes the boolean value of :math:`x < y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1592,6 +2198,13 @@ class Less(_LogicBinaryOp):
         >>> less(input_x, input_y)
         [False, False, True]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.less(x, y))
+            return Tensor(out)
+        return None
 
 
 class LessEqual(_LogicBinaryOp):
@@ -1599,18 +2212,19 @@ class LessEqual(_LogicBinaryOp):
     Computes the boolean value of :math:`x <= y` element-wise.
 
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them should be same.
-    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
-    and the type of the scalar is the same as the data type of the tensor.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
 
     Inputs:
-        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
-          a number.
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1619,6 +2233,13 @@ class LessEqual(_LogicBinaryOp):
         >>> less_equal(input_x, input_y)
         [True, False, True]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.less_equal(x, y))
+            return Tensor(out)
+        return None
 
 
 class LogicalNot(PrimitiveWithInfer):
@@ -1655,15 +2276,16 @@ class LogicalAnd(_LogicBinaryOp):
     """
     Computes the "logical AND" of two tensors element-wise.
 
-    The inputs must be two tensors or one tensor and one bool object.
+    The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
-    When the inputs are one tensor and one bool object, the bool object cannot be a parameter, only can be a constant,
+    When the inputs are one tensor and one bool, the bool object only could be a constant,
     and the data type of the tensor should be bool.
 
     Inputs:
-        - **input_x** (Union[Tensor, bool]) - The first input is a tensor whose data type is bool or a bool object.
-        - **input_y** (Union[Tensor, bool]) - The second input is a tensor whose data type is bool or a bool object.
+        - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
+        - **input_y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+          a tensor whose data type is bool.
 
     Outputs:
         Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
@@ -1684,18 +2306,19 @@ class LogicalOr(_LogicBinaryOp):
     """
     Computes the "logical OR" of two tensors element-wise.
 
-    The inputs must be two tensors or one tensor and one bool object.
+    The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
-    When the inputs are one tensor and one bool object, the bool object cannot be a parameter, only can be a constant,
+    When the inputs are one tensor and one bool, the bool object only could be a constant,
     and the data type of the tensor should be bool.
 
     Inputs:
-        - **input_x** (Union[Tensor, bool]) - The first input is a tensor whose data type is bool or a bool object.
-        - **input_y** (Union[Tensor, bool]) - The second input is a tensor whose data type is bool or a bool object.
+        - **input_x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
+        - **input_y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+          a tensor whose data type is bool.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -2097,8 +2720,8 @@ class NMSWithMask(PrimitiveWithInfer):
     def infer_shape(self, bboxes_shape):
         cls_name = self.name
         validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
-        validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
-        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
+        validator.check_integer("bboxes.shape[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
+        validator.check_integer("bboxes.shape[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 
@@ -2127,6 +2750,7 @@ class Abs(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Abs"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2138,7 +2762,7 @@ class Abs(PrimitiveWithInfer):
     def infer_value(self, x):
         if x is not None:
             x = x.asnumpy()
-            out = np.abs(x, dtype=x.dtype)
+            out = np.array(np.abs(x, dtype=x.dtype))
             return Tensor(out)
         return None
 
@@ -2197,7 +2821,8 @@ class Round(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        """init Round"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -2279,7 +2904,7 @@ class Atan2(_MathBinaryOp):
         - **input_y** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as `input_x`.
+        Tensor, the shape is same as the shape after broadcasting,and the data type is same as `input_x`.
 
     Examples:
          >>> input_x = Tensor(np.array([[0, 1]]), mindspore.float32)
@@ -2288,7 +2913,6 @@ class Atan2(_MathBinaryOp):
          >>> atan2(input_x, input_y)
          [[0. 0.7853982]]
     """
-
 
 class SquareSumAll(PrimitiveWithInfer):
     """
@@ -2315,6 +2939,7 @@ class SquareSumAll(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init SquareSumAll"""
+
     def infer_shape(self, x_shape, y_shape):
         validator.check("x1_shape", x_shape, "x2_shape", y_shape, Rel.EQ, self.name)
         return [], []
@@ -2441,3 +3066,101 @@ class BesselI1e(PrimitiveWithInfer):
     def infer_dtype(self, x):
         validator.check_tensor_type_same({'x': x}, mstype.number_type, self.name)
         return x
+
+
+class Inv(PrimitiveWithInfer):
+    """
+    Computes Inv(Reciprocal) of input tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          Must be one of the following types: float16, float32, int32.
+
+    Outputs:
+        Tensor, has the same shape and data type as `input_x`.
+
+    Examples:
+        >>> inv = P.Inv()
+        >>> input_x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
+        >>> output = inv(input_x)
+        [4., 2.5, 3.2258065, 1.923077]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.float16, mstype.float32,
+                                                                mstype.int32], self.name)
+        return x_dtype
+
+
+class Invert(PrimitiveWithInfer):
+    """
+    Flips all bits of input tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor[int16], Tensor[uint16]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> invert = P.Invert()
+        >>> input_x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
+        >>> output = invert(input_x)
+        [-26, -5, -14, -10]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.int16, mstype.uint16], self.name)
+        return x_dtype
+
+
+class Eps(PrimitiveWithInfer):
+    """
+    Creates a tensor filled with `input_x` dtype minimum val.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same type and shape as `input_x`, but filled with `input_x` dtype minimum val.
+
+    Examples:
+        >>> out = P.Eps()(input_x)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Eps"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
+
+    def __infer__(self, input_x):
+        valid_types = [mstype.float16, mstype.float32]
+        validator.check_tensor_type_same({'input_x': input_x['dtype']}, valid_types, self.name)
+
+        x_nptype = mstype.dtype_to_nptype(input_x['dtype'].element_type())
+        if x_nptype == np.float16:
+            min_val = 2 ** (-14)
+        else:
+            min_val = 2 ** (-16)
+
+        res = np.full(input_x['shape'], min_val, x_nptype)
+        out = {
+            'value': Tensor(res),
+            'shape': input_x['shape'],
+            'dtype': input_x['dtype'],
+        }
+        return out

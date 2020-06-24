@@ -49,104 +49,6 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_conv_bn_fusion(tag):
-    """ test_conv_bn_fusion """
-    fns = FnDict()
-
-    @fns
-    def before(x, w, scale, b, mean, variance):
-        conv_output = conv(x, w)
-        bn_output = bn(conv_output, scale, b, mean, variance)
-        item0 = tuple_getitem(bn_output, 0)
-        item1 = tuple_getitem(bn_output, 3)
-        item2 = tuple_getitem(bn_output, 4)
-        output = make_tuple(item0, item1, item2)
-        res = tuple_getitem(output, 0)
-        return res
-
-    @fns
-    def after(x, w, scale, b, mean, variance):
-        conv_bn1_output = conv_bn1(x, w)
-        conv_item0 = tuple_getitem(conv_bn1_output, 0)
-        conv_item1 = tuple_getitem(conv_bn1_output, 1)
-        conv_item2 = tuple_getitem(conv_bn1_output, 2)
-        bn2_output = fused_bn2(conv_item2, conv_item1, mean, variance)
-        bn2_item0 = tuple_getitem(bn2_output, 0)
-        bn2_item1 = tuple_getitem(bn2_output, 1)
-        bn2_item2 = tuple_getitem(bn2_output, 2)
-        bn3_output = fused_bn3(conv_item0, conv_item2, bn2_item0, scale, b)
-        output = make_tuple(bn3_output, bn2_item1, bn2_item2, conv_item2, bn2_item0)
-        item0 = tuple_getitem(output, 0)
-        item1 = tuple_getitem(output, 3)
-        item2 = tuple_getitem(output, 4)
-        new_output = make_tuple(item0, item1, item2)
-        return make_tuple(tuple_getitem(new_output, 0))
-
-    return fns[tag]
-
-
-def test_conv_bn_add_relu_fusion(tag):
-    """ test_conv_bn_add_relu_fusion """
-    fns = FnDict()
-
-    @fns
-    def before(x, w, scale, b, mean, variance, y):
-        conv_output = conv(x, w)
-        bn_output = bn(conv_output, scale, b, mean, variance)
-        item0 = tuple_getitem(bn_output, 0)
-        s = add(item0, y)
-        res = relu(s)
-        return res
-
-    @fns
-    def after(x, w, scale, b, mean, variance, y):
-        conv_bn1_output = conv_bn1(x, w)
-        conv_item0 = tuple_getitem(conv_bn1_output, 0)
-        conv_item1 = tuple_getitem(conv_bn1_output, 1)
-        conv_item2 = tuple_getitem(conv_bn1_output, 2)
-        bn2_add_relu_output = bn2_add_relu(conv_item0, conv_item1, conv_item2, y, scale, b, mean, variance)
-        bn2_add_relu_item0 = tuple_getitem(bn2_add_relu_output, 0)
-        res = make_tuple(bn2_add_relu_item0)
-        return res
-
-    return fns[tag]
-
-
-def test_conv_bn_relu_fusion(tag):
-    """ test_conv_bn_relu_fusion """
-    fns = FnDict()
-
-    @fns
-    def before(x, w, scale, b, mean, variance):
-        conv_output = conv(x, w)
-        bn_output = bn(conv_output, scale, b, mean, variance)
-        item0 = tuple_getitem(bn_output, 0)
-        item1 = tuple_getitem(bn_output, 3)
-        item2 = tuple_getitem(bn_output, 4)
-        output = make_tuple(relu(item0), item1, item2)
-        res = tuple_getitem(output, 0)
-        return res
-
-    @fns
-    def after(x, w, scale, b, mean, variance):
-        conv_bn1_output = conv_bn1(x, w)
-        conv_item0 = tuple_getitem(conv_bn1_output, 0)
-        conv_item1 = tuple_getitem(conv_bn1_output, 1)
-        conv_item2 = tuple_getitem(conv_bn1_output, 2)
-        bn2_relu_output = bn2_relu(conv_item0, conv_item1, conv_item2, scale, b, mean, variance)
-        bn2_relu_item0 = tuple_getitem(bn2_relu_output, 0)
-        bn2_relu_item1 = tuple_getitem(bn2_relu_output, 1)
-        bn2_relu_item2 = tuple_getitem(bn2_relu_output, 2)
-        bn2_relu_item3 = tuple_getitem(bn2_relu_output, 3)
-        new_make_tuple = make_tuple(bn2_relu_item0, bn2_relu_item1, bn2_relu_item2, conv_item2, bn2_relu_item3)
-        item1 = tuple_getitem(new_make_tuple, 3)
-        item2 = tuple_getitem(new_make_tuple, 4)
-        output = make_tuple(bn2_relu_item0, item1, item2)
-        return make_tuple(tuple_getitem(output, 0))
-
-    return fns[tag]
-
-
 def test_bn_split(tag):
     """ test_split_bn_fusion """
     fns = FnDict()
@@ -235,6 +137,17 @@ def test_all_reduce_fusion_all(tag):
         y3 = tuple_getitem(ar, 2)
         y2 = tuple_getitem(ar, 3)
         y1 = tuple_getitem(ar, 4)
+        res = make_tuple(y1, y2, y3, y4, y5)
+        return make_tuple(res)
+
+    @fns
+    def after1(x1, x2, x3, x4, x5):
+        ar = allreduce(x1, x2, x3, x4, x5)
+        y1 = tuple_getitem(ar, 0)
+        y2 = tuple_getitem(ar, 1)
+        y3 = tuple_getitem(ar, 2)
+        y4 = tuple_getitem(ar, 3)
+        y5 = tuple_getitem(ar, 4)
         res = make_tuple(y1, y2, y3, y4, y5)
         return make_tuple(res)
 

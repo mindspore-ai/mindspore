@@ -47,6 +47,18 @@ static std::map<std::string, size_t> type_size_map = {
   {"int64_t", sizeof(int64_t)},   {"uint64_t", sizeof(uint64_t)}, {"float16", sizeof(float) / 2},
   {"float", sizeof(float)},       {"double", sizeof(double)},     {"bool", sizeof(bool)}};
 
+std::string GetParseType(const std::string &tensorType_) {
+  static const std::map<std::string, std::string> print_parse_map = {
+    {"int8_t", "Int8"},     {"uint8_t", "Uint8"},   {"int16_t", "Int16"},  {"uint16_t", "Uint16"},
+    {"int32_t", "Int32"},   {"uint32_t", "Uint32"}, {"int64_t", "Int64"},  {"uint64_t", "Uint64"},
+    {"float16", "Float16"}, {"float", "Float32"},   {"double", "Float64"}, {"bool", "Bool"}};
+  auto type_iter = print_parse_map.find(tensorType_);
+  if (type_iter == print_parse_map.end()) {
+    MS_LOG(EXCEPTION) << "type of tensor need to print is not support " << tensorType_;
+  }
+  return type_iter->second;
+}
+
 bool ParseTensorShape(const std::string &input_shape_str, std::vector<int> *const tensor_shape, size_t *dims) {
   if (tensor_shape == nullptr) {
     return false;
@@ -141,7 +153,7 @@ void convertDataItem2Scalar(const char *str_data_ptr, const string &tensor_type,
   } else {
     MS_LOG(EXCEPTION) << "Cannot print scalar because of unsupport data type: " << tensor_type << ".";
   }
-}  // namespace mindspore
+}
 
 bool judgeLengthValid(const size_t str_len, const string &tensor_type) {
   auto type_iter = type_size_map.find(tensor_type);
@@ -200,14 +212,84 @@ bool ConvertDataItem2Tensor(const std::vector<tdt::DataItem> &items) {
   return ret_end_sequence;
 }
 
-void TensorPrint::operator()() {
-  while (true) {
-    std::vector<tdt::DataItem> bundle;
-    if (tdt::TdtHostPopData("_npu_log", bundle) != 0) {
+bool SaveDataItem2File(const std::vector<tdt::DataItem> &items, const std::string &print_file_path, prntpb::Print print,
+                       std::fstream *output) {
+  bool ret_end_sequence = false;
+  for (auto &item : items) {
+    if (item.dataType_ == tdt::TDT_END_OF_SEQUENCE) {
+      ret_end_sequence = true;
       break;
     }
-    if (ConvertDataItem2Tensor(bundle)) {
-      break;
+    prntpb::Print_Value *value = print.add_value();
+    std::shared_ptr<std::string> str_data_ptr = std::static_pointer_cast<std::string>(item.dataPtr_);
+    MS_EXCEPTION_IF_NULL(str_data_ptr);
+    if (item.tensorShape_ == kShapeScalar || item.tensorShape_ == kShapeNone) {
+      if (!judgeLengthValid(str_data_ptr->size(), item.tensorType_)) {
+        MS_LOG(EXCEPTION) << "Print op receive data length is invalid.";
+      }
+    }
+
+    std::vector<int> tensor_shape;
+    size_t totaldims = 1;
+    if (!ParseTensorShape(item.tensorShape_, &tensor_shape, &totaldims)) {
+      MS_LOG(EXCEPTION) << "Tensor print can not parse tensor shape, receive info" << item.tensorShape_;
+    }
+
+    if (item.tensorType_ == "string") {
+      std::string data(reinterpret_cast<const char *>(str_data_ptr->c_str()), item.dataLen_);
+      value->set_desc(data);
+    } else {
+      auto parse_type = GetParseType(item.tensorType_);
+      prntpb::TensorProto *tensor = value->mutable_tensor();
+      if (!(item.tensorShape_ == kShapeScalar) && !(item.tensorShape_ == kShapeNone)) {
+        for (const auto &dim : tensor_shape) {
+          tensor->add_dims(static_cast<::google::protobuf::int64>(dim));
+        }
+      }
+      tensor->set_tensor_type(parse_type);
+      std::string data(reinterpret_cast<const char *>(str_data_ptr->c_str()), item.dataLen_);
+      tensor->set_tensor_content(data);
+    }
+
+    if (!print.SerializeToOstream(output)) {
+      MS_LOG(EXCEPTION) << "Save print file:" << print_file_path << " fail.";
+    }
+    print.Clear();
+  }
+  return ret_end_sequence;
+}
+
+void TensorPrint::operator()() {
+  prntpb::Print print;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string print_file_path = ms_context->print_file_path();
+  if (print_file_path == "") {
+    while (true) {
+      std::vector<tdt::DataItem> bundle;
+      if (tdt::TdtHostPopData("_npu_log", bundle) != 0) {
+        break;
+      }
+      if (ConvertDataItem2Tensor(bundle)) {
+        break;
+      }
+    }
+  } else {
+    std::fstream output(print_file_path, std::ios::out | std::ios::trunc | std::ios::binary);
+    while (true) {
+      std::vector<tdt::DataItem> bundle;
+      if (tdt::TdtHostPopData("_npu_log", bundle) != 0) {
+        break;
+      }
+      if (SaveDataItem2File(bundle, print_file_path, print, &output)) {
+        break;
+      }
+    }
+    output.close();
+    std::string path_string = print_file_path;
+    if (chmod(common::SafeCStr(path_string), S_IRUSR) == -1) {
+      MS_LOG(ERROR) << "Modify file:" << print_file_path << " to r fail.";
+      return;
     }
   }
 }

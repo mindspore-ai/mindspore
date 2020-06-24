@@ -51,7 +51,7 @@ endif ()
 # get git commit id
 set(GIT_COMMIT_ID "")
 execute_process(
-    COMMAND ${GIT} log --format='[sha1]:%h,[branch]:%d' -1
+    COMMAND ${GIT} log --format='[sha1]:%h,[branch]:%d' --abbrev=8 -1
     OUTPUT_VARIABLE GIT_COMMIT_ID
     WORKING_DIRECTORY ${MS_ROOT_DIR}
     ERROR_QUIET)

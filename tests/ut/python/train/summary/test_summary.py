@@ -24,11 +24,9 @@ import random
 import numpy as np
 import pytest
 
-
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-from mindspore.train.callback import SummaryStep
 from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 
 CUR_DIR = os.getcwd()
@@ -192,16 +190,6 @@ def test_scalar_summary_with_ge_2():
 
 def test_validate():
     with SummaryRecord(SUMMARY_DIR) as sr:
-        with pytest.raises(ValueError):
-            SummaryStep(sr, 0)
-        with pytest.raises(ValueError):
-            SummaryStep(sr, -1)
-        with pytest.raises(ValueError):
-            SummaryStep(sr, 1.2)
-        with pytest.raises(ValueError):
-            SummaryStep(sr, True)
-        with pytest.raises(ValueError):
-            SummaryStep(sr, "str")
         sr.record(1)
         with pytest.raises(ValueError):
             sr.record(False)
@@ -215,17 +203,3 @@ def test_validate():
             sr.record("str")
         with pytest.raises(ValueError):
             sr.record(sr)
-
-    SummaryStep(sr, 1)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, 1.2)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, False)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, "str")
-    with pytest.raises(ValueError):
-        SummaryStep(sr, (1, 2))
-    with pytest.raises(ValueError):
-        SummaryStep(sr, [3, 4])
-    with pytest.raises(ValueError):
-        SummaryStep(sr, sr)

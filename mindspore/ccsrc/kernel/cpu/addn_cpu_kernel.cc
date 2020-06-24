@@ -32,17 +32,17 @@ bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> &outputs) {
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
+  size_t offset = 0;
   for (size_t i = 0; i < output_shape_[0]; ++i) {
     for (size_t j = 0; j < output_shape_[1]; ++j) {
       for (size_t k = 0; k < output_shape_[2]; ++k) {
         for (size_t m = 0; m < output_shape_[3]; ++m) {
-          auto offset = CPUKernelUtils::CalcOffset(output_shape_, i, j, k, m);
           float sum = 0;
           for (size_t index = 0; index < input_num_; ++index) {
             auto input_addr = reinterpret_cast<float *>(inputs[index]->addr);
             sum += input_addr[offset];
           }
-          output_addr[offset] = sum;
+          output_addr[offset++] = sum;
         }
       }
     }

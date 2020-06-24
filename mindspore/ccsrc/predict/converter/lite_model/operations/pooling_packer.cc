@@ -36,7 +36,6 @@ bool PoolingPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op) {
     attr->poolingMode = mindspore::predict::PoolMode::PoolMode_MEAN_POOLING;
   } else if (c_name == "GlobalPool") {
     ms_op->name = c_node_ptr->fullname_with_scope();
-    attr->poolingMode = mindspore::predict::PoolMode::PoolMode_GLOBAL_POOING;
   } else {
     MS_LOG(ERROR) << "unknowed pooling type.";
     return false;
@@ -53,7 +52,6 @@ bool PoolingPacker(const CNodePtr &c_node_ptr, OpDefT *ms_op) {
   attr->padDown = 0;
   attr->padLeft = 0;
   attr->padRight = 0;
-  attr->caffeMode = false;
   ms_op->attr.type = OpT_Pooling;
   ms_op->attr.value = attr.release();
   return true;

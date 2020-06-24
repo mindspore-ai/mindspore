@@ -189,6 +189,10 @@ class RandomDataOp : public ParallelOp {
    */
   int64_t GetTotalRows() const { return total_rows_; }
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "RandomDataOp"; }
+
  private:
   /**
    * The entry point code for when workers are launched

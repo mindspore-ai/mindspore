@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """thor_layer"""
+import numpy as np
+
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import check_bool, twice, check_int_positive
@@ -23,7 +25,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import operations as P
-import numpy as np
 C0 = 16
 
 def caculate_device_shape(matrix_dim, channel, is_A):
@@ -171,7 +172,6 @@ class Conv2d_Thor(_Conv):
         self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
         self.fake_G = Tensor(
             np.reshape(np.identity(self.matrix_G_device_dim).astype(np.float16), self.matrix_G_device_shape))
-        self.fake_G_inv_max = Tensor(np.zeros([1,]).astype(np.float32))
 
         self.shape = P.Shape()
         self.reshape = P.Reshape()
@@ -286,7 +286,6 @@ class Conv2d_Thor(_Conv):
                 matrix_A_inv = self.device_shape_pad(matrix_A_inv)
             matrix_A_inv = self.reshape(matrix_A_inv, self.matrix_A_device_temp_shape)
             matrix_A_inv = self.transpose(matrix_A_inv, (2, 0, 1, 3))
-            self.G_inv_max = self.fake_G_inv_max
             self.matrix_A_inv = matrix_A_inv
             self.matrix_G_inv = self.fake_G
             out = self.conv2d(x, self.weight)
@@ -339,15 +338,15 @@ class Dense_Thor(Cell):
         self.has_bias = check_bool(has_bias)
         self.thor = True
         if isinstance(weight_init, Tensor):
-            if weight_init.dim() != 2 or weight_init.shape()[0] != out_channels or \
-                    weight_init.shape()[1] != in_channels:
+            if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
+                    weight_init.shape[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
-                if bias_init.dim() != 1 or bias_init.shape()[0] != out_channels:
+                if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")

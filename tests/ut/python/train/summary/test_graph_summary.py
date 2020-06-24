@@ -20,8 +20,8 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Model, context
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback import SummaryStep
-from mindspore.train.summary.summary_record import SummaryRecord
+from mindspore.train.summary import SummaryRecord
+from mindspore.train.callback import SummaryCollector
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()
@@ -107,15 +107,8 @@ def test_graph_summary_sample():
     model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=model._train_network) as test_writer:
         model.train(2, dataset)
-        # step 2: create the Event
         for i in range(1, 5):
             test_writer.record(i)
-
-        # step 3: send the event to mq
-
-        # step 4: accept the event and write the file
-
-        log.debug("finished test_graph_summary_sample")
 
 
 def test_graph_summary_callback():
@@ -125,18 +118,8 @@ def test_graph_summary_callback():
     optim = Momentum(net.trainable_params(), 0.1, 0.9)
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=model._train_network) as test_writer:
-        summary_cb = SummaryStep(test_writer, 1)
-        model.train(2, dataset, callbacks=summary_cb)
-
-
-def test_graph_summary_callback2():
-    dataset = get_dataset()
-    net = Net()
-    loss = nn.SoftmaxCrossEntropyWithLogits()
-    optim = Momentum(net.trainable_params(), 0.1, 0.9)
-    context.set_context(mode=context.GRAPH_MODE)
-    model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=net) as test_writer:
-        summary_cb = SummaryStep(test_writer, 1)
-        model.train(2, dataset, callbacks=summary_cb)
+    summary_collector = SummaryCollector(SUMMARY_DIR,
+                                         collect_freq=1,
+                                         keep_default_action=False,
+                                         collect_specified_data={'collect_graph': True})
+    model.train(1, dataset, callbacks=[summary_collector])

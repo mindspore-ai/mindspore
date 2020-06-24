@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(ApplyMomentum,
+MS_REG_GPU_KERNEL_TWO(ApplyMomentum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
@@ -26,8 +26,8 @@ MS_REG_GPU_KERNEL_ONE(ApplyMomentum,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      MomentumGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(ApplyMomentum,
+                      MomentumGpuKernel, float, float)
+MS_REG_GPU_KERNEL_TWO(ApplyMomentum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
@@ -35,6 +35,15 @@ MS_REG_GPU_KERNEL_ONE(ApplyMomentum,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      MomentumGpuKernel, half)
+                      MomentumGpuKernel, half, half)
+MS_REG_GPU_KERNEL_TWO(ApplyMomentum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      MomentumGpuKernel, half, float)
 }  // namespace kernel
 }  // namespace mindspore

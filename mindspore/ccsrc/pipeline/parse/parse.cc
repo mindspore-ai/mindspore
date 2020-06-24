@@ -67,7 +67,7 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
   } else {
     return param;
   }
-  auto cast_helper = prim::GetPythonOps("_mp_cast_helper", "mindspore.ops.composite.base");
+  auto cast_helper = prim::kPrimMixedPrecisionCast;
   auto cast = func_graph->NewCNode({NewValueNode(cast_helper), NewValueNode(dst_type), param});
   return cast;
 }
@@ -967,6 +967,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
 
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
+  condition_node = header_block->ForceToWhileCond(condition_node);
   body_block->Mature();
   header_block->ConditionalJump(condition_node, body_block, after_block);
 
@@ -1175,11 +1176,11 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   auto filename = location[0].cast<std::string>();
   auto line_no = location[1].cast<int>();
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
-  if (!py::hasattr(ast()->obj(), attr_name.c_str())) {
+  if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
     MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined, at " << filename << ":"
                             << line_no;
   }
-  auto obj = ast()->obj().attr(attr_name.c_str());
+  auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
   auto obj_type = obj.attr("__class__").attr("__name__");
   if (!py::hasattr(obj, "__parameter__")) {
     MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
@@ -1205,8 +1206,18 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   // getitem apply should return the sequence data structure itself
   std::string var_name = "";
   if (ast_->IsClassMember(value_obj)) {
-    var_name = "self.";
-    (void)var_name.append(value_obj.attr("attr").cast<std::string>());
+    std::string attr_name = value_obj.attr("attr").cast<std::string>();
+    var_name = "self." + attr_name;
+    if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
+      MS_EXCEPTION(TypeError) << "'" << var_name << "' was not defined in the class '__init__' function.";
+    }
+    auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
+    auto obj_type = obj.attr("__class__").attr("__name__");
+    if (!py::hasattr(obj, "__parameter__")) {
+      MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
+                              << py::str(obj).cast<std::string>() << "' with type '"
+                              << py::str(obj_type).cast<std::string>() << "'.";
+    }
   } else {
     var_name = value_obj.attr("id").cast<std::string>();
   }
@@ -1231,7 +1242,7 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   }
 }
 
-// process a assign statement , such as a =b,  a,b = tup
+// process a assign statement, such as a =b,  a,b = tup
 FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast assgin";
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
@@ -1437,15 +1448,23 @@ bool ParseAst::UpdateFuncGraphFlags(const FuncGraphPtr &func_graph) {
   }
   py::dict flags = python_adapter::GetPyObjAttr(obj_, PYTHON_EXTERN_MINDSPORE_FLAG);
   for (auto &item : flags) {
-    if (!py::isinstance<py::str>(item.first) || !py::isinstance<py::bool_>(item.second)) {
+    if (!py::isinstance<py::str>(item.first)) {
       MS_LOG(ERROR) << "Type error in flags dict convert";
       return false;
     }
     auto name = py::cast<std::string>(item.first);
-    auto value = py::cast<bool>(item.second);
-    MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
-
-    func_graph->set_flags(name, value);
+    if (py::isinstance<py::bool_>(item.second)) {
+      auto value = py::cast<bool>(item.second);
+      MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
+      func_graph->set_flag(name, value);
+    } else if (py::isinstance<py::str>(item.second)) {
+      auto value = py::cast<std::string>(item.second);
+      MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
+      func_graph->set_attr(name, MakeValue(value));
+    } else {
+      MS_LOG(ERROR) << "Type error in flags/attrs dict convert";
+      return false;
+    }
   }
 
   return true;

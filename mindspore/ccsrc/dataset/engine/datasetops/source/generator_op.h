@@ -72,7 +72,7 @@ class GeneratorOp : public PipelineOp {
     }
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new GeneratorOp object
     Status Build(std::shared_ptr<GeneratorOp> *);
 
    private:
@@ -126,6 +126,10 @@ class GeneratorOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "GeneratorOp"; }
 
  private:
   py::function generator_function_;

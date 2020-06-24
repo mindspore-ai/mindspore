@@ -17,11 +17,13 @@
 #define DATASET_KERNELS_DATA_DATA_UTILS_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "dataset/core/constants.h"
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/data_type.h"
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 
 namespace mindspore {
 namespace dataset {
@@ -42,6 +44,13 @@ Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_
 Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                             int64_t index);
 
+// Returns a tensor of shape input filled with the passed fill_value
+// @param input  Tensor
+// @param output Tensor. The shape and type of the output tensor is same as input
+// @param fill_value Tensor. A scalar tensor used to fill the output tensor
+
+Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, std::shared_ptr<Tensor> fill_value);
+
 // Returns a type changed input tensor.
 //          Example: if input tensor is float64, the output will the specified dataType. See DataTypes.cpp
 // @param input  Tensor
@@ -58,6 +67,96 @@ void Cast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output)
 Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type);
+
+// Pad input tensor according pad_shape, need to have same rank.
+// Based on the type of the input tensor, PadEndNumeric/String will be called.
+// @param std::shared_ptr<Tensor> src - tensor to pad from
+// @param std::shared_ptr<Tensor> *dst - return tensor padded
+// @param std::vector<dsize_t> pad_shape - shape to pad to
+// @param std::shared_ptr<Tensor> pad_val - value to pad with in Tensor format,
+// @return - The error code return
+Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, const std::vector<dsize_t> &pad_shape,
+              const std::shared_ptr<Tensor> &pad_val);
+
+// Pad input numeric tensor according pad_shape, need to have same rank.
+// @param std::shared_ptr<Tensor> src - tensor to pad from
+// @param std::shared_ptr<Tensor> *dst - return tensor padded
+// @param std::vector<dsize_t> pad_shape - shape to pad to
+// @param float pad_val - value to pad with
+// @return - The error code return
+Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
+                     const std::vector<dsize_t> &pad_shape, float pad_val);
+
+// recursive helper function for padding numric tensors. This function could be very expensive if called on a
+// multi-dimensional tensor it is only meant to be called by PadEndNumeric.
+// @tparam T - type of tensor and fill value
+// @param std::shared_ptr<Tensor> src - Tensor to pad from
+// @param std::shared_ptr<Tensor>* dst - Tensor to pad to, return value
+// @param std::vector<dsize_t> cur_ind - recursion helper
+// @param T pad_val - value to pad tensor with
+// @param size_t cur_dim - recursion helper
+// @return Status - The error code return
+Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> dst,
+                           std::vector<dsize_t> cur_ind, size_t cur_dim = 0);
+
+// Pad input string tensor according pad_shape, need to have same rank.
+// @param std::shared_ptr<Tensor> src - tensor to pad from
+// @param std::shared_ptr<Tensor> *dst - return tensor padded
+// @param std::vector<dsize_t> pad_shape - shape to pad to
+// @param std::string pad_val - value to pad with
+// @return - The error code return
+Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
+                    const std::vector<dsize_t> &pad_shape, const std::string &pad_val);
+
+// recursive helper function for padding string tensors. This function could be very expensive if called on a
+// multi-dimensional tensor it is only meant to be called by PadEndString.
+// @tparam T - type of tensor and fill value
+// @param std::shared_ptr<Tensor> src - Tensor to pad from
+// @param std::shared_ptr<Tensor>* dst - Tensor to pad to, return value
+// @param std::vector<dsize_t> cur_ind - recursion helperas text
+// @param std::string pad_val - value to pad tensor with
+// @param size_t cur_dim - recursion helper
+// @return Status - The error code return
+Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::string> *dst,
+                          const TensorShape &dst_shape, std::vector<dsize_t> cur_ind, size_t cur_dim,
+                          const std::string &pad_value);
+
+enum class RelationalOp {
+  kEqual = 0,     // ==
+  kNotEqual,      // !=
+  kLess,          // <
+  kLessEqual,     // <=
+  kGreater,       // >
+  kGreaterEqual,  // >=
+};
+
+/// Helper method that masks the input tensor
+/// @tparam T type of the tensor
+/// @param input[in] input tensor
+/// @param output[out] output tensor
+/// @param value_tensor[in] scalar tensor value to compared with
+/// @param op[in] RelationalOp enum
+/// @return Status ok/error
+template <typename T>
+Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Tensor> &output,
+                  const std::shared_ptr<Tensor> &value_tensor, RelationalOp op);
+
+/// Mask the input tensor
+/// @param input[in] input tensor
+/// @param output[out] output tensor
+/// @param value[in] scalar tensor value to compared with
+/// @param op[in] RelationalOp enum
+/// @return Status ok/error
+Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
+            RelationalOp op);
+
+Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
+                   std::shared_ptr<Tensor> append);
+
+// helper for concat, always append to the input, and pass that to the output
+Status ConcatenateHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int8_t axis,
+                         std::shared_ptr<Tensor> append);
+
 }  // namespace dataset
 }  // namespace mindspore
 

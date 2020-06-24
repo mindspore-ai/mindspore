@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include "kernel/kernel.h"
-#include "kernel/akg/akgkernelbuild.h"
+#include "kernel/akg/akg_kernel_build.h"
 #include "kernel/akg/gpu/akg_gpu_kernel_mod.h"
 #include "common/utils.h"
 

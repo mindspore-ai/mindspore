@@ -40,7 +40,7 @@ class ProjectOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object.
+    // @return shared_ptr to the new ProjectOp object.
     Status Build(std::shared_ptr<ProjectOp> *);
 
    private:
@@ -106,6 +106,10 @@ class ProjectOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ProjectOp"; }
 
  private:
   std::vector<std::string> columns_to_project_;

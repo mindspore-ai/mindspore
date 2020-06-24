@@ -31,7 +31,7 @@ class KernelBuildInfo {
   class KernelBuildInfoBuilder;
 
   KernelBuildInfo() {
-    kernel_type_ = AUTO_DIFF_KERNEL;
+    kernel_type_ = TBE_KERNEL;
     fusion_type_ = OPAQUE;
     processor_ = AICORE;
     op_pattern_ = kCommonPattern;
@@ -130,6 +130,10 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   void SetProcessor(Processor processor);
 
   void SetOpPattern(OpPattern pattern);
+
+  void SetInputFormat(const std::string &format, size_t index);
+
+  void SetOutputFormat(const std::string &format, size_t index);
 
   std::shared_ptr<KernelBuildInfo> Build();
 

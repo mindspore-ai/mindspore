@@ -19,6 +19,7 @@ from .. import operations as P
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ..functional import broadcast_gradient_args
 from .. import functional as F
 from .grad_base import bprop_getters
 from ..primitive import constexpr
@@ -30,6 +31,7 @@ unsorted_segment_sum = P.UnsortedSegmentSum()
 transpose = P.Transpose()
 shape_op = P.Shape()
 reshape = P.Reshape()
+size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
 
@@ -192,24 +194,27 @@ def get_bprop_tile(self):
 @bprop_getters.register(inner.EmbeddingLookup)
 def get_bprop_embedding_lookup(self):
     """Generate bprop for EmbeddingLookup"""
-    host_sub = P.Sub().add_prim_attr('primitive_target', 'CPU')
+    sub_op = P.Sub()
+    reshape_op = P.Reshape()
     host_reshape = P.Reshape().add_prim_attr('primitive_target', 'CPU')
     def bprop_sparse(x, indices, offset, reduce_scatter_flag, split_num, out, dout):
         x_shp = shape_op(x)
-        if reduce_scatter_flag is True:
-            elu_grad = G.EmbeddingLookupCommGrad()
-            actual_dout = elu_grad(dout, split_num)
-        else:
-            actual_dout = dout
-        new_indices = host_sub(indices - offset)
+        new_indices = sub_op(indices, offset)
         # Reshape the 'new_indices'
         new_indices_shape_changed = (size_op(new_indices),)
-        new_indices = host_reshape(new_indices, new_indices_shape_changed)
-        # Reshape the 'actual_dout'
+        new_indices = reshape_op(new_indices, new_indices_shape_changed)
         x_shp_tail = x_shp[1:]
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
-        actual_dout = host_reshape(actual_dout, actual_dout_shape_changed)
-        return (new_indices, actual_dout, x_shp), zeros_like(new_indices), zeros_like(axis), \
+        if reduce_scatter_flag is True:
+            # On host
+            elu_grad = G.EmbeddingLookupCommGrad()
+            actual_dout = elu_grad(dout, split_num)
+            # Reshape the 'actual_dout' on host
+            actual_dout = host_reshape(actual_dout, actual_dout_shape_changed)
+        else:
+            # Reshape the 'actual_dout' on device
+            actual_dout = reshape_op(dout, actual_dout_shape_changed)
+        return (new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset), \
                zeros_like(reduce_scatter_flag), zeros_like(split_num)
     return bprop_sparse
 
@@ -309,7 +314,38 @@ def get_bprop_gather_v2(self):
     return bprop
 
 
-@bprop_getters.register(P.Range)
+@bprop_getters.register(P.SparseGatherV2)
+def get_bprop_sparse_gather_v2(self):
+    """Generate bprop for SparseGatherV2"""
+
+    def bprop(x, indices, axis, out, dout):
+        x_shp = shape_op(x)
+        if axis == 0:
+            indices_size = (size_op(indices),)
+            x_tail_shp = x_shp[1:]
+            values_shape = indices_size + x_tail_shp
+            values = reshape(dout, values_shape)
+            indices = reshape(indices, indices_size)
+            return (indices, values, x_shp), zeros_like(indices), zeros_like(axis)
+        if F.rank(dout) == 0:
+            dout = P.ExpandDims()(dout, -1)
+        if F.rank(indices) == 0:
+            indices = P.ExpandDims()(indices, -1)
+        out_shp = shape_op(dout)
+        ind_shp = shape_op(indices)
+        # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
+        perm_1 = _generate_shape_index(out_shp, ind_shp, axis)
+        values_transpose = transpose(dout, perm_1)
+        params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
+        # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)
+        perm_2 = _generate_inverse_index(x_shp, axis)
+        params_grad = transpose(params_grad, perm_2)
+        return params_grad, zeros_like(indices), zeros_like(axis)
+
+    return bprop
+
+
+@bprop_getters.register(inner.Range)
 def get_bprop_range(self):
     """Generate bprop for Range"""
 
@@ -445,6 +481,31 @@ def get_bprop_scatter_nd_update(self):
 
     def bprop(x, indices, update, out, dout):
         return dout, zeros_like(indices), op(dout, indices)
+
+    return bprop
+
+
+@bprop_getters.register(P.TensorScatterUpdate)
+def get_bprop_tensor_scatter_update(self):
+    """Generate bprop for TensorScatterUpdate"""
+    gather_nd = P.GatherNd()
+    tensor_scatter_update = P.TensorScatterUpdate()
+
+    def bprop(x, indices, update, out, dout):
+        x_grad = tensor_scatter_update(dout, indices, zeros_like(update))
+        update_grad = gather_nd(dout, indices)
+        return x_grad, zeros_like(indices), update_grad
+
+    return bprop
+
+
+@bprop_getters.register(P.ScatterMax)
+def get_bprop_scatter_max(self):
+    """Generate bprop for ScatterMax"""
+    gather = P.GatherV2()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), gather(dout, indices, 0)
 
     return bprop
 
@@ -604,6 +665,24 @@ def get_bprop_batch_to_space_nd(self):
     batch_to_space_nd_grad = P.SpaceToBatchND(self.block_shape, self.crops)
     def bprop(x, out, dout):
         dx = batch_to_space_nd_grad(dout)
+        return (dx,)
+    return bprop
+
+@bprop_getters.register(P.BroadcastTo)
+def get_bprop_broadcast_to(self):
+    """Generate bprop for BroadcastTo"""
+    reduce_keep_dim = P.ReduceSum(keep_dims=True)
+    broadcast_shape = self.shape
+
+    def bprop(x, out, dout):
+        x_shape = shape_op(x)
+        dout_shape = shape_op(dout)
+
+        if x_shape == dout_shape:
+            return (dout,)
+        _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
+        reduced_grad = reduce_keep_dim(dout, reduction_axes)
+        dx = reshape(reduced_grad, x_shape)
         return (dx,)
     return bprop
 

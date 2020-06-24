@@ -19,10 +19,10 @@
 #include "include/cuda_runtime.h"
 
 __global__ void DropoutForwardKernel(const float *input, float *mask, float *output, size_t num_count,
-                                     float drop_prob) {
-  float scale = 1.f / drop_prob;
+                                     float keep_prob) {
+  float scale = 1.f / keep_prob;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
-    mask[i] = mask[i] > drop_prob;
+    mask[i] = mask[i] <= keep_prob;
     output[i] = scale * input[i] * mask[i];
   }
 }
@@ -34,8 +34,8 @@ void DropoutForward(const float *input, float *mask, float *output, size_t num_c
 }
 
 __global__ void DropoutBackwardKernel(const float *dy, const float *mask, float *dx, size_t num_count,
-                                      float drop_prob) {
-  float scale = 1.f / (1.f - drop_prob);
+                                      float keep_prob) {
+  float scale = 1.f / keep_prob;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
     dx[i] = scale * dy[i] * mask[i];
   }

@@ -132,7 +132,7 @@ def test_hypermap_add3_easy():
 
 
 add3 = C.MultitypeFuncGraph('add')
-partial = Primitive('partial')
+partial = P.Partial()
 
 
 @add3.register("Number", "Number", "Number")

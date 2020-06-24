@@ -28,6 +28,7 @@ namespace mindspore {
 namespace dataset {
 
 Status UnicodeCharTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
   }

@@ -28,10 +28,11 @@ namespace mindspore {
 namespace dataset {
 class PKSampler : public Sampler {  // NOT YET FINISHED
  public:
-  // @param int64_t kVal
+  // @param num_samples - the number of samples to draw.  value of 0 means to take the full amount
+  // @param int64_t val
   // @param bool shuffle - shuffle all classIds or not, if true, classes may be 5,1,4,3,2
   // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit PKSampler(int64_t val, bool shuffle = false,
+  explicit PKSampler(int64_t num_samples, int64_t val, bool shuffle,
                      int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // default destructor
@@ -40,10 +41,11 @@ class PKSampler : public Sampler {  // NOT YET FINISHED
   // @param std::unique_ptr<DataBuffer pBuffer
   // @param int32_t workerId
   // @return - The error code return
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
-  // first handshake between StorageOp and Sampler
-  // @param op - StorageOp pointer, pass in so Sampler can call GetNumSamples() and get ClassIds()
+  // first handshake between leaf source op and Sampler. This func will determine the amount of data
+  // in the dataset that we can sample from.
+  // @param op - leaf op pointer, pass in so Sampler can ask it about how much data there is
   // @return
   Status HandshakeRandomAccessOp(const RandomAccessOp *op) override;
 
@@ -52,13 +54,12 @@ class PKSampler : public Sampler {  // NOT YET FINISHED
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
  private:
   bool shuffle_;
   uint32_t seed_;
   int64_t next_id_;
-  int64_t num_pk_samples_;
   int64_t samples_per_class_;
   std::mt19937 rnd_;
   std::vector<int64_t> labels_;

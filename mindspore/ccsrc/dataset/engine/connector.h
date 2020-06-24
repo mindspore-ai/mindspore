@@ -152,6 +152,23 @@ class Connector {
     return out;
   }
 
+  // Get current size of connector.
+  int32_t size() const {
+    int32_t size = 0;
+    for (int32_t i = 0; i < queues_.size(); ++i) {
+      size += queues_[i]->size();
+    }
+    return size;
+  }
+
+  int32_t capacity() const {
+    int32_t capacity = 0;
+    for (int32_t i = 0; i < queues_.size(); ++i) {
+      capacity += queues_[i]->capacity();
+    }
+    return capacity;
+  }
+
   // Register the internal resources with Task group for interruption service.
   // @param vg
   // @return

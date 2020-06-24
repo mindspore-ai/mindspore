@@ -48,6 +48,7 @@ ParallelContext::ParallelContext() { Reset(); }
 
 void ParallelContext::Reset() {
   mirror_mean_ = false;
+  full_batch_ = false;
   cast_before_mirror_ = true;
   loss_repeated_mean_ = true;
   device_num_ = 1;
@@ -74,6 +75,8 @@ void ParallelContext::set_global_rank(int32_t global_rank) {
 }
 
 void ParallelContext::set_mirror_mean(bool mirror_mean) { mirror_mean_ = mirror_mean; }
+
+void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
 
 void ParallelContext::set_cast_before_mirror(bool cast_before_mirror) { cast_before_mirror_ = cast_before_mirror; }
 
@@ -155,8 +158,8 @@ void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
-  if (!func_graph->has_flag(AUTO_PARALLEL) || (func_graph->flags().count(TRAINING) == 0) ||
-      func_graph->flags()[TRAINING]) {
+  if (!func_graph->has_flag(AUTO_PARALLEL) || (func_graph->attrs().count(TRAINING) == 0) ||
+      func_graph->has_flag(TRAINING)) {
     return;
   }
 

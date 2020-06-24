@@ -15,13 +15,14 @@
 
 """Parameter for cell."""
 import numbers
-from copy import copy, deepcopy
+from copy import copy
+from mindspore import context
 from . import dtype as mstype
 from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
 from ..parallel._utils import _set_clone_info, _CloneInfo
-from ..parallel._tensor import _get_seed
+from ..parallel._tensor import _get_slice_index
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -50,15 +51,19 @@ class Parameter:
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
             broadcast and gradients communication would not be applied on parameters. Default: False.
+        sparse_grad (str): Set if the parameter's gradient is sparse. Default: empty.
     """
-    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False):
+    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False, sparse_grad=""):
         self.set_parameter_data(default_input)
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
+        self.sparse_grad = sparse_grad
         self._is_init = False
         self._sliced = False
         self.clone_info = _CloneInfo()
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            self.init_data()
 
     def __repr__(self):
         format_str = 'Parameter (name={name})'
@@ -135,11 +140,13 @@ class Parameter:
         x.name = prefix + '.' + x.name
         x.is_init = False
         if init != 'same':
-            shape = self.default_input.shape()
-            dtype = self.default_input.dtype()
+            shape = self.default_input.shape
+            dtype = self.default_input.dtype
             if isinstance(init, (str, Initializer, numbers.Number)):
                 x.init_mode = initializer(init, shape=shape, dtype=dtype)
                 x.default_input = MetaTensor(dtype, shape)
+                if context.get_context("mode") == context.PYNATIVE_MODE:
+                    x.init_data()
             else:
                 x.default_input = initializer(init, shape=shape, dtype=dtype)
 
@@ -169,29 +176,36 @@ class Parameter:
         self._requires_grad = value
 
     @property
+    def sparse_grad(self):
+        """Return whether the parameter's gradient is sparse."""
+        return self._sparse_grad
+
+    @sparse_grad.setter
+    def sparse_grad(self, value=""):
+        if not isinstance(value, str):
+            raise TypeError("`sparse_grad` parameter must be str type")
+        self._sparse_grad = value
+
+    @property
     def data(self):
         return self.default_input
 
     def __add__(self, other):
-        res = deepcopy(self)
-        res.default_input = res.default_input + other
-        return res
+        return self.default_input + other
 
     def __sub__(self, other):
-        res = deepcopy(self)
-        res.default_input = res.default_input - other
-        return res
+        return self.default_input - other
 
     def __mul__(self, other):
-        res = deepcopy(self)
-        default_input = res.default_input * other
-        res.default_input = Tensor(default_input.asnumpy().copy())
-        return res
+        return self.default_input * other
 
     def __truediv__(self, other):
-        res = deepcopy(self)
-        res.default_input = res.default_input / other
-        return res
+        return self.default_input / other
+
+    def __setitem__(self, index, value):
+        default_input = self.default_input
+        default_input[index] = value
+        return self
 
     def set_parameter_data(self, data):
         """Set `default_input` of current `Parameter`."""
@@ -237,10 +251,11 @@ class Parameter:
             if len(layout) != 3:
                 raise ValueError("The length of layout must be 3! layout is {}."
                                  .format(layout))
-            self.init_mode.shape = layout[2]
-            self.init_mode.seed = int(_get_seed(layout[0], layout[1]))
+            slice_index = int(_get_slice_index(layout[0], layout[1]))
+            self.default_input = self.init_mode.to_tensor(slice_index, layout[2])
+        else:
+            self.default_input = self.init_mode.to_tensor()
 
-        self.default_input = self.init_mode.to_tensor()
         self.init_mode = None
         if set_sliced:
             self.sliced = True

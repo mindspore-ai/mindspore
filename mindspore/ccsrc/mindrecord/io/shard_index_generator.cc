@@ -335,15 +335,15 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
 
       int index = sqlite3_bind_parameter_index(stmt, common::SafeCStr(place_holder));
       if (field_type == "INTEGER") {
-        if (sqlite3_bind_int(stmt, index, std::stoi(field_value)) != SQLITE_OK) {
+        if (sqlite3_bind_int64(stmt, index, std::stoll(field_value)) != SQLITE_OK) {
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index
-                        << ", field value: " << std::stoi(field_value);
+                        << ", field value: " << std::stoll(field_value);
           return FAILED;
         }
       } else if (field_type == "NUMERIC") {
-        if (sqlite3_bind_double(stmt, index, std::stod(field_value)) != SQLITE_OK) {
+        if (sqlite3_bind_double(stmt, index, std::stold(field_value)) != SQLITE_OK) {
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index
-                        << ", field value: " << std::stoi(field_value);
+                        << ", field value: " << std::stold(field_value);
           return FAILED;
         }
       } else if (field_type == "NULL") {
@@ -514,7 +514,7 @@ INDEX_FIELDS ShardIndexGenerator::GenerateIndexFields(const std::vector<json> &s
   return {SUCCESS, std::move(fields)};
 }
 
-MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
+MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, std::pair<MSRStatus, sqlite3 *> &db,
                                                   const std::vector<int> &raw_page_ids,
                                                   const std::map<int, int> &blob_id_to_page_id) {
   // Add index data to database
@@ -556,6 +556,7 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
     MS_LOG(ERROR) << "Close database failed";
     return FAILED;
   }
+  db.second = nullptr;
   return SUCCESS;
 }
 

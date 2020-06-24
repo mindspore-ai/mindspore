@@ -41,9 +41,12 @@ const int kPynativeMode = 1;
 const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";
+const char kDavinciInferenceDevice[] = "AscendInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
+// The default max available device memory is 1024GB.
+const float kDefaultMaxDeviceMemory = 1024;
 
 class MsContext {
  public:
@@ -61,6 +64,9 @@ class MsContext {
 
   bool enable_pynative_infer() const { return enable_pynative_infer_; }
   void set_enable_pynative_infer(bool enable_pynative_infer) { enable_pynative_infer_ = enable_pynative_infer; }
+
+  bool enable_pynative_hook() const { return enable_pynative_hook_; }
+  void set_enable_pynative_hook(bool enable_pynative_hook) { enable_pynative_hook_ = enable_pynative_hook; }
 
   bool enable_task_sink() const { return enable_task_sink_; }
 
@@ -92,7 +98,7 @@ class MsContext {
   bool ir_fusion_flag() const { return ir_fusion_flag_; }
 
   bool loop_sink_flag() const { return enable_loop_sink_; }
-
+  void set_loop_sink_flag(bool enable_loop_sink) { enable_loop_sink_ = enable_loop_sink; }
   void set_enable_mem_reuse(bool enable_mem_reuse) { enable_mem_reuse_ = enable_mem_reuse; }
   bool enable_mem_reuse() const { return enable_mem_reuse_; }
 
@@ -135,6 +141,10 @@ class MsContext {
     variable_memory_max_size_ = variable_memory_max_size;
   }
 
+  const std::string &variable_memory_max_size() const { return variable_memory_max_size_; }
+
+  const std::string &graph_memory_max_size() const { return graph_memory_max_size_; }
+
   void set_enable_profiling(bool flag) { profiling_mode_ = flag; }
   bool enable_profiling() const { return profiling_mode_; }
 
@@ -142,6 +152,14 @@ class MsContext {
   std::string profiling_options() const { return profiling_options_; }
   bool check_bprop_flag() const { return check_bprop_flag_; }
   void set_check_bprop_flag(bool check_bprop_flag) { check_bprop_flag_ = check_bprop_flag; }
+  void set_print_file_path(const std::string &file) { print_file_path_ = file; }
+  const std::string &print_file_path() const { return print_file_path_; }
+
+  float max_device_memory() const { return max_device_memory_; }
+  void set_max_device_memory(float max_device_memory) { max_device_memory_ = max_device_memory; }
+
+  void set_enable_graph_kernel(bool enable_graph_kernel) { enable_graph_kernel_ = enable_graph_kernel; }
+  bool enable_graph_kernel() const { return enable_graph_kernel_; }
 
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
@@ -156,6 +174,7 @@ class MsContext {
   uint32_t device_id_;
   int execution_mode_;
   bool enable_pynative_infer_;
+  bool enable_pynative_hook_;
   bool save_graphs_flag_;
   std::string save_graphs_path_;
   uint32_t tsd_ref_;
@@ -182,6 +201,9 @@ class MsContext {
   bool profiling_mode_;
   std::string profiling_options_;
   bool check_bprop_flag_;
+  float max_device_memory_;
+  std::string print_file_path_;
+  bool enable_graph_kernel_;
 };
 
 }  // namespace mindspore

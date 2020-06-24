@@ -37,6 +37,20 @@ class Net(nn.Cell):
         return x
 
 
+class NetWithSparseGatherV2(nn.Cell):
+    """ NetWithSparseGatherV2 definition """
+    def __init__(self):
+        super(NetWithSparseGatherV2, self).__init__()
+        self.weight1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)),
+                                 name="weight1", sparse_grad="sparse_key_w1")
+        self.weight2 = Parameter(Tensor(np.ones([2, 1, 2]).astype((np.float32))), name="weight2")
+        self.axis = 0
+        self.gather = P.SparseGatherV2()
+
+    def construct(self, indices, label):
+        return self.gather(self.weight1, indices, self.axis) + self.weight2
+
+
 def test_ftrl():
     """ test_ftrl """
     inputs = Tensor(np.ones([1, 64]).astype(np.float32))
@@ -44,7 +58,19 @@ def test_ftrl():
     net = Net()
     net.set_train()
     loss = nn.SoftmaxCrossEntropyWithLogits()
-    optimizer = FTRL(net.trainable_params())
+    optimizer = FTRL(net.trainable_params(), weight_decay=0.9, loss_scale=2.0)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     _executor.compile(train_network, inputs, label)
+
+
+def test_spares_ftrl_compile():
+    """ test sparse ftrl compile """
+    indices = Tensor(np.array([0, 1]).astype(np.int32))
+    label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
+    net = NetWithSparseGatherV2()
+    net.set_train()
+
+    optimizer = FTRL(net.trainable_params(), loss_scale=2.0)
+    train_network = TrainOneStepCell(net, optimizer)
+    _executor.compile(train_network, indices, label)

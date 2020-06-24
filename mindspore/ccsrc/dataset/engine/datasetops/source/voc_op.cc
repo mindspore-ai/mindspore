@@ -44,7 +44,7 @@ const char kSegmentationExtension[] = ".png";
 const char kAnnotationExtension[] = ".xml";
 const char kImageSetsExtension[] = ".txt";
 
-VOCOp::Builder::Builder() : builder_decode_(false), builder_num_samples_(0), builder_sampler_(nullptr) {
+VOCOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -55,7 +55,9 @@ VOCOp::Builder::Builder() : builder_decode_(false), builder_num_samples_(0), bui
 Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   if (builder_task_type_ == TaskType::Segmentation) {
@@ -71,8 +73,7 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
   }
   *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_task_mode_, builder_dir_, builder_labels_to_read_,
                                  builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
-                                 builder_num_samples_, builder_decode_, std::move(builder_schema_),
-                                 std::move(builder_sampler_));
+                                 builder_decode_, std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -81,20 +82,16 @@ Status VOCOp::Builder::SanityCheck() {
   std::string err_msg;
   err_msg += dir.IsDirectory() == false ? "VOC path is invalid or not set\n" : "";
   err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is set to 0 or negative\n" : "";
-  err_msg += builder_num_samples_ < 0 ? "num_samples is negative\n" : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
-             int32_t queue_size, int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema,
-             std::shared_ptr<Sampler> sampler)
+             int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size),
       decode_(decode),
       row_cnt_(0),
       buf_cnt_(0),
-      num_rows_(0),
-      num_samples_(num_samples),
       task_type_(task_type),
       task_mode_(task_mode),
       folder_path_(folder_path),
@@ -112,7 +109,6 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
 Status VOCOp::TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys) {
   for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
     if ((*itr) > num_rows_) continue;
-    if (row_cnt_ == num_samples_) break;
     keys->push_back(*itr);
     row_cnt_++;
     if (row_cnt_ % rows_per_buffer_ == 0) {
@@ -127,7 +123,7 @@ Status VOCOp::TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::
 Status VOCOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
   while (true) {
     std::vector<int64_t> keys;
     keys.reserve(rows_per_buffer_);
@@ -138,7 +134,7 @@ Status VOCOp::operator()() {
         RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't int64");
       }
       RETURN_IF_NOT_OK(TraverseSampleIds(sample_ids, &keys));
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
     if (keys.empty() == false) {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
@@ -159,7 +155,7 @@ Status VOCOp::operator()() {
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());
       wp_.Clear();
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
   }
 }
@@ -181,23 +177,13 @@ void VOCOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status VOCOp::Reset() {
-  RETURN_IF_NOT_OK(sampler_->Reset());
+  RETURN_IF_NOT_OK(sampler_->ResetSampler());
   row_cnt_ = 0;
   wp_.Set();
   return Status::OK();
 }
 
-Status VOCOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API VOCDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
-  return Status::OK();
-}
-
-Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
+Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *trow) {
   if (task_type_ == TaskType::Segmentation) {
     std::shared_ptr<Tensor> image, target;
     const std::string kImageFile =
@@ -206,7 +192,7 @@ Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
       folder_path_ + std::string(kSegmentationClassFolder) + image_id + std::string(kSegmentationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
-    (*trow) = {std::move(image), std::move(target)};
+    (*trow) = TensorRow(row_id, {std::move(image), std::move(target)});
   } else if (task_type_ == TaskType::Detection) {
     std::shared_ptr<Tensor> image, annotation;
     const std::string kImageFile =
@@ -215,7 +201,7 @@ Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
       folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, data_schema_->column(1), &annotation));
-    (*trow) = {std::move(image), std::move(annotation)};
+    (*trow) = TensorRow(row_id, {std::move(image), std::move(annotation)});
   }
   return Status::OK();
 }
@@ -224,7 +210,7 @@ Status VOCOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataB
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
   for (const uint64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_ids_[key], &trow));
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_ids_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
@@ -280,7 +266,6 @@ Status VOCOp::ParseImageIds() {
   in_file.close();
   image_ids_.shrink_to_fit();
   num_rows_ = image_ids_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   return Status::OK();
 }
 
@@ -305,7 +290,6 @@ Status VOCOp::ParseAnnotationIds() {
   }
 
   num_rows_ = image_ids_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   return Status::OK();
 }
 
@@ -384,17 +368,7 @@ Status VOCOp::LaunchThreadsAndInitOp() {
 }
 
 Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
-  std::ifstream fs;
-  fs.open(path, std::ios::binary | std::ios::in);
-  if (fs.fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + path);
-  }
-  int64_t num_elements = fs.seekg(0, std::ios::end).tellg();
-  (void)fs.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(
-    Tensor::CreateTensor(tensor, col.tensorImpl(), TensorShape(std::vector<dsize_t>(1, num_elements)), col.type()));
-  (void)fs.read(reinterpret_cast<char *>((*tensor)->GetMutableBuffer()), num_elements);
-  fs.close();
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, path));
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
@@ -432,19 +406,8 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, const ColDescripto
   return Status::OK();
 }
 
-// Derived from RandomAccessOp
-Status VOCOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API VOCDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_rows_;
-  return Status::OK();
-}
-
 Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                             const py::dict &dict, int64_t numSamples, int64_t *count) {
+                             const py::dict &dict, int64_t *count) {
   if (task_type == "Detection") {
     std::map<std::string, int32_t> input_class_indexing;
     for (auto p : dict) {
@@ -464,14 +427,12 @@ Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_typ
     RETURN_IF_NOT_OK(op->ParseImageIds());
     *count = static_cast<int64_t>(op->image_ids_.size());
   }
-  *count = (numSamples == 0 || *count < numSamples) ? *count : numSamples;
 
   return Status::OK();
 }
 
 Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               const py::dict &dict, int64_t numSamples,
-                               std::map<std::string, int32_t> *output_class_indexing) {
+                               const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing) {
   std::map<std::string, int32_t> input_class_indexing;
   for (auto p : dict) {
     (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),

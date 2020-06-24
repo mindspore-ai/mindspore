@@ -16,6 +16,7 @@
 """_BatchNormFold op"""
 
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+import te
 from te import tvm
 from topi import generic
 from topi.cce import util
@@ -64,7 +65,6 @@ def batchnorm_fold(x, x_sum, x_square_sum, mean, variance,
                    momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0, data_format="NCHW",
                    kernel_name="batchnorm_fold"):
     """batchnorm_fold TBE op"""
-    momentum = 1.0 - momentum
     util.check_kernel_name(kernel_name)
     data_format = data_format.upper()
     if data_format != "NCHW":
@@ -119,13 +119,12 @@ def batchnorm_fold(x, x_sum, x_square_sum, mean, variance,
     variance_div = te.lang.cce.vmuls(x_square_sum, num_rec)
     mean_square = te.lang.cce.vmul(batch_mean, batch_mean)
     batch_var_biased = te.lang.cce.vsub(variance_div, mean_square)
-
+    batch_std = te.lang.cce.vsqrt(te.lang.cce.vadds(batch_var_biased, epsilon))
     if num == 1:
         batch_var_scaler = 0.0
     else:
         batch_var_scaler = float(num) / (num - 1)
-    batch_variance = te.lang.cce.vmuls(batch_var_biased, batch_var_scaler)
-    batch_std = te.lang.cce.vsqrt(te.lang.cce.vadds(batch_variance, epsilon))
+    batch_var_unbiased = te.lang.cce.vmuls(batch_var_biased, batch_var_scaler)
 
     factor = 1.0 - momentum
     factor_reverse = momentum
@@ -133,7 +132,7 @@ def batchnorm_fold(x, x_sum, x_square_sum, mean, variance,
     mean_mul_rev = te.lang.cce.vmuls(mean, factor_reverse)
     mean_updated = te.lang.cce.vadd(mean_mul, mean_mul_rev)
 
-    var_mul = te.lang.cce.vmuls(batch_variance, factor)
+    var_mul = te.lang.cce.vmuls(batch_var_unbiased, factor)
     var_mul_rev = te.lang.cce.vmuls(variance, factor_reverse)
     variance_updated = te.lang.cce.vadd(var_mul, var_mul_rev)
 

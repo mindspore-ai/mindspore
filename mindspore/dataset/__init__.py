@@ -19,16 +19,16 @@ can also create samplers with this module to sample data.
 """
 
 from .core.configuration import config
-from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, \
-    GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CelebADataset, TextFileDataset, \
-    Schema, Shuffle, zip, RandomDataset
+from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, NumpySlicesDataset, \
+    GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CocoDataset, CelebADataset,\
+    TextFileDataset, CLUEDataset, Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
-    WeightedRandomSampler, SubsetSampler, Sampler
+    WeightedRandomSampler, Sampler
 from .engine.serializer_deserializer import serialize, deserialize, show
 from .engine.graphdata import GraphData
 
 __all__ = ["config", "ImageFolderDatasetV2", "MnistDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset",
-           "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
-           "VOCDataset", "TextFileDataset", "Schema", "DistributedSampler", "PKSampler", "RandomSampler",
-           "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler", "zip", "GraphData"]
+           "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset", "NumpySlicesDataset", "VOCDataset",
+           "CocoDataset", "TextFileDataset", "CLUEDataset", "Schema", "DistributedSampler", "PKSampler",
+           "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler", "zip", "GraphData"]

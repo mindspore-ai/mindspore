@@ -26,9 +26,8 @@ import mindspore.nn as nn
 from mindspore import Model, context
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback import SummaryStep
-from mindspore.train.summary.summary_record import SummaryRecord, \
-    _cache_summary_tensor_data
+from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
+from mindspore.train.callback import Callback
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()
@@ -155,13 +154,22 @@ def get_dataset():
     return dataset
 
 
-class ImageSummaryCallback:
-    def __init__(self, summaryRecord):
-        self._summaryRecord = summaryRecord
+class ImageSummaryCallback(Callback):
+    """Image summary callback."""
+
+    def __init__(self, summary_record):
+        self._summary_record = summary_record
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *err):
+        self._summary_record.close()
 
     def record(self, step, train_network=None):
-        self._summaryRecord.record(step, train_network)
-        self._summaryRecord.flush()
+        """record data."""
+        self._summary_record.record(step, train_network)
+        self._summary_record.flush()
 
 
 def test_image_summary_train():
@@ -176,9 +184,8 @@ def test_image_summary_train():
         # step 2: create the Event
 
         model = get_model()
-        fn = ImageSummaryCallback(test_writer)
-        summary_recode = SummaryStep(fn, 1)
-        model.train(2, dataset, callbacks=summary_recode)
+        callback = ImageSummaryCallback(test_writer)
+        model.train(2, dataset, callbacks=[callback])
 
         # step 3: send the event to mq
 

@@ -19,17 +19,17 @@
 #include "device/gpu/cuda_common.h"
 
 template <typename T>
-__global__ void RmsPropKernel(const T* learning_rate, const T* decay, const T* momentum, const T* epsilon, T* variable,
+__global__ void RmsPropKernel(const T* learning_rate, const T decay, const T momentum, const T epsilon, T* variable,
                               T* mean_square, T*moment, T* gradients, const size_t size) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x)  {
-    mean_square[i] = decay[0] * mean_square[i] + (1.0 - decay[0]) * gradients[i] * gradients[i];
-    moment[i] = momentum[0] * moment[i] + learning_rate[0] * rsqrt(mean_square[i] + epsilon[0]) * gradients[i];
+    mean_square[i] = decay * mean_square[i] + (1.0 - decay) * gradients[i] * gradients[i];
+    moment[i] = momentum * moment[i] + learning_rate[0] * rsqrt(mean_square[i] + epsilon) * gradients[i];
     variable[i] -= moment[i];
   }
 }
 
 template <typename T>
-void RmsProp(const T* learning_rate, const T* decay, const T* momentum, const T* epsilon,
+void RmsProp(const T* learning_rate, const T decay, const T momentum, const T epsilon,
              T* variable, T* mean_square, T* moment, T* gradients, const size_t size, cudaStream_t cuda_stream) {
   RmsPropKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(learning_rate, decay, momentum, epsilon,
                                                                    variable, mean_square, moment, gradients, size);
@@ -58,7 +58,7 @@ void RmsPropCenter(const T* learning_rate, const T* decay, const T* momentum, co
 }
 
 template
-void RmsProp(const float* learning_rate, const float* decay, const float* momentum, const float* epsilon,
+void RmsProp(const float* learning_rate, const float decay, const float momentum, const float epsilon,
             float* variable, float* mean_square, float* moment, float* gradients, const size_t size,
             cudaStream_t cuda_stream);
 

@@ -64,7 +64,7 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   DumpGraph(root, std::string(ALLREDUCE_FUSION_END));
 
   // allreduce fusion only run once
-  root->flags()[ALLREDUCE_FUSION_RUN_ONCE_ONLY] = true;
+  root->set_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY, true);
   res->results()[pipeline::kStepParallelGraph] = root;
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();

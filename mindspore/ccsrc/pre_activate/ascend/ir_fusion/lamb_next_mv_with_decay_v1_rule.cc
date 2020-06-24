@@ -153,6 +153,9 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     return nullptr;
   }
+  if (!CheckSupportDataType(node, kFloatDataTypeSet)) {
+    return nullptr;
+  }
   AnfNodePtr mul4 = nullptr;
   AnfNodePtr real_div0 = nullptr;
   AnfNodePtr real_div1 = nullptr;

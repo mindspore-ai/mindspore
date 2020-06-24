@@ -60,6 +60,7 @@ const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
 const char PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER[] = "is_class_member";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_TYPE[] = "get_obj_type";
+const char PYTHON_MOD_GET_OBJ_ID[] = "get_obj_id";
 const char PYTHON_MOD_GET_CLASS_INSTANCE_TYPE[] = "get_class_instance_type";
 const char PYTHON_MOD_CREATE_OBJ_INSTANCE[] = "create_obj_instance";
 const char PYTHON_MOD_GET_DATACLASS_ATTRS[] = "get_dataclass_attributes";
@@ -83,6 +84,7 @@ const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
+const char PYTHON_MOD_GET_DEFAULT_INPUT[] = "get_default_input";
 
 // define the common name
 const char NAMED_PRIMITIVE_ITER[] = "iter";
@@ -107,6 +109,7 @@ const char PYTHON_EXTERN_MINDSPORE_FLAG[] = "_mindspore_flags";
 
 // define the parse constant
 const int MAX_COMPARISON_OPS_SUPPORTED = 1;
+const char CUSTOM_BPROP_NAME[] = "bprop";
 
 // define the Namespace name
 const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // for ast type namespace

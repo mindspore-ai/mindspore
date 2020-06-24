@@ -79,7 +79,7 @@ class ReduceOneEliminater : public AnfVisitor {
   }
 
   void Visit(const AnfNodePtr &node) override {
-    if (x_ == nullptr) {
+    if (!IsVNode(node) && x_ == nullptr) {
       if (IsValueNode<tensor::Tensor>(node)) {
         is_tensor_ = true;
       }

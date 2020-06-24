@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/engine/datasetops/device_queue_op.h"
+
 #include <iomanip>
 #include <iostream>
 #include <memory>
-
 #include "dataset/core/config_manager.h"
 #include "dataset/core/global_context.h"
+#include "dataset/engine/datasetops/device_queue_op.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/dataset_iterator.h"
+#include "dataset/engine/opt/pass.h"
+#include "dataset/engine/perf/profiling.h"
+#include "dataset/engine/perf/device_queue_tracing.h"
 #include "dataset/util/status.h"
 #include "dataset/util/task_manager.h"
-#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -97,7 +99,19 @@ Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
   int64_t total_batch = 0;
   bool is_break_loop = false;
-
+  double batch_start_time, end_time;
+  int32_t batch_cost, tdt_cost;
+  int32_t connector_size = 0;
+  int32_t connector_capacity;
+  std::shared_ptr<DeviceQueueTracing> profiling_node;
+  bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
+  if (isProfilingEnable) {
+    std::shared_ptr<Tracing> node;
+    RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
+    profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
+    batch_start_time = ProfilingTime::GetCurMilliSecond();
+    connector_capacity = ChildOpConnectorCapacity();
+  }
   std::unique_ptr<DataBuffer> current_buffer;
   RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
 
@@ -107,20 +121,43 @@ Status DeviceQueueOp::SendDataToAscend() {
       TensorRow currRow;
       for (int row_id = 0; row_id < current_buffer->NumRows() && !is_break_loop; row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
-        auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_);
+        auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost);
         if (status == TdtStatus::FAILED) {
           return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
+        }
+
+        if (isProfilingEnable) {
+          end_time = ProfilingTime::GetCurMilliSecond();
+          // record push tdt time
+          profiling_node->Record(TIME, TDT_PUSH_TIME, total_batch + 1, tdt_cost);
+          batch_cost = (int32_t)(end_time - batch_start_time);
+          // record batch time
+          profiling_node->Record(TIME, BATCH_TIME, total_batch + 1, batch_cost);
+          // record pipeline time
+          profiling_node->Record(TIME, PIPELINE_TIME, total_batch + 1, batch_cost - tdt_cost);
+          batch_start_time = end_time;
+          // record connector depth
+          profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, total_batch + 1, connector_size);
         }
         total_batch++;
         if (num_batch_ > 0 && total_batch == num_batch_) {
           is_break_loop = true;
         }
       }
+      if (isProfilingEnable) {
+        connector_size = ChildOpConnectorSize();
+        connector_capacity = ChildOpConnectorCapacity();
+      }
       RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+    }
+    if (isProfilingEnable) {
+      connector_size = ChildOpConnectorSize();
+      connector_capacity = ChildOpConnectorCapacity();
     }
     RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
   }
 
+  tree_->SetFinished();
   MS_LOG(INFO) << "Device queue total batch is " << total_batch << ", number of batches is " << num_batch_ << ".";
 
   return Status::OK();
@@ -195,13 +232,17 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
 
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     RETURN_IF_NOT_OK(MallocForGPUData(&items, curr_row));
-    auto ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
+    BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
       for (int i = 0; i < items.size(); i++) {
         free(items[i].data_ptr_);
       }
-      MS_LOG(WARNING) << "Retry pushing data...";
-      continue;
+      if (ret == BlockQueueStatus_T::ERROR_INPUT) {
+        return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "invalid input Data, please check it.");
+      } else {
+        MS_LOG(WARNING) << "Retry pushing data...";
+        continue;
+      }
     } else {
       break;
     }
@@ -217,7 +258,7 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memory malloc failed.");
     }
     (void)memset_s(sub_item.data_ptr_, sub_item.data_len_, 0, sub_item.data_len_);
-    unsigned char *column_data = curr_row[i]->GetMutableBuffer();
+    const unsigned char *column_data = curr_row[i]->GetBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
       MS_LOG(ERROR) << "memcpy_s failed!";

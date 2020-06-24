@@ -65,7 +65,7 @@ def test_bias_add(test_with_simu):
             self.biasAdd = P.BiasAdd()
 
             if isinstance(bias_init, Tensor):
-                if bias_init.dim() != 1 or bias_init.shape()[0] != output_channels:
+                if bias_init.dim() != 1 or bias_init.shape[0] != output_channels:
                     raise ValueError("bias_init shape error")
 
             self.bias = Parameter(initializer(

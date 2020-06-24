@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 #include "dataset/util/status.h"
 
 #define IO_CHECK(input, output)                             \
@@ -40,6 +41,40 @@
         RETURN_STATUS_UNEXPECTED("input is null."); \
       }                                             \
     }                                               \
+  } while (false)
+
+#define BOUNDING_BOX_CHECK(input)                                                           \
+  do {                                                                                      \
+    if (input[1]->shape().Size() < 2) {                                                     \
+      return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
+                    "Bounding boxes shape should have at least two dims");                  \
+    }                                                                                       \
+    uint32_t num_of_features = input[1]->shape()[1];                                        \
+    if (num_of_features < 4) {                                                              \
+      return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
+                    "Bounding boxes should be have at least 4 features");                   \
+    }                                                                                       \
+    uint32_t num_of_boxes = input[1]->shape()[0];                                           \
+    uint32_t img_h = input[0]->shape()[0];                                                  \
+    uint32_t img_w = input[0]->shape()[1];                                                  \
+    for (uint32_t i = 0; i < num_of_boxes; i++) {                                           \
+      uint32_t min_x = 0;                                                                   \
+      uint32_t min_y = 0;                                                                   \
+      uint32_t b_w = 0;                                                                     \
+      uint32_t b_h = 0;                                                                     \
+      input[1]->GetItemAt<uint32_t>(&min_x, {i, 0});                                        \
+      input[1]->GetItemAt<uint32_t>(&min_y, {i, 1});                                        \
+      input[1]->GetItemAt<uint32_t>(&b_w, {i, 2});                                          \
+      input[1]->GetItemAt<uint32_t>(&b_h, {i, 3});                                          \
+      if ((min_x + b_w > img_w) || (min_y + b_h > img_h)) {                                 \
+        return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,              \
+                      "At least one of the bounding boxes is out of bounds of the image."); \
+      }                                                                                     \
+      if (static_cast<int>(min_x) < 0 || static_cast<int>(min_y) < 0) {                     \
+        return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,              \
+                      "At least one of the bounding boxes has negative min_x or min_y.");   \
+      }                                                                                     \
+    }                                                                                       \
   } while (false)
 
 namespace mindspore {
@@ -75,8 +110,7 @@ class TensorOp {
   // @param input is a vector of shared_ptr to Tensor (pass by const reference).
   // @param output is the address to an empty vector of shared_ptr to Tensor.
   // @return Status
-  virtual Status Compute(const std::vector<std::shared_ptr<Tensor>> &input,
-                         std::vector<std::shared_ptr<Tensor>> *output);
+  virtual Status Compute(const TensorRow &input, TensorRow *output);
 
   // Returns true oif the TensorOp takes one input and returns one output.
   // @return true/false

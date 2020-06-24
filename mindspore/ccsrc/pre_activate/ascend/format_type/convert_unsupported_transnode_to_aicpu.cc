@@ -34,13 +34,13 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     return nullptr;
   }
   auto node_name = AnfAlgo::GetCNodeName(node);
-  if (node_name != prim::KPrimTransData->name() || node_name != prim::kPrimCast->name()) {
+  if (node_name != prim::KPrimTransData->name() && node_name != prim::kPrimCast->name()) {
     return nullptr;
   }
   auto kernel_builder_info = AnfAlgo::GetSelectKernelBuildInfo(node);
-  if (supported_checker_->CheckAiCoreSupported(node, kernel_builder_info)) {
-    return node;
-  } else if (supported_checker_->CheckAiCpuSupported(node, kernel_builder_info)) {
+  if (supported_checker_->CheckAICoreSupported(node, kernel_builder_info)) {
+    return nullptr;
+  } else if (supported_checker_->CheckAICPUSupported(node, kernel_builder_info)) {
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_builder_info);
     builder->SetKernelType(AICPU_KERNEL);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
@@ -49,7 +49,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     MS_LOG(EXCEPTION) << " kernel " << kernel_builder_info->ToString() << "is not supported in AiCPU & AiCore : node ["
                       << node->DebugString() << "]";
   }
-  return node;
+  return nullptr;
 }
 }  // namespace opt
 }  // namespace mindspore

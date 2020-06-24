@@ -25,6 +25,7 @@
 #include <set>
 
 #include "utils/log_adapter.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
@@ -55,6 +56,7 @@ constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
 constexpr auto kBNTrainingReduceOpName = "BNTrainingReduce";
 constexpr auto kBNTrainingUpdateOpName = "BNTrainingUpdate";
 constexpr auto kBNTrainingUpdateV2OpName = "BNTrainingUpdateV2";
+constexpr auto kBNTrainingUpdateV3OpName = "BNTrainingUpdateV3";
 constexpr auto kSimpleMeanGradOpName = "SimpleMeanGrad";
 constexpr auto kMeanGradOpName = "MeanGrad";
 constexpr auto kSliceOpName = "Slice";
@@ -64,11 +66,13 @@ constexpr auto kScatterNdOpName = "ScatterNd";
 constexpr auto kStridedSliceAssignOpName = "StridedSliceAssign";
 constexpr auto kStridedSliceOpName = "StridedSlice";
 constexpr auto kStridedSliceGradOpName = "StridedSliceGrad";
+constexpr auto kSparseGatherV2 = "SparseGatherV2";
 constexpr auto kUnsortedSegmentProdOpName = "UnsortedSegmentProd";
 constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kFlattenGradOpName = "FlattenGrad";
 constexpr auto kExpandDimsOpName = "ExpandDims";
 constexpr auto kSplitOpName = "Split";
+constexpr auto kSplitVOpName = "SplitV";
 constexpr auto kSparseApplyAdagradOpName = "SparseApplyAdagrad";
 constexpr auto kMomentumOpName = "Momentum";
 constexpr auto kApplyMomentumOpName = "ApplyMomentum";
@@ -131,6 +135,8 @@ constexpr auto kResizeNearestNeighborV2OpName = "ResizeNearestNeighborV2";
 constexpr auto kResizeNearestNeighborV2GradOpName = "ResizeNearestNeighborV2Grad";
 constexpr auto kApplyRMSPropOpname = "ApplyRMSProp";
 constexpr auto kCumsumOpName = "Cumsum";
+constexpr auto kInplaceAddOpName = "InplaceAdd";
+constexpr auto kInplaceSubOpName = "InplaceSub";
 constexpr auto kResizeBilinearV2OpName = "kResizeBilinearV2";
 constexpr auto kReduceProdOpName = "ReduceProd";
 constexpr auto kCumprodOpName = "Cumprod";
@@ -153,6 +159,8 @@ constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
 constexpr auto kNMSWithMaskOpName = "NMSWithMask";
 constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
+constexpr auto kStridedReadOpName = "StridedRead";
+constexpr auto kStridedWriteOpName = "StridedWrite";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -172,9 +180,9 @@ constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kAttrShapeGamma = "shape_gamma";
 constexpr auto kAttrPerm = "perm";
 constexpr auto kAttrTransposeFirst = "transpose_first";
-constexpr auto kAttrAutomicAddMemSize = "automic_add_mem_size";
-constexpr auto kAttrAutomicOutputIndexs = "atomic_output_clean_indexs";
-constexpr auto kAttrAutomicWorkspaceSize = "atomic_workspace_clean_size";
+constexpr auto kAttrAtomicAddMemSize = "automic_add_mem_size";
+constexpr auto kAttrAtomicOutputIndexs = "atomic_output_clean_indexs";
+constexpr auto kAttrAtomicWorkspaceIndexs = "atomic_workspace_clean_indexs";
 constexpr auto kAttrSwitchCondition = "switch_condition";
 constexpr auto kAttrDataType = "data_type";
 constexpr auto kAttrActiveTarget = "active_target";
@@ -184,6 +192,9 @@ constexpr auto kAttrEventId = "event_id";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
+constexpr auto kAttrMultiples = "multiples";
+constexpr auto kAttrFixPrecision = "fix_precision";
+constexpr auto kAttrOutputPrecision = "output_precision";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
 constexpr auto kAttrN = "n";
@@ -197,6 +208,18 @@ constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";
 constexpr auto kAttrNewAxisMask = "new_axis_mask";
 constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
+constexpr auto kAttrDatadumpOriginalNames = "_datadump_original_names";
+constexpr auto kAttrStreamId = "stream_id";
+constexpr auto kAttrRecordEvent = "record_event";
+constexpr auto kAttrWaitEvent = "wait_event";
+constexpr auto kAttrRecordEventStream = "record_event_stream";
+constexpr auto kAttrWaitEventStream = "wait_event_stream";
+constexpr auto kAttrIndex = "index";
+constexpr auto kAttrSplitDim = "split_dim";
+constexpr auto kAttrNumSplit = "num_split";
+constexpr auto kAttrOutputNum = "output_num";
+constexpr auto kAttrSizeSplits = "size_splits";
+constexpr auto kAttrOutputDefault = "output_default";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -204,7 +227,9 @@ constexpr auto kValueTargetOther = "target_other";
 
 // some size
 const size_t kShape4dDims = 4;
+const size_t kShape2dDims = 2;
 const size_t kShape5dDims = 5;
+const size_t kShape1dDims = 1;
 const size_t kCubeSize = 16;
 const size_t kMemAlignSize = 512;
 const int kParameterDataTensorMask = 0;
@@ -213,6 +238,7 @@ const int kValueNodeTensorMask = 2;
 
 // define special index in special node
 constexpr auto kAnfPrimitiveIndex = 0;
+constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kAnfPartialFuncGraphIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
@@ -251,17 +277,19 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyRMSPropOpName,
 };
 
-const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+const std::set<std::string> kHWSpecialFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
                                                    kOpFormat_FRAC_NZ,      kOpFormat_C1HWNCoC0,   kOpFormat_NC1HWC0_C04,
                                                    kOpFormat_FRACTAL_Z_C04};
 
+const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
+
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
-  if (access(file_name.c_str(), F_OK) != 0) {
-    MS_LOG(DEBUG) << "File `" << file_name << "` does not exist.";
-    return;
-  }
-  if (chmod(file_name.c_str(), mode) != 0) {
-    MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+  try {
+    if (chmod(file_name.c_str(), mode) != 0) {
+      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+    }
+  } catch (std::exception &e) {
+    MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";
   }
 }
 }  // namespace mindspore

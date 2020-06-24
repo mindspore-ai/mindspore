@@ -31,6 +31,24 @@ const BaseRef SoftmaxGradExtFusion::DefinePattern() const {
   return mul_grad;
 }
 
+const BaseRef SoftmaxGradExtFusionV2::DefinePattern() const {
+  VectorRef mul({prim::kPrimMul, input1_, input0_});
+  VectorRef sum({sum_var_, mul});
+  VectorRef sub({prim::kPrimSub, input0_, sum});
+  VectorRef mul1({prim::kPrimMul, input1_, sub});
+  VectorRef mul_grad({prim::kPrimMul, input2_, mul1});
+  return mul_grad;
+}
+
+const BaseRef SoftmaxGradExtFusionV3::DefinePattern() const {
+  VectorRef mul({prim::kPrimMul, input1_, input0_});
+  VectorRef sum({sum_var_, mul});
+  VectorRef sub({prim::kPrimSub, input0_, sum});
+  VectorRef mul1({prim::kPrimMul, input1_, sub});
+  VectorRef mul_grad({prim::kPrimMul, mul1, input2_});
+  return mul_grad;
+}
+
 const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(graph);
@@ -40,13 +58,17 @@ const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const 
   auto input1 = GetAnfNodeByVar(equiv, input1_);
   auto input2 = GetAnfNodeByVar(equiv, input2_);
   auto sum = GetAnfNodeByVar(equiv, sum_var_);
+  if (!GetBoolAttr(sum, kAttrKeepDims)) {
+    MS_LOG(INFO) << "sum's attr keep_dims should be true if do fusion";
+    return nullptr;
+  }
 
   auto prim = std::make_shared<Primitive>(kSoftmaxGradExtOpName);
   auto fusion_node = graph->NewCNode({NewValueNode(prim), input0, input1, input2});
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(node->scope());
   fusion_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, fusion_node);
+  AnfAlgo::CopyNodeAttr(kAttrKeepDims, "keepdims", sum, fusion_node);
   AnfAlgo::CopyNodeAttr(kAttrAxis, sum, fusion_node);
   return fusion_node;
 }

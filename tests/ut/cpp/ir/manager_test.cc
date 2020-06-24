@@ -104,7 +104,7 @@ class NestingSpecs {
     return name;
   }
 
-  void Check(std::shared_ptr<FuncGraphAnalysis> results) {
+  void Check(std::shared_ptr<DepComputer> results) {
     if (expected_.empty() && expected_recursive_.empty()) {
       return;
     }
@@ -118,18 +118,6 @@ class NestingSpecs {
     auto recursive = dynamic_pointer_cast<RecursiveComputer>(results);
     if (recursive != nullptr) {
       CheckRecursive(recursive);
-      return;
-    }
-
-    auto counter_g = dynamic_pointer_cast<CounterFuncGraphCollector>(results);
-    if (counter_g != nullptr) {
-      CheckGraphCounter(counter_g);
-      return;
-    }
-
-    auto counter_p = dynamic_pointer_cast<CounterAnfNodeCollector<AnfNodePtr>>(results);
-    if (counter_p != nullptr) {
-      CheckAnfNodeCounter(counter_p);
       return;
     }
   }
@@ -183,59 +171,6 @@ class NestingSpecs {
       std::set<std::string> v;
       if (value != nullptr && !Name(value).empty()) {
         v.insert(Name(value));
-      }
-
-      if (!v.empty()) {
-        clean_results[k] = v;
-      }
-    }
-
-    ASSERT_EQ(clean_results, expected_);
-  }
-
-  // Add CheckNesting function
-  void CheckAnfNodeCounter(std::shared_ptr<CounterAnfNodeCollector<AnfNodePtr>> results) {
-    std::map<std::string, std::set<std::string>> clean_results;
-    for (auto& iter : results->count_nodes_map()) {
-      auto key = iter.first;
-      auto value = iter.second;
-      if (key == nullptr) {
-        continue;
-      }
-      std::string k = Name(key);
-
-      std::set<std::string> v;
-      for (auto& node : value) {
-        auto fg = node.first;
-        if (!Name(fg).empty()) {
-          v.insert(Name(fg));
-        }
-      }
-
-      if (!v.empty()) {
-        clean_results[k] = v;
-      }
-    }
-
-    ASSERT_EQ(clean_results, expected_);
-  }
-
-  void CheckGraphCounter(std::shared_ptr<CounterFuncGraphCollector> results) {
-    std::map<std::string, std::set<std::string>> clean_results;
-    for (auto& iter : results->count_func_graphs_map()) {
-      auto key = iter.first;
-      auto value = iter.second;
-      if (key == nullptr) {
-        continue;
-      }
-      std::string k = Name(key);
-
-      std::set<std::string> v;
-      for (auto& node : value) {
-        auto fg = node.first;
-        if (!Name(fg).empty()) {
-          v.insert(Name(fg));
-        }
       }
 
       if (!v.empty()) {

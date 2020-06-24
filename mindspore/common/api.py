@@ -20,7 +20,7 @@ from collections import OrderedDict
 from functools import wraps
 from mindspore import context
 from mindspore import log as logger
-from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
+from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
 
@@ -273,6 +273,34 @@ def _generate_pip_args(obj, *args, method="construct"):
     obj.__parse_method__ = parse_method
     return args_names, args_list
 
+class _PynativeExecutor:
+    """
+    An pynative executor used to compile/manage/run graph.
+
+    Returns:
+        Graph, return the result of pipeline running.
+    """
+
+    def __init__(self):
+        self._executor = PynativeExecutor_.get_instance()
+
+    def new_graph(self, obj, *args):
+        self._executor.new_graph(obj, *args)
+
+    def end_graph(self, obj, output, *args):
+        self._executor.end_graph(obj, output, *args)
+
+    def grad(self, grad, obj, weights, *args):
+        self._executor.grad_net(grad, obj, weights, *args)
+
+    def clear(self, flag=""):
+        self._executor.clear(flag)
+
+    def set_grad_flag(self, flag):
+        self._executor.set_grad_flag(flag)
+
+    def __call__(self, *args):
+        return self._executor(args, "")
 
 class _Executor:
     """
@@ -334,7 +362,7 @@ class _Executor:
                 if not auto_parallel_mode:
                     param.init_data()
                 elif key not in obj.parameter_layout_dict:
-                    logger.info("Layout dict does not contain the key %s.", key)
+                    logger.debug("Layout dict does not contain the key %s.", key)
                     param.init_data(set_sliced=True)
                 else:
                     layout = obj.parameter_layout_dict[key]
@@ -372,7 +400,7 @@ class _Executor:
         key = generate_key(phase, dic)
         self.phase_prefix = str(key[1])
         if phase == 'export':
-            phase = phase + '.' + str(obj.create_time)
+            phase = phase + '.' + self.phase_prefix + '.' + str(obj.create_time)
         else:
             phase = self.phase_prefix + phase + '.' + str(obj.create_time)
         enable_debug_runtime = context.get_context("enable_debug_runtime")
@@ -495,10 +523,16 @@ class _Executor:
             file_format (str): MindSpore currently support 'GEIR' and 'ONNX' format for exported model
         """
         from .._c_expression import export_graph
-        phase = 'export' + '.' + str(net.create_time)
+        phase = 'export' + '.' + self.phase_prefix + '.' + str(net.create_time)
         export_graph(file_name, file_format, phase)
 
+    def fetch_info_for_quant_export(self, exec_id):
+        """Get graph proto from pipeline."""
+        if self._executor.has_compiled(exec_id) is False:
+            return None
+        return self._executor.fetch_info_for_quant_export(exec_id)
 
 _executor = _Executor()
+_pynative_exec = _PynativeExecutor()
 
 __all__ = ['ms_function']

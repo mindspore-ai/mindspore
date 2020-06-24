@@ -24,9 +24,11 @@
 
 #include "optimizer/optimizer.h"
 #include "optimizer/irpass.h"
+#include "ir/optimizer_caller.h"
 #include "optimizer/irpass/prim_eliminate.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
+#include "ir/pattern_matcher.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,12 +37,14 @@ class SpecialOpEliminater {
  public:
   SpecialOpEliminater()
       : insert_gradient_of_(prim::kPrimInsertGradientOf),
+        stop_gradient_(prim::kPrimStopGradient),
         hook_backward_(prim::kPrimHookBackward),
         print_shape_type_(prim::kPrimPrintShapeType),
         get_ref_value_(prim::kPrimGetRefValue),
         mirror_(prim::kPrimMirror),
         virtual_div_(prim::kPrimVirtualDiv) {
     eliminaters_.emplace_back(insert_gradient_of_);
+    eliminaters_.emplace_back(stop_gradient_);
     eliminaters_.emplace_back(hook_backward_);
     eliminaters_.emplace_back(print_shape_type_);
     eliminaters_.emplace_back(get_ref_value_);
@@ -61,7 +65,8 @@ class SpecialOpEliminater {
   }
 
  private:
-  PrimEliminater insert_gradient_of_, hook_backward_, print_shape_type_, get_ref_value_, mirror_, virtual_div_;
+  PrimEliminater insert_gradient_of_, stop_gradient_, hook_backward_, print_shape_type_, get_ref_value_, mirror_,
+    virtual_div_;
   std::vector<TransformFuncType> eliminaters_{};
 };
 
@@ -137,13 +142,13 @@ class ResetDeferInline : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     if (IsValueNode<FuncGraph>(node)) {
       auto fg = GetValueNode<FuncGraphPtr>(node);
-      fg->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
+      fg->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
     }
     return nullptr;
   }
 };
 
-// {PrimZerosLikeTensor, Y} ->
+// {PrimZerosLike, Y} ->
 // {PrimFill, {PrimDType, Y}, {PrimShape, Y}, 0}
 class ZeroLikeFillZero : public AnfVisitor {
  public:
@@ -155,7 +160,7 @@ class ZeroLikeFillZero : public AnfVisitor {
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     y_ = nullptr;
-    AnfVisitor::Match(prim::kPrimZerosLikeTensor, {IsNode})(node);
+    AnfVisitor::Match(prim::kPrimZerosLike, {IsNode})(node);
     if (y_ == nullptr || node->func_graph() == nullptr) {
       return nullptr;
     }
@@ -188,6 +193,17 @@ class ZeroLikeFillZero : public AnfVisitor {
   AnfNodePtr y_{nullptr};
   PrimitivePtr PrimFill_, PrimShape_, PrimDType_;
 };
+
+// {prim::kPrimDepend, X, ValueCond}->X
+class DependValueElim : public OptimizerCaller {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    PatternNode<AnfNodePtr> x, cond;
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x, cond), x, IsVNode(cond.GetNode(node)));
+    return nullptr;
+  }
+};
+
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include <algorithm>
 
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/datasetops/device_queue_op.h"
@@ -38,6 +39,7 @@ DatasetOp::DatasetOp(int32_t op_connector_size)
       tree_(nullptr),
       state_(OpState::kDeOpIdle),
       op_ctrl_flags_(kDeOpNone),
+      out_connector_(nullptr),
       first_fetch_(true) {
   // The operator starts out with an invalid operator id.  The only way to
   // get it out of invalid state is to assign the operator to an execution tree.
@@ -67,8 +69,45 @@ Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
   return Status::OK();
 }
 
+Status DatasetOp::RemoveChild(std::shared_ptr<DatasetOp> child) {
+  if (operator_id_ == kInvalidOperatorId) {
+    std::string err_msg(
+      "Cannot remove child node.  Tree node connections can only"
+      "be made if the node belongs to a tree.");
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  // disallow relationships with other trees
+  if (tree_ != child->tree_) {
+    std::string err_msg(
+      "Cannot remove child node.  Tree node connections can only be made if both nodes belong to the same tree.");
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  child_.erase(std::remove(child_.begin(), child_.end(), child), child_.end());
+  child->RemoveParent(this);
+  return Status::OK();
+}
+
+Status DatasetOp::InsertAsParent(std::shared_ptr<DatasetOp> to_add) {
+  for (auto &prev_parent : this->parent_) {
+    RETURN_IF_NOT_OK(prev_parent->RemoveChild(shared_from_this()));
+    RETURN_IF_NOT_OK(prev_parent->AddChild(to_add));
+  }
+  RETURN_IF_NOT_OK(to_add->AddChild(shared_from_this()));
+  if (tree_->root()->id() == this->id()) {
+    tree_->AssignRoot(to_add);
+  }
+  return Status::OK();
+}
+
 // Adds a parent operator to this operator
-void DatasetOp::AddParent(const DatasetOp *parent) { parent_.push_back(parent); }
+void DatasetOp::AddParent(DatasetOp *parent) { parent_.push_back(parent); }
+
+// Removes a parent operator from this operator
+void DatasetOp::RemoveParent(DatasetOp *parent) {
+  parent_.erase(std::remove(parent_.begin(), parent_.end(), parent), parent_.end());
+}
 
 // Getter function to get a shared pointer to our childAdds a operator to become our child.
 std::shared_ptr<DatasetOp> DatasetOp::child(int32_t child_index) const {

@@ -191,7 +191,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         f (Function): MindSpore's Function. Callback function.
 
     Inputs:
-        - **input_x** (Tensor) - The graph node to attach to.
+        - **input_x** (Any) - The graph node to attach to.
 
     Outputs:
         Tensor, returns `input_x` directly. `InsertGradientOf` does not affect the forward result.
@@ -285,12 +285,6 @@ class HookBackward(PrimitiveWithInfer):
             raise TypeError("Hook function should be python function type.")
         self.register_hook(hook_fn)
         self.cell_id = cell_id
-
-    def __call__(self, *inputs):
-        """run in PyNative mode."""
-        if len(inputs) == 1:
-            return inputs[0]
-        return inputs
 
     def infer_shape(self, *inputs_shape):
         if len(inputs_shape) == 1:

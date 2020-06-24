@@ -21,6 +21,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import log as logger
 from mindspore.train.checkpoint_pb2 import Checkpoint
+from mindspore.train.print_pb2 import Print
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
@@ -30,11 +31,15 @@ from mindspore._checkparam import check_input_data
 
 __all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export"]
 
-tensor_to_ms_type = {"Int8": mstype.int8, "Int16": mstype.int16, "Int32": mstype.int32, "Int64": mstype.int64,
-                     "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64}
+tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
+                     "Int32": mstype.int32, "Uint32": mstype.uint32, "Int64": mstype.int64, "Uint64": mstype.uint64,
+                     "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64,
+                     "Bool": mstype.bool_}
 
-tensor_to_np_type = {"Int8": np.int8, "Int16": np.int16, "Int32": np.int32, "Int64": np.int64,
-                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64}
+tensor_to_np_type = {"Int8": np.int8, "Uint8": np.uint8, "Int16": np.int16, "Uint16": np.uint16,
+                     "Int32": np.int32, "Uint32": np.uint32, "Int64": np.int64, "Uint64": np.uint64,
+                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
+
 
 def _special_process_par(par, new_par):
     """
@@ -42,17 +47,17 @@ def _special_process_par(par, new_par):
 
     Like (12,2048,1,1)->(12,2048), this case is caused by GE 4 dimensions tensor.
     """
-    par_shape_len = len(par.data.shape())
-    new_par_shape_len = len(new_par.data.shape())
+    par_shape_len = len(par.data.shape)
+    new_par_shape_len = len(new_par.data.shape)
     delta_len = new_par_shape_len - par_shape_len
     delta_i = 0
     for delta_i in range(delta_len):
-        if new_par.data.shape()[par_shape_len + delta_i] != 1:
+        if new_par.data.shape[par_shape_len + delta_i] != 1:
             break
     if delta_i == delta_len - 1:
         new_val = new_par.data.asnumpy()
-        new_val = new_val.reshape(par.data.shape())
-        par.set_parameter_data(Tensor(new_val, par.data.dtype()))
+        new_val = new_val.reshape(par.data.shape)
+        par.set_parameter_data(Tensor(new_val, par.data.dtype))
         return True
     return False
 
@@ -61,17 +66,17 @@ def _update_param(param, new_param):
     """Updates param's data from new_param's data."""
 
     if isinstance(param.data, Tensor) and isinstance(new_param.data, Tensor):
-        if param.data.dtype() != new_param.data.dtype():
+        if param.data.dtype != new_param.data.dtype:
             logger.error("Failed to combine the net and the parameters for param %s.", param.name)
             msg = ("Net parameters {} type({}) different from parameter_dict's({})"
-                   .format(param.name, param.data.dtype(), new_param.data.dtype()))
+                   .format(param.name, param.data.dtype, new_param.data.dtype))
             raise RuntimeError(msg)
 
-        if param.data.shape() != new_param.data.shape():
+        if param.data.shape != new_param.data.shape:
             if not _special_process_par(param, new_param):
                 logger.error("Failed to combine the net and the parameters for param %s.", param.name)
                 msg = ("Net parameters {} shape({}) different from parameter_dict's({})"
-                       .format(param.name, param.data.shape(), new_param.data.shape()))
+                       .format(param.name, param.data.shape, new_param.data.shape))
                 raise RuntimeError(msg)
             return
 
@@ -79,12 +84,12 @@ def _update_param(param, new_param):
         return
 
     if isinstance(param.data, Tensor) and not isinstance(new_param.data, Tensor):
-        if param.data.shape() != (1,) and param.data.shape() != ():
+        if param.data.shape != (1,) and param.data.shape != ():
             logger.error("Failed to combine the net and the parameters for param %s.", param.name)
             msg = ("Net parameters {} shape({}) is not (1,), inconsitent with parameter_dict's(scalar)."
-                   .format(param.name, param.data.shape()))
+                   .format(param.name, param.data.shape))
             raise RuntimeError(msg)
-        param.set_parameter_data(initializer(new_param.data, param.data.shape(), param.data.dtype()))
+        param.set_parameter_data(initializer(new_param.data, param.data.shape, param.data.dtype))
 
     elif isinstance(new_param.data, Tensor) and not isinstance(param.data, Tensor):
         logger.error("Failed to combine the net and the parameters for param %s.", param.name)
@@ -120,12 +125,12 @@ def save_checkpoint(parameter_list, ckpoint_file_name):
                 param["data"].init_data()
             param_data = param["data"].asnumpy().reshape(-1)
             param_tensor.tensor_content = param_data.tostring()
-            param_tensor.tensor_type = str(param["data"].dtype())
+            param_tensor.tensor_type = str(param["data"].dtype)
 
-            if param['data'].shape() == ():
+            if param['data'].shape == ():
                 param_tensor.dims.append(0)
             else:
-                for dim in param['data'].shape():
+                for dim in param['data'].shape:
                     param_tensor.dims.append(dim)
 
         with open(ckpoint_file_name, "wb") as f:
@@ -398,17 +403,18 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         net (Cell): MindSpore network.
         inputs (Tensor): Inputs of the `net`.
         file_name (str): File name of model to export.
-        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'LITE' format for exported model.
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' 'LITE' and 'BINARY' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
             - LITE: Huawei model format for mobile. A lite model only for the MindSpore Lite
+            - BINARY: Binary format for model. An intermidiate representation format for models.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
 
-    supported_formats = ['GEIR', 'ONNX', 'LITE']
+    supported_formats = ['GEIR', 'ONNX', 'LITE', 'BINARY']
     if file_format not in supported_formats:
         raise ValueError(f'Illegal file format {file_format}, it must be one of {supported_formats}')
     # switch network mode to infer when it is training
@@ -428,9 +434,77 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
+    elif file_format == 'BINARY':  # file_format is 'BINARY'
+        phase_name = 'export_binary'
+        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
+        onnx_stream = _executor._get_func_graph_proto(graph_id, 'binary_ir')
+        with open(file_name, 'wb') as f:
+            os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
+            f.write(onnx_stream)
     elif file_format == 'LITE':  # file_format is 'LITE'
         context.set_context(save_ms_model=True, save_ms_model_path=file_name)
         net(*inputs)
     # restore network training mode
     if is_training:
         net.set_train(mode=True)
+
+
+def parse_print(print_file_name):
+    """
+    Loads Print data from a specified file.
+
+    Args:
+        print_file_name (str): The file name of save print data.
+
+    Returns:
+        List, element of list is Tensor.
+
+    Raises:
+        ValueError: Print file is incorrect.
+    """
+    if not os.path.realpath(print_file_name):
+        raise ValueError("Please input the correct print file name.")
+
+    if os.path.getsize(print_file_name) == 0:
+        raise ValueError("The print file may be empty, please make sure enter the correct file name.")
+
+    logger.info("Execute load print process.")
+    print_list = Print()
+
+    try:
+        with open(print_file_name, "rb") as f:
+            pb_content = f.read()
+        print_list.ParseFromString(pb_content)
+    except BaseException as e:
+        logger.error("Failed to read the print file %s, please check the correct of the file.", print_file_name)
+        raise ValueError(e.__str__())
+
+    tensor_list = []
+
+    try:
+        for print_ in print_list.value:
+            # String type
+            if print_.HasField("desc"):
+                tensor_list.append(print_.desc)
+            elif print_.HasField("tensor"):
+                dims = print_.tensor.dims
+                data_type = print_.tensor.tensor_type
+                data = print_.tensor.tensor_content
+                np_type = tensor_to_np_type[data_type]
+                param_data = np.fromstring(data, np_type)
+                ms_type = tensor_to_ms_type[data_type]
+                param_dim = []
+                for dim in dims:
+                    param_dim.append(dim)
+                if param_dim:
+                    param_value = param_data.reshape(param_dim)
+                    tensor_list.append(Tensor(param_value, ms_type))
+                # Scale type
+                else:
+                    tensor_list.append(Tensor(param_data, ms_type))
+
+    except BaseException as e:
+        logger.error("Failed to load the print file %s.", print_list)
+        raise RuntimeError(e.__str__())
+
+    return tensor_list

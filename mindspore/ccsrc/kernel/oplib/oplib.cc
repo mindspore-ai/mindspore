@@ -35,7 +35,7 @@ constexpr auto kKernelName = "kernel_name";
 constexpr auto kPartialFlag = "partial_flag";
 constexpr auto kReshapeType = "reshape_type";
 constexpr auto kOpPattern = "op_pattern";
-constexpr auto kDynamicFormat = "dynamic_format";
+constexpr auto kDynamicFormat = "dynamicFormat";
 constexpr auto kFormatAgnostic = "formatAgnostic";
 constexpr auto kBroadcast = "broadcast";
 constexpr auto kReduce = "reduce";
@@ -100,21 +100,27 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
 
 void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
   const std::map<std::string, kernel::OpPattern> kOpPatternMap = {{kFormatAgnostic, kFormatAgnosticPattern},
-                                                                  {kFormatAgnostic, kBroadcastPattern},
+                                                                  {kBroadcast, kBroadcastPattern},
                                                                   {kReduce, kReducePattern},
                                                                   {kDynamicFormat, kDynamicFormatPattern}};
+  MS_EXCEPTION_IF_NULL(op_info);
   op_info->set_async_flag(obj.at(kAsyncFlag));
   op_info->set_binfile_name(obj.at(kBinfileName));
   op_info->set_compute_cost(obj.at(kComputeCost));
   op_info->set_kernel_name(obj.at(kKernelName));
   op_info->set_partial_flag(obj.at(kPartialFlag));
+
   if (obj.find(kOpPattern) != obj.end()) {
-    if (kOpPatternMap.find(obj.at(kOpPattern)) != kOpPatternMap.end()) {
-      op_info->set_op_pattern(obj.at(kOpPattern));
+    std::string op_pattern = obj.at(kOpPattern);
+    auto find_iter = kOpPatternMap.find(op_pattern);
+    if (find_iter == kOpPatternMap.end()) {
+      if (!op_pattern.empty()) {
+        MS_LOG(WARNING) << "Op pattern set value error: " << op_pattern;
+      }
+      op_info->set_op_pattern(kCommonPattern);
+    } else {
+      op_info->set_op_pattern(find_iter->second);
     }
-  }
-  if (obj.find(kDynamicFormat) != obj.end()) {
-    op_info->set_dynamic_format(obj.at(kDynamicFormat));
   }
 }
 
@@ -194,6 +200,7 @@ bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType imply_type,
 
 bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,
                               size_t index) {
+  MS_EXCEPTION_IF_NULL(op_io);
   bool ret = true;
   try {
     std::vector<std::string> dtype;
@@ -213,6 +220,7 @@ bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::sha
 
 bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply_type, const OpIOType io_type,
                               const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format) {
+  MS_EXCEPTION_IF_NULL(op_info);
   bool ret = true;
   try {
     std::shared_ptr<OpIOInfo> op_io = std::make_shared<OpIOInfo>();
@@ -264,8 +272,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->device_target() == kGPUDevice);
-  if ((is_gpu && (imply_type == kTBE || imply_type == kAICPU)) ||
-      (!is_gpu && (imply_type != kTBE && imply_type != kAICPU))) {
+  if (is_gpu && (imply_type == kTBE || imply_type == kAICPU)) {
     MS_LOG(ERROR) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
                   << ", current op num: " << op_info_.size();
     return nullptr;

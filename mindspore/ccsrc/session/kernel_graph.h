@@ -40,6 +40,7 @@ class KernelGraph : public FuncGraph {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
+    summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
   }
   ~KernelGraph() override;
@@ -50,6 +51,7 @@ class KernelGraph : public FuncGraph {
   std::vector<AnfNodePtr> *MutableInputs() const { return inputs_.get(); }
   std::vector<AnfNodePtr> outputs() const;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
+  void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr);
@@ -90,11 +92,15 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+  // set summary_node of graph
+  void set_summary_node_exist(bool summary_node_exist) { summary_node_exist_ = summary_node_exist; }
+  // check whether exist summary node in graph
+  bool summary_node_exist() const { return summary_node_exist_; }
   // set invalid inputs for control sink
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
   std::vector<bool> valid_inputs() const { return valid_inputs_; }
   // replace node in graph
-  void ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf_node);
+  void ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node);
   // set stream label of graph
   void set_stream_distinction_label(uint32_t stream_label) { stream_distinction_label_ = stream_label; }
   // get stream label of graph
@@ -122,8 +128,7 @@ class KernelGraph : public FuncGraph {
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
   // get real inputs
-  const std::map<AnfNodePtr, std::set<AnfNodePtr>> &real_inputs() const { return real_inputs_; }
-  std::set<AnfNodePtr> GetRealInput(const AnfNodePtr &parameter);
+  const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs() const { return real_inputs_; }
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
   // used to dump ir
   std::string ToString() const override;
@@ -136,6 +141,9 @@ class KernelGraph : public FuncGraph {
   CNodePtr get_end_goto() { return end_goto_; }
   bool get_output_null() { return null_output_; }
   void set_output_null(bool is_output_null) { null_output_ = is_output_null; }
+  void PrintGraphExecuteOrder() const;
+  const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
+  void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
 
  private:
   // remove value node form graph
@@ -169,8 +177,11 @@ class KernelGraph : public FuncGraph {
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
+  std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // graph needn't execute
   bool executable_;
+  // exist summary node in graph
+  bool summary_node_exist_;
   // valid inputs
   std::vector<bool> valid_inputs_;
 
@@ -186,7 +197,7 @@ class KernelGraph : public FuncGraph {
   // parameter graph
   std::shared_ptr<KernelGraph> parent_graph_;
   // record real parameters,inputs_ is the formal parameters
-  std::map<AnfNodePtr, std::set<AnfNodePtr>> real_inputs_;
+  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;

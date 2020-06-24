@@ -51,6 +51,7 @@ TEST_F(MindDataTestrepeat_op, Testrepeat_opFuntions) {
   ASSERT_NE(my_tfreader_op, nullptr);
   parent_op->AddChild(std::move(my_tfreader_op));
   MS_LOG(INFO) << parent_op;
+  my_tree->AssignRoot(parent_op);
   my_tree->Prepare();
 
   RepeatOp RepeatOpOp();

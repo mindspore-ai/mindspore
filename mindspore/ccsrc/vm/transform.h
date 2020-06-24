@@ -32,7 +32,7 @@
 #include "vm/segment_runner.h"
 #include "vm/backend.h"
 
-// mindspore namespace is the top level namespace of Mindsporeession project.
+// mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
 extern const char kMsVm[];
@@ -80,7 +80,7 @@ class CompileGraph {
  private:
   void PushParameters(const FuncGraphPtr &func_graph);
   bool SplitGraph(const FuncGraphPtr &func_graph);
-  int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list);
+  int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
   int InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
   int AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
   void AddSinkSwitch(const CNodePtr &node);
@@ -124,6 +124,7 @@ class CompileGraphs {
   void Compile(const FuncGraphPtr &func_graph);
   FinalVMPtr Link(const FuncGraphPtr &func_graph);
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
+  static bool ContainMixedTarget(const FuncGraphPtr &graph);
 
  private:
   InstSet insts_;

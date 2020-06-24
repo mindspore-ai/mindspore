@@ -7,7 +7,7 @@ endif ()
 
 include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
-if (ENABLE_GE)
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 endif ()
 
@@ -86,10 +86,18 @@ if (ENABLE_GE OR ENABLE_D OR ENABLE_TESTCASES)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/graphengine/third_party/fwkacllib/inc/toolchain)
 endif()
 
+if (ENABLE_AKG AND ENABLE_D)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/akg")
+endif()
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 add_subdirectory(mindspore/ccsrc)
 if (ENABLE_TESTCASES)
     add_subdirectory(tests)
+endif()
+
+if (ENABLE_SERVING)
+    add_subdirectory(serving)
 endif()
 
 include(cmake/package.cmake)

@@ -15,6 +15,7 @@
 """test callback function."""
 import os
 import stat
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -25,10 +26,9 @@ from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback import ModelCheckpoint, _check_file_name_prefix, RunContext, _checkpoint_cb_for_save_op, \
-    LossMonitor, _InternalCallbackParam, _chg_ckpt_file_name_if_same_exist, \
-    _build_callbacks, CheckpointConfig, _set_cur_net
-
+from mindspore.train.callback import ModelCheckpoint, RunContext, LossMonitor, _InternalCallbackParam, \
+    _CallbackManager, Callback, CheckpointConfig, _set_cur_net, _checkpoint_cb_for_save_op
+from mindspore.train.callback._checkpoint import _check_file_name_prefix, _chg_ckpt_file_name_if_same_exist
 
 class Net(nn.Cell):
     """Net definition."""
@@ -74,7 +74,7 @@ class LossNet(nn.Cell):
         return out
 
 
-def test_Model_Checkpoint_prefix_invalid():
+def test_model_checkpoint_prefix_invalid():
     """Test ModelCheckpoint prefix invalid."""
     with pytest.raises(ValueError):
         ModelCheckpoint(123)
@@ -116,19 +116,20 @@ def test_loss_monitor_sink_mode():
     """Test loss monitor sink mode."""
     cb_params = _InternalCallbackParam()
     cb_params.cur_epoch_num = 4
+    cb_params.epoch_num = 4
     cb_params.cur_step_num = 2
     cb_params.batch_num = 2
     cb_params.net_outputs = Tensor(2.0)
     run_context = RunContext(cb_params)
     loss_cb = LossMonitor(1)
     callbacks = [loss_cb]
-    callbacklist = _build_callbacks(callbacks)
-    callbacklist.begin(run_context)
-    callbacklist.epoch_begin(run_context)
-    callbacklist.step_begin(run_context)
-    callbacklist.step_end(run_context)
-    callbacklist.epoch_end(run_context)
-    callbacklist.end(run_context)
+    with _CallbackManager(callbacks) as callbacklist:
+        callbacklist.begin(run_context)
+        callbacklist.epoch_begin(run_context)
+        callbacklist.step_begin(run_context)
+        callbacklist.step_end(run_context)
+        callbacklist.epoch_end(run_context)
+        callbacklist.end(run_context)
 
 
 def test_loss_monitor_normal_mode():
@@ -137,6 +138,7 @@ def test_loss_monitor_normal_mode():
     run_context = RunContext(cb_params)
     loss_cb = LossMonitor(1)
     cb_params.cur_epoch_num = 4
+    cb_params.epoch_num = 4
     cb_params.cur_step_num = 1
     cb_params.batch_num = 1
     cb_params.net_outputs = Tensor(2.0)
@@ -269,29 +271,61 @@ def test_checkpoint_save_ckpt_seconds():
     ckpt_cb2.step_end(run_context)
 
 
-def test_build_callbacks():
-    """Test_build_callbacks."""
+def test_CallbackManager():
+    """TestCallbackManager."""
     ck_obj = ModelCheckpoint()
     loss_cb_1 = LossMonitor(1)
 
     callbacks = [None]
     with pytest.raises(TypeError):
-        callbacks = _build_callbacks(callbacks)
+        _CallbackManager(callbacks)
 
     callbacks = ['Error']
     with pytest.raises(TypeError):
-        callbacks = _build_callbacks(callbacks)
+        _CallbackManager(callbacks)
 
     callbacks = [ck_obj, loss_cb_1, 'Error', None]
     with pytest.raises(TypeError):
-        _ = _build_callbacks(callbacks)
+        _CallbackManager(callbacks)
+
+
+def test_CallbackManager_exit_called():
+    with mock.patch.object(Callback, '__exit__', return_value=None) as mock_exit:
+        cb1, cb2 = Callback(), Callback()
+        with _CallbackManager([cb1, cb2]):
+            pass
+    for call_args in mock_exit.call_args_list:
+        assert call_args == mock.call(mock.ANY, None, None, None)
+    assert mock_exit.call_count == 2
+
+
+def test_CallbackManager_exit_called_when_raises():
+    with mock.patch.object(Callback, '__exit__', return_value=None) as mock_exit:
+        cb1, cb2 = Callback(), Callback()
+        with pytest.raises(ValueError):
+            with _CallbackManager([cb1, cb2]):
+                raise ValueError()
+    for call_args in mock_exit.call_args_list:
+        assert call_args == mock.call(*[mock.ANY] * 4)
+    assert mock_exit.call_count == 2
+
+
+def test_CallbackManager_begin_called():
+    context = dict()
+    with mock.patch.object(Callback, 'begin', return_value=None) as mock_begin:
+        cb1, cb2 = Callback(), Callback()
+        with _CallbackManager([cb1, cb2]) as cm:
+            cm.begin(context)
+    for call_args in mock_begin.call_args_list:
+        assert call_args == mock.call(context)
+    assert mock_begin.call_count == 2
 
 
 def test_RunContext():
     """Test RunContext."""
     context_err = 666
     with pytest.raises(TypeError):
-        _ = RunContext(context_err)
+        RunContext(context_err)
 
     cb_params = _InternalCallbackParam()
     cb_params.member1 = 1
@@ -338,9 +372,9 @@ def test_step_end_save_graph():
     ckpoint_cb.begin(run_context)
     # import pdb;pdb.set_trace()
     ckpoint_cb.step_end(run_context)
-    assert os.path.exists('./test_files/test-graph.meta') == True
+    assert os.path.exists('./test_files/test-graph.meta')
     if os.path.exists('./test_files/test-graph.meta'):
         os.chmod('./test_files/test-graph.meta', stat.S_IWRITE)
         os.remove('./test_files/test-graph.meta')
     ckpoint_cb.step_end(run_context)
-    assert os.path.exists('./test_files/test-graph.meta') == False
+    assert not os.path.exists('./test_files/test-graph.meta')

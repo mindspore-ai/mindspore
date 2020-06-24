@@ -25,32 +25,32 @@ namespace mindrecord {
 ShardSample::ShardSample(int n)
     : numerator_(0),
       denominator_(0),
-      no_of_samples_(n),
       partition_id_(0),
+      no_of_samples_(n),
       indices_({}),
       sampler_type_(kCustomTopNSampler) {}
 
 ShardSample::ShardSample(int num, int den)
     : numerator_(num),
       denominator_(den),
-      no_of_samples_(0),
       partition_id_(0),
+      no_of_samples_(0),
       indices_({}),
       sampler_type_(kCustomTopPercentSampler) {}
 
 ShardSample::ShardSample(int num, int den, int par)
     : numerator_(num),
       denominator_(den),
-      no_of_samples_(0),
       partition_id_(par),
+      no_of_samples_(0),
       indices_({}),
       sampler_type_(kCustomTopPercentSampler) {}
 
 ShardSample::ShardSample(const std::vector<int64_t> &indices, uint32_t seed)
     : numerator_(0),
       denominator_(0),
-      no_of_samples_(0),
       partition_id_(0),
+      no_of_samples_(0),
       indices_(indices),
       sampler_type_(kSubsetRandomSampler) {
   shuffle_op_ = std::make_shared<ShardShuffle>(seed);
@@ -71,19 +71,12 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (sampler_type_ == kSubsetRandomSampler) {
     return indices_.size();
   }
-  return -1;
-}
-
-const std::pair<int, int> ShardSample::GetPartitions() const {
-  if (numerator_ == 1 && denominator_ > 1) {
-    return std::pair<int, int>(denominator_, partition_id_);
-  }
-  return std::pair<int, int>(-1, -1);
+  return 0;
 }
 
 MSRStatus ShardSample::Execute(ShardTask &tasks) {
   int no_of_categories = static_cast<int>(tasks.categories);
-  int total_no = static_cast<int>(tasks.Size());
+  int total_no = static_cast<int>(tasks.Size());  // make sure task_size
 
   int taking = 0;
   if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
@@ -97,7 +90,7 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
   } else {  // constructor TopPercent
     if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
       if (numerator_ == 1 && denominator_ > 1) {  // sharding
-        taking = (total_no / denominator_) + (total_no % denominator_ == 0 ? 0 : 1);
+        taking = (total_no + denominator_ - 1) / denominator_;
       } else {  // non sharding
         taking = total_no * numerator_ / denominator_;
         taking -= (taking % no_of_categories);

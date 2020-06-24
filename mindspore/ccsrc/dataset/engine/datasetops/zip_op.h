@@ -65,7 +65,7 @@ class ZipOp : public PipelineOp {
     }
 
     // The builder "build" method creates the ZipOp dataset Operator.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new ZipOp object
     Status Build(std::shared_ptr<ZipOp> *);
 
    private:
@@ -109,6 +109,10 @@ class ZipOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ZipOp"; }
 
  private:
   // Handles preprocessing of the main loop, used when starting new epoch

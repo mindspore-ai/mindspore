@@ -29,7 +29,6 @@ from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _MindSporeFunction
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
-from ..utils import Slice, Ellipsis_
 
 # define return value
 RET_SUCCESS = 0
@@ -70,14 +69,9 @@ parse_expr_statement_white_list = (
     "append",
 )
 
-def create_ellipsis_obj():
-    """Create Slice object"""
-    return Ellipsis_()
-
-
 def create_slice_obj(start, end, step):
-    """Create Slice object"""
-    return Slice(start, end, step)
+    """Create slice object"""
+    return slice(start, end, step)
 
 
 def parse_cb(func, parse_method=None):
@@ -209,6 +203,14 @@ def get_object_key(obj):
         obj_id = instance_id + obj_id
     return obj_id, obj_key
 
+def get_default_input(obj):
+    if hasattr(obj, '__parameter__'):
+        return obj.default_input
+    if isinstance(obj, tuple):
+        convert = lambda x: x.default_input if hasattr(x, '__parameter__') else x
+        args = tuple(convert(x) for x in obj)
+        return args
+    return obj
 
 def is_class_member(node):
     """Check the attr is class member variable."""
@@ -221,6 +223,9 @@ def is_class_member(node):
             return True
     return False
 
+def get_obj_id(obj):
+    """Get the obj id."""
+    return str(id(obj))
 
 def get_obj_type(obj):
     """Get the obj type."""

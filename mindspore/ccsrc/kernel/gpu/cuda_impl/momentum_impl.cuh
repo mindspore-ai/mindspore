@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_MOMENTUMIMPL_H_
 
 #include "device/gpu/cuda_common.h"
-template <typename T>
-void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const T *learning_rate, const T *gradient,
-                            const T *momentum, cudaStream_t cuda_stream);
+template <typename T, typename S>
+void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const S *learning_rate, const T *gradient,
+                            const S *momentum, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_MOMENTUMIMPL_H_

@@ -205,13 +205,14 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   if (!index_value->isa<Int32Imm>()) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator index should be an int32 number, but got " << index_value->ToString();
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int32 number, but got "
+                             << index_value->ToString();
   }
   int idx_v = GetValue<int>(index_value);
   std::size_t nelems = queue->elements().size();
   if (idx_v >= SizeToInt(nelems) || idx_v < -SizeToInt(nelems)) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator index should be in range[-" << SizeToInt(nelems) << ", "
-                      << SizeToInt(nelems) << "), but got " << idx_v << ".";
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToInt(nelems) << ", "
+                             << SizeToInt(nelems) << "), but got " << idx_v << ".";
   }
 
   std::size_t uidx_v = 0;
@@ -232,18 +233,21 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   if (!index_value->isa<Int32Imm>()) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator index should be an int32 number, but got " << index_value->ToString();
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int32 number, but got "
+                             << index_value->ToString();
   }
   int idx_v = GetValue<int>(index_value);
   if (idx_v < 0) {
-    MS_LOG(EXCEPTION) << "The index of " << typeid(T).name() << " should be positive number, but got " << idx_v << ".";
+    MS_EXCEPTION(IndexError) << "The index of " << typeid(T).name() << " should be positive number, but got " << idx_v
+                             << ".";
   }
 
   size_t uidx_v = IntToSize(idx_v);
   AbstractBasePtrList elements = queue->elements();
   std::size_t nelems = elements.size();
   if (uidx_v >= nelems) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator the index: " << uidx_v << " to set out of range: " << nelems - 1 << ".";
+    MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << uidx_v << " to set out of range: " << nelems - 1
+                             << ".";
   }
   elements[uidx_v] = args_spec_list[2];
   return std::make_shared<T>(elements);

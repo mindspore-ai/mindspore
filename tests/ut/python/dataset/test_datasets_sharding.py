@@ -162,8 +162,8 @@ def test_voc_shardings(print_res=False):
     voc_dir = "../data/dataset/testVOC2012"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
-        sampler = ds.DistributedSampler(num_shards, shard_id, shuffle=shuffle)
-        data1 = ds.VOCDataset(voc_dir, decode=True, sampler=sampler, num_samples=num_samples)
+        sampler = ds.DistributedSampler(num_shards, shard_id, shuffle=shuffle, num_samples=num_samples)
+        data1 = ds.VOCDataset(voc_dir, decode=True, sampler=sampler)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator():  # each data is a dictionary

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_NLP_KERNELS_LOOKUP_OP_H_
-#define DATASET_NLP_KERNELS_LOOKUP_OP_H_
+#ifndef DATASET_TEXT_KERNELS_LOOKUP_OP_H_
+#define DATASET_TEXT_KERNELS_LOOKUP_OP_H_
 
 #include <memory>
 #include <vector>
@@ -33,7 +33,7 @@ class LookupOp : public TensorOp {
   // constructor for lookup, takes in a vocab object
   // @param std::shared_ptr<Vocab> vocab -
   // @param WordIdType default_id, id to lookup if a word is not in vocab
-  explicit LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id = Vocab::kSpecialTokens::unk);
+  explicit LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id = 1);
 
   ~LookupOp() = default;
 
@@ -61,4 +61,4 @@ class LookupOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_NLP_KERNELS_LOOKUP_OP_H_
+#endif  // DATASET_TEXT_KERNELS_LOOKUP_OP_H_

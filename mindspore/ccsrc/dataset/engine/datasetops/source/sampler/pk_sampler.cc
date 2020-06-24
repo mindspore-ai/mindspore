@@ -20,12 +20,11 @@
 
 namespace mindspore {
 namespace dataset {
-PKSampler::PKSampler(int64_t val, bool shuffle, int64_t samples_per_buffer)
-    : Sampler(samples_per_buffer),
+PKSampler::PKSampler(int64_t num_samples, int64_t val, bool shuffle, int64_t samples_per_buffer)
+    : Sampler(num_samples, samples_per_buffer),
       shuffle_(shuffle),
       seed_(GetSeed()),
       next_id_(0),
-      num_pk_samples_(0),
       samples_per_class_(val) {}
 
 Status PKSampler::InitSampler() {
@@ -36,35 +35,46 @@ Status PKSampler::InitSampler() {
     }
   }
   rnd_.seed(seed_++);
-  num_pk_samples_ = samples_per_class_ * static_cast<int64_t>(labels_.size());
-  samples_per_buffer_ = (samples_per_buffer_ > num_pk_samples_) ? num_pk_samples_ : samples_per_buffer_;
-  num_samples_ = num_pk_samples_;
+
+  // The special handshake gives the list of classes and id's, but it did not set the num_rows_ to
+  // capture the total number of possible sample ids.
+  // Compute that here for this case to find the total number of samples that are available to return.
+  // (in this case, samples per class * total classes).
+  num_rows_ = samples_per_class_ * static_cast<int64_t>(labels_.size());
+
+  // The user may have chosen to sample less than the total amount.
+  // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
+  // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
+  if (num_samples_ == 0 || num_samples_ > num_rows_) {
+    num_samples_ = num_rows_;
+  }
+
+  samples_per_buffer_ = (samples_per_buffer_ > num_samples_) ? num_samples_ : samples_per_buffer_;
   if (shuffle_ == true) {
     std::shuffle(labels_.begin(), labels_.end(), rnd_);
   } else {
     std::sort(labels_.begin(), labels_.end());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_pk_samples_ > 0, "num_class or K (num samples per class) is not positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_class or K (num samples per class) is not positive");
   return Status::OK();
 }
 
-Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
-  if (next_id_ > num_pk_samples_ || num_pk_samples_ == 0) {
+Status PKSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+  if (next_id_ > num_samples_ || num_samples_ == 0) {
     RETURN_STATUS_UNEXPECTED("Index out of bound in PKSampler");
-  } else if (next_id_ == num_pk_samples_) {
+  } else if (next_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
-    int64_t last_id =
-      (samples_per_buffer_ + next_id_ > num_pk_samples_) ? num_pk_samples_ : samples_per_buffer_ + next_id_;
+    int64_t last_id = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, last_id - next_id_));
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(sample_ids->GetMutableBuffer());
-    while (next_id_ < last_id) {
+    auto id_ptr = sample_ids->begin<int64_t>();
+    while (next_id_ < last_id && id_ptr != sample_ids->end<int64_t>()) {
       int64_t cls_id = next_id_++ / samples_per_class_;
       const std::vector<int64_t> &samples = label_to_ids_[labels_[cls_id]];
       int64_t rnd_ind = std::uniform_int_distribution<int64_t>(0, samples.size() - 1)(rnd_);
@@ -84,13 +94,13 @@ Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   return Status::OK();
 }
 
-Status PKSampler::Reset() {
-  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_pk_samples_, "ERROR Reset() called early/late");
+Status PKSampler::ResetSampler() {
+  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
   next_id_ = 0;
   rnd_.seed(seed_++);
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();

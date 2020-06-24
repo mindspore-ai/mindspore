@@ -38,22 +38,22 @@ class ShardSample : public ShardOperator {
 
   ~ShardSample() override{};
 
-  const std::pair<int, int> GetPartitions() const;
-
   MSRStatus Execute(ShardTask &tasks) override;
 
   MSRStatus SufExecute(ShardTask &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
- private:
+ protected:
   int numerator_;
   int denominator_;
-  int no_of_samples_;
   int partition_id_;
+  int no_of_samples_;
+  std::shared_ptr<ShardShuffle> shuffle_op_;
+
+ private:
   std::vector<int64_t> indices_;
   SamplerType sampler_type_;
-  std::shared_ptr<ShardShuffle> shuffle_op_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

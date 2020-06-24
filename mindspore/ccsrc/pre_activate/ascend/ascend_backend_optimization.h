@@ -20,11 +20,16 @@
 namespace mindspore {
 namespace opt {
 void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph);
-void RunOpAscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AscendGraphKernelCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AscendBackendGraphKernelOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                                 bool is_before_kernel_select = false);
+void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                               bool is_before_kernel_select = false);
+void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt

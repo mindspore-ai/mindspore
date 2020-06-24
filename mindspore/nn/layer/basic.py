@@ -22,15 +22,21 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import identity
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from mindspore.common.api import ms_function
 from mindspore import context
+from mindspore.ops import _selected_ops
 from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 
-__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold']
+
+__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
+           'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
+
 
 class Dropout(Cell):
     r"""
@@ -73,6 +79,7 @@ class Dropout(Cell):
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net(x)
     """
+
     def __init__(self, keep_prob=0.5, seed0=0, seed1=0, dtype=mstype.float32):
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
@@ -130,12 +137,13 @@ class Flatten(Cell):
     Examples:
         >>> net = nn.Flatten()
         >>> input = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
-        >>> input.shape()
+        >>> input.shape
         (2, 2, 2)
         >>> net(input)
         [[1.2 1.2 2.1 2.1]
          [2.2 2.2 3.2 3.2]]
     """
+
     def __init__(self):
         super(Flatten, self).__init__()
 
@@ -197,21 +205,21 @@ class Dense(Cell):
         self.has_bias = check_bool(has_bias)
 
         if isinstance(weight_init, Tensor):
-            if weight_init.dim() != 2 or weight_init.shape()[0] != out_channels or \
-               weight_init.shape()[1] != in_channels:
+            if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
+               weight_init.shape[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
-                if bias_init.dim() != 1 or bias_init.shape()[0] != out_channels:
+                if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
 
         self.matmul = P.MatMul(transpose_b=True)
-        self.bias_add = P.BiasAdd()
+        self.bias_add = _selected_ops.BiasAdd()
 
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
@@ -234,6 +242,13 @@ class Dense(Cell):
             str_info = str_info + ', activation={}'.format(self.activation)
 
         return str_info
+
+
+@constexpr
+def _is_equal_one(x):
+    if x is None:
+        return False
+    return bool(x.asnumpy().mean() == 1.0)
 
 
 class ClipByNorm(Cell):
@@ -263,6 +278,7 @@ class ClipByNorm(Cell):
         >>> net(input, clip_norm)
 
     """
+
     def __init__(self):
         super(ClipByNorm, self).__init__()
         self.reduce_sum = P.ReduceSum(keep_dims=True)
@@ -290,7 +306,11 @@ class ClipByNorm(Cell):
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
         l2norm = self.select_(cond, self.sqrt(l2sum_safe), l2sum)
 
-        intermediate = x * clip_norm
+        if _is_equal_one(clip_norm):
+            intermediate = x
+        else:
+            intermediate = x * clip_norm
+
         max_norm = self.max_op(l2norm, clip_norm)
         values_clip = self.cast(intermediate, mstype.float32) / self.expand_dims(max_norm, -1)
         values_clip = self.reshape(values_clip, self.shape(x))
@@ -319,6 +339,7 @@ class Norm(Cell):
         >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> net(input)
     """
+
     def __init__(self, axis=(), keep_dims=False):
         super(Norm, self).__init__()
         self.axis = axis
@@ -381,6 +402,7 @@ class OneHot(Cell):
           [0. 1.]
           [0. 0.]]]
     """
+
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
         super(OneHot, self).__init__()
         self.onehot = P.OneHot(axis)
@@ -495,6 +517,7 @@ class Unfold(Cell):
         Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1], [1, 1]]]],
                 shape=(1, 4, 2, 2), dtype=mstype.float16)
     """
+
     def __init__(self, ksizes, strides, rates, padding="valid"):
         super(Unfold, self).__init__()
         self.extract_image_patches = inner.ExtractImagePatches(ksizes, strides, rates, padding)
@@ -507,3 +530,112 @@ class Unfold(Cell):
         ret = self.extract_image_patches(x_transpose)
         ret_transpose = self.transpose(ret, self.format_NCHW)
         return ret_transpose
+
+
+@constexpr
+def _get_matrix_diag_assist(x_shape, x_dtype):
+    validator.check_integer("x rank", len(x_shape), 1, Rel.GE, "_get_matrix_diag_assist")
+    base_eye = np.eye(x_shape[-1], x_shape[-1]).reshape(-1)
+    assist = np.tile(base_eye, x_shape[:-1]).reshape(x_shape + (x_shape[-1],))
+    return Tensor(assist, x_dtype)
+
+
+@constexpr
+def _get_matrix_diag_part_assist(x_shape, x_dtype):
+    validator.check_integer("x rank", len(x_shape), 2, Rel.GE, "_get_matrix_diag_part_assist")
+    base_eye = np.eye(x_shape[-2], x_shape[-1]).reshape(-1)
+    assist = np.tile(base_eye, x_shape[:-2]).reshape(x_shape)
+    return Tensor(assist, x_dtype)
+
+
+class MatrixDiag(Cell):
+    """
+    Returns a batched diagonal tensor with a given batched diagonal values.
+
+    Inputs:
+        - **x** (Tensor) - The diagonal values. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+
+    Outputs:
+        Tensor, same type as input `x`. The shape should be x.shape + (x.shape[-1], ).
+
+    Examples:
+        >>> x = Tensor(np.array([1, -1]), mstype.float32)
+        >>> matrix_diag = nn.MatrixDiag()
+        >>> result = matrix_diag(x)
+        [[1.   0.]
+         [0.  -1.]]
+    """
+    def __init__(self):
+        super(MatrixDiag, self).__init__()
+        self.matrix_diag = inner.MatrixDiag()
+        self.dtype = P.DType()
+
+    def construct(self, input_x):
+        x_shape = F.shape(input_x)
+        x_dtype = self.dtype(input_x)
+        assist = _get_matrix_diag_assist(x_shape, x_dtype)
+        out_matrix_diag = self.matrix_diag(input_x, assist)
+        return out_matrix_diag
+
+
+class MatrixDiagPart(Cell):
+    r"""
+    Returns the batched diagonal part of a batched tensor.
+
+    Inputs:
+        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+
+    Outputs:
+        Tensor, same type as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
+
+    Examples:
+        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> matrix_diag_part = nn.MatrixDiagPart()
+        >>> result = matrix_diag_part(x)
+        [[-1., 1.], [-1., 1.], [-1., 1.]]
+    """
+    def __init__(self):
+        super(MatrixDiagPart, self).__init__()
+        self.matrix_diag_part = inner.MatrixDiagPart()
+        self.dtype = P.DType()
+
+    def construct(self, input_x):
+        x_shape = F.shape(input_x)
+        x_dtype = self.dtype(input_x)
+        assist = _get_matrix_diag_part_assist(x_shape, x_dtype)
+        out_matrix_diag_part = self.matrix_diag_part(input_x, assist)
+        return out_matrix_diag_part
+
+
+class MatrixSetDiag(Cell):
+    r"""
+    Modify the batched diagonal part of a batched tensor.
+
+    Inputs:
+        - **x** (Tensor) - The batched tensor. It can be of the following data types:
+          float32, float16, int32, int8, uint8.
+        - **diagonal** (Tensor) - The diagonal values.
+
+    Outputs:
+        Tensor, same type as input `x`. The shape same as `x`.
+
+    Examples:
+        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
+        >>> matrix_set_diag = nn.MatrixSetDiag()
+        >>> result = matrix_set_diag(x, diagonal)
+        [[[-1, 0], [0, 2]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+    """
+    def __init__(self):
+        super(MatrixSetDiag, self).__init__()
+        self.matrix_set_diag = inner.MatrixSetDiag()
+        self.dtype = P.DType()
+
+    def construct(self, input_x, diagonal):
+        x_shape = F.shape(input_x)
+        x_dtype = self.dtype(input_x)
+        assist = _get_matrix_diag_part_assist(x_shape, x_dtype)
+        out_matrix_set_diag = self.matrix_set_diag(input_x, diagonal, assist)
+        return out_matrix_set_diag

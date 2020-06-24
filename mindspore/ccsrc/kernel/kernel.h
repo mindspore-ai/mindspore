@@ -27,11 +27,11 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-enum KernelType : int { UNKNOWN_KERNEL_TYPE = 0, AUTO_DIFF_KERNEL, AICPU_KERNEL, RT_KERNEL, HCCL_KERNEL, TBE_KERNEL };
+enum KernelType : int { UNKNOWN_KERNEL_TYPE = 0, AKG_KERNEL, AICPU_KERNEL, RT_KERNEL, HCCL_KERNEL, TBE_KERNEL };
 
 namespace kernel {
 
-enum Axis {
+enum Axis : int {
   N = 0,
   C,
   H,
@@ -45,6 +45,7 @@ enum FusionType {
   COMMREDUCE,
   SEGMENT,
   OPAQUE,
+  DYNAMIC,
   UNKNOWN_FUSION_TYPE = -1,
 };
 enum OpPattern {

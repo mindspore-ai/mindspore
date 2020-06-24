@@ -27,7 +27,8 @@ namespace mindspore {
 // namespace to support primitive operators
 namespace prim {
 ValuePtr GetPythonOps(const std::string &op_name,
-                      const std::string &module_name = "mindspore._extends.parse.standard_method");
+                      const std::string &module_name = "mindspore._extends.parse.standard_method",
+                      bool use_signature = false);
 
 // Arithmetic
 extern const PrimitivePtr kPrimScalarAdd;
@@ -58,6 +59,12 @@ extern const PrimitivePtr kPrimBoolNot;
 extern const PrimitivePtr kPrimBoolAnd;
 extern const PrimitivePtr kPrimBoolOr;
 extern const PrimitivePtr kPrimBoolEq;
+extern const PrimitivePtr kPrimGreater;
+extern const PrimitivePtr kPrimGreaterEqual;
+extern const PrimitivePtr kPrimLess;
+extern const PrimitivePtr kPrimLessEqual;
+extern const PrimitivePtr kPrimEqual;
+extern const PrimitivePtr kPrimNotEqual;
 
 // Type introspection
 extern const PrimitivePtr kPrimTypeOf;
@@ -140,6 +147,8 @@ extern const PrimitivePtr kPrimConcat;
 extern const PrimitivePtr kPrimSqueeze;
 extern const PrimitivePtr kPrimTranspose;
 extern const PrimitivePtr kPrimGatherV2;
+extern const PrimitivePtr kPrimEmbeddingLookup;
+extern const PrimitivePtr kPrimEmbeddingLookupCommGrad;
 extern const PrimitivePtr kPrimSize;
 extern const PrimitivePtr kPrimArgMax;
 extern const PrimitivePtr kPrimPack;
@@ -153,6 +162,11 @@ extern const PrimitivePtr kPrimAddN;
 extern const PrimitivePtr KPrimTransData;
 extern const PrimitivePtr kPrimNMSWithMask;
 extern const PrimitivePtr kPrimPad;
+extern const PrimitivePtr kPrimArgMaxWithValue;
+extern const PrimitivePtr kPrimRealDiv;
+extern const PrimitivePtr kPrimSqrt;
+extern const PrimitivePtr kPrimReciprocal;
+extern const PrimitivePtr kPrimExpandDims;
 
 // Maths
 extern const PrimitivePtr kPrimTensorAdd;
@@ -176,9 +190,14 @@ extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
 extern const PrimitivePtr kPrimCumSum;
 extern const PrimitivePtr kPrimCumProd;
+extern const PrimitivePtr kPrimSubscalar;
+extern const PrimitivePtr kPrimInplaceAdd;
+extern const PrimitivePtr kPrimInplaceSub;
+extern const PrimitivePtr kPrimPow;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
+extern const PrimitivePtr kPrimSoftmax;
 extern const PrimitivePtr kPrimLogSoftmax;
 extern const PrimitivePtr kPrimLogSoftmaxGrad;
 extern const PrimitivePtr kPrimApplyCenteredRMSProp;
@@ -211,15 +230,18 @@ extern const PrimitivePtr kPrimLayerNormGrad;
 extern const PrimitivePtr kPrimLayerNormXBackprop;
 extern const PrimitivePtr kPrimLayerNormBetaGammaBackprop;
 extern const PrimitivePtr kPrimDropoutGenMask;
+extern const PrimitivePtr kPrimDropoutDoMask;
 extern const PrimitivePtr kPrimOneHot;
 extern const PrimitivePtr kPrimGelu;
 extern const PrimitivePtr kPrimGeluGrad;
 extern const PrimitivePtr kPrimRelu;
 extern const PrimitivePtr kPrimReluV2;
 extern const PrimitivePtr kPrimActivation;
-extern const PrimitivePtr kPrimZerosLikeTensor;
+extern const PrimitivePtr kPrimZerosLike;
 extern const PrimitivePtr kPrimFakeBprop;
 extern const PrimitivePtr kPrimBpropCut;
+extern const PrimitivePtr kPrimFakeQuantPerLayer;
+extern const PrimitivePtr kPrimFakeQuantPerChannel;
 
 // Other Miscellaneous
 extern const PrimitivePtr kPrimIdentity;
@@ -251,8 +273,12 @@ extern const PrimitivePtr kPrimIs_;
 extern const PrimitivePtr kPrimIsNot;
 extern const PrimitivePtr kPrimInDict;
 extern const PrimitivePtr kPrimNotInDict;
+extern const PrimitivePtr kPrimMixedPrecisionCast;
+extern const PrimitivePtr kPrimIsConsant;
+extern const PrimitivePtr kPrimEquivFormat;
 
 // Comm ops
+extern const PrimitivePtr kPrimAllReduce;
 extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;

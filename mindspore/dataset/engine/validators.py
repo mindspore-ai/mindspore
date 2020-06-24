@@ -19,179 +19,18 @@ import inspect as ins
 import os
 from functools import wraps
 from multiprocessing import cpu_count
+
 import numpy as np
 from mindspore._c_expression import typing
-from . import samplers
+
 from . import datasets
+from . import samplers
 
 INT32_MAX = 2147483647
 valid_detype = [
     "bool", "int8", "int16", "int32", "int64", "uint8", "uint16",
     "uint32", "uint64", "float16", "float32", "float64", "string"
 ]
-
-
-def check(method):
-    """Check the function parameters and return the function ."""
-    func_name = method.__name__
-    # Required parameter
-    req_param_int = []
-    req_param_bool = []
-    # Non-required parameter
-    nreq_param_int = []
-    nreq_param_bool = []
-
-    if func_name in 'repeat':
-        nreq_param_int = ['count', 'prefetch_size']
-
-    if func_name in 'take':
-        req_param_int = ['count']
-        nreq_param_int = ['prefetch_size']
-
-    elif func_name in 'shuffle':
-        req_param_int = ['buffer_size']
-        nreq_param_bool = ['reshuffle_each_iteration']
-        nreq_param_int = ['prefetch_size', 'seed']
-
-    elif func_name in 'batch':
-        req_param_int = ['batch_size']
-        nreq_param_int = ['num_parallel_workers', 'prefetch_size']
-        nreq_param_bool = ['drop_remainder']
-
-    elif func_name in ('zip', 'filter', 'cache', 'rename', 'project'):
-        nreq_param_int = ['prefetch_size']
-
-    elif func_name in ('map', '__init__'):
-        nreq_param_int = ['num_parallel_workers', 'prefetch_size', 'seed']
-        nreq_param_bool = ['block_reader']
-
-    @wraps(method)
-    def wrapper(*args, **kwargs):
-
-        def _make_key():
-            sig = ins.signature(method)
-            params = sig.parameters
-            keys = list(params.keys())
-            param_dic = dict()
-            for name, value in enumerate(args):
-                param_dic[keys[name]] = value
-            param_dic.update(zip(params.keys(), args))
-            param_dic.update(kwargs)
-
-            for name, value in params.items():
-                if name not in param_dic:
-                    param_dic[name] = value.default
-            return param_dic
-
-        # check type
-        def _check_param_type(arg, param_name, param_type=None):
-            if param_type is not None and not isinstance(arg, param_type):
-                raise ValueError(
-                    "The %s function %s type error!" % (func_name, param_name))
-
-        # check range
-        def _check_param_range(arg, param_name):
-            if isinstance(arg, int) and param_name == "seed" and (
-                    arg < 0 or arg > 2147483647):
-                raise ValueError(
-                    "The %s function %s exceeds the boundary!" % (
-                        func_name, param_name))
-            if isinstance(arg, int) and param_name == "count" and ((arg <= 0 and arg != -1) or arg > 2147483647):
-                raise ValueError(
-                    "The %s function %s exceeds the boundary!" % (
-                        func_name, param_name))
-            if isinstance(arg, int) and param_name == "prefetch_size" and (
-                    arg <= 0 or arg > 1024):
-                raise ValueError(
-                    "The %s function %s exceeds the boundary!" % (
-                        func_name, param_name))
-            if isinstance(arg, int) and param_name == "num_parallel_workers" and (
-                    arg < 1 or arg > cpu_count()):
-                raise ValueError(
-                    "The %s function %s exceeds the boundary(%s)!" % (
-                        func_name, param_name, cpu_count()))
-            if isinstance(arg, int) and param_name != "seed" \
-                    and param_name != "count" and param_name != "prefetch_size" \
-                    and param_name != "num_parallel_workers" and (arg < 1 or arg > 2147483647):
-                raise ValueError(
-                    "The %s function %s exceeds the boundary!" % (
-                        func_name, param_name))
-
-        key = _make_key()
-        # check integer
-        for karg in req_param_int:
-            _check_param_type(key[karg], karg, int)
-            _check_param_range(key[karg], karg)
-        for karg in nreq_param_int:
-            if karg in key:
-                if key[karg] is not None:
-                    _check_param_type(key[karg], karg, int)
-                    _check_param_range(key[karg], karg)
-        # check bool
-        for karg in req_param_bool:
-            _check_param_type(key[karg], karg, bool)
-        for karg in nreq_param_bool:
-            if karg in key:
-                if key[karg] is not None:
-                    _check_param_type(key[karg], karg, bool)
-
-        if func_name in '__init__':
-            if 'columns_list' in key.keys():
-                columns_list = key['columns_list']
-                if columns_list is not None:
-                    _check_param_type(columns_list, 'columns_list', list)
-
-            if 'columns' in key.keys():
-                columns = key['columns']
-                if columns is not None:
-                    _check_param_type(columns, 'columns', list)
-
-            if 'partitions' in key.keys():
-                partitions = key['partitions']
-                if partitions is not None:
-                    _check_param_type(partitions, 'partitions', list)
-
-            if 'schema' in key.keys():
-                schema = key['schema']
-                if schema is not None:
-                    check_filename(schema)
-                    if not os.path.isfile(schema) or not os.access(schema, os.R_OK):
-                        raise ValueError(
-                            "The file %s does not exist or permission denied!" % schema)
-
-            if 'dataset_dir' in key.keys():
-                dataset_dir = key['dataset_dir']
-                if dataset_dir is not None:
-                    if not os.path.isdir(dataset_dir) or not os.access(dataset_dir, os.R_OK):
-                        raise ValueError(
-                            "The folder %s does not exist or permission denied!" % dataset_dir)
-
-            if 'dataset_files' in key.keys():
-                dataset_files = key['dataset_files']
-                if not dataset_files:
-                    raise ValueError(
-                        "The dataset file does not exists!")
-                if dataset_files is not None:
-                    _check_param_type(dataset_files, 'dataset_files', list)
-                    for file in dataset_files:
-                        if not os.path.isfile(file) or not os.access(file, os.R_OK):
-                            raise ValueError(
-                                "The file %s does not exist or permission denied!" % file)
-
-            if 'dataset_file' in key.keys():
-                dataset_file = key['dataset_file']
-                if not dataset_file:
-                    raise ValueError(
-                        "The dataset file does not exists!")
-                check_filename(dataset_file)
-                if dataset_file is not None:
-                    if not os.path.isfile(dataset_file) or not os.access(dataset_file, os.R_OK):
-                        raise ValueError(
-                            "The file %s does not exist or permission denied!" % dataset_file)
-
-        return method(*args, **kwargs)
-
-    return wrapper
 
 
 def check_valid_detype(type_):
@@ -211,7 +50,7 @@ def check_filename(path):
         Exception: when error
     """
     if not isinstance(path, str):
-        raise ValueError("path: {} is not string".format(path))
+        raise TypeError("path: {} is not string".format(path))
     filename = os.path.basename(path)
 
     # '#', ':', '|', ' ', '}', '"', '+', '!', ']', '[', '\\', '`',
@@ -283,8 +122,8 @@ def check_num_parallel_workers(value):
 
 def check_num_samples(value):
     check_type(value, 'num_samples', int)
-    if value <= 0:
-        raise ValueError("num_samples must be greater than 0!")
+    if value < 0:
+        raise ValueError("num_samples cannot be less than 0!")
 
 
 def check_dataset_dir(dataset_dir):
@@ -304,7 +143,7 @@ def check_sampler_shuffle_shard_options(param_dict):
     num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
 
     if sampler is not None and not isinstance(sampler, (samplers.BuiltinSampler, samplers.Sampler)):
-        raise ValueError("sampler is not a valid Sampler type.")
+        raise TypeError("sampler is not a valid Sampler type.")
 
     if sampler is not None:
         if shuffle is not None:
@@ -322,6 +161,27 @@ def check_sampler_shuffle_shard_options(param_dict):
     if num_shards is None and shard_id is not None:
         raise RuntimeError("shard_id is specified but num_shards is not.")
 
+
+def check_padding_options(param_dict):
+    """ check for valid padded_sample and num_padded of padded samples"""
+    columns_list = param_dict.get('columns_list')
+    block_reader = param_dict.get('block_reader')
+    padded_sample, num_padded = param_dict.get('padded_sample'), param_dict.get('num_padded')
+    if padded_sample is not None:
+        if num_padded is None:
+            raise RuntimeError("padded_sample is specified and requires num_padded as well.")
+        if num_padded < 0:
+            raise ValueError("num_padded is invalid, num_padded={}.".format(num_padded))
+        if columns_list is None:
+            raise RuntimeError("padded_sample is specified and requires columns_list as well.")
+        for column in columns_list:
+            if column not in padded_sample:
+                raise ValueError("padded_sample cannot match columns_list.")
+        if block_reader:
+            raise RuntimeError("block_reader and padded_sample cannot be specified at the same time.")
+
+    if padded_sample is None and num_padded is not None:
+        raise RuntimeError("num_padded is specified but padded_sample is not.")
 
 def check_imagefolderdatasetv2(method):
     """A wrapper that wrap a parameter checker to the original Dataset(ImageFolderDatasetV2)."""
@@ -468,13 +328,13 @@ def check_vocdataset(method):
         if task is None:
             raise ValueError("task is not provided.")
         if not isinstance(task, str):
-            raise ValueError("task is not str type.")
+            raise TypeError("task is not str type.")
         # check mode; required argument
         mode = param_dict.get('mode')
         if mode is None:
             raise ValueError("mode is not provided.")
         if not isinstance(mode, str):
-            raise ValueError("mode is not str type.")
+            raise TypeError("mode is not str type.")
 
         imagesets_file = ""
         if task == "Segmentation":
@@ -494,6 +354,52 @@ def check_vocdataset(method):
 
         check_param_type(nreq_param_dict, param_dict, dict)
 
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_cocodataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(CocoDataset)."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        # check dataset_dir; required argument
+        dataset_dir = param_dict.get('dataset_dir')
+        if dataset_dir is None:
+            raise ValueError("dataset_dir is not provided.")
+        check_dataset_dir(dataset_dir)
+
+        # check annotation_file; required argument
+        annotation_file = param_dict.get('annotation_file')
+        if annotation_file is None:
+            raise ValueError("annotation_file is not provided.")
+        check_dataset_file(annotation_file)
+
+        # check task; required argument
+        task = param_dict.get('task')
+        if task is None:
+            raise ValueError("task is not provided.")
+        if not isinstance(task, str):
+            raise TypeError("task is not str type.")
+
+        if task not in {'Detection', 'Stuff', 'Panoptic', 'Keypoint'}:
+            raise ValueError("Invalid task type")
+
+        check_param_type(nreq_param_int, param_dict, int)
+
+        check_param_type(nreq_param_bool, param_dict, bool)
+
+        sampler = param_dict.get('sampler')
+        if sampler is not None and isinstance(sampler, samplers.PKSampler):
+            raise ValueError("CocoDataset doesn't support PKSampler")
         check_sampler_shuffle_shard_options(param_dict)
 
         return method(*args, **kwargs)
@@ -549,9 +455,10 @@ def check_minddataset(method):
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
 
-        nreq_param_int = ['num_samples', 'num_parallel_workers', 'seed', 'num_shards', 'shard_id']
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'seed', 'num_shards', 'shard_id', 'num_padded']
         nreq_param_list = ['columns_list']
         nreq_param_bool = ['block_reader']
+        nreq_param_dict = ['padded_sample']
 
         # check dataset_file; required argument
         dataset_file = param_dict.get('dataset_file')
@@ -569,12 +476,11 @@ def check_minddataset(method):
 
         check_param_type(nreq_param_bool, param_dict, bool)
 
-        num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
-        if (num_shards is not None and shard_id is None) or (num_shards is None and shard_id is not None):
-            raise ValueError("num_shards and shard_id need to be set or not set at the same time")
+        check_param_type(nreq_param_dict, param_dict, dict)
 
         check_sampler_shuffle_shard_options(param_dict)
 
+        check_padding_options(param_dict)
         return method(*args, **kwargs)
 
     return new_method
@@ -599,6 +505,8 @@ def check_generatordataset(method):
 
         # check column_names or schema; required argument
         column_names = param_dict.get('column_names')
+        if column_names is not None:
+            check_columns(column_names, "column_names")
         schema = param_dict.get('schema')
         if column_names is None and schema is None:
             raise ValueError("Neither columns_names not schema are provided.")
@@ -648,7 +556,7 @@ def check_generatordataset(method):
 
 def check_batch_size(batch_size):
     if not (isinstance(batch_size, int) or (callable(batch_size))):
-        raise ValueError("batch_size should either be an int or a callable.")
+        raise TypeError("batch_size should either be an int or a callable.")
     if callable(batch_size):
         sig = ins.signature(batch_size)
         if len(sig.parameters) != 1:
@@ -683,7 +591,68 @@ def check_pad_info(key, val):
                     check_type(dim, "dim in pad_shape", int)
                     assert dim > 0, "pad shape should be positive integers"
         if val[1] is not None:
-            check_type(val[1], "pad_value", (int, float))
+            check_type(val[1], "pad_value", (int, float, str, bytes))
+
+
+def check_bucket_batch_by_length(method):
+    """check the input arguments of bucket_batch_by_length."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_list = ['column_names', 'bucket_boundaries', 'bucket_batch_sizes']
+        check_param_type(nreq_param_list, param_dict, list)
+
+        # check column_names: must be list of string.
+        column_names = param_dict.get("column_names")
+        all_string = all(isinstance(item, str) for item in column_names)
+        if not all_string:
+            raise TypeError("column_names should be a list of str.")
+
+        element_length_function = param_dict.get("element_length_function")
+        if element_length_function is None and len(column_names) != 1:
+            raise ValueError("If element_length_function is not specified, exactly one column name should be passed.")
+
+        # check bucket_boundaries: must be list of int, positive and strictly increasing
+        bucket_boundaries = param_dict.get('bucket_boundaries')
+
+        if not bucket_boundaries:
+            raise ValueError("bucket_boundaries cannot be empty.")
+
+        all_int = all(isinstance(item, int) for item in bucket_boundaries)
+        if not all_int:
+            raise TypeError("bucket_boundaries should be a list of int.")
+
+        all_non_negative = all(item >= 0 for item in bucket_boundaries)
+        if not all_non_negative:
+            raise ValueError("bucket_boundaries cannot contain any negative numbers.")
+
+        for i in range(len(bucket_boundaries) - 1):
+            if not bucket_boundaries[i + 1] > bucket_boundaries[i]:
+                raise ValueError("bucket_boundaries should be strictly increasing.")
+
+        # check bucket_batch_sizes: must be list of int and positive
+        bucket_batch_sizes = param_dict.get('bucket_batch_sizes')
+        if len(bucket_batch_sizes) != len(bucket_boundaries) + 1:
+            raise ValueError("bucket_batch_sizes must contain one element more than bucket_boundaries.")
+
+        all_int = all(isinstance(item, int) for item in bucket_batch_sizes)
+        if not all_int:
+            raise TypeError("bucket_batch_sizes should be a list of int.")
+
+        all_non_negative = all(item >= 0 for item in bucket_batch_sizes)
+        if not all_non_negative:
+            raise ValueError("bucket_batch_sizes cannot contain any negative numbers.")
+
+        if param_dict.get('pad_info') is not None:
+            check_type(param_dict["pad_info"], "pad_info", dict)
+            for k, v in param_dict.get('pad_info').items():
+                check_pad_info(k, v)
+
+        return method(*args, **kwargs)
+
+    return new_method
 
 
 def check_batch(method):
@@ -737,6 +706,7 @@ def check_batch(method):
 
 def check_sync_wait(method):
     """check the input arguments of sync_wait."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -804,7 +774,7 @@ def check_filter(method):
         param_dict = make_param_dict(method, args, kwargs)
         predicate = param_dict.get("predicate")
         if not callable(predicate):
-            raise ValueError("Predicate should be a python function or a callable python object.")
+            raise TypeError("Predicate should be a python function or a callable python object.")
 
         nreq_param_int = ['num_parallel_workers']
         check_param_type(nreq_param_int, param_dict, int)
@@ -896,7 +866,7 @@ def check_zip_dataset(method):
             raise ValueError("datasets is not provided.")
 
         if not isinstance(ds, (tuple, datasets.Dataset)):
-            raise ValueError("datasets is not tuple or of type Dataset.")
+            raise TypeError("datasets is not tuple or of type Dataset.")
 
         return method(*args, **kwargs)
 
@@ -916,7 +886,7 @@ def check_concat(method):
             raise ValueError("datasets is not provided.")
 
         if not isinstance(ds, (list, datasets.Dataset)):
-            raise ValueError("datasets is not list or of type Dataset.")
+            raise TypeError("datasets is not list or of type Dataset.")
 
         return method(*args, **kwargs)
 
@@ -995,7 +965,7 @@ def check_add_column(method):
         de_type = param_dict.get("de_type")
         if de_type is not None:
             if not isinstance(de_type, typing.Type) and not check_valid_detype(de_type):
-                raise ValueError("Unknown column type.")
+                raise TypeError("Unknown column type.")
         else:
             raise TypeError("Expected non-empty string.")
 
@@ -1003,6 +973,41 @@ def check_add_column(method):
         shape = param_dict.get("shape")
         if shape is not None:
             check_shape(shape, "shape")
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_cluedataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(CLUEDataset)."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+
+        # check dataset_files; required argument
+        dataset_files = param_dict.get('dataset_files')
+        if dataset_files is None:
+            raise ValueError("dataset_files is not provided.")
+        if not isinstance(dataset_files, (str, list)):
+            raise TypeError("dataset_files should be of type str or a list of strings.")
+
+        # check task
+        task_param = param_dict.get('task')
+        if task_param not in ['AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC', 'CSL']:
+            raise ValueError("task should be AFQMC, TNEWS, IFLYTEK, CMNLI, WSC or CSL")
+
+        # check usage
+        usage_param = param_dict.get('usage')
+        if usage_param not in ['train', 'test', 'eval']:
+            raise ValueError("usage should be train, test or eval")
+
+        check_param_type(nreq_param_int, param_dict, int)
+
+        check_sampler_shuffle_shard_options(param_dict)
 
         return method(*args, **kwargs)
 
@@ -1130,6 +1135,36 @@ def check_gnn_get_all_nodes(method):
     return new_method
 
 
+def check_gnn_get_all_edges(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_all_edges` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_type; required argument
+        check_type(param_dict.get("edge_type"), 'edge_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_nodes_from_edges(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_nodes_from_edges` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check edge_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("edge_list"), 'edge_list')
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_gnn_get_all_neighbors(method):
     """A wrapper that wrap a parameter checker to the GNN `get_all_neighbors` function."""
 
@@ -1142,6 +1177,79 @@ def check_gnn_get_all_neighbors(method):
 
         # check neighbor_type; required argument
         check_type(param_dict.get("neighbor_type"), 'neighbor_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_sampled_neighbors(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_sampled_neighbors` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("node_list"), 'node_list')
+
+        # check neighbor_nums; required argument
+        neighbor_nums = param_dict.get("neighbor_nums")
+        check_gnn_list_or_ndarray(neighbor_nums, 'neighbor_nums')
+        if len(neighbor_nums) > 6:
+            raise ValueError("Wrong number of input members for {0}, should be less than or equal to 6, got {1}".format(
+                'neighbor_nums', len(neighbor_nums)))
+
+        # check neighbor_types; required argument
+        neighbor_types = param_dict.get("neighbor_types")
+        check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types')
+        if len(neighbor_nums) > 6:
+            raise ValueError("Wrong number of input members for {0}, should be less than or equal to 6, got {1}".format(
+                'neighbor_types', len(neighbor_types)))
+
+        if len(neighbor_nums) != len(neighbor_types):
+            raise ValueError(
+                "The number of members of neighbor_nums and neighbor_types is inconsistent")
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_neg_sampled_neighbors(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_neg_sampled_neighbors` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("node_list"), 'node_list')
+
+        # check neg_neighbor_num; required argument
+        check_type(param_dict.get("neg_neighbor_num"), 'neg_neighbor_num', int)
+
+        # check neg_neighbor_type; required argument
+        check_type(param_dict.get("neg_neighbor_type"),
+                   'neg_neighbor_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_random_walk(method):
+    """A wrapper that wrap a parameter checker to the GNN `random_walk` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_gnn_list_or_ndarray(param_dict.get("target_nodes"), 'target_nodes')
+
+        # check meta_path; required argument
+        check_gnn_list_or_ndarray(param_dict.get("meta_path"), 'meta_path')
 
         return method(*args, **kwargs)
 
@@ -1201,6 +1309,51 @@ def check_gnn_get_node_feature(method):
         # check feature_types; required argument
         check_gnn_list_or_ndarray(param_dict.get(
             "feature_types"), 'feature_types')
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_numpyslicesdataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(NumpySlicesDataset)."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check data; required argument
+        data = param_dict.get('data')
+        if not isinstance(data, (list, tuple, dict, np.ndarray)):
+            raise TypeError("Unsupported data type: {}, only support some common python data type, "
+                            "like list, tuple, dict, and numpy array.".format(type(data)))
+        if isinstance(data, tuple) and not isinstance(data[0], (list, np.ndarray)):
+            raise TypeError("Unsupported data type: when input is tuple, only support some common python "
+                            "data type, like tuple of lists and tuple of numpy arrays.")
+        if not data:
+            raise ValueError("Input data is empty.")
+
+        # check column_names
+        column_names = param_dict.get('column_names')
+        if column_names is not None:
+            check_columns(column_names, "column_names")
+
+            # check num of input column in column_names
+            column_num = 1 if isinstance(column_names, str) else len(column_names)
+            if isinstance(data, dict):
+                data_column = len(list(data.keys()))
+                if column_num != data_column:
+                    raise ValueError("Num of input column names is {0}, but required is {1}."
+                                     .format(column_num, data_column))
+
+            elif isinstance(data, tuple):
+                if column_num != len(data):
+                    raise ValueError("Num of input column names is {0}, but required is {1}."
+                                     .format(column_num, len(data)))
+            else:
+                if column_num != 1:
+                    raise ValueError("Num of input column names is {0}, but required is {1} as data is list."
+                                     .format(column_num, 1))
 
         return method(*args, **kwargs)
 

@@ -23,41 +23,39 @@ template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerNode::Sort() {
   // Build an inverse map. Basically it means keys[i] should be relocated to keys[inverse[i]];
   slot_allocator alloc(this->alloc_);
-  slot_type *inverse = nullptr;
   try {
-    inverse = alloc.allocate(traits::kInnerSlots);
+    // We use a unique_ptr will custom deleter to ensure the memory will be released when this
+    // function returns.
+    std::unique_ptr<slot_type[], std::function<void(slot_type *)>> memGuard(
+      alloc.allocate(traits::kInnerSlots), [&alloc](slot_type *p) { alloc.deallocate(p, traits::kInnerSlots); });
+    slot_type *inverse = memGuard.get();
+    for (slot_type i = 0; i < slotuse_; i++) {
+      inverse[slot_dir_[i]] = i;
+    }
+    for (slot_type i = 0; i < slotuse_; i++) {
+      while (inverse[i] != i) {
+        slot_type j = inverse[i];
+        slot_type k = inverse[j];
+        // Swap the key
+        std::swap(keys_[j], keys_[i]);
+        // Swap the pointers.
+        if ((j + 1) >= traits::kInnerSlots + 1 || (i + 1) >= traits::kInnerSlots + 1) {
+          return IndexRc::kUnexpectedError;
+        }
+        std::swap(data_[j + 1], data_[i + 1]);
+        // one key in order.
+        inverse[j] = j;
+        // continue to move
+        inverse[i] = k;
+      }
+      slot_dir_[i] = i;
+    }
+    return IndexRc::kOk;
   } catch (std::bad_alloc &e) {
     return IndexRc::kOutOfMemory;
   } catch (std::exception &e) {
     return IndexRc::kUnexpectedError;
   }
-
-  for (slot_type i = 0; i < slotuse_; i++) {
-    inverse[slot_dir_[i]] = i;
-  }
-  for (slot_type i = 0; i < slotuse_; i++) {
-    while (inverse[i] != i) {
-      slot_type j = inverse[i];
-      slot_type k = inverse[j];
-      // Swap the key
-      std::swap(keys_[j], keys_[i]);
-      // Swap the pointers.
-      if ((j + 1) >= traits::kInnerSlots + 1 || (i + 1) >= traits::kInnerSlots + 1) {
-        return IndexRc::kUnexpectedError;
-      }
-      std::swap(data_[j + 1], data_[i + 1]);
-      // one key in order.
-      inverse[j] = j;
-      // continue to move
-      inverse[i] = k;
-    }
-    slot_dir_[i] = i;
-  }
-  if (inverse != nullptr) {
-    alloc.deallocate(inverse, traits::kInnerSlots);
-    inverse = nullptr;
-  }
-  return IndexRc::kOk;
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
@@ -117,41 +115,39 @@ template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::Sort() {
   // Build an inverse map. Basically it means keys[i] should be relocated to keys[inverse[i]];
   slot_allocator alloc(this->alloc_);
-  slot_type *inverse = nullptr;
   try {
-    inverse = alloc.allocate(traits::kLeafSlots);
+    // We use a unique_ptr will custom deleter to ensure the memory will be released when this
+    // function returns.
+    std::unique_ptr<slot_type[], std::function<void(slot_type *)>> memGuard(
+      alloc.allocate(traits::kLeafSlots), [&alloc](slot_type *p) { alloc.deallocate(p, traits::kLeafSlots); });
+    slot_type *inverse = memGuard.get();
+    for (slot_type i = 0; i < slotuse_; i++) {
+      inverse[slot_dir_[i]] = i;
+    }
+    for (slot_type i = 0; i < slotuse_; i++) {
+      while (inverse[i] != i) {
+        slot_type j = inverse[i];
+        slot_type k = inverse[j];
+        // Swap the key
+        if (j >= traits::kLeafSlots || i >= traits::kLeafSlots) {
+          return IndexRc::kUnexpectedError;
+        }
+        std::swap(keys_[j], keys_[i]);
+        // Swap the shared pointers
+        std::swap(data_[j], data_[i]);
+        // one key in order.
+        inverse[j] = j;
+        // continue to move
+        inverse[i] = k;
+      }
+      slot_dir_[i] = i;
+    }
+    return IndexRc::kOk;
   } catch (std::bad_alloc &e) {
     return IndexRc::kOutOfMemory;
   } catch (std::exception &e) {
     return IndexRc::kUnexpectedError;
   }
-
-  for (slot_type i = 0; i < slotuse_; i++) {
-    inverse[slot_dir_[i]] = i;
-  }
-  for (slot_type i = 0; i < slotuse_; i++) {
-    while (inverse[i] != i) {
-      slot_type j = inverse[i];
-      slot_type k = inverse[j];
-      // Swap the key
-      if (j >= traits::kLeafSlots || i >= traits::kLeafSlots) {
-        return IndexRc::kUnexpectedError;
-      }
-      std::swap(keys_[j], keys_[i]);
-      // Swap the shared pointers
-      std::swap(data_[j], data_[i]);
-      // one key in order.
-      inverse[j] = j;
-      // continue to move
-      inverse[i] = k;
-    }
-    slot_dir_[i] = i;
-  }
-  if (inverse != nullptr) {
-    alloc.deallocate(inverse, traits::kLeafSlots);
-    inverse = nullptr;
-  }
-  return IndexRc::kOk;
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
@@ -273,26 +269,17 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafInsertK
     RETURN_IF_BAD_RC(rc);
     leaf_nodes_.InsertAfter(node, new_leaf);
     *split_node = new_leaf;
-    if (slot == node->slotuse_ && traits::kAppendMode) {
-      // Split high. Good for bulk load and keys are in asending order on insert
-      *split_key = key;
-      // Just insert the new key to the new leaf. No further need to move the keys
-      // from one leaf to the other.
-      rc = new_leaf->InsertIntoSlot(nullptr, 0, key, std::move(value));
+    // 50/50 split
+    rc = node->Split(new_leaf);
+    RETURN_IF_BAD_RC(rc);
+    *split_key = new_leaf->keys_[0];
+    if (LessThan(key, *split_key)) {
+      rc = node->InsertIntoSlot(nullptr, slot, key, std::move(value));
       RETURN_IF_BAD_RC(rc);
     } else {
-      // 50/50 split
-      rc = node->Split(new_leaf);
+      slot -= node->slotuse_;
+      rc = new_leaf->InsertIntoSlot(nullptr, slot, key, std::move(value));
       RETURN_IF_BAD_RC(rc);
-      *split_key = new_leaf->keys_[0];
-      if (LessThan(key, *split_key)) {
-        rc = node->InsertIntoSlot(nullptr, slot, key, std::move(value));
-        RETURN_IF_BAD_RC(rc);
-      } else {
-        slot -= node->slotuse_;
-        rc = new_leaf->InsertIntoSlot(nullptr, slot, key, std::move(value));
-        RETURN_IF_BAD_RC(rc);
-      }
     }
   }
   return rc;
@@ -313,25 +300,18 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerInsert
     rc = AllocateInner(&new_inner);
     RETURN_IF_BAD_RC(rc);
     *split_node = new_inner;
-    if (slot == node->slotuse_ && traits::kAppendMode) {
-      *split_key = key;
-      new_inner->data_[0] = node->data_[node->slotuse_];
-      rc = new_inner->InsertIntoSlot(0, key, ptr);
+    rc = node->Split(new_inner, split_key);
+    RETURN_IF_BAD_RC(rc);
+    if (LessThan(key, *split_key)) {
+      // Need to readjust the slot position since the split key is no longer in the two children.
+      slot = FindSlot(node, key);
+      rc = node->InsertIntoSlot(slot, key, ptr);
       RETURN_IF_BAD_RC(rc);
     } else {
-      rc = node->Split(new_inner, split_key);
+      // Same reasoning as above
+      slot = FindSlot(new_inner, key);
+      rc = new_inner->InsertIntoSlot(slot, key, ptr);
       RETURN_IF_BAD_RC(rc);
-      if (LessThan(key, *split_key)) {
-        // Need to readjust the slot position since the split key is no longer in the two children.
-        slot = FindSlot(node, key);
-        rc = node->InsertIntoSlot(slot, key, ptr);
-        RETURN_IF_BAD_RC(rc);
-      } else {
-        // Same reasoning as above
-        slot = FindSlot(new_inner, key);
-        rc = new_inner->InsertIntoSlot(slot, key, ptr);
-        RETURN_IF_BAD_RC(rc);
-      }
     }
   }
   return rc;
@@ -381,8 +361,7 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InsertKeyVa
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
-typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::Locate(RWLock *parent_lock,
-                                                                            bool forUpdate,
+typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::Locate(RWLock *parent_lock, bool forUpdate,
                                                                             BPlusTree<K, V, A, C, T>::BaseNode *top,
                                                                             const key_type &key,
                                                                             BPlusTree<K, V, A, C, T>::LeafNode **ln,
@@ -485,9 +464,6 @@ Status BPlusTree<K, V, A, C, T>::DoInsert(const key_type &key, std::unique_ptr<v
   do {
     // Track all the paths to the target and lock each internal node in S.
     LockPathCB InsCB(this, retry);
-    // Mark the numKeysArray invalid. We may latch the tree in S and multiple guys are doing insert.
-    // But it is okay as we all set the same value.
-    stats_.num_keys_array_valid_ = false;
     // Initially we lock path in S unless we need to do node split.
     retry = false;
     BaseNode *new_child = nullptr;
@@ -556,70 +532,6 @@ std::unique_ptr<V> BPlusTree<K, V, A, C, T>::DoUpdate(const key_type &key, std::
   }
 }
 
-template <typename K, typename V, typename A, typename C, typename T>
-void BPlusTree<K, V, A, C, T>::PopulateNumKeys() {
-  // Start from the root and we calculate how many leaf nodes as pointed to by each inner node.
-  // The results are stored in the numKeys array in each inner node.
-  (void)PopulateNumKeys(root_);
-  // Indicate the result is accurate since we have the tree locked exclusive.
-  stats_.num_keys_array_valid_ = true;
-}
-
-template <typename K, typename V, typename A, typename C, typename T>
-uint64_t BPlusTree<K, V, A, C, T>::PopulateNumKeys(BPlusTree<K, V, A, C, T>::BaseNode *n) {
-  if (n->is_leafnode()) {
-    auto *leaf = static_cast<LeafNode *>(n);
-    return leaf->slotuse_;
-  } else {
-    auto *inner = static_cast<InnerNode *>(n);
-    uint64_t num_keys = 0;
-    for (auto i = 0; i < inner->slotuse_ + 1; i++) {
-      inner->num_keys_[i] = PopulateNumKeys(inner->data_[i]);
-      num_keys += inner->num_keys_[i];
-    }
-    return num_keys;
-  }
-}
-
-template <typename K, typename V, typename A, typename C, typename T>
-typename BPlusTree<K, V, A, C, T>::key_type BPlusTree<K, V, A, C, T>::KeyAtPos(uint64_t inx) {
-  if (stats_.num_keys_array_valid_ == false) {
-    // We need exclusive access to the tree. If concurrent insert is going on, it is hard to get accurate numbers
-    UniqueLock lck(&rw_lock_);
-    // Check again.
-    if (stats_.num_keys_array_valid_ == false) {
-      PopulateNumKeys();
-    }
-  }
-  // Now we know how many keys each inner branch contains, we can now traverse the correct node in log n time.
-  return KeyAtPos(root_, inx);
-}
-
-template <typename K, typename V, typename A, typename C, typename T>
-typename BPlusTree<K, V, A, C, T>::key_type BPlusTree<K, V, A, C, T>::KeyAtPos(BPlusTree<K, V, A, C, T>::BaseNode *n,
-                                                                               uint64_t inx) {
-  if (n->is_leafnode()) {
-    auto *leaf = static_cast<LeafNode *>(n);
-    return leaf->keys_[leaf->slot_dir_[inx]];
-  } else {
-    auto *inner = static_cast<InnerNode *>(n);
-    if ((inx + 1) > inner->num_keys_[0]) {
-      inx -= inner->num_keys_[0];
-    } else {
-      return KeyAtPos(inner->data_[0], inx);
-    }
-    for (auto i = 0; i < inner->slotuse_; i++) {
-      if ((inx + 1) > inner->num_keys_[inner->slot_dir_[i] + 1]) {
-        inx -= inner->num_keys_[inner->slot_dir_[i] + 1];
-      } else {
-        return KeyAtPos(inner->data_[inner->slot_dir_[i] + 1], inx);
-      }
-    }
-  }
-  // If we get here, inx is way too big. Instead of throwing exception, we will just return the default value
-  // of key_type whatever it is.
-  return key_type();
-}
 }  // namespace dataset
 }  // namespace mindspore
 #endif

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <map>
 #include "device/ascend/profiling/reporter/graph_desc_reporter.h"
 #include "device/ascend/profiling/profiling_utils.h"
 #include "kernel/kernel.h"
@@ -24,6 +23,7 @@
 #include "utils/utils.h"
 #include "device/ascend/profiling/reporter/task_desc_reporter.h"
 #include "utils/context/ms_context.h"
+#include "device/ascend/profiling/reporter/point_reporter.h"
 
 namespace mindspore {
 namespace device {
@@ -33,8 +33,9 @@ constexpr char kCustomNode[] = "PROFILING_CUSTOM_";
 constexpr char kFpStartNode[] = "PROFILING_FP_START";
 constexpr char kBpEndNode[] = "PROFILING_BP_END";
 constexpr char kIterEndNode[] = "PROFILING_ITER_END";
-std::unordered_map<uint32_t, std::vector<CNodePtr>> ProfilingUtils::graph_profiling_cnode_;
-std::unordered_map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
+std::map<uint32_t, std::vector<CNodePtr>> ProfilingUtils::graph_profiling_cnode_;
+std::map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
+std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> ProfilingUtils::graph_point_;
 uint32_t ProfilingUtils::custom_node_index_ = 1;
 
 ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr) {
@@ -102,6 +103,7 @@ std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exe
 void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
                                             NotNull<std::set<std::string> *> getnext_outputs) {
   for (const auto &cnode : cnode_exec_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
     for (const auto &input : cnode->inputs()) {
       auto prev_cnode = AnfAlgo::VisitKernel(input, 0);
       if (!prev_cnode.first->isa<CNode>()) {
@@ -203,6 +205,17 @@ NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &p
   return NOT_NULL(cnode_ptr);
 }
 
+void ProfilingUtils::SaveProfilingPoint(uint32_t graph_id, const std::string &node_name, uint32_t point_id) {
+  std::shared_ptr<ProfDesc> prof_desc_ptr = std::make_shared<PointDesc>(node_name, point_id);
+  auto iter = graph_point_.find(graph_id);
+  if (iter == graph_point_.end()) {
+    std::vector<std::shared_ptr<ProfDesc>> tmp_vect = {prof_desc_ptr};
+    graph_point_.insert({graph_id, tmp_vect});
+  } else {
+    iter->second.emplace_back(prof_desc_ptr);
+  }
+}
+
 void ProfilingUtils::ProfilingTraceFpStart(const mindspore::AnfNodePtr &anf_node,
                                            const ProfilingTraceInfo &profiling_trace_info,
                                            NotNull<session::KernelGraph *> graph_ptr,
@@ -213,6 +226,8 @@ void ProfilingUtils::ProfilingTraceFpStart(const mindspore::AnfNodePtr &anf_node
     ProfilingContent fp_profiling_content = {false, kProfilingFpStartLogId, 0};
     auto fp_profiling_node = CreateProfilingCNodeWithStream(anf_node, fp_profiling_content, graph_ptr);
     kernel_list->emplace_back(fp_profiling_node);
+    // insert ProfDesc
+    SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), kProfilingFpStartLogId);
   }
 }
 
@@ -244,13 +259,16 @@ void ProfilingUtils::ProfilingCustomOp(const AnfNodePtr &anf_node, const Profili
   }
   MS_LOG(INFO) << "Profiling Match CustomOp:" << anf_node->fullname_with_scope();
   // custom op profiling job start from 3.
-  ProfilingContent front_profiling_content = {false, 2 * custom_node_index_ + 1, 0};
+  auto custom_point_id = 2 * custom_node_index_ + 1;
+  ProfilingContent front_profiling_content = {false, custom_point_id, 0};
   CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
   kernel_list->insert(kernel_list->end() - 1, front_node);
+  SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id);
 
-  ProfilingContent back_profiling_content = {false, 2 * custom_node_index_ + 2, 0};
+  ProfilingContent back_profiling_content = {false, custom_point_id + 1, 0};
   CNodePtr back_node = CreateProfilingCNodeWithStream(anf_node, back_profiling_content, graph_ptr);
   kernel_list->insert(kernel_list->end(), back_node);
+  SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id + 1);
   ++custom_node_index_;
 }
 
@@ -263,6 +281,7 @@ void ProfilingUtils::ProfilingTraceBpEnd(const AnfNodePtr &anf_node, const Profi
     ProfilingContent bp_end_profiling_content = {false, kProfilingBpEndLogId, 0};
     CNodePtr bp_end_node = CreateProfilingCNodeWithStream(anf_node, bp_end_profiling_content, graph_ptr);
     kernel_list->emplace_back(bp_end_node);
+    SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), kProfilingBpEndLogId);
   }
 }
 
@@ -276,6 +295,7 @@ void ProfilingUtils::ProfilingTraceEnd(const AnfNodePtr &anf_node, const Profili
     ProfilingContent bp_end_profiling_content = {true, kProfilingIterEndLogId, 0};
     CNodePtr bp_kernel_ptr = CreateProfilingCNodeWithStream(anf_node, bp_end_profiling_content, graph_ptr);
     kernel_list->emplace_back(bp_kernel_ptr);
+    SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), kProfilingIterEndLogId);
   }
 }
 
@@ -302,7 +322,7 @@ bool ProfilingUtils::ValidComputeGraph(NotNull<const session::KernelGraph *> gra
   return false;
 }
 
-void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
+void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
                                          NotNull<const session::KernelGraph *> graph) {
   if (!ValidComputeGraph(graph)) {
     MS_LOG(WARNING) << "Not a valid compute graph:" << graph->graph_id();
@@ -319,11 +339,24 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
   MS_EXCEPTION_IF_NULL(context);
   TaskDescReporter task_reporter(context->device_id(), "vm.task_desc_info", ret->second);
   task_reporter.set_task_ids(task_ids);
+  task_reporter.set_stream_ids(stream_ids);
   task_reporter.ReportData();
 
   GraphDescReporter graph_reporter(context->device_id(), "vm.graph_desc_info", ret->second);
   graph_profiling_cnode_.erase(ret);
   graph_reporter.ReportData();
+
+  // Report profiling point
+  auto point_iter = graph_point_.find(graph->graph_id());
+  if (point_iter == graph_point_.end()) {
+    MS_LOG(ERROR) << "Graph id not found in graph_point";
+    return;
+  }
+  PointReporter point_reporter(context->device_id(), "vm.point");
+  for (const auto &point : point_iter->second) {
+    point_reporter.AddReportData(point);
+  }
+  point_reporter.ReportData();
 }
 }  // namespace ascend
 }  // namespace device

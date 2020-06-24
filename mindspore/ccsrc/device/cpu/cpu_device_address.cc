@@ -22,10 +22,30 @@ namespace device {
 namespace cpu {
 bool CPUDeviceAddress::SyncDeviceToHost(const std::vector<int> & /*shape*/, size_t size, TypeId type,
                                         void *host_ptr) const {
-  if (type == kNumberTypeFloat16) {
+  if (ptr_ == nullptr) {
+    MS_LOG(ERROR) << "The pointer ptr_ is null!";
+    return false;
+  }
+
+  if (host_ptr == ptr_) {
+    MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
+    return true;
+  }
+
+  if (type == type_id_) {
+    auto ret_code = memcpy_s(host_ptr, size, ptr_, size_);
+    if (ret_code != EOK) {
+      MS_LOG(ERROR) << "Failed to copy tensor!";
+      return false;
+    }
+  } else if (type == kNumberTypeFloat16) {
     FloatToHalf(host_ptr, ptr_, size / 2);
   } else if (type == kNumberTypeFloat64) {
     FloatToDouble(host_ptr, ptr_, size / sizeof(double));
+  } else {
+    MS_LOG(ERROR) << "Types not match. Device type: " << TypeIdLabel(type_id_) << ", host type: " << TypeIdLabel(type)
+                  << "!";
+    return false;
   }
   return true;
 }

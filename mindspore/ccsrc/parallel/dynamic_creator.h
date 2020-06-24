@@ -121,6 +121,7 @@ REGISTER(SparseSoftmaxCrossEntropyWithLogitsInfo);
 REGISTER(AssignSubInfo);
 REGISTER(ReLUInfo);
 REGISTER(GatherV2Info);
+REGISTER(SparseGatherV2Info);
 REGISTER(SqrtInfo);
 REGISTER(SigmoidInfo);
 REGISTER(GetNextInfo);

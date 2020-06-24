@@ -606,7 +606,7 @@ class RandomRotation:
 
 class RandomOrder:
     """
-    Perform a series of transforms to the input PIL image in a random oreder.
+    Perform a series of transforms to the input PIL image in a random order.
 
     Args:
         transforms (list): List of the transformations to be applied.
@@ -1087,7 +1087,7 @@ class RandomAffine:
             The horizontal and vertical shift is selected randomly from the range:
             (-tx*width, tx*width) and (-ty*height, ty*height), respectively.
             If None, no translations gets applied.
-        scale (sequence, optional): Scaling factor interval (default=None, riginal scale is used).
+        scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
         shear (int or float or sequence, optional): Range of shear factor (default=None).
             If a number 'shear', then a shear parallel to the x axis in the range of (-shear, +shear) is applied.
             If a tuple or list of size 2, then a shear parallel to the x axis in the range of (shear[0], shear[1])

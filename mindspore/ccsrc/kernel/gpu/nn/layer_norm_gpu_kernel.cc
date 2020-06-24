@@ -27,5 +27,14 @@ MS_REG_GPU_KERNEL_ONE(LayerNorm,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       LayerNormGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(LayerNorm,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      LayerNormGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

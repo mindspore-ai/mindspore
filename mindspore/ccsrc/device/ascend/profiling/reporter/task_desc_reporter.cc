@@ -31,7 +31,7 @@ void TaskDescReporter::ReportData() {
 
   size_t task_index = 0;
   for (const auto &node : cnode_list_) {
-    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AKG_KERNEL) {
       MS_LOG(WARNING) << "Skip non tbe kernel";
       ++task_index;
       continue;
@@ -40,11 +40,21 @@ void TaskDescReporter::ReportData() {
     auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
-    auto desc_ptr = std::make_shared<TaskDesc>(node->fullname_with_scope(), task_ids_[task_index++],
-                                               ascend_kernel_mod->block_dim(), ascend_kernel_mod->stream_id());
-    prof_desc_.emplace_back(desc_ptr);
+    // Check task_id and stream_id valid
+    CheckStreamTaskValid(task_index, task_index);
+    auto desc_ptr = std::make_shared<TaskDesc>(node->fullname_with_scope(), task_ids_[task_index],
+                                               ascend_kernel_mod->block_dim(), stream_ids_[task_index]);
+    prof_desc_list_.emplace_back(desc_ptr);
+    ++task_index;
   }
-  DescReporter::ReportData();
+  ReportAllLine();
+}
+
+void TaskDescReporter::CheckStreamTaskValid(uint32_t task_id, uint32_t stream_id) {
+  if (task_id >= task_ids_.size() || stream_id >= stream_ids_.size()) {
+    MS_LOG(EXCEPTION) << "Index invalid. task_id:" << task_id << ", task_ids.size:" << task_ids_.size()
+                      << ", stream_id:" << stream_id << ", stream_ids.size:" << stream_ids_.size();
+  }
 }
 }  // namespace ascend
 }  // namespace device

@@ -28,10 +28,11 @@ namespace dataset {
 class SubsetRandomSampler : public Sampler {
  public:
   // Constructor.
+  // @param num_samples The number of samples to draw. 0 for the full amount.
   // @param indices List of indices from where we will randomly draw samples.
   // @param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
   // When samplesPerBuffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
-  explicit SubsetRandomSampler(const std::vector<int64_t> &indices,
+  explicit SubsetRandomSampler(int64_t num_samples, const std::vector<int64_t> &indices,
                                std::int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
@@ -43,12 +44,12 @@ class SubsetRandomSampler : public Sampler {
 
   // Reset the internal variable to the initial state and reshuffle the indices.
   // @return Status
-  Status Reset() override;
+  Status ResetSampler() override;
 
   // Get the sample ids.
   // @param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.
   // @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
  private:
   // A list of indices (already randomized in constructor).

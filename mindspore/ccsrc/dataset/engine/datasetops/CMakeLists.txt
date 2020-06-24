@@ -8,6 +8,7 @@ add_library(engine-datasetops OBJECT
     pipeline_op.cc
     barrier_op.cc
     batch_op.cc
+    bucket_batch_by_length_op.cc
     device_queue_op.cc
     map_op.cc
     project_op.cc
@@ -19,5 +20,6 @@ add_library(engine-datasetops OBJECT
     zip_op.cc
     concat_op.cc
     filter_op.cc
+    build_vocab_op.cc
     )
 

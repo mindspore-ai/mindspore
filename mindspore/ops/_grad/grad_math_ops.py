@@ -17,14 +17,17 @@
 
 from functools import reduce
 import numpy as np
+from mindspore.ops import _selected_grad_ops as SG
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
+from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ..composite.multitype_ops import _constexpr_utils as const_utils
+
 
 shape_op = P.Shape()
 reduce_sum = P.ReduceSum()
@@ -232,9 +235,39 @@ def get_bprop_div(self):
     return bprop
 
 
+@bprop_getters.register(P.DivNoNan)
+def get_bprop_div_no_nan(self):
+    """Grad definition for `DivNoNan` operation."""
+    div_no_nan_op = P.DivNoNan()
+    neg = P.Neg()
+    mul_op = P.Mul()
+
+    def bprop(x, y, out, dout):
+        bc_x = div_no_nan_op(dout, y)
+        bc_y = neg(mul_op(bc_x, out))
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Floor)
 def get_bprop_floor(self):
     """Grad definition for `floor` operation."""
+    fill_ = P.Fill()
+    shape_ = P.Shape()
+    dtype_ = P.DType()
+
+    def bprop(x, out, dout):
+        bc_x = fill_(dtype_(x), shape_(x), 0.)
+        return (bc_x,)
+
+
+    return bprop
+
+
+@bprop_getters.register(P.Ceil)
+def get_bprop_ceil(self):
+    """Grad definition for `ceil` operation."""
     fill_ = P.Fill()
     shape_ = P.Shape()
     dtype_ = P.DType()
@@ -422,10 +455,23 @@ def get_bprop_exp(self):
     return bprop
 
 
+@bprop_getters.register(P.Expm1)
+def get_bprop_expm1(self):
+    """Grad definition for `Expm1` operation."""
+    exp_ = P.Exp()
+
+    def bprop(x, out, dout):
+        g = exp_(x)
+        dx = g * dout
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Minimum)
 def get_bprop_minimum(self):
     """Grad definition for `Minimum` operation."""
-    input_grad = G.MinimumGrad()
+    input_grad = SG.MinimumGrad()
 
     def bprop(x, y, out, dout):
         dx, dy = input_grad(x, y, dout)
@@ -437,7 +483,7 @@ def get_bprop_minimum(self):
 @bprop_getters.register(P.Maximum)
 def get_bprop_maximum(self):
     """Grad definition for `Maximum` operation."""
-    input_grad = G.MaximumGrad()
+    input_grad = SG.MaximumGrad()
 
     def bprop(x, y, out, dout):
         dx, dy = input_grad(x, y, dout)
@@ -639,6 +685,16 @@ def get_bprop_not_equal(self):
     return bprop
 
 
+@bprop_getters.register(P.ApproximateEqual)
+def get_bprop_approximate_equal(self):
+    """Grad definition for `ApproximateEqual` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Greater)
 def get_bprop_greater(self):
     """Grad definition for `Greater` operation."""
@@ -793,6 +849,18 @@ def get_bprop_asinh(self):
     return bprop
 
 
+@bprop_getters.register(P.Sinh)
+def get_bprop_sinh(self):
+    """Grad definition for `Sinh` operation."""
+    cosh = P.Cosh()
+
+    def bprop(x, out, dout):
+        dx = cosh(x) * dout
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Cos)
 def get_bprop_cos(self):
     """Grad definition for `Cos` operation."""
@@ -830,10 +898,22 @@ def get_bprop_acosh(self):
     return bprop
 
 
+@bprop_getters.register(P.Cosh)
+def get_bprop_cosh(self):
+    """Grad definition for `Cosh` operation."""
+    sinh = P.Sinh()
+
+    def bprop(x, out, dout):
+        dx = sinh(x) * dout
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Abs)
 def get_bprop_abs(self):
     """Grad definition for `Abs` operation."""
-    abs_grad = G.AbsGrad()
+    abs_grad = SG.AbsGrad()
 
     def bprop(x, out, dout):
         dx = abs_grad(x, dout)
@@ -849,6 +929,18 @@ def get_bprop_scalar_cast(self):
     def bprop(x, t, out, dout):
         return F.scalar_cast(dout, F.typeof(x)), zeros_like(t)
 
+    return bprop
+
+
+@bprop_getters.register(P.AccumulateNV2)
+def get_bprop_scalar_accumulatenv2(self):
+    """Generate bprop for AccumulateNV2"""
+
+    def bprop(x, out, dout):
+        dx = ()
+        for _ in range(len(x)):
+            dx = dx + (dout,)
+        return dx
     return bprop
 
 
@@ -934,15 +1026,16 @@ def get_bprop_bessel_i1e(self):
     reciprocal = P.Reciprocal()
     cast = P.Cast()
     dtype = P.DType()
+    abs_ops = P.Abs()
 
     def bprop(x, out, dout):
         zeros = zeros_like(x)
         np_eps = const_utils.get_np_eps(dtype(x))
         eps = cast(np_eps, dtype(x))
-        x_is_valid = less(eps, x)
+        x_is_valid = less(eps, abs_ops(x))
         x_safe = select(x_is_valid, x, eps + zeros)
-        tmp = bessel_i0e(x_safe) - out * (sign(x) + reciprocal(x_safe))
-        dx = select(x_is_valid, tmp, 0.5 + zeros)
+        tmp = bessel_i0e(x_safe) - out * (sign(x_safe) + reciprocal(x_safe))
+        dx = select(x_is_valid, tmp, cast(0.5, dtype(x)) + zeros) * dout
         return (dx,)
     return bprop
 
@@ -957,4 +1050,25 @@ def get_bprop_atanh(self):
         tmp = 1 - power(x, 2)
         dx = div(1, tmp) * dout
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Inv)
+def get_bprop_inv(self):
+    """Grad definition for 'Inv' operation"""
+    inv_grad = G.InvGrad()
+
+    def bprop(x, out, dout):
+        dx = inv_grad(out, dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(inner.LinSpace)
+def get_bprop_lin_space(self):
+    """Grad definition for `LinSpace` operation."""
+
+    def bprop(assist, start, stop, num, out, dout):
+        return zeros_like(assist), zeros_like(start), zeros_like(stop), zeros_like(num)
+
     return bprop

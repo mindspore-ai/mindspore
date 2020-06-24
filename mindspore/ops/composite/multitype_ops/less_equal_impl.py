@@ -25,7 +25,7 @@ less_equal = base.MultitypeFuncGraph("less_equal")
 @less_equal.register("Number", "Number")
 def _less_equal_scala(x, y):
     """
-    Determine whether x is less equal than y
+    Determine whether x is less equal than y.
 
     Args:
        x(Number): Number.
@@ -41,7 +41,7 @@ def _less_equal_scala(x, y):
 @less_equal.register("Tensor", "Tensor")
 def _less_equal_tensor(x, y):
     """
-    Determine  whether tensor x is less equal than tensor y elementwise
+    Determine  whether tensor x is less equal than tensor y elementwise.
 
     Args:
        x(Tensor): Tensor.

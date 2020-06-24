@@ -20,17 +20,20 @@ def argparse_init():
     argparse_init
     """
     parser = argparse.ArgumentParser(description='WideDeep')
+    parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
+                        help="device where the code will be implemented. (Default: Ascend)")
     parser.add_argument("--data_path", type=str, default="./test_raw_data/")
     parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--full_batch", type=bool, default=False)
     parser.add_argument("--batch_size", type=int, default=16000)
     parser.add_argument("--eval_batch_size", type=int, default=16000)
     parser.add_argument("--field_size", type=int, default=39)
-    parser.add_argument("--vocab_size", type=int, default=184965)
+    parser.add_argument("--vocab_size", type=int, default=200000)
     parser.add_argument("--emb_dim", type=int, default=80)
     parser.add_argument("--deep_layer_dim", type=int, nargs='+', default=[1024, 512, 256, 128])
     parser.add_argument("--deep_layer_act", type=str, default='relu')
     parser.add_argument("--keep_prob", type=float, default=1.0)
-
+    parser.add_argument("--dropout_flag", type=int, default=0)
     parser.add_argument("--output_path", type=str, default="./output/")
     parser.add_argument("--ckpt_path", type=str, default="./checkpoints/")
     parser.add_argument("--eval_file_name", type=str, default="eval.log")
@@ -43,12 +46,14 @@ class WideDeepConfig():
     WideDeepConfig
     """
     def __init__(self):
+        self.device_target = "Ascend"
         self.data_path = "./test_raw_data/"
+        self.full_batch = False
         self.epochs = 15
         self.batch_size = 16000
         self.eval_batch_size = 16000
         self.field_size = 39
-        self.vocab_size = 184965
+        self.vocab_size = 200000
         self.emb_dim = 80
         self.deep_layer_dim = [1024, 512, 256, 128]
         self.deep_layer_act = 'relu'
@@ -70,8 +75,10 @@ class WideDeepConfig():
         """
         parser = argparse_init()
         args, _ = parser.parse_known_args()
+        self.device_target = args.device_target
         self.data_path = args.data_path
         self.epochs = args.epochs
+        self.full_batch = args.full_batch
         self.batch_size = args.batch_size
         self.eval_batch_size = args.eval_batch_size
         self.field_size = args.field_size
@@ -83,7 +90,7 @@ class WideDeepConfig():
         self.weight_bias_init = ['normal', 'normal']
         self.emb_init = 'normal'
         self.init_args = [-0.01, 0.01]
-        self.dropout_flag = False
+        self.dropout_flag = bool(args.dropout_flag)
         self.l2_coef = 8e-5
 
         self.output_path = args.output_path

@@ -83,9 +83,9 @@ class MemCopyManager {
 
   virtual DeviceAddressPtr UpdateSwapInQueue() { return nullptr; }
 
-  virtual bool AllocHostPinnedMem(size_t size, void **addr) { return true; }
+  virtual bool AllocHostPinnedMem(size_t size, void **addr) const { return true; }
 
-  virtual void FreeHostPinnedMem(void *addr) {}
+  virtual void FreeHostPinnedMem(void *addr) const {}
 
   virtual void ClearSwapQueue() {}
 };

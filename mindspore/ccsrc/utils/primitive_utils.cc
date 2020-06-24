@@ -29,9 +29,6 @@ py::function GetBpropFunctionByObj(py::object obj) {
 
 py::function GetBpropFunction(std::string name) {
   auto fn = GetBpropFunctionByObj(py::str(name));
-  if (fn.is_none()) {
-    MS_LOG(WARNING) << "Can't find bprop function for " << name;
-  }
   return fn;
 }
 
@@ -41,7 +38,7 @@ py::function GetComputeFunction(std::string name) {
   if (!py::hasattr(mod, common::SafeCStr(name))) {
     PyErr_SetString(PyExc_NotImplementedError, common::SafeCStr(name));
     // If raise AttributeError, user can't understand. This case need raise NotImplementedError.
-    throw py::error_already_set();
+    throw(py::error_already_set());
   }
   py::object fn = mod.attr(common::SafeCStr(name));
   return fn;

@@ -62,6 +62,7 @@ add_dependencies(engine-datasetops-source core)
 add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
 add_dependencies(engine-opt core)
+add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(text core)
@@ -81,6 +82,7 @@ set(submodules
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
     $<TARGET_OBJECTS:engine-gnn>
+    $<TARGET_OBJECTS:engine-perf>
     $<TARGET_OBJECTS:engine-datasetops>
     $<TARGET_OBJECTS:engine-opt>
     $<TARGET_OBJECTS:engine>
@@ -106,10 +108,11 @@ target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})
 else()
+    set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
     target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
 endif()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
-        mindspore::opencv_imgproc mindspore::tinyxml2)
+        mindspore::opencv_imgproc mindspore::tinyxml2  ${ICU_LIB})
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue
                                      ${CUDNN_PATH}/lib64/libcudnn.so

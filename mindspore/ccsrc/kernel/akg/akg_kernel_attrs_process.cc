@@ -79,6 +79,10 @@ void SetAkgAttrsForCast(const AnfNodePtr &anf_node) {
     dst_type = "float32";
   } else if (output_type == kFloat16->type_id()) {
     dst_type = "float16";
+  } else if (output_type == kInt32->type_id()) {
+    dst_type = "int32";
+  } else {
+    MS_LOG(WARNING) << "Unknown cast_to type: " << TypeIdToType(output_type)->ToString();
   }
   AnfAlgo::SetNodeAttr("dst_type", MakeValue(dst_type), anf_node);
 }

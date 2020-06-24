@@ -25,7 +25,7 @@ greater_equal = base.MultitypeFuncGraph("greater_equal")
 @greater_equal.register("Number", "Number")
 def _greater_equal_scala(x, y):
     """
-    Determine whether x is greater equal than y
+    Determine whether x is greater equal than y.
 
     Args:
        x(Number): Number.

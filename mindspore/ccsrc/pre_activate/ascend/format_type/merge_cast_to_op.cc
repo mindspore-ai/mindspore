@@ -61,16 +61,14 @@ bool AlternativeKernelInfoForInput(const CNodePtr &node, const TypeId dst_type, 
 
 bool GetNextNodeAndCastIndex(const FuncGraphPtr &graph, const AnfNodePtr &node, AnfNodePtr *next_node,
                              size_t *cast_index) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-  // Check whether the cast node is used for input by only one another node.
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  if (manager->node_users().find(node) == manager->node_users().end() || manager->node_users()[node].size() != 1) {
+  auto output_node_list = GetRealNodeUsedList(graph, node);
+  MS_EXCEPTION_IF_NULL(output_node_list);
+  if (output_node_list->size() != 1) {
     return false;
   }
-  *next_node = manager->node_users()[node].begin()->first;
-  *cast_index = IntToSize(manager->node_users()[node].begin()->second - 1);
+  auto node_pair = output_node_list->at(0);
+  *next_node = node_pair.first;
+  *cast_index = node_pair.second - 1;
   return true;
 }
 
@@ -122,6 +120,24 @@ bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::Kernel
   return AnfAlgo::GetOutputFormat(node, 0) == kernel_info->GetOutputFormat(index);
 }
 
+void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size_t cast_index) {
+  using Shape = std::vector<size_t>;
+  auto cast_dtype = AnfAlgo::GetOutputInferDataType(cast, 0);
+  auto cast_shape = AnfAlgo::GetOutputInferShape(cast, 0);
+  std::vector<Shape> shapes;
+  std::vector<TypeId> types;
+  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
+    if (cast_index == index) {
+      shapes.emplace_back(cast_shape);
+      types.emplace_back(cast_dtype);
+      continue;
+    }
+    shapes.emplace_back(AnfAlgo::GetOutputInferShape(cnode, index));
+    types.emplace_back(AnfAlgo::GetOutputInferDataType(cnode, index));
+  }
+  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, cnode.get());
+}
+
 AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, const KernelQueryPtr kernel_query) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(kernel_query);
@@ -135,6 +151,9 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
     return nullptr;
   }
   auto next_cnode = next_node->cast<CNodePtr>();
+  if (AnfAlgo::IsGraphKernel(next_node)) {
+    return nullptr;
+  }
   auto next_op_name = AnfAlgo::GetCNodeName(next_node);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   kernel_query->Query(next_cnode, &kernel_info_list);
@@ -148,11 +167,14 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
   if (alternative_kernel_info == kernel_info_list.end()) {
     return nullptr;
   }
-  MS_LOG(INFO) << "Found alternative kernel info for current anf kernel " << next_op_name;
+  auto ori_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(next_node);
+  MS_LOG(INFO) << "Found alternative kernel info for current anf kernel " << next_cnode->DebugString()
+               << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
+               << (*alternative_kernel_info)->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(*alternative_kernel_info, next_cnode.get());
+  ChangeNodeInferInfo(next_cnode, node, cast_index);
   if (node->inputs().size() < kCastInputNum) {
-    auto op_name = AnfAlgo::GetCNodeName(node);
-    MS_LOG(EXCEPTION) << "op[" << op_name << "] has wrong input num:";
+    MS_LOG(EXCEPTION) << "Op[" << node->DebugString() << "] has wrong input num:";
   }
   return node->input(1);
 }
@@ -205,6 +227,9 @@ AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_nod
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(prior_op);
+  if (AnfAlgo::IsGraphKernel(prior_op)) {
+    return nullptr;
+  }
 
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   kernel_query->Query(prior_op, &kernel_info_list);
@@ -217,8 +242,16 @@ AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_nod
   if (kernel_info_it == kernel_info_list.end()) {
     return nullptr;
   }
+  auto ori_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(prior_op);
+  MS_LOG(INFO) << "Found alternative kernel info for current anf kernel " << prior_op->DebugString()
+               << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
+               << (*kernel_info_it)->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(*kernel_info_it, prior_op.get());
-
+  ChangeNodeInferInfo(prior_op, cur_node, output_idx);
+  if (!single_output) {
+    MS_EXCEPTION_IF_NULL(x_node);
+    ChangeNodeInferInfo(x_node->cast<CNodePtr>(), cur_node, 0);
+  }
   auto prior_name = AnfAlgo::GetCNodeName(prior_op);
   if (prior_name == kFive2FourOpName) {
     AnfAlgo::CopyNodeAttr("dst_type", "dstType", cur_node, prior_op);

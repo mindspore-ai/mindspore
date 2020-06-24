@@ -45,7 +45,7 @@ class DropoutGradGpuFwdKernel : public GpuKernel {
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
   size_t num_count_;
-  float drop_prob_;
+  float keep_prob_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

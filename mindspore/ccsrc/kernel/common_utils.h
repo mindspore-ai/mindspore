@@ -20,9 +20,12 @@
 #include <dirent.h>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <map>
 #include <string>
 #include <vector>
+#include <utility>
+#include <nlohmann/json.hpp>
 #include "kernel/kernel.h"
 #include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_build_info.h"
@@ -69,19 +72,64 @@ class KernelMeta {
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
 
+struct SparseGradient {
+  float *value_;
+  int *indices_;
+  size_t indices_size_;
+};
+
+struct MultiThreadComputeParams {
+  float *var_;
+  float *accum_;
+  float *linear_;
+  float *m_;
+  float *m_t_;
+  float *v_;
+  float lr_;
+  float l1_;
+  float l2_;
+  float lr_power_;
+  float beta1_;
+  float beta2_;
+  float epsilon_;
+  SparseGradient sparse_grad_;
+  size_t var_first_dim_size_;
+  size_t var_outer_dim_size_;
+  bool use_nesterov_;
+};
+using MultiThreadComputeFunc = std::function<void(MultiThreadComputeParams *param, size_t start, size_t end)>;
+
 bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
 TypeId DtypeToTypeId(const std::string &dtypes);
-std::string Dtype2String(const std::string &dtypes);
 std::string Dtype2ShortType(const std::string &dtypes);
 std::string TypeId2String(TypeId type_id);
 size_t GetDtypeNbyte(const std::string &dtypes);
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
-bool IsAtomicNode(const CNodePtr &kernel_node);
 void SaveJsonInfo(const std::string &json_name, const std::string &info);
 std::string GetProcessor(const AnfNodePtr &anf_node);
+bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
+int Sign(float x);
+void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                              size_t outer_dim);
+void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                          size_t outer_dim);
+std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index);
+std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                                            const std::vector<AnfNodePtr> &input_list);
+std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                          const std::vector<AnfNodePtr> &input_list,
+                                                          const std::vector<AnfNodePtr> &output_list);
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
+                         std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list);
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list);
+bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json);
+void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list);
+bool IsWeightBoundary(const AnfNodePtr &node);
+void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params, size_t thread_num,
+                        size_t total_compute_size);
 }  // namespace kernel
 }  // namespace mindspore
 

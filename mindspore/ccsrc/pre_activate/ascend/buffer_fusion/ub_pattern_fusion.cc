@@ -206,6 +206,7 @@ void ReplaceOldNode(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusi
 void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
                                    std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto nodes = TopoSort(kernel_graph->get_return());
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -231,6 +232,7 @@ void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
     auto fusion_info = buffer_fusion_info.second;
     for (const auto &node : fusion_info.anf_nodes) {
       auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
       for (size_t idx = 1; idx < cnode->inputs().size(); ++idx) {
         auto real_input = AnfAlgo::VisitKernel(cnode->input(idx), 0);
         if (std::find(fusion_info.anf_nodes.begin(), fusion_info.anf_nodes.end(), real_input.first) ==
@@ -253,6 +255,14 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   auto getitem2 = node2->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(getitem1);
   MS_EXCEPTION_IF_NULL(getitem2);
+  if (getitem1->size() < kTupleGetItemInputSize) {
+    MS_LOG(EXCEPTION) << "node's input size less than " << kTupleGetItemInputSize << ", getitem1["
+                      << getitem1->DebugString() << "]";
+  }
+  if (getitem2->size() < kTupleGetItemInputSize) {
+    MS_LOG(EXCEPTION) << "node's input size less than " << kTupleGetItemInputSize << ", getitem1["
+                      << getitem2->DebugString() << "]";
+  }
   auto output_idx1 = GetValue<int>(GetValueNode(getitem1->input(2)));
   auto output_idx2 = GetValue<int>(GetValueNode(getitem2->input(2)));
   return output_idx1 < output_idx2;
@@ -285,6 +295,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
                        [](const std::pair<AnfNodePtr, int> &use_node) { return use_node.first; });
         std::sort(tuple_getitem_nodes.begin(), tuple_getitem_nodes.end(), TupleGetitemNodeCompare);
         for (auto getitem : tuple_getitem_nodes) {
+          MS_EXCEPTION_IF_NULL(getitem);
           auto getitem_ptr = getitem->cast<CNodePtr>();
           auto input2 = getitem_ptr->input(2);
           auto output_idx = GetValue<int>(GetValueNode(input2));
@@ -313,6 +324,7 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
   MS_EXCEPTION_IF_NULL(manager);
   for (size_t idx = 0; idx < outputs_list.size(); ++idx) {
     auto output = outputs_list[idx];
+    MS_EXCEPTION_IF_NULL(output);
     if (output->isa<CNode>() && AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
       auto real_output = AnfAlgo::VisitKernel(output, 0);
       auto output_cnode = output->cast<CNodePtr>();
@@ -393,6 +405,7 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
 bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos,
                                       int32_t fusion_id, const kernel::KernelModPtr &kernel_ptr,
                                       session::KernelGraph *kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];
   auto buffer_fusion = CreateFusionOp(buffer_fusion_info.inputs_list, buffer_fusion_info.outputs_list,
                                       buffer_fusion_info.anf_nodes, kernel_graph);

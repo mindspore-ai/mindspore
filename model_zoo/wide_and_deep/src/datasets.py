@@ -17,10 +17,19 @@
 
 import os
 import math
+from enum import Enum
 import numpy as np
 import pandas as pd
 import mindspore.dataset.engine as de
 import mindspore.common.dtype as mstype
+
+class DataType(Enum):
+    """
+    Enumerate supported dataset format.
+    """
+    MINDRECORD = 1
+    TFRECORD = 2
+    H5 = 3
 
 
 class H5Dataset():
@@ -193,15 +202,60 @@ def _get_tf_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
     ds = ds.repeat(epochs)
     return ds
 
+def _get_mindrecord_dataset(directory, train_mode=True, epochs=1, batch_size=1000,
+                            line_per_sample=1000, rank_size=None, rank_id=None):
+    """
+    Get dataset with mindrecord format.
+
+    Args:
+        directory (str): Dataset directory.
+        train_mode (bool): Whether dataset is use for train or eval (default=True).
+        epochs (int): Dataset epoch size (default=1).
+        batch_size (int): Dataset batch size (default=1000).
+        line_per_sample (int): The number of sample per line (default=1000).
+        rank_size (int): The number of device, not necessary for single device (default=None).
+        rank_id (int): Id of device, not necessary for single device (default=None).
+
+    Returns:
+        Dataset.
+    """
+    file_prefix_name = 'train_input_part.mindrecord' if train_mode else 'test_input_part.mindrecord'
+    file_suffix_name = '00' if train_mode else '0'
+    shuffle = train_mode
+
+    if rank_size is not None and rank_id is not None:
+        ds = de.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
+                            columns_list=['feat_ids', 'feat_vals', 'label'],
+                            num_shards=rank_size, shard_id=rank_id, shuffle=shuffle,
+                            num_parallel_workers=8)
+    else:
+        ds = de.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
+                            columns_list=['feat_ids', 'feat_vals', 'label'],
+                            shuffle=shuffle, num_parallel_workers=8)
+    ds = ds.batch(int(batch_size / line_per_sample), drop_remainder=True)
+    ds = ds.map(operations=(lambda x, y, z: (np.array(x).flatten().reshape(batch_size, 39),
+                                             np.array(y).flatten().reshape(batch_size, 39),
+                                             np.array(z).flatten().reshape(batch_size, 1))),
+                input_columns=['feat_ids', 'feat_vals', 'label'],
+                columns_order=['feat_ids', 'feat_vals', 'label'],
+                num_parallel_workers=8)
+    ds = ds.repeat(epochs)
+    return ds
+
 
 def create_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
-                   is_tf_dataset=True, line_per_sample=1000, rank_size=None, rank_id=None):
+                   data_type=DataType.TFRECORD, line_per_sample=1000, rank_size=None, rank_id=None):
     """
     create_dataset
     """
-    if is_tf_dataset:
+    if data_type == DataType.TFRECORD:
         return _get_tf_dataset(data_dir, train_mode, epochs, batch_size,
                                line_per_sample, rank_size=rank_size, rank_id=rank_id)
+    if data_type == DataType.MINDRECORD:
+        return _get_mindrecord_dataset(data_dir, train_mode, epochs,
+                                       batch_size, line_per_sample,
+                                       rank_size, rank_id)
+
     if rank_size > 1:
         raise RuntimeError("please use tfrecord dataset.")
     return _get_h5_dataset(data_dir, train_mode, epochs, batch_size)

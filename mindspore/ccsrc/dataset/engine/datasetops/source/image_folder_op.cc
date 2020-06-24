@@ -26,8 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-ImageFolderOp::Builder::Builder()
-    : builder_decode_(false), builder_recursive_(false), builder_num_samples_(0), builder_sampler_(nullptr) {
+ImageFolderOp::Builder::Builder() : builder_decode_(false), builder_recursive_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -37,7 +36,9 @@ ImageFolderOp::Builder::Builder()
 Status ImageFolderOp::Builder::Build(std::shared_ptr<ImageFolderOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    const int64_t num_samples = 0;  // default num samples of 0 means to sample entire set of data
+    const int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   TensorShape scalar = TensorShape::CreateScalar();
@@ -46,9 +47,9 @@ Status ImageFolderOp::Builder::Build(std::shared_ptr<ImageFolderOp> *ptr) {
   RETURN_IF_NOT_OK(builder_schema_->AddColumn(
     ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar)));
   *ptr = std::make_shared<ImageFolderOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
-                                         builder_op_connector_size_, builder_num_samples_, builder_recursive_,
-                                         builder_decode_, builder_extensions_, builder_labels_to_read_,
-                                         std::move(builder_schema_), std::move(builder_sampler_));
+                                         builder_op_connector_size_, builder_recursive_, builder_decode_,
+                                         builder_extensions_, builder_labels_to_read_, std::move(builder_schema_),
+                                         std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -61,20 +62,18 @@ Status ImageFolderOp::Builder::SanityCheck() {
 }
 
 ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size,
-                             int64_t num_samples, bool recursive, bool do_decode, const std::set<std::string> &exts,
+                             bool recursive, bool do_decode, const std::set<std::string> &exts,
                              const std::map<std::string, int32_t> &map, std::unique_ptr<DataSchema> data_schema,
                              std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_wkrs, queue_size),
       rows_per_buffer_(rows_per_buffer),
       folder_path_(file_dir),
-      num_samples_(num_samples),
       recursive_(recursive),
       decode_(do_decode),
       extensions_(exts),
       class_index_(map),
       data_schema_(std::move(data_schema)),
       sampler_(std::move(sampler)),
-      num_rows_(0),
       row_cnt_(0),
       buf_cnt_(0),
       sampler_ind_(0),
@@ -117,7 +116,11 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   }
   image_label_pairs_.shrink_to_fit();
   num_rows_ = image_label_pairs_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
+  if (num_rows_ == 0) {
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ImageFolderDatasetV2.Please check file path or dataset "
+      "API validation first.");
+  }
   // free memory of two queues used for pre-scan
   folder_name_queue_->Reset();
   image_name_queue_->Reset();
@@ -128,7 +131,7 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
 Status ImageFolderOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
   while (true) {  // each iterator is 1 epoch
     std::vector<int64_t> keys;
     keys.reserve(rows_per_buffer_);
@@ -138,8 +141,7 @@ Status ImageFolderOp::operator()() {
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       if (sample_ids->type() != DataType(DataType::DE_INT64)) RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't int64");
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) continue;    // index out of bound, skipping
-        if (row_cnt_ >= num_samples_) break;  // enough row read, break for loop
+        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
         keys.push_back(*itr);
         row_cnt_++;
         if (row_cnt_ % rows_per_buffer_ == 0) {
@@ -148,7 +150,7 @@ Status ImageFolderOp::operator()() {
           keys.clear();
         }
       }
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
     if (keys.empty() == false) {
       RETURN_IF_NOT_OK(
@@ -169,7 +171,7 @@ Status ImageFolderOp::operator()() {
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());  // Master thread goes to sleep after it has made all the IOBlocks
       wp_.Clear();
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
   }
 }
@@ -202,23 +204,13 @@ Status ImageFolderOp::WorkerEntry(int32_t worker_id) {
 }
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
-Status ImageFolderOp::LoadTensorRow(ImageLabelPair pairPtr, TensorRow *trow) {
+Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, TensorRow *trow) {
   std::shared_ptr<Tensor> image, label;
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
                                         data_schema_->column(1).type(),
                                         reinterpret_cast<unsigned char *>(&pairPtr->second)));
-  std::ifstream fs;
-  fs.open(folder_path_ + (pairPtr->first), std::ios::binary | std::ios::in);
-  if (fs.fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + pairPtr->first);
-  }
-  int64_t num_elements = fs.seekg(0, std::ios::end).tellg();
-  (void)fs.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
-                                        TensorShape(std::vector<dsize_t>(1, num_elements)),
-                                        data_schema_->column(0).type(), nullptr));
-  (void)fs.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
-  fs.close();
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, folder_path_ + (pairPtr->first)));
+
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
@@ -226,7 +218,7 @@ Status ImageFolderOp::LoadTensorRow(ImageLabelPair pairPtr, TensorRow *trow) {
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
-  (*trow) = {std::move(image), std::move(label)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
 
@@ -235,7 +227,7 @@ Status ImageFolderOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_p
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
   for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_label_pairs_[key], &trow));
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_label_pairs_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
@@ -260,7 +252,7 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
 
 // Reset Sampler and wakeup Master thread (functor)
 Status ImageFolderOp::Reset() {
-  RETURN_IF_NOT_OK(sampler_->Reset());
+  RETURN_IF_NOT_OK(sampler_->ResetSampler());
   row_cnt_ = 0;
   wp_.Set();  // wake up master thread after reset is done
   return Status::OK();
@@ -269,28 +261,6 @@ Status ImageFolderOp::Reset() {
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status ImageFolderOp::InitSampler() {
   RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status ImageFolderOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_samples_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ImageFolderDatasetV2.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status ImageFolderOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ImageFolderDatasetV2.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_rows_;
   return Status::OK();
 }
 
@@ -353,9 +323,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
 // if mRecursive == false, don't go into folder of folders
 Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(dir);
-  if (dir_itr == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error encountered when indexing files");
-  }
+  RETURN_UNEXPECTED_IF_NULL(dir_itr);
   while (dir_itr->hasNext()) {
     Path subdir = dir_itr->next();
     if (subdir.IsDirectory()) {
@@ -389,9 +357,7 @@ Status ImageFolderOp::startAsyncWalk() {
 }
 
 Status ImageFolderOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
-  }
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   // Registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(folder_name_queue_->Register(tree_->AllTasks()));
@@ -413,16 +379,14 @@ Status ImageFolderOp::LaunchThreadsAndInitOp() {
   return Status::OK();
 }
 
-Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const int64_t &num_samples,
-                                          const std::set<std::string> &exts, int64_t *num_rows, int64_t *num_classes,
-                                          int64_t dev_id, int64_t num_dev) {
+Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::set<std::string> &exts, int64_t *num_rows,
+                                          int64_t *num_classes, int64_t dev_id, int64_t num_dev) {
   Path dir(path);
   std::string err_msg = "";
   int64_t row_cnt = 0;
   err_msg += (dir.Exists() == false || dir.IsDirectory() == false) ? "unable to open dir " + path : "";
   err_msg += (num_classes == nullptr || num_rows == nullptr) ? "num_class/num_rows is null\n" : "";
   err_msg += (dev_id >= num_dev || num_dev <= 0) ? "invalid sharding config\n" : "";
-  err_msg += num_samples < 0 ? "num_samples can't be negative! set it to 0 to use all samples\n" : "";
   if (err_msg.empty() == false) {
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -441,10 +405,6 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const int64_t
     while (dir_itr->hasNext()) {
       if (exts.empty() || exts.find(subdir.Extension()) != exts.end()) {
         ++row_cnt;
-        if (row_cnt == num_samples * num_dev) {
-          (*num_rows) = (row_cnt / num_dev) + (row_cnt % num_dev == 0 ? 0 : 1);
-          return Status::OK();
-        }
       }
     }
     foldernames.pop();

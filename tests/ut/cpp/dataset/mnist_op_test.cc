@@ -53,13 +53,11 @@ Status Create1DTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements,
                       DataType::Type data_type = DataType::DE_UINT32);
 
 std::shared_ptr<MnistOp> CreateMnist(int64_t num_wrks, int64_t rows, int64_t conns, std::string path,
-                                     bool shuf = false, std::unique_ptr<Sampler> sampler = nullptr,
-                                     int64_t num_samples = 0) {
+                                     bool shuf = false, std::shared_ptr<Sampler> sampler = nullptr) {
   std::shared_ptr<MnistOp> so;
   MnistOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_wrks).SetDir(path).SetRowsPerBuffer(rows)
-                     .SetOpConnectorSize(conns).SetSampler(std::move(sampler))
-                     .SetNumSamples(num_samples).Build(&so);
+                     .SetOpConnectorSize(conns).SetSampler(std::move(sampler)).Build(&so);
   return so;
 }
 
@@ -74,7 +72,10 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
   // appear in this dataset
   // Example: python tests/dataset/data/prep_data.py
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  auto tree = Build({CreateMnist(16, 2, 32, folder_path, false, nullptr, 10), Repeat(2)});
+  int64_t num_samples = 10;
+  int64_t start_index = 0;
+  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto tree = Build({CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler)), Repeat(2)});
   tree->Prepare();
   uint32_t res[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   Status rc = tree->Launch();
@@ -101,7 +102,10 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
 
 TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  auto tree = Build({CreateMnist(16, 2, 32, folder_path, false, nullptr, 10), Repeat(2), Batch(5)});
+  int64_t num_samples = 10;
+  int64_t start_index = 0;
+  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto tree = Build({CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler)), Repeat(2), Batch(5)});
   tree->Prepare();
   uint32_t res[4][5] = { {0, 0, 0, 0, 0 },
                          {0, 0, 0, 0, 0 },

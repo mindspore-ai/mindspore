@@ -21,10 +21,37 @@
 #include "session/anf_runtime_algorithm.h"
 #include "pre_activate/common/helper.h"
 #include "session/kernel_graph.h"
+#include "kernel/common_utils.h"
+#include "device/kernel_info.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+bool MakeValueNode(const AnfNodePtr &node) {
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return false;
+  }
+
+  // create kernel_info fo new value node
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  value_node->set_kernel_info(kernel_info);
+  // create kernel_build_info for new value node
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  // set the format of value_node to DEFAULT_FORMAT
+  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+  // set value node initial device data type = infer data type
+  TypeId infer_data_type;
+  if (AnfAlgo::GetOutputTensorNum(value_node) == 0) {
+    infer_data_type = kTypeUnknown;
+  } else {
+    infer_data_type = AnfAlgo::GetOutputInferDataType(value_node, 0);
+  }
+  kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{infer_data_type});
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), value_node.get());
+  return true;
+}
+
 void ConvertTupleOuputToPlantInputs(const FuncGraphPtr &graph, const AnfNodePtr &input_node,
                                     std::vector<AnfNodePtr> *plant_inputs, std::vector<int> *dyn_input_sizes) {
   MS_EXCEPTION_IF_NULL(plant_inputs);
@@ -50,12 +77,12 @@ void ConvertTupleOuputToPlantInputs(const FuncGraphPtr &graph, const AnfNodePtr 
   (void)std::copy(convert_inputs.begin(), convert_inputs.end(), std::back_inserter(*plant_inputs));
 }
 
-CNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
+void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
   auto &ori_args = cnode_ptr->inputs();
   if (ori_args.size() < 1) {
-    return nullptr;
+    return;
   }
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int> dyn_input_sizes;
@@ -68,8 +95,17 @@ CNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNo
       auto cnode = input_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
-      (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(plant_inputs));
-    } else if (AnfAlgo::IsTupleOutput(input_node)) {
+      for (size_t j = 1; j < inputs.size(); ++j) {
+        MS_EXCEPTION_IF_NULL(inputs[j]);
+        if (IsValueNode<tensor::Tensor>(inputs[j])) {
+          auto success = MakeValueNode(inputs[j]);
+          if (!success) {
+            MS_LOG(WARNING) << "Make value node failed, " << inputs[j]->DebugString();
+          }
+        }
+        plant_inputs.push_back(inputs[j]);
+      }
+    } else if (input_node->Type() != nullptr && AnfAlgo::IsTupleOutput(input_node)) {
       ConvertTupleOuputToPlantInputs(graph, input_node, &plant_inputs, &dyn_input_sizes);
     } else {
       dyn_input_sizes.push_back(-1);
@@ -81,7 +117,6 @@ CNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNo
     AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode_ptr);
     cnode_ptr->set_inputs(plant_inputs);
   }
-  return cnode_ptr;
 }
 }  // namespace
 
@@ -96,7 +131,18 @@ const AnfNodePtr ConvertTupleInputToDynamicInput::Process(const FuncGraphPtr &fu
   if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealKernel(node)) {
     return nullptr;
   }
-  return ConvertMakeTupleInputToPlantInputs(func_graph, node->cast<CNodePtr>());
+  if (AnfAlgo::IsGraphKernel(node)) {
+    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    std::vector<AnfNodePtr> todos;
+    kernel::GetValidKernelNodes(sub_graph, &todos);
+    for (auto &t : todos) {
+      ConvertMakeTupleInputToPlantInputs(sub_graph, t->cast<CNodePtr>());
+    }
+  } else {
+    ConvertMakeTupleInputToPlantInputs(func_graph, node->cast<CNodePtr>());
+  }
+  return node;
 }
 }  // namespace opt
 }  // namespace mindspore

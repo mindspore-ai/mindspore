@@ -334,8 +334,8 @@ ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairL
 
 FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-  ptrGraph->set_flags(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
   ptrGraph->debug_info()->set_name("hyper_map");
 
   AnfNodePtr ptrFnArg = nullptr;
@@ -389,7 +389,7 @@ FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tu
   MS_EXCEPTION_IF_NULL(a_tuple);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("tail");
   AnfNodePtr ptrTup = ret->add_parameter();
 
@@ -409,7 +409,7 @@ FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr &a_list
   MS_EXCEPTION_IF_NULL(a_list);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("tail");
   AnfNodePtr ptrList = ret->add_parameter();
 
@@ -481,10 +481,10 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
     grads.push_back(b->NewCNode({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
   }
 
-  b->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   b->set_output(b->NewCNode(grads));
 
-  fg->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg->set_output(fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeTuple));
   return fg;
@@ -501,9 +501,15 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
 }
 
 FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
-                                    const std::vector<AnfNodePtr> &params_list, bool applyJ) {
+                                    const std::vector<AnfNodePtr> &params_list, const std::vector<AnfNodePtr> &args,
+                                    bool applyJ) {
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+
+  auto weights_node = weights;
+  if (weights == nullptr && !args.empty()) {
+    weights_node = ret->NewCNode(args);
+  }
 
   ValueNodePtr opsJ = NewValueNode(prim::kPrimJ);
   ValueNodePtr opsTupleItem = NewValueNode(prim::kPrimTupleGetItem);
@@ -537,7 +543,7 @@ FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
   inputs.push_back(NewValueNode(1));
   AnfNodePtr ptrBprop = ret->NewCNode(inputs);
 
-  doGetGrad(ret, out, ptrBprop, weights, opsTupleItem);
+  doGetGrad(ret, out, ptrBprop, weights_node, opsTupleItem);
   return ret;
 }
 
@@ -619,7 +625,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   std::ostringstream ss;
   ss << "grad{" << nparam << "}";
-  dfBuilder->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  dfBuilder->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   dfBuilder->debug_info()->set_name(ss.str());
   ParameterPtr param_graph = dfBuilder->add_parameter();
 
@@ -665,7 +671,7 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
   }
 
   FuncGraphPtr fg_ptr = std::make_shared<FuncGraph>();
-  fg_ptr->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fg_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg_ptr->debug_info()->set_name("list_map");
   AnfNodePtr fn = fg_ptr->add_parameter();
 
@@ -735,7 +741,7 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
   // cond = reduce(lambda a, b: g.apply(P.bool_and, a, b), hasnexts)
   FuncGraphPtr fgtrue_ptr = std::make_shared<FuncGraph>();
   fgtrue_ptr->debug_info()->set_name("ftrue");
-  fgtrue_ptr->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fgtrue_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
   CNodePtr fgtrue_output_cnode = fgtrue_ptr->NewCNode({NewValueNode(fgnext_ptr), fn, resl});
   auto inputs = fgtrue_output_cnode->inputs();
@@ -745,7 +751,7 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
 
   FuncGraphPtr fgfalse_ptr = std::make_shared<FuncGraph>();
   fgfalse_ptr->debug_info()->set_name("ffalse");
-  fgfalse_ptr->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  fgfalse_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fgfalse_ptr->set_output(resl);
 
   AnfNodePtr output_cnode = fg_ptr->NewCNode({NewValueNode(prim::kPrimSwitch), NewValueNode(std::string("cond")),
@@ -802,7 +808,7 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
   }
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   AnfNodePtr p_tup_a = ret->add_parameter();
   AnfNodePtr p_tup_b = ret->add_parameter();
 
@@ -906,7 +912,7 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   GenerateTupleSliceParameter(tuple, slice, &start_index, &stop_index, &step_value);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   AnfNodePtr p_tuple = ret->add_parameter();
   (void)ret->add_parameter();
 
@@ -926,206 +932,6 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   return ret;
 }
 
-int ConvertBinaryToDecimal(const std::vector<unsigned int> &number_bin) {
-  unsigned int number_dec = 0;
-  for (size_t index = 0; index < number_bin.size(); index++) {
-    number_dec |= number_bin[index] << index;
-  }
-  return static_cast<int>(number_dec);
-}
-
-void ParseSlice(const AbstractSlicePtr &slice, std::vector<int> *begin, std::vector<int> *end,
-                std::vector<int> *strides, int length) {
-  MS_EXCEPTION_IF_NULL(slice);
-  MS_EXCEPTION_IF_NULL(begin);
-  MS_EXCEPTION_IF_NULL(end);
-  MS_EXCEPTION_IF_NULL(strides);
-  if (length <= 0) {
-    MS_LOG(EXCEPTION) << "Could not slice a dim when it's length less than 1";
-  }
-
-  int start_default = 0;
-  int stop_default = length;
-  int step_default = 1;
-  int step_value = CheckSliceMember(slice->step(), step_default, "step");
-  if (step_value < 0) {
-    start_default = -1;
-    stop_default = -(length + 1);
-  }
-
-  begin->push_back(CheckSliceMember(slice->start(), start_default, "begin"));
-  end->push_back(CheckSliceMember(slice->stop(), stop_default, "stop"));
-  strides->push_back(step_value);
-}
-
-int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr &slice_tuple, const std::vector<int> &shape,
-                                            std::vector<int> *begin, std::vector<int> *end, std::vector<int> *strides) {
-  MS_EXCEPTION_IF_NULL(slice_tuple);
-  MS_EXCEPTION_IF_NULL(begin);
-  MS_EXCEPTION_IF_NULL(end);
-  MS_EXCEPTION_IF_NULL(strides);
-
-  size_t slice_tuple_size = slice_tuple->size();
-  size_t shape_size = shape.size();
-  if (slice_tuple_size > shape_size) {
-    MS_LOG(EXCEPTION) << "The number of slice data to slice tensor should be less than the rank of tensor,"
-                         "when the rank of tensor is "
-                      << shape_size << ", the number of slice is " << slice_tuple_size;
-  }
-
-  std::vector<unsigned int> shrink;
-  auto slice_tuple_eles = slice_tuple->elements();
-  size_t ellipsis_num = 0;
-
-  for (size_t index = 0; index < slice_tuple_size; index++) {
-    if (slice_tuple_eles[index]->isa<AbstractSlice>()) {
-      AbstractSlicePtr slice = dyn_cast<AbstractSlice>(slice_tuple_eles[index]);
-      ParseSlice(slice, begin, end, strides, shape[index]);
-      shrink.push_back(0);
-      continue;
-    }
-
-    if (slice_tuple_eles[index]->isa<AbstractScalar>()) {
-      int ele_index = GetArgScalarValue(dyn_cast<AbstractScalar>(slice_tuple_eles[index]), "slice_tuple");
-      begin->push_back(ele_index);
-      end->push_back(ele_index + 1);
-      strides->push_back(1);
-      shrink.push_back(1);
-      continue;
-    }
-
-    if (slice_tuple_eles[index]->isa<AbstractEllipsis>()) {
-      ellipsis_num++;
-      if (ellipsis_num > 1) {
-        MS_LOG(EXCEPTION) << "Tensor slice supports at most one ellipsis";
-      }
-      size_t ellipsis_len = shape_size - (slice_tuple_size - 1);
-      begin->insert(begin->end(), ellipsis_len, 0);
-      end->insert(end->end(), shape.begin() + index, shape.begin() + index + ellipsis_len);
-      strides->insert(strides->end(), ellipsis_len, 1);
-      shrink.insert(shrink.end(), ellipsis_len, 0);
-      continue;
-    }
-
-    MS_LOG(EXCEPTION) << "Slice tuple only could contain slice, int number or ellipsis, but got "
-                      << slice_tuple_eles[index]->ToString();
-  }
-
-  if (ellipsis_num == 0) {
-    for (size_t index = slice_tuple_size; index < shape_size; index++) {
-      begin->push_back(0);
-      end->push_back(shape[index]);
-      strides->push_back(1);
-    }
-  }
-  return ConvertBinaryToDecimal(shrink);
-}
-
-int GenerateStridedSliceParametersFromSlice(const AbstractSlicePtr &slice, const std::vector<int> &shape,
-                                            std::vector<int> *begin, std::vector<int> *end, std::vector<int> *strides) {
-  MS_EXCEPTION_IF_NULL(begin);
-  MS_EXCEPTION_IF_NULL(end);
-  MS_EXCEPTION_IF_NULL(strides);
-  size_t shape_size = shape.size();
-  if (shape_size == 0) {
-    MS_LOG(EXCEPTION) << "Could slice a scalar tensor";
-  }
-
-  ParseSlice(slice, begin, end, strides, shape[0]);
-
-  for (size_t index = 1; index < shape_size; index++) {
-    begin->push_back(0);
-    end->push_back(shape[index]);
-    strides->push_back(1);
-  }
-
-  return 0;
-}
-
-int GenerateStridedSliceParametersFromNumber(const AbstractScalarPtr &scalar, const std::vector<int> &shape,
-                                             std::vector<int> *begin, std::vector<int> *end,
-                                             std::vector<int> *strides) {
-  MS_EXCEPTION_IF_NULL(begin);
-  MS_EXCEPTION_IF_NULL(end);
-  MS_EXCEPTION_IF_NULL(strides);
-  int ele_index = GetArgScalarValue(scalar, "slice_tuple");
-
-  begin->push_back(ele_index);
-  end->push_back(ele_index + 1);
-  strides->push_back(1);
-
-  for (size_t index = 1; index < shape.size(); index++) {
-    begin->push_back(0);
-    end->push_back(shape[index]);
-    strides->push_back(1);
-  }
-
-  return 1;
-}
-
-FuncGraphPtr ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) {
-  auto PrimExpandDims = GetPythonOps("expand_dims", "mindspore.ops.functional");
-  ret_graph->set_output(NewCNode({NewValueNode(PrimExpandDims), tensor_node, NewValueNode(0)}, ret_graph));
-  return ret_graph;
-}
-
-FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  // slice a tensor
-  // args: tensor, slice or slice tuple
-  const std::string op_name = std::string("TensorSlice");
-  abstract::CheckArgsSize(op_name, args_spec_list, 2);
-  AbstractTensorPtr tensorPtr = abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-
-  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-  AnfNodePtr tensor_node = ret_graph->add_parameter();
-  (void)ret_graph->add_parameter();
-
-  auto shape = tensorPtr->shape()->shape();
-  std::vector<int> begin;
-  std::vector<int> end;
-  std::vector<int> strides;
-  int shrink_axis_mask;
-
-  if (args_spec_list[1]->isa<AbstractTuple>()) {
-    AbstractTuplePtr tuple_ptr = dyn_cast<AbstractTuple>(args_spec_list[1]);
-    shrink_axis_mask = GenerateStridedSliceParametersFromTuple(tuple_ptr, shape, &begin, &end, &strides);
-  } else if (args_spec_list[1]->isa<AbstractSlice>()) {
-    AbstractSlicePtr slice_ptr = dyn_cast<AbstractSlice>(args_spec_list[1]);
-    shrink_axis_mask = GenerateStridedSliceParametersFromSlice(slice_ptr, shape, &begin, &end, &strides);
-  } else if (args_spec_list[1]->isa<AbstractScalar>()) {
-    AbstractScalarPtr scalar_ptr = dyn_cast<AbstractScalar>(args_spec_list[1]);
-    if (scalar_ptr->BuildValue()->isa<BoolImm>()) {
-      if (scalar_ptr->BuildValue()->cast<BoolImmPtr>()->value()) {
-        return ExpandADim(ret_graph, tensor_node);
-      }
-      MS_LOG(EXCEPTION) << "TensorSlice not support the index is False.";
-    }
-    shrink_axis_mask = GenerateStridedSliceParametersFromNumber(scalar_ptr, shape, &begin, &end, &strides);
-  } else if (args_spec_list[1]->isa<AbstractEllipsis>()) {
-    ret_graph->set_output(tensor_node);
-    return ret_graph;
-  } else if (args_spec_list[1]->isa<AbstractNone>()) {
-    return ExpandADim(ret_graph, tensor_node);
-  } else {
-    std::ostringstream args_info;
-    for (const auto &arg : args_spec_list) {
-      MS_EXCEPTION_IF_NULL(arg);
-      args_info << arg->ToString() << "\n";
-    }
-    MS_LOG(EXCEPTION)
-      << "TensorSlice requires the input should be one of [slice, ellipsis, int number, bool, none, tuple] , but got "
-      << args_info.str();
-  }
-
-  auto PrimStridedSliceClass = prim::GetPythonOps("StridedSlice", "mindspore.ops.operations");
-  auto PrimStridedSlice = ret_graph->NewCNode({NewValueNode(PrimStridedSliceClass), NewValueNode(0), NewValueNode(0),
-                                               NewValueNode(0), NewValueNode(0), NewValueNode(shrink_axis_mask)});
-  ret_graph->set_output(ret_graph->NewCNode(
-    {PrimStridedSlice, tensor_node, NewValueNode(begin), NewValueNode(end), NewValueNode(strides)}));
-  return ret_graph;
-}
-
 FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // select indexed item
   // args: tuple of items, index
@@ -1135,7 +941,7 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   AbstractBasePtrList branches = branches_abs->elements();
   if (branches.size() > 0 && branches[0] != nullptr && branches[0]->isa<AbstractFunction>()) {
     FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-    ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+    ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
     AnfNodePtr functions = ret_graph->add_parameter();
     auto index = ret_graph->add_parameter();
 
@@ -1153,11 +959,6 @@ REGISTER_PYBIND_DEFINE(TupleAdd_, ([](const py::module *m) {
 
 REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module *m) {
                          (void)py::class_<TupleSlice, MetaFuncGraph, std::shared_ptr<TupleSlice>>(*m, "TupleSlice_")
-                           .def(py::init<std::string &>());
-                       }));
-
-REGISTER_PYBIND_DEFINE(TensorSlice_, ([](const py::module *m) {
-                         (void)py::class_<TensorSlice, MetaFuncGraph, std::shared_ptr<TensorSlice>>(*m, "TensorSlice_")
                            .def(py::init<std::string &>());
                        }));
 

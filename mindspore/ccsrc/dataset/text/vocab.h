@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATASET_NLP_VOCAB_H_
-#define DATASET_NLP_VOCAB_H_
+#ifndef DATASET_TEXT_VOCAB_H_
+#define DATASET_TEXT_VOCAB_H_
 
 #include <string>
 #include <memory>
@@ -45,7 +45,8 @@ class Vocab {
   // @param const py::list &words - a list of string, used to build vocab, id starts from 2
   // @param std::shared_ptr<Vocab> *vocab - return value, vocab object
   // @return error code
-  static Status BuildFromPyList(const py::list &words, std::shared_ptr<Vocab> *vocab);
+  static Status BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
+                                std::shared_ptr<Vocab> *vocab);
 
   // Build a vocab from reading a vocab file, id are automatically assigned, start from 2
   // @param std::string &path - path to vocab file , each line is assumed to contain 1 word
@@ -54,7 +55,7 @@ class Vocab {
   // @param std::shared_ptr<Vocab> *vocab - return value, vocab object
   // @return error code
   static Status BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
-                              std::shared_ptr<Vocab> *vocab);
+                              const py::list &special_tokens, bool prepend_special, std::shared_ptr<Vocab> *vocab);
 
   // Lookup the id of a word, if word doesn't exist in vocab, return default_id
   // @param const WordType word - word to look up
@@ -65,26 +66,26 @@ class Vocab {
   // reverse lookup, lookup the word based on its id
   // @param WordIdType id - word id to lookup to
   // @return WordType the word
-  WordType Lookup(WordIdType id) const;
+  WordType Lookup(WordIdType id);
 
   // constructor, shouldn't be called directly, can't be private due to std::make_unique()
   // @param std::unordered_map<WordType, WordIdType> map - sanitized word2id map
   explicit Vocab(std::unordered_map<WordType, WordIdType> map);
 
+  Vocab() = default;
+
+  // add one word to vocab, increment it's index automatically
+  // @param std::string & word - word to be added will skip if word already exists
+  void append_word(const std::string &word);
+
+  // destructor
   ~Vocab() = default;
-
-  // enum type that holds all special tokens, add more if needed
-  enum kSpecialTokens : WordIdType { pad = 0, unk = 1, num_tokens = 2 };
-
-  // reversed lookup table for the reserved tokens
-  static const std::vector<WordType> reserved_token_str_;
 
  private:
   std::unordered_map<WordType, WordIdType> word2id_;
-  std::vector<WordType> id2word_;  // reverse lookup
 };
 
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_NLP_VOCAB_H_
+#endif  // DATASET_TEXT_VOCAB_H_

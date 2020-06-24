@@ -27,10 +27,11 @@ namespace mindspore {
 namespace dataset {
 class DistributedSampler : public Sampler {
  public:
-  // @param int64_t numDev
-  // @param int64_t devId
+  // @param num_samples
+  // @param int64_t num_dev
+  // @param int64_t dev_id
   // @param bool shuffle
-  DistributedSampler(int64_t num_dev, int64_t dev_id, bool shuffle = true,
+  DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
                      uint32_t seed = std::numeric_limits<uint32_t>::max());
 
   // default destructor
@@ -39,14 +40,14 @@ class DistributedSampler : public Sampler {
   // @param std::unique_ptr<DataBuffer> * pBuffer
   // @param int32_t workerId
   // @return - The error code return
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
   // Init sampler, called by base class or python
   Status InitSampler() override;
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
   void Print(std::ostream &out, bool show_all) const override;
 

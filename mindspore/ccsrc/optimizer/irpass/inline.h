@@ -71,11 +71,7 @@ class ReplaceApplicator : public AnfVisitor {
 using CriterionFuncType = std::function<bool(FuncGraphPtr, AnfNodePtr)>;
 
 bool IsTrivial(const FuncGraphPtr &fg, AnfNodePtr) {
-  auto &s = fg->nodes();
-  int n_cnode = std::count_if(s.begin(), s.end(), [](const AnfNodePtr &n) {
-    MS_EXCEPTION_IF_NULL(n);
-    return n->isa<CNode>();
-  });
+  auto n_cnode = fg->nodes().size() - fg->parameters().size();
   // There is at least one CNode(return, other_node).
   return n_cnode <= 2;
 }
@@ -90,20 +86,10 @@ bool IsUniqueUse(const FuncGraphPtr &fg, AnfNodePtr) {
 
 bool IsInside(FuncGraphPtr, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node->func_graph());
-  auto &flags = node->func_graph()->flags();
-  if (flags.find("inline_inside") != flags.end()) {
-    return flags["inline_inside"];
-  }
-  return false;
+  return node->func_graph()->has_flag("inline_inside");
 }
 
-bool IsCore(const FuncGraphPtr &fg, AnfNodePtr) {
-  auto &flags = fg->flags();
-  if (flags.find("core") != flags.end()) {
-    return flags["core"];
-  }
-  return false;
-}
+bool IsCore(const FuncGraphPtr &fg, AnfNodePtr) { return fg->has_flag("core"); }
 
 bool NoCriterion(FuncGraphPtr, AnfNodePtr) { return true; }
 
@@ -126,6 +112,13 @@ class InlinerBase : public AnfVisitor {
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
     if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
       return nullptr;
+    }
+    // Do not inline GraphKernel to Cell.
+    if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      // If the GraphKernel only contains a return node, we make it inlined.
+      if (fg->nodes().size() - fg->parameters().size() > 1) {
+        return nullptr;
+      }
     }
 
     Reset();
@@ -167,7 +160,8 @@ class InlinerBase : public AnfVisitor {
     auto params = fg->parameters();
     auto old_size = params.size();
     if (old_size != new_params.size()) {
-      MS_LOG(EXCEPTION) << "Parameter size not match.";
+      MS_LOG(EXCEPTION) << "Parameter size not match." << old_size << " new " << new_params.size()
+                        << fg->output()->DebugString(10);
     }
     for (size_t i = 0; i < old_size; i++) {
       (void)mng->Replace(params[i], new_params[i]);

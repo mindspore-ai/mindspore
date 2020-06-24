@@ -88,14 +88,6 @@ FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool ma
 FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs = {}, bool manage = true);
 
 struct Signals {
-  Signal<void(FuncGraphPtr)> AddFuncGraph;
-  Signal<void(FuncGraphPtr)> DropFuncGraph;
-  Signal<void(AnfNodePtr)> AddNode;
-  Signal<void(AnfNodePtr)> DropNode;
-  Signal<void(AnfNodePtr, int, AnfNodePtr)> AddEdge;
-  Signal<void(AnfNodePtr, int, AnfNodePtr)> DropEdge;
-  Signal<void(FuncGraphPtr, FuncGraphPtr)> MoveAllCNode;
-  Signal<void()> InvalidateCollector;
   Signal<void()> InvalidateComputer;
 };
 
@@ -103,136 +95,15 @@ enum EdgeProcessDirection { kDecEdge = -1, kIncEdge = 1 };
 
 using CNodeIndexPair = std::pair<AnfNodePtr, int>;
 using CNodeIndexPairPtr = std::shared_ptr<CNodeIndexPair>;
-
-using FuncGraphToFuncGraphCounterMap = OrderedMap<FuncGraphPtr, OrderedMap<FuncGraphPtr, int>>;
-template <typename ValueT, class CollectorHash = std::hash<ValueT>, class CollectorEqual = std::equal_to<ValueT>>
-using FuncGraphToAnfNodeCounterMap = OrderedMap<FuncGraphPtr, OrderedMap<ValueT, int, CollectorHash, CollectorEqual>>;
-
-// analysis base class
-class FuncGraphAnalysis {
- public:
-  explicit FuncGraphAnalysis(const FuncGraphManager *const manager);
-
-  virtual ~FuncGraphAnalysis() { manager_ = nullptr; }
-
-  virtual size_t size() const { return 0; }
-
-  virtual void OnAddFuncGraph(FuncGraphPtr) {}
-
-  virtual void OnDropFuncGraph(FuncGraphPtr) {}
-
-  virtual void OnMoveAllCNode(FuncGraphPtr, FuncGraphPtr) {}
-
- protected:
-  // subclass can reset their own member;
-  virtual void ExtraReset() {}
-
-  virtual void OnAddNode(AnfNodePtr n) {}
-
-  virtual void OnDropNode(AnfNodePtr n) {}
-
-  virtual void OnAddEdge(AnfNodePtr, int, AnfNodePtr) {}
-
-  virtual void OnDropEdge(AnfNodePtr, int, AnfNodePtr) {}
-
-  const FuncGraphManager *manager_;
-  bool include_func_graph_none_;
-};
-
-using FuncGraphToAnfNodeMap = OrderedMap<FuncGraphPtr, AnfNodeSet>;
-
-struct CNodeIndexHasher {
-  std::size_t operator()(const CNodeIndexPairPtr pair) const {
-    MS_EXCEPTION_IF_NULL(pair);
-    MS_EXCEPTION_IF_NULL(pair->first);
-    return hash_combine(pair->first->hash(), std::hash<int>()(pair->second));
-  }
-};
-
-struct CNodeIndexEqual {
-  bool operator()(const CNodeIndexPairPtr lhs, const CNodeIndexPairPtr rhs) const {
-    if (lhs == nullptr || rhs == nullptr) {
-      return false;
-    }
-    if (lhs == rhs) {
-      return true;
-    }
-    if (lhs->first != rhs->first) {
-      return false;
-    }
-    if (lhs->second != rhs->second) {
-      return false;
-    }
-    return true;
-  }
-};
-
-// graphs analysis which compute in write, read needn't recompute
-class DepCollector : public FuncGraphAnalysis {
- public:
-  explicit DepCollector(const FuncGraphManager *manager);
-  ~DepCollector() override = default;
-
-  void Reset() { ExtraReset(); }
-  void OnInvalidateCollector() { Reset(); }
-
- protected:
-  // inherit from FuncGraphAnalysis
-  void OnAddEdge(AnfNodePtr node, int index, AnfNodePtr inp) override;
-  void OnDropEdge(AnfNodePtr node, int index, AnfNodePtr inp) override;
-  // subclass can override;
-  virtual void OnModEdge(AnfNodePtr, int, AnfNodePtr, EdgeProcessDirection) {}
-};
-
-class CounterFuncGraphCollector : public DepCollector {
- public:
-  explicit CounterFuncGraphCollector(const FuncGraphManager *m) : DepCollector(m) {}
-  ~CounterFuncGraphCollector() override = default;
-  FuncGraphToFuncGraphCounterMap &count_func_graphs_map() { return count_func_graphs_map_; }
-  // inherit from FuncGraphAnalysis
-  size_t size() const override { return count_func_graphs_map_.size(); }
-  void OnAddFuncGraph(FuncGraphPtr fg) final { count_func_graphs_map_[fg] = OrderedMap<FuncGraphPtr, int>(); }
-  void OnDropFuncGraph(FuncGraphPtr fg) final { (void)count_func_graphs_map_.erase(fg); }
-  bool Inc(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count);
-  bool Dec(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count);
-  bool Mod(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count);
-
-  FuncGraphToFuncGraphCounterMap count_func_graphs_map_;
-
- protected:
-  void ExtraReset() override { count_func_graphs_map_.clear(); }
-};
-
-template <typename ValueT, class CollectorHash = std::hash<ValueT>, class CollectorEqual = std::equal_to<ValueT>>
-class CounterAnfNodeCollector : public DepCollector {
- public:
-  explicit CounterAnfNodeCollector(const FuncGraphManager *m) : DepCollector(m) {}
-  ~CounterAnfNodeCollector() override = default;
-  FuncGraphToAnfNodeCounterMap<ValueT, CollectorHash, CollectorEqual> &count_nodes_map() { return count_nodes_map_; }
-
-  size_t size() const override { return count_nodes_map_.size(); }
-  void OnAddFuncGraph(FuncGraphPtr fg) final {
-    count_nodes_map_[fg] = OrderedMap<ValueT, int, CollectorHash, CollectorEqual>();
-  }
-  void OnDropFuncGraph(FuncGraphPtr fg) final { (void)count_nodes_map_.erase(fg); }
-
-  bool Inc(const FuncGraphPtr &func_graph, const ValueT &key, int count);
-  bool Dec(const FuncGraphPtr &func_graph, const ValueT &key, int count);
-  bool Mod(const FuncGraphPtr &func_graph, const ValueT &key, int count);
-
-  FuncGraphToAnfNodeCounterMap<ValueT, CollectorHash, CollectorEqual> count_nodes_map_;
-
- protected:
-  void ExtraReset() override { count_nodes_map_.clear(); }
-};
-
 using FuncGraphToFuncGraphSetMap = OrderedMap<FuncGraphPtr, FuncGraphSet>;
 
-// graphs analysis which need dynamic compute by DepCollector in each read
-class DepComputer : public FuncGraphAnalysis {
+// analysis base class, graphs analysis which need dynamic compute by DepCollector in each read
+class DepComputer {
  public:
   explicit DepComputer(const FuncGraphManager *manager);
-  ~DepComputer() override = default;
+  virtual ~DepComputer() { manager_ = nullptr; }
+
+  virtual size_t size() const { return 0; }
 
   void Reset() {
     ExtraReset();
@@ -250,15 +121,14 @@ class DepComputer : public FuncGraphAnalysis {
 
   bool IsValidate(const FuncGraphPtr &fg) { return func_graphs_validate_[fg]; }
 
-  void OnAddFuncGraph(FuncGraphPtr) final { Reset(); }
-
-  void OnDropFuncGraph(FuncGraphPtr) final { Reset(); }
-
  protected:
+  // subclass can reset their own member;
+  virtual void ExtraReset() {}
   // subclass do the real compute
   virtual void RealRecompute() {}
   virtual void RealRecompute(FuncGraphPtr) {}
 
+  const FuncGraphManager *manager_;
   bool validate_;
   OrderedMap<FuncGraphPtr, bool> func_graphs_validate_;
 
@@ -345,12 +215,9 @@ class ScopeComputer final : public DepComputer {
 
 using FVTotalMap = OrderedMap<FuncGraphPtr, OrderedMap<BaseRef, int, BaseRefHash>>;
 
-class FVTotalComputer final : public DepComputer,
-                              public CounterAnfNodeCollector<AnfNodePtr>,
-                              public CounterFuncGraphCollector {
+class FVTotalComputer final : public DepComputer {
  public:
-  explicit FVTotalComputer(const FuncGraphManager *m)
-      : DepComputer(m), CounterAnfNodeCollector(m), CounterFuncGraphCollector(m) {}
+  explicit FVTotalComputer(const FuncGraphManager *m) : DepComputer(m) {}
   ~FVTotalComputer() override = default;
 
   FVTotalMap &fv_total_analysis() { return fv_total_analysis_; }

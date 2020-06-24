@@ -19,7 +19,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore import dtype as mstype
-from mindspore.common.api import _executor
 
 context.set_context(device_target="Ascend")
 
@@ -54,4 +53,4 @@ class Net_Dropout(nn.Cell):
 def test_compile_dropout():
     net = Net_Dropout()
     input_data = Tensor(np.ones([20, 16, 50], dtype=np.float32))
-    _executor.compile(net, input_data)
+    net(input_data)

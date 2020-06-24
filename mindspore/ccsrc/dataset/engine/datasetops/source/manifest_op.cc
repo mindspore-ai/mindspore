@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_num_samples_(0), builder_decode_(false) {
+ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_decode_(false) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -39,16 +39,18 @@ ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_num_samples_
 Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  *ptr = std::make_shared<ManifestOp>(
-    builder_num_workers_, builder_rows_per_buffer_, builder_file_, builder_op_connector_size_, builder_num_samples_,
-    builder_decode_, builder_labels_to_read_, std::move(builder_schema_), std::move(builder_sampler_), builder_usage_);
+  *ptr = std::make_shared<ManifestOp>(builder_num_workers_, builder_rows_per_buffer_, builder_file_,
+                                      builder_op_connector_size_, builder_decode_, builder_labels_to_read_,
+                                      std::move(builder_schema_), std::move(builder_sampler_), builder_usage_);
   return Status::OK();
 }
 
@@ -59,9 +61,9 @@ Status ManifestOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size,
-                       int64_t num_samples, bool decode, const std::map<std::string, int32_t> &class_index,
-                       std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler, std::string usage)
+ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
+                       const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
+                       std::shared_ptr<Sampler> sampler, std::string usage)
     : ParallelOp(num_works, queue_size),
       rows_per_buffer_(rows_per_buffer),
       io_block_pushed_(0),
@@ -71,8 +73,6 @@ ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string f
       file_(file),
       class_index_(class_index),
       sampler_(std::move(sampler)),
-      num_samples_(num_samples),
-      num_rows_(0),
       decode_(decode),
       usage_(usage),
       buf_cnt_(0) {
@@ -88,7 +88,7 @@ ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string f
 Status ManifestOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
   return AddIoBlock(&sampler_buffer);
 }
 
@@ -101,8 +101,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
       RETURN_IF_NOT_OK((*sampler_buffer)->PopRow(&sample_row));
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) continue;    // index out of bound, skipping
-        if (row_cnt_ >= num_samples_) break;  // enough row read, break for loop
+        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
         keys.push_back(*itr);
         row_cnt_++;
         if (row_cnt_ % rows_per_buffer_ == 0) {
@@ -111,7 +110,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
           keys.clear();
         }
       }
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(sampler_buffer));
     }
     if (keys.empty() == false) {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
@@ -132,7 +131,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
         io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());  // Master thread goes to sleep after it has made all the IOBlocks
       wp_.Clear();
-      RETURN_IF_NOT_OK(sampler_->GetNextBuffer(sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(sampler_buffer));
     }
   }
 }
@@ -183,7 +182,8 @@ Status ManifestOp::WorkerEntry(int32_t worker_id) {
 }
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
-Status ManifestOp::LoadTensorRow(const std::pair<std::string, std::vector<std::string>> &data, TensorRow *trow) {
+Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<std::string>> &data,
+                                 TensorRow *trow) {
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;
   std::vector<int32_t> label_index(data.second.size());
@@ -199,23 +199,7 @@ Status ManifestOp::LoadTensorRow(const std::pair<std::string, std::vector<std::s
       data_schema_->column(1).type(), reinterpret_cast<unsigned char *>(&label_index[0])));
   }
 
-  std::ifstream fs;
-  fs.open(data.first, std::ios::binary | std::ios::in);
-  if (!fs.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Fail to open file: " + data.first);
-  }
-
-  int64_t num_elements = fs.seekg(0, std::ios::end).tellg();
-  (void)fs.seekg(0, std::ios::beg);
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
-                                        TensorShape(std::vector<dsize_t>(1, num_elements)),
-                                        data_schema_->column(0).type(), nullptr));
-  (void)fs.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
-  if (fs.fail()) {
-    fs.close();
-    RETURN_STATUS_UNEXPECTED("Fail to read file: " + data.first);
-  }
-  fs.close();
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data.first));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
@@ -223,7 +207,7 @@ Status ManifestOp::LoadTensorRow(const std::pair<std::string, std::vector<std::s
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
-  (*trow) = {std::move(image), std::move(label)};
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   return Status::OK();
 }
 
@@ -232,7 +216,7 @@ Status ManifestOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<
   std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   for (const auto &key : keys) {
     TensorRow trow;
-    RETURN_IF_NOT_OK(LoadTensorRow(image_labelname_[static_cast<size_t>(key)], &trow));
+    RETURN_IF_NOT_OK(LoadTensorRow(key, image_labelname_[static_cast<size_t>(key)], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
@@ -257,7 +241,7 @@ void ManifestOp::Print(std::ostream &out, bool show_all) const {
 
 // Reset Sampler and wakeup Master thread (functor)
 Status ManifestOp::Reset() {
-  RETURN_IF_NOT_OK(sampler_->Reset());
+  RETURN_IF_NOT_OK(sampler_->ResetSampler());
   row_cnt_ = 0;
   wp_.Set();  // wake up master thread after reset is done
   return Status::OK();
@@ -266,28 +250,6 @@ Status ManifestOp::Reset() {
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status ManifestOp::InitSampler() {
   RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status ManifestOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status ManifestOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_rows_;
   return Status::OK();
 }
 
@@ -408,7 +370,6 @@ Status ManifestOp::CountDatasetInfo() {
   }
 
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
       "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
@@ -417,8 +378,8 @@ Status ManifestOp::CountDatasetInfo() {
   return Status::OK();
 }
 
-Status ManifestOp::CountTotalRows(const std::string &file, int64_t numSamples, const py::dict &dict,
-                                  const std::string &usage, int64_t *count, int64_t *numClasses) {
+Status ManifestOp::CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage,
+                                  int64_t *count, int64_t *numClasses) {
   // the logic of counting the number of samples is copied from ParseManifestFile()
   std::map<std::string, int32_t> map;
   for (auto p : dict) {
@@ -428,17 +389,15 @@ Status ManifestOp::CountTotalRows(const std::string &file, int64_t numSamples, c
 
   std::shared_ptr<ManifestOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(
-    Builder().SetManifestFile(file).SetNumSamples(numSamples).SetClassIndex(map).SetUsage(usage).Build(&op));
+  RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(map).SetUsage(usage).Build(&op));
   RETURN_IF_NOT_OK(op->ParseManifestFile());
   *numClasses = static_cast<int64_t>(op->label_index_.size());
   *count = static_cast<int64_t>(op->image_labelname_.size());
-  *count = (*count < numSamples || numSamples == 0) ? *count : numSamples;
   return Status::OK();
 }
 
-Status ManifestOp::GetClassIndexing(const std::string &file, int64_t numSamples, const py::dict &dict,
-                                    const std::string &usage, std::map<std::string, int32_t> *output_class_indexing) {
+Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
+                                    std::map<std::string, int32_t> *output_class_indexing) {
   std::map<std::string, int32_t> input_class_indexing;
   for (auto p : dict) {
     (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
@@ -449,12 +408,7 @@ Status ManifestOp::GetClassIndexing(const std::string &file, int64_t numSamples,
     *output_class_indexing = input_class_indexing;
   } else {
     std::shared_ptr<ManifestOp> op;
-    RETURN_IF_NOT_OK(Builder()
-                       .SetManifestFile(file)
-                       .SetNumSamples(numSamples)
-                       .SetClassIndex(input_class_indexing)
-                       .SetUsage(usage)
-                       .Build(&op));
+    RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(input_class_indexing).SetUsage(usage).Build(&op));
     RETURN_IF_NOT_OK(op->ParseManifestFile());
     RETURN_IF_NOT_OK(op->CountDatasetInfo());
     uint32_t count = 0;

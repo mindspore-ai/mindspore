@@ -37,7 +37,7 @@ class SkipOp : public PipelineOp {
     ~Builder() = default;
 
     // The builder "build" method creates the final object.
-    // @return shared_ptr to the new StorageOp object
+    // @return shared_ptr to the new SkipOp object
     Status Build(std::shared_ptr<SkipOp> *);
 
    private:
@@ -79,6 +79,10 @@ class SkipOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "SkipOp"; }
 
  private:
   int32_t max_skips_;   // The number of skips that the user requested

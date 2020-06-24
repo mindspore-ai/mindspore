@@ -39,7 +39,7 @@ class ProfilingManager {
   uint64_t GetJobId() const;
   bool ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const;
   bool StartupProfiling(uint32_t device_id);
-  bool StopProfiling() const;
+  bool StopProfiling();
 
   inline bool IsProfiling() const {
     auto context = MsContext::GetInstance();

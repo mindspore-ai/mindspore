@@ -49,7 +49,7 @@ class GatherV2PInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
-  Status InferForwardCommunication() override { return SUCCESS; }
+  Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
@@ -57,14 +57,31 @@ class GatherV2PInfo : public OperatorInfo {
 
  private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status ComputeReplaceOp();
   Status InferBias();
   Status InferGroup();
 
   int32_t axis_;
+  std::string target_;
+  std::string replace_op_name_ = GATHERV2;
   int32_t bias_;
   int32_t slice_size_;
   Shape out_dev_matrix_shape_;
   Group group_;
+  bool reduce_scatter_flag_ = false;
+  int32_t split_num_ = 1;
+  bool host_reduce_scatter_ = false;
+};
+
+class SparseGatherV2Info : public GatherV2PInfo {
+ public:
+  SparseGatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                     const PrimitiveAttrs &attrs)
+      : GatherV2PInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~SparseGatherV2Info() override = default;
+
+ private:
+  std::string replace_op_name_ = SPARSE_GATHERV2;
 };
 }  // namespace parallel
 }  // namespace mindspore

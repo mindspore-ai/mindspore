@@ -30,6 +30,21 @@ class NetEqual(Cell):
     def construct(self, x, y):
         return self.Equal(x, y)
 
+class NetNotEqual(Cell):
+    def __init__(self):
+        super(NetNotEqual, self).__init__()
+        self.NotEqual = P.NotEqual()
+
+    def construct(self, x, y):
+        return self.NotEqual(x, y)
+
+class NetGreaterEqual(Cell):
+    def __init__(self):
+        super(NetGreaterEqual, self).__init__()
+        self.GreaterEqual = P.GreaterEqual()
+
+    def construct(self, x, y):
+        return self.GreaterEqual(x, y)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -50,16 +65,58 @@ def test_equal():
     equal = NetEqual()
     output0 = equal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
     output1 = equal(x1, y1)
     assert np.all(output1.asnumpy() == expect1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     equal = NetEqual()
     output0 = equal(x0, y0)
     assert np.all(output0.asnumpy() == expect0)
-    assert output0.shape() == expect0.shape
+    assert output0.shape == expect0.shape
     output1 = equal(x1, y1)
     assert np.all(output1.asnumpy() == expect1)
-    assert output1.shape() == expect1.shape
+    assert output1.shape == expect1.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_notequal():
+    x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
+    y0 = Tensor(np.array([[1, 2]]).astype(np.float32))
+    expect0 = np.array([[True, True], [False, True]])
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    notequal = NetNotEqual()
+    output0 = notequal(x0, y0)
+    assert np.all(output0.asnumpy() == expect0)
+    assert output0.shape == expect0.shape
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    notequal = NetNotEqual()
+    output0 = notequal(x0, y0)
+    assert np.all(output0.asnumpy() == expect0)
+    assert output0.shape == expect0.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_greaterqual():
+    x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
+    y0 = Tensor(np.array([[1, 2]]).astype(np.float32))
+    expect0 = np.array([[True, False], [True, False]])
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    gequal = NetGreaterEqual()
+    output0 = gequal(x0, y0)
+    assert np.all(output0.asnumpy() == expect0)
+    assert output0.shape == expect0.shape
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    gequal = NetGreaterEqual()
+    output0 = gequal(x0, y0)
+    assert np.all(output0.asnumpy() == expect0)
+    assert output0.shape == expect0.shape

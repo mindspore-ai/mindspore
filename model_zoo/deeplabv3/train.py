@@ -27,14 +27,10 @@ from src.config import config
 
 parser = argparse.ArgumentParser(description="Deeplabv3 training")
 parser.add_argument("--distribute", type=str, default="false", help="Run distribute, default is false.")
-parser.add_argument('--epoch_size', type=int, default=6, help='Epoch size.')
-parser.add_argument('--batch_size', type=int, default=2, help='Batch size.')
 parser.add_argument('--data_url', required=True, default=None, help='Train data url')
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
 parser.add_argument('--checkpoint_url', default=None, help='Checkpoint path')
-parser.add_argument("--enable_save_ckpt", type=str, default="true", help="Enable save checkpoint, default is true.")
-parser.add_argument("--save_checkpoint_steps", type=int, default=1000, help="Save checkpoint steps, default is 1000.")
-parser.add_argument("--save_checkpoint_num", type=int, default=1, help="Save checkpoint numbers, default is 1.")
+
 args_opt = parser.parse_args()
 print(args_opt)
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
@@ -70,16 +66,16 @@ if __name__ == "__main__":
         init()
     args_opt.base_size = config.crop_size
     args_opt.crop_size = config.crop_size
-    train_dataset = create_dataset(args_opt, args_opt.data_url, args_opt.epoch_size, args_opt.batch_size, usage="train")
+    train_dataset = create_dataset(args_opt, args_opt.data_url, config.epoch_size, config.batch_size, usage="train")
     dataset_size = train_dataset.get_dataset_size()
     time_cb = TimeMonitor(data_size=dataset_size)
     callback = [time_cb, LossCallBack()]
-    if args_opt.enable_save_ckpt == "true":
-        config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
-                                     keep_checkpoint_max=args_opt.save_checkpoint_num)
+    if config.enable_save_ckpt:
+        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
+                                     keep_checkpoint_max=config.save_checkpoint_num)
         ckpoint_cb = ModelCheckpoint(prefix='checkpoint_deeplabv3', config=config_ck)
         callback.append(ckpoint_cb)
-    net = deeplabv3_resnet50(config.seg_num_classes, [args_opt.batch_size, 3, args_opt.crop_size, args_opt.crop_size],
+    net = deeplabv3_resnet50(config.seg_num_classes, [config.batch_size, 3, args_opt.crop_size, args_opt.crop_size],
                              infer_scale_sizes=config.eval_scales, atrous_rates=config.atrous_rates,
                              decoder_output_stride=config.decoder_output_stride, output_stride=config.output_stride,
                              fine_tune_batch_norm=config.fine_tune_batch_norm, image_pyramid=config.image_pyramid)
@@ -88,5 +84,5 @@ if __name__ == "__main__":
     loss = OhemLoss(config.seg_num_classes, config.ignore_label)
     opt = Momentum(filter(lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'depth' not in x.name and 'bias' not in x.name, net.trainable_params()), learning_rate=config.learning_rate, momentum=config.momentum, weight_decay=config.weight_decay)
     model = Model(net, loss, opt)
-    model.train(args_opt.epoch_size, train_dataset, callback)
+    model.train(config.epoch_size, train_dataset, callback)
     

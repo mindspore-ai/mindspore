@@ -16,6 +16,7 @@
 #include "dataset/engine/tdt/tdt_plugin.h"
 #include "common/utils.h"
 #include "utils/log_adapter.h"
+#include "dataset/engine/perf/profiling.h"
 
 namespace mindspore {
 namespace dataset {
@@ -28,17 +29,25 @@ std::shared_ptr<TdtPlugin> TdtPlugin::GetInstance() {
   return instance_ptr_;
 }
 
-TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name) {
-  MS_LOG(INFO) << "TDT channel name is " << channel_name << ".";
+TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profiling, int32_t &time) {
+  MS_LOG(DEBUG) << "TDT channel name is " << channel_name << ".";
   std::vector<DataItem> items;
+  double start_time;
   auto ret = translate(ts_row, items);
   if (ret != SUCCESS) {
     MS_LOG(ERROR) << "TDT converting tensor failed!";
     return FAILED;
   }
+  if (profiling) {
+    start_time = ProfilingTime::GetCurMilliSecond();
+  }
   if (tdt::TdtHostPushData(channel_name, items) != 0) {
     MS_LOG(ERROR) << "TDT pushing data failed!";
     return FAILED;
+  }
+  if (profiling) {
+    double end_time = ProfilingTime::GetCurMilliSecond();
+    time = (int32_t)(end_time - start_time);
   }
   return SUCCESS;
 }
@@ -110,10 +119,11 @@ TdtStatus TdtPlugin::translate(const TensorRow &ts_row, std::vector<DataItem> &i
     data_item.tensorShape_ = dataShapes;
     data_item.tensorType_ = datatype;
     data_item.dataLen_ = ts->SizeInBytes();
-    data_item.dataPtr_ = std::shared_ptr<void>(reinterpret_cast<void *>(ts->GetMutableBuffer()), [](void *elem) {});
+    data_item.dataPtr_ =
+      std::shared_ptr<void>(reinterpret_cast<uchar *>(&(*ts->begin<uint8_t>())), [](const void *elem) {});
     items.emplace_back(data_item);
-    MS_LOG(INFO) << "TDT data type is " << datatype << ", data shape is " << dataShapes << ", data length is "
-                 << ts->Size() << ".";
+    MS_LOG(DEBUG) << "TDT data type is " << datatype << ", data shape is " << dataShapes << ", data length is "
+                  << ts->Size() << ".";
   }
   return SUCCESS;
 }

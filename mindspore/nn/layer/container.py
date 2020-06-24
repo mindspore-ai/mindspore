@@ -140,6 +140,11 @@ class SequentialCell(Cell):
     def __len__(self):
         return len(self._cells)
 
+    def set_grad(self, flag=True):
+        self.requires_grad = flag
+        for cell in self._cells.values():
+            cell.set_grad(flag)
+
     def construct(self, input_data):
         for cell in self.cell_list:
             input_data = cell(input_data)
@@ -150,8 +155,9 @@ class CellList(_CellListBase, Cell):
     """
     Holds Cells in a list.
 
-    CellList can be indexed like a regular Python list, but cells it
-    contains are properly registered, and will be visible by all Cell methods.
+    CellList can be used like a regular Python list, support
+    '__getitem__', '__setitem__', '__delitem__', '__len__', '__iter__' and '__iadd__',
+    but cells it contains are properly registered, and will be visible by all Cell methods.
 
     Args:
         args (list, optional): List of subclass of Cell.
@@ -244,6 +250,11 @@ class CellList(_CellListBase, Cell):
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell
         return self
+
+    def set_grad(self, flag=True):
+        self.requires_grad = flag
+        for cell in self._cells.values():
+            cell.set_grad(flag)
 
     def construct(self, *inputs):
         raise NotImplementedError

@@ -32,6 +32,8 @@ namespace tbe {
 static std::map<string, string> tbe_func_adapter_map = {
   {"softmax", "softmax_v2"},
   {"log_softmax", "log_softmax_v2"},
+  {"apply_momentum", "apply_momentum_d"},
+  {"apply_ftrl", "apply_ftrl_d"},
   {"re_lu6", "relu6"},
   {"re_lu6_grad", "relu6_grad"},
   {"re_lu", "relu"},
@@ -51,10 +53,12 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"scatter_nd", "scatter_nd_d"},
   {"tile", "tile_d"},
   {"gather_v2", "gather_v2_d"},
+  {"sparse_gather_v2", "gather_v2_d"},
   {"batch_mat_mul", "batch_matmul"},
   {"b_n_training_reduce", "bn_training_reduce"},
   {"b_n_training_update", "bn_training_update"},
   {"b_n_training_update_v2", "bn_training_update_v2"},
+  {"b_n_training_update_v3", "bn_training_update_v3"},
   {"b_n_training_reduce_grad", "bn_training_reduce_grad"},
   {"b_n_training_update_grad", "bn_training_update_grad"},
   {"b_n_infer", "bn_infer"},
@@ -66,17 +70,27 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"strided_slice", "strided_slice_d"},
   {"strided_slice_grad", "strided_slice_grad_d"},
   {"sparse_apply_ftrl", "sparse_apply_ftrl_d"},
+  {"apply_ada_max", "apply_ada_max_d"},
+  {"apply_adadelta", "apply_adadelta_d"},
+  {"apply_adagrad", "apply_adagrad_d"},
+  {"apply_adagrad_v2", "apply_adagradv2_d"},
+  {"sparse_apply_adagrad", "sparse_apply_adagrad_d"},
+  {"apply_proximal_adagrad", "apply_proximal_adagrad_d"},
+  {"sparse_apply_proximal_adagrad", "sparse_apply_proximal_adagrad_d"},
   {"transpose", "transpose_d"},
   {"fill", "fill_d"},
   {"unsorted_segment_sum", "unsorted_segment_sum_d"},
   {"concat", "concat_d"},
   {"slice", "slice_d"},
   {"reduce_sum", "reduce_sum_d"},
+  {"inplace_add", "inplace_add_d"},
+  {"inplace_sub", "inplace_sub_d"},
   {"one_hot", "one_hot_d"},
   {"sum", "reduce_sum_d"},
   {"lamb_next_mv_with_decay", "lamb_next_m_v_with_decay"},
   {"lamb_next_mv", "lamb_next_m_v"},
   {"split", "split_d"},
+  {"split_v", "split_v_d"},
   {"resize_nearest_neighbor", "resize_nearest_neighbor_v2_d"},
   {"resize_nearest_neighbor_grad", "resize_nearest_neighbor_v2_grad_d"},
   {"pad", "pad_d"},
@@ -88,7 +102,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"batch_to_space_nd", "batch_to_space_nd_d"},
   {"resize_bilinear", "resize_bilinear_v2_d"},
   {"resize_bilinear_grad", "resize_bilinear_v2_grad"},
-  {"adam", "apply_adam"},
+  {"adam", "apply_adam_d"},
   {"r_oi_align", "roi_align"},
   {"r_oi_align_grad", "roi_align_grad"},
   {"i_ou", "iou"},
@@ -97,6 +111,9 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"n_ms_with_mask", "nms_with_mask"},
   {"square_sum_all", "square_sum_all"},
   {"cum_sum", "cumsum_d"},
+  {"range", "range_d"},
+  {"lin_space", "lin_space_d"},
+  {"inv_grad", "inv_grad"},
   {"apply_rms_prop", "apply_rms_prop_d"},
   {"cum_prod", "cumprod_d"},
   {"reduce_all", "reduce_all_d"},
@@ -104,7 +121,13 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"unsorted_segment_min", "unsorted_segment_min_d"},
   {"reduce_prod", "reduce_prod_d"},
   {"a_cos", "acos"},
-  {"a_cos_grad", "acos_grad"}};
+  {"a_cos_grad", "acos_grad"},
+  {"histogram_fixed_width", "histogram_fixed_width_d"},
+  {"broadcast_to", "broadcast_to_d"},
+  {"inplace_update", "inplace_update_d"},
+  {"matrix_diag", "matrix_diag_d"},
+  {"matrix_diag_part", "matrix_diag_part_d"},
+  {"matrix_set_diag", "matrix_set_diag_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {
@@ -138,7 +161,7 @@ void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   *func_name = name_tmp;
   auto iter = tbe_func_adapter_map.find(*func_name);
   if (iter != tbe_func_adapter_map.end()) {
-    MS_LOG(INFO) << "map actual op from me " << func_name << "to tbe op" << iter->second;
+    MS_LOG(INFO) << "map actual op from me " << *func_name << " to tbe op" << iter->second;
     *func_name = iter->second;
   }
 }
@@ -176,6 +199,18 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
       for (size_t i = 3; i < inputs_list.size(); ++i) {
         inputs_json->push_back(inputs_list[i]);
       }
+    } else if (op_name == "ApplyCenteredRMSProp") {
+      // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
+      // TBE parameter to correspond python API parameter by latter's index using hardcode
+      inputs_json->push_back(inputs_list[0]);
+      inputs_json->push_back(inputs_list[1]);
+      inputs_json->push_back(inputs_list[2]);
+      inputs_json->push_back(inputs_list[3]);
+      inputs_json->push_back(inputs_list[5]);
+      inputs_json->push_back(inputs_list[6]);
+      inputs_json->push_back(inputs_list[7]);
+      inputs_json->push_back(inputs_list[8]);
+      inputs_json->push_back(inputs_list[4]);
     } else {
       inputs_json->push_back(inputs_list[1]);
       inputs_json->push_back(inputs_list[0]);
@@ -316,10 +351,10 @@ static int TypeStrToDstType(const std::string &type_str) {
     ret = 4;
   } else if (type_str == "UInt64") {
     ret = 10;
-  } else if (type_str == "Bool_") {
+  } else if (type_str == "Bool") {
     ret = 12;
   } else {
-    MS_EXCEPTION(ArgumentError) << "type str is invailed: " << type_str;
+    MS_LOG(INFO) << "Error type str is invailed: " << type_str;
   }
   return ret;
 }

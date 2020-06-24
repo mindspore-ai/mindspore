@@ -289,7 +289,7 @@ class LogConfigLexer {
     return '\0';
   }
 
-  LogConfigToken GetNext(std::string *ptr) {
+  LogConfigToken GetNext(std::string *const ptr) {
 #ifdef DEBUG
     std::string text;
     auto tok = GetNextInner(&text);

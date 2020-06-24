@@ -32,6 +32,7 @@
 #include "utils/symbolic.h"
 #include "utils/context/ms_context.h"
 #include "debug/trace.h"
+#include "optimizer/ad/grad.h"
 
 namespace mindspore {
 namespace parse {
@@ -39,6 +40,35 @@ using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
+
+FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
+  std::vector<std::string> results = data_converter::GetObjKey(obj);
+  std::string obj_key = results[0];
+  py::function bprop_func = py::getattr(obj, CUSTOM_BPROP_NAME);
+
+  auto bprop_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> outputs;
+
+  auto fake_bprop = std::make_shared<PrimitivePy>("bprop_cut", py::object());
+  fake_bprop->set_hook(bprop_func);
+  (void)fake_bprop->AddAttr(CUSTOM_BPROP_NAME, MakeValue(true));
+  outputs.push_back(NewValueNode(fake_bprop));
+
+  py::object code_obj = py::getattr(bprop_func, "__code__");
+  size_t inputs_num = py::cast<int>(py::getattr(code_obj, "co_argcount")) - 3;
+  for (size_t i = 0; i < inputs_num; ++i) {
+    auto param = bprop_graph->add_parameter();
+    outputs.push_back(param);
+  }
+  auto p1 = bprop_graph->add_parameter();
+  auto p2 = bprop_graph->add_parameter();
+  outputs.push_back(p1);
+  outputs.push_back(p2);
+
+  bprop_graph->set_output(bprop_graph->NewCNode(outputs));
+  data_converter::SetObjGraphValue(obj_key, bprop_graph);
+  return bprop_graph;
+}
 
 namespace {
 bool ConvertTuple(const py::object &obj, ValuePtr *const data, bool use_signature) {
@@ -208,33 +238,51 @@ bool ConvertTensor(const py::object &obj, ValuePtr *const data) {
   return true;
 }
 
-FuncGraphPtr ConvertToBpropCut(py::object obj) {
-  std::vector<std::string> results = data_converter::GetObjKey(obj);
-  std::string obj_key = results[0];
-  py::function bprop_func = py::getattr(obj, "bprop");
+bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
+  MS_LOG(DEBUG) << "Converting slice object";
 
-  FuncGraphPtr bprop_graph = std::make_shared<FuncGraph>();
-  std::vector<AnfNodePtr> outputs;
+  py::slice slice_obj = obj.cast<py::slice>();
+  auto convert_func = [obj](std::string attr) -> ValuePtr {
+    auto py_attr = py::getattr(obj, attr.c_str());
+    if (py::isinstance<py::none>(py_attr)) {
+      return kNone;
+    } else if (py::isinstance<py::int_>(py_attr)) {
+      int value = py::cast<int>(py_attr);
+      return MakeValue(value);
+    } else {
+      MS_LOG(EXCEPTION) << "Slice should contain only int or none";
+    }
+  };
+  ValuePtr start = convert_func("start");
+  ValuePtr stop = convert_func("stop");
+  ValuePtr step = convert_func("step");
+  *data = std::make_shared<ValueSlice>(start, stop, step);
+  return true;
+}
 
-  auto fake_bprop = std::make_shared<Primitive>("bprop_cut");
-  fake_bprop->set_hook(bprop_func);
-  (void)fake_bprop->AddAttr("bprop", MakeValue(true));
-  outputs.push_back(NewValueNode(fake_bprop));
-
-  py::object code_obj = py::getattr(bprop_func, "__code__");
-  size_t inputs_num = py::cast<int>(py::getattr(code_obj, "co_argcount")) - 3;
-  for (size_t i = 0; i < inputs_num; ++i) {
-    auto param = bprop_graph->add_parameter();
-    outputs.push_back(param);
+bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
+  FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Parse resolve function error.";
+    return false;
   }
-  auto p1 = bprop_graph->add_parameter();
-  auto p2 = bprop_graph->add_parameter();
-  outputs.push_back(p1);
-  outputs.push_back(p2);
-
-  bprop_graph->set_output(bprop_graph->NewCNode(outputs));
-  data_converter::SetObjGraphValue(obj_key, bprop_graph);
-  return bprop_graph;
+  // if the cell object has specified bprop, it has user-defined bprop function parse and record it
+  if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
+    FuncGraphPtr bprop_graph = nullptr;
+    bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
+    if (enable_bprop_debug) {
+      bprop_graph = ConvertToBpropCut(obj);
+    } else {
+      bprop_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
+    }
+    if (bprop_graph != nullptr) {
+      (void)func_graph->transforms().insert(std::make_pair(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph)));
+      (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
+      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+    }
+  }
+  *data = func_graph;
+  return true;
 }
 
 bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
@@ -261,32 +309,12 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
     // Create the namespace for common class instance
     // When the obj is Cell, default parse the 'construct'
     if (data_converter::IsCellInstance(obj)) {
-      FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
-      if (func_graph == nullptr) {
-        MS_LOG(ERROR) << "Parse resolve function error.";
-        return false;
-      }
-      // if the cell object has specified bprop, it has user-defined bprop function parse and record it
-      if (py::hasattr(obj, "bprop")) {
-        FuncGraphPtr bprop_graph = nullptr;
-        bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
-        if (enable_bprop_debug) {
-          bprop_graph = ConvertToBpropCut(obj);
-        } else {
-          bprop_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
-        }
-        if (bprop_graph != nullptr) {
-          (void)func_graph->transforms().insert(std::make_pair("bprop", FuncGraphTransform(bprop_graph)));
-          (void)bprop_graph->transforms().insert(std::make_pair("primal", FuncGraphTransform(func_graph)));
-          func_graph->set_flags(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-        }
-      }
-      *data = func_graph;
-    } else {
-      py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-      py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
-      *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+      return ConvertCellObjToFuncGraph(obj, data);
     }
+
+    py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+    py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
+    *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
     return true;
   }
   MS_LOG(ERROR) << "Resolve type is invalid " << ((std::string)py::str(obj));
@@ -315,6 +343,10 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     converted = std::make_shared<StringImm>(py::cast<std::string>(obj));
   } else if (py::isinstance<py::dict>(obj)) {
     ret = ConvertDict(obj, &converted, use_signature);
+  } else if (py::isinstance<py::slice>(obj)) {
+    ret = ConvertSlice(obj, &converted);
+  } else if (py::isinstance<py::ellipsis>(obj)) {
+    converted = kEllipsis;
   } else if (py::isinstance<py::tuple>(obj)) {
     ret = ConvertTuple(obj, &converted, use_signature);
   } else if (py::hasattr(obj, PYTHON_CELL_AS_LIST)) {
@@ -338,6 +370,9 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   } else if (py::hasattr(obj, PYTHON_ENVINSTANCE_FLAG)) {
     std::shared_ptr<EnvInstance> env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;
+  } else if (py::hasattr(obj, "__parameter__")) {
+    auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
+    ret = ConvertData(to_convert, &converted);
   } else {
     ret = ConvertOtherObj(obj, &converted);
   }

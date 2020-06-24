@@ -38,6 +38,32 @@ namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
 using FuncGraphCounterMap = OrderedMap<FuncGraphPtr, int>;
 
+struct CNodeIndexHasher {
+  std::size_t operator()(const CNodeIndexPairPtr pair) const {
+    MS_EXCEPTION_IF_NULL(pair);
+    MS_EXCEPTION_IF_NULL(pair->first);
+    return hash_combine(pair->first->hash(), std::hash<int>()(pair->second));
+  }
+};
+
+struct CNodeIndexEqual {
+  bool operator()(const CNodeIndexPairPtr lhs, const CNodeIndexPairPtr rhs) const {
+    if (lhs == nullptr || rhs == nullptr) {
+      return false;
+    }
+    if (lhs == rhs) {
+      return true;
+    }
+    if (lhs->first != rhs->first) {
+      return false;
+    }
+    if (lhs->second != rhs->second) {
+      return false;
+    }
+    return true;
+  }
+};
+
 template <typename ValueT, class CounterHash = std::hash<ValueT>, class CounterEqual = std::equal_to<ValueT>>
 using CounterOrderedMap = OrderedMap<ValueT, int, CounterHash, CounterEqual>;
 using AnfNodeCounterMap = CounterOrderedMap<AnfNodePtr>;
@@ -48,6 +74,7 @@ using FuncGraphMap = OrderedMap<FuncGraphPtr, int>;
 const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_CORE[] = "core";
+const char FUNC_GRAPH_ATTR_GRAPH_KERNEL[] = "graph_kernel";
 const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
 
 namespace abstract {
@@ -56,9 +83,6 @@ using AbstractKeywordArgPtr = std::shared_ptr<AbstractKeywordArg>;
 class AbstractFunction;
 using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
 }  // namespace abstract
-
-class FuncGraphManager;
-using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
 // ANF transform class
 // either a primitive or a func_graph
@@ -172,10 +196,19 @@ class FuncGraph : public FuncGraphBase {
   void set_is_generate(bool generated) { is_generated_ = generated; }
   bool is_generated() const { return is_generated_; }
 
-  bool has_flag(const std::string &flag);
-  std::unordered_map<std::string, bool> &flags() { return flags_; }
-  void set_flags(const std::unordered_map<std::string, bool> &flags) { flags_ = flags; }
-  void set_flags(const std::string &key, const bool value) { flags_[key] = value; }
+  std::unordered_map<std::string, ValuePtr> &attrs() { return attrs_; }
+  void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+    for (auto &attr : attrs) {
+      attrs_[attr.first] = attr.second;
+    }
+  }
+  bool has_flag(const std::string &key);
+  void set_flag(const std::string &key, bool flag) { attrs_[key] = MakeValue(flag); }
+  void erase_flag(const std::string &key) { (void)attrs_.erase(key); }
+
+  bool has_attr(const std::string &key);
+  ValuePtr get_attr(const std::string &key);
+  void set_attr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
 
   std::unordered_map<std::string, FuncGraphTransform> &transforms() { return transforms_; }
   void set_transforms(const std::unordered_map<std::string, FuncGraphTransform> &transforms) {
@@ -294,7 +327,7 @@ class FuncGraph : public FuncGraphBase {
 
   std::unordered_map<AnfNodePtr, AnfNodePtr> &make_ref_params() { return make_ref_params_; }
 
-  std::unordered_map<std::string, bool> flags_;
+  std::unordered_map<std::string, ValuePtr> attrs_;
   std::unordered_map<std::string, FuncGraphTransform> transforms_;
   // parameter default value
   std::map<std::string, AnfNodePtr> parameter_default_value_;

@@ -40,7 +40,7 @@ class SliceGrad(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_slice():
+def test_slice_grad():
     x = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]]), mstype.float32)
     dy = Tensor(np.array([[[3., 1., 2.]], [[4., 1., 4.]]]), mstype.float32)
     slicegrad = SliceGrad()
@@ -54,6 +54,27 @@ def test_slice():
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
+class SliceGrad2(nn.Cell):
+    def __init__(self):
+        super(SliceGrad2, self).__init__()
+        self.slicegrad = G.SliceGrad()
+
+    def construct(self, dy, x):
+        return self.slicegrad(dy, x, (0, 1, 0), (2, 2, 2))
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice_grad2():
+    dy = Tensor(np.array([[[2., 3.], [4., 5.]], [[8., 9.], [10., 11.]]]), mstype.float32)
+    x = Tensor(np.arange(2 * 3 * 2).reshape(2, 3, 2), mstype.float32)
+    grad = SliceGrad2()
+    output = grad(dy, x)
+    print("output:\n", output)
+    expect = [[[0., 0.], [2., 3.], [4.,  5.]],
+              [[0., 0.], [8., 9.], [10., 11.]]]
+    assert (output.asnumpy() == expect).all()
 
 if __name__ == '__main__':
-    test_slice()
+    test_slice_grad()
+    test_slice_grad2()

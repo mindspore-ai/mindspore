@@ -16,6 +16,7 @@
 #include "dataset/kernels/image/image_utils.h"
 #include <opencv2/imgproc/types_c.h>
 #include <algorithm>
+#include <vector>
 #include <stdexcept>
 #include <utility>
 #include <opencv2/imgcodecs.hpp>
@@ -119,17 +120,14 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
-bool HasJpegMagic(const unsigned char *data, size_t data_size) {
+bool HasJpegMagic(const std::shared_ptr<Tensor> &input) {
   const unsigned char *kJpegMagic = (unsigned char *)"\xFF\xD8\xFF";
   constexpr size_t kJpegMagicLen = 3;
-  return data_size >= kJpegMagicLen && memcmp(data, kJpegMagic, kJpegMagicLen) == 0;
+  return input->SizeInBytes() >= kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  if (input->GetMutableBuffer() == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Tensor is nullptr");
-  }
-  if (HasJpegMagic(input->GetMutableBuffer(), input->SizeInBytes())) {
+  if (HasJpegMagic(input)) {
     return JpegCropAndDecode(input, output);
   } else {
     return DecodeCv(input, output);
@@ -283,7 +281,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
     jpeg_create_decompress(&cinfo);
-    JpegSetSource(&cinfo, input->GetMutableBuffer(), input->SizeInBytes());
+    JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
     (void)jpeg_read_header(&cinfo, TRUE);
     RETURN_IF_NOT_OK(JpegSetColorSpace(&cinfo));
     jpeg_calc_output_dimensions(&cinfo);
@@ -312,7 +310,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   TensorShape ts = TensorShape({crop_h, crop_w, kOutNumComponents});
   auto output_tensor = std::make_shared<Tensor>(ts, DataType(DataType::DE_UINT8));
   const int buffer_size = output_tensor->SizeInBytes();
-  JSAMPLE *buffer = static_cast<JSAMPLE *>(output_tensor->GetMutableBuffer());
+  JSAMPLE *buffer = static_cast<JSAMPLE *>(reinterpret_cast<uchar *>(&(*output_tensor->begin<uint8_t>())));
   const int max_scanlines_to_read = skipped_scanlines + crop_h;
   // stride refers to output tensor, which has 3 components at most
   const int stride = crop_w * kOutNumComponents;
@@ -376,8 +374,9 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
       *output = input;
       return Status::OK();
     }
-    if (input_cv->shape().Size() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels is not equal 3");
+    if (input_cv->shape().Size() < 2 || input_cv->shape().Size() > 3 ||
+        (input_cv->shape().Size() == 3 && input_cv->shape()[2] != 3 && input_cv->shape()[2] != 1)) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3 nor 1");
     }
     cv::Mat output_img;
 
@@ -401,8 +400,8 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
-    if (input_cv->shape().Size() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels is not equal 3");
+    if (input_cv->shape().Size() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -422,7 +421,7 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
     if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-      RETURN_STATUS_UNEXPECTED("Ishape not <H,W,C> or <H,W>");
+      RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
     }
     // image too large or too small
     if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * 1000 ||
@@ -541,8 +540,8 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -561,8 +560,8 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     cv::Mat gray, output_img;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
@@ -587,8 +586,8 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -615,8 +614,8 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
     }
-    if (input_cv->Rank() != 3 && input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not <H,W,3> or <H,W>");
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("The shape is incorrect: number of channels does not equal 3");
     }
     auto output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
     RETURN_UNEXPECTED_IF_NULL(output_cv);
@@ -644,7 +643,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
              uint8_t fill_g, uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (input_cv->mat().data == nullptr || (input_cv->Rank() != 3 && input_cv->shape()[2] != 3)) {
+    if (input_cv->mat().data == nullptr || input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
       RETURN_STATUS_UNEXPECTED("bad CV Tensor input for erase");
     }
     cv::Mat input_img = input_cv->mat();
@@ -726,5 +725,101 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     RETURN_STATUS_UNEXPECTED("Unexpected error in pad");
   }
 }
+// -------- BBOX OPERATIONS -------- //
+Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int CB_Xmin, int CB_Ymin, int CB_Xmax,
+                           int CB_Ymax) {
+  // PASS LIST, COUNT OF BOUNDING BOXES
+  // Also PAss X/Y Min/Max of image cropped region - normally obtained from 'GetCropBox' functions
+  uint32_t bb_Xmin_t, bb_Ymin_t, bb_Xmax_t, bb_Ymax_t;
+
+  std::vector<int> correct_ind;
+  std::vector<uint32_t> copyVals;
+  dsize_t bboxDim = (*bboxList)->shape()[1];
+  bool retFlag = false;  // true unless overlap found
+  for (int i = 0; i < *bboxCount; i++) {
+    int bb_Xmin, bb_Xmax, bb_Ymin, bb_Ymax;
+    RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&bb_Xmin_t, {i, 0}));
+    RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&bb_Ymin_t, {i, 1}));
+    RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&bb_Xmax_t, {i, 2}));
+    RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&bb_Ymax_t, {i, 3}));
+    bb_Xmin = bb_Xmin_t;
+    bb_Ymin = bb_Ymin_t;
+    bb_Xmax = bb_Xmax_t;
+    bb_Ymax = bb_Ymax_t;
+    bb_Xmax = bb_Xmin + bb_Xmax;
+    bb_Ymax = bb_Ymin + bb_Ymax;
+    // check for image / BB overlap
+    if (((bb_Xmin > CB_Xmax) || (bb_Ymin > CB_Ymax)) || ((bb_Xmax < CB_Xmin) || (bb_Ymax < CB_Ymin))) {
+      continue;  // no overlap found
+    }
+    // Update this bbox and select it to move to the final output tensor
+    correct_ind.push_back(i);
+    // adjust BBox corners by bringing into new CropBox if beyond
+    // Also reseting/adjusting for boxes to lie within CropBox instead of Image - subtract CropBox Xmin/YMin
+    bb_Xmin = bb_Xmin - (std::min(0, (bb_Xmin - CB_Xmin)) + CB_Xmin);
+    bb_Xmax = bb_Xmax - (std::max(0, (bb_Xmax - CB_Xmax)) + CB_Xmin);
+    bb_Ymin = bb_Ymin - (std::min(0, (bb_Ymin - CB_Ymin)) + CB_Ymin);
+    bb_Ymax = bb_Ymax - (std::max(0, (bb_Ymax - CB_Ymax)) + CB_Ymin);
+    // reset min values and calculate width/height from Box corners
+    RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 0}, static_cast<uint32_t>(bb_Xmin)));
+    RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 1}, static_cast<uint32_t>(bb_Ymin)));
+    RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 2}, static_cast<uint32_t>(bb_Xmax - bb_Xmin)));
+    RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 3}, static_cast<uint32_t>(bb_Ymax - bb_Ymin)));
+  }
+  // create new tensor and copy over bboxes still valid to the image
+  // bboxes outside of new cropped region are ignored - empty tensor returned in case of none
+  *bboxCount = correct_ind.size();
+  uint32_t temp;
+  for (auto slice : correct_ind) {  // for every index in the loop
+    for (int ix = 0; ix < bboxDim; ix++) {
+      RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&temp, {slice, ix}));
+      copyVals.push_back(temp);
+    }
+  }
+  std::shared_ptr<Tensor> retV;
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&retV, copyVals, TensorShape({static_cast<dsize_t>(*bboxCount), bboxDim})));
+  (*bboxList) = retV;  // reset pointer
+  return Status::OK();
+}
+
+Status PadBBoxes(std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left) {
+  for (int i = 0; i < bboxCount; i++) {
+    uint32_t xMin, yMin;
+    RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&xMin, {i, 0}));
+    RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&yMin, {i, 1}));
+    xMin += static_cast<uint32_t>(pad_left);  // should not be negative
+    yMin += static_cast<uint32_t>(pad_top);
+    RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 0}, xMin));
+    RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 1}, yMin));
+  }
+  return Status::OK();
+}
+
+Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size_t &bboxCount, int32_t target_width_,
+                             int32_t target_height_, int orig_width, int orig_height) {
+  uint32_t bb_Xmin, bb_Ymin, bb_Xwidth, bb_Ywidth;
+  // cast to float to preseve fractional
+  double W_aspRatio = (target_width_ * 1.0) / (orig_width * 1.0);
+  double H_aspRatio = (target_height_ * 1.0) / (orig_height * 1.0);
+  for (int i = 0; i < bboxCount; i++) {
+    // for each bounding box
+    RETURN_IF_NOT_OK(bboxList->GetUnsignedIntAt(&bb_Xmin, {i, 0}));
+    RETURN_IF_NOT_OK(bboxList->GetUnsignedIntAt(&bb_Ymin, {i, 1}));
+    RETURN_IF_NOT_OK(bboxList->GetUnsignedIntAt(&bb_Xwidth, {i, 2}));
+    RETURN_IF_NOT_OK(bboxList->GetUnsignedIntAt(&bb_Ywidth, {i, 3}));
+    // update positions and widths
+    bb_Xmin = bb_Xmin * W_aspRatio;
+    bb_Ymin = bb_Ymin * H_aspRatio;
+    bb_Xwidth = bb_Xwidth * W_aspRatio;
+    bb_Ywidth = bb_Ywidth * H_aspRatio;
+    // reset bounding box values
+    RETURN_IF_NOT_OK(bboxList->SetItemAt({i, 0}, bb_Xmin));
+    RETURN_IF_NOT_OK(bboxList->SetItemAt({i, 1}, bb_Ymin));
+    RETURN_IF_NOT_OK(bboxList->SetItemAt({i, 2}, bb_Xwidth));
+    RETURN_IF_NOT_OK(bboxList->SetItemAt({i, 3}, bb_Ywidth));
+  }
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

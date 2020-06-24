@@ -133,3 +133,7 @@ rtError_t rtGetStreamId(rtStream_t stream, int32_t *streamId) { return RT_ERROR_
 rtError_t rtGetFunctionByName(const char *stubName, void **stubFunc) { return RT_ERROR_NONE; }
 
 rtError_t rtSetTaskGenCallback(rtTaskGenCallback callback) { return RT_ERROR_NONE; }
+
+rtError_t rtProfilerStart(void) { return RT_ERROR_NONE; }
+
+rtError_t rtProfilerStop(void) { return RT_ERROR_NONE; }

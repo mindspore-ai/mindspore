@@ -8,6 +8,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_compile_definitions(BUILDING_DLL)
 endif()
 
+if (ENABLE_MPI)
+    add_compile_definitions(ENABLE_MPI)
+endif ()
+
 if(ENABLE_GPU)
     find_package(CUDA REQUIRED)
     find_package(Threads)
@@ -35,7 +39,7 @@ if(ENABLE_GPU)
             "device/gpu/*.cu"
             "kernel/gpu/*.cu"
             "kernel/akg/gpu/*.cc"
-            "kernel/akg/akgkernelbuild.cc"
+            "kernel/akg/akg_kernel_build.cc"
             "kernel/akg/akg_kernel_attrs_process.cc"
             )
 
@@ -75,7 +79,9 @@ if (ENABLE_DUMP_PROTO)
     file(GLOB_RECURSE PROTO_PY RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "utils/anf_ir.proto"
         "utils/summary.proto"
+        "utils/lineage.proto"
         "utils/checkpoint.proto"
+        "utils/print.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 
@@ -120,7 +126,11 @@ endforeach ()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 target_link_libraries(mindspore proto_input)
-target_link_libraries(mindspore securec mindspore::flatbuffers)
+if (ENABLE_CPU AND ENABLE_MPI)
+    target_link_libraries(mindspore securec mindspore::flatbuffers mindspore::ompi)
+else ()
+    target_link_libraries(mindspore securec mindspore::flatbuffers)
+endif ()
 if (NOT WIN32)
   target_link_libraries(mindspore dl)
 endif()
@@ -227,3 +237,29 @@ if (ENABLE_MINDDATA)
     add_subdirectory(mindrecord)
     add_subdirectory(dataset)
 endif ()
+
+# build inference
+set(LOAD_ONNX_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_converter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_model_parser.cc
+        )
+add_library(inference SHARED
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/session.cc
+        ${LOAD_ONNX_SRC}
+        )
+target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
+
+if (ENABLE_CPU)
+    target_link_libraries(inference PRIVATE mindspore::dnnl mindspore::mkldnn)
+endif ()
+
+if (USE_GLOG)
+    target_link_libraries(inference PRIVATE mindspore::glog)
+else()
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        target_link_options(inference PRIVATE -Wl,-init,mindspore_log_init)
+    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
+    endif ()
+endif()

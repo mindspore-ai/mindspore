@@ -51,35 +51,35 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
  *
  *                  OpId(2) ZipOp
  *            /                       \
- *     OpId(0) StorageOp    OpId(1) StorageOp
+ *     OpId(0) TFReaderOp    OpId(1) TFReaderOp
  * Start with an empty execution tree
 */
   Status rc;
   MS_LOG(INFO) << "UT test TestZipBasic.";
   auto my_tree = std::make_shared<ExecutionTree>();
-  // Creating StorageOp
+  // Creating TFReaderOp
 
-  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1";
-  std::string dataset_path2 = datasets_root_path_ + "/test_tf_file_3_images_2";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1/train-0000-of-0001.data";
+  std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(1)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op);
+  rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<StorageOp> my_storage_op2;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path2)
+  std::shared_ptr<TFReaderOp> my_tfreader_op2;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path2})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(1)
       .SetNumWorkers(1)
-      .Build(&my_storage_op2);
+      .Build(&my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op2);
+  rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
 
   // Creating DatasetOp
@@ -89,9 +89,9 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
 
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = zip_op->AddChild(std::move(my_storage_op));
+  rc = zip_op->AddChild(std::move(my_tfreader_op));
   EXPECT_TRUE(rc.IsOk());
-  rc = zip_op->AddChild(std::move(my_storage_op2));
+  rc = zip_op->AddChild(std::move(my_tfreader_op2));
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(zip_op);
   EXPECT_TRUE(rc.IsOk());
@@ -125,6 +125,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
     EXPECT_TRUE(rc.IsOk());
     row_count++;
   }
+  MS_LOG(WARNING) <<"row count is: " << row_count;
   ASSERT_EQ(row_count, 3); // Should be 3 rows fetched
 }
 
@@ -135,7 +136,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
  *
  *                  OpId(2) ZipOp
  *            /                       \
- *         OpId(0) StorageOp    OpId(1) StorageOp
+ *         OpId(0) TFReaderOp    OpId(1) TFReaderOp
  *
  * Start with an empty execution tree
 */
@@ -143,27 +144,27 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   MS_LOG(INFO) << "UT test TestZipRepeat.";
   auto my_tree = std::make_shared<ExecutionTree>();
 
-  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1";
-  std::string dataset_path2 = datasets_root_path_ + "/test_tf_file_3_images_2";
-  std::shared_ptr<StorageOp> my_storage_op;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path)
+  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1/train-0000-of-0001.data";
+  std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(16)
       .SetNumWorkers(1)
-      .Build(&my_storage_op);
+      .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op);
+  rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<StorageOp> my_storage_op2;
-  rc = StorageOp::Builder()
-      .SetDatasetFilesDir(dataset_path2)
+  std::shared_ptr<TFReaderOp> my_tfreader_op2;
+  rc = TFReaderOp::Builder()
+      .SetDatasetFilesList({dataset_path2})
       .SetRowsPerBuffer(2)
       .SetWorkerConnectorSize(1)
       .SetNumWorkers(1)
-      .Build(&my_storage_op2);
+      .Build(&my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
-  rc = my_tree->AssociateNode(my_storage_op2);
+  rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
   // Creating DatasetOp
   std::shared_ptr<ZipOp> zip_op;
@@ -171,9 +172,9 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
-  rc = zip_op->AddChild(std::move(my_storage_op));
+  rc = zip_op->AddChild(std::move(my_tfreader_op));
   EXPECT_TRUE(rc.IsOk());
-  rc = zip_op->AddChild(std::move(my_storage_op2));
+  rc = zip_op->AddChild(std::move(my_tfreader_op2));
   EXPECT_TRUE(rc.IsOk());
 
   // Builder(num_of_repeats)

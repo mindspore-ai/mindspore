@@ -129,7 +129,7 @@ class GradOperation : public MetaFuncGraph {
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
   FuncGraphPtr GetGrad(AnfNodePtr ptrNode, const AnfNodePtr &weights, const std::vector<AnfNodePtr> &ptrParams,
-                       bool applyJ = false);
+                       const std::vector<AnfNodePtr> &args = {}, bool applyJ = false);
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
   bool sens_param() const { return sens_param_; }
   bool get_all_;
@@ -174,16 +174,6 @@ class TupleSlice : public MetaFuncGraph {
   friend bool operator==(const TupleSlice &lhs, const TupleSlice &rhs) { return lhs.name_ == rhs.name_; }
 };
 using TupleSlicePtr = std::shared_ptr<TupleSlice>;
-
-class TensorSlice : public MetaFuncGraph {
- public:
-  explicit TensorSlice(const std::string &name) : MetaFuncGraph(name) {}
-  ~TensorSlice() override = default;
-  MS_DECLARE_PARENT(TensorSlice, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  friend bool operator==(const TensorSlice &lhs, const TensorSlice &rhs) { return lhs.name_ == rhs.name_; }
-};
-using TensorSlicePtr = std::shared_ptr<TensorSlice>;
 
 class TupleGetItemTensor : public MetaFuncGraph {
  public:

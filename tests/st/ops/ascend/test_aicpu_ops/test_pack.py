@@ -33,15 +33,15 @@ class Net(nn.Cell):
 
 
 def test_net_bool():
-    x = np.random.randn(3, 5, 4)>0
-    y = np.random.randn(3, 5, 4)>0
+    x = np.random.randn(3, 5, 4) > 0
+    y = np.random.randn(3, 5, 4) > 0
     axis = -1
     net = Net((Tensor(x), Tensor(y)), axis)
     output = net()
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_int8():
@@ -53,7 +53,7 @@ def test_net_int8():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_uint8():
@@ -65,7 +65,7 @@ def test_net_uint8():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_int16():
@@ -77,7 +77,7 @@ def test_net_int16():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_uint16():
@@ -89,7 +89,7 @@ def test_net_uint16():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_int32():
@@ -101,7 +101,7 @@ def test_net_int32():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_uint32():
@@ -113,7 +113,7 @@ def test_net_uint32():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_int64():
@@ -125,8 +125,7 @@ def test_net_int64():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
-
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 def test_net_uint64():
     x = np.random.randn(3, 5, 4).astype(np.uint64)
@@ -137,7 +136,7 @@ def test_net_uint64():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_float16():
@@ -149,7 +148,7 @@ def test_net_float16():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_float32():
@@ -161,7 +160,7 @@ def test_net_float32():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))
 
 
 def test_net_float64():
@@ -173,4 +172,4 @@ def test_net_float64():
     print(x)
     print(y)
     print(output.asnumpy())
-    assert np.array_equal(output.asnumpy(), np.stack([x,y], axis))
+    assert np.array_equal(output.asnumpy(), np.stack([x, y], axis))

@@ -37,6 +37,9 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
+  if (!AnfAlgo::HasNodeAttr(kAttrEventId, anf_node->cast<CNodePtr>())) {
+    MS_LOG(EXCEPTION) << "RecvKernel has no attr kAttrEventId";
+  }
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
   MS_LOG(INFO) << "recv op event_id_:" << event_id_;
   return true;

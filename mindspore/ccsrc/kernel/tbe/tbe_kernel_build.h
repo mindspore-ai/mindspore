@@ -93,7 +93,7 @@ class TbeKernelJsonCreator {
                          nlohmann::json *outputs_json);
   bool GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                       nlohmann::json *attrs_json);
-  void ParseAttrValue(const std::string &type, const ValuePtr &value, nlohmann::json *attr_obj);
+  static void ParseAttrValue(const std::string &type, const ValuePtr &value, nlohmann::json *attr_obj);
   bool GenInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index, bool value,
                         const std::shared_ptr<OpIOInfo> &input_ptr, const string &op_input_name, size_t input_i,
                         std::vector<nlohmann::json> *input_list);
@@ -105,6 +105,13 @@ class TbeKernelJsonCreator {
   void GenOutputList(const std::shared_ptr<AnfNode> &anf_node, const size_t &output_obj_num,
                      const std::shared_ptr<OpIOInfo> &output_ptr, size_t *output_idx,
                      std::vector<nlohmann::json> *output_list);
+  std::vector<size_t> GetDeviceInputShape(const AnfNodePtr &anf_node, size_t real_index) const;
+  std::string GetDeviceInputType(const AnfNodePtr &anf_node, size_t real_index) const;
+  std::string GetDeviceInputFormat(const AnfNodePtr &anf_node, size_t real_index) const;
+  std::vector<size_t> GetDeviceOutputShape(const AnfNodePtr &anf_node, size_t real_index) const;
+  std::string GetDeviceOutputType(const AnfNodePtr &anf_node, size_t real_index) const;
+  std::string GetDeviceOutputFormat(const AnfNodePtr &anf_node, size_t real_index) const;
+
   kCreaterType creater_type_;
   std::string json_name_;
   std::string json_info_;

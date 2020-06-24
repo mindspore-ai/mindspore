@@ -42,22 +42,22 @@ void DescReporter::ReportByLine(const std::string &data, const std::string &file
     report_data.data = (unsigned char *)data.c_str() + cur_size;
     auto ret = memcpy_s(report_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, file_name.c_str(), file_name.length());
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s report data tag failed";
+      MS_LOG(EXCEPTION) << "Memcpy_s report data tag failed";
     }
     auto report_ret = reporter->Report(&report_data);
     if (report_ret != 0) {
-      MS_LOG(EXCEPTION) << "report data failed";
+      MS_LOG(EXCEPTION) << "Report data failed";
     }
     if (report_size == 0) {
-      MS_LOG(WARNING) << "report_size is 0";
+      MS_LOG(WARNING) << "Report_size is 0";
       break;
     }
     cur_size += report_size;
   }
 }
 
-void DescReporter::ReportData() {
-  for (const auto &desc : prof_desc_) {
+void DescReporter::ReportAllLine() {
+  for (const auto &desc : prof_desc_list_) {
     auto data = desc->ToString();
     ReportByLine(data, file_name_);
   }

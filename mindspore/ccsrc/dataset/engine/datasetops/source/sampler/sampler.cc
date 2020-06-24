@@ -19,8 +19,21 @@
 
 namespace mindspore {
 namespace dataset {
-Sampler::Sampler(int64_t samples_per_buffer)
-    : DatasetOp(0), num_rows_(0), num_samples_(0), samples_per_buffer_(samples_per_buffer), col_desc_(nullptr) {}
+Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
+  // The sampler base class itself does not compute it's own num_rows_ value.
+  // Instead, this value is computed by the derived leaf op during it's own initialization
+  // after it has interacted with it's storage layers.
+  // Here, it is just a getter method to return the value.  However, it is invalid if there is
+  // not a value set for this count, so generate a failure if that is the case.
+  if (num == nullptr || num_rows_ == 0) {
+    RETURN_STATUS_UNEXPECTED("RandomAccessOp has not computed it's num rows yet.");
+  }
+  (*num) = num_rows_;
+  return Status::OK();
+}
+
+Sampler::Sampler(int64_t num_samples, int64_t samples_per_buffer)
+    : num_rows_(0), num_samples_(num_samples), samples_per_buffer_(samples_per_buffer), col_desc_(nullptr) {}
 
 Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   std::shared_ptr<Sampler> child_sampler;
@@ -36,10 +49,10 @@ Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp is nullptr\n");
-  RETURN_IF_NOT_OK(op->GetNumSamples(&num_samples_));
+
+  // If there's a child sampler, set the row count to be it's sample count
   if (HasChildSampler()) {
-    int64_t child_num_samples = child_sampler->num_samples();
-    num_rows_ = child_num_samples;
+    num_rows_ = child_sampler->num_samples_;
   } else {
     RETURN_IF_NOT_OK(op->GetNumRowsInDataset(&num_rows_));
   }
@@ -80,7 +93,7 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
   std::shared_ptr<Tensor> sample_ids;
 
   // A call to derived class to get sample ids wrapped inside a buffer
-  RETURN_IF_NOT_OK(GetNextBuffer(&db));
+  RETURN_IF_NOT_OK(GetNextSample(&db));
   // Get the only tensor inside the buffer that contains the actual SampleIds for the entire epoch
   RETURN_IF_NOT_OK(db->GetTensor(&sample_ids, 0, 0));
   // check this buffer is not a ctrl buffer
@@ -97,15 +110,15 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
     }
   }
   // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
-  RETURN_IF_NOT_OK(GetNextBuffer(&db));
+  RETURN_IF_NOT_OK(GetNextSample(&db));
   CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
   // Reset Sampler since this is the end of the epoch
-  RETURN_IF_NOT_OK(Reset());
+  RETURN_IF_NOT_OK(ResetSampler());
   return Status::OK();
 }
 
 Status Sampler::SetNumSamples(int64_t num_samples) {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples > 0, "num_samples is negative or 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "num_samples is negative");
   num_samples_ = num_samples;
   return Status::OK();
 }
@@ -116,7 +129,7 @@ Status Sampler::SetNumRowsInDataset(int64_t num_rows) {
   return Status::OK();
 }
 
-Status Sampler::AddChild(std::shared_ptr<DatasetOp> child) {
+Status Sampler::AddChild(std::shared_ptr<Sampler> child) {
   if (child == nullptr) {
     return Status::OK();
   }

@@ -55,6 +55,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimIsNot, {InferImplIsNot, true}},
     {prim::kPrimInDict, {InferImplInDict, true}},
     {prim::kPrimNotInDict, {InferImplNotInDict, true}},
+    {prim::kPrimIsConsant, {InferImplIsConstant, true}},
     // Maths
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
@@ -106,8 +107,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimConv2DBackpropFilter, {InferImplConv2DBackpropFilter, true}},
     {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
     {prim::kPrimRelu, {InferImplRelu, true}},
-    {prim::kPrimZerosLikeTensor, {InferImplZerosLikeTensor, true}},
     {prim::kPrimFakeBprop, {InferImplFakeBprop, false}},
+    {prim::kPrimZerosLike, {InferImplZerosLike, true}},
     {prim::kPrimBpropCut, {InferImplBpropCut, true}},
     {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
     {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
@@ -147,9 +148,6 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         AnfNodeConfigPtr out_conf) {
   AbstractBasePtrList args_spec_list;
-  if (!prim_->isa<prim::DoSignaturePrimitive>()) {
-    MS_LOG(EXCEPTION) << "Primitive should be DoSignature, but " << prim_->ToString();
-  }
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
@@ -221,9 +219,6 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
-  if (!prim_->isa<prim::UnpackGraphPrimitive>()) {
-    MS_LOG(EXCEPTION) << "Primitive should be UnpackGraphPrimitive, but got " << prim_->ToString();
-  }
 
   auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
   auto out_node = out_conf->node()->cast<CNodePtr>();
@@ -267,6 +262,80 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
+AnfNodePtr MixedPrecisionCastHelper(AnfNodePtr source_node, AbstractBasePtr node_type, AnfNodePtr target_type,
+                                    FuncGraphPtr func_graph) {
+  AnfNodePtr target_node = source_node;
+  if (node_type->isa<AbstractTensor>()) {
+    auto x = node_type->cast<AbstractTensorPtr>();
+    if (x->element()->BuildType()->isa<Float>()) {
+      auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
+      MS_EXCEPTION_IF_NULL(cast);
+      target_node = func_graph->NewCNode({NewValueNode(cast), source_node, target_type});
+    }
+  } else if (node_type->isa<AbstractTuple>()) {
+    auto x = node_type->cast<AbstractTuplePtr>();
+    auto &items = x->elements();
+    std::vector<AnfNodePtr> nodes;
+    nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    int idx = 0;
+    for (const auto &item : items) {
+      AnfNodePtr tuple_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(idx)});
+      AnfNodePtr node = MixedPrecisionCastHelper(tuple_node, item, target_type, func_graph);
+      nodes.emplace_back(node);
+      ++idx;
+    }
+    target_node = func_graph->NewCNode(nodes);
+  } else if (node_type->isa<AbstractDictionary>()) {
+    auto x = node_type->cast<AbstractDictionaryPtr>();
+    auto &items = x->elements();
+    std::vector<AnfNodePtr> dict_key_nodes;
+    std::vector<AnfNodePtr> dict_value_nodes;
+    dict_key_nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    dict_value_nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    for (const auto &item : items) {
+      AnfNodePtr dict_value_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), source_node, NewValueNode(item.first)});
+      AnfNodePtr node = MixedPrecisionCastHelper(dict_value_node, item.second, target_type, func_graph);
+      dict_key_nodes.emplace_back(NewValueNode(item.first));
+      dict_value_nodes.emplace_back(node);
+    }
+    target_node = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(dict_key_nodes),
+                                        func_graph->NewCNode(dict_value_nodes)});
+  }
+  return target_node;
+}
+
+EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                               AnfNodeConfigPtr out_conf) {
+  AbstractBasePtrList args_spec_list;
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "MixedPrecisionCast"
+                      << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
+
+  ScopePtr scope = kDefaultScope;
+  if (out_conf != nullptr) {
+    scope = out_conf->node()->scope();
+  }
+  ScopeGuard scope_guard(scope);
+
+  FuncGraphPtr func_graph = out_conf->node()->func_graph();
+  AnfNodePtr new_node = MixedPrecisionCastHelper(out_node_inputs[2], args_spec_list[1], out_node_inputs[1], func_graph);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
+
+  return engine->ForwardConfig(out_conf, fn_conf);
+}
+
 namespace {
 py::object BuildValue(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
@@ -300,11 +369,9 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     auto value = abs_base->cast<AbstractRefPtr>()->ref();
     dic = ConvertAbstractToPython(value);
   } else if (abs_base->isa<AbstractEllipsis>()) {
-    auto arg_slice = dyn_cast<AbstractEllipsis>(abs_base);
-    std::vector<int> shape;
-    dic["shape"] = shape;
-    dic["dtype"] = arg_slice->BuildType();
-    dic["value"] = BuildValue(arg_slice->BuildValue());
+    dic["shape"] = py::none();
+    dic["dtype"] = py::ellipsis();
+    dic["value"] = py::ellipsis();
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();
@@ -798,7 +865,11 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     }
     auto refkey = key_value->cast<RefKeyPtr>();
     if (refkey == nullptr) {
-      return std::make_shared<EvalResult>(std::make_shared<AbstractScalar>(type), std::make_shared<AttrValueMap>());
+      auto ret = std::make_shared<AbstractScalar>(type);
+      auto ref_value = ref_abs->ref();
+      MS_EXCEPTION_IF_NULL(ref_value);
+      ret->set_sparse_grad(ref_value->sparse_grad());
+      return std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     }
 
     std::string name = refkey->tag();
@@ -812,6 +883,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     x = SensitivityTransform(x);
     std::shared_ptr<SymbolicKeyInstance> key = std::make_shared<SymbolicKeyInstance>(node, x);
     std::shared_ptr<AbstractScalar> abs_scalar = std::make_shared<AbstractScalar>(key, type);
+    abs_scalar->set_sparse_grad(x->sparse_grad());
     return std::make_shared<EvalResult>(abs_scalar, std::make_shared<AttrValueMap>());
   }
 };

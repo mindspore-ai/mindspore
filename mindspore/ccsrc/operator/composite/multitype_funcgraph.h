@@ -34,7 +34,6 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-
 class MultitypeFuncGraph : public MetaFuncGraph {
  public:
   explicit MultitypeFuncGraph(const std::string &name);
@@ -59,7 +58,6 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   std::unordered_map<TypePtrList, py::function, TypeListHasher, TypeListEqual> fn_cache_py_;
 };
 using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;
-
 }  // namespace prim
 }  // namespace mindspore
 

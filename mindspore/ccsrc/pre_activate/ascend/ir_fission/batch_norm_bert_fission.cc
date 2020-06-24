@@ -27,24 +27,6 @@ const std::vector<int> kOutputIndex{0, 3, 4, 5};
 constexpr size_t kBatchNormRealOutputNum = 3;
 constexpr size_t kBatchNormRealInputNum = 3;
 
-bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
-  MS_EXCEPTION_IF_NULL(n1);
-  MS_EXCEPTION_IF_NULL(n2);
-  auto n1_cnode = n1->cast<CNodePtr>();
-  auto n2_cnode = n2->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(n1_cnode);
-  MS_EXCEPTION_IF_NULL(n2_cnode);
-  auto index_input1 = n1_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(index_input1);
-  auto value_node1 = index_input1->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node1);
-  auto index_input2 = n2_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(index_input2);
-  auto value_node2 = index_input2->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node2);
-  return GetValue<int>(value_node1->value()) < GetValue<int>(value_node2->value());
-}
-
 bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vector<AnfNodePtr> *bn_outputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(bn_outputs);

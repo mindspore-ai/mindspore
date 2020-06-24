@@ -24,9 +24,6 @@ This example provides an efficient way to generate MindRecord. Users only need t
 
 1. Download and prepare the Cora dataset as required.
 
-    > [Cora dataset download address](https://github.com/jzaldi/datasets/tree/master/cora)
-
-
 2. Edit write_cora.sh and modify the parameters
     ```
     --mindrecord_file: output MindRecord file.

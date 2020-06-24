@@ -28,6 +28,23 @@
 
 namespace mindspore {
 namespace session {
+ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(anf);
+  if (!anf->isa<Parameter>()) {
+    MS_LOG(EXCEPTION) << "anf[" << anf->DebugString() << "] is not a parameter";
+  }
+  auto valid_inputs = graph->MutableValidInputs();
+  MS_EXCEPTION_IF_NULL(valid_inputs);
+  auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
+  ParameterPtr new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
+  TraceManager::EndTrace();
+  graph_inputs->push_back(new_parameter);
+  valid_inputs->push_back(valid_input);
+  return new_parameter;
+}
+
 GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
@@ -46,16 +63,35 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Bind input output address";
-  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
+  std::vector<tensor::TensorPtr> need_sync_outputs;
+  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs, &need_sync_outputs);
   MS_LOG(INFO) << "Run graph start";
   predictmodel::StepConvertWeight(inputs);
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);
+
+  bool enable_summary = summary_callback_ != nullptr;
   kernel_graph->set_execution_order(execution_order);
+  NamedSummaryOutputs summary_outputs;
+  if (enable_summary) {
+    GetSummaryNodes(kernel_graph.get());
+    summary_outputs = kernel_graph->summary_nodes();
+    runtime_.IncreaseSummaryRefCount(summary_outputs);
+  }
+
   bool ret = runtime_.Run(kernel_graph.get());
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
+  for (auto output : need_sync_outputs) {
+    (void)output->data_sync();
+  }
+
+  if (enable_summary) {
+    Summary(kernel_graph.get());
+    runtime_.DecreaseSummaryRefCount(summary_outputs);
+  }
+
   MS_LOG(INFO) << "Run graph end";
 }
 

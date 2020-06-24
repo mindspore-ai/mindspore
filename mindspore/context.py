@@ -25,6 +25,7 @@ from mindspore._c_expression import MSContext
 from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
+from mindspore.parallel.mpi._mpi_config import _set_mpi_config, _get_mpi_config
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context']
@@ -55,7 +56,8 @@ def _make_directory(path):
             os.makedirs(path)
             real_path = path
         except PermissionError as e:
-            logger.error(f"No write permission on the directory `{path}, error = {e}")
+            logger.error(
+                f"No write permission on the directory `{path}, error = {e}")
             raise ValueError(f"No write permission on the directory `{path}`.")
     return real_path
 
@@ -78,11 +80,13 @@ class _ThreadLocalInfo(threading.local):
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Sets whether to save the network class name in the scope."""
         if not isinstance(reserve_class_name_in_scope, bool):
-            raise ValueError("Set reserve_class_name_in_scope value must be bool!")
+            raise ValueError(
+                "Set reserve_class_name_in_scope value must be bool!")
         self._reserve_class_name_in_scope = reserve_class_name_in_scope
 
 
-_ContextRecord = namedtuple("_ContextRecord", ["is_pynative_mode", "switch_context_fn"])
+_ContextRecord = namedtuple(
+    "_ContextRecord", ["is_pynative_mode", "switch_context_fn"])
 
 
 class _ContextSwitchInfo(threading.local):
@@ -109,7 +113,8 @@ class _ContextSwitchInfo(threading.local):
         """
         if isinstance(switch_context_fn, FunctionType):
             switch_context_fn()
-        self.context_stack.append(_ContextRecord(is_pynative, switch_context_fn))
+        self.context_stack.append(
+            _ContextRecord(is_pynative, switch_context_fn))
 
     def pop(self):
         self.context_stack.pop()
@@ -193,7 +198,8 @@ class _Context:
 
     @save_graphs_path.setter
     def save_graphs_path(self, save_graphs_path):
-        self._context_handle.set_save_graphs_path(_make_directory(save_graphs_path))
+        self._context_handle.set_save_graphs_path(
+            _make_directory(save_graphs_path))
 
     @property
     def device_target(self):
@@ -212,7 +218,8 @@ class _Context:
     @device_id.setter
     def device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
-            raise ValueError("Device id must be in [0, 4095], but got {}".format(device_id))
+            raise ValueError(
+                "Device id must be in [0, 4095], but got {}".format(device_id))
         success = self._context_handle.set_device_id(device_id)
         if not success:
             raise RuntimeError("Device id set failed!!!")
@@ -239,7 +246,8 @@ class _Context:
 
     @enable_auto_mixed_precision.setter
     def enable_auto_mixed_precision(self, enable_auto_mixed_precision):
-        self._context_handle.set_auto_mixed_precision_flag(enable_auto_mixed_precision)
+        self._context_handle.set_auto_mixed_precision_flag(
+            enable_auto_mixed_precision)
 
     @property
     def enable_reduce_precision(self):
@@ -247,7 +255,8 @@ class _Context:
 
     @enable_reduce_precision.setter
     def enable_reduce_precision(self, enable_reduce_precision):
-        self._context_handle.set_enable_reduce_precision_flag(enable_reduce_precision)
+        self._context_handle.set_enable_reduce_precision_flag(
+            enable_reduce_precision)
 
     @property
     def enable_dump(self):
@@ -279,11 +288,20 @@ class _Context:
 
     @profiling_options.setter
     def profiling_options(self, option):
-        options = ["training_trace", "task_trace", "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
+        options = ["training_trace", "task_trace",
+                   "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
         if option not in options:
             raise ValueError("Profiling options must be in 'training_trace' 'task_trace' "
                              "'task_trace:training_trace' 'training_trace:task_trace' or 'op_trace'.")
         self._context_handle.set_profiling_options(option)
+
+    @property
+    def enable_graph_kernel(self):
+        return self._context_handle.get_enable_graph_kernel()
+
+    @enable_graph_kernel.setter
+    def enable_graph_kernel(self, graph_kernel_switch_):
+        self._context_handle.set_enable_graph_kernel(graph_kernel_switch_)
 
     @property
     def reserve_class_name_in_scope(self):
@@ -302,13 +320,19 @@ class _Context:
     @variable_memory_max_size.setter
     def variable_memory_max_size(self, variable_memory_max_size):
         if not check_input_format(variable_memory_max_size):
-            raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
+            raise ValueError(
+                "Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
         if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
-            raise ValueError("Context param variable_memory_max_size should be less than 31GB.")
-        variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
-        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
-        graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
-        self._context_handle.set_variable_memory_max_size(variable_memory_max_size_)
+            raise ValueError(
+                "Context param variable_memory_max_size should be less than 31GB.")
+        variable_memory_max_size_ = variable_memory_max_size[:-
+                                                             2] + " * 1024 * 1024 * 1024"
+        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - \
+            int(variable_memory_max_size[:-2])
+        graph_memory_max_size_ = str(
+            graph_memory_max_size) + " * 1024 * 1024 * 1024"
+        self._context_handle.set_variable_memory_max_size(
+            variable_memory_max_size_)
         self._context_handle.set_graph_memory_max_size(graph_memory_max_size_)
 
     @property
@@ -331,6 +355,28 @@ class _Context:
     @check_bprop.setter
     def check_bprop(self, check_bprop_flag):
         self._context_handle.set_check_bprop_flag(check_bprop_flag)
+
+    @property
+    def max_device_memory(self):
+        return self._context_handle.get_max_device_memory()
+
+    @max_device_memory.setter
+    def max_device_memory(self, max_device_memory):
+        if not check_input_format(max_device_memory):
+            raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
+        max_device_memory_value = float(max_device_memory[:-2])
+        if max_device_memory_value == 0:
+            raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
+        self._context_handle.set_max_device_memory(max_device_memory_value)
+
+    @property
+    def print_file_path(self):
+        return None
+
+    @print_file_path.setter
+    def print_file_path(self, file):
+        self._context_handle.set_print_file_path(file)
+
 
 def check_input_format(x):
     import re
@@ -367,7 +413,8 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
-                 parameter_broadcast=bool, strategy_ckpt_load_file=str, strategy_ckpt_save_file=str)
+                 auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
+                 strategy_ckpt_save_file=str, full_batch=bool)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -399,11 +446,18 @@ def set_auto_parallel_context(**kwargs):
                        setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
+        auto_parallel_search_mode (str): There are two kinds of search modes, "recursive_programming"
+                     and "dynamic_programming". Default: "dynamic_programming".
+
+                     - recursive_programming: Recursive programming search mode.
+
+                     - dynamic_programming: Dynamic programming search mode.
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
+        full_batch (bool): Whether to load the whole batch on each device. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -453,13 +507,11 @@ def reset_auto_parallel_context():
     _reset_auto_parallel_context()
 
 
-@args_type_check(mode=int, precompile_only=bool, device_target=str,
-                 device_id=int, enable_ir_fusion=bool, save_graphs=bool,
-                 enable_task_sink=bool, save_graphs_path=str, enable_loop_sink=bool,
-                 enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str, enable_gpu_summary=bool,
-                 enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
-                 enable_reduce_precision=bool, enable_dynamic_memory=bool, graph_memory_max_size=str,
-                 variable_memory_max_size=str, enable_profiling=bool, profiling_options=str)
+@args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
+                 save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
+                 save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
+                 enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
+                 check_bprop=bool, max_device_memory=str, print_file_path=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -476,7 +528,6 @@ def set_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        If need to config graph max memory size and variable max memory size, one must make sure:
 
     Args:
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE.
@@ -511,6 +562,8 @@ def set_context(**kwargs):
             separated by colons; single operator can choose op_trace, op_trace cannot be combined with
             training_trace and task_trace. Default: "training_trace".
         check_bprop (bool): Whether to check bprop. Default: False.
+        max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
+            The format is "xxGB". Default: "1024GB".
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -530,6 +583,7 @@ def set_context(**kwargs):
         >>>                     device_target="Ascend",device_id=0, save_graphs=True,
         >>>                     save_graphs_path="/mindspore")
         >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
+        >>> context.set_context(max_device_memory="3.5GB")
     """
     for key, value in kwargs.items():
         if not hasattr(_context(), key):
@@ -551,5 +605,43 @@ def get_context(attr_key):
         ValueError: If input key is not an attribute in context.
     """
     if not hasattr(_context(), attr_key):
-        raise ValueError("Get context keyword %s is not recognized!" % attr_key)
+        raise ValueError(
+            "Get context keyword %s is not recognized!" % attr_key)
     return getattr(_context(), attr_key)
+
+@args_type_check(enable_mpi=bool)
+def set_mpi_config(**kwargs):
+    """
+    Sets mpi config for running environment.
+
+    mpi config should be configured before running your program. If there is no configuration,
+    mpi moudle will be disabled by default.
+
+    Note:
+        Attribute name is required for setting attributes.
+
+    Args:
+        enable_mpi (bool): Whether to enable mpi. Default: False.
+
+    Raises:
+        ValueError: If input key is not an attribute in mpi config.
+
+    Examples:
+        >>> mpiconfig.set_mpi_config(enable_mpi=True)
+    """
+    _set_mpi_config(**kwargs)
+
+def get_mpi_config(attr_key):
+    """
+    Gets mpi config attribute value according to the input key.
+
+    Args:
+        attr_key (str): The key of the attribute.
+
+    Returns:
+        Object, The value of given attribute key.
+
+    Raises:
+        ValueError: If input key is not an attribute in context.
+    """
+    return _get_mpi_config(attr_key)

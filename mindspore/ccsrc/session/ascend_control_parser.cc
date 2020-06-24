@@ -18,6 +18,7 @@
 #include <memory>
 #include "session/ascend_control_parser.h"
 #include "session/anf_runtime_algorithm.h"
+#include "utils/union_find_set.h"
 
 static constexpr size_t kCNodePrim = 0;
 static constexpr size_t kCNodeCallArg = 1;
@@ -32,35 +33,126 @@ static constexpr size_t kCNodeSwitchLayerLength = 3;
 
 namespace mindspore {
 namespace session {
+static void InitUnionFindSet(NotNull<KernelGraphPtr> kg, const NotNull<UnionFindSet<AnfNodePtr> *> union_find_set,
+                             const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(kg.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(kg.get());
 
-void AscendControlParser::ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map) {
-  for (auto &iter : graph_id_map) {
-    auto &kg = iter.second;
-    MS_EXCEPTION_IF_NULL(kg);
-    auto real_inputs = kg->real_inputs();
-    for (auto &it : real_inputs) {
-      auto &parameter = it.first;
-      auto &args = it.second;
-      for (auto &arg : args) {
-        MS_EXCEPTION_IF_NULL(arg);
-        if (arg->isa<Parameter>()) {
-          MS_LOG(INFO) << "Parameter should be reused, no need insert assign, parameter: " << parameter->DebugString()
-                       << ", arg:" << arg->DebugString();
-          continue;
-        }
-        auto target_graph_iter = graph_id_map.find(AnfAlgo::GetGraphId(arg.get()));
-        if (target_graph_iter == graph_id_map.end()) {
-          MS_LOG(EXCEPTION) << "Graph id " << AnfAlgo::GetGraphId(arg.get()) << " not found.";
-        }
-        InsertAssignToGraph(NOT_NULL(target_graph_iter->second), NOT_NULL(arg), NOT_NULL(parameter));
+  const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs = kg->real_inputs();
+  for (auto &iter : real_inputs) {
+    auto &para = iter.first;
+    MS_EXCEPTION_IF_NULL(para);
+    if (para->isa<Parameter>()) {
+      union_find_set->Add(para);
+    }
+    for (auto &arg : iter.second) {
+      MS_EXCEPTION_IF_NULL(arg);
+      if (!arg->isa<Parameter>()) {
+        continue;
       }
+      union_find_set->Add(arg);
     }
   }
+  for (auto &child : kg->child_graph_order()) {
+    InitUnionFindSet(NOT_NULL(child), union_find_set, memo);
+  }
+}
+
+static void UnionParentParameter(NotNull<KernelGraphPtr> kg, const NotNull<UnionFindSet<AnfNodePtr> *> union_find_set,
+                                 const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(kg.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(kg.get());
+
+  const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs = kg->real_inputs();
+  for (auto &iter : real_inputs) {
+    auto &para = iter.first;
+    for (auto &arg : iter.second) {
+      MS_EXCEPTION_IF_NULL(arg);
+      if (!arg->isa<Parameter>()) {
+        continue;
+      }
+      union_find_set->Union(arg, para);
+    }
+  }
+  for (auto &child : kg->child_graph_order()) {
+    UnionParentParameter(NOT_NULL(child), union_find_set, memo);
+  }
+}
+
+static UnionFindSet<AnfNodePtr> MakeUnionFindSet(NotNull<KernelGraphPtr> root_kg) {
+  UnionFindSet<AnfNodePtr> result;
+  std::set<KernelGraphPtr> memo;
+  InitUnionFindSet(root_kg, NOT_NULL(&result), NOT_NULL(&memo));
+  memo.clear();
+  UnionParentParameter(root_kg, NOT_NULL(&result), NOT_NULL(&memo));
+  return result;
+}
+
+static void RecursiveReplaceNode(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> main_parameter,
+                                 const std::set<AnfNodePtr> &parameter_reuse_set,
+                                 const NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (parameter_reuse_set.empty()) {
+    MS_LOG(EXCEPTION) << "parameter_reuse_set is empty.";
+  }
+  if (memo->find(kg.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(kg.get());
+
+  for (auto &para : parameter_reuse_set) {
+    if (para == main_parameter.get()) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(para);
+    MS_LOG(INFO) << "Replace " << para->DebugString() << " of graph " << AnfAlgo::GetGraphId(para.get()) << " to "
+                 << main_parameter->DebugString() << " of graph " << AnfAlgo::GetGraphId(main_parameter.get().get());
+    kg->ReplaceNode(NOT_NULL(para), main_parameter);
+  }
+
+  for (auto &child : kg->child_graph_order()) {
+    RecursiveReplaceNode(NOT_NULL(child), main_parameter, parameter_reuse_set, memo);
+  }
+}
+
+static void ReuseParameter(NotNull<KernelGraphPtr> root_kg, NotNull<UnionFindSet<AnfNodePtr> *> parameter_set) {
+  auto parameter_reuse_sets = parameter_set->GetSets();
+  for (auto &[key, parameter_reuse_set] : parameter_reuse_sets) {
+    if (parameter_reuse_set.size() <= 1) {
+      continue;
+    }
+
+    AnfNodePtr main_parameter = key;
+    std::set<AnfNodePtr> root_inputs_set;
+    const auto &root_inputs_vector = root_kg->inputs();
+    root_inputs_set.insert(root_inputs_vector.begin(), root_inputs_vector.end());
+    for (auto &node : parameter_reuse_set) {
+      if (root_inputs_set.find(node) != root_inputs_set.end()) {
+        main_parameter = node;
+        break;
+      }
+    }
+
+    std::set<KernelGraphPtr> memo;
+    RecursiveReplaceNode(root_kg, NOT_NULL(main_parameter), parameter_reuse_set, NOT_NULL(&memo));
+  }
+}
+
+CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start) {
+  for (size_t i = start; i < list.size() - 1; ++i) {
+    if (!IsPrimitiveCNode(list[i], prim::kPrimPartial) && AnfAlgo::IsRealKernel(list[i])) {
+      return list[i];
+    }
+  }
+  return nullptr;
 }
 
 void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
   std::set<KernelGraphPtr> memo;
-  ProcessKernelGraph(kg, nullptr, nullptr, NOT_NULL(&memo));
+  (void)ProcessKernelGraph(kg, nullptr, nullptr, NOT_NULL(&memo));
   std::map<uint32_t, KernelGraphPtr> graph_id_map;
   for (auto &g : memo) {
     if (graph_id_map.find(g->graph_id()) != graph_id_map.end()) {
@@ -69,16 +161,49 @@ void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
     }
     graph_id_map[g->graph_id()] = g;
   }
+  // Make UnionFindSet
+  UnionFindSet<AnfNodePtr> parameter_set = MakeUnionFindSet(kg);
+  // Reuse Parameter
+  ReuseParameter(kg, NOT_NULL(&parameter_set));
+  // Insert Assign
   ChildGraphDataAssign(graph_id_map);
 }
 
-CNodePtr AscendControlParser::GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start) {
-  for (size_t i = start; i < list.size() - 1; ++i) {
-    if (!IsPrimitiveCNode(list[i], prim::kPrimPartial) && AnfAlgo::IsRealKernel(list[i])) {
-      return list[i];
+void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
+  std::set<KernelGraphPtr> memo;
+  (void)RecurseGraph(root_graph, NOT_NULL(&memo));
+}
+
+void AscendControlParser::ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map) {
+  for (auto &iter : graph_id_map) {
+    auto &kg = iter.second;
+    MS_EXCEPTION_IF_NULL(kg);
+    std::set<std::pair<AnfNodePtr, AnfNodePtr>> memo;
+    const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs = kg->real_inputs();
+    for (auto &it : real_inputs) {
+      auto &parameter = it.first;
+      auto &args = it.second;
+      for (auto &arg : args) {
+        MS_EXCEPTION_IF_NULL(arg);
+        if (memo.find({parameter, arg}) != memo.end()) {
+          continue;
+        } else {
+          memo.emplace(parameter, arg);
+        }
+        if (arg->isa<Parameter>()) {
+          MS_EXCEPTION_IF_NULL(parameter);
+          MS_LOG(DEBUG) << "Parameter should be reused, no need insert assign, parameter: " << parameter->DebugString()
+                        << ", arg:" << arg->DebugString();
+          continue;
+        }
+        auto target_graph_iter = graph_id_map.find(AnfAlgo::GetGraphId(arg.get()));
+        if (target_graph_iter == graph_id_map.end()) {
+          MS_LOG(EXCEPTION) << "Graph id " << AnfAlgo::GetGraphId(arg.get()) << " not found.";
+        }
+        InsertMultipleAssignToGraph(NOT_NULL(target_graph_iter->second), NOT_NULL(arg), NOT_NULL(parameter));
+      }
     }
   }
-  return nullptr;
 }
 
 NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
@@ -99,25 +224,29 @@ NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr
   // 3. topological sort
   kg->SetExecOrderByDefault();
   const std::vector<CNodePtr> &nodes = kg->execution_order();
-  if (nodes.empty()) {
-    MS_LOG(EXCEPTION) << "KernelGraph " << kg->ToString() << " has no cnodes!";
-  }
   // 4. insert first_label
-  auto start_label = kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSetOpName))});
-  MS_LOG(INFO) << "Insert start label " << start_label->DebugString() << " to " << kg->ToString();
-  kg->set_start_label(start_label);
+  CNodePtr start_label;
+  if (last_node != nullptr && last_label != nullptr) {
+    start_label = kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSetOpName))});
+    MS_LOG(INFO) << "Insert start label " << start_label->DebugString() << " to " << kg->ToString();
+    kg->set_start_label(start_label);
+  } else {
+    // no goto node will jump to start label of root graph, so return a fake label
+    start_label = std::make_shared<CNode>(std::vector<AnfNodePtr>(), FuncGraphPtr(nullptr));
+  }
+
   // 5. traverse
   for (size_t i = 0; i < nodes.size(); ++i) {
     auto &cnode = nodes[i];
     if (cnode->size() < kCNodePrim + 1) {
       MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
     }
-    AnfNodePtr fn = cnode->input(kCNodePrim);
+    AnfNodePtr fn = cnode->input(kAnfPrimitiveIndex);
     if (!IsPrimitive(fn, prim::kPrimCall) || cnode->size() < kCNodeCallArg + 1) {
       MS_LOG(DEBUG) << "continue node " << cnode->DebugString();
       continue;
     }
-    AnfNodePtr arg = cnode->input(kCNodeCallArg);
+    AnfNodePtr arg = cnode->input(kFirstDataInputIndex);
     if (IsValueNode<KernelGraph>(arg)) {
       RecurseCall(kg, NOT_NULL(cnode), GetNextRealKernel(nodes, i + 1), memo);
     } else if (!arg->isa<CNode>()) {
@@ -140,11 +269,10 @@ NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr
 }
 
 void AscendControlParser::InsertDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> attch_node) {
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>("depend"))};
   auto return_node = kg->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
-  inputs.push_back(return_node->input(1));
-  inputs.push_back(attch_node.get());
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                    return_node->input(kFirstDataInputIndex), attch_node.get()};
   auto depend_node = kg->NewCNode(inputs);
   return_node->set_input(1, depend_node);
 }
@@ -161,17 +289,8 @@ void AscendControlParser::InsertControlDependToGraph(NotNull<KernelGraphPtr> kg,
 
 void AscendControlParser::LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
                                           const CNodePtr &last_label) {
-  auto origin_return = kg->get_return();
-  const std::vector<AnfNodePtr> &origin_return_inputs = origin_return->inputs();
-  // if entry graph, replace return with make_tuple
-  if (from_graph_call_node == nullptr || last_label == nullptr) {
-    MS_LOG(INFO) << kg->ToString() << " is entry graph.";
-    std::vector<AnfNodePtr> make_tuple_inputs = {std::make_shared<ValueNode>(prim::kPrimMakeTuple)};
-    make_tuple_inputs.insert(make_tuple_inputs.end(), origin_return_inputs.begin() + 1, origin_return_inputs.end());
-    auto make_tuple = kg->NewCNode(make_tuple_inputs);
-    origin_return->set_inputs({origin_return->input(kCNodePrim), make_tuple});
-  } else {
-    // else replace return with label_goto
+  // if not entry graph, replace return with label_goto
+  if (from_graph_call_node != nullptr && last_label != nullptr) {
     auto label_goto =
       kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelGotoOpName)), last_label});
     MS_LOG(INFO) << "Insert end goto " << label_goto->DebugString() << " to " << kg->ToString();
@@ -181,10 +300,13 @@ void AscendControlParser::LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNod
 
 void AscendControlParser::RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
                                       const NotNull<std::set<KernelGraphPtr> *> memo) {
-  MS_LOG(INFO) << "process call func " << cur_node->DebugString();
+  MS_LOG(INFO) << "Process call func " << cur_node->DebugString();
 
   // 1 get kernel graph
   const std::vector<AnfNodePtr> &origin_inputs = cur_node->inputs();
+  if (kCNodeCallArg >= origin_inputs.size()) {
+    MS_LOG(EXCEPTION) << "Index out of range,size:" << origin_inputs.size();
+  }
   std::vector<AnfNodePtr> new_inputs = {std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelGotoOpName))};
   if (!IsValueNode<KernelGraph>(origin_inputs[kCNodeCallArg])) {
     MS_LOG(WARNING) << "Node " << cur_node->DebugString(10) << " index " << kCNodeCallArg << " is not a ValueNode";
@@ -208,12 +330,12 @@ void AscendControlParser::RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodeP
   new_inputs.insert(new_inputs.end(), origin_inputs.begin(), origin_inputs.end());
   cur_node->set_inputs(new_inputs);
   cur_node->set_abstract(nullptr);
-  MS_LOG(INFO) << "success process call func " << cur_node->DebugString();
+  MS_LOG(INFO) << "Succeed processing call func " << cur_node->DebugString();
 }
 
 void AscendControlParser::RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node,
                                         const CNodePtr &next_node, const NotNull<std::set<KernelGraphPtr> *> memo) {
-  MS_LOG(INFO) << "process switch node " << cur_node->DebugString();
+  MS_LOG(INFO) << "Process switch node " << cur_node->DebugString();
 
   if (cur_node->size() < kCNodeSwitchLength) {
     MS_LOG(EXCEPTION) << "Inputs of apply node must more than " << kCNodeSwitchLength;
@@ -245,13 +367,13 @@ void AscendControlParser::RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNod
   new_switch_inputs.insert(new_switch_inputs.end(), origin_switch_inputs.begin(), origin_switch_inputs.end());
   cur_node->set_inputs(new_switch_inputs);
   cur_node->set_abstract(nullptr);
-  MS_LOG(INFO) << "success process switch func " << cur_node->DebugString();
+  MS_LOG(INFO) << "Succeed processing switch func " << cur_node->DebugString();
 }
 
 void AscendControlParser::RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node,
                                              const CNodePtr &next_node,
                                              const NotNull<std::set<KernelGraphPtr> *> memo) {
-  MS_LOG(INFO) << "process switch node " << cur_node->DebugString();
+  MS_LOG(INFO) << "Process switch node " << cur_node->DebugString();
 
   if (cur_node->size() < kCNodeSwitchLayerLength) {
     MS_LOG(EXCEPTION) << "Inputs of apply node must more than " << kCNodeSwitchLayerLength;
@@ -272,6 +394,9 @@ void AscendControlParser::RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull
   }
   // 3 recurse sub graph
   const std::vector<AnfNodePtr> &origin_switch_inputs = cur_node->inputs();
+  if (kCNodeSwitchCond >= origin_switch_inputs.size()) {
+    MS_LOG(EXCEPTION) << "Index out of range:" << origin_switch_inputs.size() << ".";
+  }
   std::vector<AnfNodePtr> new_switch_inputs = {
     std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSwitchOpName)),
     origin_switch_inputs[kCNodeSwitchCond]};
@@ -286,7 +411,7 @@ void AscendControlParser::RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull
   new_switch_inputs.insert(new_switch_inputs.end(), branch_partial.begin(), branch_partial.end());
   cur_node->set_inputs(new_switch_inputs);
   cur_node->set_abstract(nullptr);
-  MS_LOG(INFO) << "success process switch layer " << cur_node->DebugString();
+  MS_LOG(INFO) << "Succeed processing switch layer " << cur_node->DebugString();
 }
 
 std::tuple<CNodePtr, KernelGraphPtr> AscendControlParser::ParsePartial(NotNull<AnfNodePtr> node) {
@@ -295,13 +420,31 @@ std::tuple<CNodePtr, KernelGraphPtr> AscendControlParser::ParsePartial(NotNull<A
   }
   // 2.1 branch kernel graph and args
   auto partial_cnode = utils::cast<CNodePtr>(node.get());
+  MS_EXCEPTION_IF_NULL(partial_cnode);
   if (partial_cnode->size() < kCNodePartialLength) {
     MS_LOG(EXCEPTION) << "Inputs of partial node must more than " << kCNodePartialLength;
   }
-  auto partial_inputs = partial_cnode->inputs();
-  auto branch_kg = GetValueNode<KernelGraphPtr>(partial_inputs[kCNodePartialFunc]);
 
+  const auto &partial_inputs = partial_cnode->inputs();
+  if (kCNodePartialFunc >= partial_inputs.size()) {
+    MS_LOG(EXCEPTION) << "Index out of range:" << partial_inputs.size() << ".";
+  }
+  auto branch_kg = GetValueNode<KernelGraphPtr>(partial_inputs[kCNodePartialFunc]);
   return {partial_cnode, branch_kg};
+}
+
+void AscendControlParser::InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from,
+                                                      NotNull<AnfNodePtr> to) {
+  std::vector<AnfNodePtr> from_outputs = AnfAlgo::GetAllOutput(from, {prim::kPrimTupleGetItem});
+  std::vector<AnfNodePtr> to_outputs = AnfAlgo::GetAllOutput(to, {prim::kPrimTupleGetItem});
+  MS_LOG(INFO) << "Insert multi-assign from [" << from->DebugString() << "] to [" << to->DebugString() << "]";
+  if (from_outputs.size() != to_outputs.size()) {
+    MS_LOG(EXCEPTION) << "From outputs size[" << from_outputs.size() << "] is not equal to to outputs size["
+                      << to_outputs.size() << "]";
+  }
+  for (size_t i = 0; i < from_outputs.size(); i++) {
+    InsertAssignToGraph(kg, NOT_NULL(from_outputs[i]), NOT_NULL(to_outputs[i]));
+  }
 }
 
 void AscendControlParser::InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from,
@@ -316,7 +459,7 @@ void AscendControlParser::InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNul
   MS_LOG(INFO) << "Insert assign to graph " << kg->ToString() << " from " << from->DebugString() << " to "
                << to->DebugString();
   // config inputs of assign node
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>("Assign")), to, from};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimAssign->name())), to, from};
   // generate a new cnode
   auto assign_node = kg->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(assign_node);
@@ -325,49 +468,24 @@ void AscendControlParser::InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNul
   InsertDependToGraph(kg, NOT_NULL(assign_node));
 }
 
-void AscendControlParser::LinkArgsToParam(NotNull<KernelGraphPtr> to_graph, NotNull<KernelGraphPtr> target_graph,
-                                          NotNull<AnfNodePtr> arg, NotNull<AnfNodePtr> param) {
-  if (IsPrimitiveCNode(arg, prim::kPrimMakeTuple) && IsPrimitiveCNode(param, prim::kPrimMakeTuple)) {
-    MS_LOG(INFO) << "Arg " << arg->DebugString() << " Param " << param->DebugString() << " is a tuple";
-    CNodePtr cnode_arg = arg.get()->cast<CNodePtr>();
-    CNodePtr cnode_param = param.get()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode_arg);
-    MS_EXCEPTION_IF_NULL(cnode_param);
-    if (cnode_arg->size() != cnode_param->size()) {
-      MS_LOG(EXCEPTION) << "Arg " << arg->DebugString() << " size " << cnode_arg->size() << " but Param "
-                        << param->DebugString() << " size " << cnode_param->size();
-    }
-
-    for (size_t i = 1; i < cnode_param->size(); ++i) {
-      LinkArgsToParam(to_graph, target_graph, NOT_NULL(cnode_arg->input(i)), NOT_NULL(cnode_param->input(i)));
-    }
-  } else if (arg->isa<CNode>()) {
-    InsertAssignToGraph(target_graph, arg, param);
-  } else {
-    MS_LOG(EXCEPTION) << "Arg " << arg->DebugString() << " Param " << param->DebugString() << " unknown type.";
-  }
-}
-
-void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
-  std::set<KernelGraphPtr> memo;
-  (void)RecurseGraph(root_graph, NOT_NULL(&memo));
-}
-
 std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> graph,
                                                         const NotNull<std::set<KernelGraphPtr> *> memo) {
-  MS_LOG(INFO) << "graph:" << graph->graph_id() << " start";
-  auto print_vector = [&](std::vector<CNodePtr> vec) -> void {
-    MS_LOG(INFO) << "graph:" << graph->graph_id() << "execution order";
-    for (size_t i = 0; i < vec.size(); i++) {
-      MS_LOG(INFO) << "[" << i << "][" << vec[i]->DebugString() << "]";
-    }
-  };
+  MS_LOG(INFO) << "Graph:" << graph->graph_id() << " start";
   if (memo->find(graph) != memo->end()) {
     return {};
   }
   memo->insert(graph.get());
   graph->SetExecOrderByDefault();
-  const std::vector<CNodePtr> &cnodes = graph->execution_order();
+  std::vector<CNodePtr> cnodes = graph->execution_order();
+
+  auto end_label_goto = graph->get_end_goto();
+  if (cnodes.rbegin() != cnodes.rend() && *cnodes.rbegin() == end_label_goto) {
+    cnodes.pop_back();
+  }
+  AnfAlgo::ReorderExecList(NOT_NULL(&cnodes));
+  if (end_label_goto != nullptr) {
+    cnodes.push_back(end_label_goto);
+  }
 
   std::vector<CNodePtr> execution_order;
   uint32_t child_order_index = 0;
@@ -377,43 +495,32 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
     if (node == graph->get_end_goto()) {
       continue;
     }
-    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
-      if (!CheckLabelIndex(child_order_index, 0, node, graph)) {
-        MS_LOG(EXCEPTION) << "Check label index fail";
-      }
-      auto child_graph = graph->child_graph_order()[child_order_index++];
-      if (child_graph == graph->parent_graph()) {
-        continue;
-      }
-      auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
-      execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
-    } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSwitch)) {
-      std::vector<uint32_t> label_switch_list = GetLabelSwitchList(node);
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSwitch)) {
+      std::vector<uint32_t> label_switch_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
       for (auto iter = label_switch_list.rbegin(); iter != label_switch_list.rend(); ++iter) {
         if (!CheckLabelIndex(child_order_index, *iter, node, graph)) {
           MS_LOG(EXCEPTION) << "Check label index fail";
         }
-        auto child_graph = graph->child_graph_order()[child_order_index++];
-        if (child_graph == graph->parent_graph()) {
-          continue;
+        if (child_order_index >= graph->child_graph_order().size()) {
+          MS_LOG(EXCEPTION) << "Index out of range:" << graph->child_graph_order().size();
         }
+        auto child_graph = graph->child_graph_order()[child_order_index++];
         auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
         execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
       }
+    } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
+      uint32_t label_index = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
+      if (!CheckLabelIndex(child_order_index, label_index, node, graph)) {
+        MS_LOG(EXCEPTION) << "Check label index fail";
+      }
+      auto child_graph = graph->child_graph_order()[child_order_index++];
+      auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
+      execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
     }
   }
   graph->set_execution_order(execution_order);
-  print_vector(graph->execution_order());
+  graph->PrintGraphExecuteOrder();
   return execution_order;
-}
-
-std::vector<uint32_t> AscendControlParser::GetLabelSwitchList(const CNodePtr &node) {
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, node)) {
-    MS_LOG(EXCEPTION) << "LabelSwitchKernel has no attr label_switch_list";
-  }
-  auto primitive = AnfAlgo::GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  return GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrLabelSwitchList));
 }
 
 bool AscendControlParser::CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cur_label,
@@ -424,37 +531,23 @@ bool AscendControlParser::CheckLabelIndex(uint32_t order_index, uint32_t label_i
     MS_LOG(EXCEPTION) << "Child graph order is wrong, graph " << graph->ToString() << " child graph size "
                       << child_graph_order.size() << " goto index " << order_index;
   }
-
-  if (AnfAlgo::CheckPrimitiveType(cur_label, prim::kPrimLabelGoto)) {
-    // check label_goto and start_label in child graph
-    if (!AnfAlgo::HasNodeAttr(kAttrLabelIndex, cur_label)) {
-      MS_LOG(EXCEPTION) << "LabelSetKernel has no attr label_index";
-    }
-    auto primitive = AnfAlgo::GetCNodePrimitive(cur_label);
-    MS_EXCEPTION_IF_NULL(primitive);
-    uint32_t label_goto_index = GetValue<uint32_t>(primitive->GetAttr(kAttrLabelIndex));
-    label_index = label_goto_index;
-  }
-  // get start_label_set_index of child graph
   auto child_graph = child_graph_order[order_index];
   MS_EXCEPTION_IF_NULL(child_graph);
+
+  // get start_label_set_index of child graph
   auto start_label_set = child_graph->get_start_label();
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelIndex, start_label_set)) {
-    MS_LOG(EXCEPTION) << "LabelSetKernel has no attr label_index";
-  }
-  auto start_primitive = AnfAlgo::GetCNodePrimitive(start_label_set);
-  MS_EXCEPTION_IF_NULL(start_primitive);
-  uint32_t start_label_set_index = GetValue<uint32_t>(start_primitive->GetAttr(kAttrLabelIndex));
+  uint32_t start_label_set_index = AnfAlgo::GetNodeAttr<uint32_t>(start_label_set, kAttrLabelIndex);
   if (label_index != start_label_set_index) {
     MS_LOG(WARNING) << cur_label->DebugString() << " index " << label_index << " but " << start_label_set->DebugString()
                     << " index " << start_label_set_index << " current child graph order : " << order_index;
     return false;
+  } else {
+    return true;
   }
-  return true;
 }
 
 void AscendControlParser::UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg) {
-  MS_LOG(INFO) << "graph id:" << kg->graph_id();
+  MS_LOG(INFO) << "Graph id:" << kg->graph_id();
   kg->SetExecOrderByDefault();
   auto call_nodes = kg->FindNodeByPrimitive(std::make_shared<Primitive>(prim::kPrimCall->name()));
   std::vector<KernelGraphPtr> child_graph_order;
@@ -474,6 +567,5 @@ void AscendControlParser::UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg) {
   }
   kg->set_child_graph_order(child_graph_order);
 }
-
 }  // namespace session
 }  // namespace mindspore

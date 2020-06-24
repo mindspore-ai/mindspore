@@ -102,22 +102,15 @@ class DfGraphConvertor {
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph)
       : anf_graph_(anf_graph), df_graph_(std::make_shared<DfGraph>(anf_graph_->ToString())) {
 #if (!defined ENABLE_GE) || (defined ENABLE_INFER)
-    auto it_training = anf_graph->flags().find("training");
-    if (it_training != anf_graph->flags().end()) {
-      training_ = it_training->second;
-    } else {
-      training_ = false;
-    }
+    training_ = anf_graph->has_flag("training");
 #else
     training_ = ENABLE_TRAIN;
 #endif
-    auto it_distribute = anf_graph->flags().find("broadcast_flag");
-    if (it_distribute != anf_graph->flags().end()) {
+    distribute_ = anf_graph->has_flag("broadcast_flag");
+    if (anf_graph->has_flag("broadcast_flag")) {
       ConfigManager::GetInstance().set_parallel_strategy(ParallelStrategy::DISTRIBUTION);
-      distribute_ = it_distribute->second;
     } else {
       ConfigManager::GetInstance().set_parallel_strategy(ParallelStrategy::ONE_DEVICE);
-      distribute_ = false;
     }
 
     MS_LOG(INFO) << "Create DfGraphConvertor with training: " << training_ << ", distribute: " << distribute_;

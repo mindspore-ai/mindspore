@@ -74,14 +74,6 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method
-    // @param uint64_t num_samples
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumSamples(uint64_t num_samples) {
-      num_samples_ = num_samples;
-      return *this;
-    }
-
-    // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
@@ -121,7 +113,6 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
    private:
     std::string dir_;
     int32_t num_workers_;
-    uint64_t num_samples_;
     int32_t rows_per_buffer_;
     int32_t op_connect_size_;
     std::shared_ptr<Sampler> sampler_;
@@ -137,7 +128,7 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   // @param uint32_t - queueSize - connector queue size
   // @param std::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
   CifarOp(CifarType type, int32_t num_works, int32_t rows_per_buf, const std::string &file_dir, int32_t queue_size,
-          int64_t num_samples, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
   // Destructor.
   ~CifarOp() = default;
 
@@ -152,16 +143,6 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Method derived from RandomAccess Op, enable Sampler to get numRows
-  // @param uint64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumSamples(int64_t *num) const override;
-
-  // Method derived from RandomAccess Op, enable Sampler to get total numRows in dataset
-  // @param uint64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumRowsInDataset(int64_t *num) const override;
-
   // A print method typically used for debugging
   // @param out
   // @param show_all
@@ -169,11 +150,14 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
 
   // Function to count the number of samples in the CIFAR dataset
   // @param dir path to the CIFAR directory
-  // @param numSamples maximum number of samples requested
   // @param isCIFAR10 true if CIFAR10 and false if CIFAR100
-  // @param count output arg that will hold the minimum of the actual dataset size and numSamples
+  // @param count output arg that will hold the actual dataset size
   // @return
-  static Status CountTotalRows(const std::string &dir, int64_t numSamples, bool isCIFAR10, int64_t *count);
+  static Status CountTotalRows(const std::string &dir, bool isCIFAR10, int64_t *count);
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "CifarOp"; }
 
  private:
   // Initialize Sampler, calls sampler->Init() within
@@ -227,10 +211,8 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   CifarType cifar_type_;
   int32_t rows_per_buffer_;
   std::string folder_path_;
-  int64_t num_samples_;
   std::unique_ptr<DataSchema> data_schema_;
   std::shared_ptr<Sampler> sampler_;
-  int64_t num_rows_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
 

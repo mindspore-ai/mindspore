@@ -55,6 +55,7 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
       auto eltwise_input = cnode->input(1);
+      MS_EXCEPTION_IF_NULL(eltwise_input);
       if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimMatMul)) {
         MatchMatmulEltwise(cnode, eltwise_input, kernel_graph, candidate_fusion);
       }

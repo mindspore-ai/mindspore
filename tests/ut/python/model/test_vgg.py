@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.model_zoo.vgg import vgg16
+from model_zoo.vgg16.src.vgg import vgg16
 from ..ut_filter import non_graph_engine
 
 

@@ -13,17 +13,20 @@
 # limitations under the License.
 # ============================================================================
 
-"""Generate bprop for aware quantization ops"""
+"""Generate bprop for quantization aware ops"""
 
 from .. import operations as P
+from ..operations import _quant_ops as Q
 from .grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ... import context
 
 
-@bprop_getters.register(P.FakeQuantWithMinMax)
+@bprop_getters.register(Q.FakeQuantPerLayer)
 def get_bprop_fakequant_with_minmax(self):
-    """Generate bprop for FakeQuantWithMinMax for GPU and Ascend"""
-    op = P.FakeQuantWithMinMaxGrad(num_bits=self.num_bits, quant_delay=self.quant_delay)
+    """Generate bprop for FakeQuantPerLayer for GPU and Ascend"""
+    op = Q.FakeQuantPerLayerGrad(
+        num_bits=self.num_bits, quant_delay=self.quant_delay)
 
     def bprop(x, x_min, x_max, out, dout):
         dx = op(dout, x, x_min, x_max)
@@ -32,10 +35,14 @@ def get_bprop_fakequant_with_minmax(self):
     return bprop
 
 
-@bprop_getters.register(P.FakeQuantWithMinMaxPerChannel)
+@bprop_getters.register(Q.FakeQuantPerChannel)
 def get_bprop_fakequant_with_minmax_perchannel(self):
-    """Generate bprop for FakeQuantWithMinMaxPerChannel for GPU"""
-    op = P.FakeQuantWithMinMaxPerChannelGrad(num_bits=self.num_bits, quant_delay=self.quant_delay)
+    """Generate bprop for FakeQuantPerChannel"""
+    op = Q.FakeQuantPerChannelGrad(num_bits=self.num_bits,
+                                   quant_delay=self.quant_delay,
+                                   symmetric=self.symmetric,
+                                   narrow_range=self.symmetric,
+                                   channel_axis=self.channel_axis)
 
     def bprop(x, x_min, x_max, out, dout):
         dx = op(dout, x, x_min, x_max)
@@ -44,10 +51,10 @@ def get_bprop_fakequant_with_minmax_perchannel(self):
     return bprop
 
 
-@bprop_getters.register(P.BatchNormFold)
+@bprop_getters.register(Q.BatchNormFold)
 def get_bprop_batchnorm_fold(self):
     """Generate bprop for BatchNormFold for GPU"""
-    op = P.BatchNormFoldGrad(self.epsilon, self.is_training, self.freeze_bn)
+    op = Q.BatchNormFoldGrad(self.epsilon, self.is_training, self.freeze_bn)
 
     def bprop(x, mean, variance, global_step, out, dout):
         dx = op(dout[0], dout[1], x, out[0], out[1], global_step)
@@ -56,36 +63,45 @@ def get_bprop_batchnorm_fold(self):
     return bprop
 
 
-@bprop_getters.register(P.CorrectionMul)
+@bprop_getters.register(Q.CorrectionMul)
 def get_bprop_correction_mul(self):
     """Generate bprop for CorrectionMul for Ascend and GPU"""
-    grad = P.CorrectionMulGrad(self.channel_axis)
+    grad_dx = Q.CorrectionMulGrad(self.channel_axis)
+    grad_d_batch_std = Q.CorrectionMulGradReduce(self.channel_axis)
 
     def bprop(x, batch_std, running_std, out, dout):
-        dx, d_batch_std = grad(dout, x, batch_std, running_std)
+        dx, d_batch_std = grad_dx(dout, x, batch_std, running_std)
         return dx, d_batch_std, zeros_like(running_std)
+
+    def bprop_npu(x, batch_std, running_std, out, dout):
+        dx, mul_dx = grad_dx(dout, x, batch_std, running_std)
+        d_batch_std = grad_d_batch_std(mul_dx)
+        return dx, d_batch_std, zeros_like(running_std)
+
+    if context.get_context('device_target') == "Ascend":
+        return bprop_npu
 
     return bprop
 
 
-@bprop_getters.register(P.BatchNormFold2)
+@bprop_getters.register(Q.BatchNormFold2)
 def get_bprop_batchnorm_fold2(self):
     """Generate bprop for BatchNormFold2 for GPU"""
-    op_f = P.BatchNormFold2Grad(freeze_bn=self.freeze_bn)
+    op_f = Q.BatchNormFold2Grad(freeze_bn=self.freeze_bn)
 
     def bprop(x, beta, gamma, batch_std, batch_mean, running_std, running_mean, global_step, out, dout):
         d_batch_std, d_batch_mean, d_beta, d_gamma, d_x = op_f(dout, x, gamma, batch_std, batch_mean, running_std,
                                                                running_mean, global_step)
         return d_x, d_beta, d_gamma, d_batch_std, d_batch_mean, zeros_like(running_std), zeros_like(running_mean), \
-               zeros_like(global_step)
+            zeros_like(global_step)
 
     return bprop
 
 
-@bprop_getters.register(P.BatchNormFoldD)
+@bprop_getters.register(Q.BatchNormFoldD)
 def get_bprop_BatchNormFold(self):
     """Generate bprop for BatchNormFold for Ascend"""
-    op = P.BatchNormFoldGrad_(self.epsilon, self.is_training, self.freeze_bn)
+    op = Q.BatchNormFoldGradD(self.epsilon, self.is_training, self.freeze_bn)
 
     def bprop(x, x_sum, x_square_sum, mean, variance, out, dout):
         dx = op(dout[1], dout[2], x, out[1], out[2])
@@ -102,11 +118,11 @@ def get_bprop_BNTrainingReduce(self):
     return bprop
 
 
-@bprop_getters.register(P.BatchNormFold2_D)
+@bprop_getters.register(Q.BatchNormFold2_D)
 def get_bprop_batchnorm_fold2_(self):
     """Generate bprop for BatchNormFold2 for Ascend"""
-    op_reduce = P.BatchNormFold2GradReduce(freeze_bn=self.freeze_bn)
-    op_f = P.BatchNormFold2GradD(freeze_bn=self.freeze_bn)
+    op_reduce = Q.BatchNormFold2GradReduce(freeze_bn=self.freeze_bn)
+    op_f = Q.BatchNormFold2GradD(freeze_bn=self.freeze_bn)
 
     def bprop(x, beta, gamma, batch_std, batch_mean, running_std, out, dout):
         dout_reduce, dout_x_reduce = op_reduce(dout, x)
@@ -117,9 +133,19 @@ def get_bprop_batchnorm_fold2_(self):
     return bprop
 
 
-@bprop_getters.register(P.FakeQuantWithMinMaxUpdate)
-def get_bprop_fakequant_with_minmax_update(self):
-    """Generate bprop for FakeQuantWithMinMaxUpdate for Ascend"""
+@bprop_getters.register(Q.MinMaxUpdatePerLayer)
+def get_bprop_fakequant_with_minmax_per_layer_update(self):
+    """Generate bprop for MinMaxUpdatePerLayer for Ascend"""
+
+    def bprop(x, x_min, x_max, out, dout):
+        return zeros_like(x), zeros_like(x_min), zeros_like(x_max)
+
+    return bprop
+
+
+@bprop_getters.register(Q.MinMaxUpdatePerChannel)
+def get_bprop_fakequant_with_minmax_per_channel_update(self):
+    """Generate bprop for MinMaxUpdatePerChannel for Ascend"""
 
     def bprop(x, x_min, x_max, out, dout):
         return zeros_like(x), zeros_like(x_min), zeros_like(x_max)

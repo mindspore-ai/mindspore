@@ -26,10 +26,12 @@
 #include "kernel/kernel.h"
 #include "kernel/tbe/tbe_kernel_build.h"
 #include "kernel/tbe/tbe_kernel_parallel_build.h"
+#include "kernel/akg/ascend/akg_ascend_kernel_build.h"
 #include "kernel/aicpu/aicpu_kernel_build.h"
 #include "kernel/hccl/hccl_kernel_build.h"
 #include "kernel/rts/rt_kernel_build.h"
 #include "kernel/tbe/tbe_utils.h"
+#include "kernel/common_utils.h"
 #include "operator/ops.h"
 #include "session/anf_runtime_algorithm.h"
 #include "./common.h"
@@ -62,9 +64,36 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
   return kernel_mod_ptr;
 }
 
+static bool KernelPreBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  std::vector<AnfNodePtr> tbe_nodes;
+  for (const auto &anf_node : kernel_graph_ptr->execution_order()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    if (!AnfAlgo::IsRealKernel(anf_node)) {
+      continue;
+    }
+    KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
+    switch (kernel_type) {
+      case KernelType::TBE_KERNEL: {
+        if (AnfAlgo::GetKernelMod(anf_node) == nullptr &&
+            AnfAlgo::GetFusionType(anf_node) == kernel::FusionType::DYNAMIC) {
+          tbe_nodes.push_back(anf_node);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+  bool ret = kernel::TbeOpParallelPreBuild(tbe_nodes);
+  return ret;
+}
+
 static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   std::vector<AnfNodePtr> tbe_nodes;
+  std::vector<AnfNodePtr> akg_nodes;
   std::vector<AnfNodePtr> other_nodes;
   for (const auto &anf_node : kernel_graph_ptr->execution_order()) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -79,43 +108,52 @@ static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *ke
         }
         break;
       }
+      case KernelType::AKG_KERNEL: {
+        akg_nodes.push_back(anf_node);
+        break;
+      }
       default: {
         other_nodes.push_back(anf_node);
         break;
       }
     }
   }
-  bool ret = kernel::TbeOpParallelBuild(tbe_nodes);
+  bool tbe_ret = kernel::TbeOpParallelBuild(tbe_nodes);
+  bool akg_ret = kernel::AkgAscendKernelParallelBuild(akg_nodes);
+  auto bin_map = kernel::tbe::KernelMeta::GetInstance();
+  (void)bin_map->ReadIndex(kernel::kCceKernelMeta);
   for (const auto &anf_node : other_nodes) {
     kernel::KernelModPtr kernel_mod_ptr = SerialCompileImpl(anf_node);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
   }
-  return ret;
+  return tbe_ret && akg_ret;
 }
 
-static std::vector<int> CalCleanZerosSize(const CNodePtr &pre_node) {
+static std::vector<size_t> CalCleanZerosSize(const CNodePtr &pre_node) {
   MS_EXCEPTION_IF_NULL(pre_node);
-  std::vector<int> clean_size_list;
+  auto kernel_mod = AnfAlgo::GetKernelMod(pre_node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  std::vector<size_t> clean_size_list;
   // clean output
-  if (AnfAlgo::HasNodeAttr(kAttrAutomicOutputIndexs, pre_node)) {
-    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAutomicOutputIndexs);
-    for (auto index : clean_output_indexs) {
-      TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(pre_node, index);
-      size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-      std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(pre_node, index);
-      auto size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-      clean_size_list.push_back((size + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize);
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+    auto output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+    auto output_men_size = kernel_mod->GetOutputSizeList();
+    for (auto index : output_indexs) {
+      auto clean_item = (output_men_size.at(index) + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
+      clean_size_list.emplace_back(clean_item);
     }
   }
   // clean workspace
-  auto workspaces_size = 0;
-  if (AnfAlgo::HasNodeAttr(kAttrAutomicWorkspaceSize, pre_node)) {
-    workspaces_size = AnfAlgo::GetNodeAttr<int>(pre_node, kAttrAutomicWorkspaceSize);
-    clean_size_list.push_back(workspaces_size);
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+    auto workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+    auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
+    for (const auto &index : workspace_indexs) {
+      auto clean_item = (workspace_men_sizes.at(index) + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
+      clean_size_list.emplace_back(clean_item);
+    }
   }
-  MS_LOG(INFO) << "clear output size:" << clean_size_list.size() << ", workspace size:" << workspaces_size
-               << ",pre_node:" << pre_node->fullname_with_scope();
+  MS_LOG(INFO) << "clear output size:" << clean_size_list.size() << ",pre_node:" << pre_node->fullname_with_scope();
   return clean_size_list;
 }
 
@@ -139,12 +177,12 @@ static void AddTbeClearZeroNode(mindspore::session::KernelGraph *const kernel_gr
   builder->SetKernelType(KernelType::TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clear_zero.get());
   auto clean_size = CalCleanZerosSize(pre_node);
-  AnfAlgo::SetNodeAttr(kAttrAutomicAddMemSize, MakeValue(clean_size), clear_zero);
+  AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clear_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), clear_zero.get());
   new_nodes->push_back(clear_zero);
 }
 
-bool IsAtomicNode(const CNodePtr &kernel_node) {
+static bool IsAtomicNode(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -152,40 +190,50 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   if (parameters_indexs.empty()) {
     return false;
   }
-  auto atomic_flag = false;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
-  if (input_num + workspace_num + output_num > parameters_indexs.size()) {
-    size_t lossNum = (input_num + workspace_num + output_num) - parameters_indexs.size();
-    for (size_t i = 0; i < lossNum; i++) {
-      parameters_indexs.push_back(0);
+  size_t param_num = parameters_indexs.size();
+  size_t total_num = input_num + workspace_num + output_num;
+  MS_LOG(INFO) << "parameters size: " << param_num << ", input & workspace & output num: " << total_num;
+  size_t pad_index = param_num;
+  for (; pad_index < total_num; ++pad_index) {
+    parameters_indexs.emplace_back(0);
+  }
+  // process input
+  for (size_t j = 0; j < input_num; ++j) {
+    if (parameters_indexs.at(j) == 1) {
+      MS_LOG(EXCEPTION) << "Atomic addr clean does't support clean input address, input index: " << j;
     }
   }
-  std::vector<size_t> clean_output_indexs;
-  // in parameters data sort as input->workspace->output
-  size_t index = 0;
-  while (index < output_num) {
-    if (parameters_indexs[input_num + workspace_num + index] == 1) {
-      atomic_flag = true;
-      clean_output_indexs.push_back(index);
-    }
-    index++;
-  }
-  if (atomic_flag) {
-    AnfAlgo::SetNodeAttr(kAttrAutomicOutputIndexs, MakeValue(clean_output_indexs), kernel_node);
-  }
-  for (size_t i = 0; i < workspace_num; ++i) {
-    if (parameters_indexs[input_num + i] == 1) {
-      atomic_flag = true;
-      AnfAlgo::SetNodeAttr(kAttrAutomicWorkspaceSize,
-                           MakeValue(std::accumulate(workspace_size_list.begin(), workspace_size_list.end(), 0)),
-                           kernel_node);
-      break;
+  // process output
+  std::vector<size_t> output_indexs;
+  for (size_t i = 0; i < output_num; ++i) {
+    auto param_output = parameters_indexs.at(input_num + workspace_num + i);
+    if (param_output == 1) {
+      output_indexs.emplace_back(i);
+      MS_LOG(INFO) << "Atomic clear output index: " << i;
     }
   }
-  return atomic_flag;
+  AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(output_indexs), kernel_node);
+  // process workspace
+  std::vector<size_t> workspace_indexs;
+  for (size_t k = 0; k < workspace_num; ++k) {
+    auto param_workspace = parameters_indexs.at(input_num + k);
+    if (param_workspace == 1) {
+      workspace_indexs.emplace_back(k);
+      MS_LOG(INFO) << "Atomic clear workspace index: " << k;
+    }
+  }
+  AnfAlgo::SetNodeAttr(kAttrAtomicWorkspaceIndexs, MakeValue(workspace_indexs), kernel_node);
+
+  return !(workspace_indexs.empty() && output_indexs.empty());
+}
+
+bool KernelPreBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  bool ret = device::ascend::KernelPreBuildParallelCompile(kernel_graph_ptr);
+  return ret;
 }
 
 bool KernelBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {
@@ -202,7 +250,7 @@ void KernelBuildPreprocess(mindspore::session::KernelGraph *kernel_graph) {
   for (const auto &anf_node : kernel_graph->execution_order()) {
     std::string apply_function_name = AnfAlgo::GetCNodeName(anf_node);
     if (apply_function_name == prim::kPrimMaxPoolGrad->name() &&
-        AnfAlgo::GetKernelType(anf_node) == KernelType::AUTO_DIFF_KERNEL) {
+        AnfAlgo::GetKernelType(anf_node) == KernelType::AKG_KERNEL) {
       auto clear_zero_prim = std::make_shared<Primitive>(kClearZeroOpName);
       MS_EXCEPTION_IF_NULL(clear_zero_prim);
       auto new_value_node = NewValueNode(clear_zero_prim);

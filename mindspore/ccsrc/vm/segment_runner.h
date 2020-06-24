@@ -43,7 +43,7 @@ struct LinConvertResult {
   uint32_t graph_id;
 };
 
-using LinkFuncType = std::function<LinConvertResult(const AnfNodePtrList &)>;
+using LinkFuncType = std::function<LinConvertResult(const AnfNodePtrList &, const std::string &)>;
 using ConvertCache = std::unordered_map<BaseRef, LinConvertResult, BaseRefHash>;
 extern LinkFuncType MsVmConvert;
 extern LinkFuncType GeVmConvert;

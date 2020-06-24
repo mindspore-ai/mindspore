@@ -15,7 +15,6 @@
  */
 
 #include "device/ascend/ascend_kernel_runtime.h"
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -24,7 +23,9 @@
 #include <algorithm>
 
 #include "device/ascend/ascend_device_address.h"
+#include "device/cpu/mpi/mpi_adapter.h"
 #include "utils/context/ms_context.h"
+#include "utils/mpi/mpi_config.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
 #include "common/trans.h"
@@ -51,6 +52,38 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 static const size_t PRAMATER_OUTPUT_INDEX = 0;
+namespace {
+std::string GetRankId() {
+  std::string rank_id_str;
+#ifdef ENABLE_MPI
+  auto mpi_config_ptr = MpiConfig::GetInstance();
+  MS_EXCEPTION_IF_NULL(mpi_config_ptr);
+  if (mpi_config_ptr->enable_mpi()) {
+    int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
+    const char *offset = std::getenv("RANK_OFFSET");
+    if (offset != nullptr) {
+      try {
+        int rank_offset = std::stoi(offset);
+        rank_id += rank_offset;
+      } catch (std::invalid_argument) {
+        MS_LOG(EXCEPTION) << "stoi invalid argument:" << offset;
+      } catch (std::out_of_range) {
+        MS_LOG(EXCEPTION) << "stoi out_of_range:" << offset;
+      }
+    }
+    rank_id_str = std::to_string(rank_id);
+  } else {
+    rank_id_str = std::getenv("RANK_ID");
+  }
+#else
+  rank_id_str = std::getenv("RANK_ID");
+#endif
+  if (rank_id_str.empty()) {
+    MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
+  }
+  return rank_id_str;
+}
+}  // namespace
 
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
@@ -65,13 +98,13 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  MS_LOG(INFO) << "clear graph:" << graph_id << " runtime resource";
+  MS_LOG(DEBUG) << "clear graph:" << graph_id << " runtime resource";
   auto iter = graph_model_map_.find(graph_id);
   if (iter == graph_model_map_.end()) {
-    MS_LOG(WARNING) << "GraphId:" << graph_id << " not found";
+    MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
     return;
   }
-  MS_LOG(INFO) << "Ge UnloadModel " << iter->first;
+  MS_LOG(DEBUG) << "Ge UnloadModel " << iter->first;
   auto ret = ge::model_runner::ModelRunner::Instance().UnloadModel(iter->first);
   if (!ret) {
     MS_LOG(ERROR) << "UnloadModel failed";
@@ -124,6 +157,12 @@ bool AscendKernelRuntime::Init() {
   }
 #endif
 
+  // Start up profiling before rtSetDevice
+  ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
+  if (!ret) {
+    MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
+  }
+
   ret = InitDevice();
   if (!ret) {
     return ret;
@@ -131,11 +170,6 @@ bool AscendKernelRuntime::Init() {
   mem_manager_ = std::make_shared<AscendMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->MallocDeviceMemory();
-
-  ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
-  if (!ret) {
-    MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
-  }
 
   initialized_ = true;
   return ret;
@@ -259,6 +293,15 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
   return true;
 }
 
+bool AscendKernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
+  if (AnfAlgo::OutputAddrExist(kernel, index)) {
+    auto address = AnfAlgo::GetOutputAddr(kernel, index);
+    MS_EXCEPTION_IF_NULL(address);
+    return address->DeviceType() == DeviceAddressType::kAscend;
+  }
+  return false;
+}
+
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                           TypeId type_id) {
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
@@ -284,38 +327,34 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   vector<std::shared_ptr<TaskInfo>> task_info_list;
   auto anf_node_list = graph->execution_order();
   TaskGenerator::GenTasks(anf_node_list, &task_info_list, graph->graph_id());
-
   // Store the task_info_list
   auto insert_ret = task_map_.insert(std::make_pair(graph->graph_id(), task_info_list));
   if (!insert_ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
   }
-
   // Graph may have no compute node, such TensorAddGrad.
   if (task_info_list.empty()) {
     MS_LOG(WARNING) << "graph " << graph->graph_id() << " have no compute node";
     return true;
   }
-
-  AscendStreamAssign &stream_assign_instance = AscendStreamAssign::GetInstance();
+  AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
+  AscendStreamMng &stream_manager = AscendStreamMng::GetInstance();
   AscendLabelAssign &label_assign_instance = AscendLabelAssign::GetInstance();
   // the streams' flag not HEAD_STREAM
   std::vector<uint32_t> wait_active_stream_list;
-  stream_assign_instance.GetWaitStreams(&wait_active_stream_list);
-  auto force_copy_stream_list = stream_assign_instance.hcom_streams();
-
-  MS_LOG(INFO) << "call DavinciModel total stream num:" << stream_assign_instance.GetTotalStreamNum()
-               << ", total event num:" << stream_assign_instance.total_event_num()
+  assign_instance.GetWaitStreams(&wait_active_stream_list);
+  std::vector<uint32_t> force_copy_stream_list;
+  assign_instance.GetHcomStreams(&force_copy_stream_list);
+  MS_LOG(INFO) << "call DavinciModel total stream num:" << stream_manager.GetCurAllocStreamNum()
+               << ", total event num:" << assign_instance.total_event_num()
                << ", total label num:" << label_assign_instance.GetLabelNum(NOT_NULL(graph))
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
-
   std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
   std::shared_ptr<ge::model_runner::DavinciModel> model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
-    0, 0, 0, 0, 0, stream_assign_instance.GetTotalStreamNum(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
-    stream_assign_instance.total_event_num(), 0);
-
+    0, 0, 0, 0, 0, stream_manager.GetCurAllocStreamNum(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
+    assign_instance.total_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
@@ -356,7 +395,8 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   }
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(task_ids, NOT_NULL(graph));
+    auto stream_ids = ge::model_runner::ModelRunner::Instance().GetStreamIdList(model_iter->first);
+    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
   }
   return true;
 }
@@ -486,30 +526,23 @@ bool AscendKernelRuntime::HcclInit() {
   if (!context_ptr->IsTsdOpened()) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
-
   MS_LOG(INFO) << "do hcom init";
   auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
     config_path_str = std::getenv("RANK_TABLE_FILE");
     if (config_path_str == nullptr) {
       MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+      return false;
     }
-    return false;
   }
+  std::string rank_id_str = GetRankId();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
     MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
     return false;
   }
-
-  const char *identify = std::getenv("RANK_ID");
-  if (identify == nullptr) {
-    MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
-    free(full_path);
-    return false;
-  }
-  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << identify;
-  hcclResult_t res = hcom_init(full_path, identify);
+  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
+  hcclResult_t res = hcom_init(full_path, rank_id_str.c_str());
   free(full_path);
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "hcom init failed, res is " << static_cast<int>(res);

@@ -30,6 +30,7 @@
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/parse/resolve.h"
 #include "operator/composite/composite.h"
+#include "operator/composite/map.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "utils/utils.h"
@@ -190,6 +191,8 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
  * ├── MultitypeGraph
  * ├── HyperMap
  * │   └── HyperMapPy
+ * ├── Map
+ * │   └── MapPy
  * ├── Tail
  * ├── MakeTupleGradient
  * ├── GradOperation
@@ -208,16 +211,24 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     oss << GetMultitypeFuncGraphText(mt_func_graph);
   } else if (meta_func_graph
                ->isa<prim::HyperMapPy>()) {  // this statement must before 'meta_graph->isa<prim::HyperMap>()'
-    prim::HyperMapPyPtr hyper_map = meta_func_graph->cast<prim::HyperMapPyPtr>();
-    MS_EXCEPTION_IF_NULL(hyper_map);
+    auto hyper_map = meta_func_graph->cast<prim::HyperMapPyPtr>();
     if (hyper_map->GetFnLeaf() != nullptr) {
       oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
     }
   } else if (meta_func_graph->isa<prim::HyperMap>()) {
-    prim::HyperMapPtr hyper_map = meta_func_graph->cast<prim::HyperMapPtr>();
-    MS_EXCEPTION_IF_NULL(hyper_map);
+    auto hyper_map = meta_func_graph->cast<prim::HyperMapPtr>();
     if (hyper_map->GetFnLeaf() != nullptr) {
       oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
+    }
+  } else if (meta_func_graph->isa<prim::MapPy>()) {  // this statement must before 'meta_graph->isa<prim::Map>()'
+    auto map = meta_func_graph->cast<prim::MapPyPtr>();
+    if (map->GetFnLeaf() != nullptr) {
+      oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
+    }
+  } else if (meta_func_graph->isa<prim::Map>()) {
+    auto map = meta_func_graph->cast<prim::MapPtr>();
+    if (map->GetFnLeaf() != nullptr) {
+      oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
     }
   } else if (meta_func_graph->isa<prim::GradOperation>()) {
     prim::GradOperationPtr grad_op = meta_func_graph->cast<prim::GradOperationPtr>();
@@ -1555,7 +1566,7 @@ class IrParser {
       return lexer_.GetNextToken();
     } else if (type == "Tuple") {
       return ParseTypeVector(func_graph, lexer_.GetNextToken(), type, ptr);
-    } else if (type == "Array") {
+    } else if (type == "Tensor") {
       return ParseTypeArray(func_graph, lexer_.GetNextToken(), ptr);
     } else if (type == "List") {
       return ParseTypeVector(func_graph, lexer_.GetNextToken(), type, ptr);
@@ -1971,7 +1982,11 @@ class IrParser {
         MS_LOG(EXCEPTION) << "Cast to type 'PrimitivePyPtr' error";
       }
     } else {
-      ptr = std::make_shared<PrimitivePy>(id.substr(strlen("PrimitivePy::")), py_obj);
+      auto len = strlen("PrimitivePy::");
+      if (id.size() < len) {
+        return TOK_ERROR;
+      }
+      ptr = std::make_shared<PrimitivePy>(id.substr(len), py_obj);
     }
     *val_ptr = ptr;
 
@@ -1988,7 +2003,7 @@ class IrParser {
     return next;
   }
 
-  Token ParseValueGraphAndNamespace(const std::string &id, ValuePtr *val_ptr) {
+  Token ParseValueGraphAndNamespace(const std::string &id, ValuePtr *const val_ptr) {
     if (Match(id, "MultitypeFuncGraph::")) {
       std::string name = id.substr(strlen("MultitypeFuncGraph::"));
       auto mt_func_graph = std::make_shared<prim::MultitypeFuncGraph>(name);
@@ -2028,7 +2043,7 @@ class IrParser {
     }
   }
 
-  Token ParseValueBasic(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *val_ptr,
+  Token ParseValueBasic(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *const val_ptr,
                         AnfNodePtr *const node_ptr = nullptr) {
     if (id == "None") {
       *val_ptr = std::make_shared<None>();

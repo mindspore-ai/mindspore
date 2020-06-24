@@ -47,6 +47,7 @@ class KernelRuntime {
   virtual bool Init() = 0;
   virtual void AssignMemory(session::KernelGraph *graph);
   void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph);
+  void RunOpClearMemory(session::KernelGraph *graph);
   virtual bool Run(session::KernelGraph *graph);
   virtual bool DumpData(session::KernelGraph *graph);
   virtual bool RunTask(const session::KernelGraph *graph);
@@ -55,6 +56,7 @@ class KernelRuntime {
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
+  virtual bool SyncStream() = 0;
 
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr GetDumpConf();
@@ -67,7 +69,7 @@ class KernelRuntime {
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) = 0;
-  virtual bool SyncStream() = 0;
+  virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
   void AssignStaticMemory(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
   void ReuseAssignDynamicMemory(session::KernelGraph *graph);

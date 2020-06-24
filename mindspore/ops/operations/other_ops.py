@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Other operators."""
+import functools
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
@@ -52,7 +53,7 @@ class Assign(PrimitiveWithInfer):
     )
     @prim_attr_register
     def __init__(self):
-        pass
+        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
 
     def infer_shape(self, variable, value):
         return variable
@@ -227,20 +228,20 @@ class IOU(PrimitiveWithInfer):
 
     Inputs:
         - **anchor_boxes** (Tensor) - Anchor boxes, tensor of shape (N, 4). "N" indicates the number of anchor boxes,
-          and the value "4" refers to "x0", "x1", "y0", and "y1".
+          and the value "4" refers to "x0", "x1", "y0", and "y1". Data type must be float16.
         - **gt_boxes** (Tensor) - Ground truth boxes, tensor of shape (M, 4). "M" indicates the number of ground
-          truth boxes, and the value "4" refers to "x0", "x1", "y0", and "y1".
+          truth boxes, and the value "4" refers to "x0", "x1", "y0", and "y1". Data type must be float16.
 
     Outputs:
-        Tensor, the 'iou' values, tensor of shape (M, N).
+        Tensor, the 'iou' values, tensor of shape (M, N), with data type float16.
 
     Raises:
         KeyError: When `mode` is not 'iou' or 'iof'.
 
     Examples:
         >>> iou = P.IOU()
-        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float32)
-        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float32)
+        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
+        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> iou(anchor_boxes, gt_boxes)
     """
 
@@ -304,6 +305,46 @@ class MakeRefKey(Primitive):
         pass
 
 
+class Partial(Primitive):
+    """
+    Make a partial function instance, used for pynative mode.
+
+    Inputs:
+        - **args** (Union[FunctionType, Tensor]) - The function and bind arguments.
+
+    Outputs:
+        FunctionType, partial function binded with arguments.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __call__(self, *args):
+        func = args[0].__call__
+        partial_func = functools.partial(func, *args[1:])
+        return partial_func
+
+class Depend(Primitive):
+    """
+    Depend is used for process side-effect operations.
+
+    Inputs:
+        - **value** (Tensor) - the real value to return for depend operator.
+        - **expr** (Expression) - the expression to execute with no outputs.
+
+    Outputs:
+        Tensor, the value passed by last operator.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __call__(self, value, expr):
+        return value
+
+
 class CheckBprop(PrimitiveWithInfer):
     """
     Checks whether data type and shape of corresponding element from tuple x and y are the same.
@@ -332,6 +373,8 @@ class CheckBprop(PrimitiveWithInfer):
 
     def infer_shape(self, xshapes, yshapes):
         tips = f'Bprop of {self.prim_to_check}'
+        validator.check_value_type('grads', xshapes, (tuple,), tips)
+        validator.check_value_type('params', yshapes, (tuple,), tips)
         if len(xshapes) < len(yshapes):
             raise TypeError(f"{tips}, the size of output should be {len(yshapes)},"
                             f" but got {len(xshapes)}.")
@@ -348,6 +391,8 @@ class CheckBprop(PrimitiveWithInfer):
 
     def infer_dtype(self, xdtypes, ydtypes):
         tips = f'Bprop of {self.prim_to_check}'
+        validator.check_value_type('grads', xdtypes, (tuple,), tips)
+        validator.check_value_type('params', ydtypes, (tuple,), tips)
         if len(xdtypes) < len(ydtypes):
             raise TypeError(f"{tips}, the size of output should be {len(ydtypes)},"
                             f" but got {len(xdtypes)}.")
@@ -366,3 +411,50 @@ class CheckBprop(PrimitiveWithInfer):
                 raise TypeError(f"{tips}, the dtype of {i}th output should be {ydtype},"
                                 f" but got {xdtype}.")
         return xdtypes
+
+
+class ConfusionMatrix(PrimitiveWithInfer):
+    r"""
+    Calculate the confusion matrix from labels and predictions.
+
+    Args:
+        num_classes (int): The num of classes.
+        dtype (str): Data type of confusion matrix. Default: 'int32'.
+
+    Inputs:
+        - **labels** (Tensor) - real labels, tensor of 1-D. the dtype must be non-negative Integer.
+        - **predictions** (Tensor) - the labels from prediction, tensor of 1-D.
+          the shape same as `labels` and the dtype must be non-negative Integer.
+        - **weights** (Tensor) - tensor of 1-D. the shape same as `predictions`.
+
+    Outputs:
+        Tensor, the confusion matrix, with shape (`num_classes`, `num_classes`).
+
+    Examples:
+        >>> confusion_matrix = P.ConfusionMatrix(4)
+        >>> labels = Tensor([0, 1, 1, 3], mindspore.int32)
+        >>> predictions = Tensor([1, 2, 1, 3], mindspore.int32)
+        >>> confusion_matrix(labels, predictions)
+    """
+
+    @prim_attr_register
+    def __init__(self, num_classes, dtype="int32"):
+        validator.check_value_type("num_classes", num_classes, [int], self.name)
+        validator.check_value_type("dtype", dtype, [str], self.name)
+
+    def infer_shape(self, labels, predictions, weights=None):
+        validator.check('labels dimension', len(labels), '', 1, Rel.EQ, self.name)
+        validator.check('labels shape', labels, 'predictions shape', predictions, Rel.EQ, self.name)
+        if weights is not None:
+            validator.check('labels shape', labels, 'weights shape', weights, Rel.EQ, self.name)
+        ret = (self.num_classes, self.num_classes)
+        return ret
+
+    def infer_dtype(self, labels, predictions, weights=None):
+        validator.check_subclass('labels', labels, mstype.tensor, self.name)
+        validator.check_subclass('predictions', predictions, mstype.tensor, self.name)
+        if weights is not None:
+            validator.check_subclass('weights', weights, mstype.tensor, self.name)
+        args = {"labels": labels, "predictions": predictions}
+        validator.check_tensor_type_same(args, (mstype.number_type), self.name)
+        return labels

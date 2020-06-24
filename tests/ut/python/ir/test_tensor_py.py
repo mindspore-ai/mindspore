@@ -71,7 +71,7 @@ def test_tensor_size():
 
 def test_dtype():
     a = ms.Tensor(np.ones((2, 3), dtype=np.int32))
-    assert a.dtype() == ms.int32
+    assert a.dtype == ms.int32
 
 
 def test_asnumpy():
@@ -89,7 +89,7 @@ def test_print():
 
 def test_float():
     a = ms.Tensor(np.ones((2, 3)), ms.float16)
-    assert a.dtype() == ms.float16
+    assert a.dtype == ms.float16
 
 
 def test_tensor_method_sub():

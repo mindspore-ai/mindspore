@@ -48,11 +48,7 @@ using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 
 class SessionBasic {
  public:
-  SessionBasic() : device_id_(0) {
-    graphs_ = {};
-    run_op_graphs_ = {};
-    summary_callback_ = nullptr;
-  }
+  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {}
 
   virtual void Init(uint32_t device_id) { device_id_ = device_id; }
 
@@ -75,7 +71,8 @@ class SessionBasic {
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
-  std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph);
+  std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
+                                                    std::vector<KernelGraphPtr> *all_out_graph);
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
@@ -93,8 +90,7 @@ class SessionBasic {
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   virtual void SetActive(GraphId, GraphId) {}
-  virtual void GetSummaryNodes(const KernelGraph *graph,
-                               std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary);
+  virtual void GetSummaryNodes(KernelGraph *graph);
 
  protected:
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
@@ -114,10 +110,11 @@ class SessionBasic {
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
-  ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
@@ -129,6 +126,7 @@ class SessionBasic {
 };
 
 using SessionPtr = std::shared_ptr<session::SessionBasic>;
+using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H

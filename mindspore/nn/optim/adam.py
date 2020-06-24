@@ -26,12 +26,10 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
-_learning_rate_update_func = ['linear', 'cos', 'sin']
-
-adam_opt = C.MultitypeFuncGraph("adam_opt")
+_adam_opt = C.MultitypeFuncGraph("adam_opt")
 
 
-@adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
 def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, gradient, decay_flag):
     """
     Update parameters.
@@ -67,16 +65,16 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, grad
     next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32)
                                             - beta2, op_square(gradient_fp32))
 
-    update = next_m / (op_sqrt(next_v) + eps)
+    update = next_m / (eps + op_sqrt(next_v))
     if decay_flag:
-        update = update + op_mul(weight_decay_tensor, param_fp32)
+        update = op_mul(weight_decay_tensor, param_fp32) + update
 
     update_with_lr = op_mul(lr, update)
     next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
 
-    next_v = F.depend(next_v, F.assign(param, next_param))
-    next_v = F.depend(next_v, F.assign(m, next_m))
-    next_v = F.depend(next_v, F.assign(v, next_v))
+    next_v = F.depend(next_v, F.assign(param, op_cast(next_param, mstype.float16)))
+    next_v = F.depend(next_v, F.assign(m, op_cast(next_m, mstype.float16)))
+    next_v = F.depend(next_v, F.assign(v, op_cast(next_v, mstype.float16)))
     return next_v
 
 
@@ -94,19 +92,30 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
 
 def _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, prim_name):
     """Check the type of inputs."""
-    validator.check_float_positive('learning_rate', learning_rate, prim_name)
-    validator.check_float_legal_value('learning_rate', learning_rate, prim_name)
-    validator.check_float_positive('end_learning_rate', end_learning_rate, prim_name)
-    validator.check_float_legal_value('end_learning_rate', end_learning_rate, prim_name)
+    validator.check_value_type("learning_rate", learning_rate, [float], prim_name)
+    validator.check_number_range("learning_rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
+    validator.check_value_type("end_learning_rate", end_learning_rate, [float], prim_name)
+    validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
     validator.check_float_positive('power', power, prim_name)
     validator.check_float_legal_value('power', power, prim_name)
     validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
 
 
-@adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
-                   "Tensor")
-def _run_opt_with_one_number(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params, moment1,
-                             moment2):
+@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tuple",
+                    "Tensor", "Tensor", "Tensor")
+def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
+                         moment1, moment2):
+    """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
+    success = True
+    success = F.depend(success, sparse_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+                                           eps, gradient[1], gradient[0]))
+    return success
+
+
+@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor")
+def _run_opt_with_one_number(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
+                             moment1, moment2):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
     success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
@@ -144,10 +153,16 @@ class Adam(Optimizer):
         value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
         applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
 
+        To improve parameter groups performance, the customized order of parameters can be supported.
+
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
+        `sparse_grad` of `Parameter` being set. The sparse feature is under continuous development. The sparse
+        behavior is currently performed on the CPU, weight decay is not supported.
+
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
             the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
-            "lr" and "weight_decay" are the keys can be parsed.
+            "lr", "weight_decay" and "order_params" are the keys can be parsed.
 
             - params: Required. The value should be a list of `Parameter`.
 
@@ -157,13 +172,19 @@ class Adam(Optimizer):
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
 
-        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
-                                                        Iterable or a Tensor and the dims of the Tensor is 1,
-                                                        use dynamic learning rate, then the i-th step will
-                                                        take the i-th value as the learning rate.
-                                                        When the learning_rate is float or learning_rate is a Tensor
-                                                        but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Default: 1e-3.
+            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
+              in the value of 'order_params' but not in any group will use default learning rate and default weight
+              decay.
+
+        learning_rate (Union[int, float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
+                                                             Iterable or a Tensor and the dims of the Tensor is 1,
+                                                             use dynamic learning rate, then the i-th step will
+                                                             take the i-th value as the learning rate.
+                                                             When the learning_rate is float or learning_rate is a
+                                                             Tensor but the dims of the Tensor is 0, use fixed learning
+                                                             rate. Other cases are not supported. It should be equal to
+                                                             or greater than 0. Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0). Default:
                        0.9.
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0). Default:
@@ -176,9 +197,8 @@ class Adam(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If True, updates the gradients using NAG.
             If False, updates the gradients without using NAG. Default: False.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
-                            1.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
+        loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -193,13 +213,16 @@ class Adam(Optimizer):
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
-        >>>                 {'params': no_conv_params}]
+        >>> bias_params = list(filter(lambda x: 'bias' in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
+        >>>                 {'params': bias_params, 'lr': 0.01},
+        >>>                 {'order_params': net.trainable_params()}]
         >>> opt = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
-        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
-        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
+        >>> # The bias_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
+        >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
+        >>> # The parameters which in the value of 'order_params' but not in any group will use a learning rate
+        >>> # of default value 0.1 and a weight decay of default value 0.0.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
@@ -211,8 +234,6 @@ class Adam(Optimizer):
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
-        validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
@@ -225,11 +246,7 @@ class Adam(Optimizer):
 
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
-
-        self.pow = P.Pow()
-        self.sqrt = P.Sqrt()
-        self.one = Tensor(np.array([1.0]).astype(np.float32))
-        self.realdiv = P.RealDiv()
+        self.sparse_opt = P.SparseApplyAdam(use_locking, use_nesterov)
 
     def construct(self, gradients):
         params = self.parameters
@@ -244,13 +261,13 @@ class Adam(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
-                                               self.beta2, self.eps),
-                                     lr, gradients, params, moment1, moment2)
+            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, beta1_power, beta2_power,
+                                          self.beta1, self.beta2, self.eps),
+                                lr, gradients, params, moment1, moment2)
         else:
-            success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
-                                               self.beta2, self.eps, lr),
-                                     gradients, params, moment1, moment2)
+            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, beta1_power, beta2_power,
+                                          self.beta1, self.beta2, self.eps, lr),
+                                gradients, params, moment1, moment2)
         return success
 
 
@@ -267,14 +284,15 @@ class AdamWeightDecay(Optimizer):
                                                         take the i-th value as the learning rate.
                                                         When the learning_rate is float or learning_rate is a Tensor
                                                         but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported. Default: 1e-3.
+                                                        Other cases are not supported. It should be equal to or
+                                                        greater than 0. Default: 1e-3.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
             Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
@@ -310,7 +328,7 @@ class AdamWeightDecay(Optimizer):
 
     def construct(self, gradients):
         lr = self.get_lr()
-        updated_velocity = self.hyper_map(F.partial(adam_opt, self.beta1, self.beta2, self.eps, lr,
+        updated_velocity = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
                                                     self.weight_decay_tensor),
                                           self.params, self.moments1, self.moments2, gradients, self.decay_flag)
 
@@ -324,17 +342,20 @@ class AdamWeightDecayDynamicLR(Optimizer):
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
                                   should be class mindspore.Parameter.
-        decay_steps (int): The steps of the decay.
-        learning_rate (float): A floating point value for the learning rate. Default: 0.001.
-        end_learning_rate (float): A floating point value for the end learning rate. Default: 0.0001.
-        power (float): Power. Default: 10.0.
+        decay_steps (int): The steps of the decay. It must be int and positive.
+        warmup_steps (int): The steps of lr warm up. Default: 0.
+        learning_rate (float): A floating point value for the learning rate. It should be equal to or
+            greater than 0. Default: 0.001.
+        end_learning_rate (float): A floating point value for the end learning rate. It should be equal
+            to or greater than 0. Default: 0.0001.
+        power (float): The Power of the polynomial. It must be positive. Default: 10.0.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
             Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (float): Weight decay (L2 penalty). It should be equal to or greater than 0. Default: 0.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
@@ -353,6 +374,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
     def __init__(self,
                  params,
                  decay_steps,
+                 warmup_steps=0,
                  learning_rate=0.001,
                  end_learning_rate=0.0001,
                  power=10.0,
@@ -360,13 +382,13 @@ class AdamWeightDecayDynamicLR(Optimizer):
                  beta2=0.999,
                  eps=1e-6,
                  weight_decay=0.0,
-                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name,
-                 warmup_steps=0):
-        super(AdamWeightDecayDynamicLR, self).__init__(learning_rate, params)
+                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
+        super(AdamWeightDecayDynamicLR, self).__init__(0.0, params)
         if self.is_group:
             raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, self.cls_name)
+        validator.check_integer('warmup_steps', warmup_steps, 0, Rel.GE, self.cls_name)
         # turn them to scalar when me support scalar/tensor mix operations
         self.global_step = Parameter(initializer(0, [1]), name="global_step")
         self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
@@ -402,7 +424,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
             warmup_lr = self.start_learning_rate * warmup_percent
             is_warmup = self.cast(self.greater(self.warmup_steps, self.global_step), mstype.float32)
             lr = (self.one - is_warmup) * lr + is_warmup * warmup_lr
-        updated_velocity = self.hyper_map(F.partial(adam_opt, self.beta1, self.beta2, self.eps, lr,
+        updated_velocity = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
                                                     self.weight_decay_tensor),
                                           self.params, self.moments1, self.moments2, gradients, self.decay_flag)
 

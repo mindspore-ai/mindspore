@@ -79,14 +79,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method
-    // @param int64_t num_samples
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
-      return *this;
-    }
-
-    // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
@@ -114,7 +106,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
    private:
     std::string builder_dir_;
     int32_t builder_num_workers_;
-    int64_t builder_num_samples_;
     int32_t builder_rows_per_buffer_;
     int32_t builder_op_connector_size_;
     std::shared_ptr<Sampler> builder_sampler_;
@@ -126,11 +117,10 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @param int32_t rows_per_buffer - number of images (rows) in each buffer
   // @param std::string folder_path - dir directory of mnist
   // @param int32_t queue_size - connector queue size
-  // @param int64_t num_samples - number of samples to read
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the mnist dataset
   // @param td::unique_ptr<Sampler> sampler - sampler tells MnistOp what to read
   MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folder_path, int32_t queue_size,
-          int64_t num_samples, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
 
   // Destructor.
   ~MnistOp() = default;
@@ -146,16 +136,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Method derived from RandomAccess Op, enable Sampler to get numRows
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumSamples(int64_t *num) const override;
-
-  // Method derived from RandomAccess Op, enable Sampler to get total numRows in dataset
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumRowsInDataset(int64_t *num) const override;
-
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
@@ -167,11 +147,14 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   void Print(std::ostream &out, bool show_all) const override;
 
   // Function to count the number of samples in the MNIST dataset
-  // @param dir path to the MNSIT directory
-  // @param numSamples maximum number of samples requested
+  // @param dir path to the MNIST directory
   // @param count output arg that will hold the minimum of the actual dataset size and numSamples
   // @return
-  static Status CountTotalRows(const std::string &dir, int64_t numSamples, int64_t *count);
+  static Status CountTotalRows(const std::string &dir, int64_t *count);
+
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "MnistOp"; }
 
  private:
   // Initialize Sampler, calls sampler->Init() within
@@ -179,10 +162,11 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   Status InitSampler();
 
   // Load a tensor row according to a pair
+  // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status - The error code return
-  Status LoadTensorRow(const MnistLabelPair &mnist_pair, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *row);
 
   // @param const std::vector<int64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db
@@ -244,9 +228,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
 
   int64_t buf_cnt_;
   int64_t row_cnt_;
-  int64_t num_rows_;  // total number of images in Mnist
   WaitPost wp_;
-  int64_t num_samples_;
   std::string folder_path_;  // directory of image folder
   int32_t rows_per_buffer_;
   std::shared_ptr<Sampler> sampler_;

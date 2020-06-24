@@ -41,6 +41,11 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
   int seq_len_;
   int num_directions_;
   bool bidirectional_;
+  bool has_bias_;
+  dnnl::memory::dims weights_dims_;
+  dnnl::memory::dims weights_h_dims_;
+  dnnl::memory::dims bias_dims_;
+  dnnl::lstm_backward::primitive_desc prim_backward_desc_;
 };
 
 MS_REG_CPU_KERNEL(LSTMGrad,
@@ -63,5 +68,4 @@ MS_REG_CPU_KERNEL(LSTMGrad,
                   LSTMGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_KERNEL_CPU_LSTM_GRAD_CPU_KERNEL_H_

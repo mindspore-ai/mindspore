@@ -17,6 +17,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 #include "kernel/oplib/oplib.h"
+#include "kernel/oplib/oploader.h"
 #include "pipeline/pipeline.h"
 #include "operator/composite/composite.h"
 #include "ir/signature.h"
@@ -26,6 +27,7 @@
 #include "pipeline/parse/python_adapter.h"
 #include "utils/summary/event_writer.h"
 #include "utils/config_manager.h"
+#include "utils/mpi/mpi_config.h"
 #include "parallel/context.h"
 #include "parallel/device_manager.h"
 #include "parallel/costmodel_context.h"
@@ -44,6 +46,7 @@ using PrimitivePy = mindspore::PrimitivePy;
 using MetaFuncGraph = mindspore::MetaFuncGraph;
 using EventWriter = mindspore::summary::EventWriter;
 using OpLib = mindspore::kernel::OpLib;
+using OpInfoLoaderPy = mindspore::kernel::OpInfoLoaderPy;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 
@@ -76,6 +79,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get CNode Strategy Dictionary.")
     .def("get_allreduce_fusion", &ExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
          "Get Allreduce Fusion Dictionary.")
+    .def("fetch_info_for_quant_export", &ExecutorPy::FetchInfoForQuantExport, py::arg("phase") = py::str("train"),
+         "Fetch the inputs of Conv or Matmul for quant export.")
     .def("build_data_graph", &ExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
@@ -143,7 +148,18 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_profiling_options", &mindspore::MsContext::profiling_options, "Get options to profiling.")
     .def("set_profiling_options", &mindspore::MsContext::set_profiling_options, "Set options to profiling.")
     .def("get_check_bprop_flag", &mindspore::MsContext::check_bprop_flag, "Get whether to check bprop.")
-    .def("set_check_bprop_flag", &mindspore::MsContext::set_check_bprop_flag, "Set whether to check bprop.");
+    .def("set_check_bprop_flag", &mindspore::MsContext::set_check_bprop_flag, "Set whether to check bprop.")
+    .def("get_max_device_memory", &mindspore::MsContext::max_device_memory, "Get deivce memory max size.")
+    .def("set_max_device_memory", &mindspore::MsContext::set_max_device_memory, "Set deivce memory max size.")
+    .def("set_print_file_path", &mindspore::MsContext::set_print_file_path, "Set path to print.")
+    .def("set_enable_graph_kernel", &mindspore::MsContext::set_enable_graph_kernel,
+         "Set the GraphKernel switch to on or off.")
+    .def("get_enable_graph_kernel", &mindspore::MsContext::enable_graph_kernel, "Get the value of GraphKernel switch.");
+
+  (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
+    .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")
+    .def("get_enable_mpi", &mindspore::MpiConfig::enable_mpi, "Get whether enable mpi.")
+    .def("set_enable_mpi", &mindspore::MpiConfig::set_enable_mpi, "Set whether to enable mpi.");
 
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")
@@ -187,6 +203,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set strategy checkpoint save file.")
     .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
     .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
+    .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
+    .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
@@ -312,4 +330,8 @@ PYBIND11_MODULE(_c_expression, m) {
               "Finalize gpu collective communication mode.");
 
 #endif
+
+  (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
+    .def(py::init())
+    .def("get_all_ops_info", &OpInfoLoaderPy::GetAllOpsInfo, "get all ops info.");
 }

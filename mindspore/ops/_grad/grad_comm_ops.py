@@ -26,9 +26,10 @@ from .grad_base import bprop_getters
 
 @bprop_getters.register(AllReduce)
 def get_bprop_all_reduce(self):
-    """Generate bprop for AllReduce."""
+    """Generate bprop for AllReduce, do allreduce or allgather, allgather for sparse feature."""
 
     all_reduce_grad = AllReduce(ReduceOp.SUM, self.group)
+    all_gather = AllGather(group=self.group)
     if self.instance_name:
         instance_name = "grad" + self.instance_name
         all_reduce_grad.set_prim_instance_name(instance_name)
@@ -42,15 +43,28 @@ def get_bprop_all_reduce(self):
     if self.op == ReduceOp.SUM:
 
         def bprop(x, out, dout):
-            dx = all_reduce_grad(dout)
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                dx = all_reduce_grad(dout)
+            else:
+                indices = all_gather(dout[0])
+                grad = all_gather(dout[1])
+                dx = (indices, grad, dout[2])
             return (dx,)
     else:
 
         def bprop(x, out, dout):
-            dx = all_reduce_grad(dout)
-            z = equal(x, out)
-            z = cast(z, dtype(dx))
-            dx = mul(dx, z)
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                dx = all_reduce_grad(dout)
+                z = equal(x, out)
+                z = cast(z, dtype(dx))
+                dx = mul(dx, z)
+            else:
+                indices = all_gather(dout[0])
+                grad = all_gather(dout[1])
+                z = equal(x, out)
+                z = cast(z, dtype(grad))
+                grad = mul(grad, z)
+                dx = (indices, grad, dout[2])
             return (dx,)
     return bprop
 
@@ -147,12 +161,16 @@ def get_bprop_all_to_all(self):
 
 @bprop_getters.register(_MirrorOperator)
 def get_bprop_mirror_operator(self):
-    """Backpropagator for _MirrorOperator, do allreduce for the devices in group(only for one group)."""
+    """
+    Backpropagator for _MirrorOperator, do allreduce or allgather for the devices in group(only for one group),
+    allgather for sparse feature.
+    """
     group = self.group
     dev_num = self.dev_num
     mean_flag = self.mean_flag
 
     all_reduce = AllReduce(group=group)
+    all_gather = AllGather(group=group)
     mul = P.Mul()
     cast = P.Cast()
 
@@ -170,12 +188,25 @@ def get_bprop_mirror_operator(self):
 
     def bprop(x, out, dout):
         if mean_flag:
-            dx = all_reduce(dout)
-            float_one = F.scalar_cast(1.0, F.dtype(dx))
-            num = F.scalar_cast(dev_num, F.dtype(dx))
-            dx = mul(dx, cast(F.scalar_to_array(float_one/num), F.dtype(dx)))
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                dx = all_reduce(dout)
+                float_one = F.scalar_cast(1.0, F.dtype(dx))
+                num = F.scalar_cast(dev_num, F.dtype(dx))
+                dx = mul(dx, cast(F.scalar_to_array(float_one/num), F.dtype(dx)))
+            else:
+                indices = all_gather(dout[0])
+                grad = all_gather(dout[1])
+                float_one = F.scalar_cast(1.0, F.dtype(grad))
+                num = F.scalar_cast(dev_num, F.dtype(grad))
+                grad = mul(grad, cast(F.scalar_to_array(float_one/num), F.dtype(grad)))
+                dx = (indices, grad, dout[2])
         else:
-            dx = all_reduce(dout)
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                dx = all_reduce(dout)
+            else:
+                indices = all_gather(dout[0])
+                grad = all_gather(dout[1])
+                dx = (indices, grad, dout[2])
 
         return (dx,)
     return bprop

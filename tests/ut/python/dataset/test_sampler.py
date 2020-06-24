@@ -28,8 +28,8 @@ def test_sequential_sampler(print_res=False):
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(num_samples, num_repeats=None):
-        sampler = ds.SequentialSampler()
-        data1 = ds.ManifestDataset(manifest_file, num_samples=num_samples, sampler=sampler)
+        sampler = ds.SequentialSampler(num_samples=num_samples)
+        data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
         if num_repeats is not None:
             data1 = data1.repeat(num_repeats)
         res = []
@@ -119,8 +119,8 @@ def test_python_sampler():
             return iter([i for i in range(self.dataset_size)])
 
     class Sp2(ds.Sampler):
-        def __init__(self):
-            super(Sp2, self).__init__()
+        def __init__(self, num_samples=None):
+            super(Sp2, self).__init__(num_samples)
             # at this stage, self.dataset_size and self.num_samples are not yet known
             self.cnt = 0
 
@@ -130,8 +130,8 @@ def test_python_sampler():
         def reset(self):
             self.cnt = (self.cnt + 1) % self.dataset_size
 
-    def test_config(num_samples, num_repeats, sampler):
-        data1 = ds.ManifestDataset(manifest_file, num_samples=num_samples, sampler=sampler)
+    def test_config(num_repeats, sampler):
+        data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
         if num_repeats is not None:
             data1 = data1.repeat(num_repeats)
         res = []
@@ -154,8 +154,8 @@ def test_python_sampler():
             assert data[0] == (np.array(i),)
             i = i - 1
 
-    assert test_config(5, 2, Sp1()) == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
-    assert test_config(2, 6, Sp2()) == [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0]
+    assert test_config(2, Sp1(5)) == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+    assert test_config(6, Sp2(2)) == [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0]
     test_generator()
 
     sp1 = Sp1().create()
@@ -169,8 +169,8 @@ def test_subset_sampler():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
-    def test_config(num_samples, start_index, subset_size):
-        sampler = ds.SubsetSampler(start_index, subset_size)
+    def test_config(start_index, num_samples):
+        sampler = ds.SequentialSampler(start_index, num_samples)
         d = ds.ManifestDataset(manifest_file, sampler=sampler)
 
         res = []
@@ -179,19 +179,15 @@ def test_subset_sampler():
 
         return res
 
-    with pytest.raises(RuntimeError) as info:
-        test_config(5, 0, 0)
-    assert "subset_size <= 0" in str(info.value)
-
-    assert test_config(5, 0, 1) == [0]
-    assert test_config(5, 0, 2) == [0, 1]
-    assert test_config(5, 0, 3) == [0, 1, 2]
-    assert test_config(5, 0, 4) == [0, 1, 2, 3]
-    assert test_config(5, 0, 5) == [0, 1, 2, 3, 4]
-    assert test_config(5, 1, 1) == [1]
-    assert test_config(5, 2, 3) == [2, 3, 4]
-    assert test_config(5, 3, 2) == [3, 4]
-    assert test_config(5, 4, 1) == [4]
+    assert test_config(0, 1) == [0]
+    assert test_config(0, 2) == [0, 1]
+    assert test_config(0, 3) == [0, 1, 2]
+    assert test_config(0, 4) == [0, 1, 2, 3]
+    assert test_config(0, 5) == [0, 1, 2, 3, 4]
+    assert test_config(1, 1) == [1]
+    assert test_config(2, 3) == [2, 3, 4]
+    assert test_config(3, 2) == [3, 4]
+    assert test_config(4, 1) == [4]
 
 
 def test_sampler_chain():
@@ -199,11 +195,11 @@ def test_sampler_chain():
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
     def test_config(num_shards, shard_id):
-        sampler = ds.DistributedSampler(num_shards, shard_id, False)
+        sampler = ds.DistributedSampler(num_shards, shard_id, shuffle=False, num_samples=5)
         child_sampler = ds.SequentialSampler()
         sampler.add_child(child_sampler)
 
-        data1 = ds.ManifestDataset(manifest_file, num_samples=5, sampler=sampler)
+        data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
 
         res = []
         for item in data1.create_dict_iterator():
@@ -232,6 +228,11 @@ def test_add_sampler_invalid_input():
     with pytest.raises(TypeError) as info:
         data1.use_sampler("sampler")
     assert "not an instance of a sampler" in str(info.value)
+
+    sampler = ds.SequentialSampler()
+    with pytest.raises(ValueError) as info:
+        data2 = ds.ManifestDataset(manifest_file, sampler=sampler, num_samples=20)        
+    assert "Conflicting arguments during sampler assignments" in str(info.value)
 
 
 if __name__ == '__main__':

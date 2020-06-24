@@ -15,14 +15,15 @@
  */
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 
-#include <cmath>
-#include <condition_variable>
+#include <algorithm>
+#include <fstream>
 #include <future>
 #include <iomanip>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <utility>
-#include <unordered_map>
+#include <vector>
 
 #include "proto/example.pb.h"
 #include "./securec.h"
@@ -32,8 +33,6 @@
 #include "dataset/engine/connector.h"
 #include "dataset/engine/data_schema.h"
 #include "dataset/engine/datasetops/source/io_block.h"
-#include "dataset/engine/datasetops/source/storage_client.h"
-#include "dataset/engine/datasetops/source/tf_client.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/jagged_connector.h"
@@ -56,6 +55,7 @@ TFReaderOp::Builder::Builder()
   builder_op_connector_size_ = config_manager->op_connector_size();
   builder_rows_per_buffer_ = config_manager->rows_per_buffer();
   builder_shuffle_files_ = false;
+  builder_shuffle_global_ = false;
   builder_data_schema_ = std::make_unique<DataSchema>();
 }
 
@@ -126,7 +126,8 @@ Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op)
   std::shared_ptr<TFReaderOp> new_tf_reader_op = std::make_shared<TFReaderOp>(
     builder_num_workers_, builder_worker_connector_size_, builder_rows_per_buffer_, builder_total_rows_,
     builder_dataset_files_list_, std::move(builder_data_schema_), builder_op_connector_size_, builder_columns_to_load_,
-    builder_shuffle_files_, builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_);
+    builder_shuffle_files_, builder_shuffle_global_, builder_num_devices_, builder_device_id_,
+    builder_equal_rows_per_shard_);
 
   RETURN_IF_NOT_OK(new_tf_reader_op->Init());
   *out_tf_reader_op = std::move(new_tf_reader_op);
@@ -136,8 +137,8 @@ Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op)
 TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer,
                        int64_t total_num_rows, std::vector<std::string> dataset_files_list,
                        std::unique_ptr<DataSchema> data_schema, int32_t op_connector_size,
-                       std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_device,
-                       int32_t device_id, bool equal_rows_per_shard)
+                       std::vector<std::string> columns_to_load, bool shuffle_files, bool shuffle_global,
+                       int32_t num_device, int32_t device_id, bool equal_rows_per_shard)
     : ParallelOp(num_workers, op_connector_size),
       device_id_(device_id),
       num_devices_(num_device),
@@ -147,6 +148,7 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
       columns_to_load_(std::move(columns_to_load)),
       finished_reading_dataset_(false),
       shuffle_files_(shuffle_files),
+      shuffle_global_(shuffle_global),
       data_schema_(std::move(data_schema)),
       filename_index_(std::make_unique<StringIndex>()),
       load_io_block_queue_(true),
@@ -172,7 +174,8 @@ void TFReaderOp::Print(std::ostream &out, bool show_all) const {
     // Then show any custom derived-internal stuff
     out << "\nRows per buffer: " << rows_per_buffer_ << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_
         << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
-        << "\nDataset files list:\n";
+        << "\nShuffle global: " << ((shuffle_global_) ? "yes" : "no")
+        << "\nDataset files list: Size: " << dataset_files_list_.size() << "\n";
     for (int i = 0; i < dataset_files_list_.size(); ++i) {
       out << " " << dataset_files_list_[i];
     }
@@ -217,7 +220,6 @@ Status TFReaderOp::Init() {
   // temporary: make size large enough to hold all files + EOE to avoid hangs
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(dataset_files_list_.size() / num_workers_)) + 1;
   io_block_queues_.Init(num_workers_, safe_queue_size);
-  dataset_files_list_.clear();  // no longer need the original list of files
 
   return Status::OK();
 }
@@ -451,8 +453,7 @@ Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
         }
       } else {
         // Do an index lookup using that key to get the filename.
-        auto file_it = filename_index_->Search(*it);
-        std::string file_name = file_it.value();
+        std::string file_name = (*filename_index_)[*it];
         if (NeedPushFileToblockQueue(file_name, &start_offset, &end_offset, pre_count)) {
           auto ioBlock = std::make_unique<FilenameBlock>(*it, start_offset, end_offset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
@@ -481,7 +482,7 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
   int64_t start_offset = 0;
   int64_t end_offset = 0;
   bool finish = false;
-  bool end_of_epoch = true;
+  bool end_of_epoch = false;
   while (!finish) {
     // Iterate over all the keys and add one key to each block.
     for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
@@ -771,53 +772,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // know how many elements there are and the total bytes, create tensor here:
   TensorShape current_shape = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape((*num_elements) * pad_size, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
-
-  // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  unsigned char *current_tensor_addr = (*tensor)->GetMutableBuffer();
-  int64_t tensor_bytes_remaining = (*num_elements) * pad_size;
-
-  if (current_tensor_addr == nullptr) {
-    std::string err_msg = "tensor memory allocation failed";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  RETURN_IF_NOT_OK(LoadAndPadBytes(current_tensor_addr, bytes_list, tensor_bytes_remaining, pad_size));
-
-  return Status::OK();
-}
-
-Status TFReaderOp::LoadAndPadBytes(unsigned char *current_tensor_addr, const dataengine::BytesList &bytes_list,
-                                   int64_t tensor_bytes_remaining, int64_t pad_size) {
-  if (current_tensor_addr == nullptr) {
-    std::string err_msg = "current_tensor_addr is null";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  for (int i = 0; i < bytes_list.value_size(); i++) {
-    // read string data into tensor
-    const std::string &current_element = bytes_list.value(i);
-    int return_code =
-      memcpy_s(current_tensor_addr, tensor_bytes_remaining, common::SafeCStr(current_element), current_element.size());
-    if (return_code != 0) {
-      std::string err_msg = "memcpy_s failed when reading bytesList element into Tensor";
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-
-    current_tensor_addr += current_element.size();
-    tensor_bytes_remaining -= current_element.size();
-
-    // pad
-    int64_t chars_to_pad = pad_size - current_element.size();
-    return_code = memset_s(current_tensor_addr, tensor_bytes_remaining, static_cast<int>(' '), chars_to_pad);
-    if (return_code != 0) {
-      std::string err_msg = "memset_s failed when padding bytesList in Tensor";
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-
-    current_tensor_addr += chars_to_pad;
-    tensor_bytes_remaining -= chars_to_pad;
-  }
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, bytes_list, current_shape, current_col.type(), pad_size));
 
   return Status::OK();
 }
@@ -905,7 +860,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   return Status::OK();
 }
 
-Status TFReaderOp::CreateSchema(const std::string tf_file, const std::vector<std::string> &columns_to_load) {
+Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load) {
   std::ifstream reader;
   reader.open(tf_file);
 
@@ -926,12 +881,14 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, const std::vector<std
 
   const dataengine::Features &example_features = example.features();
   const google::protobuf::Map<std::string, dataengine::Feature> &feature_map = example_features.feature();
-  std::vector<std::string> columns = columns_to_load;
 
-  if (columns_to_load.empty())
-    (void)std::transform(feature_map.begin(), feature_map.end(), std::back_inserter(columns),
+  if (columns_to_load.empty()) {
+    (void)std::transform(feature_map.begin(), feature_map.end(), std::back_inserter(columns_to_load),
                          [](const auto &it) -> std::string { return it.first; });
-  for (const auto &curr_col_name : columns) {
+    std::sort(columns_to_load.begin(), columns_to_load.end());
+  }
+
+  for (const auto &curr_col_name : columns_to_load) {
     auto it = feature_map.find(curr_col_name);
     if (it == feature_map.end()) {
       RETURN_STATUS_UNEXPECTED("Failed to find column " + curr_col_name);

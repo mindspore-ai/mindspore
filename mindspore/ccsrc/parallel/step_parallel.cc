@@ -534,6 +534,10 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
   }
   std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
+  auto prim = GetValueNode<PrimitivePtr>(node->input(0));
+  if (prim->name() == GATHERV2 || prim->name() == SPARSE_GATHERV2) {
+    replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
+  }
   if (!params.empty()) {
     Param param_first = *(params.begin());
     int32_t first_position = param_first.second;
@@ -1371,11 +1375,19 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
 
 void SetVirtualDatasetStrategy(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == VIRTUAL_DATA_SET) {
     CheckGlobalDeviceManager();
-    int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+    int32_t dev_num;
+    if (full_batch) {
+      dev_num = 1;
+    } else {
+      dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+    }
     auto attrs_temp = prim->attrs();
     std::vector<Shapes> shape_list = ExtractShape(node);
     if (shape_list.empty()) {
@@ -1864,11 +1876,15 @@ void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePt
 
   DropoutDoMaskInfoPtr dropout_do_mask = std::dynamic_pointer_cast<DropoutDoMaskInfo>(distribute_operator);
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
-  Operator replace_op = dropout_do_mask->GetDropoutGenMaskReplaceOp(cnode);
+  std::vector<Operator> replace_op = dropout_do_mask->GetDropoutGenMaskReplaceOp(cnode);
+  if (replace_op.empty()) {
+    MS_LOG(DEBUG) << "No need to replace dropout_gen_mask";
+    return;
+  }
   if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of drop out do mask cnode's input is not " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
   }
-  ReplaceOneOp(replace_op, cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
+  ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 
 void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
@@ -2254,10 +2270,10 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
       (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
     if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
       if (HasStrategy(root)) {
-        MS_LOG(INFO) << "strategies ignored in " << parallel_mode
+        MS_LOG(INFO) << "Strategies ignored in " << parallel_mode
                      << ", set_strategy() only valid in [semi_]auto_parallel.";
       }
-      root->flags()[CHECK_SET_STRATEGY_VALID_ONCE_ONLY] = true;
+      root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
     }
 
     return changes;
@@ -2314,11 +2330,11 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once
-  root->flags()[SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY] = true;
+  root->set_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY, true);
   res->results()[pipeline::kStepParallelGraph] = root;
 
   // in auto parallel mode, no need to check if stategies set
-  root->flags()[CHECK_SET_STRATEGY_VALID_ONCE_ONLY] = true;
+  root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
 
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);

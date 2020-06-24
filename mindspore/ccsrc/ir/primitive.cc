@@ -52,9 +52,6 @@ py::function PrimitivePy::GetBpropFunction() {
     return fn;
   } else {
     auto fn = GetBpropFunctionByObj(python_obj_);
-    if (fn.is_none()) {
-      MS_LOG(WARNING) << "Can't find bprop function for " << name();
-    }
     return fn;
   }
 }
@@ -75,7 +72,7 @@ py::function PrimitivePy::GetComputeFunction() {
   py::function vm_fn = get_fn(python_obj_);
 
   if (py::isinstance<py::none>(vm_fn)) {
-    MS_LOG(DEBUG) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
+    MS_LOG(WARNING) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
     vm_fn = mindspore::GetComputeFunction(Primitive::name());
   }
   return vm_fn;

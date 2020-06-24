@@ -33,7 +33,11 @@
 namespace mindspore {
 namespace dataset {
 TextFileOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(0), builder_shuffle_files_(false) {
+    : builder_device_id_(0),
+      builder_num_devices_(1),
+      builder_total_rows_(0),
+      builder_shuffle_files_(false),
+      builder_shuffle_global_(false) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
@@ -43,7 +47,7 @@ TextFileOp::Builder::Builder()
 
 Status TextFileOp::Builder::ValidateInputs() const {
   std::string err_msg;
-  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers should be greate than 0\n" : "";
+  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers should be greater than 0\n" : "";
   err_msg += builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1 ? "Wrong sharding configs\n" : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
@@ -62,25 +66,27 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
     builder_schema_->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
 
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
-    builder_num_workers_, builder_rows_per_buffer_, builder_num_samples_, builder_worker_connector_size_,
+    builder_num_workers_, builder_rows_per_buffer_, builder_total_rows_, builder_worker_connector_size_,
     std::move(builder_schema_), builder_text_files_list_, builder_op_connector_size_, builder_shuffle_files_,
-    builder_num_devices_, builder_device_id_);
+    builder_shuffle_global_, builder_num_devices_, builder_device_id_);
   RETURN_IF_NOT_OK(text_file_op->Init());
   *op = std::move(text_file_op);
 
   return Status::OK();
 }
 
-TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
+TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
                        std::unique_ptr<DataSchema> schema, std::vector<std::string> text_files_list,
-                       int32_t op_connector_size, bool shuffle_files, int32_t num_device, int32_t device_id)
+                       int32_t op_connector_size, bool shuffle_files, bool shuffle_global, int32_t num_device,
+                       int32_t device_id)
     : ParallelOp(num_workers, op_connector_size),
       device_id_(device_id),
       num_devices_(num_device),
       rows_per_buffer_(rows_per_buffer),
-      num_samples_(num_samples),
+      total_rows_(total_rows),
       text_files_list_(std::move(text_files_list)),
       shuffle_files_(shuffle_files),
+      shuffle_global_(shuffle_global),
       data_schema_(std::move(schema)),
       all_num_rows_(0),
       num_rows_per_shard_(0),
@@ -104,9 +110,9 @@ void TextFileOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << num_samples_
-        << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
-        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nText files list:\n";
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nRow count: " << total_rows_ << "\nDevice id: " << device_id_
+        << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
+        << "\nText files list:\n";
     for (int i = 0; i < text_files_list_.size(); ++i) {
       out << " " << text_files_list_[i];
     }
@@ -314,8 +320,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
             break;
           }
         }
-        auto file_it = filename_index_->Search(*it);
-        file_index.emplace_back(std::pair<std::string, int64_t>(file_it.value(), *it));
+        file_index.emplace_back(std::pair<std::string, int64_t>((*filename_index_)[*it], *it));
       }
     } else {
       for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
@@ -404,9 +409,9 @@ Status TextFileOp::operator()() {
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &buffer));
       if (buffer->eoe()) {
         workers_done++;
-      } else if (num_samples_ == 0 || rows_read < num_samples_) {
-        if ((num_samples_ > 0) && (rows_read + buffer->NumRows() > num_samples_)) {
-          int64_t rowsToRemove = buffer->NumRows() - (num_samples_ - rows_read);
+      } else if (total_rows_ == 0 || rows_read < total_rows_) {
+        if ((total_rows_ > 0) && (rows_read + buffer->NumRows() > total_rows_)) {
+          int64_t rowsToRemove = buffer->NumRows() - (total_rows_ - rows_read);
           RETURN_IF_NOT_OK(buffer->SliceOff(rowsToRemove));
         }
         rows_read += buffer->NumRows();

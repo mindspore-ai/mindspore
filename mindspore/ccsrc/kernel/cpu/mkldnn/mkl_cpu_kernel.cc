@@ -98,11 +98,9 @@ void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
 }
 
 void MKLCPUKernel::ExecutePrimitive() { MKLKernelEngine::Get().Execute(primitive_, arguments_); }
-void MKLCPUKernel::write_to_dnnl_memory(void *handle, const dnnl::memory &mem) {
-  MKLKernelEngine::Get().write_to_dnnl_memory(handle, mem);
-}
-void MKLCPUKernel::read_from_dnnl_memory(void *handle, const dnnl::memory &mem) {
-  MKLKernelEngine::Get().read_from_dnnl_memory(handle, mem);
+
+void MKLCPUKernel::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
+  MKLKernelEngine::Get().Reorder(src_mem, dst_mem);
 }
 }  // namespace kernel
 }  // namespace mindspore

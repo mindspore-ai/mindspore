@@ -78,9 +78,8 @@ def load_weights(model_path):
 
     weights = {}
     for msname in ms_ckpt:
-        infer_name = msname.replace("transformer.transformer.", "")
+        infer_name = msname
         if "tfm_decoder" in msname:
-            infer_name = infer_name.replace(".layers.", ".layer")
             infer_name = "tfm_decoder.decoder." + infer_name
         if is_npz:
             weights[infer_name] = ms_ckpt[msname]

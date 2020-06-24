@@ -40,7 +40,7 @@ def _mul_scalar(x, y):
 @mul.register("Tensor", "Tensor")
 def _mul_tensor(x, y):
     """
-    Returns x * y by element-wise where x and y are all tensors and have same dtype.
+    Returns x * y by element-wise where x and y are all tensors.
 
     Outputs:
         Tensor, has the same dtype as x.

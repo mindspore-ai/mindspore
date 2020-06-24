@@ -41,22 +41,12 @@ class Initializer:
         self._kwargs = kwargs
         self.shape = None
         self.dtype = None
-        self._seed = None
 
     def _initialize(self, *kwargs):
         raise NotImplementedError('Must be overridden!')
 
     def __call__(self, arr):
         return self._initialize(arr)
-
-    @property
-    def seed(self):
-        return self._seed
-
-    @seed.setter
-    def seed(self, seed_):
-        """set the random seed."""
-        self._seed = seed_
 
     @property
     def shape(self):
@@ -74,19 +64,30 @@ class Initializer:
     def dtype(self, dtype):
         self._dtype = dtype
 
-    def to_tensor(self):
-        """Get the tensor format data of this Initializer."""
+    def to_tensor(self, slice_index=None, shape=None):
+        """
+        Get the tensor format data of this Initializer.
+
+        Args:
+            slice_index (int): Slice index of a parameter's slices.
+                Used when initialize a slice of a parameter, it guarantee that
+                devices use the same slice can generate the same tensor.
+            shape (list[int]): Shape of the slice, used when initialize a slice of the parameter.
+        """
         arr = None
+        if shape is None:
+            shape = self.shape
+
         try:
-            arr = np.ndarray(self.shape)
+            arr = np.ndarray(shape)
         except ValueError:
-            msg = "Error shape={}".format(self.shape)
+            msg = "Error shape={}".format(shape)
             logger.error(msg)
             raise ValueError(msg)
-        if self._seed is not None:
-            np.random.seed(self.seed)
+
+        if slice_index is not None:
+            np.random.seed(slice_index)
         self.__call__(arr)
-        self._seed = None
         return Tensor(arr, dtype=self.dtype)
 
 def _register(*aliases):
@@ -331,11 +332,11 @@ def initializer(init, shape=None, dtype=mstype.float32):
         raise TypeError("Unsupported init type '{}'.".format(type(init)))
 
     if isinstance(init, Tensor):
-        init_shape = init.shape()
+        init_shape = init.shape
         shape = shape if isinstance(shape, (tuple, list)) else [shape]
         if shape is not None and init_shape != tuple(shape):
             raise ValueError("The shape of init should be same as variable shape, but got the shape of init {} and "
-                             "the variable shape {}.".format(list(init.shape()), shape))
+                             "the variable shape {}.".format(list(init.shape), shape))
         return init
 
     if isinstance(shape, list):

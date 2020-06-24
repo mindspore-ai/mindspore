@@ -31,6 +31,49 @@ class NetFlatten(nn.Cell):
         return self.flatten(x)
 
 
+class NetAllFlatten(nn.Cell):
+    def __init__(self):
+        super(NetAllFlatten, self).__init__()
+        self.flatten = P.Flatten()
+
+    def construct(self, x):
+        loop_count = 4
+        while loop_count > 0:
+            x = self.flatten(x)
+            loop_count = loop_count - 1
+        return x
+
+
+class NetFirstFlatten(nn.Cell):
+    def __init__(self):
+        super(NetFirstFlatten, self).__init__()
+        self.flatten = P.Flatten()
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        loop_count = 4
+        while loop_count > 0:
+            x = self.flatten(x)
+            loop_count = loop_count - 1
+        x = self.relu(x)
+        return x
+
+
+class NetLastFlatten(nn.Cell):
+    def __init__(self):
+        super(NetLastFlatten, self).__init__()
+        self.flatten = P.Flatten()
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        loop_count = 4
+        x = self.relu(x)
+        while loop_count > 0:
+            x = self.flatten(x)
+            loop_count = loop_count - 1
+        return x
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -46,3 +89,55 @@ def test_flatten():
     flatten = NetFlatten()
     output = flatten(x)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_all_flatten():
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
+    expect = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    flatten = NetAllFlatten()
+    output = flatten(x)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    flatten = NetAllFlatten()
+    output = flatten(x)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_first_flatten():
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
+    expect = np.array([[0, 0.3, 3.6], [0.4, 0.5, 0]]).astype(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    flatten = NetFirstFlatten()
+    output = flatten(x)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    flatten = NetFirstFlatten()
+    output = flatten(x)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_last_flatten():
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
+    expect = np.array([[0, 0.3, 3.6], [0.4, 0.5, 0]]).astype(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    flatten = NetLastFlatten()
+    output = flatten(x)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    flatten = NetLastFlatten()
+    output = flatten(x)
+    assert (output.asnumpy() == expect).all()
+    

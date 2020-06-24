@@ -51,7 +51,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
 
   (void)abstract::CheckArg<AbstractFunction>(op_name, args_spec_list, 0);
   auto ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
   AnfNodePtr fnNode = ret_graph->add_parameter();
   std::vector<AnfNodePtr> elems;

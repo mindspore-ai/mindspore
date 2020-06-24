@@ -27,11 +27,8 @@ sign_op_info = TBERegOp("Sign") \
     .input(0, "x", None, "required", None) \
     .output(0, "y", True, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
     .get_op_info()
 
 

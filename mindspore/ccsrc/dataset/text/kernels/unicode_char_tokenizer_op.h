@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_KERNELS_TEXT_UNICODE_CHAR_TOKENIZER_OP_H_
-#define DATASET_KERNELS_TEXT_UNICODE_CHAR_TOKENIZER_OP_H_
+#ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
 #include <memory>
 
 #include "dataset/core/tensor.h"
@@ -37,4 +37,4 @@ class UnicodeCharTokenizerOp : public TensorOp {
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_KERNELS_TEXT_UNICODE_CHAR_TOKENIZER_OP_H_
+#endif  // DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_

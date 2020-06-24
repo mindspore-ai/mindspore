@@ -18,10 +18,17 @@
 #include <unordered_map>
 #include <map>
 #include <iostream>
+#include <utility>
 #include <fstream>
+#include <thread>
 #include "nlohmann/json.hpp"
 #include "session/anf_runtime_algorithm.h"
 #include "common/utils.h"
+#include "ir/manager.h"
+#include "ir/meta_tensor.h"
+#include "ir/func_graph.h"
+#include "operator/ops.h"
+#include "utils/graph_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,12 +54,6 @@ const std::map<TypeId, std::string> type_id_str_map = {
   {TypeId::kNumberTypeBool, "bool"},
 };
 
-const std::map<std::string, std::string> DATATYPE_STRING_MAP{
-  {"Float32", "float32"}, {"Float16", "float16"}, {"Int8", "int8"},   {"Int16", "int16"},
-  {"UInt16", "uint16"},   {"UInt8", "uint8"},     {"Int32", "int32"}, {"UInt32", "uint32"},
-  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool_", "bool"},  {"Float64", "double"},
-};
-
 const std::unordered_map<std::string, std::string> dtype_shortdtype_map_ = {
   {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"}, {"int8", "i8"},    {"int16", "i16"},  {"int32", "i32"},
   {"int64", "i64"},   {"uint8", "u8"},    {"uint16", "u16"},  {"uint32", "u32"}, {"uint64", "u64"}, {"bool", "bool"},
@@ -69,50 +70,6 @@ const std::unordered_map<std::string, FusionType> fusion_type_maps = {
   {"CONVLUTION", FusionType::CONVLUTION}, {"ELEMWISE", FusionType::ELEMWISE}, {"COMMREDUCE", FusionType::COMMREDUCE},
   {"SEGMENT", FusionType::SEGMENT},       {"OPAQUE", FusionType::OPAQUE},
 };
-
-bool IsAtomicNode(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto parameters_indexs = kernel_mod->GenParameters();
-  if (parameters_indexs.empty()) {
-    return false;
-  }
-  auto atomic_flag = false;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
-  size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
-  if (input_num + workspace_num + output_num > parameters_indexs.size()) {
-    size_t lossNum = (input_num + workspace_num + output_num) - parameters_indexs.size();
-    for (size_t i = 0; i < lossNum; i++) {
-      parameters_indexs.push_back(0);
-    }
-  }
-  std::vector<int> clean_output_indexs;
-  // in parameters data sort as input->workspace->output
-  size_t index = 0;
-  while (index < output_num) {
-    if (parameters_indexs[input_num + workspace_num + index] == 1) {
-      atomic_flag = true;
-      clean_output_indexs.push_back(SizeToInt(index));
-    }
-    index++;
-  }
-  if (atomic_flag) {
-    AnfAlgo::SetNodeAttr(kAttrAutomicOutputIndexs, MakeValue(clean_output_indexs), kernel_node);
-  }
-  for (size_t i = 0; i < workspace_num; ++i) {
-    if (parameters_indexs[input_num + i] == 1) {
-      atomic_flag = true;
-      AnfAlgo::SetNodeAttr(kAttrAutomicWorkspaceSize,
-                           MakeValue(std::accumulate(workspace_size_list.begin(), workspace_size_list.end(), 0)),
-                           kernel_node);
-      break;
-    }
-  }
-  return atomic_flag;
-}
 
 void KernelMeta::Initialize() {
   kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(getpid()) + "/";
@@ -242,14 +199,6 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   }
 }
 
-std::string Dtype2String(const std::string &dtypes) {
-  auto iter = DATATYPE_STRING_MAP.find(dtypes);
-  if (iter == DATATYPE_STRING_MAP.end()) {
-    MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtypes;
-  }
-  return iter->second;
-}
-
 std::string TypeId2String(TypeId type_id) {
   auto iter = type_id_str_map.find(type_id);
   if (iter == type_id_str_map.end()) {
@@ -360,7 +309,7 @@ bool SetOutputKernelBuilderInfo(const std::vector<std::shared_ptr<OpIOInfo>> &ou
       output_num = 1;
     } else {
       if (output_idx < real_output_num) {
-        MS_LOG(INFO) << "Set output kernel builder info, output type is optional, output index is :" << output_idx;
+        MS_LOG(DEBUG) << "Set output kernel builder info, output type is optional, output index is :" << output_idx;
         output_num = 1;
       }
     }
@@ -402,7 +351,7 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
   }
 
   if (imply_type == kAKG) {
-    builder->SetKernelType(AUTO_DIFF_KERNEL);
+    builder->SetKernelType(AKG_KERNEL);
   } else if (imply_type == kAICPU) {
     builder->SetKernelType(AICPU_KERNEL);
   } else {
@@ -524,6 +473,430 @@ std::string GetProcessor(const AnfNodePtr &anf_node) {
       break;
   }
   return device;
+}
+
+bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b) {
+  if (shape_a.size() != shape_b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < shape_a.size(); ++i) {
+    if (shape_a[i] != shape_b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int Sign(float x) {
+  if (x > 0) {
+    return 1;
+  }
+  if (x < 0) {
+    return -1;
+  }
+  return 0;
+}
+
+void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                              size_t outer_dim) {
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.value_);
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.indices_);
+  MS_EXCEPTION_IF_NULL(unique_grad);
+  MS_EXCEPTION_IF_NULL(unique_grad->value_);
+  MS_EXCEPTION_IF_NULL(unique_grad->indices_);
+  std::unordered_map<int, size_t> index_map;
+  size_t unique_indices_size = 0;
+  for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
+    int index = origin_sparse_grad.indices_[i];
+    if (index < 0 || IntToSize(index) >= first_dim) {
+      continue;
+    }
+    auto iter = index_map.find(index);
+    if (iter == index_map.end()) {
+      index_map[index] = unique_indices_size;
+      unique_grad->indices_[unique_indices_size] = index;
+      size_t start_index = unique_indices_size * outer_dim;
+      size_t end_index = start_index + outer_dim;
+      for (size_t j = start_index, k = i * outer_dim; j < end_index; ++j, ++k) {
+        unique_grad->value_[j] = origin_sparse_grad.value_[k];
+      }
+      unique_indices_size++;
+    } else {
+      size_t first_index = iter->second;
+      size_t start_index = first_index * outer_dim;
+      size_t end_index = start_index + outer_dim;
+      for (size_t j = start_index, k = i * outer_dim; j < end_index; ++j, ++k) {
+        unique_grad->value_[j] += origin_sparse_grad.value_[k];
+      }
+    }
+  }
+  unique_grad->indices_size_ = unique_indices_size;
+}
+
+struct WorkerParamsForReduceSparseGradient {
+  size_t slice_start_{0};
+  size_t slice_end_{0};
+  size_t max_length_{0};
+  size_t outer_dim_{0};
+  std::vector<std::pair<int, size_t>> *sorted_indices_{nullptr};
+  std::vector<size_t> *slice_positions_{nullptr};
+  float *src_value_{nullptr};
+  SparseGradient *unique_grad_{nullptr};
+};
+
+void WorkerForReduceSparseGradient(WorkerParamsForReduceSparseGradient param) {
+  MS_EXCEPTION_IF_NULL(param.sorted_indices_);
+  MS_EXCEPTION_IF_NULL(param.slice_positions_);
+  MS_EXCEPTION_IF_NULL(param.src_value_);
+  MS_EXCEPTION_IF_NULL(param.unique_grad_);
+  auto outer_dim = param.outer_dim_;
+  auto &sorted_indices = *(param.sorted_indices_);
+  auto &slice_positions = *(param.slice_positions_);
+  auto unique_grad = param.unique_grad_;
+  for (size_t slice_id = param.slice_start_; slice_id < param.slice_end_; ++slice_id) {
+    size_t cur_pos = slice_positions[slice_id];
+    int index = sorted_indices[cur_pos].first;
+    unique_grad->indices_[slice_id] = index;
+    size_t start_index = slice_id * outer_dim;
+    auto ret_code = memcpy_s(unique_grad->value_ + start_index, (param.max_length_ - start_index) * sizeof(float),
+                             param.src_value_ + sorted_indices[cur_pos].second, outer_dim * sizeof(float));
+    if (ret_code != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to copy data!";
+    }
+    cur_pos++;
+    size_t end_pos;
+    if (slice_id + 1 < slice_positions.size()) {
+      end_pos = slice_positions[slice_id + 1];
+    } else {
+      end_pos = sorted_indices.size();
+    }
+    while (cur_pos < end_pos) {
+      for (size_t i = 0; i < outer_dim; ++i) {
+        unique_grad->value_[start_index + i] += param.src_value_[sorted_indices[cur_pos].second + i];
+      }
+      cur_pos++;
+    }
+  }
+}
+
+void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
+                          size_t outer_dim) {
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.value_);
+  MS_EXCEPTION_IF_NULL(origin_sparse_grad.indices_);
+  MS_EXCEPTION_IF_NULL(unique_grad);
+  MS_EXCEPTION_IF_NULL(unique_grad->value_);
+  MS_EXCEPTION_IF_NULL(unique_grad->indices_);
+  std::vector<std::pair<int, size_t>> sorted_indices;
+  sorted_indices.reserve(origin_sparse_grad.indices_size_);
+  for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
+    int index = origin_sparse_grad.indices_[i];
+    if (index >= 0 && IntToSize(index) < first_dim) {
+      sorted_indices.emplace_back(std::pair<int, size_t>(index, i * outer_dim));
+    }
+  }
+  std::sort(
+    sorted_indices.begin(), sorted_indices.end(),
+    [](const std::pair<int, size_t> &left, const std::pair<int, size_t> &right) { return left.first < right.first; });
+  int last_index = 0;
+  std::vector<size_t> slice_positions;
+  for (size_t i = 0; i < sorted_indices.size(); ++i) {
+    if (i == 0 || last_index != sorted_indices[i].first) {
+      slice_positions.emplace_back(i);
+    }
+    last_index = sorted_indices[i].first;
+  }
+  size_t thread_num = 8;
+  if (slice_positions.size() < thread_num) {
+    thread_num = slice_positions.size();
+  }
+  size_t stride = (slice_positions.size() + thread_num - 1) / thread_num;
+  thread_num = (slice_positions.size() + stride - 1) / stride;
+  std::vector<std::thread> threads;
+  size_t max_length = sorted_indices.size() * outer_dim;
+  for (size_t i = 0; i < thread_num; ++i) {
+    size_t slice_start = i * stride;
+    size_t slice_end = 0;
+    if (i == thread_num - 1) {
+      slice_end = slice_positions.size();
+    } else {
+      slice_end = slice_start + stride;
+    }
+    WorkerParamsForReduceSparseGradient params{
+      slice_start, slice_end, max_length, outer_dim, &sorted_indices, &slice_positions, origin_sparse_grad.value_,
+      unique_grad};
+    threads.emplace_back(std::thread(WorkerForReduceSparseGradient, params));
+  }
+  for (size_t i = 0; i < thread_num; ++i) {
+    threads[i].join();
+  }
+  unique_grad->indices_size_ = slice_positions.size();
+}
+
+std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+
+  if (index >= AnfAlgo::GetInputTensorNum(anf_node)) {
+    MS_EXCEPTION(ArgumentError) << "Index is out of the size of anf_node inputs.";
+  }
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return AnfAlgo::VisitKernel(anf_node, 0);
+  } else {
+    return AnfAlgo::VisitKernel(anf_node->cast<CNodePtr>()->input(index + 1), 0);
+  }
+}
+
+std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                                            const std::vector<AnfNodePtr> &input_list) {
+  std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> input_index;
+  for (size_t i = 0; i < input_list.size(); ++i) {
+    auto const &input = input_list[i];
+    MS_EXCEPTION_IF_NULL(input);
+    bool found = false;
+    // using NodeUsersMap = std::unordered_map<AnfNodePtr, std::set<std::pair<AnfNodePtr, int>>>;
+    auto mng = input->func_graph()->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    const NodeUsersMap &users = mng->node_users();
+    auto input_users = users.find(input);
+    if (input_users == users.end() || input_users->second.empty()) {
+      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
+                                  << input->func_graph()->ToString() << "] has no users.";
+    }
+
+    for (auto const &input_user : input_users->second) {
+      for (auto const &anf_node : node_list) {
+        if (anf_node != input_user.first) {
+          continue;
+        }
+
+        std::vector<int> dyn_input_sizes;
+        auto prim = AnfAlgo::GetCNodePrimitive(anf_node);
+        MS_EXCEPTION_IF_NULL(prim);
+        if (prim->GetAttr(kAttrDynInputSizes) != nullptr) {
+          dyn_input_sizes = GetValue<const std::vector<int>>(prim->GetAttr(kAttrDynInputSizes));
+        }
+
+        if (dyn_input_sizes.empty()) {
+          input_index.push_back(std::make_pair(anf_node, std::make_pair(IntToSize(input_user.second - 1), 0)));
+          found = true;
+          break;
+        } else {
+          int used_as_idx = input_user.second - 1;
+          int accum_idx = 0;
+          size_t dyn_i = 0;
+          for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
+            accum_idx += dyn_input_sizes[dyn_i];
+            if (used_as_idx < accum_idx) {
+              input_index.push_back(std::make_pair(
+                anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
+              break;
+            }
+          }
+          if (dyn_i != dyn_input_sizes.size()) {
+            found = true;
+            break;
+          }
+        }
+      }
+      if (found) {
+        break;
+      }
+    }
+
+    if (!found) {
+      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
+                                  << input->func_graph()->ToString() << "] found no related kernel info.";
+    }
+  }
+  return input_index;
+}
+
+std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                          const std::vector<AnfNodePtr> &input_list,
+                                                          const std::vector<AnfNodePtr> &output_list) {
+  std::vector<std::pair<AnfNodePtr, size_t>> output_index;
+  for (size_t i = 0; i < output_list.size(); ++i) {
+    auto const &output = output_list[i];
+    MS_EXCEPTION_IF_NULL(output);
+    bool found = false;
+    auto pree_node = AnfAlgo::VisitKernel(output, 0);
+
+    auto pos = std::find(std::begin(node_list), std::end(node_list), pree_node.first);
+    if (pos != std::end(node_list)) {
+      output_index.push_back(pree_node);
+      continue;
+    }
+
+    auto ret = std::find(std::begin(input_list), std::end(input_list), pree_node.first);
+    if (ret != std::end(input_list)) {
+      output_index.push_back(std::make_pair(pree_node.first, 0));
+      found = true;
+    }
+
+    if (!found) {
+      MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(2) << "] of ["
+                                  << output->func_graph()->ToString() << "] found no related kernel info.";
+    }
+  }
+  return output_index;
+}
+
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list) {
+  MS_EXCEPTION_IF_NULL(node_list);
+
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  std::vector<AnfNodePtr> node_lists = TopoSort(func_graph->get_return());
+  for (auto const &node : node_lists) {
+    if (!AnfAlgo::IsRealKernel(node) || !node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+
+    if (IsValueNode<Primitive>(cnode->input(kAnfPrimitiveIndex))) {
+      node_list->push_back(node);
+    }
+  }
+}
+
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
+                         std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list) {
+  MS_EXCEPTION_IF_NULL(node_list);
+  MS_EXCEPTION_IF_NULL(input_list);
+  MS_EXCEPTION_IF_NULL(output_list);
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  GetValidKernelNodes(func_graph, node_list);
+
+  auto parameters = func_graph->parameters();
+  input_list->insert(input_list->begin(), parameters.begin(), parameters.end());
+
+  auto func_output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(func_output);
+  if (func_output->isa<CNode>()) {
+    // multi output.
+    auto cnode = func_output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto input0 = cnode->input(kAnfPrimitiveIndex);
+    MS_EXCEPTION_IF_NULL(input0);
+    if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
+      for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
+        auto input_node = cnode->input(input_idx);
+        MS_EXCEPTION_IF_NULL(input_node);
+        output_list->push_back(AnfAlgo::VisitKernel(input_node, 0).first);
+      }
+    } else {
+      // single output.
+      output_list->push_back(AnfAlgo::VisitKernel(func_output, 0).first);
+    }
+  } else {
+    // single output.
+    output_list->push_back(AnfAlgo::VisitKernel(func_output, 0).first);
+  }
+}
+
+bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(node_json);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (input_idx + 1 >= cnode->size()) {
+    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
+                                << cnode->inputs().size() << "][" << cnode->DebugString() << "]";
+  }
+
+  auto input_node = cnode->input(input_idx + 1);
+  if (!IsValueNode<tensor::Tensor>(input_node)) {
+    return false;
+  }
+
+  auto tensor = GetValueNode<tensor::TensorPtr>(input_node);
+  if (tensor == nullptr) {
+    return false;
+  }
+
+  auto type_id = tensor->data_type();
+  auto *data = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data);
+  if (tensor->DataDim() > 1 || tensor->DataSize() != 1) {
+    // not const tensor.
+    MS_LOG(WARNING) << "We take first value of tensor whose datasize != 1, [" << input_node->DebugString(2) << "]";
+  }
+
+  if (type_id == kFloat32->type_id()) {
+    float *val = static_cast<float *>(data);
+    MS_EXCEPTION_IF_NULL(val);
+    (*node_json)["value"] = val[0];
+    MS_LOG(DEBUG) << "Value of tensor[" << cnode->DebugString() << "] is [float32][" << *val << "].";
+    return true;
+  } else if (type_id == kFloat16->type_id()) {
+    float16 *val = static_cast<float16 *>(data);
+    MS_EXCEPTION_IF_NULL(val);
+    (*node_json)["value"] = static_cast<float>(val[0]);
+    MS_LOG(INFO) << "Value of tensor[" << cnode->DebugString() << "] is [float16][" << *val << "].";
+    return true;
+  } else if (type_id == kInt32->type_id()) {
+    int *val = static_cast<int *>(data);
+    MS_EXCEPTION_IF_NULL(val);
+    (*node_json)["value"] = val[0];
+    MS_LOG(INFO) << "Value of tensor[" << cnode->DebugString() << "] is [int32][" << *val << "].";
+    return true;
+  }
+  MS_LOG(ERROR) << "Unknown value type of tensor[" << cnode->DebugString() << "]";
+  return false;
+}
+
+void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node_list);
+  auto output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(output);
+  if (AnfAlgo::IsRealKernel(output)) {
+    // single output.
+    node_list->push_back(std::make_pair(output, 0));
+    return;
+  } else if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+    auto output_cnode = output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(output_cnode);
+    // multi output.
+    auto &inputs = output_cnode->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      auto in_with_idx = AnfAlgo::VisitKernel(inputs[i], 0);
+      node_list->push_back(in_with_idx);
+    }
+    return;
+  }
+  MS_EXCEPTION(ArgumentError) << "Unknown  output type: " << output->DebugString(2)
+                              << " of graph: " << func_graph->ToString();
+}
+
+bool IsWeightBoundary(const AnfNodePtr &node) {
+  if (node->isa<ValueNode>()) {
+    return true;
+  }
+  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+    return true;
+  }
+  return false;
+}
+
+void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params, size_t thread_num,
+                        size_t total_compute_size) {
+  std::vector<std::thread> threads;
+  threads.reserve(thread_num);
+  size_t start = 0;
+  size_t once_compute_size = (total_compute_size + thread_num - 1) / thread_num;
+  while (start < total_compute_size) {
+    size_t end = (start + once_compute_size) > total_compute_size ? total_compute_size : (start + once_compute_size);
+    threads.emplace_back(std::thread(func, params, start, end));
+    start += once_compute_size;
+  }
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore

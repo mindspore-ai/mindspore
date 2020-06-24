@@ -15,15 +15,18 @@
 import functools
 import numpy as np
 
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from tests.ut.python.ut_filter import non_graph_engine
 from tests.mindspore_test_framework.mindspore_test import mindspore_test
 from tests.mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
+context.set_context(mode=context.GRAPH_MODE)
 
 def test_list_equal():
     class Net(nn.Cell):
@@ -42,7 +45,12 @@ def test_list_equal():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [1, 2, 3]
     net = Net(z)
-    assert net(x, y) == x
+    ret = net(x, y)
+
+    print(ret.asnumpy())
+    assert ret == x
+    assert ret.dtype == mstype.int32
+    assert ret.shape == (6, 8, 10)
 
 
 def test_list_not_equal():
@@ -109,7 +117,7 @@ def test_list_append():
     assert net(x, y) == y
 
 
-def test_list_append_2():
+def test_class_member_list_append():
     class Net(nn.Cell):
         def __init__(self, z: list):
             super(Net, self).__init__()
@@ -129,7 +137,45 @@ def test_list_append_2():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [[1, 2], 3]
     net = Net(z)
-    assert net(x, y) == x
+    with pytest.raises(TypeError) as ex:
+        net(x, y)
+    assert "'self.z' should be a Parameter, but got '[[1, 2], 3]' with type 'list'." in str(ex.value)
+
+
+def test_class_member_not_defined():
+    class Net(nn.Cell):
+        def __init__(self, z: list):
+            super(Net, self).__init__()
+            self.z = z
+
+        def construct(self, x, y):
+            self.x[0] = 9
+            return self.x
+
+    z = [[1, 2], 3]
+    net = Net(z)
+    with pytest.raises(TypeError) as ex:
+        net()
+    assert "'self.x' was not defined in the class '__init__' function." in str(ex.value)
+
+
+def test_change_list_element():
+    class Net(nn.Cell):
+        def __init__(self, z: list):
+            super(Net, self).__init__()
+            self.z = z
+
+        def construct(self, x, y):
+            self.z[0] = x
+            return self.z[0]
+
+    x = Tensor(np.ones([6, 8, 10], np.int32))
+    y = Tensor(np.zeros([3, 4, 5], np.int32))
+    z = [[1, 2], 3]
+    net = Net(z)
+    with pytest.raises(TypeError) as ex:
+        net(x, y)
+    assert "'self.z' should be a Parameter, but got '[[1, 2], 3]' with type 'list'." in str(ex.value)
 
 
 class ListOperate(nn.Cell):

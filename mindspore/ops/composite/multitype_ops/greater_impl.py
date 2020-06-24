@@ -23,7 +23,7 @@ greater = base.MultitypeFuncGraph("greater")
 
 
 @greater.register("Number", "Number")
-def _greater_scala(x, y):
+def _greater_scalar(x, y):
     """
     Determine whether two numbers are greater.
 
@@ -48,6 +48,6 @@ def _greater_tensor(x, y):
        y(Tensor): Tensor.
 
     Returns:
-       tensor, return operation of x and y by P.Greater
+       tensor, return operation of x and y by P.Greater.
    """
     return F.tensor_gt(x, y)

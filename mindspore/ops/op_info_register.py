@@ -97,6 +97,7 @@ class RegOp:
         """
         if not isinstance(value, str):
             raise TypeError("%s value must be str" % str(value))
+        return True
 
     def _is_int(self, value):
         """
@@ -110,6 +111,7 @@ class RegOp:
         """
         if not isinstance(value, int):
             raise TypeError("%s value must be int" % str(value))
+        return True
 
     def _is_bool(self, value):
         """
@@ -123,6 +125,7 @@ class RegOp:
         """
         if not isinstance(value, bool):
             raise TypeError("%s value must be bool" % str(value))
+        return True
 
     def _check_param(self, param_list, key_list, fn_list, kwargs):
         """
@@ -494,6 +497,7 @@ class DataType:
     The current list below maybe not completed. If necessary, please add it.
     """
 
+    None_None = ("", "")
     BOOL_None = ("bool", "")
     BOOL_Default = ("bool", "DefaultFormat")
     BOOL_5HD = ("bool", "NC1HWC0")

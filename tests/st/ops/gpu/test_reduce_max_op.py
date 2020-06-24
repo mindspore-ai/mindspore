@@ -128,43 +128,43 @@ def test_ReduceMax():
     diff0 = abs(output[0].asnumpy() - expect0)
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
-    assert output[0].shape() == expect0.shape
+    assert output[0].shape == expect0.shape
 
     expect1 = np.max(x1, axis=axis1, keepdims=keep_dims1)
     diff1 = abs(output[1].asnumpy() - expect1)
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
-    assert output[1].shape() == expect1.shape
+    assert output[1].shape == expect1.shape
 
     expect2 = np.max(x2, axis=axis2, keepdims=keep_dims2)
     diff2 = abs(output[2].asnumpy() - expect2)
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
-    assert output[2].shape() == expect2.shape
+    assert output[2].shape == expect2.shape
 
     expect3 = np.max(x3, axis=axis3, keepdims=keep_dims3)
     diff3 = abs(output[3].asnumpy() - expect3)
     error3 = np.ones(shape=expect3.shape) * 1.0e-5
     assert np.all(diff3 < error3)
-    assert output[3].shape() == expect3.shape
+    assert output[3].shape == expect3.shape
 
     expect4 = np.max(x4, axis=np_axis4, keepdims=keep_dims4)
     diff4 = abs(output[4].asnumpy() - expect4)
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
     assert np.all(diff4 < error4)
-    assert output[4].shape() == expect4.shape
+    assert output[4].shape == expect4.shape
 
     expect5 = np.max(x5, axis=np_axis5, keepdims=keep_dims5)
     diff5 = abs(output[5].asnumpy() - expect5)
     error5 = np.ones(shape=expect5.shape) * 1.0e-5
     assert np.all(diff5 < error5)
-    assert output[5].shape() == expect5.shape
+    assert output[5].shape == expect5.shape
 
     expect6 = np.max(x6, axis=axis6, keepdims=keep_dims6)
     diff6 = abs(output[6].asnumpy() - expect6)
     error6 = np.ones(shape=expect6.shape) * 1.0e-5
     assert np.all(diff6 < error6)
-    assert output[6].shape() == expect6.shape
+    assert output[6].shape == expect6.shape
 
     expect7 = np.max(x7, axis=axis7, keepdims=keep_dims7)
     diff7 = abs(output[7].asnumpy() - expect7)

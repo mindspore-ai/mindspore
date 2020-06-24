@@ -70,6 +70,9 @@ enum class StatusCode : char {
   kPythonInterpreterFailure = 7,
   kTDTPushFailure = 8,
   kFileNotExist = 9,
+  kProfilingError = 10,
+  kBoundingBoxOutOfBounds = 11,
+  kBoundingBoxInvalidShape = 12,
   // Make this error code the last one. Add new error code above it.
   kUnexpectedError = 127
 };

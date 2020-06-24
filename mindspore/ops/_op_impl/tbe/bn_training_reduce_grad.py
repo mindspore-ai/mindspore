@@ -32,6 +32,7 @@ bn_training_reduce_grad_op_info = TBERegOp("BNTrainingReduceGrad") \
     .input(5, "batch_mean", False, "required", "all") \
     .input(6, "batch_variance", False, "required", "all") \
     .output(0, "y", False, "required", "all", reshape_type="NC") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,

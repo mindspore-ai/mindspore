@@ -41,7 +41,7 @@ int64_t ShardCategory::GetNumSamples(int64_t dataset_size, int64_t num_classes) 
   if (dataset_size > 0 && num_classes > 0 && num_categories_ > 0 && num_elements_ > 0) {
     return std::min(num_categories_, num_classes) * num_elements_;
   }
-  return -1;
+  return 0;
 }
 }  // namespace mindrecord
 }  // namespace mindspore

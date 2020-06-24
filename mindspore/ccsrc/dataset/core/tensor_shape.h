@@ -94,7 +94,7 @@ class TensorShape {
   // @return
   TensorShape PrependDim(dsize_t dim) const;
 
-  // Insert a new dim at the end of the shape. For example,  <2,4> --> PrependDim(4) --> <2,4,4>
+  // Insert a new dim at the end of the shape. For example,  <2,4> --> AppendDim(4) --> <2,4,4>
   // @param dim
   // @return
   TensorShape AppendDim(dsize_t dim) const;
@@ -118,7 +118,10 @@ class TensorShape {
 
   bool operator!=(const TensorShape &rhs) const { return !(rhs == *this); }
 
-  dsize_t operator[](const dsize_t index) const { return raw_shape_[index]; }
+  dsize_t operator[](const dsize_t index) const {
+    if (index < 0) return raw_shape_[raw_shape_.size() + index];
+    return raw_shape_[index];
+  }
 
   // Return the Shape as a vector
   // @return

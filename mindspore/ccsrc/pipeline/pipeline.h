@@ -97,6 +97,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void ReleaseResource(const py::object &phase);
   static void ClearRes();
 
+  std::map<std::string, std::pair<PrimitivePyPtr, std::string>> FetchInfoForQuantExport(const std::string &phase_s);
+
  private:
   ExecutorPy();
   void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
@@ -138,6 +140,8 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run);
+
+void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list);
 
 }  // namespace pipeline
 }  // namespace mindspore

@@ -53,7 +53,7 @@ const AnfNodePtr TransposeTransDataFusion::Process(const FuncGraphPtr &func_grap
   new_transdata_builder->SetProcessor(transdata_kernel_build_info->processor());
 
   auto new_fusion_transdata = std::make_shared<Primitive>(kTransDataOpName);
-  if (supported_checker_->CheckAiCoreSupported(transdata_cnode, new_transdata_builder->Build())) {
+  if (supported_checker_->CheckAICoreSupported(transdata_cnode, new_transdata_builder->Build())) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(new_fusion_transdata),
                                       utils::cast<AnfNodePtr>((*equiv)[input_varptr_])};
     auto new_node = func_graph->NewCNode(inputs);

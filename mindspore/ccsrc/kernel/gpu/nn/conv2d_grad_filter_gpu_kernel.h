@@ -98,7 +98,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     if (!CheckParam(kernel_node)) {
       return false;
     }
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(in_shape);

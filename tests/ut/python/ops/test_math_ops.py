@@ -31,7 +31,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
-
+context.set_context(mode=context.GRAPH_MODE)
 
 # pylint: disable=W0613
 # pylint: disable=W0231
@@ -101,10 +101,8 @@ def test_pow():
     result = testpow(input_tensor, power)
     assert np.all(result.asnumpy() == expect)
     net = PowNet()
-    with pytest.raises(TypeError):
-        net(input_tensor, True)
-    with pytest.raises(TypeError):
-        net(input_tensor, power2)
+    net(input_tensor, True)
+    net(input_tensor, power2)
 
 
 def test_exp():

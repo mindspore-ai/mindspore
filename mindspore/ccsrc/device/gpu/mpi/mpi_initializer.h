@@ -30,7 +30,7 @@ class MPIInitializer {
 
  private:
   MPIInitializer();
-  ~MPIInitializer() = default;
+  ~MPIInitializer();
 
   int rank_id_;
   int rank_size_;

@@ -21,18 +21,37 @@
 #include <utility>
 #include <functional>
 #include <unordered_map>
+#include <set>
 #include "kernel/kernel.h"
 #include "device/cpu/cpu_device_address.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "common/utils.h"
 #include "session/anf_runtime_algorithm.h"
+#include "session/session_basic.h"
 #include "operator/ops.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
 const size_t INIT_NODE_REF = 1;
+namespace {
+TypeId GetCPUSupportOutputTypeId(const TypeId type_id) {
+  TypeId support_type_id = type_id;
+  if (type_id == kNumberTypeUInt32) {
+    support_type_id = kNumberTypeInt32;
+  }
+  if (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
+      type_id == kNumberTypeFloat64) {
+    support_type_id = kNumberTypeFloat32;
+  }
+  if (support_type_id != kNumberTypeInt32 && support_type_id != kNumberTypeFloat32) {
+    MS_LOG(EXCEPTION) << "Check output type failed.";
+  }
+  return support_type_id;
+}
+}  // namespace
+
 void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
   AssignValueNodeAddress(kernel_graph);
   AssignInputNodeAddress(kernel_graph);
@@ -121,23 +140,25 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
-BaseRef CPUKernelRuntime::CreatTensorForOutput(const AnfNodePtr &input_node, size_t index,
-                                               const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map) {
+BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &kernel_with_index,
+                                               const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map,
+                                               std::set<DeviceAddressPtr> *bound_addresses,
+                                               std::vector<tensor::TensorPtr> *need_sync_outputs) {
+  auto &input_node = kernel_with_index.first;
+  auto index = kernel_with_index.second;
   MS_EXCEPTION_IF_NULL(input_node);
-  if (input_node->isa<CNode>() && AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
-    auto cnode = input_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    VectorRef ret;
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
-      auto item_with_index = AnfAlgo::VisitKernelWithReturnType(cnode->input(i), 0);
-      auto out = CreatTensorForOutput(item_with_index.first, item_with_index.second, input_map);
-      ret.push_back(out);
-    }
-    return ret;
-  }
   if (input_node->isa<CNode>()) {
     auto node = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(node);
+    if (AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
+      VectorRef ret;
+      for (size_t i = 1; i < node->inputs().size(); i++) {
+        auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
+        auto out = CreatTensorForOutput(item_with_index, input_map, bound_addresses, need_sync_outputs);
+        ret.push_back(out);
+      }
+      return ret;
+    }
     size_t output_size = AnfAlgo::GetOutputTensorNum(node);
     if (index >= output_size) {
       MS_LOG(EXCEPTION) << "Invalid input index " << index;
@@ -148,20 +169,17 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const AnfNodePtr &input_node, siz
     std::vector<int> temp_shape;
     (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
     TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
-    if (type_id == kNumberTypeUInt32) {
-      type_id = kNumberTypeInt32;
-    }
-    if (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
-        type_id == kNumberTypeFloat64) {
-      type_id = kNumberTypeFloat32;
-    }
-    if (type_id != kNumberTypeInt32 && type_id != kNumberTypeFloat32) {
-      MS_LOG(EXCEPTION) << "Check output type failed.";
-    }
+    type_id = GetCPUSupportOutputTypeId(type_id);
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     MS_EXCEPTION_IF_NULL(tensor);
-    address->ptr_ = tensor->data_c(true);
-    address->ref_count_ = INIT_NODE_REF;
+    if (bound_addresses->find(address) != bound_addresses->end()) {
+      tensor->set_device_address(address);
+      need_sync_outputs->emplace_back(tensor);
+    } else {
+      address->ptr_ = tensor->data_c(true);
+      address->ref_count_ = INIT_NODE_REF;
+      (void)bound_addresses->insert(address);
+    }
     tensor->set_dirty(false);
     return tensor;
   } else if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {
@@ -174,7 +192,8 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const AnfNodePtr &input_node, siz
 }
 
 void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
-                                       const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+                                       const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs,
+                                       std::vector<tensor::TensorPtr> *need_sync_outputs) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
   // bind input ptr
@@ -182,20 +201,23 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
   if (input_nodes.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
   }
-
   std::unordered_map<AnfNode *, tensor::TensorPtr> input_map;
   size_t input_idx = 0;
-  size_t type_size = sizeof(float);
   for (auto &item : input_nodes) {
     MS_EXCEPTION_IF_NULL(item);
     input_map[item.get()] = inputs[input_idx];
     if (item->isa<Parameter>()) {
       auto address = AnfAlgo::GetMutableOutputAddr(item, 0);
       auto tensor = inputs[input_idx];
+      auto tensor_address = tensor->device_address();
       MS_EXCEPTION_IF_NULL(address);
       MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor_address != nullptr && tensor_address != address) {
+        (void)tensor->data_sync();
+      }
       std::vector<int> data_shape = tensor->shape();
-      size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
+      size_t tensor_size =
+        std::accumulate(data_shape.begin(), data_shape.end(), sizeof(float), std::multiplies<size_t>());
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
         address->ptr_ = tensor->data_c(false);
       } else {
@@ -211,12 +233,12 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
     }
     input_idx++;
   }
-
   // new output and bind ptr
+  std::set<DeviceAddressPtr> bound_addresses;
   auto output_nodes = kernel_graph->outputs();
   for (const auto &item : output_nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0);
-    auto out = CreatTensorForOutput(item_with_index.first, item_with_index.second, input_map);
+    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0, true);
+    auto out = CreatTensorForOutput(item_with_index, input_map, &bound_addresses, need_sync_outputs);
     outputs->push_back(std::move(out));
   }
 }
@@ -234,9 +256,18 @@ void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<ker
   input_list->push_back(input);
 }
 
+void CPUKernelRuntime::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+  resource_manager_.IncreaseSummaryRefCount(summary_outputs);
+}
+
+void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+  resource_manager_.DecreaseSummaryRefCount(summary_outputs);
+}
+
 bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  resource_manager_.ResetAddressRefCount(kernel_graph);
+  resource_manager_.IncreaseAddressRefCount(kernel_graph);
+
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
     std::vector<kernel::AddressPtr> kernel_inputs;

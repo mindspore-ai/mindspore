@@ -28,6 +28,7 @@
 #include "utils/context/ms_context.h"
 #include "common/utils.h"
 #include "utils/convert_utils.h"
+#include "runtime/base.h"
 
 using std::vector;
 using Json = nlohmann::json;
@@ -120,7 +121,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     MS_LOG(ERROR) << "Register profiling Engine failed.";
     return false;
   }
-
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const string prof_options_str = context->profiling_options();
@@ -129,7 +129,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     MS_LOG(WARNING) << "Profiling is enabled, but profiling option is not set!";
     return true;
   }
-
   // current one docker only use one device`
   Json p_device;
   // JOBID
@@ -148,7 +147,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   // only one device, but sProfMgrStartUp API require for device list
   Json devices;
   devices[0] = p_device;
-
   Json startCfg;
   startCfg["startCfg"] = devices;
 
@@ -156,8 +154,12 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   std::stringstream ss;
   ss << startCfg;
   std::string cfg = ss.str();
-
   MS_LOG(INFO) << "profiling config " << cfg;
+  auto ret = rtProfilerStart();
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(INFO) << "Call rtProfilerStart failed, ret:" << ret;
+    return false;
+  }
 
   // call profiling startup API
   ProfMgrCfg prof_cfg = {cfg};
@@ -169,7 +171,7 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   return true;
 }
 
-bool ProfilingManager::StopProfiling() const {
+bool ProfilingManager::StopProfiling() {
   MS_LOG(INFO) << "StopProfiling";
   if (!IsProfiling()) {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
@@ -180,12 +182,20 @@ bool ProfilingManager::StopProfiling() const {
     MS_LOG(INFO) << "report data end, ret = " << reporter->Flush();
   }
 
+  auto rt_ret = rtProfilerStop();
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rtProfilerStop failed";
+    return false;
+  }
+
   if (prof_handle_ != nullptr) {
     int result = ProfMgrStop(prof_handle_);
     if (result != 0) {
       MS_LOG(ERROR) << "ProfMgr stop return fail:" << result << ".";
+      prof_handle_ = nullptr;
       return false;
     }
+    prof_handle_ = nullptr;
   }
 
   return true;

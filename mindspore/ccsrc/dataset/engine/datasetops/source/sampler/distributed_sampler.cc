@@ -23,8 +23,9 @@
 
 namespace mindspore {
 namespace dataset {
-DistributedSampler::DistributedSampler(int64_t num_dev, int64_t dev_id, bool shuffle, uint32_t seed)
-    : Sampler(),
+DistributedSampler::DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
+                                       uint32_t seed)
+    : Sampler(num_samples, std::numeric_limits<int64_t>::max()),
       cnt_(0),
       seed_(seed == std::numeric_limits<uint32_t>::max() ? GetSeed() : seed),
       device_id_(dev_id),
@@ -32,6 +33,11 @@ DistributedSampler::DistributedSampler(int64_t num_dev, int64_t dev_id, bool shu
       shuffle_(shuffle) {}
 
 Status DistributedSampler::InitSampler() {
+  // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
+  // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
+  if (num_samples_ == 0 || num_samples_ > num_rows_) {
+    num_samples_ = num_rows_;
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_samples <= 0\n");
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
   CHECK_FAIL_RETURN_UNEXPECTED(device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
@@ -49,21 +55,21 @@ Status DistributedSampler::InitSampler() {
   return Status::OK();
 }
 
-Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
+Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (cnt_ > samples_per_buffer_) {
     RETURN_STATUS_UNEXPECTED("Distributed Sampler Error");
   } else if (cnt_ == samples_per_buffer_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
     (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, samples_per_buffer_));
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(sample_ids->GetMutableBuffer());
-    while (cnt_ < samples_per_buffer_) {
+    auto id_ptr = sample_ids->begin<int64_t>();
+    while (cnt_ < samples_per_buffer_ && id_ptr != sample_ids->end<int64_t>()) {
       int64_t sampled_id = (num_devices_ * cnt_ + device_id_) % num_rows_;
       if (shuffle_) {
         sampled_id = shuffle_vec_[static_cast<size_t>(sampled_id)];
@@ -83,7 +89,7 @@ Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer
   return Status::OK();
 }
 
-Status DistributedSampler::Reset() {
+Status DistributedSampler::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_buffer_, "ERROR Reset() called early/late");
   cnt_ = 0;
 
@@ -94,7 +100,7 @@ Status DistributedSampler::Reset() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->Reset());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
   }
 
   return Status::OK();

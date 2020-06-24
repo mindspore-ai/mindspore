@@ -28,9 +28,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PoolingGradGpuFwdKernel : public GpuKernel {
+class PoolingGradGpuKernel : public GpuKernel {
  public:
-  PoolingGradGpuFwdKernel()
+  PoolingGradGpuKernel()
       : cudnn_handle_(nullptr),
         pooling_descriptor_(nullptr),
         y_descriptor_(nullptr),
@@ -55,7 +55,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
         padded_size_(0),
         workspace_size_(0),
         use_pad_(true) {}
-  ~PoolingGradGpuFwdKernel() override { DestroyResource(); }
+  ~PoolingGradGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -108,7 +108,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
     auto input_mask = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "PoolingGradGpuFwdKernel input is null.";
+      MS_LOG(WARNING) << "PoolingGradGpuKernel input is null.";
       InitSizeLists();
       return true;
     }
@@ -196,7 +196,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
   bool CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but PoolingGradGpuFwdKernel needs 3 inputs.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but PoolingGradGpuKernel needs 3 inputs.";
       return false;
     }
     return true;
@@ -239,7 +239,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
   void SetPoolingMode(const CNodePtr &kernel_node) {
     pad_mode_ = GetAttr<std::string>(kernel_node, "padding");
     stride_ = GetAttr<std::vector<int>>(kernel_node, "strides");
-    cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPoolGradGpu") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;

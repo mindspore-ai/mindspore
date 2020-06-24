@@ -38,43 +38,24 @@ def _cleanup():
 
 def alter_tree(node):
     """Traversing the python Dataset tree/graph to perform some alteration to some specific nodes."""
-    if not node.input:
+    if not node.children:
         return _alter_node(node)
 
     converted_children = []
-    for input_op in node.input:
+    for input_op in node.children:
         converted_children.append(alter_tree(input_op))
-    node.input = converted_children
+    node.children = converted_children
     return _alter_node(node)
 
 
 def _alter_node(node):
-    """Performing some alteration to a dataset node. A common alteration is to insert a node."""
-    if isinstance(node, (de.TFRecordDataset, de.TextFileDataset)) and node.shuffle_level == de.Shuffle.GLOBAL:
-        # Remove the connection between the parent's node to the current node because we are inserting a node.
-        if node.output:
-            node.output.pop()
-        # Perform a fast scan for average rows per file
-        if isinstance(node, de.TFRecordDataset):
-            avg_rows_per_file = node.get_dataset_size(True) // len(node.dataset_files)
-        else:
-            avg_rows_per_file = node.get_dataset_size() // len(node.dataset_files)
-
-        # Shuffle between 4 files with a minimum size of 10000 rows
-        new_shuffle = node.shuffle(max(avg_rows_per_file * 4, 10000))
-        return new_shuffle
-
+    """DEPRECATED"""
+    # Please check ccsrc/dataset/engine/opt for tree transformation.
     if isinstance(node, de.MapDataset):
         if node.python_multiprocessing:
             # Bootstrap can only be performed on a copy of the original dataset node.
             # Bootstrap on original dataset node will make all iterators share the same process pool
             node.iterator_bootstrap()
-        if node.columns_order is not None:
-            # Remove the connection between the parent's node to the current node because we are inserting a node.
-            if node.output:
-                node.output.pop()
-
-            return node.project(node.columns_order)
     return node
 
 
@@ -105,14 +86,14 @@ class Iterator:
 
     def __is_tree_node(self, node):
         """Check if a node is tree node."""
-        if not node.input:
-            if len(node.output) > 1:
+        if not node.children:
+            if len(node.parent) > 1:
                 return False
 
-        if len(node.output) > 1:
+        if len(node.parent) > 1:
             return False
 
-        for input_node in node.input:
+        for input_node in node.children:
             cls = self.__is_tree_node(input_node)
             if not cls:
                 return False
@@ -131,6 +112,8 @@ class Iterator:
             op_type = OpName.MINDRECORD
         elif isinstance(dataset, de.BatchDataset):
             op_type = OpName.BATCH
+        elif isinstance(dataset, de.BucketBatchByLengthDataset):
+            op_type = OpName.BUCKETBATCH
         elif isinstance(dataset, de.SyncWaitDataset):
             op_type = OpName.BARRIER
         elif isinstance(dataset, de.ZipDataset):
@@ -165,6 +148,8 @@ class Iterator:
             op_type = OpName.MANIFEST
         elif isinstance(dataset, de.VOCDataset):
             op_type = OpName.VOC
+        elif isinstance(dataset, de.CocoDataset):
+            op_type = OpName.COCO
         elif isinstance(dataset, de.Cifar10Dataset):
             op_type = OpName.CIFAR10
         elif isinstance(dataset, de.Cifar100Dataset):
@@ -175,6 +160,10 @@ class Iterator:
             op_type = OpName.RANDOMDATA
         elif isinstance(dataset, de.TextFileDataset):
             op_type = OpName.TEXTFILE
+        elif isinstance(dataset, de.BuildVocabDataset):
+            op_type = OpName.BUILDVOCAB
+        elif isinstance(dataset, de.CLUEDataset):
+            op_type = OpName.CLUE
         else:
             raise ValueError("Unsupported DatasetOp")
 
@@ -185,7 +174,7 @@ class Iterator:
         op_type = self.__get_dataset_type(node)
         c_node = self.depipeline.AddNodeToTree(op_type, node.get_args())
 
-        for py_child in node.input:
+        for py_child in node.children:
             c_child = self.__convert_node_postorder(py_child)
             self.depipeline.AddChildToParentNode(c_child, c_node)
 
@@ -195,7 +184,7 @@ class Iterator:
         """Recursively get batch node in the dataset tree."""
         if isinstance(dataset, de.BatchDataset):
             return
-        for input_op in dataset.input:
+        for input_op in dataset.children:
             self.__batch_node(input_op, level + 1)
 
     @staticmethod
@@ -205,11 +194,11 @@ class Iterator:
         ptr = hex(id(dataset))
         for _ in range(level):
             logger.info("\t", end='')
-        if not dataset.input:
+        if not dataset.children:
             logger.info("-%s (%s)", name, ptr)
         else:
             logger.info("+%s (%s)", name, ptr)
-        for input_op in dataset.input:
+        for input_op in dataset.children:
             Iterator.__print_local(input_op, level + 1)
 
     def print(self):

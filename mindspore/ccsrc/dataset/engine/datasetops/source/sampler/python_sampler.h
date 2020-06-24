@@ -26,8 +26,11 @@ namespace dataset {
 class PythonSampler : public Sampler {
  public:
   // Constructor
-  // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit PythonSampler(py::object py_sampler_instance,
+  // @param num_samples - the number of samples to draw.  Value of 0 means to sample all of the
+  //                      data from the dataset.
+  // @param py_sampler_instance - the python instance of the sampler
+  // @param int64_t samples_per_buffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
+  explicit PythonSampler(int64_t num_samples, py::object py_sampler_instance,
                          int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
@@ -39,13 +42,13 @@ class PythonSampler : public Sampler {
 
   // for next epoch of sampleIds
   // @return - The error code return
-  Status Reset() override;
+  Status ResetSampler() override;
 
   // Op calls this to get next Buffer that contains all the sampleIds
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
+  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
   // @return - The error code return
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
  private:
   bool need_to_reset_;  // Whether Reset() should be called before calling GetNextBuffer()

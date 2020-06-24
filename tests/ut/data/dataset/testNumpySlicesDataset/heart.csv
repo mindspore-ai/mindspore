@@ -1,0 +1,6 @@
+age,sex,height,weight,slope,state,target
+65,0,161,45,93,fixed,1
+72,1,164,60,86,good,0
+45,0,174,70,79,bad,1
+73,1,173,65,70,good,1
+55,1,182,80,104,good,0

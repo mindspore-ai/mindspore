@@ -281,6 +281,16 @@ class TraceForceBool : public TraceInfo {
   TraceInfoPtr clone() override { return std::make_shared<TraceForceBool>(*shared_from_base<TraceForceBool>()); }
 };
 
+class TraceForceWhileCond : public TraceInfo {
+ public:
+  explicit TraceForceWhileCond(const DebugInfoPtr &info) : TraceInfo(info, "force_while_cond", "") {}
+  MS_DECLARE_PARENT(TraceForceWhileCond, TraceInfo);
+  ~TraceForceWhileCond() override = default;
+  TraceInfoPtr clone() override {
+    return std::make_shared<TraceForceWhileCond>(*shared_from_base<TraceForceWhileCond>());
+  }
+};
+
 class TraceExpandJ : public TraceInfo {
  public:
   explicit TraceExpandJ(const DebugInfoPtr &info) : TraceInfo(info, "expand_j", "") {}

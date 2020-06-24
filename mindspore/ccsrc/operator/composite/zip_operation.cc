@@ -57,7 +57,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
                                     return (x->cast<AbstractTuplePtr>()->size() < y->cast<AbstractTuplePtr>()->size());
                                   });
   FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   for (size_t idx = 0; idx < args_spec_list.size(); idx++) {
     (void)ret_graph->add_parameter();
   }

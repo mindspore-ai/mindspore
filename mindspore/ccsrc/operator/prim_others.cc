@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <sstream>
+
+#include "ir/dtype.h"
+#include "common/utils.h"
+#include "operator/ops.h"
 #include "pipeline/static_analysis/param_validator.h"
 #include "pipeline/static_analysis/prim.h"
-#include "operator/ops.h"
 #include "pipeline/static_analysis/utils.h"
 #include "utils/symbolic.h"
 
@@ -50,6 +55,81 @@ AbstractBasePtr InferImplJ(const AnalysisEnginePtr &, const PrimitivePtr &primit
   return AbstractFunction::MakeAbstractFunction(jv);
 }
 
+class UndeterminedShapeType {
+ public:
+  explicit UndeterminedShapeType(const std::string &env_str) {
+    // param_name indices_shape indices_type values_shape values_type dense_shape
+    // export UNDETERMINED_SPARSE_SHAPE_TYPES="sparse_key_w1:2:Int32:2 1 2:Float32:3 1 2;sparse_key_w2:2:Int32:2 1
+    // 2:Float32:3 1 2"
+    std::vector<string> fields;
+    string tmp;
+    std::stringstream input(env_str);
+    while (std::getline(input, tmp, ':')) {
+      fields.push_back(tmp);
+    }
+    if (fields.size() != fields_num) {
+      MS_LOG(EXCEPTION) << "Expect " << fields_num << " fields, but got " << fields.size();
+    }
+
+    param_name_ = fields[0];
+
+    indices_shape_ = GetShape(fields[1]);
+    indices_type_ = StringToType(fields[2]);
+
+    values_shape_ = GetShape(fields[3]);
+    values_type_ = StringToType(fields[4]);
+
+    auto dense_shape_vec = GetShape(fields[5]);
+    AbstractBasePtrList dense_shape_list;
+    (void)std::transform(dense_shape_vec.begin(), dense_shape_vec.end(), std::back_inserter(dense_shape_list),
+                         [](const auto &elem) { return FromValue(elem, false); });
+    dense_shape_ = dense_shape_list;
+  }
+  ~UndeterminedShapeType() = default;
+  const std::string &param_name() { return param_name_; }
+  const std::vector<int> &indices_shape() { return indices_shape_; }
+  const TypePtr &indices_type() { return indices_type_; }
+  const std::vector<int> &values_shape() { return values_shape_; }
+  const TypePtr &values_type() { return values_type_; }
+  const AbstractBasePtrList &dense_shape() { return dense_shape_; }
+
+ private:
+  std::string param_name_;
+  std::vector<int> indices_shape_;
+  TypePtr indices_type_;
+  std::vector<int> values_shape_;
+  TypePtr values_type_;
+  AbstractBasePtrList dense_shape_;
+  static const size_t fields_num;
+
+  std::vector<int> GetShape(const std::string &shape_str);
+};
+std::vector<int> UndeterminedShapeType::GetShape(const std::string &shape_str) {
+  std::vector<int> ret;
+  std::istringstream iss(shape_str);
+  int elem;
+  while (iss.good()) {
+    iss >> elem;
+    ret.emplace_back(elem);
+  }
+  return ret;
+}
+const size_t UndeterminedShapeType::fields_num = 6;
+
+std::unordered_map<std::string, UndeterminedShapeType> g_undetermined_configs;
+void InitUndeterminedFromEnv(const std::string &sparse_shape_types) {
+  if (!g_undetermined_configs.empty()) {
+    return;
+  }
+  std::string tmp;
+  std::stringstream input(sparse_shape_types);
+  while (std::getline(input, tmp, ';')) {
+    auto config = UndeterminedShapeType(tmp);
+    g_undetermined_configs.insert(std::make_pair(config.param_name(), config));
+    MS_LOG(DEBUG) << "Undetermined config from env: " << tmp;
+  }
+}
+
 AbstractBasePtr InferImplEnvGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -62,6 +142,37 @@ AbstractBasePtr InferImplEnvGetItem(const AnalysisEnginePtr &, const PrimitivePt
   if (type->type_id() != kObjectTypeSymbolicKeyType) {
     MS_LOG(EXCEPTION) << "EnvGetItem evaluator args[1] should be a SymbolicKeyInstance but: " << key->ToString();
   }
+
+  if (!key->sparse_grad().empty()) {
+    // Will be fixed once undetermined type ready
+    auto sparse_shape_types = common::GetEnv("UNDETERMINED_SPARSE_SHAPE_TYPES");
+    if (sparse_shape_types.empty()) {
+      sparse_shape_types = "sparse_key_w1:2:Int32:2 1 2:Float32:3 1 2;sparse_key_w2:2:Int32:2 1 2:Float32:3 1 2";
+    }
+    InitUndeterminedFromEnv(sparse_shape_types);
+
+    auto shape_types = g_undetermined_configs.find(key->sparse_grad());
+    if (shape_types == g_undetermined_configs.end()) {
+      MS_LOG(EXCEPTION) << "Param " << key->ToString()
+                        << " has sparse_grad, but shape/type is not configured in env UNDETERMINED_SPARSE_SHAPE_TYPES: "
+                        << sparse_shape_types;
+    }
+    MS_LOG(DEBUG) << "EnvGetItem is sparse_grad " << key->ToString();
+    AbstractBasePtrList sparse_list;
+    // indices
+    auto indices_ele = std::make_shared<AbstractScalar>(kAnyValue, shape_types->second.indices_type());
+    auto indices =
+      std::make_shared<AbstractTensor>(indices_ele, std::make_shared<Shape>(shape_types->second.indices_shape()));
+    sparse_list.emplace_back(indices);
+    // values
+    auto dout_ele = std::make_shared<AbstractScalar>(kAnyValue, shape_types->second.values_type());
+    auto dout = std::make_shared<AbstractTensor>(dout_ele, std::make_shared<Shape>(shape_types->second.values_shape()));
+    sparse_list.emplace_back(dout);
+    // dense_shape
+    sparse_list.emplace_back(std::make_shared<AbstractTuple>(shape_types->second.dense_shape()));
+    return std::make_shared<AbstractTuple>(sparse_list);
+  }
+
   if (!key->GetValueTrack()->isa<SymbolicKeyInstance>()) {
     return dflt;
   }
@@ -80,8 +191,6 @@ AbstractBasePtr InferImplEnvSetItem(const AnalysisEnginePtr &, const PrimitivePt
   CheckArgsSize(primitive->name(), args_spec_list, 3);
 
   auto key = args_spec_list[1];
-  auto value = args_spec_list[2];
-
   ValuePtr key_value_ptr = key->GetValueTrack();
   MS_EXCEPTION_IF_NULL(key_value_ptr);
   auto key_value_track = key_value_ptr->cast<SymbolicKeyInstancePtr>();
@@ -91,7 +200,6 @@ AbstractBasePtr InferImplEnvSetItem(const AnalysisEnginePtr &, const PrimitivePt
   }
   auto expected = key_value_track->abstract();
   MS_EXCEPTION_IF_NULL(expected);
-  (void)expected->Join(value);
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 
@@ -126,7 +234,9 @@ AbstractBasePtr InferImplMakeRef(const AnalysisEnginePtr &, const PrimitivePtr &
   if (type->type_id() != kObjectTypeRefKey) {
     MS_LOG(EXCEPTION) << "First input of make_ref should be a RefKey but a " << type->ToString();
   }
-  return std::make_shared<AbstractRef>(args_spec_list[0], args_spec_list[1], args_spec_list[2]);
+  auto ret = std::make_shared<AbstractRef>(args_spec_list[0], args_spec_list[1], args_spec_list[2]);
+  ret->set_sparse_grad(args_spec_list[2]->sparse_grad());
+  return ret;
 }
 
 AbstractBasePtr InferImplGetRefKey(const AnalysisEnginePtr &, const PrimitivePtr &,

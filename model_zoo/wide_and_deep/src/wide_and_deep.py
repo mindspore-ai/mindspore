@@ -14,16 +14,20 @@
 # ============================================================================
 """wide and deep model"""
 from mindspore import nn
-from mindspore import Tensor, Parameter, ParameterTuple
+from mindspore import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-# from mindspore.nn import Dropout
+from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam, FTRL
 # from mindspore.nn.metrics import Metric
 from mindspore.common.initializer import Uniform, initializer
 # from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
+from mindspore.train.parallel_utils import ParallelMode
+from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from mindspore.communication.management import get_group_size
 import numpy as np
 
 np_type = np.float32
@@ -42,8 +46,7 @@ def init_method(method, shape, name, max_val=1.0):
     elif method == 'zero':
         params = Parameter(initializer("zeros", shape, ms_type), name=name)
     elif method == "normal":
-        params = Parameter(Tensor(np.random.normal(
-            loc=0.0, scale=0.01, size=shape).astype(dtype=np_type)), name=name)
+        params = Parameter(initializer("normal", shape, ms_type), name=name)
     return params
 
 
@@ -66,8 +69,8 @@ def init_var_dict(init_args, in_vars):
                 var_map[key] = Parameter(initializer(
                     "zeros", shape, ms_type), name=key)
             elif method == 'normal':
-                var_map[key] = Parameter(Tensor(np.random.normal(
-                    loc=0.0, scale=0.01, size=shape).astype(dtype=np_type)), name=key)
+                var_map[key] = Parameter(initializer(
+                    "normal", shape, ms_type), name=key)
     return var_map
 
 
@@ -79,7 +82,7 @@ class DenseLayer(nn.Cell):
     """
 
     def __init__(self, input_dim, output_dim, weight_bias_init, act_str,
-                 keep_prob=0.7, scale_coef=1.0, convert_dtype=True):
+                 keep_prob=0.7, use_activation=True, convert_dtype=True, drop_out=False):
         super(DenseLayer, self).__init__()
         weight_init, bias_init = weight_bias_init
         self.weight = init_method(
@@ -89,11 +92,10 @@ class DenseLayer(nn.Cell):
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
         self.cast = P.Cast()
-        #self.dropout = Dropout(keep_prob=keep_prob)
-        self.mul = P.Mul()
-        self.realDiv = P.RealDiv()
-        self.scale_coef = scale_coef
+        self.dropout = Dropout(keep_prob=keep_prob)
+        self.use_activation = use_activation
         self.convert_dtype = convert_dtype
+        self.drop_out = drop_out
 
     def _init_activation(self, act_str):
         act_str = act_str.lower()
@@ -106,20 +108,23 @@ class DenseLayer(nn.Cell):
         return act_func
 
     def construct(self, x):
-        x = self.act_func(x)
-        # if self.training:
-        #    x = self.dropout(x)
-        x = self.mul(x, self.scale_coef)
+        if self.training and self.drop_out:
+            x = self.dropout(x)
         if self.convert_dtype:
             x = self.cast(x, mstype.float16)
             weight = self.cast(self.weight, mstype.float16)
+            bias = self.cast(self.bias, mstype.float16)
             wx = self.matmul(x, weight)
+            wx = self.bias_add(wx, bias)
+            if self.use_activation:
+                wx = self.act_func(wx)
             wx = self.cast(wx, mstype.float32)
         else:
             wx = self.matmul(x, self.weight)
-        wx = self.realDiv(wx, self.scale_coef)
-        output = self.bias_add(wx, self.bias)
-        return output
+            wx = self.bias_add(wx, self.bias)
+            if self.use_activation:
+                wx = self.act_func(wx)
+        return wx
 
 
 class WideDeepModel(nn.Cell):
@@ -132,6 +137,9 @@ class WideDeepModel(nn.Cell):
     def __init__(self, config):
         super(WideDeepModel, self).__init__()
         self.batch_size = config.batch_size
+        parallel_mode = _get_parallel_mode()
+        if parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            self.batch_size = self.batch_size * get_group_size()
         self.field_size = config.field_size
         self.vocab_size = config.vocab_size
         self.emb_dim = config.emb_dim
@@ -157,23 +165,28 @@ class WideDeepModel(nn.Cell):
         self.dense_layer_1 = DenseLayer(self.all_dim_list[0],
                                         self.all_dim_list[1],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_2 = DenseLayer(self.all_dim_list[1],
                                         self.all_dim_list[2],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_3 = DenseLayer(self.all_dim_list[2],
                                         self.all_dim_list[3],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_4 = DenseLayer(self.all_dim_list[3],
                                         self.all_dim_list[4],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        convert_dtype=True, drop_out=config.dropout_flag)
         self.dense_layer_5 = DenseLayer(self.all_dim_list[4],
                                         self.all_dim_list[5],
                                         self.weight_bias_init,
-                                        self.deep_layer_act, convert_dtype=True)
+                                        self.deep_layer_act,
+                                        use_activation=False, convert_dtype=True, drop_out=config.dropout_flag)
 
         self.gather_v2 = P.GatherV2()
         self.mul = P.Mul()
@@ -258,7 +271,7 @@ class TrainStepWrap(nn.Cell):
         sens (Number): The adjust parameter. Default: 1000.0
     """
 
-    def __init__(self, network, sens=1000.0):
+    def __init__(self, network, sens=1024.0):
         super(TrainStepWrap, self).__init__()
         self.network = network
         self.network.set_train()
@@ -285,6 +298,18 @@ class TrainStepWrap(nn.Cell):
         self.loss_net_w = IthOutputCell(network, output_index=0)
         self.loss_net_d = IthOutputCell(network, output_index=1)
 
+        self.reducer_flag = False
+        self.grad_reducer_w = None
+        self.grad_reducer_d = None
+        parallel_mode = _get_parallel_mode()
+        self.reducer_flag = parallel_mode in (ParallelMode.DATA_PARALLEL,
+                                              ParallelMode.HYBRID_PARALLEL)
+        if self.reducer_flag:
+            mean = _get_mirror_mean()
+            degree = _get_device_num()
+            self.grad_reducer_w = DistributedGradReducer(self.optimizer_w.parameters, mean, degree)
+            self.grad_reducer_d = DistributedGradReducer(self.optimizer_d.parameters, mean, degree)
+
     def construct(self, batch_ids, batch_wts, label):
         weights_w = self.weights_w
         weights_d = self.weights_d
@@ -295,6 +320,9 @@ class TrainStepWrap(nn.Cell):
                                                           label, sens_w)
         grads_d = self.grad_d(self.loss_net_d, weights_d)(batch_ids, batch_wts,
                                                           label, sens_d)
+        if self.reducer_flag:
+            grads_w = self.grad_reducer_w(grads_w)
+            grads_d = self.grad_reducer_d(grads_d)
         return F.depend(loss_w, self.optimizer_w(grads_w)), F.depend(loss_d,
                                                                      self.optimizer_d(grads_d))
 

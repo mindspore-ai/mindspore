@@ -34,65 +34,9 @@
 
 #include "ir/base.h"
 #include "ir/named.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
-//
-// Supported meta type
-//
-enum TypeId : int {
-  kTypeUnknown = 0,
-  kMetaTypeBegin = kTypeUnknown,
-  kMetaTypeType,  // Type
-  kMetaTypeAnything,
-  kMetaTypeObject,
-  kMetaTypeTypeType,  // TypeType
-  kMetaTypeProblem,
-  kMetaTypeExternal,
-  kMetaTypeNone,
-  kMetaTypeNull,
-  kMetaTypeEllipsis,
-  kMetaTypeEnd,
-  //
-  // Object types
-  //
-  kObjectTypeBegin = kMetaTypeEnd,
-  kObjectTypeNumber,
-  kObjectTypeString,
-  kObjectTypeList,
-  kObjectTypeTuple,
-  kObjectTypeSlice,
-  kObjectTypeKeyword,
-  kObjectTypeTensorType,
-  kObjectTypeClass,
-  kObjectTypeDictionary,
-  kObjectTypeFunction,
-  kObjectTypeJTagged,
-  kObjectTypeSymbolicKeyType,
-  kObjectTypeEnvType,
-  kObjectTypeRefKey,
-  kObjectTypeRef,
-  kObjectTypeEnd,
-  //
-  // Number Types
-  //
-  kNumberTypeBegin = kObjectTypeEnd,
-  kNumberTypeBool,
-  kNumberTypeInt,
-  kNumberTypeInt8,
-  kNumberTypeInt16,
-  kNumberTypeInt32,
-  kNumberTypeInt64,
-  kNumberTypeUInt,
-  kNumberTypeUInt8,
-  kNumberTypeUInt16,
-  kNumberTypeUInt32,
-  kNumberTypeUInt64,
-  kNumberTypeFloat,
-  kNumberTypeFloat16,
-  kNumberTypeFloat32,
-  kNumberTypeFloat64,
-  kNumberTypeEnd
-};
 
 TypeId IntBitsToTypeId(const int nbits);
 TypeId UIntBitsToTypeId(const int nbits);

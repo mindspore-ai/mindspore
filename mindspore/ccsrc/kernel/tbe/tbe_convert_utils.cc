@@ -45,13 +45,13 @@ const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeInt64, "int64"},     {TypeId::kNumberTypeUInt, "uint"},
   {TypeId::kNumberTypeUInt8, "uint8"},     {TypeId::kNumberTypeUInt16, "uint16"},
   {TypeId::kNumberTypeUInt32, "uint32"},   {TypeId::kNumberTypeUInt64, "uint64"},
-  {TypeId::kNumberTypeBool, "bool"},
+  {TypeId::kNumberTypeBool, "int8"},
 };
 
 const std::map<std::string, std::string> type_str_maps = {
   {"Float32", "float32"}, {"Float16", "float16"}, {"Int8", "int8"},   {"Int16", "int16"},
   {"UInt16", "uint16"},   {"UInt8", "uint8"},     {"Int32", "int32"}, {"UInt32", "uint32"},
-  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool_", "int8"},  {"Float64", "float64"},
+  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool", "int8"},   {"Float64", "float64"},
 };
 
 const std::unordered_map<std::string, size_t> type_nbyte_maps = {
@@ -63,7 +63,7 @@ const std::unordered_map<std::string, size_t> type_nbyte_maps = {
 
 const std::unordered_map<std::string, FusionType> fusion_type_maps = {
   {"CONVLUTION", FusionType::CONVLUTION}, {"ELEMWISE", FusionType::ELEMWISE}, {"COMMREDUCE", FusionType::COMMREDUCE},
-  {"SEGMENT", FusionType::SEGMENT},       {"OPAQUE", FusionType::OPAQUE},
+  {"SEGMENT", FusionType::SEGMENT},       {"DYNAMIC", FusionType::DYNAMIC},   {"OPAQUE", FusionType::OPAQUE},
 };
 
 TypeId DtypeToTypeId(const std::string &dtypes) {
@@ -74,18 +74,10 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   return iter->second;
 }
 
-std::string DtypeToString(const std::string &dtypes) {
-  auto iter = type_str_maps.find(dtypes);
-  if (iter == type_str_maps.end()) {
-    MS_LOG(EXCEPTION) << "Illegal input dtype: " << dtypes;
-  }
-  return iter->second;
-}
-
 std::string TypeIdToString(TypeId type_id) {
   auto iter = type_id_str_maps.find(type_id);
   if (iter == type_id_str_maps.end()) {
-    MS_LOG(EXCEPTION) << "Illegal input dtype." << TypeIdLabel(type_id);
+    MS_LOG(EXCEPTION) << "Illegal input dtype: " << TypeIdLabel(type_id);
   }
   return iter->second;
 }
@@ -101,7 +93,7 @@ size_t GetDtypeNbyte(const std::string &dtypes) {
 FusionType GetFusionType(const std::string &pattern) {
   auto iter = fusion_type_maps.find(pattern);
   if (iter == fusion_type_maps.end()) {
-    MS_LOG(DEBUG) << "Illegal fusion pattern: " << pattern;
+    MS_LOG(INFO) << "Illegal fusion pattern: " << pattern;
     return UNKNOWN_FUSION_TYPE;
   }
   return iter->second;
@@ -115,7 +107,7 @@ std::string GetProcessor(const AnfNodePtr &anf_node) {
       device = kProcessorAiCore;
       break;
     default:
-      MS_LOG(DEBUG) << "Unknown processor type." << anf_node->fullname_with_scope();
+      MS_LOG(INFO) << "Unknown processor type." << anf_node->fullname_with_scope();
       break;
   }
   return device;

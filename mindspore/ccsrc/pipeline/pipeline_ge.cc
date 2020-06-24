@@ -460,12 +460,12 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::
       ValuePtr converted = nullptr;
       bool succ = parse::ConvertData(args[i], &converted);
       if (!succ) {
-        MS_LOG(EXCEPTION) << "Args convert error";
+        MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
       }
       if (converted->isa<tensor::Tensor>()) {
         inputs->push_back(converted->cast<tensor::TensorPtr>());
       } else {
-        MS_EXCEPTION(TypeError) << "Args " << converted->ToString() << " is not tensor";
+        MS_EXCEPTION(TypeError) << "The " << i << "th arg: " << converted->ToString() << " is not tensor.";
       }
     }
   }
@@ -488,7 +488,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
 #ifdef ENABLE_INFER
   // Now don't use the graph because the exec ge function don't take effect
   MS_EXCEPTION_IF_NULL(info.at(phase)->func_graph);
-  if (ENABLE_TRAIN != info.at(phase)->func_graph->flags()["training"]) {
+  if (ENABLE_TRAIN != info.at(phase)->func_graph->has_flag("training")) {
     MS_LOG(ERROR) << "Graph training mode mismatch mode of libraries";
     ConfigManager::GetInstance().ResetConfig();
     return py::none();

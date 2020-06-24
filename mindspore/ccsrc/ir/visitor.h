@@ -18,14 +18,12 @@
 #define MINDSPORE_CCSRC_IR_VISITOR_H_
 
 #include <vector>
-#include "ir/anf.h"
-#include "optimizer/opt.h"
+#include "ir/optimizer_caller.h"
 
 namespace mindspore {
 using VisitFuncType = std::function<void(const AnfNodePtr &)>;
-class AnfVisitor {
+class AnfVisitor : public OptimizerCaller {
  public:
-  virtual AnfNodePtr operator()(const opt::OptimizerPtr &, const AnfNodePtr &);
   virtual void Visit(const AnfNodePtr &);
   virtual void Visit(const CNodePtr &);
   virtual void Visit(const ValueNodePtr &);

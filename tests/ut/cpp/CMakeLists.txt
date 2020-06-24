@@ -91,6 +91,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/device/kernel_info.cc"
         "../../../mindspore/ccsrc/device/ascend/profiling/*.cc"
         "../../../mindspore/ccsrc/device/ascend/kernel_select_ascend.cc"
+        "../../../mindspore/ccsrc/device/ascend/kernel_select_graph_kernel.cc"
         "../../../mindspore/ccsrc/device/convert_tensor_utils.cc"
         "../../../mindspore/ccsrc/device/ascend/kernel_build_ascend.cc"
         "../../../mindspore/ccsrc/device/ascend/ascend_kernel_runtime.cc"
@@ -106,9 +107,12 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/dump_proto.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ir/lite/tensor.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/anf_ir.pb.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/node_strategy.pb.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/load_onnx/anf_model_parser.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/load_onnx/anf_converter.cc")
 
 file(GLOB_RECURSE UT_SUTB_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "stub/aicpu/*.cc"

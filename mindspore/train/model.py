@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """Model."""
+from collections.abc import Iterable
+
 import numpy as np
 
 from mindspore import log as logger
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
 from .._checkparam import check_input_data, check_output_data, check_int_positive, check_bool
-from .callback import _InternalCallbackParam, RunContext, _build_callbacks
+from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
@@ -54,10 +56,13 @@ class Model:
                              value would be passed to `Loss` metric, predict value and label would be passed to other
                              metric. Default: None.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
-            precision training. Supports [O0, O2]. Default: "O0".
+            precision training. Supports [O0, O2, O3]. Default: "O0".
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
+            - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
+
+            O2 is recommended on GPU, O3 is recommended on Ascend.
 
         loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, or else
             scale the loss by LossScaleManager. If it is set, overwrite the level setting. It's a eyword argument.
@@ -111,7 +116,7 @@ class Model:
         self._build_predict_network()
 
     def _process_amp_args(self, kwargs):
-        if self._amp_level == "O0":
+        if self._amp_level in ["O0", "O3"]:
             self._keep_bn_fp32 = False
         if 'keep_batchnorm_fp32' in kwargs:
             self._keep_bn_fp32 = kwargs['keep_batchnorm_fp32']
@@ -169,6 +174,8 @@ class Model:
             self._eval_indexes = [0, 1, 2]
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            if self._optimizer:
+                self._eval_network = _VirtualDatasetCell(self._eval_network)
             self._eval_network.set_auto_parallel()
 
     def _build_predict_network(self):
@@ -281,7 +288,7 @@ class Model:
 
             if self._parameter_broadcast:
                 self._train_network.set_broadcast_flag()
-
+            train_dataset.__no_send__ = True
             train_dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                                         is_train=True,
                                                                         phase='train',
@@ -298,6 +305,7 @@ class Model:
 
             self._eval_network.set_train(False)
             self._eval_network.phase = 'eval'
+            valid_dataset.__no_send__ = True
             valid_dataset_helper, eval_network = self._exec_preprocess(self._eval_network,
                                                                        is_train=False,
                                                                        phase='eval',
@@ -330,8 +338,6 @@ class Model:
         if self._parameter_broadcast:
             self._train_network.set_broadcast_flag()
 
-        # build callback list
-        list_callback = _build_callbacks(callbacks)
         cb_params = _InternalCallbackParam()
         cb_params.train_network = self._train_network
         cb_params.epoch_num = epoch
@@ -342,17 +348,30 @@ class Model:
         cb_params.parallel_mode = self._parallel_mode
         cb_params.device_number = self._device_number
         cb_params.train_dataset = train_dataset
-        cb_params.list_callback = list_callback
+        cb_params.list_callback = self._transform_callbacks(callbacks)
+        cb_params.train_dataset_element = None
 
-        if dataset_sink_mode:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
+        # build callback list
+        with _CallbackManager(callbacks) as list_callback:
+            if not dataset_sink_mode:
+                self._train_process(epoch, train_dataset, list_callback, cb_params)
+            elif context.get_context("mode") == context.PYNATIVE_MODE:
                 logger.warning("The pynative mode cannot support dataset sink mode currently."
                                "So the training process will be performed with dataset not sink.")
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
                 self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params)
-        else:
-            self._train_process(epoch, train_dataset, list_callback, cb_params)
+
+    @staticmethod
+    def _transform_callbacks(callbacks):
+        """Transform callback to a list."""
+        if callbacks is None:
+            return []
+
+        if isinstance(callbacks, Iterable):
+            return list(callbacks)
+
+        return [callbacks]
 
     def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
         """
@@ -365,7 +384,7 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned, and the data and label are passed to the network and loss
                                      function respectively.
-            list_callback (_ListCallback): Executor of callback list. Default: None.
+            list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
         """
         dataset_helper, train_network = self._exec_preprocess(self._train_network,
@@ -413,7 +432,7 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned, and the data and label are passed to the network and loss
                                      function respectively.
-            list_callback (_ListCallback): Executor of callback list. Default: None.
+            list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
         """
         dataset_helper, _ = self._exec_preprocess(self._train_network,
@@ -445,6 +464,7 @@ class Model:
                     scaling_sens = self._get_scaling_sens()
                     next_element = tuple(next_element) + (Tensor(scaling_sens, mstype.float32),)
 
+                cb_params.train_dataset_element = next_element
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
@@ -520,7 +540,7 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            list_callback (ListCallback): Executor of callback list. Default: None.
+            list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
 
         Returns:
@@ -559,7 +579,7 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            list_callback (ListCallback): Executor of callback list. Default: None.
+            list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
 
         Returns:
@@ -618,22 +638,23 @@ class Model:
         if not self._metric_fns:
             raise ValueError("metric fn can not be None or empty.")
 
-        list_callback = _build_callbacks(callbacks)
         cb_params = _InternalCallbackParam()
         cb_params.eval_network = self._eval_network
         cb_params.valid_dataset = valid_dataset
         cb_params.batch_num = valid_dataset.get_dataset_size()
         cb_params.mode = "eval"
         cb_params.cur_step_num = 0
+        cb_params.list_callback = self._transform_callbacks(callbacks)
 
         self._eval_network.set_train(mode=False)
         self._eval_network.phase = 'eval'
 
         self._clear_metrics()
 
-        if dataset_sink_mode:
-            return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
-        return self._eval_process(valid_dataset, list_callback, cb_params)
+        with _CallbackManager(callbacks) as list_callback:
+            if dataset_sink_mode:
+                return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
+            return self._eval_process(valid_dataset, list_callback, cb_params)
 
     def predict(self, *predict_data):
         """

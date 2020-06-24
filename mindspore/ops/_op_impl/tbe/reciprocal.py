@@ -25,6 +25,7 @@ reciprocal_op_info = TBERegOp("Reciprocal") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \

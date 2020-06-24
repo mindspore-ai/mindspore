@@ -44,11 +44,11 @@ AnfNodePtr GetReplaceNode(const AnfNodePtr &node) {
   return cnode->input(kSingleInputIndex);
 }
 
-bool ReplaceMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+AnfNodePtr ReplaceMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimMakeTuple->name()) {
-    return false;
+    return nullptr;
   }
   std::vector<AnfNodePtr> new_make_tuple_inputs;
   bool need_update = false;
@@ -75,17 +75,16 @@ bool ReplaceMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     auto manager = func_graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     manager->Replace(cnode, new_make_tuple);
+    return new_make_tuple;
   }
-  return true;
+  return nullptr;
 }
 }  // namespace
 
 const BaseRef OptimizeDependence::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>("X");
-  MS_EXCEPTION_IF_NULL(X);
-  VarPtr Y = std::make_shared<Var>("Y");
-  MS_EXCEPTION_IF_NULL(Y);
-  return VectorRef({prim::kPrimDepend, X, Y});
+  VarPtr X = std::make_shared<Var>();
+  VarPtr Xs = std::make_shared<SeqVar>();
+  return VectorRef({X, Xs});
 }
 
 const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -95,29 +94,31 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
   if (!node->isa<CNode>()) {
     return nullptr;
   }
+  auto node_name = AnfAlgo::GetCNodeName(node);
+  if (node_name != prim::kPrimControlDepend->name() && node_name != prim::kPrimDepend->name()) {
+    return nullptr;
+  }
+  size_t index = 0;
   auto depend_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(depend_cnode);
-  CheckCNodeInputSize(depend_cnode, kDependInputNum);
-  auto replacing_node = depend_cnode->input(kDependInputNum - 1);
-  MS_EXCEPTION_IF_NULL(replacing_node);
-  if (!replacing_node->isa<CNode>()) {
-    return nullptr;
+  std::vector<AnfNodePtr> new_depend_inputs = {depend_cnode->input(kAnfPrimitiveIndex)};
+  if (node_name == prim::kPrimDepend->name()) {
+    index = 1;
+    new_depend_inputs.push_back(depend_cnode->input(kRealInputIndexInDepend));
   }
-  auto replacing_cnode = replacing_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(replacing_cnode);
-  // Deal with the make_tuple with TransData or Cast inputs.
-  if (ReplaceMakeTuple(func_graph, replacing_cnode)) {
-    return nullptr;
+  if (AnfAlgo::GetInputTensorNum(depend_cnode) < 2) {
+    MS_LOG(EXCEPTION) << "The depend node input size is at less size 2,but got "
+                      << AnfAlgo::GetInputTensorNum(depend_cnode) << depend_cnode->DebugString();
   }
-  AnfNodePtr replace_node = GetReplaceNode(replacing_cnode);
-  if (replace_node == nullptr) {
-    MS_LOG(DEBUG) << "Can not find the TransData or Cast with single output node. Depend node: " << node->DebugString();
-    return nullptr;
+  auto input_num = AnfAlgo::GetInputTensorNum(depend_cnode);
+  while (index < input_num) {
+    auto replace_node = GetConvertNode(func_graph, node, index);
+    MS_EXCEPTION_IF_NULL(replace_node);
+    new_depend_inputs.push_back(replace_node);
+    ++index;
   }
-  std::vector<AnfNodePtr> new_depend_inputs = {depend_cnode->input(kAnfPrimitiveIndex),
-                                               depend_cnode->input(kRealInputIndexInDepend), replace_node};
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
-  CNodePtr new_depend;
+  CNodePtr new_depend = nullptr;
   if (kernel_graph == nullptr) {
     new_depend = func_graph->NewCNode(new_depend_inputs);
     MS_EXCEPTION_IF_NULL(new_depend);
@@ -130,5 +131,31 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
   }
   return new_depend;
 }
+
+const AnfNodePtr OptimizeDependence::GetConvertNode(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                    const size_t index) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto depend_cnode = node->cast<CNodePtr>();
+  auto replacing_node = AnfAlgo::GetInputNode(depend_cnode, index);
+  MS_EXCEPTION_IF_NULL(replacing_node);
+  if (!replacing_node->isa<CNode>()) {
+    return replacing_node;
+  }
+  auto replacing_cnode = replacing_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(replacing_cnode);
+  // Deal with the make_tuple with TransData or Cast inputs.
+  auto make_tuple_replace_node = ReplaceMakeTuple(graph, replacing_cnode);
+  if (make_tuple_replace_node != nullptr) {
+    return make_tuple_replace_node;
+  }
+  AnfNodePtr replace_node = GetReplaceNode(replacing_cnode);
+  if (replace_node == nullptr) {
+    MS_LOG(DEBUG) << "Can not find the TransData or Cast with single output node. Depend node: " << node->DebugString();
+    return replacing_node;
+  }
+  return replace_node;
+}
+
 }  // namespace opt
 }  // namespace mindspore

@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace session {
-
 class AscendControlParser {
  public:
   static void ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map);
@@ -53,15 +52,10 @@ class AscendControlParser {
                               const CNodePtr &last_label);
   static std::tuple<CNodePtr, KernelGraphPtr> ParsePartial(NotNull<AnfNodePtr> node);
 
-  static void LinkArgsToParam(NotNull<KernelGraphPtr> to_graph, NotNull<KernelGraphPtr> target_graph,
-                              NotNull<AnfNodePtr> arg, NotNull<AnfNodePtr> param);
-
+  static void InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
   static void InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
 
-  static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start);
-
   // root graph order
-  static std::vector<uint32_t> GetLabelSwitchList(const CNodePtr &node);
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);
   static std::vector<CNodePtr> RecurseGraph(NotNull<KernelGraphPtr> graph,

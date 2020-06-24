@@ -29,12 +29,12 @@ namespace dataset {
 class WeightedRandomSampler : public Sampler {
  public:
   // Constructor.
-  // @param weights A lift of sample weights.
   // @param num_samples Number of samples to be drawn.
+  // @param weights A lift of sample weights.
   // @param replacement Determine if samples are drawn with/without replacement.
   // @param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
   // When samplesPerBuffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
-  WeightedRandomSampler(const std::vector<double> &weights, int64_t num_samples, bool replacement = true,
+  WeightedRandomSampler(int64_t num_samples, const std::vector<double> &weights, bool replacement,
                         int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
@@ -46,12 +46,12 @@ class WeightedRandomSampler : public Sampler {
   Status InitSampler() override;
 
   // Reset the internal variable to the initial state and reshuffle the indices.
-  Status Reset() override;
+  Status ResetSampler() override;
 
   // Get the sample ids.
   // @param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.
   // @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
  private:
   // A list of weights for each sample.
@@ -68,9 +68,6 @@ class WeightedRandomSampler : public Sampler {
 
   // Random engine and device
   std::mt19937 rand_gen_;
-
-  // num_samples from user
-  int64_t user_num_samples_;
 
   // Discrete distribution for generating weighted random numbers with replacement.
   std::unique_ptr<std::discrete_distribution<int64_t>> discrete_dist_;

@@ -76,7 +76,47 @@ void CPUResourceManager::MemFree(void *ptr) {
   }
 }
 
-void CPUResourceManager::ResetAddressRefCount(const session::KernelGraph *graph) {
+void CPUResourceManager::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+  if (!dynamic_malloc_) {
+    return;
+  }
+
+  if (summary_outputs.empty()) {
+    return;
+  }
+
+  for (auto &output_item : summary_outputs) {
+    auto node = output_item.second.first;
+    size_t index = IntToSize(output_item.second.second);
+    auto address = AnfAlgo::GetMutableOutputAddr(node, index);
+    MS_EXCEPTION_IF_NULL(address);
+    address->ref_count_++;
+  }
+}
+
+void CPUResourceManager::DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+  if (!dynamic_malloc_) {
+    return;
+  }
+
+  if (summary_outputs.empty()) {
+    return;
+  }
+
+  for (auto &output_item : summary_outputs) {
+    auto node = output_item.second.first;
+    size_t index = IntToSize(output_item.second.second);
+    auto address = AnfAlgo::GetMutableOutputAddr(node, index);
+    MS_EXCEPTION_IF_NULL(address);
+    address->ref_count_--;
+    if (address->ref_count_ == 0 && address->ptr_ != nullptr) {
+      MemFree(address->ptr_);
+      address->ptr_ = nullptr;
+    }
+  }
+}
+
+void CPUResourceManager::IncreaseAddressRefCount(const session::KernelGraph *graph) {
   if (!dynamic_malloc_) {
     return;
   }

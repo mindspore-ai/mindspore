@@ -25,9 +25,6 @@ MS_REG_GPU_KERNEL_ONE(ApplyRMSProp,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       RMSPropGpuKernel, float)
 

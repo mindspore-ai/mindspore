@@ -55,8 +55,7 @@ class MockSupportedChecker : public SupportedChecker {
  public:
   MockSupportedChecker() = default;
   ~MockSupportedChecker() override = default;
-  bool CheckAiCoreSupported(const AnfNodePtr &anf_node,
-                            const kernel::KernelBuildInfoPtr &select_kernel_build_info) override {
+  bool CheckAICoreSupported(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) override {
     return true;
   }
 };  // namespace opt

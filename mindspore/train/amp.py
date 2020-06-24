@@ -21,7 +21,6 @@ from .._checkparam import Rel
 from ..common import dtype as mstype
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..ops import functional as F
-from ..ops.composite.base import _mp_cast_helper
 from ..parallel._utils import _get_parallel_mode
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
 from .parallel_utils import ParallelMode
@@ -66,7 +65,11 @@ _config_level = {
     "O2": {
         "keep_batchnorm_fp32": True,
         "cast_model_type": mstype.float16,
-        "loss_scale_manager": DynamicLossScaleManager()}}
+        "loss_scale_manager": DynamicLossScaleManager()},
+    "O3": {
+        "keep_batchnorm_fp32": False,
+        "cast_model_type": mstype.float16,
+        "loss_scale_manager": None}}
 
 
 def _check_kwargs(key_words):
@@ -98,7 +101,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
 
         def construct(self, data, label):
             out = self._backbone(data)
-            label = _mp_cast_helper(mstype.float32, label)
+            label = F.mixed_precision_cast(mstype.float32, label)
             return self._loss_fn(F.cast(out, mstype.float32), label)
 
     validator.check_value_type('loss_fn', loss_fn, nn.Cell, None)
@@ -118,11 +121,14 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
         loss_fn (Union[None, Cell]): Definition of the loss_fn. If None, the `network` should have the loss inside.
             Default: None.
         optimizer (Optimizer): Optimizer to update the Parameter.
-        level (str): Supports [O0, O2]. Default: "O0".
+        level (str): Supports [O0, O2, O3]. Default: "O0".
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
+            - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
+
+            O2 is recommended on GPU, O3 is recommended on Ascend.
 
         cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32`.
             If set to `mstype.float16`, use `float16` mode to train. If set, overwrite the level setting.
@@ -132,7 +138,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
     """
     validator.check_value_type('network', network, nn.Cell, None)
     validator.check_value_type('optimizer', optimizer, nn.Optimizer, None)
-    validator.check('level', level, "", ['O0', 'O2'], Rel.IN, None)
+    validator.check('level', level, "", ['O0', 'O2', 'O3'], Rel.IN, None)
     _check_kwargs(kwargs)
     config = dict(_config_level[level], **kwargs)
     config = edict(config)

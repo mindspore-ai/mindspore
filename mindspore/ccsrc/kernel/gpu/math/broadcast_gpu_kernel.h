@@ -68,14 +68,14 @@ class BroadcastOpGpuKernel : public GpuKernel {
       output_shape_[i] = shape3[i];
       output_num_ *= shape3[i];
     }
-    int offset = shape3.size() - shape1.size();
+    int lhs_offset = shape3.size() - shape1.size();
     for (size_t j = 0; j < shape1.size(); j++) {
-      lhs_shape_[j + offset] = shape1[j];
+      lhs_shape_[j + lhs_offset] = shape1[j];
       input1_num_ *= shape1[j];
     }
-    offset = shape3.size() - shape2.size();
+    int rhs_offset = shape3.size() - shape2.size();
     for (size_t k = 0; k < shape2.size(); k++) {
-      rhs_shape_[k + offset] = shape2[k];
+      rhs_shape_[k + rhs_offset] = shape2[k];
       input2_num_ *= shape2[k];
     }
 
@@ -98,7 +98,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
     static std::map<std::string, BroadcastOpType> kBroadcastTypeMap = {
       {"Greater", BROADCAST_TYPE_GREATER}, {"Less", BROADCAST_TYPE_LESS}, {"Maximum", BROADCAST_TYPE_MAXIMUM},
       {"Minimum", BROADCAST_TYPE_MINIMUM}, {"Pow", BROADCAST_TYPE_POWER}, {"RealDiv", BROADCAST_TYPE_REALDIV},
-      {"Mul", BROADCAST_TYPE_MUL},         {"Sub", BROADCAST_TYPE_SUB},
+      {"Mul", BROADCAST_TYPE_MUL},         {"Sub", BROADCAST_TYPE_SUB},   {"TensorAdd", BROADCAST_TYPE_ADD},
     };
 
     auto iter = kBroadcastTypeMap.find(kernel_name);

@@ -78,7 +78,10 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cons);
 
   auto dt = data->abstract();
-  MS_EXCEPTION_IF_NULL(dt);
+  if (dt == nullptr) {
+    return nullptr;
+  }
+
   if (!dt->isa<AbstractClass>()) {
     MS_LOG(EXCEPTION) << "First parameter of getattr is not AbstractClass, but " << dt->type_name() << ".";
   }

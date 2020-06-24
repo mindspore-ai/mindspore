@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include "kernel/kernel.h"
+#include "kernel/gpu/kernel_constants.h"
 #include "device/gpu/gpu_device_manager.h"
 #include "device/gpu/gpu_common.h"
 #include "session/anf_runtime_algorithm.h"
@@ -63,6 +64,9 @@ class GpuKernel : public KernelMod {
   }
   // expand Nd Shape to 4d (N in [0,4])
   void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<int> *dst) {
+    if (src.size() > 4) {
+      MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
+    }
     dst->push_back(src.size() < 4 ? 1 : SizeToInt(src[src.size() - 4]));
     dst->push_back(src.size() < 3 ? 1 : SizeToInt(src[src.size() - 3]));
     dst->push_back(src.size() < 2 ? 1 : SizeToInt(src[src.size() - 2]));
@@ -78,6 +82,22 @@ class GpuKernel : public KernelMod {
            "dimension of the inputB "
            "must match the corresponding dimension of outC or must be equal to 1.";
     }
+  }
+
+  // choose the suitable datatype for cudnn/cublas
+  inline cudnnDataType_t GetCudnnDataType(const std::string &Type) {
+    auto type = kCudnnDtypeMap.find(Type);
+    if (type == kCudnnDtypeMap.end()) {
+      MS_EXCEPTION(TypeError) << Type << " is not supported.";
+    }
+    return type->second;
+  }
+  inline cudaDataType_t GetCudaDataType(const std::string &Type) {
+    auto type = kCudaDtypeMap.find(Type);
+    if (type == kCudaDtypeMap.end()) {
+      MS_EXCEPTION(TypeError) << Type << " is not supported.";
+    }
+    return type->second;
   }
 };
 }  // namespace kernel

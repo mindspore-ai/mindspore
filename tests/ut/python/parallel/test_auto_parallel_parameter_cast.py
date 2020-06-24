@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 
 import mindspore as ms
@@ -69,9 +70,8 @@ def test_common_parameter():
 
     _executor.compile(net, x, y, phase='train')
     strategies = _executor._get_strategy(net)
-    expected_strategies = {'Default/network-Net/MatMul-op1': [[8, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op3': [[8, 1], [1, 1]],
-                           'Default/network-Net/Cast-op2': [[1, 1]],
-                           'Default/network-Net/MatMul-op0': [[8, 1], [1, 1]],
-                           'Default/network-Net/Cast-op4': [[1, 1]]}
-    assert strategies == expected_strategies
+    for (k, v) in strategies.items():
+        if re.search('MatMul-op', k) is not None:
+            assert v == [[8, 1], [1, 1]]
+        elif re.search('Cast-op', k) is not None:
+            assert v == [[1, 1]]

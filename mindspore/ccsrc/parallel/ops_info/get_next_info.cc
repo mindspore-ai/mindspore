@@ -24,15 +24,23 @@
 #include "ir/value.h"
 #include "parallel/device_matrix.h"
 #include "parallel/strategy.h"
+#include "parallel/context.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
 namespace parallel {
 Status GetNextInfo::InferTensorMap() {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+
   for (auto shp : shapes_) {
     TensorMap out_tensor_map;
     for (size_t i = 0; i < shp.size(); ++i) {
-      out_tensor_map.push_back(SizeToInt(dev_matrix_shape_.size() - i - 1));
+      if (full_batch) {
+        out_tensor_map.push_back(MAP_NONE);
+      } else {
+        out_tensor_map.push_back(SizeToInt(dev_matrix_shape_.size() - i - 1));
+      }
     }
     outputs_tensor_map_.push_back(out_tensor_map);
   }
@@ -190,6 +198,9 @@ Status GetNextInfo::GetAttrs() {
 }
 
 Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+
   Shapes out_shapes = outputs_shape_;
   for (size_t i = 0; i < out_shapes.size(); ++i) {
     if (dev_num_ <= 0) {
@@ -200,7 +211,9 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
       MS_LOG(ERROR) << name_ << " : batch num cannot floor div dev num.";
       return FAILED;
     }
-    out_shapes[i][0] = out_shapes[i][0] / dev_num_;
+    if (!full_batch) {
+      out_shapes[i][0] = out_shapes[i][0] / dev_num_;
+    }
   }
   ValuePtr new_shapes = MakeValue(out_shapes);
   Attr attr_types = std::make_pair(TYPES, attrs_[TYPES]);

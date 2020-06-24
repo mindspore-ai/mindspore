@@ -26,3 +26,19 @@ def test_clip_by_norm():
     x = Tensor(np.array([[-2, 0, 0], [0, 3, 4]]).astype(np.float32))
     clip_norm = Tensor(np.array([1]).astype(np.float32))
     clip_by_norm(x, clip_norm)
+
+
+@non_graph_engine
+def test_clip_by_norm_const():
+    class Network(nn.Cell):
+        def __init__(self):
+            super(Network, self).__init__()
+            self.norm_value = Tensor(np.array([1]).astype(np.float32))
+            self.clip = nn.ClipByNorm()
+
+        def construct(self, x):
+            return self.clip(x, self.norm_value)
+
+    net = Network()
+    x = Tensor(np.array([[-2, 0, 0], [0, 3, 4]]).astype(np.float32))
+    net(x)

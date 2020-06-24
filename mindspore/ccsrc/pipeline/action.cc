@@ -38,6 +38,7 @@
 #include "pipeline/remove_value_node_dup.h"
 #include "optimizer/optimizer.h"
 #include "vm/transform.h"
+#include "parse/python_adapter.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -228,6 +229,9 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
     if (param_node->has_default()) {
       auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
       AbstractBasePtr ptr = abstract::FromValue(parse::data_converter::PyDataToValue(param_value->value()), true);
+      auto sparse_grad =
+        py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), "sparse_grad"));
+      ptr->set_sparse_grad(sparse_grad);
 
       parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
       args_spec.push_back(ptr);
@@ -276,8 +280,14 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 
 bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
 
+bool PynativeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kPynativePasses); }
+
 static bool IsCtrlSink() {
   auto ms_ctx = MsContext::GetInstance();
+  if (ms_ctx->execution_mode() != kGraphMode) {
+    return false;
+  }
+
   std::string device_target = ms_ctx->device_target();
   if (device_target != kAscendDevice) {
     return false;
@@ -287,15 +297,9 @@ static bool IsCtrlSink() {
     return false;
   }
 
-  const char *enable_ctrl_sink = std::getenv("ENABLE_CTRL_SINK");
-  if (enable_ctrl_sink == nullptr) {
+  if (!ms_ctx->is_multi_graph_sink()) {
     return false;
   }
-  std::string enable_ctrl_sink_str(enable_ctrl_sink);
-  if (enable_ctrl_sink_str == "0") {
-    return false;
-  }
-
   return true;
 }
 
@@ -305,12 +309,24 @@ bool TaskEmitAction(const ResourcePtr &res) {
   }
   FuncGraphPtr func_graph = res->func_graph();
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (CompileGraphs::ContainMixedTarget(func_graph)) {
+    bc_ptr->set_is_multi_graph_sink(false);
+    context_ptr->set_is_multi_graph_sink(false);
+    context_ptr->set_loop_sink_flag(false);
+  } else if (context_ptr->execution_mode() != kPynativeMode) {
+    std::string device_target = context_ptr->device_target();
+    if (device_target == kAscendDevice) {
+      bc_ptr->set_is_multi_graph_sink(true);
+      context_ptr->set_is_multi_graph_sink(true);
+    }
+  }
 
   if (IsCtrlSink()) {
     res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
     return true;
   }
-
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
   if (bc_ptr->name() == kMsConvert) {
     cut_list = compile::GetMsNonlinearOps();
@@ -329,7 +345,6 @@ bool ExecuteAction(const ResourcePtr &res) {
     if (!res->results()[kOutput].is<GraphId>()) {
       MS_LOG(EXCEPTION) << "Execute args error";
     }
-
     auto graph_id = res->results()[kOutput].cast<GraphId>();
     std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
     std::shared_ptr<compile::MsBackend> msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr);

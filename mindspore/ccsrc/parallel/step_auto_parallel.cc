@@ -107,7 +107,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Now leaving step auto parallel, used time: " << time << " us";
 
-  root->flags()[AUTO_PARALLEL_RUN_ONCE_ONLY] = true;
+  root->set_flag(AUTO_PARALLEL_RUN_ONCE_ONLY, true);
   return changes;
 }
 
@@ -261,7 +261,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      REDUCE_MAX, REDUCE_MIN, ARGMAXWITHVALUE, ARGMINWITHVALUE, REDUCE_SUM, CONV2D, FUSE_BATCH_NORM, POOLING,
      MAX_POOL_WITH_ARGMAX, SIMPLE_MEAN, FLATTEN, BATCH_NORM, LAYER_NORM, BIAS_ADD, ASSIGN_SUB, COS, ACOS, EXP,
      LOG, REDUCE_MEAN, REAL_DIV, SIGMOID, POW, MAXIMUM, MINIMUM, EQUAL, NOT_EQUAL, LOGICALNOT, GATHERV2, SQRT,
-     STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE,
+     STRIDEDSLICE, GET_NEXT, CAST, NEG, SQUARE, BATCH_MATMUL, EXPAND_DIMS, SQUEEZE, SPARSE_GATHERV2,
      SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, SIGMOID_CROSS_ENTROPY_WITH_LOGITS, SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS};
   // clang-format on
 
@@ -283,6 +283,10 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   if (bool_result) {
     MS_LOG(EXCEPTION) << "Should implementing OperatorInfo for: " << prim->name();
   } else if (prim->name() == CAST) {
+    if (cnode->fullname_with_scope().find(OPTIMIZER_SUB_STRING) != std::string::npos) {
+      // Do not care CASTs from optimizer
+      return false;
+    }
     return true;
   }
   return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
@@ -409,6 +413,13 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
+      // Needed by rec_parser
+      if (ParallelContext::GetInstance()->strategy_search_mode() == RECURSIVE_PROGRAMMING) {
+        auto prev_cnode = GetInternalOperatorInfo(cnode, prim_anf_node);
+        if (prev_cnode != nullptr) {
+          entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), prev_cnode->UniqueId()));
+        }
+      }
       continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
@@ -467,6 +478,13 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
+      // Needed by rec_parser
+      if (ParallelContext::GetInstance()->strategy_search_mode() == RECURSIVE_PROGRAMMING) {
+        auto prev_cnode = GetInternalOperatorInfo(cnode, prim_anf_node);
+        if (prev_cnode != nullptr) {
+          entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), prev_cnode->UniqueId()));
+        }
+      }
       continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
@@ -1090,14 +1108,44 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
   return input_tensor_names;
 }
 
-Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
-  if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
-    MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are " << entire_costgraph->GetOperators().size()
-                 << " operators.";
-  } else {
-    MS_LOG(ERROR) << "Constructing nodes for cost graph failed.";
-    return FAILED;
+CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node) {
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+  if (prim->name() == TUPLE_GETITEM || prim->name() == DEPEND) {
+    auto prev_cnode = cnode->input(1)->cast<CNodePtr>();
+    if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
+      return nullptr;
+    }
+    auto prev_prim = prev_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
+    while (prev_prim->name() == TUPLE_GETITEM || prev_prim->name() == DEPEND) {
+      prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
+      if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
+        return nullptr;
+      }
+      prev_prim = prev_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
+    }
+    return prev_cnode;
   }
+  return nullptr;
+}
+
+Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
+    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
+  } else {
+    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
+  }
+  ReshapeCostCompute(all_nodes);
+
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   auto tuple_getitem_list = entire_costgraph->get_tuple_getitem_list();

@@ -28,6 +28,7 @@ class GPUMemoryAllocator : public DynamicMemPoolBestFit {
  public:
   ~GPUMemoryAllocator() override = default;
   bool Init();
+  void CheckMaxDeviceMemory() const;
   bool Finalize();
   bool AllocBufferQueueMem(size_t size, DeviceMemPtr *addr);
 
@@ -48,6 +49,10 @@ class GPUMemoryAllocator : public DynamicMemPoolBestFit {
 
   // Used to track address of data buffer queue.
   DeviceMemPtr buffer_q_addr_{nullptr};
+
+  float limited_device_memory_{0.0};
+  size_t total_used_device_memory_{0};
+  size_t available_device_memory_{0};
 };
 }  // namespace gpu
 }  // namespace device

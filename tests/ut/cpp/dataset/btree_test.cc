@@ -32,13 +32,8 @@ using mindspore::LogStream;
 // For testing purposes, we will make the branching factor very low.
 struct mytraits {
     using slot_type = uint16_t;
-
     static const slot_type kLeafSlots = 6;
-
     static const slot_type kInnerSlots = 3;
-
-    static const bool kAppendMode = false;
-
 };
 
 
@@ -95,13 +90,14 @@ TEST_F(MindDataTestBPlusTree, Test1) {
   // Test search
   {
     MS_LOG(INFO) << "Locate key " << 100 << " Expect found.";
-    auto it = btree.Search(100);
-    EXPECT_FALSE(it == btree.end());
+    auto r = btree.Search(100);
+    auto &it = r.first;
+    EXPECT_TRUE(r.second);
     EXPECT_EQ(it.key(), 100);
     EXPECT_EQ(it.value(), "Hello World. I am 100");
     MS_LOG(INFO) << "Locate key " << 300 << " Expect not found.";
-    it = btree.Search(300);
-    EXPECT_TRUE(it == btree.end());
+    auto q = btree.Search(300);
+    EXPECT_FALSE(q.second);
   }
 
   // Test duplicate key
@@ -169,26 +165,18 @@ TEST_F(MindDataTestBPlusTree, Test2) {
   {
     MS_LOG(INFO) << "Locating key from 0 to 9999. Expect found.";
     for (int i = 0; i < 10000; i++) {
-      auto it = btree.Search(i);
-      bool eoS = (it == btree.end());
-      EXPECT_FALSE(eoS);
-      if (!eoS) {
+      auto r = btree.Search(i);
+      EXPECT_TRUE(r.second);
+      if (r.second) {
+        auto &it = r.first;
         EXPECT_EQ(it.key(), i);
         std::string val = "Hello World. I am " + std::to_string(i);
         EXPECT_EQ(it.value(), val);
       }
     }
     MS_LOG(INFO) << "Locate key " << 10000 << ". Expect not found";
-    auto it = btree.Search(10000);
-    EXPECT_TRUE(it == btree.end());
-  }
-
-  // Test to retrieve key at certain position.
-  {
-    for (int i = 0; i < 10000; i++) {
-      int k = btree.KeyAtPos(i);
-      EXPECT_EQ(k, i);
-    }
+    auto q = btree.Search(10000);
+    EXPECT_FALSE(q.second);
   }
 }
 
@@ -204,7 +192,8 @@ TEST_F(MindDataTestBPlusTree, Test3) {
   uint64_t max = ai.max_key();
   EXPECT_EQ(min, 1);
   EXPECT_EQ(max, 4);
-  auto it = ai.Search(3);
+  auto r = ai.Search(3);
+  auto &it = r.first;
   EXPECT_EQ(it.value(), "b");
   MS_LOG(INFO) << "Dump all the values using [] operator.";
   for (uint64_t i = min; i <= max; i++) {

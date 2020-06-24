@@ -16,13 +16,17 @@
 #ifndef DATASET_ENGINE_GNN_GRAPH_H_
 #define DATASET_ENGINE_GNN_GRAPH_H_
 
+#include <algorithm>
 #include <memory>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <utility>
 
 #include "dataset/core/tensor.h"
+#include "dataset/core/tensor_row.h"
 #include "dataset/engine/gnn/graph_loader.h"
 #include "dataset/engine/gnn/feature.h"
 #include "dataset/engine/gnn/node.h"
@@ -33,24 +37,17 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-struct NodeMetaInfo {
-  NodeType type;
-  NodeIdType num;
-  std::vector<FeatureType> feature_type;
-  NodeMetaInfo() {
-    type = 0;
-    num = 0;
-  }
-};
+const float kGnnEpsilon = 0.0001;
+const uint32_t kMaxNumWalks = 80;
+using StochasticIndex = std::pair<std::vector<int32_t>, std::vector<float>>;
 
-struct EdgeMetaInfo {
-  EdgeType type;
-  EdgeIdType num;
-  std::vector<FeatureType> feature_type;
-  EdgeMetaInfo() {
-    type = 0;
-    num = 0;
-  }
+struct MetaInfo {
+  std::vector<NodeType> node_type;
+  std::vector<EdgeType> edge_type;
+  std::map<NodeType, NodeIdType> node_num;
+  std::map<EdgeType, EdgeIdType> edge_num;
+  std::vector<FeatureType> node_feature_type;
+  std::vector<FeatureType> edge_feature_type;
 };
 
 class Graph {
@@ -62,19 +59,23 @@ class Graph {
 
   ~Graph() = default;
 
-  // Get the nodes from the graph.
+  // Get all nodes from the graph.
   // @param NodeType node_type - type of node
-  // @param NodeIdType node_num - Number of nodes to be acquired, if -1 means all nodes are acquired
   // @param std::shared_ptr<Tensor> *out - Returned nodes id
   // @return Status - The error code return
-  Status GetNodes(NodeType node_type, NodeIdType node_num, std::shared_ptr<Tensor> *out);
+  Status GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out);
 
-  // Get the edges from the graph.
+  // Get all edges from the graph.
   // @param NodeType edge_type - type of edge
-  // @param NodeIdType edge_num - Number of edges to be acquired, if -1 means all edges are acquired
   // @param std::shared_ptr<Tensor> *out - Returned edge ids
   // @return Status - The error code return
-  Status GetEdges(EdgeType edge_type, EdgeIdType edge_num, std::shared_ptr<Tensor> *out);
+  Status GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out);
+
+  // Get the node id from the edge.
+  // @param std::vector<EdgeIdType> edge_list - List of edges
+  // @param std::shared_ptr<Tensor> *out - Returned node ids
+  // @return Status - The error code return
+  Status GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out);
 
   // All neighbors of the acquisition node.
   // @param std::vector<NodeType> node_list - List of nodes
@@ -86,12 +87,35 @@ class Graph {
   Status GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                          std::shared_ptr<Tensor> *out);
 
-  Status GetSampledNeighbor(const std::vector<NodeIdType> &node_list, const std::vector<NodeIdType> &neighbor_nums,
-                            const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out);
-  Status GetNegSampledNeighbor(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
-                               NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out);
-  Status RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path, float p, float q,
-                    NodeIdType default_node, std::shared_ptr<Tensor> *out);
+  // Get sampled neighbors.
+  // @param std::vector<NodeType> node_list - List of nodes
+  // @param std::vector<NodeIdType> neighbor_nums - Number of neighbors sampled per hop
+  // @param std::vector<NodeType> neighbor_types - Neighbor type sampled per hop
+  // @param std::shared_ptr<Tensor> *out - Returned neighbor's id.
+  // @return Status - The error code return
+  Status GetSampledNeighbors(const std::vector<NodeIdType> &node_list, const std::vector<NodeIdType> &neighbor_nums,
+                             const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out);
+
+  // Get negative sampled neighbors.
+  // @param std::vector<NodeType> node_list - List of nodes
+  // @param NodeIdType samples_num - Number of neighbors sampled
+  // @param NodeType neg_neighbor_type - The type of negative neighbor.
+  // @param std::shared_ptr<Tensor> *out - Returned negative neighbor's id.
+  // @return Status - The error code return
+  Status GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
+                                NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out);
+
+  // Node2vec random walk.
+  // @param std::vector<NodeIdType> node_list - List of nodes
+  // @param std::vector<NodeType> meta_path - node type of each step
+  // @param float step_home_param - return hyper parameter in node2vec algorithm
+  // @param float step_away_param - inout hyper parameter in node2vec algorithm
+  // @param NodeIdType default_node - default node id
+  // @param std::shared_ptr<Tensor> *out - Returned nodes id in walk path
+  // @return Status - The error code return
+  Status RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
+                    float step_home_param, float step_away_param, NodeIdType default_node,
+                    std::shared_ptr<Tensor> *out);
 
   // Get the feature of a node
   // @param std::shared_ptr<Tensor> nodes - List of nodes
@@ -112,14 +136,55 @@ class Graph {
                         TensorRow *out);
 
   // Get meta information of graph
-  // @param std::vector<NodeMetaInfo> *node_info - Returned meta information of node
-  // @param std::vector<NodeMetaInfo> *node_info - Returned meta information of edge
+  // @param MetaInfo *meta_info - Returned meta information
   // @return Status - The error code return
-  Status GetMetaInfo(std::vector<NodeMetaInfo> *node_info, std::vector<EdgeMetaInfo> *edge_info);
+  Status GetMetaInfo(MetaInfo *meta_info);
+
+  // Return meta information to python layer
+  Status GraphInfo(py::dict *out);
 
   Status Init();
 
  private:
+  class RandomWalkBase {
+   public:
+    explicit RandomWalkBase(Graph *graph);
+
+    Status Build(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
+                 float step_home_param = 1.0, float step_away_param = 1.0, NodeIdType default_node = -1,
+                 int32_t num_walks = 1, int32_t num_workers = 1);
+
+    ~RandomWalkBase() = default;
+
+    Status SimulateWalk(std::vector<std::vector<NodeIdType>> *walks);
+
+   private:
+    Status Node2vecWalk(const NodeIdType &start_node, std::vector<NodeIdType> *walk_path);
+
+    Status GetNodeProbability(const NodeIdType &node_id, const NodeType &node_type,
+                              std::shared_ptr<StochasticIndex> *node_probability);
+
+    Status GetEdgeProbability(const NodeIdType &src, const NodeIdType &dst, uint32_t meta_path_index,
+                              std::shared_ptr<StochasticIndex> *edge_probability);
+
+    static StochasticIndex GenerateProbability(const std::vector<float> &probability);
+
+    static uint32_t WalkToNextNode(const StochasticIndex &stochastic_index);
+
+    template <typename T>
+    std::vector<float> Normalize(const std::vector<T> &non_normalized_probability);
+
+    Graph *graph_;
+    std::vector<NodeIdType> node_list_;
+    std::vector<NodeType> meta_path_;
+    float step_home_param_;  // Return hyper parameter. Default is 1.0
+    float step_away_param_;  // Inout hyper parameter. Default is 1.0
+    NodeIdType default_node_;
+
+    int32_t num_walks_;    // Number of walks per source. Default is 10
+    int32_t num_workers_;  // The number of worker threads. Default is 1
+  };
+
   // Load graph data from mindrecord file
   // @return Status - The error code return
   Status LoadNodeAndEdge();
@@ -146,8 +211,25 @@ class Graph {
   // @return Status - The error code return
   Status GetNodeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature);
 
+  // Find node object using node id
+  // @param NodeIdType id -
+  // @param std::shared_ptr<Node> *node - Returned node object
+  // @return Status - The error code return
+  Status GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node);
+
+  // Negative sampling
+  // @param std::vector<NodeIdType> &input_data - The data set to be sampled
+  // @param std::unordered_set<NodeIdType> &exclude_data - Data to be excluded
+  // @param int32_t samples_num -
+  // @param std::vector<NodeIdType> *out_samples - Sampling results returned
+  // @return Status - The error code return
+  Status NegativeSample(const std::vector<NodeIdType> &input_data, const std::unordered_set<NodeIdType> &exclude_data,
+                        int32_t samples_num, std::vector<NodeIdType> *out_samples);
+
   std::string dataset_file_;
   int32_t num_workers_;  // The number of worker threads
+  std::mt19937 rnd_;
+  RandomWalkBase random_walk_;
 
   std::unordered_map<NodeType, std::vector<NodeIdType>> node_type_map_;
   std::unordered_map<NodeIdType, std::shared_ptr<Node>> node_id_map_;

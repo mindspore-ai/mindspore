@@ -11,6 +11,7 @@ add_library(core OBJECT
   data_type.cc
   global_context.cc
   tensor.cc
+  tensor_row.cc
   tensor_shape.cc
   )
 add_dependencies(core mindspore::protobuf)

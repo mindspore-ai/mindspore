@@ -36,7 +36,6 @@ using GraphDefT = mindspore::predict::GraphDefT;
 using TensorDefT = mindspore::predict::TensorDefT;
 using SubGraphDefT = mindspore::predict::SubGraphDefT;
 using SubGraphPtr = std::unique_ptr<mindspore::predict::SubGraphDefT>;
-using NodeDef = mindspore::predict::NodeDefT;
 using MsDataType = mindspore::predict::DataType;
 using MsFormat = mindspore::predict::Format;
 using MsKernelKey = void *;
