@@ -289,7 +289,7 @@ const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {
     if (chmod(file_name.c_str(), mode) != 0) {
-      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+      MS_LOG(DEBUG) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
     }
   } catch (std::exception &e) {
     MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";
