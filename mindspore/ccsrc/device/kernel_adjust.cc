@@ -103,8 +103,8 @@ CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::Kern
 }
 
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
-  device::ascend::AscendStreamMng &stream_manager = device::ascend::AscendStreamMng::GetInstance();
-  stream_manager.Reset();
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  resource_manager.ResetResource();
   if (!NeedInsertSwitch()) {
     return;
   }
@@ -135,17 +135,16 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   }
 
   std::vector<CNodePtr> exec_order;
-
   // getnext loop process
   // getnext loop stream switch op
   CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
   MS_EXCEPTION_IF_NULL(getnext_switch_app);
-  uint32_t getnext_switch_stream_id = stream_manager.ApplyNewStream();
+  uint32_t getnext_switch_stream_id = resource_manager.ApplyNewStream();
   AnfAlgo::SetStreamId(getnext_switch_stream_id, getnext_switch_app.get());
   exec_order.push_back(getnext_switch_app);
 
   // getnext op
-  uint32_t getnext_stream_id = stream_manager.ApplyNewStream();
+  uint32_t getnext_stream_id = resource_manager.ApplyNewStream();
   size_t i = 0;
   for (; i < orders.size(); i++) {
     auto node = orders[i];
@@ -160,7 +159,8 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(getnext_stream_id), getnext_switch_app);
 
   // getnext loop send
-  CNodePtr send = CreateSendApplyKernel(kernel_graph_ptr, kFirstEventId);
+  uint32_t getnext_event_id = resource_manager.ApplyNewEvent();
+  CNodePtr send = CreateSendApplyKernel(kernel_graph_ptr, getnext_event_id);
   AnfAlgo::SetStreamId(getnext_stream_id, send.get());
   exec_order.push_back(send);
 
@@ -168,14 +168,14 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   // fpbp loop stream switch
   CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
   MS_EXCEPTION_IF_NULL(fpbp_switch_app);
-  uint32_t fpbp_switch_stream_id = stream_manager.ApplyNewStream();
+  uint32_t fpbp_switch_stream_id = resource_manager.ApplyNewStream();
   AnfAlgo::SetStreamId(fpbp_switch_stream_id, fpbp_switch_app.get());
   AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
   exec_order.push_back(fpbp_switch_app);
 
   // fpbp loop recv
-  CNodePtr recv = CreateRecvApplyKernel(kernel_graph_ptr, kFirstEventId);
-  uint32_t fpbp_stream_id = stream_manager.ApplyNewStream();
+  CNodePtr recv = CreateRecvApplyKernel(kernel_graph_ptr, getnext_event_id);
+  uint32_t fpbp_stream_id = resource_manager.ApplyNewStream();
   AnfAlgo::SetStreamId(fpbp_stream_id, recv.get());
   exec_order.push_back(recv);
 
