@@ -158,7 +158,9 @@ class _MindSporeFunction:
         # replace key with obj info and object ext info when fn is a method
         if self.obj is not None:
             self.obj.__parse_method__ = method_name
-            generate_name = self.obj.__module__ + "." + str(self.obj.create_time)
+            generate_name = self.obj.__module__ + "."
+            if self.obj.__class__.__name__ != "ClipByNorm":
+                generate_name = generate_name + str(self.obj.create_time)
         if self.identify_obj is not None:
             generate_name = generate_name + str(id(self.identify_obj))
 

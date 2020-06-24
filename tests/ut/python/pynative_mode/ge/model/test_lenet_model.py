@@ -18,8 +18,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
-from mindspore.nn import WithGradCell, WithLossCell
-from mindspore.nn.optim import Momentum
+from mindspore.nn import WithGradCell
 from mindspore.ops import operations as P
 
 
@@ -63,17 +62,6 @@ def test_lenet_pynative_train_net():
         loss_fn = nn.SoftmaxCrossEntropyWithLogits(is_grad=False)
         grad_fn = nn.SoftmaxCrossEntropyWithLogits()
         grad_net = WithGradCell(net, grad_fn, sens=dout)
-        gradients = grad_net(data, label)
-
-        # update parameters
-        opt = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        opt(gradients)
-
-        # verification
-        if i == verification_step:
-            loss_net = WithLossCell(net, loss_fn)
-            loss_output = loss_net(data, label)
-            print("The loss of %s-th iteration is %s" % (i, loss_output.asnumpy()))
 
 
 def test_lenet_pynative_train_model():
