@@ -207,7 +207,7 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
     }
   }
   // process output
-  std::vector<size_t> output_indexs;
+  std::vector<size_t> output_indexs = {};
   for (size_t i = 0; i < output_num; ++i) {
     auto param_output = parameters_indexs.at(input_num + workspace_num + i);
     if (param_output == 1) {
@@ -215,9 +215,11 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
       MS_LOG(INFO) << "Atomic clear output index: " << i;
     }
   }
-  AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(output_indexs), kernel_node);
+  if (!output_indexs.empty()) {
+    AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(output_indexs), kernel_node);
+  }
   // process workspace
-  std::vector<size_t> workspace_indexs;
+  std::vector<size_t> workspace_indexs = {};
   for (size_t k = 0; k < workspace_num; ++k) {
     auto param_workspace = parameters_indexs.at(input_num + k);
     if (param_workspace == 1) {
@@ -225,8 +227,9 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
       MS_LOG(INFO) << "Atomic clear workspace index: " << k;
     }
   }
-  AnfAlgo::SetNodeAttr(kAttrAtomicWorkspaceIndexs, MakeValue(workspace_indexs), kernel_node);
-
+  if (!workspace_indexs.empty()) {
+    AnfAlgo::SetNodeAttr(kAttrAtomicWorkspaceIndexs, MakeValue(workspace_indexs), kernel_node);
+  }
   return !(workspace_indexs.empty() && output_indexs.empty());
 }
 
