@@ -301,6 +301,8 @@ class SummaryCollector(Callback):
         else:
             self._collect_eval_lineage(cb_params)
 
+        # This is a workaround to avoid record '_summary_tensor_cache'.
+        self._record.set_mode('eval')
         # There's nothing special about setting step to 0 here, just to satisfy the interface call
         self._record.record(step=0)
 
