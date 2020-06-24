@@ -17,16 +17,14 @@ network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
 
-config = ed({
+# config for resent50, cifar10
+config1 = ed({
     "class_num": 10,
     "batch_size": 32,
     "loss_scale": 1024,
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "epoch_size": 90,
-    "buffer_size": 100,
-    "image_height": 224,
-    "image_width": 224,
     "save_checkpoint": True,
     "save_checkpoint_epochs": 5,
     "keep_checkpoint_max": 10,
@@ -36,4 +34,46 @@ config = ed({
     "lr_init": 0.01,
     "lr_end": 0.00001,
     "lr_max": 0.1
+})
+
+# config for resnet50, imagenet2012
+config2 = ed({
+    "class_num": 1001,
+    "batch_size": 32,
+    "loss_scale": 1024,
+    "momentum": 0.9,
+    "weight_decay": 1e-4,
+    "epoch_size": 90,
+    "pretrain_epoch_size": 1,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 5,
+    "keep_checkpoint_max": 10,
+    "save_checkpoint_path": "./",
+    "warmup_epochs": 0,
+    "lr_decay_mode": "cosine",
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
+    "lr_init": 0,
+    "lr_max": 0.1
+
+})
+
+# config for resent101, imagenet2012
+config3 = ed({
+    "class_num": 1001,
+    "batch_size": 32,
+    "loss_scale": 1024,
+    "momentum": 0.9,
+    "weight_decay": 1e-4,
+    "epoch_size": 120,
+    "pretrain_epoch_size": 0,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 5,
+    "keep_checkpoint_max": 10,
+    "save_checkpoint_path": "./",
+    "warmup_epochs": 0,
+    "lr_decay_mode": "cosine",
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
+    "lr": 0.1
 })

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""ResNet101."""
+"""ResNet."""
 import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
@@ -239,6 +239,28 @@ class ResNet(nn.Cell):
         out = self.end_point(out)
 
         return out
+
+
+def resnet50(class_num=10):
+    """
+    Get ResNet50 neural network.
+
+    Args:
+        class_num (int): Class number.
+
+    Returns:
+        Cell, cell instance of ResNet50 neural network.
+
+    Examples:
+        >>> net = resnet50(10)
+    """
+    return ResNet(ResidualBlock,
+                  [3, 4, 6, 3],
+                  [64, 256, 512, 1024],
+                  [256, 512, 1024, 2048],
+                  [1, 2, 2, 2],
+                  class_num)
+
 
 def resnet101(class_num=1001):
     """
