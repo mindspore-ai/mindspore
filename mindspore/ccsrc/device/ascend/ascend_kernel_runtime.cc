@@ -59,7 +59,9 @@ std::string GetRankId() {
   auto mpi_config_ptr = MpiConfig::GetInstance();
   MS_EXCEPTION_IF_NULL(mpi_config_ptr);
   if (mpi_config_ptr->enable_mpi()) {
-    int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
+    auto mpi_instance = device::cpu::MPIAdapter::Instance();
+    MS_EXCEPTION_IF_NULL(mpi_instance);
+    int rank_id = mpi_instance->GetRankId();
     const char *offset = std::getenv("RANK_OFFSET");
     if (offset != nullptr) {
       try {
