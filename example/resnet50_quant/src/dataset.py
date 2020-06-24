@@ -16,12 +16,15 @@
 create train or eval dataset.
 """
 import os
+from functools import partial
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.transforms.vision.py_transforms as P
 from mindspore.communication.management import init, get_rank, get_group_size
+from src.config import config
+
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
@@ -45,11 +48,16 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
         rank_id = get_rank()
         device_num = get_group_size()
 
-    if device_num == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+    columns_list = ['image', 'label']
+    if config.data_load_mode == "mindrecord":
+        load_func = partial(de.MindDataset, dataset_path, columns_list)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                     num_shards=device_num, shard_id=rank_id)
+        load_func = partial(de.ImageFolderDatasetV2, dataset_path)
+    if device_num == 1:
+        ds = load_func(num_parallel_workers=8, shuffle=True)
+    else:
+        ds = load_func(num_parallel_workers=8, shuffle=True,
+                       num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -66,7 +74,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     else:
         trans = [
             C.Decode(),
-            C.Resize((256, 256)),
+            C.Resize(256),
             C.CenterCrop(image_size),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
@@ -84,6 +92,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     ds = ds.repeat(repeat_num)
 
     return ds
+
 
 def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """

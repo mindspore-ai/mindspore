@@ -27,7 +27,7 @@ from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from models.resnet_quant import resnet50_quant
-from src.dataset import create_dataset_py
+from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config
 from src.crossentropy import CrossEntropy
@@ -62,7 +62,6 @@ if __name__ == '__main__':
     epoch_size = config.epoch_size
     net = resnet50_quant(class_num=config.class_num)
     net.set_train(True)
-    print("========resnet50:\r\n{}".format(net))
 
     # weight init
     if args_opt.pre_trained:
@@ -85,8 +84,8 @@ if __name__ == '__main__':
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     if args_opt.do_train:
-        dataset = create_dataset_py(dataset_path=args_opt.dataset_path, do_train=True,
-                                    repeat_num=epoch_size, batch_size=config.batch_size, target=target)
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
+                                 repeat_num=epoch_size, batch_size=config.batch_size, target=target)
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -94,6 +93,7 @@ if __name__ == '__main__':
                     total_epochs=config.epoch_size, steps_per_epoch=step_size, lr_decay_mode='cosine')
         if args_opt.pre_trained:
             lr = lr[config.pretrained_epoch_size * step_size:]
+        print("========resnet50:\r\n{}\r\nlr: \r\n{}".format(net, lr))
         lr = Tensor(lr)
 
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         loss_cb = LossMonitor()
         cb = [time_cb, loss_cb]
         if config.save_checkpoint:
-            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs*step_size,
+            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                          keep_checkpoint_max=config.keep_checkpoint_max)
             ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
             cb += [ckpt_cb]

@@ -22,6 +22,7 @@ config_ascend = ed({
     "image_height": 224,
     "image_width": 224,
     "batch_size": 192,
+    "data_load_mode": "mindrecord",
     "epoch_size": 60,
     "start_epoch": 200,
     "warmup_epochs": 1,

@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore.nn import FakeQuantWithMinMax, Conv2dBatchNormQuant
 
 _ema_decay = 0.999
-_symmetric = False
+_symmetric = True
 _fake = True
 _per_channel = True
 
