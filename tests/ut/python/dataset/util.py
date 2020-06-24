@@ -16,7 +16,9 @@
 import hashlib
 import json
 import os
+from enum import Enum
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
 # import jsbeautifier
 import mindspore.dataset as ds
@@ -284,3 +286,124 @@ def config_get_set_num_parallel_workers(num_parallel_workers_new):
     logger.info("num_parallel_workers: original = {}  new = {} ".format(num_parallel_workers_original,
                                                                         num_parallel_workers_new))
     return num_parallel_workers_original
+
+
+def visualize_with_bounding_boxes(orig, aug, plot_rows=3):
+    """
+    Take a list of un-augmented and augmented images with "annotation" bounding boxes
+    Plot images to compare test correct BBox augment functionality
+    :param orig: list of original images and bboxes (without aug)
+    :param aug: list of augmented images and bboxes
+    :param plot_rows: number of rows on plot (rows = samples on one plot)
+    :return: None
+    """
+
+    def add_bounding_boxes(ax, bboxes):
+        for bbox in bboxes:
+            rect = patches.Rectangle((bbox[0], bbox[1]),
+                                     bbox[2], bbox[3],
+                                     linewidth=1, edgecolor='r', facecolor='none')
+            # Add the patch to the Axes
+            ax.add_patch(rect)
+
+    # Quick check to confirm correct input parameters
+    if not isinstance(orig, list) or not isinstance(aug, list):
+        return
+    if len(orig) != len(aug) or not orig:
+        return
+
+    comp_set = int(len(orig)/plot_rows)
+    orig, aug = np.array(orig), np.array(aug)
+
+    if len(orig) > plot_rows:
+        orig = np.split(orig[:comp_set*plot_rows], comp_set) + [orig[comp_set*plot_rows:]]
+        aug = np.split(aug[:comp_set*plot_rows], comp_set) + [aug[comp_set*plot_rows:]]
+    else:
+        orig = [orig]
+        aug = [aug]
+
+    for ix, allData in enumerate(zip(orig, aug)):
+        base_ix = ix * plot_rows  # will signal what base level we're on
+
+        sub_plot_count = 2 if (len(allData[0]) < 2) else len(allData[0])  # if 1 image remains, create subplot for 2 to simplify axis selection
+        fig, axs = plt.subplots(sub_plot_count, 2)
+        fig.tight_layout(pad=1.5)
+
+        for x, (dataA, dataB) in enumerate(zip(allData[0], allData[1])):
+            cur_ix = base_ix + x
+
+            axs[x, 0].imshow(dataA["image"])
+            add_bounding_boxes(axs[x, 0], dataA["annotation"])
+            axs[x, 0].title.set_text("Original" + str(cur_ix+1))
+            logger.info("Original **\n{} : {}".format(str(cur_ix+1), dataA["annotation"]))
+
+            axs[x, 1].imshow(dataB["image"])
+            add_bounding_boxes(axs[x, 1], dataB["annotation"])
+            axs[x, 1].title.set_text("Augmented" + str(cur_ix+1))
+            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix+1), dataB["annotation"]))
+
+        plt.show()
+
+
+class InvalidBBoxType(Enum):
+    """
+    Defines Invalid Bounding Bbox types for test cases
+    """
+    WidthOverflow = 1
+    HeightOverflow = 2
+    NegativeXY = 3
+    WrongShape = 4
+
+
+def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
+    """
+    :param data: de object detection pipeline
+    :param test_op: Augmentation Op to test on image
+    :param invalid_bbox_type: type of bad box
+    :param expected_error: error expected to get due to bad box
+    :return: None
+    """
+
+    def add_bad_annotation(img, bboxes, invalid_bbox_type_):
+        """
+        Used to generate erroneous bounding box examples on given img.
+        :param img: image where the bounding boxes are.
+        :param bboxes: in [x_min, y_min, w, h, label, truncate, difficult] format
+        :param box_type_: type of bad box
+        :return: bboxes with bad examples added
+        """
+        height = img.shape[0]
+        width = img.shape[1]
+        if invalid_bbox_type_ == InvalidBBoxType.WidthOverflow:
+            # use box that overflows on width
+            return img, np.array([[0, 0, width + 1, height, 0, 0, 0]]).astype(np.uint32)
+
+        if invalid_bbox_type_ == InvalidBBoxType.HeightOverflow:
+            # use box that overflows on height
+            return img, np.array([[0, 0, width, height + 1, 0, 0, 0]]).astype(np.uint32)
+
+        if invalid_bbox_type_ == InvalidBBoxType.NegativeXY:
+            # use box with negative xy
+            return img, np.array([[-10, -10, width, height, 0, 0, 0]]).astype(np.uint32)
+
+        if invalid_bbox_type_ == InvalidBBoxType.WrongShape:
+            # use box that has incorrect shape
+            return img, np.array([[0, 0, width - 1]]).astype(np.uint32)
+        return img, bboxes
+
+    try:
+        # map to use selected invalid bounding box type
+        data = data.map(input_columns=["image", "annotation"],
+                        output_columns=["image", "annotation"],
+                        columns_order=["image", "annotation"],
+                        operations=lambda img, bboxes: add_bad_annotation(img, bboxes, invalid_bbox_type))
+        # map to apply ops
+        data = data.map(input_columns=["image", "annotation"],
+                        output_columns=["image", "annotation"],
+                        columns_order=["image", "annotation"],
+                        operations=[test_op])  # Add column for "annotation"
+        for _, _ in enumerate(data.create_dict_iterator()):
+            break
+    except RuntimeError as error:
+        logger.info("Got an exception in DE: {}".format(str(error)))
+        assert expected_error in str(error)
