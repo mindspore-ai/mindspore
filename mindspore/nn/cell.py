@@ -186,7 +186,7 @@ class Cell:
         raise AttributeError("'{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
-        _pynative_exec.clear("resource")
+        _pynative_exec.clear(str(id(self)))
         if hasattr(self, "_create_time"):
             _executor.del_net_res(str(self._create_time))
 

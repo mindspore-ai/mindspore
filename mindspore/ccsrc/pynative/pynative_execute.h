@@ -46,7 +46,7 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 py::tuple RunOp(const py::args &args);
 
 py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *const out_args,
-                        py::list *out_args_list);
+                        py::list *const out_args_list);
 
 void ClearPyNativeSession();
 
@@ -68,11 +68,15 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
     return executor_;
   }
   void NewGraph(const py::object &cell, const py::args &args);
+  void NewGraphInner(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
+  void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
   void EndGraphByOutId(const std::string &out_id, const py::object &cell, const py::object &out, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights);
   abstract::AbstractBasePtrList GetArgsSpec(const py::args &args);
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
+  void GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                    const py::args &args);
   void Clear(const std::string &flag = "");
   void Clean();
   void ClearRes();
