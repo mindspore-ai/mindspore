@@ -47,8 +47,8 @@ bool ReduceScatterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto output_data_num = outputs[0]->size / sizeof(float);
 
-  return device::cpu::MPIAdapter::Instance().ReduceScatter(input_addr, output_addr, ranks_group_, output_data_num,
-                                                           op_type_);
+  return device::cpu::MPIAdapter::Instance()->ReduceScatter(input_addr, output_addr, ranks_group_, output_data_num,
+                                                            op_type_);
 }
 }  // namespace kernel
 }  // namespace mindspore
