@@ -1647,7 +1647,7 @@ bool DfGraphConvertor::GetControlDependList(const CNodePtr &node,
     dst_ops_list->insert(dst_ops_list->end(), converted_list.begin(), converted_list.end());
   }
   if (src_ops_list->empty() || dst_ops_list->empty()) {
-    MS_LOG(WARNING) << "Control depend node's src or dest node is not a apply node, ignore it";
+    MS_LOG(DEBUG) << "Control depend node's src or dest node is not a CNode, ignore it";
     error_ = SUCCESS;
   }
   return true;
@@ -1691,6 +1691,8 @@ void DfGraphConvertor::ConvertControlDependNode(const CNodePtr node) {
                          });
   } else if (src_ops_list->size() == 1 && dst_ops_list->size() == 1) {
     control_edges.push_back({(*src_ops_list)[0], (*dst_ops_list)[0]});
+  } else if (src_ops_list->empty() || dst_ops_list->empty()) {
+    MS_LOG(DEBUG) << "Depend list of src or dst is empty, ignore it";
   } else {
     MS_LOG(ERROR) << "Convert control depend node to operator failed, depend src:" << src_ops_list->size()
                   << " -> dst:" << dst_ops_list->size();
