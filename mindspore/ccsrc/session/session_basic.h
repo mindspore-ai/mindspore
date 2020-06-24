@@ -77,6 +77,8 @@ class SessionBasic {
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
+  void CreateCNodeKernelGraph(const AnfNodePtr node, KernelGraphPtr graph);
+
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph);

@@ -139,16 +139,16 @@ std::vector<BaseRef> GetRealArgs(const KernelGraphPtr graph, const VectorRef &ar
     }
   }
   if (graph_inputs.size() != valid_inputs.size()) {
-    MS_LOG(EXCEPTION) << "graph_inputs.size(): " << graph_inputs.size()
+    MS_LOG(EXCEPTION) << "Graph_inputs.size(): " << graph_inputs.size()
                       << ", valid_inputs.size(): " << valid_inputs.size() << " not equal";
   }
   if (real_args_size != graph_inputs.size()) {
     for (size_t j = 0; j < valid_inputs.size(); j++) {
       if (valid_inputs[j]) {
-        MS_LOG(INFO) << "index: " << j << ", nodes: " << graph_inputs[j]->DebugString();
+        MS_LOG(INFO) << "Index: " << j << ", nodes: " << graph_inputs[j]->DebugString();
       }
     }
-    MS_LOG(WARNING) << "real_args_size: " << real_args_size << ", graph_inputs.size(): " << graph_inputs.size()
+    MS_LOG(WARNING) << "Real_args_size: " << real_args_size << ", graph_inputs.size(): " << graph_inputs.size()
                     << " not equal";
   }
   return real_args;
@@ -158,7 +158,7 @@ std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
   std::vector<CNodePtr> cnodes = {};
   size_t i = 0;
   for (const auto &anf : anf_nodes) {
-    MS_LOG(INFO) << "apply_list[" << i++ << "] = " << anf->DebugString();
+    MS_LOG(INFO) << "Apply_list[" << i++ << "] = " << anf->DebugString();
     MS_EXCEPTION_IF_NULL(anf);
     if (anf->isa<CNode>()) {
       cnodes.push_back(anf->cast<CNodePtr>());
@@ -276,7 +276,7 @@ static void RecurseToUpdateCallRealInput(NotNull<KernelGraphPtr> graph,
 }  // namespace
 
 GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
-  MS_LOG(INFO) << "start";
+  MS_LOG(INFO) << "Start";
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs);
   auto graph_id = graph->graph_id();
@@ -285,7 +285,7 @@ GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrL
 }
 
 GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
-  MS_LOG(INFO) << "start";
+  MS_LOG(INFO) << "Start";
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   BackendOptimization(all_graphs);
@@ -338,7 +338,7 @@ void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> 
 }
 
 void AscendSession::BuildGraph(GraphId graph_id) {
-  MS_LOG(INFO) << "start";
+  MS_LOG(INFO) << "Start";
   auto graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(graph);
   // resource initialize
@@ -369,6 +369,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
     MergeGraphExecOrder();
   } else {
     auto single_graph = GetGraph(graph_id);
+    MS_EXCEPTION_IF_NULL(single_graph);
     CompileChildGraph(single_graph);
     // set the distinction label of single graph
     single_graph->set_stream_distinction_label(graph_id);
@@ -397,7 +398,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   // sync the inital const tensor to device
   SyncInitialTenosrToDevice();
   ExportChildGraphs(graph_id);
-  MS_LOG(INFO) << "end";
+  MS_LOG(INFO) << "End";
 }
 
 void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
@@ -439,7 +440,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
 
 void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                              VectorRef *const outputs) {
-  MS_LOG(INFO) << "start";
+  MS_LOG(INFO) << "Start";
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // if none of child graph and no anf output exists
@@ -499,7 +500,7 @@ void AscendSession::RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_EXCEPTION_IF_NULL(runtime_instance);
   bool ret_ok = runtime_instance->LaunchKernel(kernel_graph.get());
   if (!ret_ok) {
-    MS_LOG(EXCEPTION) << "run task error!";
+    MS_LOG(EXCEPTION) << "Run task error!";
   }
   MS_LOG(INFO) << "Finish!";
 }
@@ -696,7 +697,7 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::RunOpMemoryClear(KernelGraph *kernel_graph) const {
+void AscendSession::RunOpMemoryClear(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -796,6 +797,7 @@ void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
 GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {
   MS_LOG(INFO) << "Start! Args size " << args.size();
   auto final_graph = NewKernelGraph();
+  MS_EXCEPTION_IF_NULL(final_graph);
   final_graph_id_ = final_graph->graph_id();
   MS_LOG(INFO) << "Create a new final graph" << final_graph_id_ << " success";
   // init private variables and bind them with final_graph_id
@@ -826,7 +828,7 @@ GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {
       final_graph_inputs->push_back(parameter_backend);
     }
     MS_EXCEPTION_IF_NULL(parameter_backend);
-    MS_LOG(INFO) << "parameter backend " << parameter_backend->DebugString() << " belong_graph_id "
+    MS_LOG(INFO) << "Parameter backend " << parameter_backend->DebugString() << " belong_graph_id "
                  << AnfAlgo::GetGraphId(parameter_backend.get());
   }
   MS_LOG(INFO) << "End final_graph_id " << final_graph_id_;
@@ -842,7 +844,7 @@ void AscendSession::RecurseGetSummaryNodes(KernelGraph *graph,
   if (graph_order_iter == graph_execute_orders_.end()) {
     SessionBasic::GetSummaryNodes(graph);
     auto summary_nodes = graph->summary_nodes();
-    (*summary).insert(summary_nodes.begin(), summary_nodes.end());
+    summary->insert(summary_nodes.begin(), summary_nodes.end());
     return;
   }
   // for every child graph, find summary nodes
@@ -854,7 +856,7 @@ void AscendSession::RecurseGetSummaryNodes(KernelGraph *graph,
     }
     SessionBasic::GetSummaryNodes(child_graph.get());
     auto child_graph_summary = child_graph->summary_nodes();
-    (*summary).insert(child_graph_summary.begin(), child_graph_summary.end());
+    summary->insert(child_graph_summary.begin(), child_graph_summary.end());
     RecurseGetSummaryNodes(child_graph.get(), summary);
   }
   graph->set_summary_nodes(*summary);
@@ -941,6 +943,7 @@ void AscendSession::SetFinalGraphOutput(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(final_graph);
   final_graph->set_output(final_graph->NewCNode({NewValueNode(prim::kPrimMakeTuple), value_node}));
   final_graph->set_executable(false);
+  MS_EXCEPTION_IF_NULL(value);
   MS_LOG(INFO) << "Not anf output[" << value->ToString() << "]";
 }
 
@@ -1047,6 +1050,7 @@ void AscendSession::CopyOutputOfIf(GraphId false_graph_id) {
       MS_LOG(INFO) << "The last graph of false branch is " << false_graph_id;
       // create fake output
       auto fake_output_graph = NewKernelGraph();
+      MS_EXCEPTION_IF_NULL(fake_output_graph);
       graph_execute_order.push_back(fake_output_graph->graph_id());
       graph_order_type.push_back(COMMON_GRAPH);
       fake_output_graph->set_output(CreateFakeOutput(fake_output_graph->graph_id(), final_graph->output()));
@@ -1079,7 +1083,7 @@ void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, 
   auto cond_graph_index = ExecOrderOfChildGraph(final_graph_id_, cond_graph_id);
   auto &graph_order_type = GetGraphOrderType(final_graph_id_);
   if (cond_graph_index >= graph_order_type.size()) {
-    MS_LOG(EXCEPTION) << "cond_graph_index " << cond_graph_index << " out of range " << graph_order_types_.size();
+    MS_LOG(EXCEPTION) << "Cond_graph_index " << cond_graph_index << " out of range " << graph_order_types_.size();
   }
   graph_order_type[cond_graph_index] = CONDITION_GRAPH;
   // update distinction label of false graph,update before merge to sure the distinction
@@ -1156,7 +1160,7 @@ void AscendSession::InsertAllAssigns() {
     MS_EXCEPTION_IF_NULL(to_graph);
     std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
     if (input_idx >= graph_inputs.size()) {
-      MS_LOG(EXCEPTION) << "input_index " << input_idx << " out of range size " << graph_inputs.size();
+      MS_LOG(EXCEPTION) << "Input_index " << input_idx << " out of range size " << graph_inputs.size();
     }
     auto backend_parameter = graph_inputs[input_idx];
     assigns.emplace_back(std::pair<AnfNodePtr, AnfNodePtr>(front_anf, backend_parameter));
@@ -1180,7 +1184,7 @@ void AscendSession::InsertAllAssigns() {
 // insert active to graph
 void AscendSession::SetActive(GraphId from, GraphId to) {
   if (while_condition_graphs_.find(to) != while_condition_graphs_.end()) {
-    MS_LOG(WARNING) << " to " << to << " has been exits in map,from " << from << ",exist from "
+    MS_LOG(WARNING) << "To " << to << " has been exits in map,from " << from << ",exist from "
                     << while_condition_graphs_[to];
     return;
   }
@@ -1216,7 +1220,7 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, GraphId 
   MS_EXCEPTION_IF_NULL(to_graph);
   std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
   if (input_idx >= graph_inputs.size()) {
-    MS_LOG(EXCEPTION) << "input_index " << input_idx << " out of range size " << graph_inputs.size();
+    MS_LOG(EXCEPTION) << "Input_index " << input_idx << " out of range size " << graph_inputs.size();
   }
   auto backend_parameter = graph_inputs[input_idx];
   MS_EXCEPTION_IF_NULL(backend_parameter);
@@ -1250,7 +1254,7 @@ void AscendSession::SetChildGraphParameter(const tensor::TensorPtr &front_tensor
 }
 
 void AscendSession::UpdateGraphOrder(GraphId to_graph_id) {
-  MS_LOG(INFO) << "to_graph_id " << to_graph_id;
+  MS_LOG(INFO) << "To_graph_id " << to_graph_id;
   auto &graph_order = GetGraphOrder(final_graph_id_);
   auto &graph_type = GetGraphOrderType(final_graph_id_);
   for (size_t i = 0; i < graph_order.size(); i++) {
@@ -1268,6 +1272,8 @@ void AscendSession::UpdateGraphOrder(GraphId to_graph_id) {
 }
 
 size_t AscendSession::SetChildGraphInput(const KernelGraphPtr &graph, const AnfNodePtr &node, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto output_num = AnfAlgo::GetOutputTensorNum(node);
   if (output_num > 1 && !AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
     return input_index + output_num;
@@ -1282,6 +1288,7 @@ size_t AscendSession::SetChildGraphInput(const KernelGraphPtr &graph, const AnfN
 }
 
 size_t AscendSession::SetChildGraphInput(const KernelGraphPtr &graph, const ValuePtr &value, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<Tensor>()) {
     MS_LOG(EXCEPTION) << "Value Node should be a tensor, unexpected value: " << value->ToString();
@@ -1319,7 +1326,7 @@ void AscendSession::SetChildGraphInput(GraphId g, const VectorRef &args) {
   size_t input_index = 0;
   for (size_t i = 0; i < real_args.size(); i++) {
     if (input_index >= graph_inputs.size()) {
-      MS_LOG(EXCEPTION) << "input_index " << input_index << " out of range size " << graph_inputs.size();
+      MS_LOG(EXCEPTION) << "Input_index " << input_index << " out of range size " << graph_inputs.size();
     }
     auto &real_arg = real_args[i];
     if (utils::isa<AnfNodePtr>(real_arg)) {
@@ -1351,7 +1358,7 @@ GraphId AscendSession::GetGraphIdByNode(const AnfNodePtr &front_anf) const {
     }
   }
   MS_EXCEPTION_IF_NULL(front_anf);
-  MS_LOG(DEBUG) << "front_anf " << front_anf->DebugString() << " is not exist in any graph";
+  MS_LOG(DEBUG) << "Front_anf " << front_anf->DebugString() << " is not exist in any graph";
   return kInvalidGraphId;
 }
 
@@ -1514,7 +1521,7 @@ void AscendSession::SyncInitialTenosrToDevice() {
     MS_EXCEPTION_IF_NULL(to_graph);
     std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
     if (input_idx >= graph_inputs.size()) {
-      MS_LOG(EXCEPTION) << "input_index " << input_idx << " out of range size " << graph_inputs.size();
+      MS_LOG(EXCEPTION) << "Input_index " << input_idx << " out of range size " << graph_inputs.size();
     }
     auto backend_parameter = graph_inputs[input_idx];
     // sync data from host to device
@@ -1548,6 +1555,7 @@ static void ConstructSplitedGraphOutput(const KernelGraphPtr &new_kernel_graph, 
       new_kernel_graph->set_return(anf_node);
     }
     if (has_output_nodes.find(anf_node) == has_output_nodes.end()) {
+      MS_EXCEPTION_IF_NULL(anf_node);
       MS_LOG(INFO) << "Output[" << output_idx++ << "]:" << anf_node->DebugString();
       make_tuple_inputs.push_back(anf_node);
     }
@@ -1560,7 +1568,7 @@ static void ConstructSplitedGraphOutput(const KernelGraphPtr &new_kernel_graph, 
 std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
                                                              const std::vector<CNodePtr> &list) {
   MS_EXCEPTION_IF_NULL(new_kernel_graph);
-  MS_LOG(INFO) << "start contruct splited kernel graph:" << new_kernel_graph->graph_id();
+  MS_LOG(INFO) << "Start contruct splited kernel graph:" << new_kernel_graph->graph_id();
   MS_LOG(INFO) << "Construct input of kernel graph:" << new_kernel_graph->graph_id();
   std::vector<AnfNodePtr> call_node_inputs;
   std::vector<AnfNodePtr> new_graph_inputs;
@@ -1604,7 +1612,7 @@ std::vector<AnfNodePtr> AscendSession::ConstructSplitedGraph(const KernelGraphPt
 
   MS_LOG(INFO) << "Construct output of kernel graph:" << new_kernel_graph->graph_id();
   ConstructSplitedGraphOutput(new_kernel_graph, list);
-  MS_LOG(INFO) << "end";
+  MS_LOG(INFO) << "End";
   return call_node_inputs;
 }
 
@@ -1699,7 +1707,7 @@ void AscendSession::SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<Pri
   }
   AscendControlParser::UpdateChildGraphOrder(graph);
   UpdateRealInput(graph);
-  MS_LOG(INFO) << "split graph[" << graph->graph_id() << "] end";
+  MS_LOG(INFO) << "Split graph[" << graph->graph_id() << "] end";
   // recurse to split child graph
 }
 

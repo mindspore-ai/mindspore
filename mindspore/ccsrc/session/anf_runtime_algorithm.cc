@@ -303,7 +303,7 @@ size_t AnfRuntimeAlgorithm::GetInputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t input_num = cnode->inputs().size();
   if (input_num == 0) {
-    MS_LOG(EXCEPTION) << "cnode inputs size can't be zero";
+    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero";
   }
   // exclude intputs[0],which is value_node storing attr,inputs left are real input
   return input_num - 1;
@@ -994,10 +994,10 @@ FuncGraphPtr AnfRuntimeAlgorithm::GetValueNodeFuncGraph(const AnfNodePtr &node) 
 }
 
 std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CNodePtr &call_node) {
-  if (!AnfAlgo::CheckPrimitiveType(call_node, std::make_shared<Primitive>("call"))) {
-    MS_LOG(EXCEPTION) << "anf node: " << call_node->DebugString() << "is not a call node.";
-  }
   MS_EXCEPTION_IF_NULL(call_node);
+  if (!AnfAlgo::CheckPrimitiveType(call_node, std::make_shared<Primitive>("call"))) {
+    MS_LOG(EXCEPTION) << "Anf node: " << call_node->DebugString() << "is not a call node.";
+  }
   auto input1 = call_node->input(1);
   MS_EXCEPTION_IF_NULL(input1);
   if (input1->isa<ValueNode>()) {
@@ -1009,7 +1009,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CN
   } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
     auto switch_node = input1->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(switch_node);
-    auto get_switch_kernel_graph = [&](size_t input_index) -> KernelGraphPtr {
+    auto get_switch_kernel_graph = [switch_node](size_t input_index) -> KernelGraphPtr {
       auto partial = switch_node->input(input_index);
       MS_EXCEPTION_IF_NULL(partial);
       auto partial_cnode = partial->cast<CNodePtr>();
@@ -1031,7 +1031,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CN
 bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
   MS_EXCEPTION_IF_NULL(call_node);
   if (!CheckPrimitiveType(call_node, prim::kPrimCall)) {
-    MS_LOG(EXCEPTION) << "call node should be a 'call', but is a " << call_node->DebugString();
+    MS_LOG(EXCEPTION) << "Call node should be a 'call', but is a " << call_node->DebugString();
   }
   auto input1 = call_node->input(1);
   if (input1->isa<ValueNode>()) {
