@@ -119,6 +119,10 @@ def test_4d_transpose_ab():
                [[5612, 5810, 6008, 6206]]]]
     assert (output.asnumpy() == expect).all()
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_4D_fp16():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float16)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float16)
@@ -126,13 +130,13 @@ def test_4D_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet()
     output = net(input_x, input_y)
-    expect = [[[[20, 23, 26, 29]],
-               [[200, 212, 224, 236]],
-               [[596, 617, 638, 659]],
-               [[1208, 1238, 1268, 1298]]],
+    expect = np.array([[[[20, 23, 26, 29]],
+                        [[200, 212, 224, 236]],
+                        [[596, 617, 638, 659]],
+                        [[1208, 1238, 1268, 1298]]],
 
-              [[[2036, 2075, 2114, 2153]],
-               [[3080, 3128, 3176, 3224]],
-               [[4340, 4397, 4454, 4511]],
-               [[5816, 5882, 5948, 6014]]]]
+                       [[[2036, 2076, 2114, 2152]],
+                        [[3080, 3128, 3176, 3224]],
+                        [[4340, 4396, 4456, 4510]],
+                        [[5816, 5880, 5948, 6016]]]]).astype(np.float16)
     assert (output.asnumpy() == expect).all()

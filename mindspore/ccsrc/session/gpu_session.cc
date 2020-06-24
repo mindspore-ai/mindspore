@@ -23,6 +23,8 @@
 #include "pre_activate/common/helper.h"
 #include "pre_activate/pass/communication_op_fusion.h"
 #include "pre_activate/pass/getitem_tuple.h"
+#include "pre_activate/gpu/adam_weight_decay_fusion.h"
+#include "pre_activate/gpu/adam_fusion.h"
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"
@@ -53,6 +55,16 @@ void GPUSession::StartKernelRT() const {
 
 void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
+  pm->AddPass(std::make_shared<opt::AdamFusion>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
+void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
@@ -151,14 +163,16 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+  // Optimize
+  Optimize(graph);
   // Select kernel build info
   SelectKernel(graph);
   // Convert kernel Graph to model
   predictmodel::StepConvertGraph(graph);
   // Start gpu kernel runtime
   StartKernelRT();
-  // AllReduce Optimize
-  Optimize(graph);
+  // HardwareOptimize
+  HardwareOptimize(graph);
   // Assign CUDA streams
   AssignStream(graph);
   // Hide NoOp from execution graph
