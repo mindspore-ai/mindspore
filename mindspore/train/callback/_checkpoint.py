@@ -21,15 +21,14 @@ import time
 
 import mindspore.context as context
 from mindspore import log as logger
-from mindspore._checkparam import check_bool, check_int_non_negative
+from mindspore._checkparam import check_bool, check_string, check_int_non_negative
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import _exec_save_checkpoint, _save_graph
-
 from ._callback import Callback, set_cur_net
+
 
 _cur_dir = os.getcwd()
 _save_dir = _cur_dir
-
 
 
 def _check_file_name_prefix(file_name_prefix):
@@ -87,6 +86,7 @@ class CheckpointConfig:
             Can't be used with keep_checkpoint_max at the same time.
         integrated_save (bool): Whether to intergrated save in automatic model parallel scene. Default: True.
             Integrated save function is only supported in automatic parallel scene, not supported in manual parallel.
+        model_type (str): Model type in `normal`, `fusion` or `quant`. Default: "normal".
 
     Raises:
         ValueError: If the input_param is None or 0.
@@ -101,7 +101,8 @@ class CheckpointConfig:
                  save_checkpoint_seconds=0,
                  keep_checkpoint_max=5,
                  keep_checkpoint_per_n_minutes=0,
-                 integrated_save=True):
+                 integrated_save=True,
+                 model_type="normal"):
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
@@ -115,6 +116,8 @@ class CheckpointConfig:
             keep_checkpoint_max = check_int_non_negative(keep_checkpoint_max)
         if keep_checkpoint_per_n_minutes:
             keep_checkpoint_per_n_minutes = check_int_non_negative(keep_checkpoint_per_n_minutes)
+        if model_type:
+            model_type = check_string(model_type, ["normal", "fusion", "quant"])
 
         self._save_checkpoint_steps = save_checkpoint_steps
         self._save_checkpoint_seconds = save_checkpoint_seconds
@@ -129,6 +132,7 @@ class CheckpointConfig:
             if not self._keep_checkpoint_per_n_minutes or self._keep_checkpoint_per_n_minutes == 0:
                 self._keep_checkpoint_max = 1
 
+        self._model_type = model_type
         self._integrated_save = check_bool(integrated_save)
 
     @property
@@ -156,12 +160,18 @@ class CheckpointConfig:
         """Get the value of _integrated_save."""
         return self._integrated_save
 
+    @property
+    def model_type(self):
+        """Get the value of model_type."""
+        return self._model_type
+
     def get_checkpoint_policy(self):
         """Get the policy of checkpoint."""
         checkpoint_policy = {'save_checkpoint_steps': self._save_checkpoint_steps,
                              'save_checkpoint_seconds': self._save_checkpoint_seconds,
                              'keep_checkpoint_max': self._keep_checkpoint_max,
-                             'keep_checkpoint_per_n_minutes': self._keep_checkpoint_per_n_minutes}
+                             'keep_checkpoint_per_n_minutes': self._keep_checkpoint_per_n_minutes,
+                             'model_type': self._model_type}
 
         return checkpoint_policy
 
@@ -226,7 +236,7 @@ class ModelCheckpoint(Callback):
             graph_file_name = os.path.join(self._directory, self._prefix + '-graph.meta')
             _save_graph(cb_params.train_network, graph_file_name)
             self._graph_saved = True
-        self._save_ckpt(cb_params)
+        self._save_ckpt(cb_params, self._config.model_type)
 
     def end(self, run_context):
         """
@@ -237,7 +247,7 @@ class ModelCheckpoint(Callback):
         """
         cb_params = run_context.original_args()
         _to_save_last_ckpt = True
-        self._save_ckpt(cb_params, _to_save_last_ckpt)
+        self._save_ckpt(cb_params, self._config.model_type, _to_save_last_ckpt)
 
         from mindspore.parallel._cell_wrapper import destroy_allgather_cell
         destroy_allgather_cell()
@@ -256,7 +266,7 @@ class ModelCheckpoint(Callback):
 
         return False
 
-    def _save_ckpt(self, cb_params, force_to_save=False):
+    def _save_ckpt(self, cb_params, model_type, force_to_save=False):
         """Save checkpoint files."""
         if cb_params.cur_step_num == self._last_triggered_step:
             return
@@ -292,7 +302,7 @@ class ModelCheckpoint(Callback):
                 set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
 
-            _exec_save_checkpoint(cb_params.train_network, gen_file, self._config.integrated_save)
+            _exec_save_checkpoint(cb_params.train_network, gen_file, model_type, self._config.integrated_save)
 
             if os.path.exists(gen_file):
                 shutil.move(gen_file, cur_file)

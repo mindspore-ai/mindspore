@@ -76,7 +76,7 @@ class LossMonitor(Callback):
             step_loss = np.mean(step_loss.asnumpy())
 
         self.losses.append(step_loss)
-        cur_step_in_epoch = int((cb_params.cur_step_num - 1) % cb_params.batch_num)
+        cur_step_in_epoch = int((cb_params.cur_step_num - 1) % cb_params.batch_num) + 1
 
         if isinstance(step_loss, float) and (np.isnan(step_loss) or np.isinf(step_loss)):
             raise ValueError("Epoch: [{:3d}/{:3d}], step: [{:5d}/{:5d}]. "
@@ -87,7 +87,7 @@ class LossMonitor(Callback):
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             print("Epoch: [{:3d}/{:3d}], step: [{:5d}/{:5d}], "
                   "loss: [{:5.4f}/{:5.4f}], time: [{:5.4f}]".format(
-                      cb_params.cur_epoch_num - 1, cb_params.epoch_num,
+                      cb_params.cur_epoch_num, cb_params.epoch_num,
                       cur_step_in_epoch, int(cb_params.batch_num),
                       step_loss, np.mean(self.losses),
                       step_mseconds), flush=True)
