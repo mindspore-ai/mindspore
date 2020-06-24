@@ -204,8 +204,8 @@ ForwardOp CreatReduceMeanForwardOp(const std::vector<Group> &forward_group, cons
   OperatorName operator1_name = REAL_DIV;
   std::vector<Device> device_list = forward_group[0].GetDevicesList();
   auto divisor = static_cast<float>(device_list.size());
-  py::tuple tuple = py::make_tuple(divisor);
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(tuple, dtype);
+  std::vector<double> tensor_data = {divisor};
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(tensor_data, dtype);
   ValuePtr op1_param_value = MakeValue(tensor_ptr);
   Attr op1_param = std::make_pair("divisor", op1_param_value);
   OperatorParams operator1_params = {std::make_pair(op1_param, 2)};

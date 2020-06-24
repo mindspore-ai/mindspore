@@ -390,7 +390,7 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
       tensor->set_device_address(device_address);
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                             LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                            tensor->data_c(false))) {
+                                            tensor->data_c())) {
         MS_LOG(INFO) << "SyncHostToDevice failed.";
         return false;
       }
@@ -407,14 +407,14 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   tensor::TensorPtr loop_count_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(loop_count_tensor);
   int32_t *val = nullptr;
-  val = static_cast<int32_t *>(loop_count_tensor->data_c(true));
+  val = static_cast<int32_t *>(loop_count_tensor->data_c());
   MS_EXCEPTION_IF_NULL(val);
   *val = 0;
   inputs->push_back(loop_count_tensor);
 
   tensor::TensorPtr iter_loop_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(iter_loop_tensor);
-  val = static_cast<int32_t *>(iter_loop_tensor->data_c(true));
+  val = static_cast<int32_t *>(iter_loop_tensor->data_c());
   MS_EXCEPTION_IF_NULL(val);
   *val = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
   MS_LOG(INFO) << "iter_loop_tensor = " << *val;
@@ -422,14 +422,14 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
 
   tensor::TensorPtr zero_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(zero_tensor);
-  val = static_cast<int32_t *>(zero_tensor->data_c(true));
+  val = static_cast<int32_t *>(zero_tensor->data_c());
   MS_EXCEPTION_IF_NULL(val);
   *val = 0;
   inputs->push_back(zero_tensor);
 
   tensor::TensorPtr one_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(one_tensor);
-  val = static_cast<int32_t *>(one_tensor->data_c(true));
+  val = static_cast<int32_t *>(one_tensor->data_c());
   MS_EXCEPTION_IF_NULL(val);
   *val = 1;
   inputs->push_back(one_tensor);

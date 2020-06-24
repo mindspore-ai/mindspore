@@ -87,7 +87,7 @@ bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *co
                          const size_t &memory_size) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(print_tensor);
-  auto *tensor_data_ptr = static_cast<uint8_t *>(print_tensor->data_c(true));
+  auto *tensor_data_ptr = static_cast<uint8_t *>(print_tensor->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_ptr);
   auto cp_ret =
     memcpy_s(tensor_data_ptr, static_cast<size_t>(print_tensor->data().nbytes()), str_data_ptr, memory_size);

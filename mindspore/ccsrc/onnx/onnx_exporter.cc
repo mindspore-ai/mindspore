@@ -27,6 +27,7 @@
 #include "proto/onnx.pb.h"
 #include "operator/ops.h"
 #include "ir/param_value_py.h"
+#include "ir/tensor_py.h"
 
 namespace mindspore {
 enum OpMergeMode {
@@ -1190,7 +1191,7 @@ void OnnxExporter::SetNodeAttribute(const ValuePtr &value, onnx::NodeProto *cons
     attr_proto->set_type(onnx::AttributeProto_AttributeType_TENSOR);
     onnx::TensorProto *tensor_proto = attr_proto->mutable_t();
     auto data = dyn_cast<tensor::Tensor>(value);
-    tensor_proto->set_raw_data(data->data().request(true).ptr, static_cast<size_t>(data->data().nbytes()));
+    tensor_proto->set_raw_data(data->data_c(), static_cast<size_t>(data->data().nbytes()));
     auto dtype = data->data_type();
     auto shape = data->shape_c();
 

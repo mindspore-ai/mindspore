@@ -21,6 +21,9 @@
 #include "pipeline/static_analysis/param_validator.h"
 #include "operator/ops.h"
 #include "utils/convert_utils.h"
+#include "ir/tensor_py.h"
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace abstract {
@@ -554,7 +557,7 @@ AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitiveP
 
   py::tuple data_tuple = ValuePtrToPyData(input->BuildValue());
   py::array data = py::array(data_tuple);
-  auto tensor = std::make_shared<tensor::Tensor>(data);
+  auto tensor = TensorPy::MakeTensor(data);
   auto ret = tensor->ToAbstract();
   ret->set_value(tensor);
   MS_LOG(DEBUG) << "Tuple2arry result AbstractTensor: " << ret->ToString();

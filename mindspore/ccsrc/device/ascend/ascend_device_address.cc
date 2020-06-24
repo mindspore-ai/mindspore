@@ -329,12 +329,12 @@ bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &file
     MS_LOG(INFO) << "E2E Dump path is " << path;
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     size_t host_size = out_tensor->data().nbytes();
-    ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c(true));
+    ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
     if (!ret) {
       MS_LOG(ERROR) << "Copy device mem to host failed";
       return ret;
     }
-    ret = mindspore::Dump::DumpToFile(path, out_tensor->data_c(false), host_size);
+    ret = mindspore::Dump::DumpToFile(path, out_tensor->data_c(), host_size);
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
     auto ret_rt_memcpy = rtMemcpy(host_tmp.data(), size_, ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
@@ -364,7 +364,7 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
     MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     size_t host_size = out_tensor->data().nbytes();
-    ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c(true));
+    ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
     if (!ret) {
       MS_LOG(ERROR) << "Copy device mem to host failed";
       return ret;
@@ -379,7 +379,7 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
   } else {
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(type_id_, host_shape);
     size_t host_size = out_tensor->data().nbytes();
-    auto ret_rt_memcpy = rtMemcpy(out_tensor->data_c(true), host_size, ptr_, host_size, RT_MEMCPY_DEVICE_TO_HOST);
+    auto ret_rt_memcpy = rtMemcpy(out_tensor->data_c(), host_size, ptr_, host_size, RT_MEMCPY_DEVICE_TO_HOST);
 
     auto tensor_data = std::make_shared<mindspore::TensorData>();
     tensor_data->SetName(tensor_name);

@@ -210,8 +210,8 @@ OperatorVector CreateSubOp(int32_t sub_value) {
   OperatorName operator_name = SUB;
   OperatorAttrs operator_attrs;
 
-  py::tuple tuple = py::make_tuple(sub_value);
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(tuple, kInt32);
+  std::vector<int64_t> tensor_data = {sub_value};
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(tensor_data, kInt32);
   ValuePtr op_param_value = MakeValue(tensor_ptr);
 
   Attr op1_param = std::make_pair("", op_param_value);

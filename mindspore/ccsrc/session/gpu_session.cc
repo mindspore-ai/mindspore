@@ -129,7 +129,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
         MS_EXCEPTION_IF_NULL(device_address);
         if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                               LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                              tensor->data_c(false))) {
+                                              tensor->data_c())) {
           MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
         }
       }

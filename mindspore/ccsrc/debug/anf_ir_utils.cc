@@ -27,6 +27,7 @@
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
 #include "ir/param_value_py.h"
+#include "ir/tensor_py.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/parse/resolve.h"
 #include "operator/composite/composite.h"
@@ -38,6 +39,8 @@
 #include "debug/label.h"
 #include "utils/context/ms_context.h"
 #include "operator/ops.h"
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 // max number of elements in sequence
@@ -399,7 +402,7 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const Valu
     oss << value->DumpText();
   } else if (value->isa<tensor::Tensor>()) {
     auto tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    oss << value->DumpText() << "@" << DumpObject(tensor_ptr->data(), "T");
+    oss << value->DumpText() << "@" << DumpObject(TensorPy::AsNumpy(*tensor_ptr), "T");
   } else if (value->isa<parse::Symbol>() || value->isa<None>() || value->isa<NullObj>()) {
     oss << value->DumpText();
   } else if (value->isa<ValueSequeue>()) {
@@ -1813,7 +1816,7 @@ class IrParser {
     if (tensor_data == nullptr) {
       return TOK_ERROR;
     }
-    *val_ptr = std::make_shared<tensor::Tensor>(tensor_data, TypeIdToType(type));
+    *val_ptr = TensorPy::MakeTensor(tensor_data, TypeIdToType(type));
 
     return lexer_.GetNextToken();
   }

@@ -104,7 +104,7 @@ TEST_F(TestHWConstInputToTensorInput, test_value_tuple_tensor_input) {
   EXPECT_TRUE(IsValueNode<tensor::Tensor>(input1));
   auto tensor = input1->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
   ASSERT_TRUE(tensor != nullptr);
-  auto data = tensor->data_c(false);
+  auto data = tensor->data_c();
   EXPECT_EQ(std::vector<int>((int *)data, (int *)data + 4), std::vector<int>({2, 4, 2, 2}));
 }
 }  // namespace opt

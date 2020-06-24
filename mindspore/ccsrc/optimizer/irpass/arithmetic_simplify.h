@@ -153,7 +153,7 @@ class TensorMultiplyBase : public AnfVisitor {
     }
 
     tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    return tensor_ptr->data_c(writable);
+    return tensor_ptr->data_c();
   }
 
   // Make a new tensor (when possible) with the same shape as of `node`
@@ -171,7 +171,7 @@ class TensorMultiplyBase : public AnfVisitor {
 
     auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c(true));
+    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
 
     if (x == nullptr) {
       std::memset(data, 0, mem_size);
@@ -546,7 +546,7 @@ class ConstantDuplicateMul : public AnfVisitor {
 
     auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
     size_t mem_size = GetTypeByte(tensor_3_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c(true));
+    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
     memcpy(data, data_out, mem_size);
 
     auto new_vnode = NewValueNode(new_tensor_ptr);

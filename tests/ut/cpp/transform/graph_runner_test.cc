@@ -18,6 +18,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "ir/dtype.h"
+#include "ir/tensor_py.h"
 #include "transform/transform_base_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "pipeline/static_analysis/static_analysis.h"
@@ -34,6 +35,8 @@
 
 #define private public
 #include "transform/graph_runner.h"
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace transform {
@@ -70,7 +73,7 @@ std::shared_ptr<DfGraphConvertor> MakeGeGraph() {
   return std::make_shared<DfGraphConvertor>(anf_graph);
 }
 namespace {
-std::shared_ptr<std::vector<MeTensorPtr>> DoExecGraph(const std::vector<MeTensorPtr>& inputs) {
+std::shared_ptr<std::vector<MeTensorPtr>> DoExecGraph(const std::vector<MeTensorPtr> &inputs) {
   std::vector<GeTensorPtr> ge_tensor_ptrs = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
 
   std::vector<GeTensorPtr> ge_outputs;
@@ -109,7 +112,7 @@ TEST_F(TestGraphRunner, TestGeTensorConstructor) {
   MeTensor tensor = MeTensor(TypeId::kNumberTypeFloat32, std::vector<int>({1, 2, 3}));
 
   // Get the writable data pointer from the tensor
-  float* me_tensor_data = reinterpret_cast<float*>(tensor.data_c(true));
+  float *me_tensor_data = reinterpret_cast<float *>(tensor.data_c());
 
   // Copy data from buffer to tensor's data
   memcpy_s(me_tensor_data, static_cast<size_t>(tensor.data().nbytes()), ge_tensor_data, sizeof(ge_tensor_data));
@@ -119,11 +122,11 @@ TEST_F(TestGraphRunner, TestGeTensorConstructor) {
   py::tuple py_tuple =
     py::make_tuple(py::make_tuple(py::make_tuple(1.1f, 2.2f, 3.3f), py::make_tuple(4.4f, 5.5f, 6.6f)));
   py::array my_arry = py::array(py_tuple).attr("astype").cast<py::function>()("float32").cast<py::array>();
-  MeTensor tensor_tuple = MeTensor(my_arry, kFloat32);
-  PrintMeTensor(&tensor_tuple);
+  auto tensor_tuple = TensorPy::MakeTensor(my_arry, kFloat32);
+  PrintMeTensor(tensor_tuple.get());
 
-  py::array tensor_array = tensor.data();
-  py::array tensor_tuple_array = tensor_tuple.data();
+  py::array tensor_array = TensorPy::AsNumpy(tensor);
+  py::array tensor_tuple_array = TensorPy::AsNumpy(*tensor_tuple);
   assert(memcmp(ge_tensor_data, tensor_array.data(), sizeof(ge_tensor_data)) == 0);
   assert(memcmp(ge_tensor_data, tensor_tuple_array.data(), sizeof(ge_tensor_data)) == 0);
 }
@@ -131,7 +134,7 @@ TEST_F(TestGraphRunner, TestGeTensorConstructor) {
 #if (!defined ENABLE_GE)
 
 TEST_F(TestGraphRunner, TestRunGraphException) {
-  DfGraphManager& graph_manager = DfGraphManager::GetInstance();
+  DfGraphManager &graph_manager = DfGraphManager::GetInstance();
   graph_manager.ClearGraph();
 
   std::map<string, MeTensorPtr> dict;
@@ -167,7 +170,7 @@ TEST_F(TestGraphRunner, TestRunGraphException) {
 }
 
 TEST_F(TestGraphRunner, TestRunGraph) {
-  DfGraphManager& graph_manager = DfGraphManager::GetInstance();
+  DfGraphManager &graph_manager = DfGraphManager::GetInstance();
   graph_manager.ClearGraph();
 
   std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
@@ -183,7 +186,7 @@ TEST_F(TestGraphRunner, TestRunGraph) {
     py::make_tuple(py::make_tuple(py::make_tuple(1.0, 2.0, 3.0, 4.0), py::make_tuple(4.0, 5.0, 6.0, 7.0))),
     py::make_tuple(py::make_tuple(py::make_tuple(1.0, 2.0, 3.0, 4.0), py::make_tuple(4.0, 5.0, 6.0, 7.0))));
   py::array array = py::array(tuple);
-  MeTensorPtr me_tensor_ptr = std::make_shared<MeTensor>(array, type_id);
+  MeTensorPtr me_tensor_ptr = TensorPy::MakeTensor(array, type_id);
 
   MS_LOG(INFO) << "inputs me tensor data is: ";
   PrintMeTensor(&(*me_tensor_ptr));
@@ -204,7 +207,7 @@ TEST_F(TestGraphRunner, TestRunGraph) {
 }
 
 TEST_F(TestGraphRunner, TestAPI) {
-  DfGraphManager& graph_manager = DfGraphManager::GetInstance();
+  DfGraphManager &graph_manager = DfGraphManager::GetInstance();
   graph_manager.ClearGraph();
 
   std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();

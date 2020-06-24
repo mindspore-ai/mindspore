@@ -191,7 +191,7 @@ inline void ResetSharedOp() {
 tensor::TensorPtr ConstData() {
   std::vector<int> shp = {1};
   tensor::TensorPtr const_data = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  auto *val = static_cast<int32_t *>(const_data->data_c(true));
+  auto *val = static_cast<int32_t *>(const_data->data_c());
   *val = 0;
   return const_data;
 }
@@ -267,7 +267,7 @@ CNodePtr GenerateSwitchControlDependNode(const FuncGraphPtr &graph, const AnfNod
   auto PrimSquare = prim::GetPythonOps("square", "mindspore.ops.functional")->cast<PrimitivePtr>();
   std::vector<int> shp = {1};
   tensor::TensorPtr const_data = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  auto *val = static_cast<int32_t *>(const_data->data_c(true));
+  auto *val = static_cast<int32_t *>(const_data->data_c());
   *val = 0;
   // for the control_depend netoutput node , add two const data to merge the flow ,one for depended node with same
   // switch the other use the opposite

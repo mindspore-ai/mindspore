@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <algorithm>
 
+#include "ir/tensor_py.h"
 #include "ir/param_value_py.h"
 #include "utils/any.h"
 #include "utils/utils.h"
@@ -50,6 +51,8 @@
 #ifdef ENABLE_GE
 #include "pynative/pynative_execute_ge.h"
 #endif
+
+using mindspore::tensor::TensorPy;
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 // primitive unable to infer value for constant input in PyNative mode
@@ -171,7 +174,8 @@ py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &args, py::tu
         py_args[i] = std::make_shared<tensor::Tensor>(py::cast<py::int_>(py_args[i]), tensor_ptr->Dtype());
         (*out_args_list)[i] = py_args[i];
       } else {
-        py_args[i] = std::make_shared<tensor::Tensor>(py::cast<py::float_>(py_args[i]), tensor_ptr->Dtype());
+        double arg_value = py::cast<py::float_>(py_args[i]);
+        py_args[i] = std::make_shared<tensor::Tensor>(arg_value, tensor_ptr->Dtype());
         (*out_args_list)[i] = py_args[i];
       }
       continue;
@@ -262,7 +266,7 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
         result[i] = py::getattr(input, "data");
       } else {
         auto tensor = py::cast<tensor::TensorPtr>(op_inputs[i]);
-        auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data());
+        auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
         result[i] = new_tensor;
       }
     }
@@ -366,13 +370,14 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
   if (py::isinstance<tensor::Tensor>(input_object)) {
     tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
   } else if (py::isinstance<py::float_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::float_>(input_object), kFloat32);
+    double input_value = py::cast<py::float_>(input_object);
+    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::int_>(input_object)) {
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::int_>(input_object), kInt32);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::array>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::array>(input_object), nullptr);
+    tensor_ptr = TensorPy::MakeTensor(py::cast<py::array>(input_object), nullptr);
   } else if (py::isinstance<py::list>(input_object)) {
     auto list_inputs = py::cast<py::list>(input_object);
     py::tuple tuple_inputs(list_inputs.size());

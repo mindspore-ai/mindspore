@@ -81,11 +81,11 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       DeviceAddressPtr address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeFloat32);
       MS_EXCEPTION_IF_NULL(address);
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
-        address->ptr_ = tensor->data_c(false);
+        address->ptr_ = tensor->data_c();
       } else {
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                       tensor->data_c(false))) {
+                                       tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
         }
       }
@@ -178,7 +178,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &k
       tensor->set_device_address(address);
       need_sync_outputs->emplace_back(tensor);
     } else {
-      address->ptr_ = tensor->data_c(true);
+      address->ptr_ = tensor->data_c();
       address->ref_count_ = INIT_NODE_REF;
       (void)bound_addresses->insert(address);
     }
@@ -221,11 +221,11 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
       size_t tensor_size =
         std::accumulate(data_shape.begin(), data_shape.end(), sizeof(float), std::multiplies<size_t>());
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
-        address->ptr_ = tensor->data_c(false);
+        address->ptr_ = tensor->data_c();
       } else {
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                       tensor->data_c(false))) {
+                                       tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
         }
         tensor->set_dirty(true);

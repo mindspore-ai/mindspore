@@ -16,319 +16,261 @@
 
 #include "ir/tensor.h"
 
+#include <atomic>
 #include <functional>
 #include <numeric>
-#include <utility>
 #include <vector>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "device/device_address.h"
-#include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
 namespace tensor {
-static uint64_t count = 0;
-void DataBuf2Contiguous(const py::array &src, py::array *const dest) {
-  if (dest == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to copy data to a contiguous buffer as dest is nullptr!";
-  }
 
-  Py_buffer pybuf_src;
-  if (PyObject_GetBuffer(src.ptr(), &pybuf_src, PyBUF_ANY_CONTIGUOUS)) {
-    MS_LOG(EXCEPTION) << "Failed to get buffer info from the src!";
-  }
+using Bool = unsigned char;
 
-  if (!PyBuffer_IsContiguous(&pybuf_src, 'C')) {
-    if (PyBuffer_ToContiguous(dest->request(true).ptr, &pybuf_src, pybuf_src.len, 'C')) {
-      MS_LOG(EXCEPTION) << "Can't copy numpy.ndarray to a contiguous buffer.";
-    }
-  } else {
-    *dest = src;
-  }
-
-  PyBuffer_Release(&pybuf_src);
+static std::string MakeId() {
+  // Use atomic to make id generator thread safe.
+  static std::atomic<uint64_t> last_id{1};
+  return std::to_string(last_id.fetch_add(1, std::memory_order_relaxed));
 }
 
-Tensor::Tensor(const TypePtr &type_ptr, const py::tuple &shape) {
-  TypeId data_type = TypeId::kTypeUnknown;
-  if (type_ptr != nullptr) {
-    data_type = type_ptr->type_id();
-  }
-  data_type_ = data_type;
-  shape_.resize(shape.size());
-  for (size_t i = 0; i < shape.size(); ++i) {
-    shape_[i] = py::int_(shape[i]);
-  }
-  init(data_type_, shape_, &data_);
+static TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId) {
+  return data_type ? data_type->type_id() : defaultTypeId;
 }
 
-Tensor::Tensor(TypeId data_type, const std::vector<int> &shape) { init(data_type, shape, &data_); }
-
-Tensor::Tensor(const py::array &input, const TypePtr &data_type) { init(input, data_type); }
-
-Tensor::Tensor(const py::list &input, const TypePtr &data_type) { init(py::array(input), data_type); }
-
-Tensor::Tensor(const py::tuple &input, const TypePtr &data_type) { init(py::array(input), data_type); }
-
-Tensor::Tensor(const py::float_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
-
-Tensor::Tensor(const py::int_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
-
-Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
-    : MetaTensor(tensor), device_address_(tensor.device_address_) {
-  init(tensor.data_, data_type);
-  dirty_ = tensor.is_dirty();
-  id_ = tensor.id();
+static size_t SizeOf(const std::vector<int> &shape) {
+  return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
 }
 
-Tensor &Tensor::operator=(const Tensor &tensor) {
-  if (this != &tensor) {
-    MetaTensor::operator=(tensor);
-    dirty_ = tensor.is_dirty();
-    device_address_ = tensor.device_address();
-    data_ = tensor.data_;
-    id_ = tensor.id();
-  }
-  return *this;
-}
-Tensor &Tensor::AssignValue(const Tensor &tensor) {
-  *this = tensor;
-  return *this;
-}
-
-bool Tensor::operator==(const Tensor &tensor) const {
-  return (MetaTensor::operator==(tensor) && data_ == tensor.data_);
-}
-
-bool Tensor::ValueEqual(const Tensor &other) const {
-  auto equal = [&other, this]() -> bool {
-    auto np = py::module::import("numpy");
-    auto equal = np.attr("equal")(data_, other.data_);
-    auto all_equal = np.attr("all")(equal);
-    return all_equal.cast<bool>();
-  };
-  return (MetaTensor::operator==(other) && (data_.is(other.data_) || equal()));
-}
-
-py::tuple Tensor::GetPyTupleShape() const {
-  std::vector<int> shape = this->shape();
-  py::tuple dims(shape.size());
-  for (size_t i = 0; i < dims.size(); ++i) {
-    dims[i] = py::int_(shape[i]);
-  }
-  return dims;
-}
-
-int Tensor::DataDim() const { return static_cast<int>(data_.ndim()); }
-
-int Tensor::DataSize() const { return static_cast<int>(data_.size()); }
-
-py::array Tensor::data() const { return data_; }
-
-int Tensor::data_type_c() const { return static_cast<int>(data_type_); }
-
-std::vector<int> Tensor::shape_c(void) const { return shape(); }
-
-void *Tensor::data_c(bool writable) {
-  // operand of bit operation should be unsigned int.
-  unsigned int flags = ((unsigned int)data_.flags()) & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_;
-  bool is_c_contiguous = (flags != 0) ? true : false;
-  if (!is_c_contiguous) {
-    py::array data_c;
-    init(data_type_, shape_, &data_c);
-    DataBuf2Contiguous(data_, &data_c);
-    data_ = data_c;
-  }
-  return data_.request(writable).ptr;
-}
-
-TypeId Tensor::GetDataType(const py::buffer_info &buf) const {
-  TypeId data_type = TypeId::kTypeUnknown;
-  if (buf.format.compare("e") == 0) {
-    data_type = TypeId::kNumberTypeFloat16;
-  } else if (buf.format.compare("f") == 0) {
-    data_type = TypeId::kNumberTypeFloat32;
-  } else if (buf.format.compare("d") == 0) {
-    data_type = TypeId::kNumberTypeFloat64;
-  } else if (buf.format.compare("B") == 0) {
-    data_type = TypeId::kNumberTypeUInt8;
-  } else if (buf.format.compare("H") == 0) {
-    data_type = TypeId::kNumberTypeUInt16;
-  } else if (buf.format.compare("I") == 0) {
-    data_type = TypeId::kNumberTypeUInt32;
-  } else if (buf.format.compare("L") == 0 || buf.format.compare("Q") == 0) {
-    data_type = TypeId::kNumberTypeUInt64;
-  } else if (buf.format.compare("b") == 0) {
-    data_type = TypeId::kNumberTypeInt8;
-  } else if (buf.format.compare("h") == 0) {
-    data_type = TypeId::kNumberTypeInt16;
-  } else if (buf.format.compare("i") == 0) {
-    data_type = TypeId::kNumberTypeInt32;
-  } else if (buf.format.compare("l") == 0 || buf.format.compare("q") == 0) {
-    data_type = TypeId::kNumberTypeInt64;
-  } else if (buf.format.compare("?") == 0) {
-    data_type = TypeId::kNumberTypeBool;
-  } else {
-    MS_LOG(WARNING) << "Get unsupported DataType " << buf.format << ".";
-  }
-  return data_type;
-}
-
-void Tensor::init(const py::array &input, const TypePtr &type_ptr) {
-  TypeId data_type = TypeId::kTypeUnknown;
-  if (type_ptr != nullptr) {
-    data_type = type_ptr->type_id();
-  }
-  init(input, data_type);
-}
-
-void Tensor::init(const py::array &input, const TypeId &data_type) {
-  py::buffer_info buf = input.request();
-
-  data_type_ = GetDataType(buf);
-  if (TypeId::kTypeUnknown == data_type && TypeId::kTypeUnknown == data_type_) {
-    MS_LOG(EXCEPTION) << "Unsupported tensor type!";
-  }
-
-  std::vector<ssize_t> tm = buf.shape;
-  size_t len = tm.size();
-  std::vector<int> dims(len);
-  for (size_t i = 0; i < len; ++i) {
-    dims[i] = static_cast<int>(tm[i]);
-  }
-  (void)set_shape(dims);
-
-  if (TypeId::kTypeUnknown != data_type && TypeId::kTypeUnknown != data_type_ && data_type_ != data_type) {
-    // If user defined data type is not same as GetDataType from the data
-    bool success = convert_data(input, data_type_, &data_, data_type);
-    if (success) {
-      data_type_ = data_type;
-    } else {
-      data_type_ = TypeId::kTypeUnknown;
-      MS_LOG(EXCEPTION) << "Convert data from " << data_type_ << " to " << data_type << " failed!";
-    }
-  } else {
-    data_ = input;
-  }
-  dirty_ = true;
-  id_ = std::to_string((uintptr_t)(this)) + std::to_string(count++);
-}
-
-void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {
-  data_type_ = data_type;
-  shape_ = shape;
+template <typename T>
+std::vector<T> CopyData(const std::vector<int> &shape, void *data, TypeId data_type) {
+  const size_t count = SizeOf(shape);
   switch (data_type) {
-    case kNumberTypeBool:
-      *data = py::array_t<bool, py::array::c_style>(shape);
-      break;
-    case kNumberTypeInt8:
-      *data = py::array_t<int8_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeInt16:
-      *data = py::array_t<int16_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeInt32:
-      *data = py::array_t<int32_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeInt64:
-      *data = py::array_t<int64_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeUInt8:
-      *data = py::array_t<uint8_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeUInt16:
-      *data = py::array_t<uint16_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeUInt32:
-      *data = py::array_t<uint32_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeUInt64:
-      *data = py::array_t<uint64_t, py::array::c_style>(shape);
-      break;
-    case kNumberTypeFloat16:
-      *data = py::array_t<float16, py::array::c_style>(shape);
-      break;
-    case kNumberTypeFloat32:
-      *data = py::array_t<float, py::array::c_style>(shape);
-      break;
-    case kNumberTypeFloat64:
-      *data = py::array_t<double, py::array::c_style>(shape);
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
-      break;
-  }
-  id_ = std::to_string((uintptr_t)(this)) + std::to_string(count++);
-}
-
-TypePtr Tensor::SetDtype(const TypePtr type_ptr) {
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  (void)set_data_type(type_ptr->type_id());
-  return type_ptr;
-}
-
-TypeId Tensor::set_data_type(const TypeId data_type) {
-  if (data_.size() > 0 && data_type_ != data_type) {
-    bool success = convert_data(data_, data_type_, &data_, data_type);
-    if (success) {
-      data_type_ = data_type;
-    } else {
-      MS_LOG(EXCEPTION) << "Convert data from " << data_type_ << " to " << data_type << " failed!";
+    case kNumberTypeBool: {
+      auto buf = static_cast<Bool *>(data);
+      return std::vector<T>(buf, buf + count);
     }
-  } else if (data_.size() == 0) {
-    data_type_ = data_type;
+    case kNumberTypeUInt8: {
+      auto buf = static_cast<uint8_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeInt8: {
+      auto buf = static_cast<int8_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeInt16: {
+      auto buf = static_cast<int16_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeInt32: {
+      auto buf = static_cast<int32_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeInt64: {
+      auto buf = static_cast<int64_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeUInt16: {
+      auto buf = static_cast<uint16_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeUInt32: {
+      auto buf = static_cast<uint32_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeUInt64: {
+      auto buf = static_cast<uint64_t *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeFloat16: {
+      auto buf = static_cast<float16 *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeFloat32: {
+      const float *buf = static_cast<float *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    case kNumberTypeFloat64: {
+      auto buf = static_cast<double *>(data);
+      return std::vector<T>(buf, buf + count);
+    }
+    default:
+      break;
   }
-
-  return data_type_;
+  MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
 }
 
-bool Tensor::is_init() { return init_flag_; }
+// Convert to bool is not allowed.
+template <>
+std::vector<Bool> CopyData<Bool>(const std::vector<int> &shape, void *data, TypeId data_type) {
+  MS_LOG(EXCEPTION) << "Cannot convert from " << TypeIdLabel(data_type) << " to " << TypeIdLabel(kNumberTypeBool)
+                    << ".";
+  return {};
+}
 
-void Tensor::set_init_flag(bool flag) { init_flag_ = flag; }
+template <typename T>
+std::vector<T> CopyData(const std::vector<int> &shape, void *data, size_t data_len) {
+  size_t size = SizeOf(shape);
+  if (size * sizeof(T) != data_len) {
+    MS_LOG(EXCEPTION) << "Incorrect tensor input data length  " << data_len << ", expect " << size * sizeof(T)
+                      << " item size " << sizeof(T);
+  }
+  auto buf = static_cast<T *>(data);
+  return {buf, buf + size};
+}
 
-bool Tensor::convert_data(const py::array &in, const TypeId in_data_type, py::array *const out,
-                          const TypeId out_data_type) {
-  if (out == nullptr) {
+// Tensor data implementation.
+template <typename T>
+class TensorDataImpl : public TensorData {
+ public:
+  explicit TensorDataImpl(const std::vector<int> &shape) : shape_(shape), data_(SizeOf(shape)) {}
+
+  TensorDataImpl(const std::vector<int> &shape, void *data, size_t data_len)
+      : shape_(shape), data_(CopyData<T>(shape, data, data_len)) {}
+
+  TensorDataImpl(const std::vector<int> &shape, void *data, TypeId data_type)
+      : shape_(shape), data_(CopyData<T>(shape, data, data_type)) {}
+
+  template <typename InputIt>
+  TensorDataImpl(const std::vector<int> &shape, InputIt first, InputIt last) : shape_(shape), data_(first, last) {}
+
+  template <typename Scalar>
+  TensorDataImpl(const std::vector<int> &shape, Scalar scalar) : shape_(shape), data_({static_cast<T>(scalar)}) {}
+
+  ssize_t size() const override { return data_.size(); }
+
+  ssize_t itemsize() const override { return static_cast<ssize_t>(sizeof(T)); }
+
+  ssize_t nbytes() const override { return size() * itemsize(); }
+
+  ssize_t ndim() const override { return static_cast<ssize_t>(shape_.size()); }
+
+  void *data() override {
+    static std::vector<T> empty_data(1);
+    if (data_.empty()) {
+      // Prevent null pointer for empty data.
+      return empty_data.data();
+    }
+    return data_.data();
+  }
+
+  bool equals(const TensorData &other) const override {
+    auto ptr = dynamic_cast<const TensorDataImpl<T> *>(&other);
+    if (ptr) {
+      return (ptr == this) || ((shape_ == ptr->shape_) && (data_ == ptr->data_));
+    }
     return false;
   }
 
-  bool result = true;
-  if (TypeId::kTypeUnknown == in_data_type || TypeId::kTypeUnknown == out_data_type) {
-    result = false;
-  } else if (in_data_type == out_data_type) {
-    *out = in;
-  } else if (TypeId::kNumberTypeFloat64 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("float64").cast<py::array>();
-  } else if (TypeId::kNumberTypeFloat32 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("float32").cast<py::array>();
-  } else if (TypeId::kNumberTypeFloat16 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("float16").cast<py::array>();
-  } else if (TypeId::kNumberTypeInt64 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("int64").cast<py::array>();
-  } else if (TypeId::kNumberTypeInt32 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("int32").cast<py::array>();
-  } else if (TypeId::kNumberTypeInt16 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("int16").cast<py::array>();
-  } else if (TypeId::kNumberTypeInt8 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("int8").cast<py::array>();
-  } else if (TypeId::kNumberTypeUInt8 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("uint8").cast<py::array>();
-  } else if (TypeId::kNumberTypeUInt16 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("uint16").cast<py::array>();
-  } else if (TypeId::kNumberTypeUInt32 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("uint32").cast<py::array>();
-  } else if (TypeId::kNumberTypeUInt64 == out_data_type) {
-    *out = in.attr("astype").cast<py::function>()("uint64").cast<py::array>();
-  } else {
-    data_type_ = TypeId::kTypeUnknown;
-    MS_LOG(EXCEPTION) << "Cannot convert from " << TypeIdLabel(in_data_type) << " to " << TypeIdLabel(out_data_type)
-                      << ".";
+  std::string ToString() const override {
+    std::ostringstream ss;
+    ss << '[';
+    for (auto value : data_) {
+      ss << value << ',';
+    }
+    ss << ']';
+    return ss.str();
   }
 
-  return result;
+ private:
+  std::vector<int> shape_;
+  std::vector<T> data_;
+};
+
+template <typename... Args>
+TensorDataPtr MakeTensorData(TypeId data_type, const std::vector<int> &shape, Args... args) {
+  switch (data_type) {
+    case kNumberTypeBool:
+      // std::vector<bool> is a specialization of std::vector,
+      // it may use single bit instead of sizeof(bool) bytes,
+      // so we use std::vector<Bool> for bool tensors.
+      return std::make_shared<TensorDataImpl<Bool>>(shape, args...);
+    case kNumberTypeUInt8:
+      return std::make_shared<TensorDataImpl<uint8_t>>(shape, args...);
+    case kNumberTypeInt8:
+      return std::make_shared<TensorDataImpl<int8_t>>(shape, args...);
+    case kNumberTypeInt16:
+      return std::make_shared<TensorDataImpl<int16_t>>(shape, args...);
+    case kNumberTypeInt32:
+      return std::make_shared<TensorDataImpl<int32_t>>(shape, args...);
+    case kNumberTypeInt64:
+      return std::make_shared<TensorDataImpl<int64_t>>(shape, args...);
+    case kNumberTypeUInt16:
+      return std::make_shared<TensorDataImpl<uint16_t>>(shape, args...);
+    case kNumberTypeUInt32:
+      return std::make_shared<TensorDataImpl<uint32_t>>(shape, args...);
+    case kNumberTypeUInt64:
+      return std::make_shared<TensorDataImpl<uint64_t>>(shape, args...);
+    case kNumberTypeFloat16:
+      return std::make_shared<TensorDataImpl<float16>>(shape, args...);
+    case kNumberTypeFloat32:
+      return std::make_shared<TensorDataImpl<float>>(shape, args...);
+    case kNumberTypeFloat64:
+      return std::make_shared<TensorDataImpl<double>>(shape, args...);
+    default:
+      break;
+  }
+  MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
+}
+
+Tensor::Tensor(const Tensor &tensor)
+    : MetaTensor(tensor),
+      init_flag_(tensor.init_flag_),
+      data_(tensor.data_),
+      dirty_(tensor.dirty_),
+      id_(tensor.id_),
+      device_address_(tensor.device_address_) {}
+
+Tensor::Tensor(const Tensor &tensor, TypeId data_type)
+    : MetaTensor(data_type, tensor.shape_),
+      init_flag_(tensor.init_flag_),
+      data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
+      dirty_(tensor.dirty_),
+      id_(tensor.id_),
+      device_address_(tensor.device_address_) {}
+
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data)
+    : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
+
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape)
+    : Tensor(data_type, shape, MakeTensorData(data_type, shape)) {}
+
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, void *data, size_t data_len)
+    : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, data_len)) {}
+
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, void *data, TypeId src_data_type)
+    : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, src_data_type)) {}
+
+Tensor::Tensor(const std::vector<int64_t> &input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {static_cast<int>(input.size())}),
+      data_(MakeTensorData(data_type_, shape_, input.begin(), input.end())),
+      id_(MakeId()) {}
+
+Tensor::Tensor(const std::vector<double> &input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {static_cast<int>(input.size())}),
+      data_(MakeTensorData(data_type_, shape_, input.begin(), input.end())),
+      id_(MakeId()) {}
+
+Tensor::Tensor(int64_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {}),
+      data_(MakeTensorData(data_type_, {}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(double input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {}),
+      data_(MakeTensorData(data_type_, {}, input)),
+      id_(MakeId()) {}
+
+bool Tensor::operator==(const Tensor &tensor) const {
+  return (&tensor == this || (MetaTensor::operator==(tensor) && data_ == tensor.data_));
+}
+
+bool Tensor::ValueEqual(const Tensor &tensor) const {
+  return (&tensor == this || (MetaTensor::operator==(tensor) && data_->equals(*tensor.data_)));
 }
 
 abstract::AbstractBasePtr Tensor::ToAbstract() {
@@ -355,7 +297,7 @@ std::string Tensor::ToString() const {
   buf << "Tensor shape:[" << shape() << "]" << this->Dtype()->ToString();
   // only print small tensor
   if (DataSize() < small_tensor_size) {
-    buf << "val:" << std::string(py::str(data()));
+    buf << "val:" << data().ToString();
   }
   return buf.str();
 }
@@ -365,172 +307,31 @@ std::string Tensor::ToStringRepr() const {
   auto type_ptr = this->Dtype();
   MS_EXCEPTION_IF_NULL(type_ptr);
   buf << "Tensor shape:[" << shape() << "]" << type_ptr->ToString();
-  buf << "\nval:" << std::string(py::str(data()));
+  buf << "\nval:" << data().ToString();
   return buf.str();
 }
 
-py::array Tensor::data_sync() {
+void Tensor::data_sync() const {
   if (device_address_ != nullptr) {
-    if (!device_address_->SyncDeviceToHost(this->shape(), static_cast<size_t>(this->data().nbytes()), this->data_type(),
-                                           this->data_c(true))) {
+    if (!device_address_->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
       MS_LOG(EXCEPTION) << "SyncDeviceToHost when asnumpy.";
     }
   }
-  return data_;
 }
 
-REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
-                         // dtype should define before Tensor, because Tensor init depend dtype
-                         (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor")
-                           .def(py::init<TypePtr, py::tuple>(), py::arg("dtype"), py::arg("shape"))
-                           .def(py::init<py::array, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init<py::float_, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init<py::int_, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init<py::list, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init<py::tuple, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init<Tensor, TypePtr>(), py::arg("input"), py::arg("dtype") = nullptr)
-                           .def_readonly(PYTHON_TENSOR_FLAG, &Tensor::parse_info_)
-                           .def_property_readonly("dtype", &Tensor::Dtype, R"mydelimiter(
-                             Get the tensor's data type.
-
-                             Returns:
-                                 type, the data type of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
-                                 >>> data.dtype
-                                 Int32
-                             )mydelimiter")
-                           .def_property_readonly("shape", &Tensor::GetPyTupleShape, R"mydelimiter(
-                             Get the tensor's shape.
-
-                             Returns:
-                                 tuple[int], the shape of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((3, 3)))
-                                 >>> data.shape()
-                                 (3, 3)
-                             )mydelimiter")
-                           .def("asnumpy", &Tensor::data_sync, R"mydelimiter(
-                             Convert tensor to numpy.ndarray.
-
-                             Returns:
-                                 numpy.ndarray.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
-                                 >>> array = data.asnumpy()
-                                 >>> array
-                                 array([[1., 1., 1.],
-                                        [1., 1., 1.]])
-                             )mydelimiter")
-                           .def("size", &Tensor::DataSize, R"mydelimiter(
-                             Get tensor's data size.
-
-                             Returns:
-                                 int, the size of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
-                                 >>> data.size()
-                                 6
-                             )mydelimiter")
-                           .def("is_init", &Tensor::is_init, R"mydelimiter(
-                             Get tensor init_flag.
-
-                             Returns:
-                                 bool, whether the tensor init.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
-                                 >>> data.is_init()
-                                 False
-                             )mydelimiter")
-                           .def("set_init_flag", &Tensor::set_init_flag, R"mydelimiter(
-                             Set tensor init_flag.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
-                                 >>> data.set_init_flag(True)
-                             )mydelimiter")
-                           .def("dim", &Tensor::DataDim, R"mydelimiter(
-                             Get tensor's data dimension.
-
-                             Returns:
-                                 int, the dimension of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
-                                 >>> data.dim()
-                                 2
-                             )mydelimiter")
-                           .def("set_dtype", &Tensor::SetDtype, R"mydelimiter(
-                             Set the tensor's data type.
-
-                             Arg:
-                                 dtype (:class:`mindspore.dtype`): The type of output tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
-                                 >>> data.set_dtype(mindspore.int32)
-                                 mindspore.int32
-                             )mydelimiter")
-                           .def("assign_value", &Tensor::AssignValue, R"mydelimiter(
-                             Assign another tensor value to this.
-
-                             Arg:
-                                 value (:class:`mindspore.tensor`): The value tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
-                                 >>> data2 = mindspore.Tensor(np.ones((2, 2), np.float32))
-                                 >>> data.assign_value(data2)
-                                 >>> data.shape
-                                 (2, 2)
-                             )mydelimiter")
-                           .def("__str__", &Tensor::ToString)
-                           .def("__repr__", &Tensor::ToStringRepr)
-                           .def(py::pickle(
-                             [](const Tensor &t) {  // __getstate__
-                               /* Return a tuple that fully encodes the state of the object */
-                               return py::make_tuple(t.data());
-                             },
-                             [](const py::tuple &t) {  // __setstate__
-                               if (t.size() != 1) {
-                                 throw std::runtime_error("Invalid state!");
-                               }
-                               /* Create a new C++ instance */
-                               Tensor tensor(t[0].cast<py::array>());
-                               return tensor;
-                             }));
-                         (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
-                           .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
-                           .def(py::pickle(
-                             [](const MetaTensor &t) {  // __getstate__
-                               /* Return a tuple that fully encodes the state of the object */
-                               return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
-                             },
-                             [](const py::tuple &t) {  // __setstate__
-                               if (t.size() != 2) {
-                                 throw std::runtime_error("Invalid state!");
-                               }
-                               /* Create a new C++ instance */
-                               MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<std::vector<int>>());
-                               return tensor;
-                             }))
-                           .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
-                           .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
-                           .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.");
-                       }));
+TypeId Tensor::set_data_type(const TypeId data_type) {
+  if (data_type != data_type_) {
+    data_ = MakeTensorData(data_type, shape_, data_->data(), data_type_);
+    return MetaTensor::set_data_type(data_type);
+  }
+  return data_type;
+}
 }  // namespace tensor
 
 namespace inference {
 MSTensor *MSTensor::CreateTensor(TypeId data_type, const std::vector<int> &shape) {
   return new Tensor(data_type, shape);
 }
-
-Tensor::Tensor() { this->tensor_impl_ = std::make_shared<tensor::Tensor>(); }
 
 Tensor::Tensor(TypeId data_type, const std::vector<int> &shape) {
   this->tensor_impl_ = std::make_shared<tensor::Tensor>(data_type, shape);
@@ -585,7 +386,8 @@ size_t Tensor::Size() const {
 
 void *Tensor::MutableData() const {
   MS_ASSERT(this->tensor_impl_ != nullptr);
-  return this->tensor_impl_->data_c(true);
+  return this->tensor_impl_->data_c();
 }
+
 }  // namespace inference
 }  // namespace mindspore

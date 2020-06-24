@@ -71,7 +71,7 @@ class SpecializeTransform {
           continue;
         }
         if (value_args[i] != nullptr) {
-          auto const_tensor = *value_args[i];
+          auto &const_tensor = *value_args[i];
           auto const_tensor_ptr = std::make_shared<tensor::Tensor>(const_tensor);
           AnfNodePtr arg = NewValueNode(const_tensor_ptr);
           (void)mng->Replace(params[i], arg);
