@@ -17,7 +17,7 @@ eval.
 """
 import os
 import argparse
-from src.dataset import create_dataset_py
+from src.dataset import create_dataset
 from src.config import config
 from src.crossentropy import CrossEntropy
 from src.utils import _load_param_into_net
@@ -49,8 +49,8 @@ if __name__ == '__main__':
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     if args_opt.do_eval:
-        dataset = create_dataset_py(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
-                                    target=target)
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
+                                 target=target)
         step_size = dataset.get_dataset_size()
 
         if args_opt.checkpoint_path:

@@ -32,7 +32,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.serialization import load_checkpoint
 from mindspore.communication.management import init
 import mindspore.dataset.engine as de
-from src.dataset import create_dataset_py
+from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_ascend
 from src.mobilenetV2_quant import mobilenet_v2_quant
@@ -197,12 +197,12 @@ if __name__ == '__main__':
     else:
         loss = SoftmaxCrossEntropyWithLogits(
             is_grad=False, sparse=True, reduction='mean')
-    dataset = create_dataset_py(dataset_path=args_opt.dataset_path,
-                                do_train=True,
-                                config=config_ascend,
-                                platform=args_opt.platform,
-                                repeat_num=epoch_size,
-                                batch_size=config_ascend.batch_size)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                             do_train=True,
+                             config=config_ascend,
+                             platform=args_opt.platform,
+                             repeat_num=epoch_size,
+                             batch_size=config_ascend.batch_size)
     step_size = dataset.get_dataset_size()
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
