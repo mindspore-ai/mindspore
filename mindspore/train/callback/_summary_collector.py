@@ -161,7 +161,7 @@ class SummaryCollector(Callback):
         self._check_custom_lineage_data(custom_lineage_data)
         self._custom_lineage_data = custom_lineage_data
 
-        self._optimizer = None
+        self._temp_optimizer = None
         self._has_saved_train_network = False
         self._has_saved_custom_data = False
         self._is_parse_loss_success = True
@@ -369,15 +369,15 @@ class SummaryCollector(Callback):
         input_data = getattr(cb_params, 'train_dataset_element', None)
         if input_data is None:
             self._collect_specified_data['collect_input_data'] = False
-            logger.info("There is not a `train_dataset_element` in cb_params.")
+            logger.info("The 'train_dataset_element' in cb_params is None, maybe there is dataset sink mode.")
             return
 
         if isinstance(input_data, (list, tuple)):
             input_data = input_data[0]
         try:
             self._record.add_value(PluginEnum.IMAGE.value, 'input_data/auto', input_data)
-        except ValueError as ex:
-            logger.warning(str(ex))
+        except ValueError:
+            logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
             self._collect_specified_data['collect_input_data'] = False
             return
 
@@ -418,8 +418,8 @@ class SummaryCollector(Callback):
 
         try:
             self._record.add_value(PluginEnum.SCALAR.value, 'loss/auto', loss)
-        except ValueError as exc:
-            logger.warning(str(exc))
+        except ValueError:
+            logger.warning("The output of network is not a scalar, so will not collect loss in SummaryCollector.")
             self._collect_specified_data['collect_metric'] = False
 
     def _get_loss(self, cb_params):
@@ -438,7 +438,7 @@ class SummaryCollector(Callback):
 
         output = cb_params.net_outputs
         if output is None:
-            logger.warning("Can not find any output by this network.")
+            logger.warning("Can not find any output by this network, so will not collect loss in SummaryCollector.")
             self._is_parse_loss_success = False
             return None
 
@@ -448,7 +448,7 @@ class SummaryCollector(Callback):
             # If the output is a list, since the default network returns loss first,
             # we assume that the first one is loss.
             loss = output[0]
-        elif isinstance(output, Tensor) and (not output.shape or output.shape == [1]):
+        elif isinstance(output, Tensor) and (not output.shape or output.shape == (1,)):
             loss_numpy = output.asnumpy()
             loss = float(np.atleast_1d(loss_numpy)[0])
         else:
@@ -473,15 +473,15 @@ class SummaryCollector(Callback):
         """
         # 'optimizer_failed' means find optimizer failed, so we will not collect data about optimizer.
         optimizer_failed = 'Failed'
-        if self._optimizer == optimizer_failed:
+        if self._temp_optimizer == optimizer_failed:
             return None
 
-        if self._optimizer is not None:
-            return self._optimizer
+        if self._temp_optimizer is not None:
+            return self._temp_optimizer
 
         optimizer = cb_params.optimizer
         if optimizer is None:
-            network = cb_params.train_network if cb_params.mode == 'train' else cb_params.eval_work
+            network = cb_params.train_network if cb_params.mode == 'train' else cb_params.eval_network
             optimizer = self._parse_optimizer_by_network(network)
 
         if optimizer is None or not isinstance(optimizer, Optimizer):
@@ -489,7 +489,7 @@ class SummaryCollector(Callback):
                            "optimizer, so we will not collect data about optimizer in SummaryCollector.")
             optimizer = None
 
-        self._optimizer = optimizer if optimizer is not None else optimizer_failed
+        self._temp_optimizer = optimizer if optimizer is not None else optimizer_failed
 
         return optimizer
 
@@ -765,7 +765,7 @@ class SummaryCollector(Callback):
             cb_params (_InternalCallbackParam): Callback parameters.
 
         Returns:
-            Union[Loss_fn, None], a Cell object, if parse failed, will return None.
+            Union[Cell, None], a Cell object, if parse failed, will return None.
         """
         loss_fn = cb_params.loss_fn
         if loss_fn is not None:
