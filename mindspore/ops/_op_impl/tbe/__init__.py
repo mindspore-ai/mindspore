@@ -34,6 +34,10 @@ from .apply_ada_max import _apply_ada_max_tbe
 from .apply_adadelta import _apply_adadelta_tbe
 from .apply_adagrad import _apply_adagrad_tbe
 from .apply_adagrad_v2 import _apply_adagrad_v2_tbe
+from .apply_add_sign import _apply_add_sign_tbe
+from .apply_power_sign import _apply_power_sign_tbe
+from .apply_gradient_descent import _apply_gradient_descent_tbe
+from .apply_proximal_gradient_descent import _apply_proximal_gradient_descent_tbe
 from .approximate_equal import _approximate_equal_tbe
 from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe

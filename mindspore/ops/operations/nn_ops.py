@@ -3382,7 +3382,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
         - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
           With float32 or float16 data type.
-        - **lr** (Union[Number, Tensor]): The learning rate value, should be scalar. With float32 or float16 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. With float32 or float16 data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
           With float32 or float16 data type.
 
@@ -3458,7 +3458,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
         - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
           With float32 or float16 data type.
-        - **lr** (Union[Number, Tensor]): The learning rate value, should be scalar. With float32 or float16 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. With float32 or float16 data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
           With float32 or float16 data type.
 
@@ -3615,11 +3615,11 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type should be float16 or float32.
         - **accum** (Parameter) - Accum to be updated. Must has the same shape and dtype as `var`.
-        - **lr** (Union[Number, Tensor]): The learning rate value, should be scalar. The data type should be
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. The data type should be
           float16 or float32.
-        - **l1** (Union[Number, Tensor]): l1 regularization strength, should be scalar. The data type should be
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, should be scalar. The data type should be
           float16 or float32.
-        - **l2** (Union[Number, Tensor]): l2 regularization strength, should be scalar. The data type should be
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, should be scalar. The data type should be
           float16 or float32.
         - **grad** (Tensor) - Gradient. Must has the same shape and dtype as `var`.
 
@@ -3710,9 +3710,9 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
         - **accum** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
-        - **lr** (Union[Number, Tensor]): The learning rate value. The data type must be float32.
-        - **l1** (Union[Number, Tensor]): l1 regularization strength. The data type must be float32.
-        - **l2** (Union[Number, Tensor]): l2 regularization strength. The data type must be float32.
+        - **lr** (Union[Number, Tensor]) - The learning rate value. The data type must be float32.
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength. The data type must be float32.
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength. The data type must be float32.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient. The data type must be float32.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
 
@@ -3759,7 +3759,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad', 'indices'],
-                                outputs=['output'])
+                                outputs=['var', 'accum'])
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
@@ -3776,6 +3776,349 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
                        mstype.uint16, mstype.uint32, mstype.uint64]
         validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
         return var_dtype, accum_dtype
+
+
+class ApplyAddSign(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the AddSign algorithm.
+
+    .. math::
+        \begin{array}{ll} \\
+            m_{t} = \beta * m_{t-1} + (1 - \beta) * g \\
+            \text{update} = (\alpha + \text{sign_decay} * sign(g) * sign(m)) * g \\
+            var = var - lr_{t} * \text{update}
+        \end{array}
+
+    :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
+    is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+        - **m** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar.
+          With float32 or float16 data type.
+        - **alpha** (Union[Number, Tensor]) - Should be a scalar. With float32 or float16 data type.
+        - **sign_decay** (Union[Number, Tensor]) - Should be a scalar. With float32 or float16 data type.
+        - **beta** (Union[Number, Tensor]) - The exponential decay rate, should be a scalar.
+          With float32 or float16 data type.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+
+    Outputs:
+        Tuple of 2 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.apply_add_sign = P.ApplyAddSign()
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+        >>>         self.lr = 0.001
+        >>>         self.alpha = 1.0
+        >>>         self.sign_decay = 0.99
+        >>>         self.beta = 0.9
+        >>>     def construct(self, grad):
+        >>>         out = self.apply_add_sign(self.var, self.m, self.lr, self.alpha, self.sign_decay, self.beta, grad)
+        >>>         return out
+        >>> net = Net()
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> output = net(grad)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('m', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('alpha', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T2),
+        ('sign_decay', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE,
+         sig_dtype.T3),
+        ('beta', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T4),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        "init ApplyAddSign"
+
+    def infer_shape(self, var_shape, m_shape, lr_shape, alpha_shape, sign_decay_shape, beta_shape, grad_shape):
+        validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
+        validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
+        lr_shape_len = len(lr_shape)
+        validator.check_integer("lr's rank", lr_shape_len, 1, Rel.LE, self.name)
+        if lr_shape_len == 1:
+            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+        alpha_shape_len = len(alpha_shape)
+        validator.check_integer("alpha's rank", alpha_shape_len, 1, Rel.LE, self.name)
+        if alpha_shape_len == 1:
+            validator.check_integer("alpha_shape[0]", alpha_shape[0], 1, Rel.EQ, self.name)
+        sign_decay_shape_len = len(sign_decay_shape)
+        validator.check_integer("sign_decay's rank", sign_decay_shape_len, 1, Rel.LE, self.name)
+        if sign_decay_shape_len == 1:
+            validator.check_integer("sign_decay_shape[0]", sign_decay_shape[0], 1, Rel.EQ, self.name)
+        beta_shape_len = len(beta_shape)
+        validator.check_integer("beta's rank", beta_shape_len, 1, Rel.LE, self.name)
+        if beta_shape_len == 1:
+            validator.check_integer("beta_shape[0]", beta_shape[0], 1, Rel.EQ, self.name)
+        return var_shape, m_shape
+
+    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, alpha_dtype, sign_decay_dtype, beta_dtype, grad_dtype):
+        valid_types = [mstype.float16, mstype.float32]
+        args = {'var': var_dtype, 'm': m_dtype, 'grad': grad_dtype}
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"lr": lr_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"alpha": alpha_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"sign_decay": sign_decay_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"beta": beta_dtype}, valid_types, self.name)
+        return var_dtype, m_dtype
+
+
+class ApplyPowerSign(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the AddSign algorithm.
+
+    .. math::
+        \begin{array}{ll} \\
+            m_{t} = \beta * m_{t-1} + (1 - \beta) * g \\
+            \text{update} = \exp(\text{logbase} * \text{sign_decay} * sign(g) * sign(m)) * g \\
+            var = var - lr_{t} * \text{update}
+        \end{array}
+
+    :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
+    is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+        - **m** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar.
+          With float32 or float16 data type.
+        - **logbase** (Union[Number, Tensor]) - Should be a scalar. With float32 or float16 data type.
+        - **sign_decay** (Union[Number, Tensor]) - Should be a scalar. With float32 or float16 data type.
+        - **beta** (Union[Number, Tensor]) - The exponential decay rate, should be a scalar.
+          With float32 or float16 data type.
+        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+
+    Outputs:
+        Tuple of 2 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.apply_power_sign = P.ApplyPowerSign()
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+        >>>         self.lr = 0.001
+        >>>         self.logbase = np.e
+        >>>         self.sign_decay = 0.99
+        >>>         self.beta = 0.9
+        >>>     def construct(self, grad):
+        >>>         out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase,
+                                                self.sign_decay, self.beta, grad)
+        >>>         return out
+        >>> net = Net()
+        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> output = net(grad)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('m', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('lr', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('logbase', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T2),
+        ('sign_decay', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE,
+         sig_dtype.T3),
+        ('beta', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T4),
+        ('grad', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        "init ApplyPowerSign"
+
+    def infer_shape(self, var_shape, m_shape, lr_shape, logbase_shape, sign_decay_shape, beta_shape, grad_shape):
+        validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
+        validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
+        lr_shape_len = len(lr_shape)
+        validator.check_integer("lr's rank", lr_shape_len, 1, Rel.LE, self.name)
+        if lr_shape_len == 1:
+            validator.check_integer("lr_shape[0]", lr_shape[0], 1, Rel.EQ, self.name)
+        logbase_shape_len = len(logbase_shape)
+        validator.check_integer("logbase's rank", logbase_shape_len, 1, Rel.LE, self.name)
+        if logbase_shape_len == 1:
+            validator.check_integer("logbase_shape[0]", logbase_shape[0], 1, Rel.EQ, self.name)
+        sign_decay_shape_len = len(sign_decay_shape)
+        validator.check_integer("sign_decay's rank", sign_decay_shape_len, 1, Rel.LE, self.name)
+        if sign_decay_shape_len == 1:
+            validator.check_integer("sign_decay_shape[0]", sign_decay_shape[0], 1, Rel.EQ, self.name)
+        beta_shape_len = len(beta_shape)
+        validator.check_integer("beta's rank", beta_shape_len, 1, Rel.LE, self.name)
+        if beta_shape_len == 1:
+            validator.check_integer("beta_shape[0]", beta_shape[0], 1, Rel.EQ, self.name)
+        return var_shape, m_shape
+
+    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, logbase_dtype, sign_decay_dtype, beta_dtype, grad_dtype):
+        valid_types = [mstype.float16, mstype.float32]
+        args = {'var': var_dtype, 'm': m_dtype, 'grad': grad_dtype}
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"lr": lr_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"logbase": logbase_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"sign_decay": sign_decay_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"beta": beta_dtype}, valid_types, self.name)
+        return var_dtype, m_dtype
+
+
+class ApplyGradientDescent(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the following formula.
+
+    .. math::
+        var = var - \alpha * \delta
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+        - **alpha** (Union[Number, Tensor]) - Scaling factor, should be a scalar. With float32 or float16 data type.
+        - **delta** (Tensor) - A tensor for the change. Has the same type as `var`.
+
+    Outputs:
+        Tensor, representing the updated var.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.apply_gradient_descent = P.ApplyGradientDescent()
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.alpha = 0.001
+        >>>     def construct(self, delta):
+        >>>         out = self.apply_gradient_descent(self.var, self.alpha, delta)
+        >>>         return out
+        >>> net = Net()
+        >>> delta = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> output = net(delta)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('alpha', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('delta', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        "init ApplyGradientDescent"
+
+    def infer_shape(self, var_shape, alpha_shape, delta_shape):
+        validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
+        alpha_shape_len = len(alpha_shape)
+        validator.check_integer("alpha's rank", alpha_shape_len, 1, Rel.LE, self.name)
+        if alpha_shape_len == 1:
+            validator.check_integer("alpha_shape[0]", alpha_shape[0], 1, Rel.EQ, self.name)
+        return var_shape
+
+    def infer_dtype(self, var_dtype, alpha_dtype, delta_dtype):
+        valid_types = [mstype.float16, mstype.float32]
+        args = {'var': var_dtype, 'delta': delta_dtype}
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"alpha": alpha_dtype}, valid_types, self.name)
+        return var_dtype
+
+
+class ApplyProximalGradientDescent(PrimitiveWithInfer):
+    r"""
+    Update relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
+
+    .. math::
+        \text{prox_v} = var - \alpha * \delta
+    .. math::
+        var = \frac{sign(\text{prox_v})}{1 + \alpha * l2} * \max(\left| \text{prox_v} \right| - alpha * l1, 0)
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+        - **alpha** (Union[Number, Tensor]) - Saling factor, should be a scalar. With float32 or float16 data type.
+        - **l1** (Union[Number, Tensor]) - l1 regularization strength, should be scalar.
+          With float32 or float16 data type.
+        - **l2** (Union[Number, Tensor]) - l2 regularization strength, should be scalar.
+          With float32 or float16 data type.
+        - **delta** (Tensor) - A tensor for the change. Has the same type as `var`.
+
+    Outputs:
+        Tensor, representing the updated var.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.alpha = 0.001
+        >>>         self.l1 = 0.0
+        >>>         self.l2 = 0.0
+        >>>     def construct(self, delta):
+        >>>         out = self.apply_proximal_gradient_descent(self.var, self.alpha, self.l1, self.l2, delta)
+        >>>         return out
+        >>> net = Net()
+        >>> delta = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> output = net(delta)
+    """
+
+    __mindspore_signature__ = (
+        ('var', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('alpha', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('l1', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T2),
+        ('l2', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T3),
+        ('delta', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        "init ApplyGradientDescent"
+
+    def infer_shape(self, var_shape, alpha_shape, l1_shape, l2_shape, delta_shape):
+        validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
+        alpha_shape_len = len(alpha_shape)
+        validator.check_integer("alpha's rank", alpha_shape_len, 1, Rel.LE, self.name)
+        if alpha_shape_len == 1:
+            validator.check_integer("alpha_shape[0]", alpha_shape[0], 1, Rel.EQ, self.name)
+        l1_shape_len = len(l1_shape)
+        validator.check_integer("l1's rank", l1_shape_len, 1, Rel.LE, self.name)
+        if l1_shape_len == 1:
+            validator.check_integer("l1_shape[0]", l1_shape[0], 1, Rel.EQ, self.name)
+        l2_shape_len = len(l2_shape)
+        validator.check_integer("l2's rank", l2_shape_len, 1, Rel.LE, self.name)
+        if l2_shape_len == 1:
+            validator.check_integer("l2_shape[0]", l2_shape[0], 1, Rel.EQ, self.name)
+        return var_shape
+
+    def infer_dtype(self, var_dtype, alpha_dtype, l1_dtype, l2_dtype, delta_dtype):
+        valid_types = [mstype.float16, mstype.float32]
+        args = {'var': var_dtype, 'delta': delta_dtype}
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"alpha": alpha_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"l1": l1_dtype}, valid_types, self.name)
+        validator.check_scalar_or_tensor_type_same({"l2": l2_dtype}, valid_types, self.name)
+        return var_dtype
 
 
 class LARSUpdate(PrimitiveWithInfer):

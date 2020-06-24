@@ -351,6 +351,64 @@ class ApplyAdagradV2Net(nn.Cell):
         return out
 
 
+class ApplyAddSignNet(nn.Cell):
+    def __init__(self):
+        super(ApplyAddSignNet, self).__init__()
+        self.apply_add_sign = P.ApplyAddSign()
+        self.lr = 0.001
+        self.alpha = 1.0
+        self.sign_decay = 0.99
+        self.beta = 0.99
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+
+    def construct(self, grad):
+        out = self.apply_add_sign(self.var, self.m, self.lr, self.alpha, self.sign_decay, self.beta, grad)
+        return out
+
+
+class ApplyPowerSignNet(nn.Cell):
+    def __init__(self):
+        super(ApplyPowerSignNet, self).__init__()
+        self.apply_power_sign = P.ApplyPowerSign()
+        self.lr = 0.001
+        self.logbase = np.e
+        self.sign_decay = 0.99
+        self.beta = 0.99
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+
+    def construct(self, grad):
+        out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase, self.sign_decay, self.beta, grad)
+        return out
+
+
+class ApplyGradientDescentNet(nn.Cell):
+    def __init__(self):
+        super(ApplyGradientDescentNet, self).__init__()
+        self.apply_gradient_descent = P.ApplyGradientDescent()
+        self.alpha = 0.001
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+
+    def construct(self, delta):
+        out = self.apply_gradient_descent(self.var, self.alpha, delta)
+        return out
+
+
+class ApplyProximalGradientDescentNet(nn.Cell):
+    def __init__(self):
+        super(ApplyProximalGradientDescentNet, self).__init__()
+        self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
+        self.alpha = 0.001
+        self.l1 = 0.0
+        self.l2 = 0.0
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+
+    def construct(self, delta):
+        out = self.apply_proximal_gradient_descent(self.var, self.alpha, self.l1, self.l2, delta)
+        return out
+
+
 class SparseApplyAdagradNet(nn.Cell):
     def __init__(self):
         super(SparseApplyAdagradNet, self).__init__()
@@ -1239,6 +1297,22 @@ test_case_nn_ops = [
         'skip': ['backward']}),
     ('ApplyAdagradV2', {
         'block': ApplyAdagradV2Net(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyAddSign', {
+        'block': ApplyAddSignNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyPowerSign', {
+        'block': ApplyPowerSignNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyGradientDescent', {
+        'block': ApplyGradientDescentNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyProximalGradientDescent', {
+        'block': ApplyProximalGradientDescentNet(),
         'desc_inputs': [[3, 3]],
         'skip': ['backward']}),
     ('Flatten_1', {
