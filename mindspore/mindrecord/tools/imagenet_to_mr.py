@@ -114,7 +114,7 @@ class ImageNetToMR:
                 if not image_bytes:
                     logger.warning("The image file: {} is invalid.".format(file_name))
                     continue
-                data["data"] = image_bytes
+                data["image"] = image_bytes
                 yield data
 
     def transform(self):
@@ -126,8 +126,8 @@ class ImageNetToMR:
         """
         t0_total = time.time()
 
-        imagenet_schema_json = {"label": {"type": "int64"},
-                                "data": {"type": "bytes"},
+        imagenet_schema_json = {"label": {"type": "int32"},
+                                "image": {"type": "bytes"},
                                 "file_name": {"type": "string"}}
 
         logger.info("transformed MindRecord schema is: {}".format(imagenet_schema_json))
