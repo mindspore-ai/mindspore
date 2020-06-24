@@ -291,7 +291,7 @@ bool AnfRuntimeAlgorithm::HasNodeAttr(const std::string &key, const CNodePtr &no
   // graph kernel cnode.
   auto fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(fg);
-  return fg->has_flag(key);
+  return fg->has_attr(key);
 }
 
 size_t AnfRuntimeAlgorithm::GetInputTensorNum(const AnfNodePtr &node) {

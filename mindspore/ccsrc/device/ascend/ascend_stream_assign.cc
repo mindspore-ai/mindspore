@@ -348,16 +348,13 @@ void AscendStreamAssign::GetProcessedStream(const NotNull<KernelGraphPtr> &graph
     uint32_t cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
 
     if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamSwitchOpName) {
-      auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
-      MS_EXCEPTION_IF_NULL(primitive);
-      auto true_stream_id = GetValue<uint32_t>(primitive->GetAttr(kAttrTrueBranchStream));
+      auto true_stream_id = AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrTrueBranchStream);
       processed_streams_.emplace(true_stream_id);
 
-      auto value_ptr = primitive->GetAttr(kStreamNeedActivedFirst);
-      if (value_ptr == nullptr) {
+      if (!AnfAlgo::HasNodeAttr(kStreamNeedActivedFirst, cur_cnode_ptr)) {
         continue;
       }
-      auto need_active = GetValue<bool>(value_ptr);
+      auto need_active = AnfAlgo::GetNodeAttr<bool>(cur_cnode_ptr, kStreamNeedActivedFirst);
       if (need_active) {
         processed_streams_.emplace(cur_stream_id);
       }
@@ -371,20 +368,17 @@ void AscendStreamAssign::GetProcessedStream(const NotNull<KernelGraphPtr> &graph
 void AscendStreamAssign::UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
                                             vector<CNodePtr> *orders) {
   orders->emplace_back(switch_ptr);
-  auto primitive = AnfAlgo::GetCNodePrimitive(switch_ptr);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto value_ptr = primitive->GetAttr(kStreamNeedActivedFirst);
-  if (value_ptr == nullptr) {
+  if (!AnfAlgo::HasNodeAttr(kStreamNeedActivedFirst, switch_ptr)) {
     return;
   }
 
-  auto need_active = GetValue<bool>(value_ptr);
+  auto need_active = AnfAlgo::GetNodeAttr<bool>(switch_ptr, kStreamNeedActivedFirst);
   if (!need_active) {
     return;
   }
 
   MS_EXCEPTION_IF_NULL(switch_ptr);
-  auto true_stream_id = GetValue<uint32_t>(primitive->GetAttr(kAttrTrueBranchStream));
+  auto true_stream_id = AnfAlgo::GetNodeAttr<uint32_t>(switch_ptr, kAttrTrueBranchStream);
   MS_LOG(INFO) << "Streamswtich stream id:" << AnfAlgo::GetStreamId(switch_ptr)
                << "; active stream id:" << true_stream_id;
 
@@ -677,14 +671,11 @@ void AscendStreamAssign::GetNeedActiveStreams(const NotNull<KernelGraphPtr> &gra
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto value_ptr = primitive->GetAttr(kStreamNeedActivedFirst);
-    if (value_ptr == nullptr) {
+    if (!AnfAlgo::HasNodeAttr(kStreamNeedActivedFirst, cur_cnode_ptr)) {
       continue;
     }
 
-    auto need_active = GetValue<bool>(value_ptr);
+    auto need_active = AnfAlgo::GetNodeAttr<bool>(cur_cnode_ptr, kStreamNeedActivedFirst);
     if (need_active) {
       auto stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
       MS_LOG(INFO) << "Stream id:" << stream_id << " is need actived at first";
