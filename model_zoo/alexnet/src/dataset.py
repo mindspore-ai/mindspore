@@ -16,11 +16,11 @@
 Produce the dataset
 """
 
-from config import alexnet_cfg as cfg
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as CV
 from mindspore.common import dtype as mstype
+from .config import alexnet_cfg as cfg
 
 
 def create_dataset_mnist(data_path, batch_size=32, repeat_size=1, status="train"):
