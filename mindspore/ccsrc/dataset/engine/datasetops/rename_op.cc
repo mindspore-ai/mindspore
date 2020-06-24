@@ -69,12 +69,6 @@ Status RenameOp::operator()() {
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
-  // First, populate the column map from the input child.
-  // This will not be the final map for output from this op.
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
-  // core rename functionality only needs to happen once, to identify the new column names/indexes
-  RETURN_IF_NOT_OK(RenameColumns());
-
   while (curr_buffer->eof() == false) {
     while (curr_buffer->eoe() == false) {
       // push the renamed input buffer
@@ -95,45 +89,52 @@ Status RenameOp::operator()() {
   return Status::OK();
 }
 
-// renames the columns
-Status RenameOp::RenameColumns() {
-  // iterate over my index in input vector, find the corresponding position
-  std::unordered_map<std::string, int32_t> new_col_name_id_map = {};
-  // parameter for input check
-  size_t found = 0;
+// Rename core functionality to compute the new column name id map.
+// We need to overwrite the super class ComputeColMap here because we're making a modification of the
+// map from the child map.
+Status RenameOp::ComputeColMap() {
+  if (column_name_id_map_.empty()) {
+    column_name_id_map_ = child_[0]->column_name_id_map();
+    // iterate over my index in input vector, find the corresponding position
+    std::unordered_map<std::string, int32_t> new_col_name_id_map = {};
+    // parameter for input check
+    size_t found = 0;
 
-  // iterate over all the pairs and if there is a name match with rename, rename the column and add it to new map
-  // by doing it this way we recreate a new ColNameIdMap and allow for switching
-  for (const auto &pair : column_name_id_map_) {
-    std::string name = pair.first;
-    int32_t id = pair.second;
-    // find name
-    std::vector<std::string>::iterator it;
-    it = std::find(in_columns_.begin(), in_columns_.end(), name);
-    // for c input checks here we have to count the number of times we find the stuff in in_columns_
-    // because we iterate over the mInputList n times
-    if (it != in_columns_.end()) {
-      // found
-      found += 1;
-      int index = std::distance(in_columns_.begin(), it);
-      MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
+    // iterate over all the pairs and if there is a name match with rename, rename the column and add it to new map
+    // by doing it this way we recreate a new ColNameIdMap and allow for switching
+    for (const auto &pair : column_name_id_map_) {
+      std::string name = pair.first;
+      int32_t id = pair.second;
+      // find name
+      std::vector<std::string>::iterator it;
+      it = std::find(in_columns_.begin(), in_columns_.end(), name);
+      // for c input checks here we have to count the number of times we find the stuff in in_columns_
+      // because we iterate over the mInputList n times
+      if (it != in_columns_.end()) {
+        // found
+        found += 1;
+        int index = std::distance(in_columns_.begin(), it);
+        MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
 
-      new_col_name_id_map[out_columns_[index]] = id;
-    } else {
-      // not found
-      MS_LOG(DEBUG) << "Rename operator index not found: " << id << " is the column id.";
-      new_col_name_id_map[name] = id;
+        new_col_name_id_map[out_columns_[index]] = id;
+      } else {
+        // not found
+        MS_LOG(DEBUG) << "Rename operator index not found: " << id << " is the column id.";
+        new_col_name_id_map[name] = id;
+      }
     }
-  }
-  // only checks number of renamed columns have been found, this input check doesn't check everything
-  if (found != in_columns_.size()) {
-    MS_LOG(DEBUG) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
-    std::string err_msg = "Renamed column doesn't exist in dataset";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
+    // only checks number of renamed columns have been found, this input check doesn't check everything
+    if (found != in_columns_.size()) {
+      MS_LOG(DEBUG) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
+      std::string err_msg = "Renamed column doesn't exist in dataset";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
 
-  // Now, overwrite our column map with the new renamed columns/id's
-  column_name_id_map_ = new_col_name_id_map;
+    // Now, overwrite our column map with the new renamed columns/id's
+    column_name_id_map_ = new_col_name_id_map;
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 

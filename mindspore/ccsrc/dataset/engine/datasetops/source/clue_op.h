@@ -263,6 +263,10 @@ class ClueOp : public ParallelOp {
   // @return Status - the error code returned.
   Status GetValue(const nlohmann::json &js, std::vector<std::string> key_chain, std::shared_ptr<Tensor> *t);
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t device_id_;
   bool shuffle_files_;
   bool shuffle_global_;

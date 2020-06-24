@@ -86,7 +86,6 @@ Status BuildVocabOp::operator()() {
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-  RETURN_IF_NOT_OK(AssignColMapFromChild());
   if (!col_names_.empty()) {
     col_ids_.reserve(col_names_.size());
     for (std::string col : col_names_) {

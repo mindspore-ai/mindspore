@@ -122,7 +122,9 @@ class RenameOp : public PipelineOp {
 
  protected:
   // Rename core functionality
-  Status RenameColumns();
+  // Computing the assignment of the new column name map.
+  // @return - Status
+  Status ComputeColMap() override;
 
   // Variable to store the input column names
   std::vector<std::string> in_columns_;

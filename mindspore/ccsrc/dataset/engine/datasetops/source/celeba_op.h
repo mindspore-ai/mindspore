@@ -212,6 +212,10 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t rows_per_buffer_;
   std::string folder_path_;  // directory of celeba folder
   bool decode_;

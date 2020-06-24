@@ -139,24 +139,6 @@ Status ZipOp::prepare(TensorQTable *const table) {
   // Pack this first row into our tensor table
   table->push_back(std::move(new_row));
 
-  // At this point we have at least 1 row produced, so all child iterators have their column names such that we
-  // can produce our column name map now.
-  column_name_id_map_ = {};
-  for (int32_t i = 0; i < children_num_; ++i) {
-    // Initializing col_name_id_map_ from the first data buffer.
-    const std::unordered_map<std::string, int32_t> col_name_id_map = child_iterators_[i]->GetColumnNameMap();
-    int32_t colsCurrent = column_name_id_map_.size();
-    // the update code below shouldn't do anything bad if the column name already exists.
-    for (const auto &pair : col_name_id_map) {
-      std::string name = pair.first;
-      int32_t old_id = pair.second;
-      // check if name already exists in column name descriptor
-      if (column_name_id_map_.count(name) == 1) {
-        RETURN_STATUS_UNEXPECTED("key already exists when zipping datasets");
-      }
-      column_name_id_map_[name] = old_id + colsCurrent;
-    }
-  }
   return Status::OK();
 }
 
@@ -256,6 +238,31 @@ Status ZipOp::EoeReceived(int32_t) {
 Status ZipOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(std::static_pointer_cast<ZipOp>(shared_from_this()), modified);
+}
+
+Status ZipOp::ComputeColMap() {
+  if (column_name_id_map_.empty()) {
+    column_name_id_map_ = {};
+    for (int32_t i = 0; i < child_.size(); ++i) {
+      // Initializing col_name_id_map from the child.
+      const std::unordered_map<std::string, int32_t> col_name_id_map = child_[i]->column_name_id_map();
+      int32_t colsCurrent = column_name_id_map_.size();
+      // the update code below shouldn't do anything bad if the column name already exists.
+      for (const auto &pair : col_name_id_map) {
+        std::string name = pair.first;
+        int32_t old_id = pair.second;
+        // check if name already exists in column name descriptor
+        if (column_name_id_map_.count(name) == 1) {
+          RETURN_STATUS_UNEXPECTED("key already exists when zipping datasets");
+        }
+        column_name_id_map_[name] = old_id + colsCurrent;
+      }
+    }
+    MS_LOG(DEBUG) << "Setting column map:\n" << this->ColumnNameMapAsString();
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

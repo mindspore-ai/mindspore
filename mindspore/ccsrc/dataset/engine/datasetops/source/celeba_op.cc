@@ -79,11 +79,6 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
       sampler_(std::move(sampler)),
       num_rows_in_attr_file_(0),
       dataset_type_(dataset_type) {
-  // Set the column name map (base class field)
-  for (int32_t index = 0; index < data_schema_->NumColumns(); index++) {
-    column_name_id_map_[data_schema_->column(index).name()] = index;
-  }
-
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
   io_block_queues_.Init(num_workers_, queue_size);
 }
@@ -411,6 +406,18 @@ void CelebAOp::Print(std::ostream &out, bool show_all) const {
 Status CelebAOp::Reset() {
   RETURN_IF_NOT_OK(sampler_->ResetSampler());
   wp_.Set();  // wake up master thread after reset is done
+  return Status::OK();
+}
+
+Status CelebAOp::ComputeColMap() {
+  // Set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t index = 0; index < data_schema_->NumColumns(); index++) {
+      column_name_id_map_[data_schema_->column(index).name()] = index;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

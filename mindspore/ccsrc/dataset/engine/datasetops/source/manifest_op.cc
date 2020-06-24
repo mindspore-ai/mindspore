@@ -76,10 +76,6 @@ ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string f
       decode_(decode),
       usage_(usage),
       buf_cnt_(0) {
-  // Set the column name map (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   io_block_queues_.Init(num_workers_, queue_size);
   (void)std::transform(usage_.begin(), usage_.end(), usage_.begin(), ::tolower);
 }
@@ -418,6 +414,18 @@ Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dic
     }
   }
 
+  return Status::OK();
+}
+
+Status ManifestOp::ComputeColMap() {
+  // Set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

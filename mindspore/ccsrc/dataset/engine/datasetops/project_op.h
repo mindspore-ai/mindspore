@@ -116,6 +116,10 @@ class ProjectOp : public PipelineOp {
   std::vector<int32_t> projected_column_indices_;
 
   Status Project(std::unique_ptr<DataBuffer> *data_buffer);
+
+  // Computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
 };
 }  // namespace dataset
 }  // namespace mindspore

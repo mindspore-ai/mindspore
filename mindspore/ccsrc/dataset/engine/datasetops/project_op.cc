@@ -74,24 +74,6 @@ void ProjectOp::Print(std::ostream &out, bool show_all) const {
 Status ProjectOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(p_buffer, worker_id, retry_if_eoe));
   if (!((*p_buffer)->eoe()) && !((*p_buffer)->eof())) {
-    // Only for the first buffer fetched, get the column map of the incoming data and save it
-    // into our own column name map after making the appropriate mods
-    // We cannot use the super class AssignColMapFromChild here because we're making a modification of the
-    // map from the child map.
-    if (first_fetch_) {
-      std::unordered_map<std::string, int32_t> child_column_name_mapping = child_[0]->column_name_id_map();
-      for (size_t i = 0; i < columns_to_project_.size(); i++) {
-        std::string &current_column = columns_to_project_[i];
-        if (child_column_name_mapping.find(current_column) == child_column_name_mapping.end()) {
-          std::string err_msg = "ProjectOp: column " + current_column + " does not exist in child operator.";
-          RETURN_STATUS_UNEXPECTED(err_msg);
-        }
-        // Setup the new column name mapping for ourself (base class field)
-        column_name_id_map_[current_column] = i;
-        projected_column_indices_.push_back(child_column_name_mapping[current_column]);
-      }
-      first_fetch_ = false;  // we only need to do this path once
-    }
     RETURN_IF_NOT_OK(Project(p_buffer));
   }
   return Status::OK();
@@ -150,6 +132,28 @@ Status ProjectOp::EofReceived(int32_t worker_id) { return Status::OK(); }
 Status ProjectOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(std::static_pointer_cast<ProjectOp>(shared_from_this()), modified);
+}
+
+// Compute the column map and save it into our own column name map
+// We cannot use the super class ComputeColMap here because we're making a modification of the
+// map from the child map.
+Status ProjectOp::ComputeColMap() {
+  if (column_name_id_map_.empty()) {
+    std::unordered_map<std::string, int32_t> child_column_name_mapping = child_[0]->column_name_id_map();
+    for (size_t i = 0; i < columns_to_project_.size(); i++) {
+      std::string &current_column = columns_to_project_[i];
+      if (child_column_name_mapping.find(current_column) == child_column_name_mapping.end()) {
+        std::string err_msg = "ProjectOp: column " + current_column + " does not exist in child operator.";
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+      // Setup the new column name mapping for ourself (base class field)
+      column_name_id_map_[current_column] = i;
+      projected_column_indices_.push_back(child_column_name_mapping[current_column]);
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

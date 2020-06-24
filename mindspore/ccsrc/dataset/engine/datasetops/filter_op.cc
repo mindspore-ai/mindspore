@@ -126,9 +126,6 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
       continue;
     }
 
-    // Now that the first fetch is in, use the helper function to assign the column name map to this op.
-    RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
-
     RETURN_IF_NOT_OK(CheckColumns(in_buffer.get(), &in_columns_));
 
     // if the databuffer was all filtered, it is marked as kFilterEmpty.

@@ -85,6 +85,10 @@ class ConcatOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return "ConcatOp"; }
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
  private:
   Status Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf);
 
