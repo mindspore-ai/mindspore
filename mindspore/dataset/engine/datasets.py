@@ -4019,8 +4019,6 @@ class Schema:
             else:
                 raise RuntimeError("Unknown field %s" % k)
 
-        if self.dataset_type is None:
-            raise RuntimeError("DatasetType field is missing.")
         if self.columns is None:
             raise RuntimeError("Columns are missing.")
         if self.num_rows is not None:
