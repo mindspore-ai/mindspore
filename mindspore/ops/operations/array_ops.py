@@ -1123,7 +1123,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         - output_x (Tensor) - The maximum value of input tensor, the shape same as index.
 
     Examples:
-        >>> input_x = Tensor(np.random.rand(5))
+        >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
         >>> index, output = P.ArgMaxWithValue()(input_x)
     """
 
