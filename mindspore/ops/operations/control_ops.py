@@ -47,8 +47,6 @@ class ControlDepend(Primitive):
         Bool. This operation has no actual data output, it will be used to setup the order of relative operations.
 
     Examples:
-        >>> # In the following example, the data calculation uses original global_step. After the calculation the global
-        >>> # step should be increased, so the add operation should depend on the data calculation operation.
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
