@@ -154,7 +154,9 @@ class ConvertToQuantNetwork:
                                                   per_channel=self.act_channel,
                                                   symmetric=self.act_symmetric,
                                                   narrow_range=self.act_range)
-            prefix = '.'.join([network.param_prefix, self._convert_op_name(prim_op.name)])
+            prefix = self._convert_op_name(prim_op.name)
+            if network.param_prefix:
+                prefix = '.'.join([network.param_prefix, self._convert_op_name(prim_op.name)])
             add_quant.update_parameters_name(prefix + '.')
             del network.__dict__[name]
             network.insert_child_to_cell(name, add_quant)
