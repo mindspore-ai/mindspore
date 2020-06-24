@@ -231,6 +231,7 @@ const PrimitivePtr kPrimFakeBprop = std::make_shared<Primitive>("fake_bprop");
 const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 const PrimitivePtr kPrimFakeQuantPerLayer = std::make_shared<Primitive>("FakeQuantPerLayer");
 const PrimitivePtr kPrimFakeQuantPerChannel = std::make_shared<Primitive>("FakeQuantPerChannel");
+const PrimitivePtr kPrimApplyRMSProp = std::make_shared<Primitive>("ApplyRMSProp");
 
 // Other miscellaneous
 const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity");
