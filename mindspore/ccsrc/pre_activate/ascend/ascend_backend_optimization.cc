@@ -148,7 +148,6 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("pynative_transop_pm");
-  data_layout_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
@@ -179,7 +178,6 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
-  data_layout_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
@@ -236,6 +234,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   } else {
     ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
+    ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion>());
   }
@@ -279,6 +278,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
 
