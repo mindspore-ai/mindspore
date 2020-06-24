@@ -22,6 +22,7 @@ message Checkpoint {
         required TensorProto tensor = 2;
     }
     repeated Value value = 1;
+    required string model_type = 2;
 }
 
 

@@ -128,9 +128,9 @@ After all the following we will get the loss value of each step as following:
 ```bash
 >>> Epoch: [  1/ 10] step: [  1/ 900], loss: [2.3040/2.5234], time: [1.300234]
 >>> ...
->>> Epoch: [ 10/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
 ```
 
 To save your time, just run this command.
@@ -197,9 +197,9 @@ After all the following we will get the loss value of each step as following:
 ```bash
 >>> Epoch: [  1/ 10] step: [  1/ 900], loss: [2.3040/2.5234], time: [1.300234]
 >>> ...
->>> Epoch: [ 10/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
 ```
 
 ### Evaluate quantization aware model
@@ -214,8 +214,8 @@ network = LeNet5Fusion(cfg.num_classes)
 param_dict = load_checkpoint(args.ckpt_path)
 load_param_into_net(network, param_dict)
 
-# convert funsion netwrok to aware quantizaiton network
-network = quant.convert_quant_network(network 
+# convert funsion netwrok to quantization aware network
+network = quant.convert_quant_network(network)
 ```
 
 To save your time, just run this command.
