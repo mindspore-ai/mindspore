@@ -142,7 +142,7 @@ def gen_bbox_edge(im, bbox):
     return im, bbox
 
 
-def c_random_crop_with_bbox_op(plot_vis=False):
+def test_random_crop_with_bbox_op_c(plot_vis=False):
     """
      Prints images side by side with and without Aug applied + bboxes
     """
@@ -176,7 +176,7 @@ def c_random_crop_with_bbox_op(plot_vis=False):
         visualize(unaugSamp, augSamp)
 
 
-def c_random_crop_with_bbox_op2(plot_vis=False):
+def test_random_crop_with_bbox_op2_c(plot_vis=False):
     """
      Prints images side by side with and without Aug applied + bboxes
      With Fill Value
@@ -212,7 +212,7 @@ def c_random_crop_with_bbox_op2(plot_vis=False):
         visualize(unaugSamp, augSamp)
 
 
-def c_random_crop_with_bbox_op3(plot_vis=False):
+def test_random_crop_with_bbox_op3_c(plot_vis=False):
     """
      Prints images side by side with and without Aug applied + bboxes
      With Padding Mode passed
@@ -247,7 +247,7 @@ def c_random_crop_with_bbox_op3(plot_vis=False):
         visualize(unaugSamp, augSamp)
 
 
-def c_random_crop_with_bbox_op_edge(plot_vis=False):
+def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
     """
      Prints images side by side with and without Aug applied + bboxes
      Testing for an Edge case
@@ -289,7 +289,7 @@ def c_random_crop_with_bbox_op_edge(plot_vis=False):
         visualize(unaugSamp, augSamp)
 
 
-def c_random_crop_with_bbox_op_invalid():
+def test_random_crop_with_bbox_op_invalid_c():
     """
     Checking for invalid params passed to Aug Constructor
     """
@@ -319,7 +319,7 @@ def c_random_crop_with_bbox_op_invalid():
         assert "Size should be a single integer" in str(err)
 
 
-def c_random_crop_with_bbox_op_bad():
+def test_random_crop_with_bbox_op_bad_c():
     # Should Fail - Errors logged to logger
     for ix, badFunc in enumerate(badGenFuncs):
         try:
@@ -352,9 +352,9 @@ def c_random_crop_with_bbox_op_bad():
 
 
 if __name__ == "__main__":
-    c_random_crop_with_bbox_op(False)
-    c_random_crop_with_bbox_op2(False)
-    c_random_crop_with_bbox_op3(False)
-    c_random_crop_with_bbox_op_edge(False)
-    c_random_crop_with_bbox_op_invalid()
-    c_random_crop_with_bbox_op_bad()
+    test_random_crop_with_bbox_op_c(plot_vis=True)
+    test_random_crop_with_bbox_op2_c(plot_vis=True)
+    test_random_crop_with_bbox_op3_c(plot_vis=True)
+    test_random_crop_with_bbox_op_edge_c(plot_vis=True)
+    test_random_crop_with_bbox_op_invalid_c()
+    test_random_crop_with_bbox_op_bad_c()

@@ -305,8 +305,8 @@ def test_c_random_resized_crop_with_bbox_op_bad():
 
 
 if __name__ == "__main__":
-    test_c_random_resized_crop_with_bbox_op(False)
-    test_c_random_resized_crop_with_bbox_op_edge(False)
+    test_c_random_resized_crop_with_bbox_op(plot_vis=True)
+    test_c_random_resized_crop_with_bbox_op_edge(plot_vis=True)
     test_c_random_resized_crop_with_bbox_op_invalid()
     test_c_random_resized_crop_with_bbox_op_invalid2()
     test_c_random_resized_crop_with_bbox_op_bad()
