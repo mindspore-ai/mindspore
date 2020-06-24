@@ -163,8 +163,8 @@ size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &i
   return SIZE_MAX;
 }
 
-void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
-                   const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list) {
+void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
+                   const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list) {
   std::vector<size_t> eli;
   eli.push_back(node_index);
   for (size_t i = 0; i < (size_t)graph->nodes[node_index].node_out.size(); i++) {
@@ -211,18 +211,18 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
   }
 }
 
-std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
-                                      const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
-                                      const std::shared_ptr<std::vector<size_t>> index_list) {
+std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
+                                      const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
+                                      const std::shared_ptr<std::vector<size_t>> &index_list) {
   MS_EXCEPTION_IF_NULL(graph);
-  const std::set<OperatorType> type_list = {
-    OperatorType::kRecReLU,      OperatorType::kRecLog,     OperatorType::kRecExp,    OperatorType::kRecAdd,
-    OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd, OperatorType::kRecSub,    OperatorType::kRecMul,
-    OperatorType::kRecDiv,       OperatorType::kRecSqueeze, OperatorType::kRecReduce, OperatorType::kRecCast,
-    OperatorType::kRecReshape,   OperatorType::kRecGatherV2};
+  const std::set<OperatorType> elementwise_type = {
+    OperatorType::kRecReLU,      OperatorType::kRecLog,      OperatorType::kRecExp,         OperatorType::kRecAdd,
+    OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,  OperatorType::kRecSub,         OperatorType::kRecMul,
+    OperatorType::kRecDiv,       OperatorType::kRecSqueeze,  OperatorType::kRecReduce,      OperatorType::kRecCast,
+    OperatorType::kRecReshape,   OperatorType::kRecGatherV2, OperatorType::kRecArgWithValue};
   for (size_t node_index = 0; node_index < (size_t)graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
-    if (type_list.find(type) != type_list.end()) {
+    if (elementwise_type.find(type) != elementwise_type.end()) {
       Eliminate_Aux(node_index, graph, eli_list);
     }
   }
