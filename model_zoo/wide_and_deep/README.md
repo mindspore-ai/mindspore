@@ -37,6 +37,7 @@ To train and evaluate the model, command as follows:
 python train_and_eval.py
 ```
 Arguments:
+  * `--device_target`: Device where the code will be implemented (Default: Ascend).
   * `--data_path`: This should be set to the same directory given to the data_download's data_dir argument.
   * `--epochs`: Total train epochs.
   * `--batch_size`: Training batch size.
@@ -57,6 +58,7 @@ To train the model in one device, command as follows:
 python train.py
 ```
 Arguments:
+  * `--device_target`: Device where the code will be implemented (Default: Ascend).
   * `--data_path`: This should be set to the same directory given to the data_download's data_dir argument.
   * `--epochs`: Total train epochs.
   * `--batch_size`: Training batch size.
@@ -87,6 +89,7 @@ To evaluate the model, command as follows:
 python eval.py
 ```
 Arguments:
+  * `--device_target`: Device where the code will be implemented (Default: Ascend).
   * `--data_path`: This should be set to the same directory given to the data_download's data_dir argument.
   * `--epochs`: Total train epochs.
   * `--batch_size`: Training batch size.

@@ -26,11 +26,11 @@ from src.datasets import create_dataset
 from src.metrics import AUCMetric
 from src.config import WideDeepConfig
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Davinci",
-                    save_graphs=True)
-
 
 def get_WideDeep_net(config):
+    """
+    Get network of wide&deep model.
+    """
     WideDeep_net = WideDeepModel(config)
 
     loss_net = NetWithLossClass(WideDeep_net, config)
@@ -91,4 +91,5 @@ if __name__ == "__main__":
     widedeep_config = WideDeepConfig()
     widedeep_config.argparse_init()
 
+    context.set_context(mode=context.GRAPH_MODE, device_target=widedeep_config.device_target)
     test_eval(widedeep_config)
