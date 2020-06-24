@@ -75,28 +75,30 @@ class Slice(cde.SliceOp):
     Slice operation to extract a tensor out using the given n slices.
 
     The functionality of Slice is similar to NumPy indexing feature.
-    (Currently only rank 1 Tensors are supported)
+    (Currently only rank-1 tensors are supported).
 
     Args:
-        *slices(Variable length argument list): Maximum `n` number of arguments to slice a tensor of rank `n`.
+        *slices(Variable length argument list, supported types are, int, list(int), slice, None or Ellipses):
+            Maximum `n` number of arguments to slice a tensor of rank `n`.
             One object in slices can be one of:
-             1.  int: slice this index only. Negative index is supported.
-             2.  slice object: slice the generated indices from the slice object. Similar to `start:stop:step`.
-             3.  None: slice the whole dimension. Similar to `:` in python indexing.
-             4.  Ellipses ...: slice all dimensions between the two slices.
+            1.  :py:obj:`int`: Slice this index only. Negative index is supported.
+            2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supdeported.
+            3.  :py:obj:`slice`: Slice the generated indices from the slice object. Similar to `start:stop:step`.
+            4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in python indexing.
+            5.  :py:obj:`Ellipses`: Slice all dimensions between the two slices. Similar to `...` in python indexing.
 
     Examples:
-        >>> # Data before
-        >>> # |   col   |
-        >>> # +---------+
-        >>> # | [1,2,3] |
-        >>> # +---------|
-        >>> data = data.map(operations=Slice(slice(1,3))) # slice indices 1 and 2 only
-        >>> # Data after
-        >>> # |    col     |
-        >>> # +------------+
-        >>> # |    [1,2]   |
-        >>> # +------------|
+     >>> # Data before
+     >>> # |   col   |
+     >>> # +---------+
+     >>> # | [1,2,3] |
+     >>> # +---------|
+     >>> data = data.map(operations=Slice(slice(1,3))) # slice indices 1 and 2 only
+     >>> # Data after
+     >>> # |   col   |
+     >>> # +---------+
+     >>> # |  [2,3]  |
+     >>> # +---------|
     """
 
     @check_slice_op
@@ -167,7 +169,7 @@ class PadEnd(cde.PadEndOp):
     Pad input tensor according to `pad_shape`, need to have same rank.
 
     Args:
-        pad_shape (list of `int`): list on integers representing the shape needed. Dimensions that set to `None` will
+        pad_shape (list(int)): list on integers representing the shape needed. Dimensions that set to `None` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
         pad_value (python types (str, bytes, int, float, or bool), optional): value used to pad. Default to 0 or empty
             string in case of Tensors of strings.
