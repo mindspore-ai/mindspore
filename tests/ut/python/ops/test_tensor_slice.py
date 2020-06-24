@@ -130,7 +130,7 @@ class TensorAssignWithSlice2(Cell):
 class TensorAssignWithSlice(Cell):
     def __init__(self):
         super(TensorAssignWithSlice, self).__init__()
-        self.c = 2
+        self.c = 2.0
 
     def construct(self, a, b, ck):
         a[1:3, ::] = b
@@ -528,8 +528,7 @@ def test_tensor_assign():
     net = TensorAssignWithTupleEllipsis()
     net(Ta, b)
     Tc = Tensor(1, mstype.float32)
-    with pytest.raises(ValueError):
-        net(Ta, Tc)
+    net(Ta, Tc)
     with pytest.raises(ValueError):
         net(Ta, Tb)
 
@@ -548,7 +547,7 @@ class TensorAssignWithTupleEllipsis(Cell):
         super(TensorAssignWithTupleEllipsis, self).__init__()
 
     def construct(self, a, b):
-        a[:2, ...] = 1
+        a[:2, ...] = 1.0
         a[1:, ...] = b
         return a
 
@@ -579,10 +578,10 @@ class TensorAssignWithTupleInteger(Cell):
         super(TensorAssignWithTupleInteger, self).__init__()
 
     def construct(self, a, b, ck):
-        a[(1)] = 1
+        a[(1)] = 1.0
         a[(1)] = b
         a[(1, 1)] = b
-        a[(1, 1)] = 1
+        a[(1, 1)] = 1.0
         z = a + ck
         return z
 
