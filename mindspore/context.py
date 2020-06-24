@@ -563,6 +563,8 @@ def set_context(**kwargs):
         check_bprop (bool): Whether to check bprop. Default: False.
         max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
             The format is "xxGB". Default: "1024GB".
+        print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
+        a file by default，and turn off printing to the screen.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -583,6 +585,7 @@ def set_context(**kwargs):
         >>>                     save_graphs_path="/mindspore")
         >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
         >>> context.set_context(max_device_memory="3.5GB")
+        >>> context.set_context(print_file_path="print.pb")
     """
     for key, value in kwargs.items():
         if not hasattr(_context(), key):
