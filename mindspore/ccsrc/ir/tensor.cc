@@ -272,7 +272,17 @@ bool Tensor::operator==(const Tensor &tensor) const {
 bool Tensor::ValueEqual(const Tensor &tensor) const {
   return (&tensor == this || (MetaTensor::operator==(tensor) && data_->equals(*tensor.data_)));
 }
-
+// assgin value to this tensor
+Tensor &Tensor::AssignValue(const Tensor &tensor) {
+  if (this != &tensor) {
+    MetaTensor::operator=(tensor);
+    dirty_ = tensor.is_dirty();
+    device_address_ = tensor.device_address();
+    data_ = tensor.data_;
+    id_ = tensor.id();
+  }
+  return *this;
+}
 abstract::AbstractBasePtr Tensor::ToAbstract() {
   auto tens = shared_from_base<Tensor>();
   auto dtype = tens->Dtype();
