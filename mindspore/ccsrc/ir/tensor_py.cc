@@ -327,6 +327,19 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.dim()
                                  2
                              )mydelimiter")
+                           .def("assign_value", &Tensor::AssignValue, R"mydelimiter(
+                             Assign another tensor value to this.
+
+                             Arg:
+                                 value (:class:`mindspore.tensor`): The value tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
+                                 >>> data2 = mindspore.Tensor(np.ones((2, 2), np.float32))
+                                 >>> data.assign_value(data2)
+                                 >>> data.shape
+                                 (2, 2)
+                             )mydelimiter")
                            .def("set_dtype", &Tensor::SetDtype, R"mydelimiter(
                               Set the tensor's data type.
 

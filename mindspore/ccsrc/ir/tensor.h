@@ -147,6 +147,9 @@ class Tensor : public MetaTensor {
   // it do real value comparison.
   bool ValueEqual(const Tensor &tensor) const;
 
+  // assgin value to this tensor
+  Tensor &AssignValue(const Tensor &tensor);
+
   bool operator==(const Value &other) const override {
     if (other.isa<Tensor>()) {
       auto &other_ = static_cast<const Tensor &>(other);
