@@ -125,7 +125,6 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
     EXPECT_TRUE(rc.IsOk());
     row_count++;
   }
-  MS_LOG(WARNING) <<"row count is: " << row_count;
   ASSERT_EQ(row_count, 3); // Should be 3 rows fetched
 }
 
