@@ -132,9 +132,9 @@ class GetNextSentenceOutput(nn.Cell):
     def __init__(self, config):
         super(GetNextSentenceOutput, self).__init__()
         self.log_softmax = _selected_ops.LogSoftmax()
-        self.weight_init = TruncatedNormal(config.initializer_range)
+        weight_init = TruncatedNormal(config.initializer_range)
         self.dense = nn.Dense(config.hidden_size, 2,
-                              weight_init=self.weight_init, has_bias=True).to_float(config.compute_type)
+                              weight_init=weight_init, has_bias=True).to_float(config.compute_type)
         self.dtype = config.dtype
         self.cast = P.Cast()
 
@@ -321,7 +321,6 @@ class BertTrainOneStepCell(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-
         succ = self.optimizer(grads)
         return F.depend(loss, succ)
 
@@ -380,8 +379,8 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
-        self.add_flags(has_effect=True)
 
+    @C.add_flags(has_effect=True)
     def construct(self,
                   input_ids,
                   input_mask,

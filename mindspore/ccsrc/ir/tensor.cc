@@ -345,14 +345,14 @@ abstract::AbstractBasePtr Tensor::ToAbstract() {
 
 std::string Tensor::GetShapeAndDataTypeInfo() const {
   std::ostringstream buf;
-  buf << "Tensor \nshape:[" << shape() << "]" << this->Dtype()->ToString();
+  buf << "Tensor shape:[" << shape() << "]" << this->Dtype()->ToString();
   return buf.str();
 }
 
 std::string Tensor::ToString() const {
   const int small_tensor_size = 30;
   std::ostringstream buf;
-  buf << "Tensor \nshape:[" << shape() << "]" << this->Dtype()->ToString();
+  buf << "Tensor shape:[" << shape() << "]" << this->Dtype()->ToString();
   // only print small tensor
   if (DataSize() < small_tensor_size) {
     buf << "val:" << std::string(py::str(data()));

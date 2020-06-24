@@ -86,7 +86,7 @@ void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
   }
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(obj));
+    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
   }
   (void)this->AddAttr(attr_name, converted_ret);
 }

@@ -234,7 +234,11 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
     current_fg->debug_info()->set_deco_location(GetLocation(deco_list));
   }
 
-  bool set_flag = ast_->UpdateFuncGraphFlags(current_fg);
+  bool set_flag = UpdateFuncGraphFlags(ast_->function(), current_fg);
+  if (ast_->obj() != ast_->function()) {
+    set_flag = set_flag && UpdateFuncGraphFlags(ast_->obj(), current_fg);
+  }
+
   if (!set_flag) {
     MS_LOG(ERROR) << "Set flags failed";
     return nullptr;
@@ -1436,17 +1440,17 @@ bool ParseAst::IsClassMember(const py::object &node) {
   return ret.cast<bool>();
 }
 
-bool ParseAst::UpdateFuncGraphFlags(const FuncGraphPtr &func_graph) {
+bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "FuncGraph is null";
     return false;
   }
 
-  if (!py::hasattr(obj_, PYTHON_EXTERN_MINDSPORE_FLAG)) {
+  if (!py::hasattr(obj, PYTHON_EXTERN_MINDSPORE_FLAG)) {
     MS_LOG(DEBUG) << "No flags";
     return true;
   }
-  py::dict flags = python_adapter::GetPyObjAttr(obj_, PYTHON_EXTERN_MINDSPORE_FLAG);
+  py::dict flags = python_adapter::GetPyObjAttr(obj, PYTHON_EXTERN_MINDSPORE_FLAG);
   for (auto &item : flags) {
     if (!py::isinstance<py::str>(item.first)) {
       MS_LOG(ERROR) << "Type error in flags dict convert";
@@ -1466,7 +1470,6 @@ bool ParseAst::UpdateFuncGraphFlags(const FuncGraphPtr &func_graph) {
       return false;
     }
   }
-
   return true;
 }
 

@@ -284,7 +284,6 @@ class ClipByNorm(Cell):
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.select_ = P.Select()
         self.greater_ = P.Greater()
-        self.axis = ()
         self.cast = P.Cast()
         self.zero = Tensor(np.array([0.0]).astype(np.float32))
         self.sqrt = P.Sqrt()
@@ -299,7 +298,7 @@ class ClipByNorm(Cell):
     def construct(self, x, clip_norm):
         """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
-        l2sum = self.cast(self.reduce_sum(mul_x, self.axis), mstype.float32)
+        l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
         cond = self.greater_(l2sum, self.zero)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
 
