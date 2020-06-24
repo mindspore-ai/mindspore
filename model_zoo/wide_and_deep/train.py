@@ -15,16 +15,16 @@
 import os
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
-
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack
 from src.datasets import create_dataset
 from src.config import WideDeepConfig
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
-
 
 def get_WideDeep_net(configure):
+    """
+    Get network of wide&deep model.
+    """
     WideDeep_net = WideDeepModel(configure)
 
     loss_net = NetWithLossClass(WideDeep_net, configure)
@@ -72,7 +72,7 @@ def test_train(configure):
 
     model = Model(train_net)
     callback = LossCallBack(config=configure)
-    ckptconfig = CheckpointConfig(save_checkpoint_steps=1,
+    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(),
                                   keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train', directory=configure.ckpt_path, config=ckptconfig)
     model.train(epochs, ds_train, callbacks=[TimeMonitor(ds_train.get_dataset_size()), callback, ckpoint_cb])
@@ -82,4 +82,5 @@ if __name__ == "__main__":
     config = WideDeepConfig()
     config.argparse_init()
 
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
     test_train(config)
