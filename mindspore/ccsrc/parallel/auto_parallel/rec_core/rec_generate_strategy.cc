@@ -370,8 +370,6 @@ std::vector<int32_t> CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Gr
       s.push_back(1 / graph->nodes[iter_graph].tensor_parm.tensor_str.str_c);
       s.push_back(1 / graph->nodes[iter_graph].tensor_parm.tensor_str.str_h);
       s.push_back(1 / graph->nodes[iter_graph].tensor_parm.tensor_str.str_w);
-    } else if (input_stra_dim == 0) {
-      s = {};
     } else {
       MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": Tensor's shape is unknown.";
     }

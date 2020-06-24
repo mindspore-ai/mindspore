@@ -215,7 +215,7 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
                                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                                       const std::shared_ptr<std::vector<size_t>> &index_list) {
   MS_EXCEPTION_IF_NULL(graph);
-  const std::set<OperatorType> elementwise_type = {
+  static const std::set<OperatorType> elementwise_type = {
     OperatorType::kRecReLU,      OperatorType::kRecLog,      OperatorType::kRecExp,         OperatorType::kRecAdd,
     OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,  OperatorType::kRecSub,         OperatorType::kRecMul,
     OperatorType::kRecDiv,       OperatorType::kRecSqueeze,  OperatorType::kRecReduce,      OperatorType::kRecCast,
