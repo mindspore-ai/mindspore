@@ -41,7 +41,7 @@ class CSE {
     return chg && report_changes_;
   }
 
-  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const;
+  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect = true) const;
 
   virtual bool CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const;
 
