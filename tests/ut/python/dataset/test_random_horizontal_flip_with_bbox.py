@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing the bounding box augment op in DE
+Testing the random horizontal flip with bounding boxes op in DE
 """
-from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
-    config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
 import numpy as np
 import mindspore.log as logger
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
+from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
+    config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -43,21 +43,21 @@ def fix_annotate(bboxes):
     return bboxes
 
 
-def test_bounding_box_augment_with_rotation_op(plot_vis=False):
+def test_random_horizontal_flip_with_bbox_op_c(plot_vis=False):
     """
-    Test BoundingBoxAugment op (passing rotation op as transform)
-    Prints images side by side with and without Aug applied + bboxes to compare and test
+    Prints images side by side with and without Aug applied + bboxes to
+    compare and test
     """
-    logger.info("test_bounding_box_augment_with_rotation_op")
+    logger.info("test_random_horizontal_flip_with_bbox_op_c")
 
-    original_seed = config_get_set_seed(0)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    # Load dataset
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
 
-    # Ratio is set to 1 to apply rotation on all bounding boxes.
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomRotation(90), 1)
+    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
     # maps to fix annotations to minddata standard
     dataVoc1 = dataVoc1.map(input_columns=["annotation"],
@@ -72,9 +72,6 @@ def test_bounding_box_augment_with_rotation_op(plot_vis=False):
                             columns_order=["image", "annotation"],
                             operations=[test_op])
 
-    filename = "bounding_box_augment_rotation_c_result.npz"
-    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
-
     unaugSamp, augSamp = [], []
 
     for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
@@ -84,26 +81,26 @@ def test_bounding_box_augment_with_rotation_op(plot_vis=False):
     if plot_vis:
         visualize_with_bounding_boxes(unaugSamp, augSamp)
 
-    # Restore config setting
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
-
-def test_bounding_box_augment_with_crop_op(plot_vis=False):
+def test_random_horizontal_bbox_with_bbox_valid_rand_c(plot_vis=False):
     """
-    Test BoundingBoxAugment op (passing crop op as transform)
-    Prints images side by side with and without Aug applied + bboxes to compare and test
+    Uses a valid non-default input, expect to pass
+    Prints images side by side with and without Aug applied + bboxes to
+    compare and test
     """
-    logger.info("test_bounding_box_augment_with_crop_op")
+    logger.info("test_random_horizontal_bbox_valid_rand_c")
 
     original_seed = config_get_set_seed(1)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    # Load dataset
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
 
-    # Ratio is set to 1 to apply rotation on all bounding boxes.
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomCrop(90), 1)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
+
+    test_op = c_vision.RandomHorizontalFlipWithBBox(0.6)
 
     # maps to fix annotations to minddata standard
     dataVoc1 = dataVoc1.map(input_columns=["annotation"],
@@ -118,7 +115,7 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
                             columns_order=["image", "annotation"],
                             operations=[test_op])
 
-    filename = "bounding_box_augment_crop_c_result.npz"
+    filename = "random_horizontal_flip_with_bbox_01_c_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
 
     unaugSamp, augSamp = [], []
@@ -135,64 +132,17 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_bounding_box_augment_valid_ratio_c(plot_vis=False):
+def test_random_horizontal_flip_with_bbox_valid_edge_c(plot_vis=False):
     """
-    Test BoundingBoxAugment op (testing with valid ratio, less than 1.
+    Test RandomHorizontalFlipWithBBox op (testing with valid edge case, box covering full image).
     Prints images side by side with and without Aug applied + bboxes to compare and test
     """
-    logger.info("test_bounding_box_augment_valid_ratio_c")
-
-    original_seed = config_get_set_seed(1)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    logger.info("test_horizontal_flip_with_bbox_valid_edge_c")
 
     dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 0.9)
-
-    # maps to fix annotations to minddata standard
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
-                            operations=[test_op])  # Add column for "annotation"
-    filename = "bounding_box_augment_valid_ratio_c_result.npz"
-    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
-
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
-
-    # Restore config setting
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
-
-
-def test_bounding_box_augment_valid_edge_c(plot_vis=False):
-    """
-    Test BoundingBoxAugment op (testing with valid edge case, box covering full image).
-    Prints images side by side with and without Aug applied + bboxes to compare and test
-    """
-    logger.info("test_bounding_box_augment_valid_edge_c")
-
-    original_seed = config_get_set_seed(1)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 1)
+    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
     # maps to fix annotations to minddata standard
     dataVoc1 = dataVoc1.map(input_columns=["annotation"],
@@ -217,8 +167,6 @@ def test_bounding_box_augment_valid_edge_c(plot_vis=False):
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
                             operations=[test_op])
-    filename = "bounding_box_augment_valid_edge_c_result.npz"
-    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
 
     unaugSamp, augSamp = [], []
 
@@ -229,23 +177,18 @@ def test_bounding_box_augment_valid_edge_c(plot_vis=False):
     if plot_vis:
         visualize_with_bounding_boxes(unaugSamp, augSamp)
 
-    # Restore config setting
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
-
-def test_bounding_box_augment_invalid_ratio_c():
+def test_random_horizontal_flip_with_bbox_invalid_prob_c():
     """
-    Test BoundingBoxAugment op with invalid input ratio
+    Test RandomHorizontalFlipWithBBox op with invalid input probability
     """
-    logger.info("test_bounding_box_augment_invalid_ratio_c")
+    logger.info("test_random_horizontal_bbox_invalid_prob_c")
 
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
     try:
-        # ratio range is from 0 - 1
-        test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 1.5)
-        # maps to fix annotations to minddata standard
+        # Note: Valid range of prob should be [0.0, 1.0]
+        test_op = c_vision.RandomHorizontalFlipWithBBox(1.5)
         dataVoc2 = dataVoc2.map(input_columns=["annotation"],
                                 output_columns=["annotation"],
                                 operations=fix_annotate)
@@ -259,14 +202,13 @@ def test_bounding_box_augment_invalid_ratio_c():
         assert "Input is not" in str(error)
 
 
-def test_bounding_box_augment_invalid_bounds_c():
+def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
     """
-    Test BoundingBoxAugment op with invalid bboxes.
+    Test RandomHorizontalFlipWithBBox op with invalid bounding boxes
     """
-    logger.info("test_bounding_box_augment_invalid_bounds_c")
+    logger.info("test_random_horizontal_bbox_invalid_bounds_c")
 
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1),
-                                          1)
+    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
@@ -280,9 +222,8 @@ def test_bounding_box_augment_invalid_bounds_c():
 
 if __name__ == "__main__":
     # set to false to not show plots
-    test_bounding_box_augment_with_rotation_op(plot_vis=False)
-    test_bounding_box_augment_with_crop_op(plot_vis=False)
-    test_bounding_box_augment_valid_ratio_c(plot_vis=False)
-    test_bounding_box_augment_valid_edge_c(plot_vis=False)
-    test_bounding_box_augment_invalid_ratio_c()
-    test_bounding_box_augment_invalid_bounds_c()
+    test_random_horizontal_flip_with_bbox_op_c(plot_vis=False)
+    test_random_horizontal_bbox_with_bbox_valid_rand_c(plot_vis=False)
+    test_random_horizontal_flip_with_bbox_valid_edge_c(plot_vis=False)
+    test_random_horizontal_flip_with_bbox_invalid_prob_c()
+    test_random_horizontal_flip_with_bbox_invalid_bounds_c()
