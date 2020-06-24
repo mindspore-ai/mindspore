@@ -111,7 +111,7 @@ convert_object_map = {
     # system function
     T.len:          M.ms_len,
     T.bool:         M.bool_,
-    T.map:          C.HyperMap(),
+    T.map:          C.Map(),
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
     T.print:        F.print_,
