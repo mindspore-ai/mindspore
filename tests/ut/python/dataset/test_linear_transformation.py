@@ -73,12 +73,12 @@ def test_linear_transformation_op(plot=False):
     if plot:
         visualize_list(image, image_transformed)
 
-def test_linear_transformation_md5_01():
+def test_linear_transformation_md5():
     """
     Test LinearTransformation op: valid params (transformation_matrix, mean_vector)
     Expected to pass
     """
-    logger.info("test_linear_transformation_md5_01")
+    logger.info("test_linear_transformation_md5")
 
     # Initialize parameters
     height = 50
@@ -102,12 +102,12 @@ def test_linear_transformation_md5_01():
     filename = "linear_transformation_01_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
-def test_linear_transformation_md5_02():
+def test_linear_transformation_exception_01():
     """
     Test LinearTransformation op: transformation_matrix is not provided
     Expected to raise ValueError
     """
-    logger.info("test_linear_transformation_md5_02")
+    logger.info("test_linear_transformation_exception_01")
 
     # Initialize parameters
     height = 50
@@ -130,12 +130,12 @@ def test_linear_transformation_md5_02():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "not provided" in str(e)
 
-def test_linear_transformation_md5_03():
+def test_linear_transformation_exception_02():
     """
     Test LinearTransformation op: mean_vector is not provided
     Expected to raise ValueError
     """
-    logger.info("test_linear_transformation_md5_03")
+    logger.info("test_linear_transformation_exception_02")
 
     # Initialize parameters
     height = 50
@@ -158,12 +158,12 @@ def test_linear_transformation_md5_03():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "not provided" in str(e)
 
-def test_linear_transformation_md5_04():
+def test_linear_transformation_exception_03():
     """
     Test LinearTransformation op: transformation_matrix is not a square matrix
     Expected to raise ValueError
     """
-    logger.info("test_linear_transformation_md5_04")
+    logger.info("test_linear_transformation_exception_03")
 
     # Initialize parameters
     height = 50
@@ -187,12 +187,12 @@ def test_linear_transformation_md5_04():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "square matrix" in str(e)
 
-def test_linear_transformation_md5_05():
+def test_linear_transformation_exception_04():
     """
     Test LinearTransformation op: mean_vector does not match dimension of transformation_matrix
     Expected to raise ValueError
     """
-    logger.info("test_linear_transformation_md5_05")
+    logger.info("test_linear_transformation_exception_04")
 
     # Initialize parameters
     height = 50
@@ -217,9 +217,9 @@ def test_linear_transformation_md5_05():
         assert "should match" in str(e)
 
 if __name__ == '__main__':
-    test_linear_transformation_op(True)
-    test_linear_transformation_md5_01()
-    test_linear_transformation_md5_02()
-    test_linear_transformation_md5_03()
-    test_linear_transformation_md5_04()
-    test_linear_transformation_md5_05()
+    test_linear_transformation_op(plot=True)
+    test_linear_transformation_md5()
+    test_linear_transformation_exception_01()
+    test_linear_transformation_exception_02()
+    test_linear_transformation_exception_03()
+    test_linear_transformation_exception_04()

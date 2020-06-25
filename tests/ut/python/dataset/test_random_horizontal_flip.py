@@ -49,7 +49,7 @@ def test_random_horizontal_op(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
-    random_horizontal_op = c_vision.RandomHorizontalFlip()
+    random_horizontal_op = c_vision.RandomHorizontalFlip(1.0)
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_horizontal_op)
 
@@ -69,6 +69,7 @@ def test_random_horizontal_op(plot=False):
         image_h_flipped_2 = h_flip(image)
 
         mse = diff_mse(image_h_flipped, image_h_flipped_2)
+        assert mse == 0
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         num_iter += 1
         if plot:

@@ -21,18 +21,21 @@ import cv2
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
+from mindspore.dataset.transforms.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize_image, diff_mse
+from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
+    config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+GENERATE_GOLDEN = False
 
-def test_random_rotation_op(plot=False):
+def test_random_rotation_op_c(plot=False):
     """
-    Test RandomRotation op
+    Test RandomRotation in c++ transformations op
     """
-    logger.info("test_random_rotation_op")
+    logger.info("test_random_rotation_op_c")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -58,8 +61,44 @@ def test_random_rotation_op(plot=False):
         logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
         assert mse == 0
         num_iter += 1
-    if plot:
-        visualize_image(original, rotation_de, mse, rotation_cv)
+        if plot:
+            visualize_image(original, rotation_de, mse, rotation_cv)
+
+
+def test_random_rotation_op_py(plot=False):
+    """
+    Test RandomRotation in python transformations op
+    """
+    logger.info("test_random_rotation_op_py")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
+    # use [90, 90] to force rotate 90 degrees, expand is set to be True to match output size
+    transform1 = py_vision.ComposeOp([py_vision.Decode(),
+                                      py_vision.RandomRotation((90, 90), expand=True),
+                                      py_vision.ToTensor()])
+    data1 = data1.map(input_columns=["image"], operations=transform1())
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transform2 = py_vision.ComposeOp([py_vision.Decode(),
+                                      py_vision.ToTensor()])
+    data2 = data2.map(input_columns=["image"], operations=transform2())
+
+    num_iter = 0
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        if num_iter > 0:
+            break
+        rotation_de = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        logger.info("shape before rotate: {}".format(original.shape))
+        rotation_cv = cv2.rotate(original, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        mse = diff_mse(rotation_de, rotation_cv)
+        logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse == 0
+        num_iter += 1
+        if plot:
+            visualize_image(original, rotation_de, mse, rotation_cv)
 
 
 def test_random_rotation_expand():
@@ -71,7 +110,7 @@ def test_random_rotation_expand():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
-    # use [90, 90] to force rotate 90 degrees, expand is set to be True to match output size
+    # expand is set to be True to match output size
     random_rotation_op = c_vision.RandomRotation((0, 90), expand=True)
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_rotation_op)
@@ -83,9 +122,50 @@ def test_random_rotation_expand():
         num_iter += 1
 
 
-def test_rotation_diff():
+def test_random_rotation_md5():
     """
-    Test Rotation op
+    Test RandomRotation with md5 check
+    """
+    logger.info("Test RandomRotation with md5 check")
+    original_seed = config_get_set_seed(5)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Fisrt dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    resize_op = c_vision.RandomRotation((0, 90),
+                                        expand=True,
+                                        resample=Inter.BILINEAR,
+                                        center=(50, 50),
+                                        fill_value=150)
+    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(input_columns=["image"], operations=resize_op)
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
+    transform2 = py_vision.ComposeOp([py_vision.Decode(),
+                                      py_vision.RandomRotation((0, 90),
+                                                               expand=True,
+                                                               resample=Inter.BILINEAR,
+                                                               center=(50, 50),
+                                                               fill_value=150),
+                                      py_vision.ToTensor()])
+    data2 = data2.map(input_columns=["image"], operations=transform2())
+
+    # Compare with expected md5 from images
+    filename1 = "random_rotation_01_c_result.npz"
+    save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
+    filename2 = "random_rotation_01_py_result.npz"
+    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_rotation_diff(plot=False):
+    """
+    Test RandomRotation op
     """
     logger.info("test_random_rotation_op")
 
@@ -93,7 +173,7 @@ def test_rotation_diff():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    rotation_op = c_vision.RandomRotation((45, 45), expand=True)
+    rotation_op = c_vision.RandomRotation((45, 45))
     ctrans = [decode_op,
               rotation_op
               ]
@@ -103,7 +183,7 @@ def test_rotation_diff():
     # Second dataset
     transforms = [
         py_vision.Decode(),
-        py_vision.RandomRotation((45, 45), expand=True),
+        py_vision.RandomRotation((45, 45)),
         py_vision.ToTensor(),
     ]
     transform = py_vision.ComposeOp(transforms)
@@ -111,10 +191,13 @@ def test_rotation_diff():
     data2 = data2.map(input_columns=["image"], operations=transform())
 
     num_iter = 0
+    image_list_c, image_list_py = [], []
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         num_iter += 1
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        image_list_c.append(c_image)
+        image_list_py.append(py_image)
 
         logger.info("shape of c_image: {}".format(c_image.shape))
         logger.info("shape of py_image: {}".format(py_image.shape))
@@ -122,8 +205,15 @@ def test_rotation_diff():
         logger.info("dtype of c_image: {}".format(c_image.dtype))
         logger.info("dtype of py_image: {}".format(py_image.dtype))
 
+        mse = diff_mse(c_image, py_image)
+        assert mse < 0.001 # Rounding error
+    if plot:
+        visualize_list(image_list_c, image_list_py, visualize_mode=2)
+
 
 if __name__ == "__main__":
-    test_random_rotation_op(True)
+    test_random_rotation_op_c(plot=True)
+    test_random_rotation_op_py(plot=True)
     test_random_rotation_expand()
-    test_rotation_diff()
+    test_random_rotation_md5()
+    test_rotation_diff(plot=True)
