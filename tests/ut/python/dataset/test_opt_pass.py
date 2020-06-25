@@ -16,8 +16,10 @@ import numpy as np
 
 import mindspore.dataset as ds
 
-
-def test_map_reorder_pass_0():
+# tests the construction of multiple ops from a single dataset.
+# map dataset with columns order arguments should produce a ProjectOp over MapOp
+# This test does not utilize the compiling passes at this time.
+def test_map_reorder0():
     def generator_mc(maxid=1):
         for _ in range(maxid):
             yield (np.array([0]), np.array([1]))
@@ -31,8 +33,10 @@ def test_map_reorder_pass_0():
     for item in data0.create_tuple_iterator():  # each data is a dictionary
         assert item == [np.array(1), np.array(0)]
 
-
-def test_map_reorder_pass_1():
+# tests the construction of multiple ops from a single dataset.
+# map dataset with columns order arguments should produce a ProjectOp over MapOp
+# This test does not utilize the compiling passes at this time.
+def test_map_reorder1():
     def generator_mc(maxid=1):
         for _ in range(maxid):
             yield (np.array([0]), np.array([1]), np.array([2]))
@@ -48,8 +52,10 @@ def test_map_reorder_pass_1():
     for item in data2.create_tuple_iterator():
         assert item == [np.array(2), np.array(2), np.array(1), np.array(1), np.array(0), np.array(0)]
 
-
-def test_global_shuffle_pass():
+# tests the construction of multiple ops from a single dataset.
+# TFRecordDataset with global shuffle should produce a ShuffleOp over TfReaderOp.
+# This test does not utilize the compiling passes at this time.
+def test_shuffle():
 
     FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
     SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
@@ -85,6 +91,6 @@ def test_global_shuffle_pass():
 
 
 if __name__ == "__main__":
-    test_map_reorder_pass_0()
-    test_map_reorder_pass_1()
-    test_global_shuffle_pass()
+    test_map_reorder0()
+    test_map_reorder1()
+    test_global_shuffle()

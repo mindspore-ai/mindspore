@@ -106,13 +106,6 @@ class ClueOp : public ParallelOp {
 
     // Setter method.
     // @return Builder - setter method returns reference to the builder.
-    Builder &SetShuffleGlobal(bool shuffle_global) {
-      builder_shuffle_global_ = shuffle_global;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
     Builder &SetNumSamples(int64_t num_samples) {
       builder_num_samples_ = num_samples;
       return *this;
@@ -139,15 +132,13 @@ class ClueOp : public ParallelOp {
     int32_t builder_worker_connector_size_;
     std::vector<std::string> builder_clue_files_list_;
     bool builder_shuffle_files_;
-    bool builder_shuffle_global_;
     std::map<std::string, std::string> builder_cols_to_keyword_;
   };
 
   // Constructor of ClueOp
-  // @param shuffle_global - whether or not to shuffle the entire dataset.
   ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
          ColKeyMap cols_to_keyword, std::vector<std::string> clue_files_list, int32_t op_connector_size,
-         bool shuffle_files, bool shuffle_global, int32_t num_devices, int32_t device_id);
+         bool shuffle_files, int32_t num_devices, int32_t device_id);
 
   // Default destructor
   ~ClueOp() = default;
@@ -181,10 +172,6 @@ class ClueOp : public ParallelOp {
   // File names getter
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return clue_files_list_; }
-
-  // Global shuffle flag getter
-  // @return Bool - whether this Op requires global shuffle
-  bool RequireGlobalShuffle() { return shuffle_global_; }
 
  private:
   // The entry point for when workers are launched.
@@ -269,7 +256,6 @@ class ClueOp : public ParallelOp {
 
   int32_t device_id_;
   bool shuffle_files_;
-  bool shuffle_global_;
   bool finished_reading_dataset_;
   int32_t num_devices_;
   int64_t rows_per_buffer_;

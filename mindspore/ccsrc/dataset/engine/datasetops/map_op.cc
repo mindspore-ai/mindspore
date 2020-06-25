@@ -54,20 +54,19 @@ Status MapOp::Builder::sanityCheck() const {
 Status MapOp::Builder::Build(std::shared_ptr<MapOp> *ptr) {
   RETURN_IF_NOT_OK(sanityCheck());
   *ptr = std::make_shared<MapOp>(std::move(build_in_col_names_), std::move(build_out_col_names_),
-                                 std::move(build_tensor_funcs_), std::move(build_col_order_), build_num_workers_,
-                                 build_op_connector_size_, build_perf_mode_);
+                                 std::move(build_tensor_funcs_), build_num_workers_, build_op_connector_size_,
+                                 build_perf_mode_);
   return Status::OK();
 }
 
 // Constructor of MapOp
 MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-             std::vector<std::shared_ptr<TensorOp>> tensor_funcs, const std::vector<std::string> &columns_order,
-             int32_t num_workers, int32_t op_connector_size, bool perf_mode)
+             std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size,
+             bool perf_mode)
     : ParallelOp(num_workers, op_connector_size),
       tfuncs_(std::move(tensor_funcs)),
       in_columns_(in_col_names),
       out_columns_(out_col_names),
-      columns_order_(columns_order),
       perf_mode_(perf_mode) {
   // If caller didn't specify the out_col_names, assume they are same as the in_columns.
   if (out_columns_.empty() || out_columns_[0].empty()) {
