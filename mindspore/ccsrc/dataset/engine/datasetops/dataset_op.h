@@ -222,12 +222,17 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   // Getter function
   // @return connector size of current op
+
   int32_t ConnectorSize() const {
     if (!inlined()) {
       return out_connector_->size();
     }
     // Return child connector size for inlined op
     return ChildOpConnectorSize();
+  }
+
+  int64_t ConnectorOutBufferCount() const {
+    return out_connector_ == nullptr ? int64_t(-1) : static_cast<int64_t>(out_connector_->out_buffers_count());
   }
 
   // Getter function

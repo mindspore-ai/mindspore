@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "dataset/engine/perf/connector_size.h"
-
 #include <algorithm>
 #include <fstream>
 #include <memory>

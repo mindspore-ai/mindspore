@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <chrono>
 #include "dataset/util/status.h"
 
 namespace mindspore {
@@ -28,9 +29,10 @@ namespace dataset {
 class Monitor;
 class ExecutionTree;
 
-const char kDeviceQueueTracingName[] = "Device Queue Tracing";
-const char kDatasetIteratorTracingName[] = "Dataset Iterator Tracing";
-const char kConnectorSizeSamplingName[] = "Connector Size Sampling";
+const char kDeviceQueueTracingName[] = "Device_Queue_Tracing";
+const char kDatasetIteratorTracingName[] = "Dataset_Iterator_Tracing";
+const char kConnectorSizeSamplingName[] = "Connector_Size_Sampling";
+const char kConnectorThroughputSamplingName[] = "Connector_Throughput_Sampling";
 
 // Profiling is a class of basic unit of profiling action
 // This base class encapsulate the serialization output logic
@@ -59,6 +61,8 @@ class Sampling : public Profiling {
  public:
   // Sampling action function. This function will be invoked by performance monitor thread.
   virtual Status Sample() = 0;
+  // virtual Status TestPrint() = 0;
+  virtual ~Sampling() = default;
 };
 
 // Tracing is class of profiling which record samples upon request.
@@ -132,7 +136,7 @@ enum ProfilingTimeSubType {
 
 class ProfilingTime {
  public:
-  static double GetCurMilliSecond();
+  static int64_t GetCurMilliSecond();
 };
 
 }  // namespace dataset

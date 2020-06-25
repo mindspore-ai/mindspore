@@ -28,7 +28,6 @@ Monitor::Monitor(ExecutionTree *tree) : tree_(tree) {
   max_samples_ = 0;
   cur_row_ = 0;
 }
-
 Status Monitor::operator()() {
   // Register this thread with TaskManager to receive proper interrupt signal.
   TaskManager::FindMe()->Post();

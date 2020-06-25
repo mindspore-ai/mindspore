@@ -29,6 +29,7 @@ class ExecutionTree;
 class Monitor {
  public:
   // Monitor object constructor
+
   explicit Monitor(ExecutionTree *tree);
 
   Monitor() = default;
