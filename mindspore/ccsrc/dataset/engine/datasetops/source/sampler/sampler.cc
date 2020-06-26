@@ -80,11 +80,12 @@ Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t
 }
 
 void Sampler::Print(std::ostream &out, bool show_all) const {
-  out << "(sampler): base\n";
-
+  // Sampler printing is usually only called in the show_all mode.
+  // Derived classes will display the name, then call back to this base
+  // for common info.
+  // No-op in the summary mode.
   if (show_all) {
-    out << "num_rows_: " << num_rows_ << '\n';
-    out << "num_samples_: " << num_samples_ << '\n';
+    out << "\nnum_rows_: " << num_rows_ << "\nnum_samples_: " << num_samples_;
   }
 }
 

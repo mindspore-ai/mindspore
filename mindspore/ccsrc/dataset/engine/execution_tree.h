@@ -37,7 +37,8 @@ class ExecutionTree {
   // Prepare flags used during tree prepare phase
   enum PrepareFlags {
     kDePrepNone = 0,
-    kDePrepRepeat = 1  //  Processing a repeat operation
+    kDePrepRepeat = 1,  //  Processing a repeat operation
+    kDePrepCache = 2    //  Processing a cache operation
   };
 
   // State flags for the lifecycle of the tree
@@ -118,9 +119,9 @@ class ExecutionTree {
   // @return Status - The error code return
   Status Launch();
 
-  // A print method typically used for debugging
-  // @param out - The output stream to write output to
-  void Print(std::ostream &out) const;
+  /// A print method typically used for debugging
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out, const std::shared_ptr<DatasetOp> &op = nullptr) const;
 
   // Returns an iterator positioned at the start
   // @return Iterator - The iterator
@@ -199,14 +200,23 @@ class ExecutionTree {
   // @return Status - The error code return
   Status PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op);
 
-  // Adds an operator to the repeat stack during prepare phase.
-  // @param op - The dataset op to work add to repeat stack
-  // @return Status - The error code return
-  void AddToRepeatStack(std::shared_ptr<DatasetOp> dataset_op);
+  /// Adds an operator to the eoe operator stack during prepare phase.
+  /// \param op - The dataset op to work add to eoe stack
+  /// \return Status - The error code return
+  void AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op);
 
-  // Pops an operator from the repeat stack during prepare phase.
-  // @return shared_ptr to the popped operator
-  std::shared_ptr<DatasetOp> PopFromRepeatStack();
+  /// Pops an operator from the eoe operator stack during prepare phase.
+  /// \return shared_ptr to the popped operator
+  std::shared_ptr<DatasetOp> PopFromEOEOpStack();
+
+  /// Adds a sampler to the sampler stack during prepare phase.
+  /// \param samplerop - The dataset op to work add to eoe stack
+  /// \return Status - The error code return
+  void AddToSamplerStack(std::shared_ptr<Sampler> sampler);
+
+  /// Pops an operator from the sampler stack during prepare phase.
+  /// \return shared_ptr to the popped operator
+  std::shared_ptr<Sampler> PopFromSamplerStack();
 
   // Return the pointer to the TaskGroup
   // @return raw pointer to the TaskGroup
@@ -236,9 +246,10 @@ class ExecutionTree {
   int32_t id_count_;                                     // Counter for generating operator id's
   uint32_t prepare_flags_;                               // Flags used during tree prepare
   TreeState tree_state_;                                 // Tracking the current tree state
-  std::stack<std::shared_ptr<DatasetOp>> repeat_stack_;  // A stack used during prepare phase
   std::unique_ptr<Monitor> perf_monitor_;                // Performance Monitor
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
+  std::stack<std::shared_ptr<DatasetOp>> eoe_stack_;     // A stack used during prepare phase
+  std::stack<std::shared_ptr<Sampler>> sampler_stack_;   // A stack used during prepare phase
 };
 }  // namespace dataset
 }  // namespace mindspore

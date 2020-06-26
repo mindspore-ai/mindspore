@@ -230,7 +230,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   std::unique_ptr<DataSchema> data_schema_;
   std::string file_;  // file that store the information of images
   std::map<std::string, int32_t> class_index_;
-  std::shared_ptr<Sampler> sampler_;
   bool decode_;
   std::string usage_;
   int64_t buf_cnt_;

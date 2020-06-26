@@ -274,7 +274,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   TaskType task_type_;
   std::string task_mode_;
   int32_t rows_per_buffer_;
-  std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
 
   WaitPost wp_;

@@ -100,7 +100,7 @@ void MapOp::Print(std::ostream &out, bool show_all) const {
     }
     out << "\n  TensorOps:";
     for (size_t i = 0; i < tfuncs_.size(); i++) {
-      out << " " << tfuncs_[i];
+      out << " " << *(tfuncs_[i].get());
     }
     out << "\n\n";
   }

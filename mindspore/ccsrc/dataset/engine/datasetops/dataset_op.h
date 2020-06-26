@@ -34,6 +34,8 @@ class DataBuffer;
 
 class NodePass;
 
+class Sampler;
+
 // The base class DatasetOp is the main tree node.  It is an abstract class, so
 // the actual implementation of the operators will be derived from here.
 class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
@@ -55,7 +57,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   // Constructor
   // @param op_connector_size - The size for the output connector of this operator.
-  explicit DatasetOp(int32_t op_connector_size);
+  // @param sampler - The sampler for the op
+  explicit DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler);
 
   // Destructor
   virtual ~DatasetOp() { tree_ = nullptr; }
@@ -204,6 +207,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return Sets the control flags
   void set_control_flag(uint64_t flag) { BitSet(&op_ctrl_flags_, flag); }
 
+  // Setter function
+  // @return Sets the control flags
+  void ClearControlFlag(uint64_t flag) { BitClear(&op_ctrl_flags_, flag); }
+
   // Register the internal worker connectors. No op unless it is a parallel op
   // @return Status
   virtual Status RegisterWorkerConnectors() { return Status::OK(); }
@@ -271,6 +278,13 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return Pointer to the ExecutionTree the current op belongs to, no ownership
   ExecutionTree *Tree() { return tree_; }
 
+  // Getter for the sampler
+  // @return Shared pointer to the sampler (may return nullptr)
+  std::shared_ptr<Sampler> sampler() { return sampler_; }
+
+  // Computes a CRC value for the operator
+  static uint32_t GenerateCRC(const std::shared_ptr<DatasetOp> &op);
+
  protected:
   // Adds a parent operator to this operator
   // @notes External callers do not have access to this function.
@@ -289,8 +303,15 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return - Status
   virtual Status ComputeColMap();
 
+  // A helper function with some common code that leaf nodes can use during
+  // prepare phase for checking if they need to assign a sampler to the cache.
+  // @param random_access_op - indicate if this is a mappable random access leaf or not
+  // @return - Status
+  Status SaveSamplerForCache(bool random_access_op);
+
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership
+  std::shared_ptr<Sampler> sampler_;                             // Some leaf ops might have a sampler
   int32_t oc_queue_size_;                                        // Capacity for each out_connector_
   int32_t operator_id_;                                          // Generated id for the node
   ExecutionTree *tree_;                                          // Back pointer to our tree.

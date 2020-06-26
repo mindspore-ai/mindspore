@@ -128,7 +128,7 @@ Status ConcatOp::Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf) {
 
 Status ConcatOp::PrepareNodePostAction() {
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  tree_->AddToRepeatStack(shared_from_this());
+  tree_->AddToEOEOpStack(shared_from_this());
   return Status::OK();
 }
 

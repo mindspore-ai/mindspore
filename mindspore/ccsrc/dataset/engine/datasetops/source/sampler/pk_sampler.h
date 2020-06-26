@@ -56,6 +56,11 @@ class PKSampler : public Sampler {  // NOT YET FINISHED
   // @return - The error code return
   Status ResetSampler() override;
 
+  // Printer for debugging purposes.
+  // @param out - output stream to write to
+  // @param show_all - bool to show detailed vs summary
+  void Print(std::ostream &out, bool show_all) const override;
+
  private:
   bool shuffle_;
   uint32_t seed_;

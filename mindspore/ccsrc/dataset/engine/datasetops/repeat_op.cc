@@ -82,14 +82,14 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 Status RepeatOp::PrepareNodePostAction() {
   // Run any common code from super class first before adding our own specific logic
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  std::shared_ptr<DatasetOp> leaf_op = tree_->PopFromRepeatStack();
+  std::shared_ptr<DatasetOp> leaf_op = tree_->PopFromEOEOpStack();
   while (leaf_op != nullptr) {
     // Track the leaf operators that are under this repeat op.
     eoe_ops_.push_back(leaf_op);
-    leaf_op = tree_->PopFromRepeatStack();
+    leaf_op = tree_->PopFromEOEOpStack();
   }
   // Push ourselves to the stack in case one of our ascendants is repeat too.
-  tree_->AddToRepeatStack(shared_from_this());
+  tree_->AddToEOEOpStack(shared_from_this());
   return Status::OK();
 }
 

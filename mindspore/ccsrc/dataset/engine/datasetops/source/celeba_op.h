@@ -221,7 +221,6 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   bool decode_;
   std::set<std::string> extensions_;  // extensions allowed
   std::unique_ptr<DataSchema> data_schema_;
-  std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<Queue<std::vector<std::string>>> attr_info_queue_;
   int64_t num_rows_in_attr_file_;  // rows number specified in attr file
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;

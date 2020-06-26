@@ -18,23 +18,26 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <utility>
 #include <string>
 #include <algorithm>
 
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/datasetops/device_queue_op.h"
+#include "dataset/engine/datasetops/source/sampler/sampler.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/opt/pass.h"
-
+#include "utils/system/crc32c.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
 // Constructor
-DatasetOp::DatasetOp(int32_t op_connector_size)
+DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler)
     : oc_queue_size_(op_connector_size),
+      sampler_(sampler),
       operator_id_(kInvalidOperatorId),
       tree_(nullptr),
       state_(OpState::kDeOpIdle),
@@ -150,6 +153,9 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
     }
     out << "\nConnector queue size   : " << oc_queue_size_ << "\nOperator control flags : 0x" << std::hex
         << std::setw(8) << std::setfill('0') << op_ctrl_flags_ << std::dec << std::setfill(' ');
+    if (sampler_) {
+      sampler_->Print(out, show_all);
+    }
   }
 }
 
@@ -222,11 +228,10 @@ Status DatasetOp::PrepareNodePreAction() {
 Status DatasetOp::PrepareNodePostAction() {
   // If this op does not have any children and it is in a repeat path of the tree...
   if (child_.empty() && BitTest(op_ctrl_flags_, kDeOpRepeated)) {
-    // push ourselves onto the tree repeat stack.  Later, the repeat operator
+    // push ourselves onto the eoe operator stack.  Later, a repeat/epoch ctrl operator
     // above us will consume them.
-    tree_->AddToRepeatStack(shared_from_this());
+    tree_->AddToEOEOpStack(shared_from_this());
   }
-
   // Creating Connector object for each op.
   // The consumer of the root node is assumed to be one thread.
   // If multiple threads are consuming from the root node, they will get the ordered data in round robin fashion.
@@ -288,6 +293,57 @@ Status DatasetOp::Accept(NodePass *p, bool *modified) {
   // DatasetOp is the base class of visitor target.
   // This method will only be called if its derived class does not implement one.
   return p->RunOnNode(shared_from_this(), modified);
+}
+
+// A helper function with some common code that leaf nodes can use during
+// prepare phase for checking if they need to assign a sampler to the cache.
+// @return - Status
+Status DatasetOp::SaveSamplerForCache(bool random_access_op) {
+  // If we are a descendant under a cache op and we have a sampler, then save this sampler
+  // to a stack so that the cache can pick it up during it's processing above us.
+  if (sampler_) {
+    if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepCache)) {
+      // use move semantic to set our sampler_ to null after the move.  This is okay because a sampler is
+      // useless to a random data op.  It was only being used as a temporary holding until the cache can
+      // be created
+      tree_->AddToSamplerStack(sampler_);
+      MS_LOG(INFO) << "Preparing a leaf op: passing sampler up the tree for Cache handling.";
+    } else if (!random_access_op) {
+      // A sampler exists, but we are not in a caching tree and we are not a random access mappable leaf.
+      // This is an error because that type of leaf does not use sampling unless there's a cache to hook it into.
+      return Status(
+        StatusCode::kUnexpectedError, __LINE__, __FILE__,
+        "Non-mappable leaf op has a sampler, but it only supports sampling if there is a cache after it in the tree");
+    }
+  }
+
+  if (!random_access_op) {
+    // Since we don't truly need the sampler for this non-mappable dataset and it's been saved for the cache
+    // we can remove it now from the base.
+    sampler_.reset();
+  }
+
+  return Status::OK();
+}
+uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
+  std::stringstream ss;
+  op->tree_->Print(ss, op);
+  std::string ss_str = ss.str();
+
+  // Filter out the Operator control flags field when generating the check sum
+  ss_str = std::regex_replace(ss_str, std::regex("Operator control flags.*\n"), "");
+
+  // Filter out the Device id field to allow cache sharing for a distributed run of the same pipeline
+  ss_str = std::regex_replace(ss_str, std::regex("Device id.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("device_id.*\n"), "");
+
+  // The Cache crc and Server cache id field is different when creating new cache_client and re-using the same
+  // cache_client later. So we filter out these two fields to allow cache sharing.
+  ss_str = std::regex_replace(ss_str, std::regex("Cache crc.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("Server cache id.*\n"), "");
+
+  uint32_t cache_crc = system::Crc32c::GetMaskCrc32cValue(ss_str.c_str(), ss_str.length());
+  return cache_crc;
 }
 }  // namespace dataset
 }  // namespace mindspore

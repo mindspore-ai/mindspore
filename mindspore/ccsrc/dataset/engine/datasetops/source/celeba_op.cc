@@ -70,13 +70,12 @@ Status CelebAOp::Builder::SanityCheck() {
 CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size,
                    bool decode, const std::string &dataset_type, const std::set<std::string> &exts,
                    std::unique_ptr<DataSchema> schema, std::shared_ptr<Sampler> sampler)
-    : ParallelOp(num_workers, queue_size),
+    : ParallelOp(num_workers, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       folder_path_(dir),
       decode_(decode),
       extensions_(exts),
       data_schema_(std::move(schema)),
-      sampler_(std::move(sampler)),
       num_rows_in_attr_file_(0),
       dataset_type_(dataset_type) {
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);

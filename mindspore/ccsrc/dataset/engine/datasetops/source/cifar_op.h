@@ -216,7 +216,6 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   int32_t rows_per_buffer_;
   std::string folder_path_;
   std::unique_ptr<DataSchema> data_schema_;
-  std::shared_ptr<Sampler> sampler_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
 

@@ -235,7 +235,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   WaitPost wp_;
   std::string folder_path_;  // directory of image folder
   int32_t rows_per_buffer_;
-  std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
   std::vector<MnistLabelPair> image_label_pairs_;
   std::vector<std::string> image_names_;
