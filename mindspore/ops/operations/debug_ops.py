@@ -334,7 +334,7 @@ class Print(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        self.add_prim_attr("_side_effect", True)
 
     def __call__(self, *args):
         for arg in args:

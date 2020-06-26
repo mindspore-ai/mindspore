@@ -34,7 +34,7 @@ extern const char GRAPH_FLAG_LOOP_CAN_UNROLL[];
 extern const char GRAPH_FLAG_HAS_EFFECT[];
 extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
 extern const char GRAPH_FLAG_RANDOM_EFFECT[];
-
+extern const char GRAPH_FLAG_SIDE_EFFECT[];
 }  // namespace mindspore
 
 #endif  // PYBIND_API_EXPORT_FLAGS_H_
