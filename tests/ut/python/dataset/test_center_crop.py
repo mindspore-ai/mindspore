@@ -109,23 +109,18 @@ def test_center_crop_comp(height=375, width=375, plot=False):
         visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
 
-# pylint: disable=unnecessary-lambda
 def test_crop_grayscale(height=375, width=375):
     """
     Test that centercrop works with pad and grayscale images
     """
 
-    def channel_swap(image):
-        """
-        Py func hack for our pytransforms to work with c transforms
-        """
-        return (image.transpose(1, 2, 0) * 255).astype(np.uint8)
-
+    # Note: image.transpose performs channel swap to allow py transforms to
+    # work with c transforms
     transforms = [
         py_vision.Decode(),
         py_vision.Grayscale(1),
         py_vision.ToTensor(),
-        (lambda image: channel_swap(image))
+        (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
     transform = py_vision.ComposeOp(transforms)

@@ -37,6 +37,7 @@ def test_basic():
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
     prefetch_size_original = ds.config.get_prefetch_size()
     seed_original = ds.config.get_seed()
+    monitor_sampling_interval_original = ds.config.get_monitor_sampling_interval()
 
     ds.config.load('../data/dataset/declient.cfg')
 
@@ -45,23 +46,27 @@ def test_basic():
     # assert ds.config.get_worker_connector_size() == 16
     assert ds.config.get_prefetch_size() == 16
     assert ds.config.get_seed() == 5489
+    # assert ds.config.get_monitor_sampling_interval() == 15
 
     # ds.config.set_rows_per_buffer(1)
     ds.config.set_num_parallel_workers(2)
     # ds.config.set_worker_connector_size(3)
     ds.config.set_prefetch_size(4)
     ds.config.set_seed(5)
+    ds.config.set_monitor_sampling_interval(45)
 
     # assert ds.config.get_rows_per_buffer() == 1
     assert ds.config.get_num_parallel_workers() == 2
     # assert ds.config.get_worker_connector_size() == 3
     assert ds.config.get_prefetch_size() == 4
     assert ds.config.get_seed() == 5
+    assert ds.config.get_monitor_sampling_interval() == 45
 
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
     ds.config.set_prefetch_size(prefetch_size_original)
     ds.config.set_seed(seed_original)
+    ds.config.set_monitor_sampling_interval(monitor_sampling_interval_original)
 
 
 def test_get_seed():
@@ -150,7 +155,7 @@ def test_deterministic_run_fail():
 
 def test_deterministic_run_pass():
     """
-    Test deterministic run with with setting the seed
+    Test deterministic run with setting the seed
     """
     logger.info("test_deterministic_run_pass")
 
