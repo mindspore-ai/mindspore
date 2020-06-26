@@ -40,7 +40,7 @@ const TensorParam MakeTensor(int n, int c, int h, int w) {
   return tensor;
 }
 
-Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops) {
+Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
   Graph::NodeType NewOp;
   NewOp.name = ops[iter_ops]->name();
   NewOp.info = InfoType::kApplication;
@@ -140,7 +140,7 @@ std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo
   return graph;
 }
 
-void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph) {
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, const std::shared_ptr<Graph> &graph) {
   for (size_t iter_i = 0; iter_i < input_tensor_names.size(); iter_i++) {
     for (size_t iter_j = 1; iter_j < input_tensor_names[iter_i].size(); iter_j++) {
       size_t head_node_index = GetIndexInInputTensorNames(input_tensor_names, input_tensor_names[iter_i][iter_j]);
@@ -163,8 +163,8 @@ size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &i
   return SIZE_MAX;
 }
 
-void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
-                   const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list) {
+void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
+                   const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list) {
   std::vector<size_t> eli;
   eli.push_back(node_index);
   for (size_t i = 0; i < (size_t)graph->nodes[node_index].node_out.size(); i++) {
@@ -211,18 +211,18 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
   }
 }
 
-std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
-                                      const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
-                                      const std::shared_ptr<std::vector<size_t>> index_list) {
+std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
+                                      const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
+                                      const std::shared_ptr<std::vector<size_t>> &index_list) {
   MS_EXCEPTION_IF_NULL(graph);
-  const std::set<OperatorType> type_list = {
-    OperatorType::kRecOneHot, OperatorType::kRecReLU,      OperatorType::kRecLog,     OperatorType::kRecExp,
-    OperatorType::kRecAdd,    OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd, OperatorType::kRecSub,
-    OperatorType::kRecMul,    OperatorType::kRecDiv,       OperatorType::kRecSqueeze, OperatorType::kRecReduce,
-    OperatorType::kRecCast,   OperatorType::kRecReshape,   OperatorType::kRecGatherV2};
+  static const std::set<OperatorType> elementwise_type = {
+    OperatorType::kRecReLU,      OperatorType::kRecLog,      OperatorType::kRecExp,         OperatorType::kRecAdd,
+    OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,  OperatorType::kRecSub,         OperatorType::kRecMul,
+    OperatorType::kRecDiv,       OperatorType::kRecSqueeze,  OperatorType::kRecReduce,      OperatorType::kRecCast,
+    OperatorType::kRecReshape,   OperatorType::kRecGatherV2, OperatorType::kRecArgWithValue};
   for (size_t node_index = 0; node_index < (size_t)graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
-    if (type_list.find(type) != type_list.end()) {
+    if (elementwise_type.find(type) != elementwise_type.end()) {
       Eliminate_Aux(node_index, graph, eli_list);
     }
   }
@@ -250,12 +250,22 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
 
     new_graph->nodes.push_back(graph->nodes[i]);
     auto *node_in = &new_graph->nodes[index_list->at(i)].node_in;
-    for (size_t j = 0; j < node_in->size(); j++) {
-      node_in->at(j) = index_list->at(node_in->at(j));
+    for (size_t j = node_in->size(); j > 0; j--) {
+      bool IsEliminated = (index_list->at(node_in->at(j - 1)) == SIZE_MAX);
+      if (IsEliminated) {
+        node_in->erase(node_in->begin() + j - 1);
+      } else {
+        node_in->at(j - 1) = index_list->at(node_in->at(j - 1));
+      }
     }
     auto *node_out = &new_graph->nodes[index_list->at(i)].node_out;
-    for (size_t j = 0; j < node_out->size(); j++) {
-      node_out->at(j) = index_list->at(node_out->at(j));
+    for (size_t j = node_out->size(); j > 0; j--) {
+      bool IsEliminated = (index_list->at(node_out->at(j - 1)) == SIZE_MAX);
+      if (IsEliminated) {
+        node_out->erase(node_out->begin() + j - 1);
+      } else {
+        node_out->at(j - 1) = index_list->at(node_out->at(j - 1));
+      }
     }
   }
   return new_graph;
