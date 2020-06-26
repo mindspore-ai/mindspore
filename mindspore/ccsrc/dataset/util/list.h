@@ -106,6 +106,24 @@ struct List {
     ++count;
   }
 
+  // Insert elem2 before elem1 in the list.
+  virtual void InsertBefore(pointer elem1, pointer elem2) {
+    DS_ASSERT(elem1 != elem2);
+    Node<T> &elem1_node = elem1->*node;
+    Node<T> &elem2_node = elem2->*node;
+    elem2_node.next = elem1;
+    elem2_node.prev = elem1_node.prev;
+    if (elem1_node.prev != nullptr) {
+      Node<T> &prev_node = elem1_node.prev->*node;
+      prev_node.next = elem2;
+    }
+    elem1_node.prev = elem2;
+    if (head == elem1) {
+      head = elem2;
+    }
+    ++count;
+  }
+
   // Remove an element in the list
   virtual void Remove(pointer elem) noexcept {
     Node<T> &elem_node = elem->*node;
