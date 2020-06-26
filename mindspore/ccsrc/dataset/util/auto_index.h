@@ -91,7 +91,7 @@ class AutoIndexObj : public BPlusTree<int64_t, T, A> {
   }
 
  private:
-  static constexpr key_type kMinKey = 1;
+  static constexpr key_type kMinKey = 0;
   std::atomic<key_type> inx_;
 };
 }  // namespace dataset
