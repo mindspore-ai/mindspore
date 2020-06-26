@@ -1040,7 +1040,7 @@ class Dataset:
 
         Args:
             columns (list[str], optional): List of columns to be used to specify the order of columns
-                (defaults=None, means all columns).
+                (default=None, means all columns).
 
         Returns:
             Iterator, list of ndarray.
@@ -3382,7 +3382,7 @@ class ManifestDataset(MappableDataset):
         class_indexing (dict, optional): A str-to-int mapping from label name to index
             (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
-        decode (bool, optional): decode the images after reading (defaults=False).
+        decode (bool, optional): decode the images after reading (default=False).
         num_shards (int, optional): Number of shards that the dataset should be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
@@ -4760,7 +4760,7 @@ class _NumpySlicesDataset:
 
     def process_dict(self, input_data):
         """
-        Convert the dict like data into tuple format, when input is a tuple of dict then compose it into a dict first.
+        Convert the dict like data into tuple format, when input is a tuple of dicts then compose it into a dict first.
         """
         # Convert pandas like dict(has "values" column) into General dict
         data_keys = list(input_data.keys())

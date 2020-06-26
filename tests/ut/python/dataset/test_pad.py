@@ -16,12 +16,12 @@
 Testing Pad op in DE
 """
 import numpy as np
-from util import diff_mse
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -69,23 +69,19 @@ def test_pad_op():
         assert mse < 0.01
 
 
-# pylint: disable=unnecessary-lambda
+
 def test_pad_grayscale():
     """
     Tests that the pad works for grayscale images
     """
 
-    def channel_swap(image):
-        """
-        Py func hack for our pytransforms to work with c transforms
-        """
-        return (image.transpose(1, 2, 0) * 255).astype(np.uint8)
-
+    # Note: image.transpose performs channel swap to allow py transforms to
+    # work with c transforms
     transforms = [
         py_vision.Decode(),
         py_vision.Grayscale(1),
         py_vision.ToTensor(),
-        (lambda image: channel_swap(image))
+        (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
     transform = py_vision.ComposeOp(transforms)

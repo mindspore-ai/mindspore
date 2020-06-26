@@ -50,9 +50,7 @@ def test_diff_predicate_func():
 
 
 def filter_func_ge(data):
-    if data > 10:
-        return False
-    return True
+    return data <= 10
 
 
 def generator_1d():
@@ -108,15 +106,11 @@ def test_filter_by_generator_with_repeat_after():
 
 
 def filter_func_batch(data):
-    if data[0] > 8:
-        return False
-    return True
+    return data[0] <= 8
 
 
 def filter_func_batch_after(data):
-    if data > 20:
-        return False
-    return True
+    return data <= 20
 
 
 # test with batchOp before
@@ -152,9 +146,7 @@ def test_filter_by_generator_with_batch_after():
 
 
 def filter_func_shuffle(data):
-    if data > 20:
-        return False
-    return True
+    return data <= 20
 
 
 # test with batchOp before
@@ -169,9 +161,7 @@ def test_filter_by_generator_with_shuffle():
 
 
 def filter_func_shuffle_after(data):
-    if data > 20:
-        return False
-    return True
+    return data <= 20
 
 
 # test with batchOp after
@@ -197,15 +187,11 @@ def generator_1d_zip2():
 
 def filter_func_zip(data1, data2):
     _ = data2
-    if data1 > 20:
-        return False
-    return True
+    return data1 <= 20
 
 
 def filter_func_zip_after(data1):
-    if data1 > 20:
-        return False
-    return True
+    return data1 <= 20
 
 
 # test with zipOp before
@@ -247,16 +233,11 @@ def test_filter_by_generator_with_zip_after():
 
 def filter_func_map(col1, col2):
     _ = col2
-    if col1[0] > 8:
-        return True
-    return False
+    return col1[0] > 8
 
 
-# pylint: disable=simplifiable-if-statement
 def filter_func_map_part(col1):
-    if col1 < 3:
-        return True
-    return False
+    return col1 < 3
 
 
 def filter_func_map_all(col1, col2):
@@ -311,9 +292,7 @@ def test_filter_by_generator_with_map_part_col():
 
 
 def filter_func_rename(data):
-    if data > 8:
-        return True
-    return False
+    return data > 8
 
 
 # test with  rename before
@@ -334,15 +313,11 @@ def test_filter_by_generator_with_rename():
 # test input_column
 def filter_func_input_column1(col1, col2):
     _ = col2
-    if col1[0] < 8:
-        return True
-    return False
+    return col1[0] < 8
 
 
 def filter_func_input_column2(col1):
-    if col1[0] < 8:
-        return True
-    return False
+    return col1[0] < 8
 
 
 def filter_func_input_column3(col1):
@@ -439,9 +414,7 @@ def test_filter_by_generator_Partial2():
 
 def filter_func_Partial(col1, col2):
     _ = col2
-    if col1[0] % 3 == 0:
-        return True
-    return False
+    return col1[0] % 3 == 0
 
 
 def generator_big(maxid=20):
@@ -461,9 +434,7 @@ def test_filter_by_generator_Partial():
 
 def filter_func_cifar(col1, col2):
     _ = col1
-    if col2 % 3 == 0:
-        return True
-    return False
+    return col2 % 3 == 0
 
 
 # test with  cifar10
