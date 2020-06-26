@@ -21,6 +21,11 @@ class Distribution(Cell):
     """
     Base class for all mathematical distributions.
 
+    Args:
+        dtype (mindspore.dtype): type of the distribution.
+        name (str): name of the distribution.
+        param (dict): parameters used to initialize the distribution.
+
     Note:
         Derived class should override operations such as ,_mean, _prob,
         and _log_prob. Functions should be called through construct when
@@ -97,14 +102,8 @@ class Distribution(Cell):
         Note:
             value is casted to Tensor for further calculation.
 
-        Args:
-            name (str): name of the calling function.
-            value (Tensor): values to be evaluated.
-            mean (Tensor): mean of the distirbution. Default: self.mean.
-            sd (Tensor): standard deviation of the distribution. Default: self.sd.
-
-        Outputs:
-            Tensor, shape: broadcast_shape of the distribution.
+        Returns:
+            Tensor, shape is the broadcast_shape of the distribution.
         """
         return self._call_log_prob(*args)
 
@@ -114,35 +113,8 @@ class Distribution(Cell):
 
         .. math::
             probability(x) = \exp(log_likehood(x))
-
-        Args:
-            name (str): name of the calling function.
-            value (Tensor): values to be evaluated.
-            mean (Tensor): mean of the distribution. Default: self.mean.
-            sd (Tensor): standard deviation of the distritbuion. Default: self.sd.
         """
         return self.exp(self._log_likelihood(*args))
-
-    def _call_prob(self, *args):
-        """
-        Raises:
-            NotImplementedError when derived class didn't override _prob or _log_likelihood.
-        """
-        raise NotImplementedError('pdf/pmf is not implemented: {}'.format(type(self).__name__))
-
-    def _call_log_prob(self, *args):
-        """
-        Raises:
-            NotImplementedError when derived class didn't override _prob or _log_likelihood.
-        """
-        raise NotImplementedError('log_probability is not implemented: {}'.format(type(self).__name__))
-
-    def _call_sd(self):
-        """
-        Raises:
-            NotImplementedError when derived class didn't override _sd or _var.
-        """
-        raise NotImplementedError('standard deviation is not implemented: {}'.format(type(self).__name__))
 
     def prob(self, *args):
         """
@@ -151,14 +123,8 @@ class Distribution(Cell):
         Note:
             value is casted to Tensor for further calculation.
 
-        Args:
-            name (str): name of the calling function.
-            value (Tensor): values to be evaluated.
-            mean (Tensor): mean of the distribution.
-            sd (Tensor): standard deviation of the distritbuion.
-
-        Outputs:
-            Tensor, shape: broadcast_shape of the distribution.
+        Returns:
+            Tensor, shape is the broadcast_shape of the distribution.
         """
         return self._call_prob(*args)
 
@@ -176,8 +142,8 @@ class Distribution(Cell):
         Evaluate the KL divergence. Parameters of the second distribution should be
         passed in through **kwargs.
 
-        Outputs:
-            Tensor, shape: broadcast_shape of the distribution and input distribution.
+        Returns:
+            Tensor, shape is the broadcast_shape of the distribution and input distribution.
         """
         return self._kl_loss(**kwargs)
 
@@ -185,8 +151,8 @@ class Distribution(Cell):
         """
         Evaluate the mean.
 
-        Outputs:
-            Tensor, shape: broadcast_shape of the distribution.
+        Returns:
+            Tensor, shape is the broadcast_shape of the distribution.
         """
         return self._mean(**kwargs)
 
@@ -194,19 +160,19 @@ class Distribution(Cell):
         """
         Evaluate the standard deviation.
 
-        Outputs:
-            Tensor, with shape of broadcast_shape of the distribution.
+        Returns:
+            Tensor, shape is the broadcast_shape of the distribution.
         """
         return self._call_sd(**kwargs)
 
-    def _calc_sd_from_var(self, **kwargs):
+    def _calc_sd_from_var(self, *args):
         r"""
         Evaluate log probability from probability.
 
         .. math::
             STD(x) = \sqrt(VAR(x))
         """
-        return self.sqrt(self._var(**kwargs))
+        return self.sqrt(self._var(*args))
 
     def construct(self, *inputs):
         """
@@ -226,7 +192,9 @@ class Distribution(Cell):
         if inputs[0] == 'kl_loss':
             return self._kl_loss(*inputs)
         if inputs[0] == 'mean':
-            return self._mean()
+            return self._mean(*inputs)
         if inputs[0] == 'sd':
-            return self._call_sd()
+            return self._call_sd(*inputs)
+        if inputs[0] == 'sample':
+            return self._sample(*inputs)
         return None

@@ -36,18 +36,18 @@ def test_no_arguments():
     No args passed in during initialization.
     """
     n = nn.Normal()
+    assert isinstance(n, nn.Distribution)
     b = nn.Bernoulli()
-    print(n)
-    print(b)
+    assert isinstance(b, nn.Distribution)
 
 def test_with_arguments():
     """
     Args passed in during initialization.
     """
     n = nn.Normal([3.0], [4.0], dtype=dtype.float32)
+    assert isinstance(n, nn.Distribution)
     b = nn.Bernoulli([0.3, 0.5], dtype=dtype.int32)
-    print(n)
-    print(b)
+    assert isinstance(b, nn.Distribution)
 
 class NormalProb(nn.Cell):
     """
@@ -69,8 +69,8 @@ def test_normal_prob():
     net = NormalProb()
     value = Tensor([0.5, 1.0], dtype=dtype.float32)
     pdf, log_pdf = net(value)
-    print("pdf: ", pdf)
-    print("log_pdf: ", log_pdf)
+    assert isinstance(pdf, Tensor)
+    assert isinstance(log_pdf, Tensor)
 
 class NormalProb1(nn.Cell):
     """
@@ -94,9 +94,8 @@ def test_normal_prob1():
     mean = Tensor([0.0], dtype=dtype.float32)
     sd = Tensor([1.0], dtype=dtype.float32)
     pdf, log_pdf = net(value, mean, sd)
-    print("pdf: ", pdf)
-    print("log_pdf: ", log_pdf)
-
+    assert isinstance(pdf, Tensor)
+    assert isinstance(log_pdf, Tensor)
 
 class NormalProb2(nn.Cell):
     """
@@ -121,8 +120,8 @@ def test_normal_prob2():
     mean = Tensor([0.0], dtype=dtype.float32)
     sd = Tensor([1.0], dtype=dtype.float32)
     pdf, log_pdf = net(value, mean, sd)
-    print("pdf: ", pdf)
-    print("log_pdf: ", log_pdf)
+    assert isinstance(pdf, Tensor)
+    assert isinstance(log_pdf, Tensor)
 
 class BernoulliProb(nn.Cell):
     """
@@ -133,9 +132,19 @@ class BernoulliProb(nn.Cell):
         self.bernoulli = nn.Bernoulli(0.5, dtype=dtype.int32)
 
     def construct(self, value):
-        x = self.bernoulli('prob', value)
-        y = self.bernoulli('log_prob', value)
-        return x, y
+        return self.bernoulli('prob', value)
+
+class BernoulliLogProb(nn.Cell):
+    """
+    Bernoulli distribution: initialize with probs.
+    """
+    def __init__(self):
+        super(BernoulliLogProb, self).__init__()
+        self.bernoulli = nn.Bernoulli(0.5, dtype=dtype.int32)
+
+    def construct(self, value):
+        return self.bernoulli('log_prob', value)
+
 
 def test_bernoulli_prob():
     """
@@ -143,10 +152,17 @@ def test_bernoulli_prob():
     """
     net = BernoulliProb()
     value = Tensor([1, 0, 1, 0, 1], dtype=dtype.float32)
-    ans = net(value)
-    print("pmf: ", ans)
-    print("log_pmf: ", ans)
+    pmf = net(value)
+    assert isinstance(pmf, Tensor)
 
+def test_bernoulli_log_prob():
+    """
+    Test pmf/log_pmf: passing value through construct.
+    """
+    net = BernoulliLogProb()
+    value = Tensor([1, 0, 1, 0, 1], dtype=dtype.float32)
+    log_pmf = net(value)
+    assert isinstance(log_pmf, Tensor)
 
 class BernoulliProb1(nn.Cell):
     """
@@ -157,9 +173,19 @@ class BernoulliProb1(nn.Cell):
         self.bernoulli = nn.Bernoulli()
 
     def construct(self, value, probs):
-        x = self.bernoulli('prob', value, probs)
-        y = self.bernoulli('log_prob', value, probs)
-        return x, y
+        return self.bernoulli('prob', value, probs)
+
+class BernoulliLogProb1(nn.Cell):
+    """
+    Bernoulli distribution: initialize without probs.
+    """
+    def __init__(self):
+        super(BernoulliLogProb1, self).__init__()
+        self.bernoulli = nn.Bernoulli()
+
+    def construct(self, value, probs):
+        return self.bernoulli('log_prob', value, probs)
+
 
 def test_bernoulli_prob1():
     """
@@ -168,10 +194,18 @@ def test_bernoulli_prob1():
     net = BernoulliProb1()
     value = Tensor([1, 0, 1, 0, 1], dtype=dtype.float32)
     probs = Tensor([0.3], dtype=dtype.float32)
-    ans = net(value, probs)
-    print("pmf: ", ans)
-    print("log_pmf: ", ans)
+    pmf = net(value, probs)
+    assert isinstance(pmf, Tensor)
 
+def test_bernoulli_log_prob1():
+    """
+    Test pmf/log_pmf: passing probs through construct.
+    """
+    net = BernoulliLogProb1()
+    value = Tensor([1, 0, 1, 0, 1], dtype=dtype.float32)
+    probs = Tensor([0.3], dtype=dtype.float32)
+    log_pmf = net(value, probs)
+    assert isinstance(log_pmf, Tensor)
 
 class BernoulliProb2(nn.Cell):
     """
@@ -182,9 +216,19 @@ class BernoulliProb2(nn.Cell):
         self.bernoulli = nn.Bernoulli(0.5)
 
     def construct(self, value, probs):
-        x = self.bernoulli('prob', value, probs)
-        y = self.bernoulli('log_prob', value, probs)
-        return x, y
+        return self.bernoulli('prob', value, probs)
+
+class BernoulliLogProb2(nn.Cell):
+    """
+    Bernoulli distribution: initialize with probs.
+    """
+    def __init__(self):
+        super(BernoulliLogProb2, self).__init__()
+        self.bernoulli = nn.Bernoulli(0.5)
+
+    def construct(self, value, probs):
+        return self.bernoulli('log_prob', value, probs)
+
 
 def test_bernoulli_prob2():
     """
@@ -194,9 +238,20 @@ def test_bernoulli_prob2():
     net = BernoulliProb2()
     value = Tensor([1, 0, 1, 0, 1], dtype=dtype.float32)
     probs = Tensor([0.3], dtype=dtype.float32)
-    ans = net(value, probs)
-    print("pmf: ", ans)
-    print("log_pmf: ", ans)
+    pmf = net(value, probs)
+    assert isinstance(pmf, Tensor)
+
+def test_bernoulli_log_prob2():
+    """
+    Test pmf/log_pmf: passing probs/value through construct.
+    Overwrite original probs.
+    """
+    net = BernoulliLogProb2()
+    value = Tensor([1, 0, 1, 0, 1], dtype=dtype.float32)
+    probs = Tensor([0.3], dtype=dtype.float32)
+    log_pmf = net(value, probs)
+    assert isinstance(log_pmf, Tensor)
+
 
 class NormalKl(nn.Cell):
     """
@@ -229,13 +284,61 @@ def test_kl():
     sd_b = np.array([1.0]).astype(np.float32)
     mean = Tensor(mean_b, dtype=dtype.float32)
     sd = Tensor(sd_b, dtype=dtype.float32)
-    output = nor_net(mean, sd)
-    print("normal-normal kl loss: ", output)
+    loss = nor_net(mean, sd)
+    assert isinstance(loss, Tensor)
 
     ber_net = BernoulliKl()
     probs_b = Tensor([0.3], dtype=dtype.float32)
-    output = ber_net(probs_b)
-    print("bernoulli-bernoulli kl loss: ", output)
+    loss = ber_net(probs_b)
+    assert isinstance(loss, Tensor)
+
+
+class NormalKlNoArgs(nn.Cell):
+    """
+    Test class: kl_loss of Normal distribution.
+    No args during initialization.
+    """
+    def __init__(self):
+        super(NormalKlNoArgs, self).__init__()
+        self.n = nn.Normal(dtype=dtype.float32)
+
+    def construct(self, x_, y_, w_, v_):
+        return self.n('kl_loss', 'Normal', x_, y_, w_, v_)
+
+class BernoulliKlNoArgs(nn.Cell):
+    """
+    Test class: kl_loss between Bernoulli distributions.
+    No args during initialization.
+    """
+    def __init__(self):
+        super(BernoulliKlNoArgs, self).__init__()
+        self.b = nn.Bernoulli(dtype=dtype.int32)
+
+    def construct(self, x_, y_):
+        return self.b('kl_loss', 'Bernoulli', x_, y_)
+
+def test_kl_no_args():
+    """
+    Test kl_loss function.
+    """
+    nor_net = NormalKlNoArgs()
+    mean_b = np.array([1.0]).astype(np.float32)
+    sd_b = np.array([1.0]).astype(np.float32)
+    mean_a = np.array([2.0]).astype(np.float32)
+    sd_a = np.array([3.0]).astype(np.float32)
+    mean_b = Tensor(mean_b, dtype=dtype.float32)
+    sd_b = Tensor(sd_b, dtype=dtype.float32)
+    mean_a = Tensor(mean_a, dtype=dtype.float32)
+    sd_a = Tensor(sd_a, dtype=dtype.float32)
+    loss = nor_net(mean_b, sd_b, mean_a, sd_a)
+    assert isinstance(loss, Tensor)
+
+    ber_net = BernoulliKlNoArgs()
+    probs_b = Tensor([0.3], dtype=dtype.float32)
+    probs_a = Tensor([0.7], dtype=dtype.float32)
+    loss = ber_net(probs_b, probs_a)
+    assert isinstance(loss, Tensor)
+
 
 
 class NormalBernoulli(nn.Cell):
@@ -244,7 +347,7 @@ class NormalBernoulli(nn.Cell):
     """
     def __init__(self):
         super(NormalBernoulli, self).__init__()
-        self.n = nn.Normal(3.0, 4.0, dtype=dtype.int32)
+        self.n = nn.Normal(3.0, 4.0, dtype=dtype.float32)
         self.b = nn.Bernoulli(0.5, dtype=dtype.int32)
 
     def construct(self):
@@ -260,7 +363,7 @@ def test_bascis():
     """
     net = NormalBernoulli()
     normal_mean, normal_sd, bernoulli_mean, bernoulli_sd = net()
-    print("Mean of Normal distribution: ", normal_mean)
-    print("Standard deviation of Normal distribution: ", normal_sd)
-    print("Mean of Bernoulli distribution: ", bernoulli_mean)
-    print("Standard deviation of Bernoulli distribution: ", bernoulli_sd)
+    assert isinstance(normal_mean, Tensor)
+    assert isinstance(normal_sd, Tensor)
+    assert isinstance(bernoulli_mean, Tensor)
+    assert isinstance(bernoulli_sd, Tensor)

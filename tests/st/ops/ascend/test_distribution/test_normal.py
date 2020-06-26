@@ -65,11 +65,24 @@ class Net3(nn.Cell):
     """
     def __init__(self):
         super(Net3, self).__init__()
-        self.n = nn.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), dtype=dtype.float32)
+        self.n = nn.Normal(np.array([3.0]), np.array([2.0, 4.0]), dtype=dtype.float32)
 
     @ms_function
     def construct(self):
         return self.n('mean'), self.n('sd')
+
+class Net4(nn.Cell):
+    """
+    Test class: mean/sd of normal distribution.
+    """
+    def __init__(self, shape, seed=0):
+        super(Net4, self).__init__()
+        self.n = nn.Normal(np.array([3.0]), np.array([[2.0], [4.0]]), seed=seed, dtype=dtype.float32)
+        self.shape = shape
+
+    @ms_function
+    def construct(self, mean=None, sd=None):
+        return self.n('sample', self.shape, mean, sd)
 
 def test_pdf():
     """
@@ -79,10 +92,8 @@ def test_pdf():
     expect_pdf = norm_benchmark.pdf([1.0, 2.0]).astype(np.float32)
     pdf = Net()
     output = pdf(Tensor([1.0, 2.0], dtype=dtype.float32))
-    print("expected_pdf: ", expect_pdf)
-    print("ans: ", output.asnumpy())
     tol = 1e-6
-    assert (output.asnumpy() - expect_pdf < tol).all()
+    assert (np.abs(output.asnumpy() - expect_pdf) < tol).all()
 
 def test_log_likelihood():
     """
@@ -92,10 +103,8 @@ def test_log_likelihood():
     expect_logpdf = norm_benchmark.logpdf([1.0, 2.0]).astype(np.float32)
     logprob = Net1()
     output = logprob(Tensor([1.0, 2.0], dtype=dtype.float32))
-    print("expected_log_probability: ", expect_logpdf)
-    print("ans: ", output.asnumpy())
     tol = 1e-6
-    assert (output.asnumpy() - expect_logpdf < tol).all()
+    assert (np.abs(output.asnumpy() - expect_logpdf) < tol).all()
 
 def test_kl_loss():
     """
@@ -115,10 +124,8 @@ def test_kl_loss():
     mean = Tensor(mean_b, dtype=dtype.float32)
     sd = Tensor(sd_b, dtype=dtype.float32)
     output = kl_loss(mean, sd)
-    print("expected_kl_loss: ", expect_kl_loss)
-    print("ans: ", output.asnumpy())
     tol = 1e-6
-    assert (output.asnumpy() - expect_kl_loss < tol).all()
+    assert (np.abs(output.asnumpy() - expect_kl_loss) < tol).all()
 
 def test_basics():
     """
@@ -126,5 +133,20 @@ def test_basics():
     """
     basics = Net3()
     mean, sd = basics()
-    print("mean is ", mean)
-    print("sd is ", sd)
+    expect_mean = [3.0, 3.0]
+    expect_sd = [2.0, 4.0]
+    tol = 1e-6
+    assert (np.abs(mean.asnumpy() - expect_mean) < tol).all()
+    assert (np.abs(sd.asnumpy() - expect_sd) < tol).all()
+
+def test_sample():
+    """
+    Test sample.
+    """
+    shape = (2, 3)
+    seed = 10
+    mean = Tensor([2.0], dtype=dtype.float32)
+    sd = Tensor([2.0, 2.0, 2.0], dtype=dtype.float32)
+    sample = Net4(shape, seed=seed)
+    output = sample(mean, sd)
+    assert output.shape == (2, 3, 3)

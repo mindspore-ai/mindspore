@@ -65,11 +65,24 @@ class Net3(nn.Cell):
     """
     def __init__(self):
         super(Net3, self).__init__()
-        self.b = nn.Bernoulli([0.7, 0.5], dtype=dtype.int32)
+        self.b = nn.Bernoulli([0.5, 0.5], dtype=dtype.int32)
 
     @ms_function
     def construct(self):
         return self.b('mean'), self.b('sd')
+
+class Net4(nn.Cell):
+    """
+    Test class: log probability of bernoulli distribution.
+    """
+    def __init__(self, shape, seed=0):
+        super(Net4, self).__init__()
+        self.b = nn.Bernoulli([0.7, 0.5], seed=seed, dtype=dtype.int32)
+        self.shape = shape
+
+    @ms_function
+    def construct(self, probs=None):
+        return self.b('sample', self.shape, probs)
 
 def test_pmf():
     """
@@ -80,10 +93,8 @@ def test_pmf():
     pdf = Net()
     x_ = Tensor(np.array([0, 1, 0, 1, 1]).astype(np.int32), dtype=dtype.float32)
     output = pdf(x_)
-    print("expected_pmf: ", expect_pmf)
-    print("ans: ", output.asnumpy())
     tol = 1e-6
-    assert (output.asnumpy() - expect_pmf < tol).all()
+    assert (np.abs(output.asnumpy() - expect_pmf) < tol).all()
 
 def test_log_likelihood():
     """
@@ -94,10 +105,8 @@ def test_log_likelihood():
     logprob = Net1()
     x_ = Tensor(np.array([0, 1, 0, 1, 1]).astype(np.int32), dtype=dtype.float32)
     output = logprob(x_)
-    print("expected_log_probability: ", expect_logpmf)
-    print("ans: ", output.asnumpy())
     tol = 1e-6
-    assert (output.asnumpy() - expect_logpmf < tol).all()
+    assert (np.abs(output.asnumpy() - expect_logpmf) < tol).all()
 
 def test_kl_loss():
     """
@@ -110,10 +119,8 @@ def test_kl_loss():
     expect_kl_loss = probs1_a * np.log(probs1_a / probs1_b) + probs0_a * np.log(probs0_a / probs0_b)
     kl_loss = Net2()
     output = kl_loss(Tensor([probs1_b], dtype=dtype.float32))
-    print("expected_kl_loss: ", expect_kl_loss)
-    print("ans: ", output.asnumpy())
     tol = 1e-6
-    assert (output.asnumpy() - expect_kl_loss < tol).all()
+    assert (np.abs(output.asnumpy() - expect_kl_loss) < tol).all()
 
 def test_basics():
     """
@@ -121,8 +128,20 @@ def test_basics():
     """
     basics = Net3()
     mean, sd = basics()
-    print("mean : ", mean)
-    print("sd : ", sd)
+    expect_mean = [0.5, 0.5]
+    assert (mean.asnumpy() == expect_mean).all()
+    assert (sd.asnumpy() == expect_mean).all()
     b = nn.Bernoulli([0.7, 0.5], dtype=dtype.int32)
     probs = b.probs()
-    print("probs is ", probs)
+    expect_probs = [0.7, 0.5]
+    tol = 1e-6
+    assert (np.abs(probs.asnumpy() - expect_probs) < tol).all()
+
+def test_sample():
+    """
+    Test sample.
+    """
+    shape = (2, 3)
+    sample = Net4(shape)
+    output = sample()
+    assert output.shape == (2, 3, 2)
