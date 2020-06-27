@@ -205,6 +205,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
     .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
     .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
+    .def("set_enable_parallel_optimizer", &ParallelContext::set_enable_parallel_optimizer,
+         "Set enable/disable parallel optimizer.")
+    .def("get_enable_parallel_optimizer", &ParallelContext::enable_parallel_optimizer,
+         "Get enable/disable parallel optimizer.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")

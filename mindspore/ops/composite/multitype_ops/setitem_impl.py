@@ -85,6 +85,22 @@ def _list_setitem_with_List(data, number_index, value):
     return F.list_setitem(data, number_index, value)
 
 
+@setitem.register("List", "Number", "Tuple")
+def _list_setitem_with_Tuple(data, number_index, value):
+    """
+    Assigns value to list.
+
+    Inputs:
+        data (list): Data of type lis.
+        number_index (Number): Index of data.
+        value (list): Value given.
+
+    Outputs:
+        list, type is same as the element type of data.
+    """
+    return F.list_setitem(data, number_index, value)
+
+
 @setitem.register("Dictionary", "String", "Tensor")
 def _dict_setitem_with_tensor(data, key, value):
     """

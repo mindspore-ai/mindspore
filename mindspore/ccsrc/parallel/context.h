@@ -100,6 +100,11 @@ class ParallelContext {
   void set_strategy_ckpt_save_file(const std::string &strategy_ckpt_save_file);
   std::string strategy_ckpt_save_file() const { return strategy_ckpt_save_file_; }
 
+  void set_enable_parallel_optimizer(bool enable_parallel_optimizer) {
+    enable_parallel_optimizer_ = enable_parallel_optimizer;
+  }
+  bool enable_parallel_optimizer() const { return enable_parallel_optimizer_; }
+
   void Reset();
 
  private:
@@ -123,6 +128,7 @@ class ParallelContext {
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
   std::string strategy_ckpt_load_file_;
   std::string strategy_ckpt_save_file_;
+  bool enable_parallel_optimizer_;
 };
 
 void ParallelParameterContextInit(const FuncGraphPtr &func_graph);
