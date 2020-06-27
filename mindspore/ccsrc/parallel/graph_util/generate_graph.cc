@@ -31,13 +31,13 @@ std::string GetOpPythonPath(const OperatorName &op_name) {
   const std::string inner_ops_module = INNER_OP_PATH;
   py::module mod = py::module::import(common::SafeCStr(ops_module));
   py::module inner_mod = py::module::import(common::SafeCStr(inner_ops_module));
-  if (!py::hasattr(mod, common::SafeCStr(op_name))) {
-    if (!py::hasattr(inner_mod, common::SafeCStr(op_name))) {
+  if (!py::hasattr(inner_mod, common::SafeCStr(op_name))) {
+    if (!py::hasattr(mod, common::SafeCStr(op_name))) {
       MS_LOG(EXCEPTION) << ops_module << " or " << inner_ops_module << " don't have op:" << op_name;
     }
-    return inner_ops_module;
+    return ops_module;
   }
-  return ops_module;
+  return inner_ops_module;
 }
 
 ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name) {
