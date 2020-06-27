@@ -24,10 +24,11 @@ import numpy as np
 from src.config import lstm_cfg as cfg
 from src.dataset import convert_to_mindrecord
 from src.dataset import lstm_create_dataset
+from src.lstm import SentimentNet
 from mindspore import Tensor, nn, Model, context
-from mindspore.model_zoo.lstm import SentimentNet
 from mindspore.nn import Accuracy
 from mindspore.train.callback import LossMonitor, CheckpointConfig, ModelCheckpoint, TimeMonitor
+from mindspore.train.serialization import load_param_into_net, load_checkpoint
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MindSpore LSTM Example')
@@ -41,6 +42,8 @@ if __name__ == '__main__':
                         help='path where the pre-process data is stored.')
     parser.add_argument('--ckpt_path', type=str, default="./",
                         help='the path to save the checkpoint file.')
+    parser.add_argument('--pre_trained', type=str, default=None,
+                        help='the pretrained checkpoint file path.')
     parser.add_argument('--device_target', type=str, default="GPU", choices=['GPU', 'CPU'],
                         help='the target device to run, support "GPU", "CPU". Default: "GPU".')
     args = parser.parse_args()
@@ -63,6 +66,9 @@ if __name__ == '__main__':
                            num_classes=cfg.num_classes,
                            weight=Tensor(embedding_table),
                            batch_size=cfg.batch_size)
+    # pre_trained
+    if args.pre_trained:
+        load_param_into_net(network, load_checkpoint(args.pre_trained))
 
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)

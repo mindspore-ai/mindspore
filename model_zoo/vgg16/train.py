@@ -29,6 +29,7 @@ from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.model import Model, ParallelMode
+from mindspore.train.serialization import load_param_into_net, load_checkpoint
 from src.config import cifar_cfg as cfg
 from src.dataset import vgg_create_dataset
 from src.vgg import vgg16
@@ -64,6 +65,7 @@ if __name__ == '__main__':
                         help='device where the code will be implemented. (Default: Ascend)')
     parser.add_argument('--data_path', type=str, default='./cifar', help='path where the dataset is saved')
     parser.add_argument('--device_id', type=int, default=None, help='device id of GPU or Ascend. (Default: None)')
+    parser.add_argument('--pre_trained', type=str, default=None, help='the pretrained checkpoint file path.')
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
@@ -80,6 +82,10 @@ if __name__ == '__main__':
     batch_num = dataset.get_dataset_size()
 
     net = vgg16(num_classes=cfg.num_classes)
+    # pre_trained
+    if args_opt.pre_trained:
+        load_param_into_net(net, load_checkpoint(args_opt.pre_trained))
+
     lr = lr_steps(0, lr_max=cfg.lr_init, total_epochs=cfg.epoch_size, steps_per_epoch=batch_num)
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), cfg.momentum,
                    weight_decay=cfg.weight_decay)
