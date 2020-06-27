@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace serving {
-
 MindSporeModel::MindSporeModel(const std::string &model_name, const std::string &model_path,
                                const std::string &model_version, const time_t &last_update_time)
     : model_name_(model_name),
