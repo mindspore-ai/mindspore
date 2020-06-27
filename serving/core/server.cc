@@ -273,6 +273,11 @@ Status Server::BuildAndStart() {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+  if (server == nullptr) {
+    MS_LOG(ERROR) << "The serving server create failed";
+    ClearEnv();
+    return FAILED;
+  }
   auto grpc_server_run = [&server]() { server->Wait(); };
   std::thread serving_thread(grpc_server_run);
   MS_LOG(INFO) << "Server listening on " << server_address << std::endl;

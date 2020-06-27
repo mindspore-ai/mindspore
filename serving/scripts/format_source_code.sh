@@ -81,7 +81,7 @@ function checkopts()
 checkopts "$@"
 
 # switch to project root path, which contains clang-format config file '.clang-format'
-cd "${SCRIPTS_PATH}/.." || exit 1
+cd "${SCRIPTS_PATH}/../.." || exit 1
 
 FMT_FILE_LIST='__format_files_list__'
 
