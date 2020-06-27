@@ -47,6 +47,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {REDUCE_MIN, OperatorType::kRecReduce},
   {REDUCE_MEAN, OperatorType::kRecReduce},
   {GATHERV2, OperatorType::kRecGatherV2},
+  {ARGMAXWITHVALUE, OperatorType::kRecArgWithValue},
+  {ARGMINWITHVALUE, OperatorType::kRecArgWithValue},
 
   {RELU, OperatorType::kRecReLU},
   {"ReLU6", OperatorType::kRecReLU},
@@ -59,6 +61,7 @@ const std::map<std::string, OperatorType> DictOpType{
 
   {PRELU, OperatorType::kRecPReLU},
 
+  {TRANSPOSE, OperatorType::kRecElmWiseOp},
   {L2_NORMALIZE, OperatorType::kRecElmWiseOp},
   {TENSOR_ADD, OperatorType::kRecElmWiseOp},
   {SUB, OperatorType::kRecElmWiseOp},
@@ -67,7 +70,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {REAL_DIV, OperatorType::kRecElmWiseOp},
   {SOFTMAX, OperatorType::kRecSoftmax},
   {LOG_SOFTMAX, OperatorType::kRecSoftmax},
-  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmax},
+  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
   {SQRT, OperatorType::kRecElmWiseOp},
   {NEG, OperatorType::kRecElmWiseOp},
   {POW, OperatorType::kRecElmWiseOp},
@@ -107,7 +110,7 @@ const std::map<std::string, OperatorType> DictOpType{
 
 const TensorParam MakeTensor(int n, int c, int h, int w);
 
-Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops);
+Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops);
 
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor);
@@ -118,17 +121,17 @@ TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &o
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                   const std::vector<std::vector<std::string>> &input_tensor_names);
 
-void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph);
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, const std::shared_ptr<Graph> &graph);
 
 size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_names,
                                   const std::string &input_name);
 
-void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> graph,
-                   const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list);
+void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
+                   const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list);
 
-std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
-                                      const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
-                                      const std::shared_ptr<std::vector<size_t>> index_list);
+std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
+                                      const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
+                                      const std::shared_ptr<std::vector<size_t>> &index_list);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_

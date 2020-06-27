@@ -68,19 +68,24 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostBiasAdd>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecOneHot || op.op_type == OperatorType::kRecLog ||
-             op.op_type == OperatorType::kRecExp || op.op_type == OperatorType::kRecAdd ||
-             op.op_type == OperatorType::kRecSub || op.op_type == OperatorType::kRecMul ||
-             op.op_type == OperatorType::kRecDiv || op.op_type == OperatorType::kRecSqueeze ||
-             op.op_type == OperatorType::kRecCast) {
+  } else if (op.op_type == OperatorType::kRecLog || op.op_type == OperatorType::kRecExp ||
+             op.op_type == OperatorType::kRecAdd || op.op_type == OperatorType::kRecSub ||
+             op.op_type == OperatorType::kRecMul || op.op_type == OperatorType::kRecDiv ||
+             op.op_type == OperatorType::kRecSqueeze || op.op_type == OperatorType::kRecCast) {
     // For element-wise op
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecUnkownType || op.op_type == OperatorType::kRecPReLU ||
-             op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecSoftmax ||
-             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
-    // For unprocessed type
+  } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot ||
+             op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecSoftmax ||
+             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
+             op.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
+    // For BatchParallel op
+    auto cost_ptr = std::make_shared<CostBatchParallel>();
+
+    return cost_ptr->GetMaxCostIn();
+  } else if (op.op_type == OperatorType::kRecUnkownType) {
+    // For Unkown type
     return 0.0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
@@ -88,7 +93,7 @@ double GetWeights(const Graph::NodeType &node) {
 }
 
 // Sort all the nodes by their weights
-std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> graph) {
+std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
   std::vector<std::pair<double, size_t>> weight_to_node_index;
@@ -119,7 +124,7 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> graph) {
 // Get optimal strategy to partition the target node
 StrategyRec PartitionNode(const Graph::NodeType &node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                          std::shared_ptr<Graph> graph) {
+                          const std::shared_ptr<Graph> &graph) {
   bool enable_conv_chw_partition = false;
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -158,19 +163,26 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostBiasAdd>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecOneHot || node.apply.op_type == OperatorType::kRecLog ||
-             node.apply.op_type == OperatorType::kRecExp || node.apply.op_type == OperatorType::kRecAdd ||
-             node.apply.op_type == OperatorType::kRecSub || node.apply.op_type == OperatorType::kRecMul ||
-             node.apply.op_type == OperatorType::kRecDiv || node.apply.op_type == OperatorType::kRecSqueeze ||
-             node.apply.op_type == OperatorType::kRecCast) {
+  } else if (node.apply.op_type == OperatorType::kRecLog || node.apply.op_type == OperatorType::kRecExp ||
+             node.apply.op_type == OperatorType::kRecAdd || node.apply.op_type == OperatorType::kRecSub ||
+             node.apply.op_type == OperatorType::kRecMul || node.apply.op_type == OperatorType::kRecDiv ||
+             node.apply.op_type == OperatorType::kRecSqueeze || node.apply.op_type == OperatorType::kRecCast) {
     // For element-wise op
     auto cost_ptr = std::make_shared<CostCommon>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecUnkownType || node.apply.op_type == OperatorType::kRecPReLU ||
-             node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecSoftmax ||
+  } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
+             node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
              node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
-    // For unprocessed type
+    // For BatchParallel type
+    auto cost_ptr = std::make_shared<CostBatchParallel>();
+    return cost_ptr->GetOptimalStr(node);
+  } else if (node.apply.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
+    // For SoftmaxCrossEntropyWithLogits type
+    auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
+    return cost_ptr->GetOptimalStr(node);
+  } else if (node.apply.op_type == OperatorType::kRecUnkownType) {
+    // For Unkown type
     StrategyRec default_strategy;
     return default_strategy;
   } else {
@@ -179,7 +191,8 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
 }
 
 // Parttion graph into all devices.
-Status PartitionForAllDevices(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph) {
+Status PartitionForAllDevices(const size_t num_device, const double device_memory,
+                              const std::shared_ptr<Graph> &graph) {
   if (num_device < 1) {
     MS_LOG(EXCEPTION) << "ERROR: Number of devices can't be " << num_device << ".";
   }
@@ -249,7 +262,7 @@ Graph::NodeType ApplyStrToTensor(Graph::NodeType Node) {
   return Node;
 }
 
-Status DevicesMemoryControl(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph) {
+Status DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (num_device == 0) {
     MS_LOG(EXCEPTION) << "Failure: device number is 0.";

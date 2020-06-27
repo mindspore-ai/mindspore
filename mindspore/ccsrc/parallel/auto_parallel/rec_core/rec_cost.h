@@ -28,6 +28,8 @@
 
 namespace mindspore {
 namespace parallel {
+#define DOUBLE_MAX (std::numeric_limits<double>::max)()
+
 double CostRedis(const Graph::NodeType &node,
                  const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                  const std::vector<std::vector<float>> &mode, const Graph &graph);
@@ -195,7 +197,6 @@ class CostTensorAdd : public CostCommon {
 };
 
 // all the following operation are element-wise and have the same cost
-class CostOneHot : public CostCommon {};
 class CostReLU : public CostCommon {};
 class CostLog : public CostCommon {};
 class CostExp : public CostCommon {};
@@ -206,50 +207,27 @@ class CostDiv : public CostCommon {};
 class CostSqueeze : public CostCommon {};
 class CostCast : public CostCommon {};
 
-// class BatchNorm is used to compute the cost of BatchNorm operator.
-class CostBatchNorm {
+// class BatchParallel is used to compute the cost of BatchParallel operator.
+class CostBatchParallel {
  public:
-  StrategyRec GetOptimalStr(const Graph::NodeType &node,
-                            const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
+  virtual StrategyRec GetOptimalStr(const Graph::NodeType &node);
 
-  double GetMinCostIn(const OperatorRec &op);
+  virtual double GetMaxCostIn() const { return DOUBLE_MAX; }
 
- private:
-  double StrDimB(int32_t Tensor) {
-    cost_in_b_ = (static_cast<double>(Tensor) * 4.0) / 2.0;
+ protected:
+  virtual StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
 
-    return cost_in_b_;
-  }
+  double cost_in_ = 0;
+};  // class BatchParallel is used to compute the cost of BatchParallel operator.
 
-  double StrDimC() {
-    cost_in_c_ = 0.0;
+class CostBatchNorm : public CostBatchParallel {};
+class CostOneHot : public CostBatchParallel {};
+class CostPRelu : public CostBatchParallel {};
+class CostSoftmax : public CostBatchParallel {};
 
-    return cost_in_c_;
-  }
-
-  double StrDimH(int32_t Tensor) {
-    cost_in_h_ = (static_cast<double>(Tensor) * 4.0) / 2.0;
-
-    return cost_in_h_;
-  }
-
-  double StrDimW(int32_t Tensor) {
-    cost_in_w_ = (static_cast<double>(Tensor) * 4.0) / 2.0;
-
-    return cost_in_w_;
-  }
-
+class CostSoftmaxCrossEntropyWithLogits : public CostBatchParallel {
   StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
-
-  double cost_in_b_ = 0;
-
-  double cost_in_c_ = 0;
-
-  double cost_in_h_ = 0;
-
-  double cost_in_w_ = 0;
-};  // class BatchNorm is used to compute the cost of BatchNorm operator.
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_COST_H_

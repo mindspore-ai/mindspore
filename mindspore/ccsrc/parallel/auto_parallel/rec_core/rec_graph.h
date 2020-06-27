@@ -38,6 +38,7 @@ enum OperatorType {
   kRecBiasAdd,
   kRecSoftmax,
   kRecSparseSoftmaxCrossEntropyWithLogits,
+  kRecSoftmaxCrossEntropyWithLogits,
   kRecOneHot,
   kRecLog,
   kRecExp,
@@ -49,7 +50,8 @@ enum OperatorType {
   kRecCast,
   kRecReduce,
   kRecPReLU,
-  kRecGatherV2
+  kRecGatherV2,
+  kRecArgWithValue
 };
 
 enum InfoType { kApplication, kConstant };
