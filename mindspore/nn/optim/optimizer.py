@@ -262,6 +262,10 @@ class Optimizer(Cell):
             if not group_param['params']:
                 raise ValueError("Optimizer got an empty group parameter list.")
 
+            for param in group_param['params']:
+                if not isinstance(param, Parameter):
+                    raise TypeError("The group param should be an iterator of Parameter type.")
+
     def _parse_group_params(self, parameters, learning_rate):
         """Parse group params."""
         self._check_group_params(parameters)
