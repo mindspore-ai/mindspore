@@ -21,7 +21,7 @@ import glob
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
 
@@ -85,12 +85,12 @@ def test_pipeline():
 
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     ds.config.set_num_parallel_workers(2)
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True)])
+    data1 = data1.map(input_columns=["image"], operations=[c_vision.Decode(True)])
     ds.serialize(data1, "testpipeline.json")
 
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     ds.config.set_num_parallel_workers(4)
-    data2 = data2.map(input_columns=["image"], operations=[vision.Decode(True)])
+    data2 = data2.map(input_columns=["image"], operations=[c_vision.Decode(True)])
     ds.serialize(data2, "testpipeline2.json")
 
     # check that the generated output is different
@@ -128,8 +128,8 @@ def test_deterministic_run_fail():
     # Assuming we get the same seed on calling constructor, if this op is re-used then result won't be
     # the same in between the two datasets. For example, RandomCrop constructor takes seed (0)
     # outputs a deterministic series of numbers, e,g "a" = [1, 2, 3, 4, 5, 6] <- pretend these are random
-    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = vision.Decode()
+    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = c_vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_crop_op)
 
@@ -153,24 +153,24 @@ def test_deterministic_run_fail():
     ds.config.set_seed(seed_original)
 
 
-def test_deterministic_run_pass():
+def test_seed_undeterministic():
     """
-    Test deterministic run with setting the seed
+    Test seed with num parallel workers in c, this test is expected to fail some of the time
     """
-    logger.info("test_deterministic_run_pass")
+    logger.info("test_seed_undeterministic")
 
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
     seed_original = ds.config.get_seed()
 
     ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    ds.config.set_num_parallel_workers(3)
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # We get the seed when constructor is called
-    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = vision.Decode()
+    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = c_vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_crop_op)
 
@@ -179,7 +179,7 @@ def test_deterministic_run_pass():
     data2 = data2.map(input_columns=["image"], operations=decode_op)
     # Since seed is set up on constructor, so the two ops output deterministic sequence.
     # Assume the generated random sequence "a" = [1, 2, 3, 4, 5, 6] <- pretend these are random
-    random_crop_op2 = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    random_crop_op2 = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
     try:
         for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
@@ -194,11 +194,11 @@ def test_deterministic_run_pass():
     ds.config.set_seed(seed_original)
 
 
-def test_seed_undeterministic():
+def test_seed_deterministic():
     """
-    Test seed with num parallel workers in c, this test is expected to fail some of the time
+    Test deterministic run with setting the seed, only works with num_parallel worker = 1
     """
-    logger.info("test_seed_undeterministic")
+    logger.info("test_seed_deterministic")
 
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
@@ -210,8 +210,8 @@ def test_seed_undeterministic():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # seed will be read in during constructor call
-    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = vision.Decode()
+    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = c_vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_crop_op)
 
@@ -219,7 +219,7 @@ def test_seed_undeterministic():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(input_columns=["image"], operations=decode_op)
     # If seed is set up on constructor, so the two ops output deterministic sequence
-    random_crop_op2 = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    random_crop_op2 = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
@@ -246,8 +246,8 @@ def test_deterministic_run_distribution():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    random_crop_op = vision.RandomHorizontalFlip(0.1)
-    decode_op = vision.Decode()
+    random_crop_op = c_vision.RandomHorizontalFlip(0.1)
+    decode_op = c_vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_crop_op)
 
@@ -255,7 +255,7 @@ def test_deterministic_run_distribution():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(input_columns=["image"], operations=decode_op)
     # If seed is set up on constructor, so the two ops output deterministic sequence
-    random_crop_op2 = vision.RandomHorizontalFlip(0.1)
+    random_crop_op2 = c_vision.RandomHorizontalFlip(0.1)
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
@@ -270,7 +270,7 @@ def test_deterministic_python_seed():
     """
     Test deterministic execution with seed in python
     """
-    logger.info("deterministic_random_crop_op_python_2")
+    logger.info("test_deterministic_python_seed")
 
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
@@ -315,11 +315,12 @@ def test_deterministic_python_seed_multi_thread():
     """
     Test deterministic execution with seed in python, this fails with multi-thread pyfunc run
     """
-    logger.info("deterministic_random_crop_op_python_2")
+    logger.info("test_deterministic_python_seed_multi_thread")
 
     # Save original configuration values
+    num_parallel_workers_original = ds.config.get_num_parallel_workers()
     seed_original = ds.config.get_seed()
-
+    ds.config.set_num_parallel_workers(3)
     ds.config.set_seed(0)
     # when we set the seed all operations within our dataset should be deterministic
     # First dataset
@@ -355,15 +356,17 @@ def test_deterministic_python_seed_multi_thread():
         assert "Array" in str(e)
 
     # Restore original configuration values
+    ds.config.set_num_parallel_workers(num_parallel_workers_original)
     ds.config.set_seed(seed_original)
 
 
 if __name__ == '__main__':
     test_basic()
-    test_pipeline()
-    test_deterministic_run_pass()
-    test_deterministic_run_distribution()
-    test_deterministic_run_fail()
-    test_deterministic_python_seed()
-    test_seed_undeterministic()
     test_get_seed()
+    test_pipeline()
+    test_deterministic_run_fail()
+    test_seed_undeterministic()
+    test_seed_deterministic()
+    test_deterministic_run_distribution()
+    test_deterministic_python_seed()
+    test_deterministic_python_seed_multi_thread()
