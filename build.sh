@@ -52,7 +52,7 @@ usage()
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
   echo "    -I Compile predict, default off"
-  echo "    -K Compile with AKG, default off"
+  echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
 }
 
