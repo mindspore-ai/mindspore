@@ -19,9 +19,9 @@
 
 #include <memory>
 
-#include "optimizer/optimizer.h"
-#include "optimizer/irpass.h"
 #include "ir/pattern_matcher.h"
+#include "optimizer/irpass.h"
+#include "optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

@@ -18,31 +18,31 @@
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_SPECIAL_OP_ELIMINATE_H_
 
 #include <securec.h>
-#include <vector>
-#include <memory>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
-#include "optimizer/optimizer.h"
-#include "optimizer/irpass.h"
 #include "ir/optimizer_caller.h"
-#include "optimizer/irpass/prim_eliminate.h"
+#include "ir/pattern_matcher.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
-#include "ir/pattern_matcher.h"
+#include "optimizer/irpass.h"
+#include "optimizer/irpass/prim_eliminate.h"
+#include "optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
 namespace irpass {
-class SpecialOpEliminater {
+class SpecialOpEliminater : public OptimizerCaller {
  public:
   SpecialOpEliminater()
-      : insert_gradient_of_(prim::kPrimInsertGradientOf),
-        stop_gradient_(prim::kPrimStopGradient),
-        hook_backward_(prim::kPrimHookBackward),
-        print_shape_type_(prim::kPrimPrintShapeType),
-        get_ref_value_(prim::kPrimGetRefValue),
-        mirror_(prim::kPrimMirror),
-        virtual_div_(prim::kPrimVirtualDiv) {
+      : insert_gradient_of_(std::make_shared<PrimEliminater>(prim::kPrimInsertGradientOf)),
+        stop_gradient_(std::make_shared<PrimEliminater>(prim::kPrimStopGradient)),
+        hook_backward_(std::make_shared<PrimEliminater>(prim::kPrimHookBackward)),
+        print_shape_type_(std::make_shared<PrimEliminater>(prim::kPrimPrintShapeType)),
+        get_ref_value_(std::make_shared<PrimEliminater>(prim::kPrimGetRefValue)),
+        mirror_(std::make_shared<PrimEliminater>(prim::kPrimMirror)),
+        virtual_div_(std::make_shared<PrimEliminater>(prim::kPrimVirtualDiv)) {
     eliminaters_.emplace_back(insert_gradient_of_);
     eliminaters_.emplace_back(stop_gradient_);
     eliminaters_.emplace_back(hook_backward_);
@@ -53,10 +53,10 @@ class SpecialOpEliminater {
   }
   ~SpecialOpEliminater() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
-      new_node = eliminater(optimizer, node);
+      new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -65,9 +65,9 @@ class SpecialOpEliminater {
   }
 
  private:
-  PrimEliminater insert_gradient_of_, stop_gradient_, hook_backward_, print_shape_type_, get_ref_value_, mirror_,
+  OptimizerCallerPtr insert_gradient_of_, stop_gradient_, hook_backward_, print_shape_type_, get_ref_value_, mirror_,
     virtual_div_;
-  std::vector<TransformFuncType> eliminaters_{};
+  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 
 // {PrimVirtualDataset, X} -> X

@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_CAST_ELIMINATE_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_CAST_ELIMINATE_H_
 
+#include "ir/visitor.h"
 #include "optimizer/irpass.h"
 #include "optimizer/optimizer.h"
-#include "ir/visitor.h"
 
 namespace mindspore {
 namespace opt {
@@ -52,12 +52,12 @@ class TwoCastEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr}, t_{nullptr};
 };
 
-class CastEliminater {
+class CastEliminater : public OptimizerCaller {
  public:
   CastEliminater() : cast_same_type_eliminater_(), two_cast_eliminater_() {}
   ~CastEliminater() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     auto new_node = cast_same_type_eliminater_(optimizer, node);
     if (new_node != nullptr) {
       return new_node;
