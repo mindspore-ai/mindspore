@@ -45,7 +45,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Ceil,
-                       Acosh, Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
+                       Acosh, Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd, Mod,
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus,
@@ -322,7 +322,8 @@ __all__ = [
     "ApproximateEqual",
     "InplaceUpdate",
     "InTopK",
-    "LRN"
+    "LRN",
+    "Mod"
 ]
 
 __all__.sort()

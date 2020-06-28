@@ -306,6 +306,18 @@ def get_bprop_floormod(self):
     return bprop
 
 
+@bprop_getters.register(P.Mod)
+def get_bprop_mod(self):
+    """Grad definition for `Mod` operation."""
+
+    def bprop(x, y, out, dout):
+        bc_x = dout
+        bc_y = -dout * (x // y)
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Square)
 def get_bprop_square(self):
     """Grad definition for `Square` operation."""
