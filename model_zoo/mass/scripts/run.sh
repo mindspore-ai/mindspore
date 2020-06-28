@@ -18,7 +18,7 @@ export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
 
-options=`getopt -u -o ht:n:i:j:c:o:v: -l help,task:,device_num:,device_id:,hccl_json:,config:,output:,vocab -- "$@"`
+options=`getopt -u -o ht:n:i:j:c:o:v: -l help,task:,device_num:,device_id:,hccl_json:,config:,output:,vocab: -- "$@"`
 eval set -- "$options"
 echo $options
 
@@ -129,6 +129,7 @@ do
 esac
 done
 
+file_path=$(cd "$(dirname $0)" || exit; pwd)
 for((i=0; i < $RANK_SIZE; i++))
 do
   if [ $RANK_SIZE -gt 1 ]
@@ -139,7 +140,6 @@ do
   fi
   echo "Working on device $i"
 
-  file_path=$(cd "$(dirname $0)" || exit; pwd)
   cd $file_path || exit
   cd ../ || exit
 

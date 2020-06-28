@@ -47,7 +47,7 @@ def rouge(hypothesis: List[str], target: List[str]):
         edited_ref.append(r + "\n")
 
     _rouge = Rouge()
-    scores = _rouge.get_scores(edited_hyp, target, avg=True)
+    scores = _rouge.get_scores(edited_hyp, edited_ref, avg=True)
     print(" | ROUGE Score:")
     print(f" | RG-1(F): {scores['rouge-1']['f'] * 100:8.2f}")
     print(f" | RG-2(F): {scores['rouge-2']['f'] * 100:8.2f}")

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Dataset loader to feed into model."""
-import os
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.c_transforms as deC
@@ -39,12 +38,6 @@ def _load_dataset(input_files, batch_size, epoch_count=1,
     """
     if not input_files:
         raise FileNotFoundError("Require at least one dataset.")
-
-    if not (schema_file and
-            os.path.exists(schema_file)
-            and os.path.isfile(schema_file)
-            and os.path.basename(schema_file).endswith(".json")):
-        raise FileNotFoundError("`dataset_schema` must be a existed json file.")
 
     if not isinstance(sink_mode, bool):
         raise ValueError("`sink` must be type of bool.")
