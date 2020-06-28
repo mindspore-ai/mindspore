@@ -395,9 +395,15 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
     auto new_fg = BasicClone(fg);
     cnode_inputs.push_back(std::make_shared<ValueNode>(new_fg));
   }
+  auto origin_inputs = cnode->inputs();
+  bool optimize_depend = false;
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && origin_inputs.size() == 3 &&
+      origin_inputs[kRealInputIndexInDepend]->isa<ValueNode>()) {
+    optimize_depend = true;
+  }
   // if has multiple depends,only select first depend as parameter
-  for (size_t input_idx = 1; input_idx < cnode->inputs().size(); input_idx++) {
-    auto anf = cnode->inputs()[input_idx];
+  for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
+    auto anf = origin_inputs[input_idx];
     MS_EXCEPTION_IF_NULL(anf);
     // anf has been created before
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
@@ -421,6 +427,9 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
       } else {
         (*other_graph_cnode)[anf] = new_parameter;
       }
+      continue;
+    } else if (optimize_depend && input_idx == kDependAttachNodeIndex) {
+      cnode_inputs.push_back(origin_inputs[kRealInputIndexInDepend]);
       continue;
     } else if (anf->isa<AnfNode>()) {
       *from_other_graph = true;
