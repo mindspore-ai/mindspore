@@ -269,3 +269,6 @@ from .matrix_diag_part import _matrix_diag_part_tbe
 from .matrix_set_diag import _matrix_set_diag_tbe
 from .lrn import _lrn_tbe
 from .lrn_grad import _lrn_grad_tbe
+from .scatter_max import _scatter_max_tbe
+from .scatter_min import _scatter_min_tbe
+from .scatter_sub import _scatter_sub_tbe

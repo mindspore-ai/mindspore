@@ -207,26 +207,52 @@ class HistogramSummaryNet(nn.Cell):
 class ScatterMax(nn.Cell):
     """ScatterMax net definition"""
 
-    def __init__(self):
+    def __init__(self, dtype=np.float32, use_locking=False):
         super(ScatterMax, self).__init__()
-        self.scatter_max = P.ScatterMax()
-        self.ref = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], np.float32)), name="ref")
+        self.scatter_max = P.ScatterMax(use_locking)
+        self.ref = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype)), name="ref")
 
     def construct(self, indices, updates):
         out = self.scatter_max(self.ref, indices, updates)
         return out
 
 
+class ScatterMin(nn.Cell):
+    """ScatterMin net definition"""
+
+    def __init__(self, dtype=np.float32, use_locking=False):
+        super(ScatterMin, self).__init__()
+        self.scatter_min = P.ScatterMin(use_locking)
+        self.ref = Parameter(Tensor(np.array([[-1.0, 2.0, 3.0], [-4.0, 1.0, 6.0]], dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_min(self.ref, indices, updates)
+        return out
+
+
 class ScatterAdd(nn.Cell):
     """ScatterAdd net definition"""
 
-    def __init__(self, ref_shape, dtype=np.float32):
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
         super(ScatterAdd, self).__init__()
-        self.scatter_add = P.ScatterAdd()
+        self.scatter_add = P.ScatterAdd(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
         out = self.scatter_add(self.ref, indices, updates)
+        return out
+
+
+class ScatterSub(nn.Cell):
+    """ScatterSub net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterSub, self).__init__()
+        self.scatter_sub = P.ScatterSub(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_sub(self.ref, indices, updates)
         return out
 
 
@@ -1667,10 +1693,60 @@ test_case_other_ops = [
                         Tensor(np.array([[0, 1], [1, 2]], np.int32)),
                         Tensor(np.ones([2, 5], np.float32) * 99)),
         'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
-    ('ScatterMax', {
+    ('ScatterMaxUseLocking', {
+        'block': ScatterMax(use_locking=True),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.array([[5.0, 5.0, 5.0], [4.0, 4.0, 4.0]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMax1d', {
+        'block': ScatterMax(),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.array([[5.0, 5.0, 5.0], [4.0, 4.0, 4.0]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMaxF32', {
         'block': ScatterMax(),
         'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
                         Tensor(np.ones([2, 2, 3], np.float32) * 99)),
+        'skip': ['backward']}),
+    ('ScatterMaxF16', {
+        'block': ScatterMax(np.float16),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.float16) * 99)),
+        'skip': ['backward']}),
+    ('ScatterMaxI32', {
+        'block': ScatterMax(np.int32),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.int32) * 99)),
+        'skip': ['backward']}),
+    ('ScatterMinUseLocking', {
+        'block': ScatterMin(use_locking=True),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.ones([2, 3], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMin1d', {
+        'block': ScatterMin(),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.ones([2, 3], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMinF32', {
+        'block': ScatterMin(),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMinF16', {
+        'block': ScatterMin(np.float16),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterMinI32', {
+        'block': ScatterMin(np.int32),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterAddUseLocking', {
+        'block': ScatterAdd((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
         'skip': ['backward']}),
     ('ScatterAdd', {
         'block': ScatterAdd((6,)),
@@ -1707,6 +1783,42 @@ test_case_other_ops = [
         'block': ScatterAdd((6,), np.uint8),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
                         Tensor(np.array([2, 3, 4], np.uint8))),
+        'skip': ['backward']}),
+    ('ScatterSubUseLocking', {
+        'block': ScatterSub((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterSubScalar', {
+        'block': ScatterSub((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterSub2d', {
+        'block': ScatterSub((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterSubF16', {
+        'block': ScatterSub((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterSubI32', {
+        'block': ScatterSub((6,), np.int32),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterSubI8', {
+        'block': ScatterSub((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterSubU8', {
+        'block': ScatterSub((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([1, 1, 0], np.uint8))),
         'skip': ['backward']}),
     ('SmoothL1Loss', {
         'block': P.SmoothL1Loss(),
