@@ -566,10 +566,17 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
       MS_LOG(WARNING) << "Kernel [" << (kernel_info_list.size() + index)
                       << "] :" << aicpu_kernel_info_list[index]->ToString();
     }
-    MS_LOG(WARNING) << " <<<";
-    MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
-                            << "] cannot find valid kernel info, not supported the type:" << buffer.str()
-                            << ", please refer to the supported dtypes in candidates kernel info list";
+    if (IsPrimitiveCNode(kernel_node, prim::kPrimLabelSwitch)) {
+      auto selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, kernel_info_list);
+      AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
+      // Set format and data type for input tensor.
+      SetTensorDeviceInfo(*selected_kernel_info, kernel_node);
+    } else {
+      MS_LOG(WARNING) << " <<<";
+      MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
+                              << "] cannot find valid kernel info, not supported the type:" << buffer.str()
+                              << ", please refer to the supported dtypes in candidates kernel info list";
+    }
   }
   return select_status;
 }
