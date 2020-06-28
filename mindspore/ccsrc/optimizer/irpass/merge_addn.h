@@ -224,10 +224,9 @@ class AddNEliminater : public AnfVisitor {
     auto new_fg = TransformableClone(fg, std::make_shared<TraceTransform>("fg"));
     mng->AddFuncGraph(new_fg);
     need_update_ = false;
-    bool changed = false;
+    bool changed;
     do {
-      changed = false;
-      changed |= Process(new_fg);
+      changed = Process(new_fg);
     } while (changed);
 
     if (!need_update_) {
@@ -315,7 +314,7 @@ class AddNEliminater : public AnfVisitor {
       }
     }
 
-    need_update_ |= changed;
+    need_update_ = need_update_ || changed;
     return changed;
   }
 

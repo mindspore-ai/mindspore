@@ -452,7 +452,7 @@ void ReplaceNewFuseCNode(const std::shared_ptr<session::KernelGraph> &kernel_gra
   }
 }
 
-AnfNodePtrList EliminateMakeTuple(FuncGraphPtr *fg, FuncGraphManagerPtr *mng) {
+AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr *fg, FuncGraphManagerPtr *mng) {
   AnfNodePtrList outs;
   auto out_node = (*fg)->output();
   if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
