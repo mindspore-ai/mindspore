@@ -567,6 +567,51 @@ class SparseGatherV2(GatherV2):
         >>> out = P.GatherV2()(input_params, input_indices, axis)
     """
 
+class EmbeddingLookup(PrimitiveWithInfer):
+    """
+    Returns a slice of input tensor based on the specified indices and axis. This Primitive has the similar
+    functionality as GatherV2, but has one more inputs: `offset`.
+    This primitive runs on the acipu devices.
+
+    Inputs:
+        - **params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The Tensor slice, instead of the entire Tensor.
+        - **indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Values can be out of range of `params`,
+          and the exceeding part will be filled with 0 in the output.
+          The indices to do lookup operation whose data type should be mindspore.int32 or mindspore.int64.
+        - **offset** (int) - Specifies the offset value of this `params` slice. Thus the real indices
+          are equal to `indices` minus `offset`.
+
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
+        >>> offset = 4
+        >>> out = P.EmbeddingLookup()(params, indices, offset)
+        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init index_select"""
+        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
+                                outputs=['output'])
+
+    def __infer__(self, params, indices, offset):
+        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        valid_types = (mstype.int32, mstype.int64)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, valid_types, self.name)
+        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
+        params_shp = params['shape']
+        out_shape = indices['shape'] + params_shp[1:]
+        out = {'shape': out_shape,
+               'dtype': params['dtype'],
+               'value': None}
+        return out
+
 
 class Split(PrimitiveWithInfer):
     """
