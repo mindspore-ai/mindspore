@@ -202,6 +202,9 @@ class SummaryRecord:
             if not isinstance(value, Tensor):
                 raise TypeError(f'Expect the value to be Tensor, but got {type(value).__name__}')
             np_value = _check_to_numpy(plugin, value)
+            if name in {item['tag'] for item in self._data_pool[plugin]}:
+                entry = repr(f'{name}/{plugin}')
+                logger.warning(f'{entry} has duplicate values. Only the newest one will be recorded.')
             self._data_pool[plugin].append(dict(tag=name, mode=self._mode, value=np_value))
 
         elif plugin in ('train_lineage', 'eval_lineage', 'dataset_graph', 'custom_lineage_data'):
