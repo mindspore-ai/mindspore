@@ -28,26 +28,8 @@ confusion_transpose_d_op_info = TBERegOp("ConfusionTransposeD") \
     .attr("transpose_first", "required", "bool", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I8_FracNZ, DataType.I8_FracNZ) \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.U8_FracNZ, DataType.U8_FracNZ) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.I16_FracNZ, DataType.I16_FracNZ) \
-    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
-    .dtype_format(DataType.U16_FracNZ, DataType.U16_FracNZ) \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
-    .dtype_format(DataType.I32_FracNZ, DataType.I32_FracNZ) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.U32_FracNZ, DataType.U32_FracNZ) \
-    .dtype_format(DataType.U32_Default, DataType.U32_Default) \
-    .dtype_format(DataType.I64_FracNZ, DataType.I64_FracNZ) \
-    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.U64_FracNZ, DataType.U64_FracNZ) \
-    .dtype_format(DataType.U64_Default, DataType.U64_Default) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .op_pattern("dynamicFormat") \
+    .dtype_format(DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 
