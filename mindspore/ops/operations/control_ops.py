@@ -30,6 +30,8 @@ class ControlDepend(Primitive):
     tells the engine that the destination operations should depend on the source operation which means the source
     operations should be executed before the destination.
 
+    Note:
+        This operation does not work in `PYNATIVE_MODE`.
     Args:
         depend_mode (int): Use 0 for normal depend, 1 for depend on operations that used the parameter. Default: 0.
 

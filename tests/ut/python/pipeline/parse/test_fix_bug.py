@@ -19,6 +19,8 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from mindspore.common import dtype as ms
 from mindspore.common.api import _executor
 
 
@@ -116,3 +118,28 @@ def test_parser_map_0002():
     net = NetMap0002()
     with pytest.raises(TypeError):
         net(input_me_x)
+
+
+def test_fix_expanddims_loss_scale():
+    class ControlOneIfOneScaleOneScale(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.op = P.ExpandDims()
+
+        def construct(self, x, y, data):
+            if x > y:
+                out = 1
+            else:
+                out = 2
+            if x > y:
+                out = self.op(data, out)
+            else:
+                out = self.op(data, out)
+            return out
+    net = ControlOneIfOneScaleOneScale()
+    x = Tensor(1, ms.float32)
+    y = Tensor(0, ms.float32)
+    input_shape = (1024, 512, 7, 7)
+    input_data = np.random.randn(*input_shape).astype(np.float32)
+    net = ControlOneIfOneScaleOneScale()
+    net(x, y, Tensor(input_data))

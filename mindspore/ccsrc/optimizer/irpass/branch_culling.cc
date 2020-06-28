@@ -74,6 +74,7 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
                                                                         {prim::kPrimApplyRMSProp, {6, 7, 8}},
                                                                         {prim::kPrimCumSum, {2}},
                                                                         {prim::kPrimTile, {2}},
+                                                                        {prim::kPrimExpandDims, {2}},
                                                                         {prim::kPrimHistogramSummary, {1}}});
   for (auto &item : white_list) {
     auto matched = std::any_of(item.second.begin(), item.second.end(), [&item, &node, &index](size_t idx) {
