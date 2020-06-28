@@ -81,7 +81,15 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
     }
   }
   // if proccess reach here,it remarks item_with_index is a real node(Parameter,or executable CNode)
-  auto address = AnfAlgo::GetOutputAddr(node, output_index);
+  DeviceAddressPtr address;
+  auto is_all_nop_node = opt::IsAllNopNode(&graph);
+  if (is_all_nop_node) {
+    // The graph does not remove the nop node.
+    address = AnfAlgo::GetMutableOutputAddr(node, output_index, false);
+  } else {
+    // The graph removes the nop node.
+    address = AnfAlgo::GetMutableOutputAddr(node, output_index, true);
+  }
   MS_EXCEPTION_IF_NULL(address);
   auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
   TypeId type_id = kNumberTypeFloat32;
@@ -93,7 +101,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->execution_mode() == kPynativeMode || ms_context->device_target() == kGPUDevice) {
-    tensor->set_device_address(AnfAlgo::GetMutableOutputAddr(node, output_index));
+    tensor->set_device_address(address);
     tensor->set_dirty(false);
   } else if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, output_index),
                                         LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c())) {

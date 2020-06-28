@@ -90,6 +90,20 @@ class Path {
 
   std::string ParentPath();
 
+  Status Remove();
+
+  Status CreateFile(int *fd);
+
+  Status OpenFile(int *fd, bool create = false);
+
+  Status CloseFile(int fd) const;
+
+  Status TruncateFile(int fd) const;
+
+  std::string Basename();
+
+  friend std::ostream &operator<<(std::ostream &os, const Path &s);
+
  private:
   static char separator_;
   std::string path_;

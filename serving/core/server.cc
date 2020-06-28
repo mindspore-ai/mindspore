@@ -22,6 +22,7 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include <future>
 
 #include "mindspore/ccsrc/utils/log_adapter.h"
 #include "serving/ms_service.grpc.pb.h"
@@ -40,7 +41,7 @@ namespace serving {
 using MSTensorPtr = std::shared_ptr<inference::MSTensor>;
 
 Status Session::CreatDeviceSession(const std::string &device, uint32_t device_id) {
-  session_ = inference::MSSession::CreateSession(device + "Inference", device_id);
+  session_ = inference::MSSession::CreateSession(device, device_id);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Creat Session Failed";
     return FAILED;
@@ -67,6 +68,7 @@ Status Session::Predict(const std::vector<MSTensorPtr> &inputs, inference::Multi
   MS_LOG(INFO) << "run Predict";
 
   *outputs = session_->RunGraph(graph_id_, inputs);
+  MS_LOG(INFO) << "run Predict finished";
   return SUCCESS;
 }
 
@@ -80,12 +82,16 @@ Status Session::Warmup(const MindSporeModelPtr model) {
   std::string file_name = model->GetModelPath() + '/' + model->GetModelName();
   char *graphBuf = ReadFile(file_name.c_str(), &size);
   if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
+    MS_LOG(ERROR) << "Read model file failed, file name is " << file_name.c_str();
     return FAILED;
   }
   last_graph_ = inference::LoadModel(graphBuf, size, device_type_);
+  if (last_graph_ == nullptr) {
+    MS_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
+    return FAILED;
+  }
   graph_id_ = session_->CompileGraph(last_graph_);
-  MS_LOG(INFO) << "Session Warmup";
+  MS_LOG(INFO) << "Session Warmup finished";
   return SUCCESS;
 }
 
@@ -95,6 +101,9 @@ Status Session::Clear() {
 }
 
 namespace {
+static const uint32_t uint32max = 0x7FFFFFFF;
+std::promise<void> exit_requested;
+
 const std::map<ms_serving::DataType, TypeId> type2id_map{
   {ms_serving::MS_UNKNOWN, TypeId::kNumberTypeBegin},   {ms_serving::MS_BOOL, TypeId::kNumberTypeBool},
   {ms_serving::MS_INT8, TypeId::kNumberTypeInt8},       {ms_serving::MS_UINT8, TypeId::kNumberTypeUInt8},
@@ -141,7 +150,7 @@ MSTensorPtr ServingTensor2MSTensor(const ms_serving::Tensor &tensor) {
   }
   TypeId type = iter->second;
   auto ms_tensor = std::shared_ptr<inference::MSTensor>(inference::MSTensor::CreateTensor(type, shape));
-  memcpy_s(ms_tensor->MutableData(), tensor.data().size(), tensor.data().data(), tensor.data().size());
+  memcpy_s(ms_tensor->MutableData(), ms_tensor->Size(), tensor.data().data(), tensor.data().size());
   return ms_tensor;
 }
 
@@ -166,10 +175,7 @@ void ClearEnv() {
   Session::Instance().Clear();
   inference::ExitInference();
 }
-void HandleSignal(int sig) {
-  ClearEnv();
-  exit(0);
-}
+void HandleSignal(int sig) { exit_requested.set_value(); }
 
 #ifdef ENABLE_D
 static rtContext_t g_ctx = nullptr;
@@ -247,6 +253,7 @@ Status Server::BuildAndStart() {
   rtError_t rt_ret = rtCtxGetCurrent(&ctx);
   if (rt_ret != RT_ERROR_NONE || ctx == nullptr) {
     MS_LOG(ERROR) << "the ascend device context is null";
+    ClearEnv();
     return FAILED;
   }
   g_ctx = ctx;
@@ -258,6 +265,7 @@ Status Server::BuildAndStart() {
   auto option = grpc::MakeChannelArgumentOption(GRPC_ARG_ALLOW_REUSEPORT, 0);
   grpc::ServerBuilder builder;
   builder.SetOption(std::move(option));
+  builder.SetMaxMessageSize(uint32max);
   // Listen on the given address without any authentication mechanism.
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   // Register "service" as the instance through which we'll communicate with
@@ -265,13 +273,20 @@ Status Server::BuildAndStart() {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+  if (server == nullptr) {
+    MS_LOG(ERROR) << "The serving server create failed";
+    ClearEnv();
+    return FAILED;
+  }
+  auto grpc_server_run = [&server]() { server->Wait(); };
+  std::thread serving_thread(grpc_server_run);
   MS_LOG(INFO) << "Server listening on " << server_address << std::endl;
-
-  // Wait for the server to shutdown. Note that some other thread must be
-  // responsible for shutting down the server for this call to ever return.
-  server->Wait();
+  auto exit_future = exit_requested.get_future();
+  exit_future.wait();
+  ClearEnv();
+  server->Shutdown();
+  serving_thread.join();
   return SUCCESS;
 }
-
 }  // namespace serving
 }  // namespace mindspore

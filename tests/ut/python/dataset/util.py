@@ -312,34 +312,39 @@ def visualize_with_bounding_boxes(orig, aug, plot_rows=3):
     if len(orig) != len(aug) or not orig:
         return
 
-    comp_set = int(len(orig)/plot_rows)
+    batch_size = int(len(orig)/plot_rows)  # creates batches of images to plot together
+    split_point = batch_size * plot_rows
+
     orig, aug = np.array(orig), np.array(aug)
 
     if len(orig) > plot_rows:
-        orig = np.split(orig[:comp_set*plot_rows], comp_set) + [orig[comp_set*plot_rows:]]
-        aug = np.split(aug[:comp_set*plot_rows], comp_set) + [aug[comp_set*plot_rows:]]
+        # Create batches of required size and add remainder to last batch
+        orig = np.split(orig[:split_point], batch_size) + ([orig[split_point:]] if (split_point < orig.shape[0]) else [])  # check to avoid empty arrays being added
+        aug = np.split(aug[:split_point], batch_size) + ([aug[split_point:]] if (split_point < aug.shape[0]) else [])
     else:
         orig = [orig]
         aug = [aug]
 
     for ix, allData in enumerate(zip(orig, aug)):
-        base_ix = ix * plot_rows  # will signal what base level we're on
+        base_ix = ix * plot_rows  # current batch starting index
+        curPlot = len(allData[0])
 
-        sub_plot_count = 2 if (len(allData[0]) < 2) else len(allData[0])  # if 1 image remains, create subplot for 2 to simplify axis selection
-        fig, axs = plt.subplots(sub_plot_count, 2)
+        fig, axs = plt.subplots(curPlot, 2)
         fig.tight_layout(pad=1.5)
 
         for x, (dataA, dataB) in enumerate(zip(allData[0], allData[1])):
             cur_ix = base_ix + x
+            (axA, axB) = (axs[x, 0], axs[x, 1]) if (curPlot > 1) else (axs[0], axs[1])  # select plotting axes based on number of image rows on plot - else case when 1 row
 
-            axs[x, 0].imshow(dataA["image"])
-            add_bounding_boxes(axs[x, 0], dataA["annotation"])
-            axs[x, 0].title.set_text("Original" + str(cur_ix+1))
+            axA.imshow(dataA["image"])
+            add_bounding_boxes(axA, dataA["annotation"])
+            axA.title.set_text("Original" + str(cur_ix+1))
+
+            axB.imshow(dataB["image"])
+            add_bounding_boxes(axB, dataB["annotation"])
+            axB.title.set_text("Augmented" + str(cur_ix+1))
+
             logger.info("Original **\n{} : {}".format(str(cur_ix+1), dataA["annotation"]))
-
-            axs[x, 1].imshow(dataB["image"])
-            add_bounding_boxes(axs[x, 1], dataB["annotation"])
-            axs[x, 1].title.set_text("Augmented" + str(cur_ix+1))
             logger.info("Augmented **\n{} : {}\n".format(str(cur_ix+1), dataB["annotation"]))
 
         plt.show()

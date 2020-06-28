@@ -30,8 +30,7 @@ Status RandomCropAndResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow 
   BOUNDING_BOX_CHECK(input);
   CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Size() >= 2, "The shape of input is abnormal");
 
-  (*output).push_back(nullptr);  // init memory for return vector
-  (*output).push_back(nullptr);
+  output->resize(2);
   (*output)[1] = std::move(input[1]);  // move boxes over to output
 
   size_t bboxCount = input[1]->shape()[0];  // number of rows in bbox tensor

@@ -202,7 +202,7 @@ class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
     Flip the input image horizontally, randomly with a given probability.
 
     Args:
-        prob (float): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image being flipped (default=0.5).
     """
 
     @check_prob
@@ -217,7 +217,7 @@ class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
     Maintains data integrity by also flipping bounding boxes in an object detection pipeline.
 
     Args:
-        prob (float): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image being flipped (default=0.5).
     """
 
     @check_prob
@@ -231,7 +231,7 @@ class RandomVerticalFlip(cde.RandomVerticalFlipOp):
     Flip the input image vertically, randomly with a given probability.
 
     Args:
-        prob (float): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image being flipped (default=0.5).
     """
 
     @check_prob

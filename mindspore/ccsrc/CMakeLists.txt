@@ -277,10 +277,11 @@ endif ()
 
 if (USE_GLOG)
     target_link_libraries(inference PRIVATE mindspore::glog)
-else()
-    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-        target_link_options(inference PRIVATE -Wl,-init,mindspore_log_init)
-    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-        set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
-    endif ()
 endif()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options(inference PRIVATE -Wl,-init,common_log_init)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
+endif ()
+

@@ -15,281 +15,151 @@
 """
 Testing the resize with bounding boxes op in DE
 """
-from enum import Enum
 import numpy as np
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-from mindspore import log as logger
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
+
+from mindspore import log as logger
+from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
+    save_and_check_md5
 
 GENERATE_GOLDEN = False
 
-DATA_DIR = "../data/dataset/testVOC2012"
+DATA_DIR = "../data/dataset/testVOC2012_2"
 
 
 def fix_annotate(bboxes):
     """
+    Fix annotations to format followed by mindspore.
     :param bboxes: in [label, x_min, y_min, w, h, truncate, difficult] format
     :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
     """
-    for bbox in bboxes:
-        tmp = bbox[0]
-        bbox[0] = bbox[1]
-        bbox[1] = bbox[2]
-        bbox[2] = bbox[3]
-        bbox[3] = bbox[4]
-        bbox[4] = tmp
+    for (i, box) in enumerate(bboxes):
+        bboxes[i] = np.roll(box, -1)
     return bboxes
 
 
-class BoxType(Enum):
+def test_resize_with_bbox_op_c(plot_vis=False):
     """
-    Defines box types for test cases
+    Prints images and bboxes side by side with and without ResizeWithBBox Op applied,
+    tests with MD5 check, expected to pass
     """
-    WidthOverflow = 1
-    HeightOverflow = 2
-    NegativeXY = 3
-    OnEdge = 4
-    WrongShape = 5
+    logger.info("test_resize_with_bbox_op_c")
+
+    # Load dataset
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
+
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
+
+    test_op = c_vision.ResizeWithBBox(200)
+
+    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
+                            output_columns=["annotation"],
+                            operations=fix_annotate)
+    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
+                            output_columns=["annotation"],
+                            operations=fix_annotate)
+    # map to apply ops
+    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
+                            output_columns=["image", "annotation"],
+                            columns_order=["image", "annotation"],
+                            operations=[test_op])
+
+    filename = "resize_with_bbox_op_01_c_result.npz"
+    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
+
+    unaugSamp, augSamp = [], []
+
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+        unaugSamp.append(unAug)
+        augSamp.append(Aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaugSamp, augSamp)
 
 
-class AddBadAnnotation:  # pylint: disable=too-few-public-methods
+def test_resize_with_bbox_op_edge_c(plot_vis=False):
     """
-    Used to add erroneous bounding boxes to object detection pipelines.
-    Usage:
-    >>> # Adds a box that covers the whole image. Good for testing edge cases
-    >>> de = de.map(input_columns=["image", "annotation"],
-    >>>            output_columns=["image", "annotation"],
-    >>>            operations=AddBadAnnotation(BoxType.OnEdge))
+    Prints images and bboxes side by side with and without ResizeWithBBox Op applied,
+    applied on dynamically generated edge case, expected to pass. edge case is when bounding
+    box has dimensions as the image itself.
     """
+    logger.info("test_resize_with_bbox_op_edge_c")
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
 
-    def __init__(self, box_type):
-        self.box_type = box_type
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+                             decode=True, shuffle=False)
 
-    def __call__(self, img, bboxes):
-        """
-        Used to generate erroneous bounding box examples on given img.
-        :param img: image where the bounding boxes are.
-        :param bboxes: in [x_min, y_min, w, h, label, truncate, difficult] format
-        :return: bboxes with bad examples added
-        """
-        height = img.shape[0]
-        width = img.shape[1]
-        if self.box_type == BoxType.WidthOverflow:
-            # use box that overflows on width
-            return img, np.array([[0, 0, width + 1, height - 1, 0, 0, 0]]).astype(np.uint32)
+    test_op = c_vision.ResizeWithBBox(500)
 
-        if self.box_type == BoxType.HeightOverflow:
-            # use box that overflows on height
-            return img, np.array([[0, 0, width - 1, height + 1, 0, 0, 0]]).astype(np.uint32)
+    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
+                            output_columns=["annotation"],
+                            operations=fix_annotate)
+    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
+                            output_columns=["annotation"],
+                            operations=fix_annotate)
 
-        if self.box_type == BoxType.NegativeXY:
-            # use box with negative xy
-            return img, np.array([[-10, -10, width - 1, height - 1, 0, 0, 0]]).astype(np.uint32)
+    # maps to convert data into valid edge case data
+    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
+                            output_columns=["image", "annotation"],
+                            columns_order=["image", "annotation"],
+                            operations=[lambda img, bboxes: (
+                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
-        if self.box_type == BoxType.OnEdge:
-            # use box that covers the whole image
-            return img, np.array([[0, 0, width - 1, height - 1, 0, 0, 0]]).astype(np.uint32)
+    # Test Op added to list of Operations here
+    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
+                            output_columns=["image", "annotation"],
+                            columns_order=["image", "annotation"],
+                            operations=[lambda img, bboxes: (
+                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
-        if self.box_type == BoxType.WrongShape:
-            # use box that covers the whole image
-            return img, np.array([[0, 0, width - 1]]).astype(np.uint32)
-        return img, bboxes
+    unaugSamp, augSamp = [], []
+
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+        unaugSamp.append(unAug)
+        augSamp.append(Aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaugSamp, augSamp)
 
 
-def check_bad_box(data, box_type, expected_error):
+def test_resize_with_bbox_op_invalid_c():
+    """
+    Test ResizeWithBBox Op on invalid constructor parameters, expected to raise ValueError
+    """
+    logger.info("test_resize_with_bbox_op_invalid_c")
+
     try:
-        test_op = c_vision.ResizeWithBBox(100)
-        data = data.map(input_columns=["annotation"],
-                        output_columns=["annotation"],
-                        operations=fix_annotate)
-        # map to use width overflow
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=AddBadAnnotation(box_type))  # Add column for "annotation"
-        # map to apply ops
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=[test_op])  # Add column for "annotation"
-        for _, _ in enumerate(data.create_dict_iterator()):
-            break
-    except RuntimeError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert expected_error in str(e)
+        # invalid interpolation value
+        c_vision.ResizeWithBBox(400, interpolation="invalid")
+
+    except ValueError as err:
+        logger.info("Got an exception in DE: {}".format(str(err)))
+        assert "interpolation" in str(err)
 
 
-def add_bounding_boxes(axis, bboxes):
+def test_resize_with_bbox_op_bad_c():
     """
-    :param axis: axis to modify
-    :param bboxes: bounding boxes to draw on the axis
-    :return: None
+    Tests ResizeWithBBox Op with invalid bounding boxes, expected to catch multiple errors
     """
-    for bbox in bboxes:
-        rect = patches.Rectangle((bbox[0], bbox[1]),
-                                 bbox[2], bbox[3],
-                                 linewidth=1, edgecolor='r', facecolor='none')
-        # Add the patch to the Axes
-        axis.add_patch(rect)
+    logger.info("test_resize_with_bbox_op_bad_c")
+    test_op = c_vision.ResizeWithBBox((200, 300))
 
-
-def visualize(unaugmented_data, augment_data):
-    for idx, (un_aug_item, aug_item) in enumerate(
-            zip(unaugmented_data.create_dict_iterator(), augment_data.create_dict_iterator())):
-        axis = plt.subplot(141)
-        plt.imshow(un_aug_item["image"])
-        add_bounding_boxes(axis, un_aug_item["annotation"])  # add Orig BBoxes
-        plt.title("Original" + str(idx + 1))
-        logger.info("Original ", str(idx + 1), " :", un_aug_item["annotation"])
-
-        axis = plt.subplot(142)
-        plt.imshow(aug_item["image"])
-        add_bounding_boxes(axis, aug_item["annotation"])  # add AugBBoxes
-        plt.title("Augmented" + str(idx + 1))
-        logger.info("Augmented ", str(idx + 1), " ", aug_item["annotation"], "\n")
-        plt.show()
-
-
-def test_resize_with_bbox_op(plot=False):
-    """
-    Test resize_with_bbox_op
-    """
-    logger.info("Test resize with bbox")
-
-    # original images
-    data_original = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-
-    # augmented images
-    data_augmented = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-
-    data_original = data_original.map(input_columns=["annotation"],
-                                      output_columns=["annotation"],
-                                      operations=fix_annotate)
-
-    data_augmented = data_augmented.map(input_columns=["annotation"],
-                                        output_columns=["annotation"],
-                                        operations=fix_annotate)
-
-    # define map operations
-    test_op = c_vision.ResizeWithBBox(100)  # input value being the target size of resizeOp
-
-    data_augmented = data_augmented.map(input_columns=["image", "annotation"],
-                                        output_columns=["image", "annotation"],
-                                        columns_order=["image", "annotation"], operations=[test_op])
-    if plot:
-        visualize(data_original, data_augmented)
-
-
-def test_resize_with_bbox_invalid_bounds():
     data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    check_bad_box(data_voc2, BoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
     data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    check_bad_box(data_voc2, BoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
     data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    check_bad_box(data_voc2, BoxType.NegativeXY, "min_x")
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
     data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    check_bad_box(data_voc2, BoxType.WrongShape, "4 features")
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
-
-def test_resize_with_bbox_invalid_size():
-    """
-        Test resize_with_bbox_op
-        """
-    logger.info("Test resize with bbox with invalid target size")
-
-    # original images
-    data = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-
-    data = data.map(input_columns=["annotation"],
-                    output_columns=["annotation"],
-                    operations=fix_annotate)
-
-    # negative target size as input
-    try:
-        test_op = c_vision.ResizeWithBBox(-10)
-
-        # map to apply ops
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=[test_op])  # Add column for "annotation"
-
-        for _, _ in enumerate(data.create_dict_iterator()):
-            break
-
-    except ValueError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input is not" in str(e)
-
-    # zero target size as input
-    try:
-        test_op = c_vision.ResizeWithBBox(0)
-
-        # map to apply ops
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=[test_op])  # Add column for "annotation"
-
-        for _, _ in enumerate(data.create_dict_iterator()):
-            break
-
-    except ValueError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input is not" in str(e)
-
-    # invalid input shape
-    try:
-        test_op = c_vision.ResizeWithBBox((10, 10, 10))
-
-        # map to apply ops
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=[test_op])  # Add column for "annotation"
-
-        for _, _ in enumerate(data.create_dict_iterator()):
-            break
-
-    except TypeError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Size should be" in str(e)
-
-
-def test_resize_with_bbox_invalid_interpolation():
-    """
-       Test resize_with_bbox_op
-       """
-    logger.info("Test resize with bbox with invalid interpolation size")
-
-    # original images
-    data = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-
-    data = data.map(input_columns=["annotation"],
-                    output_columns=["annotation"],
-                    operations=fix_annotate)
-
-    # invalid interpolation
-    try:
-        test_op = c_vision.ResizeWithBBox(100, interpolation="invalid")
-
-        # map to apply ops
-        data = data.map(input_columns=["image", "annotation"],
-                        output_columns=["image", "annotation"],
-                        columns_order=["image", "annotation"],
-                        operations=[test_op])  # Add column for "annotation"
-
-        for _, _ in enumerate(data.create_dict_iterator()):
-            break
-
-    except ValueError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "interpolation" in str(e)
 
 if __name__ == "__main__":
-    test_resize_with_bbox_op(plot=False)
-    test_resize_with_bbox_invalid_bounds()
-    test_resize_with_bbox_invalid_size()
-    test_resize_with_bbox_invalid_interpolation()
+    test_resize_with_bbox_op_c(plot_vis=False)
+    test_resize_with_bbox_op_edge_c(plot_vis=False)
+    test_resize_with_bbox_op_invalid_c()
+    test_resize_with_bbox_op_bad_c()

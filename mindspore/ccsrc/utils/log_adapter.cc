@@ -463,7 +463,7 @@ void InitSubModulesLogLevel() {
 
   // set submodule's log level
   auto submodule = GetEnv("MS_SUBMODULE_LOG_v");
-  MS_LOG(INFO) << "MS_SUBMODULE_LOG_v=`" << submodule << "`";
+  MS_LOG(DEBUG) << "MS_SUBMODULE_LOG_v=`" << submodule << "`";
   LogConfigParser parser(submodule);
   auto configs = parser.Parse();
   for (const auto &cfg : configs) {
@@ -489,22 +489,14 @@ void InitSubModulesLogLevel() {
 }  // namespace mindspore
 
 extern "C" {
-// shared lib init hook
 #if defined(_WIN32) || defined(_WIN64)
-__attribute__((constructor)) void mindspore_log_init(void) {
+__attribute__((constructor)) void common_log_init(void) {
 #else
-void mindspore_log_init(void) {
+void common_log_init(void) {
 #endif
 #ifdef USE_GLOG
   // do not use glog predefined log prefix
   FLAGS_log_prefix = false;
-  static bool is_glog_initialzed = false;
-  if (!is_glog_initialzed) {
-#if !defined(_WIN32) && !defined(_WIN64)
-    google::InitGoogleLogging("mindspore");
-#endif
-    is_glog_initialzed = true;
-  }
   // set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
@@ -524,5 +516,23 @@ void mindspore_log_init(void) {
   }
 #endif
   mindspore::InitSubModulesLogLevel();
+}
+
+// shared lib init hook
+#if defined(_WIN32) || defined(_WIN64)
+__attribute__((constructor)) void mindspore_log_init(void) {
+#else
+void mindspore_log_init(void) {
+#endif
+#ifdef USE_GLOG
+  static bool is_glog_initialzed = false;
+  if (!is_glog_initialzed) {
+#if !defined(_WIN32) && !defined(_WIN64)
+    google::InitGoogleLogging("mindspore");
+#endif
+    is_glog_initialzed = true;
+  }
+#endif
+  common_log_init();
 }
 }

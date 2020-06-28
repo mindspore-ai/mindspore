@@ -13,17 +13,17 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomCropAndResizeWithBBox op
+Testing RandomCropAndResizeWithBBox op in DE
 """
 import numpy as np
-
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 
 from mindspore import log as logger
+from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
+    config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
+
+GENERATE_GOLDEN = False
 
 # updated VOC dataset with correct annotations
 DATA_DIR = "../data/dataset/testVOC2012_2"
@@ -31,8 +31,7 @@ DATA_DIR = "../data/dataset/testVOC2012_2"
 
 def fix_annotate(bboxes):
     """
-    Update Current VOC dataset format to Proposed HQ BBox format
-
+    Fix annotations to format followed by mindspore.
     :param bboxes: in [label, x_min, y_min, w, h, truncate, difficult] format
     :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
     """
@@ -46,112 +45,22 @@ def fix_annotate(bboxes):
     return bboxes
 
 
-def add_bounding_boxes(ax, bboxes):
-    for bbox in bboxes:
-        rect = patches.Rectangle((bbox[0], bbox[1]),
-                                 bbox[2], bbox[3],
-                                 linewidth=1, edgecolor='r', facecolor='none')
-        # Add the patch to the Axes
-        ax.add_patch(rect)
-
-
-def vis_check(orig, aug):
-    if not isinstance(orig, list) or not isinstance(aug, list):
-        return False
-    if len(orig) != len(aug):
-        return False
-    return True
-
-
-def visualize(orig, aug):
-
-    if not vis_check(orig, aug):
-        return
-
-    plotrows = 3
-    compset = int(len(orig)/plotrows)
-
-    orig, aug = np.array(orig), np.array(aug)
-
-    orig = np.split(orig[:compset*plotrows], compset) + [orig[compset*plotrows:]]
-    aug = np.split(aug[:compset*plotrows], compset) + [aug[compset*plotrows:]]
-
-    for ix, allData in enumerate(zip(orig, aug)):
-        base_ix = ix * plotrows  # will signal what base level we're on
-        fig, axs = plt.subplots(len(allData[0]), 2)
-        fig.tight_layout(pad=1.5)
-
-        for x, (dataA, dataB) in enumerate(zip(allData[0], allData[1])):
-            cur_ix = base_ix + x
-
-            axs[x, 0].imshow(dataA["image"])
-            add_bounding_boxes(axs[x, 0], dataA["annotation"])
-            axs[x, 0].title.set_text("Original" + str(cur_ix+1))
-            print("Original **\n ", str(cur_ix+1), " :", dataA["annotation"])
-
-            axs[x, 1].imshow(dataB["image"])
-            add_bounding_boxes(axs[x, 1], dataB["annotation"])
-            axs[x, 1].title.set_text("Augmented" + str(cur_ix+1))
-            print("Augmented **\n", str(cur_ix+1), " ", dataB["annotation"], "\n")
-
-        plt.show()
-
-# Functions to pass to Gen for creating invalid bounding boxes
-
-
-def gen_bad_bbox_neg_xy(im, bbox):
-    im_h, im_w = im.shape[0], im.shape[1]
-    bbox[0][:4] = [-50, -50, im_w - 10, im_h - 10]
-    return im, bbox
-
-
-def gen_bad_bbox_overflow_width(im, bbox):
-    im_h, im_w = im.shape[0], im.shape[1]
-    bbox[0][:4] = [0, 0, im_w + 10, im_h - 10]
-    return im, bbox
-
-
-def gen_bad_bbox_overflow_height(im, bbox):
-    im_h, im_w = im.shape[0], im.shape[1]
-    bbox[0][:4] = [0, 0, im_w - 10, im_h + 10]
-    return im, bbox
-
-
-def gen_bad_bbox_wrong_shape(im, bbox):
-    bbox = np.array([[0, 0, 0]]).astype(bbox.dtype)
-    return im, bbox
-
-
-badGenFuncs = [gen_bad_bbox_neg_xy,
-               gen_bad_bbox_overflow_width,
-               gen_bad_bbox_overflow_height,
-               gen_bad_bbox_wrong_shape]
-
-
-assertVal = ["min_x",
-             "is out of bounds of the image",
-             "is out of bounds of the image",
-             "4 features"]
-
-
-# Gen Edge case BBox
-def gen_bbox_edge(im, bbox):
-    im_h, im_w = im.shape[0], im.shape[1]
-    bbox[0][:4] = [0, 0, im_w, im_h]
-    return im, bbox
-
-
-def test_c_random_resized_crop_with_bbox_op(plot_vis=False):
+def test_random_resized_crop_with_bbox_op_c(plot_vis=False):
     """
-     Prints images side by side with and without Aug applied + bboxes to compare and test
+     Prints images and bboxes side by side with and without RandomResizedCropWithBBox Op applied,
+     tests with MD5 check, expected to pass
     """
+    logger.info("test_random_resized_crop_with_bbox_op_c")
+
+    original_seed = config_get_set_seed(23415)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
     # Load dataset
     dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
     test_op = c_vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
 
-    # maps to fix annotations to HQ standard
     dataVoc1 = dataVoc1.map(input_columns=["annotation"],
                             output_columns=["annotation"],
                             operations=fix_annotate)
@@ -164,6 +73,9 @@ def test_c_random_resized_crop_with_bbox_op(plot_vis=False):
                             columns_order=["image", "annotation"],
                             operations=[test_op])  # Add column for "annotation"
 
+    filename = "random_resized_crop_with_bbox_01_c_result.npz"
+    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
+
     unaugSamp, augSamp = [], []
 
     for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
@@ -171,20 +83,26 @@ def test_c_random_resized_crop_with_bbox_op(plot_vis=False):
         augSamp.append(Aug)
 
     if plot_vis:
-        visualize(unaugSamp, augSamp)
+        visualize_with_bounding_boxes(unaugSamp, augSamp)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_c_random_resized_crop_with_bbox_op_edge(plot_vis=False):
+def test_random_resized_crop_with_bbox_op_edge_c(plot_vis=False):
     """
-     Prints images side by side with and without Aug applied + bboxes to compare and test
+     Prints images and bboxes side by side with and without RandomResizedCropWithBBox Op applied,
+     tests on dynamically generated edge case, expected to pass
     """
+    logger.info("test_random_resized_crop_with_bbox_op_edge_c")
+
     # Load dataset
     dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
     test_op = c_vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
 
-    # maps to fix annotations to HQ standard
     dataVoc1 = dataVoc1.map(input_columns=["annotation"],
                             output_columns=["annotation"],
                             operations=fix_annotate)
@@ -192,17 +110,17 @@ def test_c_random_resized_crop_with_bbox_op_edge(plot_vis=False):
                             output_columns=["annotation"],
                             operations=fix_annotate)
 
-    # Modify BBoxes to serve as valid edge cases
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
+    # maps to convert data into valid edge case data
+    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
-                            operations=[gen_bbox_edge])
+                            operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
-    # map to apply ops
+    # Test Op added to list of Operations here
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
-                            operations=[test_op])  # Add column for "annotation"
+                            operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
     unaugSamp, augSamp = [], []
 
@@ -211,21 +129,22 @@ def test_c_random_resized_crop_with_bbox_op_edge(plot_vis=False):
         augSamp.append(Aug)
 
     if plot_vis:
-        visualize(unaugSamp, augSamp)
+        visualize_with_bounding_boxes(unaugSamp, augSamp)
 
 
-def test_c_random_resized_crop_with_bbox_op_invalid():
+def test_random_resized_crop_with_bbox_op_invalid_c():
     """
-     Prints images side by side with and without Aug applied + bboxes to compare and test
+     Tests RandomResizedCropWithBBox on invalid constructor parameters, expected to raise ValueError
     """
-    # Load dataset # only loading the to AugDataset as test will fail on this
+    logger.info("test_random_resized_crop_with_bbox_op_invalid_c")
+
+    # Load dataset, only Augmented Dataset as test will raise ValueError
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
     try:
         # If input range of scale is not in the order of (min, max), ValueError will be raised.
         test_op = c_vision.RandomResizedCropWithBBox((256, 512), (1, 0.5), (0.5, 0.5))
 
-        # maps to fix annotations to HQ standard
         dataVoc2 = dataVoc2.map(input_columns=["annotation"],
                                 output_columns=["annotation"],
                                 operations=fix_annotate)
@@ -243,10 +162,11 @@ def test_c_random_resized_crop_with_bbox_op_invalid():
         assert "Input range is not valid" in str(err)
 
 
-def test_c_random_resized_crop_with_bbox_op_invalid2():
+def test_random_resized_crop_with_bbox_op_invalid2_c():
     """
-     Prints images side by side with and without Aug applied + bboxes to compare and test
+     Tests RandomResizedCropWithBBox Op on invalid constructor parameters, expected to raise ValueError
     """
+    logger.info("test_random_resized_crop_with_bbox_op_invalid2_c")
     # Load dataset # only loading the to AugDataset as test will fail on this
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
@@ -254,7 +174,6 @@ def test_c_random_resized_crop_with_bbox_op_invalid2():
         # If input range of ratio is not in the order of (min, max), ValueError will be raised.
         test_op = c_vision.RandomResizedCropWithBBox((256, 512), (1, 1), (1, 0.5))
 
-        # maps to fix annotations to HQ standard
         dataVoc2 = dataVoc2.map(input_columns=["annotation"],
                                 output_columns=["annotation"],
                                 operations=fix_annotate)
@@ -272,41 +191,26 @@ def test_c_random_resized_crop_with_bbox_op_invalid2():
         assert "Input range is not valid" in str(err)
 
 
-def test_c_random_resized_crop_with_bbox_op_bad():
-    # Should Fail - Errors logged to logger
-    for ix, badFunc in enumerate(badGenFuncs):
-        try:
-            dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                                     decode=True, shuffle=False)
+def test_random_resized_crop_with_bbox_op_bad_c():
+    """
+    Test RandomCropWithBBox op with invalid bounding boxes, expected to catch multiple errors.
+    """
+    logger.info("test_random_resized_crop_with_bbox_op_bad_c")
+    test_op = c_vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
 
-            test_op = c_vision.RandomVerticalFlipWithBBox(1)
-
-            dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                                    output_columns=["annotation"],
-                                    operations=fix_annotate)
-
-            dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                    output_columns=["image", "annotation"],
-                                    columns_order=["image", "annotation"],
-                                    operations=[badFunc])
-
-            # map to apply ops
-            dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                                    output_columns=["image", "annotation"],
-                                    columns_order=["image", "annotation"],
-                                    operations=[test_op])
-
-            for _ in dataVoc2.create_dict_iterator():
-                break  # first sample will cause exception
-
-        except RuntimeError as err:
-            logger.info("Got an exception in DE: {}".format(str(err)))
-            assert assertVal[ix] in str(err)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 
 if __name__ == "__main__":
-    test_c_random_resized_crop_with_bbox_op(plot_vis=True)
-    test_c_random_resized_crop_with_bbox_op_edge(plot_vis=True)
-    test_c_random_resized_crop_with_bbox_op_invalid()
-    test_c_random_resized_crop_with_bbox_op_invalid2()
-    test_c_random_resized_crop_with_bbox_op_bad()
+    test_random_resized_crop_with_bbox_op_c(plot_vis=True)
+    test_random_resized_crop_with_bbox_op_edge_c(plot_vis=True)
+    test_random_resized_crop_with_bbox_op_invalid_c()
+    test_random_resized_crop_with_bbox_op_invalid2_c()
+    test_random_resized_crop_with_bbox_op_bad_c()

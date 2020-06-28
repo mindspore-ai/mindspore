@@ -336,6 +336,7 @@ class PrintNet(nn.Cell):
     def construct(self, int8, uint8, int16, uint16, int32, uint32, int64, uint64, flt16, flt32, flt64, bool_,
                   scale1, scale2):
         self.print('============tensor int8:==============', int8)
+        self.print('============tensor int8:==============', int8)
         self.print('============tensor uint8:==============', uint8)
         self.print('============tensor int16:==============', int16)
         self.print('============tensor uint16:==============', uint16)

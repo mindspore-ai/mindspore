@@ -98,6 +98,7 @@ class AllReduce(PrimitiveWithInfer):
         self.op = op
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
+        self.add_prim_attr('index', 0)
 
     def vm_impl(self, x):
         """Implement by vm mode."""
