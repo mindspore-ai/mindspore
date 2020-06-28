@@ -17,6 +17,7 @@
 #include "device/gpu/mpi/mpi_initializer.h"
 
 #include <mpi.h>
+#include <pybind11/operators.h>
 #include <iostream>
 
 namespace mindspore {
@@ -53,6 +54,12 @@ MPIInitializer &MPIInitializer::GetInstance() {
 int MPIInitializer::get_rank_id() { return MPIInitializer::GetInstance().rank_id_; }
 
 int MPIInitializer::get_rank_size() { return MPIInitializer::GetInstance().rank_size_; }
+
+PYBIND11_MODULE(_ms_mpi, mpi_initializer) {
+  mpi_initializer.doc() = "mindspore mpi python wrapper";
+  mpi_initializer.def("get_rank_id", &MPIInitializer::get_rank_id, "get rank id");
+  mpi_initializer.def("get_rank_size", &MPIInitializer::get_rank_size, "get rank size");
+}
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
