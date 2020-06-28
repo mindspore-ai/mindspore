@@ -2575,6 +2575,22 @@ class MnistDataset(MappableDataset):
          - False
          - not allowed
 
+    Citation of Mnist dataset.
+
+    .. code-block::
+
+        @article{lecun2010mnist,
+        title        = {MNIST handwritten digit database},
+        author       = {LeCun, Yann and Cortes, Corinna and Burges, CJ},
+        journal      = {ATT Labs [Online]},
+        volume       = {2},
+        year         = {2010},
+        howpublished = {http://yann.lecun.com/exdb/mnist},
+        description  = {The MNIST database of handwritten digits has a training set of 60,000 examples,
+                        and a test set of 10,000 examples. It is a subset of a larger set available from
+                        NIST. The digits have been size-normalized and centered in a fixed-size image.}
+        }
+
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of images to be included in the dataset
@@ -3536,6 +3552,20 @@ class Cifar10Dataset(MappableDataset):
          - False
          - not allowed
 
+    Citation of Cifar10 dataset.
+
+    .. code-block::
+
+        @techreport{Krizhevsky09,
+        author       = {Alex Krizhevsky},
+        title        = {Learning multiple layers of features from tiny images},
+        institution  = {},
+        year         = {2009},
+        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html},
+        description  = {The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes,
+                        with 6000 images per class. There are 50000 training images and 10000 test images.}
+        }
+
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of images to be included in the dataset.
@@ -3657,6 +3687,22 @@ class Cifar100Dataset(MappableDataset):
        * - Sampler object
          - False
          - not allowed
+
+    Citation of Cifar100 dataset.
+
+    .. code-block::
+
+        @techreport{Krizhevsky09,
+        author       = {Alex Krizhevsky},
+        title        = {Learning multiple layers of features from tiny images},
+        institution  = {},
+        year         = {2009},
+        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html},
+        description  = {This dataset is just like the CIFAR-10, except it has 100 classes containing 600 images
+                        each. There are 500 training images and 100 testing images per class. The 100 classes in
+                        the CIFAR-100 are grouped into 20 superclasses. Each image comes with a "fine" label (the
+                        class to which it belongs) and a "coarse" label (the superclass to which it belongs).}
+        }
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -4026,6 +4072,27 @@ class VOCDataset(MappableDataset):
          - False
          - not allowed
 
+   Citation of VOC dataset.
+
+    .. code-block::
+
+        @article{Everingham10,
+        author    = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
+        title     = {The Pascal Visual Object Classes (VOC) Challenge},
+        journal   = {International Journal of Computer Vision},
+        volume    = {88},
+        year      = {2010},
+        number    = {2},
+        month     = {jun},
+        pages     = {303--338},
+        biburl    = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
+        howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html},
+        description  = {The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
+                        object category recognition and detection, providing the vision and machine
+                        learning communities with a standard dataset of images and annotation, and
+                        standard evaluation procedures.}
+        }
+
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
@@ -4206,6 +4273,30 @@ class CocoDataset(MappableDataset):
          - False
          - not allowed
 
+   Citation of Coco dataset.
+
+    .. code-block::
+
+        @article{DBLP:journals/corr/LinMBHPRDZ14,
+        author    = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
+                     Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
+                     Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
+        title     = {Microsoft {COCO:} Common Objects in Context},
+        journal   = {CoRR},
+        volume    = {abs/1405.0312},
+        year      = {2014},
+        url       = {http://arxiv.org/abs/1405.0312},
+        archivePrefix = {arXiv},
+        eprint    = {1405.0312},
+        timestamp = {Mon, 13 Aug 2018 16:48:13 +0200},
+        biburl    = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
+        bibsource = {dblp computer science bibliography, https://dblp.org},
+        description = {COCO is a large-scale object detection, segmentation, and captioning dataset.
+                       It contains 91 common object categories with 82 of them having more than 5,000
+                       labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
+                       categories but more instances per category.}
+        }
+
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the annotation json.
@@ -4343,6 +4434,35 @@ class CelebADataset(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
+
+   Citation of CelebA dataset.
+
+    .. code-block::
+
+        @article{DBLP:journals/corr/LiuLWT14,
+        author    = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
+        title     = {Deep Learning Face Attributes in the Wild},
+        journal   = {CoRR},
+        volume    = {abs/1411.7766},
+        year      = {2014},
+        url       = {http://arxiv.org/abs/1411.7766},
+        archivePrefix = {arXiv},
+        eprint    = {1411.7766},
+        timestamp = {Tue, 10 Dec 2019 15:37:26 +0100},
+        biburl    = {https://dblp.org/rec/journals/corr/LiuLWT14.bib},
+        bibsource = {dblp computer science bibliography, https://dblp.org},
+        howpublished = {http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html},
+        description  = {CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
+                        with more than 200K celebrity images, each with 40 attribute annotations. The
+                        images in this dataset cover large pose variations and background clutter. CelebA
+                        has large diversities, large quantities, and rich annotations, including
+                        * 10,177 number of identities,
+                        * 202,599 number of face images, and
+                        * 5 landmark locations, 40 binary attributes annotations per image.
+                        The dataset can be employed as the training and test sets for the following computer
+                        vision tasks: face attribute recognition, face detection, landmark (or facial part)
+                        localization, and face editing & synthesis.}
+        }
     """
 
     @check_celebadataset
@@ -4442,11 +4562,28 @@ class CLUEDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
 
+   Citation of CLUE dataset.
+
+    .. code-block::
+
+        @article{CLUEbenchmark,
+        title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
+        author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
+                   Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
+                   Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+                   Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
+        journal = {arXiv preprint arXiv:2004.05986},
+        year    = {2020},
+        howpublished = {https://github.com/CLUEbenchmark/CLUE},
+        description  = {CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
+                        tasks, including single-sentence classification, sentence pair classification, and machine
+                        reading comprehension.}
+        }
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
         >>> dataset = ds.CLUEDataset(dataset_files=dataset_files, task='AFQMC', usage='train')
-
     """
 
     @check_cluedataset

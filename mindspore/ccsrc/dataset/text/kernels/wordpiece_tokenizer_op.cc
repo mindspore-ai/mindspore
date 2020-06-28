@@ -81,9 +81,9 @@ Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, std::vect
   if (!DecodeRunesInString(input_token.data(), input_token.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("Decode utf8 string failed.");
   }
-  int end;
+  int end = 0;
   for (int start = 0; start < input_token.size();) {
-    bool found;
+    bool found = false;
     RETURN_IF_NOT_OK(LookupWord(input_token, runes, start, &found, &end));
     if (found) {
       RETURN_IF_NOT_OK(AddSubword(input_token, start, end, out_tokens));

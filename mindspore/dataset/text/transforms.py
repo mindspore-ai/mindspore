@@ -190,7 +190,8 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         if not os.path.exists(file_path):
             raise ValueError(
                 "user dict file {} is not exist".format(file_path))
-        file_dict = open(file_path)
+        real_file_path = os.path.realpath(file_path)
+        file_dict = open(real_file_path)
         data_re = re.compile('^(.+?)( [0-9]+)?$', re.U)
         words_list = []
         for item in file_dict:
@@ -200,8 +201,9 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
             words = data_re.match(data).groups()
             if len(words) != 2:
                 raise ValueError(
-                    "user dict file {} format error".format(file_path))
+                    "user dict file {} format error".format(real_file_path))
             words_list.append(words)
+        file_dict.close()
         return words_list
 
     def __decode(self, data):

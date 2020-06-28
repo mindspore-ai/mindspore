@@ -782,7 +782,7 @@ Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount,
   return Status::OK();
 }
 
-Status PadBBoxes(std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left) {
+Status PadBBoxes(const std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left) {
   for (int i = 0; i < bboxCount; i++) {
     uint32_t xMin, yMin;
     RETURN_IF_NOT_OK((*bboxList)->GetUnsignedIntAt(&xMin, {i, 0}));

@@ -104,7 +104,7 @@ Status DatasetOp::InsertAsParent(std::shared_ptr<DatasetOp> to_add) {
 void DatasetOp::AddParent(DatasetOp *parent) { parent_.push_back(parent); }
 
 // Removes a parent operator from this operator
-void DatasetOp::RemoveParent(DatasetOp *parent) {
+void DatasetOp::RemoveParent(const DatasetOp *parent) {
   parent_.erase(std::remove(parent_.begin(), parent_.end(), parent), parent_.end());
 }
 
