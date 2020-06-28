@@ -71,20 +71,20 @@ class None : public Named {
 };
 extern const NamedPtr kNone;
 
-class NullObj : public Named {
+class Null : public Named {
  public:
-  NullObj() : Named("Null") {}
-  ~NullObj() override = default;
-  MS_DECLARE_PARENT(NullObj, Named);
+  Null() : Named("Null") {}
+  ~Null() override = default;
+  MS_DECLARE_PARENT(Null, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
 extern const NamedPtr kNull;
 
-class EllipsisObj : public Named {
+class Ellipsis : public Named {
  public:
-  EllipsisObj() : Named("Ellipsis") {}
-  ~EllipsisObj() override = default;
-  MS_DECLARE_PARENT(EllipsisObj, Named);
+  Ellipsis() : Named("Ellipsis") {}
+  ~Ellipsis() override = default;
+  MS_DECLARE_PARENT(Ellipsis, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
 extern const NamedPtr kEllipsis;

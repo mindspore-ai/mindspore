@@ -275,6 +275,11 @@ extern const TypePtr kTypeExternal;
 extern const TypePtr kTypeEnv;
 extern const TypePtr kTypeType;
 extern const TypePtr kString;
+extern const TypePtr kList;
+extern const TypePtr kTuple;
+extern const TypePtr kDict;
+extern const TypePtr kSlice;
+extern const TypePtr kKeyword;
 extern const TypePtr kTensorType;
 }  // namespace mindspore
 
