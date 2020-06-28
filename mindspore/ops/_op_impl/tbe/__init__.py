@@ -277,3 +277,5 @@ from .scatter_max import _scatter_max_tbe
 from .scatter_min import _scatter_min_tbe
 from .scatter_sub import _scatter_sub_tbe
 from .mod import _mod_tbe
+from .max_pool_grad_grad import _max_pool_grad_grad_tbe
+from .max_pool_grad_grad_with_argmax import _max_pool_grad_grad_with_argmax_tbe
