@@ -13,21 +13,21 @@
 # limitations under the License.
 # ============================================================================
 
-"""RandomNormal op"""
+"""RandomUniformReal op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-normal_op_info = AiCPURegOp("Normal") \
+uniform_real_op_info = AiCPURegOp("UniformReal") \
     .fusion_type("OPAQUE") \
     .input(0, "shape", "required") \
-    .input(1, "mean", "required") \
-    .input(2, "stddev", "required") \
+    .input(1, "a", "required") \
+    .input(2, "b", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
     .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
     .get_op_info()
 
-@op_info_register(normal_op_info)
-def _normal_aicpu():
-    """RandomNormal AiCPU register"""
+@op_info_register(uniform_real_op_info)
+def _uniform_real_aicpu():
+    """RandomUniformReal AiCPU register"""
     return

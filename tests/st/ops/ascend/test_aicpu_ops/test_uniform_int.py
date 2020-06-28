@@ -26,32 +26,32 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self, shape, seed=0):
         super(Net, self).__init__()
-        self.normal = P.Normal(seed=seed)
+        self.uniformint = P.UniformInt(seed=seed)
         self.shape = shape
 
-    def construct(self, mean, stddev):
-        return self.normal(self.shape, mean, stddev)
+    def construct(self, a, b):
+        return self.uniformint(self.shape, a, b)
 
 
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
-    mean = 1.0
-    stddev = 1.0
+    a = 1
+    b = 5
     net = Net(shape, seed)
-    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
-    output = net(tmean, tstddev)
+    ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
+    output = net(ta, tb)
     print(output.asnumpy())
     assert output.shape == (3, 2, 4)
 
 
 def test_net_ND():
     seed = 10
-    shape = (3, 1, 2)
-    mean = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
-    stddev = np.array([1.0]).astype(np.float32)
+    shape = (3, 2, 1)
+    a = np.array([[[1, 2]], [[3, 4]], [[5, 6]]]).astype(np.int32)
+    b = np.array([10]).astype(np.int32)
     net = Net(shape, seed)
-    tmean, tstddev = Tensor(mean), Tensor(stddev)
-    output = net(tmean, tstddev)
+    ta, tb = Tensor(a), Tensor(b)
+    output = net(ta, tb)
     print(output.asnumpy())
     assert output.shape == (3, 2, 2)

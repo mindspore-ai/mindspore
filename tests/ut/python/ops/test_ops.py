@@ -400,15 +400,57 @@ class InplaceSubNet(nn.Cell):
 
 
 class NormalNet(nn.Cell):
-    def __init__(self, shape=None, mean=0.0, stddev=1.0, seed=0):
+    def __init__(self, shape=None, seed=0):
         super(NormalNet, self).__init__()
         self.normal = P.Normal(seed=seed)
         self.shape = shape
-        self.mean = Tensor(mean, mstype.float32)
-        self.stddev = Tensor(stddev, mstype.float32)
 
-    def construct(self):
-        out = self.normal(self.shape, self.mean, self.stddev)
+    def construct(self, mean, stddev):
+        out = self.normal(self.shape, mean, stddev)
+        return out
+
+
+class GammaNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(GammaNet, self).__init__()
+        self.gamma = P.Gamma(seed=seed)
+        self.shape = shape
+
+    def construct(self, alpha, beta):
+        out = self.gamma(self.shape, alpha, beta)
+        return out
+
+
+class PoissonNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(PoissonNet, self).__init__()
+        self.poisson = P.Poisson(seed=seed)
+        self.shape = shape
+
+    def construct(self, mean):
+        out = self.poisson(self.shape, mean)
+        return out
+
+
+class UniformIntNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(UniformIntNet, self).__init__()
+        self.uniformint = P.UniformInt(seed=seed)
+        self.shape = shape
+
+    def construct(self, a, b):
+        out = self.uniformint(self.shape, a, b)
+        return out
+
+
+class UniformRealNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(UniformRealNet, self).__init__()
+        self.uniformreal = P.UniformReal(seed=seed)
+        self.shape = shape
+
+    def construct(self, a, b):
+        out = self.uniformreal(self.shape, a, b)
         return out
 
 
@@ -619,6 +661,26 @@ test_case_math_ops = [
                        (64, 2, 1024),
                        (1, 1, 1)],
         'desc_inputs': [[64, 128, 1024]],
+        'skip': ['backward']}),
+    ('Normal', {
+        'block': NormalNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('Gamma', {
+        'block': GammaNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('Poisson', {
+        'block': PoissonNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(2.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('UniformInt', {
+        'block': UniformIntNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1, mstype.int32), Tensor(15, mstype.int32)],
+        'skip': ['backward']}),
+    ('UniformReal', {
+        'block': UniformRealNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(5.0, mstype.float32)],
         'skip': ['backward']}),
     ('RandomChoiceWithMask', {
         'block': P.RandomChoiceWithMask(256),
@@ -907,10 +969,6 @@ test_case_math_ops = [
         'block': P.HistogramFixedWidth(5),
         'desc_inputs': [Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mstype.float16), Tensor([0.0, 5.0], mstype.float16)],
         'desc_bprop': [],
-        'skip': ['backward']}),
-    ('Normal', {
-        'block': NormalNet((3, 2, 4), 0.0, 1.0, 0),
-        'desc_inputs': [],
         'skip': ['backward']}),
 ]
 
