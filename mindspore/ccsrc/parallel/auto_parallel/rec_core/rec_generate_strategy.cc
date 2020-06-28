@@ -164,9 +164,34 @@ std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &gr
   return strategies;
 }
 
-std::vector<std::vector<int32_t>> PrepareGatherV2(const std::shared_ptr<std::vector<int32_t>> &s) {
+std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                  const size_t iter_ops, std::vector<int32_t> s) {
   std::vector<std::vector<int32_t>> strategies;
-  strategies.push_back(*s);
+
+  int32_t axis = 0;
+  auto axis_input = GetValue<int>(ops[iter_ops]->input_value().at(2));
+  if (axis_input < 0) {
+    axis_input += SizeToInt(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
+  }
+  axis = axis_input;
+  if (axis >= SizeToInt(s.size())) {
+    MS_LOG(EXCEPTION) << "Failure: GatherV2' axis out of range.";
+  }
+  s[axis] = 1;
+  strategies.push_back(s);
+
+  auto pos = ops[iter_ops]->name().find("Info");
+  auto name = ops[iter_ops]->name().substr(0, pos);
+  if (name == "GatherV2") {
+    return strategies;
+  }
+
+  std::vector<int32_t> s_indices;
+  for (size_t i = 0; i < ops[iter_ops]->inputs_tensor_info()[1].shape().size(); i++) {
+    s_indices.push_back(1);
+  }
+  strategies.push_back(s_indices);
+
   return strategies;
 }
 
@@ -607,7 +632,7 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
     return PrepareBiasAdd(s_ptr);
   }
   if (ops[iter_ops]->type() == GATHERV2) {
-    return PrepareGatherV2(s_ptr);
+    return PrepareGatherV2(ops, iter_ops, basic_stra);
   }
   if (ops[iter_ops]->type() == L2_NORMALIZE) {
     return PrepareL2Normalize(ops, iter_ops, basic_stra);

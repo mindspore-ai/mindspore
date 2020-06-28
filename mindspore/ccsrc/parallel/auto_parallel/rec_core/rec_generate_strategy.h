@@ -38,7 +38,8 @@ std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::shared_ptr<std::vect
 std::vector<std::vector<int32_t>> PrepareOneHot(const std::shared_ptr<Graph> &graph,
                                                 const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const size_t iter_graph, const size_t iter_ops);
-std::vector<std::vector<int32_t>> PrepareGatherV2(const std::shared_ptr<std::vector<int32_t>> &s);
+std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                  const size_t iter_ops, std::vector<int32_t> s);
 std::vector<std::vector<int32_t>> PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                      const size_t iter_ops, std::vector<int32_t> s);
 std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
