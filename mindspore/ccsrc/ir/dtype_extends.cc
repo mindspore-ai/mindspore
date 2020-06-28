@@ -95,6 +95,10 @@ TypePtr TypeIdToType(TypeId id) {
       return kAnyType;
     case kMetaTypeNone:
       return kTypeNone;
+    case kMetaTypeNull:
+      return kTypeNull;
+    case kMetaTypeEllipsis:
+      return kTypeEllipsis;
     case kObjectTypeEnvType:
       return kTypeEnv;
     case kObjectTypeRefKey:
@@ -105,6 +109,16 @@ TypePtr TypeIdToType(TypeId id) {
       return kTypeType;
     case kObjectTypeString:
       return kString;
+    case kObjectTypeList:
+      return kList;
+    case kObjectTypeTuple:
+      return kTuple;
+    case kObjectTypeDictionary:
+      return kDict;
+    case kObjectTypeSlice:
+      return kSlice;
+    case kObjectTypeKeyword:
+      return kKeyword;
     case kTypeUnknown:
       return kTypeNone;
     default:
@@ -278,7 +292,7 @@ TypePtr StringToType(const std::string &type_name) {
   if (type_name.compare("None") == 0) {
     type = std::make_shared<TypeNone>();
   } else if (type_name.compare("Ellipsis") == 0) {
-    type = std::make_shared<Ellipsis>();
+    type = std::make_shared<TypeEllipsis>();
   } else if (type_name.compare("TypeType") == 0) {
     type = std::make_shared<TypeType>();
   } else if (type_name.compare("SymbolicKeyType") == 0) {
@@ -480,7 +494,7 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<RefType, Type, std::shared_ptr<RefType>>(m_sub, "RefType").def(py::init());
     (void)py::class_<TypeAnything, Type, std::shared_ptr<TypeAnything>>(m_sub, "TypeAnything").def(py::init());
     (void)py::class_<Slice, Type, std::shared_ptr<Slice>>(m_sub, "Slice").def(py::init());
-    (void)py::class_<Ellipsis, Type, std::shared_ptr<Ellipsis>>(m_sub, "Ellipsis").def(py::init());
+    (void)py::class_<TypeEllipsis, Type, std::shared_ptr<TypeEllipsis>>(m_sub, "TypeEllipsis").def(py::init());
   }));
 
 const TypePtr kTypeExternal = std::make_shared<External>();
@@ -488,4 +502,9 @@ const TypePtr kTypeEnv = std::make_shared<EnvType>();
 const TypePtr kTypeType = std::make_shared<TypeType>();
 const TypePtr kTensorType = std::make_shared<TensorType>();
 const TypePtr kString = std::make_shared<String>();
+const TypePtr kList = std::make_shared<List>();
+const TypePtr kTuple = std::make_shared<Tuple>();
+const TypePtr kDict = std::make_shared<Dictionary>();
+const TypePtr kSlice = std::make_shared<Slice>();
+const TypePtr kKeyword = std::make_shared<Keyword>();
 }  // namespace mindspore

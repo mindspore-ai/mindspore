@@ -96,7 +96,7 @@ type_refkey = typing.RefKeyType()
 tensor_type = typing.TensorType
 anything_type = typing.TypeAnything
 slice_type = typing.Slice
-ellipsis_type = typing.Ellipsis
+ellipsis_type = typing.TypeEllipsis
 
 number_type = (int8,
                int16,
