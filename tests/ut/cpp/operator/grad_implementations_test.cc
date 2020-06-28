@@ -38,7 +38,10 @@ TEST_F(TestGradImplementations, TestGetAugmentedGraph) {
   draw::Draw("gradImpl_TestGetAugmentedFuncGraph.dot", fg);
 
   auto fg1 = ad::g_k_prims.KPrimitive(NewValueNode(kPrimScalarMul), nullptr);
-  ASSERT_TRUE(fg == fg1);
+
+  FuncGraphPairMapEquiv equiv_graph;
+  NodeMapEquiv equiv_node;
+  ASSERT_TRUE(Isomorphic(fg, fg1, &equiv_graph, &equiv_node));
 }
 
 }  // namespace prim
