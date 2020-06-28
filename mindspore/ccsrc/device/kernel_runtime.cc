@@ -258,6 +258,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
     std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
+    device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
     MS_EXCEPTION_IF_NULL(device_address);
     auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
     if (!ret) {
@@ -506,7 +507,9 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
     }
     std::string output_format = AnfAlgo::GetOutputFormat(node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
-    AnfAlgo::SetOutputAddr(CreateDeviceAddress(ptr, output_sizes[i], output_format, output_type), i, node.get());
+    auto device_address = CreateDeviceAddress(ptr, output_sizes[i], output_format, output_type);
+    device_address->set_host_shape(trans::GetRuntimePaddingShape(node, i));
+    AnfAlgo::SetOutputAddr(device_address, i, node.get());
   }
 }
 
