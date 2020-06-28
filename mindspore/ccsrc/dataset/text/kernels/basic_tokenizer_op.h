@@ -17,6 +17,7 @@
 #define DATASET_TEXT_KERNELS_BASIC_TOKENIZER_OP_H_
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -45,9 +46,15 @@ class BasicTokenizerOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+ protected:
+  Status CaseFoldWithoutUnusedWords(const std::string_view &text, const std::unordered_set<std::string> &unused_words,
+                                    std::string *outupt);
+  Status CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
  private:
   static const char kCommonPattern[];
   static const char kUnusedPattern[];
+  static const std::unordered_set<std::string> kUnusedWords;
   bool lower_case_;
   bool keep_whitespace_;
   NormalizeForm normalization_form_;
