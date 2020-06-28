@@ -16,29 +16,29 @@
 
 rm -f output/simple.mindrecord*
 
-if [ ! -d "../../../third_party/to_mindrecord/zhwiki" ]; then
-    echo "The patch base dir ../../../third_party/to_mindrecord/zhwiki is not exist."
+if [ ! -d "../../../../third_party/to_mindrecord/zhwiki" ]; then
+    echo "The patch base dir ../../../../third_party/to_mindrecord/zhwiki is not exist."
     exit 1
 fi
 
-if [ ! -f "../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch" ]; then
-    echo "The patch file ../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch is not exist."
+if [ ! -f "../../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch" ]; then
+    echo "The patch file ../../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch is not exist."
     exit 1
 fi
 
 # patch for create_pretraining_data.py
-patch -p0 -d ../../../third_party/to_mindrecord/zhwiki/ -o create_pretraining_data_patched.py < ../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch
+patch -p0 -d ../../../../third_party/to_mindrecord/zhwiki/ -o create_pretraining_data_patched.py < ../../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch
 if [ $? -ne 0 ]; then
-    echo "Patch ../../../third_party/to_mindrecord/zhwiki/create_pretraining_data.py failed"
+    echo "Patch ../../../../third_party/to_mindrecord/zhwiki/create_pretraining_data.py failed"
     exit 1
 fi
 
 # using patched script to generate mindrecord
-python ../../../third_party/to_mindrecord/zhwiki/create_pretraining_data_patched.py \
---input_file=../../../third_party/to_mindrecord/zhwiki/sample_text.txt \
+python ../../../../third_party/to_mindrecord/zhwiki/create_pretraining_data_patched.py \
+--input_file=../../../../third_party/to_mindrecord/zhwiki/sample_text.txt \
 --output_file=output/simple.mindrecord \
---partition_number=4 \
---vocab_file=../../../third_party/to_mindrecord/zhwiki/vocab.txt \
+--partition_number=1 \
+--vocab_file=../../../../third_party/to_mindrecord/zhwiki/vocab.txt \
 --do_lower_case=True \
 --max_seq_length=128 \
 --max_predictions_per_seq=20 \

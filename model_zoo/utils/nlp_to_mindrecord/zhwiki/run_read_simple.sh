@@ -15,4 +15,4 @@
 # ============================================================================
 
 # create dataset for train
-python create_dataset.py --input_file=output/simple.mindrecord0
+python create_dataset.py --input_file=output/simple.mindrecord
