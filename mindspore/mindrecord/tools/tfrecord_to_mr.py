@@ -113,7 +113,7 @@ class TFRecordToMR:
             feature_dict = {"context": {"xxxx": tf.io.FixedLenFeature([], tf.string), \
                                         "yyyy": tf.io.VarLenFeature(tf.int64)}, \
                             "sequence": {"zzzz": tf.io.FixedLenSequenceFeature([], tf.float32)}}
-        bytes_fields (list): the bytes fields which are in feature_dict.
+        bytes_fields (list, optional): the bytes fields which are in feature_dict and can be images bytes.
 
     Raises:
         ValueError: If parameter is invalid.
@@ -147,7 +147,7 @@ class TFRecordToMR:
         self.feature_dict = feature_dict
 
         bytes_fields_list = []
-        if bytes_fields:
+        if bytes_fields is not None:
             if not isinstance(bytes_fields, list):
                 raise ValueError("Parameter bytes_fields: {} must be list(str).".format(bytes_fields))
             for item in bytes_fields:
@@ -161,6 +161,9 @@ class TFRecordToMR:
                 if not isinstance(self.feature_dict[item].shape, list):
                     raise ValueError("Parameter feature_dict[{}].shape should be a list.".format(item))
 
+                if self.feature_dict[item].dtype != tf.string:
+                    raise ValueError("Parameter bytes_field: {} should be tf.string in feature_dict.".format(item))
+
                 casted_bytes_field = _cast_name(item)
                 bytes_fields_list.append(casted_bytes_field)
 
@@ -172,7 +175,7 @@ class TFRecordToMR:
         for key, val in self.feature_dict.items():
             if not val.shape:
                 self.scalar_set.add(_cast_name(key))
-                if key in self.bytes_fields_list:
+                if _cast_name(key) in self.bytes_fields_list:
                     mindrecord_schema[_cast_name(key)] = {"type": "bytes"}
                 else:
                     mindrecord_schema[_cast_name(key)] = {"type": _cast_type(val.dtype)}
@@ -182,8 +185,8 @@ class TFRecordToMR:
                 if val.shape[0] < 1:
                     raise ValueError("Parameter feature_dict[{}].shape[0] should > 0".format(key))
                 if val.dtype == tf.string:
-                    raise ValueError("Parameter feautre_dict[{}].dtype is tf.string which shape[0] \
-                        is not None. It is not supported.".format(key))
+                    raise ValueError("Parameter feautre_dict[{}].dtype is tf.string which shape[0] " \
+                        "is not None. It is not supported.".format(key))
                 self.list_set.add(_cast_name(key))
                 mindrecord_schema[_cast_name(key)] = {"type": _cast_type(val.dtype), "shape": [val.shape[0]]}
         self.mindrecord_schema = mindrecord_schema
@@ -219,12 +222,12 @@ class TFRecordToMR:
                 index_id = index_id + 1
                 for key, val in features.items():
                     cast_key = _cast_name(key)
-                    if key in self.scalar_set:
+                    if cast_key in self.scalar_set:
                         self._get_data_when_scalar_field(ms_dict, cast_key, key, val)
                     else:
                         if not isinstance(val.numpy(), np.ndarray) and not isinstance(val.numpy(), list):
-                            raise ValueError("he response key: {}, value: {} from TFRecord should be a ndarray or list."
-                                             .format(key, val))
+                            raise ValueError("The response key: {}, value: {} from TFRecord should be a ndarray or " \
+                                "list.".format(key, val))
                         # list set
                         ms_dict[cast_key] = \
                             np.asarray(val, _cast_string_type_to_np_type(self.mindrecord_schema[cast_key]["type"]))
