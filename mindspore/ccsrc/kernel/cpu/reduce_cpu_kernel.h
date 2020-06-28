@@ -46,7 +46,6 @@ MS_REG_CPU_KERNEL(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOu
                   ReduceCPUKernel);
 MS_REG_CPU_KERNEL(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ReduceCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_KERNEL_CPU_REDUCE_CPU_KERNEL_H_
