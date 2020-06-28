@@ -888,7 +888,8 @@ class Neg(PrimitiveWithInfer):
     def infer_value(self, input_x):
         if input_x is not None:
             input_x = input_x.asnumpy()
-            return Tensor(-input_x)
+            out = np.array(-input_x, input_x.dtype)
+            return Tensor(out)
 
         return None
 
@@ -1667,7 +1668,8 @@ class Div(_MathBinaryOp):
         if x is not None and y is not None:
             x = x.asnumpy()
             y = y.asnumpy()
-            return Tensor(x / y)
+            out = np.array(x / y, x.dtype)
+            return Tensor(out)
         return None
 
 
