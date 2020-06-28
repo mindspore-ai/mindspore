@@ -94,6 +94,7 @@ class AscendResourceMng {
   uint32_t cur_event_num_{0};
 };
 
+enum StreamActiveKind { kInvalid = 0, kHead, kMiddle, kTail };
 class AscendStreamAssign {
  public:
   static AscendStreamAssign &GetInstance() {
@@ -109,6 +110,8 @@ class AscendStreamAssign {
   void GetWaitStreams(vector<uint32_t> *wait_active_stream_list);
   CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
+  const std::vector<std::vector<uint32_t>> &get_stream_group() const { return stream_groups_; }
+  const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
 
  private:
   AscendStreamAssign() = default;
@@ -147,6 +150,20 @@ class AscendStreamAssign {
                                           const CNodePtr &node);
   void GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id, std::vector<uint32_t> *parallel_streams);
 
+  // function for memory resue
+  void GetStreamRelations();
+  void DFS(uint32_t start, std::vector<uint32_t> *group);
+  bool IsVecExist(std::vector<uint32_t> *group);
+  void FindStreamRelations(const NotNull<KernelGraphPtr> &graph_ptr);
+  void GetStreamSwitchStreamRelation(const CNodePtr &node_ptr);
+  void GetStreamActiveStreamRelation(const NotNull<KernelGraphPtr> &graph_ptr, size_t index);
+  StreamActiveKind GetStreamActiveKind(const NotNull<KernelGraphPtr> &graph_ptr, size_t index);
+  uint32_t GetStreamByActivedStream(uint32_t actived_stream_id);
+  void PrintStreamRelations();
+  void PrintStreamGroups();
+  void FindEventRelations(const NotNull<KernelGraphPtr> &graph_ptr);
+  bool IsSatisfiedEvent(uint32_t send_stream_id, uint32_t recv_stream_id) const;
+
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
   std::map<uint32_t, uint32_t> independent_stream_map_{};
@@ -154,6 +171,11 @@ class AscendStreamAssign {
   std::map<uint32_t, uint32_t> common_stream_map_{};
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
+
+  // attr for memory copy reuse
+  std::map<uint32_t, std::vector<uint32_t>> stream_relations_{};
+  std::vector<std::vector<uint32_t>> stream_groups_{};
+  std::map<CNodePtr, CNodePtr> event_map_;
   // new policy end
 };
 }  // namespace ascend
