@@ -510,7 +510,7 @@ def reset_auto_parallel_context():
                  save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
-                 check_bprop=bool, max_device_memory=str, print_file_path=str)
+                 enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -538,6 +538,8 @@ def set_context(**kwargs):
         save_ms_model_path (str): Path to save converted lite model. Default: "."
         save_graphs_path (str): Path to save graphs. Default: "."
         enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
+        enable_graph_kernel (bool): Whether to enable composition of basic primitives. These primitives would be
+            compiled into a fused kernel automatically. Default: False.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
