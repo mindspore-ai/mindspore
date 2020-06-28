@@ -73,7 +73,7 @@ class FTRL(Optimizer):
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
         `sparse_grad` of `Parameter` being set. The sparse feature is under continuous development. The sparse
-        behavior is currently performed on the CPU, weight decay is not supported.
+        behavior is currently performed on the CPU.
 
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
@@ -124,7 +124,7 @@ class FTRL(Optimizer):
         linear = self.linear
         lr = self.learning_rate
         if self.weight_decay > 0.0:
-            grads = self.hyper_map(F.partial(_apply_decay, self.weight_decay), self.decay_tf, params, grads)
+            grads = self.map_(F.partial(_apply_decay, self.weight_decay), self.decay_tf, params, grads)
 
         grads = self.scale_grad(grads)
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2, self.lr_power),

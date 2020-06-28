@@ -57,7 +57,7 @@ def test_rmsprop_compile():
 def test_rmsprop_e():
     net = Net()
     with pytest.raises(ValueError):
-        RMSProp(net.get_parameters(), momentum=-0.1, learning_rate=0.1)
+        RMSProp(net.get_parameters(), momentum=-0.1, learning_rate=0.1, weight_decay=0.9)
 
     with pytest.raises(TypeError):
-        RMSProp(net.get_parameters(), momentum=1, learning_rate=0.1)
+        RMSProp(net.get_parameters(), momentum=1, learning_rate=0.1, weight_decay=0.9)
