@@ -46,7 +46,7 @@ def test_basic():
     # assert ds.config.get_worker_connector_size() == 16
     assert ds.config.get_prefetch_size() == 16
     assert ds.config.get_seed() == 5489
-    # assert ds.config.get_monitor_sampling_interval() == 15
+    assert ds.config.get_monitor_sampling_interval() == 15
 
     # ds.config.set_rows_per_buffer(1)
     ds.config.set_num_parallel_workers(2)

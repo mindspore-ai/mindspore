@@ -186,7 +186,7 @@ class ConfigurationManager:
             >>> #     "workerConnectorSize": 16,
             >>> #     "opConnectorSize": 16,
             >>> #     "seed": 5489,
-            >>> #     "monitorSamplingInterval": 30 
+            >>> #     "monitorSamplingInterval": 30
             >>> # }
         """
         self.config.load(file)
