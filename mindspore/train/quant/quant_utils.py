@@ -125,7 +125,7 @@ def scale_zp_from_fack_quant_cell(cell, data_type):
     """
     minq = cell.minq.data.asnumpy()
     maxq = cell.maxq.data.asnumpy()
-    op = cell.fake_quant
+    op = cell.fake_quant_infer
 
     scale, zp = cal_quantization_params(
         minq, maxq, data_type,
