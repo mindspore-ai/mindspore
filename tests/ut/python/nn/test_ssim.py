@@ -35,16 +35,8 @@ class SSIMNet(nn.Cell):
 
 def test_compile():
     net = SSIMNet()
-    img1 = Tensor(np.random.random((8, 3, 16, 16)))
-    img2 = Tensor(np.random.random((8, 3, 16, 16)))
-    _executor.compile(net, img1, img2)
-
-
-def test_compile_grayscale():
-    max_val = 255
-    net = SSIMNet(max_val=max_val)
-    img1 = Tensor(np.random.randint(0, 256, (8, 1, 16, 16), np.uint8))
-    img2 = Tensor(np.random.randint(0, 256, (8, 1, 16, 16), np.uint8))
+    img1 = Tensor(np.random.random((8, 3, 16, 16)), mstype.float32)
+    img2 = Tensor(np.random.random((8, 3, 16, 16)), mstype.float32)
     _executor.compile(net, img1, img2)
 
 
