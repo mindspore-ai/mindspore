@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "session/ascend_control_parser.h"
 #include <utility>
 #include <memory>
-#include "session/ascend_control_parser.h"
 #include "session/anf_runtime_algorithm.h"
 #include "utils/union_find_set.h"
 
@@ -111,7 +111,7 @@ static void RecursiveReplaceNode(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr>
                                  const std::set<AnfNodePtr> &parameter_reuse_set,
                                  const NotNull<std::set<KernelGraphPtr> *> memo) {
   if (parameter_reuse_set.empty()) {
-    MS_LOG(EXCEPTION) << "parameter_reuse_set is empty.";
+    MS_LOG(EXCEPTION) << "Parameter_reuse_set is empty.";
   }
   if (memo->find(kg.get()) != memo->end()) {
     return;
@@ -170,6 +170,7 @@ void AscendControlParser::LinkGraph(NotNull<KernelGraphPtr> kg) {
   (void)ProcessKernelGraph(kg, nullptr, nullptr, NOT_NULL(&memo));
   std::map<uint32_t, KernelGraphPtr> graph_id_map;
   for (auto &g : memo) {
+    MS_EXCEPTION_IF_NULL(g);
     if (graph_id_map.find(g->graph_id()) != graph_id_map.end()) {
       MS_LOG(EXCEPTION) << "Two graph has same graph id " << g->graph_id()
                         << ", graph: " << graph_id_map[g->graph_id()]->ToString() << " " << g->ToString();
@@ -222,6 +223,20 @@ void AscendControlParser::ChildGraphDataAssign(const std::map<uint32_t, KernelGr
   }
 }
 
+NotNull<CNodePtr> AscendControlParser::GetStartLabel(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
+                                                     const CNodePtr &last_label) {
+  CNodePtr start_label;
+  if (last_node != nullptr && last_label != nullptr) {
+    start_label = kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSetOpName))});
+    MS_LOG(INFO) << "Insert start label " << start_label->DebugString() << " to " << kg->ToString();
+    kg->set_start_label(start_label);
+  } else {
+    // no goto node will jump to start label of root graph, so return a fake label
+    start_label = std::make_shared<CNode>(std::vector<AnfNodePtr>(), FuncGraphPtr(nullptr));
+  }
+  return NOT_NULL(start_label);
+}
+
 NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
                                                           const CNodePtr &last_label,
                                                           const NotNull<std::set<KernelGraphPtr> *> memo) {
@@ -241,28 +256,22 @@ NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr
   kg->SetExecOrderByDefault();
   const std::vector<CNodePtr> &nodes = kg->execution_order();
   // 4. insert first_label
-  CNodePtr start_label;
-  if (last_node != nullptr && last_label != nullptr) {
-    start_label = kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSetOpName))});
-    MS_LOG(INFO) << "Insert start label " << start_label->DebugString() << " to " << kg->ToString();
-    kg->set_start_label(start_label);
-  } else {
-    // no goto node will jump to start label of root graph, so return a fake label
-    start_label = std::make_shared<CNode>(std::vector<AnfNodePtr>(), FuncGraphPtr(nullptr));
-  }
+  CNodePtr start_label = GetStartLabel(kg, last_node, last_label);
 
   // 5. traverse
   for (size_t i = 0; i < nodes.size(); ++i) {
     auto &cnode = nodes[i];
+    MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() < kCNodePrim + 1) {
       MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
     }
     AnfNodePtr fn = cnode->input(kAnfPrimitiveIndex);
     if (!IsPrimitive(fn, prim::kPrimCall) || cnode->size() < kCNodeCallArg + 1) {
-      MS_LOG(DEBUG) << "continue node " << cnode->DebugString();
+      MS_LOG(DEBUG) << "Continue node " << cnode->DebugString();
       continue;
     }
     AnfNodePtr arg = cnode->input(kFirstDataInputIndex);
+    MS_EXCEPTION_IF_NULL(arg);
     if (IsValueNode<KernelGraph>(arg)) {
       RecurseCall(kg, NOT_NULL(cnode), GetNextRealKernel(nodes, i + 1), memo);
     } else if (!arg->isa<CNode>()) {
@@ -309,6 +318,7 @@ void AscendControlParser::LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNod
   if (from_graph_call_node != nullptr && last_label != nullptr) {
     auto label_goto =
       kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelGotoOpName)), last_label});
+    MS_EXCEPTION_IF_NULL(label_goto);
     MS_LOG(INFO) << "Insert end goto " << label_goto->DebugString() << " to " << kg->ToString();
     kg->set_end_goto(label_goto);
   }
@@ -358,6 +368,7 @@ void AscendControlParser::RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNod
   }
   // 1 return label
   auto back_label = kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSetOpName))});
+  MS_EXCEPTION_IF_NULL(back_label);
   MS_LOG(INFO) << "Insert back label " << back_label->DebugString() << " to " << kg->ToString() << " switch node "
                << cur_node->DebugString();
   // 2 add depend relationship
@@ -367,6 +378,9 @@ void AscendControlParser::RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNod
   }
   // 3 recurse sub graph
   const std::vector<AnfNodePtr> &origin_switch_inputs = cur_node->inputs();
+  if (kCNodeSwitchCond >= origin_switch_inputs.size()) {
+    MS_LOG(EXCEPTION) << "The size of origin_switch_inputs is not more than " << kCNodeSwitchCond;
+  }
   std::vector<AnfNodePtr> new_switch_inputs = {
     std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSwitchOpName)),
     origin_switch_inputs[kCNodeSwitchCond]};
@@ -562,6 +576,8 @@ bool AscendControlParser::CheckLabelIndex(uint32_t order_index, uint32_t label_i
   auto start_label_set = child_graph->get_start_label();
   uint32_t start_label_set_index = AnfAlgo::GetNodeAttr<uint32_t>(start_label_set, kAttrLabelIndex);
   if (label_index != start_label_set_index) {
+    MS_EXCEPTION_IF_NULL(cur_label);
+    MS_EXCEPTION_IF_NULL(start_label_set);
     MS_LOG(WARNING) << cur_label->DebugString() << " index " << label_index << " but " << start_label_set->DebugString()
                     << " index " << start_label_set_index << " current child graph order : " << order_index;
     return false;
@@ -587,7 +603,7 @@ void AscendControlParser::UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg) {
     }
   }
   for (size_t i = 0; i < child_graph_order.size(); i++) {
-    MS_LOG(INFO) << "child graph[" << i << "][id:" << child_graph_order[i]->graph_id() << "]";
+    MS_LOG(INFO) << "Child graph[" << i << "][id:" << child_graph_order[i]->graph_id() << "]";
   }
   kg->set_child_graph_order(child_graph_order);
 }

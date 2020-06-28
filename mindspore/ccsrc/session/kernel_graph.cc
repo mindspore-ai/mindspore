@@ -33,6 +33,7 @@ constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
                        std::unordered_set<AnfNodePtr> *visited_nodes) {
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(que);
   MS_EXCEPTION_IF_NULL(visited_nodes);
   if (visited_nodes->find(node) == visited_nodes->end()) {
@@ -131,11 +132,10 @@ void KernelGraph::VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNod
   std::vector<AnfNodePtr> active_nodes;
   for (const auto &output_edge : it->second) {
     auto next_node = output_edge.first;
+    MS_EXCEPTION_IF_NULL(next_node);
     if (node_input_num_.find(next_node) == node_input_num_.end()) {
-      MS_EXCEPTION_IF_NULL(next_node);
       MS_LOG(EXCEPTION) << "Can't find node[" << next_node->DebugString() << "]";
     }
-    MS_EXCEPTION_IF_NULL(next_node);
     MS_LOG(DEBUG) << "Decrease input:" << next_node->DebugString() << ",node:" << node->DebugString()
                   << ",num: " << node_input_num_[next_node] << ",decrease num:" << output_edge.second;
     if (node_input_num_[next_node] < output_edge.second) {
@@ -147,7 +147,7 @@ void KernelGraph::VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNod
     if (node_input_num_[next_node] == 0 && visited_nodes->find(next_node) == visited_nodes->end()) {
       (void)visited_nodes->insert(next_node);
       if (AnfAlgo::IsCommunicationOp(next_node)) {
-        MS_LOG(DEBUG) << "visit node:" << next_node->DebugString();
+        MS_LOG(DEBUG) << "Visit node:" << next_node->DebugString();
         visit_queue->push(next_node);
       } else {
         active_nodes.emplace_back(next_node);
@@ -156,7 +156,8 @@ void KernelGraph::VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNod
   }
 
   for (auto &node : active_nodes) {
-    MS_LOG(DEBUG) << "visit node:" << node->DebugString();
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(DEBUG) << "Visit node:" << node->DebugString();
     visit_queue->push(node);
   }
 }
@@ -380,12 +381,12 @@ std::vector<AnfNodePtr> KernelGraph::SplitTupleValueNodeToNodeList(const ValueNo
   auto output_size = AnfAlgo::GetOutputTensorNum(value_node);
   std::vector<AnfNodePtr> convert_inputs;
   if (!node_value->isa<ValueTuple>()) {
-    MS_LOG(EXCEPTION) << "multiple output valuenode's value must be a value tuple but got " << node_value->ToString();
+    MS_LOG(EXCEPTION) << "Multiple output valuenode's value must be a value tuple but got " << node_value->ToString();
   }
   auto value_tuple = node_value->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple);
   if (value_tuple->size() != output_size) {
-    MS_LOG(EXCEPTION) << "value tuple size" << value_tuple->size()
+    MS_LOG(EXCEPTION) << "Value tuple size" << value_tuple->size()
                       << " is not mathced with the value node's output size" << output_size;
   }
   for (size_t index = 0; index < value_tuple->value().size(); ++index) {
@@ -408,7 +409,7 @@ std::vector<AnfNodePtr> KernelGraph::SplitTupleValueNodeToNodeList(const ValueNo
     convert_inputs.emplace_back(new_value_node);
   }
   if (!RemoveValueNodeFromGraph(value_node)) {
-    MS_LOG(WARNING) << "failed to remove the value_node " << value_node->DebugString();
+    MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
   }
   return convert_inputs;
 }
@@ -429,10 +430,10 @@ void KernelGraph::FrontBackendlMapAdd(const AnfNodePtr &front_anf, const AnfNode
   MS_EXCEPTION_IF_NULL(front_anf);
   MS_EXCEPTION_IF_NULL(backend_anf);
   if (front_backend_anf_map_.find(front_anf) != front_backend_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "anf " << front_anf->DebugString() << " has been exist in the front_backend_anf_map_";
+    MS_LOG(EXCEPTION) << "Anf " << front_anf->DebugString() << " has been exist in the front_backend_anf_map_";
   }
   if (backend_front_anf_map_.find(backend_anf) != backend_front_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
+    MS_LOG(EXCEPTION) << "Kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
   }
   front_backend_anf_map_[front_anf] = backend_anf;
   backend_front_anf_map_[backend_anf] = front_anf;
@@ -442,15 +443,15 @@ void KernelGraph::FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, cons
   MS_EXCEPTION_IF_NULL(old_backend_anf);
   MS_EXCEPTION_IF_NULL(new_backend_anf);
   if (old_backend_anf == new_backend_anf) {
-    MS_LOG(DEBUG) << "old same with new:" << old_backend_anf->DebugString();
+    MS_LOG(DEBUG) << "Old same with new:" << old_backend_anf->DebugString();
     return;
   }
   if (backend_front_anf_map_.find(old_backend_anf) == backend_front_anf_map_.end()) {
-    MS_LOG(DEBUG) << "old_backend_anf " << old_backend_anf->DebugString() << " is not exist in the map";
+    MS_LOG(DEBUG) << "Old_backend_anf " << old_backend_anf->DebugString() << " is not exist in the map";
     return;
   }
   if (front_backend_anf_map_.find(backend_front_anf_map_[old_backend_anf]) == front_backend_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "anf is not exist in the map ,old " << old_backend_anf->DebugString();
+    MS_LOG(EXCEPTION) << "Anf is not exist in the map ,old " << old_backend_anf->DebugString();
   }
   front_backend_anf_map_[backend_front_anf_map_[old_backend_anf]] = new_backend_anf;
   backend_front_anf_map_[new_backend_anf] = backend_front_anf_map_[old_backend_anf];
@@ -483,6 +484,8 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
 }
 
 void KernelGraph::AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(input);
   MS_LOG(DEBUG) << "Input:" << input->DebugString() << ",  node:" << node->DebugString() << ",num:" << depend_edge_num;
   auto output_depend_edge = std::pair<AnfNodePtr, size_t>(node, depend_edge_num);
   // add output depend edge of input
@@ -625,6 +628,8 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
 bool KernelGraph::HandleControlDependNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
                                           std::unordered_set<AnfNodePtr> *visited_nodes) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(que);
+  MS_EXCEPTION_IF_NULL(visited_nodes);
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -650,6 +655,7 @@ bool KernelGraph::HandleControlDependNode(const AnfNodePtr &node, std::queue<Anf
 }
 
 void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
+  MS_EXCEPTION_IF_NULL(seed_nodes);
   node_output_edges_.clear();
   node_input_num_.clear();
   node_input_edges_.clear();
@@ -691,14 +697,14 @@ bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return r
 
 AnfWithOutIndex KernelGraph::GetRefCorrespondOutput(const AnfWithOutIndex &out_pair) const {
   if (!IsInRefOutputMap(out_pair)) {
-    MS_LOG(EXCEPTION) << "out_pair is not in RefOutputMap";
+    MS_LOG(EXCEPTION) << "Out_pair is not in RefOutputMap";
   }
   return ref_out_in_map_.at(out_pair);
 }
 
 void KernelGraph::AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair) {
   if (IsInRefOutputMap(final_pair)) {
-    MS_LOG(EXCEPTION) << "out_pair is already in RefOutputMap";
+    MS_LOG(EXCEPTION) << "Out_pair is already in RefOutputMap";
   }
   (void)ref_out_in_map_.insert(std::make_pair(final_pair, origin_pair));
 }
@@ -804,7 +810,7 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primi
 void KernelGraph::SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg) {
   MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(arg);
-  MS_LOG(INFO) << "parameter: " << parameter->DebugString() << ", real input : " << arg->DebugString();
+  MS_LOG(INFO) << "Parameter: " << parameter->DebugString() << ", real input : " << arg->DebugString();
   MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(arg);
   auto iter = std::find_if(
@@ -837,7 +843,7 @@ void KernelGraph::UpdateCallRealInput() {
 }
 
 void KernelGraph::PrintGraphExecuteOrder() const {
-  MS_LOG(INFO) << "graph:" << graph_id_ << "execution order";
+  MS_LOG(INFO) << "Graph:" << graph_id_ << "execution order";
   for (size_t i = 0; i < execution_order_.size(); i++) {
     CNodePtr cur_cnode_ptr = execution_order_[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
@@ -859,7 +865,7 @@ void KernelGraph::PrintGraphExecuteOrder() const {
       }
     }
 
-    MS_LOG(INFO) << "index[" << i << "], node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
+    MS_LOG(INFO) << "Index[" << i << "], node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
                  << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
                  << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], node info[" << cur_cnode_ptr->DebugString() << "]"
                  << event_str << label_str;

@@ -163,7 +163,7 @@ void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &inpu
   UpdateRefNodeOutputMem(graph);
 }
 
-void KernelRuntime::RunOpClearMemory(session::KernelGraph *graph) {
+void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   // clear input parameter memory resource
   for (const auto &input_node : graph->inputs()) {

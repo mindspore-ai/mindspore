@@ -33,6 +33,7 @@ namespace mindspore {
 namespace session {
 ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
+  MS_EXCEPTION_IF_NULL(graph);
   if (!anf->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << "anf[" << anf->DebugString() << "] is not a parameter";
   }

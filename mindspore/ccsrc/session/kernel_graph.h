@@ -75,7 +75,7 @@ class KernelGraph : public FuncGraph {
   // add value node tensor relation map
   void TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node);
   // get all value nodes of graph
-  std::unordered_set<ValueNodePtr> graph_value_nodes() { return graph_value_nodes_; }
+  const std::unordered_set<ValueNodePtr> graph_value_nodes() const { return graph_value_nodes_; }
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   // ref output is in map

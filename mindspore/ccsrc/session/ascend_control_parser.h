@@ -38,6 +38,8 @@ class AscendControlParser {
   static void UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg);
 
  private:
+  static NotNull<CNodePtr> GetStartLabel(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
+                                         const CNodePtr &last_label);
   static NotNull<CNodePtr> ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
                                               const CNodePtr &last_label,
                                               const NotNull<std::set<KernelGraphPtr> *> memo);
