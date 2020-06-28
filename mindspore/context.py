@@ -564,7 +564,7 @@ def set_context(**kwargs):
         max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
             The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
-        a file by default，and turn off printing to the screen.
+            a file by default, and turn off printing to the screen.
 
     Raises:
         ValueError: If input key is not an attribute in context.
