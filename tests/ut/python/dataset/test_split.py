@@ -38,7 +38,7 @@ def split_with_invalid_inputs(d):
 
     with pytest.raises(ValueError) as info:
         _, _ = d.split([-1, 6])
-    assert "there should be no negative numbers" in str(info.value)
+    assert "there should be no negative or zero numbers" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         _, _ = d.split([3, 1])
@@ -54,11 +54,11 @@ def split_with_invalid_inputs(d):
 
     with pytest.raises(ValueError) as info:
         _, _ = d.split([-0.5, 0.5])
-    assert "there should be no numbers outside the range [0, 1]" in str(info.value)
+    assert "there should be no numbers outside the range (0, 1]" in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _, _ = d.split([1.5, 0.5])
-    assert "there should be no numbers outside the range [0, 1]" in str(info.value)
+    assert "there should be no numbers outside the range (0, 1]" in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _, _ = d.split([0.5, 0.6])

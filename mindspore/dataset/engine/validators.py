@@ -1065,12 +1065,12 @@ def check_split(method):
         if all_int:
             all_positive = all(item > 0 for item in sizes)
             if not all_positive:
-                raise ValueError("sizes is a list of int, but there should be no negative numbers.")
+                raise ValueError("sizes is a list of int, but there should be no negative or zero numbers.")
 
         if all_float:
             all_valid_percentages = all(0 < item <= 1 for item in sizes)
             if not all_valid_percentages:
-                raise ValueError("sizes is a list of float, but there should be no numbers outside the range [0, 1].")
+                raise ValueError("sizes is a list of float, but there should be no numbers outside the range (0, 1].")
 
             epsilon = 0.00001
             if not abs(sum(sizes) - 1) < epsilon:
