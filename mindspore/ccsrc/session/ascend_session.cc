@@ -1691,6 +1691,14 @@ void AscendSession::RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const Not
       continue;
     }
     RecurseCompileGraph(NOT_NULL(child_graph), memo);
+    // copy ref map to final graph
+    auto child_ref_map = child_graph->GetRefMap();
+    for (auto &item : child_ref_map) {
+      if (graph->IsInRefOutputMap(item.first)) {
+        MS_LOG(EXCEPTION) << "The ref pair is already in final graph!";
+      }
+      graph->AddRefCorrespondPairs(item.first, item.second);
+    }
   }
 }
 }  // namespace session
