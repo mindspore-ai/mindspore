@@ -14,11 +14,30 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ] && [ $# != 2 ]
+if [ $# != 3 ] && [ $# != 4 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_PATH](optional)"
+    echo "Usage: sh run_standalone_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
+
+if [ $1 != "resnet50" ] && [ $1 != "resnet101" ]
+then 
+    echo "error: the selected net is neither resnet50 nor resnet101"
+exit 1
+fi
+
+if [ $2 != "cifar10" ] && [ $2 != "imagenet2012" ]
+then 
+    echo "error: the selected dataset is neither cifar10 nor imagenet2012"
+exit 1
+fi
+
+if [ $1 == "resnet101" ] && [ $2 == "cifar10" ]
+then 
+    echo "error: training resnet101 with cifar10 dataset is unsupported now!"
+exit 1
+fi
+
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -27,12 +46,12 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-PATH1=$(get_real_path $1)
-echo $PATH1
-if [ $# == 2 ]
+
+PATH1=$(get_real_path $3)
+
+if [ $# == 4 ]
 then
-    PATH2=$(get_real_path $2)
-    echo $PATH2
+    PATH2=$(get_real_path $4)
 fi
 
 if [ ! -d $PATH1 ]
@@ -41,9 +60,9 @@ then
 exit 1
 fi
 
-if [ $# == 2 ] && [ ! -f $PATH2 ]
+if [ $# == 4 ] && [ ! -f $PATH2 ]
 then
-    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+    echo "error: PRETRAINED_CKPT_PATH=$PATH2 is not a file"
 exit 1
 fi
 
@@ -64,13 +83,13 @@ cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-if [ $# == 1 ]
+if [ $# == 3 ]
 then
-    python train.py --do_train=True --dataset_path=$PATH1 &> log &
+    python train.py --net=$1 --dataset=$2 --dataset_path=$PATH1 &> log &
 fi
 
-if [ $# == 2 ]
+if [ $# == 4 ]
 then
-    python train.py --do_train=True --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+    python train.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
 fi
 cd ..
