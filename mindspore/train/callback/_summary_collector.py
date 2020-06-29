@@ -587,7 +587,6 @@ class SummaryCollector(Callback):
         train_lineage[LineageMetadata.step_num] = cb_params.cur_step_num
         train_lineage[LineageMetadata.parallel_mode] = cb_params.parallel_mode
         train_lineage[LineageMetadata.device_num] = cb_params.device_number
-        train_lineage[LineageMetadata.batch_size] = cb_params.batch_num
 
         ckpt_file_path = self._get_ckpt_file_path(cb_params)
         train_lineage[LineageMetadata.model_path] = json.dumps(dict(ckpt=ckpt_file_path))
@@ -672,6 +671,8 @@ class SummaryCollector(Callback):
         batch_num = dataset.get_dataset_size()
         batch_size = dataset.get_batch_size()
         dataset_size = int(batch_num * batch_size)
+
+        lineage_dict[LineageMetadata.batch_size] = batch_size
 
         if cb_params.mode == ModeEnum.TRAIN.value:
             lineage_dict[LineageMetadata.train_dataset_path] = dataset_dir
