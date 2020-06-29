@@ -17,7 +17,6 @@
 #include "common/cvop_common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/util/de_error.h"
 #include "dataset/engine/perf/cyclic_array.h"
 #include "dataset/engine/perf/perf_data.h"
 
