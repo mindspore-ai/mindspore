@@ -643,9 +643,9 @@ def check_bucket_batch_by_length(method):
         if not all_int:
             raise TypeError("bucket_batch_sizes should be a list of int.")
 
-        all_non_negative = all(item >= 0 for item in bucket_batch_sizes)
+        all_non_negative = all(item > 0 for item in bucket_batch_sizes)
         if not all_non_negative:
-            raise ValueError("bucket_batch_sizes cannot contain any negative numbers.")
+            raise ValueError("bucket_batch_sizes should be a list of positive numbers.")
 
         if param_dict.get('pad_info') is not None:
             check_type(param_dict["pad_info"], "pad_info", dict)
