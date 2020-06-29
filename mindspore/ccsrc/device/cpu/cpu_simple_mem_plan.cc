@@ -56,7 +56,13 @@ void CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) {
   graph_mem_size_[graph] = total_mem_size;
 }
 
-size_t CPUSimpleMemPlan::GetGraphMemSize(const session::KernelGraph *graph) { return graph_mem_size_[graph]; }
+size_t CPUSimpleMemPlan::GetGraphMemSize(const session::KernelGraph *graph) const {
+  auto iter = graph_mem_size_.find(graph);
+  if (iter != graph_mem_size_.end()) {
+    return iter->second;
+  }
+  return 0;
+}
 
 void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr) {
   MS_EXCEPTION_IF_NULL(graph);

@@ -49,6 +49,10 @@ class CPUKernelRuntime : public KernelRuntime {
                                        TypeId type_id) override;
 
  private:
+  tensor::TensorPtr CreatTensorForOutput(const CNodePtr &node, size_t index,
+                                         std::set<DeviceAddressPtr> *bound_addresses,
+                                         std::vector<tensor::TensorPtr> *need_sync_outputs);
+
   BaseRef CreatTensorForOutput(const session::KernelWithIndex &kernel_with_index,
                                const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map,
                                std::set<DeviceAddressPtr> *bound_addresses,

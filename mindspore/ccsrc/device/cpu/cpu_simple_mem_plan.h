@@ -31,7 +31,7 @@ class CPUSimpleMemPlan {
 
   void MemPlan(const session::KernelGraph *graph);
   void MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr);
-  size_t GetGraphMemSize(const session::KernelGraph *graph);
+  size_t GetGraphMemSize(const session::KernelGraph *graph) const;
 
  private:
   std::unordered_map<const session::KernelGraph *, size_t> graph_mem_size_;
