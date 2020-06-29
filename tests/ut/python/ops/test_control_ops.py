@@ -600,3 +600,42 @@ def test_while_tensor():
     x = Tensor(np.ones([6, 8, 10], np.int32))
     y = Tensor(np.ones([6, 8, 10], np.int32))
     out = net(x, y)
+
+
+def test_large_for_loop():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.flatten = P.ReLU() #nn.Flatten()
+
+        def construct(self, x):
+            for elem in range(1, 19000):
+                x = self.flatten(x + elem)
+            return x
+
+    t = Tensor(np.ones([2, 3], dtype=np.float32))
+    net = Net()
+    net(t)
+
+
+def test_large_for_loop_with_continue_break():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.flatten = P.ReLU() #nn.Flatten()
+
+        def construct(self, x):
+            idx = 0
+            for elem1 in range(200):
+                idx = idx + 1
+                if idx < 10:
+                    x = x + 0.5
+                    continue
+                if idx > 500:
+                    break
+                x = self.flatten(x + elem1)
+            return x
+
+    t = Tensor(np.ones([2, 3], dtype=np.float32))
+    net = Net()
+    net(t)

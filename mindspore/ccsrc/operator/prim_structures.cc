@@ -208,6 +208,11 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   if (!index_value->isa<Int32Imm>()) {
+    // when index_value is an AnyValue and args_spec_list[0] is a scalar, try to return the type of the first element
+    //  and continue
+    if (dyn_cast<AbstractScalar>(queue->elements()[0]) != nullptr) {
+      return std::make_shared<AbstractScalar>(queue->elements()[0]->BuildType());
+    }
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int32 number, but got "
                              << index_value->ToString();
   }
