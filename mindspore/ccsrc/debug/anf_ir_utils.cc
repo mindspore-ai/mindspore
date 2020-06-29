@@ -400,7 +400,7 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const Valu
   } else if (value->isa<tensor::Tensor>()) {
     auto tensor_ptr = dyn_cast<tensor::Tensor>(value);
     oss << value->DumpText() << "@" << DumpObject(tensor_ptr->data(), "T");
-  } else if (value->isa<parse::Symbol>() || value->isa<None>() || value->isa<NullObj>()) {
+  } else if (value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>()) {
     oss << value->DumpText();
   } else if (value->isa<ValueSequeue>()) {
     oss << GetSequenceText(func_graph, value);

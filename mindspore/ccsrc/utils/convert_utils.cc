@@ -105,7 +105,7 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
       i++;
     }
     ret = rets;
-  } else if (value->isa<EllipsisObj>()) {
+  } else if (value->isa<Ellipsis>()) {
     ret = py::ellipsis();
   } else if (value->isa<ValueSlice>()) {
     auto slice = value->cast<ValueSlicePtr>();
