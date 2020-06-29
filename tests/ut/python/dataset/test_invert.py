@@ -20,10 +20,11 @@ import numpy as np
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
-from util import visualize_list
+from util import visualize_list, save_and_check_md5
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
+GENERATE_GOLDEN = False
 
 def test_invert(plot=False):
     """
@@ -82,5 +83,25 @@ def test_invert(plot=False):
         visualize_list(images_original, images_invert)
 
 
+def test_invert_md5():
+    """
+    Test Invert with md5 check
+    """
+    logger.info("Test Invert with md5 check")
+
+    # Generate dataset
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
+    transforms_invert = F.ComposeOp([F.Decode(),
+                                     F.Invert(),
+                                     F.ToTensor()])
+
+    data = ds.map(input_columns="image", operations=transforms_invert())
+    # Compare with expected md5 from images
+    filename = "invert_01_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+
 if __name__ == "__main__":
     test_invert(plot=True)
+    test_invert_md5()

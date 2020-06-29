@@ -18,11 +18,12 @@ Testing the rescale op in DE
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
-from util import visualize_image, diff_mse
+from util import visualize_image, diff_mse, save_and_check_md5
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+GENERATE_GOLDEN = False
 
 def rescale_np(image):
     """
@@ -72,11 +73,33 @@ def test_rescale_op(plot=False):
         image_de_rescaled = item2["image"]
         image_np_rescaled = get_rescaled(num_iter)
         mse = diff_mse(image_de_rescaled, image_np_rescaled)
+        assert mse < 0.001 # rounding error
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         num_iter += 1
         if plot:
             visualize_image(image_original, image_de_rescaled, mse, image_np_rescaled)
 
 
+def test_rescale_md5():
+    """
+    Test Rescale with md5 comparison
+    """
+    logger.info("Test Rescale with md5 comparison")
+
+    # generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = vision.Decode()
+    rescale_op = vision.Rescale(1.0 / 255.0, -1.0)
+
+    # apply map operations on images
+    data = data.map(input_columns=["image"], operations=decode_op)
+    data = data.map(input_columns=["image"], operations=rescale_op)
+
+    # check results with md5 comparison
+    filename = "rescale_01_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+
 if __name__ == "__main__":
     test_rescale_op(plot=True)
+    test_rescale_md5()

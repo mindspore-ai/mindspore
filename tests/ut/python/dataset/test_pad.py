@@ -21,11 +21,12 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse
+from util import diff_mse, save_and_check_md5
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+GENERATE_GOLDEN = False
 
 def test_pad_op():
     """
@@ -116,6 +117,39 @@ def test_pad_grayscale():
         assert shape1[0:1] == shape2[0:1]
 
 
+def test_pad_md5():
+    """
+    Test Pad with md5 check
+    """
+    logger.info("test_pad_md5")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    pad_op = c_vision.Pad(150)
+    ctrans = [decode_op,
+              pad_op,
+              ]
+
+    data1 = data1.map(input_columns=["image"], operations=ctrans)
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    pytrans = [
+        py_vision.Decode(),
+        py_vision.Pad(150),
+        py_vision.ToTensor(),
+    ]
+    transform = py_vision.ComposeOp(pytrans)
+    data2 = data2.map(input_columns=["image"], operations=transform())
+    # Compare with expected md5 from images
+    filename1 = "pad_01_c_result.npz"
+    save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
+    filename2 = "pad_01_py_result.npz"
+    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+
+
 if __name__ == "__main__":
     test_pad_op()
     test_pad_grayscale()
+    test_pad_md5()

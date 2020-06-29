@@ -22,11 +22,13 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse, visualize_image
+from util import diff_mse, visualize_image, save_and_check_md5, \
+    config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+GENERATE_GOLDEN = False
 
 def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
     """
@@ -188,6 +190,41 @@ def test_random_color_adjust_op_hue_error():
     util_test_random_color_adjust_error(hue=(0.5, 0.5))
 
 
+def test_random_color_adjust_md5():
+    """
+    Test RandomColorAdjust with md5 check
+    """
+    logger.info("Test RandomColorAdjust with md5 check")
+    original_seed = config_get_set_seed(10)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    random_adjust_op = c_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1)
+    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(input_columns=["image"], operations=random_adjust_op)
+
+    # Second dataset
+    transforms = [
+        py_vision.Decode(),
+        py_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
+        py_vision.ToTensor()
+    ]
+    transform = py_vision.ComposeOp(transforms)
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = data2.map(input_columns=["image"], operations=transform())
+    # Compare with expected md5 from images
+    filename = "random_color_adjust_01_c_result.npz"
+    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
+    filename = "random_color_adjust_01_py_result.npz"
+    save_and_check_md5(data2, filename, generate_golden=GENERATE_GOLDEN)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
 if __name__ == "__main__":
     test_random_color_adjust_op_brightness(plot=True)
     test_random_color_adjust_op_brightness_error()
@@ -197,3 +234,4 @@ if __name__ == "__main__":
     test_random_color_adjust_op_saturation_error()
     test_random_color_adjust_op_hue(plot=True)
     test_random_color_adjust_op_hue_error()
+    test_random_color_adjust_md5()
