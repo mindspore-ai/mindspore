@@ -36,9 +36,9 @@ class Normal(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **mean** (Tensor) - The mean μ distribution parameter, The mean specifies the location of the peak.
-            With float32 data type.
-        - **stddev** (Tensor) - the deviation σ distribution parameter. With float32 data type.
+        - **mean** (Tensor) - The mean μ distribution parameter, which specifies the location of the peak.
+          With float32 data type.
+        - **stddev** (Tensor) - The deviation σ distribution parameter. With float32 data type.
 
     Outputs:
         Tensor, has the shape 'shape' input and dtype as float32.
@@ -75,6 +75,60 @@ class Normal(PrimitiveWithInfer):
         return out
 
 
+class Laplace(PrimitiveWithInfer):
+    r"""
+    Generates random numbers according to the Laplace random number distribution.
+    It is defined as:
+
+    .. math::
+        \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
+
+    Args:
+        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **mean** (Tensor) - The mean μ distribution parameter, which specifies the location of the peak.
+          With float32 data type.
+        - **lambda_param** (Tensor) - The parameter used for controling the variance of this random distribution. The
+          variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
+
+    Outputs:
+        Tensor, has the shape 'shape' input and dtype as float32.
+
+    Examples:
+        >>> shape = (4, 16)
+        >>> mean = Tensor(1.0, mstype.float32)
+        >>> lambda_param = Tensor(1.0, mstype.float32)
+        >>> laplace = P.Laplace(seed=2)
+        >>> output = laplace(shape, mean, lambda_param)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0):
+        """Init Laplace"""
+        self.init_prim_io_names(inputs=['shape', 'mean', 'lambda_param'], outputs=['output'])
+        validator.check_value_type('seed', seed, [int], self.name)
+
+    def __infer__(self, shape, mean, lambda_param):
+        shape_v = shape["value"]
+        if shape_v is None:
+            raise ValueError(f"For {self.name}, shape must be const.")
+        validator.check_value_type("shape", shape_v, [tuple], self.name)
+        for i, shape_i in enumerate(shape_v):
+            validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
+        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"lambda_param": lambda_param["dtype"]}, [mstype.float32], self.name)
+        broadcast_shape = get_broadcast_shape(mean['shape'], lambda_param['shape'], self.name)
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
+        out = {
+            'shape': broadcast_shape,
+            'dtype': mstype.float32,
+            'value': None}
+        return out
+
+
 class Gamma(PrimitiveWithInfer):
     r"""
     Produces random positive floating-point values x, distributed according to probability density function:
@@ -101,7 +155,7 @@ class Gamma(PrimitiveWithInfer):
         >>> alpha = Tensor(1.0, mstype.float32)
         >>> beta = Tensor(1.0, mstype.float32)
         >>> gamma = P.Gamma(seed=3)
-        >>> output = normal(shape, alpha, beta)
+        >>> output = Gamma(shape, alpha, beta)
     """
 
     @prim_attr_register
