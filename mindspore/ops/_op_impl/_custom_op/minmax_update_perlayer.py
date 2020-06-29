@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""FakeQuantMinMaxPerLayerUpdate op"""
+"""MinMaxUpdatePerLayer op"""
 from functools import reduce as functools_reduce
 import te.lang.cce
 from te import tvm
@@ -22,20 +22,15 @@ from topi import generic
 from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-
-fake_quant_minmax_update_op_info = TBERegOp("FakeQuantMinMaxPerLayerUpdate") \
+minmax_update_perlayer_op_info = TBERegOp("MinMaxUpdatePerLayer") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("fake_quant_minmax_update.so") \
+    .binfile_name("minmax_update_perlayer.so") \
     .compute_cost(10) \
-    .kernel_name("fake_quant_minmax_update") \
+    .kernel_name("minmax_update_perlayer") \
     .partial_flag(True) \
     .attr("ema", "optional", "bool", "all") \
     .attr("ema_decay", "optional", "float", "all") \
-    .attr("symmetric", "optional", "bool", "all") \
-    .attr("narrow_range", "optional", "bool", "all") \
-    .attr("training", "optional", "bool", "all") \
-    .attr("num_bits", "optional", "int", "all") \
     .input(0, "x", None, "required", None) \
     .input(1, "min", None, "required", None) \
     .input(2, "max", None, "required", None) \
@@ -46,44 +41,42 @@ fake_quant_minmax_update_op_info = TBERegOp("FakeQuantMinMaxPerLayerUpdate") \
     .get_op_info()
 
 
-@op_info_register(fake_quant_minmax_update_op_info)
-def _fake_quant_minmax_update_tbe():
-    """FakeQuantMinMaxPerLayerUpdate TBE register"""
+@op_info_register(minmax_update_perlayer_op_info)
+def _minmax_update_perlayer_tbe():
+    """MinMaxUpdatePerLayer TBE register"""
     return
 
 
-@fusion_manager.register("fake_quant_minmax_update")
-def fake_quant_minmax_update_compute(x, min_val, max_val, ema, ema_decay, quant_min, quant_max, training,
-                                     kernel_name="fake_quant_minmax_update"):
-    """FakeQuantMinMaxPerLayerUpdate compute"""
+@fusion_manager.register("minmax_update_perlayer")
+def minmax_update_perlayer_compute(x, min_val, max_val, ema, ema_decay):
+    """MinMaxUpdatePerLayer compute"""
     shape = te.lang.cce.util.shape_to_list(x.shape)
     shape_min = te.lang.cce.util.shape_to_list(min_val.shape)
     min_val = te.lang.cce.broadcast(min_val, shape_min, x.dtype)
     max_val = te.lang.cce.broadcast(max_val, shape_min, x.dtype)
     if not ema:
         ema_decay = 0.0
-    if training:
-        # CalMinMax
-        axis = tuple(range(len(shape)))
-        x_min = te.lang.cce.reduce_min(x, axis=axis)
-        x_max = te.lang.cce.reduce_max(x, axis=axis)
-        x_min = te.lang.cce.broadcast(x_min, shape_min)
-        x_max = te.lang.cce.broadcast(x_max, shape_min)
-        min_val = te.lang.cce.vadd(te.lang.cce.vmuls(
-            min_val, ema_decay), te.lang.cce.vmuls(x_min, (1 - ema_decay)))
-        max_val = te.lang.cce.vadd(te.lang.cce.vmuls(
-            max_val, ema_decay), te.lang.cce.vmuls(x_max, (1 - ema_decay)))
-        min_val = te.lang.cce.vmins(min_val, 0)
-        max_val = te.lang.cce.vmaxs(max_val, 0)
+
+    # CalMinMax
+    axis = tuple(range(len(shape)))
+    x_min = te.lang.cce.reduce_min(x, axis=axis)
+    x_max = te.lang.cce.reduce_max(x, axis=axis)
+    x_min = te.lang.cce.broadcast(x_min, shape_min)
+    x_max = te.lang.cce.broadcast(x_max, shape_min)
+    min_val = te.lang.cce.vadd(te.lang.cce.vmuls(
+        min_val, ema_decay), te.lang.cce.vmuls(x_min, (1 - ema_decay)))
+    max_val = te.lang.cce.vadd(te.lang.cce.vmuls(
+        max_val, ema_decay), te.lang.cce.vmuls(x_max, (1 - ema_decay)))
+    min_val = te.lang.cce.vmins(min_val, 0)
+    max_val = te.lang.cce.vmaxs(max_val, 0)
 
     return [min_val, max_val]
 
 
-@util.check_input_type(dict, dict, dict, dict, dict, bool, float, bool, bool, bool, int, str)
-def fake_quant_minmax_update(x, min_val, max_val, min_up, max_up,
-                             ema, ema_decay, symmetric, narrow_range, training, num_bits,
-                             kernel_name="fake_quant_minmax_update"):
-    """FakeQuantPerLayer op"""
+@util.check_input_type(dict, dict, dict, dict, dict, bool, float, str)
+def minmax_update_perlayer(x, min_val, max_val, min_up, max_up,
+                           ema, ema_decay, kernel_name="minmax_update_perlayer"):
+    """MinMaxUpdatePerLayer op"""
     input_shape = x.get("shape")
     input_dtype = x.get("dtype")
     min_shape = min_val.get("ori_shape")
@@ -112,20 +105,10 @@ def fake_quant_minmax_update(x, min_val, max_val, min_up, max_up,
     input_shape = (functools_reduce(lambda x, y: x * y, input_shape[:]),)
     shape_min, _, _ = util.produce_shapes(min_shape, input_shape)
 
-    if symmetric:
-        quant_min = 0 - 2 ** (num_bits - 1)
-        quant_max = 2 ** (num_bits - 1) - 1
-    else:
-        quant_min = 0
-        quant_max = 2 ** num_bits - 1
-    if narrow_range:
-        quant_min = quant_min + 1
-
     input_data = tvm.placeholder(input_shape, name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_min, name="min_data", dtype=min_dtype)
     max_data = tvm.placeholder(shape_min, name="max_data", dtype=max_dtype)
-    res_list = fake_quant_minmax_update_compute(input_data, min_data, max_data,
-                                                ema, ema_decay, quant_min, quant_max, training, kernel_name)
+    res_list = minmax_update_perlayer_compute(input_data, min_data, max_data, ema, ema_decay)
 
     with tvm.target.cce():
         sch = generic.auto_schedule(res_list)

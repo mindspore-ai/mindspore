@@ -30,7 +30,6 @@ batchnorm_fold2_op_info = TBERegOp("BatchNormFold2_D") \
     .compute_cost(10) \
     .kernel_name("batchnorm_fold2") \
     .partial_flag(True) \
-    .op_pattern("formatAgnostic") \
     .input(0, "x", None, "required", None) \
     .input(1, "beta", None, "required", None) \
     .input(2, "gamma", None, "required", None) \
