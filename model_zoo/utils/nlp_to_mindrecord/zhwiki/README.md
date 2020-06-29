@@ -26,7 +26,7 @@ This example is based on [zhwiki](https://dumps.wikimedia.org/zhwiki) training d
 Follow the step:
 
 ```bash
-bash run_simple.sh         # generate output/simple.mindrecord* by ../../../third_party/to_mindrecord/zhwiki/sample_text.txt
+bash run_simple.sh         # generate output/simple.mindrecord* by ../../../../third_party/to_mindrecord/zhwiki/sample_text.txt
 bash run_read_simple.sh    # use MindDataset to read output/simple.mindrecord*
 ```
 

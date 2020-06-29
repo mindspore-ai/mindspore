@@ -66,20 +66,20 @@ getdir "${data_dir}"
 # echo "The input files: "${file_list[@]}
 # echo "The output files: "${output_filename[@]}
 
-if [ ! -d "../../../third_party/to_mindrecord/zhwiki" ]; then
-    echo "The patch base dir ../../../third_party/to_mindrecord/zhwiki is not exist."
+if [ ! -d "../../../../third_party/to_mindrecord/zhwiki" ]; then
+    echo "The patch base dir ../../../../third_party/to_mindrecord/zhwiki is not exist."
     exit 1
 fi
 
-if [ ! -f "../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch" ]; then
-    echo "The patch file ../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch is not exist."
+if [ ! -f "../../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch" ]; then
+    echo "The patch file ../../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch is not exist."
     exit 1
 fi
 
 # patch for create_pretraining_data.py
-patch -p0 -d ../../../third_party/to_mindrecord/zhwiki/ -o create_pretraining_data_patched.py < ../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch
+patch -p0 -d ../../../../third_party/to_mindrecord/zhwiki/ -o create_pretraining_data_patched.py < ../../../../third_party/patch/to_mindrecord/zhwiki/create_pretraining_data.patch
 if [ $? -ne 0 ]; then
-    echo "Patch ../../../third_party/to_mindrecord/zhwiki/create_pretraining_data.py failed"
+    echo "Patch ../../../../third_party/to_mindrecord/zhwiki/create_pretraining_data.py failed"
     exit 1
 fi
 
@@ -94,7 +94,7 @@ file_list_len=`expr ${#file_list[*]} - 1`
 for index in $(seq 0 $file_list_len); do
     echo "Begin preprocess input file: ${file_list[$index]}"
     echo "Begin output file: ${output_filename[$index]}"
-    python ../../../third_party/to_mindrecord/zhwiki/create_pretraining_data_patched.py \
+    python ../../../../third_party/to_mindrecord/zhwiki/create_pretraining_data_patched.py \
         --input_file=${file_list[$index]} \
         --output_file=${output_dir}/${output_filename[$index]} \
         --partition_number=1 \
