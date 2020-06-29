@@ -51,6 +51,19 @@ MS_REG_CPU_KERNEL(SparseApplyProximalAdagrad,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   SparseApplyProximalAdagradCPUKernel);
+
+MS_REG_CPU_KERNEL(SparseApplyProximalAdagradNoReturn,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  SparseApplyProximalAdagradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -2835,11 +2835,11 @@ class SparseApplyAdam(PrimitiveWithInfer):
         - **indices** (Tensor) - Gradient indices. With int32 data type.
 
     Outputs:
-        Tuple of 3 Tensor, the updated parameters.
+        Tuple of 3 Tensor, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - The same shape and data type as `var`.
-        - **m** (Tensor) - The same shape and data type as `m`.
-        - **v** (Tensor) - The same shape and data type as `v`.
+        - **var** (Tensor) - A Tensor with shape (1,).
+        - **m** (Tensor) - A Tensor with shape (1,).
+        - **v** (Tensor) - A Tensor with shape (1,).
 
     Examples:
         >>> import numpy as np
@@ -2896,6 +2896,7 @@ class SparseApplyAdam(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['var', 'm', 'v', 'beta1_power', 'beta2_power', 'lr', 'beta1', 'beta2',
                                         'epsilon', 'grad', 'indices'],
                                 outputs=['var', 'm', 'v'])
+        self.add_prim_attr('primitive_target', 'CPU')
 
     def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
@@ -2907,7 +2908,7 @@ class SparseApplyAdam(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
                              f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
                              f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
-        return var_shape, m_shape, v_shape
+        return [1], [1], [1]
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
                     beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype, indices_dtype):
@@ -2969,11 +2970,11 @@ class SparseApplyLazyAdam(PrimitiveWithInfer):
         - **indices** (Tensor) - Gradient indices. With int32 data type.
 
     Outputs:
-        Tuple of 3 Tensor, the updated parameters.
+        Tuple of 3 Tensor, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - The same shape and data type as `var`.
-        - **m** (Tensor) - The same shape and data type as `m`.
-        - **v** (Tensor) - The same shape and data type as `v`.
+        - **var** (Tensor) - A Tensor with shape (1,).
+        - **m** (Tensor) - A Tensor with shape (1,).
+        - **v** (Tensor) - A Tensor with shape (1,).
 
     Examples:
         >>> import numpy as np
@@ -3030,6 +3031,7 @@ class SparseApplyLazyAdam(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['var', 'm', 'v', 'beta1_power', 'beta2_power', 'lr', 'beta1', 'beta2',
                                         'epsilon', 'grad', 'indices'],
                                 outputs=['var', 'm', 'v'])
+        self.add_prim_attr('primitive_target', 'CPU')
 
     def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
@@ -3041,7 +3043,7 @@ class SparseApplyLazyAdam(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
                              f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
                              f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
-        return var_shape, m_shape, v_shape
+        return [1], [1], [1]
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
                     beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype, indices_dtype):

@@ -53,6 +53,18 @@ MS_REG_CPU_KERNEL(SparseApplyFtrl,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   SparseApplyFtrlCPUKernel);
+
+MS_REG_CPU_KERNEL(SparseApplyFtrlNoReturn,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  SparseApplyFtrlCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
