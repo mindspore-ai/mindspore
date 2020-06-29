@@ -548,8 +548,8 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     if (prior_node->isa<Parameter>() && depend_mode == 1) {
       prior_nodes = GetOutputNodes(prior_node);
     }
-    if (depend_node->isa<Parameter>() && depend_mode == 1) {
-      depend_nodes = GetOutputNodes(depend_node);
+    if (depend_node->isa<Parameter>()) {
+      depend_nodes = depend_mode == 1 ? GetOutputNodes(depend_node) : std::vector<AnfNodePtr>();
     }
     for (auto &first_node : prior_nodes) {
       if (AnfAlgo::CheckPrimitiveType(first_node, prim::kPrimControlDepend)) {
