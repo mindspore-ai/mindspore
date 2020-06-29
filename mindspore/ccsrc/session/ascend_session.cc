@@ -289,6 +289,12 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   BackendOptimization(all_graphs);
+  // empty graph dont entry to backend
+  if (root_graph->execution_order().empty()) {
+    MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
+    InitRuntimeResource();
+    return root_graph->graph_id();
+  }
   // split switch
   SplitGraphs(NOT_NULL(root_graph));
   // insert goto labels and label_sets
