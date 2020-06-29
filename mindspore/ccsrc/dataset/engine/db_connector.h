@@ -83,6 +83,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
         expect_consumer_ = (expect_consumer_ + 1) % num_consumers_;
       }
     }
+    out_buffers_count_++;
     cv_.NotifyAll();
     return Status::OK();
   }

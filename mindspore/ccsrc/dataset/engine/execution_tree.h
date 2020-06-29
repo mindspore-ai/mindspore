@@ -88,8 +88,10 @@ class ExecutionTree {
 
     bool operator!=(const Iterator &rhs) { return nodes_[ind_] != rhs.nodes_[rhs.ind_]; }
 
+    int32_t NumNodes() { return nodes_.size(); }
+
    private:
-    int ind_;                                        // the cur node our Iterator points to
+    int32_t ind_;                                    // the cur node our Iterator points to
     std::vector<std::shared_ptr<DatasetOp>> nodes_;  // store the nodes in post order
     void PostOrderTraverse(const std::shared_ptr<DatasetOp> &);
   };

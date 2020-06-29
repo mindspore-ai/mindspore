@@ -79,6 +79,8 @@ SET(DE_UT_SRCS
         mask_test.cc
         trucate_pair_test.cc
         concatenate_op_test.cc
+        cyclic_array_test.cc
+        perf_data_test.cc
         )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})
