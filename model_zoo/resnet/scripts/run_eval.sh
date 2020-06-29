@@ -14,11 +14,30 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 4 ]
 then 
-    echo "Usage: sh run_infer.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
+
+if [ $1 != "resnet50" ] && [ $1 != "resnet101" ]
+then 
+    echo "error: the selected net is neither resnet50 nor resnet101"
+exit 1
+fi
+
+if [ $2 != "cifar10" ] && [ $2 != "imagenet2012" ]
+then 
+    echo "error: the selected dataset is neither cifar10 nor imagenet2012"
+exit 1
+fi
+
+if [ $1 == "resnet101" ] && [ $2 == "cifar10" ]
+then
+    echo "error: evaluating resnet101 with cifar10 dataset is unsupported now!"
+exit 1
+fi
+
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -28,8 +47,8 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $1)
-PATH2=$(get_real_path $2)
+PATH1=$(get_real_path $3)
+PATH2=$(get_real_path $4)
 
 
 if [ ! -d $PATH1 ]
@@ -50,15 +69,16 @@ export DEVICE_ID=0
 export RANK_SIZE=$DEVICE_NUM
 export RANK_ID=0
 
-if [ -d "infer" ];
+if [ -d "eval" ];
 then
-    rm -rf ./infer
+    rm -rf ./eval
 fi
-mkdir ./infer
-cp *.py ./infer
-cp *.sh ./infer
-cd ./infer || exit
+mkdir ./eval
+cp ../*.py ./eval
+cp *.sh ./eval
+cp -r ../src ./eval
+cd ./eval || exit
 env > env.log
-echo "start infering for device $DEVICE_ID"
-python eval.py --do_eval=True --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+echo "start evaluation for device $DEVICE_ID"
+python eval.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
 cd ..
