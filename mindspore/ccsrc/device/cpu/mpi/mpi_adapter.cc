@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "device/cpu/mpi/mpi_adapter.h"
 #ifdef ENABLE_MPI
 #include <algorithm>
@@ -262,9 +261,7 @@ bool MPIAdapter::AllGather(const float *input, float *output, const std::vector<
   if (comm == MPI_COMM_NULL) {
     RAISE_EXCEPTION_WITH_PARAM("create mpi comm fail! rankid:", rank_id_);
   }
-
   auto ret = MPI_Allgather(input, data_num, MPI_FLOAT, output, data_num, MPI_FLOAT, comm);
-
   if (ret != MPI_SUCCESS) {
     RAISE_EXCEPTION_WITH_PARAM("mpi allgater fail!ret = ", ret);
   }

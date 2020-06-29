@@ -115,9 +115,9 @@ bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
-void LookUpTable_task(const float *input_addr, float *output_addr, int *indices_addr, size_t indices_lens, size_t num,
-                      size_t dim0, size_t dim1, size_t dim2, int offset, size_t axis, std::vector<size_t> input_shape,
-                      size_t input_lens) {
+void LookUpTable_task(const float *input_addr, float *output_addr, const int *indices_addr, size_t indices_lens,
+                      size_t num, size_t dim0, size_t dim1, size_t dim2, int offset, size_t axis,
+                      std::vector<size_t> input_shape, size_t input_lens) {
   size_t lens = num * sizeof(float);
   for (size_t i = 0; i < indices_lens; ++i) {
     int indices = indices_addr[i] - offset;
@@ -134,7 +134,6 @@ void LookUpTable_task(const float *input_addr, float *output_addr, int *indices_
         } else if (axis == 0) {
           pos = CPUKernelUtils::CalcOffset(input_shape, index, 0, 0, 0);
         }
-
         if (pos + num <= input_lens) {
           auto ret = memcpy_s(output_addr, lens, input_addr + pos, lens);
           if (ret != EOK) {

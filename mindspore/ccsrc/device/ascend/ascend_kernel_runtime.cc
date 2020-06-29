@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define PATH_MAX 0x3ffff
 #include "device/ascend/ascend_kernel_runtime.h"
 #include <string>
 #include <vector>
@@ -21,7 +21,6 @@
 #include <utility>
 #include <exception>
 #include <algorithm>
-
 #include "device/ascend/ascend_device_address.h"
 #include "device/cpu/mpi/mpi_adapter.h"
 #include "utils/context/ms_context.h"
@@ -433,7 +432,6 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   assign_instance.GetWaitStreams(&wait_active_stream_list);
   std::vector<uint32_t> force_copy_stream_list;
   assign_instance.GetHcomStreams(&force_copy_stream_list);
-
   MS_LOG(INFO) << "call DavinciModel total stream num:" << resource_manager.get_cur_stream_num()
                << ", total event num:" << resource_manager.get_cur_event_num()
                << ", total label num:" << label_assign_instance.GetLabelNum(NOT_NULL(graph))
@@ -444,7 +442,6 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
     0, 0, 0, 0, 0, resource_manager.get_cur_stream_num(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
     resource_manager.get_cur_event_num(), 0);
-
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
@@ -624,6 +621,10 @@ bool AscendKernelRuntime::HcclInit() {
       MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
       return false;
     }
+  }
+  if (strlen(config_path_str) > PATH_MAX) {
+    MS_LOG(ERROR) << "file path oversize";
+    return false;
   }
   std::string rank_id_str = GetRankId();
   auto full_path = realpath(config_path_str, nullptr);

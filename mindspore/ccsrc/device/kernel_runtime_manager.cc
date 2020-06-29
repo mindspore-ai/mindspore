@@ -56,9 +56,14 @@ KernelRuntime *KernelRuntimeManager::GetSingleKernelRuntime(const std::string &d
     auto cur_runtime_key = runtime_map_.begin()->first;
     auto find_pos = cur_runtime_key.rfind('_');
     if (find_pos != std::string::npos) {
-      auto cur_device_id = cur_runtime_key.substr(find_pos + 1);
-      MS_LOG(EXCEPTION) << "Can't change device id in runtime, already set device id: " << cur_device_id
-                        << ", set device id: " << device_id << " failed";
+      if (cur_runtime_key.size() > find_pos + 1) {
+        auto cur_device_id = cur_runtime_key.substr(find_pos + 1);
+        MS_LOG(EXCEPTION) << "Can't change device id in runtime, already set device id: " << cur_device_id
+                          << ", set device id: " << device_id << " failed";
+      } else {
+        MS_LOG(EXCEPTION) << "Can't change device id in runtime, current runtime_key size error, set device id: "
+                          << device_id << " failed";
+      }
     }
   }
   return GetKernelRuntime(device_name, device_id);

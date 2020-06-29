@@ -375,7 +375,6 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
     tensor_data->SetTensor(out_tensor);
     tensor_data->SetSlot(slot);
     ret = tensor_loader->LoadNewTensor(tensor_data);
-
   } else {
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(type_id_, host_shape);
     size_t host_size = out_tensor->data().nbytes();
@@ -395,7 +394,6 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
   return ret;
 }
 #endif
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
