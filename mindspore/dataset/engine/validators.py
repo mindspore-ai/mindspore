@@ -153,6 +153,7 @@ def check_sampler_shuffle_shard_options(param_dict):
             raise RuntimeError("sampler and sharding cannot be specified at the same time.")
 
     if num_shards is not None:
+        check_positive_int32(num_shards, "num_shards")
         if shard_id is None:
             raise RuntimeError("num_shards is specified and currently requires shard_id as well.")
         if shard_id < 0 or shard_id >= num_shards:
@@ -529,6 +530,7 @@ def check_generatordataset(method):
             # These two parameters appear together.
             raise ValueError("num_shards and shard_id need to be passed in together")
         if num_shards is not None:
+            check_positive_int32(num_shards, "num_shards")
             if shard_id >= num_shards:
                 raise ValueError("shard_id should be less than num_shards")
 

@@ -3069,7 +3069,7 @@ class GeneratorDataset(MappableDataset):
         sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
             required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
-            This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
+            When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
             when num_shards is also specified. Random accessible input is required.
 
@@ -4878,6 +4878,11 @@ class _NumpySlicesDataset:
         else:
             self.data = (np.array(data),)
 
+        # check whether the data length in each column is equal
+        data_len = [len(data_item) for data_item in self.data]
+        if data_len[1:] != data_len[:-1]:
+            raise ValueError("Data length in each column is not equal.")
+
         # Init column_name
         if column_list is not None:
             self.column_list = column_list
@@ -4966,7 +4971,7 @@ class NumpySlicesDataset(GeneratorDataset):
         sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
             required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
-            This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
+            When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
             when num_shards is also specified. Random accessible input is required.
 
