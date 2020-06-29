@@ -261,8 +261,10 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
       if (py::hasattr(input, "__parameter__")) {
         result[i] = py::getattr(input, "data");
       } else {
-        auto tensor = py::cast<tensor::TensorPtr>(op_inputs[i]);
+        auto tensor = py::cast<tensor::TensorPtr>(input);
         auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data());
+        new_tensor->set_device_address(tensor->device_address());
+        new_tensor->set_dirty(tensor->is_dirty());
         result[i] = new_tensor;
       }
     }
