@@ -44,6 +44,10 @@ SET_ITEM_BY_TUPLE_OF_TENSOR = 1
 def raise_index_error(msg):
     raise IndexError(msg)
 
+@constexpr
+def raise_type_error(msg):
+    raise TypeError(msg)
+
 
 @constexpr
 def check_equal(param1, param2, msg="{},{}"):

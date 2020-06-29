@@ -207,8 +207,8 @@ def tensor_index_by_slice(data, slice_index):
     """Tensor getitem by a single slice"""
     shape = F.shape(data)
     if not shape:
-        const_utils.raise_index_error("When tensor is indexed by a slice, the dimension of the tensor\
-                                       cannot be 0.")
+        const_utils.raise_index_error("When tensor is indexed by a slice, the dimension of the tensor"
+                                      "cannot be 0.")
     begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_slice(shape, slice_index)
     return F.strided_slice(data, begin_strides, end_strides, step_strides)
 
@@ -217,8 +217,8 @@ def _tensor_index_by_integer(data, number):
     """Tensor getitem by a single integer number"""
     shape = F.shape(data)
     if not shape:
-        return const_utils.raise_index_error("When tensor is indexed by an integer,\
-                                             the dimension of the tensor cannot be 0.")
+        return const_utils.raise_type_error("When tensor is indexed by an integer,"
+                                            "the dimension of the tensor cannot be 0.")
     if number >= shape[0]:
         return const_utils.raise_index_error("index {} is out of bounds for axis 0 with size {}".format(
             number, shape[0]))
