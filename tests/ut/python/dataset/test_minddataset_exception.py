@@ -185,7 +185,7 @@ def test_minddataset_invalidate_num_shards():
     columns_list = ["data", "label"]
     num_readers = 4
     with pytest.raises(Exception, match="shard_id is invalid, "):
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 0, 1)
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 1, 2)
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
