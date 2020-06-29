@@ -515,11 +515,11 @@ using AbstractNullPtr = std::shared_ptr<AbstractNull>;
 
 class AbstractEllipsis : public AbstractBase {
  public:
-  AbstractEllipsis() : AbstractBase(kEllipsis) { set_type(std::make_shared<Ellipsis>()); }
+  AbstractEllipsis() : AbstractBase(kEllipsis) { set_type(std::make_shared<TypeEllipsis>()); }
   ~AbstractEllipsis() override = default;
   MS_DECLARE_PARENT(AbstractEllipsis, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<Ellipsis>(); }
+  TypePtr BuildType() const override { return std::make_shared<TypeEllipsis>(); }
   bool operator==(const AbstractEllipsis &other) const;
   bool operator==(const AbstractBase &other) const override;
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractEllipsis>(); }
