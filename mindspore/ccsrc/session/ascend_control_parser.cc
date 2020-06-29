@@ -279,7 +279,7 @@ NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr
       RecurseSwitchLayer(kg, NOT_NULL(cnode), GetNextRealKernel(nodes, i + 1), memo);
     }
   }
-
+  kg->SetExecOrderByDefault();
   MS_LOG(INFO) << "End KernelGraph process: " << kg->ToString();
   return NOT_NULL(start_label);
 }
