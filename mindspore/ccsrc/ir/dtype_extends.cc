@@ -101,6 +101,10 @@ TypePtr TypeIdToType(TypeId id) {
       return kRefKeyType;
     case kObjectTypeRef:
       return kRefType;
+    case kMetaTypeTypeType:
+      return kTypeType;
+    case kObjectTypeString:
+      return kString;
     case kTypeUnknown:
       return kTypeNone;
     default:
