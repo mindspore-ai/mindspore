@@ -27,7 +27,6 @@
 #include "dataset/util/status.h"
 #include "dataset/core/tensor_shape.h"
 #include "utils/log_adapter.h"
-#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {
@@ -425,7 +424,7 @@ DataSchema::~DataSchema() = default;
 
 // Getter for the ColDescriptor by index
 const ColDescriptor &DataSchema::column(int32_t idx) const {
-  DS_ASSERT(idx < static_cast<int>(col_descs_.size()));
+  MS_ASSERT(idx < static_cast<int>(col_descs_.size()));
   return col_descs_[idx];
 }
 

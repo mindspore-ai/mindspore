@@ -97,7 +97,7 @@ class Connector {
   virtual Status Pop(int32_t worker_id,  // The worker-id of the caller. See the requirement at the top of this file.
                      T *result) noexcept {
     {
-      DS_ASSERT(worker_id < num_consumers_);
+      MS_ASSERT(worker_id < num_consumers_);
       std::unique_lock<std::mutex> lk(m_);
       RETURN_IF_NOT_OK(cv_.Wait(&lk, [this, worker_id]() { return expect_consumer_ == worker_id; }));
       RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
@@ -114,8 +114,8 @@ class Connector {
   // @param worker_id The id of a worker thread calling this method.
   // @param el A const lvalue element to be passed/added/pushed.
   Status Push(int32_t worker_id, const T &el) noexcept {
-    DS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
-    DS_ASSERT(queues_[worker_id] != nullptr);
+    MS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
+    MS_ASSERT(queues_[worker_id] != nullptr);
     return (queues_[worker_id]->Add(el));
   }
 
@@ -125,8 +125,8 @@ class Connector {
   // @param worker_id The id of a worker thread calling this method.
   // @param el An element to be passed/added/pushed.
   virtual Status Push(int32_t worker_id, T &&el) noexcept {
-    DS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
-    DS_ASSERT(queues_[worker_id] != nullptr);
+    MS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
+    MS_ASSERT(queues_[worker_id] != nullptr);
     return (queues_[worker_id]->Add(std::forward<T>(el)));
   }
 

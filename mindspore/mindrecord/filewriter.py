@@ -240,7 +240,9 @@ class FileWriter:
 
     def set_header_size(self, header_size):
         """
-        Set the size of header.
+        Set the size of header which contains shard information, schema information, \
+        page meta information, etc. The larger the header, the more training data \
+        a single mindrecord file can store.
 
         Args:
             header_size (int): Size of header, between 16KB and 128MB.
@@ -256,7 +258,9 @@ class FileWriter:
 
     def set_page_size(self, page_size):
         """
-        Set the size of Page.
+        Set the size of page which mainly refers to the block to store training data, \
+        and the training data will be split into raw page and blob page in mindrecord. \
+        The larger the page, the more training data a single page can store.
 
         Args:
            page_size (int): Size of page, between 32KB and 256MB.

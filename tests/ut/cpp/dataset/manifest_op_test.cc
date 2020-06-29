@@ -25,7 +25,6 @@
 #include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

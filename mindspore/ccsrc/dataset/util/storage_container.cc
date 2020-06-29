@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <vector>
 #include "common/utils.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/path.h"
 #include "dataset/util/status.h"
 #include "utils/log_adapter.h"
@@ -59,7 +58,7 @@ Status StorageContainer::Close() noexcept {
 }
 
 Status StorageContainer::Read(WritableSlice *dest, off64_t offset) const noexcept {
-  DS_ASSERT(is_open_);
+  MS_ASSERT(is_open_);
   RETURN_UNEXPECTED_IF_NULL(dest);
   auto sz = dest->GetSize();
 #if defined(_WIN32) || defined(_WIN64)
@@ -83,7 +82,7 @@ Status StorageContainer::Read(WritableSlice *dest, off64_t offset) const noexcep
 }
 
 Status StorageContainer::Write(const ReadableSlice &dest, off64_t offset) const noexcept {
-  DS_ASSERT(is_open_);
+  MS_ASSERT(is_open_);
   auto sz = dest.GetSize();
 #if defined(_WIN32) || defined(_WIN64)
   // Doesn't seem there is any pwrite64 on mingw.

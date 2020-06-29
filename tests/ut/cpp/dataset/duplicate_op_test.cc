@@ -17,7 +17,6 @@
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "dataset/core/tensor.h"
-#include "dataset/util/de_error.h"
 #include "dataset/kernels/data/duplicate_op.h"
 
 using namespace mindspore::dataset;

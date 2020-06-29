@@ -16,9 +16,9 @@
 #include "dataset/util/buddy.h"
 #include <iomanip>
 #include <stdexcept>
-#include "dataset/util/de_error.h"
 #include "dataset/util/memory_pool.h"
 #include "dataset/util/system_pool.h"
+#include "utils/log_adapter.h"
 #include "./securec.h"
 
 inline uint64_t BitLeftShift(uint64_t v, uint64_t n) { return (v << n); }
@@ -68,7 +68,7 @@ Status BuddySpace::Alloc(const uint64_t sz, BSpaceDescriptor *desc, addr_t *p) n
 }
 
 addr_t BuddySpace::AllocNoLock(const uint64_t sz, BSpaceDescriptor *desc) noexcept {
-  DS_ASSERT(sz <= max_);
+  MS_ASSERT(sz <= max_);
   uint32_t reqSize = SizeToBlock(sz);
   rel_addr_t rel_addr = AllocBuddySeg(reqSize);
   if (rel_addr != static_cast<rel_addr_t>(NOSPACE)) {
@@ -84,7 +84,7 @@ addr_t BuddySpace::AllocNoLock(const uint64_t sz, BSpaceDescriptor *desc) noexce
 }
 
 void BuddySpace::FreeNoLock(const BSpaceDescriptor *desc) {
-  DS_ASSERT(desc->sig == 0XDEADBEEF);
+  MS_ASSERT(desc->sig == 0XDEADBEEF);
   rel_addr_t rel_addr = desc->addr;
   size_t blk_size = desc->blk_size;
   size_t req_size = desc->req_size;
@@ -217,7 +217,7 @@ void BuddySpace::JoinBuddySeg(rel_addr_t addr, size_t blk_sz) {
       auto log_sz = static_cast<log_t>(Log2(blk_sz));
       rel_addr_t left = (buddy < addr) ? buddy : addr;
       rel_addr_t right = left + blk_sz;
-      DS_ASSERT(count_[log_sz] >= 2);
+      MS_ASSERT(count_[log_sz] >= 2);
       count_[log_sz] -= 2;
       SetBuddySegState(right, blk_sz, STATE::kEmpty);
       SetBuddySegState(left, BitLeftShift(blk_sz, 1), STATE::kFree);
@@ -235,7 +235,7 @@ void BuddySpace::JoinBuddySeg(rel_addr_t addr, size_t blk_sz) {
 }
 
 void BuddySpace::TrimBuddySeg(rel_addr_t addr, size_t blk_sz, size_t ask_sz) {
-  DS_ASSERT(ask_sz < blk_sz);
+  MS_ASSERT(ask_sz < blk_sz);
   uint32_t inx = Log2(blk_sz);
   size_t remaining_sz = ask_sz;
   for (int i = inx; i > 0; i--) {
@@ -256,7 +256,7 @@ void BuddySpace::TrimBuddySeg(rel_addr_t addr, size_t blk_sz, size_t ask_sz) {
 }
 
 void BuddySpace::UnTrimBuddySeg(rel_addr_t addr, size_t blk_sz, size_t ask_sz) {
-  DS_ASSERT(ask_sz < blk_sz);
+  MS_ASSERT(ask_sz < blk_sz);
   uint32_t inx = Log2(blk_sz);
   size_t remaining_sz = ask_sz;
   for (int i = inx; i > 0; i--) {
@@ -268,7 +268,7 @@ void BuddySpace::UnTrimBuddySeg(rel_addr_t addr, size_t blk_sz, size_t ask_sz) {
         size_t sz = 0;
         STATE st;
         GetBuddySegState(addr, &sz, &st);
-        DS_ASSERT(sz == half_sz && st == STATE::kAlloc);
+        MS_ASSERT(sz == half_sz && st == STATE::kAlloc);
       }
 #endif
       SetBuddySegState(addr, half_sz, STATE::kFree);
@@ -291,7 +291,7 @@ rel_addr_t BuddySpace::AllocBuddySeg(uint32_t req_size) noexcept {
   STATE st;
   size_t sz = 0;
   for (int i = start_inx; !found && i < num_lvl_; i++) {
-    DS_ASSERT(count_[i] >= 0);
+    MS_ASSERT(count_[i] >= 0);
     if (count_[i] == 0) {
       continue;
     }
@@ -302,7 +302,7 @@ rel_addr_t BuddySpace::AllocBuddySeg(uint32_t req_size) noexcept {
       if (st == STATE::kFree && sz == blk_sz) {
         found = true;
       } else {
-        DS_ASSERT(st != STATE::kEmpty);
+        MS_ASSERT(st != STATE::kEmpty);
         ask_addr += ((sz > blk_sz) ? sz : blk_sz);
       }
     }

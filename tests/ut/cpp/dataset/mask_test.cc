@@ -22,7 +22,6 @@
 #include "dataset/core/tensor.h"
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/data_type.h"
-#include "dataset/util/de_error.h"
 #include "dataset/kernels/data/mask_op.h"
 #include "dataset/kernels/data/data_utils.h"
 

@@ -44,7 +44,7 @@ class JaggedConnector : public Connector<std::unique_ptr<DataBuffer>> {
 
   Status Pop(int32_t worker_id, std::unique_ptr<DataBuffer> *result) noexcept override {
     {
-      DS_ASSERT(worker_id < num_consumers_);
+      MS_ASSERT(worker_id < num_consumers_);
       std::unique_lock<std::mutex> lock(m_);
       RETURN_IF_NOT_OK(cv_.Wait(&lock, [this, worker_id]() { return expect_consumer_ == worker_id; }));
       if (is_queue_finished_[pop_from_]) {

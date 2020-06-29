@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "common/utils.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 #include "dataset/util/allocator.h"
 #include "dataset/util/services.h"

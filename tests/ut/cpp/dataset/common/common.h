@@ -16,7 +16,6 @@
 #ifndef TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
 #define TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
 
-#include "dataset/util/de_error.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 

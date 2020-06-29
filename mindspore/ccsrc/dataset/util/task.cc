@@ -16,7 +16,6 @@
 #include "dataset/util/task.h"
 #include "common/utils.h"
 #include "dataset/util/task_manager.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

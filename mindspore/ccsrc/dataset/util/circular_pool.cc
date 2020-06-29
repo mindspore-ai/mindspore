@@ -19,8 +19,8 @@
 #include <limits>
 #include <utility>
 #include "./securec.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/system_pool.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -65,7 +65,7 @@ void CircularPool::CircularIterator::Reset() {
     auto list_end = dp_->mem_segments_.end();
     auto it = std::find_if(dp_->mem_segments_.begin(), list_end,
                            [this](const std::shared_ptr<Arena> &b) { return b.get() == cur_tail_; });
-    DS_ASSERT(it != list_end);
+    MS_ASSERT(it != list_end);
     start_ = std::distance(dp_->mem_segments_.begin(), it);
     cur_ = start_;
     has_next_ = true;
@@ -153,7 +153,7 @@ Status CircularPool::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
     return (q > base && q < base + b->get_max_size());
   });
   lock.Unlock();
-  DS_ASSERT(it != mem_segments_.end());
+  MS_ASSERT(it != mem_segments_.end());
   Arena *ba = it->get();
   Status rc = ba->Reallocate(pp, old_sz, new_sz);
   if (rc.IsOutofMemory()) {

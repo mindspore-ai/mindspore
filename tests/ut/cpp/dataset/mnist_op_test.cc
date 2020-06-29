@@ -30,7 +30,6 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/path.h"
 #include "dataset/util/status.h"
 #include "gtest/gtest.h"

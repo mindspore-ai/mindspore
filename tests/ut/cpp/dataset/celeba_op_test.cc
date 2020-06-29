@@ -23,7 +23,6 @@
 #include "dataset/core/global_context.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

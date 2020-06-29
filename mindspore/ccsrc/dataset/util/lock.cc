@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "dataset/util/lock.h"
-#include "dataset/util/de_error.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -63,7 +63,7 @@ void RWLock::Unlock() noexcept {
 
 void RWLock::Upgrade() {
   std::unique_lock<std::mutex> lck(mtx_);
-  DS_ASSERT(status_);
+  MS_ASSERT(status_);
   if (status_ == -1) {
     // I am a writer already.
     return;
@@ -81,7 +81,7 @@ void RWLock::Upgrade() {
 
 void RWLock::Downgrade() {
   std::unique_lock<std::mutex> lck(mtx_);
-  DS_ASSERT(status_);
+  MS_ASSERT(status_);
   if (status_ == -1) {
     // If there are no other writers waiting, just change the status
     if (waiting_writers_ == 0) {
@@ -111,24 +111,24 @@ SharedLock::~SharedLock() {
 }
 
 void SharedLock::Unlock() {
-  DS_ASSERT(ownlock_ == true);
+  MS_ASSERT(ownlock_ == true);
   rw_->Unlock();
   ownlock_ = false;
 }
 
 void SharedLock::Lock() {
-  DS_ASSERT(ownlock_ == false);
+  MS_ASSERT(ownlock_ == false);
   rw_->LockShared();
   ownlock_ = true;
 }
 
 void SharedLock::Upgrade() {
-  DS_ASSERT(ownlock_ == true);
+  MS_ASSERT(ownlock_ == true);
   rw_->Upgrade();
 }
 
 void SharedLock::Downgrade() {
-  DS_ASSERT(ownlock_ == true);
+  MS_ASSERT(ownlock_ == true);
   rw_->Downgrade();
 }
 
@@ -146,13 +146,13 @@ UniqueLock::~UniqueLock() {
 }
 
 void UniqueLock::Unlock() {
-  DS_ASSERT(ownlock_ == true);
+  MS_ASSERT(ownlock_ == true);
   rw_->Unlock();
   ownlock_ = false;
 }
 
 void UniqueLock::Lock() {
-  DS_ASSERT(ownlock_ == false);
+  MS_ASSERT(ownlock_ == false);
   rw_->LockExclusive();
   ownlock_ = true;
 }
@@ -171,13 +171,13 @@ LockGuard::~LockGuard() {
 }
 
 void LockGuard::Unlock() {
-  DS_ASSERT(own_lock_);
+  MS_ASSERT(own_lock_);
   lck_->Unlock();
   own_lock_ = false;
 }
 
 void LockGuard::Lock() {
-  DS_ASSERT(own_lock_ == false);
+  MS_ASSERT(own_lock_ == false);
   lck_->Lock();
   own_lock_ = true;
 }

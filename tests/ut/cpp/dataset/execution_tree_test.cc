@@ -21,7 +21,6 @@
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

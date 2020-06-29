@@ -32,7 +32,6 @@
 #include "dataset/engine/data_buffer.h"
 #include "gtest/gtest.h"
 #include "dataset/core/global_context.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;

@@ -18,7 +18,6 @@
 #include "utils/log_adapter.h"
 
 #include "dataset/core/pybind_support.h"
-#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {

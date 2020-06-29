@@ -61,8 +61,8 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerNode::
 template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerNode::Split(
   BPlusTree<K, V, A, C, T>::InnerNode *to, key_type *split_key) {
-  DS_ASSERT(to);
-  DS_ASSERT(to->slotuse_ == 0);
+  MS_ASSERT(to);
+  MS_ASSERT(to->slotuse_ == 0);
   // It is simpler to sort first, then split. Other alternative is to move key by key to the
   // new node. Also we need to deal with the 'holes' after a key is moved.
   RETURN_IF_BAD_RC(this->Sort());
@@ -153,8 +153,8 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::S
 template <typename K, typename V, typename A, typename C, typename T>
 typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::Split(
   BPlusTree<K, V, A, C, T>::LeafNode *to) {
-  DS_ASSERT(to);
-  DS_ASSERT(to->slotuse_ == 0);
+  MS_ASSERT(to);
+  MS_ASSERT(to->slotuse_ == 0);
   // It is simpler to sort first, then split. Other alternative is to move key by key to the
   // new node. Also we need to deal with the 'holes' after a key is moved.
   RETURN_IF_BAD_RC(this->Sort());

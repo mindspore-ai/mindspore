@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <utility>
 #include "dataset/util/system_pool.h"
-#include "dataset/util/de_error.h"
 #include "./securec.h"
 #include "utils/log_adapter.h"
 
@@ -79,7 +78,7 @@ void Arena::Deallocate(void *p) {
   auto *q = get_base_addr(p);
   MemHdr hdr(0, 0);
   MemHdr::getHdr(q, &hdr);
-  DS_ASSERT(hdr.sig == 0xDEADBEEF);
+  MS_ASSERT(hdr.sig == 0xDEADBEEF);
   // We are going to insert a free block back to the treap. But first, check if we can combine
   // with the free blocks before and after to form a bigger block.
   std::unique_lock<std::mutex> lck(mux_);
@@ -103,8 +102,8 @@ void Arena::Deallocate(void *p) {
 }
 
 Status Arena::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
-  DS_ASSERT(pp);
-  DS_ASSERT(*pp);
+  MS_ASSERT(pp);
+  MS_ASSERT(*pp);
   uint64_t actual_size = static_cast<uint64_t>(new_sz) + ARENA_WALL_OVERHEAD_SZ;
   if (actual_size > this->get_max_size()) {
     RETURN_STATUS_UNEXPECTED("Request size too big : " + std::to_string(new_sz));
@@ -114,7 +113,7 @@ Status Arena::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
   auto *oldHdr = get_base_addr(oldAddr);
   MemHdr hdr(0, 0);
   MemHdr::getHdr(oldHdr, &hdr);
-  DS_ASSERT(hdr.sig == 0xDEADBEEF);
+  MS_ASSERT(hdr.sig == 0xDEADBEEF);
   std::unique_lock<std::mutex> lck(mux_);
   if (hdr.blk_size > req_blk) {
     // Refresh the header with the new smaller size.
@@ -239,8 +238,8 @@ bool Arena::BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz) {
 }
 
 Status Arena::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
-  DS_ASSERT(pp);
-  DS_ASSERT(*pp);
+  MS_ASSERT(pp);
+  MS_ASSERT(*pp);
   void *p = nullptr;
   void *q = *pp;
   RETURN_IF_NOT_OK(Allocate(new_sz, &p));
