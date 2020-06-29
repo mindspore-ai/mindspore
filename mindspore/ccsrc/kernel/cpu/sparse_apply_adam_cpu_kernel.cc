@@ -81,6 +81,7 @@ void SparseApplyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) 
   MS_EXCEPTION_IF_NULL(kernel_node);
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+  workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float));
 }
 
 void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -141,6 +142,7 @@ bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto indices = reinterpret_cast<int *>(inputs[10]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
   auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
+  auto m_t = reinterpret_cast<float *>(workspace[2]->addr);
 
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
   ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
@@ -156,8 +158,7 @@ bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   const size_t kThreadNum = 16;
   MultiThreadCompute(ComputeMomentum, &input_params, kThreadNum, total_dim_size);
 
-  std::vector<float> m_t(m, m + total_dim_size);
-  input_params.m_t_ = m_t.data();
+  input_params.m_t_ = m_t;
   input_params.use_nesterov_ = use_nesterov_;
   input_params.sparse_grad_ = unique_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
