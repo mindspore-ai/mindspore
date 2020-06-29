@@ -29,8 +29,8 @@ basic_lstm_cell_c_state_grad_op_info = TBERegOp("BasicLSTMCellCStateGrad") \
     .input(1, "dht", False, "required", "all") \
     .input(2, "dct", False, "required", "all") \
     .input(3, "it", False, "required", "all") \
-    .input(4, "ft", False, "required", "all") \
-    .input(5, "jt", False, "required", "all") \
+    .input(4, "jt", False, "required", "all") \
+    .input(5, "ft", False, "required", "all") \
     .input(6, "ot", False, "required", "all") \
     .input(7, "tanhct", False, "required", "all") \
     .output(0, "dgate", False, "required", "all") \
