@@ -592,8 +592,8 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     if (prior_node->isa<Parameter>() && depend_mode == 1) {
       prior_nodes = GetOutputNodes(prior_node);
     }
-    if (depend_node->isa<Parameter>() && depend_mode == 1) {
-      depend_nodes = GetOutputNodes(depend_node);
+    if (depend_node->isa<Parameter>()) {
+      depend_nodes = depend_mode == 1 ? GetOutputNodes(depend_node) : std::vector<AnfNodePtr>{};
     }
 
     std::vector<AnfNodePtr> real_prior_nodes;
