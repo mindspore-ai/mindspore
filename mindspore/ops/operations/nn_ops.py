@@ -224,6 +224,41 @@ class Softplus(PrimitiveWithInfer):
         return input_x
 
 
+class Softsign(PrimitiveWithInfer):
+    r"""
+    Softsign activation function.
+
+    The function is shown as follows:
+
+    .. math::
+        \text{output} = \frac{\text{input_x}}{1 + \abs{\text{input_x}}},
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor whose data type should be float.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
+        >>> softsign = P.Softsign()
+        >>> softsign(input_x)
+        [0. -0.5 0.6666667 0.9677419 -0.9677419]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Softsign"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, input_x):
+        return input_x
+
+    def infer_dtype(self, input_x):
+        validator.check_tensor_type_same({'input_x': input_x}, mstype.float_type, self.name)
+        return input_x
+
+
 class ReLU(PrimitiveWithInfer):
     r"""
     Computes ReLU(Rectified Linear Unit) of input tensor element-wise.

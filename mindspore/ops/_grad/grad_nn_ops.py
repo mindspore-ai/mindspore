@@ -336,6 +336,21 @@ def get_bprop_softplus(self):
     return bprop
 
 
+@bprop_getters.register(P.Softsign)
+def get_bprop_softsign(self):
+    """Grad definition for `Softsign` operation."""
+    mul = P.Mul()
+    absolute = P.Abs()
+    div = P.Div()
+    square = P.Square()
+
+    def bprop(x, out, dout):
+        dx = mul(dout, div(1, square(1 + absolute(x))))
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Tanh)
 def get_bprop_tanh(self):
     """Grad definition for `Tanh` operation."""
