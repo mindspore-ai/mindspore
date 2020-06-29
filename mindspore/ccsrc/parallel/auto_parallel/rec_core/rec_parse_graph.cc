@@ -40,7 +40,7 @@ const TensorParam MakeTensor(int n, int c, int h, int w) {
   return tensor;
 }
 
-Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops) {
+Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
   Graph::NodeType NewOp;
   NewOp.name = ops[iter_ops]->name();
   NewOp.info = InfoType::kApplication;
@@ -140,7 +140,7 @@ std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo
   return graph;
 }
 
-void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph) {
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, const std::shared_ptr<Graph> &graph) {
   for (size_t iter_i = 0; iter_i < input_tensor_names.size(); iter_i++) {
     for (size_t iter_j = 1; iter_j < input_tensor_names[iter_i].size(); iter_j++) {
       size_t head_node_index = GetIndexInInputTensorNames(input_tensor_names, input_tensor_names[iter_i][iter_j]);

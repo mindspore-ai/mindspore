@@ -111,7 +111,7 @@ const std::map<std::string, OperatorType> DictOpType{
 
 const TensorParam MakeTensor(int n, int c, int h, int w);
 
-Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops);
+Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops);
 
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor);
@@ -122,7 +122,7 @@ TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &o
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                   const std::vector<std::vector<std::string>> &input_tensor_names);
 
-void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph);
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, const std::shared_ptr<Graph> &graph);
 
 size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_names,
                                   const std::string &input_name);
