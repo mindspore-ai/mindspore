@@ -23,7 +23,6 @@
 #include <utility>
 
 #include "common/utils.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

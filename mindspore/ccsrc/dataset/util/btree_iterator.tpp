@@ -15,7 +15,6 @@
 #ifndef DATASET_UTIL_BTREE_ITERATOR_H_
 #define DATASET_UTIL_BTREE_ITERATOR_H_
 
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 #include "btree.h"
 

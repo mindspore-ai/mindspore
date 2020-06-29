@@ -104,7 +104,7 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   // following loop puts the 2 level of shuffles together into 1 vector
   for (size_t ind = 0; ind < v.size(); ++ind) {
     while (v[ind]->second.empty() == false) {
-      DS_ASSERT(!(v[ind]->first.empty()));  // make sure that v[ind]->first.substr(1) is not out of bound
+      MS_ASSERT(!(v[ind]->first.empty()));  // make sure that v[ind]->first.substr(1) is not out of bound
       v[ind]->second.front()->second = class_index_.empty() ? ind : class_index_[v[ind]->first.substr(1)];
       image_label_pairs_.push_back(v[ind]->second.front());
       v[ind]->second.pop();

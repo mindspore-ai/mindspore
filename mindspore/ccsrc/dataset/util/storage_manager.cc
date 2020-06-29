@@ -22,7 +22,6 @@
 #include "common/utils.h"
 #include "dataset/util/path.h"
 #include "dataset/util/services.h"
-#include "dataset/util//de_error.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

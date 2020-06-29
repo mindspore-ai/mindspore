@@ -110,7 +110,7 @@ void DatasetOp::RemoveParent(const DatasetOp *parent) {
 
 // Getter function to get a shared pointer to our childAdds a operator to become our child.
 std::shared_ptr<DatasetOp> DatasetOp::child(int32_t child_index) const {
-  DS_ASSERT(child_index < static_cast<int>(child_.size()));
+  MS_ASSERT(child_index < static_cast<int>(child_.size()));
   // Return a shared pointer
   return child_[child_index];
 }
