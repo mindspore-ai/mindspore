@@ -20,28 +20,72 @@
 #include <vector>
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
+#include "kernel/gpu/cuda_impl/dropout_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-class DropoutGradGpuFwdKernel : public GpuKernel {
+template <typename T>
+class DropoutGradGpuBwdKernel : public GpuKernel {
  public:
-  DropoutGradGpuFwdKernel();
-  ~DropoutGradGpuFwdKernel() override;
+  DropoutGradGpuBwdKernel() : cudnn_handle_(nullptr), is_null_input_(false), num_count_(0), keep_prob_(0.0) {}
+  ~DropoutGradGpuBwdKernel() override = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
+  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
+  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
+
+    T *dy = GetDeviceAddress<T>(inputs, 0);
+    T *mask = GetDeviceAddress<T>(inputs, 1);
+    T *dx = GetDeviceAddress<T>(outputs, 0);
+
+    DropoutBackward(dy, mask, dx, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    return true;
+  }
+  bool Init(const CNodePtr &kernel_node) override {
+    InitResource();
+
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != 2) {
+      MS_LOG(ERROR) << "Argument number is " << input_num << ", but DropoutGradGpuBwdKernel needs 2.";
+      return false;
+    }
+
+    auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      InitSizeLists();
+      return true;
+    }
+
+    num_count_ = 1;
+    for (size_t x : input_shape) {
+      num_count_ *= x;
+    }
+    keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
+
+    InitSizeLists();
+    return true;
+  }
 
  protected:
-  void InitResource() override;
-  void InitSizeLists() override;
+  void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
+  void InitSizeLists() override {
+    size_t dy_size = num_count_ * sizeof(T);
+    size_t mask_size = dy_size;
+    size_t dx_size = dy_size;
+
+    input_size_list_.push_back(dy_size);
+    input_size_list_.push_back(mask_size);
+    output_size_list_.push_back(dx_size);
+  }
 
  private:
-  void DestroyResource() noexcept;
-
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
   size_t num_count_;
@@ -50,8 +94,6 @@ class DropoutGradGpuFwdKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 };
-
-MS_REG_GPU_KERNEL(DropoutGrad, DropoutGradGpuFwdKernel)
 }  // namespace kernel
 }  // namespace mindspore
 

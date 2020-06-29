@@ -4117,6 +4117,7 @@ class Dropout(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         valid_types = (mstype.float16, mstype.float32)
+        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
         validator.check_tensor_type_same({"x_dtype": x_dtype}, valid_types, self.name)
         return x_dtype, x_dtype
 
@@ -4151,6 +4152,8 @@ class DropoutGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, dy_dtype, mask_dtype):
         valid_types = (mstype.float16, mstype.float32)
+        validator.check_subclass("dy", dy_dtype, mstype.tensor, self.name)
+        validator.check_subclass("mask", mask_dtype, mstype.tensor, self.name)
         validator.check_tensor_type_same({"dy_dtype": dy_dtype}, valid_types, self.name)
         return dy_dtype
 
