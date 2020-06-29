@@ -122,47 +122,6 @@ def _parameter_broadcast_check(parallel_mode, parameter_broadcast):
                          "do not support parameter broadcast, parallel_mode: {0}, parameter_broadcast:{1}"
                          .format(parallel_mode, parameter_broadcast))
 
-
-PARAMETER_CLONED_INDEX = 0
-
-
-class _CloneInfo():
-    """
-    The clone info of parameter.
-
-    Attributes:
-        be_cloned (bool): Whether the parameter is cloned.
-        cloned (bool): Whether the parameter clone from other parameter.
-        be_cloned_index (tuple): If the parameter is cloned, generate one index per clone.
-        cloned_index (int): If the parameter clone from other parameter, it has a unique index.
-    """
-    def __init__(self):
-        self.be_cloned = False
-        self.cloned = False
-        self.be_cloned_index = []
-        self.cloned_index = None
-
-
-def _set_clone_info(clone_from, clone_to):
-    """
-    Set the clone info.
-
-    Args:
-        clone_from (_CloneInfo): The clone info of be_cloned parameter.
-        clone_to (_CloneInfo): The clone info of cloned parameter.
-    """
-    global PARAMETER_CLONED_INDEX
-    clone_to.be_cloned = False
-    clone_to.cloned = True
-    clone_to.be_cloned_index = []
-    clone_to.cloned_index = PARAMETER_CLONED_INDEX
-
-    clone_from.be_cloned = True
-    clone_from.be_cloned_index.append(PARAMETER_CLONED_INDEX)
-
-    PARAMETER_CLONED_INDEX = PARAMETER_CLONED_INDEX + 1
-
-
 def _get_python_op(op_name, op_path, instance_name, arglist):
     """Get python operator."""
     module = __import__(op_path, fromlist=["None"])

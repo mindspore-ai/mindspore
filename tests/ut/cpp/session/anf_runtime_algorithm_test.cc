@@ -15,7 +15,7 @@
  */
 
 #include "common/common_test.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "operator/ops.h"
 #include "session/kernel_graph.h"
 #include "session/anf_runtime_algorithm.h"
@@ -764,10 +764,9 @@ TEST_F(AnfRuntimeAlgorithmTest, IsRealCNodeKernel) {
 
 TEST_F(AnfRuntimeAlgorithmTest, IsParameterWeight) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  py::object obj;
   auto parameter_node = kernel_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(parameter_node);
-  auto param_value_new = std::make_shared<ParamValuePy>(obj);
+  auto param_value_new = std::make_shared<ParamValue>();
   parameter_node->set_default_param(param_value_new);
   EXPECT_TRUE(AnfAlgo::IsParameterWeight(parameter_node));
   EXPECT_THROW(AnfAlgo::IsParameterWeight(nullptr), std::runtime_error);

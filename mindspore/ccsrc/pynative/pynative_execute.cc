@@ -24,7 +24,7 @@
 
 #include "debug/trace.h"
 #include "ir/tensor_py.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/context/ms_context.h"
@@ -754,7 +754,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, const py::object &o
     if (graph_info_map_[df_builder_].param_map.count(obj_id) == 0) {
       auto free_param = df_builder_->add_parameter();
       free_param->set_name(param_name);
-      auto free_param_new = std::make_shared<ParamValuePy>(obj);
+      auto free_param_new = py::cast<ParamValuePtr>(obj.attr("_value"));
       free_param->set_default_param(free_param_new);
       free_param->debug_info()->set_name(param_name);
       MS_LOG(DEBUG) << "Top graph set free parameter " << obj_id;
@@ -950,8 +950,9 @@ abstract::AbstractBasePtrList PynativeExecutor::GetArgsSpec(const py::args &args
   for (const auto &param : df_builder_->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
-      AbstractBasePtr ptr = abstract::FromValue(parse::data_converter::PyDataToValue(param_value->value()), true);
+      const auto &param_value = param_node->default_param();
+      ValuePtr value = param_value->value();
+      AbstractBasePtr ptr = abstract::FromValue(value, true);
       if (ptr == nullptr) {
         MS_LOG(EXCEPTION) << "Args convert error";
       }

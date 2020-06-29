@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include "pipeline/parse/data_converter.h"
 #include "ir/manager.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "kernel/common_utils.h"
 #include "operator/ops.h"
 #include "common/trans.h"
@@ -38,12 +38,12 @@
 
 namespace mindspore {
 namespace session {
-static std::shared_ptr<std::map<PyObject *, ParameterPtr>> python_paras_;
+static std::shared_ptr<std::map<ParamValuePtr, ParameterPtr>> python_paras_;
 void ClearPythonParasMap() { python_paras_ = nullptr; }
 namespace {
 const int kSummaryGetItem = 2;
 
-PyObject *GetParamDefaultInputTensor(const AnfNodePtr &node) {
+ParamValuePtr GetParamDefaultValue(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;
   }
@@ -51,10 +51,7 @@ PyObject *GetParamDefaultInputTensor(const AnfNodePtr &node) {
   if (parameter == nullptr || !parameter->has_default()) {
     return nullptr;
   }
-  auto param_value = std::dynamic_pointer_cast<ParamValuePy>(parameter->default_param());
-  MS_EXCEPTION_IF_NULL(param_value);
-  auto py_param = param_value->value();
-  return py_param.ptr();
+  return parameter->default_param();
 }
 
 BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const KernelGraph &graph,
@@ -215,8 +212,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
   if (tensor_mask == kParameterWeightTensorMask) {
-    py::object obj;
-    auto param_value_new = std::make_shared<ParamValuePy>(obj);
+    auto param_value_new = std::make_shared<ParamValue>();
     param->set_default_param(param_value_new);
   }
   // set the kernel info of parameter
@@ -384,7 +380,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
     MS_LOG(EXCEPTION) << "Anf[" << anf->DebugString() << "] is not a parameter";
   }
   MS_EXCEPTION_IF_NULL(graph);
-  auto m_tensor = GetParamDefaultInputTensor(anf);
+  auto param_value = GetParamDefaultValue(anf);
   auto valid_inputs = graph->MutableValidInputs();
   MS_EXCEPTION_IF_NULL(valid_inputs);
   auto graph_inputs = graph->MutableInputs();
@@ -392,16 +388,16 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   ParameterPtr new_parameter = nullptr;
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
   if (python_paras_ == nullptr) {
-    python_paras_ = std::make_shared<std::map<PyObject *, ParameterPtr>>();
+    python_paras_ = std::make_shared<std::map<ParamValuePtr, ParameterPtr>>();
   }
-  auto iter = python_paras_->find(m_tensor);
+  auto iter = python_paras_->find(param_value);
   if (iter != python_paras_->end()) {
     new_parameter = iter->second;
   } else {
     TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
-    if (m_tensor != nullptr) {
-      (*python_paras_)[m_tensor] = new_parameter;
+    if (param_value != nullptr) {
+      (*python_paras_)[param_value] = new_parameter;
     }
     TraceManager::EndTrace();
   }
@@ -618,19 +614,19 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
     MS_LOG(EXCEPTION) << "Anf[" << anf->DebugString() << "] is not a parameter";
   }
 
-  auto m_tensor = GetParamDefaultInputTensor(anf);
+  auto param_value = GetParamDefaultValue(anf);
   ParameterPtr new_parameter = nullptr;
   if (python_paras_ == nullptr) {
-    python_paras_ = std::make_shared<std::map<PyObject *, ParameterPtr>>();
+    python_paras_ = std::make_shared<std::map<ParamValuePtr, ParameterPtr>>();
   }
-  auto iter = python_paras_->find(m_tensor);
+  auto iter = python_paras_->find(param_value);
   if (iter != python_paras_->end()) {
     new_parameter = iter->second;
   } else {
     TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
-    if (m_tensor != nullptr) {
-      (*python_paras_)[m_tensor] = new_parameter;
+    if (param_value != nullptr) {
+      (*python_paras_)[param_value] = new_parameter;
     }
     TraceManager::EndTrace();
   }

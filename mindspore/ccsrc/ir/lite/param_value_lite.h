@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "ir/anf.h"
+#include "ir/param_value.h"
 
 namespace mindspore {
 class ParamValueLite : public ParamValue {

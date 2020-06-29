@@ -26,7 +26,7 @@
 #include "utils/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "ir/tensor_py.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/parse/resolve.h"
@@ -485,8 +485,8 @@ void AnfExporter::OutputParameters(std::ofstream &ofs, const std::vector<AnfNode
       MS_LOG(EXCEPTION) << "Param could not cast to parameter";
     }
     if (param_ptr->has_default()) {
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_ptr->default_param());
-      ofs << " = @" << DumpObject(param_value->value(), "D");
+      auto param_value = param_ptr->default_param();
+      ofs << " = @" << DumpObject(py::cast(param_value), "D");
     }
 
     // output comment
@@ -1667,7 +1667,7 @@ class IrParser {
 
         // load parameter default value from serialized file
         py::object default_obj = LoadObject(lexer_.GetTokenText());
-        auto param_value_new = std::make_shared<ParamValuePy>(default_obj);
+        auto param_value_new = py::cast<ParamValuePtr>(default_obj);
         param->set_default_param(param_value_new);
 
         tok = lexer_.GetNextToken();

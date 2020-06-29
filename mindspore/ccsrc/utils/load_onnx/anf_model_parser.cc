@@ -22,14 +22,12 @@
 #include <vector>
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/tensor.h"
-#include "ir/tensor_py.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "operator/ops.h"
 #include "pipeline/static_analysis/abstract_value.h"
 #include "proto/onnx.pb.h"
 #include "utils/log_adapter.h"
 
-using mindspore::tensor::TensorPy;
 using std::string;
 
 namespace mindspore {
@@ -123,11 +121,10 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
     MS_EXCEPTION_IF_NULL(tensor_data_buf);
     memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
 
-    py::array array_data = TensorPy::AsNumpy(*tensor_info);
-    ParamValuePyPtr para_value_ptr = std::make_shared<ParamValuePy>();
-    MS_EXCEPTION_IF_NULL(para_value_ptr);
-    para_value_ptr->set_value(array_data);
-    node->set_default_param(para_value_ptr);
+    auto param_value = std::make_shared<ParamValue>();
+    MS_EXCEPTION_IF_NULL(param_value);
+    param_value->set_value(tensor_info);
+    node->set_default_param(param_value);
   }
   anfnode_build_map_[value_proto.name()] = node;
   return true;

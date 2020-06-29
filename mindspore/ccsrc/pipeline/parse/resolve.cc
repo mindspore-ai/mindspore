@@ -21,7 +21,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/parse/parse.h"
 #include "pipeline/parse/python_adapter.h"
@@ -103,16 +103,12 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   }
   if (para_node == nullptr) {
     auto node = top_graph->AddWeightParameter(param_name);
-    auto param_value_new = std::make_shared<ParamValuePy>(obj);
-    node->set_default_param(param_value_new);
-
+    auto param_value = py::cast<ParamValuePtr>(python_adapter::GetPyObjAttr(obj, "_value"));
+    node->set_default_param(param_value);
     // set_abstract for parameter
-    auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
-    ValuePtr converted = nullptr;
-    (void)ConvertData(to_convert, &converted);
-    bool broaden = true;
-    node->set_abstract(abstract::FromValue(converted, broaden));
-
+    ValuePtr value = param_value->value();
+    constexpr bool broaden = true;
+    node->set_abstract(abstract::FromValue(value, broaden));
     para_node = node;
   }
   auto iter = func_graph->make_ref_params().find(para_node);

@@ -216,7 +216,7 @@ class Tensor : public MetaTensor {
 
   std::string ToStringRepr() const;
 
-  bool is_init() { return init_flag_; }
+  bool is_init() const { return init_flag_; }
   void set_init_flag(bool flag) { init_flag_ = flag; }
 
   bool is_dirty() const { return dirty_; }

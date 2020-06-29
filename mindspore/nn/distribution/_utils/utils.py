@@ -16,7 +16,7 @@
 """Utitly functions to help distribution class."""
 import numpy as np
 from mindspore.ops import _utils as utils
-from ....common.tensor import Tensor, MetaTensor
+from ....common.tensor import Tensor
 from ....common.parameter import Parameter
 from ....common import dtype as mstype
 
@@ -152,7 +152,7 @@ def check_greater_equal_zero(value, name):
 
     """
     if isinstance(value, Parameter):
-        if isinstance(value.default_input, MetaTensor):
+        if not isinstance(value.default_input, Tensor):
             return
         value = value.default_input
     comp = np.less(value.asnumpy(), np.zeros(value.shape))
@@ -188,7 +188,7 @@ def check_prob(p):
         ValueError: if p is not a proper probability.
     """
     if isinstance(p, Parameter):
-        if isinstance(p.default_input, MetaTensor):
+        if not isinstance(p.default_input, Tensor):
             return
         p = p.default_input
     comp = np.less(p.asnumpy(), np.zeros(p.shape))

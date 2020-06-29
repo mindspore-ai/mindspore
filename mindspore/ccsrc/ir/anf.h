@@ -79,11 +79,7 @@ using KernelInfoDevicePtr = std::shared_ptr<KernelInfoDevice>;
 
 class AnfVisitor;
 
-class ParamValue {
- public:
-  ParamValue() = default;
-  virtual ~ParamValue() = default;
-};
+class ParamValue;
 using ParamValuePtr = std::shared_ptr<ParamValue>;
 
 // AnfNode is the basic class of the IR definition derived from Base.

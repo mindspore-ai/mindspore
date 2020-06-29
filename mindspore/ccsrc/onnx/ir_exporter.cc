@@ -23,8 +23,8 @@
 #include <algorithm>
 #include <functional>
 
-#include "ir/tensor_py.h"
-#include "ir/param_value_py.h"
+#include "ir/tensor.h"
+#include "ir/param_value.h"
 #include "debug/anf_ir_utils.h"
 #include "operator/ops.h"
 #include "proto/onnx.pb.h"
@@ -187,13 +187,9 @@ void IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, onnx::Grap
     onnx::TensorProto *initializer_proto = graph_proto->add_initializer();
     initializer_proto->set_name(param_name);
     SetParamToTensorProto(param, initializer_proto);
-    auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param->default_param());
-    py::object obj = param_value->value();
-    py::object data = obj.attr("data");
-    if (py::isinstance<tensor::Tensor>(data)) {
-      auto method = data.attr("asnumpy");
-      py::array npy_data = method();
-      initializer_proto->set_raw_data(npy_data.request(true).ptr, static_cast<size_t>(npy_data.nbytes()));
+    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param()->value());
+    if (tensor) {
+      initializer_proto->set_raw_data(tensor->data_c(), tensor->data().nbytes());
     }
   }
 }
