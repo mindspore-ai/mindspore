@@ -55,7 +55,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   special_op_eliminate_ =
     MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
                      {prim::kPrimInsertGradientOf, prim::kPrimStopGradient, prim::kPrimHookBackward,
-                      prim::kPrimPrintShapeType, prim::kPrimGetRefKey, prim::kPrimMirror, prim::kPrimVirtualDiv});
+                      prim::kPrimPrintShapeType, prim::kPrimGetRefValue, prim::kPrimMirror, prim::kPrimVirtualDiv});
   zero_like_fill_zero_ =
     MakeSubstitution(std::make_shared<ZeroLikeFillZero>(), "zero_like_fill_zero", prim::kPrimZerosLike);
   adjust_all_reduce_mul_add_ =
