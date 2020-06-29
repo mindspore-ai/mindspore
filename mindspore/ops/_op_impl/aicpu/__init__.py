@@ -38,3 +38,4 @@ from .gamma import _gamma_aicpu
 from .poisson import _poisson_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu
+from .laplace import _laplace_aicpu

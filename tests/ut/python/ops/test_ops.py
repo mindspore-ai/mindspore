@@ -410,6 +410,17 @@ class NormalNet(nn.Cell):
         return out
 
 
+class LaplaceNet(nn.Cell):
+    def __init__(self, shape=None, seed=0):
+        super(LaplaceNet, self).__init__()
+        self.laplace = P.Laplace(seed=seed)
+        self.shape = shape
+
+    def construct(self, mean, lambda_param):
+        out = self.laplace(self.shape, mean, lambda_param)
+        return out
+
+
 class GammaNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(GammaNet, self).__init__()
@@ -664,6 +675,10 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('Normal', {
         'block': NormalNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
+    ('Laplace', {
+        'block': LaplaceNet((3, 2, 4), 0),
         'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
         'skip': ['backward']}),
     ('Gamma', {
