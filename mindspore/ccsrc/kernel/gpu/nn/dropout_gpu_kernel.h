@@ -20,35 +20,88 @@
 #include <vector>
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
+#include "kernel/gpu/cuda_impl/dropout_impl.cuh"
 #include "include/curand.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class DropoutGpuFwdKernel : public GpuKernel {
  public:
-  DropoutGpuFwdKernel();
+  DropoutGpuFwdKernel()
+      : cudnn_handle_(nullptr),
+        is_null_input_(false),
+        num_count_(0),
+        keep_prob_(0.0),
+        states_init_(false),
+        mask_generator_(nullptr) {}
 
-  ~DropoutGpuFwdKernel() override;
+  ~DropoutGpuFwdKernel() override = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-
-  const std::vector<size_t> &GetOutputSizeList() const override;
-
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
+  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
+  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
 
-  bool Init(const CNodePtr &kernel_node) override;
+    T *input = GetDeviceAddress<T>(inputs, 0);
+    T *output = GetDeviceAddress<T>(outputs, 0);
+    T *mask = GetDeviceAddress<T>(outputs, 1);
+    float *mask_f = GetDeviceAddress<float>(workspace, 0);
+
+    if (!states_init_) {
+      curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT);
+      curandSetPseudoRandomGeneratorSeed(mask_generator_, time(NULL));
+      states_init_ = true;
+    }
+    // curandGen only support float or double for mask.
+    curandGenerateUniform(mask_generator_, mask_f, num_count_);
+    DropoutForward(input, mask, output, mask_f, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    return true;
+  }
+
+  bool Init(const CNodePtr &kernel_node) override {
+    InitResource();
+
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != 1) {
+      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but DropoutGpuFwdKernel needs 1.";
+    }
+
+    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      InitSizeLists();
+      return true;
+    }
+
+    num_count_ = 1;
+    for (size_t x : input_shape) {
+      num_count_ *= x;
+    }
+    keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
+
+    InitSizeLists();
+    return true;
+  }
 
  protected:
-  void InitResource() override;
+  void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
 
-  void InitSizeLists() override;
+  void InitSizeLists() override {
+    size_t input_size = num_count_ * sizeof(T);
+    input_size_list_.push_back(input_size);
+    output_size_list_.push_back(input_size);                     // output size: the same with input size
+    output_size_list_.push_back(input_size);                     // mask size: the same with input size
+    workspace_size_list_.push_back(num_count_ * sizeof(float));  // temp mask_f for curandGen
+  }
 
  private:
-  void DestroyResource() noexcept;
-
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
   size_t num_count_;
@@ -59,8 +112,6 @@ class DropoutGpuFwdKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 };
-
-MS_REG_GPU_KERNEL(Dropout, DropoutGpuFwdKernel)
 }  // namespace kernel
 }  // namespace mindspore
 
