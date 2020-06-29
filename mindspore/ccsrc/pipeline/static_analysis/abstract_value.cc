@@ -429,6 +429,11 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   if (other_tensor == nullptr) {
     MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
   }
+  if (*this == *other) {
+    if (sparse_grad() == other->sparse_grad()) {
+      return shared_from_base<AbstractBase>();
+    }
+  }
   auto element = element_->Join(other_tensor->element_);
   auto shape = ShapeJoin(this->shape(), other_tensor->shape());
   auto ret = std::make_shared<AbstractTensor>(element, shape);
@@ -810,6 +815,21 @@ bool AbstractRef::operator==(const AbstractBase &other) const {
     return *this == *other_conf;
   }
   return false;
+}
+
+AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
+  auto other_ref = other->cast<AbstractRefPtr>();
+  if (other_ref == nullptr) {
+    MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
+  }
+  if (*this == *other) {
+    return shared_from_base<AbstractBase>();
+  }
+  auto ref_key = ref_key_->Join(other_ref->ref_key_);
+  auto ref = ref_->Join(other_ref->ref());
+  auto ref_origin = ref_origin_->Join(other_ref->ref_origin_);
+
+  return std::make_shared<AbstractRef>(ref_key, ref, ref_origin);
 }
 
 std::string AbstractRef::ToString() const {

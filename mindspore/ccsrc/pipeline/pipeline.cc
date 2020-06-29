@@ -314,7 +314,7 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
     auto weight_name = weight_node->cast<ParameterPtr>()->name();
     // find the fakequant from input
     int count = 0;
-    int max_depth = 5;
+    const int max_depth = 5;
     while (!is_quant_cnode(x)) {
       if (count >= max_depth) {
         break;
