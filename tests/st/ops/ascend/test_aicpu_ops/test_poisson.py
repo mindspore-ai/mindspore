@@ -24,34 +24,30 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0):
+    def __init__(self, shape):
         super(Net, self).__init__()
-        self.normal = P.Normal(seed=seed)
+        self.poisson = P.Poisson()
         self.shape = shape
 
-    def construct(self, mean, stddev):
-        return self.normal(self.shape, mean, stddev)
+    def construct(self, mean):
+        return self.poisson(self.shape, mean)
 
 
-def test_net_1D():
-    seed = 10
-    shape = (3, 2, 4)
-    mean = 1.0
-    stddev = 1.0
-    net = Net(shape, seed)
-    tmean, tstddev = Tensor(mean, mstype.float32), Tensor(stddev, mstype.float32)
-    output = net(tmean, tstddev)
+def test_net_1():
+    shape = (2, 16)
+    mean = np.array([5.0]).astype(np.float32)
+    net = Net(shape)
+    tmean = Tensor(mean)
+    output = net(tmean)
     print(output.asnumpy())
-    assert output.shape == (3, 2, 4)
+    assert output.shape == (2, 16)
 
 
-def test_net_ND():
-    seed = 10
-    shape = (3, 1, 2)
-    mean = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
-    stddev = np.array([1.0]).astype(np.float32)
-    net = Net(shape, seed)
-    tmean, tstddev = Tensor(mean), Tensor(stddev)
-    output = net(tmean, tstddev)
+def test_net_2():
+    shape = (4, 1)
+    mean = np.array([5.0, 10.0]).astype(np.float32)
+    net = Net(shape)
+    tmean = Tensor(mean)
+    output = net(tmean)
     print(output.asnumpy())
-    assert output.shape == (3, 2, 2)
+    assert output.shape == (4, 2)

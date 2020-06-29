@@ -54,7 +54,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps)
 
-from .random_ops import (RandomChoiceWithMask, Normal, RandomCategorical)
+from .random_ops import (RandomChoiceWithMask, Normal, Gamma, Poisson, UniformInt, UniformReal,
+                         RandomCategorical)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -172,6 +173,10 @@ __all__ = [
     'Tanh',
     'RandomChoiceWithMask',
     'Normal',
+    'Gamma',
+    'Poisson',
+    'UniformInt',
+    'UniformReal',
     'RandomCategorical',
     'ResizeBilinear',
     'ScalarSummary',
