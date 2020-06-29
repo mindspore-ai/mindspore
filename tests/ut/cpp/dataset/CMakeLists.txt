@@ -3,6 +3,7 @@ include(GoogleTest)
 SET(DE_UT_SRCS
         common/common.cc
         common/cvop_common.cc
+        common/bboxop_common.cc
         batch_op_test.cc
         bit_functions_test.cc
         storage_container_test.cc
