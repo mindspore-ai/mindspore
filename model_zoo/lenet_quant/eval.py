@@ -31,7 +31,7 @@ from src.lenet_fusion import LeNet5 as LeNet5Fusion
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",
-                    choices=['Ascend', 'GPU', 'CPU'],
+                    choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')

@@ -32,7 +32,6 @@ from ...ops.operations import _inner_ops as inner
 from ...train import serialization
 from . import quant_utils
 
-
 _ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
                    nn.ReLU6: quant.ReLU6Quant,
                    nn.HSigmoid: quant.HSigmoidQuant,
@@ -41,15 +40,14 @@ _ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
 
 class _AddFakeQuantInput(nn.Cell):
     """
-    Add FakeQuant at input and output of the Network. Only support one input and one output case.
+    Add FakeQuant OP at input of the network. Only support one input case.
     """
 
     def __init__(self, network, quant_delay=0):
         super(_AddFakeQuantInput, self).__init__(auto_prefix=False)
-        self.network = network
-        self.fake_quant_input = quant.FakeQuantWithMinMax(
-            min_init=-6, max_init=6, quant_delay=quant_delay, ema=True)
+        self.fake_quant_input = quant.FakeQuantWithMinMax(min_init=-6, max_init=6, quant_delay=quant_delay, ema=True)
         self.fake_quant_input.update_parameters_name('fake_quant_input')
+        self.network = network
 
     def construct(self, data):
         data = self.fake_quant_input(data)
@@ -59,7 +57,7 @@ class _AddFakeQuantInput(nn.Cell):
 
 class _AddFakeQuantAfterSubCell(nn.Cell):
     """
-    Add FakeQuant after of the sub Cell.
+    Add FakeQuant OP after of the sub Cell.
     """
 
     def __init__(self, subcell, **kwargs):
@@ -114,11 +112,12 @@ class ConvertToQuantNetwork:
         self.network.update_cell_prefix()
         network = self._convert_subcells2quant(self.network)
         network = _AddFakeQuantInput(network)
+        self.network.update_cell_type("quant")
         return network
 
     def _convert_subcells2quant(self, network):
         """
-        convet sub cell to quant cell
+        convert sub cell like `Conv2dBnAct` and `DenseBnAct` to quant cell
         """
         cells = network.name_cells()
         change = False
@@ -137,19 +136,19 @@ class ConvertToQuantNetwork:
         if isinstance(network, nn.SequentialCell) and change:
             network.cell_list = list(network.cells())
 
-        # tensoradd to tensoradd quant
+        # add FakeQuant OP after OP in while list
         add_list = []
         for name in network.__dict__:
             if name[0] == '_':
                 continue
             attr = network.__dict__[name]
-            if isinstance(attr, ops.Primitive) and attr.name in ConvertToQuantNetwork.__quant_op_name__:
+            if isinstance(attr, ops.Primitive) and attr.name in self.__quant_op_name__:
                 add_list.append((name, attr))
         for name, prim_op in add_list:
             prefix = name
             add_quant = _AddFakeQuantAfterSubCell(prim_op,
                                                   num_bits=self.act_bits,
-                                                  quant_delay=self.act_delay,
+                                                  quant_delay=self.act_qdelay,
                                                   per_channel=self.act_channel,
                                                   symmetric=self.act_symmetric,
                                                   narrow_range=self.act_range)
@@ -161,11 +160,11 @@ class ConvertToQuantNetwork:
 
     def _convert_conv(self, subcell):
         """
-        convet conv cell to quant cell
+        convert Conv2d cell to quant cell
         """
         conv_inner = subcell.conv
         bn_inner = subcell.batchnorm
-        if subcell.batchnorm is not None and self.bn_fold:
+        if subcell.has_bn and self.bn_fold:
             conv_inner = quant.Conv2dBatchNormQuant(conv_inner.in_channels,
                                                     conv_inner.out_channels,
                                                     kernel_size=conv_inner.kernel_size,
@@ -175,7 +174,7 @@ class ConvertToQuantNetwork:
                                                     dilation=conv_inner.dilation,
                                                     group=conv_inner.group,
                                                     eps=bn_inner.eps,
-                                                    momentum=bn_inner.momentum,
+                                                    momentum=1 - bn_inner.momentum,
                                                     quant_delay=self.weight_qdelay,
                                                     freeze_bn=self.freeze_bn,
                                                     per_channel=self.weight_channel,
@@ -183,6 +182,11 @@ class ConvertToQuantNetwork:
                                                     fake=True,
                                                     symmetric=self.weight_symmetric,
                                                     narrow_range=self.weight_range)
+            # change original network BatchNormal OP parameters to quant network
+            conv_inner.gamma = subcell.batchnorm.gamma
+            conv_inner.beta = subcell.batchnorm.beta
+            conv_inner.moving_mean = subcell.batchnorm.moving_mean
+            conv_inner.moving_variance = subcell.batchnorm.moving_variance
             del subcell.batchnorm
             subcell.batchnorm = None
             subcell.has_bn = False
@@ -201,6 +205,10 @@ class ConvertToQuantNetwork:
                                            num_bits=self.weight_bits,
                                            symmetric=self.weight_symmetric,
                                            narrow_range=self.weight_range)
+        # change original network Conv2D OP parameters to quant network
+        conv_inner.weight = subcell.conv.weight
+        if subcell.conv.has_bias:
+            conv_inner.bias = subcell.conv.bias
         subcell.conv = conv_inner
         if subcell.has_act and subcell.activation is not None:
             subcell.activation = self._convert_activation(subcell.activation)
@@ -227,6 +235,10 @@ class ConvertToQuantNetwork:
                                        per_channel=self.weight_channel,
                                        symmetric=self.weight_symmetric,
                                        narrow_range=self.weight_range)
+        # change original network Dense OP parameters to quant network
+        dense_inner.weight = subcell.dense.weight
+        if subcell.dense.has_bias:
+            dense_inner.bias = subcell.dense.bias
         subcell.dense = dense_inner
         if subcell.has_act and subcell.activation is not None:
             subcell.activation = self._convert_activation(subcell.activation)
@@ -234,7 +246,7 @@ class ConvertToQuantNetwork:
             subcell.has_act = True
             subcell.activation = _AddFakeQuantAfterSubCell(F.identity,
                                                            num_bits=self.act_bits,
-                                                           quant_delay=self.act_delay,
+                                                           quant_delay=self.act_qdelay,
                                                            per_channel=self.act_channel,
                                                            symmetric=self.act_symmetric,
                                                            narrow_range=self.act_range)
@@ -244,12 +256,12 @@ class ConvertToQuantNetwork:
         act_class = activation.__class__
         if act_class not in _ACTIVATION_MAP:
             raise ValueError(
-                "Unsupported activation in auto Quant: ", act_class)
+                "Unsupported activation in auto quant: ", act_class)
         return _ACTIVATION_MAP[act_class](num_bits=self.act_bits,
                                           quant_delay=self.act_qdelay,
                                           per_channel=self.act_channel,
-                                          symmetric=self.weight_symmetric,
-                                          narrow_range=self.weight_range)
+                                          symmetric=self.act_symmetric,
+                                          narrow_range=self.act_range)
 
 
 class ExportQuantNetworkDeploy:
@@ -403,7 +415,7 @@ def convert_quant_network(network,
                           narrow_range=(False, False)
                           ):
     r"""
-    Create aware quantizaiton training network.
+    Create quantization aware training network.
 
     Args:
         network (Cell): Obtain a pipeline through network for saving graph summary.
@@ -417,7 +429,7 @@ def convert_quant_network(network,
             then base on per channel otherwise base on per layer. The first element represent weights
             and second element represent data flow. Default: [False, False]
         symmetric (list of bool): Quantization algorithm use symmetric or not. If `True` then base on
-            symmetric otherwise base on assymmetric. The first element represent weights and second
+            symmetric otherwise base on asymmetric. The first element represent weights and second
             element represent data flow. Default: [False, False]
         narrow_range (list of bool): Quantization algorithm use narrow range or not. If `True` then base
             on narrow range otherwise base on off narrow range. The first element represent weights and
@@ -426,6 +438,7 @@ def convert_quant_network(network,
     Returns:
         Cell, Network which has change to aware quantization training network cell.
     """
+
     def convert2list(name, value):
         if not isinstance(value, list) and not isinstance(value, tuple):
             value = [value]

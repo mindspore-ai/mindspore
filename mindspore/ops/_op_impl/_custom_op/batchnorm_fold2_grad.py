@@ -30,7 +30,6 @@ batchnorm_fold2_grad_op_info = TBERegOp("BatchNormFold2GradD") \
     .compute_cost(10) \
     .kernel_name("batchnorm_fold2_grad") \
     .partial_flag(True) \
-    .op_pattern("formatAgnostic") \
     .input(0, "dout", None, "required", None) \
     .input(1, "dout_reduce", None, "required", None) \
     .input(2, "dout_x_reduce", None, "required", None) \

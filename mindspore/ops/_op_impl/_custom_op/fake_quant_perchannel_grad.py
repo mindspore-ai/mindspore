@@ -124,11 +124,15 @@ def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
     min_dtype = min_val.get("dtype")
     max_shape = max_val.get("ori_shape")
     max_dtype = max_val.get("dtype")
-
+    # for Dense weight quant, 2d[co,ci] -> 4d[1,co,ci,1], channel_axis_ need change to 1.
+    if channel_axis == 0 and x_shape_[0] != min_shape[0] and x_shape_[1] == min_shape[0]:
+        channel_axis_ = 1
+    else:
+        channel_axis_ = channel_axis
     util.check_kernel_name(kernel_name)
     util.check_shape_rule(x_shape)
-    util.check_shape_rule(min_shape, 1, 1, x_shape_[channel_axis])
-    util.check_shape_rule(max_shape, 1, 1, x_shape_[channel_axis])
+    util.check_shape_rule(min_shape, 1, 1, x_shape_[channel_axis_])
+    util.check_shape_rule(max_shape, 1, 1, x_shape_[channel_axis_])
     util.check_tensor_shape_size(x_shape)
     util.check_tensor_shape_size(min_shape)
     util.check_tensor_shape_size(max_shape)
@@ -151,8 +155,8 @@ def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
         quant_min = quant_min + 1
 
     shape_c = [1] * len(x_shape)
-    shape_c[channel_axis] = min_val.get("ori_shape")[0]
-    if x_format == "NC1HWC0" and channel_axis == 1:
+    shape_c[channel_axis_] = min_val.get("ori_shape")[0]
+    if x_format == "NC1HWC0" and channel_axis_ == 1:
         shape_c = min_val.get("shape")
     dout_data = tvm.placeholder(x_shape, name="dout", dtype=x_dtype)
     input_data = tvm.placeholder(x_shape, name="x", dtype=x_dtype)

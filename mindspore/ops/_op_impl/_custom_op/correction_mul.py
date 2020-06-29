@@ -30,7 +30,6 @@ correction_mul_op_info = TBERegOp("CorrectionMul") \
     .compute_cost(10) \
     .kernel_name("correction_mul") \
     .partial_flag(True) \
-    .op_pattern("formatAgnostic") \
     .attr("channel_axis", "optional", "int", "all") \
     .input(0, "x", None, "required", None) \
     .input(1, "batch_std", None, "required", None) \

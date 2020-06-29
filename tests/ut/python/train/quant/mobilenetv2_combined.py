@@ -17,7 +17,7 @@ def _conv_bn(in_channel,
                         out_channel,
                         kernel_size=ksize,
                         stride=stride,
-                        batchnorm=True)])
+                        has_bn=True)])
 
 
 class InvertedResidual(nn.Cell):
@@ -35,25 +35,25 @@ class InvertedResidual(nn.Cell):
                                3,
                                stride,
                                group=hidden_dim,
-                               batchnorm=True,
+                               has_bn=True,
                                activation='relu6'),
                 nn.Conv2dBnAct(hidden_dim, oup, 1, 1,
-                               batchnorm=True)
+                               has_bn=True)
             ])
         else:
             self.conv = nn.SequentialCell([
                 nn.Conv2dBnAct(inp, hidden_dim, 1, 1,
-                               batchnorm=True,
+                               has_bn=True,
                                activation='relu6'),
                 nn.Conv2dBnAct(hidden_dim,
                                hidden_dim,
                                3,
                                stride,
                                group=hidden_dim,
-                               batchnorm=True,
+                               has_bn=True,
                                activation='relu6'),
                 nn.Conv2dBnAct(hidden_dim, oup, 1, 1,
-                               batchnorm=True)
+                               has_bn=True)
             ])
         self.add = P.TensorAdd()
 
