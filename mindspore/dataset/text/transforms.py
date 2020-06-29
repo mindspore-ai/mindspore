@@ -119,10 +119,12 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
             the dictionary can be obtained on the official website of cppjieba.
         mp_path (str): the dictionary file is used by MPSegment algorithm,
             the dictionary can be obtained on the official website of cppjieba.
-        mode (JiebaMode, optional): "MP" model will tokenize with MPSegment algorithm,
-            "HMM" mode will tokenize with Hiddel Markov Model Segment algorithm,
-            "MIX" model will tokenize with a mix of MPSegment and HMMSegment algorithm
-            (default="MIX").
+        mode (JiebaMode, optional): Valid values can be any of [JiebaMode.MP, JiebaMode.HMM,
+            JiebaMode.MIX](default=JiebaMode.MIX).
+
+            - JiebaMode.MP, tokenize with MPSegment algorithm.
+            - JiebaMode.HMM, tokenize with Hiddel Markov Model Segment algorithm.
+            - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
     """
 
     @check_jieba_init
@@ -287,10 +289,16 @@ if platform.system().lower() != 'windows':
         Apply normalize operation on utf-8 string tensor.
 
         Args:
-            normalize_form (NormalizeForm, optional): Valid values are "NONE", "NFC", "NFKC", "NFD", "NFKD".
-                If set "NONE", will do nothing for input string tensor.
-                If set to any of "NFC", "NFKC", "NFD", "NFKD", will apply normalize operation(default="NFKC").
-                See http://unicode.org/reports/tr15/ for details.
+            normalize_form (NormalizeForm, optional): Valid values can be any of [NormalizeForm.NONE,
+                NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD,
+                NormalizeForm.NFKD](default=NormalizeForm.NFKC).
+                And you can see http://unicode.org/reports/tr15/ for details.
+
+                - NormalizeForm.NONE, do nothing for input string tensor.
+                - NormalizeForm.NFC, normalize with Normalization Form C.
+                - NormalizeForm.NFKC, normalize with Normalization Form KC.
+                - NormalizeForm.NFD, normalize with Normalization Form D.
+                - NormalizeForm.NFKD, normalize with Normalization Form KD.
         """
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
