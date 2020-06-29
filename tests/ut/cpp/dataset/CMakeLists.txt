@@ -47,6 +47,7 @@ SET(DE_UT_SRCS
         rescale_op_test.cc
         resize_bilinear_op_test.cc
         resize_op_test.cc
+	schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
