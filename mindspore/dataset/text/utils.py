@@ -24,6 +24,9 @@ import mindspore._c_dataengine as cde
 
 from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset
 
+__all__ = [
+    "Vocab", "to_str", "to_bytes"
+]
 
 class Vocab(cde.Vocab):
     """
