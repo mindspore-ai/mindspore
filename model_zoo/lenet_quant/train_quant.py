@@ -33,7 +33,7 @@ from src.lenet_fusion import LeNet5 as LeNet5Fusion
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",
-                    choices=['Ascend', 'GPU', 'CPU'],
+                    choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')
@@ -50,11 +50,13 @@ if __name__ == "__main__":
 
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
+
+    # convert fusion network to quantization aware network
+    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
+
     # load quantization aware network checkpoint
     param_dict = load_checkpoint(args.ckpt_path, network.type)
     load_param_into_net(network, param_dict)
-    # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
 
     # define network loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
@@ -64,8 +66,7 @@ if __name__ == "__main__":
     # call back and monitor
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ckpt = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                                   keep_checkpoint_max=cfg.keep_checkpoint_max,
-                                   model_type="quant")
+                                   keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpt_callback = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ckpt)
 
     # define model
