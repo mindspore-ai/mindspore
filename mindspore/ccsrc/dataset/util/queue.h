@@ -71,7 +71,7 @@ class Queue {
         arr_(nullptr),
         head_(0),
         tail_(0),
-        my_name_(std::move(Services::GetUniqueID())),
+        my_name_(Services::GetUniqueID()),
         alloc_(Services::GetInstance().GetServiceMemPool()) {
     Init();
     MS_LOG(DEBUG) << "Create Q with uuid " << my_name_ << " of size " << sz_ << ".";
@@ -154,7 +154,16 @@ class Queue {
       uint32_t k = head_++ % sz_;
       *p = std::move(arr_[k]);
       if (std::is_destructible<T>::value) {
+        // std::move above only changes arr_[k] from rvalue to lvalue.
+        // The real implementation of move constructor depends on T.
+        // It may be compiler generated or user defined. But either case
+        // the result of arr_[k] is still a valid object of type T, and
+        // we will not keep any extra copy in the queue.
         arr_[k].~T();
+        // For gcc 9, an extra fix is needed here to clear the memory content
+        // of arr_[k] because this slot can be reused by another Add which can
+        // do another std::move. We have seen SEGV here in this case.
+        std::allocator_traits<Allocator<T>>::construct(alloc_, &(arr_[k]));
       }
       full_cv_.NotifyAll();
       _lock.unlock();
