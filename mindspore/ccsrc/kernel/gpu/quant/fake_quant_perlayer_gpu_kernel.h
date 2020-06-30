@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PER_CHANNEL_GPUKERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PER_CHANNEL_GPUKERNEL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PERLAYER_GPUKERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PERLAYER_GPUKERNEL_H_
 
 #include <vector>
 #include "kernel/gpu/gpu_kernel.h"
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeQuantPerChannelGpuKernel : public GpuKernel {
+class FakeQuantPerLayerGpuKernel : public GpuKernel {
  public:
-  FakeQuantPerChannelGpuKernel();
-  ~FakeQuantPerChannelGpuKernel() = default;
+  FakeQuantPerLayerGpuKernel();
+  ~FakeQuantPerLayerGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
@@ -39,33 +39,22 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
-  void CalFakeQuantizeForTraining(float *input, float *output, float *input_min, float *input_max, float *d_nudge_min,
-                                  float *d_nudge_max, float *d_scale, void *stream_ptr);
-  void CalFakeQuantizeForInfer(float *input, float *output, float *input_min, float *input_max, float *d_nudge_min,
-                               float *d_nudge_max, float *d_scale, void *stream_ptr);
-
   size_t input_size_;
-  size_t min_size_;
-  size_t max_size_;
-  size_t output_size_;
-  size_t workspace_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  int num_bits_;
   float quant_min_;
   float quant_max_;
-  int quant_delay_;
-  bool ema_;
-  float ema_decay_;
+  int quant_num_;
   int global_step_;
+  int num_bits_;
+  int quant_delay_;
   bool training_;
-  int channel_out_;
   bool narrow_range_;
   bool symmetric_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PER_CHANNEL_GPUKERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_FAKEQUANT_PERLAYER_GPUKERNEL_H_

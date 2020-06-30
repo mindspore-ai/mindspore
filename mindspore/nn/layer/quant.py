@@ -324,6 +324,7 @@ class FakeQuantWithMinMax(Cell):
         validator.check_type("min_init", min_init, [int, float])
         validator.check_type("max_init", max_init, [int, float])
         validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
+        validator.check_integer('quant_delay', quant_delay, 0, Rel.GE)
         self.min_init = min_init
         self.max_init = max_init
         self.num_bits = num_bits
