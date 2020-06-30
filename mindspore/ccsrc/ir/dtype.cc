@@ -94,6 +94,48 @@ bool Slice::operator==(const Type &other) const {
 
 std::string Slice::DumpText() const { return ToString(); }
 
+TypePtr UndeterminedType::DeepCopy() const {
+  MS_EXCEPTION_IF_NULL(element_type_);
+  if (IsGeneric()) {
+    return std::make_shared<UndeterminedType>();
+  }
+  return std::make_shared<UndeterminedType>(element_type_->DeepCopy());
+}
+
+std::string UndeterminedType::ToReprString() const {
+  if (element_type_ == nullptr) {
+    return "Undetermined";
+  }
+  return "Undetermined[" + element_type_->ToReprString() + "]";
+}
+
+std::string UndeterminedType::ToString() const {
+  if (element_type_ == nullptr) {
+    return "Undetermined";
+  }
+  return "Undetermined[" + element_type_->ToString() + "]";
+}
+
+std::string UndeterminedType::DumpText() const {
+  if (element_type_ == nullptr) {
+    return "Undetermined";
+  }
+  return "Undetermined[" + element_type_->DumpText() + "]";
+}
+
+bool UndeterminedType::operator==(const Type &other) const {
+  if (!IsSameObjectType(*this, other)) {
+    return false;
+  }
+  auto other_elem_type = static_cast<const UndeterminedType &>(other).element_type_;
+  if (element_type_ == nullptr && other_elem_type == nullptr) {
+    return true;
+  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
+    return false;
+  }
+  return *element_type_ == *other_elem_type;
+}
+
 TypePtr TensorType::DeepCopy() const {
   MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {
@@ -129,6 +171,48 @@ bool TensorType::operator==(const Type &other) const {
   }
   auto other_elem_type = static_cast<const TensorType &>(other).element_type_;
   // When element_type_ = nullptr, which means any type of Array.
+  if (element_type_ == nullptr && other_elem_type == nullptr) {
+    return true;
+  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
+    return false;
+  }
+  return *element_type_ == *other_elem_type;
+}
+
+TypePtr IndexedSlicesType::DeepCopy() const {
+  MS_EXCEPTION_IF_NULL(element_type_);
+  if (IsGeneric()) {
+    return std::make_shared<IndexedSlicesType>();
+  }
+  return std::make_shared<IndexedSlicesType>(element_type_->DeepCopy());
+}
+
+std::string IndexedSlicesType::ToReprString() const {
+  if (element_type_ == nullptr) {
+    return "IndexedSlices";
+  }
+  return "IndexedSlices[" + element_type_->ToReprString() + "]";
+}
+
+std::string IndexedSlicesType::ToString() const {
+  if (element_type_ == nullptr) {
+    return "IndexedSlices";
+  }
+  return "IndexedSlices[" + element_type_->ToString() + "]";
+}
+
+std::string IndexedSlicesType::DumpText() const {
+  if (element_type_ == nullptr) {
+    return "IndexedSlices";
+  }
+  return "IndexedSlices[" + element_type_->DumpText() + "]";
+}
+
+bool IndexedSlicesType::operator==(const Type &other) const {
+  if (!IsSameObjectType(*this, other)) {
+    return false;
+  }
+  auto other_elem_type = static_cast<const IndexedSlicesType &>(other).element_type_;
   if (element_type_ == nullptr && other_elem_type == nullptr) {
     return true;
   } else if (element_type_ == nullptr || other_elem_type == nullptr) {

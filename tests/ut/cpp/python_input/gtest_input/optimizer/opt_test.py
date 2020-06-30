@@ -1130,3 +1130,38 @@ def test_adjust_allreduce_mul_add(tag):
         return Mul(AllReduce(AddN((Mul(z, z), x))), y)
 
     return fns[tag]
+
+
+def test_indexed_slices(tag):
+    """ test_add_zero """
+    fns = FnDict()
+    make_indexed_slices = Primitive('MakeIndexedSlices')
+    indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
+    indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
+    indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
+
+    @fns
+    def before_get_indices(x, y, z):
+        return indexed_slices_get_indices(make_indexed_slices(x, y, z))
+
+    @fns
+    def after_get_indices(x, y, z):
+        return x
+
+    @fns
+    def before_get_values(x, y, z):
+        return indexed_slices_get_values(make_indexed_slices(x, y, z))
+
+    @fns
+    def after_get_values(x, y, z):
+        return y
+
+    @fns
+    def before_get_dense_shape(x, y, z):
+        return indexed_slices_get_dense_shape(make_indexed_slices(x, y, z))
+
+    @fns
+    def after_get_dense_shape(x, y, z):
+        return z
+
+    return fns[tag]

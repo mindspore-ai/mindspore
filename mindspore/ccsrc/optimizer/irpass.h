@@ -104,6 +104,9 @@ class OptimizeIRPassLib {
 
   // Fusion
   SubstitutionPtr mark_interface_fusion_;
+
+  // IndexedSlices Eliminate
+  SubstitutionPtr indexed_slices_eliminate_;
 };
 
 // the collection of irpass for resolve action

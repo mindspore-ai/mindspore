@@ -52,13 +52,16 @@ class Parameter:
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
             broadcast and gradients communication would not be applied on parameters. Default: False.
         sparse_grad (str): Set if the parameter's gradient is sparse. Default: empty.
+        has_indexed_slices (bool): Set if the parameter's gradient is indexed_slices. Default: false.
     """
-    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False, sparse_grad=""):
+    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False,
+                 sparse_grad="", has_indexed_slices_grad=False):
         self.set_parameter_data(default_input)
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
         self.sparse_grad = sparse_grad
+        self.has_indexed_slices_grad = has_indexed_slices_grad
         self._is_init = False
         self._sliced = False
         self.clone_info = _CloneInfo()
@@ -185,6 +188,17 @@ class Parameter:
         if not isinstance(value, str):
             raise TypeError("`sparse_grad` parameter must be str type")
         self._sparse_grad = value
+
+    @property
+    def has_indexed_slices_grad(self):
+        """Return whether the parameter's gradient is indexed_slices."""
+        return self._has_indexed_slices_grad
+
+    @has_indexed_slices_grad.setter
+    def has_indexed_slices_grad(self, value=False):
+        if not isinstance(value, bool):
+            raise TypeError("`has_indexed_slices_grad` parameter must be bool type")
+        self._has_indexed_slices_grad = value
 
     @property
     def data(self):

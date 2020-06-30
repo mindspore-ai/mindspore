@@ -42,6 +42,7 @@
 #include "optimizer/irpass/tile_eliminate.h"
 #include "optimizer/irpass/transpose_eliminate.h"
 #include "optimizer/opt.h"
+#include "optimizer/irpass/indexed_slices_eliminate.h"
 
 namespace mindspore {
 namespace opt {
@@ -153,6 +154,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Mark interface fusion
   mark_interface_fusion_ =
     MakeSubstitution(std::make_shared<MarkInterfaceFusion>(), "mark_interface_fusion", prim::kPrimSelect);
+
+  // IndexedSlices Eliminate
+  indexed_slices_eliminate_ = MakeSubstitution(
+    std::make_shared<IndexedSlicesEliminater>(), "indexed_slices_eliminate",
+    {prim::kPrimIndexedSlicesGetIndices, prim::kPrimIndexedSlicesGetValues, prim::kPrimIndexedSlicesGetDenseShape});
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
