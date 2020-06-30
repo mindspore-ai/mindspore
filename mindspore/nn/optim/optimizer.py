@@ -77,8 +77,7 @@ class Optimizer(Cell):
 
             - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' but not in any group will use default learning rate and default weight
-              decay.
+              in the value of 'order_params' should be in one of group parameters.
 
         weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
@@ -351,16 +350,18 @@ class Optimizer(Cell):
                 self.group_weight_decay.append(weight_decay_)
 
         if self.is_group_params_ordered:
-            self._order_and_adjust_group_params(ordered_parameters, learning_rate, weight_decay)
+            self._order_and_adjust_group_params(ordered_parameters)
 
-    def _order_and_adjust_group_params(self, ordered_parameters, learning_rate, weight_decay):
+    def _order_and_adjust_group_params(self, ordered_parameters):
         """
-        Order group parameter, learning rate and weight decay in group params. And assign the parameters
-        which in the value of 'order_params' but not in any group to default value.
+        Order group parameter, learning rate and weight decay in group params.
         """
-        params_length = len(ordered_parameters)
-        ordered_learning_rate = [Parameter(learning_rate, name="lr_" + param.name) for param in ordered_parameters]
-        ordered_weight_decay = [weight_decay * self.loss_scale] * params_length
+        params_length = len(self.group_params)
+        if len(ordered_parameters) != len(self.group_params):
+            raise ValueError(f"The value of 'order_params' should be same with all group parameters.")
+
+        ordered_learning_rate = [None] * params_length
+        ordered_weight_decay = [None] * params_length
         params_name = [param.name for param in ordered_parameters]
 
         for param, lr, wd in zip(self.group_params, self.group_lr, self.group_weight_decay):

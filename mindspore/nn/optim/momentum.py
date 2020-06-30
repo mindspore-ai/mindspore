@@ -64,8 +64,7 @@ class Momentum(Optimizer):
 
             - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' but not in any group will use default learning rate and default weight
-              decay.
+              in the value of 'order_params' should be in one of group parameters.
 
         learning_rate (Union[int, float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                              Iterable or a Tensor and the dims of the Tensor is 1,
@@ -97,16 +96,14 @@ class Momentum(Optimizer):
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-        >>> bias_params = list(filter(lambda x: 'bias' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
-        >>>                 {'params': bias_params, 'lr': 0.01},
+        >>>                 {'params': no_conv_params, 'lr': 0.01},
         >>>                 {'order_params': net.trainable_params()}]
         >>> opt = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
         >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
-        >>> # The bias_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
+        >>> # The no_conv_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
-        >>> # The parameters which in the value of 'order_params' but not in any group will use a learning rate
-        >>> # of default value 0.1 and a weight decay of default value 0.0.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
