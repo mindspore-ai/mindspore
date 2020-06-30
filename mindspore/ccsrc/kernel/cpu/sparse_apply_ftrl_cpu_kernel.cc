@@ -145,8 +145,7 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   input_params.sparse_grad_ = unique_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  const size_t kThreadNum = 16;
-  MultiThreadCompute(ComputeFtrl, &input_params, kThreadNum, unique_sparse_grad.indices_size_);
+  MultiThreadCompute(ComputeFtrl, &input_params, unique_sparse_grad.indices_size_);
   return true;
 }
 }  // namespace kernel
