@@ -185,6 +185,19 @@ class HistogramSummaryNet(nn.Cell):
         return out
 
 
+class ScatterUpdate(nn.Cell):
+    """ScatterUpdate net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterUpdate, self).__init__()
+        self.scatter_update = P.ScatterUpdate(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_update(self.ref, indices, updates)
+        return out
+
+
 class ScatterMax(nn.Cell):
     """ScatterMax net definition"""
 
@@ -234,6 +247,32 @@ class ScatterSub(nn.Cell):
 
     def construct(self, indices, updates):
         out = self.scatter_sub(self.ref, indices, updates)
+        return out
+
+
+class ScatterMul(nn.Cell):
+    """ScatterMul net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterMul, self).__init__()
+        self.scatter_mul = P.ScatterMul(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_mul(self.ref, indices, updates)
+        return out
+
+
+class ScatterDiv(nn.Cell):
+    """ScatterDiv net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterDiv, self).__init__()
+        self.scatter_div = P.ScatterDiv(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)*10), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_div(self.ref, indices, updates)
         return out
 
 
@@ -1861,6 +1900,11 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
                         Tensor(np.ones([2, 2, 3], np.int32))),
         'skip': ['backward']}),
+    ('ScatterUpdate', {
+        'block': ScatterUpdate((6,)),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
+        'skip': ['backward']}),
     ('ScatterAddUseLocking', {
         'block': ScatterAdd((6,), use_locking=True),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
@@ -1899,6 +1943,73 @@ test_case_other_ops = [
         'skip': ['backward']}),
     ('ScatterAddU8', {
         'block': ScatterAdd((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.uint8))),
+        'skip': ['backward']}),
+    ('ScatterMulUseLocking', {
+        'block': ScatterMul((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMulScalar', {
+        'block': ScatterMul((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMul2d', {
+        'block': ScatterMul((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMulF16', {
+        'block': ScatterMul((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterMulI8', {
+        'block': ScatterMul((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterMulI32', {
+        'block': ScatterMul((6,), np.int32),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterMulU8', {
+        'block': ScatterMul((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.uint8))),
+        'skip': ['backward']}),
+    ('ScatterDivUseLocking', {
+        'block': ScatterDiv((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterDivScalar', {
+        'block': ScatterDiv((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterDiv2d', {
+        'block': ScatterDiv((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterDivF16', {
+        'block': ScatterDiv((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterDivI8', {
+        'block': ScatterDiv((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterDivU8', {
+        'block': ScatterDiv((6,), np.uint8),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
                         Tensor(np.array([2, 3, 4], np.uint8))),
         'skip': ['backward']}),

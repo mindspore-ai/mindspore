@@ -369,7 +369,7 @@ class CosineEmbeddingLoss(_Loss):
         >>> x2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
         >>> y = Tensor(np.array([1,-1]), mindspore.int32)
         >>> cosine_embedding_loss = P.CosineEmbeddingLoss()
-        >>> cosine_embedding_loss(x1, x2, target)
+        >>> cosine_embedding_loss(x1, x2, y)
         [0.0003426671]
     """
     def __init__(self, margin=0.0, reduction="mean"):
