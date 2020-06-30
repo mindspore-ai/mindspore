@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-ParallelOp::ParallelOp(int32_t num_workers, int32_t op_connector_size)
-    : DatasetOp(op_connector_size),
+ParallelOp::ParallelOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<Sampler> sampler)
+    : DatasetOp(op_connector_size, sampler),
       num_workers_(num_workers),
       num_producers_(num_workers),
       worker_connector_size_(1),

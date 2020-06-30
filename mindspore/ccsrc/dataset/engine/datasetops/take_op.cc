@@ -129,7 +129,7 @@ Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<D
 
 Status TakeOp::PrepareNodePostAction() {
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  tree_->AddToRepeatStack(shared_from_this());
+  tree_->AddToEOEOpStack(shared_from_this());
   return Status::OK();
 }
 

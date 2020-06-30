@@ -88,13 +88,13 @@ Status ExecutionTree::AssignRoot(const std::shared_ptr<DatasetOp> &op) {
 }
 
 // A print method typically used for debugging
-void ExecutionTree::Print(std::ostream &out) const {
+void ExecutionTree::Print(std::ostream &out, const std::shared_ptr<DatasetOp> &op) const {
   out << "Execution tree summary:\n"
       << "-----------------------\n";
-  this->PrintNode(out, root_, "", true, false);
+  this->PrintNode(out, op == nullptr ? root_ : op, "", true, false);
   out << "\nExecution tree operator details:\n"
       << "--------------------------------\n";
-  this->PrintNode(out, root_, "", true, true);
+  this->PrintNode(out, op == nullptr ? root_ : op, "", true, true);
 }
 
 // A helper functions for doing the recursive printing
@@ -269,27 +269,40 @@ Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) 
     RETURN_IF_NOT_OK(this->PrepareNode(i));
   }
 
-  // Then clear the flags from this op now that we have prepared it.
-  BitClear(&prepare_flags_, op_prep_flags);
-
   // No more children, now we execute any prepare actions before going back up the
   // the tree on recursive function
   RETURN_IF_NOT_OK(dataset_op->PrepareNodePostAction());
 
+  // Then clear the flags from this op now that we have prepared it.
+  BitClear(&prepare_flags_, op_prep_flags);
+
   return Status::OK();
 }
 
-// Adds an operator to the repeat stack during prepare phase.
-void ExecutionTree::AddToRepeatStack(std::shared_ptr<DatasetOp> dataset_op) { repeat_stack_.push(dataset_op); }
+// Adds an operator to the eoe operator stack during prepare phase.
+void ExecutionTree::AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op) { eoe_stack_.push(dataset_op); }
 
-// Pops an operator from the repeat stack during prepare phase.
-std::shared_ptr<DatasetOp> ExecutionTree::PopFromRepeatStack() {
+// Pops an operator from the eoe operator stack during prepare phase.
+std::shared_ptr<DatasetOp> ExecutionTree::PopFromEOEOpStack() {
   std::shared_ptr<DatasetOp> top_op = nullptr;
-  if (!repeat_stack_.empty()) {
-    top_op = repeat_stack_.top();
-    repeat_stack_.pop();
+  if (!eoe_stack_.empty()) {
+    top_op = eoe_stack_.top();
+    eoe_stack_.pop();
   }
   return top_op;
+}
+
+// Adds a sampler to the sampler stack during prepare phase.
+void ExecutionTree::AddToSamplerStack(std::shared_ptr<Sampler> sampler) { sampler_stack_.push(sampler); }
+
+// Pops an operator from the sampler stack during prepare phase.
+std::shared_ptr<Sampler> ExecutionTree::PopFromSamplerStack() {
+  std::shared_ptr<Sampler> top_sampler = nullptr;
+  if (!sampler_stack_.empty()) {
+    top_sampler = sampler_stack_.top();
+    sampler_stack_.pop();
+  }
+  return top_sampler;
 }
 }  // namespace dataset
 }  // namespace mindspore

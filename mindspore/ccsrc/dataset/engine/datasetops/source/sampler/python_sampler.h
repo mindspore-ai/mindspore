@@ -50,6 +50,11 @@ class PythonSampler : public Sampler {
   // @return - The error code return
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
+  // Printer for debugging purposes.
+  // @param out - output stream to write to
+  // @param show_all - bool to show detailed vs summary
+  void Print(std::ostream &out, bool show_all) const override;
+
  private:
   bool need_to_reset_;  // Whether Reset() should be called before calling GetNextBuffer()
 

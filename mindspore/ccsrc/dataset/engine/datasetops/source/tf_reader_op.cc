@@ -48,7 +48,11 @@
 namespace mindspore {
 namespace dataset {
 TFReaderOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_total_rows_(0), builder_equal_rows_per_shard_(false) {
+    : builder_device_id_(0),
+      builder_num_devices_(1),
+      builder_total_rows_(0),
+      builder_equal_rows_per_shard_(false),
+      builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_worker_connector_size_ = config_manager->worker_connector_size();
@@ -87,11 +91,6 @@ Status TFReaderOp::Builder::ValidateInputs() const {
     err_msg += "Number of parallel workers is smaller or equal to 0\n";
   }
 
-  if (!builder_equal_rows_per_shard_ &&
-      builder_dataset_files_list_.size() < static_cast<uint32_t>(builder_num_devices_)) {
-    err_msg += "Not enough tfrecord files provided\n";
-  }
-
   if (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1) {
     err_msg += "Wrong sharding configs\n";
   }
@@ -125,7 +124,8 @@ Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op)
   std::shared_ptr<TFReaderOp> new_tf_reader_op = std::make_shared<TFReaderOp>(
     builder_num_workers_, builder_worker_connector_size_, builder_rows_per_buffer_, builder_total_rows_,
     builder_dataset_files_list_, std::move(builder_data_schema_), builder_op_connector_size_, builder_columns_to_load_,
-    builder_shuffle_files_, builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_);
+    builder_shuffle_files_, builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_,
+    std::move(builder_sampler_));
 
   RETURN_IF_NOT_OK(new_tf_reader_op->Init());
   *out_tf_reader_op = std::move(new_tf_reader_op);
@@ -136,8 +136,8 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
                        int64_t total_num_rows, std::vector<std::string> dataset_files_list,
                        std::unique_ptr<DataSchema> data_schema, int32_t op_connector_size,
                        std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_device,
-                       int32_t device_id, bool equal_rows_per_shard)
-    : ParallelOp(num_workers, op_connector_size),
+                       int32_t device_id, bool equal_rows_per_shard, std::shared_ptr<Sampler> sampler)
+    : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       device_id_(device_id),
       num_devices_(num_device),
       rows_per_buffer_(rows_per_buffer),
@@ -1016,6 +1016,41 @@ Status TFReaderOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
+  return Status::OK();
+}
+
+// During tree prepare phase, operators may have specific post-operations to perform depending on
+// their role.
+Status TFReaderOp::PrepareNodePostAction() {
+  // Run common code from super class before adding TFReaderOp specific handling
+  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
+
+  // Specific handling for this op, we need to do cache op work so assign the sampler to the cache
+  // TF is a special case because it can support file-based sharding/shuffling, or, if there
+  // is a cache, then it can also do row-based sampler using the sampler on the cache.
+  // Thus, pass true for random access op flag when saving the sampler.  This is a special case,
+  // since usually a non-mappable dataset would pass false here.
+  RETURN_IF_NOT_OK(DatasetOp::SaveSamplerForCache(true));
+
+  // Now that the sampler has been saved for the cache, we need to adjust the TFReaderOp to turn it into
+  // a simpler producer of all data (no shuffling or sharding or anything)
+  if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepCache)) {
+    device_id_ = 0;
+    num_devices_ = 1;
+    total_rows_ = 0;
+    shuffle_files_ = false;
+    equal_rows_per_shard_ = false;
+    sampler_.reset();  // Normally SaveSampler code did this for us, but we passed in true above (See comment)
+  } else {
+    // This sanity check had been delayed until now in the prepare loop.
+    // If we are not in a cache path, then we can validate the the file-based sharding config.
+    // If we are in a cache path, there is no file-based sharding so the check is not correct in that
+    // situation.
+    if (!equal_rows_per_shard_ && dataset_files_list_.size() < static_cast<uint32_t>(num_devices_)) {
+      RETURN_STATUS_UNEXPECTED("Not enough tfrecord files provided\n");
+    }
+  }
+
   return Status::OK();
 }
 }  // namespace dataset

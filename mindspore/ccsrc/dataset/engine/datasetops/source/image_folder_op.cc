@@ -65,7 +65,7 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
                              bool recursive, bool do_decode, const std::set<std::string> &exts,
                              const std::map<std::string, int32_t> &map, std::unique_ptr<DataSchema> data_schema,
                              std::shared_ptr<Sampler> sampler)
-    : ParallelOp(num_wkrs, queue_size),
+    : ParallelOp(num_wkrs, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       folder_path_(file_dir),
       recursive_(recursive),
@@ -73,7 +73,6 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
       extensions_(exts),
       class_index_(map),
       data_schema_(std::move(data_schema)),
-      sampler_(std::move(sampler)),
       row_cnt_(0),
       buf_cnt_(0),
       sampler_ind_(0),

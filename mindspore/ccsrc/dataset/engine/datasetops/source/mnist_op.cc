@@ -66,12 +66,11 @@ Status MnistOp::Builder::SanityCheck() {
 
 MnistOp::MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folder_path, int32_t queue_size,
                  std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
-    : ParallelOp(num_workers, queue_size),
+    : ParallelOp(num_workers, queue_size, std::move(sampler)),
       buf_cnt_(0),
       row_cnt_(0),
       folder_path_(folder_path),
       rows_per_buffer_(rows_per_buffer),
-      sampler_(std::move(sampler)),
       data_schema_(std::move(data_schema)) {
   io_block_queues_.Init(num_workers, queue_size);
 }

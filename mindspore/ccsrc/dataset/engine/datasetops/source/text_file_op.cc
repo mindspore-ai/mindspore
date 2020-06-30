@@ -33,7 +33,11 @@
 namespace mindspore {
 namespace dataset {
 TextFileOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_total_rows_(0), builder_shuffle_files_(false) {
+    : builder_device_id_(0),
+      builder_num_devices_(1),
+      builder_total_rows_(0),
+      builder_shuffle_files_(false),
+      builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
@@ -64,7 +68,7 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     builder_num_workers_, builder_rows_per_buffer_, builder_total_rows_, builder_worker_connector_size_,
     std::move(builder_schema_), builder_text_files_list_, builder_op_connector_size_, builder_shuffle_files_,
-    builder_num_devices_, builder_device_id_);
+    builder_num_devices_, builder_device_id_, std::move(builder_sampler_));
   RETURN_IF_NOT_OK(text_file_op->Init());
   *op = std::move(text_file_op);
 
@@ -73,8 +77,9 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
 
 TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
                        std::unique_ptr<DataSchema> schema, std::vector<std::string> text_files_list,
-                       int32_t op_connector_size, bool shuffle_files, int32_t num_device, int32_t device_id)
-    : ParallelOp(num_workers, op_connector_size),
+                       int32_t op_connector_size, bool shuffle_files, int32_t num_device, int32_t device_id,
+                       std::shared_ptr<Sampler> sampler)
+    : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       device_id_(device_id),
       num_devices_(num_device),
       rows_per_buffer_(rows_per_buffer),
