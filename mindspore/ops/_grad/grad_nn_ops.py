@@ -521,11 +521,9 @@ def get_bprop_l2_loss(self):
 @bprop_getters.register(P.RNNTLoss)
 def get_bprop_rnnt_loss(self):
     """Grad definition for `RNNTLoss` operation."""
-    expand = P.ExpandDims()
 
     def bprop(acts, labels, act_lens, label_lens, out, dout):
-        grad_loss = out[1]
-        grad = grad_loss * expand(expand(expand(dout[0], -1), -1), -1)
+        grad = out[1]
         return grad, zeros_like(labels), zeros_like(act_lens), zeros_like(label_lens)
     return bprop
 
