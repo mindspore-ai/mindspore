@@ -38,6 +38,7 @@ class SummaryReader:
     def __init__(self, canonical_file_path, ignore_version_event=True):
         self._file_path = canonical_file_path
         self._ignore_version_event = ignore_version_event
+        self._file_handler = None
 
     def __enter__(self):
         self._file_handler = open(self._file_path, "rb")
