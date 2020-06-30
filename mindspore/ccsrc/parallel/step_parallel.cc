@@ -43,6 +43,7 @@
 #include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "utils/comm_manager.h"
 #include "utils/symbolic.h"
+#include "pipeline/static_analysis/prim.h"
 
 using mindspore::tensor::Tensor;
 
@@ -1370,6 +1371,11 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       MS_LOG(EXCEPTION) << "The parameter: " << cloned_parameter->name() << " is cloned, cloned index is  "
                         << cloned_index << ", but not found the be cloned parameter";
     }
+  }
+  std::string env = common::GetEnv("SLICE_ENV");
+  if (!env.empty()) {
+    MS_LOG(INFO) << "Slice tensors shape will be configured from env:" << env;
+    abstract::InitUndeterminedFromEnv(env);
   }
 }
 
