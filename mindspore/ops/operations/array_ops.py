@@ -2818,33 +2818,30 @@ class InplaceUpdate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, indices):
         """Init InplaceUpdate"""
-        self.init_prim_io_names(inputs=['x', 'indices', 'v'], outputs=['y'])
+        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
+        self.indices = indices
         validator.check_value_type("indices", indices, [int, tuple], self.name)
         if isinstance(indices, int):
-            self.add_prim_attr('indices', (indices,))
+            self.indices = (indices,)
         for item in self.indices:
             validator.check_value_type("item of indices", item, [int], self.name)
 
     def infer_dtype(self, x_dtype, v_dtype):
+        args = {'x': x_dtype, 'v': v_dtype}
         valid_type = [mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensor_type_same(
-            {
-                "x": x_dtype,
-                "v": v_dtype
-            }, valid_type, self.name)
-
+        validator.check_tensor_type_same(args, valid_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, v_shape):
         validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
-
+        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                        Rel.EQ, self.name)
+        for i in self.indices:
+            if i < 0 or i >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
         x_rank = len(x_shape)
         for idx in range(x_rank)[1:]:
             validator.check("x dim %d" % idx, x_shape[idx], 'v dim %d' % idx, v_shape[idx], Rel.EQ, self.name)
-
-        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
-                        Rel.EQ, self.name)
-
         return x_shape
 
 
