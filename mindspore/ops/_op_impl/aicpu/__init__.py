@@ -33,6 +33,7 @@ from .rnnt_loss import _rnnt_loss_aicpu
 from .random_categorical import _random_categorical_aicpu
 from .cast import _cast_aicpu
 from .mirror_pad import _mirror_pad_aicpu
+from .mirror_pad_grad import _mirror_pad_grad_aicpu
 from .normal import _normal_aicpu
 from .gamma import _gamma_aicpu
 from .poisson import _poisson_aicpu
