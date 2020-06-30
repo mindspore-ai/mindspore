@@ -1152,11 +1152,10 @@ class MirrorPadGrad(PrimitiveWithInfer):
         validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'], self.name)
         self.mode = mode
 
-    def __infer__(self, dout, paddings, x):
+    def __infer__(self, dout, paddings):
         validator.check_subclass("dout", dout['dtype'], mstype.tensor, self.name)
         validator.check_subclass("paddings", paddings['dtype'], mstype.tensor, self.name)
-        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
-        return {'shape': x['shape'],
+        return {'shape': dout['shape'],
                 'dtype': dout['dtype'],
                 'value': None}
 
