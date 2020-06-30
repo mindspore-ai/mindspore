@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "kernel/akg/akg_kernel_build.h"
@@ -40,6 +41,9 @@ class AkgAscendKernelBuilder : public AkgKernelBuild {
   const std::vector<size_t> &output_size_list() const { return output_size_list_; }
 
  private:
+  bool GenJsonAndPreprocess4Fused(const std::vector<AnfNodePtr> &anf_nodes,
+                                  std::map<AnfNodePtr, nlohmann::json> *node_json_map);
+
   std::string kernel_json_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
