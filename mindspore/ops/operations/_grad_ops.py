@@ -1110,6 +1110,54 @@ class StridedSliceGrad(PrimitiveWithInfer):
                 'value': None}
 
 
+class StridedSliceGradAICPU(PrimitiveWithInfer):
+    """
+    Performs grad of StridedSlice operation.
+
+    Args:
+        begin_mask (int): Start indexing the slice. Default: 0.
+        end_mask (int): End indexing the slice. Default: 0.
+        ellipsis_mask (int): An int32 mask. Default: 0.
+        new_axis_mask (int): An int32 mask. Default: 0.
+        shrink_axis_mask (int): An int32 mask. Default: 0.
+
+    Returns:
+        Tensor, has the same shape of input.
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 begin_mask=0,
+                 end_mask=0,
+                 ellipsis_mask=0,
+                 new_axis_mask=0,
+                 shrink_axis_mask=0):
+        """init StrideSliceGrad"""
+        validator.check_value_type('begin_mask', begin_mask, [int], self.name)
+        validator.check_value_type('end_mask', end_mask, [int], self.name)
+        validator.check_value_type('ellipsis_mask', ellipsis_mask, [int], self.name)
+        validator.check_value_type('new_axis_mask', new_axis_mask, [int], self.name)
+        validator.check_value_type('shrink_axis_mask', shrink_axis_mask, [int], self.name)
+        self.init_prim_io_names(inputs=['dy', 'shapex', 'begin', 'end', 'strides'], outputs=['output'])
+
+    def __infer__(self, dy, shapex, begin, end, strides):
+        args = {"dy": dy['dtype']}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+
+        for idx, item in enumerate(shapex['value']):
+            validator.check_value_type("shapex[%d]" % idx, item, [int], self.name)
+        for idx, item in enumerate(begin['value']):
+            validator.check_value_type("begin[%d]" % idx, item, [int], self.name)
+        for idx, item in enumerate(end['value']):
+            validator.check_value_type("end[%d]" % idx, item, [int], self.name)
+        for idx, item in enumerate(strides['value']):
+            validator.check_value_type("strides[%d]" % idx, item, [int], self.name)
+
+        return {'shape': shapex['value'],
+                'dtype': dy['dtype'],
+                'value': None}
+
+
 class SoftplusGrad(PrimitiveWithInfer):
     """Computes gradient for the Log Softmax activation."""
 

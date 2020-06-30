@@ -40,3 +40,5 @@ from .poisson import _poisson_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu
 from .laplace import _laplace_aicpu
+from .strided_slice import _strided_slice_aicpu
+from .strided_slice_grad import _strided_slice_grad_aicpu
