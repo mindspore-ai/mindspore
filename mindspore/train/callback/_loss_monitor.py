@@ -67,7 +67,6 @@ class LossMonitor(Callback):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
-        step_mseconds = (time.time() - self.step_time) * 1000
         step_loss = cb_params.net_outputs
 
         if isinstance(step_loss, (tuple, list)) and isinstance(step_loss[0], Tensor):
@@ -85,9 +84,6 @@ class LossMonitor(Callback):
                                  cur_step_in_epoch, cb_params.batch_num))
 
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
-            print("Epoch: [{:3d}/{:3d}], step: [{:5d}/{:5d}], "
-                  "loss: [{:5.4f}/{:5.4f}], time: [{:5.4f}]".format(
-                      cb_params.cur_epoch_num, cb_params.epoch_num,
-                      cur_step_in_epoch, int(cb_params.batch_num),
-                      step_loss, np.mean(self.losses),
-                      step_mseconds), flush=True)
+            print("epoch: {} step {}, loss is {}".format(cb_params.cur_epoch_num,
+                                                         cur_step_in_epoch,
+                                                         step_loss), flush=True)
