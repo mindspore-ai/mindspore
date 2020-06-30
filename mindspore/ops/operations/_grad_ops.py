@@ -237,6 +237,7 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
             self.add_prim_attr('stride', self.stride)
         self.dilation = dilation
         self.group = group
+        self.add_prim_attr('groups', group)
         self.add_prim_attr('data_format', "NCHW")
 
     def __infer__(self, doutput, x, w_size):

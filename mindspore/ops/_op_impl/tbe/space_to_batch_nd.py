@@ -25,8 +25,8 @@ space_to_batch_nd_op_info = TBERegOp("SpaceToBatchND") \
     .partial_flag(True) \
     .attr("block_shape", "required", "listInt", "all") \
     .attr("paddings", "required", "listListInt", "all") \
-    .input(0, "x", False, "required", "all") \
-    .output(0, "y", False, "required", "all") \
+    .input(0, "x", False, "required", "all", reshape_type="NH") \
+    .output(0, "y", False, "required", "all", reshape_type="NH") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
