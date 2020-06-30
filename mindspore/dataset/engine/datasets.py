@@ -4036,8 +4036,8 @@ class VOCDataset(MappableDataset):
     A source dataset for reading and parsing VOC dataset.
 
     The generated dataset has two columns :
-    task='Detection' : ['image', 'annotation'].
-    task='Segmentation' : ['image', 'target']
+    task='Detection' : ['image', 'annotation'];
+    task='Segmentation' : ['image', 'target'].
     The shape of both column 'image' and 'target' is [image_size] if decode flag is False, or [H, W, C]
     otherwise.
     The type of both tensor 'image' and 'target' is uint8.
@@ -4072,20 +4072,20 @@ class VOCDataset(MappableDataset):
          - False
          - not allowed
 
-   Citation of VOC dataset.
+    Citation of VOC dataset.
 
     .. code-block::
 
         @article{Everingham10,
-        author    = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
-        title     = {The Pascal Visual Object Classes (VOC) Challenge},
-        journal   = {International Journal of Computer Vision},
-        volume    = {88},
-        year      = {2010},
-        number    = {2},
-        month     = {jun},
-        pages     = {303--338},
-        biburl    = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
+        author       = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
+        title        = {The Pascal Visual Object Classes (VOC) Challenge},
+        journal      = {International Journal of Computer Vision},
+        volume       = {88},
+        year         = {2010},
+        number       = {2},
+        month        = {jun},
+        pages        = {303--338},
+        biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
         howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html},
         description  = {The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
                         object category recognition and detection, providing the vision and machine
@@ -4096,8 +4096,8 @@ class VOCDataset(MappableDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
-            (default="Segmentation")
-        mode(str): Set the data list txt file to be readed (default="train")
+            (default="Segmentation").
+        mode (str): Set the data list txt file to be readed (default="train").
         class_indexing (dict, optional): A str-to-int mapping from label name to index
             (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
@@ -4116,9 +4116,9 @@ class VOCDataset(MappableDataset):
             argument should be specified only when num_shards is also specified.
 
     Raises:
-        RuntimeError: If xml of Annotations is a invalid format
-        RuntimeError: If xml of Annotations loss attribution of "object"
-        RuntimeError: If xml of Annotations loss attribution of "bndbox"
+        RuntimeError: If xml of Annotations is a invalid format.
+        RuntimeError: If xml of Annotations loss attribution of "object".
+        RuntimeError: If xml of Annotations loss attribution of "bndbox".
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -4232,10 +4232,10 @@ class CocoDataset(MappableDataset):
     """
     A source dataset for reading and parsing COCO dataset.
 
-    CocoDataset support four kinds of task:
-        2017 Train/Val/Test Detection, Keypoints, Stuff, Panoptic.
+    CocoDataset support four kinds of task: 2017 Train/Val/Test Detection, Keypoints, Stuff, Panoptic.
 
     The generated dataset has multi-columns :
+
         - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
           ['iscrowd', dtype=uint32]].
         - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
@@ -4273,35 +4273,35 @@ class CocoDataset(MappableDataset):
          - False
          - not allowed
 
-   Citation of Coco dataset.
+    Citation of Coco dataset.
 
     .. code-block::
 
         @article{DBLP:journals/corr/LinMBHPRDZ14,
-        author    = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
-                     Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
-                     Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
-        title     = {Microsoft {COCO:} Common Objects in Context},
-        journal   = {CoRR},
-        volume    = {abs/1405.0312},
-        year      = {2014},
-        url       = {http://arxiv.org/abs/1405.0312},
+        author        = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
+                         Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
+                         Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
+        title         = {Microsoft {COCO:} Common Objects in Context},
+        journal       = {CoRR},
+        volume        = {abs/1405.0312},
+        year          = {2014},
+        url           = {http://arxiv.org/abs/1405.0312},
         archivePrefix = {arXiv},
-        eprint    = {1405.0312},
-        timestamp = {Mon, 13 Aug 2018 16:48:13 +0200},
-        biburl    = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
-        bibsource = {dblp computer science bibliography, https://dblp.org},
-        description = {COCO is a large-scale object detection, segmentation, and captioning dataset.
-                       It contains 91 common object categories with 82 of them having more than 5,000
-                       labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
-                       categories but more instances per category.}
+        eprint        = {1405.0312},
+        timestamp     = {Mon, 13 Aug 2018 16:48:13 +0200},
+        biburl        = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
+        bibsource     = {dblp computer science bibliography, https://dblp.org},
+        description   = {COCO is a large-scale object detection, segmentation, and captioning dataset.
+                         It contains 91 common object categories with 82 of them having more than 5,000
+                         labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
+                         categories but more instances per category.}
         }
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the annotation json.
         task (str): Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
-            (default='Detection')
+            (default='Detection').
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
