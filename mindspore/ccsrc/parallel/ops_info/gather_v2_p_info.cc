@@ -79,8 +79,8 @@ Status GatherV2PInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto param_shape = inputs_shape_.at(0);
   auto param_strategy = strategy->GetInputDim().at(0);
   auto slice_shape = param_shape.at(param_shape.size() - 1) / param_strategy.at(param_strategy.size() - 1);
-  if (slice_shape % 8 != 0 && slice_shape != 1) {
-    MS_LOG(DEBUG) << name_ << ": Last dim of param slice shape need 32Byte aligned.";
+  if ((target_ != CPU) && (slice_shape % 8 != 0) && (slice_shape != 1)) {
+    MS_LOG(ERROR) << name_ << ": Last dim of param slice shape need 32Byte aligned.";
     return FAILED;
   }
 
