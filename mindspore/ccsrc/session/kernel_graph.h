@@ -130,6 +130,9 @@ class KernelGraph : public FuncGraph {
   // get real inputs
   const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs() const { return real_inputs_; }
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
+  // mark unreused args
+  void AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph);
+  const std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> &unreuse_args() const { return unreuse_args_; }
   // used to dump ir
   std::string ToString() const override;
   // update the real input if the node is a call
@@ -198,6 +201,7 @@ class KernelGraph : public FuncGraph {
   std::shared_ptr<KernelGraph> parent_graph_;
   // record real parameters,inputs_ is the formal parameters
   std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_;
+  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> unreuse_args_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;

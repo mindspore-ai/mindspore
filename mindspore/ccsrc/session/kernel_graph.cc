@@ -103,6 +103,23 @@ AnfNodePtr MakeValueNode(const AnfNodePtr &node) {
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
   return new_value_node;
 }
+
+bool IsSameLabel(const CNodePtr &left, const CNodePtr &right) {
+  if (left == right) {
+    return true;
+  }
+  if (left == nullptr || right == nullptr) {
+    return false;
+  }
+  if (!IsPrimitiveCNode(left, GetCNodePrimitive(right))) {
+    return false;
+  }
+  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, left) && AnfAlgo::HasNodeAttr(kAttrLabelIndex, right)) {
+    return AnfAlgo::GetNodeAttr<uint32_t>(left, kAttrLabelIndex) ==
+           AnfAlgo::GetNodeAttr<uint32_t>(right, kAttrLabelIndex);
+  }
+  return false;
+}
 }  // namespace
 std::vector<AnfNodePtr> KernelGraph::outputs() const {
   auto graph_output = output();
@@ -219,6 +236,19 @@ void KernelGraph::SetExecOrderByDefault() {
     if (node == start_label_ || node == end_goto_) {
       continue;
     }
+
+    if (IsSameLabel(node, end_goto_)) {
+      end_goto_ = node;
+      MS_LOG(INFO) << "Replace end_goto_ in kernel graph:" << graph_id();
+      continue;
+    }
+
+    if (IsSameLabel(node, start_label_)) {
+      start_label_ = node;
+      MS_LOG(INFO) << "Replace start_label_ in kernel graph:" << graph_id();
+      continue;
+    }
+
     re_order.push_back(node);
   }
   if (end_goto_ != nullptr) {
@@ -748,10 +778,9 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
     }
     // update front to backend map
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
-    // update output depend relations
-    node_output_edges_[new_anf_node.get()] = it->second;
-    (void)node_output_edges_.erase(old_anf_node);
   }
+  // if change the ir of graph, regenerate execution order of graph
+  SetExecOrderByDefault();
   // update graph inputs in child graph
   auto it_real_inputs = std::find_if(real_inputs_.begin(), real_inputs_.end(),
                                      [&old_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
@@ -767,7 +796,7 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
                                return n.first == new_anf_node.get();
                              });
     if (iter != real_inputs_.end()) {
-      MS_LOG(WARNING) << new_anf_node->DebugString() << " already exist in real inputs, will be rewrited.";
+      MS_LOG(WARNING) << new_anf_node->DebugString() << " Already exist in real inputs, will be rewrited.";
       iter->second = old_args;
     } else {
       real_inputs_.emplace_back(new_anf_node, old_args);
@@ -824,6 +853,10 @@ void KernelGraph::SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &ar
   }
 }
 
+void KernelGraph::AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph) {
+  unreuse_args_[arg] = from_graph;
+}
+
 void KernelGraph::UpdateCallRealInput() {
   MS_LOG(INFO) << "Update graph id: " << graph_id_;
   std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_map;
@@ -836,6 +869,17 @@ void KernelGraph::UpdateCallRealInput() {
       // if real input is a call node ,find the child graph output act as the new real input
       auto tmp_real_input = GetCallRealOutputs(real_input);
       std::copy(tmp_real_input.begin(), tmp_real_input.end(), std::back_inserter(new_real_inputs));
+      // replace the call in unreuse_args_
+      auto unreuse_arg_it = unreuse_args_.find(real_input);
+      if (unreuse_arg_it != unreuse_args_.end()) {
+        auto old_graph = unreuse_arg_it->second;
+        for (auto new_real_input : new_real_inputs) {
+          // if call reference graph output is parameter, it will be allowed to reuse
+          if (!new_real_input->isa<Parameter>()) {
+            unreuse_args_[new_real_input] = old_graph;
+          }
+        }
+      }
     }
     real_inputs_map.emplace_back(parameter, new_real_inputs);
   }

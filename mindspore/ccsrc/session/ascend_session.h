@@ -77,7 +77,6 @@ class AscendSession : public SessionBasic {
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AssignStream(NotNull<KernelGraphPtr> kernel_graph) const;
-  void AssignLabel(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
@@ -100,7 +99,8 @@ class AscendSession : public SessionBasic {
   void SetFinalGraphOutput(const ValuePtr &value);
   void SetFinalGraphOutput(const VectorRef &vec_output);
 
-  void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims);
+  void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims,
+                  const NotNull<std::set<KernelGraphPtr> *> memo);
   // split graphs with recurse from root graph
   void SplitGraphs(NotNull<KernelGraphPtr> root_graph);
   void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);

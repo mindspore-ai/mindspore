@@ -23,6 +23,7 @@
 #include "session/kernel_graph.h"
 #include "utils/base_ref.h"
 #include "utils/contract.h"
+#include "utils/union_find_set.h"
 
 namespace mindspore {
 namespace session {
