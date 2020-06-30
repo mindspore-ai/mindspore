@@ -44,6 +44,7 @@
     * Bert, Move Bert from `example` to `model_zoo`, optimize network for better performance. ([!1902](https://gitee.com/mindspore/mindspore/pulls/1902))
     * VGG16, Move VGG16 from `example` to `model_zoo`, optimize network for better accuracy. ([!2645](https://gitee.com/mindspore/mindspore/pulls/2645))
     * Alexnet, modify parameter setting to improve accuracy ([!1364](https://gitee.com/mindspore/mindspore/pulls/2370))
+    * Wide&Deep, Move Wide&Deep from `example` to `model_zoo`, optimize network for better performance. ([!2221](https://gitee.com/mindspore/mindspore/pulls/2221))
 * Python API
     * Fix bug in auto cast([!1766](https://gitee.com/mindspore/mindspore/pulls/1766))
     * Fix bug of register_backward_hook([!2148](https://gitee.com/mindspore/mindspore/pulls/2148))
