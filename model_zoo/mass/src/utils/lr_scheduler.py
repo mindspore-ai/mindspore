@@ -14,8 +14,9 @@
 # ============================================================================
 """Learning scheduler."""
 from math import ceil
-
 import numpy as np
+
+import mindspore.nn.learning_rate_schedule as lr_schedules
 
 
 def square_root_schedule(lr, update_num, decay_start_step,
@@ -105,3 +106,35 @@ def polynomial_decay_scheduler(lr, min_lr, decay_steps, total_update_num, warmup
         lrs[step] = (lr - min_lr) * pow(1 - _step / _decay_steps, power) + min_lr
 
     return lrs
+
+
+class BertLearningRate(lr_schedules.LearningRateSchedule):
+    """
+    Implements of warmup-polydecay learning rate scheduler.
+
+    Args:
+        learning_rate (float): The initial value of learning rate.
+        end_learning_rate (float): The end value of learning rate.
+        warmup_steps (int): The warm up steps of learning rate.
+        decay_steps (int): A value used to calculate decayed learning rate.
+        power (float): A value used to calculate decayed learning rate.
+
+    Returns:
+        Tensor. The learning rate value for the current step.
+    """
+    def __init__(self, learning_rate, end_learning_rate, warmup_steps, decay_steps, power):
+        super(BertLearningRate, self).__init__()
+        self.warmup_lr = lr_schedules.WarmUpLR(learning_rate, warmup_steps)
+        self.decay_lr = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
+        self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
+
+        self.greater = P.Greater()
+        self.one = Tensor(np.array([1.0]).astype(np.float32))
+        self.cast = P.Cast()
+
+    def construct(self, global_step):
+        is_warmup = self.cast(self.greater(self.warmup_steps, global_step), mstype.float32)
+        warmup_lr = self.warmup_lr(global_step)
+        decay_lr = self.decay_lr(global_step)
+        lr = (self.one - is_warmup) * decay_lr + is_warmup * warmup_lr
+        return lr

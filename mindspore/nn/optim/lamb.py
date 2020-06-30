@@ -32,10 +32,9 @@ num_one = Tensor(np.ones([1]), mstype.float32)
 
 _lamb_opt = C.MultitypeFuncGraph("lamb_opt")
 
-@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
                     "Tensor", "Bool", "Bool")
-def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, param, m, v,
-                   gradient, decay_flag, optim_filter):
+def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag, optim_filter):
     """
     Update parameters.
 
@@ -44,7 +43,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay_tensor (Tensor): Weight decay. Should be in range [0.0, 1.0].
+        weight_decay (Number): Weight decay. Should be in range [0.0, 1.0].
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -87,7 +86,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
         w_norm = op_norm(param_fp32)
         g_norm = op_norm(gradient_fp32)
 
-        g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay_tensor * param_fp32)
+        g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay * param_fp32)
         zeros = F.zeros_like(w_norm)
         ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
         trust_ratio = op_select(
@@ -99,7 +98,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
         update = next_mm / (op_sqrt(next_vv) + eps)
 
         if decay_flag:
-            update = update + op_mul(weight_decay_tensor, param_fp32)
+            update = update + op_mul(weight_decay, param_fp32)
 
         update_with_lr = op_mul(op_mul(trust_ratio, lr), update)
 
@@ -116,10 +115,9 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
 lamb_opt_graph_kernel = C.MultitypeFuncGraph("lamb_opt_graph_kernel")
 
 
-@lamb_opt_graph_kernel.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+@lamb_opt_graph_kernel.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number",
                                 "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
-def _update_run_op_graph_kernel(beta1, beta2, eps, lr, weight_decay_tensor,
-                                global_step, param, m, v, gradient, decay_flag):
+def _update_run_op_graph_kernel(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag):
     """
     Update parameters.
 
@@ -128,7 +126,7 @@ def _update_run_op_graph_kernel(beta1, beta2, eps, lr, weight_decay_tensor,
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay_tensor (Tensor): Weight decay. Should be in range [0.0, 1.0].
+        weight_decay (Number): Weight decay. Should be in range [0.0, 1.0].
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -157,11 +155,10 @@ def _update_run_op_graph_kernel(beta1, beta2, eps, lr, weight_decay_tensor,
     i6 = op_cast(num_one, mstype.float32) - op_pow(beta1, i6_ex)
     i3 = op_cast(num_one, mstype.float32) - op_pow(beta2, i6_ex)
     i1 = op_square(gradient_fp32)
-    add3, update = G.LambNextMV()(i1, v, i3, gradient, m, i6, param, beta1,
-                                  i9, beta2, x1, weight_decay_tensor, eps)
+    add3, update = G.LambNextMV()(i1, v, i3, gradient, m, i6, param, beta1, i9, beta2, x1, weight_decay, eps)
 
     if decay_flag:
-        update = update + op_mul(weight_decay_tensor, param_fp32)
+        update = update + op_mul(weight_decay, param_fp32)
 
     w_norm = op_norm(param_fp32)
     g_norm = op_norm(gradient_fp32)
@@ -171,38 +168,18 @@ def _update_run_op_graph_kernel(beta1, beta2, eps, lr, weight_decay_tensor,
     ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
     tens = op_fill(op_dtype(w_norm), op_shape(w_norm), 10.0)
 
-    next_param = G.LambUpdateWithLR()(g_norm, w_norm, g_norm_hat, lr, update,
-                                      param, zeros, ones, tens)
+    next_param = G.LambUpdateWithLR()(g_norm, w_norm, g_norm_hat, lr, update, param, zeros, ones, tens)
     next_v = F.control_depend(add3, next_param)
     return next_v
 
 
-def _check_param_value(decay_steps, warmup_steps, start_learning_rate,
-                       end_learning_rate, power, beta1, beta2, eps, weight_decay, prim_name):
-    """Check the type of inputs."""
-    validator.check_value_type("start_learning_rate", start_learning_rate, [float], prim_name)
-    validator.check_number_range("start_learning_rate rate", start_learning_rate, 0.0, float("inf"), Rel.INC_LEFT,
-                                 prim_name)
-    validator.check_value_type("end_learning_rate", end_learning_rate, [float], prim_name)
-    validator.check_number_range("end_learning_rate", end_learning_rate, 0.0, float("inf"), Rel.INC_LEFT,
-                                 prim_name)
-    validator.check_float_positive('power', power, prim_name)
-    validator.check_float_legal_value('power', power, prim_name)
-    validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
-    validator.check_integer('warmup_steps', warmup_steps, 0, Rel.GE, prim_name)
+def _check_param_value(beta1, beta2, eps, prim_name):
     validator.check_value_type("beta1", beta1, [float], prim_name)
     validator.check_value_type("beta2", beta2, [float], prim_name)
     validator.check_value_type("eps", eps, [float], prim_name)
-    validator.check_value_type(
-        "weight_dacay", weight_decay, [float], prim_name)
-    validator.check_number_range(
-        "beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
-    validator.check_number_range(
-        "beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
-    validator.check_number_range(
-        "eps", eps, 0.0, float("inf"), Rel.INC_NEITHER, prim_name)
-    validator.check_number_range(
-        "weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
+    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER, prim_name)
 
 
 class Lamb(Optimizer):
@@ -213,16 +190,37 @@ class Lamb(Optimizer):
     optimization technique. Refer to the paper `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76
     MINUTES <https://arxiv.org/abs/1904.00962>`_.
 
+    Note:
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+
+        To improve parameter groups performance, the customized order of parameters can be supported.
+
     Args:
-        params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
-                                  should be class mindspore.Parameter.
-        decay_steps (int): The steps of the lr decay. Should be equal to or greater than 1.
-        warmup_steps (int): The steps of lr warm up. Should be equal to or greater than 0. Default: 0.
-        start_learning_rate (float): A floating point value for the learning rate. Should be equal to
-            or greater than 0. Default: 0.1.
-        end_learning_rate (float): A floating point value for the end learning rate. Should be equal to
-            or greater than 0. Default: 0.0001.
-        power (float): The power of the polynomial. It must be positive. Default: 1.0.
+        params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
+            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            "lr", "weight_decay" and "order_params" are the keys can be parsed.
+
+            - params: Required. The value should be a list of `Parameter`.
+
+            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+              If not, the `learning_rate` in the API will be used.
+
+            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+              will be used. If not, the `weight_decay` in the API will be used.
+
+            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
+              in the value of 'order_params' should be in one of group parameters.
+
+        learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or graph for the learning rate.
+            When the learning_rate is a Iterable or a Tensor with dimension of 1, use dynamic learning rate, then
+            the i-th step will take the i-th value as the learning rate. When the learning_rate is LearningRateSchedule,
+            use dynamic learning rate, the i-th learning rate will be calculated during the process of training
+            according to the formula of LearningRateSchedule. When the learning_rate is a float or a Tensor with
+            dimension of 0, use fixed learning rate. Other cases are not supported. The float learning rate should be
+            equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Default: 0.9.
             Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Default: 0.999.
@@ -241,90 +239,84 @@ class Lamb(Optimizer):
 
     Examples:
         >>> net = Net()
+        >>> #1) All parameters use the same learning rate and weight decay
+        >>> optim = nn.Lamb(params=net.trainable_params())
+        >>>
+        >>> #2) Use parameter groups and set different values
+        >>> poly_decay_lr = learning_rate_schedule.PolynomialDecayLR()
+        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
+        >>>                 {'params': no_conv_params, 'lr': poly_decay_lr},
+        >>>                 {'order_params': net.trainable_params(0.01, 0.0001, 10, 0.5)}]
+        >>> optim = nn.Lamb(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01.
+        >>> # The no_conv_params's parameters will use dynamic learning rate of poly decay learning rate and default
+        >>> # weight decay of 0.0.
+        >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
+        >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = nn.Lamb(params=net.trainable_params(), decay_steps=10)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
 
-    def __init__(self,
-                 params,
-                 decay_steps,
-                 warmup_steps=0,
-                 start_learning_rate=0.1,
-                 end_learning_rate=0.0001,
-                 power=1.0,
-                 beta1=0.9,
-                 beta2=0.999,
-                 eps=1e-6,
-                 weight_decay=0.0,
-                 decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()):
-        super(Lamb, self).__init__(0.0, params)
-        if self.is_group:
-            raise RuntimeError(
-                f"The {self.cls_name} optimizer cannot support group setting.")
-        _check_param_value(decay_steps, warmup_steps, start_learning_rate, end_learning_rate,
-                           power, beta1, beta2, eps, weight_decay, self.cls_name)
+    def __init__(self, params, learning_rate, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
+        super(Lamb, self).__init__(learning_rate, params, weight_decay)
+        _check_param_value(beta1, beta2, eps, self.cls_name)
 
         # turn them to scalar when me support scalar/tensor mix operations
-        self.global_step = Parameter(initializer(0, [1]), name="global_step")
-
-        self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
-        self.warmup_flag = False
-        if warmup_steps > 0:
-            self.warmup_flag = True
-        self.decay_steps = Tensor(np.array([decay_steps]).astype(np.float32))
-        self.start_learning_rate = Tensor(
-            np.array([start_learning_rate]).astype(np.float32))
-        self.end_learning_rate = Tensor(
-            np.array([end_learning_rate]).astype(np.float32))
-        self.diff_learning_rate = Tensor(
-            np.array([start_learning_rate - end_learning_rate]).astype(np.float32))
-        self.power = power
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
         self.eps = Tensor(np.array([eps]).astype(np.float32))
-        self.weight_decay_tensor = Tensor(
-            np.array([weight_decay]).astype(np.float32))
         self.params = self.parameters
         self.moments1 = self.params.clone(prefix="lamb_m", init='zeros')
         self.moments2 = self.params.clone(prefix="lamb_v", init='zeros')
-        self.decay_flag = tuple(decay_filter(x) for x in self.params)
 
+        if not self.dynamic_lr:
+            self.global_step = Parameter(initializer(0, [1]), name='global_step')
+            self.assignadd = P.AssignAdd()
         self.hyper_map = C.HyperMap()
-        self.min = P.Minimum()
-        self.pow = P.Pow()
-        self.greater = P.Greater()
-        self.one = Tensor(np.array([1.0]).astype(np.float32))
-        self.cast = P.Cast()
         self.enable_graph_kernel = context.get_context("enable_graph_kernel")
 
     def construct(self, gradients):
-        step = self.min(self.global_step, self.decay_steps)
-        p = step / self.decay_steps
-        lr = self.diff_learning_rate * \
-            self.pow(self.one - p, self.power) + self.end_learning_rate
-        if self.warmup_flag:
-            warmup_percent = self.global_step / self.warmup_steps
-            warmup_lr = self.start_learning_rate * warmup_percent
-            is_warmup = self.cast(self.greater(
-                self.warmup_steps, self.global_step), mstype.float32)
-            lr = (self.one - is_warmup) * lr + is_warmup * warmup_lr
+        lr = self.get_lr()
         if self.enable_graph_kernel:
-            optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel,
-                                                    self.beta1, self.beta2, self.eps, lr,
-                                                    self.weight_decay_tensor, self.global_step),
-                                          self.params, self.moments1, self.moments2, gradients, self.decay_flag)
+            if self.is_group:
+                if self.is_group_lr:
+                    optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel, self.beta1, self.beta2, self.eps,
+                                                            self.global_step),
+                                                  lr, self.weight_decay, self.params, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags)
+                else:
+                    optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel, self.beta1, self.beta2, self.eps,
+                                                            self.global_step, lr),
+                                                  self.weight_decay, self.params, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags)
+            else:
+                optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel, self.beta1, self.beta2, self.eps,
+                                                        self.global_step, lr, self.weight_decay),
+                                              self.params, self.moments1, self.moments2, gradients, self.decay_flags)
         else:
-            optim_result = self.hyper_map(F.partial(_lamb_opt,
-                                                    self.beta1, self.beta2, self.eps, lr,
-                                                    self.weight_decay_tensor, self.global_step),
-                                          self.params, self.moments1, self.moments2, gradients,
-                                          self.decay_flag, self.optim_filter)
+            if self.is_group:
+                if self.is_group_lr:
+                    optim_result = self.hyper_map(F.partial(_lamb_opt, self.beta1, self.beta2, self.eps,
+                                                            self.global_step),
+                                                  lr, self.weight_decay, self.params, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags, self.optim_filter)
+                else:
+                    optim_result = self.hyper_map(F.partial(_lamb_opt, self.beta1, self.beta2, self.eps,
+                                                            self.global_step, lr),
+                                                  self.weight_decay, self.params, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags, self.optim_filter)
+            else:
+                optim_result = self.hyper_map(F.partial(_lamb_opt, self.beta1, self.beta2, self.eps,
+                                                        self.global_step, lr, self.weight_decay),
+                                              self.params, self.moments1, self.moments2, gradients,
+                                              self.decay_flags, self.optim_filter)
+
         if self.use_parallel:
             optim_result = self.broadcast_params(optim_result)
 
-        added_global_step = self.global_step + self.one
-        F.control_depend(lr, added_global_step)
-        self.global_step = added_global_step
+        if not self.dynamic_lr:
+            F.control_depend(lr, self.assignadd(self.global_step, 1))
 
         return optim_result

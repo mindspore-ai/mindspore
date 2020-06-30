@@ -29,8 +29,10 @@ from mindspore.nn.optim import Lamb
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.model import Model
+from mindspore.nn import learning_rate_schedule as lr_schedules
 from src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
 from src.bert_model import BertConfig
+
 
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
@@ -111,6 +113,25 @@ def weight_variable(shape):
     return Tensor(ones)
 
 
+class BertLearningRate(lr_schedules.LearningRateSchedule):
+    def __init__(self, learning_rate, end_learning_rate, warmup_steps, decay_steps, power):
+        super(BertLearningRate, self).__init__()
+        self.warmup_lr = lr_schedules.WarmUpLR(learning_rate, warmup_steps)
+        self.decay_lr = lr_schedules.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
+        self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
+
+        self.greater = P.Greater()
+        self.one = Tensor(np.array([1.0]).astype(np.float32))
+        self.cast = P.Cast()
+
+    def construct(self, global_step):
+        is_warmup = self.cast(self.greater(self.warmup_steps, global_step), mstype.float32)
+        warmup_lr = self.warmup_lr(global_step)
+        decay_lr = self.decay_lr(global_step)
+        lr = (self.one - is_warmup) * decay_lr + is_warmup * warmup_lr
+        return lr
+
+
 class ModelCallback(Callback):
     def __init__(self):
         super(ModelCallback, self).__init__()
@@ -134,9 +155,15 @@ def test_bert_tdt():
     ds = me_de_train_dataset()
     config = get_config(version='large', batch_size=16)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size()*ds.get_repeat_count(),
-                     start_learning_rate=5e-5, end_learning_rate=1e-9,
-                     power=10.0, warmup_steps=0, weight_decay=0.01)
+    lr = BertLearningRate(decay_steps=ds.get_dataset_size()*ds.get_repeat_count(), learning_rate=5e-5,
+                          end_learning_rate=1e-9, power=10.0, warmup_steps=0)
+    decay_filter = lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
+    no_decay_filter = lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower()
+    decay_params = list(filter(decay_filter, net_with_loss.trainable_params()))
+    other_params = list(filter(no_decay_filter, net_with_loss.trainable_params()))
+    group_params = [{'params': decay_params, 'weight_decay': 0.01},
+                    {'params': other_params}]
+    optimizer = Lamb(group_params, lr)
     scale_window = 3
     scale_manager = DynamicLossScaleManager(262144, 2, scale_window)
     netwithgrads = BertTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,

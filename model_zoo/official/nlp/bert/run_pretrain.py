@@ -28,12 +28,12 @@ from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecayDynamicLR
+from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
 from mindspore import log as logger
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from src.dataset import create_bert_dataset
 from src.config import cfg, bert_net_cfg
-from src.utils import LossCallBack
+from src.utils import LossCallBack, BertLearningRate
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -109,24 +109,35 @@ def run_pretrain():
     netwithloss = BertNetworkWithLoss(bert_net_cfg, True)
 
     if cfg.optimizer == 'Lamb':
-        optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size() * new_repeat_count,
-                         start_learning_rate=cfg.Lamb.start_learning_rate, end_learning_rate=cfg.Lamb.end_learning_rate,
-                         power=cfg.Lamb.power, warmup_steps=cfg.Lamb.warmup_steps, weight_decay=cfg.Lamb.weight_decay,
-                         eps=cfg.Lamb.eps)
+        lr_schedule = BertLearningRate(learning_rate=cfg.Lamb.learning_rate,
+                                       end_learning_rate=cfg.Lamb.end_learning_rate,
+                                       warmup_steps=cfg.Lamb.warmup_steps,
+                                       decay_steps=ds.get_dataset_size() * new_repeat_count,
+                                       power=cfg.Lamb.power)
+        params = net_with_loss.trainable_params()
+        decay_params = list(filter(cfg.Lamb.decay_filter, params))
+        other_params = list(filter(lambda x: x not in decay_params, params))
+        group_params = [{'params': decay_params, 'weight_decay': cfg.Lamb.weight_decay},
+                        {'params': other_params}]
+        optimizer = Lamb(group_params, learning_rate=lr_schedule, eps=cfg.Lamb.eps)
     elif cfg.optimizer == 'Momentum':
         optimizer = Momentum(netwithloss.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
                              momentum=cfg.Momentum.momentum)
-    elif cfg.optimizer == 'AdamWeightDecayDynamicLR':
-        optimizer = AdamWeightDecayDynamicLR(netwithloss.trainable_params(),
-                                             decay_steps=ds.get_dataset_size() * new_repeat_count,
-                                             learning_rate=cfg.AdamWeightDecayDynamicLR.learning_rate,
-                                             end_learning_rate=cfg.AdamWeightDecayDynamicLR.end_learning_rate,
-                                             power=cfg.AdamWeightDecayDynamicLR.power,
-                                             weight_decay=cfg.AdamWeightDecayDynamicLR.weight_decay,
-                                             eps=cfg.AdamWeightDecayDynamicLR.eps,
-                                             warmup_steps=cfg.AdamWeightDecayDynamicLR.warmup_steps)
+    elif cfg.optimizer == 'AdamWeightDecay':
+        lr_schedule = BertLearningRate(learning_rate=cfg.AdamWeightDecay.learning_rate,
+                                       end_learning_rate=cfg.AdamWeightDecay.end_learning_rate,
+                                       warmup_steps=cfg.AdamWeightDecay.warmup_steps,
+                                       decay_steps=ds.get_dataset_size() * new_repeat_count,
+                                       power=cfg.AdamWeightDecay.power)
+        params = net_with_loss.trainable_params()
+        decay_params = list(filter(cfg.AdamWeightDecay.decay_filter, params))
+        other_params = list(filter(lambda x: x not in decay_params, params))
+        group_params = [{'params': decay_params, 'weight_decay': cfg.AdamWeightDecay.weight_decay},
+                        {'params': other_params, 'weight_decay': 0.0}]
+
+        optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
     else:
-        raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecayDynamicLR]".
+        raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay]".
                          format(cfg.optimizer))
     callback = [TimeMonitor(ds.get_dataset_size()), LossCallBack()]
     if args_opt.enable_save_ckpt == "true":

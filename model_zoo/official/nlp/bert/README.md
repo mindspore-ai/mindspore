@@ -147,7 +147,7 @@ Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float16
 
 Parameters for optimizer:
-    AdamWeightDecayDynamicLR:
+    AdamWeightDecay:
     decay_steps                     steps of the learning rate decay: N
     learning_rate                   value of learning rate: Q
     end_learning_rate               value of end learning rate: Q, must be positive

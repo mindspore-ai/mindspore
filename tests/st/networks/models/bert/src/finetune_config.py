@@ -32,7 +32,7 @@ cfg = edict({
     'pre_training_ckpt': '/your/path/pre_training.ckpt',
     'use_crf': False,
     'optimizer': 'Lamb',
-    'AdamWeightDecayDynamicLR': edict({
+    'AdamWeightDecay': edict({
         'learning_rate': 2e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
@@ -40,7 +40,7 @@ cfg = edict({
         'eps': 1e-6,
     }),
     'Lamb': edict({
-        'start_learning_rate': 2e-5,
+        'learning_rate': 2e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
         'decay_filter': lambda x: False,

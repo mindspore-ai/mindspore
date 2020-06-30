@@ -152,7 +152,7 @@ def test_compile_fp16_overflow():
     net = NetFP16(16, 16)
 
     loss = MSELoss()
-    optimizer = Lamb(net.trainable_params(), decay_steps=10, warmup_steps=5)
+    optimizer = Lamb(net.trainable_params(), learning_rate=0.01)
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
     train_network.set_train()

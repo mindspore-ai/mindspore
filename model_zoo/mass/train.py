@@ -37,7 +37,7 @@ from src.transformer.infer_mass import infer
 from src.utils import LossCallBack
 from src.utils import one_weight, zero_weight, weight_variable
 from src.utils import square_root_schedule
-from src.utils.lr_scheduler import polynomial_decay_scheduler
+from src.utils.lr_scheduler import polynomial_decay_scheduler, BertLearningRate
 
 parser = argparse.ArgumentParser(description='MASS train entry point.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
@@ -178,10 +178,16 @@ def _build_training_pipeline(config: TransformerConfig,
     if config.optimizer.lower() == "adam":
         optimizer = Adam(net_with_loss.trainable_params(), lr, beta1=0.9, beta2=0.98)
     elif config.optimizer.lower() == "lamb":
-        optimizer = Lamb(net_with_loss.trainable_params(), decay_steps=12000,
-                         start_learning_rate=config.lr, end_learning_rate=config.min_lr,
-                         power=10.0, warmup_steps=config.warmup_steps, weight_decay=0.01,
-                         eps=1e-6)
+        lr = BertLearningRate(decay_steps=12000, learning_rate=config.lr, end_learning_rate=config.min_lr,
+                              power=10.0, warmup_steps=config.warmup_steps)
+        decay_params = list(filter(lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
+                                   net_with_loss.trainable_params()))
+        other_params = list(filter(lambda x: 'layernorm' in x.name.lower() or 'bias' in x.name.lower(),
+                                   net_with_loss.trainable_params()))
+        group_params = [{'params': decay_params, 'weight_decay': 0.01},
+                        {'params': other_params}]
+
+        optimizer = Lamb(group_params, lr, eps=1e-6)
     elif config.optimizer.lower() == "momentum":
         optimizer = Momentum(net_with_loss.trainable_params(), lr, momentum=0.9)
     else:

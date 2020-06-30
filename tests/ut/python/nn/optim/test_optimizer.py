@@ -18,7 +18,7 @@ import pytest
 
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay, AdamWeightDecayDynamicLR
+from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay
 
 
 class IterableObjc:
@@ -81,10 +81,6 @@ class TestNullParam():
         with pytest.raises(ValueError):
             AdamWeightDecay(None)
 
-    def test_AdamWeightDecayDynamicLR_init(self):
-        with pytest.raises(ValueError):
-            AdamWeightDecayDynamicLR(None, 10)
-
     def test_Sgd_init(self):
         with pytest.raises(ValueError):
             SGD(None)
@@ -100,10 +96,6 @@ class TestUnsupportParam():
     def test_AdamWightDecay_init(self):
         with pytest.raises(TypeError):
             AdamWeightDecay(9)
-
-    def test_AdamWeightDecayDynamicLR_init(self):
-        with pytest.raises(TypeError):
-            AdamWeightDecayDynamicLR(0.5, 10)
 
     def test_Sgd_init(self):
         with pytest.raises(TypeError):
