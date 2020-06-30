@@ -237,7 +237,7 @@ Status ZipOp::EoeReceived(int32_t) {
 // Visitor accept method for NodePass
 Status ZipOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<ZipOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<ZipOp>(), modified);
 }
 
 Status ZipOp::ComputeColMap() {

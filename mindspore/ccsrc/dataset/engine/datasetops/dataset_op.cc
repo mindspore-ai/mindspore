@@ -111,6 +111,51 @@ void DatasetOp::RemoveParent(const DatasetOp *parent) {
   parent_.erase(std::remove(parent_.begin(), parent_.end(), parent), parent_.end());
 }
 
+// Removes this node from the tree and connects it's parent/child together
+Status DatasetOp::Remove() {
+  if (parent_.size() > 1) {
+    std::string err_msg("No support for op removal if the operator has more than one parent");
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  if (child_.size() > 1) {
+    std::string err_msg("No support for op removal if the operator has more than one child");
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  // Scenario's when removing node B:
+  // A -> B -> C
+  // A -> B
+  // B -> C
+  //
+  // If we remove B, then first take our child A and update it's parent to be C
+  // It's possible the parent is null if we are the root node being removed.
+  if (!child_.empty()) {
+    // If we have a parent, then assign chlid's parent to point to our parent.
+    if (!parent_.empty()) {
+      child_[0]->parent_[0] = parent_[0];
+    } else {
+      // We don't have a parent, so we are the root node being removed.
+      // clear the parent list of our child so that it becomes the new root.
+      child_[0]->parent_.clear();
+      tree_->AssignRoot(child_[0]);
+    }
+  }
+
+  // Next, if we had a parent, then set it's child to be our child.
+  if (!parent_.empty()) {
+    // if we have a child, then set our parent to point to it
+    if (!child_.empty()) {
+      parent_[0]->child_[0] = child_[0];
+    } else {
+      // We don't have a child, so clear the child list of the current
+      // parent because it will be empty once we are removed.
+      parent_[0]->child_.clear();
+    }
+  }
+
+  return Status::OK();
+}
+
 // Getter function to get a shared pointer to our childAdds a operator to become our child.
 std::shared_ptr<DatasetOp> DatasetOp::child(int32_t child_index) const {
   MS_ASSERT(child_index < static_cast<int>(child_.size()));
@@ -287,6 +332,12 @@ Status DatasetOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
+}
+
+Status DatasetOp::PreAccept(NodePass *p, bool *modified) {
+  // DatasetOp is the base class of visitor target pre-visit.
+  // This method will only be called if its derived class does not implement one.
+  return p->PreRunOnNode(shared_from_this(), modified);
 }
 
 Status DatasetOp::Accept(NodePass *p, bool *modified) {

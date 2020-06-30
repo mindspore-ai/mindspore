@@ -131,7 +131,7 @@ Status ProjectOp::EofReceived(int32_t worker_id) { return Status::OK(); }
 // Visitor accept method for NodePass
 Status ProjectOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<ProjectOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<ProjectOp>(), modified);
 }
 
 // Compute the column map and save it into our own column name map

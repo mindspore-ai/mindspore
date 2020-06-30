@@ -313,7 +313,7 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
 // Visitor accept method for NodePass
 Status DeviceQueueOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<DeviceQueueOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<DeviceQueueOp>(), modified);
 }
 
 }  // namespace dataset

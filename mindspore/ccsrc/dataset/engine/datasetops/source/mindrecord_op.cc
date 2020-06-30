@@ -496,7 +496,7 @@ Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path,
 // Visitor accept method for NodePass
 Status MindRecordOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<MindRecordOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<MindRecordOp>(), modified);
 }
 
 Status MindRecordOp::ComputeColMap() {

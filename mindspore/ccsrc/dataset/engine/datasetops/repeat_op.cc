@@ -190,7 +190,7 @@ int32_t RepeatOp::num_producers() const {
 // Visitor accept method for NodePass
 Status RepeatOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<RepeatOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<RepeatOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

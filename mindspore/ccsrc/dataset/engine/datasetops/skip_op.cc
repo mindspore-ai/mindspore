@@ -130,7 +130,7 @@ Status SkipOp::EofReceived(int32_t worker_id) {
 // Visitor accept method for NodePass
 Status SkipOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<SkipOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<SkipOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

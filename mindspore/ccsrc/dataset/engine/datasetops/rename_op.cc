@@ -176,7 +176,7 @@ Status RenameOp::EoeReceived(int32_t) {
 // Visitor accept method for NodePass
 Status RenameOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<RenameOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<RenameOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore
