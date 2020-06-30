@@ -139,8 +139,7 @@ bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> 
   input_params.sparse_grad_ = unique_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  const size_t kThreadNum = 16;
-  MultiThreadCompute(ComputeLazyAdam, &input_params, kThreadNum, unique_sparse_grad.indices_size_);
+  MultiThreadCompute(ComputeLazyAdam, &input_params, unique_sparse_grad.indices_size_);
   return true;
 }
 }  // namespace kernel
