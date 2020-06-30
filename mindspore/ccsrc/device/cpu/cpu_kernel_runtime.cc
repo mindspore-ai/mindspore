@@ -142,6 +142,37 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
+tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(const CNodePtr &node, size_t index,
+                                                         std::set<DeviceAddressPtr> *bound_addresses,
+                                                         std::vector<tensor::TensorPtr> *need_sync_outputs) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(bound_addresses);
+  MS_EXCEPTION_IF_NULL(need_sync_outputs);
+  size_t output_size = AnfAlgo::GetOutputTensorNum(node);
+  if (index >= output_size) {
+    MS_LOG(EXCEPTION) << "Invalid input index " << index;
+  }
+  auto address = AnfAlgo::GetMutableOutputAddr(node, index);
+  MS_EXCEPTION_IF_NULL(address);
+  auto shape = AnfAlgo::GetOutputInferShape(node, index);
+  std::vector<int> temp_shape;
+  (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
+  TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
+  type_id = GetCPUSupportOutputTypeId(type_id);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (bound_addresses->find(address) != bound_addresses->end()) {
+    tensor->set_device_address(address);
+    need_sync_outputs->emplace_back(tensor);
+  } else {
+    address->ptr_ = tensor->data_c();
+    address->ref_count_ = INIT_NODE_REF;
+    (void)bound_addresses->insert(address);
+  }
+  tensor->set_dirty(false);
+  return tensor;
+}
+
 BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &kernel_with_index,
                                                const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map,
                                                std::set<DeviceAddressPtr> *bound_addresses,
@@ -161,29 +192,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &k
       }
       return ret;
     }
-    size_t output_size = AnfAlgo::GetOutputTensorNum(node);
-    if (index >= output_size) {
-      MS_LOG(EXCEPTION) << "Invalid input index " << index;
-    }
-    auto address = AnfAlgo::GetMutableOutputAddr(node, index);
-    MS_EXCEPTION_IF_NULL(address);
-    auto shape = AnfAlgo::GetOutputInferShape(node, index);
-    std::vector<int> temp_shape;
-    (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
-    TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
-    type_id = GetCPUSupportOutputTypeId(type_id);
-    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (bound_addresses->find(address) != bound_addresses->end()) {
-      tensor->set_device_address(address);
-      need_sync_outputs->emplace_back(tensor);
-    } else {
-      address->ptr_ = tensor->data_c();
-      address->ref_count_ = INIT_NODE_REF;
-      (void)bound_addresses->insert(address);
-    }
-    tensor->set_dirty(false);
-    return tensor;
+    return CreatTensorForOutput(node, index, bound_addresses, need_sync_outputs);
   } else if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {
     auto iter = input_map.find(input_node.get());
     if (iter != input_map.end()) {
@@ -247,6 +256,7 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
 
 void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list) {
   MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(input_list);
   kernel::AddressPtr input = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(input);
   if (address->ptr_ == nullptr) {
