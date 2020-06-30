@@ -53,54 +53,6 @@ const std::vector<size_t> &AkgKernelMod::GetOutputSizeList() const { return outp
 
 const std::vector<size_t> &AkgKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-void DumpData(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const char *dump_data = getenv("MS_KERNEL_DUMP_DATA");
-  if (dump_data) {
-    int idx = 0;
-    for (const auto &x : inputs) {
-      std::vector<char> buf(x->size);
-      if (RT_ERROR_NONE != rtMemcpy(buf.data(), buf.size(), reinterpret_cast<const void *>(x->addr), x->size,
-                                    RT_MEMCPY_DEVICE_TO_HOST)) {
-        MS_LOG(WARNING) << "Call runtime rtMemcpy error.";
-        return;
-      }
-
-      std::string file_name("input_");
-      file_name += std::to_string(idx);
-      std::ofstream file(file_name, std::ios::binary);
-      if (file.is_open()) {
-        (void)file.write(buf.data(), SizeToLong(buf.size()));
-        file.close();
-        idx++;
-      } else {
-        MS_LOG(ERROR) << "Open file failed.";
-        return;
-      }
-    }
-    idx = 0;
-    for (const auto &x : outputs) {
-      std::vector<char> buf(x->size);
-      if (RT_ERROR_NONE != rtMemcpy(buf.data(), buf.size(), reinterpret_cast<const void *>(x->addr), x->size,
-                                    RT_MEMCPY_DEVICE_TO_HOST)) {
-        MS_LOG(WARNING) << "Call runtime rtMemcpy error.";
-        return;
-      }
-
-      std::string file_name("output_");
-      file_name += std::to_string(idx);
-      std::ofstream file(file_name, std::ios::binary);
-      if (file.is_open()) {
-        (void)file.write(buf.data(), SizeToLong(buf.size()));
-        file.close();
-        idx++;
-      } else {
-        MS_LOG(ERROR) << "Open file failed.";
-        return;
-      }
-    }
-  }
-}
-
 bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
@@ -135,8 +87,6 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
-  DumpData(inputs, outputs);
-
   return true;
 }
 
@@ -147,10 +97,10 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
   }
 
   std::vector<uint8_t> args;
-  uint32_t args_size = 0;
+  const uint32_t args_size = 0;
   std::vector<uint8_t> sm_desc;
   void *binary = nullptr;
-  uint32_t binary_size = 0;
+  const uint32_t binary_size = 0;
   std::vector<uint8_t> meta_data;
   std::vector<void *> input_data_addrs;
   std::vector<void *> output_data_addrs;
