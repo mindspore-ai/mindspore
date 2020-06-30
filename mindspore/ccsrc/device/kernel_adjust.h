@@ -65,6 +65,10 @@ class KernelAdjust {
                                 std::map<std::string, mindspore::ParameterPtr> *switch_loop_input);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+  CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
+                                 size_t output_idx);
+  CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                 const CNodePtr &getnext_cnode);
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
