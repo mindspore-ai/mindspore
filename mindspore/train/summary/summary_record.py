@@ -61,12 +61,14 @@ def _dictlist():
 class SummaryRecord:
     """
     SummaryRecord is used to record the summary data and lineage data.
+    The API will create a summary file and a lineage file lazily in a given directory and writes data to them.
+    It writes the data to files by executing the record method. In addition to record the data bubbled up from
+    the network by defining the summary operators, SummaryRecord also supports to record extra data which
+    can be added by calling add_value.
 
     Note:
-        The API will create a summary file and a lineage file lazily in a given directory and writes data to them.
-        It writes the data to files by executing the record method. In addition to record the data bubbled up from
-        the network by defining the summary operators, SummaryRecord also supports to record extra data which
-        can be added by calling add_value. Finally, make sure to close the SummaryRecord object at the end.
+        Make sure to close the SummaryRecord at the end, or the process will NOT exit.
+        Please see the Example section below on how to properly close with two ways.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -81,8 +83,15 @@ class SummaryRecord:
         RuntimeError: If the log_dir can not be resolved to a canonicalized absolute pathname.
 
     Examples:
+        >>> # use in with statement to auto close
         >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
         >>>     pass
+        >>>
+        >>> # use in try .. finally .. to ensure closing
+        >>> try:
+        >>>     summary_record = SummaryRecord(log_dir="/opt/log")
+        >>> finally:
+        >>>     summary_record.close()
     """
 
     def __init__(self,
@@ -310,8 +319,10 @@ class SummaryRecord:
         Flush all events and close summary records. Please use with statement to autoclose.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     pass # summary_record autoclosed
+            >>> try:
+            >>>     summary_record = SummaryRecord(log_dir="/opt/log")
+            >>> finally:
+            >>>     summary_record.close()
         """
         if not self._closed and self._event_writer:
             # event writer flush and close
