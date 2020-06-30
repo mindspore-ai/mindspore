@@ -71,6 +71,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @param child - shared pointer to the child to remove.
   Status RemoveChild(std::shared_ptr<DatasetOp> child);
 
+  /// \brief Removes this node from the tree and connects it's parent/child together.
+  /// \return Status eerror code returned
+  Status Remove();
+
   // Getter function to get a shared pointer to our child
   // @param child_index - An operator can have n children. Indicates choose which child to return.
   std::shared_ptr<DatasetOp> child(int32_t child_index) const;
@@ -264,10 +268,20 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // @return Vector of Children
   std::vector<std::shared_ptr<DatasetOp>> Children() const { return child_; }
 
-  // Base method for NodePass visit.
-  // Subclass needs to override this if it requires special node visit access.
-  // Check "dataset/engine/opt/pass.h" for more details.
-  // @return Statue of the node visit
+  /// \brief Base method for NodePass pre-visit.  A tree walk consists of walking down the tree and also walking back up
+  ///     in a depth-first order.  PreAccept is the node visit on the way down, whereas the regular Accept is the main
+  ///     visit on the way back up the tree during a post-order traversal. Subclass needs to override this if it
+  ///     requires special node visit access. Check "dataset/engine/opt/pass.h" for more details.
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  virtual Status PreAccept(NodePass *p, bool *modified);
+
+  /// \brief Base method for NodePass visit. Subclass needs to override this if it requires special node visit access.
+  ///     Check "dataset/engine/opt/pass.h" for more details.
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
   virtual Status Accept(NodePass *p, bool *modified);
 
   // Op name getter
@@ -284,6 +298,14 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   // Computes a CRC value for the operator
   static uint32_t GenerateCRC(const std::shared_ptr<DatasetOp> &op);
+
+  /// \brief A helper templated function for casting "this" pointer to shared_ptr<derived>
+  ///     Similar to shared_from_this, except this one will give you the derived class as shared_ptr
+  /// \return A shared_ptr casted to the derived class
+  template <typename Derived>
+  std::shared_ptr<Derived> shared_from_base() {
+    return std::static_pointer_cast<Derived>(shared_from_this());
+  }
 
  protected:
   // Adds a parent operator to this operator

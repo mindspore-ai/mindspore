@@ -1004,7 +1004,7 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
 // Visitor accept method for NodePass
 Status TFReaderOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<TFReaderOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<TFReaderOp>(), modified);
 }
 
 Status TFReaderOp::ComputeColMap() {

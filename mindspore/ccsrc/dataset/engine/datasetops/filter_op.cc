@@ -261,7 +261,7 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 // Visitor accept method for NodePass
 Status FilterOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<FilterOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<FilterOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

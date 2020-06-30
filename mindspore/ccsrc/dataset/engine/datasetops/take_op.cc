@@ -136,7 +136,7 @@ Status TakeOp::PrepareNodePostAction() {
 // Visitor accept method for NodePass
 Status TakeOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<TakeOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<TakeOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

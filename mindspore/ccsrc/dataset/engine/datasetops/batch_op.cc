@@ -409,7 +409,7 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 // Visitor accept method for NodePass
 Status BatchOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<BatchOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<BatchOp>(), modified);
 }
 
 }  // namespace dataset

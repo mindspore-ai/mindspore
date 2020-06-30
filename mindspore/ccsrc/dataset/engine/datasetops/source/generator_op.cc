@@ -249,7 +249,7 @@ Status GeneratorOp::Reset() {
 // Visitor accept method for NodePass
 Status GeneratorOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<GeneratorOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<GeneratorOp>(), modified);
 }
 
 Status GeneratorOp::ComputeColMap() {

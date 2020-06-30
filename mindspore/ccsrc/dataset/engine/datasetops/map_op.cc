@@ -367,7 +367,7 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
 // Visitor accept method for NodePass
 Status MapOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<MapOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<MapOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore
