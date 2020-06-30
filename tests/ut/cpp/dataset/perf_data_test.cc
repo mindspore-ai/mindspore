@@ -34,12 +34,15 @@ TEST_F(MindDataTestPerfData, Test1) {
   std::vector<int> row = {1, 2, 3};
   p1.AddSample(row);
   p2.AddSample(row);
+  EXPECT_EQ(p1.size(), 1);
   EXPECT_EQ(p1.size(), p2.size());
   p1.AddSample(row);
   p2.AddSample(row);
+  EXPECT_EQ(p1.size(), 2);
   EXPECT_EQ(p1.size(), p2.size());
-  row = {4, 5, 6};
-  p2.AddSample(row);
+  std::vector<int> row1 = {4, 5, 6};
+  p2.AddSample(row1);
+  EXPECT_EQ(p2.size(), 2);
   auto r1 = p2.Row<int>(static_cast<int64_t>(0));
   for (auto i = 0; i < 3; i++) {
     EXPECT_EQ(r1[i], i + 1);
@@ -62,9 +65,12 @@ TEST_F(MindDataTestPerfData, Test2) {
   EXPECT_EQ(pd[0][0], 1);
   EXPECT_EQ(pd[1][0], 2);
   EXPECT_EQ(pd[2][0], 3);
-  row = {4, 5, 6};
-  pd.AddSample(row);
+  auto row1 = {4, 5, 6};
+  pd.AddSample(row1);
   EXPECT_EQ(pd[0][0], 1);
   EXPECT_EQ(pd[1][0], 2);
   EXPECT_EQ(pd[2][0], 3);
+  EXPECT_EQ(pd[0][1], 4);
+  EXPECT_EQ(pd[1][1], 5);
+  EXPECT_EQ(pd[2][1], 6);
 }
