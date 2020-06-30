@@ -239,7 +239,8 @@ class SummaryCollector(Callback):
 
         unexpected_params = set(specified_data) - set(self._DEFAULT_SPECIFIED_DATA)
         if unexpected_params:
-            raise ValueError(f'For `collect_specified_data` the keys {unexpected_params} are unsupported.')
+            raise ValueError(f'For `collect_specified_data` the keys {unexpected_params} are unsupported, '
+                             f'expect the follow keys: {list(self._DEFAULT_SPECIFIED_DATA.keys())}')
 
         if 'histogram_regular' in specified_data:
             check_value_type('histogram_regular', specified_data.get('histogram_regular'), (str, type(None)))
@@ -250,7 +251,8 @@ class SummaryCollector(Callback):
                 check_value_type(item, specified_data.get(item), bool)
 
         if action:
-            result = dict(self._DEFAULT_SPECIFIED_DATA).update(specified_data)
+            result = dict(self._DEFAULT_SPECIFIED_DATA)
+            result.update(specified_data)
         else:
             result = specified_data
         return result
@@ -444,15 +446,12 @@ class SummaryCollector(Callback):
             self._is_parse_loss_success = False
             return None
 
-        if isinstance(output, (int, float)):
+        if isinstance(output, (int, float, Tensor)):
             loss = output
-        elif isinstance(output, (list, tuple)):
+        elif isinstance(output, (list, tuple)) and output:
             # If the output is a list, since the default network returns loss first,
             # we assume that the first one is loss.
             loss = output[0]
-        elif isinstance(output, Tensor) and (not output.shape or output.shape == (1,)):
-            loss_numpy = output.asnumpy()
-            loss = float(np.atleast_1d(loss_numpy)[0])
         else:
             logger.warning("The output type could not be identified, so no loss was recorded in SummaryCollector.")
             self._is_parse_loss_success = False
@@ -461,6 +460,8 @@ class SummaryCollector(Callback):
         if not isinstance(loss, Tensor):
             loss = Tensor(loss)
 
+        precision = 4
+        loss = Tensor(round(np.mean(loss.asnumpy()), precision))
         return loss
 
     def _get_optimizer(self, cb_params):
