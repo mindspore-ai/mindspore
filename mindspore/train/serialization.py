@@ -40,8 +40,6 @@ tensor_to_np_type = {"Int8": np.int8, "Uint8": np.uint8, "Int16": np.int16, "Uin
                      "Int32": np.int32, "Uint32": np.uint32, "Int64": np.int64, "Uint64": np.uint64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
 
-ModelType = ["normal", "fusion", "quant"]
-
 
 def _special_process_par(par, new_par):
     """
@@ -103,7 +101,7 @@ def _update_param(param, new_param):
         param.set_parameter_data(type(param.data)(new_param.data))
 
 
-def save_checkpoint(parameter_list, ckpt_file_name, model_type="normal"):
+def save_checkpoint(parameter_list, ckpt_file_name):
     """
     Saves checkpoint info to a specified file.
 
@@ -111,14 +109,12 @@ def save_checkpoint(parameter_list, ckpt_file_name, model_type="normal"):
         parameter_list (list): Parameters list, each element is a dict
                                like {"name":xx, "type":xx, "shape":xx, "data":xx}.
         ckpt_file_name (str): Checkpoint file name.
-        model_type (str): The name of model type. Default: "normal".
 
     Raises:
         RuntimeError: Failed to save the Checkpoint file.
     """
     logger.info("Execute save checkpoint process.")
     checkpoint_list = Checkpoint()
-    checkpoint_list.model_type = model_type
 
     try:
         for param in parameter_list:
@@ -147,13 +143,12 @@ def save_checkpoint(parameter_list, ckpt_file_name, model_type="normal"):
     logger.info("Save checkpoint process finish.")
 
 
-def load_checkpoint(ckpt_file_name, model_type="normal", net=None):
+def load_checkpoint(ckpt_file_name, net=None):
     """
     Loads checkpoint info from a specified file.
 
     Args:
         ckpt_file_name (str): Checkpoint file name.
-        model_type (str): The name of model type in `normal`, `fusion` or `quant`. Default: "normal".
         net (Cell): Cell network. Default: None
 
     Returns:
@@ -164,9 +159,6 @@ def load_checkpoint(ckpt_file_name, model_type="normal", net=None):
     """
     if not isinstance(ckpt_file_name, str):
         raise ValueError("The ckpt_file_name must be string.")
-
-    if model_type not in ModelType:
-        raise ValueError(f"The model_type is not in {ModelType}.")
 
     if not os.path.exists(ckpt_file_name) or ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("Please input the correct checkpoint file name.")
@@ -186,10 +178,6 @@ def load_checkpoint(ckpt_file_name, model_type="normal", net=None):
         raise ValueError(e.__str__())
 
     parameter_dict = {}
-    if checkpoint_list.model_type:
-        if model_type != checkpoint_list.model_type:
-            raise KeyError("Checkpoint file model type({}) is not equal to input model type({}).".format(
-                checkpoint_list.model_type, model_type))
     try:
         for element in checkpoint_list.value:
             data = element.tensor.tensor_content
@@ -314,14 +302,13 @@ def _save_graph(network, file_name):
         os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
 
 
-def _exec_save_checkpoint(train_network, ckpt_file_name, model_type="normal", integrated_save=True):
+def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True):
     """
     Saves checkpoint for 'ms' backend.
 
     Args:
         train_network (Network): The train network for training.
         ckpt_file_name (str): The name of checkpoint file.
-        model_type (str): The name of model type in `normal`, `fusion` or `quant`. Default: "normal".
         integrated_save (bool): Whether to integrated save in automatic model parallel scene.
     """
 
@@ -346,7 +333,7 @@ def _exec_save_checkpoint(train_network, ckpt_file_name, model_type="normal", in
         each_param["data"] = param_data
         param_list.append(each_param)
 
-    save_checkpoint(param_list, ckpt_file_name, model_type)
+    save_checkpoint(param_list, ckpt_file_name)
 
 
 def _get_merged_param_data(net, param_name, param_data):
