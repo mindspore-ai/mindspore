@@ -345,16 +345,6 @@ class Parser:
         self.function_name = fn.__name__
         self.col_offset = 0
 
-    @classmethod
-    def get_cache(cls, key):
-        """Get the value of the ast_cache dictionary"""
-        return cls.ast_cache.get(key)
-
-    @classmethod
-    def insert_cache(cls, key, value):
-        """Insert elements to the ast_cache dictionary"""
-        cls.ast_cache[key] = value
-
     def parse(self):
         """Parse the function or method."""
         logger.debug("fn = %r", self.fn)
@@ -362,14 +352,14 @@ class Parser:
         if isinstance(self.fn, (types.FunctionType, types.MethodType)):
             original_src = inspect.getsource(self.fn)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
-            tree = Parser.get_cache(hexstr)
+            tree = Parser.ast_cache.get(hexstr)
             if not tree:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
                 logger.debug("get source = %s", src)
                 tree = asttokens.ASTTokens(src, parse=True).tree
-                Parser.insert_cache(hexstr, tree)
+                Parser.ast_cache[hexstr] = tree
         else:
             logger.error("Fn type is invalid")
         return tree

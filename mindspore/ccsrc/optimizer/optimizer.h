@@ -136,7 +136,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       return func_graph;
     }
     // Optimizer step counter;
-    int counter = -1;
+    int counter = 1;
     bool changes = true;
 
     while (changes) {
