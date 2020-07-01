@@ -56,6 +56,8 @@ class DoSignatureMetaFuncGraph : public MetaFuncGraph {
 };
 using RWSignaturePtr = std::shared_ptr<DoSignatureMetaFuncGraph>;
 
+extern const std::map<TypeId, size_t> type_map;
+
 AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
                          const AbstractBasePtrList &args_spec_list, const AnfNodePtrList &old_node_inputs);
 }  // namespace prim
