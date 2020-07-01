@@ -94,7 +94,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   auto top_graph = Parser::GetTopFuncGraph();
   // if the parameter node has been created , return it
   AnfNodePtr para_node = nullptr;
-  for (auto param : top_graph->parameters()) {
+  for (auto const &param : top_graph->parameters()) {
     auto param_node = dyn_cast<Parameter>(param);
     if (param_node != nullptr && param_node->name() == param_name) {
       para_node = param;
