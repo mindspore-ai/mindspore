@@ -227,6 +227,7 @@ class MSServiceImpl final : public MSService::Service {
 Status Server::BuildAndStart() {
   // handle exit signal
   signal(SIGINT, HandleSignal);
+  signal(SIGTERM, HandleSignal);
   Status res;
   auto option_args = Options::Instance().GetArgs();
   std::string server_address = "0.0.0.0:" + std::to_string(option_args->grpc_port);
@@ -258,21 +259,17 @@ Status Server::BuildAndStart() {
   }
   g_ctx = ctx;
 #endif
-  MSServiceImpl service;
+  MSServiceImpl msService;
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   // Set the port is not reuseable
   auto option = grpc::MakeChannelArgumentOption(GRPC_ARG_ALLOW_REUSEPORT, 0);
-  grpc::ServerBuilder builder;
-  builder.SetOption(std::move(option));
-  builder.SetMaxMessageSize(uint32max);
-  // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  // Register "service" as the instance through which we'll communicate with
-  // clients. In this case it corresponds to an *synchronous* service.
-  builder.RegisterService(&service);
-  // Finally assemble the server.
-  std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+  grpc::ServerBuilder serverBuilder;
+  serverBuilder.SetOption(std::move(option));
+  serverBuilder.SetMaxMessageSize(uint32max);
+  serverBuilder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  serverBuilder.RegisterService(&msService);
+  std::unique_ptr<grpc::Server> server(serverBuilder.BuildAndStart());
   if (server == nullptr) {
     MS_LOG(ERROR) << "The serving server create failed";
     ClearEnv();
@@ -280,7 +277,7 @@ Status Server::BuildAndStart() {
   }
   auto grpc_server_run = [&server]() { server->Wait(); };
   std::thread serving_thread(grpc_server_run);
-  MS_LOG(INFO) << "Server listening on " << server_address << std::endl;
+  MS_LOG(INFO) << "MS Serving listening on " << server_address;
   auto exit_future = exit_requested.get_future();
   exit_future.wait();
   ClearEnv();
