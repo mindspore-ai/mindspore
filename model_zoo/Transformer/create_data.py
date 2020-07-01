@@ -37,13 +37,13 @@ class SampleInstance():
     def __str__(self):
         s = ""
         s += "source sos tokens: %s\n" % (" ".join(
-            [tokenization.printable_text(x) for x in self.source_sos_tokens]))
+            [tokenization.convert_to_printable(x) for x in self.source_sos_tokens]))
         s += "source eos tokens: %s\n" % (" ".join(
-            [tokenization.printable_text(x) for x in self.source_eos_tokens]))
+            [tokenization.convert_to_printable(x) for x in self.source_eos_tokens]))
         s += "target sos tokens: %s\n" % (" ".join(
-            [tokenization.printable_text(x) for x in self.target_sos_tokens]))
+            [tokenization.convert_to_printable(x) for x in self.target_sos_tokens]))
         s += "target eos tokens: %s\n" % (" ".join(
-            [tokenization.printable_text(x) for x in self.target_eos_tokens]))
+            [tokenization.convert_to_printable(x) for x in self.target_eos_tokens]))
         s += "\n"
         return s
 
@@ -185,9 +185,9 @@ def main():
                 if total_written <= 20:
                     logging.info("*** Example ***")
                     logging.info("source tokens: %s", " ".join(
-                        [tokenization.printable_text(x) for x in instance.source_eos_tokens]))
+                        [tokenization.convert_to_printable(x) for x in instance.source_eos_tokens]))
                     logging.info("target tokens: %s", " ".join(
-                        [tokenization.printable_text(x) for x in instance.target_sos_tokens]))
+                        [tokenization.convert_to_printable(x) for x in instance.target_sos_tokens]))
 
                     for feature_name in features.keys():
                         feature = features[feature_name]
