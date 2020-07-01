@@ -578,6 +578,7 @@ class AbstractRef : public AbstractBase {
   AbstractBasePtr Broaden() const override {
     return std::make_shared<AbstractRef>(ref_key_->Broaden(), ref_->Broaden(), ref_origin_->Broaden());
   }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
   std::size_t hash() const override {
     return ref_key_->hash() ^ ref_->hash() ^ ref_origin_->hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);
   }
