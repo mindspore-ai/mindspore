@@ -70,7 +70,6 @@ void SetTensorName(const std::string &tag, const std::string &new_name, const st
                    nlohmann::json *const node_json);
 std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
                           const std::pair<size_t, size_t> &position);
-
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -618,6 +618,5 @@ size_t AkgKernelBuild::GetOutputTensorIdxInc() {
   size_t idx = output_tensor_idx_++;
   return idx;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

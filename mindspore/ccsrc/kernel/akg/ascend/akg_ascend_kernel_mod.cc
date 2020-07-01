@@ -55,7 +55,7 @@ const std::vector<size_t> &AkgKernelMod::GetWorkspaceSizeList() const { return w
 
 bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (stream_ptr == 0) {
+  if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
