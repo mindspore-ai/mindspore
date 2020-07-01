@@ -276,4 +276,6 @@ from .lrn_grad import _lrn_grad_tbe
 from .scatter_max import _scatter_max_tbe
 from .scatter_min import _scatter_min_tbe
 from .scatter_sub import _scatter_sub_tbe
+from .scatter_mul import _scatter_mul_tbe
+from .scatter_div import _scatter_div_tbe
 from .mod import _mod_tbe
