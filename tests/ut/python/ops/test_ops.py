@@ -1032,6 +1032,10 @@ test_case_math_ops = [
         'block': NormalNet((3, 2, 4), 0.0, 1.0, 0),
         'desc_inputs': [],
         'skip': ['backward']}),
+    ('Mod', {
+        'block': P.Mod(),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
 ]
 
 test_case_nn_ops = [

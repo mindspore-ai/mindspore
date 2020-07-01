@@ -1361,7 +1361,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
         - **range** (Tensor) - Must have the same type as x. Shape [2] Tensor of same dtype as x.
-        x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
+          x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
 
     Outputs:
         Tensor, the type is int32.
@@ -1645,8 +1645,9 @@ class Div(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
           a bool or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - When the first input is a tensor, The second input
+          could be a number or a bool, or a tensor whose data type is number or bool. When the first input
+          is a number or a bool, the second input should be a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is same as the shape after broadcasting,
@@ -1740,6 +1741,42 @@ class FloorDiv(_MathBinaryOp):
         >>> floor_div(input_x, input_y)
         [0, 1, -1]
     """
+
+
+class Mod(_MathBinaryOp):
+    """
+    Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
+
+    The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast. When the inputs are one tensor
+    and one scalar, the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
+        - **input_y** (Union[Tensor, Number]) - When the first input is a tensor, The second input
+          could be a number or a tensor whose data type is number. When the first input is a number,
+          the second input should be a tensor whose data type is number.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Raises:
+        ValueError: When `input_x` and `input_y` are not the same dtype.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
+        >>> mod = P.Mod()
+        >>> mod(input_x, input_y)
+    """
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            return Tensor(np.fmod(x, y))
+        return None
 
 
 class Floor(PrimitiveWithInfer):

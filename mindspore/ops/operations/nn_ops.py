@@ -1669,7 +1669,7 @@ class DataFormatDimMap(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - A Tensor with each element as a dimension index in source data format.
-        Must be in the range [-4, 4). It's type is int32.
+          Must be in the range [-4, 4). It's type is int32.
 
     Outputs:
         Tensor, has the same type as the `input_x`.
