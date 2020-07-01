@@ -174,7 +174,13 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NDHWC) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
-    host_shape = trans::PaddingShapeTo4d(host_shape);
+    if (host_shape_.empty()) {
+      host_shape = trans::PaddingShapeTo4d(host_shape);
+    } else {
+      host_shape.clear();
+      (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(host_shape), IntToSize);
+    }
+
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {

@@ -47,6 +47,7 @@ class AscendDeviceAddress : public DeviceAddress {
   bool LoadMemToHost(bool dump_mode, const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                      const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger) const;
 #endif
+
  private:
   bool SyncDeviceToHostAndConvertFormat(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const;
   bool ConvertFormatAndSyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type,
