@@ -25,6 +25,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
+
 class NetWorkSlicePositive(Cell):
     def __init__(self):
         super(NetWorkSlicePositive, self).__init__()
@@ -1159,10 +1160,8 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
 
     input_tensor = Tensor(np.ones([6, 8, 10], np.int32))
     net = NetWork()
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError):
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(
-        ex.value)
 
 
 def test_tensor_slice_reduce_out_of_bounds_positive():
@@ -1177,6 +1176,5 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
 
     input_tensor = Tensor(np.ones([6, 8, 10], np.int32))
     net = NetWork()
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError):
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)
