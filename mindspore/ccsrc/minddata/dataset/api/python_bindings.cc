@@ -77,6 +77,7 @@
 #include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/lookup_op.h"
 #include "minddata/dataset/text/kernels/ngram_op.h"
+#include "minddata/dataset/text/kernels/sliding_window_op.h"
 #include "minddata/dataset/text/kernels/to_number_op.h"
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
@@ -640,6 +641,9 @@ void bindTokenizerOps(py::module *m) {
       py::arg("max_bytes_per_token") = WordpieceTokenizerOp::kDefMaxBytesPerToken,
       py::arg("unknown_token") = std::string(WordpieceTokenizerOp::kDefUnknownToken),
       py::arg("with_offsets") = WordpieceTokenizerOp::kDefWithOffsets);
+  (void)py::class_<SlidingWindowOp, TensorOp, std::shared_ptr<SlidingWindowOp>>(
+    *m, "SlidingWindowOp", "TensorOp to apply sliding window to a 1-D Tensor.")
+    .def(py::init<uint32_t, int32_t>(), py::arg("width"), py::arg("axis"));
 }
 
 void bindDependIcuTokenizerOps(py::module *m) {

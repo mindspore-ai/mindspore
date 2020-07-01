@@ -23,7 +23,7 @@ import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
-    INT32_MAX, check_value, check_positive
+    INT32_MAX, check_value, check_positive, check_pos_int32
 
 
 def check_unique_list_of_words(words, arg_name):
@@ -328,6 +328,17 @@ def check_from_dataset(method):
 
     return new_method
 
+def check_slidingwindow(method):
+    """A wrapper that wrap a parameter checker to the original function(sliding window operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [width, axis], _ = parse_user_args(method, *args, **kwargs)
+        check_pos_int32(width, "width")
+        type_check(axis, (int,), "axis")
+        return method(self, *args, **kwargs)
+
+    return new_method
 
 def check_ngram(method):
     """A wrapper that wraps a parameter checker to the original function."""

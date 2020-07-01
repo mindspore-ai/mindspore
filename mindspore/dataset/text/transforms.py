@@ -54,7 +54,7 @@ from .utils import JiebaMode, NormalizeForm, to_str
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer,\
     check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate,\
-    check_to_number, check_bert_tokenizer, check_python_tokenizer
+    check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
 from ..core.datatypes import mstype_to_detype
 
 
@@ -72,6 +72,34 @@ class Lookup(cde.LookupOp):
     def __init__(self, vocab, unknown_token=None):
         super().__init__(vocab, unknown_token)
 
+class SlidingWindow(cde.SlidingWindowOp):
+    """
+    TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
+    is a slice of data starting at the corresponding position, with a specified width.
+
+    Args:
+        width (int): The width of the window. Must be an integer and greater than zero.
+        axis (int, optional): The axis along which sliding window is computed (default=0).
+
+    Examples:
+        >>> # Data before
+        >>> # |    col1     |
+        >>> # +-------------+
+        >>> # | [1,2,3,4,5] |
+        >>> # +-------------+
+        >>> data = data.map(operations=SlidingWindow(3, 0))
+        >>> # Data after
+        >>> # |     col1    |
+        >>> # +-------------+
+        >>> # |  [[1,2,3],  |
+        >>> # |   [2,3,4],  |
+        >>> # |   [3,4,5]]  |
+        >>> # +--------------+
+    """
+
+    @check_slidingwindow
+    def __init__(self, width, axis=0):
+        super().__init__(width=width, axis=axis)
 
 class Ngram(cde.NgramOp):
     """

@@ -120,6 +120,7 @@ constexpr char kCaseFoldOp[] = "CaseFoldOp";
 constexpr char kJiebaTokenizerOp[] = "JiebaTokenizerOp";
 constexpr char kLookupOp[] = "LookupOp";
 constexpr char kNgramOp[] = "NgramOp";
+constexpr char kSlidingWindowOp[] = "SlidingWindowOp";
 constexpr char kNormalizeUTF8Op[] = "NormalizeUTF8Op";
 constexpr char kRegexReplaceOp[] = "RegexReplaceOp";
 constexpr char kRegexTokenizerOp[] = "RegexTokenizerOp";
