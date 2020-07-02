@@ -65,9 +65,9 @@ def _generate_indices_from_tuple_of_mixed_tensors(data, tuple_index, op_name):
     tuple_len = len(tuple_index)
     for i in range(tuple_len):
         if i in int_positions:
-            tuple_index_new = tuple_index_new + (F.scalar_to_tensor(tuple_index[i], mstype.int32),)
+            tuple_index_new += (F.scalar_to_tensor(tuple_index[i], mstype.int32),)
         else:
-            tuple_index_new = tuple_index_new + (tuple_index[i],)
+            tuple_index_new += (tuple_index[i],)
     indexes_types = hyper_map(F.typeof, tuple_index_new)
     tensor_positions, slice_positions, ellipsis_position = \
         const_utils.separate_mixed_tensors_index(indexes_types, op_name)

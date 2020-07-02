@@ -97,6 +97,8 @@ tensor_type = typing.TensorType
 anything_type = typing.TypeAnything
 slice_type = typing.Slice
 ellipsis_type = typing.TypeEllipsis
+list_type = typing.List
+tuple_type = typing.Tuple
 
 number_type = (int8,
                int16,

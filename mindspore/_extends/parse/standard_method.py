@@ -104,6 +104,15 @@ def bool_(x):
     return x.__bool__()
 
 
+def enumerate_(x, start=0):
+    """Enumerate list or tuple."""
+    x_type = F.typeof(x)
+    ret = ()
+    if check_is_tuple_or_list(x_type, "enumerate"):
+        ret = zip(range(start, start + len(x)), x)
+    return ret
+
+
 def while_cond(x):
     """For while condtion, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
@@ -112,6 +121,13 @@ def while_cond(x):
             return F.cast(x, mstype.bool_)
     return x
 
+
+@constexpr
+def check_is_tuple_or_list(x, op_name):
+    """check whether x is list or tuple."""
+    if isinstance(x, (mstype.list_type, mstype.tuple_type)):
+        return True
+    raise TypeError(f"For '{op_name}', the input parameter should be tuple or list, but got {x}.")
 
 @constexpr
 def check_is_tensor_bool_cond(shp):
