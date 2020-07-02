@@ -33,7 +33,7 @@ Then you will get the following display
 ```bash
 >>> Found existing installation: mindspore-ascend
 >>> Uninstalling mindspore-ascend:
->>>  Successfully uninstalled mindspore-ascend.
+>>>     Successfully uninstalled mindspore-ascend.
 ```
 
 ### Prepare Dataset
@@ -186,7 +186,7 @@ model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
 ### train quantization aware model
 
-Also, you can just run this command instread.
+Also, you can just run this command instead.
 
 ```python
 python train_quant.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
@@ -235,7 +235,7 @@ The top1 accuracy would display on shell.
 Here are some optional parameters:
 
 ```bash
---device_target {Ascend,GPU,CPU}
+--device_target {Ascend,GPU}
     device where the code will be implemented (default: Ascend)
 --data_path DATA_PATH
     path where the dataset is saved

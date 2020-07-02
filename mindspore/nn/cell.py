@@ -81,6 +81,7 @@ class Cell:
         self.enable_hook = False
         self._bprop_debug = False
         self._is_run = False
+        self.cell_type = None
 
     @property
     def is_run(self):
@@ -139,6 +140,14 @@ class Cell:
 
         for cell_name, cell in cells_name:
             cell._param_prefix = cell_name
+
+    def update_cell_type(self, cell_type):
+        """
+        Update current cell type mainly identify if quantization aware training network.
+
+        After invoked, can set the cell type to 'cell_type'.
+        """
+        self.cell_type = cell_type
 
     @cell_init_args.setter
     def cell_init_args(self, value):

@@ -31,7 +31,7 @@ from src.lenet_fusion import LeNet5 as LeNet5Fusion
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",
-                    choices=['Ascend', 'GPU', 'CPU'],
+                    choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')
@@ -56,8 +56,7 @@ if __name__ == "__main__":
     # call back and monitor
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ckpt = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                                   keep_checkpoint_max=cfg.keep_checkpoint_max,
-                                   model_type=network.type)
+                                   keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpt_callback = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ckpt)
 
     # define model

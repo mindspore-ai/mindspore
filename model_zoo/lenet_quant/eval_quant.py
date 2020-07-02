@@ -32,7 +32,7 @@ from src.lenet_fusion import LeNet5 as LeNet5Fusion
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",
-                    choices=['Ascend', 'GPU', 'CPU'],
+                    choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     # load quantization aware network checkpoint
-    param_dict = load_checkpoint(args.ckpt_path, model_type="quant")
+    param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
 
     print("============== Starting Testing ==============")
