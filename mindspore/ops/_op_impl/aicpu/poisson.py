@@ -22,7 +22,7 @@ poisson_op_info = AiCPURegOp("Poisson") \
     .input(1, "mean", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.I32_NCHW) \
     .get_op_info()
 
