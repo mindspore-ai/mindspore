@@ -28,6 +28,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         SameTypeShape, ScatterAdd, ScatterSub, ScatterMul, ScatterDiv, ScatterMax, ScatterMin,
                         ScatterUpdate, ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
                         Shape, Size, Slice, Split, TransShape,
+                        ParallelConcat,
                         Squeeze, StridedSlice, Tile, TensorScatterUpdate,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
@@ -329,7 +330,8 @@ __all__ = [
     "InTopK",
     "LRN",
     "Mod",
-    "PopulationCount"
+    "PopulationCount",
+    "ParallelConcat",
 ]
 
 __all__.sort()

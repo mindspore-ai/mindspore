@@ -596,6 +596,15 @@ def test_strided_slice_const():
     assert (ret.asnumpy() == np.array([], np.float32).reshape([0, 1, 7, 8, 9, 3, 1])).all()
 
 
+class ParallelConcatNet(nn.Cell):
+    def __init__(self):
+        super(ParallelConcatNet, self).__init__()
+        self.parallel_concat = P.ParallelConcat()
+
+    def construct(self, x1, x2):
+        return self.parallel_concat((x1, x2))
+
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -1874,6 +1883,12 @@ test_case_array_ops = [
         'desc_const': [(1, 12, 24, 24)],
         'desc_inputs': [[1, 3, 24, 24]],
         'desc_bprop': [[1, 12, 24, 24]],
+    }),
+    ('ParallelConcat', {
+        'block': ParallelConcatNet(),
+        'desc_inputs': [Tensor([[1, 2]], mstype.float32),
+                        Tensor([[5, 6]], mstype.float32)],
+        'skip': ['backward'],
     }),
 ]
 
