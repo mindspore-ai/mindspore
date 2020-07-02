@@ -39,6 +39,7 @@
 #include "device/kernel_runtime_manager.h"
 #include "debug/trace.h"
 #include "pynative/pynative_execute.h"
+#include "optimizer/py_pass_manager.h"
 
 #if (ENABLE_GE || ENABLE_D)
 #include "pipeline/pipeline_ge.h"
@@ -967,6 +968,7 @@ void ClearResAtexit() {
   pipeline::ExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
   pynative::PynativeExecutor::GetInstance()->ClearRes();
+  opt::python_pass::PyPassManager::GetInstance()->ClearRes();
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::DfGraphConvertor::get_adpt_map().clear();

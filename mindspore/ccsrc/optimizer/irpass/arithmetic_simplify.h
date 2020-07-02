@@ -391,10 +391,6 @@ class TensorAddByZero : public AnfVisitor {
   }
 
   void Visit(const AnfNodePtr &node) override {
-    if (IsPrimitive(node, prim::kPrimZerosLike)) {
-      is_zero_ = true;
-      return;
-    }
     if (node->isa<ValueNode>() && CheckTensorConstant(0).IsTensorScalarConstant(GetValueNode(node))) {
       is_zero_ = true;
       return;

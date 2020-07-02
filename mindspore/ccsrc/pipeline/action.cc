@@ -39,6 +39,7 @@
 #include "optimizer/optimizer.h"
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
+#include "optimizer/py_pass_manager.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -423,6 +424,25 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
 
 bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
 
+void ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
+  MS_EXCEPTION_IF_NULL(res->manager());
+  MS_EXCEPTION_IF_NULL(res->func_graph());
+  auto ppm = opt::python_pass::PyPassManager::GetInstance();
+  if (!ppm->GetPassGroup(phase)->Run(res->func_graph())) {
+    MS_LOG(DEBUG) << "No match.\n";
+  }
+}
+
+bool ResolveActionPyStub(const ResourcePtr &res) {
+  ActionPyStub(res, opt::python_pass::Phase::RESOLVE);
+  return true;
+}
+
+bool OptActionPyStub(const ResourcePtr &res) {
+  ActionPyStub(res, opt::python_pass::Phase::RESOLVE);
+  return true;
+}
+
 static std::vector<ActionItem> CommonPipeline() {
   std::vector<ActionItem> actions;
 
@@ -435,6 +455,8 @@ static std::vector<ActionItem> CommonPipeline() {
   if (!multi_graphs) {
     actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
+  // Add resolve-stage python pass stub
+  actions.emplace_back(std::make_pair("py_resolve", ResolveActionPyStub));
   actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
@@ -446,6 +468,8 @@ std::vector<ActionItem> GePipeline() {
   auto actions = CommonPipeline();
   // optimize
   actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
+  // Add opt-stage python pass stub
+  actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
   actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
   actions.emplace_back(std::make_pair("validate", ValidateAction));
   return actions;
@@ -456,6 +480,9 @@ std::vector<ActionItem> VmPipeline() {
 
   // optimize
   actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+
+  // Add opt-stage python pass stub
+  actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
 

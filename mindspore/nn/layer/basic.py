@@ -173,7 +173,8 @@ class Dense(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        activation (str): activate function applied to the output of the fully connected layer, eg. 'relu'.
+            Default: None.
 
     Raises:
         ValueError: If weight_init or bias_init shape is incorrect.
