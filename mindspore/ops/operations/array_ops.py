@@ -1371,11 +1371,9 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
     """
     Computes the minimum along segments of a tensor.
 
-    If the given segment_ids is negative, the value will be ignored.
-
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value should be >= 0.
         - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
 
     Outputs:

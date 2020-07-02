@@ -1738,6 +1738,8 @@ class SGD(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, dampening=0.0, weight_decay=0.0, nesterov=False):
         validator.check_value_type("nesterov", nesterov, [bool], self.name)
+        if nesterov and dampening != 0:
+            raise ValueError(f"Nesterov need zero dampening!")
         self.init_prim_io_names(inputs=['parameters', 'gradient', 'learning_rate', 'accum', 'momentum', 'stat'],
                                 outputs=['output'])
 
@@ -2151,7 +2153,8 @@ class ResizeBilinear(PrimitiveWithInfer):
                        rescale by `new_height / height`. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Image to be resized. Tensor of shape `(N_i, ..., N_n, height, width)`.
+        - **input** (Tensor) - Image to be resized. Tensor of shape `(N_i, ..., N_n, height, width)`,
+          with data type of float32 or float16.
 
     Outputs:
         Tensor, resized image. Tensor of shape `(N_i, ..., N_n, new_height, new_width)` in `float32`.
