@@ -296,6 +296,7 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
+    root_graph->set_executable(false);
     InitRuntimeResource();
     return root_graph->graph_id();
   }
