@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Record the summary event."""
+import atexit
 import os
 import re
 import threading
@@ -21,7 +22,7 @@ from mindspore import log as logger
 
 from ..._c_expression import Tensor
 from ..._checkparam import _check_str_by_regular
-from .._utils import _make_directory, _check_to_numpy, _check_lineage_value
+from .._utils import _check_lineage_value, _check_to_numpy, _make_directory
 from ._summary_adapter import get_event_file_name, package_graph_event
 from ._writer_pool import WriterPool
 
@@ -102,8 +103,8 @@ class SummaryRecord:
                  file_suffix="_MS",
                  network=None):
 
-        self._closed, self._mode = False, 'train'
-        self._data_pool = _dictlist()
+        self._closed, self._event_writer = False, None
+        self._mode, self._data_pool = 'train', _dictlist()
 
         _check_str_by_regular(file_prefix)
         _check_str_by_regular(file_suffix)
@@ -141,6 +142,7 @@ class SummaryRecord:
         self._event_writer = WriterPool(log_dir,
                                         summary=self.full_file_name,
                                         lineage=get_event_file_name('events', '_lineage'))
+        atexit.register(self.close)
 
     def __enter__(self):
         """Enter the context manager."""
@@ -327,11 +329,9 @@ class SummaryRecord:
         if not self._closed and self._event_writer:
             # event writer flush and close
             logger.info('Please wait it may take quite some time to finish writing and closing.')
+            atexit.unregister(self.close)
             self._event_writer.close()
             self._closed = True
-
-    def __del__(self) -> None:
-        self.close()
 
     @staticmethod
     def _parse_from(name: str = None):
