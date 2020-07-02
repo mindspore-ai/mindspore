@@ -151,7 +151,7 @@ class RandomCrop(cde.RandomCropOp):
 
 class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
     """
-    Crop the input image at a random location and adjust bounding boxes for crop area
+    Crop the input image at a random location and adjust bounding boxes accordingly.
 
     Args:
         size (int or sequence): The output size of the cropped image.
@@ -213,8 +213,7 @@ class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
 
 class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
     """
-    Flip the input image horizontally, randomly with a given probability.
-    Maintains data integrity by also flipping bounding boxes in an object detection pipeline.
+    Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
@@ -242,7 +241,7 @@ class RandomVerticalFlip(cde.RandomVerticalFlipOp):
 
 class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
     """
-    Flip the input image vertically, randomly with a given probability and adjust bounding boxes as well
+    Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
@@ -256,8 +255,7 @@ class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
 
 class BoundingBoxAugment(cde.BoundingBoxAugmentOp):
     """
-    Apply a given image transform on a random selection of bounding box regions
-    of a given image.
+    Apply a given image transform on a random selection of bounding box regions of a given image.
 
     Args:
         transform: C++ transformation function to be applied on random selection
@@ -305,7 +303,7 @@ class Resize(cde.ResizeOp):
 
 class ResizeWithBBox(cde.ResizeWithBBoxOp):
     """
-    Resize the input image to the given size and adjust the bounding boxes accordingly.
+    Resize the input image to the given size and adjust bounding boxes accordingly.
 
     Args:
         size (int or sequence): The output size of the resized image.
@@ -335,7 +333,7 @@ class ResizeWithBBox(cde.ResizeWithBBoxOp):
 
 class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
     """
-    Crop the input image to a random size and aspect ratio and adjust the Bounding Boxes accordingly
+    Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
     Args:
         size (int or sequence): The size of the output image.
@@ -534,7 +532,7 @@ class RandomResize(cde.RandomResizeOp):
 class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode and adjust
-    the bounding boxes accordingly.
+    bounding boxes accordingly.
 
     Args:
         size (int or sequence): The output size of the resized image.
