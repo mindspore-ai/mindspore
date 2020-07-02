@@ -95,6 +95,13 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   TypeId type_id = kNumberTypeFloat32;
   type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
   std::vector<int> temp_shape;
+  if (graph.IsInternalOutput(node)) {
+    temp_shape.emplace_back(1);
+    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+    tensor->set_device_address(address);
+    tensor->set_dirty(false);
+    return tensor;
+  }
   (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
   // if in paynative mode,data only copyed to host when user want to print data
@@ -170,48 +177,6 @@ ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) {
   graph->FrontBackendlMapAdd(anf, new_value_node);
   graph->AddValueNodeToGraph(new_value_node);
   return new_value_node;
-}
-
-std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, bool valid_input, KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> parameters;
-  std::vector<AnfNodePtr> pre_graph_out = {node};
-  // If a cnode is a call, it's input0 is a cnode too, so it doesn't have primitive
-  if (!AnfAlgo::IsRealKernel(node)) {
-    pre_graph_out = AnfAlgo::GetAllOutput(node, {prim::kPrimTupleGetItem});
-  }
-  auto valid_inputs = graph->MutableValidInputs();
-  MS_EXCEPTION_IF_NULL(valid_inputs);
-  auto graph_inputs = graph->MutableInputs();
-  MS_EXCEPTION_IF_NULL(graph_inputs);
-  auto create_parameter = [&](const AbstractBasePtr &abstract) -> void {
-    auto parameter = graph->NewParameter();
-    MS_EXCEPTION_IF_NULL(parameter);
-    parameter->set_abstract(abstract);
-    auto new_parameter = graph->NewParameter(parameter);
-    parameters.push_back(new_parameter);
-    valid_inputs->push_back(valid_input);
-    graph_inputs->push_back(new_parameter);
-  };
-  for (const auto &out_node : pre_graph_out) {
-    MS_EXCEPTION_IF_NULL(out_node);
-    auto abstract = out_node->abstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    // create multiple parameters if is a tuple output real kernel
-    if (abstract->isa<abstract::AbstractTuple>() && !AnfAlgo::CheckPrimitiveType(out_node, prim::kPrimTupleGetItem)) {
-      auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
-      MS_EXCEPTION_IF_NULL(tuple_abstract);
-      MS_LOG(INFO) << "Tuple_size [" << tuple_abstract->size() << "]";
-      for (size_t output_idx = 0; output_idx < tuple_abstract->size(); output_idx++) {
-        create_parameter((*tuple_abstract)[output_idx]);
-      }
-      continue;
-    }
-    // create single parameter if is a abstract real kernel
-    create_parameter(out_node->abstract());
-  }
-  return parameters;
 }
 
 size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs) {
@@ -323,6 +288,103 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
+
+KernelGraphPtr SessionBasic::GetGraph(mindspore::GraphId graph_id) {
+  auto it = graphs_.find(graph_id);
+  if (it == graphs_.end()) {
+    MS_LOG(WARNING) << "Can't find graph " << graph_id;
+    return nullptr;
+  }
+  return it->second;
+}
+
+void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) {
+  auto graph_id = GetGraphIdByNode(out_node);
+  if (graph_id == kInvalidGraphId) {
+    return;
+  }
+  auto node_graph = GetGraph(graph_id);
+  if (node_graph == nullptr) {
+    return;
+  }
+  MS_LOG(INFO) << "Init parameter with pre graph output node: " << out_node->DebugString();
+  auto ref_node = node_graph->GetInternalOutputByFrontNode(out_node);
+  if (ref_node == nullptr) {
+    MS_LOG(INFO) << "No corresponding internal output for output node";
+    return;
+  }
+  auto real_kernel = AnfAlgo::VisitKernel(ref_node, 0);
+  auto ref_real_node = real_kernel.first;
+  auto ref_real_node_index = real_kernel.second;
+  if (ref_real_node->isa<CNode>() && node_graph->IsInternalOutput(ref_real_node) &&
+      node_graph->IsFinalOutputKernel(ref_real_node)) {
+    auto kernel_info = ref_real_node->kernel_info();
+    if (kernel_info == nullptr || kernel_info->select_kernel_build_info() == nullptr) {
+      MS_LOG(INFO) << "No kernel info";
+      return;
+    }
+    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
+    if (address == nullptr) {
+      MS_LOG(INFO) << "No kernel address";
+      return;
+    }
+    auto format = AnfAlgo::GetOutputFormat(ref_real_node, ref_real_node_index);
+    auto type = AnfAlgo::GetOutputDeviceDataType(ref_real_node, ref_real_node_index);
+    parameter->set_kernel_info(std::make_shared<device::KernelInfo>());
+    auto d_kernel_info = parameter->kernel_info();
+    MS_EXCEPTION_IF_NULL(d_kernel_info);
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    builder.SetOutputsDeviceType({type});
+    builder.SetOutputsFormat({format});
+    d_kernel_info->set_select_kernel_build_info(builder.Build());
+    AnfAlgo::SetOutputAddr(address, 0, parameter.get());
+  }
+}
+
+std::vector<AnfNodePtr> SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, bool valid_input,
+                                                               KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  std::vector<AnfNodePtr> parameters;
+  std::vector<AnfNodePtr> pre_graph_out = {node};
+  // If a cnode is a call, it's input0 is a cnode too, so it doesn't have primitive
+  if (!AnfAlgo::IsRealKernel(node)) {
+    pre_graph_out = AnfAlgo::GetAllOutput(node, {prim::kPrimTupleGetItem});
+  }
+  auto valid_inputs = graph->MutableValidInputs();
+  MS_EXCEPTION_IF_NULL(valid_inputs);
+  auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  auto create_parameter = [&](const AbstractBasePtr &abstract) -> void {
+    auto parameter = graph->NewParameter();
+    MS_EXCEPTION_IF_NULL(parameter);
+    parameter->set_abstract(abstract);
+    auto new_parameter = graph->NewParameter(parameter);
+    parameters.push_back(new_parameter);
+    valid_inputs->push_back(valid_input);
+    graph_inputs->push_back(new_parameter);
+  };
+  for (const auto &out_node : pre_graph_out) {
+    MS_EXCEPTION_IF_NULL(out_node);
+    auto abstract = out_node->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    // create multiple parameters if is a tuple output real kernel
+    if (abstract->isa<abstract::AbstractTuple>() && !AnfAlgo::CheckPrimitiveType(out_node, prim::kPrimTupleGetItem)) {
+      auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_abstract);
+      MS_LOG(INFO) << "Tuple_size [" << tuple_abstract->size() << "]";
+      for (size_t output_idx = 0; output_idx < tuple_abstract->size(); output_idx++) {
+        create_parameter((*tuple_abstract)[output_idx]);
+      }
+      continue;
+    }
+    // create single parameter if is a abstract real kernel
+    create_parameter(out_node->abstract());
+    InitInternalOutputParameter(out_node, parameters[parameters.size() - 1]);
+  }
+  return parameters;
+}
+
 ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input,
                                                            KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
@@ -857,6 +919,29 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
   auto FindEqu = [graph, outputs](const AnfNodePtr &out) -> AnfNodePtr {
     auto backend_anf = graph->GetBackendAnfByFrontAnf(out);
     if (backend_anf != nullptr) {
+      auto front_real_kernel = AnfAlgo::VisitKernel(out, 0);
+      auto backend_real_kernel = AnfAlgo::VisitKernel(backend_anf, 0);
+      MS_EXCEPTION_IF_NULL(out);
+      auto out_func_graph = out->func_graph();
+      MS_EXCEPTION_IF_NULL(out_func_graph);
+      auto out_func_graph_manager = out_func_graph->manager();
+      if (out_func_graph_manager == nullptr) {
+        return backend_anf;
+      }
+      auto node_users = out_func_graph_manager->node_users();
+      auto users = node_users[out];
+      bool internal_output = true;
+      std::string kernel_target = GetCNodeTarget(front_real_kernel.first);
+      for (auto user : users) {
+        if (!AnfAlgo::IsRealKernel(user.first) || kernel_target != GetCNodeTarget(user.first)) {
+          internal_output = false;
+          break;
+        }
+      }
+      if (internal_output) {
+        MS_LOG(INFO) << "Internal output1: " << out->DebugString() << "To " << backend_real_kernel.first->DebugString();
+        graph->AddInternalOutput(out, backend_real_kernel.first);
+      }
       return backend_anf;
     }
     MS_LOG(EXCEPTION) << "Can't find the node in the equiv map!";

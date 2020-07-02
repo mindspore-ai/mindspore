@@ -448,7 +448,7 @@ void reset_id();
 }  // namespace id_generator
 using TaggedNodeMap = std::unordered_map<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
-
+std::string GetCNodeTarget(const AnfNodePtr &node);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_IR_ANF_H_

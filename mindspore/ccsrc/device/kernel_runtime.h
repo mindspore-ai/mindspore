@@ -95,7 +95,7 @@ class KernelRuntime {
 #endif
 
  private:
-  void AssignStaticMemoryOutput(const session::KernelGraph *graph);
+  void AssignStaticMemoryOutput(session::KernelGraph *graph);
   void GenLaunchArgs(const session::KernelGraph &graph, const AnfNodePtr &kernel, AddressPtrList *kernel_inputs,
                      AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs);
   bool LaunchKernelMod(const session::KernelGraph &graph);

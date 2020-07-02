@@ -339,7 +339,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   }
 }
 
-void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) {
+void KernelRuntime::AssignStaticMemoryOutput(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   std::vector<session::KernelWithIndex> non_communication_op;
@@ -350,6 +350,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
     if (!item_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(item_with_index.first)) {
       continue;
     }
+    graph->AddFinalOutputKernel(item_with_index.first);
     if (AnfAlgo::IsCommunicationOp(item_with_index.first)) {
       AssignCommunicationNodeMem(kStaticMem, item_with_index.first);
     } else {

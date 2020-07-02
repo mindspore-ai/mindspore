@@ -329,6 +329,9 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
     FrontBackendlMapUpdate(cnode, new_cnode);
   }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
+  if (IsInternalOutput(cnode)) {
+    ReplaceInternalOutput(cnode, new_cnode);
+  }
   return new_cnode;
 }
 
@@ -870,6 +873,76 @@ void KernelGraph::PrintGraphExecuteOrder() const {
                  << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], node info[" << cur_cnode_ptr->DebugString() << "]"
                  << event_str << label_str;
   }
+}
+
+void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node) {
+  if (front_node == nullptr || node == nullptr) {
+    MS_LOG(INFO) << "Front node or node is nullptr";
+    return;
+  }
+  MS_LOG(INFO) << "Add internal node " << node->DebugString() << " with front node " << front_node->DebugString();
+  front_to_internal_outputs_map_[front_node] = node;
+  internal_outputs_to_front_map_[node] = front_node;
+}
+
+void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node) {
+  if (new_node == nullptr || node == nullptr) {
+    MS_LOG(INFO) << "New node or node is nullptr";
+    return;
+  }
+  if (node == new_node) {
+    MS_LOG(INFO) << "New node and node is the same";
+    return;
+  }
+  auto iter = internal_outputs_to_front_map_.find(node);
+  if (iter == internal_outputs_to_front_map_.end()) {
+    MS_LOG(INFO) << "Node is not internal output";
+    return;
+  }
+  MS_LOG(INFO) << "Replace internal node " << node->DebugString() << " To " << new_node->DebugString();
+  internal_outputs_to_front_map_[new_node] = iter->second;
+  front_to_internal_outputs_map_[iter->second] = new_node;
+  internal_outputs_to_front_map_.erase(iter);
+}
+
+AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {
+  auto iter = front_to_internal_outputs_map_.find(front_node);
+  if (iter != front_to_internal_outputs_map_.end()) {
+    return iter->second;
+  }
+  return nullptr;
+}
+
+bool KernelGraph::IsInternalOutput(const AnfNodePtr &node) const {
+  if (internal_outputs_to_front_map_.find(node) != internal_outputs_to_front_map_.end()) {
+    return true;
+  }
+  return false;
+}
+
+AnfNodePtr KernelGraph::GetFrontNodeByInternalOutput(const AnfNodePtr &node) const {
+  auto iter = internal_outputs_to_front_map_.find(node);
+  if (iter != internal_outputs_to_front_map_.end()) {
+    return iter->second;
+  }
+  return nullptr;
+}
+
+void KernelGraph::AddFinalOutputKernel(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  (void)final_output_kernels_.insert(node);
+}
+
+bool KernelGraph::IsFinalOutputKernel(const AnfNodePtr &node) const {
+  if (node == nullptr) {
+    return false;
+  }
+  if (final_output_kernels_.find(node) != final_output_kernels_.end()) {
+    return true;
+  }
+  return false;
 }
 
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
