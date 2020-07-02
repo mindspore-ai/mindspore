@@ -27,8 +27,8 @@ reduce_all_op_info = TBERegOp("ReduceAll") \
     .attr("keep_dims", "optional", "bool", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
-    .dtype_format(DataType.BOOL_FracZ, DataType.BOOL_FracZ) \
+    .op_pattern("reduce") \
+    .dtype_format(DataType.BOOL_None, DataType.BOOL_None) \
     .get_op_info()
 
 

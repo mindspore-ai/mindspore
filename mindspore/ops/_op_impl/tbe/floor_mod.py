@@ -26,9 +26,10 @@ floor_mod_op_info = TBERegOp("FloorMod") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .op_pattern("broadcast") \
+    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
+    .dtype_format(DataType.I32_None, DataType.I32_None, DataType.I32_None) \
     .get_op_info()
 
 

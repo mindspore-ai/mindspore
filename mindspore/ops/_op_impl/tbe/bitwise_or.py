@@ -26,8 +26,9 @@ bitwise_or_op_info = TBERegOp("BitwiseOr") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I16_Default, DataType.I16_Default, DataType.I16_Default) \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default, DataType.U16_Default) \
+    .op_pattern("broadcast") \
+    .dtype_format(DataType.I16_None, DataType.I16_None, DataType.I16_None) \
+    .dtype_format(DataType.U16_None, DataType.U16_None, DataType.U16_None) \
     .get_op_info()
 
 

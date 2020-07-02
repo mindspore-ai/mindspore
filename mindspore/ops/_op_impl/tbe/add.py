@@ -23,16 +23,11 @@ add_op_info = TBERegOp("Add") \
     .compute_cost(10) \
     .kernel_name("add") \
     .partial_flag(True) \
+    .op_pattern("dynamicFormat") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 

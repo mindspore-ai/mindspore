@@ -25,10 +25,8 @@ logical_not_op_info = TBERegOp("LogicalNot") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
-    .dtype_format(DataType.BOOL_FracZ, DataType.BOOL_FracZ) \
-    .dtype_format(DataType.BOOL_C1HWNCoC0, DataType.BOOL_C1HWNCoC0) \
-    .dtype_format(DataType.BOOL_5HD, DataType.BOOL_5HD) \
+    .op_pattern("formatAgnostic") \
+    .dtype_format(DataType.BOOL_None, DataType.BOOL_None) \
     .get_op_info()
 
 
