@@ -30,7 +30,7 @@ run_ascend()
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-    if [ -d "train" ];
+    if [ -d "../train" ];
     then
         rm -rf ../train
     fi
