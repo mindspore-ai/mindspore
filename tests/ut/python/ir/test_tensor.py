@@ -430,10 +430,20 @@ def test_tensor_dtype_np_int64():
 
 
 def test_tensor_dtype_fp32_to_bool():
-    with pytest.raises(RuntimeError):
-        input_ = np.random.randn(2, 3, 4, 5).astype(np.float32)
-        input_ = ms.Tensor(input_)
-        _ = ms.Tensor(input_, dtype=ms.bool_)
+    input_ = np.random.randn(2, 3, 4, 5).astype(np.float32)
+    input_ = ms.Tensor(input_)
+    t = ms.Tensor(input_, dtype=ms.bool_)
+    assert isinstance(t, ms.Tensor)
+    assert t.shape == (2, 3, 4, 5)
+    assert t.dtype == ms.bool_
+
+
+def test_tensor_dtype_fp64_to_uint8():
+    array = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
+    t = ms.Tensor(array, ms.uint8)
+    assert isinstance(t, ms.Tensor)
+    assert t.shape == (2, 3)
+    assert t.dtype == ms.uint8
 
 
 def test_tensor_operation():
