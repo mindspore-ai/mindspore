@@ -91,7 +91,7 @@ def package_graph_event(data):
     return graph_event
 
 
-def package_summary_event(data_list, step):
+def package_summary_event(data_list, step, wall_time):
     """
     Package the summary to event protobuffer.
 
@@ -105,7 +105,7 @@ def package_summary_event(data_list, step):
     # create the event of summary
     summary_event = Event()
     summary = summary_event.summary
-    summary_event.wall_time = time.time()
+    summary_event.wall_time = wall_time
     summary_event.step = int(step)
 
     for value in data_list:
