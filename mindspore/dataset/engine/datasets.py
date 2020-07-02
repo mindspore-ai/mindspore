@@ -4421,23 +4421,7 @@ class CelebADataset(MappableDataset):
         The generated dataset has two columns ['image', 'attr'].
         The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
 
-    Args:
-        dataset_dir (str): Path to the root directory that contains the dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data (default=value set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        dataset_type (str): one of 'all', 'train', 'valid' or 'test'.
-        sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
-        decode (bool, optional): decode the images after reading (default=False).
-        extensions (list[str], optional): List of file extensions to be
-            included in the dataset (default=None).
-        num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_shards (int, optional): Number of shards that the dataset should be divided
-            into (default=None).
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
-
-   Citation of CelebA dataset.
+    Citation of CelebA dataset.
 
     .. code-block::
 
@@ -4455,9 +4439,9 @@ class CelebADataset(MappableDataset):
         bibsource = {dblp computer science bibliography, https://dblp.org},
         howpublished = {http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html},
         description  = {CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
-                        with more than 200K celebrity images, each with 40 attribute annotations. The
-                        images in this dataset cover large pose variations and background clutter. CelebA
-                        has large diversities, large quantities, and rich annotations, including
+                        with more than 200K celebrity images, each with 40 attribute annotations.
+                        The images in this dataset cover large pose variations and background clutter.
+                        CelebA has large diversities, large quantities, and rich annotations, including
                         * 10,177 number of identities,
                         * 202,599 number of face images, and
                         * 5 landmark locations, 40 binary attributes annotations per image.
@@ -4465,6 +4449,22 @@ class CelebADataset(MappableDataset):
                         vision tasks: face attribute recognition, face detection, landmark (or facial part)
                         localization, and face editing & synthesis.}
         }
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_parallel_workers (int, optional): Number of workers to read the data (default=value set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
+        dataset_type (str): one of 'all', 'train', 'valid' or 'test'.
+        sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
+        decode (bool, optional): decode the images after reading (default=False).
+        extensions (list[str], optional): List of file extensions to be
+            included in the dataset (default=None).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_shards (int, optional): Number of shards that the dataset should be divided
+            into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
     """
 
     @check_celebadataset
@@ -4542,6 +4542,24 @@ class CLUEDataset(SourceDataset):
     models, corpus and leaderboard. Here we bring in classification task of CLUE, which are AFQMC, TNEWS, IFLYTEK,
     CMNLI, WSC and CSL.
 
+    Citation of CLUE dataset.
+
+    .. code-block::
+
+        @article{CLUEbenchmark,
+        title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
+        author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
+                   Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
+                   Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+                   Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
+        journal = {arXiv preprint arXiv:2004.05986},
+        year    = {2020},
+        howpublished = {https://github.com/CLUEbenchmark/CLUE},
+        description  = {CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
+                        tasks, including single-sentence classification, sentence pair classification, and machine
+                        reading comprehension.}
+        }
+
     Args:
         dataset_files (str or list[str]): String or list of files to be read or glob strings to search for a pattern of
             files. The list will be sorted in a lexicographical order.
@@ -4563,24 +4581,6 @@ class CLUEDataset(SourceDataset):
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
-
-   Citation of CLUE dataset.
-
-    .. code-block::
-
-        @article{CLUEbenchmark,
-        title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
-        author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
-                   Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
-                   Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
-                   Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
-        journal = {arXiv preprint arXiv:2004.05986},
-        year    = {2020},
-        howpublished = {https://github.com/CLUEbenchmark/CLUE},
-        description  = {CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
-                        tasks, including single-sentence classification, sentence pair classification, and machine
-                        reading comprehension.}
-        }
 
     Examples:
         >>> import mindspore.dataset as ds
