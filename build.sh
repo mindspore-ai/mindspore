@@ -25,7 +25,7 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -52,7 +52,6 @@ usage()
   echo "    -M Enable MPI and NCCL for GPU training, default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
   echo "    -I Compile predict, default off"
-  echo "    -K Compile with AKG, default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -91,7 +90,6 @@ checkopts()
   COMPILE_PREDICT="off"
   USE_GLOG="on"
   PREDICT_PLATFORM=""
-  ENABLE_AKG="off"
 
   # Process the options
   while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K' opt
@@ -230,10 +228,6 @@ checkopts()
           exit 1
         fi
         ;;
-      K)
-        ENABLE_AKG="on"
-        echo "enable compile with akg"
-        ;;
       *)
         echo "Unknown option ${opt}!"
         usage
@@ -245,9 +239,6 @@ checkopts "$@"
 echo "---------------- mindspore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
-if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
-    git submodule update --init --recursive akg
-fi
 
 build_exit()
 {
@@ -309,9 +300,6 @@ build_mindspore()
     fi
     if [[ "X$USE_GLOG" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DUSE_GLOG=ON"
-    fi
-    if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
     fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
