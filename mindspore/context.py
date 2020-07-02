@@ -368,14 +368,6 @@ class _Context:
         self._context_handle.set_check_bprop_flag(check_bprop_flag)
 
     @property
-    def enable_sparse(self):
-        return self._context_handle.get_enable_sparse_flag()
-
-    @enable_sparse.setter
-    def enable_sparse(self, enable_sparse_flag):
-        self._context_handle.set_enable_sparse_flag(enable_sparse_flag)
-
-    @property
     def max_device_memory(self):
         return self._context_handle.get_max_device_memory()
 
@@ -408,6 +400,13 @@ class _Context:
             full_file_name = print_file_path
         self._context_handle.set_print_file_path(full_file_name)
 
+    @property
+    def enable_sparse(self):
+        return self._context_handle.get_enable_sparse()
+
+    @enable_sparse.setter
+    def enable_sparse(self, enable_sparse):
+        self._context_handle.set_enable_sparse(enable_sparse)
 
 def check_input_format(x):
     import re
@@ -601,7 +600,7 @@ def set_context(**kwargs):
         print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
             a file by default, and turn off printing to the screen. If the file already exists, add a timestamp
             suffix to the file.
-        enable_sparse (bool): Whether to enable sparse feature. Default: False.
+        enable_sparse (bool): Whether to enable sparsity feature. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.

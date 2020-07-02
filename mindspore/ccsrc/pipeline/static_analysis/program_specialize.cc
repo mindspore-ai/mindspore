@@ -321,7 +321,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &node, co
   AbstractFunctionPtr func = real_a->GetUnique();
   SpecializeStatusCode errcode;
   ScopeGuard scope_guard(node->scope());
-  AnfNodePtr repl = BuildSpecializedNodeInner(abs, func, argvals, &errcode);
+  AnfNodePtr repl = BuildSpecializedNodeInner(node, abs, func, argvals, &errcode);
   if (repl == nullptr) {
     if (errcode == kSpecializeFindUniqueArgvalDead) {
       const auto error_dead_node = std::make_shared<AbstractError>(kDeadNode, node);
@@ -340,7 +340,8 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &node, co
   return repl;
 }
 
-AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AbstractBasePtr &abs, const AbstractFunctionPtr &func,
+AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &node, const AbstractBasePtr &abs,
+                                                           const AbstractFunctionPtr &func,
                                                            const AbstractBasePtrList &args,
                                                            SpecializeStatusCode *errcode) {
   MS_EXCEPTION_IF_NULL(abs);
@@ -384,7 +385,14 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AbstractBasePtr
   AnalysisContextPtr context = real_eval->MakeContext(engine_, argvals);
   MS_LOG(DEBUG) << "Specialize function graph: " << context->func_graph()->ToString() << ", args: " << argvals.size()
                 << ", graph: " << context->func_graph()->get_return()->DebugString();
+  if (context->func_graph()->stub()) {
+    MS_LOG(DEBUG) << "Specialize stub function graph, return the original node: " << context->func_graph()->ToString()
+                  << ", args: " << argvals.size() << ", graph: " << context->func_graph()->get_return()->DebugString()
+                  << ", " << node->ToString();
+    return node;
+  }
   FuncGraphPtr v = specializer_->SpecializeFuncGraph(context->func_graph(), context);
+  v->set_flag(kFuncGraphFlagUndetermined, false);
   return BuildValueNode(v, abs);
 }
 
@@ -613,7 +621,8 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
     *result = std::make_pair(choices->begin()->first, choices->begin()->second->abstract());
     return kSpecializeSuccess;
   } else if (choices->empty()) {
-    MS_LOG(DEBUG) << "Find DEAD code, it may be optimized in later phase.";
+    MS_LOG(DEBUG) << "Find DEAD code, it may be optimized in later phase " << func->ToString() << " | "
+                  << func->type_name();
     return kSpecializeFindUniqueArgvalDead;
   } else {
     if (IsPolyFunc(func, argvals)) {

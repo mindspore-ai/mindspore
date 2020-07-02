@@ -39,7 +39,7 @@ class ReplaceApplicator : public AnfVisitor {
     }
 
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub()) {
       return nullptr;
     }
 
@@ -110,7 +110,7 @@ class InlinerBase : public AnfVisitor {
 
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub()) {
       return nullptr;
     }
     // Do not inline GraphKernel to Cell.

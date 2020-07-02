@@ -45,7 +45,8 @@ FuncGraph::FuncGraph()
       hyper_param_count_(0),
       is_generated_(false),
       return_(nullptr),
-      manager_(std::weak_ptr<FuncGraphManager>()) {
+      manager_(std::weak_ptr<FuncGraphManager>()),
+      stub_(false) {
   debug_info_ = std::make_shared<GraphDebugInfo>();
 }
 

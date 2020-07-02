@@ -1367,7 +1367,6 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
   std::string env = common::GetEnv("SLICE_ENV");
   if (!env.empty()) {
     MS_LOG(INFO) << "Slice tensors shape will be configured from env:" << env;
-    abstract::InitUndeterminedFromEnv(env);
   }
 }
 

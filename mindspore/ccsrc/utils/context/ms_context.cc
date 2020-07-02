@@ -89,7 +89,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   max_device_memory_ = kDefaultMaxDeviceMemory;
   print_file_path_ = "";
   enable_graph_kernel_ = false;
-  enable_sparse_flag_ = false;
+  enable_sparse_ = false;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {

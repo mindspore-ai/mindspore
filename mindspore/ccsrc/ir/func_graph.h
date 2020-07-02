@@ -344,6 +344,9 @@ class FuncGraph : public FuncGraphBase {
   void SetEffectDepends(const std::vector<AnfNodePtr> &depend_inputs);
   bool HasEffect(const CNodePtr &cnode);
 
+  bool stub() const { return stub_; }
+  void set_stub(bool stub) { stub_ = stub; }
+
  private:
   // graph is manipulated by manager and others
   friend FuncGraphManager;
@@ -402,6 +405,7 @@ class FuncGraph : public FuncGraphBase {
 
   // CNode order which relates to origin code order
   std::list<CNodePtr> order_;
+  bool stub_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

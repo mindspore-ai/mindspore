@@ -59,8 +59,8 @@ class ProximalAdagrad(Optimizer):
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
-        `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
+        The sparse feature is under continuous development. The sparse
         behavior is currently performed on the CPU.
 
     Args:

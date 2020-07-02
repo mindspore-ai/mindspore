@@ -232,8 +232,6 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
       ValuePtr value = param_value->value();
       constexpr bool broaden = true;
       AbstractBasePtr ptr = abstract::FromValue(value, broaden);
-      ptr->set_sparse_grad(param_value->sparse_grad());
-      ptr->set_has_indexed_slices_grad(param_value->has_indexed_slices_grad());
 
       parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
       args_spec.push_back(ptr);

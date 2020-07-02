@@ -30,6 +30,7 @@
 #include "pipeline/static_analysis/param_validator.h"
 #include "operator/cc_implementations.h"
 #include "optimizer/opt.h"
+#include "utils/context/ms_context.h"
 #include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
 #include "./common.h"
@@ -115,36 +116,43 @@ const py::function MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
     }
     return item.second;
   }
-  // Try best match
-  py::function py_fn_subclass;
-  size_t subclass_match_cnt = 0;
-  for (auto &item : fn_cache_py_) {
-    TypePtrList sign = item.first;
-    if (sign.size() != types.size()) {
-      continue;
+  return py::none();
+}
+
+FuncGraphPtr GenerateStubFunc(const TypePtrList &types) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse = context->enable_sparse();
+  if (!enable_sparse) {
+    return nullptr;
+  }
+
+  std::vector<AnfNodePtr> parameters;
+  ParameterPtr undetermined_param = nullptr;
+  auto stub = std::make_shared<FuncGraph>();
+  for (size_t i = 0; i < types.size(); ++i) {
+    auto param = stub->add_parameter();
+    parameters.push_back(param);
+    if (types[i]->type_id() == kObjectTypeUndeterminedType) {
+      undetermined_param = param;
     }
-    auto match = true;
-    for (size_t i = 0; i < sign.size(); ++i) {
-      if (!IsIdentidityOrSubclass(UnwrapRef(types[i]), sign[i]) &&
-          !IsParentOrChildrenType(UnwrapRef(types[i]), sign[i])) {
-        match = false;
-        break;
+  }
+  if (undetermined_param != nullptr) {
+    std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+    for (size_t i = 0; i < types.size(); ++i) {
+      if (types[i]->type_id() == kObjectTypeFunction) {
+        std::vector<AnfNodePtr> call_prim{parameters[i], undetermined_param};
+        inputs.push_back(stub->NewCNode(call_prim));
+      } else {
+        inputs.push_back(parameters[i]);
       }
     }
-    if (!match) {
-      continue;
-    }
-    py_fn_subclass = item.second;
-    subclass_match_cnt++;
+    auto stub_output = stub->NewCNode(inputs);
+    stub->set_output(stub_output);
+    stub->set_stub(true);
+    return stub;
   }
-  if (subclass_match_cnt > 1) {
-    MS_LOG(EXCEPTION) << "There are more than one prototypes for overload function match by subclass";
-  }
-  if (subclass_match_cnt == 1) {
-    MS_LOG(DEBUG) << "Found one subclass match";
-    return py_fn_subclass;
-  }
-  return py::none();
+  return nullptr;
 }
 
 FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
@@ -158,6 +166,11 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     }
     MS_LOG(DEBUG) << "Find overload function " << buffer.str() << ", function: " << func_graph->ToString();
     return func_graph;
+  }
+  auto stub = GenerateStubFunc(types);
+  if (stub != nullptr) {
+    MS_LOG(DEBUG) << "GenerateStubFunc " << buffer.str() << ", function: " << stub->ToString();
+    return stub;
   }
   std::ostringstream oss;
   oss << "There are " << fn_cache_py_.size() << " prototypes for overload function `" << name_

@@ -321,21 +321,19 @@ bool InferenceOptPreparePass(const ResourcePtr &res) {
   return true;
 }
 
-std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
-                                   {"opt_a", OptPassAGroup},
+std::vector<PassItem> kVmPasses = {{"opt_a", OptPassAGroup},
+                                   {"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_b", OptPassBGroup},
                                    {"cconv", CconvPass},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
                                    {"add_control_depend", AddControlDependPass}};
 
-std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
-                                   {"opt_a", OptPassAGroup},
-                                   {"opt_b", OptPassBGroup},
-                                   {"add_control_depend", AddControlDependPass},
-                                   {"opt_control", ControlGroup},
-                                   {"opt_prepare", PrepareGroup},
-                                   {"cconv", CconvPass}};
+std::vector<PassItem> kGePasses = {
+  {"opt_a", OptPassAGroup},      {"simplify_data_structures", SimplifyDataStructuresPass},
+  {"opt_b", OptPassBGroup},      {"add_control_depend", AddControlDependPass},
+  {"opt_control", ControlGroup}, {"opt_prepare", PrepareGroup},
+  {"cconv", CconvPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup}, {"opt_b", OptPassBGroup}, {"cconv", CconvPass}};
 }  // namespace pipeline

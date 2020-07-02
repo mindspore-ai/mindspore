@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "pipeline/static_analysis/static_analysis.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
@@ -59,6 +60,13 @@ class Evaluator : public Base {
   }
 
   virtual EvalResultPtr AbstractEval(const AbstractBasePtrList &args_spec_list) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    bool enable_sparse = context->enable_sparse();
+    if (!enable_sparse) {
+      return nullptr;
+    }
+
     auto is_abstract = std::any_of(args_spec_list.begin(), args_spec_list.end(), [](auto &arg) {
       if (arg->BuildType()->type_id() == kObjectTypeUndeterminedType) {
         return true;
