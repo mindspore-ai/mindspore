@@ -96,16 +96,18 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
   return result;
 }
 
-static bool isTraversable(const AnfNodePtr &node) {
-  if (node == nullptr) {
+static bool inline isTraversable(const AnfNodePtr &node, const AnfNodeSet &all_nodes) {
+  if (node->isa<CNode>() || node->isa<Parameter>()) {
     return false;
   }
-  if (node->isa<CNode>() || node->isa<Parameter>()) {
-    return true;
-  }
+
   if (IsValueNode<FuncGraph>(node) || IsValueNode<RefKey>(node)) {
+    if (!all_nodes.contains(node)) {
+      return false;
+    }
     return true;
   }
+
   return false;
 }
 
@@ -128,9 +130,15 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
     todo.pop_front();
 
     // check whether this node has been matched.
-    if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {
+    if (node == nullptr || node->seen_ == seen) {
       continue;
     }
+
+    auto fg = node->func_graph();
+    if (!(fg != nullptr && fg->manager() != nullptr) && !isTraversable(node, all_nodes)) {
+      continue;
+    }
+
     node->seen_ = seen;
 
     // select nodes that this transform can be applied.
