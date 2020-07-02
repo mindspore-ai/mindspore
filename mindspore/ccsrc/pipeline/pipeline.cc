@@ -245,7 +245,9 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
 }
 
 void ExecutorPy::DelNetRes(const std::string &id) {
+#ifdef ENABLE_GE
   FinalizeBackend();
+#endif
   if (executor_ != nullptr) {
     bool flag = false;
     auto tmp_info = info_;
