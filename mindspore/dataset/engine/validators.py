@@ -606,8 +606,15 @@ def check_bucket_batch_by_length(method):
         nreq_param_list = ['column_names', 'bucket_boundaries', 'bucket_batch_sizes']
         check_param_type(nreq_param_list, param_dict, list)
 
+        nbool_param_list = ['pad_to_bucket_boundary', 'drop_remainder']
+        check_param_type(nbool_param_list, param_dict, bool)
+
         # check column_names: must be list of string.
         column_names = param_dict.get("column_names")
+
+        if not column_names:
+            raise ValueError("column_names cannot be empty")
+
         all_string = all(isinstance(item, str) for item in column_names)
         if not all_string:
             raise TypeError("column_names should be a list of str.")
