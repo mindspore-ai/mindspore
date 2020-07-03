@@ -1356,7 +1356,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Args:
         dtype (string): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
-        nbins (Tensor): Number of histogram bins, the type is int32.
+        nbins (int): Number of histogram bins, the type is positive integer.
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
@@ -1377,6 +1377,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, nbins, dtype='int32'):
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
+        validator.check_integer("nbins", nbins, 1, Rel.GE, self.name)
         valid_values = ['int32', 'int64']
         self.dtype = validator.check_string("dtype", dtype, valid_values, self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
