@@ -166,7 +166,7 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes,
     valid_mask = boxes_wh[..., 0] > 0
 
     wh = boxes_wh[valid_mask]
-    if wh:
+    if wh.size > 0:
         wh = np.expand_dims(wh, -2)
         boxes_max = wh / 2.
         boxes_min = -boxes_max
@@ -319,7 +319,7 @@ def _choose_candidate_by_constraints(max_trial, input_w, input_h, image_w, image
             dx = int(_rand(0, input_w - nw))
             dy = int(_rand(0, input_h - nh))
 
-            if box:
+            if box.size > 0:
                 t_box = copy.deepcopy(box)
                 t_box[:, [0, 2]] = t_box[:, [0, 2]] * float(nw) / float(image_w) + dx
                 t_box[:, [1, 3]] = t_box[:, [1, 3]] * float(nh) / float(image_h) + dy
