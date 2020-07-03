@@ -1376,6 +1376,10 @@ test_case_nn_ops = [
         'block': P.Softmax(),
         'desc_inputs': [[5, 5]],
         'desc_bprop': [[5, 5]]}),
+    ('Softsign', {
+        'block': P.Softsign(),
+        'desc_inputs': [[5, 5]],
+        'desc_bprop': [[5, 5]]}),
     ('DepthwiseConv2dNative_1', {
         'block': P.DepthwiseConv2dNative(3, (3, 3), pad_mode="pad", pad=1, stride=2),
         'desc_inputs': [[10, 32, 32, 32], [1, 32, 3, 3]],
