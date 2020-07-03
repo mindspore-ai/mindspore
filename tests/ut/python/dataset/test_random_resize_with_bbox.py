@@ -35,7 +35,11 @@ def fix_annotate(bboxes):
     :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
     """
     for (i, box) in enumerate(bboxes):
-        bboxes[i] = np.roll(box, -1)
+        if box.size == 7:
+            bboxes[i] = np.roll(box, -1)
+        else:
+            print("ERROR: Invalid Bounding Box size provided")
+            break
     return bboxes
 
 
