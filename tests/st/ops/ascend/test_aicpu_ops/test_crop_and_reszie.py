@@ -41,8 +41,8 @@ def test_net_float32():
     image_width = 256
     channels = 3
     image = np.random.normal(size=[batch_size, image_height, image_width, channels]).astype(np.float32)
-    boxes = np.random.uniform(shape=[num_boxes, 4]).astype(np.float32)
-    box_index = np.random.uniform(shape=[num_boxes], low=0, high=batch_size).astype(np.int32)
+    boxes = np.random.uniform(size=[num_boxes, 4]).astype(np.float32)
+    box_index = np.random.uniform(size=[num_boxes], low=0, high=batch_size).astype(np.int32)
     crop_size = np.array([24, 24]).astype(np.int32)
     net = Net(crop_size=Tensor(crop_size))
     output = net(Tensor(image), Tensor(boxes), Tensor(box_index))
