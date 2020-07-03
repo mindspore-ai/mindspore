@@ -259,7 +259,7 @@ Status Server::BuildAndStart() {
   }
   g_ctx = ctx;
 #endif
-  MSServiceImpl msService;
+  MSServiceImpl ms_service;
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   // Set the port is not reuseable
@@ -268,7 +268,7 @@ Status Server::BuildAndStart() {
   serverBuilder.SetOption(std::move(option));
   serverBuilder.SetMaxMessageSize(uint32max);
   serverBuilder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  serverBuilder.RegisterService(&msService);
+  serverBuilder.RegisterService(&ms_service);
   std::unique_ptr<grpc::Server> server(serverBuilder.BuildAndStart());
   if (server == nullptr) {
     MS_LOG(ERROR) << "The serving server create failed";
