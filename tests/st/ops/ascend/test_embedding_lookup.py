@@ -15,6 +15,7 @@
 import numpy as np
 
 import mindspore.context as context
+import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore.ops import operations as P
