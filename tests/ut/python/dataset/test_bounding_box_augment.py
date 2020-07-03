@@ -34,12 +34,16 @@ def fix_annotate(bboxes):
     :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
     """
     for bbox in bboxes:
-        tmp = bbox[0]
-        bbox[0] = bbox[1]
-        bbox[1] = bbox[2]
-        bbox[2] = bbox[3]
-        bbox[3] = bbox[4]
-        bbox[4] = tmp
+        if bbox.size == 7:
+            tmp = bbox[0]
+            bbox[0] = bbox[1]
+            bbox[1] = bbox[2]
+            bbox[2] = bbox[3]
+            bbox[3] = bbox[4]
+            bbox[4] = tmp
+        else:
+            print("ERROR: Invalid Bounding Box size provided")
+            break
     return bboxes
 
 
