@@ -33,7 +33,6 @@ from ...ops.operations import _inner_ops as inner
 from ...train import serialization
 from . import quant_utils
 
-
 _ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
                    nn.ReLU6: quant.ReLU6Quant,
                    nn.HSigmoid: quant.HSigmoidQuant,
@@ -178,7 +177,6 @@ class ConvertToQuantNetwork:
                                                     dilation=conv_inner.dilation,
                                                     group=conv_inner.group,
                                                     eps=bn_inner.eps,
-                                                    momentum=1 - bn_inner.momentum,
                                                     quant_delay=self.weight_qdelay,
                                                     freeze_bn=self.freeze_bn,
                                                     per_channel=self.weight_channel,
@@ -268,16 +266,16 @@ class ConvertToQuantNetwork:
                                           narrow_range=self.act_range)
 
 
-class ExportQuantNetworkDeploy:
+class ExportToQuantInferNetwork:
     """
-    Convert quantization aware network to deploy network.
+    Convert quantization aware network to infer network.
 
     Args:
-        network (Cell): MindSpore network produced by `convert_quant_network`.
-        inputs (Tensor): Inputs of the `network`.
+        network (Cell): MindSpore network API `convert_quant_network`.
+        inputs (Tensor): Input tensors of the `quantization aware training network`.
 
     Returns:
-        Cell, converted network.
+        Cell, GEIR backend Infer network.
     """
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
@@ -287,7 +285,7 @@ class ExportQuantNetworkDeploy:
         network = validator.check_isinstance('network', network, (nn.Cell,))
         self.data_type = mstype.int8
         self.network = copy.deepcopy(network)
-        self.all_paramters = {p.name: p for p in self.network.get_parameters()}
+        self.all_parameters = {p.name: p for p in self.network.get_parameters()}
         self.get_inputs_table(inputs)
 
     def get_inputs_table(self, inputs):
@@ -315,8 +313,8 @@ class ExportQuantNetworkDeploy:
         info = self.quant_info_table.get(w_minq_name, None)
         if info:
             fack_quant_a_in_op, minq_name = info
-            maxq = self.all_paramters[minq_name[:-4] + "maxq"]
-            minq = self.all_paramters[minq_name]
+            maxq = self.all_parameters[minq_name[:-4] + "maxq"]
+            minq = self.all_parameters[minq_name]
             scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
         else:
             logger.warning(f"Do not find `fake_quant` from input with `fack_quant.minq` {w_minq_name}")
@@ -357,7 +355,7 @@ class ExportQuantNetworkDeploy:
         return block
 
     def _convert_quant2deploy(self, network):
-        """Convet network's all quant subcell to deploy subcell."""
+        """Convert network's all quant subcell to deploy subcell."""
         cells = network.name_cells()
         change = False
         for name in cells:
@@ -395,18 +393,26 @@ class ExportQuantNetworkDeploy:
         return network
 
 
-def export_geir(network, *inputs, file_name):
+def export(network, *inputs, file_name, file_format='GEIR'):
     """
-    Exports MindSpore quant predict model to deploy with GEIR.
+    Exports MindSpore quantization predict model to deploy with GEIR.
 
     Args:
         network (Cell): MindSpore network produced by `convert_quant_network`.
-        inputs (Tensor): Inputs of the `network`.
+        inputs (Tensor): Inputs of the `quantization aware training network`.
         file_name (str): File name of model to export.
+        file_format (str): MindSpore currently supports 'GEIR' format for exported quantization aware model.
+            - GEIR: Graph Engine Intermediate Representation. An Intermediate representation format of Ascend model.
     """
-    exporter = ExportQuantNetworkDeploy(network, *inputs)
-    deploy_net = exporter.run()
-    serialization.export(deploy_net, *inputs, file_name=file_name, file_format="GEIR")
+    supported_formats = ['GEIR']
+
+    if file_format not in supported_formats:
+        raise ValueError('Illegal file format {}.'.format(file_format))
+
+    if file_format == 'GEIR':
+        exporter = ExportToQuantInferNetwork(network, *inputs)
+        deploy_net = exporter.run()
+        serialization.export(deploy_net, *inputs, file_name=file_name, file_format=file_format)
 
 
 def convert_quant_network(network,
@@ -443,6 +449,7 @@ def convert_quant_network(network,
         Cell, Network which has change to quantization aware training network cell.
     """
     support_device = ["Ascend", "GPU"]
+
     def convert2list(name, value):
         if not isinstance(value, list) and not isinstance(value, tuple):
             value = [value]
@@ -457,7 +464,7 @@ def convert_quant_network(network,
     narrow_range = convert2list("narrow range", narrow_range)
 
     if context.get_context('device_target') not in support_device:
-        raise KeyError("Not support {} backend.".format(context.get_context('device_target')))
+        raise KeyError("Unsupported {} device target.".format(context.get_context('device_target')))
 
     net = ConvertToQuantNetwork(network=network,
                                 quant_delay=quant_delay,

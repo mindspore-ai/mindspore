@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
-    # convert fusion netwrok to quantization aware network
+    # convert fusion network to quantization aware network
     network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
 
     # define loss

@@ -86,7 +86,7 @@ class LossMonitor(Callback):
 
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             print("Epoch: [{:3d}/{:3d}], step: [{:5d}/{:5d}], "
-                  "loss: [{:5.4f}], avg los: [{:5.4f}], time: [{:5.4f}]".format(
+                  "loss: [{:5.4f}], avg los: [{:5.4f}], time: [{:5.4f}ms]".format(
                       cb_params.cur_epoch_num, cb_params.epoch_num,
                       cur_step_in_epoch, int(cb_params.batch_num),
                       step_loss, np.mean(self.losses),

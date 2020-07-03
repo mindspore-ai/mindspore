@@ -160,7 +160,10 @@ def load_checkpoint(ckpt_file_name, net=None):
     if not isinstance(ckpt_file_name, str):
         raise ValueError("The ckpt_file_name must be string.")
 
-    if not os.path.exists(ckpt_file_name) or ckpt_file_name[-5:] != ".ckpt":
+    if not os.path.exists(ckpt_file_name):
+        raise ValueError("The checkpoint file is not exist.")
+
+    if ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("Please input the correct checkpoint file name.")
 
     if os.path.getsize(ckpt_file_name) == 0:
