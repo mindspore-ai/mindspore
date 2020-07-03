@@ -32,6 +32,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
     - [Natural Language Processing](#natural-language-processing)
         - [BERT](#bert)
         - [MASS](#mass)
+        - [Transformer](#transformer)
 
 
 # Announcements
@@ -300,6 +301,26 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Checkpoint for Fine tuning |      |
 | Model for inference        |      |
 | Scripts                    |      |
+
+#### [Transformer](#table-of-contents)
+
+| Parameters                 | Transformer                                                    |
+| -------------------------- | -------------------------------------------------------------- |
+| Published Year             | 2017                                                           |
+| Paper                      | [Attention Is All You Need ](https://arxiv.org/abs/1706.03762) |
+| Resource                   | Ascend 910                                                     |
+| Features                   | • Multi-GPU training support with Ascend                       |
+| MindSpore Version          | 0.5.0-beta                                                     |
+| Dataset                    | WMT Englis-German                                              |
+| Training Parameters        | epoch=52, batch_size=96                                        |
+| Optimizer                  | Adam                                                           |
+| Loss Function              | Softmax Cross Entropy                                          |
+| BLEU Score                 | 28.7                                                           |
+| Speed                      | 410ms/step (8pcs)                                              |
+| Loss                       | 2.8                                                            |
+| Params (M)                 | 213.7                                                          |
+| Checkpoint for inference   | 2.4G (.ckpt file)                                              |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/Transformer |
 
 #### License
 
