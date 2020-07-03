@@ -184,7 +184,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           }
         }
       };
-      use_profile ? (WITH(MsProfile::GetProfile()->Lap(counter++)) run_runc) : run_runc();
+      use_profile ? (WITH(MsProfile::GetProfile()->Lap(counter)) run_runc) : run_runc();
+      counter++;
 
       if (run_only_once_) {
         break;
