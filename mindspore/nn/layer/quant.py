@@ -1193,9 +1193,9 @@ class QuantBlock(Cell):
         self.dequant = dequant_op
         self.dequant_scale = dequant_scale
         self.bias = bias
-        self.has_bias = bias is None
+        self.has_bias = bias is not None
         self.activation = activation
-        self.has_act = activation is None
+        self.has_act = activation is not None
         self.bias_add = P.BiasAdd()
 
     def construct(self, x):

@@ -57,7 +57,7 @@ if __name__ == "__main__":
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     # load check point into network
-    param_dict = load_checkpoint(args.ckpt_path, network.type)
+    param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
 
     print("============== Starting Testing ==============")

@@ -13,19 +13,18 @@
 # limitations under the License.
 # ============================================================================
 """
-######################## train lenet example ########################
-train lenet and get network model files(.ckpt) :
-python train.py --data_path /YourDataPath
+export quantization aware training network to infer `GEIR` backend.
 """
 
-import os
 import argparse
-import mindspore.nn as nn
+import numpy as np
+
+import mindspore
+from mindspore import Tensor
 from mindspore import context
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
-from mindspore.train import Model
-from mindspore.nn.metrics import Accuracy
-from src.dataset import create_dataset
+from mindspore.train.quant import quant
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion
 
@@ -43,25 +42,15 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-    ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size, cfg.epoch_size)
-    step_size = ds_train.get_dataset_size()
 
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
-    # define network loss
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
-    # define network optimization
-    net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
+    # convert fusion network to quantization aware network
+    network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
+    # load quantization aware network checkpoint
+    param_dict = load_checkpoint(args.ckpt_path)
+    load_param_into_net(network, param_dict)
 
-    # call back and monitor
-    config_ckpt = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                                   keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpt_callback = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ckpt)
-
-    # define model
-    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
-
-    print("============== Starting Training ==============")
-    model.train(cfg['epoch_size'], ds_train, callbacks=[ckpt_callback, LossMonitor()],
-                dataset_sink_mode=args.dataset_sink_mode)
-    print("============== End Training ==============")
+    # export network
+    inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
+    quant.export(network, inputs, file_name="lenet_quant", file_format='GEIR')
