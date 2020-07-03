@@ -348,7 +348,6 @@ Status DatasetOp::Accept(NodePass *p, bool *modified) {
 
 // A helper function with some common code that leaf nodes can use during
 // prepare phase for checking if they need to assign a sampler to the cache.
-// @return - Status
 Status DatasetOp::SaveSamplerForCache(bool random_access_op) {
   // If we are a descendant under a cache op and we have a sampler, then save this sampler
   // to a stack so that the cache can pick it up during it's processing above us.
@@ -362,8 +361,7 @@ Status DatasetOp::SaveSamplerForCache(bool random_access_op) {
     } else if (!random_access_op) {
       // A sampler exists, but we are not in a caching tree and we are not a random access mappable leaf.
       // This is an error because that type of leaf does not use sampling unless there's a cache to hook it into.
-      return Status(
-        StatusCode::kUnexpectedError, __LINE__, __FILE__,
+      RETURN_STATUS_UNEXPECTED(
         "Non-mappable leaf op has a sampler, but it only supports sampling if there is a cache after it in the tree");
     }
   }
