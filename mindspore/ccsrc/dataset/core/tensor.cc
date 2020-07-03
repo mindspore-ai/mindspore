@@ -513,6 +513,15 @@ const unsigned char *Tensor::GetBuffer() const {
   return data_;
 }
 
+// check for empty
+bool Tensor::HasData() const {
+  if (data_ == nullptr) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 unsigned char *Tensor::GetMutableBuffer() {
   if (!shape_.known() || type_ == DataType::DE_UNKNOWN) {
     return nullptr;
