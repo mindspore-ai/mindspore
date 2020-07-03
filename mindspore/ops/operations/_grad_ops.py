@@ -536,6 +536,51 @@ class MaxPoolGrad(_PoolGrad):
         return x1_dtype
 
 
+class MaxPoolGradGrad(_PoolGrad):
+    r"""
+    Performs gradients of the MaxPoolGrad operation.
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both ksize, or a tuple
+            of two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. Output height and width will be the same as
+              the input. Total number of padding will be calculated for horizontal and vertical
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
+
+    Inputs:
+        - **origin_input** (Tensor) - Tensor with data format "NCHW", data type should be float16.
+        - **origin_output** (Tensor) - Data type same as `origin_input`.
+        - **grad** (Tensor) - Data type same as `origin_input`.
+
+    Outputs:
+        Tensor, With data type same as `origin_input`.
+
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize=1, strides=1, padding="VALID"):
+        super(MaxPoolGradGrad, self).__init__(ksize, strides, padding)
+
+    def infer_shape(self, x1_shape, x2_shape, grad_shape):
+        return x1_shape
+
+    def infer_dtype(self, x1_dtype, x2_dtype, grad_dtype):
+        args = {'x1_dtype': x1_dtype, 'x2_dtype': x2_dtype, 'grad_dtype': grad_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16], self.name)
+        return x1_dtype
+
+
 class MaximumGrad(Primitive):
     """Grad for maximum."""
 
@@ -561,6 +606,54 @@ class MaxPoolGradWithArgmax(_PoolGrad):
         return x_shape
 
     def infer_dtype(self, x_dtype, grad_dtype, argmax_dtype):
+        return grad_dtype
+
+
+class MaxPoolGradGradWithArgmax(_PoolGrad):
+    r"""
+    Computes the gradients of MaxPoolGradWithArgmax.
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both ksize, or a tuple
+            of two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. Output height and width will be the same as
+              the input. Total number of padding will be calculated for horizontal and vertical
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
+
+    Inputs:
+        - **x** (Tensor) - Tensor with data format "NCHW", data type should be float16.
+        - **grad** (Tensor) - Data type same as `x`.
+        - **argmax** (Tensor) - Data type should be uint16 or int64.
+
+    Outputs:
+        Tensor, With data type same as `x`.
+
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize=1, strides=1, padding="VALID"):
+        self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
+        super(MaxPoolGradGradWithArgmax, self).__init__(ksize, strides, padding)
+
+    def infer_shape(self, x_shape, grad_shape, argmax_shape):
+        if not grad_shape:
+            raise TypeError("The dout of MaxPoolGradGradWithArgmax should be a Tensor.")
+        return x_shape
+
+    def infer_dtype(self, x_dtype, grad_dtype, argmax_dtype):
+        args = {'x_dtype': x_dtype, 'grad_dtype': grad_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16], self.name)
         return grad_dtype
 
 

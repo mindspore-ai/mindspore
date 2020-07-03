@@ -1585,6 +1585,20 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor([0, 1, 2, 3], mstype.int32)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('MaxPoolGradGrad', {
+        'block': G.MaxPoolGradGrad(),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.random.rand(1, 1, 2, 2), mstype.float16)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
+    ('MaxPoolGradGradWithArgmax', {
+        'block': G.MaxPoolGradGradWithArgmax(),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.zeros((1, 1, 2, 2)), mstype.uint16)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [

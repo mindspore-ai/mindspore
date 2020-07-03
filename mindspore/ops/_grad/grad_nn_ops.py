@@ -146,6 +146,40 @@ def get_bprop_max_pool_with_argmax(self):
     return bprop
 
 
+@bprop_getters.register(G.MaxPoolGrad)
+def get_bprop_max_pool_grad_grad(self):
+    """Grad definition for `MaxPoolGrad` operation."""
+    maxpool_grad_grad = G.MaxPoolGradGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        padding=self.padding)
+
+    def bprop(x1, x2, grad, out, dout):
+        dx1 = zeros_like(x1)
+        dx2 = zeros_like(x2)
+        dgrad = maxpool_grad_grad(x1, x2, dout)
+        return (dx1, dx2, dgrad)
+
+    return bprop
+
+
+@bprop_getters.register(G.MaxPoolGradGrad)
+def get_bprop_max_pool_grad_grad_grad(self):
+    """Grad definition for `MaxPoolGradGrad` operation."""
+    maxpool_grad = G.MaxPoolGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        padding=self.padding)
+
+    def bprop(x1, x2, grad, out, dout):
+        dx1 = zeros_like(x1)
+        dx2 = zeros_like(x2)
+        dgrad = maxpool_grad(x1, x2, dout)
+        return (dx1, dx2, dgrad)
+
+    return bprop
+
+
 @bprop_getters.register(P.MaxPool)
 def get_bprop_max_pool_grad(self):
     """Grad definition for `MaxPool` operation."""
