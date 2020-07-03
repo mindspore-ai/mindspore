@@ -52,7 +52,7 @@ class AscendControlParser {
 
   static void LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
                               const CNodePtr &last_label);
-  static std::tuple<CNodePtr, KernelGraphPtr> ParsePartial(NotNull<AnfNodePtr> node);
+  static KernelGraphPtr ParsePartial(NotNull<AnfNodePtr> node);
 
   static void InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> from_graph, NotNull<KernelGraphPtr> to_graph,
                                           NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);

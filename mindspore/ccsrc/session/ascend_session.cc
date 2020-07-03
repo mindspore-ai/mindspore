@@ -247,6 +247,9 @@ static void UpdateRealInput(NotNull<KernelGraphPtr> graph, bool split_flag) {
         MS_EXCEPTION_IF_NULL(switch_cnode);
         auto partial = switch_cnode->input(input_index);
         MS_EXCEPTION_IF_NULL(partial);
+        if (IsValueNode<KernelGraph>(partial)) {
+          return {};
+        }
         auto partial_cnode = partial->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(partial_cnode);
         auto ret = std::vector<AnfNodePtr>(partial_cnode->inputs().begin() + 2, partial_cnode->inputs().end());

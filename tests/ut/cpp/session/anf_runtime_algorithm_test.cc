@@ -590,7 +590,8 @@ TEST_F(AnfRuntimeAlgorithmTest, SetOutputInferTypeAndShape) {
   std::vector<TypeId> none_types = {};
   std::vector<std::vector<size_t>> none_shapes = {};
   EXPECT_THROW(AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, nullptr), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, add.get()), std::runtime_error);
+  AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, add.get());
+  EXPECT_EQ((*add->abstract()), abstract::AbstractNone());
   // set single input
   std::vector<TypeId> single_types = {kFloat32->type_id()};
   std::vector<std::vector<size_t>> single_shapes = {{2, 32, 224, 224}};

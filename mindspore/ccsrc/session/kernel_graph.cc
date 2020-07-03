@@ -357,18 +357,16 @@ ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
     } else {
       kernel_info->SetFeatureMapFlag(true);
     }
-    // if output is a tuple tensor,now can use for loop to handle tuple tensor
-    output_tensor_num = AnfAlgo::GetOutputTensorNum(parameter);
   }
   new_parameter->set_kernel_info(kernel_info);
   // create kernel_build_info for new parameter
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   // create init data type,
   std::vector<TypeId> init_data_type = {};
-  for (size_t i = 0; i < output_tensor_num; i++) {
-    TypeId infer_data_type = AnfAlgo::GetOutputInferDataType(new_parameter, i);
-    init_data_type.push_back(AnfAlgo::IsParameterWeight(new_parameter) ? kTypeUnknown : infer_data_type);
-  }
+
+  TypeId infer_data_type = AnfAlgo::GetOutputInferDataType(new_parameter, 0);
+  init_data_type.push_back(AnfAlgo::IsParameterWeight(new_parameter) ? kTypeUnknown : infer_data_type);
+
   // set the format of parameter to DEFAULT_FORMAT
   kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>(output_tensor_num, kOpFormat_DEFAULT));
   // set parameter initaial device data type
