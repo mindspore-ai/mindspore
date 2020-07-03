@@ -25,7 +25,7 @@
 
 #include "ir/func_graph.h"
 #include "ir/primitive_base.h"
-
+#include "utils/context/ms_context.h"
 #include "operator/ops.h"
 
 namespace mindspore {
@@ -179,4 +179,43 @@ std::string get_id(const AnfNodePtr &node) {
 
 void reset_id() { node_ids.clear(); }
 }  // namespace id_generator
+
+std::string GetCNodeTarget(const AnfNodePtr &node) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string default_target = context_ptr->device_target();
+  if (!node->isa<CNode>()) {
+    return default_target;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto attr_input = cnode->input(0);
+  if (attr_input == nullptr) {
+    return default_target;
+  }
+  auto value_node = attr_input->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return default_target;
+  }
+  auto value = value_node->value();
+  if (value == nullptr) {
+    return default_target;
+  }
+  if (!value->isa<Primitive>()) {
+    return default_target;
+  }
+  auto primitive = value->cast<PrimitivePtr>();
+  auto att_target = primitive->GetAttr("primitive_target");
+  if (att_target != nullptr) {
+    if (!att_target->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
+    auto target = GetValue<std::string>(att_target);
+    if (kTargetSet.find(target) == kTargetSet.end()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
+    return target;
+  }
+  return default_target;
+}
 }  // namespace mindspore

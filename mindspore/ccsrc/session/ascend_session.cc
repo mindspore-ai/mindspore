@@ -987,15 +987,6 @@ void AscendSession::SetFinalGraphOutput(const BaseRef &output) {
   }
 }
 
-KernelGraphPtr AscendSession::GetGraph(mindspore::GraphId graph_id) {
-  auto it = graphs_.find(graph_id);
-  if (it == graphs_.end()) {
-    MS_LOG(WARNING) << "Can't find graph " << graph_id;
-    return nullptr;
-  }
-  return it->second;
-}
-
 void AscendSession::InsertSwitchToGraph(GraphId condition_graph_id, GraphId true_graph_id) {
   MS_LOG(INFO) << "Start!";
   MS_LOG(INFO) << "Condition graph id[" << condition_graph_id << "],true graph id[" << true_graph_id << "]";

@@ -128,8 +128,6 @@ class AscendSession : public SessionBasic {
   void InsertDependToGraph(GraphId graph_id, const AnfNodePtr &attch_node);
   // insert depend to graph, used to attch control nodes to graph
   void InsertControlDependToGraph(GraphId graph_id, const AnfNodePtr &first_node, const AnfNodePtr &second_node);
-  // Get graph by graph id ,if not exist return null ptr
-  KernelGraphPtr GetGraph(GraphId graph_id);
   // set child graph parameter if front arg is a anf
   void SetChildGraphParameter(const AnfNodePtr &front_anf, GraphId to_graph_id, size_t input_idx);
   // set child graph parameter if front arg is a tensor
