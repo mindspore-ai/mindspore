@@ -76,7 +76,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
-from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
+from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
                         CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
 from .thor_ops import *
 
@@ -328,7 +328,8 @@ __all__ = [
     "InplaceUpdate",
     "InTopK",
     "LRN",
-    "Mod"
+    "Mod",
+    "PopulationCount"
 ]
 
 __all__.sort()
