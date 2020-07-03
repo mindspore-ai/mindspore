@@ -27,11 +27,11 @@ accumulate_n_v2_op_info = TBERegOp("AccumulateNV2") \
     .input(0, "x", False, "dynamic", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("broadcast") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None) \
+    .dtype_format(DataType.I32_None, DataType.I32_None) \
+    .dtype_format(DataType.I8_None, DataType.I8_None) \
+    .dtype_format(DataType.U8_None, DataType.U8_None) \
     .get_op_info()
 
 
