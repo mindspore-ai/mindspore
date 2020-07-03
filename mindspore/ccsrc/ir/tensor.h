@@ -54,8 +54,14 @@ class TensorData {
   virtual ssize_t ndim() const = 0;
   /// Data pointer.
   virtual void *data() = 0;
+  /// Shape of data.
+  virtual std::vector<int> shape() const = 0;
   /// Is data equals.
   virtual bool equals(const TensorData &other) const = 0;
+  /// Check for lazy allocation.
+  virtual void CheckDataSafe() = 0;
+  /// To string for lazy allocation.
+  virtual std::string ToStringSafe() = 0;
   /// To string.
   virtual std::string ToString() const = 0;
 };
@@ -180,7 +186,6 @@ class Tensor : public MetaTensor {
 
   // brief Get Tensor data pointer for c++ type
   //
-  // param writable true if writable, false if read only
   // return The pointer to the object
   void *data_c() { return data().data(); }
 
@@ -216,6 +221,12 @@ class Tensor : public MetaTensor {
   std::string ToString() const override;
 
   std::string ToStringRepr() const;
+
+  /// To string for lazy allocation.
+  std::string ToStringSafe();
+
+  /// To string for lazy allocation.
+  std::string ToStringReprSafe();
 
   bool is_init() { return init_flag_; }
   void set_init_flag(bool flag) { init_flag_ = flag; }

@@ -23,12 +23,18 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <iomanip>
+#include <algorithm>
+#include <type_traits>
+#include <typeinfo>
 
 #include "device/device_address.h"
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
 namespace tensor {
+constexpr auto kEllipsis = "...";
+constexpr auto kThreshold = 6;
 
 using Bool = unsigned char;
 
@@ -127,21 +133,22 @@ std::vector<T> CopyData(const std::vector<int> &shape, void *data, size_t data_l
 template <typename T>
 class TensorDataImpl : public TensorData {
  public:
-  explicit TensorDataImpl(const std::vector<int> &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
+  explicit TensorDataImpl(const std::vector<int> &shape)
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), shape_(shape) {}
 
   TensorDataImpl(const std::vector<int> &shape, void *data, size_t data_len)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)) {}
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)), shape_(shape) {}
 
   TensorDataImpl(const std::vector<int> &shape, void *data, TypeId data_type)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_type)) {}
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_type)), shape_(shape) {}
 
   template <typename InputIt>
   TensorDataImpl(const std::vector<int> &shape, InputIt first, InputIt last)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(first, last) {}
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(first, last), shape_(shape) {}
 
   template <typename Scalar>
   TensorDataImpl(const std::vector<int> &shape, Scalar scalar)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_({static_cast<T>(scalar)}) {}
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_({static_cast<T>(scalar)}), shape_(shape) {}
 
   ssize_t size() const override { return static_cast<ssize_t>(data_size_); }
 
@@ -157,12 +164,11 @@ class TensorDataImpl : public TensorData {
       // Prevent null pointer for empty shape.
       return empty_data.data();
     }
-    if (data_.empty()) {
-      // Lazy allocation.
-      data_.resize(data_size_);
-    }
+    CheckDataSafe();
     return data_.data();
   }
+
+  std::vector<int> shape() const { return shape_; }
 
   bool equals(const TensorData &other) const override {
     auto ptr = dynamic_cast<const TensorDataImpl<T> *>(&other);
@@ -172,20 +178,121 @@ class TensorDataImpl : public TensorData {
     return false;
   }
 
-  std::string ToString() const override {
-    std::ostringstream ss;
-    ss << '[';
-    for (auto value : data_) {
-      ss << value << ',';
+  // Prepare for lazy allocation.
+  void CheckDataSafe() {
+    // Lazy allocation.
+    if (data_.empty()) {
+      data_.resize(data_size_);
     }
-    ss << ']';
+  }
+
+  // ToString() for lazy allocation.
+  std::string ToStringSafe() {
+    CheckDataSafe();
+    return ToString();
+  }
+
+  std::string ToString() const override {
+    constexpr auto valid =
+      std::is_same<T, Bool>::value || std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
+      std::is_same<T, int16_t>::value || std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value ||
+      std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value || std::is_same<T, uint64_t>::value ||
+      std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value;
+    if (!valid) {
+      MS_LOG(EXCEPTION) << "Type is invalid, T: " << typeid(T).name();
+    }
+    if (data_size_ == 0) {
+      return "";
+    }
+    if (data_.empty()) {
+      MS_LOG(ERROR) << "data_ is empty, data_size_: " << data_size_;
+      return "";
+    }
+
+    std::ostringstream ss;
+    ssize_t cursor = 0;
+    SummaryStringRecursive(ss, &cursor, 0);
     return ss.str();
   }
 
  private:
+  void OutputDataString(std::ostringstream &ss, ssize_t cursor, ssize_t start, ssize_t end) const {
+    constexpr auto isFloat =
+      std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value;
+    constexpr auto isSigned = std::is_same<T, int8_t>::value || std::is_same<T, int16_t>::value ||
+                              std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value;
+    for (ssize_t i = start; i < end && (cursor + i) < static_cast<ssize_t>(data_size_); i++) {
+      if (isFloat) {
+        ss << std::setw(15) << std::setprecision(8) << std::setiosflags(std::ios::scientific | std::ios::right)
+           << data_[cursor + i];
+      } else {
+        if (isSigned && static_cast<int64_t>(data_[cursor + i]) >= 0) {
+          ss << ' ';
+        }
+        ss << data_[cursor + i];
+      }
+      if (i != end - 1) {
+        ss << ' ';
+      }
+    }
+  }
+
+  void SummaryStringRecursive(std::ostringstream &ss, ssize_t *cursor, ssize_t depth) const {
+    if (depth >= static_cast<ssize_t>(ndim_)) {
+      return;
+    }
+    ss << '[';
+    if (depth == static_cast<ssize_t>(ndim_) - 1) {  // Bottom dimension
+      ssize_t num = shape_[depth];
+      if (num > kThreshold) {
+        OutputDataString(ss, *cursor, 0, kThreshold / 2);
+        ss << ' ' << kEllipsis << ' ';
+        OutputDataString(ss, *cursor, num - kThreshold / 2, num);
+      } else {
+        OutputDataString(ss, *cursor, 0, num);
+      }
+      *cursor += num;
+    } else {  // Middle dimension
+      ssize_t num = shape_[depth];
+      // Handle the first half.
+      for (ssize_t i = 0; i < std::min(static_cast<ssize_t>(kThreshold / 2), num); i++) {
+        if (i > 0) {
+          ss << '\n';
+          ss << std::setw(depth + 1) << ' ';  // Add the indent.
+        }
+        SummaryStringRecursive(ss, cursor, depth + 1);
+      }
+      // Handle the ignored part.
+      if (num > kThreshold) {
+        ss << '\n';
+        ss << std::setw(depth + 1) << ' ';  // Add the indent.
+        ss << kEllipsis << '\n';
+        // Ignored at this layer.
+        ssize_t ignored = shape_[depth + 1];
+        for (ssize_t i = depth + 2; i < static_cast<ssize_t>(ndim_); i++) {
+          ignored *= shape_[i];
+        }
+        // Multiple with ignored layers number.
+        ignored *= num - kThreshold;
+
+        *cursor += ignored;
+      }
+      // Handle the second half.
+      if (num > kThreshold / 2) {
+        for (ssize_t i = num - kThreshold / 2; i < num; i++) {
+          ss << '\n';
+          ss << std::setw(depth + 1) << ' ';  // Add the indent.
+          SummaryStringRecursive(ss, cursor, depth + 1);
+        }
+      }
+    }
+    ss << ']';
+  }
+
   size_t ndim_{0};
   size_t data_size_{0};
   std::vector<T> data_;
+  std::vector<int> shape_;
 };
 
 template <typename... Args>
@@ -314,7 +421,7 @@ std::string Tensor::ToString() const {
   buf << "Tensor shape:[" << shape() << "]" << this->Dtype()->ToString();
   // only print small tensor
   if (DataSize() < small_tensor_size) {
-    buf << "val:" << data().ToString();
+    buf << ", value:" << data().ToString();
   }
   return buf.str();
 }
@@ -324,8 +431,18 @@ std::string Tensor::ToStringRepr() const {
   auto type_ptr = this->Dtype();
   MS_EXCEPTION_IF_NULL(type_ptr);
   buf << "Tensor shape:[" << shape() << "]" << type_ptr->ToString();
-  buf << "\nval:" << data().ToString();
+  buf << "\nvalue:" << data().ToString();
   return buf.str();
+}
+
+std::string Tensor::ToStringSafe() {
+  data().CheckDataSafe();
+  return ToString();
+}
+
+std::string Tensor::ToStringReprSafe() {
+  data().CheckDataSafe();
+  return ToStringRepr();
 }
 
 void Tensor::data_sync() const {
