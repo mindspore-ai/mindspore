@@ -20,6 +20,7 @@
 #include <deque>
 #include <memory>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "ir/anf.h"
 #include "ir/manager.h"
@@ -191,21 +192,53 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   FuncGraphManagerPtr manager = optimizer->manager();
   manager->AddFuncGraph(func_graph);
 
+  // for transform status counting
+  size_t space = 0;
+  std::unordered_map<std::string, std::vector<bool>> status;
+  if (optimizer->is_on_debug_) {
+    for (size_t i = 0; i < list_.size(); i++) {
+      status[list_[i]->name_ + std::to_string(i)] = {};
+    }
+  }
+
   bool loop = false;
   bool changes = false;
 
   do {
     loop = false;
-    for (auto const &transform : list_) {
-      auto change = ApplyTransform(optimizer, func_graph->output(), transform);
+    for (size_t i = 0; i < list_.size(); i++) {
+      auto change = ApplyTransform(optimizer, func_graph->output(), list_[i]);
       changes = changes || change;
       loop = loop || change;
+
+      // record the status of each transform
+      if (optimizer->is_on_debug_) {
+        status[list_[i]->name_ + std::to_string(i)].push_back(change);
+        space = std::max(list_[i]->name_.size(), space);
+      }
     }
 
     if (is_once_) {
       break;
     }
   } while (loop);
+
+  // display the status of each transform
+  if (optimizer->is_on_debug_) {
+    std::stringstream ss;
+    ss << std::endl
+       << "Pass: " << optimizer->name() << "(" << optimizer->CurPass_.counter << ")_" << optimizer->CurPass_.name
+       << std::endl;
+    for (size_t i = 0; i < list_.size(); i++) {
+      auto name = list_[i]->name_;
+      ss << std::left << std::setw(space + 4) << name << "\t";
+      for (auto change : status[name + std::to_string(i)]) {
+        ss << change << " ";
+      }
+      ss << std::endl;
+    }
+    MS_LOG(DEBUG) << ss.str();
+  }
 
   return changes;
 }
