@@ -986,11 +986,10 @@ class InvertPermutation(PrimitiveWithInfer):
         values can not be negative.
 
     Inputs:
-        - **input_x** (Union(tuple[int], Tensor[int])) - The input tuple is constructed by multiple
+        - **input_x** (Union(tuple[int]) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
-          If the input is Tensor, it must be 1-d and the dtype is int. Only constant value is allowed.
-
+          Only constant value is allowed.
 
     Outputs:
         tuple[int]. the lenth is same as input.
@@ -1014,9 +1013,7 @@ class InvertPermutation(PrimitiveWithInfer):
             raise ValueError(f'For \'{self.name}\' the input value must be const.')
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
         if mstype.issubclass_(x['dtype'], mstype.tensor):
-            validator.check('x dimension', len(x_shp), '', 1, Rel.EQ, self.name)
-            validator.check_tensor_type_same({'x dtype': x['dtype']}, mstype.int_type, self.name)
-            x_value = [int(i) for i in x_value.asnumpy()]
+            raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
 
