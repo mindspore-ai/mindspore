@@ -694,7 +694,7 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size();
   }
   if (shapes.empty()) {
-    MS_LOG(EXCEPTION) << "Illegal empty output_types_shapes";
+    node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1) {
     // single output handle
     std::vector<int> shape_int;
@@ -1012,6 +1012,9 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CN
     auto get_switch_kernel_graph = [switch_node](size_t input_index) -> KernelGraphPtr {
       auto partial = switch_node->input(input_index);
       MS_EXCEPTION_IF_NULL(partial);
+      if (IsValueNode<KernelGraph>(partial)) {
+        return GetValueNode<KernelGraphPtr>(partial);
+      }
       auto partial_cnode = partial->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(partial_cnode);
       auto graph_node = partial_cnode->input(1);
