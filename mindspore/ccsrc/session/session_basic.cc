@@ -81,15 +81,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
     }
   }
   // if proccess reach here,it remarks item_with_index is a real node(Parameter,or executable CNode)
-  DeviceAddressPtr address;
-  auto is_all_nop_node = opt::IsAllNopNode(&graph);
-  if (is_all_nop_node) {
-    // The graph does not remove the nop node.
-    address = AnfAlgo::GetMutableOutputAddr(node, output_index, false);
-  } else {
-    // The graph removes the nop node.
-    address = AnfAlgo::GetMutableOutputAddr(node, output_index, true);
-  }
+  auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
   MS_EXCEPTION_IF_NULL(address);
   auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
   TypeId type_id = kNumberTypeFloat32;
