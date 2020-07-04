@@ -99,6 +99,19 @@ class ControlIfbyIfbyIf(nn.Cell):
         return out
 
 
+class ControlSimpleWhile(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.addn = op.AddN()
+
+    def construct(self, x, y, input_data):
+        out = input_data
+        while x:
+            out = self.addn([input_data, input_data, input_data])
+            x = y
+        return out
+
+
 class ControlMixedWhileIf(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -201,6 +214,22 @@ def test_if_by_if_by_if():
     net = ControlIfbyIfbyIf()
     output = net(Tensor(x), Tensor(y), Tensor(cond1), Tensor(cond2), Tensor(input_data))
     expect = input_data * 3 * 2 * 2 * 2
+    assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_simple_while():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    x = np.array(True).astype(np.bool)
+    y = np.array(False).astype(np.bool)
+    input_shape = (127, 7, 53, 31)
+    input_data = np.random.randn(*input_shape).astype(np.float32)
+    net = ControlSimpleWhile()
+    output = net(Tensor(x), Tensor(y), Tensor(input_data))
+    expect = input_data * 3
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 

@@ -102,7 +102,7 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
   memo->insert(graph.get());
 
   MS_LOG(INFO) << "Process label goto/switch for " << graph->ToString();
-  graph->SetExecOrderByDefault();
+
   auto nodes = graph->execution_order();
   auto end_goto = graph->get_end_goto();
   if (end_goto != nullptr) {
@@ -128,6 +128,7 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
   for (auto &cg : graph->child_graph_order()) {
     AssignLabelForGotoSwitch(NOT_NULL(cg), memo);
   }
+  graph->SetExecOrderByDefault();
 }
 
 void AscendLabelAssign::AssignLabel(NotNull<std::shared_ptr<session::KernelGraph>> graph) {
