@@ -36,6 +36,13 @@ __global__ void LogarithmKernel(T *input, T *output, size_t count) {
   }
   return;
 }
+template <>
+__global__ void LogarithmKernel(half *input, half *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = hlog(input[i]);
+  }
+  return;
+}
 template <typename T>
 __global__ void NegativeKernel(T *input, T *output, size_t count) {
   T neg_one = -1;
