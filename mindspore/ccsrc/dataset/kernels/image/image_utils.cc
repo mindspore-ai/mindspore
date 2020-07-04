@@ -120,14 +120,14 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
-bool HasJpegMagic(const std::shared_ptr<Tensor> &input) {
+bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input) {
   const unsigned char *kJpegMagic = (unsigned char *)"\xFF\xD8\xFF";
   constexpr size_t kJpegMagicLen = 3;
-  return input->SizeInBytes() >= kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
+  return input->SizeInBytes() > kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  if (HasJpegMagic(input)) {
+  if (IsNonEmptyJPEG(input)) {
     return JpegCropAndDecode(input, output);
   } else {
     return DecodeCv(input, output);
