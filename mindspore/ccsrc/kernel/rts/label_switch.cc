@@ -67,7 +67,7 @@ std::vector<TaskInfoPtr> LabelSwitchKernel::GenTask(const std::vector<AddressPtr
   MS_LOG(INFO) << "LabelSwitchKernel GenTask label size:" << label_size_ << ", stream id:" << stream_id;
   std::vector<TaskInfoPtr> task_info_list;
   cond_ = inputs[0]->addr;
-  auto task_info_ptr = std::make_shared<LabelSwitchTaskInfo>(stream_id, label_size_, label_list_, cond_);
+  auto task_info_ptr = std::make_shared<LabelSwitchTaskInfo>(kernel_name_, stream_id, label_size_, label_list_, cond_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   task_info_list.emplace_back(task_info_ptr);
   return task_info_list;

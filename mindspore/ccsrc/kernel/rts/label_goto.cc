@@ -55,7 +55,8 @@ std::vector<TaskInfoPtr> LabelGotoKernel::GenTask(const std::vector<AddressPtr> 
                                                   const std::vector<AddressPtr> &, uint32_t stream_id) {
   MS_LOG(INFO) << "LabelGotoKernel GenTask label:" << label_ << ", stream id:" << stream_id;
   std::vector<TaskInfoPtr> task_info_list;
-  std::shared_ptr<LabelGotoTaskInfo> task_info_ptr = std::make_shared<LabelGotoTaskInfo>(stream_id, label_);
+  std::shared_ptr<LabelGotoTaskInfo> task_info_ptr =
+    std::make_shared<LabelGotoTaskInfo>(kernel_name_, stream_id, label_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   task_info_list.emplace_back(task_info_ptr);
   return task_info_list;

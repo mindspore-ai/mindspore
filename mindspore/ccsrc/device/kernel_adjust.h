@@ -37,6 +37,7 @@ constexpr auto kLoopCountParamName = "loop_count";
 constexpr auto kIterLoopParamName = "iter_loop";
 constexpr auto kZeroParamName = "zero";
 constexpr auto kOneParamName = "one";
+constexpr auto kEpochParamName = "loop_epoch";
 constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
 constexpr uint32_t kSecondStreamSwitchLabel = 2;
 

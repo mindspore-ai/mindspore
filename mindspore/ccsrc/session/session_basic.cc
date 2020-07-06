@@ -187,6 +187,18 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   // set loop_count to zero
   MS_EXCEPTION_IF_NULL(inputs);
   inputs->push_back(tensor);
+
+  auto epoch_tensor = (*inputs_params)[1];
+  MS_EXCEPTION_IF_NULL(epoch_tensor);
+  auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(epoch_val);
+  *epoch_val = graph->current_epoch();
+  epoch_tensor->set_dirty(true);
+  inputs->push_back(epoch_tensor);
+  MS_LOG(INFO) << "Load epoch_val:" << *epoch_val;
+
+  graph->set_current_epoch(graph->current_epoch() + 1);
+
   return inputs_params->size();
 }
 
@@ -814,13 +826,13 @@ void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &para
 void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                  const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
-  size_t input_ctrl_size = 1;
+  size_t input_ctrl_size = 2;
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->input_ctrl_tensors()) {
     input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
   }
   auto input_nodes = kernel_graph->inputs();
-  if ((inputs.size() + input_ctrl_size) - 1 != input_nodes.size()) {
+  if ((inputs.size() + input_ctrl_size) - 2 != input_nodes.size()) {
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
                       << ", input_ctrl_size:" << input_ctrl_size;
   }

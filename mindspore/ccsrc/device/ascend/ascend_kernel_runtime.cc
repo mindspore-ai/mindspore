@@ -42,6 +42,7 @@
 #include "device/ascend/ascend_memory_manager.h"
 #include "debug/tensor_load.h"
 
+using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
@@ -90,9 +91,16 @@ std::string GetRankId() {
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
+#ifdef ENABLE_DATA_DUMP
+  for (auto &iter : graph_data_dumper_) {
+    MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
+    iter.second->UnloadDumpInfo();
+  }
+  graph_data_dumper_.clear();
+#endif
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
-    auto ret = ge::model_runner::ModelRunner::Instance().UnloadModel(iter.first);
+    auto ret = ModelRunner::Instance().UnloadModel(iter.first);
     if (!ret) {
       MS_LOG(ERROR) << "UnloadModel failed";
     }
@@ -107,7 +115,7 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
     return;
   }
   MS_LOG(DEBUG) << "Ge UnloadModel " << iter->first;
-  auto ret = ge::model_runner::ModelRunner::Instance().UnloadModel(iter->first);
+  auto ret = ModelRunner::Instance().UnloadModel(iter->first);
   if (!ret) {
     MS_LOG(ERROR) << "UnloadModel failed";
   }
@@ -157,6 +165,10 @@ bool AscendKernelRuntime::Init() {
   if (!ret) {
     MS_LOG(INFO) << "No dump conf to set!";
   }
+#endif
+
+#ifdef ENABLE_DATA_DUMP
+  DataDumpParser::GetInstance().ParseDumpConfig();
 #endif
 
   // Start up profiling before rtSetDevice
@@ -440,7 +452,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
   std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
-  std::shared_ptr<ge::model_runner::DavinciModel> model = std::make_shared<ge::model_runner::DavinciModel>(
+  auto model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
     0, 0, 0, 0, 0, resource_manager.get_cur_stream_num(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
     resource_manager.get_cur_event_num(), 0);
@@ -477,21 +489,45 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
 
   std::shared_ptr<ge::ModelListener> listener;
   MS_LOG(INFO) << "LoadDavinciModel mode_id:" << model_iter->first;
-  bool status = ge::model_runner::ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first,
-                                                                           model_iter->second, listener);
+  bool status =
+    ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second, listener);
   if (!status) {
     MS_LOG(EXCEPTION) << "Load Task Failed";
   }
   if (ProfilingManager::GetInstance().IsProfiling()) {
-    auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
-    auto stream_ids = ge::model_runner::ModelRunner::Instance().GetStreamIdList(model_iter->first);
+    auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
+    auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
     ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
+  }
+
+#ifdef ENABLE_DATA_DUMP
+  LaunchDataDump(NOT_NULL(graph));
+#endif
+  if (!ModelRunner::Instance().LoadModelComplete(model_iter->first)) {
+    MS_LOG(ERROR) << "Call ge runtime LoadModelComplete failed";
+    return false;
   }
   return true;
 }
 
+#ifdef ENABLE_DATA_DUMP
+void AscendKernelRuntime::LaunchDataDump(NotNull<const session::KernelGraph *> graph) {
+  if (!DataDumpParser::GetInstance().DumpEnabled()) {
+    return;
+  }
+  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph->graph_id());
+  auto data_dumper = std::make_shared<DataDumper>(graph.get(), runtime_info_map);
+  MS_EXCEPTION_IF_NULL(data_dumper);
+  data_dumper->LoadDumpInfo();
+  auto ret = graph_data_dumper_.try_emplace(graph->graph_id(), data_dumper);
+  if (!ret.second) {
+    MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
+  }
+}
+#endif
+
 void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
-  auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(graph_id);
+  auto task_ids = ModelRunner::Instance().GetTaskIdList(graph_id);
   auto graph_task_names = ProfilingUtils::graph_kernel_name();
   auto iter = graph_task_names.find(graph_id);
   if (iter != graph_task_names.end()) {
@@ -524,7 +560,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
     return false;
   }
 
-  bool status = ge::model_runner::ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
+  bool status = ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
     MS_LOG(ERROR) << "Run task failed";
     DebugTaskIdName(graph->graph_id());

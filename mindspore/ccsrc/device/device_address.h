@@ -34,6 +34,7 @@ class CPUKernelRuntime;
 namespace ascend {
 class AscendKernelRuntime;
 class AscendMemoryManager;
+class DataDumper;
 namespace tasksink {
 class TaskGenerator;
 }  // namespace tasksink
@@ -90,6 +91,7 @@ class DeviceAddress {
   friend class mindspore::device::gpu::GPUMemoryManager;
   friend class mindspore::device::ascend::AscendKernelRuntime;
   friend class mindspore::device::ascend::AscendMemoryManager;
+  friend class mindspore::device::ascend::DataDumper;
 };
 
 using DeviceAddressPtr = std::shared_ptr<DeviceAddress>;

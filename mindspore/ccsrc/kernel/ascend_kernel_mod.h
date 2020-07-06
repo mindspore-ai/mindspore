@@ -21,6 +21,9 @@
 #include <memory>
 #include "framework/ge_runtime/task_info.h"
 #include "kernel/kernel.h"
+#ifdef ENABLE_DATA_DUMP
+#include "debug/data_dump_parser.h"
+#endif
 
 using TaskInfoPtr = std::shared_ptr<ge::model_runner::TaskInfo>;
 namespace mindspore {
@@ -31,6 +34,13 @@ class AscendKernelMod : public KernelMod {
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
   uint32_t block_dim() { return block_dim_; }
   uint32_t stream_id() { return stream_id_; }
+  virtual bool NeedDump() {
+#ifdef ENABLE_DATA_DUMP
+    return DataDumpParser::GetInstance().NeedDump(kernel_name_);
+#else
+    return false;
+#endif
+  }
 
  protected:
   uint32_t block_dim_{1};

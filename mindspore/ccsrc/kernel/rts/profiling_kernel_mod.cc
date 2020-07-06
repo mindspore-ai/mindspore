@@ -63,7 +63,7 @@ std::vector<TaskInfoPtr> ProfilingKernelMod::GenTask(const std::vector<AddressPt
                << ", outputs size:" << outputs.size();
   stream_id_ = stream_id;
   std::shared_ptr<ProfilerTraceTaskInfo> task_info_ptr =
-    std::make_shared<ProfilerTraceTaskInfo>(stream_id, log_id_, notify_, flags_);
+    std::make_shared<ProfilerTraceTaskInfo>(kernel_name_, stream_id, log_id_, notify_, flags_);
   return {task_info_ptr};
 }
 }  // namespace kernel
