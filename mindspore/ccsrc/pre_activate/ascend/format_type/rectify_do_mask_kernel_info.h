@@ -19,23 +19,28 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "pre_activate/common/optimizer.h"
+#include "pre_activate/ascend/ascend_helper.h"
 namespace mindspore {
 namespace opt {
 class RectifyDoMaskKernelInfo : public PatternProcessPass {
  public:
   explicit RectifyDoMaskKernelInfo(bool multigraph = true)
-      : PatternProcessPass("batch_norm_bert_fission", multigraph) {}
+      : PatternProcessPass("batch_norm_bert_fission", multigraph), kernel_selecter(std::make_shared<KernelSelect>()) {}
   ~RectifyDoMaskKernelInfo() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  void RectifyKernelInfo(const std::vector<CNodePtr> &do_mask_node_list) const;
+  void RectifyKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const FuncGraphPtr &graph) const;
   AnfNodePtr RectifyKernelInfoInPynativeProcess(const AnfNodePtr &node) const;
   std::string GetConvertFormat(const std::map<std::string, size_t> &format_counter) const;
-  void RectifyDropOutDoMaskKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const std::string &format) const;
+  void RectifyDropOutDoMaskKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const std::string &format,
+                                      const FuncGraphPtr &graph) const;
+  void ReSelecChildNodeKernelInfo(const CNodePtr &cnode, const FuncGraphPtr &graph) const;
+  KernelSelectPtr kernel_selecter;
 };
 }  // namespace opt
 }  // namespace mindspore
