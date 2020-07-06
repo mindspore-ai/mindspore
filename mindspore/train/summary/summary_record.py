@@ -62,14 +62,16 @@ def _dictlist():
 class SummaryRecord:
     """
     SummaryRecord is used to record the summary data and lineage data.
-    The API will create a summary file and a lineage file lazily in a given directory and writes data to them.
-    It writes the data to files by executing the record method. In addition to record the data bubbled up from
+
+    The API will create a summary file and lineage files lazily in a given directory and writes data to them.
+    It writes the data to files by executing the 'record' method. In addition to record the data bubbled up from
     the network by defining the summary operators, SummaryRecord also supports to record extra data which
     can be added by calling add_value.
 
     Note:
-        Make sure to close the SummaryRecord at the end, or the process will NOT exit.
-        Please see the Example section below on how to properly close with two ways.
+        1. Make sure to close the SummaryRecord at the end, or the process will not exit.
+           Please see the Example section below on how to properly close with two ways.
+        2. The SummaryRecord instance can only allow one at a time, otherwise it will cause problems with data writes.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -85,12 +87,12 @@ class SummaryRecord:
 
     Examples:
         >>> # use in with statement to auto close
-        >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+        >>> with SummaryRecord(log_dir="./summary_dir") as summary_record:
         >>>     pass
         >>>
         >>> # use in try .. finally .. to ensure closing
         >>> try:
-        >>>     summary_record = SummaryRecord(log_dir="/opt/log")
+        >>>     summary_record = SummaryRecord(log_dir="./summary_dir")
         >>> finally:
         >>>     summary_record.close()
     """
@@ -165,7 +167,7 @@ class SummaryRecord:
             ValueError: When the mode is not recognized.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.set_mode('eval')
         """
         mode_spec = 'train', 'eval'
@@ -204,7 +206,7 @@ class SummaryRecord:
             TypeError: When the value is not a Tensor.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.add_value('scalar', 'loss', Tensor(0.1))
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
@@ -239,10 +241,10 @@ class SummaryRecord:
             bool, whether the record process is successful or not.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.record(step=2)
         """
-        logger.info("SummaryRecord step is %r.", step)
+        logger.debug("SummaryRecord step is %r.", step)
         if self._closed:
             logger.error("The record writer is closed.")
             return False
@@ -296,7 +298,7 @@ class SummaryRecord:
             str, the full path of log file.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     print(summary_record.log_dir)
         """
         return self.full_file_name
@@ -308,7 +310,7 @@ class SummaryRecord:
         Call it to make sure that all pending events have been written to disk.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.flush()
         """
         if self._closed:
@@ -322,7 +324,7 @@ class SummaryRecord:
 
         Examples:
             >>> try:
-            >>>     summary_record = SummaryRecord(log_dir="/opt/log")
+            >>>     summary_record = SummaryRecord(log_dir="./summary_dir")
             >>> finally:
             >>>     summary_record.close()
         """

@@ -83,6 +83,7 @@ class SummaryCollector(Callback):
             The data that supports control is shown below.
 
             - collect_metric: Whether to collect training metrics, currently only loss is collected.
+              The first output will be treated as loss, and it will be averaged.
               Optional: True/False. Default: True.
             - collect_graph: Whether to collect computational graph, currently only
               training computational graph is collected. Optional: True/False. Default: True.
