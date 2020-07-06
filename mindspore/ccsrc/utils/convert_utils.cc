@@ -230,6 +230,20 @@ bool ValueToBool(const ValuePtr &v, bool *value) {
   return true;
 }
 
+bool BaseRefToInt(const ValuePtr &v, int *value) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    (void)tensor->data_sync();
+    int *tensor_data = static_cast<int *>(tensor->data_c());
+    auto vb = tensor_data[0];
+    *value = vb;
+    return true;
+  }
+  MS_LOG(ERROR) << "Index must be tensor type.";
+  return false;
+}
+
 bool BaseRefToBool(const BaseRef &v, bool *value) {
   if (utils::isa<ValuePtr>(v)) {
     return ValueToBool(utils::cast<ValuePtr>(v), value);
