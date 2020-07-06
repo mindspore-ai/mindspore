@@ -625,6 +625,36 @@ def get_bprop_unsorted_segment_min(self):
     return bprop
 
 
+@bprop_getters.register(P.UnsortedSegmentProd)
+def get_bprop_unsorted_segment_prod(self):
+    """Generate bprop for UnsortedSegmentProd"""
+    equal = P.Equal()
+    cast = P.Cast()
+    select = P.Select()
+    gather = P.GatherV2()
+    greater = P.Greater()
+    ones_like = P.OnesLike()
+    maximum = P.Maximum()
+    unsorted_segment_prod = P.UnsortedSegmentProd()
+
+    def bprop(x, segment_ids, num_segments, out, dout):
+        is_zero = equal(x, 0)
+        num_zero = unsorted_segment_sum(cast(is_zero, mstype.int32), segment_ids, num_segments)
+        grad = select(greater(num_zero, 1), zeros_like(dout), dout)
+        non_zero_data = select(is_zero, ones_like(x), x)
+        non_zero_prod = unsorted_segment_prod(non_zero_data, segment_ids, num_segments)
+        zero_clipped_indices = maximum(segment_ids, zeros_like(segment_ids))
+        gathered_prod = gather(out, zero_clipped_indices, 0)
+        gathered_non_zero_prod = gather(non_zero_prod, zero_clipped_indices, 0)
+        prod_divided_by_x = gathered_prod / x
+        partial_derivative = select(is_zero, gathered_non_zero_prod, prod_divided_by_x)
+        gathered_grad, _, _ = _GatherDropNegatives(grad, segment_ids, zero_clipped_indices)
+        dx = gathered_grad * partial_derivative
+        return dx, zeros_like(segment_ids), zeros_like(num_segments)
+
+    return bprop
+
+
 @bprop_getters.register(P.SpaceToBatch)
 def get_bprop_space_to_batch(self):
     """Generate bprop for SpaceToBatch"""
