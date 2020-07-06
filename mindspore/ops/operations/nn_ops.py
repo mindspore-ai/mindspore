@@ -4770,6 +4770,7 @@ class CTCLoss(PrimitiveWithInfer):
     def infer_shape(self, inputs, labels_indices, labels_values, sequence_length):
         validator.check_integer("inputs rank", len(inputs), 3, Rel.EQ, self.name)
         validator.check_integer("labels_indices rank", len(labels_indices), 2, Rel.EQ, self.name)
+        validator.check_integer("labels_indices dim one", labels_indices[1], 2, Rel.EQ, self.name)
         validator.check_integer("labels_values rank", len(labels_values), 1, Rel.EQ, self.name)
         validator.check_integer("sequence_length rank", len(sequence_length), 1, Rel.EQ, self.name)
         validator.check('labels_indices size', labels_indices[0], 'labels_values size',
