@@ -51,6 +51,7 @@ class Assign(PrimitiveWithInfer):
         ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
         ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
@@ -324,6 +325,7 @@ class Partial(Primitive):
         partial_func = functools.partial(func, *args[1:])
         return partial_func
 
+
 class Depend(Primitive):
     """
     Depend is used for process side-effect operations.
@@ -457,3 +459,32 @@ class ConfusionMatrix(PrimitiveWithInfer):
         args = {"labels": labels, "predictions": predictions}
         validator.check_tensor_type_same(args, (mstype.number_type), self.name)
         return labels
+
+
+class PopulationCount(PrimitiveWithInfer):
+    r"""
+    Calculate population count.
+
+    Inputs:
+        - **input** (Tensor) -  The data type should be int16 or uint16.
+
+    Outputs:
+        Tensor, with shape same as the input.
+
+    Examples:
+        >>> population_count = P.PopulationCount()
+        >>> x_input = Tensor([0, 1, 3], mindspore.int16)
+        >>> population_count(x_input)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        args = {"x": x_dtype}
+        validator.check_tensor_type_same(args, (mstype.int16, mstype.uint16,), self.name)
+        return mstype.tensor_type(mstype.uint8)

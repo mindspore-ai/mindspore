@@ -2143,7 +2143,10 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
         'skip': ['backward']}),
-
+    ('PopulationCount', {
+        'block': P.PopulationCount(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int16))],
+        'skip': ['backward']}),
 ]
 
 test_case_quant_ops = [
