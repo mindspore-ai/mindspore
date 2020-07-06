@@ -530,6 +530,7 @@ _activation = {
     'relu6': ReLU6,
     'tanh': Tanh,
     'gelu': GELU,
+    'elu': ELU,
     'sigmoid': Sigmoid,
     'prelu': PReLU,
     'leakyrelu': LeakyReLU,

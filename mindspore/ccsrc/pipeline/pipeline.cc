@@ -289,7 +289,8 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
   MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
   std::map<std::string, std::pair<PrimitivePyPtr, std::string>> fake_quant_table;
   auto filter = [](AnfNodePtr node) {
-    return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul));
+    return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul) ||
+             IsPrimitiveCNode(node, prim::kPrimDepthwiseConv2dNative));
   };
   std::vector<AnfNodePtr> nodes = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
   auto is_quant_cnode = [](AnfNodePtr node) {
