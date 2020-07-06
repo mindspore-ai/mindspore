@@ -3106,3 +3106,28 @@ class ReverseSequence(PrimitiveWithInfer):
         validator.check_tensor_type_same({"x_dtype": x}, mstype.number_type + (mstype.bool_,), self.name)
         validator.check_tensor_type_same({"seq_lengths_dtype": seq_lengths}, [mstype.int32, mstype.int64], self.name)
         return x
+
+
+class TransShape(PrimitiveWithInfer):
+    """
+    Transform the shape of input tensor to target shape.
+
+    Inputs:
+        - **input_x** (Tensor) - A input tensor.
+        - **out_shape** (tuple[int]) - The shape of output data.
+
+    Outputs:
+        Tensor, a tensor whose data type is same as 'input_x', and the shape is same as the `out_shape`.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.__setattr_flag__ = True
+
+    def __infer__(self, x, shape):
+        shp = shape['value']
+        dtype = x['dtype']
+        validator.check_tensor_type_same({'x': dtype}, mstype.number_type + (mstype.bool_,), self.name)
+        self.add_prim_attr('out_shape', tuple(shp))
+        return {'shape': shp,
+                'dtype': dtype,
+                'value': None}
