@@ -134,43 +134,41 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 
 | Parameters                 | AlexNet |
 | -------------------------- | ------- |
-| Published Year             |         |
-| Paper                      |         |
-| Resource                   |         |
-| Features                   |         |
-| MindSpore Version          |         |
-| Dataset                    |         |
-| Training Parameters        |         |
-| Optimizer                  |         |
-| Loss Function              |         |
-| Accuracy                   |         |
-| Speed                      |         |
-| Loss                       |         |
-| Params (M)                 |         |
-| Checkpoint for Fine tuning |         |
-| Model for inference        |         |
-| Scripts                    |         |
+| Published Year             | 2012                                                               |
+| Paper                      | [ImageNet Classification with Deep Convolutional Neural Networks](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-)        |
+| Resource                   | Ascend 910                                                         |
+| Features                   | support with Ascend, GPU                                           |
+| MindSpore Version          | 0.5.0-beta                                                         |
+| Dataset                    | CIFAR10                                                              |
+| Training Parameters        | epoch=30, batch_size=32                                            |
+| Optimizer                  | Momentum                                                           |
+| Loss Function              | SoftmaxCrossEntropyWithLogits                                      |
+| Accuracy                   | 88.23%                                                             |
+| Speed                      | 1481fps                                                            |
+| Loss                       | 0.108                                                                 |
+| Params (M)                 | 61.10                                                                 | 
+| Checkpoint for Fine tuning | 445MB(.ckpt file)                                                    |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/alexnet|
 
 #### [LeNet](#table-of-contents)
 
 | Parameters                 | LeNet |
 | -------------------------- | ----- |
-| Published Year             |       |
-| Paper                      |       |
-| Resource                   |       |
-| Features                   |       |
-| MindSpore Version          |       |
-| Dataset                    |       |
-| Training Parameters        |       |
-| Optimizer                  |       |
-| Loss Function              |       |
-| Accuracy                   |       |
-| Speed                      |       |
-| Loss                       |       |
-| Params (M)                 |       |
-| Checkpoint for Fine tuning |       |
-| Model for inference        |       |
-| Scripts                    |       |
+| Published Year             | 1998                                                             |
+| Paper                      | [Gradient-Based Learning Applied to Document Recognition](https://ieeexplore.ieee.org/abstract/document/726791)          |
+| Resource                   | Ascend 910             |
+| Features                   | support with Ascend, GPU, CPU                                  |
+| MindSpore Version          | 0.5.0-beta                                                       |
+| Dataset                    | MNIST                                                          |
+| Training Parameters        | epoch=10, batch_size=32                                          |
+| Optimizer                  | Momentum                                                    |
+| Loss Function              | SoftmaxCrossEntropyWithLogits                                    |
+| Accuracy                   | 98.52%                                                           |
+| Speed                      | 18680fps                                                         |
+| Loss                       | 0.004                                                            |
+| Params (M)                 | 0.06                                                            |
+| Checkpoint for Fine tuning | 483KB(.ckpt file)                                                |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/lenet|
 
 ### Object Detection and Segmentation 
 
