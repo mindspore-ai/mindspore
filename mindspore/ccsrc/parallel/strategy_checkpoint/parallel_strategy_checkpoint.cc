@@ -93,6 +93,7 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map) {
     parallel_strategy_item->set_node_name(node_stra.first);
     straspb::ParallelStrategys *parallel_strategys = parallel_strategy_item->mutable_parallel_strategys();
     MS_EXCEPTION_IF_NULL(parallel_strategys);
+    MS_EXCEPTION_IF_NULL(node_stra.second);
     parallel_strategys->set_stage(IntToUint(node_stra.second->GetInputStage()));
     for (auto &dims : node_stra.second->GetInputDim()) {
       straspb::ParallelStrategy *parallel_strategy = parallel_strategys->add_parallel_strategy();

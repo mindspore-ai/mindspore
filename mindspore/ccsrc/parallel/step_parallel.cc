@@ -2120,6 +2120,9 @@ void CheckpointStrategy(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(prim);
     OperatorInfoPtr operator_info = cnode->operator_info();
     if (operator_info) {
+      if (operator_info->name().find(RESHAPEINFO) != std::string::npos) {
+        continue;
+      }
       StrategyPtr strategyPtr = operator_info->strategy();
       MS_EXCEPTION_IF_NULL(node->scope());
       stra_map[param_name] = strategyPtr;
