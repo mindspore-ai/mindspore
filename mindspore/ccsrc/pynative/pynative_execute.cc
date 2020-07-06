@@ -980,7 +980,7 @@ std::vector<AnfNodePtr> PynativeExecutor::GetWeightsArgs(const py::object &weigh
       }
     }
   } else {
-    MS_LOG(EXCEPTION) << "training not paramter_tuple";
+    MS_LOG(DEBUG) << "training not paramter_tuple";
   }
   return w_args;
 }

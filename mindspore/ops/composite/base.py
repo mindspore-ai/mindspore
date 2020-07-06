@@ -17,6 +17,7 @@
 
 """Basic composite operations."""
 from functools import partial
+from types import FunctionType
 
 from mindspore import context
 from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
@@ -25,6 +26,7 @@ from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_exec, _wrap_func
 from .. import functional as F
 from ...common.parameter import Parameter
+from ...common.tensor import Tensor
 
 
 __all__ = [EnvInstance_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
@@ -114,37 +116,48 @@ class GradOperation(GradOperation_):
         self.fn = None
         self.need_forward = False
 
+    def _pynative_forward_run(self, args, fn):
+        """ Pynative forward run to build grad graph. """
+        if self.sens_param:
+            args = args[:-1]
+        if isinstance(fn, FunctionType):
+            _pynative_exec.set_grad_flag(True)
+            _pynative_exec.new_graph(fn, *args)
+            output = fn(*args)
+            _pynative_exec.end_graph(fn, output, *args)
+        else:
+            if fn.is_run and not fn.requires_grad:
+                raise ValueError("obj must set_grad.")
+            if not fn.is_run:
+                self.need_forward = True
+                print("already has forward run before grad by user")
+            if self.need_forward:
+                fn.set_grad()
+                fn(*args)
+
     def __call__(self, fn, weights=None):
         grad_ = GradOperation('grad', self.get_all, self.get_by_list, self.sens_param)
         if self.grad_fn is None or self.fn != fn:
-            if self.get_by_list:
-                if context.get_context("mode") == context.GRAPH_MODE:
+            if context.get_context("mode") == context.GRAPH_MODE:
+                if self.get_by_list:
                     @ms_function(obj=fn)
                     def after_grad(*args):
                         return grad_(fn, weights)(*args)
                 else:
-                    @_wrap_func
+                    @ms_function(obj=fn)
                     def after_grad(*args):
-                        if fn.is_run and not fn.requires_grad:
-                            raise ValueError("obj must set_grad.")
-                        if not fn.is_run:
-                            self.need_forward = True
-                            print("already has forward run before grad by user")
-                        if self.need_forward:
-                            fn.set_grad()
-                            if self.sens_param:
-                                f_args = args[:-1]
-                                fn(*f_args)
-                            else:
-                                fn(*args)
-                        _pynative_exec.grad(grad_, fn, weights, *args)
-                        out = _pynative_exec(*args)
-                        _pynative_exec.clear()
-                        return out
+                        return grad_(fn)(*args)
             else:
-                @ms_function(obj=fn)
+                @_wrap_func
                 def after_grad(*args):
-                    return grad_(fn)(*args)
+                    for arg in args:
+                        if not isinstance(arg, Tensor):
+                            raise TypeError("grad inputs should be tensor in pynative mode")
+                    self._pynative_forward_run(args, fn)
+                    _pynative_exec.grad(grad_, fn, weights, *args)
+                    out = _pynative_exec(*args)
+                    _pynative_exec.clear()
+                    return out
             self.grad_fn = after_grad
             self.fn = fn
         return self.grad_fn

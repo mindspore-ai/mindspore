@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Parameter
@@ -24,12 +25,15 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from ....mindspore_test_framework.utils.bprop_util import bprop
+from .....mindspore_test_framework.utils.bprop_util import bprop
 
 
 def setup_module(module):
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE)
 
+def teardown_module(module):
+    context.set_context(device_target="Ascend")
 
 class MulAdd(nn.Cell):
     def __init__(self):
@@ -45,7 +49,9 @@ class MulAdd(nn.Cell):
 
 def test_grad_mul_add():
     mul_add = MulAdd()
-    assert C.grad_all(mul_add)(1, 2) == (2, 4)
+    x = Tensor(1, dtype=ms.int32)
+    y = Tensor(2, dtype=ms.int32)
+    assert C.grad_all(mul_add)(x, y) == (2, 4)
 
 
 class InlineMulADD(nn.Cell):
@@ -60,7 +66,9 @@ class InlineMulADD(nn.Cell):
 
 def test_grad_inline_mul_add():
     inline_mul_add = InlineMulADD()
-    assert C.grad_all(inline_mul_add)(1, 2) == (3, 6)
+    x = Tensor(1, dtype=ms.int32)
+    y = Tensor(2, dtype=ms.int32)
+    assert C.grad_all(inline_mul_add)(x, y) == (3, 6)
 
 
 class WithParameter(nn.Cell):
@@ -93,7 +101,9 @@ class WithNoBprop(nn.Cell):
 
 def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
-    assert C.grad_all(with_no_bprop)(1, 2) == (2, 1)
+    x = Tensor(1, dtype=ms.int32)
+    y = Tensor(2, dtype=ms.int32)
+    assert C.grad_all(with_no_bprop)(x, y) == (2, 1)
 
 
 def test_grad_in_bprop_1():
