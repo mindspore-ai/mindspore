@@ -248,3 +248,29 @@ TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
   EXPECT_TRUE(s.IsOk());
   EXPECT_TRUE(walk_path->shape().ToString() == "<33,60>");
 }
+
+TEST_F(MindDataTestGNNGraph, TestRandomWalkDefaults) {
+  std::string path = "data/mindrecord/testGraphData/sns";
+  Graph graph(path, 1);
+  Status s = graph.Init();
+  EXPECT_TRUE(s.IsOk());
+
+  MetaInfo meta_info;
+  s = graph.GetMetaInfo(&meta_info);
+  EXPECT_TRUE(s.IsOk());
+
+  std::shared_ptr<Tensor> nodes;
+  s = graph.GetAllNodes(meta_info.node_type[0], &nodes);
+  EXPECT_TRUE(s.IsOk());
+  std::vector<NodeIdType> node_list;
+  for (auto itr = nodes->begin<NodeIdType>(); itr != nodes->end<NodeIdType>(); ++itr) {
+    node_list.push_back(*itr);
+  }
+
+  print_int_vec(node_list, "node list ");
+  std::vector<NodeType> meta_path(59, 1);
+  std::shared_ptr<Tensor> walk_path;
+  s = graph.RandomWalk(node_list, meta_path, 1.0, 1.0, -1, &walk_path);
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(walk_path->shape().ToString() == "<33,60>");
+}

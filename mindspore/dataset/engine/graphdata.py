@@ -232,9 +232,10 @@ class GraphData:
         Args:
             target_nodes (list[int]): Start node list in random walk
             meta_path (list[int]): node type for each walk step
-            step_home_param (float): return hyper parameter in node2vec algorithm
-            step_away_param (float): inout hyper parameter in node2vec algorithm
-            default_node (int): default node if no more neighbors found
+            step_home_param (float, optional): return hyper parameter in node2vec algorithm (Default = 1.0).
+            step_away_param (float, optional): inout hyper parameter in node2vec algorithm (Default = 1.0).
+            default_node (int, optional): default node if no more neighbors found (Default = -1).
+                A default value of -1 indicates that no node is given.
 
         Returns:
             numpy.ndarray: array of nodes.
