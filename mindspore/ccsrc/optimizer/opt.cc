@@ -84,13 +84,8 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
   }
 #endif
   if (optimizer != nullptr && optimizer->is_watch_renormalize() && result != nullptr) {
-    if (renorm_action_ == FORCE_RENORM) {
-      optimizer->add_node_to_renormalize(result);
-    } else {
-      // renorm_action_ is CHECK_RENORM
-      if (result->abstract() == nullptr) {
-        optimizer->add_node_to_renormalize(result);
-      }
+    if ((renorm_action_ == FORCE_RENORM) || (result->abstract() == nullptr)) {
+      optimizer->set_is_untyped_generated();
     }
   }
 
