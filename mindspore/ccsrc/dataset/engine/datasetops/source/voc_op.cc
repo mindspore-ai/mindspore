@@ -69,7 +69,7 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
     RETURN_IF_NOT_OK(builder_schema_->AddColumn(
       ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
     RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnAnnotation), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      ColDescriptor(std::string(kColumnAnnotation), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
   }
   *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_task_mode_, builder_dir_, builder_labels_to_read_,
                                  builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
@@ -308,30 +308,30 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   }
   while (object != nullptr) {
     std::string label_name;
-    uint32_t xmin = 0, ymin = 0, xmax = 0, ymax = 0, truncated = 0, difficult = 0;
+    float xmin = 0.0, ymin = 0.0, xmax = 0.0, ymax = 0.0, truncated = 0.0, difficult = 0.0;
     XMLElement *name_node = object->FirstChildElement("name");
     if (name_node != nullptr && name_node->GetText() != 0) label_name = name_node->GetText();
     XMLElement *truncated_node = object->FirstChildElement("truncated");
-    if (truncated_node != nullptr) truncated = truncated_node->UnsignedText();
+    if (truncated_node != nullptr) truncated = truncated_node->FloatText();
     XMLElement *difficult_node = object->FirstChildElement("difficult");
-    if (difficult_node != nullptr) difficult = difficult_node->UnsignedText();
+    if (difficult_node != nullptr) difficult = difficult_node->FloatText();
 
     XMLElement *bbox_node = object->FirstChildElement("bndbox");
     if (bbox_node != nullptr) {
       XMLElement *xmin_node = bbox_node->FirstChildElement("xmin");
-      if (xmin_node != nullptr) xmin = xmin_node->UnsignedText();
+      if (xmin_node != nullptr) xmin = xmin_node->FloatText();
       XMLElement *ymin_node = bbox_node->FirstChildElement("ymin");
-      if (ymin_node != nullptr) ymin = ymin_node->UnsignedText();
+      if (ymin_node != nullptr) ymin = ymin_node->FloatText();
       XMLElement *xmax_node = bbox_node->FirstChildElement("xmax");
-      if (xmax_node != nullptr) xmax = xmax_node->UnsignedText();
+      if (xmax_node != nullptr) xmax = xmax_node->FloatText();
       XMLElement *ymax_node = bbox_node->FirstChildElement("ymax");
-      if (ymax_node != nullptr) ymax = ymax_node->UnsignedText();
+      if (ymax_node != nullptr) ymax = ymax_node->FloatText();
     } else {
       RETURN_STATUS_UNEXPECTED("bndbox dismatch in " + path);
     }
     if (label_name != "" && (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) && xmin > 0 &&
         ymin > 0 && xmax > xmin && ymax > ymin) {
-      std::vector<uint32_t> bbox_list = {xmin, ymin, xmax - xmin, ymax - ymin, truncated, difficult};
+      std::vector<float> bbox_list = {xmin, ymin, xmax - xmin, ymax - ymin, truncated, difficult};
       bbox.emplace_back(std::make_pair(label_name, bbox_list));
       label_index_[label_name] = 0;
     }
@@ -376,17 +376,17 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
 Status VOCOp::ReadAnnotationToTensor(const std::string &path, const ColDescriptor &col,
                                      std::shared_ptr<Tensor> *tensor) {
   Bbox bbox_info = label_map_[path];
-  std::vector<uint32_t> bbox_row;
+  std::vector<float> bbox_row;
   dsize_t bbox_column_num = 0, bbox_num = 0;
   for (auto box : bbox_info) {
     if (label_index_.find(box.first) != label_index_.end()) {
-      std::vector<uint32_t> bbox;
-      if (class_index_.find(box.first) != class_index_.end()) {
-        bbox.emplace_back(class_index_[box.first]);
-      } else {
-        bbox.emplace_back(label_index_[box.first]);
-      }
+      std::vector<float> bbox;
       bbox.insert(bbox.end(), box.second.begin(), box.second.end());
+      if (class_index_.find(box.first) != class_index_.end()) {
+        bbox.push_back(static_cast<float>(class_index_[box.first]));
+      } else {
+        bbox.push_back(static_cast<float>(label_index_[box.first]));
+      }
       bbox_row.insert(bbox_row.end(), bbox.begin(), bbox.end());
       if (bbox_column_num == 0) {
         bbox_column_num = static_cast<dsize_t>(bbox.size());
