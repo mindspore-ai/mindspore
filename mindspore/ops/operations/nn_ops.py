@@ -1851,7 +1851,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.001
-        >>> result = apply_rms(input_x, mean_square, moment, grad, learning_rate, decay, momentum, epsilon)
+        >>> result = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
         (-2.9977674, 0.80999994, 1.9987665)
     """
 
