@@ -29,8 +29,8 @@ lin_space_op_info = TBERegOp("LinSpace") \
     .input(2, "stop", False, "required", "all") \
     .input(3, "num", False, "required", "all") \
     .output(0, "output", False, "required", "all") \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.I32_Default,
-                  DataType.F32_Default,) \
+    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None, DataType.I32_None,
+                  DataType.F32_None,) \
     .get_op_info()
 
 

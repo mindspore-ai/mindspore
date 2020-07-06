@@ -947,7 +947,7 @@ class InplaceAdd(PrimitiveWithInfer):
                 raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
         x_rank = len(x_shape)
         for idx in range(x_rank)[1:]:
-            validator.check("x dim %d" % idx, x_shape[idx], 'v dim %d' % idx, v_shape[idx], Rel.EQ, self.name)
+            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
 
         return x_shape
 
@@ -1005,7 +1005,7 @@ class InplaceSub(PrimitiveWithInfer):
                 raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
         x_rank = len(x_shape)
         for idx in range(x_rank)[1:]:
-            validator.check("x dim %d" % idx, x_shape[idx], 'v dim %d' % idx, v_shape[idx], Rel.EQ, self.name)
+            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
 
         return x_shape
 
