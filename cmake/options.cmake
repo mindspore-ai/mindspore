@@ -16,7 +16,6 @@ option(ENABLE_DUMP_PROTO "Enable dump anf graph to file in ProtoBuffer format, d
 option(ENABLE_DUMP_E2E "Enable dump e2e file, default on" OFF)
 option(ENABLE_DUMP_IR "Enable dump funciton graph ir, default on" ON)
 option(ENABLE_MPI "enable mpi" OFF)
-option(ENABLE_AKG "enable akg" OFF)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (WIN32)
