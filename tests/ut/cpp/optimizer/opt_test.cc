@@ -77,10 +77,10 @@ class TestOptOpt : public UT::Common {
   };
 
   void SetUp() {
-    elim_Z = MakeSubstitution(irpass::AddByZero(), "elim_Z", prim::kPrimScalarAdd);
-    elim_R = MakeSubstitution(irpass::PrimEliminater(R), "elim_R", R);
-    idempotent_P = MakeSubstitution(IdempotentEliminater(), "idempotent_P", P);
-    Qct_to_P = MakeSubstitution(QctToP(), "Qct_to_P", Q);
+    elim_Z = MakeSubstitution(std::make_shared<irpass::AddByZero>(), "elim_Z", prim::kPrimScalarAdd);
+    elim_R = MakeSubstitution(std::make_shared<irpass::PrimEliminater>(R), "elim_R", R);
+    idempotent_P = MakeSubstitution(std::make_shared<IdempotentEliminater>(), "idempotent_P", P);
+    Qct_to_P = MakeSubstitution(std::make_shared<QctToP>(), "Qct_to_P", Q);
   }
 
   bool CheckTransform(FuncGraphPtr gbefore, FuncGraphPtr gafter, const SubstitutionList &transform) {

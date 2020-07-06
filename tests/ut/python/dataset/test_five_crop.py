@@ -20,11 +20,12 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
 from mindspore import log as logger
-from util import visualize_list
+from util import visualize_list, save_and_check_md5
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+GENERATE_GOLDEN = False
 
 def test_five_crop_op(plot=False):
     """
@@ -63,7 +64,7 @@ def test_five_crop_op(plot=False):
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
         if plot:
-            visualize_list(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
+            visualize_list(np.array([image_1]*5), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 5 images.
         assert len(image_2.shape) == 4
@@ -93,6 +94,27 @@ def test_five_crop_error_msg():
     assert error_msg in str(info.value)
 
 
+def test_five_crop_md5():
+    """
+    Test FiveCrop with md5 check
+    """
+    logger.info("test_five_crop_md5")
+
+    # First dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms = [
+        vision.Decode(),
+        vision.FiveCrop(100),
+        lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
+    ]
+    transform = vision.ComposeOp(transforms)
+    data = data.map(input_columns=["image"], operations=transform())
+    # Compare with expected md5 from images
+    filename = "five_crop_01_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+
 if __name__ == "__main__":
     test_five_crop_op(plot=True)
     test_five_crop_error_msg()
+    test_five_crop_md5()

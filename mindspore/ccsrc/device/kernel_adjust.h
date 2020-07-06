@@ -38,12 +38,8 @@ constexpr auto kIterLoopParamName = "iter_loop";
 constexpr auto kZeroParamName = "zero";
 constexpr auto kOneParamName = "one";
 constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
+constexpr uint32_t kSecondStreamSwitchLabel = 2;
 
-const uint32_t kFirstStreamSwitchLabel = 0;
-const uint32_t kGetNextLabel = 1;
-const uint32_t kSecondStreamSwitchLabel = 2;
-const uint32_t kInvalidEventId = UINT32_MAX;
-const uint32_t kFirstEventId = kInvalidEventId / 2;
 namespace device {
 class KernelAdjust {
  public:
@@ -69,6 +65,10 @@ class KernelAdjust {
                                 std::map<std::string, mindspore::ParameterPtr> *switch_loop_input);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+  CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
+                                 size_t output_idx);
+  CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                 const CNodePtr &getnext_cnode);
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,

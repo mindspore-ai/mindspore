@@ -29,7 +29,7 @@ from mindspore.common.api import _executor
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import check_input_data
 
-__all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export"]
+__all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export", "parse_print"]
 
 tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
                      "Int32": mstype.int32, "Uint32": mstype.uint32, "Int64": mstype.int64, "Uint64": mstype.uint64,
@@ -101,14 +101,14 @@ def _update_param(param, new_param):
         param.set_parameter_data(type(param.data)(new_param.data))
 
 
-def save_checkpoint(parameter_list, ckpoint_file_name):
+def save_checkpoint(parameter_list, ckpt_file_name):
     """
     Saves checkpoint info to a specified file.
 
     Args:
         parameter_list (list): Parameters list, each element is a dict
                                like {"name":xx, "type":xx, "shape":xx, "data":xx}.
-        ckpoint_file_name (str): Checkpoint file name.
+        ckpt_file_name (str): Checkpoint file name.
 
     Raises:
         RuntimeError: Failed to save the Checkpoint file.
@@ -133,22 +133,22 @@ def save_checkpoint(parameter_list, ckpoint_file_name):
                 for dim in param['data'].shape:
                     param_tensor.dims.append(dim)
 
-        with open(ckpoint_file_name, "wb") as f:
+        with open(ckpt_file_name, "wb") as f:
             f.write(checkpoint_list.SerializeToString())
-        os.chmod(ckpoint_file_name, stat.S_IRUSR)
+        os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
-        logger.error("Failed to save the checkpoint file %s.", ckpoint_file_name)
+        logger.error("Failed to save the checkpoint file %s.", ckpt_file_name)
         raise RuntimeError(e.__str__())
     logger.info("Save checkpoint process finish.")
 
 
-def load_checkpoint(ckpoint_file_name, net=None):
+def load_checkpoint(ckpt_file_name, net=None):
     """
     Loads checkpoint info from a specified file.
 
     Args:
-        ckpoint_file_name (str): Checkpoint file name.
+        ckpt_file_name (str): Checkpoint file name.
         net (Cell): Cell network. Default: None
 
     Returns:
@@ -157,28 +157,30 @@ def load_checkpoint(ckpoint_file_name, net=None):
     Raises:
         ValueError: Checkpoint file is incorrect.
     """
-    if not isinstance(ckpoint_file_name, str):
-        raise ValueError("The ckpoint_file_name must be String.")
+    if not isinstance(ckpt_file_name, str):
+        raise ValueError("The ckpt_file_name must be string.")
 
-    if not os.path.exists(ckpoint_file_name) or ckpoint_file_name[-5:] != ".ckpt":
+    if not os.path.exists(ckpt_file_name):
+        raise ValueError("The checkpoint file is not exist.")
+
+    if ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("Please input the correct checkpoint file name.")
 
-    if os.path.getsize(ckpoint_file_name) == 0:
+    if os.path.getsize(ckpt_file_name) == 0:
         raise ValueError("The checkpoint file may be empty, please make sure enter the correct file name.")
 
     logger.info("Execute load checkpoint process.")
     checkpoint_list = Checkpoint()
 
     try:
-        with open(ckpoint_file_name, "rb") as f:
+        with open(ckpt_file_name, "rb") as f:
             pb_content = f.read()
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
-        logger.error("Failed to read the checkpoint file %s, please check the correct of the file.", ckpoint_file_name)
+        logger.error("Failed to read the checkpoint file `%s`, please check the correct of the file.", ckpt_file_name)
         raise ValueError(e.__str__())
 
     parameter_dict = {}
-
     try:
         for element in checkpoint_list.value:
             data = element.tensor.tensor_content
@@ -206,7 +208,7 @@ def load_checkpoint(ckpoint_file_name, net=None):
         logger.info("Load checkpoint process finish.")
 
     except BaseException as e:
-        logger.error("Failed to load the checkpoint file %s.", ckpoint_file_name)
+        logger.error("Failed to load the checkpoint file `%s`.", ckpt_file_name)
         raise RuntimeError(e.__str__())
 
     if net:
@@ -303,14 +305,14 @@ def _save_graph(network, file_name):
         os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
 
 
-def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True):
+def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True):
     """
     Saves checkpoint for 'ms' backend.
 
     Args:
         train_network (Network): The train network for training.
-        ckpoint_file_name (str): The name of checkpoint file.
-        integrated_save (bool): Whether to intergrated save in automatic model parallel scene.
+        ckpt_file_name (str): The name of checkpoint file.
+        integrated_save (bool): Whether to integrated save in automatic model parallel scene.
     """
 
     param_dict = {}
@@ -334,7 +336,7 @@ def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True
         each_param["data"] = param_data
         param_list.append(each_param)
 
-    save_checkpoint(param_list, ckpoint_file_name)
+    save_checkpoint(param_list, ckpt_file_name)
 
 
 def _get_merged_param_data(net, param_name, param_data):
@@ -501,6 +503,13 @@ def parse_print(print_file_name):
                     tensor_list.append(Tensor(param_value, ms_type))
                 # Scale type
                 else:
+                    data_type_ = data_type.lower()
+                    if 'float' in data_type_:
+                        param_data = float(param_data[0])
+                    elif 'int' in data_type_:
+                        param_data = int(param_data[0])
+                    elif 'bool' in data_type_:
+                        param_data = bool(param_data[0])
                     tensor_list.append(Tensor(param_data, ms_type))
 
     except BaseException as e:

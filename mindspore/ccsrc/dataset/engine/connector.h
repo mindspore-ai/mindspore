@@ -97,13 +97,15 @@ class Connector {
   virtual Status Pop(int32_t worker_id,  // The worker-id of the caller. See the requirement at the top of this file.
                      T *result) noexcept {
     {
-      DS_ASSERT(worker_id < num_consumers_);
+      MS_ASSERT(worker_id < num_consumers_);
       std::unique_lock<std::mutex> lk(m_);
       RETURN_IF_NOT_OK(cv_.Wait(&lk, [this, worker_id]() { return expect_consumer_ == worker_id; }));
       RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
       pop_from_ = (pop_from_ + 1) % num_producers_;
+      out_buffers_count_++;
       expect_consumer_ = (expect_consumer_ + 1) % num_consumers_;
     }
+
     cv_.NotifyAll();
     return Status::OK();
   }
@@ -114,10 +116,12 @@ class Connector {
   // @param worker_id The id of a worker thread calling this method.
   // @param el A const lvalue element to be passed/added/pushed.
   Status Push(int32_t worker_id, const T &el) noexcept {
-    DS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
-    DS_ASSERT(queues_[worker_id] != nullptr);
+    MS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
+    MS_ASSERT(queues_[worker_id] != nullptr);
     return (queues_[worker_id]->Add(el));
   }
+
+  auto out_buffers_count() const { return out_buffers_count_.load(); }
 
   // Add an element into the DbConnector without the overhead of synchronization.
   // It may block when the internal queue is full.
@@ -125,8 +129,8 @@ class Connector {
   // @param worker_id The id of a worker thread calling this method.
   // @param el An element to be passed/added/pushed.
   virtual Status Push(int32_t worker_id, T &&el) noexcept {
-    DS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
-    DS_ASSERT(queues_[worker_id] != nullptr);
+    MS_ASSERT(worker_id < static_cast<int32_t>(queues_.size()));
+    MS_ASSERT(queues_[worker_id] != nullptr);
     return (queues_[worker_id]->Add(std::forward<T>(el)));
   }
 
@@ -138,6 +142,7 @@ class Connector {
     }
     expect_consumer_ = 0;
     pop_from_ = 0;
+    out_buffers_count_ = 0;
     MS_LOG(DEBUG) << "Connector counters reset.";
   }
 
@@ -198,6 +203,7 @@ class Connector {
   // Used in the Pop(), when a thread call pop() but it is not the expect_consumer_.
   std::mutex m_;
   CondVar cv_;
+  std::atomic<std::int64_t> out_buffers_count_ = 0;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -234,7 +234,11 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
     current_fg->debug_info()->set_deco_location(GetLocation(deco_list));
   }
 
-  bool set_flag = ast_->UpdateFuncGraphFlags(current_fg);
+  bool set_flag = UpdateFuncGraphFlags(ast_->function(), current_fg);
+  if (ast_->obj() != ast_->function()) {
+    set_flag = set_flag && UpdateFuncGraphFlags(ast_->obj(), current_fg);
+  }
+
   if (!set_flag) {
     MS_LOG(ERROR) << "Set flags failed";
     return nullptr;
@@ -1044,11 +1048,10 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   CNodePtr app = body_block->func_graph()->NewCNode({op_next, iter_param});
   CNodePtr target_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(0)});
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
-  auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(target_node, "id"));
-  target_app->debug_info()->set_name(name_id);
 
   CNodePtr iter2_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(1)});
-  body_block->WriteVariable(name_id, target_app);
+  WriteAssignVars(body_block, target_node, target_app);
+
   // link the variable name with the target
   auto it_info = std::make_shared<TraceIterator>(target_app->debug_info());
   iter_param->debug_info()->set_trace_info(it_info);
@@ -1436,17 +1439,17 @@ bool ParseAst::IsClassMember(const py::object &node) {
   return ret.cast<bool>();
 }
 
-bool ParseAst::UpdateFuncGraphFlags(const FuncGraphPtr &func_graph) {
+bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "FuncGraph is null";
     return false;
   }
 
-  if (!py::hasattr(obj_, PYTHON_EXTERN_MINDSPORE_FLAG)) {
+  if (!py::hasattr(obj, PYTHON_EXTERN_MINDSPORE_FLAG)) {
     MS_LOG(DEBUG) << "No flags";
     return true;
   }
-  py::dict flags = python_adapter::GetPyObjAttr(obj_, PYTHON_EXTERN_MINDSPORE_FLAG);
+  py::dict flags = python_adapter::GetPyObjAttr(obj, PYTHON_EXTERN_MINDSPORE_FLAG);
   for (auto &item : flags) {
     if (!py::isinstance<py::str>(item.first)) {
       MS_LOG(ERROR) << "Type error in flags dict convert";
@@ -1466,7 +1469,6 @@ bool ParseAst::UpdateFuncGraphFlags(const FuncGraphPtr &func_graph) {
       return false;
     }
   }
-
   return true;
 }
 

@@ -44,6 +44,7 @@ constexpr auto kBNGrad3OpName = "BNGrad3";
 constexpr auto kClearZeroOpName = "ClearZero";
 constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
 constexpr auto kGetNextOpName = "GetNext";
+constexpr auto kEndOfSequence = "EndOfSequence";
 constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kAllGatherOpName = "AllGather";
 constexpr auto kHostAllGatherOpName = "HostAllGather";
@@ -161,6 +162,8 @@ constexpr auto kNMSWithMaskOpName = "NMSWithMask";
 constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
 constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
+constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
+constexpr auto kFusedAdamName = "FusedAdam";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -247,9 +250,11 @@ constexpr auto kTupleGetItemInputSize = 3;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;
+constexpr auto kControlDependMode = "depend_mode";
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
+constexpr auto kDependInputSize = 3;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";
@@ -287,7 +292,7 @@ const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {
     if (chmod(file_name.c_str(), mode) != 0) {
-      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+      MS_LOG(DEBUG) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
     }
   } catch (std::exception &e) {
     MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";

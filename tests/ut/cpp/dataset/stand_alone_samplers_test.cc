@@ -21,7 +21,6 @@
 #include "dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/sampler.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

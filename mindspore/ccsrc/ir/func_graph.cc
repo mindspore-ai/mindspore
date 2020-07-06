@@ -68,9 +68,7 @@ ParameterPtr FuncGraph::add_parameter() {
 
 void FuncGraph::add_parameter(const ParameterPtr &p) {
   if (manager_.lock()) {
-    std::vector<AnfNodePtr> new_params = parameters_;
-    new_params.push_back(p);
-    manager_.lock()->SetParameters(shared_from_base<FuncGraph>(), new_params);
+    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), p);
   } else {
     parameters_.push_back(p);
   }
@@ -82,12 +80,8 @@ ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
   p->set_name(name);
   p->debug_info()->set_name(name);
 
-  std::vector<AnfNodePtr> new_params = parameters_;
-  // append parameter
-  new_params.push_back(p);
-
   if (manager_.lock()) {
-    manager_.lock()->SetParameters(shared_from_base<FuncGraph>(), new_params);
+    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), p);
   } else {
     parameters_.push_back(p);
   }
@@ -432,7 +426,7 @@ AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {
   if (default_value == nullptr) {
     MS_LOG(EXCEPTION) << "Graph parameter " << name << " not exist";
   }
-  if (IsValueNode<NullObj>(default_value)) {
+  if (IsValueNode<Null>(default_value)) {
     return nullptr;
   }
   return default_value;
@@ -440,8 +434,8 @@ AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {
 
 // set the default values
 void FuncGraph::SetDefaultValues(const std::vector<std::string> &name_list, const std::vector<AnfNodePtr> &value_list) {
-  auto all_is_null = std::all_of(value_list.begin(), value_list.end(),
-                                 [](const AnfNodePtr &node) { return IsValueNode<NullObj>(node); });
+  auto all_is_null =
+    std::all_of(value_list.begin(), value_list.end(), [](const AnfNodePtr &node) { return IsValueNode<Null>(node); });
   if (value_list.empty()) {
     all_is_null = true;
   }
@@ -457,7 +451,7 @@ void FuncGraph::ClearDefaultValues() { parameter_default_value_.clear(); }
 size_t FuncGraph::GetDefaultValueCount() {
   int null_count =
     std::count_if(parameter_default_value_.begin(), parameter_default_value_.end(),
-                  [](const std::pair<std::string, AnfNodePtr> &pair) { return IsValueNode<NullObj>(pair.second); });
+                  [](const std::pair<std::string, AnfNodePtr> &pair) { return IsValueNode<Null>(pair.second); });
   return parameter_default_value_.size() - IntToSize(null_count);
 }
 

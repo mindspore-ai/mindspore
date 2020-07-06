@@ -14,11 +14,25 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/eigen.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
+
+if (ENABLE_DEBUGGER)
+    # build dependencies of gRPC
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/absl.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/c-ares.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/zlib.cmake)
+    # build gRPC
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/grpc.cmake)
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/pybind11.cmake)
 MESSAGE("go to link flatbuffers")
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/flatbuffers.cmake)
 if(USE_GLOG)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/glog.cmake)
+endif()
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/zeromq.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/pslite.cmake)
 endif()
 
 find_package(Python3)

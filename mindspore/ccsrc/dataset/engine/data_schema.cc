@@ -27,7 +27,6 @@
 #include "dataset/util/status.h"
 #include "dataset/core/tensor_shape.h"
 #include "utils/log_adapter.h"
-#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {
@@ -184,35 +183,7 @@ TensorShape ColDescriptor::shape() const {
 const char DataSchema::DEFAULT_DATA_SCHEMA_FILENAME[] = "datasetSchema.json";
 
 // Constructor 1: Simple constructor that leaves things uninitialized.
-DataSchema::DataSchema() : dataset_type_(DatasetType::kUnknown), num_rows_(0) {}
-
-DatasetType DataSchema::GetDatasetTYpeFromString(const std::string &type) const {
-  // Convert the string to a more easy to manage enum flavour of the buffer type.
-  if (type == "ARROW") {
-    return DatasetType::kArrow;
-  } else if (type == "TF") {
-    return DatasetType::kTf;
-  } else {
-    return DatasetType::kUnknown;
-  }
-}
-
-Status DataSchema::LoadDatasetType(const std::string &schema_file_path) {
-  try {
-    std::ifstream in(schema_file_path);
-    nlohmann::json js;
-    in >> js;
-    // First, get the column for the type of dataset.
-    dataset_type_str_ = js.value("datasetType", "");
-    dataset_type_ = GetDatasetTYpeFromString(dataset_type_str_);
-    dir_structure_ = js.value("directoryStructure", "");
-  }
-  // Catch any exception and convert to Status return code
-  catch (const std::exception &err) {
-    RETURN_STATUS_UNEXPECTED("Schema file failed to load");
-  }
-  return Status::OK();
-}
+DataSchema::DataSchema() : num_rows_(0) {}
 
 // Internal helper function. Parses the json schema file in any order and produces a schema that
 // does not follow any particular order (json standard does not enforce any ordering protocol).
@@ -400,8 +371,6 @@ Status DataSchema::LoadSchemaString(const std::string &schema_json_string,
     nlohmann::json js = nlohmann::json::parse(schema_json_string);
     RETURN_IF_NOT_OK(PreLoadExceptionCheck(js));
     num_rows_ = js.value("numRows", 0);
-    dataset_type_str_ = js.value("datasetType", "");
-    dataset_type_ = GetDatasetTYpeFromString(dataset_type_str_);
     nlohmann::json column_tree = js.at("columns");
     if (column_tree.empty()) {
       RETURN_STATUS_UNEXPECTED("columns is null");
@@ -425,22 +394,16 @@ DataSchema::~DataSchema() = default;
 
 // Getter for the ColDescriptor by index
 const ColDescriptor &DataSchema::column(int32_t idx) const {
-  DS_ASSERT(idx < static_cast<int>(col_descs_.size()));
+  MS_ASSERT(idx < static_cast<int>(col_descs_.size()));
   return col_descs_[idx];
 }
 
 // A print method typically used for debugging
 void DataSchema::Print(std::ostream &out) const {
-  out << "Dataset type string : (";
-  if (dataset_type_str_.empty()) {
-    out << "none specified)\n";
-  } else {
-    out << dataset_type_str_ << ")\n";
-  }
+  out << "Dataset schema: (";
   for (const auto &col_desc : col_descs_) {
     out << col_desc << "\n";
   }
-  out << "Dataset type: " << static_cast<uint32_t>(dataset_type_) << "\n";
 }
 
 // Adds a column descriptor to the schema

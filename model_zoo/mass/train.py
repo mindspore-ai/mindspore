@@ -120,6 +120,7 @@ def _build_training_pipeline(config: TransformerConfig,
         test_dataset (Dataset): Test dataset.
     """
     net_with_loss = TransformerNetworkWithLoss(config, is_training=True)
+    net_with_loss.init_parameters_data()
 
     if config.existed_ckpt:
         if config.existed_ckpt.endswith(".npz"):

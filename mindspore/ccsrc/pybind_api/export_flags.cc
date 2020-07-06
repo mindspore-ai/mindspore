@@ -33,5 +33,6 @@ const char GRAPH_FLAG_LOOP_CAN_UNROLL[] = "loop_can_unroll";
 const char GRAPH_FLAG_HAS_EFFECT[] = "has_effect";
 const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[] = "_effect_patial_order";
 const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";
+const char GRAPH_FLAG_SIDE_EFFECT[] = "_side_effect";
 
 }  // namespace mindspore

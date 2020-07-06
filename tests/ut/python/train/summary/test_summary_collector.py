@@ -16,9 +16,53 @@
 import os
 import tempfile
 import shutil
+from importlib import import_module
+from unittest import mock
+
+import numpy as np
 import pytest
 
+from mindspore import Tensor
+from mindspore import Parameter
 from mindspore.train.callback import SummaryCollector
+from mindspore.train.callback import _InternalCallbackParam
+from mindspore.train.summary.enum import ModeEnum, PluginEnum
+from mindspore.train.summary import SummaryRecord
+from mindspore.nn import Cell
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.ops.operations import TensorAdd
+
+
+_VALUE_CACHE = list()
+
+
+def add_value(plugin, name, value):
+    """This function is mock the function in SummaryRecord."""
+    global _VALUE_CACHE
+    _VALUE_CACHE.append((plugin, name, value))
+
+
+def get_value():
+    """Get the value which is added by add_value function."""
+    global _VALUE_CACHE
+
+    value = _VALUE_CACHE
+    _VALUE_CACHE = list()
+    return value
+
+_SPECIFIED_DATA = SummaryCollector._DEFAULT_SPECIFIED_DATA
+_SPECIFIED_DATA['collect_metric'] = False
+
+
+class CustomNet(Cell):
+    """Define custom netwrok."""
+    def __init__(self):
+        super(CustomNet, self).__init__()
+        self.add = TensorAdd
+        self.optimizer = Optimizer(learning_rate=1, parameters=[Parameter(Tensor(1), 'weight')])
+
+    def construct(self, data):
+        return data
 
 
 class TestSummaryCollector:
@@ -33,6 +77,10 @@ class TestSummaryCollector:
         """Run after test this class."""
         if os.path.exists(self.base_summary_dir):
             shutil.rmtree(self.base_summary_dir)
+
+    def teardown_method(self):
+        """Run after each test function."""
+        get_value()
 
     @pytest.mark.parametrize("summary_dir", [1234, None, True, ''])
     def test_params_with_summary_dir_value_error(self, summary_dir):
@@ -145,8 +193,8 @@ class TestSummaryCollector:
         data = {'unexpected_key': True}
         with pytest.raises(ValueError) as exc:
             SummaryCollector(summary_dir, collect_specified_data=data)
-        expected_msg = f"For `collect_specified_data` the keys {set(data)} are unsupported."
-        assert expected_msg == str(exc.value)
+        expected_msg = f"For `collect_specified_data` the keys {set(data)} are unsupported"
+        assert expected_msg in str(exc.value)
 
     @pytest.mark.parametrize("custom_lineage_data", [
         123,
@@ -182,3 +230,172 @@ class TestSummaryCollector:
                                f'bug got {type(param_value).__name__}.'
 
         assert expected_msg == str(exc.value)
+
+    def test_check_callback_with_multi_instances(self):
+        """Use multi SummaryCollector instances to test check_callback function."""
+        cb_params = _InternalCallbackParam()
+        cb_params.list_callback = [
+            SummaryCollector(tempfile.mkdtemp(dir=self.base_summary_dir)),
+            SummaryCollector(tempfile.mkdtemp(dir=self.base_summary_dir))
+        ]
+        with pytest.raises(ValueError) as exc:
+            SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))._check_callbacks(cb_params)
+        assert f"more than one SummaryCollector instance in callback list" in str(exc.value)
+
+    def test_collect_input_data_with_train_dataset_element_none(self):
+        """Test the param 'train_dataset_element' in cb_params is none."""
+        cb_params = _InternalCallbackParam()
+        cb_params.train_dataset_element = None
+        summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
+        summary_collector._collect_input_data(cb_params)
+        assert not summary_collector._collect_specified_data['collect_input_data']
+
+    @mock.patch.object(SummaryRecord, 'add_value')
+    def test_collect_input_data_success(self, mock_add_value):
+        """Mock a image data, and collect image data success."""
+        mock_add_value.side_effect = add_value
+        cb_params = _InternalCallbackParam()
+        image_data = Tensor(np.random.randint(0, 255, size=(1, 1, 1, 1)).astype(np.uint8))
+        cb_params.train_dataset_element = image_data
+        with SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir))) as summary_collector:
+            summary_collector._collect_input_data(cb_params)
+            # Note Here need to asssert the result and expected data
+
+    @mock.patch.object(SummaryRecord, 'add_value')
+    def test_collect_dataset_graph_success(self, mock_add_value):
+        """Test collect dataset graph."""
+        dataset = import_module('mindspore.dataset')
+        mock_add_value.side_effect = add_value
+        cb_params = _InternalCallbackParam()
+        cb_params.train_dataset = dataset.MnistDataset(dataset_dir=tempfile.mkdtemp(dir=self.base_summary_dir))
+        cb_params.mode = ModeEnum.TRAIN.value
+        with SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir))) as summary_collector:
+            summary_collector._collect_dataset_graph(cb_params)
+            plugin, name, _ = get_value()[0]
+        assert plugin == 'dataset_graph'
+        assert name == 'train_dataset'
+
+    @pytest.mark.parametrize("net_output, expected_loss", [
+        (None, None),
+        (1, Tensor(1)),
+        (1.5, Tensor(1.5)),
+        (Tensor(1), Tensor(1)),
+        ([1], Tensor(1)),
+        ([Tensor(1)], Tensor(1)),
+        ({}, None),
+        (Tensor([[1, 2], [3, 4]]), Tensor(2.5)),
+        ([Tensor([[3, 4, 3]]), Tensor([3, 4])], Tensor(3.33333)),
+        (tuple([1]), Tensor(1)),
+    ])
+    def test_get_loss(self, net_output, expected_loss):
+        """Test get loss success and failed."""
+        cb_params = _InternalCallbackParam()
+        cb_params.net_outputs = net_output
+        summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
+
+        assert summary_collector._is_parse_loss_success
+        assert summary_collector._get_loss(cb_params) == expected_loss
+
+        if expected_loss is None:
+            assert not summary_collector._is_parse_loss_success
+
+    def test_get_optimizer_from_cb_params_success(self):
+        """Test get optimizer success from cb params."""
+        cb_params = _InternalCallbackParam()
+        cb_params.optimizer = Optimizer(learning_rate=0.1, parameters=[Parameter(Tensor(1), 'weight')])
+        summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
+        optimizer = summary_collector._get_optimizer(cb_params)
+        assert optimizer == cb_params.optimizer
+
+        # Test get optimizer again
+        assert summary_collector._get_optimizer(cb_params) == cb_params.optimizer
+
+    @pytest.mark.parametrize('mode', [ModeEnum.TRAIN.value, ModeEnum.EVAL.value])
+    def test_get_optimizer_from_network(self, mode):
+        """Get optimizer from train network"""
+        cb_params = _InternalCallbackParam()
+        cb_params.optimizer = None
+        cb_params.mode = mode
+        if mode == ModeEnum.TRAIN.value:
+            cb_params.train_network = CustomNet()
+        else:
+            cb_params.eval_network = CustomNet()
+        summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
+        optimizer = summary_collector._get_optimizer(cb_params)
+        assert isinstance(optimizer, Optimizer)
+
+    def test_get_optimizer_failed(self):
+        """Test get optimizer failed."""
+        class Net(Cell):
+            """Define net."""
+            def __init__(self):
+                super(Net, self).__init__()
+                self.add = TensorAdd()
+
+            def construct(self, data):
+                return data
+
+        cb_params = _InternalCallbackParam()
+        cb_params.optimizer = None
+        cb_params.train_network = Net()
+        cb_params.mode = ModeEnum.TRAIN.value
+        summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
+        optimizer = summary_collector._get_optimizer(cb_params)
+        assert optimizer is None
+        assert summary_collector._temp_optimizer == 'Failed'
+
+        # Test get optimizer again
+        optimizer = summary_collector._get_optimizer(cb_params)
+        assert optimizer is None
+        assert summary_collector._temp_optimizer == 'Failed'
+
+    @pytest.mark.parametrize("histogram_regular, expected_names, expected_values", [
+        (
+            'conv1|conv2',
+            ['conv1.weight1/auto', 'conv2.weight2/auto', 'conv1.bias1/auto'],
+            [1, 2, 3]
+        ),
+        (
+            None,
+            ['conv1.weight1/auto', 'conv2.weight2/auto', 'conv1.bias1/auto', 'conv3.bias/auto', 'conv5.bias/auto'],
+            [1, 2, 3, 4, 5]
+        )
+    ])
+    @mock.patch.object(SummaryRecord, 'add_value')
+    def test_collect_histogram_from_regular(self, mock_add_value, histogram_regular, expected_names, expected_values):
+        """Test collect histogram from regular success."""
+        mock_add_value.side_effect = add_value
+        cb_params = _InternalCallbackParam()
+        parameters = [
+            Parameter(Tensor(1), 'conv1.weight1'),
+            Parameter(Tensor(2), 'conv2.weight2'),
+            Parameter(Tensor(3), 'conv1.bias1'),
+            Parameter(Tensor(4), 'conv3.bias'),
+            Parameter(Tensor(5), 'conv5.bias'),
+            Parameter(Tensor(6), 'conv6.bias'),
+        ]
+        cb_params.optimizer = Optimizer(learning_rate=0.1, parameters=parameters)
+        with SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir))) as summary_collector:
+            summary_collector._collect_specified_data['histogram_regular'] = histogram_regular
+            summary_collector._collect_histogram(cb_params)
+        result = get_value()
+        assert PluginEnum.HISTOGRAM.value == result[0][0]
+        assert expected_names == [data[1] for data in result]
+        assert expected_values == [data[2] for data in result]
+
+    @pytest.mark.parametrize("specified_data, action, expected_result", [
+        (None, True, SummaryCollector._DEFAULT_SPECIFIED_DATA),
+        (None, False, {}),
+        ({}, True, SummaryCollector._DEFAULT_SPECIFIED_DATA),
+        ({}, False, {}),
+        ({'collect_metric': False}, True, _SPECIFIED_DATA),
+        ({'collect_metric': True}, False, {'collect_metric': True})
+    ])
+    def test_process_specified_data(self, specified_data, action, expected_result):
+        """Test process specified data."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        summary_collector = SummaryCollector(summary_dir,
+                                             collect_specified_data=specified_data,
+                                             keep_default_action=action)
+
+        assert summary_collector._collect_specified_data == expected_result

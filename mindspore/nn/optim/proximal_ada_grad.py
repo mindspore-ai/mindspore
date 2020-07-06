@@ -16,6 +16,7 @@
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
@@ -60,7 +61,7 @@ class ProximalAdagrad(Optimizer):
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
         `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
-        behavior is currently performed on the CPU, weight decay is not supported.
+        behavior is currently performed on the CPU.
 
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
@@ -99,7 +100,7 @@ class ProximalAdagrad(Optimizer):
         self.weight_decay = weight_decay
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyProximalAdagrad(use_locking=use_locking)
-        self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
+        self.sparse_opt = inner.SparseApplyProximalAdagradNoReturn(use_locking=use_locking)
 
     def construct(self, grads):
         params = self.parameters

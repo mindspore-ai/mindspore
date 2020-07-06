@@ -150,6 +150,10 @@ class GeneratorOp : public PipelineOp {
   Status PyRowToTensorRow(py::object py_data, TensorRow *tensor_row);
 
   Status FillBuffer(TensorQTable *tt);
+
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
 };
 
 #pragma GCC visibility pop

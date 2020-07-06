@@ -23,6 +23,7 @@
 #include "session/kernel_graph.h"
 #include "utils/base_ref.h"
 #include "utils/contract.h"
+#include "utils/union_find_set.h"
 
 namespace mindspore {
 namespace session {
@@ -38,6 +39,8 @@ class AscendControlParser {
   static void UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg);
 
  private:
+  static NotNull<CNodePtr> GetStartLabel(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
+                                         const CNodePtr &last_label);
   static NotNull<CNodePtr> ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
                                               const CNodePtr &last_label,
                                               const NotNull<std::set<KernelGraphPtr> *> memo);
@@ -50,10 +53,11 @@ class AscendControlParser {
 
   static void LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
                               const CNodePtr &last_label);
-  static std::tuple<CNodePtr, KernelGraphPtr> ParsePartial(NotNull<AnfNodePtr> node);
+  static KernelGraphPtr ParsePartial(NotNull<AnfNodePtr> node);
 
-  static void InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
-  static void InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
+  static void InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> from_graph, NotNull<KernelGraphPtr> to_graph,
+                                          NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
+  static AnfNodePtr InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
 
   // root graph order
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,

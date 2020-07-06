@@ -182,9 +182,11 @@ extern const PrimitivePtr kPrimReduceMin;
 extern const PrimitivePtr kPrimNeg;
 extern const PrimitivePtr kPrimSub;
 extern const PrimitivePtr kPrimMul;
+extern const PrimitivePtr kPrimRealDiv;
 extern const PrimitivePtr kPrimMinimum;
 extern const PrimitivePtr kPrimMaximum;
 extern const PrimitivePtr kPrimSquare;
+extern const PrimitivePtr kPrimSqrt;
 extern const PrimitivePtr kPrimEqual;
 extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
@@ -242,6 +244,7 @@ extern const PrimitivePtr kPrimFakeBprop;
 extern const PrimitivePtr kPrimBpropCut;
 extern const PrimitivePtr kPrimFakeQuantPerLayer;
 extern const PrimitivePtr kPrimFakeQuantPerChannel;
+extern const PrimitivePtr kPrimApplyRMSProp;
 
 // Other Miscellaneous
 extern const PrimitivePtr kPrimIdentity;
@@ -276,12 +279,20 @@ extern const PrimitivePtr kPrimNotInDict;
 extern const PrimitivePtr kPrimMixedPrecisionCast;
 extern const PrimitivePtr kPrimIsConsant;
 extern const PrimitivePtr kPrimEquivFormat;
+extern const PrimitivePtr kPrimDebug;
 
 // Comm ops
 extern const PrimitivePtr kPrimAllReduce;
 extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;
+
+// IndexedSlices
+extern const PrimitivePtr kPrimMakeIndexedSlices;
+extern const PrimitivePtr kPrimIndexedSlicesGetValues;
+extern const PrimitivePtr kPrimIndexedSlicesGetIndices;
+extern const PrimitivePtr kPrimIndexedSlicesGetDenseShape;
+extern const PrimitivePtr kPrimIsIndexedSlices;
 
 class DoSignaturePrimitive : public Primitive {
  public:

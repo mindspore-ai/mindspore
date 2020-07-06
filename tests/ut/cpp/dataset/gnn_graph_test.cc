@@ -159,6 +159,18 @@ TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   EXPECT_TRUE(s.ToString().find("Input node_list is empty.") != std::string::npos);
 
   neighbors.reset();
+  s = graph.GetSampledNeighbors({-1, 1}, {10}, {meta_info.node_type[1]}, &neighbors);
+  EXPECT_TRUE(s.ToString().find("Invalid node id") != std::string::npos);
+
+  neighbors.reset();
+  s = graph.GetSampledNeighbors(node_list, {2, 50}, {meta_info.node_type[0], meta_info.node_type[1]}, &neighbors);
+  EXPECT_TRUE(s.ToString().find("Wrong samples number") != std::string::npos);
+
+  neighbors.reset();
+  s = graph.GetSampledNeighbors(node_list, {2}, {5}, &neighbors);
+  EXPECT_TRUE(s.ToString().find("Invalid neighbor type") != std::string::npos);
+
+  neighbors.reset();
   s = graph.GetSampledNeighbors(node_list, {2, 3, 4}, {meta_info.node_type[1], meta_info.node_type[0]}, &neighbors);
   EXPECT_TRUE(s.ToString().find("The sizes of neighbor_nums and neighbor_types are inconsistent.") !=
               std::string::npos);
@@ -199,8 +211,16 @@ TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
   EXPECT_TRUE(s.ToString().find("Input node_list is empty.") != std::string::npos);
 
   neg_neighbors.reset();
+  s = graph.GetNegSampledNeighbors({-1, 1}, 3, meta_info.node_type[1], &neg_neighbors);
+  EXPECT_TRUE(s.ToString().find("Invalid node id") != std::string::npos);
+
+  neg_neighbors.reset();
+  s = graph.GetNegSampledNeighbors(node_list, 50, meta_info.node_type[1], &neg_neighbors);
+  EXPECT_TRUE(s.ToString().find("Wrong samples number") != std::string::npos);
+
+  neg_neighbors.reset();
   s = graph.GetNegSampledNeighbors(node_list, 3, 3, &neg_neighbors);
-  EXPECT_TRUE(s.ToString().find("Invalid node type:3") != std::string::npos);
+  EXPECT_TRUE(s.ToString().find("Invalid neighbor type") != std::string::npos);
 }
 
 TEST_F(MindDataTestGNNGraph, TestRandomWalk) {

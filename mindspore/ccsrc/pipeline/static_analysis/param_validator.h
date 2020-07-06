@@ -66,6 +66,8 @@ ABSTRACT_REPORT_NAME_TRAITS(Function)
 ABSTRACT_REPORT_NAME_TRAITS(Type)
 ABSTRACT_REPORT_NAME_TRAITS(KeywordArg)
 ABSTRACT_REPORT_NAME_TRAITS(Class)
+ABSTRACT_REPORT_NAME_TRAITS(IndexedSlices)
+ABSTRACT_REPORT_NAME_TRAITS(Sequeue)
 
 template <typename T>
 std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index) {

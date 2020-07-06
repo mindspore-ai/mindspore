@@ -32,11 +32,10 @@ num_one = Tensor(np.ones([1]), mstype.float32)
 
 _lamb_opt = C.MultitypeFuncGraph("lamb_opt")
 
-
-@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Bool", "Bool")
 def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, param, m, v,
-                   gradient, decay_flag):
+                   gradient, decay_flag, optim_filter):
     """
     Update parameters.
 
@@ -52,66 +51,66 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
         v (Tensor): v value of parameters.
         gradient (Tensor): Gradient of parameters.
         decay_flag (bool): Specifies whether param update with weight decay.
+        optim_filter(bool): Applies parameter update or not.
 
     Returns:
         Tensor, the new value of v after updating.
     """
-    op_mul = P.Mul()
-    op_sqrt = P.Sqrt()
-    op_rsqrt = P.Rsqrt()
-    op_square = P.Square()
-    op_cast = P.Cast()
-    op_reshape = P.Reshape()
-    op_shape = P.Shape()
-    op_pow = P.Pow()
-    op_norm = layer.Norm()
-    op_select = P.Select()
-    op_greater = P.Greater()
-    op_fill = P.Fill()
-    op_dtype = P.DType()
+    if optim_filter:
+        op_mul = P.Mul()
+        op_sqrt = P.Sqrt()
+        op_rsqrt = P.Rsqrt()
+        op_square = P.Square()
+        op_cast = P.Cast()
+        op_reshape = P.Reshape()
+        op_shape = P.Shape()
+        op_pow = P.Pow()
+        op_norm = layer.Norm()
+        op_select = P.Select()
+        op_greater = P.Greater()
+        op_fill = P.Fill()
+        op_dtype = P.DType()
 
-    param_fp32 = op_cast(param, mstype.float32)
-    m_fp32 = op_cast(m, mstype.float32)
-    v_fp32 = op_cast(v, mstype.float32)
-    gradient_fp32 = op_cast(gradient, mstype.float32)
+        param_fp32 = op_cast(param, mstype.float32)
+        m_fp32 = op_cast(m, mstype.float32)
+        v_fp32 = op_cast(v, mstype.float32)
+        gradient_fp32 = op_cast(gradient, mstype.float32)
 
-    next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(num_one,
-                                                    mstype.float32) - beta1, gradient_fp32)
+        next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta1, gradient_fp32)
 
-    next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(num_one,
-                                                    mstype.float32) - beta2, op_square(gradient_fp32))
+        next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta2, op_square(gradient_fp32))
 
-    next_mm = next_m / (op_cast(num_one, mstype.float32)
-                        - op_pow(beta1, op_cast(global_step + num_one, mstype.float32)))
-    next_vv = next_v / (op_cast(num_one, mstype.float32) -
-                        op_pow(beta2, op_cast(global_step + num_one, mstype.float32)))
-    w_norm = op_norm(param_fp32)
-    g_norm = op_norm(gradient_fp32)
+        next_mm = next_m / (op_cast(num_one, mstype.float32)
+                            - op_pow(beta1, op_cast(global_step + num_one, mstype.float32)))
+        next_vv = next_v / (op_cast(num_one, mstype.float32) -
+                            op_pow(beta2, op_cast(global_step + num_one, mstype.float32)))
+        w_norm = op_norm(param_fp32)
+        g_norm = op_norm(gradient_fp32)
 
-    g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(
-        next_vv + eps)) + weight_decay_tensor * param_fp32)
-    zeros = F.zeros_like(w_norm)
-    ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
-    trust_ratio = op_select(
-        op_greater(w_norm, zeros),
-        op_select(op_greater(g_norm, zeros), w_norm / g_norm_hat, ones),
-        ones)
-    tens = op_fill(op_dtype(trust_ratio), op_shape(trust_ratio), 10.0)
-    trust_ratio = C.clip_by_value(trust_ratio, zeros, tens)
-    update = next_mm / (op_sqrt(next_vv) + eps)
+        g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay_tensor * param_fp32)
+        zeros = F.zeros_like(w_norm)
+        ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
+        trust_ratio = op_select(
+            op_greater(w_norm, zeros),
+            op_select(op_greater(g_norm, zeros), w_norm / g_norm_hat, ones),
+            ones)
+        tens = op_fill(op_dtype(trust_ratio), op_shape(trust_ratio), 10.0)
+        trust_ratio = C.clip_by_value(trust_ratio, zeros, tens)
+        update = next_mm / (op_sqrt(next_vv) + eps)
 
-    if decay_flag:
-        update = update + op_mul(weight_decay_tensor, param_fp32)
+        if decay_flag:
+            update = update + op_mul(weight_decay_tensor, param_fp32)
 
-    update_with_lr = op_mul(op_mul(trust_ratio, lr), update)
+        update_with_lr = op_mul(op_mul(trust_ratio, lr), update)
 
-    next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
+        next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
 
-    next_v = F.depend(next_v, F.assign(param, next_param))
-    next_v = F.depend(next_v, F.assign(m, next_m))
-    next_v = F.depend(next_v, F.assign(v, next_v))
+        next_param = F.depend(next_param, F.assign(param, next_param))
+        next_param = F.depend(next_param, F.assign(m, next_m))
+        next_param = F.depend(next_param, F.assign(v, next_v))
 
-    return next_v
+        return next_param
+    return gradient
 
 
 lamb_opt_graph_kernel = C.MultitypeFuncGraph("lamb_opt_graph_kernel")
@@ -238,7 +237,7 @@ class Lamb(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        tuple[Parameter], the updated velocity value, the shape is the same as `params`.
+        tuple[bool], all elements are True.
 
     Examples:
         >>> net = Net()
@@ -311,18 +310,21 @@ class Lamb(Optimizer):
                 self.warmup_steps, self.global_step), mstype.float32)
             lr = (self.one - is_warmup) * lr + is_warmup * warmup_lr
         if self.enable_graph_kernel:
-            updated_velocity = self.hyper_map(F.partial(lamb_opt_graph_kernel,
-                                                        self.beta1, self.beta2, self.eps, lr,
-                                                        self.weight_decay_tensor, self.global_step),
-                                              self.params, self.moments1, self.moments2, gradients, self.decay_flag)
+            optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel,
+                                                    self.beta1, self.beta2, self.eps, lr,
+                                                    self.weight_decay_tensor, self.global_step),
+                                          self.params, self.moments1, self.moments2, gradients, self.decay_flag)
         else:
-            updated_velocity = self.hyper_map(F.partial(_lamb_opt,
-                                                        self.beta1, self.beta2, self.eps, lr,
-                                                        self.weight_decay_tensor, self.global_step),
-                                              self.params, self.moments1, self.moments2, gradients, self.decay_flag)
+            optim_result = self.hyper_map(F.partial(_lamb_opt,
+                                                    self.beta1, self.beta2, self.eps, lr,
+                                                    self.weight_decay_tensor, self.global_step),
+                                          self.params, self.moments1, self.moments2, gradients,
+                                          self.decay_flag, self.optim_filter)
+        if self.use_parallel:
+            optim_result = self.broadcast_params(optim_result)
 
         added_global_step = self.global_step + self.one
         F.control_depend(lr, added_global_step)
         self.global_step = added_global_step
 
-        return updated_velocity
+        return optim_result

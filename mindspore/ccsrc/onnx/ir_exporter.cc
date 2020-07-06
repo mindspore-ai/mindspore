@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "ir/tensor_py.h"
 #include "ir/param_value_py.h"
 #include "debug/anf_ir_utils.h"
 #include "operator/ops.h"
@@ -257,7 +258,7 @@ void IrExportBuilder::SetTensorToAttributeProto(const ValuePtr &value, onnx::Att
   attr_proto->set_type(onnx::AttributeProto_AttributeType_TENSOR);
   onnx::TensorProto *tensor_proto = attr_proto->mutable_t();
   auto data = value->cast<tensor::TensorPtr>();
-  tensor_proto->set_raw_data(data->data().request(true).ptr, static_cast<size_t>(data->data().nbytes()));
+  tensor_proto->set_raw_data(data->data_c(), static_cast<size_t>(data->data().nbytes()));
   auto dtype = data->data_type();
   auto shape = data->shape_c();
   tensor_proto->set_data_type(GetOnnxDataType(dtype));

@@ -18,41 +18,39 @@
 #include "device/gpu/cuda_common.h"
 #include "include/cuda_fp16.h"
 template <typename T, typename S>
-__global__ void ArgmaxWithValue(size_t size, const T* input, const int bound, int outerSize, int innerSize,
-                                S* index, T* output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-      for (int i = 0; i < outerSize; i++)   {
-        int inputOutterOffset = i * innerSize * bound;
-        int outputOutterOffset = i * innerSize;
-        for (int j = 0; j < innerSize; j++) {
-            auto outputInnerOffset = outputOutterOffset + j;
-            S idx = 0;
-            T maxData = input[j + inputOutterOffset];
-            for (S c = 0; c < bound; c++) {
-                int offset = j + c * innerSize;
-                auto inputData = input[inputOutterOffset + offset];
-                idx = inputData > maxData ? c : idx;
-                maxData = inputData > maxData ? inputData : maxData;
-            }
-            output[outputInnerOffset] = maxData;
-            index[outputInnerOffset] = idx;
+__global__ void ArgmaxWithValue(const T* input, const int bound, int outerSize, int innerSize, S* index,
+                                T* output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (outerSize); pos += blockDim.x * gridDim.x) {
+      int inputOutterOffset = pos * innerSize * bound;
+      int outputOutterOffset = pos * innerSize;
+      for (int j = 0; j < innerSize; j++) {
+          auto outputInnerOffset = outputOutterOffset + j;
+          S idx = 0;
+          T maxData = input[j + inputOutterOffset];
+          for (S c = 0; c < bound; c++) {
+              int offset = j + c * innerSize;
+              auto inputData = input[inputOutterOffset + offset];
+              idx = inputData > maxData ? c : idx;
+              maxData = inputData > maxData ? inputData : maxData;
+          }
+          output[outputInnerOffset] = maxData;
+          index[outputInnerOffset] = idx;
       }
-    }
   }
   return;
 }
 
 template <typename T, typename S>
-void CalArgmaxWithValue(size_t size, const T* input, const int bound_, const int outerSize_, const int innerSize_,
+void CalArgmaxWithValue(const T* input, const int bound_, const int outerSize_, const int innerSize_,
                         S* index, T* output, cudaStream_t cuda_stream) {
-  ArgmaxWithValue<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, bound_, outerSize_, innerSize_,
-                                                                     index, output);
+  ArgmaxWithValue<<<GET_BLOCKS(outerSize_), GET_THREADS, 0, cuda_stream>>>(input, bound_, outerSize_, innerSize_,
+                                                                           index, output);
   return;
 }
 
-template void CalArgmaxWithValue<float, int>(size_t size, const float* input, const int bound_, const int outerSize_,
+template void CalArgmaxWithValue<float, int>(const float* input, const int bound_, const int outerSize_,
                                   const int innerSize_, int* index, float* output,
                                   cudaStream_t cuda_stream);
-template void CalArgmaxWithValue<half, int>(size_t size, const half* input, const int bound_, const int outerSize_,
+template void CalArgmaxWithValue<half, int>(const half* input, const int bound_, const int outerSize_,
                                   const int innerSize_, int* index, half* output,
                                   cudaStream_t cuda_stream);

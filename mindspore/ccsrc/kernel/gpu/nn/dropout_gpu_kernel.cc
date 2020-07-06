@@ -15,84 +15,16 @@
  */
 
 #include "kernel/gpu/nn/dropout_gpu_kernel.h"
-#include "kernel/gpu/cuda_impl/dropout_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-DropoutGpuFwdKernel::DropoutGpuFwdKernel()
-    : cudnn_handle_(nullptr),
-      is_null_input_(false),
-      num_count_(0),
-      keep_prob_(0.0),
-      states_init_(false),
-      mask_generator_(nullptr) {}
-
-DropoutGpuFwdKernel::~DropoutGpuFwdKernel() { DestroyResource(); }
-
-const std::vector<size_t> &DropoutGpuFwdKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &DropoutGpuFwdKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &DropoutGpuFwdKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool DropoutGpuFwdKernel::Init(const CNodePtr &kernel_node) {
-  InitResource();
-
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but DropoutGpuFwdKernel needs 1.";
-  }
-
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  is_null_input_ = CHECK_NULL_INPUT(input_shape);
-  if (is_null_input_) {
-    InitSizeLists();
-    return true;
-  }
-
-  num_count_ = 1;
-  for (size_t x : input_shape) {
-    num_count_ *= x;
-  }
-  keep_prob_ = GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("keep_prob"));
-
-  InitSizeLists();
-  return true;
-}
-
-void DropoutGpuFwdKernel::InitResource() {
-  cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-}
-
-void DropoutGpuFwdKernel::DestroyResource() noexcept {}
-
-void DropoutGpuFwdKernel::InitSizeLists() {
-  size_t input_size = num_count_ * sizeof(float);
-  input_size_list_.push_back(input_size);
-  output_size_list_.push_back(input_size);  // output size: the same with input size
-  output_size_list_.push_back(input_size);  // mask size: the same with input size
-}
-
-bool DropoutGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_null_input_) {
-    return true;
-  }
-
-  auto *input = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
-  auto *mask = reinterpret_cast<float *>(outputs[1]->addr);
-
-  if (!states_init_) {
-    curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT);
-    curandSetPseudoRandomGeneratorSeed(mask_generator_, time(NULL));
-    states_init_ = true;
-  }
-
-  curandGenerateUniform(mask_generator_, mask, num_count_);
-  DropoutForward(input, mask, output, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-  return true;
-}
+MS_REG_GPU_KERNEL_ONE(
+  Dropout,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  DropoutGpuFwdKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  Dropout,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  DropoutGpuFwdKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

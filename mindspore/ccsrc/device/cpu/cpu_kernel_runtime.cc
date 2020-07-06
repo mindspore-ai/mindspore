@@ -26,6 +26,7 @@
 #include "device/cpu/cpu_device_address.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
+#include "utils/profile.h"
 #include "common/utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "session/session_basic.h"
@@ -78,12 +79,13 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       std::vector<int> data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       DeviceAddressPtr address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeFloat32);
+      MS_EXCEPTION_IF_NULL(address);
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
-        address->ptr_ = tensor->data_c(false);
+        address->ptr_ = tensor->data_c();
       } else {
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                       tensor->data_c(false))) {
+                                       tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
         }
       }
@@ -140,6 +142,37 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
+tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(const CNodePtr &node, size_t index,
+                                                         std::set<DeviceAddressPtr> *bound_addresses,
+                                                         std::vector<tensor::TensorPtr> *need_sync_outputs) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(bound_addresses);
+  MS_EXCEPTION_IF_NULL(need_sync_outputs);
+  size_t output_size = AnfAlgo::GetOutputTensorNum(node);
+  if (index >= output_size) {
+    MS_LOG(EXCEPTION) << "Invalid input index " << index;
+  }
+  auto address = AnfAlgo::GetMutableOutputAddr(node, index);
+  MS_EXCEPTION_IF_NULL(address);
+  auto shape = AnfAlgo::GetOutputInferShape(node, index);
+  std::vector<int> temp_shape;
+  (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
+  TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
+  type_id = GetCPUSupportOutputTypeId(type_id);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (bound_addresses->find(address) != bound_addresses->end()) {
+    tensor->set_device_address(address);
+    need_sync_outputs->emplace_back(tensor);
+  } else {
+    address->ptr_ = tensor->data_c();
+    address->ref_count_ = INIT_NODE_REF;
+    (void)bound_addresses->insert(address);
+  }
+  tensor->set_dirty(false);
+  return tensor;
+}
+
 BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &kernel_with_index,
                                                const std::unordered_map<AnfNode *, tensor::TensorPtr> &input_map,
                                                std::set<DeviceAddressPtr> *bound_addresses,
@@ -159,29 +192,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const session::KernelWithIndex &k
       }
       return ret;
     }
-    size_t output_size = AnfAlgo::GetOutputTensorNum(node);
-    if (index >= output_size) {
-      MS_LOG(EXCEPTION) << "Invalid input index " << index;
-    }
-    auto address = AnfAlgo::GetMutableOutputAddr(node, index);
-    MS_EXCEPTION_IF_NULL(address);
-    auto shape = AnfAlgo::GetOutputInferShape(node, index);
-    std::vector<int> temp_shape;
-    (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
-    TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
-    type_id = GetCPUSupportOutputTypeId(type_id);
-    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (bound_addresses->find(address) != bound_addresses->end()) {
-      tensor->set_device_address(address);
-      need_sync_outputs->emplace_back(tensor);
-    } else {
-      address->ptr_ = tensor->data_c(true);
-      address->ref_count_ = INIT_NODE_REF;
-      (void)bound_addresses->insert(address);
-    }
-    tensor->set_dirty(false);
-    return tensor;
+    return CreatTensorForOutput(node, index, bound_addresses, need_sync_outputs);
   } else if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {
     auto iter = input_map.find(input_node.get());
     if (iter != input_map.end()) {
@@ -219,11 +230,11 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
       size_t tensor_size =
         std::accumulate(data_shape.begin(), data_shape.end(), sizeof(float), std::multiplies<size_t>());
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
-        address->ptr_ = tensor->data_c(false);
+        address->ptr_ = tensor->data_c();
       } else {
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                       tensor->data_c(false))) {
+                                       tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
         }
         tensor->set_dirty(true);
@@ -245,6 +256,7 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
 
 void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list) {
   MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(input_list);
   kernel::AddressPtr input = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(input);
   if (address->ptr_ == nullptr) {
@@ -270,6 +282,9 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
 
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
+#ifdef ENABLE_PROFILE
+    double start_time = GetTime();
+#endif
     std::vector<kernel::AddressPtr> kernel_inputs;
     std::vector<kernel::AddressPtr> kernel_workspaces;
     std::vector<kernel::AddressPtr> kernel_outputs;
@@ -297,6 +312,10 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph) {
     if (!ret) {
       MS_LOG(EXCEPTION) << "Launch kernel failed.";
     }
+#ifdef ENABLE_PROFILE
+    double cost_time = GetTime() - start_time;
+    MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
+#endif
   }
   return true;
 }

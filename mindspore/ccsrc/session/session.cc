@@ -33,9 +33,14 @@
 namespace py = pybind11;
 namespace mindspore::inference {
 std::shared_ptr<FuncGraph> LoadModel(const char *model_buf, size_t size, const std::string &device) {
-  inference::Session::RegAllOp();
-  auto anf_graph = lite::AnfConverter::RunAnfConverter(model_buf, size);
-  return anf_graph;
+  try {
+    inference::Session::RegAllOp();
+    auto anf_graph = lite::AnfConverter::RunAnfConverter(model_buf, size);
+    return anf_graph;
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << "Inference LoadModel failed";
+    return nullptr;
+  }
 }
 
 void ExitInference() {
@@ -51,12 +56,17 @@ void ExitInference() {
 }
 
 std::shared_ptr<MSSession> MSSession::CreateSession(const std::string &device, uint32_t device_id) {
-  auto session = std::make_shared<inference::Session>();
-  auto ret = session->Init(device, device_id);
-  if (ret != 0) {
+  try {
+    auto session = std::make_shared<inference::Session>();
+    auto ret = session->Init(device, device_id);
+    if (ret != 0) {
+      return nullptr;
+    }
+    return session;
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << "Inference CreatSession failed";
     return nullptr;
   }
-  return session;
 }
 
 void Session::RegAllOp() {
@@ -113,47 +123,71 @@ void Session::RegAllOp() {
 
 uint32_t Session::CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr) {
   MS_ASSERT(session_impl_ != nullptr);
-  auto graph_id = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
-  py::gil_scoped_release gil_release;
-  return graph_id;
+  try {
+    auto graph_id = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
+    py::gil_scoped_release gil_release;
+    return graph_id;
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << "Inference CompileGraph failed";
+    return static_cast<uint32_t>(-1);
+  }
 }
 
 MultiTensor Session::RunGraph(uint32_t graph_id, const std::vector<std::shared_ptr<inference::MSTensor>> &inputs) {
-  std::vector<tensor::TensorPtr> inTensors;
-  inTensors.resize(inputs.size());
-  bool has_error = false;
-  std::transform(inputs.begin(), inputs.end(), inTensors.begin(),
-                 [&has_error](const std::shared_ptr<inference::MSTensor> &tensor_ptr) -> tensor::TensorPtr {
-                   if (tensor_ptr == nullptr) {
-                     MS_LOG(WARNING) << "input MSTensor is nullptr, return nullptr";
-                     has_error = true;
-                     return nullptr;
-                   }
-                   auto tensor = static_cast<inference::Tensor *>(tensor_ptr.get());
-                   if (tensor == nullptr) {
-                     MS_LOG(ERROR) << "Can not cast input MSTensor to tensor";
-                     has_error = true;
-                     return nullptr;
-                   }
-                   return tensor->tensor();
-                 });
-  if (has_error) {
-    MS_LOG(ERROR) << "Init Tensor failed, returning empty result";
-    std::vector<std::shared_ptr<inference::MSTensor>> multiTensor;
-    return multiTensor;
+  try {
+    std::vector<tensor::TensorPtr> inTensors;
+    inTensors.resize(inputs.size());
+    bool has_error = false;
+    std::transform(inputs.begin(), inputs.end(), inTensors.begin(),
+                   [&has_error](const std::shared_ptr<inference::MSTensor> &tensor_ptr) -> tensor::TensorPtr {
+                     if (tensor_ptr == nullptr) {
+                       MS_LOG(WARNING) << "input MSTensor is nullptr, return nullptr";
+                       has_error = true;
+                       return nullptr;
+                     }
+                     auto tensor = static_cast<inference::Tensor *>(tensor_ptr.get());
+                     if (tensor == nullptr) {
+                       MS_LOG(ERROR) << "Can not cast input MSTensor to tensor";
+                       has_error = true;
+                       return nullptr;
+                     }
+                     return tensor->tensor();
+                   });
+    if (has_error) {
+      MS_LOG(ERROR) << "Init Tensor failed, returning empty result";
+      std::vector<std::shared_ptr<inference::MSTensor>> multiTensor;
+      return multiTensor;
+    }
+    VectorRef outputs;
+    session_impl_->RunGraph(graph_id, inTensors, &outputs);
+
+    return TransformVectorRefToMultiTensor(outputs);
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << "Inference Rungraph failed";
+    return MultiTensor();
   }
-  VectorRef outputs;
-  session_impl_->RunGraph(graph_id, inTensors, &outputs);
-
-  return TransformVectorRefToMultiTensor(outputs);
 }
-
+namespace {
+string AjustTargetName(const std::string &device) {
+  if (device == kAscendDevice) {
+    return std::string(kAscendDevice) + "Inference";
+  } else {
+    MS_LOG(ERROR) << "Only support device Ascend right now";
+    return "";
+  }
+}
+}  // namespace
 int Session::Init(const std::string &device, uint32_t device_id) {
   RegAllOp();
   auto ms_context = MsContext::GetInstance();
   ms_context->set_execution_mode(kGraphMode);
-  ms_context->set_device_target(kAscendDevice);
-  session_impl_ = session::SessionFactory::Get().Create(device);
+  ms_context->set_device_id(device_id);
+  auto ajust_device = AjustTargetName(device);
+  if (ajust_device == "") {
+    return -1;
+  }
+  ms_context->set_device_target(device);
+  session_impl_ = session::SessionFactory::Get().Create(ajust_device);
   if (session_impl_ == nullptr) {
     MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << device << " is available.";
     return -1;

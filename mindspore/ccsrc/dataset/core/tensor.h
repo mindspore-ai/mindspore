@@ -33,7 +33,6 @@
 #include "dataset/core/data_type.h"
 #include "dataset/core/tensor_shape.h"
 #include "dataset/util/allocator.h"
-#include "dataset/util/de_error.h"
 #include "dataset/util/status.h"
 #include "proto/example.pb.h"
 

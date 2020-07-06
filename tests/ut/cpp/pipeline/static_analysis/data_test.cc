@@ -113,12 +113,8 @@ TEST_F(TestData, test_build_shape) {
 
   std::vector<int> weight1_dims = {2, 20, 5, 5};
   std::vector<int> weight2_dims = {2, 2, 5, 5};
-  tensor::TensorPtr weight1 = std::make_shared<tensor::Tensor>();
-  weight1->set_data_type(kNumberTypeInt32);
-  weight1->set_shape(weight1_dims);
-  tensor::TensorPtr weight2 = std::make_shared<tensor::Tensor>();
-  weight2->set_data_type(kNumberTypeInt32);
-  weight2->set_shape(weight2_dims);
+  tensor::TensorPtr weight1 = std::make_shared<tensor::Tensor>(kNumberTypeInt32, weight1_dims);
+  tensor::TensorPtr weight2 = std::make_shared<tensor::Tensor>(kNumberTypeInt32, weight2_dims);
 
   AbstractBasePtr abstract_weight1 = FromValue(weight1, true);
   AbstractBasePtr abstract_weight2 = FromValue(weight2, true);

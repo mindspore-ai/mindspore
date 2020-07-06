@@ -18,7 +18,8 @@
 
 #include <iostream>
 #include <iterator>
-#include "dataset/util/de_error.h"
+
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -90,7 +91,7 @@ struct List {
 
   // Insert elem2 after elem1 in the list.
   virtual void InsertAfter(pointer elem1, pointer elem2) {
-    DS_ASSERT(elem1 != elem2);
+    MS_ASSERT(elem1 != elem2);
     Node<T> &elem1_node = elem1->*node;
     Node<T> &elem2_node = elem2->*node;
     elem2_node.prev = elem1;
@@ -102,6 +103,24 @@ struct List {
     elem1_node.next = elem2;
     if (tail == elem1) {
       tail = elem2;
+    }
+    ++count;
+  }
+
+  // Insert elem2 before elem1 in the list.
+  virtual void InsertBefore(pointer elem1, pointer elem2) {
+    MS_ASSERT(elem1 != elem2);
+    Node<T> &elem1_node = elem1->*node;
+    Node<T> &elem2_node = elem2->*node;
+    elem2_node.next = elem1;
+    elem2_node.prev = elem1_node.prev;
+    if (elem1_node.prev != nullptr) {
+      Node<T> &prev_node = elem1_node.prev->*node;
+      prev_node.next = elem2;
+    }
+    elem1_node.prev = elem2;
+    if (head == elem1) {
+      head = elem2;
     }
     ++count;
   }

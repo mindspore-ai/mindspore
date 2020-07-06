@@ -276,7 +276,8 @@ bool AkgKernelBuild::CreateInputDescJson(const AnfNodePtr &anf_node, nlohmann::j
       input_desc_json[kName] = op_input_name;
       input_desc_json[kTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
       auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, real_input_index);
-      if (GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
+      if (anf_node->func_graph() != nullptr && anf_node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) &&
+          GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
         MS_LOG(WARNING) << "we take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
                         << "] as const tensor, shape: [" << Vector2Str(input_shape)
                         << "], value: " << input_desc_json[kValue];
@@ -618,6 +619,5 @@ size_t AkgKernelBuild::GetOutputTensorIdxInc() {
   size_t idx = output_tensor_idx_++;
   return idx;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

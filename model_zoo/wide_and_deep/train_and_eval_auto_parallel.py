@@ -40,6 +40,9 @@ init()
 
 
 def get_WideDeep_net(config):
+    """
+    Get network of wide&deep model.
+    """
     WideDeep_net = WideDeepModel(config)
     loss_net = NetWithLossClass(WideDeep_net, config)
     loss_net = VirtualDatasetCellTriple(loss_net)

@@ -17,7 +17,8 @@ import time
 import pytest
 import numpy as np
 from mindspore import context
-from model_zoo.gcn.src.gcn import GCN, LossAccuracyWrapper, TrainNetWrapper
+from model_zoo.gcn.src.gcn import GCN
+from model_zoo.gcn.src.metrics import LossAccuracyWrapper, TrainNetWrapper
 from model_zoo.gcn.src.config import ConfigGCN
 from model_zoo.gcn.src.dataset import get_adj_features_labels, get_mask
 

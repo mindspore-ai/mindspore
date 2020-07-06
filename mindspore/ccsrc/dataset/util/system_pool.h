@@ -19,8 +19,10 @@
 #include <cstddef>
 #include <cstdlib>
 #include <limits>
+#include <memory>
 #include <new>
 #include "./securec.h"
+#include "dataset/util/allocator.h"
 #include "dataset/util/memory_pool.h"
 
 namespace mindspore {
@@ -61,6 +63,11 @@ class SystemPool : public MemoryPool {
   uint64_t get_max_size() const override { return std::numeric_limits<uint64_t>::max(); }
 
   int PercentFree() const override { return 100; }
+
+  template <typename T>
+  static Allocator<T> GetAllocator() {
+    return Allocator<T>(std::make_shared<SystemPool>());
+  }
 };
 }  // namespace dataset
 }  // namespace mindspore

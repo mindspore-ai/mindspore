@@ -77,7 +77,7 @@ class DEPipeline {
   ~DEPipeline();
 
   // Function to add a Node to the Execution Tree.
-  Status AddNodeToTree(const OpName &op_name, const py::dict &args, DsOpPtr *out);
+  Status AddNodeToTree(const OpName &op_name, const py::dict &args, py::dict *output);
 
   // Function to add a child and parent relationship.
   static Status AddChildToParentNode(const DsOpPtr &child_op, const DsOpPtr &parent_op);
@@ -104,73 +104,74 @@ class DEPipeline {
 
   int GetRepeatCount() const;
 
-  Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status BuildMindrecordSamplerChain(const py::handle &handle,
                                      std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators,
                                      int num_padded);
 
-  Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseBucketBatchByLengthOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseBucketBatchByLengthOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
+                                    std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseConcatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseConcatOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseTFReaderOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseTFReaderOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseProjectOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseProjectOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseImageFolderOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseImageFolderOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseManifestOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseManifestOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseCifar100Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseCifar100Op(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseRandomDataOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseRandomDataOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   void PrintTree();
 
   int32_t GetNumClasses() const;
 
-  Status ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status SetBatchParameters(const py::dict &args);
 
-  Status ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
-  Status ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+  Status ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
  private:
   // Execution tree that links the dataset operators.
@@ -179,6 +180,25 @@ class DEPipeline {
   std::unique_ptr<DatasetIterator> iterator_;
 
   static Status ParsePadInfo(py::handle value, PadInfo *pad_info);
+
+  /// \brief Helper function to inject a shuffle operator over top of the current operation being built.
+  /// \param[in] shuffle_size The size to use in the shuffle buffer
+  /// \param[in] input_op The operator to build shuffle on top of
+  /// \param[out] shuffle_op The top node of the created subtree (subtree contains two nodes). In this case it will be
+  ///     the shuffle operator
+  /// \return Status return code
+  Status AddShuffleOp(int64_t shuffle_size, std::shared_ptr<DatasetOp> input_op,
+                      std::shared_ptr<DatasetOp> *shuffle_op);
+
+  /// \brief Helper function to compute the shuffle size
+  /// \param[in] num_files The number of files in the dataset
+  /// \param[in] num_devices The number of devices in the dataset
+  /// \param[in] num_rows The number of rows in the dataset
+  /// \param[in] total_rows An upper bound on the total rows in the dataset
+  /// \param[out] shuffle_size The resultant computed shuffle size
+  /// \return Status return code
+  Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
+                            int64_t *shuffle_size);
 
   int batch_size_;
   int repeat_num_;

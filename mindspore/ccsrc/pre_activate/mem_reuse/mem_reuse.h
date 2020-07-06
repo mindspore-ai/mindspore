@@ -42,7 +42,7 @@ class MemReuseUtil {
   KernelRefCountPtrList total_refs_list_;
   KernelRefCountPtrList total_wk_ref_list_;
   KernelRefs kernel_workspace_refs_;
-  MemReuseUtil() : util_index_(kInitIndex), graph_(nullptr) {}
+  MemReuseUtil() : util_index_(kInitIndex), graph_(nullptr), is_all_nop_node_(false) {}
   ~MemReuseUtil() {
     if (graph_ != nullptr) {
       graph_ = nullptr;
@@ -87,6 +87,7 @@ class MemReuseUtil {
  private:
   int util_index_;
   const KernelGraph *graph_;
+  bool is_all_nop_node_;
   KernelRefCountPtrList ref_list_;
   KernelDefPtrMaps kernel_def_ptr_list_;
   KernelRefCountPtrList last_ref_list_;

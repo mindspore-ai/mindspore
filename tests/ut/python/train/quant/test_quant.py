@@ -42,7 +42,7 @@ class LeNet5(nn.Cell):
     def __init__(self, num_class=10):
         super(LeNet5, self).__init__()
         self.num_class = num_class
-        self.conv1 = nn.Conv2dBnAct(1, 6, kernel_size=5, batchnorm=True, activation='relu6', pad_mode="valid")
+        self.conv1 = nn.Conv2dBnAct(1, 6, kernel_size=5, has_bn=True, activation='relu6', pad_mode="valid")
         self.conv2 = nn.Conv2dBnAct(6, 16, kernel_size=5, activation='relu', pad_mode="valid")
         self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
         self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
@@ -67,7 +67,7 @@ def test_qat_lenet():
     img = Tensor(np.ones((32, 1, 32, 32)).astype(np.float32))
     net = LeNet5()
     net = qat.convert_quant_network(
-        net, quant_delay=0, bn_fold=False, freeze_bn=10000, num_bits=8)
+        net, freeze_bn=10000, num_bits=8)
     # should load the checkpoint. mock here
     for param in net.get_parameters():
         param.init_data()

@@ -19,8 +19,8 @@
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/util/task_manager.h"
-#include "dataset/engine/opt/pre/map_column_reorder.h"
-#include "dataset/engine/opt/pre/global_shuffle.h"
+#include "dataset/engine/opt/pass.h"
+#include "dataset/engine/opt/pre/removal_pass.h"
 #include "dataset/engine/perf/profiling.h"
 #include "dataset/engine/perf/monitor.h"
 
@@ -42,6 +42,10 @@ ExecutionTree::~ExecutionTree() { (void)tg_->ServiceStop(); }
 // provides it with a link to the tree. A node cannot form any relationships (parent/child) with
 // other nodes unless they are associated with the same tree.
 Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
+  // If we are already a part of the tree, no-op
+  if (op->tree_ == this) {
+    return Status::OK();
+  }
   if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding) {
     std::string err_msg =
       "Invalid tree state for adding a node. Current state: " + std::to_string(static_cast<int>(tree_state_)) +
@@ -85,13 +89,13 @@ Status ExecutionTree::AssignRoot(const std::shared_ptr<DatasetOp> &op) {
 }
 
 // A print method typically used for debugging
-void ExecutionTree::Print(std::ostream &out) const {
+void ExecutionTree::Print(std::ostream &out, const std::shared_ptr<DatasetOp> &op) const {
   out << "Execution tree summary:\n"
       << "-----------------------\n";
-  this->PrintNode(out, root_, "", true, false);
+  this->PrintNode(out, op == nullptr ? root_ : op, "", true, false);
   out << "\nExecution tree operator details:\n"
       << "--------------------------------\n";
-  this->PrintNode(out, root_, "", true, true);
+  this->PrintNode(out, op == nullptr ? root_ : op, "", true, true);
 }
 
 // A helper functions for doing the recursive printing
@@ -209,10 +213,10 @@ Status ExecutionTree::Prepare() {
 
 Status ExecutionTree::PrepareTreePreAction() {
   bool modified = false;
-  std::vector<Pass *> pre_actions;
+  std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
-  pre_actions.push_back(new MapColumnReorder());
-  pre_actions.push_back(new GlobalShufflePass());
+  MS_LOG(INFO) << "Running pre pass";
+  pre_actions.push_back(std::make_unique<RemovalPass>(RemovalPass()));
   // Apply pre action passes
   for (auto &pass : pre_actions) {
     RETURN_IF_NOT_OK(pass->Run(this, &modified));
@@ -267,27 +271,40 @@ Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) 
     RETURN_IF_NOT_OK(this->PrepareNode(i));
   }
 
-  // Then clear the flags from this op now that we have prepared it.
-  BitClear(&prepare_flags_, op_prep_flags);
-
   // No more children, now we execute any prepare actions before going back up the
   // the tree on recursive function
   RETURN_IF_NOT_OK(dataset_op->PrepareNodePostAction());
 
+  // Then clear the flags from this op now that we have prepared it.
+  BitClear(&prepare_flags_, op_prep_flags);
+
   return Status::OK();
 }
 
-// Adds an operator to the repeat stack during prepare phase.
-void ExecutionTree::AddToRepeatStack(std::shared_ptr<DatasetOp> dataset_op) { repeat_stack_.push(dataset_op); }
+// Adds an operator to the eoe operator stack during prepare phase.
+void ExecutionTree::AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op) { eoe_stack_.push(dataset_op); }
 
-// Pops an operator from the repeat stack during prepare phase.
-std::shared_ptr<DatasetOp> ExecutionTree::PopFromRepeatStack() {
+// Pops an operator from the eoe operator stack during prepare phase.
+std::shared_ptr<DatasetOp> ExecutionTree::PopFromEOEOpStack() {
   std::shared_ptr<DatasetOp> top_op = nullptr;
-  if (!repeat_stack_.empty()) {
-    top_op = repeat_stack_.top();
-    repeat_stack_.pop();
+  if (!eoe_stack_.empty()) {
+    top_op = eoe_stack_.top();
+    eoe_stack_.pop();
   }
   return top_op;
+}
+
+// Adds a sampler to the sampler stack during prepare phase.
+void ExecutionTree::AddToSamplerStack(std::shared_ptr<Sampler> sampler) { sampler_stack_.push(sampler); }
+
+// Pops an operator from the sampler stack during prepare phase.
+std::shared_ptr<Sampler> ExecutionTree::PopFromSamplerStack() {
+  std::shared_ptr<Sampler> top_sampler = nullptr;
+  if (!sampler_stack_.empty()) {
+    top_sampler = sampler_stack_.top();
+    sampler_stack_.pop();
+  }
+  return top_sampler;
 }
 }  // namespace dataset
 }  // namespace mindspore

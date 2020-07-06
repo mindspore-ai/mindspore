@@ -16,8 +16,8 @@
 import os
 import subprocess
 
-ENCODER = "subword-nmt apply-bpe -c {codes} -i {input} -o {output}"
-LEARN_DICT = "subword-nmt get-vocab -i {input} -o {dict_path}"
+ENCODER = "subword-nmt apply-bpe -c"
+LEARN_DICT = "subword-nmt get-vocab -i"
 
 
 def bpe_encode(codes_path, src_path, output_path, dict_path):
@@ -43,10 +43,10 @@ def bpe_encode(codes_path, src_path, output_path, dict_path):
         raise FileNotFoundError("Dir not found.")
 
     # Encoding.
-    print(f" | Applying BPE encoding.")
-    subprocess.call(ENCODER.format(codes=codes_path, input=src_path, output=output_path),
-                    shell=True)
-    print(f" | Fetching vocabulary from single file.")
+    print(" | Applying BPE encoding.")
+    commands = ENCODER.split() + [codes_path] + ["-i"] + [src_path] + ["-o"] + [output_path]
+    subprocess.call(commands)
+    print(" | Fetching vocabulary from single file.")
     # Learn vocab.
-    subprocess.call(LEARN_DICT.format(input=output_path, dict_path=dict_path),
-                    shell=True)
+    commands = LEARN_DICT.split() + [output_path] + ["-o"] + [dict_path]
+    subprocess.call(commands)

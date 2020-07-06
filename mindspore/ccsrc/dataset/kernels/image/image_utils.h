@@ -244,7 +244,7 @@ Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount,
 // @param bboxCount: total Number of bounding boxes - required within caller function to run update loop
 // @param pad_top: Total amount of padding applied to image top
 // @param pad_left: Total amount of padding applied to image left side
-Status PadBBoxes(std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left);
+Status PadBBoxes(const std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left);
 
 // Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
 // For e.g those that remain after a crop

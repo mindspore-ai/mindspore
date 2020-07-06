@@ -30,7 +30,6 @@ correction_mul_grad_op_info = TBERegOp("CorrectionMulGrad") \
     .compute_cost(10) \
     .kernel_name("correction_mul_grad") \
     .partial_flag(True) \
-    .op_pattern("formatAgnostic") \
     .attr("channel_axis", "optional", "int", "all") \
     .input(0, "dout", None, "required", None) \
     .input(1, "x", None, "required", None) \
@@ -128,7 +127,6 @@ correction_mul_grad_reduce_op_info = TBERegOp("CorrectionMulGradReduce") \
     .compute_cost(10) \
     .kernel_name("correction_mul_grad_reduce") \
     .partial_flag(True) \
-    .op_pattern("formatAgnostic") \
     .attr("channel_axis", "optional", "int", "all") \
     .input(0, "dout", None, "required", None) \
     .output(0, "d_batch_std", True, "required", "all") \

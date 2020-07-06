@@ -94,8 +94,7 @@ class LazyAdam(Optimizer):
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
         `sparse_grad` of `Parameter` being set. The sparse behavior, to be notice, is not equivalent to the
         original Adam algorithm, as only the current indices parames will be updated. The sparse feature is under
-        continuous development. The sparse behavior is currently performed on the CPU, weight decay is
-        not supported.
+        continuous development. The sparse behavior is currently performed on the CPU.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -109,6 +108,10 @@ class LazyAdam(Optimizer):
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
               will be used. If not, the `weight_decay` in the API will be used.
+
+            - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
+              the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
+              in the value of 'order_params' should be in one of group parameters.
 
         learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                         Iterable or a Tensor and the dims of the Tensor is 1,
@@ -147,12 +150,13 @@ class LazyAdam(Optimizer):
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
-        >>>                 {'params': no_conv_params}]
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
+        >>>                 {'params': no_conv_params, 'lr': 0.01},
+        >>>                 {'order_params': net.trainable_params()}]
         >>> opt = nn.LazyAdam(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
-        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
-        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
+        >>> # The no_conv_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
+        >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)

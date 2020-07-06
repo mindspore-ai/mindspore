@@ -44,6 +44,10 @@ class NetWorkSlicePositive(Cell):
         return ret0, ret1, ret2, ret3
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_slice_positive():
     net = NetWorkSlicePositive()
     input_np = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
@@ -143,7 +147,12 @@ class TensorGetItemByThreeTensors(Cell):
         return ret0, ret1, ret2
 
 
-def test_getitem_by_tensors():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def Xtest_getitem_by_tensors():
+    """This testcase may encounter a sync stream error occassionally"""
     net = TensorGetItemByThreeTensors()
     input_x = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
     index_0 = np.random.randint(6, size=(3, 4, 5)).astype(np.int32)
@@ -179,6 +188,10 @@ class TensorGetItemByMixedTensorsBasicCase(Cell):
         return ret0, ret1, ret2, ret3, ret4, ret5
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_getitem_by_mixed_tensors():
     const0 = np.ones((3, 4, 5, 3), np.float32)
     const1 = np.ones((3, 3, 4, 5, 5), np.float32)
@@ -217,6 +230,10 @@ class TensorSetItemByMixedTensors_0(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_mixed_tensors_0():
     value = 88.0
     net = TensorSetItemByMixedTensors_0(value)
@@ -247,6 +264,10 @@ class TensorSetItemByMixedTensors_1(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_mixed_tensors_1():
     value = 88.0
     net = TensorSetItemByMixedTensors_1(value)
@@ -277,6 +298,10 @@ class TensorSetItemByMixedTensors_2(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_mixed_tensors_2():
     value = 88.0
     net = TensorSetItemByMixedTensors_2(value)
@@ -324,6 +349,10 @@ class TensorSetItemByOneTensorWithNumber(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_one_tensor_with_number():
     value = 0.0
     net = TensorSetItemByOneTensorWithNumber(value)
@@ -348,6 +377,10 @@ class TensorSetItemByOneTensorWithTensor(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_one_tensor_with_tensor():
     net = TensorSetItemByOneTensorWithTensor()
     index_np = np.random.randint(4, size=(5, 4))
@@ -374,6 +407,10 @@ class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_one_tensor_with_tuple_number():
     value = (0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7)
     net = TensorSetItemByOneTensorWithTupleOfNumber(value)
@@ -398,6 +435,10 @@ class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_one_tensor_with_tuple_tensors():
     net = TensorSetItemByOneTensorWithTupleOfTensor()
     input_np = np.random.randint(6, size=(5, 4)).astype(np.int32)
@@ -428,6 +469,10 @@ class TensorSetItemByTensorsWithNumber(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_tensors_with_number():
     value = 0.0
     net = TensorSetItemByTensorsWithNumber(value)
@@ -456,6 +501,10 @@ class TensorSetItemByTensorsWithTensor(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tensor():
     net = TensorSetItemByTensorsWithTensor()
     index_0 = np.random.randint(6, size=(3, 4, 5))
@@ -485,6 +534,10 @@ class TensorSetItemByTensorsWithTensorNumberError(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tensor_error():
     index_0 = Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32)
     index_1 = Tensor(np.random.randint(7, size=(4, 5)), mstype.int32)
@@ -509,6 +562,10 @@ class TensorSetItemByTensorsWithTupleOfNumber(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tuple_of_number():
     value = (0.0, 1.1, 2.2, 3.3, 4.4)
     net = TensorSetItemByTensorsWithTupleOfNumber(value)
@@ -537,6 +594,10 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tuple_of_tensor():
     value_0 = np.zeros((4, 5))
     value_1 = np.ones((4, 5))
@@ -570,6 +631,10 @@ class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
         return ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setitem_by_tensor_with_tuple_of_tensor_error():
     net = TensorSetItemByTensorsWithTupleOfTensorNumberError()
     index_0_ms = Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32)
@@ -646,7 +711,7 @@ class TensorAssignWithSlice2(Cell):
 class TensorAssignWithSlice(Cell):
     def __init__(self):
         super(TensorAssignWithSlice, self).__init__()
-        self.c = 2
+        self.c = 2.0
 
     def construct(self, a, b, ck):
         a[1:3, ::] = b
@@ -661,7 +726,59 @@ class TensorAssignWithSlice(Cell):
         return z
 
 
-def test_tensor_assign():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_assign_slice_value_1():
+    net = TensorAssignWithSlice()
+    a = np.arange(60).reshape(3, 4, 5)
+    ck = np.arange(60).reshape(3, 4, 5)
+    b = np.array([1]).astype(np.float32)  # Tensor([1], dtype=mstype.float32)
+    tb = Tensor(b, dtype=mstype.float32)
+    ta = Tensor(a, dtype=mstype.float32)
+    tck = Tensor(ck, dtype=mstype.float32)
+    out = net(ta, tb, tck)
+    a[1:3, ::] = b
+    a[2:3:, 3:] = b
+    a[::] = b
+    a[::] = 2.0
+    a[::, ::] = b
+    a[::, ::] = 2.0
+    a[2:3:, 0:, 4:1:-1] = b
+    a[2:3:, 0:, 4:1:-1] = 2.0
+    z = a + ck
+    assert np.all(z == out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_assign_slice_value_2():
+    net2 = TensorAssignWithSlice2()
+    a = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    ck = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    b = np.array([1]).astype(np.float32)  # Tensor([1], dtype=mstype.float32)
+    tb = Tensor(b, dtype=mstype.float32)
+    ta = Tensor(a, dtype=mstype.float32)
+    tck = Tensor(ck, dtype=mstype.float32)
+    out = net2(ta, tb, tck)
+    a[1:5] = b
+    a[3:4] = 5
+    a[-1:1:-1] = b
+    a[-1:3:-1] = 5
+    a[::] = b
+    a[::] = 9
+    z = a + ck
+    assert np.all(z == out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_assign_exception():
     net = TensorAssignWithSlice()
     net2 = TensorAssignWithSlice2()
     net_e1 = TensorAssignWithSliceError1()
@@ -677,8 +794,6 @@ def test_tensor_assign():
     Tc = Tensor([], dtype=mstype.float32)
     t = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     tck = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
-    net(Ta, b, Tck)
-    net2(t, b, tck)
     # Error for A[Slice] = Number
     # 1. A[Slice] = Number,  Slice error
     with pytest.raises(IndexError):
@@ -744,9 +859,6 @@ def test_tensor_assign():
     # 2. A[::, 1:, ...] = scalar/tensor
     net = TensorAssignWithTupleEllipsis()
     net(Ta, b)
-    Tc = Tensor(1, mstype.float32)
-    with pytest.raises(ValueError):
-        net(Ta, Tc)
     with pytest.raises(ValueError):
         net(Ta, Tb)
 
@@ -765,7 +877,7 @@ class TensorAssignWithTupleEllipsis(Cell):
         super(TensorAssignWithTupleEllipsis, self).__init__()
 
     def construct(self, a, b):
-        a[:2, ...] = 1
+        a[:2, ...] = 1.0
         a[1:, ...] = b
         return a
 
@@ -851,6 +963,10 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         return a
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assign_bool_index_0():
     a = np.arange(60).reshape(3, 4, 5)
     b = a > 5
@@ -868,6 +984,10 @@ def test_tensor_assign_bool_index_0():
     assert np.all(out.asnumpy() == res)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_tensor_assign_bool_index_1():
     a = np.arange(60).reshape(3, 4, 5)
     Ta = Tensor(a, dtype=mstype.float32)
@@ -955,3 +1075,20 @@ def Xtest_tensor_slice_reduce_out_of_bounds_positive():
     with pytest.raises(ValueError) as ex:
         net(input_tensor)
     assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_range():
+    a = np.arange(4*5*6).reshape(4, 5, 6).astype(np.float32)
+    ta = Tensor(a, mstype.float32)
+    ms_out = []
+    for item in ta:
+        ms_out.append(item)
+    np_out = []
+    for item in a:
+        np_out.append(item)
+    for i, elem in enumerate(ms_out):
+        assert np.all(elem.asnumpy() == np_out[i])

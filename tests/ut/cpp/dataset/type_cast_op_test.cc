@@ -25,7 +25,6 @@
 #include "dataset/core/pybind_support.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/util/de_error.h"
 
 #define  MAX_INT_PRECISION 16777216  // float int precision is 16777216
 using namespace mindspore::dataset;

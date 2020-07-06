@@ -26,10 +26,8 @@ logical_and_op_info = TBERegOp("LogicalAnd") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
-    .dtype_format(DataType.BOOL_FracZ, DataType.BOOL_FracZ, DataType.BOOL_FracZ) \
-    .dtype_format(DataType.BOOL_C1HWNCoC0, DataType.BOOL_C1HWNCoC0, DataType.BOOL_C1HWNCoC0) \
-    .dtype_format(DataType.BOOL_5HD, DataType.BOOL_5HD, DataType.BOOL_5HD) \
+    .op_pattern("broadcast") \
+    .dtype_format(DataType.BOOL_None, DataType.BOOL_None, DataType.BOOL_None) \
     .get_op_info()
 
 

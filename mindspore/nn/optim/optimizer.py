@@ -22,11 +22,14 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
+from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from mindspore.common.tensor import Tensor
 from mindspore import log as logger
+from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.train.parallel_utils import ParallelMode
 
 __all__ = ['Optimizer']
 
@@ -74,8 +77,7 @@ class Optimizer(Cell):
 
             - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' but not in any group will use default learning rate and default weight
-              decay.
+              in the value of 'order_params' should be in one of group parameters.
 
         weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
@@ -155,6 +157,27 @@ class Optimizer(Cell):
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
 
+        use_parallel = auto_parallel_context().get_enable_parallel_optimizer()
+        self.use_parallel = use_parallel
+        if use_parallel:
+            if self.cls_name not in ["Lamb", "AdamWeightDecayDynamicLR", "AdamWeightDecay"]:
+                raise RuntimeError("Optimizer segmentation does not support optimizer {}".format(self.cls_name))
+            if _get_parallel_mode() not in [ParallelMode.HYBRID_PARALLEL, ParallelMode.DATA_PARALLEL,
+                                            ParallelMode.AUTO_PARALLEL]:
+                raise RuntimeError("Optimizer segmentation does not support parallel mode {}".format
+                                   (_get_parallel_mode()))
+            self.dev_num = _get_device_num()
+            if self.dev_num > self.param_length:
+                raise RuntimeError("Optimizer segmentation can not be applied when the number of parameters {} is"
+                                   " less than the number of devices {}".format(self.param_length, self.dev_num))
+            self.param_rank = self._get_parameter_group_id()
+            self.optim_filter = tuple(map(lambda x: x == _get_global_rank(), self.param_rank))
+            self.param_names = []
+            for param in self.parameters:
+                self.param_names.append(param.name)
+        else:
+            self.optim_filter = (True,) * self.param_length
+
     def decay_weight(self, gradients):
         """
         Weight decay.
@@ -171,12 +194,12 @@ class Optimizer(Cell):
         params = self.parameters
         if self.is_group:
             if self.exec_weight_decay:
-                gradients = self.hyper_map(F.partial(_apply_decay), self.weight_decay, self.decay_flags,
-                                           params, gradients)
+                gradients = self.map_(F.partial(_apply_decay), self.weight_decay, self.decay_flags,
+                                      params, gradients)
         else:
             if self.weight_decay > 0:
-                gradients = self.hyper_map(F.partial(_apply_decay, self.weight_decay), self.decay_flags,
-                                           params, gradients)
+                gradients = self.map_(F.partial(_apply_decay, self.weight_decay), self.decay_flags,
+                                      params, gradients)
 
         return gradients
 
@@ -219,8 +242,32 @@ class Optimizer(Cell):
             raise TypeError("Learning rate should be float, Tensor or Iterable.")
         return lr
 
+    def _check_group_params(self, parameters):
+        """Check group params."""
+        parse_keys = ['params', 'lr', 'weight_decay', 'order_params']
+        for group_param in parameters:
+            invalid_key = list(filter(lambda x: x not in parse_keys, group_param.keys()))
+            if invalid_key:
+                raise KeyError(f'The key "{invalid_key}" cannot be recognized in group params.')
+
+            if 'order_params' in group_param.keys():
+                if len(group_param.keys()) > 1:
+                    raise ValueError("The order params dict in group parameters should "
+                                     "only include the 'order_params' key.")
+                if not isinstance(group_param['order_params'], Iterable):
+                    raise TypeError("The value of 'order_params' should be an Iterable type.")
+                continue
+
+            if not group_param['params']:
+                raise ValueError("Optimizer got an empty group parameter list.")
+
+            for param in group_param['params']:
+                if not isinstance(param, Parameter):
+                    raise TypeError("The group param should be an iterator of Parameter type.")
+
     def _parse_group_params(self, parameters, learning_rate):
         """Parse group params."""
+        self._check_group_params(parameters)
         if self.dynamic_lr:
             dynamic_lr_length = learning_rate.size()
         else:
@@ -249,9 +296,6 @@ class Optimizer(Cell):
 
             if dynamic_lr_length not in (lr_length, 0):
                 raise ValueError("The dynamic learning rate in group should be the same size.")
-
-            if not group_param['params']:
-                raise ValueError("Optimizer got an empty group parameter list.")
 
             dynamic_lr_length = lr_length
         self.dynamic_lr_length = dynamic_lr_length
@@ -306,24 +350,28 @@ class Optimizer(Cell):
                 self.group_weight_decay.append(weight_decay_)
 
         if self.is_group_params_ordered:
-            self._order_and_adjust_group_params(ordered_parameters, learning_rate, weight_decay)
+            self._order_and_adjust_group_params(ordered_parameters)
 
-    def _order_and_adjust_group_params(self, ordered_parameters, learning_rate, weight_decay):
+    def _order_and_adjust_group_params(self, ordered_parameters):
         """
-        Order group parameter, learning rate and weight decay in group params. And assign the parameters
-        which in the value of 'order_params' but not in any group to default value.
+        Order group parameter, learning rate and weight decay in group params.
         """
-        params_length = len(ordered_parameters)
-        ordered_learning_rate = [Parameter(learning_rate, name="lr_" + param.name) for param in ordered_parameters]
-        ordered_weight_decay = [weight_decay * self.loss_scale] * params_length
+        params_length = len(self.group_params)
+        if len(ordered_parameters) != len(self.group_params):
+            raise ValueError(f"The value of 'order_params' should be same with all group parameters.")
+
+        ordered_params = [None] * params_length
+        ordered_learning_rate = [None] * params_length
+        ordered_weight_decay = [None] * params_length
         params_name = [param.name for param in ordered_parameters]
 
         for param, lr, wd in zip(self.group_params, self.group_lr, self.group_weight_decay):
             index = params_name.index(param.name)
+            ordered_params[index] = param
             ordered_learning_rate[index] = lr
             ordered_weight_decay[index] = wd
 
-        self.group_params = list(ordered_parameters)
+        self.group_params = ordered_params
         self.group_lr = ordered_learning_rate
         self.group_weight_decay = ordered_weight_decay
 
@@ -383,13 +431,68 @@ class Optimizer(Cell):
                 lr = self.learning_rate
         return lr
 
+    def _get_parameter_group_id(self):
+        """
+        Get the parameter partition group id, which is less than the number of devices.
+
+        Returns:
+            tuple, the group id tuple of parameters.
+        """
+        rank_list = ()
+        count = 0
+        for _ in range(self.param_length):
+            rank_list = rank_list + (count,)
+            count = count + 1
+            if count == self.dev_num:
+                count = 0
+        return rank_list
+
+    def broadcast_params(self, optim_result):
+        """
+        Apply Broadcast operations in the sequential order of parameter groups.
+
+        Returns:
+             bool, the status flag.
+        """
+        param_group = []
+        key_group = []
+        for _ in range(self.dev_num):
+            param_group.append(F.make_tuple())
+            key_group.append(F.make_tuple())
+        for i in range(self.param_length):
+            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (optim_result[i],)
+            key = P.MakeRefKey(self.param_names[i])()
+            key_group[self.param_rank[i]] = key_group[self.param_rank[i]] + (key,)
+        new_param_group = []
+        for root in range(self.dev_num):
+            ops = P.Broadcast(root)
+            next_params = ops(param_group[root])
+            new_param_group.append(next_params)
+            for i in range(F.tuple_len(next_params)):
+                F.assign(key_group[root][i], next_params[i])
+        status = True
+        for i in range(self.dev_num - 1):
+            status = F.control_depend(new_param_group[i][0], new_param_group[i+1])
+
+        return status
+
     def construct(self, *hyper_params):
         raise NotImplementedError
 
 
 op_add = P.AddN()
+op_gather = P.GatherV2()
 
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
+
+
+@_apply_decay.register("Number", "Bool", "Tensor", "Tuple")
+def _tensor_apply_decay_with_sparse(weight_decay, if_apply, weight, gradient):
+    """Get grad with weight_decay."""
+    if if_apply:
+        weight = op_gather(weight, gradient[0], 0)
+        return gradient[0], op_add((weight * weight_decay, gradient[1])), gradient[2]
+    return gradient
 
 
 @_apply_decay.register("Number", "Bool", "Tensor", "Tensor")

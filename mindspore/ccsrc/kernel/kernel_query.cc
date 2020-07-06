@@ -23,6 +23,7 @@
 #include "kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 #include "kernel/akg/akg_kernel_metadata.h"
 #include "session/anf_runtime_algorithm.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -96,6 +97,12 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   MS_EXCEPTION_IF_NULL(kernel_info_list);
 
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->enable_graph_kernel() && IsPrimitiveCNode(kernel_node, prim::kPrimBatchMatMul)) {
+    kernel_type = KernelType::AKG_KERNEL;
+  }
 
   switch (kernel_type) {
     case KernelType::AKG_KERNEL:

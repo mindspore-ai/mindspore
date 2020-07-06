@@ -47,6 +47,7 @@ from .gather_v2 import _gather_v2_akg
 from .less import _less_akg
 from .log import _log_akg
 from .matmul import _matmul_akg
+from .batchmatmul import _batchmatmul_akg
 from .max_pool_grad_with_argmax import _max_pool_grad_with_argmax_akg
 from .max_pool_with_argmax import _max_pool_with_argmax_akg
 from .max import _max_akg

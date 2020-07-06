@@ -36,6 +36,7 @@
 #include "pipeline/parse/resolve.h"
 #include "ir/tensor.h"
 #include "utils/convert_utils.h"
+#include "utils/context/ms_context.h"
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/static_analysis/param_validator.h"
 #include "common/utils.h"
@@ -130,6 +131,14 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDepend, {InferImplDepend, true}},
     {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
     {prim::kPrimControlDepend, {InferImplControlDepend, true}},
+    // Debug
+    {prim::kPrimDebug, {InferImplDebug, true}},
+    // IndexedSlices
+    {prim::kPrimMakeIndexedSlices, {InferImplMakeIndexedSlices, true}},
+    {prim::kPrimIndexedSlicesGetValues, {InferImplIndexedSlicesGetValues, true}},
+    {prim::kPrimIndexedSlicesGetIndices, {InferImplIndexedSlicesGetIndices, true}},
+    {prim::kPrimIndexedSlicesGetDenseShape, {InferImplIndexedSlicesGetDenseShape, true}},
+    {prim::kPrimIsIndexedSlices, {InferImplIsIndexedSlices, true}},
   };
   return prim_eval_implement_map;
 }
@@ -137,6 +146,16 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 using mindspore::parse::PyObjectWrapper;
 
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse_flag = context->enable_sparse_flag();
+  if (enable_sparse_flag && prim_ != prim::kPrimMakeTuple && prim_ != prim::kPrimSwitch) {
+    auto ret_abstract = AbstractEval(args);
+    if (ret_abstract != nullptr) {
+      MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
+      return ret_abstract;
+    }
+  }
   prim_->BeginRecordAddAttr();
   AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
   prim_->EndRecordAddAttr();
@@ -483,6 +502,16 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 }  // end anonymous namespace
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse_flag = context->enable_sparse_flag();
+  if (enable_sparse_flag) {
+    auto ret_abstract = AbstractEval(args);
+    if (ret_abstract != nullptr) {
+      MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
+      return ret_abstract;
+    }
+  }
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
   const auto &iter = cache_->find(args);
@@ -510,6 +539,16 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
 }
 
 EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool enable_sparse_flag = context->enable_sparse_flag();
+  if (enable_sparse_flag) {
+    auto ret_abstract = AbstractEval(args);
+    if (ret_abstract != nullptr) {
+      MS_LOG(DEBUG) << "UniformPrimEvaluator eval Undetermined";
+      return ret_abstract;
+    }
+  }
   // if func_desc_.retval type is super class of parameter type, then make the retval type as parameter type.
   if (nargs_ != args.size()) {
     MS_LOG(ERROR) << "UniformPrimEvaluator expect " << nargs_ << " args, but got " << args.size() << " inputs";
@@ -869,6 +908,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       auto ref_value = ref_abs->ref();
       MS_EXCEPTION_IF_NULL(ref_value);
       ret->set_sparse_grad(ref_value->sparse_grad());
+      ret->set_has_indexed_slices_grad(ref_value->has_indexed_slices_grad());
       return std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     }
 
@@ -884,6 +924,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     std::shared_ptr<SymbolicKeyInstance> key = std::make_shared<SymbolicKeyInstance>(node, x);
     std::shared_ptr<AbstractScalar> abs_scalar = std::make_shared<AbstractScalar>(key, type);
     abs_scalar->set_sparse_grad(x->sparse_grad());
+    abs_scalar->set_has_indexed_slices_grad(x->has_indexed_slices_grad());
     return std::make_shared<EvalResult>(abs_scalar, std::make_shared<AttrValueMap>());
   }
 };
@@ -895,6 +936,16 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(GetAttrEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    bool enable_sparse_flag = context->enable_sparse_flag();
+    if (enable_sparse_flag) {
+      auto ret_abstract = AbstractEval(args_spec_list);
+      if (ret_abstract != nullptr) {
+        MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
+        return ret_abstract;
+      }
+    }
     // Inputs: data, item
     if (args_spec_list.size() != 2) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();

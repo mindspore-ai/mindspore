@@ -17,6 +17,7 @@
 """Resources for ast tree parse."""
 import ast
 import math
+from mindspore import IndexedSlices
 from mindspore.ops.composite import multitype_ops
 from mindspore.ops import functional as F, composite as C
 from . import standard_method as M
@@ -111,10 +112,11 @@ convert_object_map = {
     # system function
     T.len:          M.ms_len,
     T.bool:         M.bool_,
-    T.map:          C.HyperMap(),
+    T.map:          C.Map(),
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
     T.print:        F.print_,
+    T.enumerate:    M.enumerate_,
 
     # custom define operation
     T.iter:         M.ms_iter,
@@ -135,4 +137,7 @@ convert_object_map = {
     math.sin:       NO_IMPLEMENT,
     math.cos:       NO_IMPLEMENT,
     math.tan:       NO_IMPLEMENT,
+
+    # user defined
+    IndexedSlices:  F.make_indexed_slices,
 }

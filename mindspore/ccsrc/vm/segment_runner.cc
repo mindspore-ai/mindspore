@@ -28,6 +28,7 @@
 #include <string>
 
 #include "utils/log_adapter.h"
+#include "utils/utils.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
 #include "operator/ops.h"
@@ -85,7 +86,6 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   if (lst.empty()) {
     MS_LOG(EXCEPTION) << "Input anf node list is empty";
   }
-
   auto ref = [&eqv, &inputs, &fg](const AnfNodePtr &a) -> AnfNodePtr {
     if (a->isa<ValueNode>() && !IsValueNode<FuncGraph>(a)) {
       eqv[a] = a;
@@ -95,17 +95,14 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
       eqv[a]->set_abstract(a->abstract());
       eqv[a]->set_kernel_info(a->kernel_info_ptr());
     }
-
     return eqv[a];
   };
-
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
   for (auto n : lst) {
     if (!n->isa<CNode>()) {
       MS_LOG(EXCEPTION) << "Inst is not CNode";
     }
     auto &inps = n->cast<CNodePtr>()->inputs();
-
     if (inps.empty()) {
       MS_LOG(EXCEPTION) << "Input is empty";
     }
@@ -114,21 +111,22 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
           inps[0]->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL))) {
       MS_LOG(EXCEPTION) << "Input[0] Must be a Primitive valuenode";
     }
-
     auto fn = inps[0];
-
     std::vector<AnfNodePtr> args{fn};
-    (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args), ref);
-
+    if (IsPrimitive(fn, prim::kPrimDepend) && inps.size() == 3 && inps[kRealInputIndexInDepend]->isa<ValueNode>() &&
+        eqv.find(inps[kDependAttachNodeIndex]) == eqv.end()) {
+      args.emplace_back(inps[kRealInputIndexInDepend]);
+      args.emplace_back(inps[kRealInputIndexInDepend]);
+    } else {
+      (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args), ref);
+    }
     eqv[n] = fg->NewCNode(args);
     eqv[n]->set_abstract(n->abstract());
     eqv[n]->set_kernel_info(n->kernel_info_ptr());
   }
-
   std::vector<AnfNodePtr> eqv_keys;
   (void)std::transform(std::begin(eqv), std::end(eqv), std::back_inserter(eqv_keys),
                        [](const std::pair<AnfNodePtr, AnfNodePtr> &elem) -> AnfNodePtr { return elem.first; });
-
   auto outputs = GetOutput(lst, lst[0]->func_graph()->manager()->node_users(), eqv_keys);
   AnfNodePtr fg_output;
   if (outputs.size() > 1) {

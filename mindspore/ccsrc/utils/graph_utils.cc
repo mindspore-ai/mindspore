@@ -23,10 +23,10 @@
 #include <utility>
 #include <stack>
 #include <vector>
-#include <list>
 #include <string>
 #include <fstream>
 #include <queue>
+#include <deque>
 #include <set>
 
 #include "common/utils.h"
@@ -37,9 +37,11 @@
 namespace mindspore {
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
   size_t seen = NewSeenGeneration();
-  std::list<AnfNodePtr> todo(1, root);
+  std::deque<AnfNodePtr> todo(1024);
   std::unordered_map<AnfNodePtr, size_t> rank;
   std::vector<AnfNodePtr> res;
+  todo.clear();
+  todo.push_back(root);
 
   while (!todo.empty()) {
     AnfNodePtr node = todo.back();

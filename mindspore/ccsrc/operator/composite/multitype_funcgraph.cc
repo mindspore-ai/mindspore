@@ -93,15 +93,17 @@ static TypePtr UnwrapRef(const TypePtr &type) {
   }
   return type;
 }
-FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
-  bool find_fn = false;
-  py::function py_fn;
+
+// Return Exact match if exists,  else return non ambiguous sub class match
+// Return py::none() if matching is ambiguous
+const py::function MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
+  // Exact match
   for (auto &item : fn_cache_py_) {
     TypePtrList sign = item.first;
     if (sign.size() != types.size()) {
       continue;
     }
-    bool match = true;
+    auto match = true;
     for (size_t i = 0; i < sign.size(); ++i) {
       if (!IsIdentidityOrSubclass(UnwrapRef(types[i]), sign[i])) {
         match = false;
@@ -111,13 +113,45 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     if (!match) {
       continue;
     }
-    find_fn = true;
-    py_fn = item.second;
-    break;
+    return item.second;
   }
+  // Try best match
+  py::function py_fn_subclass;
+  size_t subclass_match_cnt = 0;
+  for (auto &item : fn_cache_py_) {
+    TypePtrList sign = item.first;
+    if (sign.size() != types.size()) {
+      continue;
+    }
+    auto match = true;
+    for (size_t i = 0; i < sign.size(); ++i) {
+      if (!IsIdentidityOrSubclass(UnwrapRef(types[i]), sign[i]) &&
+          !IsParentOrChildrenType(UnwrapRef(types[i]), sign[i])) {
+        match = false;
+        break;
+      }
+    }
+    if (!match) {
+      continue;
+    }
+    py_fn_subclass = item.second;
+    subclass_match_cnt++;
+  }
+  if (subclass_match_cnt > 1) {
+    MS_LOG(EXCEPTION) << "There are more than one prototypes for overload function match by subclass";
+  }
+  if (subclass_match_cnt == 1) {
+    MS_LOG(DEBUG) << "Found one subclass match";
+    return py_fn_subclass;
+  }
+  return py::none();
+}
+
+FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
+  auto py_fn = SignMatch(types);
   std::ostringstream buffer;
   buffer << types;
-  if (find_fn) {
+  if (py_fn != py::none()) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(py_fn);
     if (func_graph == nullptr) {
       MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str();

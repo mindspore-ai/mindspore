@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define PATH_MAX 0x3ffff
 #include "device/ascend/ascend_kernel_runtime.h"
 #include <string>
 #include <vector>
@@ -21,7 +21,6 @@
 #include <utility>
 #include <exception>
 #include <algorithm>
-
 #include "device/ascend/ascend_device_address.h"
 #include "device/cpu/mpi/mpi_adapter.h"
 #include "utils/context/ms_context.h"
@@ -41,6 +40,7 @@
 #include "kernel/tbe/tbe_python_funcs.h"
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
 #include "device/ascend/ascend_memory_manager.h"
+#include "debug/tensor_load.h"
 
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
@@ -59,16 +59,18 @@ std::string GetRankId() {
   auto mpi_config_ptr = MpiConfig::GetInstance();
   MS_EXCEPTION_IF_NULL(mpi_config_ptr);
   if (mpi_config_ptr->enable_mpi()) {
-    int rank_id = device::cpu::MPIAdapter::Instance().GetRankId();
+    auto mpi_instance = device::cpu::MPIAdapter::Instance();
+    MS_EXCEPTION_IF_NULL(mpi_instance);
+    int rank_id = mpi_instance->GetRankId();
     const char *offset = std::getenv("RANK_OFFSET");
     if (offset != nullptr) {
       try {
         int rank_offset = std::stoi(offset);
         rank_id += rank_offset;
       } catch (std::invalid_argument) {
-        MS_LOG(EXCEPTION) << "stoi invalid argument:" << offset;
+        MS_LOG(EXCEPTION) << "Call stoi invalid argument:" << offset;
       } catch (std::out_of_range) {
-        MS_LOG(EXCEPTION) << "stoi out_of_range:" << offset;
+        MS_LOG(EXCEPTION) << "Call stoi out_of_range:" << offset;
       }
     }
     rank_id_str = std::to_string(rank_id);
@@ -79,7 +81,7 @@ std::string GetRankId() {
   rank_id_str = std::getenv("RANK_ID");
 #endif
   if (rank_id_str.empty()) {
-    MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
+    MS_LOG(ERROR) << "Get hccl rankid failed, please set env RANK_ID";
   }
   return rank_id_str;
 }
@@ -98,7 +100,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  MS_LOG(DEBUG) << "clear graph:" << graph_id << " runtime resource";
+  MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
   auto iter = graph_model_map_.find(graph_id);
   if (iter == graph_model_map_.end()) {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
@@ -116,7 +118,7 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->enable_hccl()) {
-    MS_LOG(INFO) << "hccl is not enabled";
+    MS_LOG(INFO) << "Hccl is not enabled";
     return false;
   }
   // Note: make sure hcom_connectivity_detection api never be used.
@@ -124,7 +126,7 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
 }
 
 void AscendKernelRuntime::ReleaseDeviceRes() {
-  MS_LOG(INFO) << "ascend finalize start";
+  MS_LOG(INFO) << "Ascend finalize start";
   // release ge runtime
   ClearGraphModelMap();
 
@@ -132,7 +134,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto ret = rtSetDevice(context_ptr->device_id());
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtSetDevice, ret[" << static_cast<int>(ret) << "]";
+    MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
 
   if (mem_manager_ != nullptr) {
@@ -142,7 +144,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   (void)DestroyHccl();
   (void)ResetDevice();
   (void)ProfilingManager::GetInstance().StopProfiling();
-  MS_LOG(INFO) << "ascend finalize end";
+  MS_LOG(INFO) << "Ascend finalize end";
 }
 
 bool AscendKernelRuntime::Init() {
@@ -153,7 +155,7 @@ bool AscendKernelRuntime::Init() {
 #ifdef ENABLE_DUMP_E2E
   ret = SetDumpConf();
   if (!ret) {
-    MS_LOG(INFO) << "no dump conf to set!";
+    MS_LOG(INFO) << "No dump conf to set!";
   }
 #endif
 
@@ -261,13 +263,13 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
 bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DUMP_E2E
-  MS_LOG(INFO) << "start dump step";
+  MS_LOG(INFO) << "Start dump step";
   DumpConfPtr dump_conf = GetDumpConf();
   MS_EXCEPTION_IF_NULL(dump_conf);
   dump_conf->UpdataCurIter();
   bool dump_flag = dump_conf->dump_enable();
   if (!dump_flag) {
-    MS_LOG(INFO) << "dump flag is disable, pass dump step";
+    MS_LOG(INFO) << "Dump flag is disable, pass dump step";
     return true;
   }
   uint32_t cur_iter = dump_conf->cur_iter();
@@ -276,7 +278,7 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
       return true;
     }
   }
-  MS_LOG(INFO) << "cur iter is " << cur_iter;
+  MS_LOG(INFO) << "Cur iter is " << cur_iter;
   std::string net_name = dump_conf->dump_net_name();
   std::string iterator = to_string(cur_iter);
   std::string dump_path = dump_conf->dump_path();
@@ -289,6 +291,91 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
   DumpOutput(graph, dump_path, dump_conf);
   // dump parameters
   DumpParameters(graph, dump_path, dump_conf);
+#endif
+  return true;
+}
+
+#ifdef ENABLE_DEBUGGER
+namespace {
+void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  bool trans_flag = false;
+  const auto &apply_kernels = graph->execution_order();
+  // for kernels, execution order starts from 1
+  int exec_order = 1;
+  for (const auto &node : apply_kernels) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    std::string kernel_name = node->fullname_with_scope();
+    auto output_size = AnfAlgo::GetOutputTensorNum(node);
+    for (size_t j = 0; j < output_size; ++j) {
+      auto addr = AnfAlgo::GetOutputAddr(node, j);
+      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+      auto format = kOpFormat_DEFAULT;
+      string tensor_name = kernel_name + ':' + std::to_string(j);
+      auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
+      std::vector<int> int_shapes;
+      if (trans_flag) {
+        int_shapes = trans::GetRuntimePaddingShape(node, j);
+      } else {
+        auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
+        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                             [](size_t inner_item) { return SizeToInt(inner_item); });
+      }
+      auto ret = ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, j, debugger);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost: flag:" << trans_flag << ", tensor_name:" << tensor_name
+                      << ", host_format:" << format << ".!";
+      }
+    }
+    exec_order = exec_order + 1;
+  }
+}
+
+void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  bool trans_flag = false;
+  const auto &parameters = graph->inputs();
+  // for parameters, set its execution order to be 0;
+  int exec_order = 0;
+  for (auto &item : parameters) {
+    if (!item->isa<Parameter>()) {
+      continue;
+    }
+    std::string parameter_name = item->fullname_with_scope();
+    auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
+    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
+    string tensor_name = parameter_name + ':' + "0";
+    auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
+    std::vector<int> int_shapes;
+    if (trans_flag) {
+      int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
+    } else {
+      auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+    }
+    auto ret = ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, 0, debugger);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost Failed: flag:" << trans_flag << ", path:" << tensor_name
+                    << ", host_format:" << format << ".!";
+    }
+  }
+}
+}  // namespace
+#endif
+
+bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+#ifdef ENABLE_DEBUGGER
+  MS_LOG(INFO) << "Start load step";
+  uint32_t cur_iter = 0;
+  MS_LOG(INFO) << "Cur iter is " << cur_iter;
+  // load output
+  LoadOutput(graph, debugger);
+  // load parameters
+  LoadParameters(graph, debugger);
 #endif
   return true;
 }
@@ -334,27 +421,27 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   }
   // Graph may have no compute node, such TensorAddGrad.
   if (task_info_list.empty()) {
-    MS_LOG(WARNING) << "graph " << graph->graph_id() << " have no compute node";
+    MS_LOG(WARNING) << "Graph " << graph->graph_id() << " have no compute node";
     return true;
   }
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
-  AscendStreamMng &stream_manager = AscendStreamMng::GetInstance();
+  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
   AscendLabelAssign &label_assign_instance = AscendLabelAssign::GetInstance();
   // the streams' flag not HEAD_STREAM
   std::vector<uint32_t> wait_active_stream_list;
   assign_instance.GetWaitStreams(&wait_active_stream_list);
   std::vector<uint32_t> force_copy_stream_list;
   assign_instance.GetHcomStreams(&force_copy_stream_list);
-  MS_LOG(INFO) << "call DavinciModel total stream num:" << stream_manager.GetCurAllocStreamNum()
-               << ", total event num:" << assign_instance.total_event_num()
+  MS_LOG(INFO) << "Call DavinciModel total stream num:" << resource_manager.get_cur_stream_num()
+               << ", total event num:" << resource_manager.get_cur_event_num()
                << ", total label num:" << label_assign_instance.GetLabelNum(NOT_NULL(graph))
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
   std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
   std::shared_ptr<ge::model_runner::DavinciModel> model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
-    0, 0, 0, 0, 0, stream_manager.GetCurAllocStreamNum(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
-    assign_instance.total_event_num(), 0);
+    0, 0, 0, 0, 0, resource_manager.get_cur_stream_num(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
+    resource_manager.get_cur_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
@@ -437,7 +524,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
   bool status = ge::model_runner::ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
-    MS_LOG(ERROR) << "run task failed";
+    MS_LOG(ERROR) << "Run task failed";
     DebugTaskIdName(graph->graph_id());
     return false;
   }
@@ -456,18 +543,18 @@ bool AscendKernelRuntime::InitDevice() {
   int device_count = 0;
   auto ret = rtGetDeviceCount(&device_count);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
+    MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }
 
   ret = rtSetDevice(device_id_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtSetDevice, ret[" << static_cast<int>(ret) << "]";
+    MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr == nullptr) {
-    MS_LOG(ERROR) << "get MsContext instance failed";
+    MS_LOG(ERROR) << "Get MsContext instance failed";
     return false;
   }
   if (context_ptr->enable_hccl()) {
@@ -479,17 +566,17 @@ bool AscendKernelRuntime::InitDevice() {
 
   ret = rtCtxCreate(&rt_context_, 0, device_id_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
+    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
   }
 
   ret = rtCtxSetCurrent(rt_context_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtCtxSetCurrent, ret[" << ret << "]";
+    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
   }
 
   ret = rtStreamCreate(&stream_, 0);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtStreamCreate, ret[" << ret << "]";
+    MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
   }
 
   return true;
@@ -498,14 +585,14 @@ bool AscendKernelRuntime::InitDevice() {
 bool AscendKernelRuntime::ResetDevice() {
   auto ret = rtCtxSetCurrent(rt_context_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "call rtCtxSetCurrent failed";
+    MS_LOG(ERROR) << "Call rtCtxSetCurrent failed";
     return false;
   }
 
   if (stream_ != nullptr) {
     ret = rtStreamDestroy(stream_);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtStreamDestroy, ret[" << ret << "]";
+      MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
     }
     stream_ = nullptr;
   }
@@ -513,7 +600,7 @@ bool AscendKernelRuntime::ResetDevice() {
   if (rt_context_ != nullptr) {
     ret = rtCtxDestroy(rt_context_);
     if (ret != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "rtCtxDestroy, ret[" << ret << "]";
+      MS_EXCEPTION(DeviceProcessError) << "Call rtCtxDestroy, ret[" << ret << "]";
     }
     rt_context_ = nullptr;
   }
@@ -526,26 +613,30 @@ bool AscendKernelRuntime::HcclInit() {
   if (!context_ptr->IsTsdOpened()) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
-  MS_LOG(INFO) << "do hcom init";
+  MS_LOG(INFO) << "Do hcom init";
   auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
     config_path_str = std::getenv("RANK_TABLE_FILE");
     if (config_path_str == nullptr) {
-      MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+      MS_LOG(ERROR) << "Get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
       return false;
     }
+  }
+  if (strlen(config_path_str) > PATH_MAX) {
+    MS_LOG(ERROR) << "File path oversize";
+    return false;
   }
   std::string rank_id_str = GetRankId();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
-    MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
+    MS_LOG(ERROR) << "File path " << config_path_str << " does not exist";
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
   hcclResult_t res = hcom_init(full_path, rank_id_str.c_str());
   free(full_path);
   if (res != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "hcom init failed, res is " << static_cast<int>(res);
+    MS_LOG(ERROR) << "Hcom init failed, res is " << static_cast<int>(res);
     return false;
   }
   return true;
@@ -555,15 +646,15 @@ bool AscendKernelRuntime::DestroyHccl() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!NeedDestroyHccl()) {
-    MS_LOG(INFO) << "hccl is not enable, no need to close.";
+    MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
   }
   hcclResult_t res = hcom_destroy();
   if (res != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "hccl destroy failed";
+    MS_LOG(ERROR) << "Hccl destroy failed";
     return false;
   }
-  MS_LOG(INFO) << "hccl destroy successful, status = " << res << ".";
+  MS_LOG(INFO) << "Hccl destroy successful, status = " << res << ".";
   context_ptr->set_enable_hccl(false);
   return true;
 }

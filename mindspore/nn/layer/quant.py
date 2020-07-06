@@ -16,6 +16,7 @@
 
 from functools import partial
 import numpy as np
+
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -23,10 +24,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import check_int_positive, check_bool, twice
-from mindspore._checkparam import Validator as validator, Rel
-from mindspore.nn.cell import Cell
-from mindspore.nn.layer.activation import get_activation
+from mindspore._checkparam import Rel
 import mindspore.context as context
+
 from .normalization import BatchNorm2d
 from .activation import get_activation
 from ..cell import Cell
@@ -82,7 +82,7 @@ class Conv2dBnAct(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Possible
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
-        batchnorm (bool): Specifies to used batchnorm or not. Default: None.
+        has_bn (bool): Specifies to used batchnorm or not. Default: False.
         activation (string): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
@@ -94,7 +94,7 @@ class Conv2dBnAct(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> net = Conv2dBnAct(120, 240, 4, batchnorm=True, activation='ReLU')
+        >>> net = Conv2dBnAct(120, 240, 4, has_bn=True, activation='ReLU')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> net(input).shape
         (1, 240, 1024, 640)
@@ -112,28 +112,39 @@ class Conv2dBnAct(Cell):
                  has_bias=False,
                  weight_init='normal',
                  bias_init='zeros',
-                 batchnorm=None,
+                 has_bn=False,
                  activation=None):
         super(Conv2dBnAct, self).__init__()
-        self.conv = conv.Conv2d(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            pad_mode,
-            padding,
-            dilation,
-            group,
-            has_bias,
-            weight_init,
-            bias_init)
-        self.has_bn = batchnorm is not None
+
+        if context.get_context('device_target') == "Ascend" and group > 1:
+            self.conv = conv.DepthwiseConv2d(in_channels,
+                                             out_channels,
+                                             kernel_size=kernel_size,
+                                             stride=stride,
+                                             pad_mode=pad_mode,
+                                             padding=padding,
+                                             dilation=dilation,
+                                             group=group,
+                                             has_bias=has_bias,
+                                             weight_init=weight_init,
+                                             bias_init=bias_init)
+        else:
+            self.conv = conv.Conv2d(in_channels,
+                                    out_channels,
+                                    kernel_size=kernel_size,
+                                    stride=stride,
+                                    pad_mode=pad_mode,
+                                    padding=padding,
+                                    dilation=dilation,
+                                    group=group,
+                                    has_bias=has_bias,
+                                    weight_init=weight_init,
+                                    bias_init=bias_init)
+
+        self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
-        self.batchnorm = batchnorm
-        if batchnorm is True:
+        if has_bn:
             self.batchnorm = BatchNorm2d(out_channels)
-        elif batchnorm is not None:
-            validator.check_isinstance('batchnorm', batchnorm, (BatchNorm2d,))
         self.activation = get_activation(activation)
 
     def construct(self, x):
@@ -160,7 +171,7 @@ class DenseBnAct(Cell):
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
-        batchnorm (bool): Specifies to used batchnorm or not. Default: None.
+        has_bn (bool): Specifies to used batchnorm or not. Default: False.
         activation (string): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
@@ -183,7 +194,7 @@ class DenseBnAct(Cell):
                  weight_init='normal',
                  bias_init='zeros',
                  has_bias=True,
-                 batchnorm=None,
+                 has_bn=False,
                  activation=None):
         super(DenseBnAct, self).__init__()
         self.dense = basic.Dense(
@@ -192,12 +203,10 @@ class DenseBnAct(Cell):
             weight_init,
             bias_init,
             has_bias)
-        self.has_bn = batchnorm is not None
+        self.has_bn = validator.check_bool("has_bn", has_bn)
         self.has_act = activation is not None
-        if batchnorm is True:
+        if has_bn:
             self.batchnorm = BatchNorm2d(out_channels)
-        elif batchnorm is not None:
-            validator.check_isinstance('batchnorm', batchnorm, (BatchNorm2d,))
         self.activation = get_activation(activation)
 
     def construct(self, x):
@@ -312,6 +321,10 @@ class FakeQuantWithMinMax(Cell):
                  quant_delay=0):
         """init FakeQuantWithMinMax layer"""
         super(FakeQuantWithMinMax, self).__init__()
+        validator.check_type("min_init", min_init, [int, float])
+        validator.check_type("max_init", max_init, [int, float])
+        validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
+        validator.check_integer('quant_delay', quant_delay, 0, Rel.GE)
         self.min_init = min_init
         self.max_init = max_init
         self.num_bits = num_bits
@@ -1180,15 +1193,16 @@ class QuantBlock(Cell):
         self.dequant = dequant_op
         self.dequant_scale = dequant_scale
         self.bias = bias
-        self.has_bias = bias is None
+        self.has_bias = bias is not None
         self.activation = activation
-        self.has_act = activation is None
+        self.has_act = activation is not None
+        self.bias_add = P.BiasAdd()
 
     def construct(self, x):
         x = self.quant(x)
         x = self.core_op(x, self.weight)
         if self.has_bias:
-            output = self.bias_add(output, self.bias)
+            x = self.bias_add(x, self.bias)
         if self.has_act:
             x = self.activation(x)
         x = self.dequant(x, self.dequant_scale)

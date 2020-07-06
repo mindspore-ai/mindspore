@@ -25,11 +25,15 @@
 #include "predict/predict.h"
 #include "kernel/cpu/cpu_kernel_factory.h"
 #include "device/cpu/kernel_select_cpu.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 
 namespace mindspore {
 namespace session {
 ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
+  MS_EXCEPTION_IF_NULL(graph);
   if (!anf->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << "anf[" << anf->DebugString() << "] is not a parameter";
   }
@@ -78,7 +82,12 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
     summary_outputs = kernel_graph->summary_nodes();
     runtime_.IncreaseSummaryRefCount(summary_outputs);
   }
-
+#ifdef ENABLE_DEBUGGER
+  // debugger pre-execution processing
+  if (debugger_) {
+    debugger_->PreExecute(kernel_graph);
+  }
+#endif
   bool ret = runtime_.Run(kernel_graph.get());
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
@@ -92,6 +101,12 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
     runtime_.DecreaseSummaryRefCount(summary_outputs);
   }
 
+#ifdef ENABLE_DEBUGGER
+  // debugger post-execution processing
+  if (debugger_) {
+    debugger_->PostExecute();
+  }
+#endif
   MS_LOG(INFO) << "Run graph end";
 }
 

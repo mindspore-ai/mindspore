@@ -353,7 +353,10 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   if (other_sess_ == nullptr) {
     MS_LOG(EXCEPTION) << "Session create failed!, please make sure target device:" << target << " is available.";
   }
-  other_sess_->Init(0);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  uint32_t device_id = context_ptr->device_id();
+  other_sess_->Init(device_id);
   other_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
   other_device_ = target;
 }
@@ -361,6 +364,10 @@ void MsBackend::CreateOtherSession(const std::string &target) {
 GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraph(fg); }
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
+
+#ifdef ENABLE_DEBUGGER
+void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
+#endif
 
 }  // namespace compile
 }  // namespace mindspore

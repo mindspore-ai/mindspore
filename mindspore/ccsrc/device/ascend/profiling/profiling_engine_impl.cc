@@ -28,6 +28,7 @@ PluginIntf *ProfilingEngineImpl::CreatePlugin() {
 int ProfilingEngineImpl::ReleasePlugin(PluginIntf *plugin) {
   if (plugin != nullptr) {
     delete plugin;
+    plugin = nullptr;
   }
   return 0;
 }

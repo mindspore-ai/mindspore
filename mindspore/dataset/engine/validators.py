@@ -153,6 +153,7 @@ def check_sampler_shuffle_shard_options(param_dict):
             raise RuntimeError("sampler and sharding cannot be specified at the same time.")
 
     if num_shards is not None:
+        check_positive_int32(num_shards, "num_shards")
         if shard_id is None:
             raise RuntimeError("num_shards is specified and currently requires shard_id as well.")
         if shard_id < 0 or shard_id >= num_shards:
@@ -529,6 +530,7 @@ def check_generatordataset(method):
             # These two parameters appear together.
             raise ValueError("num_shards and shard_id need to be passed in together")
         if num_shards is not None:
+            check_positive_int32(num_shards, "num_shards")
             if shard_id >= num_shards:
                 raise ValueError("shard_id should be less than num_shards")
 
@@ -604,8 +606,15 @@ def check_bucket_batch_by_length(method):
         nreq_param_list = ['column_names', 'bucket_boundaries', 'bucket_batch_sizes']
         check_param_type(nreq_param_list, param_dict, list)
 
+        nbool_param_list = ['pad_to_bucket_boundary', 'drop_remainder']
+        check_param_type(nbool_param_list, param_dict, bool)
+
         # check column_names: must be list of string.
         column_names = param_dict.get("column_names")
+
+        if not column_names:
+            raise ValueError("column_names cannot be empty")
+
         all_string = all(isinstance(item, str) for item in column_names)
         if not all_string:
             raise TypeError("column_names should be a list of str.")
@@ -641,9 +650,9 @@ def check_bucket_batch_by_length(method):
         if not all_int:
             raise TypeError("bucket_batch_sizes should be a list of int.")
 
-        all_non_negative = all(item >= 0 for item in bucket_batch_sizes)
+        all_non_negative = all(item > 0 for item in bucket_batch_sizes)
         if not all_non_negative:
-            raise ValueError("bucket_batch_sizes cannot contain any negative numbers.")
+            raise ValueError("bucket_batch_sizes should be a list of positive numbers.")
 
         if param_dict.get('pad_info') is not None:
             check_type(param_dict["pad_info"], "pad_info", dict)
@@ -1065,12 +1074,12 @@ def check_split(method):
         if all_int:
             all_positive = all(item > 0 for item in sizes)
             if not all_positive:
-                raise ValueError("sizes is a list of int, but there should be no negative numbers.")
+                raise ValueError("sizes is a list of int, but there should be no negative or zero numbers.")
 
         if all_float:
             all_valid_percentages = all(0 < item <= 1 for item in sizes)
             if not all_valid_percentages:
-                raise ValueError("sizes is a list of float, but there should be no numbers outside the range [0, 1].")
+                raise ValueError("sizes is a list of float, but there should be no numbers outside the range (0, 1].")
 
             epsilon = 0.00001
             if not abs(sum(sizes) - 1) < epsilon:
@@ -1110,10 +1119,10 @@ def check_gnn_list_or_ndarray(param, param_name):
         for m in param:
             if not isinstance(m, int):
                 raise TypeError(
-                    "Each membor in {0} should be of type int. Got {1}.".format(param_name, type(m)))
+                    "Each member in {0} should be of type int. Got {1}.".format(param_name, type(m)))
     elif isinstance(param, np.ndarray):
         if not param.dtype == np.int32:
-            raise TypeError("Each membor in {0} should be of type int32. Got {1}.".format(
+            raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                 param_name, param.dtype))
     else:
         raise TypeError("Wrong input type for {0}, should be list or numpy.ndarray, got {1}".format(
@@ -1196,15 +1205,15 @@ def check_gnn_get_sampled_neighbors(method):
         # check neighbor_nums; required argument
         neighbor_nums = param_dict.get("neighbor_nums")
         check_gnn_list_or_ndarray(neighbor_nums, 'neighbor_nums')
-        if len(neighbor_nums) > 6:
-            raise ValueError("Wrong number of input members for {0}, should be less than or equal to 6, got {1}".format(
+        if not neighbor_nums or len(neighbor_nums) > 6:
+            raise ValueError("Wrong number of input members for {0}, should be between 1 and 6, got {1}".format(
                 'neighbor_nums', len(neighbor_nums)))
 
         # check neighbor_types; required argument
         neighbor_types = param_dict.get("neighbor_types")
         check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types')
-        if len(neighbor_nums) > 6:
-            raise ValueError("Wrong number of input members for {0}, should be less than or equal to 6, got {1}".format(
+        if not neighbor_types or len(neighbor_types) > 6:
+            raise ValueError("Wrong number of input members for {0}, should be between 1 and 6, got {1}".format(
                 'neighbor_types', len(neighbor_types)))
 
         if len(neighbor_nums) != len(neighbor_types):
@@ -1256,7 +1265,7 @@ def check_gnn_random_walk(method):
     return new_method
 
 
-def check_aligned_list(param, param_name, membor_type):
+def check_aligned_list(param, param_name, member_type):
     """Check whether the structure of each member of the list is the same."""
 
     if not isinstance(param, list):
@@ -1264,27 +1273,27 @@ def check_aligned_list(param, param_name, membor_type):
     if not param:
         raise TypeError(
             "Parameter {0} or its members are empty".format(param_name))
-    membor_have_list = None
+    member_have_list = None
     list_len = None
-    for membor in param:
-        if isinstance(membor, list):
-            check_aligned_list(membor, param_name, membor_type)
-            if membor_have_list not in (None, True):
+    for member in param:
+        if isinstance(member, list):
+            check_aligned_list(member, param_name, member_type)
+            if member_have_list not in (None, True):
                 raise TypeError("The type of each member of the parameter {0} is inconsistent".format(
                     param_name))
-            if list_len is not None and len(membor) != list_len:
+            if list_len is not None and len(member) != list_len:
                 raise TypeError("The size of each member of parameter {0} is inconsistent".format(
                     param_name))
-            membor_have_list = True
-            list_len = len(membor)
+            member_have_list = True
+            list_len = len(member)
         else:
-            if not isinstance(membor, membor_type):
-                raise TypeError("Each membor in {0} should be of type int. Got {1}.".format(
-                    param_name, type(membor)))
-            if membor_have_list not in (None, False):
+            if not isinstance(member, member_type):
+                raise TypeError("Each member in {0} should be of type int. Got {1}.".format(
+                    param_name, type(member)))
+            if member_have_list not in (None, False):
                 raise TypeError("The type of each member of the parameter {0} is inconsistent".format(
                     param_name))
-            membor_have_list = False
+            member_have_list = False
 
 
 def check_gnn_get_node_feature(method):
@@ -1300,7 +1309,7 @@ def check_gnn_get_node_feature(method):
             check_aligned_list(node_list, 'node_list', int)
         elif isinstance(node_list, np.ndarray):
             if not node_list.dtype == np.int32:
-                raise TypeError("Each membor in {0} should be of type int32. Got {1}.".format(
+                raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                     node_list, node_list.dtype))
         else:
             raise TypeError("Wrong input type for {0}, should be list or numpy.ndarray, got {1}".format(

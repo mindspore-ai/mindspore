@@ -56,7 +56,7 @@ def test_lars_multi_step_lr():
 
     lr = multisteplr(10, [2, 6])
     SGD = Momentum(net.trainable_params(), lr, 0.9)
-    optimizer = LARS(SGD, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
+    optimizer = LARS(SGD, epsilon=1e-08, coefficient=0.02, use_clip=True,
                      lars_filter=lambda x: 'bn' not in x.name)
 
     net_with_loss = WithLossCell(net, loss)
@@ -73,7 +73,7 @@ def test_lars_float_lr():
 
     lr = 0.1
     SGD = Momentum(net.trainable_params(), lr, 0.9)
-    optimizer = LARS(SGD, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
+    optimizer = LARS(SGD, epsilon=1e-08, coefficient=0.02,
                      lars_filter=lambda x: 'bn' not in x.name)
 
     net_with_loss = WithLossCell(net, loss)

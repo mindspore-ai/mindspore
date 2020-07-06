@@ -220,7 +220,9 @@ class DataWrapper(Cell):
 
     def __init__(self, network, dataset_types, dataset_shapes, queue_name):
         super(DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
-
+        # Also copy the flag in `network` construct
+        flags = getattr(network.__class__.construct, "_mindspore_flags", {})
+        self.add_flags(**flags)
         self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
         self.network = network
 

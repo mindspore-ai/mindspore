@@ -21,7 +21,6 @@
 #include "dataset/util/task_manager.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -190,9 +189,9 @@ TEST_F(MindDataTestBPlusTree, Test3) {
   EXPECT_TRUE(rc.IsOk());
   uint64_t min = ai.min_key();
   uint64_t max = ai.max_key();
-  EXPECT_EQ(min, 1);
-  EXPECT_EQ(max, 4);
-  auto r = ai.Search(3);
+  EXPECT_EQ(min, 0);
+  EXPECT_EQ(max, 3);
+  auto r = ai.Search(2);
   auto &it = r.first;
   EXPECT_EQ(it.value(), "b");
   MS_LOG(INFO) << "Dump all the values using [] operator.";

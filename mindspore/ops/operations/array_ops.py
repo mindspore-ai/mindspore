@@ -37,6 +37,40 @@ from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
 from ..._c_expression import typing
 
+
+class _ScatterOp(PrimitiveWithInfer):
+    """
+    Define Scatter operators
+    """
+    __mindspore_signature__ = (
+        ('x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
+        ('updates', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+    )
+    @staticmethod
+    def _check_scatter_shape(x_shape, indices_shape, updates_shape, prim_name):
+        if updates_shape and updates_shape != indices_shape + x_shape[1:]:
+            raise ValueError(f"For '{prim_name}', the shape of updates should be [] or "
+                             f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
+                             f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Init _ScatterOp"""
+        validator.check_value_type('use_locking', use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+
+    def infer_shape(self, x_shape, indices_shape, updates_shape):
+        _ScatterOp._check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
+        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        args = {"x": x_dtype, "updates": updates_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        return x_dtype
+
+
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):
     validator.check_value_type('keep_dims', keep_dims, [bool], prim_name)
     validator.check_value_type('axis', axis, [int, tuple], prim_name)
@@ -193,7 +227,7 @@ class Cast(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
 
     def check_elim(self, x, dtype):
-        if  isinstance(x, (Tensor, numbers.Number, Parameter)):
+        if isinstance(x, (Tensor, numbers.Number, Parameter)):
             if isinstance(x, Tensor) and x.dtype == dtype:
                 return (True, x)
             if isinstance(x, numbers.Number):
@@ -564,7 +598,7 @@ class SparseGatherV2(GatherV2):
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> out = P.GatherV2()(input_params, input_indices, axis)
+        >>> out = P.SparseGatherV2()(input_params, input_indices, axis)
     """
 
 class EmbeddingLookup(PrimitiveWithInfer):
@@ -997,11 +1031,10 @@ class InvertPermutation(PrimitiveWithInfer):
         values can not be negative.
 
     Inputs:
-        - **input_x** (Union(tuple[int], Tensor[int])) - The input tuple is constructed by multiple
+        - **input_x** (Union(tuple[int]) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
-          If the input is Tensor, it must be 1-d and the dtype is int. Only constant value is allowed.
-
+          Only constant value is allowed.
 
     Outputs:
         tuple[int]. the lenth is same as input.
@@ -1016,6 +1049,7 @@ class InvertPermutation(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init InvertPermutation"""
+        self.const_value = True
 
     def __infer__(self, x):
         x_shp = x['shape']
@@ -1024,17 +1058,15 @@ class InvertPermutation(PrimitiveWithInfer):
             raise ValueError(f'For \'{self.name}\' the input value must be const.')
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
         if mstype.issubclass_(x['dtype'], mstype.tensor):
-            validator.check('x dimension', len(x_shp), '', 1, Rel.EQ, self.name)
-            validator.check_tensor_type_same({'x dtype': x['dtype']}, mstype.int_type, self.name)
-            x_value = [int(i) for i in x_value.asnumpy()]
+            raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
 
         for i in range(1, len(z)):
-            if z[i-1] == z[i]:
+            if z[i - 1] == z[i]:
                 raise ValueError(f"For {self.name}, {z[i]} is duplicated in the input.")
         validator.check(f'value min', min(x_value), '', 0, Rel.EQ, self.name)
-        validator.check(f'value max', max(x_value), '', len(x_value)-1, Rel.EQ, self.name)
+        validator.check(f'value max', max(x_value), '', len(x_value) - 1, Rel.EQ, self.name)
 
         y = [None] * len(x_value)
         for i, value in enumerate(x_value):
@@ -1168,7 +1200,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         - output_x (Tensor) - The maximum value of input tensor, the shape same as index.
 
     Examples:
-        >>> input_x = Tensor(np.random.rand(5))
+        >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
         >>> index, output = P.ArgMaxWithValue()(input_x)
     """
 
@@ -1381,11 +1413,9 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
     """
     Computes the minimum along segments of a tensor.
 
-    If the given segment_ids is negative, the value will be ignored.
-
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value should be >= 0.
         - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
 
     Outputs:
@@ -1481,7 +1511,7 @@ class Concat(PrimitiveWithInfer):
 def _get_pack_shape(x_shape, x_type, axis, prim_name):
     """for pack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
-    validator.check_integer("len of input_x", len(x_shape), 1, Rel.GT, prim_name)
+    validator.check_integer("len of input_x", len(x_shape), 1, Rel.GE, prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
     rank_base = len(x_shape[0])
     N = len(x_shape)
@@ -1737,6 +1767,57 @@ class Select(PrimitiveWithInfer):
         return None
 
 
+def _compute_slicing_length(begin, end, stride, x_shape, i):
+    """Compute the length of the slicing."""
+    if i >= len(x_shape):
+        raise ValueError(f"For 'StridedSlice', When their is no new axis, the index length must be less or "
+                         f"equal than the dim of x.")
+    x_dim = x_shape[i]
+    if stride > 0:
+        # When slicing forward, convert begin and end to positive numbers.
+        if begin >= x_dim or end < -x_dim:
+            # When slicing forward, if begin >= x_dim or end < -x_dim, the length of the slicing is 0.
+            slicing_length = 0
+        else:
+            if -x_dim <= begin < 0:
+                begin += x_dim
+            if begin < -x_dim:
+                # When slicing forward, if begin < -x_dim, set begin = 0, which means start from the 0th element.
+                begin = 0
+            if -x_dim <= end < 0:
+                end += x_dim
+            if end > x_dim:
+                # When slicing forward, if end > x_dim, set end = x_dims, which means slice to the last element.
+                end = x_dim
+            if begin >= end:
+                # When slicing forward, if begin >= end, the length of the slicing is 0.
+                slicing_length = 0
+            else:
+                slicing_length = 1 + (end - 1 - begin) // stride
+    else:
+        # When slicing backward, convert begin and end to negative numbers.
+        if begin < -x_dim or end >= x_dim:
+            # When slicing backward, if begin < -x_dim or end >= x_dim, the length of the slicing is 0.
+            slicing_length = 0
+        else:
+            if 0 <= begin < x_dim:
+                begin += -x_dim
+            if begin >= x_dim:
+                # When slicing backward, if begin >= x_dim, set begin = -1, which means start from the last element.
+                begin = -1
+            if 0 < end < x_dim:
+                end += -x_dim
+            if end < -x_dim - 1:
+                # When slicing backward, if end < -x_dim - 1, set end = -x_dim - 1, which means
+                # slicing to the 0th element.
+                end = -x_dim - 1
+            if begin <= end:
+                # When slicing backward, if begin <= end, the length of the slicing is 0.
+                slicing_length = 0
+            else:
+                slicing_length = 1 + (end + 1 - begin) // stride
+    return slicing_length
+
 
 class StridedSlice(PrimitiveWithInfer):
     r"""
@@ -1800,13 +1881,15 @@ class StridedSlice(PrimitiveWithInfer):
                  ellipsis_mask=0,
                  new_axis_mask=0,
                  shrink_axis_mask=0):
-        """init StrideSlice"""
+        """Init StrideSlice"""
         self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
-        validator.check_value_type('begin_mask', begin_mask, [int], self.name)
-        validator.check_value_type('end_mask', end_mask, [int], self.name)
-        validator.check_value_type('ellipsis_mask', ellipsis_mask, [int], self.name)
-        validator.check_value_type('new_axis_mask', new_axis_mask, [int], self.name)
-        validator.check_value_type('shrink_axis_mask', shrink_axis_mask, [int], self.name)
+        validator.check_integer('begin_mask', begin_mask, 0, Rel.GE, self.name)
+        validator.check_integer('end_mask', end_mask, 0, Rel.GE, self.name)
+        validator.check_integer('ellipsis_mask', ellipsis_mask, 0, Rel.GE, self.name)
+        if len(tuple(filter(lambda x: x == '1', bin(ellipsis_mask)[-1:1:-1]))) > 1:
+            raise ValueError(f"For '{self.name}', only support one ellipsis in the index, but got {end_mask}.")
+        validator.check_integer('new_axis_mask', new_axis_mask, 0, Rel.GE, self.name)
+        validator.check_integer('shrink_axis_mask', shrink_axis_mask, 0, Rel.GE, self.name)
 
     def __infer__(self, x, begin, end, strides):
         begin_v, end_v, strides_v = begin['value'], end['value'], strides['value']
@@ -1814,58 +1897,103 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_value_type("end", end_v, [tuple], self.name)
         validator.check_value_type("strides", strides_v, [tuple], self.name)
 
-        x_shape = x['shape']
-        x_shp_len = len(x_shape)
-        if len(begin_v) != x_shp_len or len(end_v) != x_shp_len or len(strides_v) != x_shp_len:
-            raise ValueError(f"For \'{self.name}\' the length of begin index{begin_v}, end index{end_v} and "
-                             f"strides{strides_v} must be equal to the dims({x_shp_len}) of input.")
+        if tuple(filter(lambda x: not isinstance(x, int), begin_v + end_v + strides_v)):
+            raise ValueError(f"For {self.name}, both the begins, ends, and strides must be a tuple of int, "
+                             f"but got begins: {begin_v}, ends: {end_v}, strides: {strides_v}.")
 
-        ret_shape = []
-        append_dimensions = []
-        shrink_pos = bin(self.shrink_axis_mask)[::-1]
-        new_pos = bin(self.new_axis_mask)[::-1]
-        for i in range(x_shp_len):
-            # After the integer is converted to binary, it is a str and the first two chars are the flag char '0b'
-            if i < (len(new_pos) - 2) and new_pos[i] == '1':
-                ret_shape.append(1)
-                append_dimensions.append(x_shape[x_shp_len - 1 - len(append_dimensions)])
-                continue
-            if i < (len(shrink_pos) - 2) and shrink_pos[i] == '1':
-                validator.check_integer(f'begin[{i}]', begin_v[i], -x_shape[i], Rel.GE, self.name)
-                validator.check_integer(f'begin[{i}]', begin_v[i], x_shape[i], Rel.LT, self.name)
-                continue
+        if tuple(filter(lambda x: x == 0, strides_v)):
+            raise ValueError(f"For '{self.name}', the strides cannot contain 0, but got strides: {strides_v}.")
 
-            begin_idx = begin_v[i]
-            end_idx = end_v[i]
-            strides_idx = strides_v[i]
-            if self.begin_mask:
-                begin_idx = 0
-            if self.end_mask:
-                end_idx = x_shape[i]
-            validator.check_integer(f'begin[{i}]', begin_idx, x_shape[i], Rel.LE, self.name)
-            validator.check_integer(f'end[{i}]', end_idx, x_shape[i], Rel.LE, self.name)
-            validator.check_integer(f'strides[{i}]', strides_idx, 0, Rel.NE, self.name)
-            if strides_idx > 0:
-                # If sliced forward , end_idx >= begin_idx
-                validator.check(f'begin[{i}]', begin_idx, f'end[{i}]', end_idx, Rel.LE)
-                if begin_idx < 0 < end_idx:
-                    # Turn negative begin_idx into positive values
-                    begin_idx = x_shape[i] + begin_idx
-                num_elems = (end_idx - begin_idx + strides_idx - 1) // strides_idx
-            else:
-                # If sliced backwards, end_idx <= begin_idx
-                validator.check(f'begin[{i}]', begin_idx, f'end[{i}]', end_idx, Rel.GE)
-                if end_idx < 0 < begin_idx:
-                    # Turn negative end_idx into positive values
-                    end_idx = x_shape[i] + end_idx
-                num_elems = (end_idx - begin_idx + strides_idx + 1) // strides_idx
+        if len(end_v) != len(begin_v) or len(strides_v) != len(begin_v):
+            raise ValueError(f"For '{self.name}' the length of begin index: {begin_v}, end index: {end_v} and "
+                             f"strides: {strides_v} must be equal.")
 
-            ret_shape.append(num_elems)
-        if append_dimensions:
-            ret_shape += append_dimensions[::-1]
+        ret_shape = self._compute_slicing_shape(x['shape'], begin_v, end_v, strides_v)
+
+        value = None if all(ret_shape) else Tensor(np.array([]).reshape(ret_shape), x['dtype'].element_type())
         return {'shape': ret_shape,
                 'dtype': x['dtype'],
-                'value': None}
+                'value': value}
+
+    def _compute_slicing_shape(self, x_shape, begin_v, end_v, strides_v):
+        """Compute the shape of the slicing."""
+        x_rank = len(x_shape)
+        slice_len = len(begin_v)
+
+        # After the integer is converted to binary, it is a str and the first two chars are the flag char '0b'.
+        begin_pos = bin(self.begin_mask)[-1:1:-1]
+        end_pos = bin(self.end_mask)[-1:1:-1]
+        ellipsis_pos = bin(self.ellipsis_mask)[-1:1:-1]
+        new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
+        shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
+
+        ret_shape = []
+        i, j = 0, 0
+        has_ellipsis = False
+        while i < x_rank or j < slice_len:
+            if j < slice_len:
+                begin, end, stride = begin_v[j], end_v[j], strides_v[j]
+
+                if j < len(ellipsis_pos) and ellipsis_pos[j] == '1':
+                    # When there is ellipsis, the latter part of the ellipsis will be processed separately.
+                    has_ellipsis = True
+                    break
+                if j < len(begin_pos) and begin_pos[j] == '1':
+                    begin = -1 if strides_v[j] < 0 else 0
+                if j < len(end_pos) and end_pos[j] == '1':
+                    end = -(x_shape[i] + 1) if strides_v[j] < 0 else x_shape[i]
+                if j < len(new_axis_pos) and new_axis_pos[j] == '1':
+                    ret_shape.append(1)
+                    j += 1
+                    continue
+                if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
+                    if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
+                        raise ValueError(f"For {self.name}, when shrink axis, the stride cannot be negative number, "
+                                         f"and begin should be in [-{x_shape[i]}, {x_shape[i]}), "
+                                         f"but got stride: {stride}, begin: {begin}.")
+                    j += 1
+                    i += 1
+                    continue
+            else:
+                begin, end, stride = 0, x_shape[i], 1
+
+            slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
+            ret_shape.append(slicing_length)
+            i += 1
+            j += 1
+        if has_ellipsis:
+            # When there is ellipsis, handle the second half of the ellipsis split.
+            ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
+                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
+            ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
+            j += 1
+            i += ellipsis_occupied_dims
+
+            while i < x_rank or j < slice_len:
+                begin, end, stride = begin_v[j], end_v[j], strides_v[j]
+
+                if j < len(begin_pos) and begin_pos[j] == '1':
+                    begin = -1 if strides_v[j] < 0 else 0
+                if j < len(end_pos) and end_pos[j] == '1':
+                    end = -(x_shape[i] + 1) if strides_v[j] < 0 else x_shape[i]
+                if j < len(new_axis_pos) and new_axis_pos[j] == '1':
+                    ret_shape.append(1)
+                    j += 1
+                    continue
+                if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
+                    if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
+                        raise ValueError(f"For {self.name}, when shrink axis, the stride cannot be negative number, "
+                                         f"and begin should be in [-{x_shape[i]}, {x_shape[i]}), "
+                                         f"but got stride: {stride}, begin: {begin}.")
+                    j += 1
+                    i += 1
+                    continue
+
+                slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
+                ret_shape.append(slicing_length)
+                i += 1
+                j += 1
+        return ret_shape
 
 
 class Diag(PrimitiveWithInfer):
@@ -2146,6 +2274,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         >>> op = P.TensorScatterUpdate()
         >>> output = op(input_x, indices, update)
     """
+
     @prim_attr_register
     def __init__(self):
         """Init TensorScatterUpdate"""
@@ -2165,7 +2294,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         return x_dtype
 
 
-class ScatterUpdate(PrimitiveWithInfer):
+class ScatterUpdate(_ScatterOp):
     """
     Update tensor value by using input indices and value.
 
@@ -2177,8 +2306,8 @@ class ScatterUpdate(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
         - **indices** (Tensor) - The index of input tensor. With int32 data type.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape = indices.shape + input_x.shape[1:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape = indices.shape + input_x.shape[1:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2187,26 +2316,17 @@ class ScatterUpdate(PrimitiveWithInfer):
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
         >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> np_update = np.array([[[1.0, 2.2, 1.0], [2.0, 1.2, 1.0]], [[2.0, 2.2, 1.0], [3.0, 1.2, 1.0]]])
-        >>> update = Tensor(np_update, mindspore.float32)
+        >>> np_updates = np.array([[[1.0, 2.2, 1.0], [2.0, 1.2, 1.0]], [[2.0, 2.2, 1.0], [3.0, 1.2, 1.0]]])
+        >>> updates = Tensor(np_updates, mindspore.float32)
         >>> op = P.ScatterUpdate()
-        >>> output = op(input_x, indices, update)
+        >>> output = op(input_x, indices, updates)
     """
-    __mindspore_signature__ = (
-        ('x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
-    )
+
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Init ScatterUpdate"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
-        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
-
-    def infer_shape(self, x_shape, indices_shape, value_shape):
-        if indices_shape + x_shape[1:] != value_shape:
-            raise ValueError("For 'ScatterUpdate', input value are not match with input indices.")
-        return x_shape
+        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
         validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
@@ -2245,6 +2365,7 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
         ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
+
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Init ScatterNdUpdate"""
@@ -2264,14 +2385,8 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
-def _check_scatter_shape(x_shape, indices_shape, updates_shape, prim_name):
-    if updates_shape and updates_shape != indices_shape + x_shape[1:]:
-        raise ValueError(f"For '{prim_name}', the shape of updates should be [] or "
-                         f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
-                         f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
 
-
-class ScatterMax(PrimitiveWithInfer):
+class ScatterMax(_ScatterOp):
     """
     Update the value of the input tensor through the max operation.
 
@@ -2305,18 +2420,37 @@ class ScatterMax(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
         validator.check_value_type('use_locking', use_locking, (bool,), self.name)
 
-    def infer_shape(self, x_shape, indices_shape, updates_shape):
-        _check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
-        return x_shape
 
-    def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, (mstype.int32,), self.name)
-        args = {"x": x_dtype, "updates": updates_dtype}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
-        return x_dtype
+class ScatterMin(_ScatterOp):
+    """
+    Update the value of the input tensor through the min operation.
+
+    Using given values to update tensor value through the min operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do min operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="input_x")
+        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
+        >>> update = Tensor(np.ones([2, 2, 3]), mindspore.float32)
+        >>> scatter_min = P.ScatterMin()
+        >>> output = scatter_min(input_x, indices, update)
+        [[0.0, 1.0, 1.0], [0.0, 0.0, 0.0]]
+    """
 
 
-class ScatterAdd(PrimitiveWithInfer):
+class ScatterAdd(_ScatterOp):
     """
     Update the value of the input tensor through the add operation.
 
@@ -2344,20 +2478,92 @@ class ScatterAdd(PrimitiveWithInfer):
         [[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]]
     """
 
-    @prim_attr_register
-    def __init__(self, use_locking=False):
-        """Init ScatterAdd"""
-        validator.check_value_type('use_locking', use_locking, (bool,), self.name)
 
-    def infer_shape(self, x_shape, indices_shape, updates_shape):
-        _check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
-        return x_shape
+class ScatterSub(_ScatterOp):
+    """
+    Update the value of the input tensor through the sub operation.
 
-    def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, (mstype.int32,), self.name)
-        args = {'x': x_dtype, 'updates': updates_dtype}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
-        return x_dtype
+    Using given values to update tensor value through the sub operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do sub operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[0, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> scatter_sub = P.ScatterSub()
+        >>> output = scatter_sub(input_x, indices, updates)
+        [[-1.0, -1.0, -1.0], [-1.0, -1.0, -1.0]]
+    """
+
+
+class ScatterMul(_ScatterOp):
+    """
+    Update the value of the input tensor through the mul operation.
+
+    Using given values to update tensor value through the mul operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do mul operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the mul operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> updates = Tensor(np.ones([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> scatter_mul = P.ScatterMul()
+        >>> output = scatter_mul(input_x, indices, updates)
+        [[2.0, 2.0, 2.0], [4.0, 4.0, 4.0]]
+    """
+
+
+class ScatterDiv(_ScatterOp):
+    """
+    Update the value of the input tensor through the div operation.
+
+    Using given values to update tensor value through the div operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do div operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the div operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> updates = Tensor(np.ones([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> scatter_div = P.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
+        [[3.0, 3.0, 3.0], [1.0, 1.0, 1.0]]
+    """
 
 
 class SpaceToDepth(PrimitiveWithInfer):
@@ -2680,16 +2886,20 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         x_rank = len(x_shape)
+        validator.check_integer('x_shape rank', x_rank, 4, Rel.EQ, self.name)
         out_shape = copy.deepcopy(x_shape)
 
         block_shape_prod = 1
-        for i in range(x_rank - 2):
-            padded = out_shape[i + 2] + self.paddings[i][0] + \
+        offset = 2
+        if x_rank < 4:
+            offset = 1
+        for i in range(len(self.block_shape)):
+            padded = out_shape[i + offset] + self.paddings[i][0] + \
                      self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
                 raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
                                  f'block_shape[{i}] {self.block_shape[i]}')
-            out_shape[i + 2] = padded // self.block_shape[i]
+            out_shape[i + offset] = padded // self.block_shape[i]
             block_shape_prod = block_shape_prod * self.block_shape[i]
         out_shape[0] *= block_shape_prod
         return out_shape
@@ -2760,15 +2970,19 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         x_rank = len(x_shape)
+        validator.check_integer('x_shape rank', x_rank, 4, Rel.EQ, self.name)
         out_shape = copy.deepcopy(x_shape)
 
         block_shape_prod = 1
-        for i in range(x_rank - 2):
+        offset = 2
+        if x_rank < 4:
+            offset = 1
+        for i in range(len(self.block_shape)):
             block_shape_prod = block_shape_prod * self.block_shape[i]
-            x_block_prod = out_shape[i + 2] * self.block_shape[i]
+            x_block_prod = out_shape[i + offset] * self.block_shape[i]
             crops_sum = self.crops[i][0] + self.crops[i][1]
             validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, Rel.GT, self.name)
-            out_shape[i + 2] = x_block_prod - crops_sum
+            out_shape[i + offset] = x_block_prod - crops_sum
 
         if out_shape[0] % block_shape_prod != 0:
             raise ValueError(f'For \'{self.name}\' input_x dimension 0 {out_shape[0]}  should be divisible by '
@@ -2859,36 +3073,34 @@ class InplaceUpdate(PrimitiveWithInfer):
           [ 4.   5.]
           [ 6.   7.]]]
     """
+
     @prim_attr_register
     def __init__(self, indices):
         """Init InplaceUpdate"""
-        self.init_prim_io_names(inputs=['x', 'indices', 'v'], outputs=['y'])
+        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
+        self.indices = indices
         validator.check_value_type("indices", indices, [int, tuple], self.name)
         if isinstance(indices, int):
-            self.add_prim_attr('indices', (indices,))
+            self.indices = (indices,)
         for item in self.indices:
             validator.check_value_type("item of indices", item, [int], self.name)
 
     def infer_dtype(self, x_dtype, v_dtype):
+        args = {'x': x_dtype, 'v': v_dtype}
         valid_type = [mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensor_type_same(
-            {
-                "x": x_dtype,
-                "v": v_dtype
-            }, valid_type, self.name)
-
+        validator.check_tensor_type_same(args, valid_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, v_shape):
         validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
-
-        x_rank = len(x_shape)
-        for idx in range(x_rank)[1:]:
-            validator.check("x dim %d" % idx, x_shape[idx], 'v dim %d' % idx, v_shape[idx], Rel.EQ, self.name)
-
         validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
                         Rel.EQ, self.name)
-
+        for i in self.indices:
+            if i < 0 or i >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        x_rank = len(x_shape)
+        for idx in range(x_rank)[1:]:
+            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
         return x_shape
 
 
@@ -2939,3 +3151,28 @@ class ReverseSequence(PrimitiveWithInfer):
         validator.check_tensor_type_same({"x_dtype": x}, mstype.number_type + (mstype.bool_,), self.name)
         validator.check_tensor_type_same({"seq_lengths_dtype": seq_lengths}, [mstype.int32, mstype.int64], self.name)
         return x
+
+
+class TransShape(PrimitiveWithInfer):
+    """
+    Transform the shape of input tensor to target shape.
+
+    Inputs:
+        - **input_x** (Tensor) - A input tensor.
+        - **out_shape** (tuple[int]) - The shape of output data.
+
+    Outputs:
+        Tensor, a tensor whose data type is same as 'input_x', and the shape is same as the `out_shape`.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.__setattr_flag__ = True
+
+    def __infer__(self, x, shape):
+        shp = shape['value']
+        dtype = x['dtype']
+        validator.check_tensor_type_same({'x': dtype}, mstype.number_type + (mstype.bool_,), self.name)
+        self.add_prim_attr('out_shape', tuple(shp))
+        return {'shape': shp,
+                'dtype': dtype,
+                'value': None}

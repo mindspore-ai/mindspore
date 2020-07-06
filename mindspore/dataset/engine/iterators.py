@@ -172,13 +172,13 @@ class Iterator:
     # Convert python node into C node and add to C layer execution tree in postorder traversal.
     def __convert_node_postorder(self, node):
         op_type = self.__get_dataset_type(node)
-        c_node = self.depipeline.AddNodeToTree(op_type, node.get_args())
+        c_nodes = self.depipeline.AddNodeToTree(op_type, node.get_args())
 
         for py_child in node.children:
             c_child = self.__convert_node_postorder(py_child)
-            self.depipeline.AddChildToParentNode(c_child, c_node)
+            self.depipeline.AddChildToParentNode(c_child, c_nodes["bottom"])
 
-        return c_node
+        return c_nodes["top"]
 
     def __batch_node(self, dataset, level):
         """Recursively get batch node in the dataset tree."""

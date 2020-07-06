@@ -31,7 +31,7 @@ class BackendCSE : public CSE {
  public:
   BackendCSE() = default;
   ~BackendCSE() override = default;
-  bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const override;
+  bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect = true) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

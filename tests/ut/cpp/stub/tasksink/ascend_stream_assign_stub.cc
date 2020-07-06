@@ -26,7 +26,7 @@ void AscendLabelAssign::AssignLabel(NotNull<std::shared_ptr<session::KernelGraph
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> graph) { return 1; }
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<std::shared_ptr<session::KernelGraph>> graph) { return 1; }
 
-void AscendStreamAssign::AssignStream(const KernelGraphPtr &graph) { return; }
+void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) { return; }
 
 void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) { return; }
 

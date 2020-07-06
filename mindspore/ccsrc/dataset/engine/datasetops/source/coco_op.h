@@ -306,6 +306,10 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   template <typename T>
   Status SearchNodeInJson(nlohmann::json input_tree, std::string node_name, T *output_node);
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   bool decode_;
   int64_t row_cnt_;
   int64_t buf_cnt_;

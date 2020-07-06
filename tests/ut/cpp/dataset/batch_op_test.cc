@@ -21,7 +21,6 @@
 #include "common/utils.h"
 #include "gtest/gtest.h"
 #include "dataset/core/global_context.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 #include "securec.h"
 #include "dataset/util/status.h"

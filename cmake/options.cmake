@@ -17,6 +17,8 @@ option(ENABLE_DUMP_E2E "Enable dump e2e file, default on" OFF)
 option(ENABLE_DUMP_IR "Enable dump funciton graph ir, default on" ON)
 option(ENABLE_MPI "enable mpi" OFF)
 option(ENABLE_AKG "enable akg" OFF)
+option(ENABLE_DEBUGGER "enable debugger" OFF)
+option(ENABLE_IBVERBS "enable IBVERBS for parameter server" OFF)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (WIN32)
@@ -111,4 +113,8 @@ endif()
 
 if(ENABLE_DUMP_E2E)
     add_compile_definitions(ENABLE_DUMP_E2E)
+endif()
+
+if(ENABLE_DEBUGGER)
+    add_compile_definitions(ENABLE_DEBUGGER)
 endif()

@@ -58,6 +58,20 @@ class Evaluator : public Base {
     return args_spec_list;
   }
 
+  virtual EvalResultPtr AbstractEval(const AbstractBasePtrList &args_spec_list) {
+    auto is_abstract = std::any_of(args_spec_list.begin(), args_spec_list.end(), [](auto &arg) {
+      if (arg->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+        return true;
+      }
+      return false;
+    });
+    if (is_abstract) {
+      MS_LOG(DEBUG) << "Eval " << identifier_ << " return abstract result";
+      return std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), std::make_shared<AttrValueMap>());
+    }
+    return nullptr;
+  }
+
   std::string ToString() const override { return identifier_; }
 
   virtual AnfNodePtr bound_node() const { return bound_node_.lock(); }

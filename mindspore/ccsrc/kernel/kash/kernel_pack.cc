@@ -50,6 +50,8 @@ bool CheckHash(const std::string &json_file, const std::string &bin_file, const 
 }  // namespace
 
 const std::string KernelPack::Serialize() const {
+  MS_EXCEPTION_IF_NULL(json_);
+  MS_EXCEPTION_IF_NULL(kernel_);
   std::string buffer;
   (void)buffer.append((const char *)json_, json_->len + sizeof(json_->len));
   (void)buffer.append((const char *)kernel_, kernel_->len + sizeof(kernel_->len));

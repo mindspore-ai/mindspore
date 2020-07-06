@@ -161,6 +161,9 @@ class MsContext {
   void set_enable_graph_kernel(bool enable_graph_kernel) { enable_graph_kernel_ = enable_graph_kernel; }
   bool enable_graph_kernel() const { return enable_graph_kernel_; }
 
+  bool enable_sparse_flag() const { return enable_sparse_flag_; }
+  void set_enable_sparse_flag(bool enable_sparse_flag) { enable_sparse_flag_ = enable_sparse_flag; }
+
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
   void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
@@ -204,6 +207,7 @@ class MsContext {
   float max_device_memory_;
   std::string print_file_path_;
   bool enable_graph_kernel_;
+  bool enable_sparse_flag_;
 };
 
 }  // namespace mindspore

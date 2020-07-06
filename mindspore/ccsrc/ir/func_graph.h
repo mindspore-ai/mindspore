@@ -158,6 +158,7 @@ class FuncGraph : public FuncGraphBase {
   const std::vector<AnfNodePtr> &parameters() const { return parameters_; }
   virtual ParameterPtr add_parameter();
   void add_parameter(const ParameterPtr &p);
+  void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
   // add a weight parameter with specific name
   ParameterPtr AddWeightParameter(const std::string &name);

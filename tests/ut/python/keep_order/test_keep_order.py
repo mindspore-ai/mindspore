@@ -133,8 +133,8 @@ def test_keep_order_io_effect_exception_return_dtype():
             self.dtype = P.DType()
             self.sub = P.Sub()
             self.neg = P.Neg()
-            self.add_flags(has_effect=True)
 
+        @C.add_flags(has_effect=True)
         def construct(self, x):
             init = self.alloc_status()
             self.clear_status(init)

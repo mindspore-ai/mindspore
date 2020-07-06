@@ -73,7 +73,7 @@ class SummaryCollector(Callback):
         summary_dir (str): The collected data will be persisted to this directory.
             If the directory does not exist, it will be created automatically.
         collect_freq (int): Set the frequency of data collection, it should be greater then zero,
-            and the unit is `step`. Default: 10.
+            and the unit is `step`. Default: 10. The first step will be recorded at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
             It is not recommended to collect data too frequently, which can affect performance.
         collect_specified_data (Union[None, dict]): Perform custom operations on the collected data. Default: None.
@@ -83,6 +83,7 @@ class SummaryCollector(Callback):
             The data that supports control is shown below.
 
             - collect_metric: Whether to collect training metrics, currently only loss is collected.
+              The first output will be treated as loss, and it will be averaged.
               Optional: True/False. Default: True.
             - collect_graph: Whether to collect computational graph, currently only
               training computational graph is collected. Optional: True/False. Default: True.
@@ -142,9 +143,6 @@ class SummaryCollector(Callback):
         'histogram_regular': None
     }
 
-    # _OPTIMIZER_FAILED means find optimizer failed, so we will not collect data about optimizer.
-    _OPTIMIZER_FAILED = 'Failed'
-
     def __init__(self, summary_dir, collect_freq=10, collect_specified_data=None,
                  keep_default_action=True, custom_lineage_data=None):
         super(SummaryCollector, self).__init__()
@@ -158,17 +156,22 @@ class SummaryCollector(Callback):
         self._check_action(keep_default_action)
 
         self._collect_specified_data = self._process_specified_data(collect_specified_data, keep_default_action)
-        logger.info(f"For `collect_specified_data` the value after processing is: {self._collect_specified_data}.")
+        msg = f"For 'collect_specified_data' the value after processing is: {self._collect_specified_data}."
+        logger.info(msg)
 
         self._check_custom_lineage_data(custom_lineage_data)
         self._custom_lineage_data = custom_lineage_data
 
-        self._optimizer = None
+        self._temp_optimizer = None
         self._has_saved_train_network = False
         self._has_saved_custom_data = False
         self._is_parse_loss_success = True
+        self._first_step = True
+        self._dataset_sink_mode = True
 
     def __enter__(self):
+        self._first_step = True
+        self._dataset_sink_mode = True
         self._record = SummaryRecord(log_dir=self._summary_dir)
         return self
 
@@ -228,7 +231,7 @@ class SummaryCollector(Callback):
         if specified_data is None:
             if action:
                 return self._DEFAULT_SPECIFIED_DATA
-            return None
+            return dict()
 
         check_value_type('collect_specified_data', specified_data, [dict, type(None)])
 
@@ -237,7 +240,8 @@ class SummaryCollector(Callback):
 
         unexpected_params = set(specified_data) - set(self._DEFAULT_SPECIFIED_DATA)
         if unexpected_params:
-            raise ValueError(f'For `collect_specified_data` the keys {unexpected_params} are unsupported.')
+            raise ValueError(f'For `collect_specified_data` the keys {unexpected_params} are unsupported, '
+                             f'expect the follow keys: {list(self._DEFAULT_SPECIFIED_DATA.keys())}')
 
         if 'histogram_regular' in specified_data:
             check_value_type('histogram_regular', specified_data.get('histogram_regular'), (str, type(None)))
@@ -248,7 +252,8 @@ class SummaryCollector(Callback):
                 check_value_type(item, specified_data.get(item), bool)
 
         if action:
-            result = dict(self._DEFAULT_SPECIFIED_DATA).update(specified_data)
+            result = dict(self._DEFAULT_SPECIFIED_DATA)
+            result.update(specified_data)
         else:
             result = specified_data
         return result
@@ -280,9 +285,13 @@ class SummaryCollector(Callback):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
+        if self._first_step:
+            # Notice: This way of determining whether dataset sink mode is True does not work in the eval scenario
+            self._dataset_sink_mode = bool(cb_params.cur_step_num == cb_params.batch_num)
 
         if cb_params.mode == ModeEnum.TRAIN.value:
-            if cb_params.cur_step_num % self._collect_freq:
+
+            if not self._is_collect_this_step(cb_params):
                 return
 
             if not self._has_saved_train_network:
@@ -292,6 +301,7 @@ class SummaryCollector(Callback):
             self._collect_metric(cb_params)
             self._collect_histogram(cb_params)
 
+        self._first_step = False
         self._record.record(cb_params.cur_step_num)
 
     def end(self, run_context):
@@ -301,6 +311,8 @@ class SummaryCollector(Callback):
         else:
             self._collect_eval_lineage(cb_params)
 
+        # This is a workaround to avoid record '_summary_tensor_cache'.
+        self._record.set_mode('eval')
         # There's nothing special about setting step to 0 here, just to satisfy the interface call
         self._record.record(step=0)
 
@@ -316,6 +328,18 @@ class SummaryCollector(Callback):
                     continue
                 raise ValueError(f"There are more than one {self.__class__.__name__} instance in callback list,"
                                  f"but expected only one {self.__class__.__name__} instance.")
+
+    def _is_collect_this_step(self, cb_params):
+        """Decide whether to collect data for the current step."""
+        # Make sure the first step data is recorded
+        if not self._first_step:
+            if self._dataset_sink_mode:
+                if cb_params.cur_epoch_num % self._collect_freq:
+                    return False
+            else:
+                if cb_params.cur_step_num % self._collect_freq:
+                    return False
+        return True
 
     @staticmethod
     def _package_custom_lineage_data(custom_lineage_data):
@@ -350,7 +374,7 @@ class SummaryCollector(Callback):
         input_data = getattr(cb_params, 'train_dataset_element', None)
         if input_data is None:
             self._collect_specified_data['collect_input_data'] = False
-            logger.info("There is not a `train_dataset_element` in cb_params.")
+            logger.info("The 'train_dataset_element' in cb_params is None, maybe there is dataset sink mode.")
             return
 
         if isinstance(input_data, (list, tuple)):
@@ -358,6 +382,7 @@ class SummaryCollector(Callback):
         try:
             self._record.add_value(PluginEnum.IMAGE.value, 'input_data/auto', input_data)
         except ValueError:
+            logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
             self._collect_specified_data['collect_input_data'] = False
             return
 
@@ -395,7 +420,12 @@ class SummaryCollector(Callback):
         loss = self._get_loss(cb_params)
         if loss is None:
             return
-        self._record.add_value(PluginEnum.SCALAR.value, 'loss/auto', loss)
+
+        try:
+            self._record.add_value(PluginEnum.SCALAR.value, 'loss/auto', loss)
+        except ValueError:
+            logger.warning("The output of network is not a scalar, so will not collect loss in SummaryCollector.")
+            self._collect_specified_data['collect_metric'] = False
 
     def _get_loss(self, cb_params):
         """
@@ -413,19 +443,16 @@ class SummaryCollector(Callback):
 
         output = cb_params.net_outputs
         if output is None:
-            logger.warning("Can not find any output by this network.")
+            logger.warning("Can not find any output by this network, so will not collect loss in SummaryCollector.")
             self._is_parse_loss_success = False
             return None
 
-        if isinstance(output, (int, float)):
+        if isinstance(output, (int, float, Tensor)):
             loss = output
-        elif isinstance(output, (list, tuple)):
+        elif isinstance(output, (list, tuple)) and output:
             # If the output is a list, since the default network returns loss first,
             # we assume that the first one is loss.
             loss = output[0]
-        elif isinstance(output, Tensor) and (not output.shape or output.shape == [1]):
-            loss_numpy = output.asnumpy()
-            loss = float(np.atleast_1d(loss_numpy)[0])
         else:
             logger.warning("The output type could not be identified, so no loss was recorded in SummaryCollector.")
             self._is_parse_loss_success = False
@@ -434,6 +461,8 @@ class SummaryCollector(Callback):
         if not isinstance(loss, Tensor):
             loss = Tensor(loss)
 
+        precision = 4
+        loss = Tensor(round(np.mean(loss.asnumpy()), precision))
         return loss
 
     def _get_optimizer(self, cb_params):
@@ -446,21 +475,25 @@ class SummaryCollector(Callback):
         Returns:
             Union[Optimizer, None], if parse optimizer success, will return a optimizer, else return None.
         """
-        if self._optimizer == self._OPTIMIZER_FAILED:
+        # 'optimizer_failed' means find optimizer failed, so we will not collect data about optimizer.
+        optimizer_failed = 'Failed'
+        if self._temp_optimizer == optimizer_failed:
             return None
 
-        if self._optimizer is not None:
-            return self._optimizer
+        if self._temp_optimizer is not None:
+            return self._temp_optimizer
 
         optimizer = cb_params.optimizer
         if optimizer is None:
-            network = cb_params.train_network if cb_params.mode == 'train' else cb_params.eval_work
+            network = cb_params.train_network if cb_params.mode == 'train' else cb_params.eval_network
             optimizer = self._parse_optimizer_by_network(network)
 
         if optimizer is None or not isinstance(optimizer, Optimizer):
-            logger.warning("Can not find optimizer in network, or the optimizer does not inherit Mindpore's optimizer, "
-                           "so we will not collect data about optimizer in SummaryCollector.")
-            optimizer = self._OPTIMIZER_FAILED
+            logger.warning("Can not find optimizer in network, or the optimizer does not inherit MindSpore's "
+                           "optimizer, so we will not collect data about optimizer in SummaryCollector.")
+            optimizer = None
+
+        self._temp_optimizer = optimizer if optimizer is not None else optimizer_failed
 
         return optimizer
 
@@ -469,6 +502,8 @@ class SummaryCollector(Callback):
         """Parse optimizer from network, if parse success will return a optimizer, else return None."""
         optimizer = None
         for _, cell in network.cells_and_names():
+            if isinstance(cell, Optimizer):
+                return cell
             try:
                 optimizer = getattr(cell, 'optimizer')
             except AttributeError:
@@ -489,11 +524,11 @@ class SummaryCollector(Callback):
         if 'histogram_regular' not in self._collect_specified_data:
             return
 
-        self._optimizer = self._get_optimizer(cb_params)
-        if self._optimizer is None:
+        optimizer = self._get_optimizer(cb_params)
+        if optimizer is None:
             return
 
-        parameters = self._optimizer.parameters
+        parameters = optimizer.parameters
         regular = self._collect_specified_data.get('histogram_regular')
         if regular is not None:
             for parameter in parameters:
@@ -538,7 +573,7 @@ class SummaryCollector(Callback):
             train_lineage[LineageMetadata.loss] = None
 
         optimizer = self._get_optimizer(cb_params)
-        learning_rate = self._get_learning_rate(optimizer)
+        learning_rate = self._get_learning_rate(optimizer) if optimizer is not None else None
 
         if learning_rate is not None:
             train_lineage[LineageMetadata.learning_rate] = list(np.atleast_1d(learning_rate.asnumpy()))[0]
@@ -554,7 +589,6 @@ class SummaryCollector(Callback):
         train_lineage[LineageMetadata.step_num] = cb_params.cur_step_num
         train_lineage[LineageMetadata.parallel_mode] = cb_params.parallel_mode
         train_lineage[LineageMetadata.device_num] = cb_params.device_number
-        train_lineage[LineageMetadata.batch_size] = cb_params.batch_num
 
         ckpt_file_path = self._get_ckpt_file_path(cb_params)
         train_lineage[LineageMetadata.model_path] = json.dumps(dict(ckpt=ckpt_file_path))
@@ -640,6 +674,8 @@ class SummaryCollector(Callback):
         batch_size = dataset.get_batch_size()
         dataset_size = int(batch_num * batch_size)
 
+        lineage_dict[LineageMetadata.batch_size] = batch_size
+
         if cb_params.mode == ModeEnum.TRAIN.value:
             lineage_dict[LineageMetadata.train_dataset_path] = dataset_dir
             lineage_dict[LineageMetadata.train_dataset_size] = dataset_size
@@ -677,7 +713,7 @@ class SummaryCollector(Callback):
             return output_dataset.dataset_dir
         if isinstance(output_dataset, dataset_files_set):
             return output_dataset.dataset_files[0]
-        return self._get_dataset_path(output_dataset.input[0])
+        return self._get_dataset_path(output_dataset.children[0])
 
     @staticmethod
     def _get_ckpt_file_path(cb_params):
@@ -734,7 +770,7 @@ class SummaryCollector(Callback):
             cb_params (_InternalCallbackParam): Callback parameters.
 
         Returns:
-            Union[Loss_fn, None], a Cell object, if parse failed, will return None.
+            Union[Cell, None], a Cell object, if parse failed, will return None.
         """
         loss_fn = cb_params.loss_fn
         if loss_fn is not None:

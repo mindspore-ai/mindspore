@@ -173,7 +173,8 @@ class Dense(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        activation (str): activate function applied to the output of the fully connected layer, eg. 'relu'.
+            Default: None.
 
     Raises:
         ValueError: If weight_init or bias_init shape is incorrect.
@@ -284,7 +285,6 @@ class ClipByNorm(Cell):
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.select_ = P.Select()
         self.greater_ = P.Greater()
-        self.axis = ()
         self.cast = P.Cast()
         self.zero = Tensor(np.array([0.0]).astype(np.float32))
         self.sqrt = P.Sqrt()
@@ -299,7 +299,7 @@ class ClipByNorm(Cell):
     def construct(self, x, clip_norm):
         """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
-        l2sum = self.cast(self.reduce_sum(mul_x, self.axis), mstype.float32)
+        l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
         cond = self.greater_(l2sum, self.zero)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
 

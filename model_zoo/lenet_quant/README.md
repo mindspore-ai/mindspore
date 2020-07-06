@@ -33,7 +33,7 @@ Then you will get the following display
 ```bash
 >>> Found existing installation: mindspore-ascend
 >>> Uninstalling mindspore-ascend:
->>>  Successfully uninstalled mindspore-ascend.
+>>>     Successfully uninstalled mindspore-ascend.
 ```
 
 ### Prepare Dataset
@@ -128,9 +128,9 @@ After all the following we will get the loss value of each step as following:
 ```bash
 >>> Epoch: [  1/ 10] step: [  1/ 900], loss: [2.3040/2.5234], time: [1.300234]
 >>> ...
->>> Epoch: [ 10/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
 ```
 
 Also, you can just run this command instead.
@@ -186,7 +186,7 @@ model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
 ### train quantization aware model
 
-Also, you can just run this command instread.
+Also, you can just run this command instead.
 
 ```python
 python train_quant.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
@@ -197,9 +197,9 @@ After all the following we will get the loss value of each step as following:
 ```bash
 >>> Epoch: [  1/ 10] step: [  1/ 900], loss: [2.3040/2.5234], time: [1.300234]
 >>> ...
->>> Epoch: [ 10/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
->>> Epoch: [ 10/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
+>>> Epoch: [ 9/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
 ```
 
 ### Evaluate quantization aware model
@@ -215,7 +215,7 @@ param_dict = load_checkpoint(args.ckpt_path)
 load_param_into_net(network, param_dict)
 
 # convert funsion netwrok to quantization aware network
-network = quant.convert_quant_network(network 
+network = quant.convert_quant_network(network)
 ```
 
 Also, you can just run this command insread.
@@ -235,7 +235,7 @@ The top1 accuracy would display on shell.
 Here are some optional parameters:
 
 ```bash
---device_target {Ascend,GPU,CPU}
+--device_target {Ascend,GPU}
     device where the code will be implemented (default: Ascend)
 --data_path DATA_PATH
     path where the dataset is saved

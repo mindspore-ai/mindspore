@@ -55,9 +55,7 @@ const char kNameSimpleMeanGrad[] = "SimpleMeanGrad";
 const char kNameAllReduce[] = "AllReduce";
 const char kNameBroadcast[] = "Broadcast";
 const char kNameAllgather[] = "AllGather";
-const char kNameHostAllgather[] = "HostAllGather";
 const char kNameReduceScatter[] = "ReduceScatter";
-const char kNameHostReduceScatter[] = "HostReduceScatter";
 const char kNameReduceSum[] = "ReduceSum";
 const char kNameIsFinite[] = "isFinite";
 const char kNameReciprocal[] = "Reciprocal";
@@ -136,6 +134,7 @@ const char kNameAssignSub[] = "AssignSub";
 const char kNameNPUAllocFloatStatus[] = "NPUAllocFloatStatus";
 const char kNameNPUClearFloatStatus[] = "NPUClearFloatStatus";
 const char kNameReshape[] = "Reshape";
+const char kNameTransShape[] = "TransShape";
 const char kNameRealDiv[] = "RealDiv";
 const char kNameTile[] = "Tile";
 const char kNameCos[] = "Cos";
@@ -244,6 +243,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchNorm), ADPT_DESC(BatchNorm)},
     {string(kNameBatchNormGrad), ADPT_DESC(BatchNormGrad)},
     {string(kNameReshape), ADPT_DESC(Reshape)},
+    {string(kNameTransShape), ADPT_DESC(TransShape)},
     {string(kNameFlattenGrad), ADPT_DESC(Reshape)},
     {prim::kPrimFlatten->name(), ADPT_DESC(Flatten)},
     {string(kNameAddN), ADPT_DESC(AddN)},
@@ -371,6 +371,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimImageSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary)},
+    {prim::kPrimDebug->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorAdd->name(),
      std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})),
                                      std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})))},
@@ -1647,7 +1648,7 @@ bool DfGraphConvertor::GetControlDependList(const CNodePtr &node,
     dst_ops_list->insert(dst_ops_list->end(), converted_list.begin(), converted_list.end());
   }
   if (src_ops_list->empty() || dst_ops_list->empty()) {
-    MS_LOG(WARNING) << "Control depend node's src or dest node is not a apply node, ignore it";
+    MS_LOG(DEBUG) << "Control depend node's src or dest node is not a CNode, ignore it";
     error_ = SUCCESS;
   }
   return true;
@@ -1691,6 +1692,8 @@ void DfGraphConvertor::ConvertControlDependNode(const CNodePtr node) {
                          });
   } else if (src_ops_list->size() == 1 && dst_ops_list->size() == 1) {
     control_edges.push_back({(*src_ops_list)[0], (*dst_ops_list)[0]});
+  } else if (src_ops_list->empty() || dst_ops_list->empty()) {
+    MS_LOG(DEBUG) << "Depend list of src or dst is empty, ignore it";
   } else {
     MS_LOG(ERROR) << "Convert control depend node to operator failed, depend src:" << src_ops_list->size()
                   << " -> dst:" << dst_ops_list->size();

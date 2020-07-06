@@ -156,11 +156,11 @@ void ConvertObjectToTensors(const py::dict &dict, TensorOrderMap *const tensors)
     if (py::isinstance<py::float_>(item.second.attr("default_input"))) {
       // convert float to tensor with shape([1])
       tensor = std::make_shared<Tensor>(kNumberTypeFloat32, std::vector<int>({1}));
-      *(static_cast<float *>(tensor->data_c(true))) = py::cast<float>(item.second.attr("default_input"));
+      *(static_cast<float *>(tensor->data_c())) = py::cast<float>(item.second.attr("default_input"));
     } else if (py::isinstance<py::int_>(item.second.attr("default_input"))) {
       // convert int to tensor with shape([1])
       tensor = std::make_shared<Tensor>(kNumberTypeInt32, std::vector<int>({1}));
-      *(static_cast<float *>(tensor->data_c(true))) = py::cast<float>(item.second.attr("default_input"));
+      *(static_cast<float *>(tensor->data_c())) = py::cast<float>(item.second.attr("default_input"));
     } else if (py::hasattr(item.second.attr("default_input"), PYTHON_TENSOR_FLAG)) {
       // cast tensor
       tensor = py::cast<std::shared_ptr<Tensor>>(item.second.attr("default_input"));
@@ -330,7 +330,7 @@ py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::t
       MS_LOG(EXCEPTION) << "The shape of the tensor derived is not Shape, is " << shape->ToString();
     }
     auto shape_me = shape->cast<abstract::ShapePtr>()->shape();
-    auto shape_ge = py::cast<Tensor>(data[*count]).shape();
+    auto shape_ge = py::cast<Tensor &>(data[*count]).shape();
     if (shape_ge != shape_me) {
       MS_LOG(EXCEPTION) << "The shape of the " << *count << "th tensor returned: " << shape_ge
                         << " is not the same as the shape of the tensor derived: " << shape_me;

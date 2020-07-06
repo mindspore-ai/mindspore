@@ -24,7 +24,7 @@ from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm
 
 __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
-    "to_str", "to_bytes", "JiebaMode", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
+    "to_str", "to_bytes", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
     "PythonTokenizer"
 ]
 
@@ -33,4 +33,4 @@ if platform.system().lower() != 'windows':
         RegexReplace, RegexTokenizer, BasicTokenizer, BertTokenizer, PythonTokenizer
 
     __all__.append(["UnicodeScriptTokenizer", "WhitespaceTokenizer", "CaseFold", "NormalizeUTF8",
-                    "RegexReplace", "RegexTokenizer", "BasicTokenizer", "BertTokenizer", "NormalizeForm"])
+                    "RegexReplace", "RegexTokenizer", "BasicTokenizer", "BertTokenizer"])

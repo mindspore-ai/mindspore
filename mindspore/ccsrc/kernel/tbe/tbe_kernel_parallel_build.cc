@@ -77,7 +77,7 @@ bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   return true;
 }
 
-bool TbeOpParallelBuild(std::vector<AnfNodePtr> anf_nodes) {
+bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
   set<std::string> processed_kernel;

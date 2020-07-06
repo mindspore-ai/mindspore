@@ -424,7 +424,6 @@ AnfNodePtr DFunctor::MapToK(const AnfNodePtr &primal) {
     }
     auto k_prim = g_k_prims.KPrimitive(value_node, resources_);
     if (k_prim != nullptr) {
-      k_prim = BasicClone(k_prim);
       return NewValueNode(k_prim);
     }
     // When failed to find k_prim, try k_meta.

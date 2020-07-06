@@ -33,6 +33,7 @@ class OptimizeIRPassLib {
   ~OptimizeIRPassLib() = default;
 
   SubstitutionPtr arithmetic_simplify_;
+  SubstitutionPtr arithmetic_simplify2_;
   SubstitutionPtr special_op_eliminate_;
   SubstitutionPtr zero_like_fill_zero_;
   SubstitutionPtr adjust_all_reduce_mul_add_;
@@ -103,6 +104,9 @@ class OptimizeIRPassLib {
 
   // Fusion
   SubstitutionPtr mark_interface_fusion_;
+
+  // IndexedSlices Eliminate
+  SubstitutionPtr indexed_slices_eliminate_;
 };
 
 // the collection of irpass for resolve action

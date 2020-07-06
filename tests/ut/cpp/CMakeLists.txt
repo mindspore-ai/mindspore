@@ -104,6 +104,12 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/predict/converter/attr_utils/*.cc"
         "../../../mindspore/ccsrc/predict/converter/lite_model/*.cc"
         "../../../mindspore/ccsrc/predict/converter/lite_model/operations/*.cc"
+        "../../../mindspore/ccsrc/kernel/cpu/cpu_kernel.cc"
+        "../../../mindspore/ccsrc/kernel/cpu/cpu_kernel_factory.cc"
+        "../../../mindspore/ccsrc/kernel/cpu/sparse_apply_adam_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/kernel/cpu/sparse_apply_ftrl_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/kernel/cpu/sparse_apply_lazy_adam_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/kernel/cpu/sparse_apply_proximal_adagrad_cpu_kernel.cc"
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/dump_proto.cc")
@@ -113,6 +119,12 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/anf_ir.pb.cc
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/node_strategy.pb.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/load_onnx/anf_model_parser.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/utils/load_onnx/anf_converter.cc")
+
+# remove files for debugger
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/debugger/debugger.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/debugger/grpc_client.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/debug_services.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/debugger/proto_exporter.cc")
 
 file(GLOB_RECURSE UT_SUTB_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "stub/aicpu/*.cc"

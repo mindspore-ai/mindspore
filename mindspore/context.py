@@ -25,7 +25,6 @@ from mindspore._c_expression import MSContext
 from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
-from mindspore.parallel.mpi._mpi_config import _set_mpi_config, _get_mpi_config
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context']
@@ -357,6 +356,14 @@ class _Context:
         self._context_handle.set_check_bprop_flag(check_bprop_flag)
 
     @property
+    def enable_sparse(self):
+        return self._context_handle.get_enable_sparse_flag()
+
+    @enable_sparse.setter
+    def enable_sparse(self, enable_sparse_flag):
+        self._context_handle.set_enable_sparse_flag(enable_sparse_flag)
+
+    @property
     def max_device_memory(self):
         return self._context_handle.get_max_device_memory()
 
@@ -511,7 +518,8 @@ def reset_auto_parallel_context():
                  save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
-                 check_bprop=bool, max_device_memory=str, print_file_path=str)
+                 enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
+                 enable_sparse=bool)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -539,6 +547,8 @@ def set_context(**kwargs):
         save_ms_model_path (str): Path to save converted lite model. Default: "."
         save_graphs_path (str): Path to save graphs. Default: "."
         enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
+        enable_graph_kernel (bool): Whether to enable composition of basic primitives. These primitives would be
+            compiled into a fused kernel automatically. Default: False.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
@@ -564,6 +574,9 @@ def set_context(**kwargs):
         check_bprop (bool): Whether to check bprop. Default: False.
         max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
             The format is "xxGB". Default: "1024GB".
+        print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
+            a file by default, and turn off printing to the screen.
+        enable_sparse (bool): Whether to enable sparse feature. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -584,6 +597,7 @@ def set_context(**kwargs):
         >>>                     save_graphs_path="/mindspore")
         >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
         >>> context.set_context(max_device_memory="3.5GB")
+        >>> context.set_context(print_file_path="print.pb")
     """
     for key, value in kwargs.items():
         if not hasattr(_context(), key):
@@ -608,40 +622,3 @@ def get_context(attr_key):
         raise ValueError(
             "Get context keyword %s is not recognized!" % attr_key)
     return getattr(_context(), attr_key)
-
-@args_type_check(enable_mpi=bool)
-def set_mpi_config(**kwargs):
-    """
-    Sets mpi config for running environment.
-
-    mpi config should be configured before running your program. If there is no configuration,
-    mpi moudle will be disabled by default.
-
-    Note:
-        Attribute name is required for setting attributes.
-
-    Args:
-        enable_mpi (bool): Whether to enable mpi. Default: False.
-
-    Raises:
-        ValueError: If input key is not an attribute in mpi config.
-
-    Examples:
-        >>> mpiconfig.set_mpi_config(enable_mpi=True)
-    """
-    _set_mpi_config(**kwargs)
-
-def get_mpi_config(attr_key):
-    """
-    Gets mpi config attribute value according to the input key.
-
-    Args:
-        attr_key (str): The key of the attribute.
-
-    Returns:
-        Object, The value of given attribute key.
-
-    Raises:
-        ValueError: If input key is not an attribute in context.
-    """
-    return _get_mpi_config(attr_key)

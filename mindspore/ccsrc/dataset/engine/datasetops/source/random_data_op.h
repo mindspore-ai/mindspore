@@ -42,7 +42,7 @@ class RandomDataOp : public ParallelOp {
   // Some constants to provide limits to random generation.
   static constexpr int32_t kMaxNumColumns = 4;
   static constexpr int32_t kMaxRank = 4;
-  static constexpr int32_t kMaxDimValue = 2048;
+  static constexpr int32_t kMaxDimValue = 32;
   static constexpr int32_t kMaxTotalRows = 1024;
 
   // A nested builder class to aid in the construction of a RandomDataOp
@@ -117,6 +117,14 @@ class RandomDataOp : public ParallelOp {
       return *this;
     }
 
+    // Setter method
+    // @param std::shared_ptr<Sampler> sampler
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+      builder_sampler_ = std::move(sampler);
+      return *this;
+    }
+
    private:
     /**
      * Check if the required parameters are set by the builder.
@@ -125,6 +133,7 @@ class RandomDataOp : public ParallelOp {
     Status SanityCheck() const;
 
     std::unique_ptr<DataSchema> builder_data_schema_;
+    std::shared_ptr<Sampler> builder_sampler_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int64_t builder_rows_per_buffer_;
@@ -139,10 +148,11 @@ class RandomDataOp : public ParallelOp {
    * @param rows_per_buffer - The number of rows in each DataBuffer
    * @param data_schema - A user-provided schema
    * @param total_rows - The total number of rows in the dataset
+   * @param sampler - allow a sampler.  Only valid if a cache exists in ascendent tree nodes
    * @return Builder - The modified builder by reference
    */
   RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
-               std::unique_ptr<DataSchema> data_schema);
+               std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
 
   /**
    * Destructor
@@ -192,6 +202,12 @@ class RandomDataOp : public ParallelOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "RandomDataOp"; }
+
+  // During tree prepare phase, operators may have specific post-operations to perform depending on
+  // their role.
+  // @notes Derived versions of this function should always call it's superclass version first
+  // before providing their own implementations.
+  Status PrepareNodePostAction() override;
 
  private:
   /**
@@ -249,6 +265,10 @@ class RandomDataOp : public ParallelOp {
     std::unique_lock<std::mutex> lock(buffer_id_mutex_);
     return ++buffer_id_;
   }
+
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
 
   int32_t buffer_id_;
   int64_t rows_per_buffer_;

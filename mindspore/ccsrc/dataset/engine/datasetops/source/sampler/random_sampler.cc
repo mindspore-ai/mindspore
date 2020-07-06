@@ -113,13 +113,12 @@ Status RandomSampler::ResetSampler() {
 }
 
 void RandomSampler::Print(std::ostream &out, bool show_all) const {
-  out << "(sampler): RandomSampler\n";
-
+  out << "\nSampler: RandomSampler";
   if (show_all) {
-    out << "num_samples_: " << num_samples_ << '\n';
-    out << "next_id_: " << next_id_ << '\n';
+    // Call the super class for displaying any common detailed info
+    Sampler::Print(out, show_all);
+    // Then add our own info if any
   }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

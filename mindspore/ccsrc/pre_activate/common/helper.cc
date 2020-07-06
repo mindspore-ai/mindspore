@@ -348,7 +348,7 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
   MS_EXCEPTION_IF_NULL(tensor);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
   tensor->set_device_info(device_info);
-  auto data_ptr = tensor->data_c(true);
+  auto data_ptr = tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
   auto elem_num = values.size() * data_length;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), values.data(), elem_num);

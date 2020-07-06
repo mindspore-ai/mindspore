@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_QUEUE_DEPTH_H
-#define MINDSPORE_QUEUE_DEPTH_H
+#ifndef DATASET_CONNECTOR_SIZE_H
+#define DATASET_CONNECTOR_SIZE_H
 
 #include <string>
 #include <vector>
@@ -50,7 +50,7 @@ class ConnectorSize : public Sampling {
   // This function samples the connector size of every nodes within the ExecutionTree
   Status Sample() override;
 
-  std::string Name() const override { return kDeviceQueueTracingName; };
+  std::string Name() const override { return kConnectorSizeSamplingName; }
 
   // Save sampling data to file
   // @return Status - The error code return
@@ -65,6 +65,8 @@ class ConnectorSize : public Sampling {
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer
   ConnectorSizeSampleTable sample_table_;  // Dataset structure to store all samples of connector size sampling
 };
+
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_QUEUE_DEPTH_H
+
+#endif  // DATASET_CONNECTOR_SIZE_H

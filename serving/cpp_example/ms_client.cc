@@ -214,6 +214,7 @@ PredictRequest ReadBertInput() {
 class MSClient {
  public:
   explicit MSClient(std::shared_ptr<Channel> channel) : stub_(MSService::NewStub(channel)) {}
+  ~MSClient() = default;
 
   std::string Predict(const std::string &type) {
     // Data we are sending to the server.
@@ -310,7 +311,6 @@ int main(int argc, char **argv) {
         type = "add";
       }
     }
-
   } else {
     target_str = "localhost:5500";
     type = "add";

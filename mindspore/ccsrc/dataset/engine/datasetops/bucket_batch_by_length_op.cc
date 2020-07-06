@@ -115,7 +115,6 @@ Status BucketBatchByLengthOp::operator()() {
   TensorRow current_row;
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
-  RETURN_IF_NOT_OK(AssignColMapFromChild());
   while (!child_iterator_->eof_handled()) {
     while (!current_row.empty()) {
       int32_t element_length;

@@ -1,0 +1,32 @@
+{ 
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 1
+    },
+    "label" : {
+      "type": "int32",
+      "rank": 1
+    },
+    "id" : {
+      "type": "int64",
+      "rank": 0
+    },
+    "_priority" : {
+      "type": "float64",
+      "rank": 0
+    },
+    "_embedding" : {
+      "type": "uint8",
+      "rank": 1
+    },
+    "_segmented_image" : {
+      "type": "uint8",
+      "rank": 1
+    },
+    "_processed_image" : {
+      "type": "uint8",
+      "rank": 1
+    }
+  }
+}

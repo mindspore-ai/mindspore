@@ -64,7 +64,6 @@ class PeriodicFunction {
   VersionController::VersionControllerStrategy version_control_strategy_;
   std::vector<MindSporeModelPtr> valid_models_;
 };
-
 }  // namespace serving
 }  // namespace mindspore
 

@@ -69,7 +69,11 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_task_sink_ = true;
   ir_fusion_flag_ = true;
   enable_hccl_ = false;
+#ifdef ENABLE_DEBUGGER
+  enable_mem_reuse_ = false;
+#else
   enable_mem_reuse_ = true;
+#endif
   enable_gpu_summary_ = true;
   precompile_only_ = false;
   auto_mixed_precision_flag_ = false;
@@ -85,6 +89,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   max_device_memory_ = kDefaultMaxDeviceMemory;
   print_file_path_ = "";
   enable_graph_kernel_ = false;
+  enable_sparse_flag_ = false;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -300,19 +305,6 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
     (*ge_options)["ge.exec.profilingOptions"] = profiling_options_;
   }
 
-  // only not supported in ge
-  auto tbe_plugin_path = common::GetEnv("ME_TBE_PLUGIN_PATH");
-  if (!tbe_plugin_path.empty()) {
-    char real_path[PATH_MAX] = {0};
-    if (nullptr == realpath(tbe_plugin_path.c_str(), real_path)) {
-      MS_LOG(ERROR) << "Ms tbe plugin Path error, " << tbe_plugin_path;
-    } else {
-      tbe_plugin_path = real_path;
-      (*ge_options)["ge.TBE_plugin_path"] = tbe_plugin_path;
-    }
-  } else {
-    MS_LOG(ERROR) << "Set TBE plugin path failed!";
-  }
   (*ge_options)["rank_table_file"] = "";
   auto env_ddk_version = common::GetEnv("DDK_VERSION");
   if (!env_ddk_version.empty()) {
@@ -356,18 +348,6 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
     MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
-  // all libs are set in same env variable "OPTION_EXEC_EXTERN_PLUGIN_PATH", such as FE, HCCL, AICPU, etc
-  auto load_path = common::GetEnv("OPTION_EXEC_EXTERN_PLUGIN_PATH");
-  if (!load_path.empty()) {
-    char real_path[PATH_MAX] = {0};
-    if (realpath(load_path.c_str(), real_path)) {
-      load_path = real_path;
-      (*ge_options)["ge.soLoadPath"] = load_path;
-    }
-  } else {
-    MS_LOG(ERROR) << "Set lib load path failed!";
-  }
-
   auto proto_lib_path = common::GetEnv("OPTION_PROTO_LIB_PATH");
   if (!proto_lib_path.empty()) {
     char real_path[PATH_MAX] = {0};
@@ -376,7 +356,7 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
       (*ge_options)["ge.opsProtoLibPath"] = proto_lib_path;
     }
   } else {
-    MS_LOG(ERROR) << "Set proto lib path failed!";
+    MS_LOG(WARNING) << "Set proto lib path failed!";
   }
 
   // Enable auto mixed precision according to the context options

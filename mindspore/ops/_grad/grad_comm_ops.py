@@ -18,9 +18,9 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.comm_ops import (AllGather, HostAllGather, AllReduce, _AlltoAll, Broadcast,
+from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
                                    _GetTensorSlice, _MirrorOperator, ReduceOp,
-                                   ReduceScatter, HostReduceScatter, _VirtualDiv)
+                                   ReduceScatter, _HostReduceScatter, _VirtualDiv)
 from .grad_base import bprop_getters
 
 
@@ -93,10 +93,10 @@ def get_bprop_all_gather(self):
     return bprop
 
 
-@bprop_getters.register(HostAllGather)
+@bprop_getters.register(_HostAllGather)
 def get_bprop_host_all_gather(self):
-    """Generate bprop for HostAllGather"""
-    host_all_gather_grad = HostReduceScatter(ReduceOp.SUM, self.group)
+    """Generate bprop for _HostAllGather"""
+    host_all_gather_grad = _HostReduceScatter(ReduceOp.SUM, self.group)
     if self.instance_name:
         instance_name = "grad" + self.instance_name
         host_all_gather_grad.set_prim_instance_name(instance_name)
@@ -126,10 +126,10 @@ def get_bprop_reduce_scatter(self):
     return bprop
 
 
-@bprop_getters.register(HostReduceScatter)
+@bprop_getters.register(_HostReduceScatter)
 def get_bprop_host_reduce_scatter(self):
-    """Generate bprop for HostReduceScatter"""
-    host_reduce_scatter_grad = HostAllGather(self.group)
+    """Generate bprop for _HostReduceScatter"""
+    host_reduce_scatter_grad = _HostAllGather(self.group)
     if self.instance_name:
         instance_name = "grad" + self.instance_name
         host_reduce_scatter_grad.set_prim_instance_name(instance_name)

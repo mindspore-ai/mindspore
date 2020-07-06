@@ -49,7 +49,7 @@ TEST_F(CommonUtilTest, DeduplicateIndexedSlicesTest1) {
   std::vector<int> unique_indices(3);
   std::vector<float> summed_grad(6);
   SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 0});
-  DeduplicateIndexedSlices(SparseGradient({grad.data(), indices.data(), 6}), &unique_grad, 6, 2);
+  ReduceSparseGradient(SparseGradient({grad.data(), indices.data(), 6}), &unique_grad, 6, 2);
   EXPECT_EQ(unique_grad.indices_size_, 3);
   EXPECT_EQ(unique_indices, std::vector<int>({0, 1, 3}));
   /* 10 13
@@ -83,7 +83,7 @@ TEST_F(CommonUtilTest, DeduplicateIndexedSlicesTest2) {
   std::vector<int> unique_indices(2);
   std::vector<float> summed_grad(4);
   SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 0});
-  DeduplicateIndexedSlices(SparseGradient({grad.data(), indices.data(), 6}), &unique_grad, 6, 2);
+  ReduceSparseGradient(SparseGradient({grad.data(), indices.data(), 6}), &unique_grad, 6, 2);
   EXPECT_EQ(unique_grad.indices_size_, 2);
   EXPECT_EQ(unique_indices, std::vector<int>({0, 1}));
   /* 10 13

@@ -36,6 +36,7 @@ using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTuple;
+using mindspore::abstract::AbstractUndetermined;
 
 static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
   if (t == nullptr) {
@@ -78,7 +79,7 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cons);
 
   auto dt = data->abstract();
-  if (dt == nullptr) {
+  if (dt == nullptr || dt->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     return nullptr;
   }
 

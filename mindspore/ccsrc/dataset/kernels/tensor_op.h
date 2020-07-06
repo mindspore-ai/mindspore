@@ -45,14 +45,18 @@
 
 #define BOUNDING_BOX_CHECK(input)                                                           \
   do {                                                                                      \
+    if (input.size() != 2) {                                                                \
+      return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
+                    "Requires Image and Bounding Boxes, likely missed bounding boxes.");    \
+    }                                                                                       \
     if (input[1]->shape().Size() < 2) {                                                     \
       return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
-                    "Bounding boxes shape should have at least two dims");                  \
+                    "Bounding boxes shape should have at least two dimensions.");           \
     }                                                                                       \
     uint32_t num_of_features = input[1]->shape()[1];                                        \
     if (num_of_features < 4) {                                                              \
       return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,               \
-                    "Bounding boxes should be have at least 4 features");                   \
+                    "Bounding boxes should be have at least 4 features.");                  \
     }                                                                                       \
     uint32_t num_of_boxes = input[1]->shape()[0];                                           \
     uint32_t img_h = input[0]->shape()[0];                                                  \

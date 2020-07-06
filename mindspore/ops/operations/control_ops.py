@@ -30,6 +30,8 @@ class ControlDepend(Primitive):
     tells the engine that the destination operations should depend on the source operation which means the source
     operations should be executed before the destination.
 
+    Note:
+        This operation does not work in `PYNATIVE_MODE`.
     Args:
         depend_mode (int): Use 0 for normal depend, 1 for depend on operations that used the parameter. Default: 0.
 
@@ -47,8 +49,6 @@ class ControlDepend(Primitive):
         Bool. This operation has no actual data output, it will be used to setup the order of relative operations.
 
     Examples:
-        >>> # In the following example, the data calculation uses original global_step. After the calculation the global
-        >>> # step should be increased, so the add operation should depend on the data calculation operation.
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()

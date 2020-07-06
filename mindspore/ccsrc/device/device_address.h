@@ -63,6 +63,7 @@ class DeviceAddress {
   size_t GetSize() const { return size_; }
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
+  void set_host_shape(const std::vector<int> &shape) { host_shape_ = shape; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
@@ -77,6 +78,7 @@ class DeviceAddress {
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
   bool from_mem_pool_{false};
+  std::vector<int> host_shape_{};
   friend class KernelRuntime;
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;

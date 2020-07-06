@@ -20,11 +20,13 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
 from mindspore import log as logger
-from util import diff_mse, visualize_image
+from util import diff_mse, visualize_image, save_and_check_md5, \
+    config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+GENERATE_GOLDEN = False
 
 def test_random_erasing_op(plot=False):
     """
@@ -69,5 +71,32 @@ def test_random_erasing_op(plot=False):
             visualize_image(image_1, image_2, mse)
 
 
+def test_random_erasing_md5():
+    """
+    Test RandomErasing with md5 check
+    """
+    logger.info("Test RandomErasing with md5 check")
+    original_seed = config_get_set_seed(5)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms_1 = [
+        vision.Decode(),
+        vision.ToTensor(),
+        vision.RandomErasing(value='random')
+    ]
+    transform_1 = vision.ComposeOp(transforms_1)
+    data = data.map(input_columns=["image"], operations=transform_1())
+    # Compare with expected md5 from images
+    filename = "random_erasing_01_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers((original_num_parallel_workers))
+
+
 if __name__ == "__main__":
     test_random_erasing_op(plot=True)
+    test_random_erasing_md5()

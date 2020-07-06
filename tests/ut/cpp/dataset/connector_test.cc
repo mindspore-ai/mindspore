@@ -140,7 +140,7 @@ Status MindDataTestConnector::Run_test_0() {
   auto my_conn = std::make_shared<Connector<uint32_t>>(1,  // num of producers
                                                       1,  // num of consumers
                                                       10);  // capacity of each queue
-  DS_ASSERT(my_conn != nullptr);
+  MS_ASSERT(my_conn != nullptr);
 
   rc = my_conn->Register(tg_.get());
   RETURN_IF_NOT_OK(rc);
@@ -277,7 +277,7 @@ Status MindDataTestConnector::FirstWorkerPush(
                                       int start_in,
                                       int offset)  {
   TaskManager::FindMe()->Post();
-  DS_ASSERT(my_conn != nullptr);
+  MS_ASSERT(my_conn != nullptr);
   Status rc;
   for (int i = start_in; i < input_.size(); i += offset) {
     rc = my_conn->Push(tid, input_[i]);
@@ -294,7 +294,7 @@ Status MindDataTestConnector::MidWorkerJob(
                                    int tid,
                                    std::shared_ptr<Connector<uint32_t> > from_conn,
                                    std::shared_ptr<Connector<uint32_t> > to_conn) {
-  DS_ASSERT((from_conn != nullptr) && (to_conn != nullptr));
+  MS_ASSERT((from_conn != nullptr) && (to_conn != nullptr));
   Status rc;
   TaskManager::FindMe()->Post();
   while (1) {

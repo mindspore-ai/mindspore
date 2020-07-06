@@ -17,6 +17,6 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ARGMAXWITHVALUE_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ARGMAXWITHVALUE_H_
 template <typename T, typename S>
-void CalArgmaxWithValue(size_t size, const T* input, const int bound_, const int outerSize_, const int innerSize_,
-                        S* index, T* output, cudaStream_t cuda_stream);
+void CalArgmaxWithValue(const T *input, const int bound_, const int outerSize_, const int innerSize_, S *index,
+                        T *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ARGMAXWITHVALUE_H_

@@ -17,6 +17,8 @@ import os
 import pickle
 import collections
 import argparse
+import urllib.request
+import tarfile
 import numpy as np
 from mindspore.mindrecord import FileWriter
 
@@ -257,10 +259,15 @@ if __name__ == '__main__':
     download_data_path = data_path + "origin_data/"
     mkdir_path(download_data_path)
 
-    os.system(
-        "wget -P {} -c https://s3-eu-west-1.amazonaws.com/kaggle-display-advertising-challenge-dataset/dac.tar.gz --no-check-certificate".format(
-            download_data_path))
-    os.system("tar -zxvf {}dac.tar.gz".format(download_data_path))
+    url = "https://s3-eu-west-1.amazonaws.com/kaggle-display-advertising-challenge-dataset/dac.tar.gz"
+    file_name = download_data_path + '/' + url.split('/')[-1]
+    urllib.request.urlretrieve(url, filename=file_name)
+
+    tar = tarfile.open(file_name)
+    names = tar.getnames()
+    for name in names:
+        tar.extract(name, path=download_data_path)
+    tar.close()
 
     criteo_stats = CriteoStatsDict()
     data_file_path = data_path + "origin_data/train.txt"

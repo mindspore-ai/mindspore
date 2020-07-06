@@ -310,6 +310,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   void KeepRoots(const std::vector<FuncGraphPtr> &roots = {});
   void RemoveRoots();
   void SetParameters(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &parameters);
+  void AddParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter);
   void MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users = false);
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
@@ -400,6 +401,7 @@ class FuncGraphTransaction {
 
   // set parameters of a func graph
   void SetParameters(FuncGraphPtr fg, const std::vector<AnfNodePtr> &params);
+  void AddParameter(FuncGraphPtr fg, const AnfNodePtr &param);
 
   // replace old_node with new_node
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
@@ -427,6 +429,18 @@ struct ArgsOfSetParams {
   }
 };
 
+// args for add param
+struct ArgsOfAddParam {
+  FuncGraphPtr func_graph;
+  AnfNodePtr param;
+  bool operator==(const ArgsOfAddParam &other) const { return &other == this; }
+
+  friend std::ostream &operator<<(std::ostream &os, const ArgsOfAddParam &) {
+    os << "[ArgsOfAddParam]";
+    return os;
+  }
+};
+
 // args for set edge
 struct ArgsOfSetEdge {
   CNodePtr root_node;
@@ -441,7 +455,7 @@ struct ArgsOfSetEdge {
 };
 
 struct Change {
-  enum OpName { kTxSetParams, kTxSetEdge };
+  enum OpName { kTxSetParams, kTxSetEdge, kTxAddParam };
   OpName op;
   Any args;
   Change(OpName name, const Any &para) : op(name), args(para) {}

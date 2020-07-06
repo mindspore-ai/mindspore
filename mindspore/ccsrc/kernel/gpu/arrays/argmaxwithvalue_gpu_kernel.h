@@ -38,7 +38,7 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
     S *index = GetDeviceAddress<S>(outputs, 0);
-    CalArgmaxWithValue(input_size_ / sizeof(T), input, bound_, outerSize_, innerSize_, index, output,
+    CalArgmaxWithValue(input, bound_, outerSize_, innerSize_, index, output,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }

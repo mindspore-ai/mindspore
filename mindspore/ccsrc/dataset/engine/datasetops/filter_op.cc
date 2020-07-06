@@ -126,9 +126,6 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
       continue;
     }
 
-    // Now that the first fetch is in, use the helper function to assign the column name map to this op.
-    RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
-
     RETURN_IF_NOT_OK(CheckColumns(in_buffer.get(), &in_columns_));
 
     // if the databuffer was all filtered, it is marked as kFilterEmpty.
@@ -264,7 +261,7 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 // Visitor accept method for NodePass
 Status FilterOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<FilterOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<FilterOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

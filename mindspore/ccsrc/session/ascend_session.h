@@ -76,17 +76,17 @@ class AscendSession : public SessionBasic {
   void HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void AssignLabel(NotNull<KernelGraphPtr> kernel_graph) const;
+  void AssignStream(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
-  void RunOpMemoryClear(KernelGraph *kernel_graph) const;
+  void RunOpMemoryClear(const KernelGraph *kernel_graph) const;
   void GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void LoadTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void ExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void ExportChildGraphs(const GraphId graph_id);
+  void LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
   void RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -99,7 +99,8 @@ class AscendSession : public SessionBasic {
   void SetFinalGraphOutput(const ValuePtr &value);
   void SetFinalGraphOutput(const VectorRef &vec_output);
 
-  void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims);
+  void SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<PrimitivePtr> &cut_prims,
+                  const NotNull<std::set<KernelGraphPtr> *> memo);
   // split graphs with recurse from root graph
   void SplitGraphs(NotNull<KernelGraphPtr> root_graph);
   void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);
@@ -127,8 +128,6 @@ class AscendSession : public SessionBasic {
   void InsertDependToGraph(GraphId graph_id, const AnfNodePtr &attch_node);
   // insert depend to graph, used to attch control nodes to graph
   void InsertControlDependToGraph(GraphId graph_id, const AnfNodePtr &first_node, const AnfNodePtr &second_node);
-  // Get graph by graph id ,if not exist return null ptr
-  KernelGraphPtr GetGraph(GraphId graph_id);
   // set child graph parameter if front arg is a anf
   void SetChildGraphParameter(const AnfNodePtr &front_anf, GraphId to_graph_id, size_t input_idx);
   // set child graph parameter if front arg is a tensor

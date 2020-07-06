@@ -141,6 +141,10 @@ class ZipOp : public PipelineOp {
   //         1, a, T
   Status getNextTensorRow(TensorRow *const new_zip_row);
 
+  // Computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t children_num_;
   int32_t rows_per_buffer_;
   int32_t buffer_id_;

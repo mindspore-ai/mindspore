@@ -154,7 +154,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_print_file_path", &mindspore::MsContext::set_print_file_path, "Set path to print.")
     .def("set_enable_graph_kernel", &mindspore::MsContext::set_enable_graph_kernel,
          "Set the GraphKernel switch to on or off.")
-    .def("get_enable_graph_kernel", &mindspore::MsContext::enable_graph_kernel, "Get the value of GraphKernel switch.");
+    .def("get_enable_graph_kernel", &mindspore::MsContext::enable_graph_kernel, "Get the value of GraphKernel switch.")
+    .def("get_enable_sparse_flag", &mindspore::MsContext::enable_sparse_flag, "Get whether to enable sparse.")
+    .def("set_enable_sparse_flag", &mindspore::MsContext::set_enable_sparse_flag, "Set whether to enable sparse.");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")
@@ -205,6 +207,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
     .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
     .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
+    .def("set_enable_parallel_optimizer", &ParallelContext::set_enable_parallel_optimizer,
+         "Set enable/disable parallel optimizer.")
+    .def("get_enable_parallel_optimizer", &ParallelContext::enable_parallel_optimizer,
+         "Get enable/disable parallel optimizer.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")

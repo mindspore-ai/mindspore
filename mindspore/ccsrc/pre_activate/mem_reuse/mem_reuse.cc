@@ -103,6 +103,7 @@ bool MemReuseUtil::InitDynamicWorkspaceKernelRef() {
 bool MemReuseUtil::InitDynamicKernelRef(const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   graph_ = graph;
+  is_all_nop_node_ = opt::IsAllNopNode(graph);
   if (!InitDynamicOutputKernelRef()) {
     MS_LOG(INFO) << "InitDynamicOutputKernelRef fail";
     return false;
@@ -229,7 +230,14 @@ KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t
   }
   auto input_node = kernel->input(input_idx + 1);
   // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-  auto kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+  session::KernelWithIndex kernel_input;
+  if (is_all_nop_node_) {
+    // The graph does not remove the nop node.
+    kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+  } else {
+    // The graph removes the nop node.
+    kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+  }
   if (IsPrimitive(kernel_input.first, prim::kPrimMakeTuple)) {
     MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << input_idx << " is MakeTuple";
   }
@@ -272,7 +280,14 @@ void MemReuseUtil::SetKernelDefInputs() {
         // set the inputs of this kernel_def
         auto input_node = AnfAlgo::GetInputNode(kernel, i);
         // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-        auto input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+        session::KernelWithIndex input;
+        if (is_all_nop_node_) {
+          // The graph does not remove the nop node.
+          input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+        } else {
+          // The graph removes the nop node.
+          input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+        }
         if (IsPrimitive(input.first, prim::kPrimMakeTuple)) {
           MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
         }
@@ -333,11 +348,10 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
-  auto is_all_nop_node = opt::IsAllNopNode(graph_);
   auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
     session::KernelWithIndex kernel_input;
-    if (is_all_nop_node) {
+    if (is_all_nop_node_) {
       // The graph does not remove the nop node.
       kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, false);
     } else {

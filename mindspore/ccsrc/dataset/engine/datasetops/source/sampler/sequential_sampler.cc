@@ -89,7 +89,14 @@ Status SequentialSampler::ResetSampler() {
   return Status::OK();
 }
 
-void SequentialSampler::Print(std::ostream &out, bool show_all) const { out << "(sampler): SequentialSampler\n"; }
-
+void SequentialSampler::Print(std::ostream &out, bool show_all) const {
+  out << "\nSampler: SequentialSampler";
+  if (show_all) {
+    // Call the super class for displaying any common detailed info
+    Sampler::Print(out, show_all);
+    // Then add our own info
+    out << "\nStart index: " << start_index_;
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

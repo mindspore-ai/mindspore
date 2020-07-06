@@ -36,17 +36,16 @@ bool RemovePrefix(std::string *str, const std::string &prefix) {
 
 bool Option::ParseInt32(std::string *arg) {
   if (RemovePrefix(arg, "--") && RemovePrefix(arg, name_) && RemovePrefix(arg, "=")) {
-    char extra;
     int32_t parsed_value;
-    if (sscanf(arg->data(), "%d%c", &parsed_value, &extra) != 1) {
-      std::cout << "Parse " << name_ << "Error for option " << *arg << std::endl;
+    try {
+      parsed_value = std::stoi(arg->data());
+    } catch (std::invalid_argument) {
+      std::cout << "Parse " << name_ << " Error for option " << *arg << std::endl;
       return false;
-    } else {
-      *int32_default_ = parsed_value;
     }
+    *int32_default_ = parsed_value;
     return true;
   }
-
   return false;
 }
 
@@ -76,17 +75,16 @@ bool Option::ParseString(std::string *arg) {
 
 bool Option::ParseFloat(std::string *arg) {
   if (RemovePrefix(arg, "--") && RemovePrefix(arg, name_) && RemovePrefix(arg, "=")) {
-    char extra;
     float parsed_value;
-    if (sscanf(arg->data(), "%f%c", &parsed_value, &extra) != 1) {
-      std::cout << "Parse " << name_ << "Error for option " << *arg << std::endl;
+    try {
+      parsed_value = std::stof(arg->data());
+    } catch (std::invalid_argument) {
+      std::cout << "Parse " << name_ << " Error for option " << *arg << std::endl;
       return false;
-    } else {
-      *float_default_ = parsed_value;
     }
+    *float_default_ = parsed_value;
     return true;
   }
-
   return false;
 }
 
@@ -159,10 +157,11 @@ Options::Options() : args_(nullptr) { CreateOptions(); }
 void Options::CreateOptions() {
   args_ = std::make_shared<Arguments>();
   std::vector<Option> options = {
-    Option("port", &args_->grpc_port, "Port to listen on for gRPC API, default is 5500"),
-    Option("model_name", &args_->model_name, "model name "),
-    Option("model_path", &args_->model_path, "the path of the model files"),
-    Option("device_id", &args_->device_id, "the device id, default is 0"),
+    Option("port", &args_->grpc_port,
+           "[Optional] Port to listen on for gRPC API, default is 5500, range from 1 to 65535"),
+    Option("model_name", &args_->model_name, "[Required] model name "),
+    Option("model_path", &args_->model_path, "[Required] the path of the model files"),
+    Option("device_id", &args_->device_id, "[Optional] the device id, default is 0, range from 0 to 7"),
   };
   options_ = options;
 }
@@ -174,6 +173,14 @@ bool Options::CheckOptions() {
   }
   if (args_->device_type != "Ascend") {
     std::cout << "device_type only support Ascend right now" << std::endl;
+    return false;
+  }
+  if (args_->device_id > 7) {
+    std::cout << "the device_id should be in [0~7]" << std::endl;
+    return false;
+  }
+  if (args_->grpc_port < 1 || args_->grpc_port > 65535) {
+    std::cout << "the port should be in [1~65535]" << std::endl;
     return false;
   }
   return true;
@@ -238,6 +245,5 @@ void Options::Usage() {
               << option.usage_ << std::endl;
   }
 }
-
 }  // namespace serving
 }  // namespace mindspore

@@ -67,6 +67,7 @@ class Type : public Value {
   virtual bool equal(const TypePtr other) const { return *this == *other; }
 
   virtual TypeId object_type() const { return kTypeUnknown; }
+  virtual TypeId parent_type() const { return kTypeUnknown; }
   virtual TypeId number_type() const { return kTypeUnknown; }
   virtual TypePtr DeepCopy() const = 0;
   virtual TypePtr Clone() const { return DeepCopy(); }
@@ -97,13 +98,16 @@ using TypePtrList = std::vector<TypePtr>;
 //
 class Object : public Type {
  public:
-  Object() : Type(kMetaTypeObject), object_type_(kMetaTypeObject) {}
+  Object() : Type(kMetaTypeObject), object_type_(kMetaTypeObject), parent_type_(kMetaTypeObject) {}
   explicit Object(const TypeId object_type, bool is_generic = true)
-      : Type(kMetaTypeObject, is_generic), object_type_(object_type) {}
+      : Type(kMetaTypeObject, is_generic), object_type_(object_type), parent_type_(kMetaTypeObject) {}
+  explicit Object(const TypeId object_type, const TypeId parent_type, bool is_generic = true)
+      : Type(kMetaTypeObject, is_generic), object_type_(object_type), parent_type_(parent_type) {}
   ~Object() override = default;
   MS_DECLARE_PARENT(Object, Type)
 
   TypeId object_type() const override { return object_type_; }
+  TypeId parent_type() const override { return parent_type_; }
   TypeId type_id() const override { return object_type_; }
   TypeId generic_type_id() const override { return kMetaTypeObject; }
   bool equal(const TypePtr other) const override;
@@ -114,6 +118,7 @@ class Object : public Type {
 
  private:
   const TypeId object_type_;
+  const TypeId parent_type_;
 };
 
 std::ostream &operator<<(std::ostream &os, const TypePtrList &types);

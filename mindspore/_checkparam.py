@@ -593,6 +593,17 @@ def check_bool(input_param):
     raise TypeError("Input type must be bool!")
 
 
+def check_string(input_param, valid_values):
+    """String type judgment."""
+    if isinstance(input_param, str) and input_param in valid_values:
+        return input_param
+    if len(valid_values) == 1:
+        raise ValueError(f'Input should be str and must be {valid_values[0]},'
+                         f' but got {input_param}.')
+    raise ValueError(f'Input should be str and must be one of {valid_values},'
+                     f' but got {input_param}.')
+
+
 def check_input_format(input_param):
     """Judge input format."""
     if input_param == "NCHW":

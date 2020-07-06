@@ -25,7 +25,7 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-E]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -50,10 +50,12 @@ usage()
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
-  echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
+  echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
   echo "    -I Compile predict, default off"
-  echo "    -K Compile with AKG, default off"
+  echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
+  echo "    -B Enable debugger, default off"
+  echo "    -E Enable IBVERBS for parameter server, default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -88,14 +90,17 @@ checkopts()
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
   ENABLE_MPI="off"
-  CUDA_VERSION="9.2"
+  CUDA_VERSION="10.1"
   COMPILE_PREDICT="off"
   USE_GLOG="on"
   PREDICT_PLATFORM=""
   ENABLE_AKG="on"
   ENABLE_SERVING="off"
+  ENABLE_DEBUGGER="off"
+  ENABLE_IBVERBS="off"
+
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:s' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:sB:E' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -191,6 +196,10 @@ checkopts()
           usage
           exit 1
         fi
+        if [[ "X$OPTARG" == "X9.2" ]]; then
+          echo "Unsupported CUDA version 9.2"
+          exit 1
+        fi
         CUDA_VERSION="$OPTARG"
         ;;
       P)
@@ -239,6 +248,15 @@ checkopts()
       s)
         ENABLE_SERVING="on"
         echo "enable serving"
+        ;;
+      B)
+        check_on_off $OPTARG B
+        ENABLE_DEBUGGER="on"
+        echo "enable debugger"
+        ;;
+      E)
+        ENABLE_IBVERBS="on"
+        echo "enable IBVERBS for parameter server"
         ;;
       *)
         echo "Unknown option ${opt}!"
@@ -322,7 +340,13 @@ build_mindspore()
     if [[ "X$ENABLE_SERVING" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SERVING=ON"
     fi
+    if [[ "X$ENABLE_DEBUGGER" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DEBUGGER=ON"
+    fi
 
+    if [[ "X$ENABLE_IBVERBS" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_IBVERBS=ON"
+    fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..
@@ -446,9 +470,9 @@ build_predict()
 
     cd "${BASEPATH}/predict/output/"
     if [[ "$PREDICT_PLATFORM" == "x86_64" ]]; then
-      tar -cf MSPredict-0.3.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
+      tar -cf MSPredict-0.5.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
     elif [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      tar -cf MSPredict-0.3.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
+      tar -cf MSPredict-0.5.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
     fi
     echo "success to build predict project!"
 }

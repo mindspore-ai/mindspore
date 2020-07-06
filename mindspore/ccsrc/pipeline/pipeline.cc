@@ -39,6 +39,7 @@
 #include "device/kernel_runtime_manager.h"
 #include "debug/trace.h"
 #include "pynative/pynative_execute.h"
+#include "optimizer/py_pass_manager.h"
 
 #if (ENABLE_GE || ENABLE_D)
 #include "pipeline/pipeline_ge.h"
@@ -314,7 +315,7 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
     auto weight_name = weight_node->cast<ParameterPtr>()->name();
     // find the fakequant from input
     int count = 0;
-    int max_depth = 5;
+    const int max_depth = 5;
     while (!is_quant_cnode(x)) {
       if (count >= max_depth) {
         break;
@@ -445,7 +446,10 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   std::string backend = MsContext::GetInstance()->backend_policy();
   if (use_vm && backend != "ge") {
     // Create backend and session
-    resource->results()[kBackend] = compile::CreateBackend();
+    auto backend_ptr = compile::CreateBackend();
+    // Connect session to debugger
+    backend_ptr->SetDebugger();
+    resource->results()[kBackend] = backend_ptr;
     p_actions = VmPipeline();
   } else {
     p_actions = GePipeline();
@@ -964,6 +968,7 @@ void ClearResAtexit() {
   pipeline::ExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
   pynative::PynativeExecutor::GetInstance()->ClearRes();
+  opt::python_pass::PyPassManager::GetInstance()->ClearRes();
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::DfGraphConvertor::get_adpt_map().clear();

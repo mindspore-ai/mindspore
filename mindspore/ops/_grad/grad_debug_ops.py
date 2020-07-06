@@ -66,3 +66,12 @@ def get_bprop_insert_gradient_of(self):
     def bprop(x, out, dout):
         return (f(dout),)
     return bprop
+
+
+@bprop_getters.register(P.Debug)
+def get_bprop_debug(self):
+    """Generate bprop for Debug"""
+
+    def bprop(x, out, dout):
+        return dout
+    return bprop

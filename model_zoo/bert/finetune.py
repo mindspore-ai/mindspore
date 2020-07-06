@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
-'''
+"""
 Bert finetune script.
-'''
+"""
 
 import os
 import argparse
-from src.utils import BertFinetuneCell, BertCLS, BertNER, BertSquad, BertSquadCell
+from src.utils import BertFinetuneCell, BertCLS, BertNER, BertSquad, BertSquadCell, BertReg
 from src.finetune_config import cfg, bert_net_cfg, tag_to_index
 import mindspore.common.dtype as mstype
 from mindspore import context
@@ -34,14 +34,14 @@ from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 class LossCallBack(Callback):
-    '''
+    """
     Monitor the loss in training.
     If the loss is NAN or INF, terminate training.
     Note:
         If per_print_times is 0, do not print loss.
     Args:
         per_print_times (int): Print loss every times. Default: 1.
-    '''
+    """
     def __init__(self, per_print_times=1):
         super(LossCallBack, self).__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
@@ -56,16 +56,20 @@ class LossCallBack(Callback):
             f.write("\n")
 
 def get_dataset(batch_size=1, repeat_count=1, distribute_file=''):
-    '''
+    """
     get dataset
-    '''
+    """
     ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask",
                                                                             "segment_ids", "label_ids"])
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="label_ids", operations=type_cast_op)
+    if cfg.task == "Regression":
+        type_cast_op_float = C.TypeCast(mstype.float32)
+        ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
+    else:
+        ds = ds.map(input_columns="label_ids", operations=type_cast_op)
     ds = ds.repeat(repeat_count)
 
     # apply shuffle operation
@@ -77,9 +81,9 @@ def get_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     return ds
 
 def get_squad_dataset(batch_size=1, repeat_count=1, distribute_file=''):
-    '''
+    """
     get SQuAD dataset
-    '''
+    """
     ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                             "start_positions", "end_positions",
                                                                             "unique_ids", "is_impossible"])
@@ -97,9 +101,9 @@ def get_squad_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     return ds
 
 def test_train():
-    '''
+    """
     finetune function
-    '''
+    """
     target = args_opt.device_target
     if target == "Ascend":
         devid = int(os.getenv('DEVICE_ID'))
@@ -113,7 +117,7 @@ def test_train():
         raise Exception("Target error, GPU or Ascend is supported.")
     #BertCLSTrain for classification
     #BertNERTrain for sequence labeling
-    if cfg.task == 'NER':
+    if cfg.task == 'SeqLabeling':
         if cfg.use_crf:
             netwithloss = BertNER(bert_net_cfg, True, num_labels=len(tag_to_index), use_crf=True,
                                   tag_to_index=tag_to_index, dropout_prob=0.1)
@@ -121,8 +125,12 @@ def test_train():
             netwithloss = BertNER(bert_net_cfg, True, num_labels=cfg.num_labels, dropout_prob=0.1)
     elif cfg.task == 'SQUAD':
         netwithloss = BertSquad(bert_net_cfg, True, 2, dropout_prob=0.1)
-    else:
+    elif cfg.task == 'Regression':
+        netwithloss = BertReg(bert_net_cfg, True, num_labels=cfg.num_labels, dropout_prob=0.1)
+    elif cfg.task == 'Classification':
         netwithloss = BertCLS(bert_net_cfg, True, num_labels=cfg.num_labels, dropout_prob=0.1)
+    else:
+        raise Exception("Target error, GPU or Ascend is supported.")
     if cfg.task == 'SQUAD':
         dataset = get_squad_dataset(bert_net_cfg.batch_size, cfg.epoch_num)
     else:

@@ -21,7 +21,11 @@ from .._checkparam import check_type, check_typename
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 
-__all__ = ['Tensor', 'MetaTensor']
+__all__ = ['Tensor', 'MetaTensor', 'IndexedSlices']
+np_types = (np.int8, np.int16, np.int32, np.int64,
+            np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
+            np.float32, np.float64, np.bool_)
+
 
 
 class Tensor(Tensor_):
@@ -54,6 +58,10 @@ class Tensor(Tensor_):
     """
 
     def __init__(self, input_data, dtype=None):
+        # If input data is numpy number, convert it to np array
+        if isinstance(input_data, np_types):
+            input_data = np.array(input_data)
+
         # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
         check_type('tensor input_data', input_data, (Tensor_, float, int))
         if dtype is not None:
@@ -61,9 +69,9 @@ class Tensor(Tensor_):
         if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
             input_data = np.ascontiguousarray(input_data)
         if dtype is None:
-            super(Tensor, self).__init__(input_data)
+            Tensor_.__init__(self, input_data)
         else:
-            super(Tensor, self).__init__(input_data, dtype)
+            Tensor_.__init__(self, input_data, dtype)
         self._virtual_flag = False
         self._init_flag = False
 
@@ -101,17 +109,18 @@ class Tensor(Tensor_):
         out = tensor_operator_registry.get('__neg__')(self)
         return out
 
+    def __pos__(self):
+        return self
+
     def __iadd__(self, other):
-        out = self.__add__(other)
-        return out
+        return self.__add__(other)
 
     def __radd__(self, other):
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __imul__(self, other):
-        out = self.__mul__(other)
-        return out
+        return self.__mul__(other)
 
     def __rmul__(self, other):
         out = tensor_operator_registry.get('__mul__')(self, other)
@@ -130,8 +139,7 @@ class Tensor(Tensor_):
         return out
 
     def __isub__(self, other):
-        out = self.__sub__(other)
-        return out
+        return self.__sub__(other)
 
     def __rsub__(self, other):
         out = tensor_operator_registry.get('__sub__')(other, self)
@@ -168,6 +176,18 @@ class Tensor(Tensor_):
             return 1
         return out[0]
 
+    def __mod__(self, other):
+        return tensor_operator_registry.get('__mod__')(self, other)
+
+    def __imod__(self, other):
+        return self.__mod__(other)
+
+    def __floordiv__(self, other):
+        return tensor_operator_registry.get('__floordiv__')(self, other)
+
+    def __ifloordiv__(self, other):
+        return self.__floordiv__(other)
+
     def __str__(self):
         if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
@@ -197,3 +217,8 @@ class Tensor(Tensor_):
             raise TypeError("init_flag must be bool.")
         self.set_init_flag(value)
         self._init_flag = value
+
+
+class IndexedSlices:
+    def __init__(self, indices, values, dense_shape):
+        raise NotImplementedError

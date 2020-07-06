@@ -80,6 +80,14 @@ bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
 }
 
 // for D to impl
+bool KernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  if (graph != nullptr) {
+    return true;
+  }
+  return false;
+}
+
+// for D to impl
 bool KernelRuntime::GenTask(const session::KernelGraph *graph) {
   if (graph != nullptr) {
     return true;
@@ -154,7 +162,7 @@ void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &inpu
   UpdateRefNodeOutputMem(graph);
 }
 
-void KernelRuntime::RunOpClearMemory(session::KernelGraph *graph) {
+void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   // clear input parameter memory resource
   for (const auto &input_node : graph->inputs()) {
@@ -250,6 +258,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
     std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
+    device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
     MS_EXCEPTION_IF_NULL(device_address);
     auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
     if (!ret) {
@@ -330,7 +339,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   }
 }
 
-void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) {
+void KernelRuntime::AssignStaticMemoryOutput(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   std::vector<session::KernelWithIndex> non_communication_op;
@@ -341,6 +350,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
     if (!item_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(item_with_index.first)) {
       continue;
     }
+    graph->AddFinalOutputKernel(item_with_index.first);
     if (AnfAlgo::IsCommunicationOp(item_with_index.first)) {
       AssignCommunicationNodeMem(kStaticMem, item_with_index.first);
     } else {
@@ -498,7 +508,9 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
     }
     std::string output_format = AnfAlgo::GetOutputFormat(node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
-    AnfAlgo::SetOutputAddr(CreateDeviceAddress(ptr, output_sizes[i], output_format, output_type), i, node.get());
+    auto device_address = CreateDeviceAddress(ptr, output_sizes[i], output_format, output_type);
+    device_address->set_host_shape(trans::GetRuntimePaddingShape(node, i));
+    AnfAlgo::SetOutputAddr(device_address, i, node.get());
   }
 }
 
@@ -535,7 +547,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   }
   AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
   if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
-                                 tensor->data_c(false))) {
+                                 tensor->data_c())) {
     MS_EXCEPTION(NotExistsError) << "ValueNode SyncHostToDevice fail!" << value_node->DebugString() << "node format is"
                                  << AnfAlgo::GetOutputFormat(value_node, output_idx) << "node dtype is "
                                  << AnfAlgo::GetOutputInferDataType(value_node, output_idx);

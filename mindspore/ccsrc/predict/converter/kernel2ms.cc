@@ -538,7 +538,7 @@ bool Kernel2Ms::KernelInput2MS(const std::vector<TensorPtr> &input_tensors) {
       auto match_idx = match_to_rel_idxs[j];
       auto real_tensor = input_tensors[match_idx];
       auto real_size = LongToSize(real_tensor->data().nbytes());
-      auto real_data = real_tensor->data_c(false);
+      auto real_data = real_tensor->data_c();
       MS_EXCEPTION_IF_NULL(real_data);
       if (sub_ms_graph_->allTensors[cache_idx] != nullptr) {
         sub_ms_graph_->allTensors[cache_idx]->data.resize(real_size);

@@ -888,7 +888,8 @@ class Neg(PrimitiveWithInfer):
     def infer_value(self, input_x):
         if input_x is not None:
             input_x = input_x.asnumpy()
-            return Tensor(-input_x)
+            out = np.array(-input_x, input_x.dtype)
+            return Tensor(out)
 
         return None
 
@@ -925,31 +926,30 @@ class InplaceAdd(PrimitiveWithInfer):
         """init InplaceAdd"""
         self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
         self.indices = indices
-
-    def infer_shape(self, x_shape, v_shape):
-        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
-        if isinstance(self.indices, int):
-            validator.check("size of indices", 1, "v's first dimension", v_shape[0],
-                            Rel.EQ, self.name)
-            if self.indices < 0 or self.indices >= x_shape[0]:
-                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {self.indices}.')
-        else:
-            validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
-                            Rel.EQ, self.name)
-            for i in self.indices:
-                if i < 0 or i >= x_shape[0]:
-                    raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
-        if len(x_shape) > 1:
-            validator.check("x's ith dimension", x_shape[1:], "v's ith dimension", v_shape[1:],
-                            Rel.EQ, self.name)
-        return x_shape
+        validator.check_value_type('indices', indices, [tuple, int], self.name)
+        if isinstance(indices, int):
+            self.indices = (indices,)
+        for item in self.indices:
+            validator.check_value_type("item of indices", item, [int], self.name)
 
     def infer_dtype(self, x_dtype, v_dtype):
         args = {'x': x_dtype, 'v': v_dtype}
         valid_type = [mstype.int32, mstype.float16, mstype.float32]
         validator.check_tensor_type_same(args, valid_type, self.name)
-        validator.check_value_type('indices', self.indices, [tuple, int], self.name)
         return x_dtype
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                        Rel.EQ, self.name)
+        for i in self.indices:
+            if i < 0 or i >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        x_rank = len(x_shape)
+        for idx in range(x_rank)[1:]:
+            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
+
+        return x_shape
 
 
 class InplaceSub(PrimitiveWithInfer):
@@ -984,31 +984,30 @@ class InplaceSub(PrimitiveWithInfer):
         """init InplaceSub"""
         self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
         self.indices = indices
-
-    def infer_shape(self, x_shape, v_shape):
-        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
-        if isinstance(self.indices, int):
-            validator.check("size of indices", 1, "v's first dimension", v_shape[0],
-                            Rel.EQ, self.name)
-            if self.indices < 0 or self.indices >= x_shape[0]:
-                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {self.indices}.')
-        else:
-            validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
-                            Rel.EQ, self.name)
-            for i in self.indices:
-                if i < 0 or i >= x_shape[0]:
-                    raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
-        if len(x_shape) > 1:
-            validator.check("x's ith dimension", x_shape[1:], "v's ith dimension", v_shape[1:],
-                            Rel.EQ, self.name)
-        return x_shape
+        validator.check_value_type('indices', indices, [tuple, int], self.name)
+        if isinstance(indices, int):
+            self.indices = (indices,)
+        for item in self.indices:
+            validator.check_value_type("item of indices", item, [int], self.name)
 
     def infer_dtype(self, x_dtype, v_dtype):
         args = {'x': x_dtype, 'v': v_dtype}
         valid_type = [mstype.int32, mstype.float16, mstype.float32]
         validator.check_tensor_type_same(args, valid_type, self.name)
-        validator.check_value_type('indices', self.indices, [tuple, int], self.name)
         return x_dtype
+
+    def infer_shape(self, x_shape, v_shape):
+        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
+        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
+                        Rel.EQ, self.name)
+        for i in self.indices:
+            if i < 0 or i >= x_shape[0]:
+                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+        x_rank = len(x_shape)
+        for idx in range(x_rank)[1:]:
+            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
+
+        return x_shape
 
 
 class Sub(_MathBinaryOp):
@@ -1357,12 +1356,12 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Args:
         dtype (string): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
-        nbins (Tensor): Number of histogram bins, the type is int32.
+        nbins (int): Number of histogram bins, the type is positive integer.
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
         - **range** (Tensor) - Must have the same type as x. Shape [2] Tensor of same dtype as x.
-        x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
+          x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
 
     Outputs:
         Tensor, the type is int32.
@@ -1378,6 +1377,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, nbins, dtype='int32'):
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
+        validator.check_integer("nbins", nbins, 1, Rel.GE, self.name)
         valid_values = ['int32', 'int64']
         self.dtype = validator.check_string("dtype", dtype, valid_values, self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
@@ -1646,8 +1646,9 @@ class Div(_MathBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
           a bool or a tensor whose data type is number or bool.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - When the first input is a tensor, The second input
+          could be a number or a bool, or a tensor whose data type is number or bool. When the first input
+          is a number or a bool, the second input should be a tensor whose data type is number or bool.
 
     Outputs:
         Tensor, the shape is same as the shape after broadcasting,
@@ -1667,7 +1668,8 @@ class Div(_MathBinaryOp):
         if x is not None and y is not None:
             x = x.asnumpy()
             y = y.asnumpy()
-            return Tensor(x / y)
+            out = np.array(x / y, x.dtype)
+            return Tensor(out)
         return None
 
 
@@ -1740,6 +1742,42 @@ class FloorDiv(_MathBinaryOp):
         >>> floor_div(input_x, input_y)
         [0, 1, -1]
     """
+
+
+class Mod(_MathBinaryOp):
+    """
+    Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
+
+    The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast. When the inputs are one tensor
+    and one scalar, the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
+        - **input_y** (Union[Tensor, Number]) - When the first input is a tensor, The second input
+          could be a number or a tensor whose data type is number. When the first input is a number,
+          the second input should be a tensor whose data type is number.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Raises:
+        ValueError: When `input_x` and `input_y` are not the same dtype.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
+        >>> mod = P.Mod()
+        >>> mod(input_x, input_y)
+    """
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            return Tensor(np.fmod(x, y))
+        return None
 
 
 class Floor(PrimitiveWithInfer):
@@ -1888,7 +1926,7 @@ class Cosh(PrimitiveWithInfer):
 
 class Asinh(PrimitiveWithInfer):
     """
-    Compute inverse hyperbolic cosine of x element-wise.
+    Compute inverse hyperbolic sine of x element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -2645,7 +2683,7 @@ class Sin(PrimitiveWithInfer):
 
 class Asin(PrimitiveWithInfer):
     """
-    Computes arccosine of input element-wise.
+    Computes arcsine of input element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

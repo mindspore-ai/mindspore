@@ -46,6 +46,11 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
   if (node == nullptr || !AnfAlgo::IsRealKernel(node)) {
     return nullptr;
   }
+  AnfNodePtr front_node;
+  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+  if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node)) {
+    front_node = kernel_graph->GetFrontNodeByInternalOutput(node);
+  }
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   MS_LOG(DEBUG) << "====process op: " << node->DebugString();
   AnfNodePtr new_node = InsertTransOpForInput(func_graph, node, kernel_select_);
@@ -56,7 +61,12 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
       return new_node;
     }
   }
-  return InsertTransOpForOutput(func_graph, new_node, kernel_select_);
+  auto final_node = InsertTransOpForOutput(func_graph, new_node, kernel_select_);
+  if (kernel_graph != nullptr && front_node != nullptr) {
+    auto old_node = kernel_graph->GetInternalOutputByFrontNode(front_node);
+    kernel_graph->ReplaceInternalOutput(old_node, final_node);
+  }
+  return final_node;
 }
 }  // namespace opt
 }  // namespace mindspore

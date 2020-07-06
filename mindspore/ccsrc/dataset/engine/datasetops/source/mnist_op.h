@@ -226,12 +226,15 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int64_t buf_cnt_;
   int64_t row_cnt_;
   WaitPost wp_;
   std::string folder_path_;  // directory of image folder
   int32_t rows_per_buffer_;
-  std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
   std::vector<MnistLabelPair> image_label_pairs_;
   std::vector<std::string> image_names_;

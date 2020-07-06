@@ -266,9 +266,6 @@ Status ShuffleOp::InitShuffleBuffer() {
     RETURN_STATUS_UNEXPECTED("Unable to fetch a single row for shuffle buffer.");
   }
 
-  // Now that a first fetch is done, assign the column map for this operator
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
-
   // Now fill the rest of the shuffle buffer until we are unable to get the next row or we reached
   // the desired shuffle buffer size.
   while (!new_row.empty() && shuffle_buffer_->size() < static_cast<size_t>(shuffle_size_ - 1)) {
@@ -301,7 +298,7 @@ Status ShuffleOp::EoeReceived(int32_t worker_id) {
 // Visitor accept method for NodePass
 Status ShuffleOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<ShuffleOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<ShuffleOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -26,8 +26,8 @@ cosh_op_info = TBERegOp("Cosh") \
     .op_pattern("formatAgnostic") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
 

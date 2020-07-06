@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from util import save_and_check
-
 import mindspore.dataset as ds
 from mindspore import log as logger
+from util import save_and_check
 
 # Note: Number of rows in test.data dataset:  12
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
@@ -434,7 +433,6 @@ def test_batch_exception_11():
         assert "drop_remainder" in str(e)
 
 
-# pylint: disable=redundant-keyword-arg
 def test_batch_exception_12():
     """
     Test batch exception: wrong input order, drop_remainder wrongly used as batch_size
@@ -447,12 +445,12 @@ def test_batch_exception_12():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR)
     try:
-        data1 = data1.batch(drop_remainder, batch_size=batch_size)
+        data1 = data1.batch(drop_remainder, batch_size)
         sum([1 for _ in data1])
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "batch_size" in str(e)
+        assert "drop_remainder" in str(e)
 
 
 def test_batch_exception_13():

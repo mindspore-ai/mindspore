@@ -228,6 +228,10 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     MS_LOG(EXCEPTION) << "func_conf.GetEvaluatedValue() return null, func_conf: " << func_conf->ToString()
                       << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
+  if (maybe_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+    MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
+    return std::make_shared<EvalResult>(maybe_func->Clone(), std::make_shared<AttrValueMap>());
+  }
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
   if (func == nullptr) {
     MS_LOG(EXCEPTION) << "func_conf.GetEvaluatedValue() return not AbstractFunction: " << maybe_func->ToString()

@@ -34,8 +34,8 @@ class LeNet5(nn.Cell):
         super(LeNet5, self).__init__()
         self.num_class = num_class
 
-        self.conv1 = nn.Conv2d(channel, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv1 = nn.Conv2d(channel, 6, 5, pad_mode='valid')
+        self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
         self.fc1 = nn.Dense(16 * 5 * 5, 120)
         self.fc2 = nn.Dense(120, 84)
         self.fc3 = nn.Dense(84, self.num_class)

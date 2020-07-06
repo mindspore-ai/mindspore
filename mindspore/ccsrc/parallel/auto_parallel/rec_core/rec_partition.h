@@ -32,19 +32,19 @@
 
 namespace mindspore {
 namespace parallel {
-std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> graph);
+std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph);
 
 double GetWeights(const Graph::NodeType &node);
 
 StrategyRec PartitionNode(const Graph::NodeType &node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                          std::shared_ptr<Graph> graph);
+                          const std::shared_ptr<Graph> &graph);
 
-Status PartitionForAllDevices(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph);
+Status PartitionForAllDevices(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph);
 
 Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 
-Status DevicesMemoryControl(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph);
+Status DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph);
 
 size_t GetDataTypeSize(const TensorType &type);
 }  // namespace parallel

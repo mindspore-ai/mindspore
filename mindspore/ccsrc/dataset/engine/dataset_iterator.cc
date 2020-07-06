@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor of the IteratorBase
-IteratorBase::IteratorBase() : curr_buffer_(nullptr), eof_handled_(false), first_row_(true) {}
+IteratorBase::IteratorBase() : curr_buffer_(nullptr), eof_handled_(false) {}
 
 IteratorBase::~IteratorBase() = default;
 
@@ -51,13 +51,10 @@ Status IteratorBase::GetNextAsMap(TensorMap *out_map) {
   // The column name mapping comes from the source operator that is producing the data into the iterator.
   // To avoid having to fetch this for every time, we'll take a local copy of the column name id mapping
   // and save in the iterator.  We only have to do this once.  All subsequent iterations use the same mapping.
-  // Note: This can only be done after the first row has been produced, as this guarantees the the child has
-  // it's column mapping set up.
-  if (first_row_) {
+  if (col_name_id_map_.empty()) {
     // Determine the column name map by calling the derived class method to retrieve the column
     // name map
     col_name_id_map_ = this->GetColumnNameMap();
-    first_row_ = false;
   }
 
   // Populate the out map from the row and return it

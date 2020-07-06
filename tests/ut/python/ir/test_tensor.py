@@ -24,12 +24,14 @@ import pytest
 import mindspore as ms
 import mindspore.common.api as me
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from ..ut_filter import non_graph_engine
 
 ndarr = np.ones((2, 3))
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_tensor_flatten():
@@ -428,10 +430,20 @@ def test_tensor_dtype_np_int64():
 
 
 def test_tensor_dtype_fp32_to_bool():
-    with pytest.raises(RuntimeError):
-        input_ = np.random.randn(2, 3, 4, 5).astype(np.float32)
-        input_ = ms.Tensor(input_)
-        _ = ms.Tensor(input_, dtype=ms.bool_)
+    input_ = np.random.randn(2, 3, 4, 5).astype(np.float32)
+    input_ = ms.Tensor(input_)
+    t = ms.Tensor(input_, dtype=ms.bool_)
+    assert isinstance(t, ms.Tensor)
+    assert t.shape == (2, 3, 4, 5)
+    assert t.dtype == ms.bool_
+
+
+def test_tensor_dtype_fp64_to_uint8():
+    array = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
+    t = ms.Tensor(array, ms.uint8)
+    assert isinstance(t, ms.Tensor)
+    assert t.shape == (2, 3)
+    assert t.dtype == ms.uint8
 
 
 def test_tensor_operation():
@@ -452,5 +464,11 @@ def test_tensor_operation():
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
     res = 8 / x
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = x % 3
+    assert np.all(res.asnumpy() == np.ones((3, 3)))
+    res = x // 3
+    assert np.all(res.asnumpy() == np.ones((3, 3)))
+    x %= 3
+    assert np.all(x.asnumpy() == np.ones((3, 3)))
     with pytest.raises(ValueError):
         res = x * (2, 3)

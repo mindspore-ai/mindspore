@@ -33,7 +33,9 @@ conv2d_op_info = TBERegOp("Conv2D") \
     .input(2, "bias", False, "optional", "all") \
     .input(3, "offset_w", False, "optional", "all") \
     .output(0, "y", True, "required", "all") \
+    .op_pattern("dynamicFormat") \
     .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.I8_None, DataType.F16_None) \
+    .dtype_format(DataType.I8_None, DataType.I8_None, DataType.I32_None, DataType.I8_None, DataType.I32_None) \
     .get_op_info()
 
 

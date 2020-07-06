@@ -20,18 +20,15 @@
 #include <cstring>
 #include <string>
 #include <memory>
+#include <nlohmann/json.hpp>
+#include "utils/contract.h"
 #include "utils/context/ms_context.h"
+
 using std::map;
 using std::string;
-
 namespace mindspore {
 namespace device {
 namespace ascend {
-// PROFILING_CUSTOM_LOGID_START 3
-const uint64_t kProfilingFpStartLogId = 1;
-const uint64_t kProfilingBpEndLogId = 2;
-const uint64_t kProfilingIterEndLogId = 255;
-
 class ProfilingEngineImpl;
 class ProfilingManager {
  public:
@@ -52,6 +49,7 @@ class ProfilingManager {
   ~ProfilingManager() { prof_handle_ = nullptr; }
 
  private:
+  bool ProfStartUp(NotNull<nlohmann::json *> json);
   std::shared_ptr<ProfilingEngineImpl> engine_0_;
   uint32_t device_id_;
   void *prof_handle_;

@@ -16,7 +16,6 @@
 #include "dataset/util/treap.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

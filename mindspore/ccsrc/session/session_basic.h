@@ -32,6 +32,9 @@
 #include "utils/contract.h"
 #include "pynative/pynative_execute.h"
 #include "device/kernel_info.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 
 namespace mindspore {
 using GraphId = uint32_t;
@@ -48,7 +51,11 @@ using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 
 class SessionBasic {
  public:
-  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {}
+  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
+#ifdef ENABLE_DEBUGGER
+    debugger_ = nullptr;
+#endif
+  }
 
   virtual void Init(uint32_t device_id) { device_id_ = device_id; }
 
@@ -69,6 +76,8 @@ class SessionBasic {
   }
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
+
+  void CreateCNodeKernelGraph(const AnfNodePtr node, KernelGraphPtr graph);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
@@ -92,7 +101,17 @@ class SessionBasic {
   virtual void SetActive(GraphId, GraphId) {}
   virtual void GetSummaryNodes(KernelGraph *graph);
 
+#ifdef ENABLE_DEBUGGER
+  // set debugger
+  void SetDebugger() {
+    debugger_ = Debugger::GetInstance();
+    debugger_->Init(device_id_);
+  }
+#endif
+
  protected:
+  // Get graph by graph id ,if not exist return null ptr
+  KernelGraphPtr GetGraph(GraphId graph_id);
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const;
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
@@ -110,11 +129,13 @@ class SessionBasic {
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
+  std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, bool valid_input, KernelGraph *graph);
   virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
+  void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
@@ -123,6 +144,9 @@ class SessionBasic {
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
   uint32_t device_id_;
+#ifdef ENABLE_DEBUGGER
+  std::shared_ptr<Debugger> debugger_;
+#endif
 };
 
 using SessionPtr = std::shared_ptr<session::SessionBasic>;

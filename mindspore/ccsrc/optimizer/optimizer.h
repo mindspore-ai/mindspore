@@ -95,6 +95,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   void Init(const OptPassGroupMap &passes, bool run_only_once) {
     run_only_once_ = run_only_once;
     is_watch_renormalize_ = false;
+    is_on_debug_ = IS_OUTPUT_ON(mindspore::DEBUG);
 
     for (auto &iter : passes) {
       const std::string &name = iter.first;
@@ -136,7 +137,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       return func_graph;
     }
     // Optimizer step counter;
-    int counter = -1;
+    int counter = 1;
     bool changes = true;
 
     while (changes) {
@@ -144,6 +145,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       auto run_runc = [&counter, &func_graph, &changes, use_profile, this]() {
         for (size_t i = 0; i < passes_.size(); ++i) {
           const OptPass &opt = passes_[i];
+          CurPass_ = {counter, pass_names_[i]};
           auto opt_func = [&func_graph, &changes, &opt, this]() {
             if (opt.is_renormalize()) {
               auto resource_ptr = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
@@ -173,7 +175,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             }
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
-          if (IS_OUTPUT_ON(mindspore::DEBUG) && MsContext::GetInstance()->save_graphs_flag()) {
+          if (is_on_debug_ && MsContext::GetInstance()->save_graphs_flag()) {
             MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
             auto fg_name =
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
@@ -184,7 +186,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           }
         }
       };
-      use_profile ? (WITH(MsProfile::GetProfile()->Lap(counter++)) run_runc) : run_runc();
+      use_profile ? (WITH(MsProfile::GetProfile()->Lap(counter)) run_runc) : run_runc();
+      counter++;
 
       if (run_only_once_) {
         break;
@@ -215,6 +218,13 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   void disable_watch_renormalize() { is_watch_renormalize_ = false; }
   bool is_watch_renormalize() { return is_watch_renormalize_; }
   void set_enable(bool enable) { is_enable_ = enable; }
+
+  struct {
+    int counter;
+    std::string name;
+  } CurPass_;
+
+  bool is_on_debug_{false};
 
  private:
   const std::string name_;
