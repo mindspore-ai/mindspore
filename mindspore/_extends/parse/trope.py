@@ -27,7 +27,7 @@ from operator import (  # noqa
 
 # support system function call
 from builtins import (  # noqa
-    bool, getattr, setattr, len, iter, next, pow, range, map, zip, print
+    bool, getattr, setattr, len, iter, next, pow, range, map, zip, print, enumerate
 )
 
 # support functools
@@ -44,7 +44,7 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'not_', 'and_', 'or_', 'xor', 'lshift', 'rshift', 'invert', 'is_', 'is_not', 'contains',
            'matmul', 'getitem', 'setitem',
            'bool', 'getattr', 'setattr', 'len', 'iter', 'next', 'pow', 'range', 'map', 'zip',
-           'partial', 'print',
+           'partial', 'print', 'enumerate',
            'exp', 'log', 'sin', 'cos', 'tan']
 
 

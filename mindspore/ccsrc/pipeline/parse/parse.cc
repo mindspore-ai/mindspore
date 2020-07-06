@@ -1048,11 +1048,10 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   CNodePtr app = body_block->func_graph()->NewCNode({op_next, iter_param});
   CNodePtr target_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(0)});
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
-  auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(target_node, "id"));
-  target_app->debug_info()->set_name(name_id);
 
   CNodePtr iter2_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(1)});
-  body_block->WriteVariable(name_id, target_app);
+  WriteAssignVars(body_block, target_node, target_app);
+
   // link the variable name with the target
   auto it_info = std::make_shared<TraceIterator>(target_app->debug_info());
   iter_param->debug_info()->set_trace_info(it_info);

@@ -1761,6 +1761,10 @@ test_case_array_ops = [
         'desc_inputs': [[128, 128], [128, 128]],
         'desc_bprop': [[2, 128, 128]],
     }),
+    ('Pack_3', {
+        'block': NetForPackInput(P.Pack()),
+        'desc_inputs': [[2, 2]],
+        'desc_bprop': [[1, 2, 2]]}),
     ('Unpack_0', {
         'block': NetForUnpackInput(P.Unpack(axis=0)),
         'desc_inputs': [[2, 4]],
@@ -2226,10 +2230,6 @@ raise_set = [
                         Tensor(np.ones((2, 2), np.float32)),
                         Tensor(np.ones((2,), np.float32))),
         'desc_bprop': [[2, 3]]}),
-    ('Pack', {
-        'block': (NetForPackInput(P.Pack()), {'exception': ValueError}),
-        'desc_inputs': [[2, 2]],
-        'desc_bprop': [[1, 2, 2]]}),
     ('PReLU', {
         'block': (P.PReLU(), {'exception': ValueError}),
         'desc_inputs': [[2], [1]],

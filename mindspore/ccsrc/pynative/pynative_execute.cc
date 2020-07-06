@@ -226,11 +226,8 @@ void PynativeInfer(const PrimitivePyPtr &prim, const py::list &py_args, OpExecIn
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < size; i++) {
     ValuePtr input_value = PyAttrValue(py_args[i]);
-    if (!py::hasattr(prim->GetPyObj(), "const_value") && input_value->isa<tensor::Tensor>()) {
-      args_spec_list.emplace_back(abstract::FromValueInside(input_value, true));
-    } else {
-      args_spec_list.emplace_back(abstract::FromValueInside(input_value, false));
-    }
+    args_spec_list.emplace_back(abstract::FromValueInside(
+      input_value, !py::hasattr(prim->GetPyObj(), "const_value") && input_value->isa<tensor::Tensor>()));
   }
   AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   op_exec_info->abstract = infer_res;
@@ -512,7 +509,7 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   return result;
 }
 
-py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr op_exec_info,
+py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
                                   PynativeStatusCode *const status) {
   MS_EXCEPTION_IF_NULL(status);
   py::object result;
@@ -550,7 +547,7 @@ py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecIn
 }
 
 AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out) {
-  if (!grad_flag_ || graph_info_map_.size() == 0) {
+  if (!grad_flag_ || graph_info_map_.empty()) {
     return nullptr;
   }
   std::vector<AnfNodePtr> inputs;
@@ -753,7 +750,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, const py::object &o
     if (py::isinstance<py::none>(name_attr)) {
       MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
     }
-    std::string param_name = py::cast<std::string>(name_attr);
+    auto param_name = py::cast<std::string>(name_attr);
     if (graph_info_map_[df_builder_].param_map.count(obj_id) == 0) {
       auto free_param = df_builder_->add_parameter();
       free_param->set_name(param_name);

@@ -1466,7 +1466,7 @@ class Concat(PrimitiveWithInfer):
 def _get_pack_shape(x_shape, x_type, axis, prim_name):
     """for pack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
-    validator.check_integer("len of input_x", len(x_shape), 1, Rel.GT, prim_name)
+    validator.check_integer("len of input_x", len(x_shape), 1, Rel.GE, prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
     rank_base = len(x_shape[0])
     N = len(x_shape)
