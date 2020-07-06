@@ -41,7 +41,8 @@ class Normal(PrimitiveWithInfer):
         - **stddev** (Tensor) - The deviation σ distribution parameter. With float32 data type.
 
     Outputs:
-        Tensor, has the shape 'shape' input and dtype as float32.
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and stddev.
+        The dtype is float32.
 
     Examples:
         >>> shape = (4, 16)
@@ -148,7 +149,8 @@ class Gamma(PrimitiveWithInfer):
           It is also known as the scale parameter. With float32 data type.
 
     Outputs:
-        Tensor, has the shape 'shape' input and dtype as float32.
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
+        The dtype is float32.
 
     Examples:
         >>> shape = (4, 16)
@@ -199,7 +201,8 @@ class Poisson(PrimitiveWithInfer):
           The parameter defines mean number of occurrences of the event. With float32 data type.
 
     Outputs:
-        Tensor, has the shape 'shape' input and dtype as int32.
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shape of mean.
+        The dtype is int32.
 
     Examples:
         >>> shape = (4, 16)
@@ -238,6 +241,9 @@ class UniformInt(PrimitiveWithInfer):
     .. math::
         \text{P}(i|a,b) = \frac{1}{b-a+1},
 
+    Note:
+        The number in tensor a should be strictly less than b at any position after broadcasting.
+
     Args:
         seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
           Default: 0.
@@ -250,7 +256,8 @@ class UniformInt(PrimitiveWithInfer):
           It defines the maximum possibly generated value. With int32 data type.
 
     Outputs:
-        Tensor, has the shape 'shape' input and dtype as int32.
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
+        The dtype is int32.
 
     Examples:
         >>> shape = (4, 16)
@@ -286,7 +293,7 @@ class UniformInt(PrimitiveWithInfer):
 
 class UniformReal(PrimitiveWithInfer):
     r"""
-    Produces random floating-point values i, uniformly distributed on the interval [a, b), that is,\
+    Produces random floating-point values i, uniformly distributed on the interval [min(a, b), max(a, b)), that is,\
     distributed according to the probability density function:
 
     .. math::
@@ -304,7 +311,8 @@ class UniformReal(PrimitiveWithInfer):
           It defines the maximum possibly generated value. With float32 data type.
 
     Outputs:
-        Tensor, has the shape 'shape' input and dtype as int32.
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
+        The dtype is float32.
 
     Examples:
         >>> shape = (4, 16)
