@@ -38,6 +38,7 @@ class AscendInferenceSession : public AscendSession {
   ~AscendInferenceSession() = default;
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const;
+  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
 };
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
 }  // namespace session
