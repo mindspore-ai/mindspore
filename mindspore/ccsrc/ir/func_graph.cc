@@ -68,9 +68,7 @@ ParameterPtr FuncGraph::add_parameter() {
 
 void FuncGraph::add_parameter(const ParameterPtr &p) {
   if (manager_.lock()) {
-    std::vector<AnfNodePtr> new_params = parameters_;
-    new_params.push_back(p);
-    manager_.lock()->SetParameters(shared_from_base<FuncGraph>(), new_params);
+    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), p);
   } else {
     parameters_.push_back(p);
   }
@@ -82,12 +80,8 @@ ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
   p->set_name(name);
   p->debug_info()->set_name(name);
 
-  std::vector<AnfNodePtr> new_params = parameters_;
-  // append parameter
-  new_params.push_back(p);
-
   if (manager_.lock()) {
-    manager_.lock()->SetParameters(shared_from_base<FuncGraph>(), new_params);
+    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), p);
   } else {
     parameters_.push_back(p);
   }
