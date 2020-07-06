@@ -351,8 +351,8 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                   >>> data.set_dtype(mindspore.int32)
                                   mindspore.int32
                               )mydelimiter")
-                           .def("__str__", &Tensor::ToString)
-                           .def("__repr__", &Tensor::ToStringRepr)
+                           .def("__str__", &Tensor::ToStringSafe)
+                           .def("__repr__", &Tensor::ToStringReprSafe)
                            .def(py::pickle(
                              [](const Tensor &t) {  // __getstate__
                                /* Return a tuple that fully encodes the state of the object */
