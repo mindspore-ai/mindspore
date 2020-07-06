@@ -11,6 +11,7 @@ SET(DE_UT_SRCS
         interrupt_test.cc
         image_folder_op_test.cc
         buddy_test.cc
+        bounding_box_augment_op_test.cc
         arena_test.cc
         btree_test.cc
         center_crop_op_test.cc
@@ -39,6 +40,7 @@ SET(DE_UT_SRCS
         random_crop_and_resize_op_test.cc
         random_color_adjust_op_test.cc
         random_horizontal_flip_op_test.cc
+        random_horizontal_flip_with_bbox_test.cc
         random_resize_op_test.cc
         random_rotation_op_test.cc
         random_vertical_flip_op_test.cc
