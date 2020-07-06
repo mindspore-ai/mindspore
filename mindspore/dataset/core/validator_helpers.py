@@ -271,6 +271,8 @@ def check_sampler_shuffle_shard_options(param_dict):
     if sampler is not None:
         if shuffle is not None:
             raise RuntimeError("sampler and shuffle cannot be specified at the same time.")
+        if num_shards is not None:
+            raise RuntimeError("sampler and sharding cannot be specified at the same time.")
 
     if num_shards is not None:
         check_pos_int32(num_shards)
