@@ -22,7 +22,8 @@ from mindspore._c_dataengine import Tensor
 
 from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_get_all_edges, \
     check_gnn_get_nodes_from_edges, check_gnn_get_all_neighbors, check_gnn_get_sampled_neighbors, \
-    check_gnn_get_neg_sampled_neighbors, check_gnn_get_node_feature, check_gnn_random_walk
+    check_gnn_get_neg_sampled_neighbors, check_gnn_get_node_feature, check_gnn_get_edge_feature, \
+    check_gnn_random_walk
 
 
 class GraphData:
@@ -127,7 +128,13 @@ class GraphData:
     @check_gnn_get_sampled_neighbors
     def get_sampled_neighbors(self, node_list, neighbor_nums, neighbor_types):
         """
-        Get sampled neighbor information, maximum support 6-hop sampling.
+        Get sampled neighbor information.
+
+        The api supports multi-hop neighbor sampling. That is, the previous sampling result is used as the input of
+        next-hop sampling. A maximum of 6-hop are allowed.
+
+        The sampling result is tiled into a list in the format of [input node, 1-hop sampling result,
+        2-hop samling result ...]
 
         Args:
             node_list (list or numpy.ndarray): The given list of nodes.
@@ -205,6 +212,35 @@ class GraphData:
         return [
             t.as_array() for t in self._graph.get_node_feature(
                 Tensor(node_list),
+                feature_types)]
+
+    @check_gnn_get_edge_feature
+    def get_edge_feature(self, edge_list, feature_types):
+        """
+        Get `feature_types` feature of the edges in `edge_list`.
+
+        Args:
+            edge_list (list or numpy.ndarray): The given list of edges.
+            feature_types (list or ndarray): The given list of feature types.
+
+        Returns:
+            numpy.ndarray: array of features.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> data_graph = ds.GraphData('dataset_file', 2)
+            >>> edges = data_graph.get_all_edges(0)
+            >>> features = data_graph.get_edge_feature(edges, [1])
+
+        Raises:
+            TypeError: If `edge_list` is not list or ndarray.
+            TypeError: If `feature_types` is not list or ndarray.
+        """
+        if isinstance(edge_list, list):
+            edge_list = np.array(edge_list, dtype=np.int32)
+        return [
+            t.as_array() for t in self._graph.get_edge_feature(
+                Tensor(edge_list),
                 feature_types)]
 
     def graph_info(self):

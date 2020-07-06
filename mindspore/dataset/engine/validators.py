@@ -797,7 +797,7 @@ def check_gnn_graphdata(method):
         check_file(dataset_file)
 
         if num_parallel_workers is not None:
-            type_check(num_parallel_workers, (int,), "num_parallel_workers")
+            check_num_parallel_workers(num_parallel_workers)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -962,6 +962,28 @@ def check_gnn_get_node_feature(method):
             if not node_list.dtype == np.int32:
                 raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                     node_list, node_list.dtype))
+
+        check_gnn_list_or_ndarray(feature_types, 'feature_types')
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_edge_feature(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_edge_feature` function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [edge_list, feature_types], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(edge_list, (list, np.ndarray), "edge_list")
+        if isinstance(edge_list, list):
+            check_aligned_list(edge_list, 'edge_list', int)
+        elif isinstance(edge_list, np.ndarray):
+            if not edge_list.dtype == np.int32:
+                raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
+                    edge_list, edge_list.dtype))
 
         check_gnn_list_or_ndarray(feature_types, 'feature_types')
 

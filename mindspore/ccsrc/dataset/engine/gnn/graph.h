@@ -211,11 +211,23 @@ class Graph {
   // @return Status - The error code return
   Status GetNodeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature);
 
+  // Get the default feature of a edge
+  // @param FeatureType feature_type -
+  // @param std::shared_ptr<Feature> *out_feature - Returned feature
+  // @return Status - The error code return
+  Status GetEdgeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature);
+
   // Find node object using node id
   // @param NodeIdType id -
   // @param std::shared_ptr<Node> *node - Returned node object
   // @return Status - The error code return
   Status GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node);
+
+  // Find edge object using edge id
+  // @param EdgeIdType id -
+  // @param std::shared_ptr<Node> *edge - Returned edge object
+  // @return Status - The error code return
+  Status GetEdgeByEdgeId(EdgeIdType id, std::shared_ptr<Edge> *edge);
 
   // Negative sampling
   // @param std::vector<NodeIdType> &input_data - The data set to be sampled
@@ -227,6 +239,8 @@ class Graph {
                         int32_t samples_num, std::vector<NodeIdType> *out_samples);
 
   Status CheckSamplesNum(NodeIdType samples_num);
+
+  Status CheckNeighborType(NodeType neighbor_type);
 
   std::string dataset_file_;
   int32_t num_workers_;  // The number of worker threads
@@ -242,7 +256,8 @@ class Graph {
   std::unordered_map<NodeType, std::unordered_set<FeatureType>> node_feature_map_;
   std::unordered_map<EdgeType, std::unordered_set<FeatureType>> edge_feature_map_;
 
-  std::unordered_map<FeatureType, std::shared_ptr<Feature>> default_feature_map_;
+  std::unordered_map<FeatureType, std::shared_ptr<Feature>> default_node_feature_map_;
+  std::unordered_map<FeatureType, std::shared_ptr<Feature>> default_edge_feature_map_;
 };
 }  // namespace gnn
 }  // namespace dataset

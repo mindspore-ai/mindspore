@@ -43,7 +43,8 @@ using NodeTypeMap = std::unordered_map<NodeType, std::vector<NodeIdType>>;
 using EdgeTypeMap = std::unordered_map<EdgeType, std::vector<EdgeIdType>>;
 using NodeFeatureMap = std::unordered_map<NodeType, std::unordered_set<FeatureType>>;
 using EdgeFeatureMap = std::unordered_map<EdgeType, std::unordered_set<FeatureType>>;
-using DefaultFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
+using DefaultNodeFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
+using DefaultEdgeFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
 
 // this class interfaces with the underlying storage format (mindrecord)
 // it returns raw nodes and edges via GetNodesAndEdges
@@ -63,7 +64,7 @@ class GraphLoader {
   // random order. src_node and dst_node in Edge are node_id only with -1 as type.
   // features attached to each node and edge are expected to be filled correctly
   Status GetNodesAndEdges(NodeIdMap *, EdgeIdMap *, NodeTypeMap *, EdgeTypeMap *, NodeFeatureMap *, EdgeFeatureMap *,
-                          DefaultFeatureMap *);
+                          DefaultNodeFeatureMap *, DefaultEdgeFeatureMap *);
 
  private:
   //
@@ -77,19 +78,19 @@ class GraphLoader {
   // @param mindrecord::json &jsn - contains raw data
   // @param std::shared_ptr<Node> *node - return value
   // @param NodeFeatureMap *feature_map -
-  // @param DefaultFeatureMap *default_feature -
+  // @param DefaultNodeFeatureMap *default_feature -
   // @return Status - the status code
   Status LoadNode(const std::vector<uint8_t> &blob, const mindrecord::json &jsn, std::shared_ptr<Node> *node,
-                  NodeFeatureMap *feature_map, DefaultFeatureMap *default_feature);
+                  NodeFeatureMap *feature_map, DefaultNodeFeatureMap *default_feature);
 
   // @param std::vector<uint8_t> &blob - contains data in blob field in mindrecord
   // @param mindrecord::json &jsn - contains raw data
   // @param std::shared_ptr<Edge> *edge - return value, the edge ptr, edge is not yet connected
   // @param FeatureMap *feature_map
-  // @param DefaultFeatureMap *default_feature -
+  // @param DefaultEdgeFeatureMap *default_feature -
   // @return Status - the status code
   Status LoadEdge(const std::vector<uint8_t> &blob, const mindrecord::json &jsn, std::shared_ptr<Edge> *edge,
-                  EdgeFeatureMap *feature_map, DefaultFeatureMap *default_feature);
+                  EdgeFeatureMap *feature_map, DefaultEdgeFeatureMap *default_feature);
 
   // @param std::string key - column name
   // @param std::vector<uint8_t> &blob - contains data in blob field in mindrecord
@@ -108,7 +109,7 @@ class GraphLoader {
                            std::shared_ptr<Tensor> *tensor);
 
   // merge NodeFeatureMap and EdgeFeatureMap of each worker into 1
-  void MergeFeatureMaps(NodeFeatureMap *, EdgeFeatureMap *, DefaultFeatureMap *);
+  void MergeFeatureMaps(NodeFeatureMap *, EdgeFeatureMap *, DefaultNodeFeatureMap *, DefaultEdgeFeatureMap *);
 
   const int32_t num_workers_;
   std::atomic_int row_id_;
@@ -118,7 +119,8 @@ class GraphLoader {
   std::vector<std::deque<std::shared_ptr<Edge>>> e_deques_;
   std::vector<NodeFeatureMap> n_feature_maps_;
   std::vector<EdgeFeatureMap> e_feature_maps_;
-  std::vector<DefaultFeatureMap> default_feature_maps_;
+  std::vector<DefaultNodeFeatureMap> default_node_feature_maps_;
+  std::vector<DefaultEdgeFeatureMap> default_edge_feature_maps_;
   const std::vector<std::string> keys_;
 };
 }  // namespace gnn

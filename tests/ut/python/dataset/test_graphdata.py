@@ -125,7 +125,7 @@ def test_graphdata_graphinfo():
     assert graph_info['node_num'] == {1: 10, 2: 10}
     assert graph_info['edge_num'] == {0: 40}
     assert graph_info['node_feature_type'] == [1, 2, 3, 4]
-    assert graph_info['edge_feature_type'] == []
+    assert graph_info['edge_feature_type'] == [1, 2]
 
 
 class RandomBatchedSampler(ds.Sampler):
@@ -204,7 +204,6 @@ def test_graphdata_randomwalkdefault():
     logger.info('test randomwalk with default parameters.\n')
     g = ds.GraphData(SOCIAL_DATA_FILE, 1)
     nodes = g.get_all_nodes(1)
-    print(len(nodes))
     assert len(nodes) == 33
 
     meta_path = [1 for _ in range(39)]
@@ -219,12 +218,23 @@ def test_graphdata_randomwalk():
     logger.info('test random walk with given parameters.\n')
     g = ds.GraphData(SOCIAL_DATA_FILE, 1)
     nodes = g.get_all_nodes(1)
-    print(len(nodes))
     assert len(nodes) == 33
 
     meta_path = [1 for _ in range(39)]
     walks = g.random_walk(nodes, meta_path, 2.0, 0.5, -1)
     assert walks.shape == (33, 40)
+
+
+def test_graphdata_getedgefeature():
+    """
+    Test get edge feature
+    """
+    logger.info('test get_edge_feature.\n')
+    g = ds.GraphData(DATASET_FILE)
+    edges = g.get_all_edges(0)
+    features = g.get_edge_feature(edges, [1, 2])
+    assert features[0].shape == (40,)
+    assert features[1].shape == (40,)
 
 
 if __name__ == '__main__':
@@ -236,3 +246,4 @@ if __name__ == '__main__':
     test_graphdata_generatordataset()
     test_graphdata_randomwalkdefault()
     test_graphdata_randomwalk()
+    test_graphdata_getedgefeature()
