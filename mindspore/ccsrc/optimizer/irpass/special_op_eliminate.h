@@ -25,10 +25,8 @@
 #include "ir/optimizer_caller.h"
 #include "ir/pattern_matcher.h"
 #include "ir/visitor.h"
-#include "operator/ops.h"
 #include "optimizer/irpass.h"
 #include "optimizer/irpass/prim_eliminate.h"
-#include "optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
