@@ -100,6 +100,7 @@ constexpr char CONCAT_DIM[] = "concat_dim";
 constexpr char FORWARD[] = "forward";
 constexpr char BACKWARD[] = "backward";
 constexpr char REDISTRIBUTION[] = "redistribution";
+constexpr char SKIP_REDISTRIBUTION[] = "skip_redistribution";
 constexpr char REPLACE[] = "replace";
 constexpr char CONNSYMBOL[] = "/";
 constexpr char INSTANCE_NAME[] = "instance_name";
@@ -131,6 +132,7 @@ constexpr char FORWARD_OP[] = "forward_op";
 constexpr char REDISTRIBUTION_OP[] = "redistribution_op";
 constexpr char DARA_PARALLEL[] = "data_parallel";
 constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
+constexpr char FIELD_SIZE[] = "field_size";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
 

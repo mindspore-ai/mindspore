@@ -28,6 +28,19 @@ Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix
   return Status::SUCCESS;
 }
 
+// skip redistribution for reshape operator
+OperatorVector ConstructOperator::SkipRedisReshapeOP(Shape shape) {
+  OperatorAttrs attrs;
+  ValuePtr param_value = MakeValue(shape);
+  Attr param = std::make_pair(SHAPE, param_value);
+  OperatorParams params = {std::make_pair(param, 2)};
+  OperatorArgs args = std::make_pair(attrs, params);
+  Operator op = std::make_pair(RESHAPE, args);
+  OperatorVector opvector;
+  opvector.push_back(op);
+  return opvector;
+}
+
 Status ConstructOperator::ReshapeOP(Shape shape) {
   int32_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
   int32_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int>());

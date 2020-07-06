@@ -302,16 +302,26 @@ void Redistribution(const std::pair<AnfNodePtr, int> &node_pair, const OperatorI
   MS_LOG(DEBUG) << "Redistribution: middle_node " << middle_node->ToString() << " next_node " << next_node->ToString();
   // extract tensor layout in and out
   if (distribute_operator->outputs_tensor_info().empty()) {
-    MS_LOG(EXCEPTION) << "Failure:pre_node's tensorinfo_in is empty";
+    MS_LOG(WARNING) << "pre_node's tensorinfo_in is empty, operator name is " << distribute_operator->name();
+    return;
   }
 
   if (IntToSize(index - 1) >= next_distribute_operator->inputs_tensor_info().size()) {
-    MS_LOG(EXCEPTION) << "The index is out of range, the index is " << index - 1 << ", the vector size is "
-                      << next_distribute_operator->inputs_tensor_info().size();
+    MS_LOG(WARNING) << "The index is out of range, the index is " << index - 1 << ", the vector size is "
+                    << next_distribute_operator->inputs_tensor_info().size() << "next operator name is "
+                    << next_distribute_operator->name();
+    return;
   }
   TensorInfo tensorinfo_out = next_distribute_operator->inputs_tensor_info()[IntToSize(index - 1)];
   TensorLayout tensorlayout_out = tensorinfo_out.tensor_layout();
   TensorLayout tensorlayout_in = GetTensorInLayout(middle_node, middle_prim, distribute_operator);
+
+  if (tensorlayout_in.skip_redistribution() || tensorlayout_out.skip_redistribution()) {
+    MS_LOG(INFO) << "skip the reshape redistribution, operator name is" << distribute_operator->name()
+                 << "next distribute operator, operator name is" << next_distribute_operator->name();
+    return;
+  }
+
   if (tensor_redistribution.Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
     MS_LOG(ERROR) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim : " << next_prim_name;
     MS_LOG(ERROR) << "Redistribution: middle_node " << middle_node->ToString() << " next_node "

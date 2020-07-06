@@ -35,6 +35,7 @@ class ConstructOperator {
   ConstructOperator() : dev_size_(0) {}
   ~ConstructOperator() = default;
   Status Init(const RankList &dev_list, const Shape &dev_matrix_shape);
+  OperatorVector SkipRedisReshapeOP(Shape shape);
   Status ReshapeOP(Shape shape);
   Status StridedSliceOP(Args args);
   Status AllGatherOP(int32_t dev_dim);
