@@ -60,7 +60,7 @@
 #include "dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "dataset/kernels/image/random_crop_op.h"
 #include "dataset/kernels/image/random_crop_with_bbox_op.h"
-#include "dataset/kernels/image/random_horizontal_flip_bbox_op.h"
+#include "dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
 #include "dataset/kernels/image/random_horizontal_flip_op.h"
 #include "dataset/kernels/image/random_resize_op.h"
 #include "dataset/kernels/image/random_resize_with_bbox_op.h"
