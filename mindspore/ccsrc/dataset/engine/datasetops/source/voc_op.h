@@ -40,7 +40,7 @@ namespace dataset {
 template <typename T>
 class Queue;
 
-using Bbox = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
+using Bbox = std::vector<std::pair<std::string, std::vector<float>>>;
 
 class VOCOp : public ParallelOp, public RandomAccessOp {
  public:
