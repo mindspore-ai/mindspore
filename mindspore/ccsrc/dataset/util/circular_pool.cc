@@ -88,6 +88,9 @@ Status CircularPool::Allocate(size_t n, void **p) {
     while (cirIt.has_next()) {
       auto it = cirIt.Next();
       Arena *ba = it->get();
+      if (ba->get_max_size() < n) {
+        return Status(StatusCode::kOutOfMemory);
+      }
       // If we are asked to move forward the tail
       if (move_tail) {
         Arena *expected = cirIt.cur_tail_;

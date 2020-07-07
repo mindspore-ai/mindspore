@@ -182,6 +182,9 @@ class Queue {
         arr_[k].~T();
       }
     }
+    for (uint64_t i = 0; i < sz_; i++) {
+      std::allocator_traits<Allocator<T>>::construct(alloc_, &(arr_[i]));
+    }
     empty_cv_.ResetIntrpState();
     full_cv_.ResetIntrpState();
     head_ = 0;
