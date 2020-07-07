@@ -84,6 +84,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"transpose", "transpose_d"},
   {"fill", "fill_d"},
   {"unsorted_segment_sum", "unsorted_segment_sum_d"},
+  {"unsorted_segment_prod", "unsorted_segment_prod_d"},
   {"concat", "concat_d"},
   {"slice", "slice_d"},
   {"reduce_sum", "reduce_sum_d"},

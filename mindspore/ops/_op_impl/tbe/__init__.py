@@ -133,6 +133,7 @@ from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose_d import _transpose_d_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
+from .unsorted_segment_prod import _unsorted_segment_prod_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe
 from .logsoftmax import _logsoftmax_tbe
 from .select import _select_tbe
