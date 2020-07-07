@@ -61,6 +61,8 @@ void SparseApplyLazyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_no
   MS_EXCEPTION_IF_NULL(kernel_node);
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
 }
 
 void SparseApplyLazyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -121,10 +123,13 @@ bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> 
   auto indices = reinterpret_cast<int *>(inputs[10]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
   auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
+  auto tmp_grad = reinterpret_cast<float *>(workspace[2]->addr);
+  auto tmp_indices = reinterpret_cast<int *>(workspace[3]->addr);
 
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
-  ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
-                       var_outer_dim_size_);
+  SparseGradient tmp_sparse_grad({tmp_grad, tmp_indices, indices_size_});
+  TwoLevelReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &tmp_sparse_grad, &unique_sparse_grad,
+                               var_first_dim_size_, var_outer_dim_size_);
 
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
   MultiThreadComputeParams input_params;
