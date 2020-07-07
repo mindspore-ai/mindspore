@@ -22,11 +22,22 @@ from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 
 def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):
     """Rearranges an image to row vector"""
-    batch_num, channel, height, width = img.shape
-    out_h = (height + 2 * pad - filter_h - (filter_h - 1) * (dilation[2] - 1)) // stride[2] + 1
-    out_w = (width + 2 * pad - filter_w - (filter_w - 1) * (dilation[3] - 1)) // stride[3] + 1
+    if isinstance(pad, int):
+        pad_top = pad
+        pad_bottom = pad
+        pad_left = pad
+        pad_right = pad
+    elif isinstance(pad, tuple) and len(pad) == 4:
+        pad_top, pad_bottom, pad_left, pad_right = pad
+    else:
+        raise ValueError(f"The \'pad\' should be an int number or "
+                         f"a tuple of two or four int numbers, but got {pad}")
 
-    img = np.pad(img, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant')
+    batch_num, channel, height, width = img.shape
+    out_h = (height + pad_top + pad_bottom - filter_h - (filter_h - 1) * (dilation[2] - 1)) // stride[2] + 1
+    out_w = (width + pad_left + pad_right - filter_w - (filter_w - 1) * (dilation[3] - 1)) // stride[3] + 1
+
+    img = np.pad(img, [(0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)], 'constant')
     col = np.zeros((batch_num, channel, filter_h, filter_w, out_h, out_w)).astype(img.dtype)
 
     for y in range(filter_h):
@@ -43,10 +54,21 @@ def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):
 def conv2d(x, weight, bias=None, stride=1, pad=0,
            dilation=1, groups=1, padding_mode='zeros'):
     """Convolution 2D"""
+    if isinstance(pad, int):
+        pad_top = pad
+        pad_bottom = pad
+        pad_left = pad
+        pad_right = pad
+    elif isinstance(pad, tuple) and len(pad) == 4:
+        pad_top, pad_bottom, pad_left, pad_right = pad
+    else:
+        raise ValueError(f"The \'pad\' should be an int number or "
+                         f"a tuple of two or four int numbers, but got {pad}")
+
     batch_num, _, x_h, x_w = x.shape
     filter_num, _, filter_h, filter_w = weight.shape
-    out_h = 1 + int((x_h + 2 * pad - filter_h - (filter_h - 1) * (dilation[2] - 1)) / stride[2])
-    out_w = 1 + int((x_w + 2 * pad - filter_w - (filter_w - 1) * (dilation[3] - 1)) / stride[3])
+    out_h = 1 + int((x_h + pad_top + pad_bottom - filter_h - (filter_h - 1) * (dilation[2] - 1)) / stride[2])
+    out_w = 1 + int((x_w + pad_left + pad_right - filter_w - (filter_w - 1) * (dilation[3] - 1)) / stride[3])
     col = im2col(x, filter_h, filter_w, stride, pad, dilation)
     col_w = np.reshape(weight, (filter_num, -1)).T
     out = np.dot(col, col_w)
