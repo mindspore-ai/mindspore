@@ -78,26 +78,6 @@ def test_ssim_filter_sigma_negative():
         _ = SSIMNet(filter_sigma=-0.1)
 
 
-def test_ssim_k1_k2_wrong_value():
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k1=1.1)
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k1=1.0)
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k1=0.0)
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k1=-1.0)
-
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k2=1.1)
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k2=1.0)
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k2=0.0)
-    with pytest.raises(ValueError):
-        _ = SSIMNet(k2=-1.0)
-
-
 def test_ssim_different_shape():
     shape_1 = (8, 3, 16, 16)
     shape_2 = (8, 3, 8, 8)
