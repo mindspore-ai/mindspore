@@ -53,9 +53,9 @@ class GPUKernelRuntime : public KernelRuntime {
   // The related functions and members for using dynamic memory pool.
   void InitKernelRefCount(const session::KernelGraph *graph);
   void InitKernelOutputAddress(const session::KernelGraph *graph);
+  void InitMemorySwapInfo(const session::KernelGraph *graph);
   void ClearKernelOutputAddress(const session::KernelGraph *graph);
   bool LaunchKernelDynamic(const session::KernelGraph *graph);
-  bool AddMemSwapTask(const AnfNodePtr &kernel);
   bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size);
   void *AttemptMallocMem(size_t size);
   bool AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
@@ -74,8 +74,14 @@ class GPUKernelRuntime : public KernelRuntime {
                                   std::vector<size_t> size_list);
   void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces,
                             uint32_t graph_id);
+  bool AddMemorySwapTask(const AnfNodePtr &kernel);
+  bool UpdateMemorySwapInfo(const session::KernelGraph *graph);
+  bool UpdateMemorySwapTask(const AnfNodePtr &kernel);
+  void UpdateHostSwapQueue(const DeviceAddressPtr device_address);
+  void UpdateDeviceSwapQueue();
+  void ClearSwapQueue();
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
-  std::unordered_map<void *, MemSwapManagerPtr> mem_swap_map_;
+  std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
   MemSwapManagerPtr mem_swap_manager_{nullptr};
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
