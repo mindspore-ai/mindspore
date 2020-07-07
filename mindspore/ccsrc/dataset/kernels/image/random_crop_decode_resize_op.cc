@@ -31,7 +31,7 @@ Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, s
   if (input == nullptr) {
     RETURN_STATUS_UNEXPECTED("input tensor is null");
   }
-  if (!HasJpegMagic(input)) {
+  if (!IsNonEmptyJPEG(input)) {
     DecodeOp op(true);
     std::shared_ptr<Tensor> decoded;
     RETURN_IF_NOT_OK(op.Compute(input, &decoded));
