@@ -289,22 +289,6 @@ static void RecurseToUpdateCallRealInput(NotNull<KernelGraphPtr> graph,
   // this action should from bottom to top
   graph->UpdateCallRealInput();
 }
-
-void InsertMakeTupleForEmptyGraph(NotNull<KernelGraphPtr> graph) {
-  auto return_node = graph->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  if (return_node->size() <= kReturnDataIndex) {
-    return;
-  }
-  auto origin_output = return_node->input(kReturnDataIndex);
-  MS_EXCEPTION_IF_NULL(origin_output);
-  std::vector<AnfNodePtr> make_tuple_input{
-    std::make_shared<ValueNode>(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), origin_output};
-  auto new_outputs = graph->NewCNode(make_tuple_input);
-  MS_EXCEPTION_IF_NULL(new_outputs);
-  new_outputs->set_abstract(origin_output->abstract());
-  return_node->set_input(kReturnDataIndex, new_outputs);
-}
 }  // namespace
 
 GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
@@ -321,17 +305,15 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   BackendOptimization(all_graphs);
+  // split switch
+  SplitGraphs(NOT_NULL(root_graph));
   // empty graph dont entry to backend
-  if (std::none_of(root_graph->execution_order().begin(), root_graph->execution_order().end(),
-                   [](const CNodePtr &cnode) -> bool { return AnfAlgo::IsRealKernel(cnode); })) {
+  if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
-    InsertMakeTupleForEmptyGraph(NOT_NULL(root_graph));
     root_graph->set_executable(false);
     InitRuntimeResource();
     return root_graph->graph_id();
   }
-  // split switch
-  SplitGraphs(NOT_NULL(root_graph));
   // insert goto labels and label_sets
   LinkChildGraphs(NOT_NULL(root_graph));
   // resource initialize
@@ -1649,6 +1631,10 @@ void AscendSession::BackendOptimization(const std::vector<KernelGraphPtr> &all_g
 
 void AscendSession::SplitGraphs(NotNull<KernelGraphPtr> root_graph) {
   std::set<KernelGraphPtr> memo;
+  // if output of graph is nullptr,no need insert maketuple at the end of graph
+  if (root_graph->output() == nullptr) {
+    return;
+  }
   // if root graph output is a call node ,the root graph is condition graph of 'if' sentence
   auto root_graph_output = AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0).first;
   if (AnfAlgo::CheckPrimitiveType(root_graph_output, prim::kPrimCall)) {
