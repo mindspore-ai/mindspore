@@ -54,16 +54,10 @@ class TensorData {
   virtual ssize_t ndim() const = 0;
   /// Data pointer.
   virtual void *data() = 0;
-  /// Shape of data.
-  virtual std::vector<int> shape() const = 0;
   /// Is data equals.
   virtual bool equals(const TensorData &other) const = 0;
-  /// Check for lazy allocation.
-  virtual void CheckDataSafe() = 0;
-  /// To string for lazy allocation.
-  virtual std::string ToStringSafe() = 0;
   /// To string.
-  virtual std::string ToString() const = 0;
+  virtual std::string ToString(const TypeId type, const std::vector<int> &shape) const = 0;
 };
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
@@ -221,12 +215,6 @@ class Tensor : public MetaTensor {
   std::string ToString() const override;
 
   std::string ToStringRepr() const;
-
-  /// To string for lazy allocation.
-  std::string ToStringSafe();
-
-  /// To string for lazy allocation.
-  std::string ToStringReprSafe();
 
   bool is_init() { return init_flag_; }
   void set_init_flag(bool flag) { init_flag_ = flag; }
