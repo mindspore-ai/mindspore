@@ -22,7 +22,7 @@ import sys
 from mindspore import log as logger
 from . import datasets as de
 from ..transforms.vision.utils import Inter, Border
-from ..core.configuration import config
+from ..core import config
 
 def serialize(dataset, json_filepath=None):
     """
