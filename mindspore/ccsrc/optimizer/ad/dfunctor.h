@@ -37,27 +37,9 @@ namespace mindspore {
 namespace ad {
 struct PrimitiveTotalEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
-    if (t1->name() != t2->name()) {
-      return false;
-    }
-
-    auto const &attrs1 = t1->attrs();
-    auto const &attrs2 = t2->attrs();
-    if (attrs1.size() != attrs2.size()) {
-      return false;
-    }
-
-    for (auto &attr1 : attrs1) {
-      if (!t2->HasAttr(attr1.first)) {
-        return false;
-      }
-
-      if (!(*(attr1.second) == *(t2->GetAttr(attr1.first)))) {
-        return false;
-      }
-    }
-
-    return true;
+    MS_EXCEPTION_IF_NULL(t1);
+    MS_EXCEPTION_IF_NULL(t2);
+    return *t1 == *t2;
   }
 };
 
