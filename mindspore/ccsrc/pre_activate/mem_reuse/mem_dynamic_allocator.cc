@@ -184,14 +184,16 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr device
   if (iter != global_mem_block_list_.begin()) {
     return *(--iter);
   }
-  MS_LOG(ERROR) << "Can't find the mem_block of the device address[" << device_addr << "].";
   return nullptr;
 }
 
 void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto mem_block = FindMemBlock(device_addr);
-  MS_EXCEPTION_IF_NULL(mem_block);
+  if (mem_block == nullptr) {
+    MS_LOG(WARNING) << "Can't find the mem_block of the device address[" << device_addr << "].";
+    return;
+  }
   CombineMemBuf(mem_block, device_addr);
 }
 

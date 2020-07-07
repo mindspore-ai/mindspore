@@ -32,11 +32,9 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   void set_device_mem_pool_base(uint8_t *device_mem_pool_base);
-  void set_device_mem_pool_size(uint64_t device_mem_pool_size) {
-    device_mem_pool_size_ = device_mem_pool_size;
-    free_mem_size_ = device_mem_pool_size_;
-    total_mem_size_ = free_mem_size_;
-  }
+  void set_graph_dynamic_mem_offset(uint64_t graph_dynamic_mem_offset);
+
+  uint64_t device_mem_pool_offset() const;
   size_t free_mem_size() override;
   size_t total_mem_size() override;
 
@@ -48,16 +46,12 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
  protected:
   // The real size by memory alloc aligned.
   size_t AlignMemorySize(size_t size) const override;
-  // Get the minimum memory unit size using for dynamic extend.
-  size_t mem_alloc_unit_size() const override;
 
  private:
   AscendMemoryPool() = default;
-  bool has_malloc_{false};
   uint8_t *device_mem_pool_base_{nullptr};
-  uint64_t device_mem_pool_size_{0};
-  size_t free_mem_size_{0};
-  size_t total_mem_size_{0};
+  uint64_t device_mem_pool_offset_{0};
+  uint64_t graph_dynamic_mem_offset_{0};
 };
 }  // namespace ascend
 }  // namespace device

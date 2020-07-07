@@ -303,12 +303,22 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
   return sync_ok;
 }
 
+void AscendDeviceAddress::UpdateCommunicationAddress() {
+  MS_EXCEPTION_IF_NULL(ptr_);
+  communication_ptr_ = reinterpret_cast<uint8_t *>(ptr_) - kMemAlignSize;
+}
+
 AscendDeviceAddress::~AscendDeviceAddress() {
   if (ptr_ == nullptr) {
     return;
   }
   if (from_mem_pool_) {
-    AscendMemoryPool::GetInstance().FreeTensorMem(ptr_);
+    if (communication_ptr_ != nullptr) {
+      AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr_);
+      communication_ptr_ = nullptr;
+    } else {
+      AscendMemoryPool::GetInstance().FreeTensorMem(ptr_);
+    }
     ptr_ = nullptr;
   }
 }

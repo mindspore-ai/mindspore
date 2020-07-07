@@ -39,6 +39,7 @@ class AscendDeviceAddress : public DeviceAddress {
   bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type, const void *host_ptr) const override;
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kAscend; }
+  void UpdateCommunicationAddress() override;
 #ifdef ENABLE_DUMP_E2E
   bool DumpMemToFile(bool dump_mode, const std::string &filepath, const std::string &host_fmt,
                      const std::vector<int> &host_shape, TypeId host_type) const;
@@ -53,6 +54,7 @@ class AscendDeviceAddress : public DeviceAddress {
   bool ConvertFormatAndSyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type,
                                         const void *host_ptr) const;
   void SyncStream() const;
+  uint8_t *communication_ptr_{nullptr};
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend
