@@ -58,9 +58,12 @@ class SparseApplyAdamCpuKernelTest : public UT::Common {
     inputs_.push_back(CreateKernelAddress(indices.data()));
   }
 
-  void CreateWorkspaceAddress(std::vector<float> &new_grad, std::vector<int> &new_indices, std::vector<float> &m_t) {
+  void CreateWorkspaceAddress(std::vector<float> &new_grad, std::vector<int> &new_indices, std::vector<float> &tmp_grad,
+                              std::vector<int> &tmp_indices, std::vector<float> &m_t) {
     workspace_.push_back(CreateKernelAddress(new_grad.data()));
     workspace_.push_back(CreateKernelAddress(new_indices.data()));
+    workspace_.push_back(CreateKernelAddress(tmp_grad.data()));
+    workspace_.push_back(CreateKernelAddress(tmp_indices.data()));
     workspace_.push_back(CreateKernelAddress(m_t.data()));
   }
 
@@ -95,8 +98,10 @@ TEST_F(SparseApplyAdamCpuKernelTest, dense_test) {
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
   std::vector<int> new_indices(3);
+  std::vector<float> tmp_grad(3 * 3 * 3);
+  std::vector<int> tmp_indices(3);
   std::vector<float> m_t(3 * 3 * 3);
-  CreateWorkspaceAddress(new_grad, new_indices, m_t);
+  CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices, m_t);
   sparse_adam_->Launch(inputs_, workspace_, outputs_);
   for (size_t i = 0; i < 3 * 3 * 3; ++i) {
     EXPECT_TRUE(std::fabs(var_[i] - 0.999684) < 1e-6);
@@ -120,8 +125,10 @@ TEST_F(SparseApplyAdamCpuKernelTest, sparse_test1) {
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
   std::vector<int> new_indices(3);
+  std::vector<float> tmp_grad(3 * 3 * 3);
+  std::vector<int> tmp_indices(3);
   std::vector<float> m_t(3 * 3 * 3);
-  CreateWorkspaceAddress(new_grad, new_indices, m_t);
+  CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices, m_t);
   sparse_adam_->Launch(inputs_, workspace_, outputs_);
   for (size_t i = 0; i < 3 * 3; ++i) {
     EXPECT_TRUE(std::fabs(var_[i] - 0.999684) < 1e-6);
@@ -149,8 +156,10 @@ TEST_F(SparseApplyAdamCpuKernelTest, sparse_test2) {
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
   std::vector<int> new_indices(3);
+  std::vector<float> tmp_grad(3 * 3 * 3);
+  std::vector<int> tmp_indices(3);
   std::vector<float> m_t(3 * 3 * 3);
-  CreateWorkspaceAddress(new_grad, new_indices, m_t);
+  CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices, m_t);
   sparse_adam_->Launch(inputs_, workspace_, outputs_);
   for (size_t i = 0; i < 3 * 3; ++i) {
     EXPECT_TRUE(std::fabs(var_[i] - 0.999715) < 1e-6);
