@@ -293,6 +293,9 @@ static void RecurseToUpdateCallRealInput(NotNull<KernelGraphPtr> graph,
 void InsertMakeTupleForEmptyGraph(NotNull<KernelGraphPtr> graph) {
   auto return_node = graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
+  if (return_node->size() <= kReturnDataIndex) {
+    return;
+  }
   auto origin_output = return_node->input(kReturnDataIndex);
   MS_EXCEPTION_IF_NULL(origin_output);
   std::vector<AnfNodePtr> make_tuple_input{
