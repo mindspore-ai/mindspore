@@ -62,14 +62,16 @@
     uint32_t img_h = input[0]->shape()[0];                                                  \
     uint32_t img_w = input[0]->shape()[1];                                                  \
     for (uint32_t i = 0; i < num_of_boxes; i++) {                                           \
-      uint32_t min_x = 0;                                                                   \
-      uint32_t min_y = 0;                                                                   \
-      uint32_t b_w = 0;                                                                     \
-      uint32_t b_h = 0;                                                                     \
-      input[1]->GetItemAt<uint32_t>(&min_x, {i, 0});                                        \
-      input[1]->GetItemAt<uint32_t>(&min_y, {i, 1});                                        \
-      input[1]->GetItemAt<uint32_t>(&b_w, {i, 2});                                          \
-      input[1]->GetItemAt<uint32_t>(&b_h, {i, 3});                                          \
+      float min_x = 0.0, min_y = 0.0, b_w = 0.0, b_h = 0.0;                                 \
+      bool passing_data_fetch = true;                                                       \
+      passing_data_fetch &= input[1]->GetItemAt<float>(&min_x, {i, 0}).IsOk();              \
+      passing_data_fetch &= input[1]->GetItemAt<float>(&min_y, {i, 1}).IsOk();              \
+      passing_data_fetch &= input[1]->GetItemAt<float>(&b_w, {i, 2}).IsOk();                \
+      passing_data_fetch &= input[1]->GetItemAt<float>(&b_h, {i, 3}).IsOk();                \
+      if (!passing_data_fetch) {                                                            \
+        return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,                     \
+                      "Fetching BBox values failed in BOUNDING_BOX_CHECK.");                \
+      }                                                                                     \
       if ((min_x + b_w > img_w) || (min_y + b_h > img_h)) {                                 \
         return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,              \
                       "At least one of the bounding boxes is out of bounds of the image."); \

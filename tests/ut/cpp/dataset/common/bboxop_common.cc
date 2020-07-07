@@ -118,14 +118,11 @@ void BBoxOpCommon::SaveImagesWithAnnotations(BBoxOpCommon::FileType type, const 
     bool passing_data_fetch = true;
     // For each bounding box draw on the image.
     for (uint32_t i = 0; i < num_of_boxes; i++) {
-      uint32_t x = 0;
-      uint32_t y = 0;
-      uint32_t w = 0;
-      uint32_t h = 0;
-      passing_data_fetch &= row[1]->GetUnsignedIntAt(&x, {i, 0}).IsOk();
-      passing_data_fetch &= row[1]->GetUnsignedIntAt(&y, {i, 1}).IsOk();
-      passing_data_fetch &= row[1]->GetUnsignedIntAt(&w, {i, 2}).IsOk();
-      passing_data_fetch &= row[1]->GetUnsignedIntAt(&h, {i, 3}).IsOk();
+      float x = 0.0, y = 0.0, w = 0.0, h = 0.0;
+      passing_data_fetch &= row[1]->GetItemAt<float>(&x, {i, 0}).IsOk();
+      passing_data_fetch &= row[1]->GetItemAt<float>(&y, {i, 1}).IsOk();
+      passing_data_fetch &= row[1]->GetItemAt<float>(&w, {i, 2}).IsOk();
+      passing_data_fetch &= row[1]->GetItemAt<float>(&h, {i, 3}).IsOk();
       if (!passing_data_fetch) {
         MS_LOG(ERROR) << "Fetching bbox coordinates failed in SaveImagesWithAnnotations.";
         EXPECT_TRUE(passing_data_fetch);
@@ -193,24 +190,24 @@ bool BBoxOpCommon::LoadAnnotationFile(const std::string &path, std::shared_ptr<T
     MS_LOG(ERROR) << "No object find in " + path;
     return false;
   }
-  std::vector<uint32_t> return_value_list;
+  std::vector<float> return_value_list;
   dsize_t bbox_count = 0;      // keep track of number of bboxes in file
   dsize_t bbox_val_count = 4;  // creating bboxes of size 4 to test function
   // FILE OK TO READ
   while (object != nullptr) {
     bbox_count += 1;
     std::string label_name;
-    uint32_t xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+    float xmin = 0.0, ymin = 0.0, xmax = 0.0, ymax = 0.0;
     XMLElement *bbox_node = object->FirstChildElement("bndbox");
     if (bbox_node != nullptr) {
       XMLElement *xmin_node = bbox_node->FirstChildElement("xmin");
-      if (xmin_node != nullptr) xmin = xmin_node->UnsignedText();
+      if (xmin_node != nullptr) xmin = xmin_node->FloatText();
       XMLElement *ymin_node = bbox_node->FirstChildElement("ymin");
-      if (ymin_node != nullptr) ymin = ymin_node->UnsignedText();
+      if (ymin_node != nullptr) ymin = ymin_node->FloatText();
       XMLElement *xmax_node = bbox_node->FirstChildElement("xmax");
-      if (xmax_node != nullptr) xmax = xmax_node->UnsignedText();
+      if (xmax_node != nullptr) xmax = xmax_node->FloatText();
       XMLElement *ymax_node = bbox_node->FirstChildElement("ymax");
-      if (ymax_node != nullptr) ymax = ymax_node->UnsignedText();
+      if (ymax_node != nullptr) ymax = ymax_node->FloatText();
     } else {
       MS_LOG(ERROR) << "bndbox dismatch in " + path;
       return false;
