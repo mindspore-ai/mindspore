@@ -3236,3 +3236,50 @@ class TransShape(PrimitiveWithInfer):
         return {'shape': shp,
                 'dtype': dtype,
                 'value': None}
+
+
+class EmbeddingLookup(PrimitiveWithInfer):
+    """
+    Returns a slice of input tensor based on the specified indices.
+
+    This Primitive has the similar functionality as GatherV2 operating on `axis = 0`, but has one more inputs:
+    `offset`.
+
+    Inputs:
+        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The Tensor slice, instead of the entire Tensor.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Values can be out of range of `input_params`,
+          and the exceeding part will be filled with 0 in the output.
+        - **offset** (int) - Specifies the offset value of this `input_params` slice. Thus the real indices
+          are equal to `input_indices` minus `offset`.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
+        >>> offset = 4
+        >>> out = P.EmbeddingLookup()(input_params, input_indices, offset)
+        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init index_select"""
+        self.__setattr_flag__ = True
+        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
+                                outputs=['output'])
+
+    def __infer__(self, params, indices, offset):
+        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
+        params_shp = params['shape']
+        if len(params_shp) != 2:
+            raise ValueError("The dimension of 'params' in EmbeddingLookup must be 2, but got %d." % len(params_shp))
+        out_shape = indices['shape'] + params_shp[1:]
+        out = {'shape': out_shape,
+               'dtype': params['dtype'],
+               'value': None}
+        return out

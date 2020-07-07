@@ -19,7 +19,6 @@ import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore import Tensor, context
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
@@ -42,17 +41,15 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict)
 
 class Net(nn.Cell):
-    def __init__(self, shape, offset, reduce_scatter_flag, split_num):
+    def __init__(self, shape, offset):
         super().__init__()
         self.index = Tensor(np.ones(shape), dtype=ms.int32)
         self.offset = offset
-        self.reduce_scatter_flag = reduce_scatter_flag
-        self.split_num = split_num
-        self.elu = inner.EmbeddingLookup()
+        self.elu = P.EmbeddingLookup()
         self.mm = P.BatchMatMul()
 
     def construct(self, x, y):
-        out = self.elu(x, self.index, self.offset, self.reduce_scatter_flag, self.split_num)
+        out = self.elu(x, self.index, self.offset)
         out = self.mm(out, y)
         return out
 
@@ -60,9 +57,7 @@ class Net(nn.Cell):
 def test_embeddinglookup_reducescatter_false():
     shape = [8, 8]
     offset = 8
-    reduce_scatter_flag = False
-    split_num = 1
-    net = NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num))
+    net = NetWithLoss(Net(shape, offset))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -71,11 +66,9 @@ def test_embeddinglookup_reducescatter_false():
 
 
 def test_embeddinglookup_reducescatter_true():
-    shape = [64, 8]
+    shape = [8, 8]
     offset = 8
-    reduce_scatter_flag = True
-    split_num = 8
-    net = NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num))
+    net = NetWithLoss(Net(shape, offset))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -86,9 +79,7 @@ def test_embeddinglookup_reducescatter_true():
 def test_embeddinglookup_reducescatter_false_grad():
     shape = [8, 8]
     offset = 8
-    reduce_scatter_flag = False
-    split_num = 1
-    net = GradWrap(NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num)))
+    net = GradWrap(NetWithLoss(Net(shape, offset)))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -98,11 +89,9 @@ def test_embeddinglookup_reducescatter_false_grad():
 
 def test_embeddinglookup_reducescatter_true_grad():
     context.set_context(save_graphs=True)
-    shape = [64, 8]
+    shape = [8, 8]
     offset = 8
-    reduce_scatter_flag = True
-    split_num = 8
-    net = GradWrap(NetWithLoss(Net(shape, offset, reduce_scatter_flag, split_num)))
+    net = GradWrap(NetWithLoss(Net(shape, offset)))
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
