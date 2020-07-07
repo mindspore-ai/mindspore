@@ -17,24 +17,18 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_OPT_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_OPT_H_
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/optimizer_caller.h"
 #include "operator/ops.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-class Optimizer;
-
-using OptimizerPtr = std::shared_ptr<Optimizer>;
-using OptimizerWeakPtr = std::weak_ptr<Optimizer>;
-
-using PredicateFuncType = std::function<bool(const AnfNodePtr &)>;
-using TransformFuncType = std::function<AnfNodePtr(const OptimizerPtr &, const AnfNodePtr &)>;
 
 // Define the interaction mode between an Optimize pass and Renormalize pass
 // FORCE_RENORM: if the pass modified the graph then the next Renormalize will be executed
@@ -43,26 +37,26 @@ enum RenormAction : int { FORCE_RENORM = 0, CHECK_RENORM };
 
 class Substitution {
  public:
-  TransformFuncType transform_{nullptr};
+  OptimizerCallerPtr transform_;
   std::string name_;
   PredicateFuncType predicate_{nullptr};
   // an enum to mark this Substitution relation to renormalize pass
   RenormAction renorm_action_;
-  Substitution(const TransformFuncType &transform, const std::string &name, const PredicateFuncType &predicate,
+  Substitution(const OptimizerCallerPtr &transform, const std::string &name, const PredicateFuncType &predicate,
                const RenormAction &renorm_action)
       : transform_(transform), name_(name), predicate_(predicate), renorm_action_(renorm_action) {}
   ~Substitution() = default;
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) const;
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node);
 };
 
 using SubstitutionPtr = std::shared_ptr<Substitution>;
 
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name, const PrimitivePtr &prim,
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name, const PrimitivePtr &prim,
                                  const RenormAction &action_renorm = CHECK_RENORM);
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
                                  const std::vector<PrimitivePtr> &prims,
                                  const RenormAction &action_renorm = CHECK_RENORM);
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
                                  const PredicateFuncType &predicate, const RenormAction &action_renorm = CHECK_RENORM);
 
 class SubstitutionList {

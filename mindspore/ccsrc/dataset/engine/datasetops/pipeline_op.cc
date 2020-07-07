@@ -20,7 +20,8 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-PipelineOp::PipelineOp(int32_t op_connector_size) : DatasetOp(op_connector_size) {}
+PipelineOp::PipelineOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler)
+    : DatasetOp(op_connector_size, sampler) {}
 
 // A print method typically used for debugging
 void PipelineOp::Print(std::ostream &out, bool show_all) const {

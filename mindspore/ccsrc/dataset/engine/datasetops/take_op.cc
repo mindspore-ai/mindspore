@@ -73,7 +73,6 @@ Status TakeOp::operator()() {
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> buf;
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
 
   while (buf->eof() == false) {
     if (take_count_ == max_takes_) {
@@ -130,14 +129,14 @@ Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<D
 
 Status TakeOp::PrepareNodePostAction() {
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  tree_->AddToRepeatStack(shared_from_this());
+  tree_->AddToEOEOpStack(shared_from_this());
   return Status::OK();
 }
 
 // Visitor accept method for NodePass
 Status TakeOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<TakeOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<TakeOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

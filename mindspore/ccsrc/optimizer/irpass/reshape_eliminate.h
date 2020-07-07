@@ -19,11 +19,12 @@
 
 #include <vector>
 
+#include "ir/func_graph.h"
+#include "ir/optimizer_caller.h"
+#include "ir/visitor.h"
+#include "operator/ops.h"
 #include "optimizer/irpass.h"
 #include "optimizer/optimizer.h"
-#include "ir/visitor.h"
-#include "ir/func_graph.h"
-#include "operator/ops.h"
 #include "pipeline/static_analysis/dshape.h"
 
 namespace mindspore {
@@ -124,12 +125,12 @@ class TwoReshapeEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr}, shape_{nullptr};
 };
 
-class ReshapeEliminater {
+class ReshapeEliminater : public OptimizerCaller {
  public:
   ReshapeEliminater() : reshape_same_shape_eliminater_(), two_reshape_eliminater_() {}
   ~ReshapeEliminater() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     auto new_node = reshape_same_shape_eliminater_(optimizer, node);
     if (new_node != nullptr) {
       return new_node;

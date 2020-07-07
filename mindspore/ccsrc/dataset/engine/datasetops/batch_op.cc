@@ -76,7 +76,6 @@ Status BatchOp::operator()() {
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());  // must come after the first fetch above
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
   while (child_iterator_->eof_handled() == false) {
@@ -410,7 +409,7 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 // Visitor accept method for NodePass
 Status BatchOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<BatchOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<BatchOp>(), modified);
 }
 
 }  // namespace dataset

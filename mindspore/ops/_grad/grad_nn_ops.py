@@ -146,6 +146,40 @@ def get_bprop_max_pool_with_argmax(self):
     return bprop
 
 
+@bprop_getters.register(G.MaxPoolGrad)
+def get_bprop_max_pool_grad_grad(self):
+    """Grad definition for `MaxPoolGrad` operation."""
+    maxpool_grad_grad = G.MaxPoolGradGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        padding=self.padding)
+
+    def bprop(x1, x2, grad, out, dout):
+        dx1 = zeros_like(x1)
+        dx2 = zeros_like(x2)
+        dgrad = maxpool_grad_grad(x1, x2, dout)
+        return (dx1, dx2, dgrad)
+
+    return bprop
+
+
+@bprop_getters.register(G.MaxPoolGradGrad)
+def get_bprop_max_pool_grad_grad_grad(self):
+    """Grad definition for `MaxPoolGradGrad` operation."""
+    maxpool_grad = G.MaxPoolGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        padding=self.padding)
+
+    def bprop(x1, x2, grad, out, dout):
+        dx1 = zeros_like(x1)
+        dx2 = zeros_like(x2)
+        dgrad = maxpool_grad(x1, x2, dout)
+        return (dx1, dx2, dgrad)
+
+    return bprop
+
+
 @bprop_getters.register(P.MaxPool)
 def get_bprop_max_pool_grad(self):
     """Grad definition for `MaxPool` operation."""
@@ -331,6 +365,21 @@ def get_bprop_softplus(self):
 
     def bprop(x, out, dout):
         dx = softplus_grad(dout, x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Softsign)
+def get_bprop_softsign(self):
+    """Grad definition for `Softsign` operation."""
+    mul = P.Mul()
+    absolute = P.Abs()
+    div = P.Div()
+    square = P.Square()
+
+    def bprop(x, out, dout):
+        dx = mul(dout, div(1, square(1 + absolute(x))))
         return (dx,)
 
     return bprop
@@ -726,8 +775,20 @@ def get_bprop_basic_lstm_cell(self):
     def bprop(x, h, c, w, b, out, dout):
         _, _, it, jt, ft, ot, tanhct = out
         dct, dht, _, _, _, _, _ = dout
-        dgate, dct_1 = basic_lstm_cell_cstate_grad(c, dht, dct, it, ft, jt, ot, tanhct)
+        dgate, dct_1 = basic_lstm_cell_cstate_grad(c, dht, dct, it, jt, ft, ot, tanhct)
         dxt, dht = basic_lstm_cell_input_grad(dgate, w)
         dw, db = basic_lstm_cell_weight_grad(F.depend(x, dxt), h, dgate)
         return dxt, dht, dct_1, dw, db
+    return bprop
+
+
+@bprop_getters.register(P.LRN)
+def get_bprop_lrn(self):
+    """Grad definition for `LRN` operation."""
+    grad = G.LRNGrad(self.depth_radius, self.bias, self.alpha, self.beta)
+
+    def bprop(x, out, dout):
+        dx = grad(dout, x, out)
+        return (dx,)
+
     return bprop

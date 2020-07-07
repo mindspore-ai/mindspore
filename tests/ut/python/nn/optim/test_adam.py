@@ -107,7 +107,7 @@ def test_sparse_adam_compile():
     net = NetWithSparseGatherV2()
     net.set_train()
 
-    optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0)
+    optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9)
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)
 

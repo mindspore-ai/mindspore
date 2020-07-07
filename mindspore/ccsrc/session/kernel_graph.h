@@ -75,7 +75,7 @@ class KernelGraph : public FuncGraph {
   // add value node tensor relation map
   void TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node);
   // get all value nodes of graph
-  std::unordered_set<ValueNodePtr> graph_value_nodes() { return graph_value_nodes_; }
+  const std::unordered_set<ValueNodePtr> graph_value_nodes() const { return graph_value_nodes_; }
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   // ref output is in map
@@ -130,6 +130,9 @@ class KernelGraph : public FuncGraph {
   // get real inputs
   const std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> &real_inputs() const { return real_inputs_; }
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
+  // mark unreused args
+  void AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph);
+  const std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> &unreuse_args() const { return unreuse_args_; }
   // used to dump ir
   std::string ToString() const override;
   // update the real input if the node is a call
@@ -144,6 +147,13 @@ class KernelGraph : public FuncGraph {
   void PrintGraphExecuteOrder() const;
   const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
+  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node);
+  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node);
+  AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
+  bool IsInternalOutput(const AnfNodePtr &node) const;
+  AnfNodePtr GetFrontNodeByInternalOutput(const AnfNodePtr &node) const;
+  void AddFinalOutputKernel(const AnfNodePtr &node);
+  bool IsFinalOutputKernel(const AnfNodePtr &node) const;
 
  private:
   // remove value node form graph
@@ -198,10 +208,14 @@ class KernelGraph : public FuncGraph {
   std::shared_ptr<KernelGraph> parent_graph_;
   // record real parameters,inputs_ is the formal parameters
   std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_;
+  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> unreuse_args_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
   bool null_output_;
+  std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
+  std::unordered_map<AnfNodePtr, AnfNodePtr> internal_outputs_to_front_map_;
+  std::set<AnfNodePtr> final_output_kernels_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

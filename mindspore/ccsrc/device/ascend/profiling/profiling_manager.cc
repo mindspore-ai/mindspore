@@ -15,11 +15,8 @@
  */
 
 #include "device/ascend/profiling/profiling_manager.h"
-
 #include <stdlib.h>
 #include <vector>
-
-#include <nlohmann/json.hpp>
 #include "securec/include/securec.h"
 #include "./prof_mgr_core.h"
 #include "device/ascend/profiling/plugin_impl.h"
@@ -29,9 +26,6 @@
 #include "common/utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
-
-using std::vector;
-using Json = nlohmann::json;
 
 namespace mindspore {
 namespace device {
@@ -124,35 +118,43 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const string prof_options_str = context->profiling_options();
-  vector<string> opts = Split(prof_options_str, ':');
+  std::vector<string> opts = Split(prof_options_str, ':');
   if (opts.empty()) {
     MS_LOG(WARNING) << "Profiling is enabled, but profiling option is not set!";
     return true;
   }
   // current one docker only use one device`
-  Json p_device;
+  nlohmann::json p_device;
   // JOBID
   auto job_id = GetJobId();
   p_device["jobID"] = std::to_string(job_id);
   // device_id
   p_device["deviceID"] = std::to_string(device_id);
   // features:'training_trace', 'task_trace'  etc
-  Json features;
-  for (vector<string>::size_type i = 0; i < opts.size(); i++) {
-    Json f;
+  nlohmann::json features;
+  for (std::vector<string>::size_type i = 0; i < opts.size(); i++) {
+    nlohmann::json f;
     f["name"] = opts[i];
     features[i] = f;
   }
   p_device["features"] = features;
   // only one device, but sProfMgrStartUp API require for device list
-  Json devices;
+  nlohmann::json devices;
   devices[0] = p_device;
-  Json startCfg;
+  nlohmann::json startCfg;
   startCfg["startCfg"] = devices;
 
+  if (!ProfStartUp(NOT_NULL(&startCfg))) {
+    MS_LOG(ERROR) << "ProfMgrStartUp failed.";
+    return false;
+  }
+  return true;
+}
+
+bool ProfilingManager::ProfStartUp(NotNull<nlohmann::json *> startCfg) {
   // convert json to string
   std::stringstream ss;
-  ss << startCfg;
+  ss << *startCfg;
   std::string cfg = ss.str();
   MS_LOG(INFO) << "profiling config " << cfg;
   auto ret = rtProfilerStart();

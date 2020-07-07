@@ -119,9 +119,9 @@ bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inp
   int total_size = input_size_ / sizeof(float);
   if (global_step_ >= quant_delay_) {
     CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, num_channels_,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFakeQuantizePerChannelGrad(input, gradient, output, total_size, num_channels_, nudge_min, nudge_max,
-                                  reinterpret_cast<cudaStream_t>(stream_ptr));
+                       symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalFakeQuantPerChannelGrad(input, gradient, output, total_size, num_channels_, nudge_min, nudge_max,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),

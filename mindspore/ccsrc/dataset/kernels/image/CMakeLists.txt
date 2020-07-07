@@ -25,4 +25,6 @@ add_library(kernels-image OBJECT
     resize_bilinear_op.cc
     resize_op.cc
     uniform_aug_op.cc
+    resize_with_bbox_op.cc
+    random_resize_with_bbox_op.cc
     )

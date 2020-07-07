@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 #include "dataset/util/services.h"
 #include "dataset/util/intrp_service.h"

@@ -102,6 +102,16 @@ inline void IntMulWithOverflowCheck(int a, int b, int *c) {
   *c = out;
 }
 
+inline size_t SizetMulWithOverflowCheck(size_t a, size_t b) {
+  size_t out = a * b;
+  if (a != 0) {
+    if ((out / a) != b) {
+      MS_LOG(EXCEPTION) << "Mul: a(" << a << ") * b(" << b << ") result is overflow";
+    }
+  }
+  return out;
+}
+
 inline uint8_t *AddressOffset(void *address, size_t offset) {
   MS_EXCEPTION_IF_NULL(address);
   return static_cast<uint8_t *>(address) + offset;

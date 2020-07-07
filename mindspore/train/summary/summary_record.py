@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Record the summary event."""
+import atexit
 import os
 import re
 import threading
@@ -21,7 +22,7 @@ from mindspore import log as logger
 
 from ..._c_expression import Tensor
 from ..._checkparam import _check_str_by_regular
-from .._utils import _make_directory, _check_to_numpy, _check_lineage_value
+from .._utils import _check_lineage_value, _check_to_numpy, _make_directory
 from ._summary_adapter import get_event_file_name, package_graph_event
 from ._writer_pool import WriterPool
 
@@ -62,11 +63,15 @@ class SummaryRecord:
     """
     SummaryRecord is used to record the summary data and lineage data.
 
+    The API will create a summary file and lineage files lazily in a given directory and writes data to them.
+    It writes the data to files by executing the 'record' method. In addition to record the data bubbled up from
+    the network by defining the summary operators, SummaryRecord also supports to record extra data which
+    can be added by calling add_value.
+
     Note:
-        The API will create a summary file and a lineage file lazily in a given directory and writes data to them.
-        It writes the data to files by executing the record method. In addition to record the data bubbled up from
-        the network by defining the summary operators, SummaryRecord also supports to record extra data which
-        can be added by calling add_value. Finally, make sure to close the SummaryRecord object at the end.
+        1. Make sure to close the SummaryRecord at the end, or the process will not exit.
+           Please see the Example section below on how to properly close with two ways.
+        2. The SummaryRecord instance can only allow one at a time, otherwise it will cause problems with data writes.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -81,8 +86,15 @@ class SummaryRecord:
         RuntimeError: If the log_dir can not be resolved to a canonicalized absolute pathname.
 
     Examples:
-        >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+        >>> # use in with statement to auto close
+        >>> with SummaryRecord(log_dir="./summary_dir") as summary_record:
         >>>     pass
+        >>>
+        >>> # use in try .. finally .. to ensure closing
+        >>> try:
+        >>>     summary_record = SummaryRecord(log_dir="./summary_dir")
+        >>> finally:
+        >>>     summary_record.close()
     """
 
     def __init__(self,
@@ -93,8 +105,8 @@ class SummaryRecord:
                  file_suffix="_MS",
                  network=None):
 
-        self._closed, self._mode = False, 'train'
-        self._data_pool = _dictlist()
+        self._closed, self._event_writer = False, None
+        self._mode, self._data_pool = 'train', _dictlist()
 
         _check_str_by_regular(file_prefix)
         _check_str_by_regular(file_suffix)
@@ -132,6 +144,7 @@ class SummaryRecord:
         self._event_writer = WriterPool(log_dir,
                                         summary=self.full_file_name,
                                         lineage=get_event_file_name('events', '_lineage'))
+        atexit.register(self.close)
 
     def __enter__(self):
         """Enter the context manager."""
@@ -154,7 +167,7 @@ class SummaryRecord:
             ValueError: When the mode is not recognized.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.set_mode('eval')
         """
         mode_spec = 'train', 'eval'
@@ -193,7 +206,7 @@ class SummaryRecord:
             TypeError: When the value is not a Tensor.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.add_value('scalar', 'loss', Tensor(0.1))
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
@@ -202,6 +215,9 @@ class SummaryRecord:
             if not isinstance(value, Tensor):
                 raise TypeError(f'Expect the value to be Tensor, but got {type(value).__name__}')
             np_value = _check_to_numpy(plugin, value)
+            if name in {item['tag'] for item in self._data_pool[plugin]}:
+                entry = repr(f'{name}/{plugin}')
+                logger.warning(f'{entry} has duplicate values. Only the newest one will be recorded.')
             self._data_pool[plugin].append(dict(tag=name, mode=self._mode, value=np_value))
 
         elif plugin in ('train_lineage', 'eval_lineage', 'dataset_graph', 'custom_lineage_data'):
@@ -225,10 +241,10 @@ class SummaryRecord:
             bool, whether the record process is successful or not.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.record(step=2)
         """
-        logger.info("SummaryRecord step is %r.", step)
+        logger.debug("SummaryRecord step is %r.", step)
         if self._closed:
             logger.error("The record writer is closed.")
             return False
@@ -282,7 +298,7 @@ class SummaryRecord:
             str, the full path of log file.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     print(summary_record.log_dir)
         """
         return self.full_file_name
@@ -294,7 +310,7 @@ class SummaryRecord:
         Call it to make sure that all pending events have been written to disk.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
+            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             >>>     summary_record.flush()
         """
         if self._closed:
@@ -307,17 +323,17 @@ class SummaryRecord:
         Flush all events and close summary records. Please use with statement to autoclose.
 
         Examples:
-            >>> with SummaryRecord(log_dir="/opt/log", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     pass # summary_record autoclosed
+            >>> try:
+            >>>     summary_record = SummaryRecord(log_dir="./summary_dir")
+            >>> finally:
+            >>>     summary_record.close()
         """
         if not self._closed and self._event_writer:
             # event writer flush and close
             logger.info('Please wait it may take quite some time to finish writing and closing.')
+            atexit.unregister(self.close)
             self._event_writer.close()
             self._closed = True
-
-    def __del__(self) -> None:
-        self.close()
 
     @staticmethod
     def _parse_from(name: str = None):

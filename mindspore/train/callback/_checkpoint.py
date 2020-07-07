@@ -24,12 +24,11 @@ from mindspore import log as logger
 from mindspore._checkparam import check_bool, check_int_non_negative
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import _exec_save_checkpoint, _save_graph
-
 from ._callback import Callback, set_cur_net
+
 
 _cur_dir = os.getcwd()
 _save_dir = _cur_dir
-
 
 
 def _check_file_name_prefix(file_name_prefix):

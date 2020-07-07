@@ -128,6 +128,11 @@ if (ENABLE_MPI)
         DESTINATION ${INSTALL_BASE_DIR}
         COMPONENT mindspore
     )
+    install(
+        TARGETS mpi_adapter
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
 endif ()
 
 if (ENABLE_GPU)

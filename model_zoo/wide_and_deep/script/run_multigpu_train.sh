@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-# bash run_multigpu_train.sh
+# bash run_multigpu_train.sh RANK_SIZE EPOCH_SIZE DATASET
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
 RANK_SIZE=$1
@@ -25,4 +25,5 @@ mpirun --allow-run-as-root -n $RANK_SIZE                    \
     python -s ${self_path}/../train_and_eval_distribute.py  \
         --device_target="GPU"                               \
         --data_path=$DATASET                                \
+        --batch_size=8000                                   \
         --epochs=$EPOCH_SIZE > log.txt 2>&1 &

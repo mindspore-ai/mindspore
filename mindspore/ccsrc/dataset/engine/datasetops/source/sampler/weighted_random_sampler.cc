@@ -156,5 +156,14 @@ Status WeightedRandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buf
 
   return Status::OK();
 }
+
+void WeightedRandomSampler::Print(std::ostream &out, bool show_all) const {
+  out << "\nSampler: WeightedRandomSampler";
+  if (show_all) {
+    // Call the super class for displaying any common detailed info
+    Sampler::Print(out, show_all);
+    // Then add our own info if any
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

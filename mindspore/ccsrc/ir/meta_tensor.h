@@ -115,7 +115,7 @@ class MetaTensor : public Value {
   // order it represents.
   //
   // return A const vector<int> which represents the shape of the tensor.
-  std::vector<int> shape() const { return shape_; }
+  const std::vector<int> &shape() const { return shape_; }
 
   // brief Sets the shape of a tensor.
   //

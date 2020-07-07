@@ -268,8 +268,8 @@ class NpuFloatNet(nn.Cell):
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.sub = P.Sub()
         self.neg = P.Neg()
-        self.add_flags(has_effect=True)
 
+    @C.add_flags(has_effect=True)
     def construct(self, x):
         init = self.alloc_status()
         self.clear_status(init)

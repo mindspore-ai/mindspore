@@ -71,6 +71,17 @@ message("onnx proto path is :" ${ONNX_PROTO})
 ms_protobuf_generate(ONNX_PROTO_SRCS ONNX_PROTO_HDRS ${ONNX_PROTO})
 list(APPEND MINDSPORE_PROTO_LIST ${ONNX_PROTO_SRCS})
 
+if (ENABLE_DEBUGGER)
+    # debugger: compile proto files
+    include_directories("${CMAKE_BINARY_DIR}/debug/debugger")
+    file(GLOB_RECURSE DEBUGGER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/debugger/debug_graph.proto")
+    ms_protobuf_generate(DEBUGGER_PROTO_SRCS DEBUGGER_PROTO_HDRS ${DEBUGGER_PROTO_LIST})
+    file(GLOB_RECURSE DEBUGGER_GRPC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/debugger/debug_grpc.proto")
+    ms_grpc_generate(DEBUGGER_GRPC_SRCS DEBUGGER_GRPC_HDRS ${DEBUGGER_GRPC_LIST})
+    list(APPEND MINDSPORE_PROTO_LIST ${DEBUGGER_PROTO_SRCS})
+    list(APPEND MINDSPORE_PROTO_LIST ${DEBUGGER_GRPC_SRCS})
+endif ()
+
 if (ENABLE_DUMP_PROTO)
     include_directories(${CMAKE_BINARY_DIR})
     file(GLOB_RECURSE PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "utils/node_strategy.proto")
@@ -125,12 +136,21 @@ endforeach ()
 
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
+
+target_link_libraries(proto_input mindspore::protobuf)
+
+if (ENABLE_DEBUGGER)
+    # debugger: link grpc
+    target_link_libraries(proto_input mindspore::grpc++)
+endif()
+
 target_link_libraries(mindspore proto_input)
-if (ENABLE_CPU AND ENABLE_MPI)
-    target_link_libraries(mindspore securec mindspore::flatbuffers mindspore::ompi)
+if (ENABLE_MPI)
+    target_link_libraries(mindspore securec mindspore::flatbuffers mpi_adapter)
 else ()
     target_link_libraries(mindspore securec mindspore::flatbuffers)
 endif ()
+
 if (NOT WIN32)
   target_link_libraries(mindspore dl)
 endif()
@@ -210,6 +230,10 @@ else ()
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
     target_link_libraries(_c_expression PRIVATE mindspore_gvar)
+    target_link_libraries(_c_expression PRIVATE mindspore::pslite mindspore::protobuf ${zeromq_DIRPATH}/zmq_install/lib/libzmq.a)
+    if (${ENABLE_IBVERBS} STREQUAL "ON")
+        target_link_libraries(_c_expression PRIVATE ibverbs rdmacm)
+    endif()
 endif ()
 
 if (USE_GLOG)
@@ -217,6 +241,7 @@ if (USE_GLOG)
 endif ()
 
 if (ENABLE_DUMP_PROTO)
+    message("add protobuf lib to c_expression")
     target_link_libraries(_c_expression PRIVATE mindspore::protobuf)
 endif ()
 
@@ -256,10 +281,11 @@ endif ()
 
 if (USE_GLOG)
     target_link_libraries(inference PRIVATE mindspore::glog)
-else()
-    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-        target_link_options(inference PRIVATE -Wl,-init,mindspore_log_init)
-    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-        set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
-    endif ()
 endif()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options(inference PRIVATE -Wl,-init,common_log_init)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
+endif ()
+

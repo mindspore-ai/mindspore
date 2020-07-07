@@ -248,6 +248,10 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   int32_t rows_per_buffer_;
   std::string folder_path_;  // directory of image folder
   bool recursive_;
@@ -255,7 +259,6 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   std::set<std::string> extensions_;  // extensions allowed
   std::map<std::string, int32_t> class_index_;
   std::unique_ptr<DataSchema> data_schema_;
-  std::shared_ptr<Sampler> sampler_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
   int64_t sampler_ind_;

@@ -343,10 +343,6 @@ def initializer(init, shape=None, dtype=mstype.float32):
         shape = tuple(shape)
     elif isinstance(shape, numbers.Number):
         shape = (shape,)
-    try:
-        np.ndarray(shape)
-    except ValueError:
-        raise ValueError("Error shape={}".format(shape))
 
     if isinstance(init, Initializer):
         init.shape = init.shape if init.shape is not None else shape

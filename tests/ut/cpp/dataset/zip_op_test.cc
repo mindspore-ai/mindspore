@@ -32,7 +32,6 @@
 #include "dataset/engine/data_buffer.h"
 #include "gtest/gtest.h"
 #include "dataset/core/global_context.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;
@@ -125,7 +124,6 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
     EXPECT_TRUE(rc.IsOk());
     row_count++;
   }
-  MS_LOG(WARNING) <<"row count is: " << row_count;
   ASSERT_EQ(row_count, 3); // Should be 3 rows fetched
 }
 

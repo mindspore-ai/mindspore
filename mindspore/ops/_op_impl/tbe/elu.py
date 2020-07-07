@@ -27,8 +27,8 @@ elu_op_info = TBERegOp("Elu") \
     .attr("alpha", "optional", "float", "all", "1.0") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
 

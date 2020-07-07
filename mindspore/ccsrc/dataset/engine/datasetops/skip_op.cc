@@ -86,9 +86,6 @@ Status SkipOp::operator()() {
   std::unique_ptr<DataBuffer> curr_buffer;
   RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
 
-  // After the first buffer fetch above we can do the one-time assign of the column name map
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
-
   while (curr_buffer->eof() == false) {
     // Reset count
     skip_count_ = 0;
@@ -133,7 +130,7 @@ Status SkipOp::EofReceived(int32_t worker_id) {
 // Visitor accept method for NodePass
 Status SkipOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<SkipOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<SkipOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

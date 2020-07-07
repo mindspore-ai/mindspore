@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     is_ckpt_exist = os.path.exists(ckpt_file_path)
     if is_ckpt_exist:
-        param_dict = load_checkpoint(ckpoint_file_name=ckpt_file_path)
+        param_dict = load_checkpoint(ckpt_file_name=ckpt_file_path)
         load_param_into_net(net, param_dict)
         export(net, input_data, file_name=model_path_name, file_format='LITE')
         print("test lenet predict success.")

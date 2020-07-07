@@ -34,21 +34,20 @@ class CropAndResize(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, depth].
-            Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
+          Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **boxes** (Tensor) - A 2-D tensor of shape [num_boxes, 4].
-            The i-th row of the tensor specifies the coordinates of a box in the box_ind[i] image
-            and is specified in normalized coordinates [y1, x1, y2, x2]. A normalized coordinate value of y is mapped to
-            the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
-            mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
-            crop is an up-down flipped version of the original image. The width dimension is treated similarly.
-            Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
-            extrapolate the input image values. Types allowd: float32.
+          The i-th row of the tensor specifies the coordinates of a box in the box_ind[i] image
+          and is specified in normalized coordinates [y1, x1, y2, x2]. A normalized coordinate value of y is mapped to
+          the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
+          mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
+          crop is an up-down flipped version of the original image. The width dimension is treated similarly.
+          Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
+          extrapolate the input image values. Types allowd: float32.
         - **box_index** (Tensor) - A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
-            The value of box_ind[i] specifies the image that the i-th box refers to. Types allowd: int32.
-        - **crop_size** (Tensor) - Only constant value is allowd. Types allowed: int32.
-            A 1-D tensor of 2 elements, size = [crop_height, crop_width].
-            All cropped image patches are resized to this size. The aspect ratio of the image content is not preserved.
-            Both crop_height and crop_width need to be positive.
+          The value of box_ind[i] specifies the image that the i-th box refers to. Types allowd: int32.
+        - **crop_size** (Tuple[int]) - A tuple of two int32 elements: (crop_height, crop_width).
+          Only constant value is allowed. All cropped image patches are resized to this size.
+          The aspect ratio of the image content is not preserved. Both crop_height and crop_width need to be positive.
     Outputs:
         A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type: float32.
 
@@ -68,10 +67,10 @@ class CropAndResize(PrimitiveWithInfer):
         >>> IMAGE_WIDTH = 256
         >>> CHANNELS = 3
         >>> image = np.random.normal(size=[BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS]).astype(np.float32)
-        >>> boxes = np.random.uniform(shape=[NUM_BOXES, 4]).astype(np.float32)
-        >>> box_index = np.random.uniform(shape=[NUM_BOXES], low=0, high=BATCH_SIZE).astype(np.int32)
-        >>> crop_size = np.array([24, 24]).astype(np.int32)
-        >>> crop_and_resize = CropAndResizeNet(crop_size=Tensor(crop_size))
+        >>> boxes = np.random.uniform(size=[NUM_BOXES, 4]).astype(np.float32)
+        >>> box_index = np.random.uniform(size=[NUM_BOXES], low=0, high=BATCH_SIZE).astype(np.int32)
+        >>> crop_size = (24, 24)
+        >>> crop_and_resize = CropAndResizeNet(crop_size=crop_size)
         >>> output = crop_and_resize(Tensor(image), Tensor(boxes), Tensor(box_index))
         >>> print(output.asnumpy())
     """
@@ -91,11 +90,10 @@ class CropAndResize(PrimitiveWithInfer):
         x_shape = list(x['shape'])
         boxes_shape = list(boxes['shape'])
         box_index_shape = list(box_index['shape'])
-        crop_size_shape = list(crop_size['shape'])
         # get value
         if crop_size['value'] is None:
-            raise ValueError(f"For {self.name}, crop_size must be const.")
-        crop_size_value = crop_size['value'].asnumpy()
+            raise ValueError(f"For {self.name}, crop_size must be constant.")
+        crop_size_value = crop_size['value']
         # get dtype
         x_dtype = x['dtype']
         boxes_dtype = boxes['dtype']
@@ -107,15 +105,20 @@ class CropAndResize(PrimitiveWithInfer):
                                           mstype.float32, mstype.float64, mstype.uint8, mstype.uint16], self.name)
         validator.check_tensor_type_same({"boxes": boxes_dtype}, [mstype.float32], self.name)
         validator.check_tensor_type_same({"box_index": box_index_dtype}, [mstype.int32], self.name)
-        validator.check_tensor_type_same({"crop_size": crop_size_dtype}, [mstype.int32], self.name)
+        validator.check_value_type("crop_size", crop_size_value, [tuple], self.name)
         # check input shape rank
         validator.check("x rank", len(x_shape), "expected", 4, Rel.EQ, self.name)
         validator.check("boxes rank", len(boxes_shape), "expected", 2, Rel.EQ, self.name)
         validator.check("box_index rank", len(box_index_shape), "expected", 1, Rel.EQ, self.name)
-        validator.check("crop_size rank", len(crop_size_shape), "expected", 1, Rel.EQ, self.name)
-
+        validator.check("crop_size size", len(crop_size_value), "expected", 2, Rel.EQ, self.name)
         validator.check("boxes dim_0", boxes_shape[0], "box_index dim_0", box_index_shape[0], Rel.EQ, self.name)
         validator.check("boxes dim_1", boxes_shape[1], "expected", 4, Rel.EQ, self.name)
+        # check crop_size_value
+        validator.check("crop_height", crop_size_value[0], "minimum", 0, Rel.GT, self.name)
+        validator.check("crop_width", crop_size_value[1], "minimum", 0, Rel.GT, self.name)
+        # check crop_size element type
+        validator.check("crop_height dtype", crop_size_dtype[0], mstype.int32, self.name)
+        validator.check("crop_width dtype", crop_size_dtype[1], mstype.int32, self.name)
 
         num_boxes = boxes_shape[0]
         crop_height = crop_size_value[0]

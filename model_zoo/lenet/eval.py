@@ -20,16 +20,14 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 
 import os
 import argparse
-from src.dataset import create_dataset
-from src.config import mnist_cfg as cfg
-from src.lenet import LeNet5
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
-
+from src.dataset import create_dataset
+from src.config import mnist_cfg as cfg
+from src.lenet import LeNet5
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
@@ -49,9 +47,6 @@ if __name__ == "__main__":
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
     repeat_size = cfg.epoch_size
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     print("============== Starting Testing ==============")

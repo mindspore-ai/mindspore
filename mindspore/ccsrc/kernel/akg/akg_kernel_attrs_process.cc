@@ -68,10 +68,10 @@ void SetAkgAttrsForFive2Four(const AnfNodePtr &anf_node) {
 void SetAkgAttrsForCast(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   // The x and output are akg op input and output param.
-  std::vector<std::string> input_names = {"x"};
+  std::vector<std::string> input_names = {"x", "dst_type"};
   std::vector<std::string> output_names = {"output"};
-  AnfAlgo::SetNodeAttr("input_names", MakeValue(input_names), anf_node);
-  AnfAlgo::SetNodeAttr("output_names", MakeValue(output_names), anf_node);
+  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), anf_node);
+  AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), anf_node);
 
   std::string dst_type;
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, 0);

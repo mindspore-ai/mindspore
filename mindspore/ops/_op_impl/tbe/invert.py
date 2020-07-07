@@ -25,8 +25,9 @@ invert_op_info = TBERegOp("Invert") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
+    .op_pattern("formatAgnostic") \
+    .dtype_format(DataType.I16_None, DataType.I16_None) \
+    .dtype_format(DataType.U16_None, DataType.U16_None) \
     .get_op_info()
 
 

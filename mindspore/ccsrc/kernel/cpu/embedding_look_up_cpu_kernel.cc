@@ -104,19 +104,20 @@ bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
     size_t one_split_lens = gatherv2_out_lens_ / split_num_ / sizeof(float);
     size_t reduce_scatter_out_lens = one_split_lens / 8;
     const std::vector<int> &group = {0, 1, 2, 3, 4, 5, 6, 7};
+    auto mpi_instance = device::cpu::MPIAdapter::Instance();
+    MS_EXCEPTION_IF_NULL(mpi_instance);
     for (int i = 0; i < split_num_; i++) {
-      device::cpu::MPIAdapter::Instance().ReduceScatter(reinterpret_cast<float *>(gather_v2_out_) + i * one_split_lens,
-                                                        output_addr + i * reduce_scatter_out_lens, group,
-                                                        one_split_lens / 8, "sum");
+      mpi_instance->ReduceScatter(reinterpret_cast<float *>(gather_v2_out_) + i * one_split_lens,
+                                  output_addr + i * reduce_scatter_out_lens, group, one_split_lens / 8, "sum");
     }
   }
 #endif
   return true;
 }
 
-void LookUpTable_task(const float *input_addr, float *output_addr, int *indices_addr, size_t indices_lens, size_t num,
-                      size_t dim0, size_t dim1, size_t dim2, int offset, size_t axis, std::vector<size_t> input_shape,
-                      size_t input_lens) {
+void LookUpTable_task(const float *input_addr, float *output_addr, const int *indices_addr, size_t indices_lens,
+                      size_t num, size_t dim0, size_t dim1, size_t dim2, int offset, size_t axis,
+                      std::vector<size_t> input_shape, size_t input_lens) {
   size_t lens = num * sizeof(float);
   for (size_t i = 0; i < indices_lens; ++i) {
     int indices = indices_addr[i] - offset;
@@ -133,7 +134,6 @@ void LookUpTable_task(const float *input_addr, float *output_addr, int *indices_
         } else if (axis == 0) {
           pos = CPUKernelUtils::CalcOffset(input_shape, index, 0, 0, 0);
         }
-
         if (pos + num <= input_lens) {
           auto ret = memcpy_s(output_addr, lens, input_addr + pos, lens);
           if (ret != EOK) {

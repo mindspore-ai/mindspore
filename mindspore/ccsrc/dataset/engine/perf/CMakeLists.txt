@@ -3,4 +3,6 @@ add_library(engine-perf OBJECT
     monitor.cc
     device_queue_tracing.cc
     connector_size.cc
-    dataset_iterator_tracing.cc)
+    dataset_iterator_tracing.cc
+    connector_throughput.cc
+        )

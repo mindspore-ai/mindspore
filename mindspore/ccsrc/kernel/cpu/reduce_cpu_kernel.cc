@@ -55,7 +55,6 @@ void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     }
   } else if (axis_addr->isa<Int32Imm>()) {
     int axis = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
-
     if (axis >= 0 && IntToSize(axis) >= shape_.size()) {
       MS_LOG(EXCEPTION) << "axis value is oversize.";
     }

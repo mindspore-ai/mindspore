@@ -23,8 +23,8 @@ import numpy as np
 
 from src.config import lstm_cfg as cfg
 from src.dataset import lstm_create_dataset, convert_to_mindrecord
+from src.lstm import SentimentNet
 from mindspore import Tensor, nn, Model, context
-from mindspore.model_zoo.lstm import SentimentNet
 from mindspore.nn import Accuracy
 from mindspore.train.callback import LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net

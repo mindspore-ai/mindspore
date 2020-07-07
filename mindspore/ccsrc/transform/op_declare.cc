@@ -442,6 +442,12 @@ INPUT_MAP(Reshape) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(shape)}};
 ATTR_MAP(Reshape) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Reshape) = {{0, OUTPUT_DESC(y)}};
 
+// TransShape
+INPUT_MAP(TransShape) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(TransShape) = {{2, ATTR_DESC(outShape, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(TransShape) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TransShape) = {{0, OUTPUT_DESC(y)}};
+
 // BiasAdd
 INPUT_MAP(BiasAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(bias)}};
 ATTR_MAP(BiasAdd) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};

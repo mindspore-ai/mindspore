@@ -26,9 +26,10 @@ from matplotlib import animation
 from sklearn import manifold
 from mindspore import context
 
-from model_zoo.gcn.src.gcn import GCN, LossAccuracyWrapper, TrainNetWrapper
-from model_zoo.gcn.src.config import ConfigGCN
-from model_zoo.gcn.src.dataset import get_adj_features_labels, get_mask
+from src.gcn import GCN
+from src.metrics import LossAccuracyWrapper, TrainNetWrapper
+from src.config import ConfigGCN
+from src.dataset import get_adj_features_labels, get_mask
 
 
 def t_SNE(out_feature, dim):

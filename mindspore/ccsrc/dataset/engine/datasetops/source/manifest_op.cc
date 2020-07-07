@@ -64,7 +64,7 @@ Status ManifestOp::Builder::SanityCheck() {
 ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
                        const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
                        std::shared_ptr<Sampler> sampler, std::string usage)
-    : ParallelOp(num_works, queue_size),
+    : ParallelOp(num_works, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       io_block_pushed_(0),
       row_cnt_(0),
@@ -72,14 +72,9 @@ ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string f
       data_schema_(std::move(data_schema)),
       file_(file),
       class_index_(class_index),
-      sampler_(std::move(sampler)),
       decode_(decode),
       usage_(usage),
       buf_cnt_(0) {
-  // Set the column name map (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   io_block_queues_.Init(num_workers_, queue_size);
   (void)std::transform(usage_.begin(), usage_.end(), usage_.begin(), ::tolower);
 }
@@ -418,6 +413,18 @@ Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dic
     }
   }
 
+  return Status::OK();
+}
+
+Status ManifestOp::ComputeColMap() {
+  // Set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

@@ -18,7 +18,6 @@
 #include <vector>
 #include "device/gpu/gpu_device_manager.h"
 #include "utils/log_adapter.h"
-#include "utils/context/ms_context.h"
 #include "device/gpu/gpu_memory_allocator.h"
 
 namespace mindspore {
@@ -55,8 +54,6 @@ GPUDeviceAddress::~GPUDeviceAddress() {
   if (ptr_ == nullptr) {
     return;
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   if (from_mem_pool_) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;

@@ -25,6 +25,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
+
 class NetWorkSlicePositive(Cell):
     def __init__(self):
         super(NetWorkSlicePositive, self).__init__()
@@ -130,7 +131,7 @@ class TensorAssignWithSlice2(Cell):
 class TensorAssignWithSlice(Cell):
     def __init__(self):
         super(TensorAssignWithSlice, self).__init__()
-        self.c = 2
+        self.c = 2.0
 
     def construct(self, a, b, ck):
         a[1:3, ::] = b
@@ -528,8 +529,7 @@ def test_tensor_assign():
     net = TensorAssignWithTupleEllipsis()
     net(Ta, b)
     Tc = Tensor(1, mstype.float32)
-    with pytest.raises(ValueError):
-        net(Ta, Tc)
+    net(Ta, Tc)
     with pytest.raises(ValueError):
         net(Ta, Tb)
 
@@ -548,7 +548,7 @@ class TensorAssignWithTupleEllipsis(Cell):
         super(TensorAssignWithTupleEllipsis, self).__init__()
 
     def construct(self, a, b):
-        a[:2, ...] = 1
+        a[:2, ...] = 1.0
         a[1:, ...] = b
         return a
 
@@ -579,10 +579,10 @@ class TensorAssignWithTupleInteger(Cell):
         super(TensorAssignWithTupleInteger, self).__init__()
 
     def construct(self, a, b, ck):
-        a[(1)] = 1
+        a[(1)] = 1.0
         a[(1)] = b
         a[(1, 1)] = b
-        a[(1, 1)] = 1
+        a[(1, 1)] = 1.0
         z = a + ck
         return z
 
@@ -1160,10 +1160,8 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
 
     input_tensor = Tensor(np.ones([6, 8, 10], np.int32))
     net = NetWork()
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError):
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(
-        ex.value)
 
 
 def test_tensor_slice_reduce_out_of_bounds_positive():
@@ -1178,6 +1176,5 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
 
     input_tensor = Tensor(np.ones([6, 8, 10], np.int32))
     net = NetWork()
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError):
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)

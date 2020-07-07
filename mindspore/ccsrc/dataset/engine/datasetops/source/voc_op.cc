@@ -88,7 +88,7 @@ Status VOCOp::Builder::SanityCheck() {
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
              int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
-    : ParallelOp(num_workers, queue_size),
+    : ParallelOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
       row_cnt_(0),
       buf_cnt_(0),
@@ -97,12 +97,7 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
       folder_path_(folder_path),
       class_index_(class_index),
       rows_per_buffer_(rows_per_buffer),
-      sampler_(std::move(sampler)),
       data_schema_(std::move(data_schema)) {
-  // Set the column name map (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   io_block_queues_.Init(num_workers_, queue_size);
 }
 
@@ -452,6 +447,18 @@ Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_t
     }
   }
 
+  return Status::OK();
+}
+
+Status VOCOp::ComputeColMap() {
+  // Set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
   return Status::OK();
 }
 }  // namespace dataset

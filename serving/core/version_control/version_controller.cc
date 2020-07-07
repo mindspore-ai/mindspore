@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace serving {
-
 volatile bool stop_poll = false;
 
 std::string GetVersionFromPath(const std::string &path) {
@@ -102,10 +101,10 @@ Status VersionController::CreateInitModels() {
   }
   std::vector<std::string> SubDirs = GetAllSubDirs(models_path_);
   if (version_control_strategy_ == kLastest) {
-    auto path = SubDirs.empty() ? models_path_ : SubDirs.back();
-    std::string model_version = GetVersionFromPath(path);
-    time_t last_update_time = GetModifyTime(path);
-    MindSporeModelPtr model_ptr = std::make_shared<MindSporeModel>(model_name_, path, model_version, last_update_time);
+    std::string model_version = GetVersionFromPath(models_path_);
+    time_t last_update_time = GetModifyTime(models_path_);
+    MindSporeModelPtr model_ptr =
+      std::make_shared<MindSporeModel>(model_name_, models_path_, model_version, last_update_time);
     valid_models_.emplace_back(model_ptr);
   } else {
     for (auto &dir : SubDirs) {
@@ -119,8 +118,8 @@ Status VersionController::CreateInitModels() {
     MS_LOG(ERROR) << "There is no valid model for serving";
     return FAILED;
   }
-  Session::Instance().Warmup(valid_models_.back());
-  return SUCCESS;
+  auto ret = Session::Instance().Warmup(valid_models_.back());
+  return ret;
 }
 
 void VersionController::StartPollModelPeriodic() {
@@ -129,6 +128,5 @@ void VersionController::StartPollModelPeriodic() {
 }
 
 void VersionController::StopPollModelPeriodic() {}
-
 }  // namespace serving
 }  // namespace mindspore

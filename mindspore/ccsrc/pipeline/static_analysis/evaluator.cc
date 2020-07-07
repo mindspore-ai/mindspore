@@ -166,6 +166,7 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
         // If there is loop variant, all arguments need to be broaden to avoid wrong constant propagation.
         if (!(joined_args_spec_list == args_spec_list)) {
           func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+          MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
         }
         return joined_args_spec_list;
       }
@@ -179,6 +180,7 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
       if (!(joined_args_spec_list == args_spec_list)) {
         trace_.push_back(joined_args_spec_list);
         func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+        MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
       }
       MS_LOG(DEBUG) << "Joined eval args: " << ::mindspore::ToString(joined_args_spec_list);
       return joined_args_spec_list;

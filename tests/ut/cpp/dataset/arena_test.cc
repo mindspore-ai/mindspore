@@ -17,7 +17,6 @@
 #include <string>
 #include "dataset/util/arena.h"
 #include "common/common.h"
-#include "dataset/util/de_error.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

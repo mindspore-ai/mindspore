@@ -231,6 +231,7 @@ const PrimitivePtr kPrimFakeBprop = std::make_shared<Primitive>("fake_bprop");
 const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 const PrimitivePtr kPrimFakeQuantPerLayer = std::make_shared<Primitive>("FakeQuantPerLayer");
 const PrimitivePtr kPrimFakeQuantPerChannel = std::make_shared<Primitive>("FakeQuantPerChannel");
+const PrimitivePtr kPrimApplyRMSProp = std::make_shared<Primitive>("ApplyRMSProp");
 
 // Other miscellaneous
 const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity");
@@ -275,5 +276,13 @@ const PrimitivePtr kPrimScalarSummary = std::make_shared<Primitive>("ScalarSumma
 const PrimitivePtr kPrimImageSummary = std::make_shared<Primitive>("ImageSummary");
 const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("TensorSummary");
 const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
+const PrimitivePtr kPrimDebug = std::make_shared<Primitive>("Debug");
+
+// IndexedSlices
+const PrimitivePtr kPrimMakeIndexedSlices = std::make_shared<Primitive>("MakeIndexedSlices");
+const PrimitivePtr kPrimIndexedSlicesGetValues = std::make_shared<Primitive>("IndexedSlicesGetValues");
+const PrimitivePtr kPrimIndexedSlicesGetIndices = std::make_shared<Primitive>("IndexedSlicesGetIndices");
+const PrimitivePtr kPrimIndexedSlicesGetDenseShape = std::make_shared<Primitive>("IndexedSlicesGetDenseShape");
+const PrimitivePtr kPrimIsIndexedSlices = std::make_shared<Primitive>("IsIndexedSlices");
 }  // namespace prim
 }  // namespace mindspore

@@ -17,13 +17,15 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_ITEM_TUPLE_ELIMINATE_H_
 
-#include <vector>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
-#include "optimizer/irpass.h"
-#include "optimizer/optimizer.h"
+#include "ir/optimizer_caller.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
+#include "optimizer/irpass.h"
+#include "optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
@@ -68,6 +70,45 @@ class GetitemEliminater : public AnfVisitor {
   bool is_match_{false};
   size_t id_{0};
   CNodePtr tuple_{nullptr};
+};
+
+// (a, b, c, ...)[0] => a
+// (a, b, c, ...)[1] => b
+// {prim::kPrimTupleGetItem, C1, C}
+class GetitemConstEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsVNode, IsVNode})(node);
+
+    if (is_match_) {
+      return NewValueNode((*tuple_)[id_]);
+    }
+    return nullptr;
+  }
+
+  void Visit(const ValueNodePtr &vnode) override {
+    if (IsValueNode<ValueTuple>(vnode)) {
+      tuple_ = GetValueNode<ValueTuplePtr>(vnode);
+    }
+    if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
+      id_ = IntToSize(GetValue<int>(vnode->value()));
+      if (tuple_->size() > id_) {
+        is_match_ = true;
+      }
+    }
+  }
+
+  void Reset() {
+    id_ = 0;
+    tuple_ = nullptr;
+    is_match_ = false;
+  }
+
+ private:
+  bool is_match_{false};
+  size_t id_{0};
+  ValueTuplePtr tuple_{nullptr};
 };
 
 // setitem((a, b, c, ...), 0, z) => (z, b, c, ...)
@@ -222,21 +263,26 @@ class GetitemDependReorder : public AnfVisitor {
   AnfNodePtr x_{nullptr}, y_{nullptr}, c_{nullptr};
 };
 
-class ItemTupleEliminater {
+class ItemTupleEliminater : public OptimizerCaller {
  public:
   ItemTupleEliminater()
-      : get_item_eliminater_(), set_item_eliminater_(), get_set_item_eliminater_(), get_item_depend_reorder_() {
+      : get_item_eliminater_(std::make_shared<GetitemEliminater>()),
+        get_item_const_eliminater_(std::make_shared<GetitemConstEliminater>()),
+        set_item_eliminater_(std::make_shared<SetitemEliminater>()),
+        get_set_item_eliminater_(std::make_shared<GetSetitemEliminater>()),
+        get_item_depend_reorder_(std::make_shared<GetitemDependReorder>()) {
     eliminaters_.emplace_back(get_item_eliminater_);
+    eliminaters_.emplace_back(get_item_const_eliminater_);
     eliminaters_.emplace_back(set_item_eliminater_);
     eliminaters_.emplace_back(get_set_item_eliminater_);
     eliminaters_.emplace_back(get_item_depend_reorder_);
   }
   ~ItemTupleEliminater() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
-      new_node = eliminater(optimizer, node);
+      new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -245,11 +291,9 @@ class ItemTupleEliminater {
   }
 
  private:
-  GetitemEliminater get_item_eliminater_;
-  SetitemEliminater set_item_eliminater_;
-  GetSetitemEliminater get_set_item_eliminater_;
-  GetitemDependReorder get_item_depend_reorder_;
-  std::vector<TransformFuncType> eliminaters_{};
+  OptimizerCallerPtr get_item_eliminater_, get_item_const_eliminater_, set_item_eliminater_, get_set_item_eliminater_,
+    get_item_depend_reorder_;
+  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 }  // namespace irpass
 }  // namespace opt

@@ -19,6 +19,7 @@
 import ast
 import types
 import inspect
+import hashlib
 from textwrap import dedent
 from dataclasses import is_dataclass
 import asttokens
@@ -319,7 +320,6 @@ def get_dataclass_methods(cls):
                if isinstance(getattr(cls, name), (types.FunctionType,))}
     return methods
 
-
 class Parser:
     """
     Parser python code to ast tree.
@@ -327,7 +327,10 @@ class Parser:
     Args:
         fn(FunctionType/MethodType): Need parse object instance.
         parse_method(ExtendInfoOfParseObj): Extend information for parse the function.
+        ast_cache: Dictionary for caching ast tree.
     """
+    ast_cache = {}
+
     def __init__(self, fn: (types.FunctionType, types.MethodType), parse_method=None) -> None:
         self.fn = fn
         self.parse_method = parse_method
@@ -348,11 +351,15 @@ class Parser:
         tree = None
         if isinstance(self.fn, (types.FunctionType, types.MethodType)):
             original_src = inspect.getsource(self.fn)
-            src = dedent(original_src)
-            self.col_offset = \
-                len(original_src.split('\n')[0]) - len(src.split('\n')[0])
-            logger.debug("get source = %s", src)
-            tree = asttokens.ASTTokens(src, parse=True).tree
+            hexstr = hashlib.sha256(original_src.encode()).hexdigest()
+            tree = Parser.ast_cache.get(hexstr)
+            if not tree:
+                src = dedent(original_src)
+                self.col_offset = \
+                    len(original_src.split('\n')[0]) - len(src.split('\n')[0])
+                logger.debug("get source = %s", src)
+                tree = asttokens.ASTTokens(src, parse=True).tree
+                Parser.ast_cache[hexstr] = tree
         else:
             logger.error("Fn type is invalid")
         return tree

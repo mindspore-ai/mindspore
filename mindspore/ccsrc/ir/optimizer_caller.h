@@ -17,13 +17,23 @@
 #ifndef MINDSPORE_CCSRC_IR_OPTIMIZER_CALLER_H_
 #define MINDSPORE_CCSRC_IR_OPTIMIZER_CALLER_H_
 
+#include <memory>
+
 #include "ir/anf.h"
-#include "optimizer/opt.h"
 
 namespace mindspore {
+namespace opt {
+class Optimizer;
+using OptimizerPtr = std::shared_ptr<Optimizer>;
+using OptimizerWeakPtr = std::weak_ptr<Optimizer>;
+
+using PredicateFuncType = std::function<bool(const AnfNodePtr &)>;
+}  // namespace opt
+
 class OptimizerCaller {
  public:
   virtual AnfNodePtr operator()(const opt::OptimizerPtr &, const AnfNodePtr &) { return nullptr; }
 };
+using OptimizerCallerPtr = std::shared_ptr<OptimizerCaller>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_OPTIMIZER_CALLER_H_

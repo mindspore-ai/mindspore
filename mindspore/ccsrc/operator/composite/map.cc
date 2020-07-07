@@ -181,6 +181,9 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 }
 
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
+  if (arg_pairs.empty()) {
+    MS_EXCEPTION(TypeError) << "map() must have at least two arguments";
+  }
   bool found = false;
   TypeId id = kObjectTypeEnd;
   std::pair<AnfNodePtr, TypePtr> pair;

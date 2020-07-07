@@ -17,7 +17,7 @@
 from types import FunctionType, MethodType
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
 
 def _check_summary_param(name, value, class_name):
@@ -30,6 +30,13 @@ def _check_summary_param(name, value, class_name):
 
     v_type = value['dtype']
     validator.check_value_type('value', v_type, [type(mstype.tensor)], class_name)
+
+
+# Note: The return value of the summary operator is not used,
+# so there's nothing special about the return `dtype` or `shape`, any value is ok.
+# The `value` should be set to None, else summary operators may be optimized at compile graph phase,
+# it cause summary operators can not record data in constant folding scene.
+SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 
 class ScalarSummary(PrimitiveWithInfer):
@@ -67,7 +74,7 @@ class ScalarSummary(PrimitiveWithInfer):
             raise ValueError(f"For 'value' the type should be scalar, "
                              f"shape should be [] or [1] in {self.__class__.__name__}, but got {v_shape}.")
 
-        return value
+        return SUMMARY_RETURN_VALUE
 
 
 class ImageSummary(PrimitiveWithInfer):
@@ -104,7 +111,7 @@ class ImageSummary(PrimitiveWithInfer):
             raise ValueError(f"For 'value' the dim should be {image_dim} in {self.__class__.__name__},"
                              f" but got {len(v_shape)}.")
 
-        return value
+        return SUMMARY_RETURN_VALUE
 
 
 class TensorSummary(PrimitiveWithInfer):
@@ -142,7 +149,7 @@ class TensorSummary(PrimitiveWithInfer):
             raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
                              f"shape should not be [].")
 
-        return value
+        return SUMMARY_RETURN_VALUE
 
 
 class HistogramSummary(PrimitiveWithInfer):
@@ -180,7 +187,7 @@ class HistogramSummary(PrimitiveWithInfer):
             raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
                              f"shape should not be [].")
 
-        return value
+        return SUMMARY_RETURN_VALUE
 
 
 class InsertGradientOf(PrimitiveWithInfer):
@@ -302,12 +309,6 @@ class Print(PrimitiveWithInfer):
     Output tensor or string to stdout.
 
     Note:
-        The print operation cannot support the following cases currently.
-
-        1. The type of tensor is float64 or bool.
-
-        2. The data of tensor is a scalar type.
-
         In pynative mode, please use python print function.
 
     Inputs:
@@ -327,7 +328,7 @@ class Print(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        self.add_prim_attr("_side_effect", True)
 
     def __call__(self, *args):
         for arg in args:
@@ -340,3 +341,29 @@ class Print(PrimitiveWithInfer):
         for dtype in inputs:
             validator.check_subclass("input", dtype, (mstype.tensor, mstype.string), self.name)
         return mstype.int32
+
+
+class Debug(Primitive):
+    """
+    Print tensor value.
+
+    Inputs:
+        - **value** (Tensor) - The value of tensor.
+
+    Examples:
+        >>> class DebugNN(nn.Cell):
+        >>>     def __init__(self,):
+        >>>         self.debug = nn.Debug()
+        >>>
+        >>>     def construct(self, x, y):
+        >>>         x = self.add(x, y)
+        >>>         self.debug(x)
+        >>>         return x
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def __call__(self, *args, **kwargs):
+        pass

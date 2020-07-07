@@ -34,6 +34,12 @@ from .apply_ada_max import _apply_ada_max_tbe
 from .apply_adadelta import _apply_adadelta_tbe
 from .apply_adagrad import _apply_adagrad_tbe
 from .apply_adagrad_v2 import _apply_adagrad_v2_tbe
+from .apply_add_sign import _apply_add_sign_tbe
+from .apply_power_sign import _apply_power_sign_tbe
+from .apply_gradient_descent import _apply_gradient_descent_tbe
+from .apply_proximal_gradient_descent import _apply_proximal_gradient_descent_tbe
+from .sparse_apply_ftrl_v2 import _sparse_apply_ftrl_v2_tbe
+from .sparse_apply_adagrad_v2 import _sparse_apply_adagrad_v2_tbe
 from .approximate_equal import _approximate_equal_tbe
 from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe
@@ -116,6 +122,7 @@ from .round import _round_tbe
 from .tanh import _tanh_tbe
 from .tanh_grad import _tanh_grad_tbe
 from .softmax import _softmax_tbe
+from .softsign import _softsign_tbe
 from .softplus import _softplus_tbe
 from .softplus_grad import _softplus_grad_tbe
 from .softmax_grad_ext import _softmax_grad_ext_tbe
@@ -267,3 +274,13 @@ from .lin_space import _lin_space_tbe
 from .matrix_diag import _matrix_diag_tbe
 from .matrix_diag_part import _matrix_diag_part_tbe
 from .matrix_set_diag import _matrix_set_diag_tbe
+from .lrn import _lrn_tbe
+from .lrn_grad import _lrn_grad_tbe
+from .scatter_max import _scatter_max_tbe
+from .scatter_min import _scatter_min_tbe
+from .scatter_sub import _scatter_sub_tbe
+from .scatter_mul import _scatter_mul_tbe
+from .scatter_div import _scatter_div_tbe
+from .mod import _mod_tbe
+from .max_pool_grad_grad import _max_pool_grad_grad_tbe
+from .max_pool_grad_grad_with_argmax import _max_pool_grad_grad_with_argmax_tbe

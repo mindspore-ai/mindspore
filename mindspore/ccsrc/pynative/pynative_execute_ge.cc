@@ -28,8 +28,11 @@
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/static_analysis/prim.h"
 #include "session/session_factory.h"
+#include "ir/tensor_py.h"
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace pynative {
@@ -56,15 +59,15 @@ MeTensorPtr ConvertPyObjToTensor(const py::object &obj) {
   if (py::isinstance<MeTensor>(obj)) {
     me_tensor_ptr = py::cast<MeTensorPtr>(obj);
   } else if (py::isinstance<py::tuple>(obj)) {
-    me_tensor_ptr = std::make_shared<MeTensor>(py::cast<py::tuple>(obj), nullptr);
+    me_tensor_ptr = TensorPy::MakeTensor(py::array(py::cast<py::tuple>(obj)), nullptr);
   } else if (py::isinstance<py::float_>(obj)) {
-    me_tensor_ptr = std::make_shared<MeTensor>(py::cast<py::float_>(obj), nullptr);
+    me_tensor_ptr = TensorPy::MakeTensor(py::array(py::cast<py::float_>(obj)), nullptr);
   } else if (py::isinstance<py::int_>(obj)) {
-    me_tensor_ptr = std::make_shared<MeTensor>(py::cast<py::int_>(obj), nullptr);
+    me_tensor_ptr = TensorPy::MakeTensor(py::array(py::cast<py::int_>(obj)), nullptr);
   } else if (py::isinstance<py::list>(obj)) {
-    me_tensor_ptr = std::make_shared<MeTensor>(py::cast<py::list>(obj), nullptr);
+    me_tensor_ptr = TensorPy::MakeTensor(py::array(py::cast<py::list>(obj)), nullptr);
   } else if (py::isinstance<py::array>(obj)) {
-    me_tensor_ptr = std::make_shared<MeTensor>(py::cast<py::array>(obj), nullptr);
+    me_tensor_ptr = TensorPy::MakeTensor(py::cast<py::array>(obj), nullptr);
   } else {
     MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
   }

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes);
-bool TbeOpParallelBuild(std::vector<AnfNodePtr> anf_nodes);
+bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
 
 struct KernelBuildTaskInfo {
   AnfNode *node;

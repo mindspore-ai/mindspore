@@ -17,18 +17,20 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INCORPORATE_GETITEM_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_INCORPORATE_GETITEM_H_
 
-#include <vector>
 #include <algorithm>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
-#include "optimizer/irpass.h"
-#include "optimizer/optimizer.h"
-#include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
+#include "ir/optimizer_caller.h"
+#include "ir/visitor.h"
 #include "operator/ops.h"
+#include "optimizer/irpass.h"
+#include "optimizer/optimizer.h"
+
 namespace mindspore {
 namespace opt {
 namespace irpass {
@@ -383,18 +385,20 @@ class IncorporateGetitemSwitch : public AnfVisitor {
   internal::GetitemTransform getitem_transform_;
 };
 
-class IncorporateGetitemSet {
+class IncorporateGetitemSet : public OptimizerCaller {
  public:
-  IncorporateGetitemSet() : incorporate_getitem_(), incorporate_getitem_switch_() {
+  IncorporateGetitemSet()
+      : incorporate_getitem_(std::make_shared<IncorporateGetitem>()),
+        incorporate_getitem_switch_(std::make_shared<IncorporateGetitemSwitch>()) {
     eliminaters_.emplace_back(incorporate_getitem_);
     eliminaters_.emplace_back(incorporate_getitem_switch_);
   }
   ~IncorporateGetitemSet() = default;
 
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;
     for (auto &eliminater : eliminaters_) {
-      new_node = eliminater(optimizer, node);
+      new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -403,9 +407,8 @@ class IncorporateGetitemSet {
   }
 
  private:
-  IncorporateGetitem incorporate_getitem_;
-  IncorporateGetitemSwitch incorporate_getitem_switch_;
-  std::vector<TransformFuncType> eliminaters_{};
+  OptimizerCallerPtr incorporate_getitem_, incorporate_getitem_switch_;
+  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 }  // namespace irpass
 }  // namespace opt

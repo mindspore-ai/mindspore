@@ -29,6 +29,7 @@
 #include "runtime/rt_model.h"
 #include "runtime/stream.h"
 #include "session/kernel_graph.h"
+#include "utils/contract.h"
 
 namespace mindspore {
 namespace device {
@@ -38,35 +39,59 @@ using std::shared_ptr;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
-using CnodeKey = void *;
 const uint32_t kInvalidStreamId = UINT32_MAX;
-class AscendStreamMng {
+const uint32_t kInvalidEventId = UINT32_MAX;
+class AscendResourceMng {
  public:
-  static AscendStreamMng &GetInstance() {
-    static AscendStreamMng instance;
+  static AscendResourceMng &GetInstance() {
+    static AscendResourceMng instance;
     return instance;
   }
 
-  void Reset() {
-    cur_stream_id = 0;
-    cur_stream_num = 0;
+  void ResetResource() {
+    cur_stream_num_ = 0;
+    cur_event_num_ = 0;
   }
   uint32_t ApplyNewStream() {
-    if (!cur_stream_num) {
-      cur_stream_num++;
+    if (!cur_stream_num_) {
+      uint32_t cur_stream_id = cur_stream_num_;
+      cur_stream_num_++;
       return cur_stream_id;
     }
-    cur_stream_num++;
-    cur_stream_id++;
+    uint32_t cur_stream_id = cur_stream_num_;
+    cur_stream_num_++;
     return cur_stream_id;
   }
+  uint32_t ApplyNewEvent() {
+    if (!cur_event_num_) {
+      uint32_t cur_event_id = cur_event_num_;
+      cur_event_num_++;
+      return cur_event_id;
+    }
+    uint32_t cur_event_id = cur_event_num_;
+    cur_event_num_++;
+    return cur_event_id;
+  }
 
-  uint32_t GetCurAllocStream() { return cur_stream_id; }
-  uint32_t GetCurAllocStreamNum() { return cur_stream_num; }
+  void DeleteEvent() {
+    if (!cur_event_num_) {
+      MS_LOG(WARNING) << "total event num is 0, no event to delete";
+    } else {
+      --cur_event_num_;
+    }
+  }
+  uint32_t get_cur_stream_num() { return cur_stream_num_; }
+  uint32_t GetCurAllocStreamId() {
+    if (!cur_stream_num_) {
+      MS_LOG(EXCEPTION) << "stream nums is 0, no stream id should be get";
+    }
+    return cur_stream_num_ - 1;
+  }
+  uint32_t get_cur_event_num() { return cur_event_num_; }
 
  private:
-  uint32_t cur_stream_num{0};
-  uint32_t cur_stream_id{0};
+  uint32_t cur_stream_num_{0};
+  uint32_t cur_event_num_{0};
 };
 
 class AscendStreamAssign {
@@ -79,39 +104,42 @@ class AscendStreamAssign {
   AscendStreamAssign(const AscendStreamAssign &) = delete;
   AscendStreamAssign &operator=(const AscendStreamAssign &) = delete;
 
-  uint32_t total_event_num() const { return total_event_num_; }
+  void AssignStream(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetHcomStreams(std::vector<uint32_t> *streams);
-
-  void AssignStream(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void GetWaitStreams(vector<uint32_t> *wait_active_stream_list);
-  CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id,
-                                 uint32_t stream_id);
-  CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id,
-                                 uint32_t stream_id);
+  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
+  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
 
  private:
   AscendStreamAssign() = default;
   ~AscendStreamAssign() = default;
   void Reset();
-  void CheckStreamAssign(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void AssignAllNodesStream(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void AssignCommonStreamId(const CNodePtr &cur_cnode_ptr, CNodePtr *pre_cnode_ptr, uint32_t *cur_index,
-                            uint32_t *cur_stream_id);
+  void CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr);
+  void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr);
+  void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr);
+  void AssignAllNodesStream(const NotNull<KernelGraphPtr> &graph_ptr);
+  void AssignCommonStreamId(const CNodePtr &cur_cnode_ptr);
+  void AssignHcomStreamId(const CNodePtr &cur_cnode_ptr);
   void AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr);
-  void UpdateAtomicAddrCleanStreamId(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void FindHcomParallelStreams(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void InsertStreamActive(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void UpdateStreamSwitch(const std::shared_ptr<session::KernelGraph> &graph_ptr, const CNodePtr &switch_ptr,
-                          const vector<uint32_t> &independent_stream, vector<CNodePtr> *orders);
-  void InsertSendRecvForIndependent(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void InsertSendRecvForHcomParallel(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void InsertSendRecvForDiffHcom(const shared_ptr<mindspore::session::KernelGraph> &graph_ptr);
-  void UpdateEventId(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void GetNeedActiveStreams(const std::shared_ptr<session::KernelGraph> &graph_ptr);
-  void ReorderIndependentOrders(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
+  void FindHcomParallelStreams(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertStreamActive(const NotNull<KernelGraphPtr> &graph_ptr);
+  void UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
+                          vector<CNodePtr> *orders);
+  void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventHcomDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr, const map<uint32_t, vector<size_t>> &hcom_index,
+                              uint32_t first_hcom_stream, uint32_t last_hcom_stream);
+  bool IsSatisfiedHcom(const std::map<uint32_t, vector<size_t>> &hcom_index, const CNodePtr &node_ptr, size_t index);
+
+  void GetProcessedStream(const NotNull<KernelGraphPtr> &graph_ptr);
+  void GetNeedActiveStreams(const NotNull<KernelGraphPtr> &graph_ptr);
+  void ReorderIndependentOrders(const NotNull<KernelGraphPtr> &graph_ptr);
 
   bool IsTaskSink();
-  bool IsFusionHcom(const CNodePtr &cur_cnode_ptr);
   bool IsHcom(const CNodePtr &cur_cnode_ptr);
   bool IsIndependentNode(const CNodePtr &node_ptr);
   bool IsProcessedStream(uint32_t stream_id);
@@ -119,14 +147,13 @@ class AscendStreamAssign {
                                           const CNodePtr &node);
   void GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id, std::vector<uint32_t> *parallel_streams);
 
-  uint32_t total_event_num_{0};
   bool independent_stream_activated_{false};
+  bool hcom_stream_activated_{false};
   std::map<uint32_t, uint32_t> independent_stream_map_{};
+  std::map<uint32_t, uint32_t> hcom_stream_map_{};
+  std::map<uint32_t, uint32_t> common_stream_map_{};
   std::set<uint32_t> processed_streams_{};
-  std::set<uint32_t> hcom_stream_list_{};
   std::vector<uint32_t> need_first_active_streams_{};
-  std::vector<std::vector<uint32_t>> inner_parallel_streams_{};
-
   // new policy end
 };
 }  // namespace ascend

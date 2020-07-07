@@ -32,7 +32,8 @@ class PipelineOp : public DatasetOp {
   // Constructor
   // @param op_connector_size - size of the output connector
   // @return Builder setter method returns reference to the builder.
-  explicit PipelineOp(int32_t op_connector_size);
+  // @param sampler - The sampler for the op
+  explicit PipelineOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler = nullptr);
 
   // Destructor
   ~PipelineOp() = default;

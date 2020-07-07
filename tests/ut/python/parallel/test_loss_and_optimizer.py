@@ -205,7 +205,7 @@ def test_lars():
 
     lr = Tensor(np.ones([6]), dtype=ms.float32)
     sgd = Momentum(net.trainable_params(), lr, 0.9)
-    optimizer = LARS(sgd, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
+    optimizer = LARS(sgd, epsilon=1e-08, coefficient=0.02,
                      lars_filter=lambda x: 'bn' not in x.name)
     net_with_loss = NetWithLoss(net, strategy3)
     train_net = TrainOneStepCell(net_with_loss, optimizer)

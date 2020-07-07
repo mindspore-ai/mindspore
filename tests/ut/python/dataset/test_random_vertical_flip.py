@@ -49,7 +49,7 @@ def test_random_vertical_op(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
-    random_vertical_op = c_vision.RandomVerticalFlip()
+    random_vertical_op = c_vision.RandomVerticalFlip(1.0)
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=random_vertical_op)
 
@@ -65,12 +65,11 @@ def test_random_vertical_op(plot=False):
             break
 
         image_v_flipped = item1["image"]
-
         image = item2["image"]
         image_v_flipped_2 = v_flip(image)
 
-        diff = image_v_flipped - image_v_flipped_2
-        mse = np.sum(np.power(diff, 2))
+        mse = diff_mse(image_v_flipped, image_v_flipped_2)
+        assert mse == 0
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         num_iter += 1
         if plot:

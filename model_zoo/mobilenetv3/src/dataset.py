@@ -62,7 +62,7 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
     resize_crop_op = C.RandomCropDecodeResize(resize_height, scale=(0.08, 1.0), ratio=(0.75, 1.333))
     horizontal_flip_op = C.RandomHorizontalFlip(prob=0.5)
 
-    resize_op = C.Resize((256, 256))
+    resize_op = C.Resize(256)
     center_crop = C.CenterCrop(resize_width)
     rescale_op = C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
     normalize_op = C.Normalize(mean=[0.485*255, 0.456*255, 0.406*255], std=[0.229*255, 0.224*255, 0.225*255])

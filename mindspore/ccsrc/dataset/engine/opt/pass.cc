@@ -61,6 +61,7 @@ Status NodePass::Run(ExecutionTree *tree, bool *modified) {
 
 // Helper function to perform DFS visit
 Status NodePass::DFSNodeVisit(std::shared_ptr<DatasetOp> node, bool *modified) {
+  RETURN_IF_NOT_OK(node->PreAccept(this, modified));
   for (const auto &c : node->Children()) {
     RETURN_IF_NOT_OK(this->DFSNodeVisit(c, modified));
   }
@@ -159,6 +160,5 @@ Status NodePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) 
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -120,6 +120,10 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
         type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
       }
     }
+  } else if (type->isa<IndexedSlicesType>()) {
+    // Do Nothing
+  } else if (type->isa<UndeterminedType>()) {
+    // Do Nothing
   } else if (type->isa<Tuple>()) {
     TuplePtr tuple_type = dyn_cast<Tuple>(type);
     type_proto->set_data_type(irpb::DT_TUPLE);

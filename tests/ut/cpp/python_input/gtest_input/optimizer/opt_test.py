@@ -875,7 +875,6 @@ def test_merge_addn(tag):
     """ test_merge_addn """
     fns = FnDict()
     addn = P.AddN()
-    AddN = P.AddN
 
     @fns
     def before(x, y, z, a):
@@ -883,7 +882,7 @@ def test_merge_addn(tag):
 
     @fns
     def after(x, y, z, a):
-        return AddN()((a, x, y, z))
+        return addn((a, x, y, z))
 
     return fns[tag]
 
@@ -892,7 +891,6 @@ def test_addn_zero(tag):
     """ test_addn_zero """
     fns = FnDict()
     addn = P.AddN()
-    AddN = P.AddN
     zero_tensor = Primitive('ZerosLike')
 
     @fns
@@ -901,7 +899,7 @@ def test_addn_zero(tag):
 
     @fns
     def after(x, y, z, a):
-        return AddN()((a, z))
+        return addn((a, z))
 
     @fns
     def before_2(x, y, z, a):
@@ -1128,5 +1126,40 @@ def test_adjust_allreduce_mul_add(tag):
     @fns
     def after2(x, y, z):
         return Mul(AllReduce(AddN((Mul(z, z), x))), y)
+
+    return fns[tag]
+
+
+def test_indexed_slices(tag):
+    """ test_add_zero """
+    fns = FnDict()
+    make_indexed_slices = Primitive('MakeIndexedSlices')
+    indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
+    indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
+    indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
+
+    @fns
+    def before_get_indices(x, y, z):
+        return indexed_slices_get_indices(make_indexed_slices(x, y, z))
+
+    @fns
+    def after_get_indices(x, y, z):
+        return x
+
+    @fns
+    def before_get_values(x, y, z):
+        return indexed_slices_get_values(make_indexed_slices(x, y, z))
+
+    @fns
+    def after_get_values(x, y, z):
+        return y
+
+    @fns
+    def before_get_dense_shape(x, y, z):
+        return indexed_slices_get_dense_shape(make_indexed_slices(x, y, z))
+
+    @fns
+    def after_get_dense_shape(x, y, z):
+        return z
 
     return fns[tag]

@@ -35,25 +35,6 @@ from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
 
-def test_tensor_scatter_update():
-    class TensorScatterUpdateNet(nn.Cell):
-        """TensorScatterUpdate net definition"""
-
-        def __init__(self):
-            super(TensorScatterUpdateNet, self).__init__()
-            self.tensor_scatter_update = P.TensorScatterUpdate()
-
-        def construct(self, x, i, u):
-            out = self.tensor_scatter_update(x, i, u)
-            return out
-    net = TensorScatterUpdateNet()
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
-    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)),  mstype.float32)
-    indices = Tensor(np.array([[0, 0], [1, 1]], np.int32))
-    updates = Tensor(np.ones([2, 5], np.float32))
-    net(x, indices, updates)
-
-
 class InputBackward(nn.Cell):
     def __init__(self, network):
         super(InputBackward, self).__init__()
@@ -204,29 +185,94 @@ class HistogramSummaryNet(nn.Cell):
         return out
 
 
+class ScatterUpdate(nn.Cell):
+    """ScatterUpdate net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterUpdate, self).__init__()
+        self.scatter_update = P.ScatterUpdate(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_update(self.ref, indices, updates)
+        return out
+
+
 class ScatterMax(nn.Cell):
     """ScatterMax net definition"""
 
-    def __init__(self):
+    def __init__(self, dtype=np.float32, use_locking=False):
         super(ScatterMax, self).__init__()
-        self.scatter_max = P.ScatterMax()
-        self.ref = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], np.float32)), name="ref")
+        self.scatter_max = P.ScatterMax(use_locking)
+        self.ref = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype)), name="ref")
 
     def construct(self, indices, updates):
         out = self.scatter_max(self.ref, indices, updates)
         return out
 
 
+class ScatterMin(nn.Cell):
+    """ScatterMin net definition"""
+
+    def __init__(self, dtype=np.float32, use_locking=False):
+        super(ScatterMin, self).__init__()
+        self.scatter_min = P.ScatterMin(use_locking)
+        self.ref = Parameter(Tensor(np.array([[-1.0, 2.0, 3.0], [-4.0, 1.0, 6.0]], dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_min(self.ref, indices, updates)
+        return out
+
+
 class ScatterAdd(nn.Cell):
     """ScatterAdd net definition"""
 
-    def __init__(self, ref_shape):
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
         super(ScatterAdd, self).__init__()
-        self.scatter_add = P.ScatterAdd()
-        self.ref = Parameter(Tensor(np.ones(ref_shape, np.float32)), name="ref")
+        self.scatter_add = P.ScatterAdd(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
         out = self.scatter_add(self.ref, indices, updates)
+        return out
+
+
+class ScatterSub(nn.Cell):
+    """ScatterSub net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterSub, self).__init__()
+        self.scatter_sub = P.ScatterSub(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_sub(self.ref, indices, updates)
+        return out
+
+
+class ScatterMul(nn.Cell):
+    """ScatterMul net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterMul, self).__init__()
+        self.scatter_mul = P.ScatterMul(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_mul(self.ref, indices, updates)
+        return out
+
+
+class ScatterDiv(nn.Cell):
+    """ScatterDiv net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
+        super(ScatterDiv, self).__init__()
+        self.scatter_div = P.ScatterDiv(use_locking)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)*10), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_div(self.ref, indices, updates)
         return out
 
 
@@ -257,6 +303,19 @@ class SparseApplyFtrlNet(nn.Cell):
 
     def construct(self, grad, indices):
         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        return out
+
+
+class SparseApplyFtrlV2Net(nn.Cell):
+    def __init__(self):
+        super(SparseApplyFtrlV2Net, self).__init__()
+        self.sparse_apply_ftrl_v2 = P.SparseApplyFtrlV2(lr=0.001, l1=0.0, l2=0.0, l2_shrinkage=0.0, lr_power=-0.5)
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+
+    def construct(self, grad, indices):
+        out = self.sparse_apply_ftrl_v2(self.var, self.accum, self.linear, grad, indices)
         return out
 
 
@@ -351,6 +410,64 @@ class ApplyAdagradV2Net(nn.Cell):
         return out
 
 
+class ApplyAddSignNet(nn.Cell):
+    def __init__(self):
+        super(ApplyAddSignNet, self).__init__()
+        self.apply_add_sign = P.ApplyAddSign()
+        self.lr = 0.001
+        self.alpha = 1.0
+        self.sign_decay = 0.99
+        self.beta = 0.99
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+
+    def construct(self, grad):
+        out = self.apply_add_sign(self.var, self.m, self.lr, self.alpha, self.sign_decay, self.beta, grad)
+        return out
+
+
+class ApplyPowerSignNet(nn.Cell):
+    def __init__(self):
+        super(ApplyPowerSignNet, self).__init__()
+        self.apply_power_sign = P.ApplyPowerSign()
+        self.lr = 0.001
+        self.logbase = np.e
+        self.sign_decay = 0.99
+        self.beta = 0.99
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
+
+    def construct(self, grad):
+        out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase, self.sign_decay, self.beta, grad)
+        return out
+
+
+class ApplyGradientDescentNet(nn.Cell):
+    def __init__(self):
+        super(ApplyGradientDescentNet, self).__init__()
+        self.apply_gradient_descent = P.ApplyGradientDescent()
+        self.alpha = 0.001
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+
+    def construct(self, delta):
+        out = self.apply_gradient_descent(self.var, self.alpha, delta)
+        return out
+
+
+class ApplyProximalGradientDescentNet(nn.Cell):
+    def __init__(self):
+        super(ApplyProximalGradientDescentNet, self).__init__()
+        self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
+        self.alpha = 0.001
+        self.l1 = 0.0
+        self.l2 = 0.0
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+
+    def construct(self, delta):
+        out = self.apply_proximal_gradient_descent(self.var, self.alpha, self.l1, self.l2, delta)
+        return out
+
+
 class SparseApplyAdagradNet(nn.Cell):
     def __init__(self):
         super(SparseApplyAdagradNet, self).__init__()
@@ -361,6 +478,19 @@ class SparseApplyAdagradNet(nn.Cell):
     def construct(self, grad, indices):
         out = self.sparse_apply_adagrad(self.var, self.accum, grad, indices)
         return out
+
+
+class SparseApplyAdagradV2Net(nn.Cell):
+    def __init__(self):
+        super(SparseApplyAdagradV2Net, self).__init__()
+        self.sparse_apply_adagrad_v2 = P.SparseApplyAdagradV2(lr=0.01, epsilon=0.001)
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+
+    def construct(self, grad, indices):
+        out = self.sparse_apply_adagrad_v2(self.var, self.accum, grad, indices)
+        return out
+
 
 class ApplyRMSNet(nn.Cell):
     def __init__(self):
@@ -400,13 +530,15 @@ class InplaceSubNet(nn.Cell):
 
 
 class NormalNet(nn.Cell):
-    def __init__(self, shape=None, seed=0):
+    def __init__(self, shape=None, mean=0.0, stddev=1.0, seed=0):
         super(NormalNet, self).__init__()
         self.normal = P.Normal(seed=seed)
         self.shape = shape
+        self.mean = Tensor(mean, mstype.float32)
+        self.stddev = Tensor(stddev, mstype.float32)
 
-    def construct(self, mean, stddev):
-        out = self.normal(self.shape, mean, stddev)
+    def construct(self):
+        out = self.normal(self.shape, self.mean, self.stddev)
         return out
 
 
@@ -463,6 +595,60 @@ class UniformRealNet(nn.Cell):
     def construct(self, a, b):
         out = self.uniformreal(self.shape, a, b)
         return out
+
+
+class StridedSliceNet(nn.Cell):
+    def __init__(self):
+        super(StridedSliceNet, self).__init__()
+        self.begins = (1, 2, 3, 2, 1)
+        self.ends = (5, 6, 7, 8, 9)
+        self.strides = (1, 2, 3, 2, 1)
+        self.strided_slice_0 = P.StridedSlice(begin_mask=3, end_mask=5, ellipsis_mask=4,
+                                              shrink_axis_mask=2, new_axis_mask=8)
+        self.strided_slice_1 = P.StridedSlice(begin_mask=5, end_mask=2, ellipsis_mask=2,
+                                              shrink_axis_mask=6, new_axis_mask=10)
+        self.strided_slice_2 = P.StridedSlice(begin_mask=3, end_mask=3, ellipsis_mask=4,
+                                              shrink_axis_mask=5, new_axis_mask=13)
+        self.strided_slice_3 = P.StridedSlice(begin_mask=0, end_mask=0, ellipsis_mask=4,
+                                              shrink_axis_mask=12, new_axis_mask=15)
+        self.const_0 = Tensor(np.ones([6, 8, 9, 1, 8], np.float32))
+        self.const_1 = Tensor(np.ones([5, 7, 8, 1, 8], np.float32))
+        self.const_2 = Tensor(np.ones([1, 3, 7, 8, 9, 1, 8], np.float32))
+        self.const_3 = Tensor(np.ones([1, 1, 6, 7, 8, 9, 1, 8], np.float32))
+
+    def construct(self, x):
+        out_0 = self.strided_slice_0(x, self.begins, self.ends, self.strides) + self.const_0
+        out_1 = self.strided_slice_1(x, self.begins, self.ends, self.strides) + self.const_1
+        out_2 = self.strided_slice_2(x, self.begins, self.ends, self.strides) + self.const_2
+        out_3 = self.strided_slice_3(x, self.begins, self.ends, self.strides) + self.const_3
+        return out_0, out_1, out_2, out_3
+
+
+def test_strided_slice_const():
+    class StridedSLiceConstNet(nn.Cell):
+        """StridedSLiceConstNet net definition"""
+
+        def __init__(self):
+            super(StridedSLiceConstNet, self).__init__()
+            self.begins = (0, 2, -5, 2, 1)
+            self.ends = (0, 6, 9, 8, 9)
+            self.strides = (1, 2, 1, 2, 1)
+            self.strided_slice = P.StridedSlice(begin_mask=2,
+                                                end_mask=6,
+                                                ellipsis_mask=4,
+                                                shrink_axis_mask=6,
+                                                new_axis_mask=18)
+
+        def construct(self, x):
+            out = self.strided_slice(x, self.begins, self.ends, self.strides)
+            return out
+
+    net = StridedSLiceConstNet()
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    x = Tensor(np.ones([6, 7, 8, 9, 10]), mstype.float32)
+    ret = net(x)
+    assert ret.shape == (0, 1, 7, 8, 9, 3, 1)
+    assert (ret.asnumpy() == np.array([], np.float32).reshape([0, 1, 7, 8, 9, 3, 1])).all()
 
 
 test_case_math_ops = [
@@ -674,8 +860,8 @@ test_case_math_ops = [
         'desc_inputs': [[64, 128, 1024]],
         'skip': ['backward']}),
     ('Normal', {
-        'block': NormalNet((3, 2, 4), 0),
-        'desc_inputs': [Tensor(1.0, mstype.float32), Tensor(1.0, mstype.float32)],
+        'block': NormalNet((3, 2, 4), 0.0, 1.0, 0),
+        'desc_inputs': [],
         'skip': ['backward']}),
     ('Laplace', {
         'block': LaplaceNet((3, 2, 4), 0),
@@ -985,6 +1171,14 @@ test_case_math_ops = [
         'desc_inputs': [Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mstype.float16), Tensor([0.0, 5.0], mstype.float16)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('Normal', {
+        'block': NormalNet((3, 2, 4), 0.0, 1.0, 0),
+        'desc_inputs': [],
+        'skip': ['backward']}),
+    ('Mod', {
+        'block': P.Mod(),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
 ]
 
 test_case_nn_ops = [
@@ -1261,6 +1455,10 @@ test_case_nn_ops = [
         'block': P.Softmax(),
         'desc_inputs': [[5, 5]],
         'desc_bprop': [[5, 5]]}),
+    ('Softsign', {
+        'block': P.Softsign(),
+        'desc_inputs': [[5, 5]],
+        'desc_bprop': [[5, 5]]}),
     ('DepthwiseConv2dNative_1', {
         'block': P.DepthwiseConv2dNative(3, (3, 3), pad_mode="pad", pad=1, stride=2),
         'desc_inputs': [[10, 32, 32, 32], [1, 32, 3, 3]],
@@ -1286,8 +1484,16 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
         'desc_bprop': [[3, 3], [3, 3]],
         'skip': ['backward']}),
+    ('SparseApplyAdagradV2', {
+        'block': SparseApplyAdagradV2Net(),
+        'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
     ('SparseApplyFtrl', {
         'block': SparseApplyFtrlNet(),
+        'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
+        'skip': ['backward']}),
+    ('SparseApplyFtrlV2', {
+        'block': SparseApplyFtrlV2Net(),
         'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],
         'skip': ['backward']}),
     ('ApplyProximalAdagrad', {
@@ -1314,6 +1520,22 @@ test_case_nn_ops = [
         'block': ApplyAdagradV2Net(),
         'desc_inputs': [[3, 3]],
         'skip': ['backward']}),
+    ('ApplyAddSign', {
+        'block': ApplyAddSignNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyPowerSign', {
+        'block': ApplyPowerSignNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyGradientDescent', {
+        'block': ApplyGradientDescentNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('ApplyProximalGradientDescent', {
+        'block': ApplyProximalGradientDescentNet(),
+        'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
     ('Flatten_1', {
         'block': NetForFlatten(),
         'desc_inputs': [Tensor(np.ones([2, 3, 4]).astype(np.int32)), Tensor(np.ones([2, 12]).astype(np.int32))],
@@ -1338,6 +1560,10 @@ test_case_nn_ops = [
         'block': ArgminNet(),
         'desc_inputs': [Tensor(np.array([[128, 32, 32, 64], [128, 32, 32, 64]]).astype(np.float16))],
         'desc_bprop': [Tensor(np.array([[128, 32, 32, 64], [128, 32, 32, 64]]).astype(np.float16))],
+        'skip': ['backward']}),
+    ('StridedSliceNet', {
+        'block': StridedSliceNet(),
+        'desc_inputs': [[6, 7, 8, 9, 10]],
         'skip': ['backward']}),
     ('OneHot', {
         'block': P.OneHot(),
@@ -1436,6 +1662,20 @@ test_case_nn_ops = [
     ('DataFormatDimMap', {
         'block': P.DataFormatDimMap(),
         'desc_inputs': [Tensor([0, 1, 2, 3], mstype.int32)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
+    ('MaxPoolGradGrad', {
+        'block': G.MaxPoolGradGrad(),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.random.rand(1, 1, 2, 2), mstype.float16)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
+    ('MaxPoolGradGradWithArgmax', {
+        'block': G.MaxPoolGradGradWithArgmax(),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
+                        Tensor(np.zeros((1, 1, 2, 2)), mstype.uint16)],
         'desc_bprop': [],
         'skip': ['backward']}),
 ]
@@ -1600,6 +1840,10 @@ test_case_array_ops = [
         'desc_inputs': [[128, 128], [128, 128]],
         'desc_bprop': [[2, 128, 128]],
     }),
+    ('Pack_3', {
+        'block': NetForPackInput(P.Pack()),
+        'desc_inputs': [[2, 2]],
+        'desc_bprop': [[1, 2, 2]]}),
     ('Unpack_0', {
         'block': NetForUnpackInput(P.Unpack(axis=0)),
         'desc_inputs': [[2, 4]],
@@ -1704,6 +1948,12 @@ test_case_array_ops = [
                         Tensor(np.arange(-12, 0).reshape(3, 2, 2), mstype.float32)],
         'skip': ['backward'],
     }),
+    ('TransShape', {
+        'block': P.TransShape(),
+        'desc_const': [(1, 12, 24, 24)],
+        'desc_inputs': [[1, 3, 24, 24]],
+        'desc_bprop': [[1, 12, 24, 24]],
+    }),
 ]
 
 test_case_other_ops = [
@@ -1736,25 +1986,208 @@ test_case_other_ops = [
         'desc_bprop': [([3, 3], {'dtype': np.int32})]}),
     ('TensorScatterUpdate', {
         'block': P.TensorScatterUpdate(),
-        'desc_inputs': (Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)),  mstype.float32),
+        'desc_inputs': (Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
                         Tensor(np.array([[0, 1], [1, 2]], np.int32)),
                         Tensor(np.ones([2, 5], np.float32) * 99)),
         'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
-    ('ScatterMax', {
+    ('ScatterMaxUseLocking', {
+        'block': ScatterMax(use_locking=True),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.array([[5.0, 5.0, 5.0], [4.0, 4.0, 4.0]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMax1d', {
+        'block': ScatterMax(),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.array([[5.0, 5.0, 5.0], [4.0, 4.0, 4.0]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMaxF32', {
         'block': ScatterMax(),
         'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
                         Tensor(np.ones([2, 2, 3], np.float32) * 99)),
+        'skip': ['backward']}),
+    ('ScatterMaxF16', {
+        'block': ScatterMax(np.float16),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.float16) * 99)),
+        'skip': ['backward']}),
+    ('ScatterMaxI32', {
+        'block': ScatterMax(np.int32),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.int32) * 99)),
+        'skip': ['backward']}),
+    ('ScatterMinUseLocking', {
+        'block': ScatterMin(use_locking=True),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.ones([2, 3], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMin1d', {
+        'block': ScatterMin(),
+        'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
+                        Tensor(np.ones([2, 3], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMinF32', {
+        'block': ScatterMin(),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMinF16', {
+        'block': ScatterMin(np.float16),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterMinI32', {
+        'block': ScatterMin(np.int32),
+        'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
+                        Tensor(np.ones([2, 2, 3], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterUpdate', {
+        'block': ScatterUpdate((6,)),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterAddUseLocking', {
+        'block': ScatterAdd((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
         'skip': ['backward']}),
     ('ScatterAdd', {
         'block': ScatterAdd((6,)),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
         'skip': ['backward']}),
+    ('ScatterAddScalar', {
+        'block': ScatterAdd((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
     ('ScatterAdd2d', {
         'block': ScatterAdd((3, 4)),
         'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
                         Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
                                          [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterAddF16', {
+        'block': ScatterAdd((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterAddI8', {
+        'block': ScatterAdd((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterAddI32', {
+        'block': ScatterAdd((6,), np.int32),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterAddU8', {
+        'block': ScatterAdd((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.uint8))),
+        'skip': ['backward']}),
+    ('ScatterMulUseLocking', {
+        'block': ScatterMul((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMulScalar', {
+        'block': ScatterMul((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMul2d', {
+        'block': ScatterMul((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterMulF16', {
+        'block': ScatterMul((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterMulI8', {
+        'block': ScatterMul((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterMulI32', {
+        'block': ScatterMul((6,), np.int32),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterMulU8', {
+        'block': ScatterMul((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.uint8))),
+        'skip': ['backward']}),
+    ('ScatterDivUseLocking', {
+        'block': ScatterDiv((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterDivScalar', {
+        'block': ScatterDiv((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterDiv2d', {
+        'block': ScatterDiv((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterDivF16', {
+        'block': ScatterDiv((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterDivI8', {
+        'block': ScatterDiv((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterDivU8', {
+        'block': ScatterDiv((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.uint8))),
+        'skip': ['backward']}),
+    ('ScatterSubUseLocking', {
+        'block': ScatterSub((6,), use_locking=True),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterSubScalar', {
+        'block': ScatterSub((6,)),
+        'desc_inputs': (Tensor(np.array([2], np.int32)),
+                        Tensor(np.array([2.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterSub2d', {
+        'block': ScatterSub((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterSubF16', {
+        'block': ScatterSub((6,), np.float16),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float16))),
+        'skip': ['backward']}),
+    ('ScatterSubI32', {
+        'block': ScatterSub((6,), np.int32),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int32))),
+        'skip': ['backward']}),
+    ('ScatterSubI8', {
+        'block': ScatterSub((6,), np.int8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2, 3, 4], np.int8))),
+        'skip': ['backward']}),
+    ('ScatterSubU8', {
+        'block': ScatterSub((6,), np.uint8),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([1, 1, 0], np.uint8))),
         'skip': ['backward']}),
     ('SmoothL1Loss', {
         'block': P.SmoothL1Loss(),
@@ -1792,11 +2225,10 @@ test_case_other_ops = [
 
 ]
 
-
 test_case_quant_ops = [
     ('AscendQuant_1', {
         'block': inner.AscendQuant(0.5, 0.0, False, "Round"),
-        'desc_inputs': [Tensor(np.random.rand(1,2,4,4), mstype.float32)],
+        'desc_inputs': [Tensor(np.random.rand(1, 2, 4, 4), mstype.float32)],
         'skip': ['backward']}),
     ('AscendQuant_2', {
         'block': inner.AscendQuant(80.0, 10.0, True, "Round"),
@@ -1877,10 +2309,6 @@ raise_set = [
                         Tensor(np.ones((2, 2), np.float32)),
                         Tensor(np.ones((2,), np.float32))),
         'desc_bprop': [[2, 3]]}),
-    ('Pack', {
-        'block': (NetForPackInput(P.Pack()), {'exception': ValueError}),
-        'desc_inputs': [[2, 2]],
-        'desc_bprop': [[1, 2, 2]]}),
     ('PReLU', {
         'block': (P.PReLU(), {'exception': ValueError}),
         'desc_inputs': [[2], [1]],
@@ -1889,6 +2317,18 @@ raise_set = [
         'block': (nn.SSIM(), {'exception': ValueError}),
         'desc_inputs': [Tensor(np.ones((1, 3, 8, 8)), mstype.float32),
                         Tensor(np.ones((1, 3, 8, 8)), mstype.float32)]}),
+    ('StridedSlice_0', {
+        'block': (P.StridedSlice(), {'exception': ValueError}),
+        'desc_const': [(1, 2.2, 3), (3, 4, 5), (1, 1, 1)],
+        'desc_inputs': [[4, 5, 6, 7]]}),
+    ('StridedSlice_1', {
+        'block': (P.StridedSlice(), {'exception': ValueError}),
+        'desc_const': [(1, 2, 3), (3, 4, 5), (1, 1)],
+        'desc_inputs': [[4, 5, 6, 7]]}),
+    ('StridedSlice_2', {
+        'block': (P.StridedSlice(), {'exception': ValueError}),
+        'desc_const': [(1, 2, 3), (3, 4, 5), (1, 1, 0)],
+        'desc_inputs': [[4, 5, 6, 7]]}),
 
 ]
 

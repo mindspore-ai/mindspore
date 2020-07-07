@@ -26,6 +26,7 @@ cmake-build-debug
 *_pb2.py
 *.pb.h
 *.pb.cc
+*.pb
 
 # Object files
 *.o

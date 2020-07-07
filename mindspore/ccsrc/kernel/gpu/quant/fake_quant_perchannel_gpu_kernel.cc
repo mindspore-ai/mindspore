@@ -102,9 +102,9 @@ void FakeQuantPerChannelGpuKernel::InitSizeLists() {
 void FakeQuantPerChannelGpuKernel::CalFakeQuantize(float *input, float *output, float *input_min, float *input_max,
                                                    float *nudge_min, float *nudge_max, float *scale, void *stream_ptr) {
   CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, num_channels_,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
-  CalFakeQuantizePerChannel(input, output, input_size_ / sizeof(float), num_channels_, nudge_min, nudge_max, scale,
-                            symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
+                     symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalFakeQuantPerChannel(input, output, input_size_ / sizeof(float), num_channels_, nudge_min, nudge_max, scale,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
 }
 
 bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,

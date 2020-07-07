@@ -27,7 +27,7 @@ vocab_bert = [
     "繁", "體", "字", "嘿", "哈", "大", "笑", "嘻",
     "i", "am", "mak", "make", "small", "mistake", "##s", "during", "work", "##ing", "hour",
     "😀", "😃", "😄", "😁", "+", "/", "-", "=", "12", "28", "40", "16", " ", "I",
-    "[CLS]", "[SEP]", "[UNK]", "[PAD]", "[MASK]"
+    "[CLS]", "[SEP]", "[UNK]", "[PAD]", "[MASK]", "[unused1]", "[unused10]"
 ]
 pad = '<pad>'
 test_paras = [
@@ -69,22 +69,40 @@ test_paras = [
     # test preserved tokens
     dict(
         first=8,
-        last=12,
+        last=14,
         expect_str=[
             ['[UNK]', '[CLS]'],
             ['[UNK]', '[SEP]'],
             ['[UNK]', '[UNK]'],
             ['[UNK]', '[PAD]'],
             ['[UNK]', '[MASK]'],
+            ['[unused1]'],
+            ['[unused10]']
         ],
         lower_case=False,
         vocab_list=vocab_bert,
         preserve_unused_token=True,
     ),
+    dict(
+        first=8,
+        last=14,
+        expect_str=[
+            ['[UNK]', '[CLS]'],
+            ['[UNK]', '[SEP]'],
+            ['[UNK]', '[UNK]'],
+            ['[UNK]', '[PAD]'],
+            ['[UNK]', '[MASK]'],
+            ['[unused1]'],
+            ['[unused10]']
+        ],
+        lower_case=True,
+        vocab_list=vocab_bert,
+        preserve_unused_token=True,
+    ),
     # test special symbol
     dict(
-        first=13,
-        last=13,
+        first=15,
+        last=15,
         expect_str=[['12', '+', '/', '-', '28', '=', '40', '/', '-', '16']],
         preserve_unused_token=True,
         vocab_list=vocab_bert

@@ -89,7 +89,7 @@ config.py:
     optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
 finetune_config.py:
-    task                            task type: NER | SQUAD | OTHERS
+    task                            task type: SeqLabeling | Regression | Classification | COLA | SQUAD
     num_labels                      number of labels to do classification
     data_file                       dataset file to load: PATH, default is "/your/path/train.tfrecord"
     schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"
@@ -101,7 +101,7 @@ finetune_config.py:
     optimizer                       optimizer used in fine-tune network: AdamWeigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
 evaluation_config.py:
-    task                            task type: NER | SQUAD | OTHERS
+    task                            task type: SeqLabeling | Regression | Classification | COLA
     num_labels                      number of labels to do classsification
     data_file                       dataset file to load: PATH, default is "/your/path/evaluation.tfrecord"
     schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"

@@ -18,44 +18,44 @@
 
 #include "operator/composite/zip_operation.h"
 #include <algorithm>
-#include <utility>
 
 #include "pipeline/static_analysis/abstract_value.h"
 #include "ir/anf.h"
 #include "pipeline/static_analysis/dshape.h"
-#include "pipeline/static_analysis/param_validator.h"
 #include "operator/cc_implementations.h"
 #include "optimizer/opt.h"
-#include "utils/symbolic.h"
-#include "./common.h"
 #include "pybind_api/api_register.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
 using mindspore::abstract::AbstractBase;
+using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractSequeue;
+using mindspore::abstract::AbstractSequeuePtr;
 using mindspore::abstract::AbstractTuple;
 
 FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // zip operation:
   // input: tuple arguments
   // output: tuple of items of input iterated on every input
-  if (args_spec_list.size() == 0) {
-    MS_LOG(EXCEPTION) << "zip arguments input should not be empty";
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "For 'zip', there is at least one input.";
   }
 
-  auto is_all_tuple = std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &abs) -> bool {
-    MS_EXCEPTION_IF_NULL(abs);
-    return abs->isa<AbstractTuple>();
-  });
-  if (!is_all_tuple) {
-    MS_LOG(EXCEPTION) << "zip input args should be tuple";
+  auto is_all_sequeue =
+    std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &abs) -> bool {
+      MS_EXCEPTION_IF_NULL(abs);
+      return abs->isa<AbstractSequeue>();
+    });
+  if (!is_all_sequeue) {
+    MS_LOG(EXCEPTION) << "For 'zip', all inputs must be sequence.";
   }
 
-  auto min_abs = std::min_element(args_spec_list.begin(), args_spec_list.end(),
-                                  [](const AbstractBasePtr &x, const AbstractBasePtr &y) {
-                                    return (x->cast<AbstractTuplePtr>()->size() < y->cast<AbstractTuplePtr>()->size());
-                                  });
+  auto min_abs = std::min_element(
+    args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &x, const AbstractBasePtr &y) {
+      return (x->cast<AbstractSequeuePtr>()->size() < y->cast<AbstractSequeuePtr>()->size());
+    });
   FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   for (size_t idx = 0; idx < args_spec_list.size(); idx++) {
@@ -65,12 +65,14 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
   // generate tuple output of ziped arguments input
   std::vector<AnfNodePtr> make_tuple_nodes;
   make_tuple_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
-  for (size_t idx = 0; idx < (*min_abs)->cast<AbstractTuplePtr>()->size(); idx++) {
+  for (size_t idx = 0; idx < (*min_abs)->cast<AbstractSequeuePtr>()->size(); idx++) {
     std::vector<AnfNodePtr> make_tuple_zip_nodes;
     make_tuple_zip_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
+    std::string module_name = "mindspore.ops.composite.multitype_ops.getitem_impl";
+    ValuePtr op = prim::GetPythonOps("getitem", module_name);
     for (size_t arg_idx = 0; arg_idx < args_spec_list.size(); arg_idx++) {
-      std::vector<AnfNodePtr> tuple_get_item_nodes{NewValueNode(prim::kPrimTupleGetItem),
-                                                   ret_graph->parameters()[arg_idx], NewValueNode(SizeToInt(idx))};
+      std::vector<AnfNodePtr> tuple_get_item_nodes{NewValueNode(op), ret_graph->parameters()[arg_idx],
+                                                   NewValueNode(SizeToInt(idx))};
       auto tuple_get_item_op = ret_graph->NewCNode(tuple_get_item_nodes);
       make_tuple_zip_nodes.push_back(tuple_get_item_op);
     }

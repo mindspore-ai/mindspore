@@ -152,7 +152,7 @@ Tensor::Tensor(const std::vector<std::string> &strings, const TensorShape &shape
 
   this->data_end_ = data_ + offset_arr[i];
 
-  DS_ASSERT(num_bytes == 0);
+  MS_ASSERT(num_bytes == 0);
   if (shape.known()) Tensor::Reshape(shape);
 }
 Tensor::Tensor(const dataengine::BytesList &bytes_list, const TensorShape &shape)
@@ -191,7 +191,7 @@ Tensor::Tensor(const dataengine::BytesList &bytes_list, const TensorShape &shape
 
   data_end_ = data_ + offset_arr[i];
 
-  DS_ASSERT(num_bytes == 0);
+  MS_ASSERT(num_bytes == 0);
   if (shape.known()) Tensor::Reshape(shape);
 }
 Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl, const TensorShape &shape,
@@ -420,7 +420,7 @@ bool Tensor::operator==(const Tensor &rhs) const {
 // Description: A function that print the value as specified by its index
 void Tensor::PrintItemAt(const std::vector<dsize_t> &index, std::ostream &out) const {
   Status rc;
-  DS_ASSERT(data_);
+  MS_ASSERT(data_);
 
   switch (type_.value()) {
     CASE_PRINT_HEX(DataType::DE_BOOL, bool);

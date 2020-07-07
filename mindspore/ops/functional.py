@@ -153,10 +153,20 @@ shape_mul = Primitive("shape_mul")
 # a primitive to compare between tuple.
 stop_gradient = Primitive("stop_gradient")
 
+
+make_indexed_slices = Primitive('MakeIndexedSlices')
+indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
+indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
+indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
+is_indexed_slices = Primitive('IsIndexedSlices')
+
+
 tensor_operator_registry.register('__add__', tensor_add)
 tensor_operator_registry.register('__sub__', tensor_sub)
 tensor_operator_registry.register('__mul__', tensor_mul)
 tensor_operator_registry.register('__truediv__', tensor_div)
+tensor_operator_registry.register('__mod__', tensor_mod)
+tensor_operator_registry.register('__floordiv__', tensor_floordiv)
 #ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

@@ -229,6 +229,7 @@ AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr
   // Inputs: x, t
   return std::make_shared<AbstractScalar>(!IsInDict(primitive, args_spec_list));
 }
+
 AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // statement: isconstant(x)

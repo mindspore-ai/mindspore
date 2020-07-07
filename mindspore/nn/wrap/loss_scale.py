@@ -234,8 +234,8 @@ class TrainOneStepWithLossScaleCell(Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
-        self.add_flags(has_effect=True)
 
+    @C.add_flags(has_effect=True)
     def construct(self, data, label, sens=None):
         weights = self.weights
         loss = self.network(data, label)

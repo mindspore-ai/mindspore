@@ -721,19 +721,16 @@ std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfN
     MS_EXCEPTION_IF_NULL(output);
     bool found = false;
     auto pree_node = AnfAlgo::VisitKernel(output, 0);
-
     auto pos = std::find(std::begin(node_list), std::end(node_list), pree_node.first);
     if (pos != std::end(node_list)) {
       output_index.push_back(pree_node);
       continue;
     }
-
     auto ret = std::find(std::begin(input_list), std::end(input_list), pree_node.first);
     if (ret != std::end(input_list)) {
       output_index.push_back(std::make_pair(pree_node.first, 0));
       found = true;
     }
-
     if (!found) {
       MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(2) << "] of ["
                                   << output->func_graph()->ToString() << "] found no related kernel info.";
@@ -744,18 +741,14 @@ std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfN
 
 void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list) {
   MS_EXCEPTION_IF_NULL(node_list);
-
   MS_EXCEPTION_IF_NULL(func_graph);
-
   std::vector<AnfNodePtr> node_lists = TopoSort(func_graph->get_return());
   for (auto const &node : node_lists) {
     if (!AnfAlgo::IsRealKernel(node) || !node->isa<CNode>()) {
       continue;
     }
-
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-
     if (IsValueNode<Primitive>(cnode->input(kAnfPrimitiveIndex))) {
       node_list->push_back(node);
     }
@@ -883,12 +876,13 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
   return false;
 }
 
-void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params, size_t thread_num,
+void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params,
                         size_t total_compute_size) {
+  const size_t kThreadNum = 24;
   std::vector<std::thread> threads;
-  threads.reserve(thread_num);
+  threads.reserve(kThreadNum);
   size_t start = 0;
-  size_t once_compute_size = (total_compute_size + thread_num - 1) / thread_num;
+  size_t once_compute_size = (total_compute_size + kThreadNum - 1) / kThreadNum;
   while (start < total_compute_size) {
     size_t end = (start + once_compute_size) > total_compute_size ? total_compute_size : (start + once_compute_size);
     threads.emplace_back(std::thread(func, params, start, end));

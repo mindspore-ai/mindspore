@@ -208,11 +208,14 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
+  // Private function for computing the assignment of the column name map.
+  // @return - Status
+  Status ComputeColMap() override;
+
   CifarType cifar_type_;
   int32_t rows_per_buffer_;
   std::string folder_path_;
   std::unique_ptr<DataSchema> data_schema_;
-  std::shared_ptr<Sampler> sampler_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
 

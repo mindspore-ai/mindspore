@@ -22,7 +22,7 @@ import sys
 from mindspore import log as logger
 from . import datasets as de
 from ..transforms.vision.utils import Inter, Border
-
+from ..core.configuration import config
 
 def serialize(dataset, json_filepath=None):
     """
@@ -164,6 +164,8 @@ def traverse(node):
             node_repr[k] = v.to_json()
         elif k in set(['schema', 'dataset_files', 'dataset_dir', 'schema_file_path']):
             expand_path(node_repr, k, v)
+        elif k == "num_parallel_workers" and v is None:
+            node_repr[k] = config.get_num_parallel_workers()
         else:
             node_repr[k] = v
 

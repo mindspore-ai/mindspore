@@ -68,9 +68,14 @@ class AnfRuntimeAlgorithm {
       std::string node_debug_log = node->DebugString();
       MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node_debug_log.c_str();
     }
-    auto primitive = GetCNodePrimitive(node);
-    MS_EXCEPTION_IF_NULL(primitive);
-    return GetValue<T>(primitive->GetAttr(key));
+    // single op cnode.
+    if (auto primitive = GetCNodePrimitive(node); primitive != nullptr) {
+      return GetValue<T>(primitive->GetAttr(key));
+    }
+    // graph kernel cnode.
+    auto fg = GetCNodeFuncGraphPtr(node);
+    MS_EXCEPTION_IF_NULL(fg);
+    return GetValue<T>(fg->get_attr(key));
   }
   static bool IsTupleOutput(const AnfNodePtr &anf);
   // set attr of anf node
@@ -194,7 +199,6 @@ class AnfRuntimeAlgorithm {
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
   static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
-  static bool IsWhileTrueGraph(const KernelGraphPtr &child_graph);
   // get fix output precision of cnode.
   static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.

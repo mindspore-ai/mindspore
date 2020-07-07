@@ -17,6 +17,7 @@
 import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+from mindspore.ops.composite import add_flags
 from .backbone.resnet_deeplab import _conv_bn_relu, resnet50_dl, _deep_conv_bn_relu, \
     DepthwiseConv2dNative, SpaceToBatch, BatchToSpace
 
@@ -121,6 +122,7 @@ class ASPP(nn.Cell):
         self.feature_shape = feature_shape
         self.concat = P.Concat(axis=1)
 
+    @add_flags(loop_can_unroll=True)
     def construct(self, x, scale_index=0):
         aspp0 = self.aspp0(x)
         aspp1 = self.global_poolings[scale_index](x)
@@ -276,7 +278,7 @@ class SingleDeepLabV3(nn.Cell):
                          atrous_rates=atrous_rates,
                          output_stride=output_stride,
                          fine_tune_batch_norm=fine_tune_batch_norm)
-        self.aspp.add_flags(loop_can_unroll=True)
+
         atrous_rates_len = 0
         if atrous_rates is not None:
             atrous_rates_len = len(atrous_rates)

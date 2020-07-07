@@ -82,14 +82,14 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 Status RepeatOp::PrepareNodePostAction() {
   // Run any common code from super class first before adding our own specific logic
   RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  std::shared_ptr<DatasetOp> leaf_op = tree_->PopFromRepeatStack();
+  std::shared_ptr<DatasetOp> leaf_op = tree_->PopFromEOEOpStack();
   while (leaf_op != nullptr) {
     // Track the leaf operators that are under this repeat op.
     eoe_ops_.push_back(leaf_op);
-    leaf_op = tree_->PopFromRepeatStack();
+    leaf_op = tree_->PopFromEOEOpStack();
   }
   // Push ourselves to the stack in case one of our ascendants is repeat too.
-  tree_->AddToRepeatStack(shared_from_this());
+  tree_->AddToEOEOpStack(shared_from_this());
   return Status::OK();
 }
 
@@ -123,8 +123,6 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   if (buf->eof()) {
     RETURN_IF_NOT_OK(EofReceived(worker_id));
   }
-  // Update the column name map if needed
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
   *p_buffer = std::move(buf);
   return Status::OK();
 }
@@ -192,7 +190,7 @@ int32_t RepeatOp::num_producers() const {
 // Visitor accept method for NodePass
 Status RepeatOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<RepeatOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<RepeatOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

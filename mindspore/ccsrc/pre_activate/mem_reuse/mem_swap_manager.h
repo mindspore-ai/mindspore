@@ -91,13 +91,15 @@ class MemSwapManager {
 
   void ResetSwapInfo();
 
-  void SaveUserKernelTopoOrder(const mindspore::session::KernelGraph *kernel_graph);
+  void SaveUserKernelTopoOrder();
 
   void AddKernelTriggerSwap(const AnfNodePtr &kernel, bool trigger_swap);
 
   void AddKernelNeedSwap(const AnfNodePtr &kernel, bool need_swap);
 
   void AddKernelMemSwapInfo(const AnfNodePtr &kernel, const MemSwapInfo &mem_swap_info);
+
+  bool IsCommunicationRelevantOp(const AnfNodePtr &kernel) const;
 
   std::vector<CNodePtr> execution_order_;
   std::vector<TensorInfo> ordered_tensors_;
@@ -113,7 +115,8 @@ class MemSwapManager {
   size_t tensor_size_num_;
   size_t distance_threshold_;
 
-  MemCopyManagerPtr mem_copy_manager_;
+  MemCopyManagerPtr mem_copy_manager_{nullptr};
+  FuncGraphManagerPtr graph_manager_{nullptr};
   bool mem_swap_initialized_{false};
   bool swap_info_already_set_{false};
   bool trigger_swap_{false};

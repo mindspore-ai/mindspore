@@ -51,6 +51,11 @@ class SubsetRandomSampler : public Sampler {
   // @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
+  // Printer for debugging purposes.
+  // @param out - output stream to write to
+  // @param show_all - bool to show detailed vs summary
+  void Print(std::ostream &out, bool show_all) const override;
+
  private:
   // A list of indices (already randomized in constructor).
   std::vector<int64_t> indices_;

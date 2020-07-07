@@ -35,7 +35,7 @@ class DeviceQueueTracing : public Tracing {
   // @return Status - The error code return
   Status Record(const int32_t type, const int32_t extra_info, const int32_t batch_num, const int32_t value);
 
-  std::string Name() const override { return "Device Queue Tracing"; };
+  std::string Name() const override { return kDeviceQueueTracingName; };
 
   // Save tracing data to file
   // @return Status - The error code return

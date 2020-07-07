@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "dataset/engine/perf/profiling.h"
-
 #include <sys/time.h>
 #include <cstdlib>
 #include <fstream>
@@ -23,6 +22,7 @@
 #include "dataset/engine/perf/monitor.h"
 #include "dataset/engine/perf/device_queue_tracing.h"
 #include "dataset/engine/perf/connector_size.h"
+#include "dataset/engine/perf/connector_throughput.h"
 #include "dataset/engine/perf/dataset_iterator_tracing.h"
 #include "utils/log_adapter.h"
 
@@ -72,9 +72,11 @@ Status ProfilingManager::Initialize() {
   std::shared_ptr<Tracing> dataset_iterator_tracing = std::make_shared<DatasetIteratorTracing>();
   RETURN_IF_NOT_OK(RegisterTracingNode(dataset_iterator_tracing));
 
-  std::shared_ptr<Sampling> monitor_sampling = std::make_shared<ConnectorSize>(tree_);
-  RETURN_IF_NOT_OK(RegisterSamplingNode(monitor_sampling));
+  std::shared_ptr<Sampling> connector_size_sampling = std::make_shared<ConnectorSize>(tree_);
+  RETURN_IF_NOT_OK(RegisterSamplingNode(connector_size_sampling));
 
+  std::shared_ptr<Sampling> connector_thr_sampling = std::make_shared<ConnectorThroughput>(tree_);
+  RETURN_IF_NOT_OK(RegisterSamplingNode(connector_thr_sampling));
   return Status::OK();
 }
 
@@ -140,14 +142,15 @@ Status ProfilingManager::SaveProfilingData() {
     RETURN_IF_NOT_OK(node.second->SaveToFile());
   }
   MS_LOG(INFO) << "Save profiling data end.";
-
   return Status::OK();
 }
 
-double ProfilingTime::GetCurMilliSecond() {
-  struct timeval tv = {0, 0};
-  (void)gettimeofday(&tv, nullptr);
-  return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+int64_t ProfilingTime::GetCurMilliSecond() {
+  // because cpplint does not allow using namespace
+  using std::chrono::duration_cast;
+  using std::chrono::milliseconds;
+  using std::chrono::steady_clock;
+  return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
 }
 }  // namespace dataset
 }  // namespace mindspore

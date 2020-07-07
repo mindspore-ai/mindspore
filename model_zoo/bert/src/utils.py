@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-'''
+"""
 Functional Cells used in Bert finetune and evaluation.
-'''
+"""
 
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
@@ -245,6 +245,32 @@ class BertSquadCell(nn.Cell):
         ret = (loss, cond)
         return F.depend(ret, succ)
 
+
+class BertRegressionModel(nn.Cell):
+    """
+    Bert finetune model for regression task
+    """
+    def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
+        super(BertRegressionModel, self).__init__()
+        self.bert = BertModel(config, is_training, use_one_hot_embeddings)
+        self.cast = P.Cast()
+        self.weight_init = TruncatedNormal(config.initializer_range)
+        self.log_softmax = P.LogSoftmax(axis=-1)
+        self.dtype = config.dtype
+        self.num_labels = num_labels
+        self.dropout = nn.Dropout(1 - dropout_prob)
+        self.dense_1 = nn.Dense(config.hidden_size, 1, weight_init=self.weight_init,
+                                has_bias=True).to_float(mstype.float16)
+
+    def construct(self, input_ids, input_mask, token_type_id):
+        _, pooled_output, _ = self.bert(input_ids, token_type_id, input_mask)
+        cls = self.cast(pooled_output, self.dtype)
+        cls = self.dropout(cls)
+        logits = self.dense_1(cls)
+        logits = self.cast(logits, self.dtype)
+        return logits
+
+
 class BertCLSModel(nn.Cell):
     """
     This class is responsible for classification task evaluation, i.e. XNLI(num_labels=3),
@@ -274,9 +300,9 @@ class BertCLSModel(nn.Cell):
         return log_probs
 
 class BertSquadModel(nn.Cell):
-    '''
-    This class is responsible for SQuAD
-    '''
+    """
+    Bert finetune model for SQuAD v1.1 task
+    """
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
         super(BertSquadModel, self).__init__()
         self.bert = BertModel(config, is_training, use_one_hot_embeddings)
@@ -401,9 +427,9 @@ class BertNER(nn.Cell):
         return loss
 
 class BertSquad(nn.Cell):
-    '''
+    """
     Train interface for SQuAD finetuning task.
-    '''
+    """
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
         super(BertSquad, self).__init__()
         self.bert = BertSquadModel(config, is_training, num_labels, dropout_prob, use_one_hot_embeddings)
@@ -432,3 +458,24 @@ class BertSquad(nn.Cell):
             end_logits = self.squeeze(logits[:, :, 1:2])
             total_loss = (unique_id, start_logits, end_logits)
         return total_loss
+
+
+class BertReg(nn.Cell):
+    """
+    Bert finetune model with loss for regression task
+    """
+    def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
+        super(BertReg, self).__init__()
+        self.bert = BertRegressionModel(config, is_training, num_labels, dropout_prob, use_one_hot_embeddings)
+        self.loss = nn.MSELoss()
+        self.is_training = is_training
+        self.sigmoid = P.Sigmoid()
+        self.cast = P.Cast()
+        self.mul = P.Mul()
+    def construct(self, input_ids, input_mask, token_type_id, labels):
+        logits = self.bert(input_ids, input_mask, token_type_id)
+        if self.is_training:
+            loss = self.loss(logits, labels)
+        else:
+            loss = logits
+        return loss

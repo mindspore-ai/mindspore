@@ -29,8 +29,9 @@ from .optimizer import Optimizer
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
 
 
-@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
-def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, gradient, decay_flag):
+@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Bool", "Bool")
+def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, gradient, decay_flag, optim_filter):
     """
     Update parameters.
 
@@ -44,38 +45,44 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, grad
         m (Tensor): m value of parameters.
         v (Tensor): v value of parameters.
         gradient (Tensor): Gradient of parameters.
+        decay_flag (bool): Applies weight decay or not.
+        optim_filter (bool): Applies parameter update or not.
 
     Returns:
         Tensor, the new value of v after updating.
     """
-    op_mul = P.Mul()
-    op_square = P.Square()
-    op_sqrt = P.Sqrt()
-    op_cast = P.Cast()
-    op_reshape = P.Reshape()
-    op_shape = P.Shape()
+    if optim_filter:
+        op_mul = P.Mul()
+        op_square = P.Square()
+        op_sqrt = P.Sqrt()
+        op_cast = P.Cast()
+        op_reshape = P.Reshape()
+        op_shape = P.Shape()
 
-    param_fp32 = op_cast(param, mstype.float32)
-    m_fp32 = op_cast(m, mstype.float32)
-    v_fp32 = op_cast(v, mstype.float32)
-    gradient_fp32 = op_cast(gradient, mstype.float32)
+        param_fp32 = op_cast(param, mstype.float32)
+        m_fp32 = op_cast(m, mstype.float32)
+        v_fp32 = op_cast(v, mstype.float32)
+        gradient_fp32 = op_cast(gradient, mstype.float32)
 
-    next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32) - beta1, gradient_fp32)
+        next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32)
+                                                - beta1, gradient_fp32)
 
-    next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32)
-                                            - beta2, op_square(gradient_fp32))
+        next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32)
+                                                - beta2, op_square(gradient_fp32))
 
-    update = next_m / (eps + op_sqrt(next_v))
-    if decay_flag:
-        update = op_mul(weight_decay_tensor, param_fp32) + update
 
-    update_with_lr = op_mul(lr, update)
-    next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
+        update = next_m / (eps + op_sqrt(next_v))
+        if decay_flag:
+            update = op_mul(weight_decay_tensor, param_fp32) + update
 
-    next_v = F.depend(next_v, F.assign(param, op_cast(next_param, mstype.float16)))
-    next_v = F.depend(next_v, F.assign(m, op_cast(next_m, mstype.float16)))
-    next_v = F.depend(next_v, F.assign(v, op_cast(next_v, mstype.float16)))
-    return next_v
+        update_with_lr = op_mul(lr, update)
+        next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
+
+        next_param = F.depend(next_param, F.assign(param, op_cast(next_param, F.dtype(param))))
+        next_param = F.depend(next_param, F.assign(m, op_cast(next_m, F.dtype(m))))
+        next_param = F.depend(next_param, F.assign(v, op_cast(next_v, F.dtype(v))))
+        return next_param
+    return gradient
 
 
 def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
@@ -157,7 +164,7 @@ class Adam(Optimizer):
 
         The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
         `sparse_grad` of `Parameter` being set. The sparse feature is under continuous development. The sparse
-        behavior is currently performed on the CPU, weight decay is not supported.
+        behavior is currently performed on the CPU.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -174,8 +181,7 @@ class Adam(Optimizer):
 
             - order_params: Optional. If "order_params" in the keys, the value should be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
-              in the value of 'order_params' but not in any group will use default learning rate and default weight
-              decay.
+              in the value of 'order_params' should be in one of group parameters.
 
         learning_rate (Union[int, float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                              Iterable or a Tensor and the dims of the Tensor is 1,
@@ -213,16 +219,14 @@ class Adam(Optimizer):
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-        >>> bias_params = list(filter(lambda x: 'bias' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
-        >>>                 {'params': bias_params, 'lr': 0.01},
+        >>>                 {'params': no_conv_params, 'lr': 0.01},
         >>>                 {'order_params': net.trainable_params()}]
         >>> opt = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01.
-        >>> # The bias_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
+        >>> # The no_conv_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
-        >>> # The parameters which in the value of 'order_params' but not in any group will use a learning rate
-        >>> # of default value 0.1 and a weight decay of default value 0.0.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
@@ -300,7 +304,7 @@ class AdamWeightDecay(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        tuple[Parameter], the updated velocity value, the shape is the same as `params`.
+        tuple[bool], all elements are True.
 
     Examples:
         >>> net = Net()
@@ -328,11 +332,13 @@ class AdamWeightDecay(Optimizer):
 
     def construct(self, gradients):
         lr = self.get_lr()
-        updated_velocity = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
-                                                    self.weight_decay_tensor),
-                                          self.params, self.moments1, self.moments2, gradients, self.decay_flag)
-
-        return updated_velocity
+        optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
+                                                self.weight_decay_tensor),
+                                      self.params, self.moments1, self.moments2, gradients,
+                                      self.decay_flag, self.optim_filter)
+        if self.use_parallel:
+            optim_result = self.broadcast_params(optim_result)
+        return optim_result
 
 
 class AdamWeightDecayDynamicLR(Optimizer):
@@ -363,7 +369,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        tuple[Parameter], the updated velocity value, the shape is the same as `params`.
+        tuple[bool], all elements are True.
 
     Examples:
         >>> net = Net()
@@ -424,12 +430,14 @@ class AdamWeightDecayDynamicLR(Optimizer):
             warmup_lr = self.start_learning_rate * warmup_percent
             is_warmup = self.cast(self.greater(self.warmup_steps, self.global_step), mstype.float32)
             lr = (self.one - is_warmup) * lr + is_warmup * warmup_lr
-        updated_velocity = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
-                                                    self.weight_decay_tensor),
-                                          self.params, self.moments1, self.moments2, gradients, self.decay_flag)
-
+        optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
+                                                self.weight_decay_tensor),
+                                      self.params, self.moments1, self.moments2, gradients,
+                                      self.decay_flag, self.optim_filter)
+        if self.use_parallel:
+            optim_result = self.broadcast_params(optim_result)
         added_global_step = self.global_step + self.one
         F.control_depend(lr, added_global_step)
         self.global_step = added_global_step
 
-        return updated_velocity
+        return optim_result

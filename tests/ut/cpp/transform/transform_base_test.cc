@@ -16,6 +16,9 @@
 #include <iostream>
 #include "common/common_test.h"
 #include "transform/transform_base_test.h"
+#include "ir/tensor_py.h"
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace transform {
@@ -55,10 +58,10 @@ void PrintMeTensor(MeTensor* tensor) {
   }
 
   std::cout << "the py::str() data is: " << std::endl;
-  py::array tensor_data = (*tensor).data();
+  py::array tensor_data = TensorPy::AsNumpy(*tensor);
   std::cout << std::string(py::str(tensor_data)) << std::endl;
 
-  std::cout << "tensor dtype is: " << std::string(tensor->data().dtype().str()) << std::endl;
+  std::cout << "tensor dtype is: " << std::string(tensor_data.dtype().str()) << std::endl;
 }
 
 FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {
@@ -73,7 +76,7 @@ FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim));
   for (unsigned int i = 0; i < nparam; i++) {
-    if ((prim->name() == "ScalarSummary" || prim->name() == "TensorSummary" || 
+    if ((prim->name() == "ScalarSummary" || prim->name() == "TensorSummary" ||
         prim->name() == "ImageSummary" || prim->name() == "HistogramSummary") &&
         i == 0) {
       auto input = NewValueNode("testSummary");

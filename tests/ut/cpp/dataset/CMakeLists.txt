@@ -3,6 +3,7 @@ include(GoogleTest)
 SET(DE_UT_SRCS
         common/common.cc
         common/cvop_common.cc
+        common/bboxop_common.cc
         batch_op_test.cc
         bit_functions_test.cc
         storage_container_test.cc
@@ -17,6 +18,7 @@ SET(DE_UT_SRCS
         circular_pool_test.cc
         client_config_test.cc
         connector_test.cc
+        cut_out_op_test.cc
         datatype_test.cc
         decode_op_test.cc
         execution_tree_test.cc
@@ -28,6 +30,7 @@ SET(DE_UT_SRCS
         normalize_op_test.cc
         one_hot_op_test.cc
         pad_end_op_test.cc
+        pad_op_test.cc
         path_test.cc
         project_op_test.cc
         queue_test.cc
@@ -45,6 +48,7 @@ SET(DE_UT_SRCS
         rescale_op_test.cc
         resize_bilinear_op_test.cc
         resize_op_test.cc
+	schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
@@ -77,6 +81,8 @@ SET(DE_UT_SRCS
         mask_test.cc
         trucate_pair_test.cc
         concatenate_op_test.cc
+        cyclic_array_test.cc
+        perf_data_test.cc
         )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace serving {
-
 struct Arguments {
   int32_t grpc_port = 5500;
   std::string grpc_socket_path;
@@ -40,6 +39,7 @@ class Option {
   Option(const std::string &name, bool *default_point, const std::string &usage);
   Option(const std::string &name, std::string *default_point, const std::string &usage);
   Option(const std::string &name, float *default_point, const std::string &usage);
+  ~Option() = default;
 
  private:
   friend class Options;
@@ -77,7 +77,6 @@ class Options {
   std::vector<Option> options_;
   std::shared_ptr<Arguments> args_;
 };
-
 }  // namespace serving
 }  // namespace mindspore
 

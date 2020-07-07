@@ -31,14 +31,8 @@ softmax_grad_ext_op_info = TBERegOp("SoftmaxGradExt") \
     .input(2, "x2", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
     .op_pattern("dynamicFormat") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD,
-                  DataType.F16_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.None_None, DataType.None_None,
+                  DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 

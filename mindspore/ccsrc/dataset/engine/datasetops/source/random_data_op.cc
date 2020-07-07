@@ -21,6 +21,7 @@
 #include "dataset/core/config_manager.h"
 #include "dataset/util/random.h"
 #include "dataset/util/wait_post.h"
+#include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,7 +31,8 @@ RandomDataOp::Builder::Builder()
       builder_num_workers_(0),
       builder_op_connector_size_(0),
       builder_rows_per_buffer_(0),
-      builder_total_rows_(0) {
+      builder_total_rows_(0),
+      builder_sampler_(nullptr) {
   // Some arguments to the RandomDataOp have a default argument that is taken from the config.
   // The user may override these defaults by using the builder set methods.
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
@@ -43,8 +45,9 @@ RandomDataOp::Builder::Builder()
 Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
   RETURN_IF_NOT_OK(SanityCheck());
 
-  *out_op = std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_rows_per_buffer_,
-                                           builder_total_rows_, std::move(builder_data_schema_));
+  *out_op =
+    std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_rows_per_buffer_,
+                                   builder_total_rows_, std::move(builder_data_schema_), std::move(builder_sampler_));
 
   // If the user did not provide a schema, then we will ask the op to generate a pseudo-random
   // schema.
@@ -52,9 +55,6 @@ Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
   if ((*out_op)->data_schema_ == nullptr) {
     RETURN_IF_NOT_OK((*out_op)->GenerateSchema());
   }
-
-  // Extract the column name mapping from the schema and save it in the class.
-  RETURN_IF_NOT_OK((*out_op)->data_schema_->GetColumnNameMap(&((*out_op)->column_name_id_map_)));
 
   return Status::OK();
 }
@@ -69,8 +69,8 @@ Status RandomDataOp::Builder::SanityCheck() const {
 
 // Constructor for RandomDataOp
 RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
-                           std::unique_ptr<DataSchema> data_schema)
-    : ParallelOp(num_workers, op_connector_size),
+                           std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
+    : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       buffer_id_(0),
       rows_per_buffer_(rows_per_buffer),
       total_rows_(total_rows),
@@ -127,7 +127,7 @@ Status RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(0, DataType::NUM_OF_TYPES - 2));
+    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - 2));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {
@@ -403,6 +403,26 @@ Status RandomDataOp::Reset() {
   guys_out_ = 0;
   epoch_sync_wait_post_.Set();
 
+  return Status::OK();
+}
+
+Status RandomDataOp::ComputeColMap() {
+  // Extract the column name mapping from the schema and save it in the class.
+  if (column_name_id_map_.empty()) {
+    RETURN_IF_NOT_OK(data_schema_->GetColumnNameMap(&(column_name_id_map_)));
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
+}
+
+// During tree prepare phase, operators may have specific post-operations to perform depending on
+// their role.
+Status RandomDataOp::PrepareNodePostAction() {
+  // Run common code from super class before adding RandomDataOp specific handling
+  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
+  // Specific handling for this op, we need to do cache op work to assign the sampler to the cache.
+  RETURN_IF_NOT_OK(DatasetOp::SaveSamplerForCache(false));
   return Status::OK();
 }
 }  // namespace dataset

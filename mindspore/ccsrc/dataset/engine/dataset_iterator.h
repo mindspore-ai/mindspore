@@ -72,7 +72,6 @@ class IteratorBase {
  protected:
   std::unique_ptr<DataBuffer> curr_buffer_;  // holds the current buffer
   bool eof_handled_;                         // T/F if this op got an eof
-  bool first_row_;                           // internal tracking for first row case
   std::unordered_map<std::string, int32_t> col_name_id_map_;
 };
 

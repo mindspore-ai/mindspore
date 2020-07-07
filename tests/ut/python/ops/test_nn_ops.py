@@ -482,6 +482,29 @@ class PReLUGradNet(nn.Cell):
     def construct(self, dout, x, w):
         return self.prelu_grad(dout, x, w)
 
+
+class LRNNet(nn.Cell):
+    """ LRNNet definition """
+
+    def __init__(self):
+        super(LRNNet, self).__init__()
+        self.lrn = P.LRN()
+
+    def construct(self, x):
+        return self.lrn(x)
+
+
+class LRNGradNet(nn.Cell):
+    """ LRNGradNet definition """
+
+    def __init__(self):
+        super(LRNGradNet, self).__init__()
+        self.lrn_grad = G.LRNGrad()
+
+    def construct(self, dout, x, out):
+        return self.lrn_grad(dout, x, out)
+
+
 test_cases = [
     ('SoftMaxGrad', {
         'block': SoftMaxGrad(VirtualNetWithLoss(P.Softmax())),
@@ -592,6 +615,16 @@ test_cases = [
         'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)),
                         Tensor(np.array([1, 2]).astype(np.float32))],
         'skip': ['backward']
+    }),
+    ('LRNNet', {
+        'block': LRNNet(),
+        'desc_inputs': [Tensor(np.ones([1, 5, 4, 4], np.float32))],
+    }),
+    ('LRNGradNet', {
+        'block': LRNGradNet(),
+        'desc_inputs': [Tensor(np.ones([1, 5, 4, 4], np.float32)),
+                        Tensor(np.ones([1, 5, 4, 4], np.float32)),
+                        Tensor(np.ones([1, 5, 4, 4], np.float32))],
     }),
 ]
 

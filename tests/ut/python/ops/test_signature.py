@@ -16,7 +16,6 @@
 test assign sub
 """
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -34,27 +33,6 @@ class AssignW(nn.Cell):
     def construct(self, x, w):
         self.assign(x, w)
         return x
-
-
-class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.b = Parameter(initializer('ones', [5]), name='b')
-        self.assign = AssignW()
-
-    def construct(self, value):
-        return self.assign(self.b, value)
-
-
-def test_assign_through_cell():
-    context.set_context(mode=context.GRAPH_MODE)
-    net = Net()
-    net.to_float(ms.float16)
-    net.add_flags_recursive(fp16=False)
-    input_data = Tensor(np.ones([5]).astype(np.float32))
-    net(input_data)
-    with pytest.raises(TypeError):
-        net(None)
 
 
 class AssignOp(nn.Cell):

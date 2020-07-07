@@ -55,6 +55,7 @@ def rmsprop_numpy(variable, gradients, mean_square, moment,
     mean_square = mean_square * decay + (1.0 - decay) * gradients * gradients
     moment = momentum * moment + learning_rate / np.sqrt(mean_square + epsilon) * gradients
     variable = variable - moment
+    return variable, gradients, mean_square, moment
 
 
 def rmspropcented_numpy(variable, gradients, mean_gradients, mean_square, moment,
@@ -64,7 +65,7 @@ def rmspropcented_numpy(variable, gradients, mean_gradients, mean_square, moment
     moment = momentum * moment + learning_rate / np.sqrt(
         mean_square - mean_gradients * mean_gradients + epsilon) * gradients
     variable = variable - moment
-
+    return variable, gradients, mean_gradients, mean_square, moment
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -85,12 +86,14 @@ def test_rmsprop():
     moment_ms = Tensor(moment_np)
 
     if centered:
+        variable_np, gradients_np, mean_gradients_np, mean_square_np, moment_np = \
         rmspropcented_numpy(variable_np, gradients_np, mean_gradients_np, mean_square_np, moment_np,
                             learning_rate, decay, momentum, epsilon)
         net = NetCenteredRMSProp(learning_rate, decay, momentum, epsilon)
         _ = net(variable_ms, gradients_ms, mean_gradients_ms, mean_square_ms, moment_ms)
 
     else:
+        variable_np, gradients_np, mean_square_np, moment_np = \
         rmsprop_numpy(variable_np, gradients_np, mean_square_np, moment_np,
                       learning_rate, decay, momentum, epsilon)
         net = NetRMSProp(learning_rate, decay, momentum, epsilon)
@@ -136,11 +139,13 @@ def test_rmspropcenter():
     moment_ms = Tensor(moment_np)
 
     if centered:
+        variable_np, gradients_np, mean_gradients_np, mean_square_np, moment_np = \
         rmspropcented_numpy(variable_np, gradients_np, mean_gradients_np, mean_square_np, moment_np,
                             learning_rate, decay, momentum, epsilon)
         net = NetCenteredRMSProp(learning_rate, decay, momentum, epsilon)
         _ = net(variable_ms, gradients_ms, mean_gradients_ms, mean_square_ms, moment_ms)
     else:
+        variable_np, gradients_np, mean_square_np, moment_np = \
         rmsprop_numpy(variable_np, gradients_np, mean_square_np, moment_np,
                       learning_rate, decay, momentum, epsilon)
         net = NetRMSProp(learning_rate, decay, momentum, epsilon)

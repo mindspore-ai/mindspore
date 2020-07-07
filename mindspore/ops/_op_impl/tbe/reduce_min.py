@@ -27,14 +27,11 @@ reduce_min_op_info = TBERegOp("ReduceMin") \
     .attr("keep_dims", "required", "bool", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I8_FracZ, DataType.I8_FracZ) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.U8_FracZ, DataType.U8_FracZ) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ) \
+    .op_pattern("reduce") \
+    .dtype_format(DataType.I8_None, DataType.I8_None) \
+    .dtype_format(DataType.U8_None, DataType.U8_None) \
+    .dtype_format(DataType.F16_None, DataType.F16_None) \
+    .dtype_format(DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
 

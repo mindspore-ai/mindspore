@@ -144,9 +144,6 @@ Status BarrierOp::prepare(TensorQTable *const table) {
 
   table->push_back(std::move(new_row));
 
-  // Assign the column name id map
-  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
-
   // the update code below shouldn't do anything bad if the column name already exists.
   return Status::OK();
 }

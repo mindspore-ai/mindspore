@@ -196,10 +196,6 @@ Status MindRecordOp::Init() {
     data_schema_ = std::move(tmp_schema);
   }
 
-  for (int i = 0; i < static_cast<int>(columns_to_load_.size()); i++) {
-    column_name_id_map_[columns_to_load_[i]] = i;
-  }
-
   return Status::OK();
 }
 
@@ -500,7 +496,18 @@ Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path,
 // Visitor accept method for NodePass
 Status MindRecordOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
-  return p->RunOnNode(std::static_pointer_cast<MindRecordOp>(shared_from_this()), modified);
+  return p->RunOnNode(shared_from_base<MindRecordOp>(), modified);
+}
+
+Status MindRecordOp::ComputeColMap() {
+  if (column_name_id_map_.empty()) {
+    for (int i = 0; i < static_cast<int>(columns_to_load_.size()); i++) {
+      column_name_id_map_[columns_to_load_[i]] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -21,7 +21,7 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
-from util import visualize_list
+from util import visualize_list, diff_mse
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
@@ -83,7 +83,7 @@ def test_uniform_augment(plot=False, num_ops=2):
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_ua[i] - images_original[i]) ** 2)
+        mse[i] = diff_mse(images_ua[i], images_original[i])
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
     if plot:
@@ -147,7 +147,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_ua[i] - images_original[i]) ** 2)
+        mse[i] = diff_mse(images_ua[i], images_original[i])
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 

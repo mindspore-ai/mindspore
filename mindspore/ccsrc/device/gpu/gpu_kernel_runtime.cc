@@ -565,7 +565,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
   MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::GetCNodeName(kernel) == kAllReduceOpName) {
+  if (AnfAlgo::IsCommunicationOp(kernel)) {
     return;
   }
   // Free the input of kernel by reference count.

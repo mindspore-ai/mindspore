@@ -66,14 +66,16 @@ class Pass : public std::enable_shared_from_this<Pass> {
 // TreePass is a basic Pass class which performs transformation on ExecutionTree directly.
 class TreePass : public Pass {
  public:
-  // Run the transformation pass against the execution tree.
-  // @param tree - Pointer to the execution tree to be transformed.
-  // @param modified - Pointer to the modified flag,
+  /// \brief Run the transformation pass against the execution tree.
+  /// \param[inout] tree Pointer to the execution tree to be transformed.
+  /// \param[inout] modified Indicate if the tree was modified
   Status Run(ExecutionTree *tree, bool *modified) final;
 
-  // Derived classes may implement the runOnTree function to implement tree transformation.
-  // "modified" flag needs to be set to true if tree is modified during the pass execution.
-  // @return Status - The error code return
+  /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
+  ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
+  /// \param[inout] tree The tree to operate on.
+  /// \param[inout] Indicate of the tree was modified.
+  /// \return Status The error code return
   virtual Status RunOnTree(ExecutionTree *tree, bool *modified) { return Status::OK(); }
 };
 
@@ -90,14 +92,23 @@ class NodePass : public Pass {
 
   ~NodePass() = default;
 
-  // Run the transformation pass against the execution tree.
-  // @param tree - Pointer to the execution tree to be transformed.
-  // @param modified - Pointer to the modified flag,
+  /// \brief Run the transformation pass against the execution tree
+  /// \param[inout] tree Pointer to the execution tree to be transformed
+  /// \param[inout] modified Indicator if the tree was changed
   Status Run(ExecutionTree *tree, bool *modified) final;
 
-  // Derived classes may implement the runOnNode function to implement node level tree transformation.
-  // "modified" flag needs to be set to true if tree is modified during the pass execution.
-  // @return Status - The error code return
+  /// \brief Derived classes may implement the PreRunOnNode function to implement any initial visit work on the way down
+  ///     a tree traversal.  "modified" flag needs to be set to true if tree is modified during the pass execution
+  /// \param[in] node The node being visited
+  /// \param[out] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  virtual Status PreRunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) { return Status::OK(); }
+
+  /// \brief Derived classes may implement the RunOnNode function to implement node level tree transformation
+  ///     "modified" flag needs to be set to true if tree is modified during the pass execution
+  /// \param[in] node The node being visited
+  /// \param[out] modified Indicator if the node was changed at all.
+  /// \return Status The error code return
   virtual Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) { return Status::OK(); }
 
   // Visit methods to be overridden.

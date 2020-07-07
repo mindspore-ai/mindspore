@@ -238,16 +238,11 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  if (context_ptr->execution_mode() == kPynativeMode) {
-    ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
-    ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
-  } else {
-    ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
-    ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
-  }
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   if (context_ptr->ir_fusion_flag()) {
     AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
@@ -287,8 +282,11 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());

@@ -379,8 +379,8 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
-        self.add_flags(has_effect=True)
 
+    @C.add_flags(has_effect=True)
     def construct(self,
                   input_ids,
                   input_mask,

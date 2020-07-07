@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace serving {
-
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";
@@ -70,8 +69,8 @@ bool DirOrFileExist(const std::string &file_path) {
 }
 
 std::vector<std::string> GetAllSubDirs(const std::string &dir_path) {
-  DIR *dir;
-  struct dirent *ptr;
+  DIR *dir = nullptr;
+  struct dirent *ptr = nullptr;
   std::vector<std::string> SubDirs;
 
   if ((dir = opendir(dir_path.c_str())) == NULL) {

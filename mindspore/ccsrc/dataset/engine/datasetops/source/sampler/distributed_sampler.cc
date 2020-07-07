@@ -107,12 +107,11 @@ Status DistributedSampler::ResetSampler() {
 }
 
 void DistributedSampler::Print(std::ostream &out, bool show_all) const {
-  out << "(sampler): DistributedSampler\n";
+  out << "\nSampler: DistributedSampler";
   if (show_all) {
-    out << "seed_: " << seed_ << '\n';
-    out << "device_id_: " << device_id_ << '\n';
-    out << "num_devices_: " << num_devices_ << '\n';
-    out << "shuffle_: " << shuffle_ << '\n';
+    Sampler::Print(out, show_all);
+    out << "\nseed: " << seed_ << "\ndevice_id: " << device_id_ << "\nnum_devices: " << num_devices_
+        << "\nshuffle: " << shuffle_;
   }
 }
 

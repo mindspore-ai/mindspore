@@ -41,6 +41,7 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
   set_worker_connector_size(j.value("workerConnectorSize", worker_connector_size_));
   set_op_connector_size(j.value("opConnectorSize", op_connector_size_));
   set_seed(j.value("seed", seed_));
+  set_monitor_sampling_interval(j.value("monitorSamplingInterval", monitor_sampling_interval_));
   return Status::OK();
 }
 

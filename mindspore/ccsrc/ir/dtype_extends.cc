@@ -95,12 +95,30 @@ TypePtr TypeIdToType(TypeId id) {
       return kAnyType;
     case kMetaTypeNone:
       return kTypeNone;
+    case kMetaTypeNull:
+      return kTypeNull;
+    case kMetaTypeEllipsis:
+      return kTypeEllipsis;
     case kObjectTypeEnvType:
       return kTypeEnv;
     case kObjectTypeRefKey:
       return kRefKeyType;
     case kObjectTypeRef:
       return kRefType;
+    case kMetaTypeTypeType:
+      return kTypeType;
+    case kObjectTypeString:
+      return kString;
+    case kObjectTypeList:
+      return kList;
+    case kObjectTypeTuple:
+      return kTuple;
+    case kObjectTypeDictionary:
+      return kDict;
+    case kObjectTypeSlice:
+      return kSlice;
+    case kObjectTypeKeyword:
+      return kKeyword;
     case kTypeUnknown:
       return kTypeNone;
     default:
@@ -172,6 +190,40 @@ TypePtr TensorStrToType(const std::string &type_name) {
   }
 
   return type;
+}
+
+TypePtr IndexedSlicesStrToType(const std::string &type_name) {
+  if (type_name == "IndexedSlices") {
+    return std::make_shared<IndexedSlicesType>();
+  }
+  auto start = type_name.find_first_of('[') + 1;
+  auto end = type_name.find_last_of(']');
+  if (start >= type_name.size()) {
+    return nullptr;
+  }
+  auto element_str = type_name.substr(start, end - start);
+  auto element_type = StringToType(element_str);
+  if (element_type == nullptr) {
+    return nullptr;
+  }
+  return std::make_shared<IndexedSlicesType>(element_type);
+}
+
+TypePtr UndeterminedStrToType(const std::string &type_name) {
+  if (type_name == "Undetermined") {
+    return std::make_shared<UndeterminedType>();
+  }
+  auto start = type_name.find_first_of('[') + 1;
+  auto end = type_name.find_last_of(']');
+  if (start >= type_name.size()) {
+    return nullptr;
+  }
+  auto element_str = type_name.substr(start, end - start);
+  auto element_type = StringToType(element_str);
+  if (element_type == nullptr) {
+    return nullptr;
+  }
+  return std::make_shared<UndeterminedType>(element_type);
 }
 
 TypePtr ListStrToType(const std::string &type_name) {
@@ -274,7 +326,7 @@ TypePtr StringToType(const std::string &type_name) {
   if (type_name.compare("None") == 0) {
     type = std::make_shared<TypeNone>();
   } else if (type_name.compare("Ellipsis") == 0) {
-    type = std::make_shared<Ellipsis>();
+    type = std::make_shared<TypeEllipsis>();
   } else if (type_name.compare("TypeType") == 0) {
     type = std::make_shared<TypeType>();
   } else if (type_name.compare("SymbolicKeyType") == 0) {
@@ -295,6 +347,10 @@ TypePtr StringToType(const std::string &type_name) {
     type = StringToNumberType<Float>(type_name, "Float");
   } else if (type_name.compare(0, strlen("Tensor"), "Tensor") == 0) {
     type = TensorStrToType(type_name);
+  } else if (type_name.compare(0, strlen("Undetermined"), "Undetermined") == 0) {
+    type = UndeterminedStrToType(type_name);
+  } else if (type_name.compare(0, strlen("IndexedSlices"), "IndexedSlices") == 0) {
+    type = IndexedSlicesStrToType(type_name);
   } else if (type_name.compare(0, strlen("List"), "List") == 0) {
     type = ListStrToType(type_name);
   } else if (type_name.compare(0, strlen("Tuple"), "Tuple") == 0) {
@@ -320,6 +376,20 @@ TypePtr StringToType(const std::string &type_name) {
     MS_LOG(EXCEPTION) << "Unsupported type name: " << type_name << "!";
   }
   return type;
+}
+
+bool IsParentOrChildrenType(TypePtr const &x, TypePtr const &base_type) {
+  if (x == nullptr || base_type == nullptr) {
+    MS_LOG(ERROR) << "Type is nullptr.";
+    return false;
+  }
+  if (base_type->type_id() == kTypeUnknown || x->type_id() == kTypeUnknown) {
+    return false;
+  }
+  if (base_type->type_id() == x->parent_type() || x->type_id() == base_type->parent_type()) {
+    return true;
+  }
+  return false;
 }
 
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {
@@ -463,6 +533,10 @@ REGISTER_PYBIND_DEFINE(
           TensorType data(TypeIdToType(TypeId(static_cast<int>(t[0].cast<py::int_>()))));
           return data;
         }));
+    (void)py::class_<IndexedSlicesType, Type, std::shared_ptr<IndexedSlicesType>>(m_sub, "IndexedSlicesType")
+      .def(py::init());
+    (void)py::class_<UndeterminedType, Type, std::shared_ptr<UndeterminedType>>(m_sub, "UndeterminedType")
+      .def(py::init());
     (void)py::class_<Function, Type, std::shared_ptr<Function>>(m_sub, "Function")
       .def(py::init())
       .def(py::init<std::vector<TypePtr>, TypePtr>(), py::arg("args"), py::arg("retval"));
@@ -476,12 +550,19 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<RefType, Type, std::shared_ptr<RefType>>(m_sub, "RefType").def(py::init());
     (void)py::class_<TypeAnything, Type, std::shared_ptr<TypeAnything>>(m_sub, "TypeAnything").def(py::init());
     (void)py::class_<Slice, Type, std::shared_ptr<Slice>>(m_sub, "Slice").def(py::init());
-    (void)py::class_<Ellipsis, Type, std::shared_ptr<Ellipsis>>(m_sub, "Ellipsis").def(py::init());
+    (void)py::class_<TypeEllipsis, Type, std::shared_ptr<TypeEllipsis>>(m_sub, "TypeEllipsis").def(py::init());
   }));
 
 const TypePtr kTypeExternal = std::make_shared<External>();
 const TypePtr kTypeEnv = std::make_shared<EnvType>();
 const TypePtr kTypeType = std::make_shared<TypeType>();
 const TypePtr kTensorType = std::make_shared<TensorType>();
+const TypePtr kIndexedSlicesType = std::make_shared<IndexedSlicesType>();
+const TypePtr kUndeterminedType = std::make_shared<UndeterminedType>();
 const TypePtr kString = std::make_shared<String>();
+const TypePtr kList = std::make_shared<List>();
+const TypePtr kTuple = std::make_shared<Tuple>();
+const TypePtr kDict = std::make_shared<Dictionary>();
+const TypePtr kSlice = std::make_shared<Slice>();
+const TypePtr kKeyword = std::make_shared<Keyword>();
 }  // namespace mindspore

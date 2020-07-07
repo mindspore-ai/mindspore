@@ -22,6 +22,9 @@
 
 #include "securec/include/securec.h"
 #include "ir/tensor.h"
+#include "ir/tensor_py.h"
+
+using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace tensor {
@@ -90,9 +93,7 @@ TEST_F(TestMetaTensor, EqualTest) {
 class TestTensor : public UT::Common {
  public:
   TestTensor() {}
-  virtual void SetUp() {
-    UT::InitPythonPath();
-  }
+  virtual void SetUp() { UT::InitPythonPath(); }
 };
 
 py::array_t<float, py::array::c_style> BuildInputTensor() {
@@ -124,7 +125,7 @@ TEST_F(TestTensor, PyArrayScalarTest) {
 TEST_F(TestTensor, InitScalarTest) {
   std::vector<int> dimensions;
   Tensor tensor(TypeId::kNumberTypeInt64, dimensions);
-  uint8_t *data_buf = reinterpret_cast<uint8_t *>(tensor.data_c(true));
+  uint8_t *data_buf = reinterpret_cast<uint8_t *>(tensor.data_c());
 
   int64_t num = 1;
   errno_t ret = memcpy_s(data_buf, sizeof(int64_t), &num, sizeof(int64_t));
@@ -172,9 +173,9 @@ TEST_F(TestTensor, InitTensorPtrTest) {
 }
 
 TEST_F(TestTensor, InitByTupleTest) {
-  py::tuple dimensions = py::make_tuple(2, 3, 4);
+  const std::vector<int> shape = {2, 3, 4};
   TypePtr data_type = kFloat32;
-  Tensor tuple_tensor = Tensor(data_type, dimensions);
+  Tensor tuple_tensor(data_type->type_id(), shape);
   ASSERT_EQ(2, tuple_tensor.DimensionSize(0));
   ASSERT_EQ(3, tuple_tensor.DimensionSize(1));
   ASSERT_EQ(4, tuple_tensor.DimensionSize(2));
@@ -184,8 +185,8 @@ TEST_F(TestTensor, InitByTupleTest) {
   ASSERT_EQ(TypeId::kNumberTypeFloat32, tuple_tensor.data_type());
 
   py::tuple tuple = py::make_tuple(1.0, 2.0, 3, 4, 5, 6);
-  TensorPtr tensor = std::make_shared<Tensor>(tuple, kFloat64);
-  py::array array = tensor->data();
+  TensorPtr tensor = TensorPy::MakeTensor(py::array(tuple), kFloat64);
+  py::array array = TensorPy::AsNumpy(*tensor);
 
   std::cout << "Dim: " << array.ndim() << std::endl;
   ASSERT_EQ(1, array.ndim());
@@ -203,24 +204,24 @@ TEST_F(TestTensor, InitByTupleTest) {
 
 TEST_F(TestTensor, EqualTest) {
   py::tuple tuple = py::make_tuple(1, 2, 3, 4, 5, 6);
-  TensorPtr tensor_int8 = std::make_shared<Tensor>(tuple, kInt8);
+  TensorPtr tensor_int8 = TensorPy::MakeTensor(py::array(tuple), kInt8);
   ASSERT_TRUE(*tensor_int8 == *tensor_int8);
 
   ASSERT_EQ(TypeId::kNumberTypeInt8, tensor_int8->data_type_c());
 
-  TensorPtr tensor_int16 = std::make_shared<Tensor>(tuple, kInt16);
+  TensorPtr tensor_int16 = TensorPy::MakeTensor(py::array(tuple), kInt16);
   ASSERT_EQ(TypeId::kNumberTypeInt16, tensor_int16->data_type_c());
 
-  TensorPtr tensor_int32 = std::make_shared<Tensor>(tuple, kInt32);
+  TensorPtr tensor_int32 = TensorPy::MakeTensor(py::array(tuple), kInt32);
   ASSERT_EQ(TypeId::kNumberTypeInt32, tensor_int32->data_type_c());
 
-  TensorPtr tensor_float16 = std::make_shared<Tensor>(tuple, kFloat16);
+  TensorPtr tensor_float16 = TensorPy::MakeTensor(py::array(tuple), kFloat16);
   ASSERT_EQ(TypeId::kNumberTypeFloat16, tensor_float16->data_type_c());
 
-  TensorPtr tensor_float32 = std::make_shared<Tensor>(tuple, kFloat32);
+  TensorPtr tensor_float32 = TensorPy::MakeTensor(py::array(tuple), kFloat32);
   ASSERT_EQ(TypeId::kNumberTypeFloat32, tensor_float32->data_type_c());
 
-  TensorPtr tensor_float64 = std::make_shared<Tensor>(tuple, kFloat64);
+  TensorPtr tensor_float64 = TensorPy::MakeTensor(py::array(tuple), kFloat64);
   ASSERT_EQ(TypeId::kNumberTypeFloat64, tensor_float64->data_type_c());
 }
 
@@ -247,7 +248,7 @@ TEST_F(TestTensor, PyArrayTest) {
 
 TEST_F(TestTensor, InitByFloatArrayDataCTest) {
   // Init tensor data by py::array_t<float>
-  auto tensor = std::make_shared<Tensor>(BuildInputTensor());
+  auto tensor = TensorPy::MakeTensor(BuildInputTensor());
 
   // Print some information of the tensor
   std::cout << "Datatype: " << tensor->data_type() << std::endl;
@@ -269,7 +270,7 @@ TEST_F(TestTensor, InitByFloatArrayDataCTest) {
 
 TEST_F(TestTensor, InitByFloatArrayDataTest) {
   // Init tensor data by py::array_t<float>
-  TensorPtr tensor = std::make_shared<Tensor>(BuildInputTensor());
+  TensorPtr tensor = TensorPy::MakeTensor(BuildInputTensor());
 
   // Print some information of the tensor
   std::cout << "Datatype: " << tensor->data_type() << std::endl;
@@ -291,7 +292,7 @@ TEST_F(TestTensor, InitByFloatArrayDataTest) {
 
   // Print each elements
   std::cout << "Elements: " << std::endl;
-  py::array_t<float> data = (py::array_t<float>)tensor->data();
+  py::array_t<float> data = py::cast<py::array_t<float>>(TensorPy::AsNumpy(*tensor));
   auto array = data.unchecked<2>();
   for (int i = 0; i < array.shape(0); i++) {
     for (int j = 0; j < array.shape(1); j++) {
@@ -319,17 +320,17 @@ TEST_F(TestTensor, TensorDataTest) {
   float ge_tensor_data[] = {1.1, 2.2, 3.3, 4.4, 5.5, 6.6};
 
   // Create a Tensor with wanted data type and shape
-  Tensor tensor = Tensor(TypeId::kNumberTypeFloat32, std::vector<int>({2, 3}));
+  Tensor tensor(TypeId::kNumberTypeFloat32, std::vector<int>({2, 3}));
 
   // Get the writable data pointer from the tensor
-  float *me_tensor_data = reinterpret_cast<float *>(tensor.data_c(true));
+  float *me_tensor_data = reinterpret_cast<float *>(tensor.data_c());
 
   // Copy data from buffer to tensor's data
   errno_t ret = memcpy_s(me_tensor_data, tensor.data().nbytes(), ge_tensor_data, sizeof(ge_tensor_data));
   ASSERT_EQ(0, ret);
 
   // Testify if the data has been copied to the tensor data
-  py::array_t<float> data = (py::array_t<float>)tensor.data();
+  py::array_t<float> data = py::cast<py::array_t<float>>(TensorPy::AsNumpy(tensor));
   auto array = data.mutable_unchecked();
   for (int i = 0; i < array.shape(0); i++) {
     for (int j = 0; j < array.shape(1); j++) {
@@ -338,6 +339,18 @@ TEST_F(TestTensor, TensorDataTest) {
       ASSERT_EQ(array(i, j), ge_tensor_data[3 * i + j]);
     }
   }
+}
+
+TEST_F(TestTensor, TensorPyCast) {
+  std::vector<int> shape{2, 3, 4, 5};
+  py::tuple py_tuple = py::make_tuple(std::make_shared<Tensor>(kNumberTypeFloat32, shape));
+  auto shape1 = py::cast<Tensor &>(py_tuple[0]).shape();
+  const py::tuple &t = py_tuple;
+  auto shape2 = py::cast<const Tensor &>(t[0]).shape();
+  auto shape3 = py::cast<Tensor &>(t[0]).shape();
+  ASSERT_EQ(shape, shape1);
+  ASSERT_EQ(shape, shape2);
+  ASSERT_EQ(shape, shape3);
 }
 
 }  // namespace tensor

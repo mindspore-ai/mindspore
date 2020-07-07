@@ -50,7 +50,7 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F16_HWCN, DataType.F16_FracZ) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_HWCN) \
     .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_HWCN) \
-    .dtype_format(DataType.F16_HWCN, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_HWCN, DataType.F16_C1HWNCoC0) \
     .dtype_format(DataType.F16_Default, DataType.F16_FracNZ) \
     .dtype_format(DataType.F32_Default, DataType.F32_FracNZ) \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_Default) \

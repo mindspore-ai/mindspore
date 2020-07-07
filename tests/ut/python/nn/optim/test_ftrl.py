@@ -71,6 +71,6 @@ def test_spares_ftrl_compile():
     net = NetWithSparseGatherV2()
     net.set_train()
 
-    optimizer = FTRL(net.trainable_params(), loss_scale=2.0)
+    optimizer = FTRL(net.trainable_params(), weight_decay=0.9, loss_scale=2.0)
     train_network = TrainOneStepCell(net, optimizer)
     _executor.compile(train_network, indices, label)

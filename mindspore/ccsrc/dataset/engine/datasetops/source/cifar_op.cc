@@ -79,18 +79,13 @@ Status CifarOp::Builder::SanityCheck() {
 
 CifarOp::CifarOp(CifarType type, int32_t num_works, int32_t rows_per_buf, const std::string &file_dir,
                  int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
-    : ParallelOp(num_works, queue_size),
+    : ParallelOp(num_works, queue_size, std::move(sampler)),
       cifar_type_(type),
       rows_per_buffer_(rows_per_buf),
       folder_path_(file_dir),
       data_schema_(std::move(data_schema)),
-      sampler_(std::move(sampler)),
       row_cnt_(0),
       buf_cnt_(0) {
-  // set the column name map (base class field)
-  for (uint32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
   constexpr uint64_t kUtilQueueSize = 512;
   cifar_raw_data_block_ = std::make_unique<Queue<std::vector<unsigned char>>>(kUtilQueueSize);
   io_block_queues_.Init(num_workers_, queue_size);
@@ -453,6 +448,18 @@ Status CifarOp::CountTotalRows(const std::string &dir, bool isCIFAR10, int64_t *
     *count = num_cifar100_records;
     return Status::OK();
   }
+}
+
+Status CifarOp::ComputeColMap() {
+  // set the column name map (base class field)
+  if (column_name_id_map_.empty()) {
+    for (uint32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

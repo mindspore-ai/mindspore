@@ -331,6 +331,8 @@ def test_random_crop_and_resize_comp(plot=False):
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_c_cropped.append(c_image)
         image_py_cropped.append(py_image)
+        mse = diff_mse(c_image, py_image)
+        assert mse < 0.02 # rounding error
     if plot:
         visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 

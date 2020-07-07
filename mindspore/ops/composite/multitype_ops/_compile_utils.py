@@ -65,9 +65,9 @@ def _generate_indices_from_tuple_of_mixed_tensors(data, tuple_index, op_name):
     tuple_len = len(tuple_index)
     for i in range(tuple_len):
         if i in int_positions:
-            tuple_index_new = tuple_index_new + (F.scalar_to_tensor(tuple_index[i], mstype.int32),)
+            tuple_index_new += (F.scalar_to_tensor(tuple_index[i], mstype.int32),)
         else:
-            tuple_index_new = tuple_index_new + (tuple_index[i],)
+            tuple_index_new += (tuple_index[i],)
     indexes_types = hyper_map(F.typeof, tuple_index_new)
     tensor_positions, slice_positions, ellipsis_position = \
         const_utils.separate_mixed_tensors_index(indexes_types, op_name)
@@ -167,12 +167,13 @@ def _tensor_getitem(self, index):
         return tensor_index_by_tensor(self, index)
     if isinstance(index, tuple):
         return tensor_index_by_tuple(self, index)
+    # bool type should be judged before int
+    if isinstance(index, bool):
+        return _tensor_index_by_bool(self, index)
     if isinstance(index, int):
         return _tensor_index_by_integer(self, index)
     if isinstance(index, slice):
         return tensor_index_by_slice(self, index)
-    if isinstance(index, bool):
-        return _tensor_index_by_bool(self, index)
     if index is None:
         return F.expand_dims(self, 0)
     if index is ...:
@@ -206,7 +207,8 @@ def tensor_index_by_slice(data, slice_index):
     """Tensor getitem by a single slice"""
     shape = F.shape(data)
     if not shape:
-        const_utils.raise_index_error("When tensor is indexed by a slice, the dimension of the tensor cannot be 0.")
+        const_utils.raise_index_error("When tensor is indexed by a slice, the dimension of the tensor"
+                                      "cannot be 0.")
     begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_slice(shape, slice_index)
     return F.strided_slice(data, begin_strides, end_strides, step_strides)
 
@@ -215,7 +217,11 @@ def _tensor_index_by_integer(data, number):
     """Tensor getitem by a single integer number"""
     shape = F.shape(data)
     if not shape:
-        const_utils.raise_index_error("When tensor is indexed by an integer, the dimension of the tensor cannot be 0.")
+        return const_utils.raise_type_error("When tensor is indexed by an integer,"
+                                            "the dimension of the tensor cannot be 0.")
+    if number >= shape[0]:
+        return const_utils.raise_index_error("index {} is out of bounds for axis 0 with size {}".format(
+            number, shape[0]))
     begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_integer(shape, number)
     shrink_axis_mask = 1
     return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
@@ -261,6 +267,8 @@ def _tensor_index_by_tuple_slice(data, t):
 
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types"""
+    if len(tuple_index) == 1:
+        return  data[tuple_index[0]]
     indexes_types = hyper_map(F.typeof, tuple_index)
     index_elements_type = const_utils.tuple_index_elements_type(indexes_types, const_utils.TENSOR_GETITEM)
     if index_elements_type == const_utils.NO_TENSOR:
@@ -424,11 +432,12 @@ def tensor_setitem_by_slice_with_number(data, input_slice, value):
 
 def tensor_setitem_by_tuple_with_number(data, tuple_index, value):
     """Assigns the tensor by tuple  with number value."""
+    if len(tuple_index) == 1:
+        data[tuple_index[0]] = value
+        return data
     indexes_types = hyper_map(F.typeof, tuple_index)
     index_elements_type = const_utils.tuple_index_elements_type(indexes_types, const_utils.TENSOR_SETITEM)
 
-    if index_elements_type == const_utils.NO_TENSOR:
-        return tensor_setitem_by_slice_with_number(data, tuple_index, value)
     if index_elements_type == const_utils.ALL_TENSOR:
         indices = _generate_indices_from_tuple_of_tensor(data,
                                                          tuple_index,
@@ -485,11 +494,12 @@ def tensor_setitem_by_slice_with_tensor(data, input_slice, value):
 
 def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     """Assigns the tensor by tuple  with tensor value."""
+    if len(tuple_index) == 1:
+        data[tuple_index[0]] = value
+        return data
     indexes_types = hyper_map(F.typeof, tuple_index)
     index_elements_type = const_utils.tuple_index_elements_type(indexes_types, const_utils.TENSOR_SETITEM)
 
-    if index_elements_type == const_utils.NO_TENSOR:
-        return tensor_setitem_by_slice_with_tensor(data, tuple_index, value)
     if index_elements_type == const_utils.ALL_TENSOR:
         indices = _generate_indices_from_tuple_of_tensor(data,
                                                          tuple_index,
@@ -507,6 +517,9 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
 
 def tensor_setitem_by_tuple_with_tuple(data, tuple_index, value):
     """Assigns the tensor by tuple  with tuple of  value."""
+    if len(tuple_index) == 1:
+        data[tuple_index[0]] = value
+        return data
     indexes_types = hyper_map(F.typeof, tuple_index)
     index_elements_type = const_utils.tuple_index_elements_type(indexes_types, const_utils.TENSOR_SETITEM)
 

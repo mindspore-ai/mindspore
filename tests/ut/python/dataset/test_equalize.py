@@ -20,10 +20,11 @@ import numpy as np
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
-from util import visualize_list
+from util import visualize_list, diff_mse, save_and_check_md5
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
+GENERATE_GOLDEN = False
 
 def test_equalize(plot=False):
     """
@@ -75,12 +76,31 @@ def test_equalize(plot=False):
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_equalize[i] - images_original[i]) ** 2)
+        mse[i] = diff_mse(images_equalize[i], images_original[i])
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
     if plot:
         visualize_list(images_original, images_equalize)
 
 
+def test_equalize_md5():
+    """
+    Test Equalize with md5 check
+    """
+    logger.info("Test Equalize")
+
+    # First dataset
+    data1 = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    transforms = F.ComposeOp([F.Decode(),
+                              F.Equalize(),
+                              F.ToTensor()])
+
+    data1 = data1.map(input_columns="image", operations=transforms())
+    # Compare with expected md5 from images
+    filename = "equalize_01_result.npz"
+    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+
 if __name__ == "__main__":
     test_equalize(plot=True)
+    test_equalize_md5()

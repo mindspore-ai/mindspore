@@ -23,7 +23,7 @@ import argparse
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.quant import quant
@@ -33,7 +33,7 @@ from src.lenet_fusion import LeNet5 as LeNet5Fusion
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",
-                    choices=['Ascend', 'GPU', 'CPU'],
+                    choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')
@@ -48,23 +48,30 @@ if __name__ == "__main__":
     ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size, cfg.epoch_size)
     step_size = ds_train.get_dataset_size()
 
-    # define funsion network
+    # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
+
     # load quantization aware network checkpoint
     param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
-    # convert funsion netwrok to quantization aware network
+
+    # convert fusion network to quantization aware network
     network = quant.convert_quant_network(network, quant_delay=0, bn_fold=False, freeze_bn=10000)
 
+    # define network loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    # define network optimization
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
-    time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
+
+    # call back and monitor
+    config_ckpt = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
+                                   keep_checkpoint_max=cfg.keep_checkpoint_max)
+    ckpt_callback = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ckpt)
+
+    # define model
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     print("============== Starting Training ==============")
-    model.train(cfg['epoch_size'], ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
+    model.train(cfg['epoch_size'], ds_train, callbacks=[ckpt_callback, LossMonitor()],
                 dataset_sink_mode=args.dataset_sink_mode)
     print("============== End Training ==============")

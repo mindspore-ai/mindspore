@@ -106,7 +106,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
     Args:
         ema (bool): Use EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
-        channel_axis (int): Channel asis for per channel compute. Default: 1.
+        channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
     Inputs:
         - **x** (Tensor) : float32 Tensor representing the shape of the output tensor.
@@ -123,11 +123,13 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         >>> output_tensor = MinMaxUpdatePerChannel(num_bits=8)(x, min, max)
     """
     support_quant_bit = [4, 7, 8]
+    ascend_support_x_rank = [2, 4]
 
     @prim_attr_register
     def __init__(self, ema=False, ema_decay=0.999, channel_axis=1):
         """init FakeQuantPerChannelUpdate OP for Ascend"""
-        if context.get_context('device_target') == "Ascend":
+        self.is_ascend = context.get_context('device_target') == "Ascend"
+        if self.is_ascend:
             from mindspore.ops._op_impl._custom_op import minmax_update_perchannel
         if ema and not ema_decay:
             raise ValueError(
@@ -136,13 +138,18 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
         self.ema_decay = validator.check_number_range(
             'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
-        self.channel_axis = validator.check_integer(
-            'channel axis', channel_axis, 0, Rel.GE, self.name)
+        if self.is_ascend:
+            self.channel_axis = validator.check_int_range('channel_axis', channel_axis, 0, 1, Rel.INC_BOTH, self.name)
+        else:
+            self.channel_axis = validator.check_integer('channel_axis', channel_axis, 0, Rel.GE, self.name)
         self.init_prim_io_names(
             inputs=['x', 'min', 'max'], outputs=['min_up', 'max_up'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
-        validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
+        if self.is_ascend and len(x_shape) not in self.ascend_support_x_rank:
+            raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
+        if not self.is_ascend:
+            validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check("min shape", min_shape, "max shape",
                         max_shape, Rel.EQ, self.name)
         validator.check_integer("min shape", len(
@@ -221,8 +228,8 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
             'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
         self.num_bits = validator.check_integer(
             'num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type(
-            'quant_delay', quant_delay, (int,), self.name)
+        self.quant_delay = validator.check_integer(
+            'quant_delay', quant_delay, 0, Rel.GE, self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'],
                                 outputs=['out'])
 
@@ -314,6 +321,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
         narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
         training (bool): Training the network or not. Default: True.
+        channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
     Inputs:
         - **x** (Tensor) : 4-D float32 Tensor representing the shape of the output tensor.
@@ -331,6 +339,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         >>> result = fake_quant(input_x, _min, _max)
     """
     support_quant_bit = [4, 7, 8]
+    ascend_support_x_rank = [2, 4]
 
     @prim_attr_register
     def __init__(self,
@@ -343,7 +352,8 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
                  training=True,
                  channel_axis=1):
         """init FakeQuantPerChannel OP"""
-        if context.get_context('device_target') == "Ascend":
+        self.is_ascend = context.get_context('device_target') == "Ascend"
+        if self.is_ascend:
             from mindspore.ops._op_impl._custom_op import fake_quant_perchannel
         if num_bits not in self.support_quant_bit:
             raise ValueError(
@@ -363,14 +373,19 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
             'ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
         self.num_bits = validator.check_integer(
             'num_bits', num_bits, 0, Rel.GT, self.name)
-        self.quant_delay = validator.check_value_type(
-            'quant_delay', quant_delay, (int,), self.name)
-        self.channel_axis = validator.check_integer(
-            'channel_axis', channel_axis, 0, Rel.GE, self.name)
+        self.quant_delay = validator.check_integer(
+            'quant_delay', quant_delay, 0, Rel.GE, self.name)
+        if self.is_ascend:
+            self.channel_axis = validator.check_int_range('channel_axis', channel_axis, 0, 1, Rel.INC_BOTH, self.name)
+        else:
+            self.channel_axis = validator.check_integer('channel_axis', channel_axis, 0, Rel.GE, self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
-        validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
+        if self.is_ascend and len(x_shape) not in self.ascend_support_x_rank:
+            raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
+        if not self.is_ascend:
+            validator.check_integer("x rank", len(x_shape), 1, Rel.GE, self.name)
         validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
         validator.check_integer(
             "min shape", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)

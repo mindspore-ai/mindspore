@@ -26,8 +26,9 @@ check_valid_op_info = TBERegOp("CheckValid") \
     .input(0, "bbox_tensor", False, "required", "all") \
     .input(1, "img_tas", False, "required", "all") \
     .output(0, "valid_tensor", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.I8_Default) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.BOOL_Default) \
+    .op_pattern("broadcast") \
+    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.I8_None) \
+    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.BOOL_None) \
     .get_op_info()
 
 

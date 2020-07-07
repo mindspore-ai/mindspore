@@ -37,7 +37,7 @@ TextFileOp::Builder::Builder()
       builder_num_devices_(1),
       builder_total_rows_(0),
       builder_shuffle_files_(false),
-      builder_shuffle_global_(false) {
+      builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
@@ -68,7 +68,7 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     builder_num_workers_, builder_rows_per_buffer_, builder_total_rows_, builder_worker_connector_size_,
     std::move(builder_schema_), builder_text_files_list_, builder_op_connector_size_, builder_shuffle_files_,
-    builder_shuffle_global_, builder_num_devices_, builder_device_id_);
+    builder_num_devices_, builder_device_id_, std::move(builder_sampler_));
   RETURN_IF_NOT_OK(text_file_op->Init());
   *op = std::move(text_file_op);
 
@@ -77,16 +77,15 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
 
 TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
                        std::unique_ptr<DataSchema> schema, std::vector<std::string> text_files_list,
-                       int32_t op_connector_size, bool shuffle_files, bool shuffle_global, int32_t num_device,
-                       int32_t device_id)
-    : ParallelOp(num_workers, op_connector_size),
+                       int32_t op_connector_size, bool shuffle_files, int32_t num_device, int32_t device_id,
+                       std::shared_ptr<Sampler> sampler)
+    : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       device_id_(device_id),
       num_devices_(num_device),
       rows_per_buffer_(rows_per_buffer),
       total_rows_(total_rows),
       text_files_list_(std::move(text_files_list)),
       shuffle_files_(shuffle_files),
-      shuffle_global_(shuffle_global),
       data_schema_(std::move(schema)),
       all_num_rows_(0),
       num_rows_per_shard_(0),
@@ -126,11 +125,6 @@ Status TextFileOp::Init() {
 
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(text_files_list_.size() / num_workers_) + 1);
   io_block_queues_.Init(num_workers_, safe_queue_size);
-
-  // Set the column name mapping (base class field)
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
-  }
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
 
@@ -485,6 +479,18 @@ Status TextFileOp::CountAllFileRows(const std::vector<std::string> &files, int64
   RETURN_IF_NOT_OK(Builder().SetTextFilesList(files).Build(&op));
   for (auto file : files) {
     *count += op->CountTotalRows(file);
+  }
+  return Status::OK();
+}
+
+Status TextFileOp::ComputeColMap() {
+  // Set the column name mapping (base class field)
+  if (column_name_id_map_.empty()) {
+    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+      column_name_id_map_[data_schema_->column(i).name()] = i;
+    }
+  } else {
+    MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
 }

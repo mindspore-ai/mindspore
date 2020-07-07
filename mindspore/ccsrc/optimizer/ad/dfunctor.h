@@ -47,12 +47,12 @@ struct PrimitiveTotalEqual {
       return false;
     }
 
-    for (auto &attr : attrs1) {
-      if (!t2->HasAttr(attr.first)) {
+    for (auto &attr1 : attrs1) {
+      if (!t2->HasAttr(attr1.first)) {
         return false;
       }
 
-      if (!(*(attr.second) == *(t2->GetAttr(attr.first)))) {
+      if (!(*(attr1.second) == *(t2->GetAttr(attr1.first)))) {
         return false;
       }
     }
@@ -61,7 +61,7 @@ struct PrimitiveTotalEqual {
   }
 };
 
-using Registry = std::unordered_map<PrimitivePtr, FuncGraphPtr, PrimitiveHasher>;
+using Registry = std::unordered_map<PrimitivePtr, FuncGraphPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 class KPrim;
 extern KPrim g_k_prims;
 class DFunctor;
