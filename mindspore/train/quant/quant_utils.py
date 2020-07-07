@@ -45,7 +45,7 @@ def cal_quantization_params(input_min,
         raise ValueError("input min shape should equal to input max.")
     if len(input_min.shape) > 1:
         raise ValueError("input min and max shape should be one dim.")
-    if input_min > input_max:
+    if (input_min > input_max).all():
         raise ValueError("input_min min should less than input max.")
     if (input_max == input_min).all():
         # scale = 1.0, zp = 0.0
@@ -85,9 +85,7 @@ def cal_quantization_params(input_min,
     return scale, zp
 
 
-def weight2int(data,
-               scale,
-               zero_point):
+def weight2int(data, scale, zero_point):
     r"""
     Calculate int8/uint8 weight from fp32. the formula is defined as:
 
@@ -103,12 +101,24 @@ def weight2int(data,
         weight (numpy.ndarray): The dimension of channel or 1.
     """
     if scale.shape != zero_point.shape:
-        raise ValueError("scale and zero_point should have the same shape.")
-    if scale.shape[0] > 0:
-        scale = scale.reshape(1, -1)
-        zero_point = zero_point.reshape(1, -1)
+        raise ValueError("`scale` and `zero_point` should have the same shape.")
+    if scale.shape[0] < 0:
+        raise ValueError("`scale` and `zero_point` shape should greater than zero.")
 
-    return np.round((data/scale) + zero_point)
+    if scale.shape[0] == data.shape[0]:
+        # `Conv2d` or `Dense` op weight
+        shape_list = [-1] + [1] * len(data.shape[1:])
+        scale = scale.reshape(shape_list)
+        zero_point = zero_point.reshape(shape_list)
+    elif scale.shape[0] == data.shape[1]:
+        # `DepthwiseConv2d` op weight
+        shape_list = [1, -1] + [1] * len(data.shape[2:])
+        scale = scale.reshape(shape_list)
+        zero_point = zero_point.reshape(shape_list)
+    else:
+        raise ValueError("Unsupported weight shape({})".format(data.shape))
+
+    return np.round((data / scale) + zero_point)
 
 
 def scale_zp_from_fack_quant_cell(cell, data_type):
@@ -183,9 +193,20 @@ def fold_batchnorm(weight, cell_quant):
     beta = cell_quant.beta.data.asnumpy()
     epsilon = cell_quant.eps
     sigma = np.sqrt(variance + epsilon)
-    gamma = gamma.reshape(-1, 1, 1, 1)
-    sigma = sigma.reshape(-1, 1, 1, 1)
-    mean = mean.reshape(-1, 1, 1, 1)
-    weight = weight * gamma / sigma
+
+    if gamma.shape[0] == weight.shape[0]:
+        # `Conv2d` or `Dense` op weight
+        shape_list = [-1] + [1] * len(weight.shape[1:])
+        _gamma = gamma.reshape(shape_list)
+        _sigma = sigma.reshape(shape_list)
+    elif gamma.shape[0] == weight.shape[1]:
+        # `DepthwiseConv2d` op weight
+        shape_list = [1, -1] + [1] * len(weight.shape[2:])
+        _gamma = gamma.reshape(shape_list)
+        _sigma = sigma.reshape(shape_list)
+    else:
+        raise ValueError("Unsupported weight shape({})".format(weight.shape))
+
+    weight = weight * _gamma / _sigma
     bias = beta - gamma * mean / sigma
     return weight, bias

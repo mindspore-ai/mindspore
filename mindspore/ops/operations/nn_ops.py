@@ -1004,6 +1004,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, w_dtype):
         args = {'x': x_dtype, 'w': w_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        if x_dtype.element_type() == mstype.int8:
+            return mstype.tensor_type(mstype.int32)
         return x_dtype
 
 
