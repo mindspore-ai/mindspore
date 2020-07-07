@@ -838,7 +838,8 @@ bool AbstractRef::operator==(const AbstractBase &other) const {
 AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
   auto other_ref = other->cast<AbstractRefPtr>();
   if (other_ref == nullptr) {
-    MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
+    auto new_ref = ref_->Join(other);
+    return std::make_shared<AbstractRef>(ref_key_, new_ref, ref_origin_);
   }
   if (*this == *other) {
     return shared_from_base<AbstractBase>();
