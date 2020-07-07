@@ -34,14 +34,13 @@ Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *
     // one time allocation -> updated in the loop
     // type defined based on VOC test dataset
     for (int i = 0; i < boxCount; i++) {
-      uint32_t boxCorner_y = 0;
-      uint32_t boxHeight = 0;
-      uint32_t newBoxCorner_y = 0;
-      RETURN_IF_NOT_OK(input[1]->GetUnsignedIntAt(&boxCorner_y, {i, 1}));  // get min y of bbox
-      RETURN_IF_NOT_OK(input[1]->GetUnsignedIntAt(&boxHeight, {i, 3}));    // get height of bbox
+      float boxCorner_y = 0.0, boxHeight = 0.0;
+      float newBoxCorner_y = 0.0;
+      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&boxCorner_y, {i, 1}));  // get min y of bbox
+      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&boxHeight, {i, 3}));    // get height of bbox
 
       // subtract (curCorner + height) from (max) for new Corner position
-      newBoxCorner_y = (imHeight - 1) - ((boxCorner_y + boxHeight) - 1);
+      newBoxCorner_y = (imHeight - 1.0) - ((boxCorner_y + boxHeight) - 1.0);
       RETURN_IF_NOT_OK(input[1]->SetItemAt({i, 1}, newBoxCorner_y));
     }
 
