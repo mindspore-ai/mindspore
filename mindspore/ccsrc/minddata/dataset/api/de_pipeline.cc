@@ -42,8 +42,6 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/mindrecord/include/shard_category.h"
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
-#include "minddata/mindrecord/include/shard_sample.h"
-#include "minddata/mindrecord/include/shard_shuffle.h"
 #include "pybind11/stl.h"
 #include "utils/log_adapter.h"
 
