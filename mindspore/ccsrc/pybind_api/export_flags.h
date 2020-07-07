@@ -27,6 +27,7 @@ extern const char PYTHON_ENVINSTANCE_FLAG[];
 extern const char PYTHON_DTYPE_FLAG[];
 extern const char PYTHON_CELL_AS_LIST[];
 extern const char PYTHON_DATACLASS_FIELDS[];
+extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
 
 extern const char GRAPH_FLAG_MIX_PRECISION_FP16[];
 extern const char GRAPH_FLAG_MIX_PRECISION_FP32[];

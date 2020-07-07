@@ -117,6 +117,7 @@ convert_object_map = {
     T.zip:          C.zip_operation,
     T.print:        F.print_,
     T.enumerate:    M.enumerate_,
+    T.isinstance:   M.isinstance_,
 
     # custom define operation
     T.iter:         M.ms_iter,
