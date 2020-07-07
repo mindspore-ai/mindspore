@@ -334,7 +334,7 @@ class Parser:
     def __init__(self, fn: (types.FunctionType, types.MethodType), parse_method=None) -> None:
         self.fn = fn
         self.parse_method = parse_method
-        _, self.line_offset = inspect.getsourcelines(self.fn)
+        self.line_offset = 0
         self.filename: str = inspect.getfile(self.fn)
 
         # Used to resolve the function's globals Namespace.
@@ -350,7 +350,8 @@ class Parser:
         logger.debug("fn = %r", self.fn)
         tree = None
         if isinstance(self.fn, (types.FunctionType, types.MethodType)):
-            original_src = inspect.getsource(self.fn)
+            lines, self.line_offset = inspect.getsourcelines(self.fn)
+            original_src = ''.join(lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
             tree = Parser.ast_cache.get(hexstr)
             if not tree:
