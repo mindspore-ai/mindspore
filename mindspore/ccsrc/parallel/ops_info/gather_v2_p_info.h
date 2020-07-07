@@ -36,6 +36,7 @@ class GatherV2PInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2PCost>()),
         axis_(0),
         bias_(0),
+        index_offset_(0),
         slice_size_(0) {}
   ~GatherV2PInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
@@ -57,20 +58,26 @@ class GatherV2PInfo : public OperatorInfo {
 
  private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status CheckManualSplit();
   Status ComputeReplaceOp();
   Status InferBias();
+  Status InferOffset();
   Status InferGroup();
 
   int32_t axis_;
   std::string target_;
   std::string replace_op_name_ = GATHERV2;
   int32_t bias_;
+  int32_t index_offset_;
   int32_t slice_size_;
   Shape out_dev_matrix_shape_;
   Group group_;
   bool reduce_scatter_flag_ = false;
   int32_t split_num_ = 1;
   bool host_reduce_scatter_ = false;
+  bool manual_split_ = false;
+  std::vector<int32_t> param_split_shapes_;
+  std::vector<int32_t> index_offsets_;
 };
 
 class SparseGatherV2Info : public GatherV2PInfo {
