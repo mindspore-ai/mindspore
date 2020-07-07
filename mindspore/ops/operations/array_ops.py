@@ -1463,6 +1463,57 @@ class Concat(PrimitiveWithInfer):
         return out
 
 
+class ParallelConcat(PrimitiveWithInfer):
+    r"""
+    Concat tensor in the first dimension.
+
+    Concat input tensors along with the first dimension.
+
+    Note:
+        The input tensors are all required to have size 1 in the first dimension.
+
+    Inputs:
+        - **values** (tuple, list) - Tuple or list of input tensors.
+
+    Outputs:
+        Tensor, data type same as `values`.
+
+    Examples:
+        >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
+        >>> data2 = Tensor(np.array([[2, 1]]).astype(np.int32))
+        >>> op = P.ParallelConcat()
+        >>> output = op((data1, data2))
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init ParallelConcat"""
+
+    def __infer__(self, values):
+        x_shp = values['shape']
+        x_type = values['dtype']
+
+        validator.check_integer(f'x_shp length', len(x_shp), 1, Rel.GE, self.name)
+        first_elem = x_shp[0]
+        args = {}
+        for i, elem in enumerate(x_shp[1:]):
+            j = i + 1
+            args[f'x_type[{j}]'] = x_type[j]
+            validator.check_integer(f'x_shp[{j}][0]', elem[0], 1, Rel.EQ, self.name)
+            validator.check(f"x_shp[0] shape", first_elem, f"x_shp[{j}] shape", elem, Rel.EQ, self.name)
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
+
+        ret_shp = x_shp[0].copy()
+        ret_shp[0] = len(x_shp)
+        self.add_prim_attr('shape', ret_shp)
+        self.add_prim_attr('N', len(x_shp))
+
+        out = {'shape': ret_shp,
+               'dtype': x_type[0],
+               'value': None}
+        return out
+
+
 def _get_pack_shape(x_shape, x_type, axis, prim_name):
     """for pack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
