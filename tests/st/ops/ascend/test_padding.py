@@ -16,6 +16,7 @@ import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
@@ -24,23 +25,16 @@ context.set_context(mode=context.GRAPH_MODE,
 
 
 class Net(nn.Cell):
-    def __init__(self):
+    def __init__(self, pad_dim_size):
         super(Net, self).__init__()
-        self.mask = P.DropoutGenMask(10, 28)
-        self.shape = P.Shape()
+        self.padding = P.Padding(pad_dim_size)
 
-    def construct(self, x_, y_):
-        shape_x = self.shape(x_)
-        return self.mask(shape_x, y_)
+    def construct(self, x):
+        return self.padding(x)
 
 
-x = np.ones([2, 4, 2, 2]).astype(np.int32)
-y = np.array([1.0]).astype(np.float32)
-
-
-def test_net():
-    mask = Net()
-    tx, ty = Tensor(x), Tensor(y)
-    output = mask(tx, ty)
-    print(output.asnumpy())
-    assert ([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255] == output.asnumpy()).all()
+def test_padding():
+    x = Tensor(np.array([[8], [10]]), mstype.int32)
+    padding = Net(4)
+    out = padding(x)
+    assert(out.asnumpy() == [[8, 0, 0, 0], [10, 0, 0, 0]]).all()
