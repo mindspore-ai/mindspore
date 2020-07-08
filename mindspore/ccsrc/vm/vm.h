@@ -51,15 +51,17 @@ enum Instruction {
   kPush,
   kPrim,
   kGraph,
-  kPadStack
+  kPadStack,
+  kSwitchLayer
 };
 
 using InstType = std::pair<Instruction, VectorRef>;
 using InstSet = std::vector<InstType>;
 using InstFunctionMap = std::map<Instruction, std::function<void(const VectorRef &)>>;
 
-const std::vector<std::string> inst_str{"call",  "tail_call", "return", "partial",   "switch", "switch_return", "tuple",
-                                        "input", "external",  "push",   "primitive", "graph",  "pad_stack"};
+const std::vector<std::string> inst_str{"call",          "tail_call", "return",    "partial",     "switch",
+                                        "switch_return", "tuple",     "input",     "external",    "push",
+                                        "primitive",     "graph",     "pad_stack", "switch_layer"};
 class StructPartial : public Base {
  public:
   // Initialize StructPartial.
@@ -114,6 +116,7 @@ class FinalVM {
   void InstExternal(const VectorRef &args);
   void InstPushPrim(const VectorRef &args);
   void InstSwitchReturn(const VectorRef &args);
+  void InstSwitchLayer(const VectorRef &args);
   void set_insts(const InstSet &value) { insts_ = value; }
   BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &arg);
 
@@ -157,7 +160,7 @@ class FinalVM {
     {Instruction::kExternal, [this](const VectorRef &args) { InstExternal(args); }},
     {Instruction::kPrim, [this](const VectorRef &args) { InstPushPrim(args); }},
     {Instruction::kSwitchReturn, [this](const VectorRef &args) { InstSwitchReturn(args); }},
-  };
+    {Instruction::kSwitchLayer, [this](const VectorRef &args) { InstSwitchLayer(args); }}};
   std::map<std::string, py::object> _hook_grad;
 };
 

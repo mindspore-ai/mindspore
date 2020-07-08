@@ -32,6 +32,7 @@
 namespace mindspore {
 namespace compile {
 bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
+bool Backend::GetIndex(const BaseRef &c, int *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 LinConvertResult MsBackend::GetMultiGraphRun(const FuncGraphPtr &g) {
   // multi_graph merge to one, big graph have paramters in begin and only have one output

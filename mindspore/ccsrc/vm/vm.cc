@@ -480,6 +480,35 @@ void FinalVM::InstSwitch(const VectorRef &args) {
   MS_LOG(DEBUG) << "End";
 }
 
+void FinalVM::InstSwitchLayer(const VectorRef &args) {
+  MS_LOG(DEBUG) << "Start";
+  const size_t args_size = 2;
+  if (args.size() != args_size) {
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is " << args.size()
+                  << ".";
+    return;
+  }
+
+  int idx = utils::cast<int>(args[0]);
+  VectorRef branches = utils::cast<VectorRef>(Ref(utils::cast<int>(args[1])));
+  int size = static_cast<int>(branches.size());
+
+  BaseRef index = Ref(idx);
+  int idx_value = 0;
+  if (!backend_->GetIndex(index, &idx_value)) {
+    MS_LOG(EXCEPTION) << "Not supported type to be casted to int.";
+  }
+  if (idx_value < 0) {
+    // Add support negative index range [-size, -1].
+    idx_value += size;
+  }
+  if (idx_value < 0 || idx_value >= size) {
+    MS_LOG(EXCEPTION) << __FUNCTION__ << " given index " << idx_value << " out of range.";
+  }
+  Push(branches[idx_value]);
+  MS_LOG(DEBUG) << "End";
+}
+
 void FinalVM::InstTuple(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   VectorRef tuple;
