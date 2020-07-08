@@ -150,7 +150,7 @@ def test_resize_with_bbox_op_invalid_c():
         # invalid interpolation value
         c_vision.ResizeWithBBox(400, interpolation="invalid")
 
-    except ValueError as err:
+    except TypeError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
         assert "interpolation" in str(err)
 

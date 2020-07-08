@@ -28,6 +28,7 @@ __all__ = [
     "Vocab", "to_str", "to_bytes"
 ]
 
+
 class Vocab(cde.Vocab):
     """
     Vocab object that is used to lookup a word.
@@ -38,7 +39,7 @@ class Vocab(cde.Vocab):
     @classmethod
     @check_from_dataset
     def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None, special_tokens=None,
-                     special_first=None):
+                     special_first=True):
         """
         Build a vocab from a dataset.
 
@@ -62,13 +63,21 @@ class Vocab(cde.Vocab):
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab. If special_tokens
-                is specified and special_first is set to None, special_tokens will be prepended (default=None).
+                is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
             Vocab, Vocab object built from dataset.
         """
 
         vocab = Vocab()
+        if columns is None:
+            columns = []
+        if not isinstance(columns, list):
+            columns = [columns]
+        if freq_range is None:
+            freq_range = (None, None)
+        if special_tokens is None:
+            special_tokens = []
         root = copy.deepcopy(dataset).build_vocab(vocab, columns, freq_range, top_k, special_tokens, special_first)
         for d in root.create_dict_iterator():
             if d is not None:
@@ -77,7 +86,7 @@ class Vocab(cde.Vocab):
 
     @classmethod
     @check_from_list
-    def from_list(cls, word_list, special_tokens=None, special_first=None):
+    def from_list(cls, word_list, special_tokens=None, special_first=True):
         """
         Build a vocab object from a list of word.
 
@@ -86,29 +95,33 @@ class Vocab(cde.Vocab):
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to None, special_tokens will be prepended (default=None).
+                is specified and special_first is set to True, special_tokens will be prepended (default=True).
         """
-
+        if special_tokens is None:
+            special_tokens = []
         return super().from_list(word_list, special_tokens, special_first)
 
     @classmethod
     @check_from_file
-    def from_file(cls, file_path, delimiter=None, vocab_size=None, special_tokens=None, special_first=None):
+    def from_file(cls, file_path, delimiter="", vocab_size=None, special_tokens=None, special_first=True):
         """
         Build a vocab object from a list of word.
 
         Args:
             file_path (str): path to the file which contains the vocab list.
             delimiter (str, optional): a delimiter to break up each line in file, the first element is taken to be
-                the word (default=None).
+                the word (default="").
             vocab_size (int, optional): number of words to read from file_path (default=None, all words are taken).
             special_tokens (list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first (bool, optional): whether special_tokens will be prepended/appended to vocab,
-                If special_tokens is specified and special_first is set to None,
-                special_tokens will be prepended (default=None).
+                If special_tokens is specified and special_first is set to True,
+                special_tokens will be prepended (default=True).
         """
-
+        if vocab_size is None:
+            vocab_size = -1
+        if special_tokens is None:
+            special_tokens = []
         return super().from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
 
     @classmethod

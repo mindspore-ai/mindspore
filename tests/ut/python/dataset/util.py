@@ -314,14 +314,15 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="annotation", plot_rows=
     if len(orig) != len(aug) or not orig:
         return
 
-    batch_size = int(len(orig)/plot_rows)  # creates batches of images to plot together
+    batch_size = int(len(orig) / plot_rows)  # creates batches of images to plot together
     split_point = batch_size * plot_rows
 
     orig, aug = np.array(orig), np.array(aug)
 
     if len(orig) > plot_rows:
         # Create batches of required size and add remainder to last batch
-        orig = np.split(orig[:split_point], batch_size) + ([orig[split_point:]] if (split_point < orig.shape[0]) else [])  # check to avoid empty arrays being added
+        orig = np.split(orig[:split_point], batch_size) + (
+            [orig[split_point:]] if (split_point < orig.shape[0]) else [])  # check to avoid empty arrays being added
         aug = np.split(aug[:split_point], batch_size) + ([aug[split_point:]] if (split_point < aug.shape[0]) else [])
     else:
         orig = [orig]
@@ -336,7 +337,8 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="annotation", plot_rows=
 
         for x, (dataA, dataB) in enumerate(zip(allData[0], allData[1])):
             cur_ix = base_ix + x
-            (axA, axB) = (axs[x, 0], axs[x, 1]) if (curPlot > 1) else (axs[0], axs[1])  # select plotting axes based on number of image rows on plot - else case when 1 row
+            # select plotting axes based on number of image rows on plot - else case when 1 row
+            (axA, axB) = (axs[x, 0], axs[x, 1]) if (curPlot > 1) else (axs[0], axs[1])
 
             axA.imshow(dataA["image"])
             add_bounding_boxes(axA, dataA[annot_name])

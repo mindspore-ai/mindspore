@@ -15,12 +15,14 @@
 """
 Testing the bounding box augment op in DE
 """
-from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
-    config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
+
 import numpy as np
 import mindspore.log as logger
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
+
+from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
+    config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -241,7 +243,7 @@ def test_bounding_box_augment_invalid_ratio_c():
                                 operations=[test_op])  # Add column for "annotation"
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input is not" in str(error)
+        assert "Input ratio is not within the required interval of (0.0 to 1.0)." in str(error)
 
 
 def test_bounding_box_augment_invalid_bounds_c():

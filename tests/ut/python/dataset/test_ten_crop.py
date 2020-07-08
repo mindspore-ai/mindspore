@@ -62,7 +62,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
         logger.info("dtype of image_2: {}".format(image_2.dtype))
 
         if plot:
-            visualize_list(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
+            visualize_list(np.array([image_1] * 10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 10 images.
         assert len(image_2.shape) == 4
@@ -144,7 +144,7 @@ def test_ten_crop_invalid_size_error_msg():
             vision.TenCrop(0),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
         ]
-    error_msg = "Input is not within the required range"
+    error_msg = "Input is not within the required interval of (1 to 16777216)."
     assert error_msg == str(info.value)
 
     with pytest.raises(ValueError) as info:

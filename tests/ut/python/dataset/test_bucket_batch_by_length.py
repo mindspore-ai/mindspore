@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 import mindspore.dataset as ds
 
+
 # generates 1 column [0], [0, 1], ..., [0, ..., n-1]
 def generate_sequential(n):
     for i in range(n):
@@ -99,12 +100,12 @@ def test_bucket_batch_invalid_input():
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes,
                                            None, None, invalid_type_pad_to_bucket_boundary)
-    assert "Wrong input type for pad_to_bucket_boundary, should be <class 'bool'>" in str(info.value)
+    assert "Argument pad_to_bucket_boundary with value \"\" is not of type (<class \'bool\'>,)." in str(info.value)
 
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes,
                                            None, None, False, invalid_type_drop_remainder)
-    assert "Wrong input type for drop_remainder, should be <class 'bool'>" in str(info.value)
+    assert "Argument drop_remainder with value \"\" is not of type (<class 'bool'>,)." in str(info.value)
 
 
 def test_bucket_batch_multi_bucket_no_padding():
@@ -271,7 +272,6 @@ def test_bucket_batch_default_pad():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0],
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0],
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]]
-
 
     output = []
     for data in dataset.create_dict_iterator():
