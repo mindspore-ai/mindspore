@@ -1260,6 +1260,10 @@ def check_gnn_random_walk(method):
         # check meta_path; required argument
         check_gnn_list_or_ndarray(param_dict.get("meta_path"), 'meta_path')
 
+        check_type(param_dict.get("step_home_param"), 'step_home_param', float)
+        check_type(param_dict.get("step_away_param"), 'step_away_param', float)
+        check_type(param_dict.get("default_node"), 'default_node', int)
+
         return method(*args, **kwargs)
 
     return new_method

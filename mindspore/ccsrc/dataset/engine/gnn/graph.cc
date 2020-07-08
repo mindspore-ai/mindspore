@@ -439,6 +439,18 @@ Status Graph::RandomWalkBase::Build(const std::vector<NodeIdType> &node_list, co
                           ", step_away_param: " + std::to_string(step_away_param);
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  if (default_node < -1) {
+    std::string err_msg = "Failed, default_node required to be greater or equal to -1.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  if (num_walks <= 0) {
+    std::string err_msg = "Failed, num_walks parameter required to be greater than 0";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  if (num_workers <= 0) {
+    std::string err_msg = "Failed, num_workers parameter required to be greater than 0";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
   step_home_param_ = step_home_param;
   step_away_param_ = step_away_param;
   default_node_ = default_node;

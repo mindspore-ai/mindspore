@@ -181,7 +181,7 @@ class Graph {
     float step_away_param_;  // Inout hyper parameter. Default is 1.0
     NodeIdType default_node_;
 
-    int32_t num_walks_;    // Number of walks per source. Default is 10
+    int32_t num_walks_;    // Number of walks per source. Default is 1
     int32_t num_workers_;  // The number of worker threads. Default is 1
   };
 
