@@ -28,11 +28,11 @@ strided_slice_op_info = AiCPURegOp("StridedSliceAICPU") \
     .attr("ellipsis_mask", "int") \
     .attr("new_axis_mask", "int") \
     .attr("shrink_axis_mask", "int") \
-    .dtype_format(DataType.F32_NCHW,
-                  DataType.I32_NCHW,
-                  DataType.I32_NCHW,
-                  DataType.I32_NCHW,
-                  DataType.F32_NCHW) \
+    .dtype_format(DataType.F32_Default,
+                  DataType.I32_Default,
+                  DataType.I32_Default,
+                  DataType.I32_Default,
+                  DataType.F32_Default) \
     .get_op_info()
 
 @op_info_register(strided_slice_op_info)
