@@ -413,7 +413,8 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
 void MemReuseChecker::SetMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list) {
   std::vector<MembufPtr> curr_mem_infos;
   for (const auto &mem : membuf_ptr_list) {
-    auto mem_checker = std::make_shared<Membuf>(mem->status_, mem->size_, mem->offset_, mem->index_, mem->used_kernel_);
+    auto mem_checker =
+      std::make_shared<Membuf>(mem->status_, mem->size_, mem->offset_, mem->index_, mem->type_, mem->used_kernel_);
     curr_mem_infos.push_back(mem_checker);
   }
   membuf_all_infos_.push_back(curr_mem_infos);
@@ -427,7 +428,8 @@ void MemReuseChecker::SetAddNewMembuInfos(const KernelDef *op_def, const std::ve
   std::vector<MembufPtr> add_new_curr_mem;
 
   for (const auto &mem : membuf_ptr_list) {
-    auto mem_checker = std::make_shared<Membuf>(mem->status_, mem->size_, mem->offset_, mem->index_, mem->used_kernel_);
+    auto mem_checker =
+      std::make_shared<Membuf>(mem->status_, mem->size_, mem->offset_, mem->index_, mem->type_, mem->used_kernel_);
     add_new_curr_mem.push_back(mem_checker);
   }
   add_new_mem_infos_.push_back(add_new_curr_mem);
@@ -451,6 +453,7 @@ void MemReuseChecker::ExportEachMembufInfo(std::ofstream &ofs) {
         << "mem_size\t"
         << "mem_head\t"
         << "mem_tail\t"
+        << "mem_type\t"
         << "used_kernel\n";
     size_t curr_used = 0;
     size_t curr_allocated = 0;
@@ -461,8 +464,8 @@ void MemReuseChecker::ExportEachMembufInfo(std::ofstream &ofs) {
           << "streamID[@" << membuf->used_kernel_->stream_id() << "]"
           << "\t"
           << "#" << static_cast<int>(membuf->status_) << "\t%" << membuf->index_ << "T"
-          << "\t" << membuf->size_ << "\t" << membuf->offset_ << "\t" << membuf->offset_ + membuf->size_ << "\t"
-          << GetSplitName(used_kernel) << "\n";
+          << "\t" << membuf->size_ << "\t" << membuf->offset_ << "\t\t" << membuf->offset_ + membuf->size_ << "\t"
+          << "\t" << static_cast<int>(membuf->type_) << "\t" << GetSplitName(used_kernel) << "\n";
       if (membuf->status_ == kReused) {
         curr_used += membuf->size_;
       }

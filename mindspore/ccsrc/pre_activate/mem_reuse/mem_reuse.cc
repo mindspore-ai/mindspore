@@ -329,22 +329,25 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
     return;
   }
 
+  size_t total_summary_size = 0;
   for (auto &node_item : summary_nodes) {
     auto node = node_item.second.first;
     size_t index = IntToSize(node_item.second.second);
-    MS_LOG(INFO) << "set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
     if (kernel_output_refs_.find(node.get()) != kernel_output_refs_.end()) {
       KernelRefCountPtr kernel_ref = kernel_output_refs_[node.get()][index];
       kernel_ref->ref_count_ = kMaxRefCount;
       kernel_ref->ref_count_dynamic_use_ = kMaxRefCount;
+      total_summary_size += kernel_ref->size_;
+      MS_LOG(INFO) << "Set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
     } else {
-      MS_LOG(WARNING) << "can't find summary node's kernel_def " << node->fullname_with_scope();
+      MS_LOG(WARNING) << "Can't find summary node's kernel_def " << node->fullname_with_scope() << " index: " << index;
     }
   }
 #ifdef MEM_REUSE_DEBUG
   auto graph = *graph_;
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, &graph);
 #endif
+  MS_LOG(INFO) << "Special Tensor total size: SummaryNodes: " << total_summary_size;
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {

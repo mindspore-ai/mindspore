@@ -40,11 +40,12 @@ static constexpr int kDynamicMem = -1;
 static constexpr int kWorkspaceMem = 1;
 static constexpr size_t kTotalSize = 0;
 enum Status { kUnused, kReused };
+enum MEMTYPE { NEW, IN_STREAM_REUSE, BETWEEN_STREAMS_REUSE, KERNEL_DEPENDENCE_REUSE };
 class Membuf {
  public:
   Membuf() = default;
-  Membuf(Status status, size_t size, size_t offset, int index, const KernelDefPtr &used_kernel)
-      : status_(status), size_(size), offset_(offset), index_(index), used_kernel_(used_kernel) {}
+  Membuf(Status status, size_t size, size_t offset, int index, MEMTYPE type, const KernelDefPtr &used_kernel)
+      : status_(status), size_(size), offset_(offset), index_(index), type_(type), used_kernel_(used_kernel) {}
   ~Membuf() = default;
   // Memory block status flags
   Status status_ = kUnused;
@@ -52,6 +53,7 @@ class Membuf {
   size_t offset_{0};
   // Store the tensor index stored in this memory block at a certain moment
   int index_{0};
+  MEMTYPE type_{NEW};
   KernelDefPtr used_kernel_;
 };
 using MembufPtr = std::shared_ptr<Membuf>;
@@ -122,10 +124,10 @@ class BestFitMemReuse {
   /**
    * determine if the kernel_curr can reuse the output tensor add of kernel_prev
    * @param kernel_curr, current kernel
-   * @param kernel_prev, the membuf used by this kernel
+   * @param mem_buf, the membuf
    * @return bool
    */
-  bool IsUsable(const KernelDefPtr &kernel_curr, const KernelDefPtr &kernel_prev);
+  bool IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr &mem_buf);
   /**
    * init the dependence of all kernels in the graph
    */
@@ -150,6 +152,7 @@ class BestFitMemReuse {
   std::vector<MembufPtr> membuf_ptr_list_;
   // kernel_front_map_, key: the kernel_def, value: kernels before this kernel_def
   std::map<KernelDefPtr, std::set<KernelDefPtr>> kernel_front_map_;
+  std::vector<std::vector<uint32_t>> stream_groups_;
 };
 }  // namespace memreuse
 }  // namespace mindspore
