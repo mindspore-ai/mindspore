@@ -378,7 +378,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBiasAdd), ADPT_DESC(BiasAdd)},
     {prim::kPrimRelu->name(), ADPT_DESC(Relu)},
 
-    {prim::kPrimMatMul->name(), ADPT_DESC(MatMul)},
+    {prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2)},
 
     {string(kNameConst), ADPT_DESC(Constant, Const)},
     {string(kNameSoftmax), ADPT_DESC(SoftmaxV2)},
