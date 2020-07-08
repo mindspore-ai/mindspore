@@ -256,6 +256,7 @@ bool SaveDataItem2File(const std::vector<tdt::DataItem> &items, const std::strin
     if (!print.SerializeToOstream(output)) {
       MS_LOG(ERROR) << "Save print file:" << print_file_path << " fail.";
       ret_end_thread = true;
+      break;
     }
     print.Clear();
   }

@@ -118,6 +118,12 @@ def test_variable_memory_max_size():
     context.set_context(variable_memory_max_size="3GB")
 
 
+def test_print_file_path():
+    """test_print_file_path"""
+    with pytest.raises(IOError):
+        context.set_context(print_file_path="./")
+
+
 def test_set_context():
     """ test_set_context """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",

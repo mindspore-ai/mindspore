@@ -302,7 +302,7 @@ def _save_graph(network, file_name):
     if graph_proto:
         with open(file_name, "wb") as f:
             f.write(graph_proto)
-        os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
+        os.chmod(file_name, stat.S_IRUSR)
 
 
 def _exec_save_checkpoint(train_network, ckpt_file_name, integrated_save=True):
@@ -462,19 +462,18 @@ def parse_print(print_file_name):
         List, element of list is Tensor.
 
     Raises:
-        ValueError: Print file is incorrect.
+        ValueError: The print file may be empty, please make sure enter the correct file name.
     """
-    if not os.path.realpath(print_file_name):
-        raise ValueError("Please input the correct print file name.")
+    print_file_path = os.path.realpath(print_file_name)
 
-    if os.path.getsize(print_file_name) == 0:
+    if os.path.getsize(print_file_path) == 0:
         raise ValueError("The print file may be empty, please make sure enter the correct file name.")
 
     logger.info("Execute load print process.")
     print_list = Print()
 
     try:
-        with open(print_file_name, "rb") as f:
+        with open(print_file_path, "rb") as f:
             pb_content = f.read()
         print_list.ParseFromString(pb_content)
     except BaseException as e:
