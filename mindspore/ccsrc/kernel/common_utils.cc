@@ -32,6 +32,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr char kAxis[] = "axis";
+constexpr char kTypeInt32[] = "Int32";
 const std::unordered_map<std::string, TypeId> type_id_maps = {
   {"float", TypeId::kNumberTypeFloat32},   {"float16", TypeId::kNumberTypeFloat16},
   {"float32", TypeId::kNumberTypeFloat32}, {"float64", TypeId::kNumberTypeFloat64},
@@ -988,6 +990,40 @@ void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputePa
   for (size_t i = 0; i < threads.size(); ++i) {
     threads[i].join();
   }
+}
+
+std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode) {
+  if (AnfAlgo::GetInputTensorNum(cnode) != AnfAlgo::GetOutputTensorNum(cnode) &&
+      AnfAlgo::GetInputTensorNum(cnode) != 1) {
+    MS_LOG(EXCEPTION) << "the kind of reduce node [" << cnode->DebugString()
+                      << "] is not single input or single output ";
+  }
+  std::vector<int> axis;
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto axis_attr = primitive->GetAttr(kAxis);
+  if (axis_attr == nullptr) {
+    MS_LOG(ERROR) << "This node does't have axie attr.";
+    return std::vector<int>();
+  }
+  auto type = axis_attr->type();
+  MS_EXCEPTION_IF_NULL(type);
+  std::vector<int> axis_list;
+  if (type->ToString() == kTypeInt32) {
+    axis_list.emplace_back(GetValue<int>(axis_attr));
+  } else {
+    axis_list = GetValue<std::vector<int>>(axis_attr);
+  }
+  for (const auto &elem : axis_list) {
+    if (elem < 0) {
+      axis.emplace_back(input_shape.size() + elem);
+    } else {
+      axis.emplace_back(elem);
+    }
+  }
+  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
+  return axis;
 }
 }  // namespace kernel
 }  // namespace mindspore

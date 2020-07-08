@@ -57,6 +57,7 @@
 #include "pre_activate/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/ascend/format_type/rectify_do_mask_kernel_info.h"
+#include "pre_activate/ascend/format_type/chang_axis_of_reduce_kernel.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
 #include "pre_activate/pass/erase_visit_attr.h"
@@ -157,6 +158,7 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("pynative_transop_pm");
+  data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());

@@ -20,11 +20,10 @@
 #include "utils/utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "kernel/tbe/tbe_kernel_select/common_utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr char kAxis[] = "axis";
-constexpr char kTypeInt32[] = "Int32";
 constexpr size_t kInputIndex_0 = 0;
 constexpr size_t kOutputIndex_0 = 0;
 constexpr size_t kChannelN = 0;
@@ -50,7 +49,7 @@ bool TbeKernelReduceSelecter::GetShapeInfo(SupportFormat *support_format) {
   // get keep dim attr
   GetReduceAttrKeepDim();
   // get axis attr
-  GetReduceAttrAxis();
+  axis_ = GetReduceAttrAxis(cnode_ptr_);
   AssignSupportFormat(kOpFormat_DEFAULT, support_format);
   return true;
 }
@@ -119,31 +118,6 @@ bool TbeKernelReduceSelecter::IsFracZAndC1HWNCoC0Common(const std::string &forma
   }
   AssignSupportFormat(format, support_format);
   return true;
-}
-
-void TbeKernelReduceSelecter::GetReduceAttrAxis() {
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto axis = primitive->GetAttr(kAxis);
-  if (axis == nullptr) {
-    MS_LOG(INFO) << "This node does't have axie attr.";
-    return;
-  }
-  auto type = axis->type();
-  MS_EXCEPTION_IF_NULL(type);
-  std::vector<int> axis_list;
-  if (type->ToString() == kTypeInt32) {
-    axis_list.emplace_back(GetValue<int>(axis));
-  } else {
-    axis_list = GetValue<std::vector<int>>(axis);
-  }
-  for (const auto &elem : axis_list) {
-    if (elem < 0) {
-      axis_.emplace_back(input_shape_.size() + elem);
-    } else {
-      axis_.emplace_back(IntToSize(elem));
-    }
-  }
 }
 
 void TbeKernelReduceSelecter::GetReduceAttrKeepDim() {
