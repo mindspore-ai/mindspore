@@ -855,7 +855,7 @@ class ActQuant(_QuantActivation):
                                                   symmetric=symmetric,
                                                   narrow_range=narrow_range,
                                                   quant_delay=quant_delay)
-        self.act = activation
+        self.act = activation()
 
     def construct(self, x):
         x = self.act(x)
@@ -921,7 +921,7 @@ class HSwishQuant(_QuantActivation):
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
         if isinstance(activation, nn.HSwish):
-            self.act = activation
+            self.act = activation()
         else:
             raise ValueError("Activation should be `nn.HSwish`")
 
@@ -990,7 +990,7 @@ class HSigmoidQuant(_QuantActivation):
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
         if isinstance(activation, nn.HSwish):
-            self.act = activation
+            self.act = activation()
         else:
             raise ValueError("Activation should be `nn.HSigmoid`")
 
