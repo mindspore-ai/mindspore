@@ -4974,6 +4974,7 @@ class LRN(PrimitiveWithInfer):
         validator.check_value_type("beta", beta, [float], self.name)
         validator.check_value_type("norm_region", norm_region, [str], self.name)
         validator.check_string('norm_region', norm_region, ['ACROSS_CHANNELS'], self.name)
+        validator.check_integer("depth_radius", depth_radius, 0, Rel.GE, self.name)
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32,), self.name)
