@@ -66,17 +66,16 @@ void BBoxOpCommon::GetInputImagesAndAnnotations(const std::string &dir, std::siz
     MS_LOG(ERROR) << "Images folder was not found : " + images_path;
     EXPECT_TRUE(dir_path.Exists());
   }
-  std::size_t files_fetched = 0;
   // get image file paths
-  while (image_dir_itr->hasNext() && files_fetched < num_of_samples) {
+  while (image_dir_itr->hasNext()) {
     Path image_path = image_dir_itr->next();
     if (image_path.Extension() == std::string(kImageExt)) {
       paths_to_fetch.push_back(image_path.toString());
-      files_fetched++;
     }
   }
   // sort fetched files
   std::sort(paths_to_fetch.begin(), paths_to_fetch.end());
+  std::size_t files_fetched = 0;
   for (const auto &image_file : paths_to_fetch) {
     std::string image_ext = std::string(kImageExt);
     std::string annot_file = image_file;
@@ -100,6 +99,10 @@ void BBoxOpCommon::GetInputImagesAndAnnotations(const std::string &dir, std::siz
     // add image and annotation to the tensor table
     TensorRow row_data({std::move(input_tensor_), std::move(annotation_tensor)});
     images_and_annotations_.push_back(row_data);
+    files_fetched++;
+    if (files_fetched == num_of_samples) {
+      break;
+    }
   }
 }
 
