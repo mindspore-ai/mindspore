@@ -47,6 +47,5 @@ MS_REG_GPU_KERNEL_ONE(FusedAdam,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       FusedAdamWeightDecayGpuKernel, float)
-
 }  // namespace kernel
 }  // namespace mindspore

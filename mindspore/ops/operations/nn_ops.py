@@ -4765,3 +4765,56 @@ class LRN(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         return x_shape
+
+class CTCLossV2(PrimitiveWithInfer):
+    r"""
+    Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
+    Note:
+        - Cudnn Uses label value of for the `blank`
+
+    Inputs:
+        - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
+          :math:`(max_time, batch_size, num_class)`. `num_class` should be `num_labels + 1` classes, `num_labels`
+          indicates the number of actual labels. Blank labels are reserved.
+        - **labels** (Tensor) - The labels Tensor should be a `1-D` tensor whose shape is
+          :math:`(\sigma{label_lengths})`
+          or `2-D` tensor whose shape is
+          :math:`(max_time, max{label_lengths})`
+          The type must be int32.
+        - **input_lengths** (Tensor) - A `1-D` input tensor whose shape is
+          :math:`(batch_size,)`. The values should be batch. The type must be int32.
+        - **label_lengths** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
+          The type must be int32. Each value in the tensor should not greater than `max_time`.
+
+    Outputs:
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. Has the same
+          type with `inputs`.
+        - **gradient** (Tensor) - The gradient of `loss`. Has the same type and shape with `inputs`.
+
+    Examples:
+        >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
+        >>> labels = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+        >>> input_lengths = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> label_lengths = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> ctc_loss = P.CTCLossV2()
+        >>> output = ctc_loss(inputs, labels, input_lengths, label_lengths)
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_dtype(self, input_dtype, labels_dtype, input_lengths_dtype, label_lengths_dtype):
+        validator.check_tensor_type_same({"input": input_dtype}, (mstype.float32,), self.name)
+        validator.check_tensor_type_same({"labels": labels_dtype}, (mstype.int32,), self.name)
+        validator.check_tensor_type_same({"input_lengths": input_lengths_dtype}, (mstype.int32,), self.name)
+        validator.check_tensor_type_same({"target_lengths": label_lengths_dtype}, (mstype.int32,), self.name)
+        return mstype.float32, mstype.float32
+
+    def infer_shape(self, input_shape, labels_shape, input_lengths_shape, label_lengths_shape):
+        validator.check_integer("input shape", len(input_shape), 3, Rel.EQ, self.name)
+        validator.check_number_range("labels shape", len(labels_shape), 1, 2, Rel.INC_BOTH, self.name)
+        validator.check_integer("input lengths shape", len(input_lengths_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("label lengths shape", len(label_lengths_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("input[1]", input_shape[1], input_lengths_shape[0], Rel.EQ, self.name)
+        validator.check_integer("input[1]", input_shape[1], label_lengths_shape[0], Rel.EQ, self.name)
+        return (input_shape[1],), input_shape
