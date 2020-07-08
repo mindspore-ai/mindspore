@@ -1,6 +1,6 @@
 diff -Npur sqlite-amalgamation-3320200/CMakeLists.txt linux-amalgamation/CMakeLists.txt
 --- sqlite-amalgamation-3320200/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
-+++ linux-amalgamation/CMakeLists.txt	2020-06-16 09:21:51.768154641 +0800
++++ linux-amalgamation/CMakeLists.txt	2020-06-16 09:21:51.768154000 +0800
 @@ -0,0 +1,6 @@
 +cmake_minimum_required(VERSION 3.14)
 +project (Sqlite[C])
@@ -10,7 +10,7 @@ diff -Npur sqlite-amalgamation-3320200/CMakeLists.txt linux-amalgamation/CMakeLi
 +install(TARGETS sqlite3 PUBLIC_HEADER)
 diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
 --- sqlite-amalgamation-3320200/sqlite3.c	2020-06-04 22:01:17.000000000 +0800
-+++ linux-amalgamation/sqlite3.c	2020-06-15 14:18:34.330175000 +0800
++++ linux-amalgamation/sqlite3.c	2020-07-08 10:13:09.105894000 +0800
 @@ -1164,7 +1164,7 @@ extern "C" {
  */
  #define SQLITE_VERSION        "3.32.2"
@@ -58,7 +58,15 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  ** The datatype ynVar is a signed integer, either 16-bit or 32-bit.
  ** Usually it is 16-bits.  But if SQLITE_MAX_VARIABLE_NUMBER is greater
  ** than 32767 we have to make it 32-bit.  16-bit is preferred because
-@@ -19903,10 +19923,11 @@ SQLITE_PRIVATE const unsigned char sqlit
+@@ -18462,6 +18482,7 @@ struct Select {
+ #define SF_WhereBegin    0x0080000 /* Really a WhereBegin() call.  Debug Only */
+ #define SF_WinRewrite    0x0100000 /* Window function rewrite accomplished */
+ #define SF_View          0x0200000 /* SELECT statement is a view */
++#define SF_NoopOrderBy   0x0400000 /* ORDER BY is ignored for this query */
+ 
+ /*
+ ** The results of a SELECT can be distributed in several ways, as defined
+@@ -19903,10 +19924,11 @@ SQLITE_PRIVATE const unsigned char sqlit
  SQLITE_PRIVATE const unsigned char sqlite3CtypeMap[];
  SQLITE_PRIVATE SQLITE_WSD struct Sqlite3Config sqlite3Config;
  SQLITE_PRIVATE FuncDefHash sqlite3BuiltinFunctions;
@@ -71,7 +79,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  #ifdef VDBE_PROFILE
  SQLITE_PRIVATE sqlite3_uint64 sqlite3NProfileCnt;
  #endif
-@@ -20616,6 +20637,11 @@ SQLITE_PRIVATE sqlite3_uint64 sqlite3NPr
+@@ -20616,6 +20638,11 @@ SQLITE_PRIVATE sqlite3_uint64 sqlite3NPr
  SQLITE_PRIVATE int sqlite3PendingByte = 0x40000000;
  #endif
  
@@ -83,7 +91,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  /* #include "opcodes.h" */
  /*
  ** Properties of opcodes.  The OPFLG_INITIALIZER macro is
-@@ -99243,6 +99269,14 @@ static int resolveSelectStep(Walker *pWa
+@@ -99243,6 +99270,14 @@ static int resolveSelectStep(Walker *pWa
            return WRC_Abort;
          }
        }
@@ -98,7 +106,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
      }
  #endif
  
-@@ -103297,6 +103331,7 @@ expr_code_doover:
+@@ -103297,6 +103332,7 @@ expr_code_doover:
        AggInfo *pAggInfo = pExpr->pAggInfo;
        struct AggInfo_col *pCol;
        assert( pAggInfo!=0 );
@@ -106,7 +114,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
        assert( pExpr->iAgg>=0 && pExpr->iAgg<pAggInfo->nColumn );
        pCol = &pAggInfo->aCol[pExpr->iAgg];
        if( !pAggInfo->directMode ){
-@@ -103605,6 +103640,7 @@ expr_code_doover:
+@@ -103605,6 +103641,7 @@ expr_code_doover:
          assert( !ExprHasProperty(pExpr, EP_IntValue) );
          sqlite3ErrorMsg(pParse, "misuse of aggregate: %s()", pExpr->u.zToken);
        }else{
@@ -114,7 +122,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
          return pInfo->aFunc[pExpr->iAgg].iMem;
        }
        break;
-@@ -105142,13 +105178,7 @@ struct SrcCount {
+@@ -105142,13 +105179,7 @@ struct SrcCount {
  ** Count the number of references to columns.
  */
  static int exprSrcCount(Walker *pWalker, Expr *pExpr){
@@ -129,7 +137,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
      int i;
      struct SrcCount *p = pWalker->u.pSrcCount;
      SrcList *pSrc = p->pSrc;
-@@ -128851,20 +128881,6 @@ SQLITE_API int sqlite3_prepare16_v3(
+@@ -128851,20 +128882,6 @@ SQLITE_API int sqlite3_prepare16_v3(
  /* #include "sqliteInt.h" */
  
  /*
@@ -150,7 +158,27 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  ** An instance of the following object is used to record information about
  ** how to process the DISTINCT keyword, to simplify passing that information
  ** into the selectInnerLoop() routine.
-@@ -133262,11 +133278,14 @@ static int pushDownWhereTerms(
+@@ -131553,9 +131570,7 @@ static int multiSelect(
+                           selectOpName(p->op)));
+         rc = sqlite3Select(pParse, p, &uniondest);
+         testcase( rc!=SQLITE_OK );
+-        /* Query flattening in sqlite3Select() might refill p->pOrderBy.
+-        ** Be sure to delete p->pOrderBy, therefore, to avoid a memory leak. */
+-        sqlite3ExprListDelete(db, p->pOrderBy);
++        assert( p->pOrderBy==0 );
+         pDelete = p->pPrior;
+         p->pPrior = pPrior;
+         p->pOrderBy = 0;
+@@ -132941,7 +132956,7 @@ static int flattenSubquery(
+     ** We look at every expression in the outer query and every place we see
+     ** "a" we substitute "x*3" and every place we see "b" we substitute "y+10".
+     */
+-    if( pSub->pOrderBy ){
++    if( pSub->pOrderBy && (pParent->selFlags & SF_NoopOrderBy)==0 ){
+       /* At this point, any non-zero iOrderByCol values indicate that the
+       ** ORDER BY column expression is identical to the iOrderByCol'th
+       ** expression returned by SELECT statement pSub. Since these values
+@@ -133262,11 +133277,14 @@ static int pushDownWhereTerms(
  ){
    Expr *pNew;
    int nChng = 0;
@@ -166,7 +194,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  #endif
  
  #ifdef SQLITE_DEBUG
-@@ -134602,6 +134621,9 @@ SQLITE_PRIVATE int sqlite3Select(
+@@ -134602,6 +134620,9 @@ SQLITE_PRIVATE int sqlite3Select(
    }
    if( sqlite3AuthCheck(pParse, SQLITE_SELECT, 0, 0, 0) ) return 1;
    memset(&sAggInfo, 0, sizeof(sAggInfo));
@@ -176,6 +204,14 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  #if SELECTTRACE_ENABLED
    SELECTTRACE(1,pParse,p, ("begin processing:\n", pParse->addrExplain));
    if( sqlite3SelectTrace & 0x100 ){
+@@ -134623,6 +134644,7 @@ SQLITE_PRIVATE int sqlite3Select(
+     sqlite3ExprListDelete(db, p->pOrderBy);
+     p->pOrderBy = 0;
+     p->selFlags &= ~SF_Distinct;
++    p->selFlags |= SF_NoopOrderBy;
+   }
+   sqlite3SelectPrep(pParse, p, 0);
+   if( pParse->nErr || db->mallocFailed ){
 @@ -134640,19 +134662,6 @@ SQLITE_PRIVATE int sqlite3Select(
      generateColumnNames(pParse, p);
    }
@@ -240,7 +276,7 @@ diff -Npur sqlite-amalgamation-3320200/sqlite3.c linux-amalgamation/sqlite3.c
  #endif
 diff -Npur sqlite-amalgamation-3320200/sqlite3.h linux-amalgamation/sqlite3.h
 --- sqlite-amalgamation-3320200/sqlite3.h	2020-06-04 22:01:17.000000000 +0800
-+++ linux-amalgamation/sqlite3.h	2020-06-15 14:18:32.674154000 +0800
++++ linux-amalgamation/sqlite3.h	2020-07-08 10:13:07.549957000 +0800
 @@ -125,7 +125,7 @@ extern "C" {
  */
  #define SQLITE_VERSION        "3.32.2"
