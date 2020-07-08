@@ -13,27 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-Neural Networks Cells.
-
-Pre-defined building blocks or computing units to construct Neural Networks.
+Distribution operation utility functions.
 """
-from . import layer, loss, optim, metrics, wrap, distribution
-from .cell import Cell, GraphKernel
-from .layer import *
-from .loss import *
-from .optim import *
-from .metrics import *
-from .wrap import *
-from .distribution import *
+from .utils import *
 
-
-__all__ = ["Cell", "GraphKernel"]
-__all__.extend(layer.__all__)
-__all__.extend(loss.__all__)
-__all__.extend(optim.__all__)
-__all__.extend(metrics.__all__)
-__all__.extend(wrap.__all__)
-__all__.extend(distribution.__all__)
-
-
-__all__.sort()
+__all__ = ['check_scalar', 'convert_to_batch', 'cast_to_tensor',
+           'calc_batch_size', 'check_greater',
+           'check_greater_equal_zero',
+           'calc_broadcast_shape_from_param',
+           'check_scalar_from_param', 'check_prob']
