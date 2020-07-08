@@ -32,24 +32,28 @@ namespace mindspore {
 namespace dataset {
 
 const bool UnicodeScriptTokenizerOp::kDefKeepWhitespace = false;
+const bool UnicodeScriptTokenizerOp::kDefWithOffsets = false;
 
-Status UnicodeScriptTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
-  if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
+Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
   }
   std::string_view str;
-  RETURN_IF_NOT_OK(input->GetItemAt(&str, {}));
+  RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("Decode utf8 string failed.");
   }
 
+  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
   UScriptCode last_script = USCRIPT_INVALID_CODE;
   icu::ErrorCode status;
   int start = 0;
   int len = 0;
   std::vector<std::string> splits;
+  std::vector<uint32_t> offsets_start, offsets_limit;
 
   bool was_space = false;
   for (size_t i = 0; i < runes.size(); i++) {
@@ -66,6 +70,8 @@ Status UnicodeScriptTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
     if (len > 0 && (script != last_script || is_space != was_space)) {
       // 3) If keep_whitespace_ is false, all the whitespace characters will be discard
       if (keep_whitespace_ || !was_space) {
+        offsets_start.push_back(static_cast<uint32_t>(start));
+        offsets_limit.push_back(static_cast<uint32_t>(start + len));
         std::string temp(str.substr(start, len));
         splits.emplace_back(std::move(temp));
       }
@@ -79,14 +85,29 @@ Status UnicodeScriptTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
   }
 
   if (len > 0 && (keep_whitespace_ || !was_space)) {
+    offsets_start.push_back(static_cast<uint32_t>(start));
+    offsets_limit.push_back(static_cast<uint32_t>(start + len));
     std::string temp(str.substr(start, len));
     splits.emplace_back(std::move(temp));
   }
   // 4) If the input is empty scalar string, the output will be 1-D empty string.
   if (splits.empty()) {
     splits.emplace_back("");
+    offsets_start.push_back(0);
+    offsets_limit.push_back(0);
   }
-  *output = std::make_shared<Tensor>(splits, TensorShape({(dsize_t)splits.size()}));
+  token_tensor = std::make_shared<Tensor>(splits, TensorShape({(dsize_t)splits.size()}));
+  output->push_back(token_tensor);
+  if (with_offsets_) {
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_start_tensor, TensorImpl::kFlexible,
+                                          TensorShape({(dsize_t)offsets_start.size()}), DataType(DataType::DE_UINT32),
+                                          reinterpret_cast<unsigned char *>(&offsets_start[0])));
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_limit_tensor, TensorImpl::kFlexible,
+                                          TensorShape({(dsize_t)offsets_limit.size()}), DataType(DataType::DE_UINT32),
+                                          reinterpret_cast<unsigned char *>(&offsets_limit[0])));
+    output->push_back(offsets_start_tensor);
+    output->push_back(offsets_limit_tensor);
+  }
   return Status::OK();
 }
 }  // namespace dataset

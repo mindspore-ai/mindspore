@@ -27,10 +27,12 @@
 
 namespace mindspore {
 namespace dataset {
+
 const bool BasicTokenizerOp::kDefLowerCase = false;
 const bool BasicTokenizerOp::kDefKeepWhitespace = false;
 const NormalizeForm BasicTokenizerOp::kDefNormalizationForm = NormalizeForm::kNone;
 const bool BasicTokenizerOp::kDefPreserveUnusedToken = true;
+const bool BasicTokenizerOp::kDefWithOffsets = false;
 const char BasicTokenizerOp::kCommonPattern[] =
   "[!-/]"
   "|[:-@]"
@@ -47,11 +49,14 @@ const char BasicTokenizerOp::kCommonPattern[] =
   "|[\\x{2F800}-\\x{2FA1F}]";
 const char BasicTokenizerOp::kUnusedPattern[] = "\\[CLS\\]|\\[SEP\\]|\\[UNK\\]|\\[PAD\\]|\\[MASK\\]|\\[unused\\d+\\]|";
 const std::unordered_set<std::string> BasicTokenizerOp::kUnusedWords{"[CLS]", "[SEP]", "[UNK]", "[PAD]", "[MASK]"};
-BasicTokenizerOp::BasicTokenizerOp(bool lower_case, bool keep_whitespace, NormalizeForm normalization_form,
-                                   bool preserve_unused_token)
+
+BasicTokenizerOp::BasicTokenizerOp(const bool &lower_case, const bool &keep_whitespace,
+                                   const NormalizeForm &normalization_form, const bool &preserve_unused_token,
+                                   const bool &with_offsets)
     : lower_case_(lower_case),
       keep_whitespace_(keep_whitespace),
       preserve_unused_token_(preserve_unused_token),
+      with_offsets_(with_offsets),
       case_fold_(std::make_unique<CaseFoldOp>()),
       nfd_normalize_(std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfd)),
       normalization_form_(normalization_form),
@@ -69,7 +74,7 @@ BasicTokenizerOp::BasicTokenizerOp(bool lower_case, bool keep_whitespace, Normal
     keep_delim_pattern = kUnusedPattern + keep_delim_pattern;
     delim_pattern = kUnusedPattern + delim_pattern;
   }
-  regex_tokenizer_ = std::make_unique<RegexTokenizerOp>(delim_pattern, keep_delim_pattern);
+  regex_tokenizer_ = std::make_unique<RegexTokenizerOp>(delim_pattern, keep_delim_pattern, with_offsets_);
 }
 
 Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::string_view &text,
@@ -135,9 +140,10 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor
   return Status::OK();
 }
 
-Status BasicTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
-  if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
+Status BasicTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
   }
   std::shared_ptr<Tensor> cur_input;
@@ -145,10 +151,10 @@ Status BasicTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
   if (lower_case_) {
     if (!preserve_unused_token_) {
       // to lower case
-      RETURN_IF_NOT_OK(case_fold_->Compute(input, &processed_tensor));
+      RETURN_IF_NOT_OK(case_fold_->Compute(input[0], &processed_tensor));
     } else {
       // to lower case except words in kUnusedWords
-      RETURN_IF_NOT_OK(CaseFoldWithoutUnusedWords(input, &processed_tensor));
+      RETURN_IF_NOT_OK(CaseFoldWithoutUnusedWords(input[0], &processed_tensor));
     }
     cur_input = processed_tensor;
     // strip accent characters
@@ -156,12 +162,12 @@ Status BasicTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     cur_input = processed_tensor;
     RETURN_IF_NOT_OK(replace_accent_chars_->Compute(cur_input, &processed_tensor));
   } else {
-    RETURN_IF_NOT_OK(common_normalize_->Compute(input, &processed_tensor));
+    RETURN_IF_NOT_OK(common_normalize_->Compute(input[0], &processed_tensor));
   }
   // strip control characters
   cur_input = processed_tensor;
   RETURN_IF_NOT_OK(replace_control_chars_->Compute(cur_input, &processed_tensor));
-  return regex_tokenizer_->Compute(processed_tensor, output);
+  return regex_tokenizer_->Compute(TensorRow(0, {std::move(processed_tensor)}), output);
 }
 }  // namespace dataset
 }  // namespace mindspore

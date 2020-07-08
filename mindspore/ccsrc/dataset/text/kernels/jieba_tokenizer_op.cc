@@ -23,35 +23,63 @@
 namespace mindspore {
 namespace dataset {
 
-JiebaTokenizerOp::JiebaTokenizerOp(const std::string &hmm_path, const std::string &dict_path, JiebaMode mode)
-    : jieba_mode_(mode), hmm_model_path_(hmm_path), mp_dict_path_(dict_path) {
+const bool JiebaTokenizerOp::kDefWithOffsets = false;
+
+JiebaTokenizerOp::JiebaTokenizerOp(const std::string &hmm_path, const std::string &dict_path, const JiebaMode &mode,
+                                   const bool &with_offsets)
+    : jieba_mode_(mode), hmm_model_path_(hmm_path), mp_dict_path_(dict_path), with_offsets_(with_offsets) {
   jieba_parser_ = std::make_unique<cppjieba::Jieba>(mp_dict_path_, hmm_model_path_, "");
 }
 
-Status JiebaTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
+Status JiebaTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
   RETURN_UNEXPECTED_IF_NULL(jieba_parser_);
 
-  if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
+  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("the input tensor should be scalar string tensor");
   }
 
   std::string_view sentence_v;
-  RETURN_IF_NOT_OK(input->GetItemAt(&sentence_v, {}));
+  RETURN_IF_NOT_OK(input[0]->GetItemAt(&sentence_v, {}));
   std::string sentence{sentence_v};
   std::vector<std::string> words;
+  std::vector<uint32_t> offsets_start, offsets_limit;
+  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
   if (sentence == "") {
     words.push_back("");
   } else {
+    std::vector<cppjieba::Word> tmp;
     if (jieba_mode_ == JiebaMode::kMp) {
-      jieba_parser_->CutSmall(sentence, words, MAX_WORD_LENGTH);
+      std::unique_ptr<cppjieba::MPSegment> mp_seg = std::make_unique<cppjieba::MPSegment>(jieba_parser_->GetDictTrie());
+      mp_seg->Cut(sentence, tmp, MAX_WORD_LENGTH);
     } else if (jieba_mode_ == JiebaMode::kHmm) {
-      jieba_parser_->CutHMM(sentence, words);
+      std::unique_ptr<cppjieba::HMMSegment> hmm_seg =
+        std::make_unique<cppjieba::HMMSegment>(jieba_parser_->GetHMMModel());
+      hmm_seg->Cut(sentence, tmp);
     } else {  // Mix
-      jieba_parser_->Cut(sentence, words, true);
+      std::unique_ptr<cppjieba::MixSegment> mix_seg =
+        std::make_unique<cppjieba::MixSegment>(jieba_parser_->GetDictTrie(), jieba_parser_->GetHMMModel());
+      mix_seg->Cut(sentence, tmp, true);
+    }
+    GetStringsFromWords(tmp, words);
+    for (auto item : tmp) {
+      offsets_start.push_back(static_cast<uint32_t>(item.offset));
+      offsets_limit.push_back(static_cast<uint32_t>(item.offset + item.word.length()));
     }
   }
-  *output = std::make_shared<Tensor>(words, TensorShape({(dsize_t)words.size()}));
+  token_tensor = std::make_shared<Tensor>(words, TensorShape({(dsize_t)words.size()}));
+  output->push_back(token_tensor);
+  if (with_offsets_) {
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_start_tensor, TensorImpl::kFlexible,
+                                          TensorShape({(dsize_t)offsets_start.size()}), DataType(DataType::DE_UINT32),
+                                          reinterpret_cast<unsigned char *>(&offsets_start[0])));
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_limit_tensor, TensorImpl::kFlexible,
+                                          TensorShape({(dsize_t)offsets_limit.size()}), DataType(DataType::DE_UINT32),
+                                          reinterpret_cast<unsigned char *>(&offsets_limit[0])));
+    output->push_back(offsets_start_tensor);
+    output->push_back(offsets_limit_tensor);
+  }
   return Status::OK();
 }
 

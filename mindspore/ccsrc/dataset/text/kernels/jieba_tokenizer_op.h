@@ -30,15 +30,19 @@ enum class JiebaMode { kMix = 0, kMp = 1, kHmm = 2 };
 
 class JiebaTokenizerOp : public TensorOp {
  public:
-  // deffault constant for Jieba MPSegment algorithm.
+  // default constant for Jieba MPSegment algorithm.
   static constexpr size_t MAX_WORD_LENGTH = 512;
+  // default const for set whether Jieba output offsets tensor.
+  static const bool kDefWithOffsets;
   // Constructor for JiebaTokenizerOp.
   // @param hmm_path HMM model file.
   // @param mp_path MP model file.
   // @mode tokenization mode [Default "MIX"], "MP" model will tokenize with MPSegment algorithm, "HMM" mode will
   // tokenize with Hiddel Markov Model Segment algorithm, "MIx" model will tokenize with a mix of MPSegment and
   // HMMSegment algorithm.
-  JiebaTokenizerOp(const std::string &hmm_path, const std::string &mp_path, JiebaMode mode = JiebaMode::kMix);
+  // @with_offsets user set this value to choose whether output offset tensor.
+  JiebaTokenizerOp(const std::string &hmm_path, const std::string &mp_path, const JiebaMode &mode = JiebaMode::kMix,
+                   const bool &with_offsets = kDefWithOffsets);
   ~JiebaTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override {
@@ -46,7 +50,7 @@ class JiebaTokenizerOp : public TensorOp {
         << mp_dict_path_;
   }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
   // @word the word to be added to the JiebaTokenizer.
   // @freq [Default 0] the frequency fo the word to be added.
@@ -58,6 +62,7 @@ class JiebaTokenizerOp : public TensorOp {
   std::string mp_dict_path_;
   std::unique_ptr<cppjieba::Jieba> jieba_parser_;
   JiebaMode jieba_mode_;
+  bool with_offsets_;
 };
 }  // namespace dataset
 }  // namespace mindspore

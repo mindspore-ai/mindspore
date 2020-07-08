@@ -601,13 +601,14 @@ void bindTensorOps4(py::module *m) {
 
 void bindTokenizerOps(py::module *m) {
   (void)py::class_<JiebaTokenizerOp, TensorOp, std::shared_ptr<JiebaTokenizerOp>>(*m, "JiebaTokenizerOp", "")
-    .def(py::init<const std::string, std::string, JiebaMode>(), py::arg("hmm_path"), py::arg("mp_path"),
-         py::arg("mode") = JiebaMode::kMix)
+    .def(py::init<const std::string &, const std::string &, const JiebaMode &, const bool &>(), py::arg("hmm_path"),
+         py::arg("mp_path"), py::arg("mode") = JiebaMode::kMix,
+         py::arg("with_offsets") = JiebaTokenizerOp::kDefWithOffsets)
     .def("add_word",
          [](JiebaTokenizerOp &self, const std::string word, int freq) { THROW_IF_ERROR(self.AddWord(word, freq)); });
   (void)py::class_<UnicodeCharTokenizerOp, TensorOp, std::shared_ptr<UnicodeCharTokenizerOp>>(
     *m, "UnicodeCharTokenizerOp", "Tokenize a scalar tensor of UTF-8 string to Unicode characters.")
-    .def(py::init<>());
+    .def(py::init<const bool &>(), py::arg("with_offsets") = UnicodeCharTokenizerOp::kDefWithOffsets);
   (void)py::class_<LookupOp, TensorOp, std::shared_ptr<LookupOp>>(*m, "LookupOp",
                                                                   "Tensor operation to LookUp each word")
     .def(py::init<std::shared_ptr<Vocab>, WordIdType>(), py::arg("vocab"), py::arg("unknown"))
@@ -619,21 +620,25 @@ void bindTokenizerOps(py::module *m) {
          py::arg("separator"));
   (void)py::class_<WordpieceTokenizerOp, TensorOp, std::shared_ptr<WordpieceTokenizerOp>>(
     *m, "WordpieceTokenizerOp", "Tokenize scalar token or 1-D tokens to subword tokens.")
-    .def(py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &>(),
-         py::arg("vocab"), py::arg("suffix_indicator") = std::string(WordpieceTokenizerOp::kDefSuffixIndicator),
-         py::arg("max_bytes_per_token") = WordpieceTokenizerOp::kDefMaxBytesPerToken,
-         py::arg("unknown_token") = std::string(WordpieceTokenizerOp::kDefUnknownToken));
+    .def(
+      py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &, const bool &>(),
+      py::arg("vocab"), py::arg("suffix_indicator") = std::string(WordpieceTokenizerOp::kDefSuffixIndicator),
+      py::arg("max_bytes_per_token") = WordpieceTokenizerOp::kDefMaxBytesPerToken,
+      py::arg("unknown_token") = std::string(WordpieceTokenizerOp::kDefUnknownToken),
+      py::arg("with_offsets") = WordpieceTokenizerOp::kDefWithOffsets);
 }
 
 void bindDependIcuTokenizerOps(py::module *m) {
 #ifdef ENABLE_ICU4C
   (void)py::class_<WhitespaceTokenizerOp, TensorOp, std::shared_ptr<WhitespaceTokenizerOp>>(
     *m, "WhitespaceTokenizerOp", "Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces.")
-    .def(py::init<>());
+    .def(py::init<const bool &>(), py::arg("with_offsets") = WhitespaceTokenizerOp::kDefWithOffsets);
   (void)py::class_<UnicodeScriptTokenizerOp, TensorOp, std::shared_ptr<UnicodeScriptTokenizerOp>>(
     *m, "UnicodeScriptTokenizerOp", "Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.")
     .def(py::init<>())
-    .def(py::init<bool>(), py::arg("keep_whitespace") = UnicodeScriptTokenizerOp::kDefKeepWhitespace);
+    .def(py::init<const bool &, const bool &>(),
+         py::arg("keep_whitespace") = UnicodeScriptTokenizerOp::kDefKeepWhitespace,
+         py::arg("with_offsets") = UnicodeScriptTokenizerOp::kDefWithOffsets);
   (void)py::class_<CaseFoldOp, TensorOp, std::shared_ptr<CaseFoldOp>>(
     *m, "CaseFoldOp", "Apply case fold operation on utf-8 string tensor")
     .def(py::init<>());
@@ -647,24 +652,28 @@ void bindDependIcuTokenizerOps(py::module *m) {
          py::arg("replace_all"));
   (void)py::class_<RegexTokenizerOp, TensorOp, std::shared_ptr<RegexTokenizerOp>>(
     *m, "RegexTokenizerOp", "Tokenize a scalar tensor of UTF-8 string by regex expression pattern.")
-    .def(py::init<const std::string &, const std::string &>(), py::arg("delim_pattern"), py::arg("keep_delim_pattern"));
+    .def(py::init<const std::string &, const std::string &, const bool &>(), py::arg("delim_pattern"),
+         py::arg("keep_delim_pattern"), py::arg("with_offsets") = RegexTokenizerOp::kDefWithOffsets);
   (void)py::class_<BasicTokenizerOp, TensorOp, std::shared_ptr<BasicTokenizerOp>>(
     *m, "BasicTokenizerOp", "Tokenize a scalar tensor of UTF-8 string by specific rules.")
-    .def(py::init<bool, bool, NormalizeForm, bool>(), py::arg("lower_case") = BasicTokenizerOp::kDefLowerCase,
+    .def(py::init<const bool &, const bool &, const NormalizeForm &, const bool &, const bool &>(),
+         py::arg("lower_case") = BasicTokenizerOp::kDefLowerCase,
          py::arg("keep_whitespace") = BasicTokenizerOp::kDefKeepWhitespace,
          py::arg("normalization_form") = BasicTokenizerOp::kDefNormalizationForm,
-         py::arg("preserve_unused_token") = BasicTokenizerOp::kDefPreserveUnusedToken);
+         py::arg("preserve_unused_token") = BasicTokenizerOp::kDefPreserveUnusedToken,
+         py::arg("with_offsets") = BasicTokenizerOp::kDefWithOffsets);
   (void)py::class_<BertTokenizerOp, TensorOp, std::shared_ptr<BertTokenizerOp>>(*m, "BertTokenizerOp",
                                                                                 "Tokenizer used for Bert text process.")
-    .def(py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &, bool, bool,
-                  NormalizeForm, bool>(),
+    .def(py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &, const bool &,
+                  const bool &, const NormalizeForm &, const bool &, const bool &>(),
          py::arg("vocab"), py::arg("suffix_indicator") = std::string(WordpieceTokenizerOp::kDefSuffixIndicator),
          py::arg("max_bytes_per_token") = WordpieceTokenizerOp::kDefMaxBytesPerToken,
          py::arg("unknown_token") = std::string(WordpieceTokenizerOp::kDefUnknownToken),
          py::arg("lower_case") = BasicTokenizerOp::kDefLowerCase,
          py::arg("keep_whitespace") = BasicTokenizerOp::kDefKeepWhitespace,
          py::arg("normalization_form") = BasicTokenizerOp::kDefNormalizationForm,
-         py::arg("preserve_unused_token") = BasicTokenizerOp::kDefPreserveUnusedToken);
+         py::arg("preserve_unused_token") = BasicTokenizerOp::kDefPreserveUnusedToken,
+         py::arg("with_offsets") = WordpieceTokenizerOp::kDefWithOffsets);
 #endif
 }
 

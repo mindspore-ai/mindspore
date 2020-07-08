@@ -26,13 +26,18 @@ namespace dataset {
 
 class WhitespaceTokenizerOp : public TensorOp {
  public:
-  WhitespaceTokenizerOp() {}
+  static const bool kDefWithOffsets;
+
+  explicit WhitespaceTokenizerOp(const bool &with_offsets = kDefWithOffsets) : with_offsets_(with_offsets) {}
 
   ~WhitespaceTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "WhitespaceTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
+
+ private:
+  bool with_offsets_;
 };
 }  // namespace dataset
 }  // namespace mindspore

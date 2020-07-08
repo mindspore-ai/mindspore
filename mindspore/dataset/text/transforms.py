@@ -52,8 +52,9 @@ import mindspore._c_dataengine as cde
 
 from .utils import JiebaMode, NormalizeForm, to_str
 from .validators import check_lookup, check_jieba_add_dict, \
-    check_jieba_add_word, check_jieba_init, check_ngram, check_pair_truncate, \
-    check_to_number, check_python_tokenizer
+    check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer,\
+    check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate,\
+    check_to_number, check_bert_tokenizer, check_python_tokenizer
 from ..core.datatypes import mstype_to_detype
 
 
@@ -125,15 +126,31 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
             - JiebaMode.MP, tokenize with MPSegment algorithm.
             - JiebaMode.HMM, tokenize with Hiddel Markov Model Segment algorithm.
             - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
+        with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+    Examples:
+        >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+        >>> tokenizer_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=False)
+        >>> data = data.map(operations=tokenizer_op)
+        >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
+        >>> #                                                   ["offsets_limit", dtype=uint32]}
+        >>> tokenizer_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
+        >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+        >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
     """
 
     @check_jieba_init
-    def __init__(self, hmm_path, mp_path, mode=JiebaMode.MIX):
+    def __init__(self, hmm_path, mp_path, mode=JiebaMode.MIX, with_offsets=False):
+        if not isinstance(mode, JiebaMode):
+            raise TypeError("Wrong input type for mode, should be JiebaMode.")
+
         self.mode = mode
         self.__check_path__(hmm_path)
         self.__check_path__(mp_path)
+        self.with_offsets = with_offsets
         super().__init__(hmm_path, mp_path,
-                         DE_C_INTER_JIEBA_MODE[mode])
+                         DE_C_INTER_JIEBA_MODE[mode],
+                         self.with_offsets)
 
     @check_jieba_add_word
     def add_word(self, word, freq=None):
@@ -226,7 +243,25 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
 class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
     """
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
+
+    Args:
+        with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+    Examples:
+        >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+        >>> tokenizer_op = text.UnicodeCharTokenizer()
+        >>> dataset = dataset.map(operations=tokenizer_op)
+        >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
+        >>> #                                                   ["offsets_limit", dtype=uint32]}
+        >>> tokenizer_op = text.UnicodeCharTokenizer(True)
+        >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+        >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
     """
+
+    @check_with_offsets
+    def __init__(self, with_offsets=False):
+        self.with_offsets = with_offsets
+        super().__init__(self.with_offsets)
 
 
 class WordpieceTokenizer(cde.WordpieceTokenizerOp):
@@ -239,21 +274,57 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split(default=100).
         unknown_token (str, optional): When we can not found the token: if 'unknown_token' is empty string,
             return the token directly, else return 'unknown_token'(default='[UNK]').
+        with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+    Examples:
+        >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+        >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token=['UNK'],
+        >>>                                       max_bytes_per_token=100, with_offsets=False)
+        >>> dataset = dataset.map(operations=tokenizer_op)
+        >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
+        >>> #                                                   ["offsets_limit", dtype=uint32]}
+        >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token=['UNK'],
+        >>>                                       max_bytes_per_token=100, with_offsets=True)
+        >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+        >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
     """
 
-    def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]'):
+    @check_wordpiece_tokenizer
+    def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100,
+                 unknown_token='[UNK]', with_offsets=False):
         self.vocab = vocab
         self.suffix_indicator = suffix_indicator
         self.max_bytes_per_token = max_bytes_per_token
         self.unknown_token = unknown_token
-        super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token, self.unknown_token)
+        self.with_offsets = with_offsets
+        super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
+                         self.unknown_token, self.with_offsets)
 
 
 if platform.system().lower() != 'windows':
     class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):
         """
         Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces(such as: ' ', '\\\\t', '\\\\r', '\\\\n').
+
+        Args:
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.WhitespaceTokenizer()
+            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.WhitespaceTokenizer(True)
+            >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
         """
+
+        @check_with_offsets
+        def __init__(self, with_offsets=False):
+            self.with_offsets = with_offsets
+            super().__init__(self.with_offsets)
 
 
     class UnicodeScriptTokenizer(cde.UnicodeScriptTokenizerOp):
@@ -262,11 +333,25 @@ if platform.system().lower() != 'windows':
 
         Args:
             keep_whitespace (bool, optional): If or not emit whitespace tokens (default=False).
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=False)
+            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=True)
+            >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
         """
 
-        def __init__(self, keep_whitespace=False):
+        @check_unicode_script_tokenizer
+        def __init__(self, keep_whitespace=False, with_offsets=False):
             self.keep_whitespace = keep_whitespace
-            super().__init__(self.keep_whitespace)
+            self.with_offsets = with_offsets
+            super().__init__(self.keep_whitespace, self.with_offsets)
 
 
     class CaseFold(cde.CaseFoldOp):
@@ -302,6 +387,9 @@ if platform.system().lower() != 'windows':
         """
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
+            if not isinstance(normalize_form, NormalizeForm):
+                raise TypeError("Wrong input type for normalization_form, should be NormalizeForm.")
+
             self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
             super().__init__(self.normalize_form)
 
@@ -338,12 +426,26 @@ if platform.system().lower() != 'windows':
             keep_delim_pattern(str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. And the default value is empty str(''),
                 in this situation, delimiters will not kept as a output token(default='').
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=False)
+            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=True)
+            >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
         """
 
-        def __init__(self, delim_pattern, keep_delim_pattern=''):
+        @check_regex_tokenizer
+        def __init__(self, delim_pattern, keep_delim_pattern='', with_offsets=False):
             self.delim_pattern = delim_pattern
             self.keep_delim_pattern = keep_delim_pattern
-            super().__init__(self.delim_pattern, self.keep_delim_pattern)
+            self.with_offsets = with_offsets
+            super().__init__(self.delim_pattern, self.keep_delim_pattern, self.with_offsets)
 
 
     class BasicTokenizer(cde.BasicTokenizerOp):
@@ -359,16 +461,41 @@ if platform.system().lower() != 'windows':
                 only effective when 'lower_case' is False. See NormalizeUTF8 for details(default='NONE').
             preserve_unused_token(bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
+            >>>                                   keep_whitespace=False,
+            >>>                                   normalization_form=NormalizeForm.NONE,
+            >>>                                   preserve_unused_token=True,
+            >>>                                   with_offsets=False)
+            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
+            >>>                                   keep_whitespace=False,
+            >>>                                   normalization_form=NormalizeForm.NONE,
+            >>>                                   preserve_unused_token=True,
+            >>>                                   with_offsets=True)
+            >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
         """
 
-        def __init__(self, lower_case=False, keep_whitespace=False,
-                     normalization_form=NormalizeForm.NONE, preserve_unused_token=True):
+        @check_basic_tokenizer
+        def __init__(self, lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE,
+                     preserve_unused_token=True, with_offsets=False):
+            if not isinstance(normalization_form, NormalizeForm):
+                raise TypeError("Wrong input type for normalization_form, should be NormalizeForm.")
+
             self.lower_case = lower_case
             self.keep_whitespace = keep_whitespace
             self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
             self.preserve_unused_token = preserve_unused_token
-            super().__init__(self.lower_case, self.keep_whitespace,
-                             self.normalization_form, self.preserve_unused_token)
+            self.with_offsets = with_offsets
+            super().__init__(self.lower_case, self.keep_whitespace, self.normalization_form,
+                             self.preserve_unused_token, self.with_offsets)
 
 
     class BertTokenizer(cde.BertTokenizerOp):
@@ -389,11 +516,33 @@ if platform.system().lower() != 'windows':
                 only effective when 'lower_case' is False. See NormalizeUTF8 for details(default='NONE').
             preserve_unused_token(bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
+            >>>                                  unknown_token=100, lower_case=False, keep_whitespace=False,
+            >>>                                  normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
+            >>>                                  with_offsets=False)
+            >>> dataset = dataset.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
+            >>>                                  unknown_token=100, lower_case=False, keep_whitespace=False,
+            >>>                                  normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
+            >>>                                  with_offsets=True)
+            >>> data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                 columns_order=["token", "offsets_start", "offsets_limit"], operations=tokenizer_op)
         """
 
-        def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100,
-                     unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
-                     normalization_form=NormalizeForm.NONE, preserve_unused_token=True):
+        @check_bert_tokenizer
+        def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]',
+                     lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE,
+                     preserve_unused_token=True, with_offsets=False):
+            if not isinstance(normalization_form, NormalizeForm):
+                raise TypeError("Wrong input type for normalization_form, should be NormalizeForm.")
+
             self.vocab = vocab
             self.suffix_indicator = suffix_indicator
             self.max_bytes_per_token = max_bytes_per_token
@@ -402,8 +551,10 @@ if platform.system().lower() != 'windows':
             self.keep_whitespace = keep_whitespace
             self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
             self.preserve_unused_token = preserve_unused_token
+            self.with_offsets = with_offsets
             super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token, self.unknown_token,
-                             self.lower_case, self.keep_whitespace, self.normalization_form, self.preserve_unused_token)
+                             self.lower_case, self.keep_whitespace, self.normalization_form,
+                             self.preserve_unused_token, self.with_offsets)
 
 
 class TruncateSequencePair(cde.TruncateSequencePairOp):
