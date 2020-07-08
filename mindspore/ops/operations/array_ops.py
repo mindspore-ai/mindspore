@@ -643,8 +643,10 @@ class Split(PrimitiveWithInfer):
         validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT, self.name)
         validator.check_integer("output_num", self.output_num, 0, Rel.GT, self.name)
         output_valid_check = x_shape[self.axis] % self.output_num
-        validator.check_integer("the dimension which to split divides output_num", output_valid_check, 0, Rel.EQ,
-                                self.name)
+        if output_valid_check != 0:
+            raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
+                             f" output_num {self.output_num}")
+
         x_shape[self.axis] = int(x_shape[self.axis] / self.output_num)
         out_shapes = []
         out_dtypes = []
