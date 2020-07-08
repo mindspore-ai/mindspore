@@ -294,6 +294,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto graph_inputs = graph->inputs();
   auto graph_valid_input = graph->valid_inputs();
+  graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
   for (size_t i = 0; i < graph_inputs.size(); ++i) {
     auto item = graph_inputs[i];

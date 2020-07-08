@@ -240,6 +240,7 @@ constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
 constexpr auto kAttrOffset = "offset";
 constexpr auto kAttrPsKey = "ps_key";
 constexpr auto kAttrOptimizerType = "optim_type";
+constexpr auto kAttrChildGraph = "child_graph";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

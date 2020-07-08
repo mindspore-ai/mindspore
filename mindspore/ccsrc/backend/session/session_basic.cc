@@ -74,7 +74,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
           return input_tensors[input_idx];
         }
       }
-      MS_LOG(EXCEPTION) << "Parameter : " << node->DebugString() << "has no output addr";
+      MS_LOG(EXCEPTION) << "Parameter : " << node->DebugString() << " has no output addr";
     }
   }
   // if proccess reach here,it remarks item_with_index is a real node(Parameter,or executable CNode)
@@ -107,8 +107,8 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   return tensor;
 }
 
-BaseRef CreatTensorForOutput(const AnfNodePtr &anf, const KernelGraph &graph,
-                             const std::vector<tensor::TensorPtr> &input_tensors) {
+BaseRef CreateTensorForOutput(const AnfNodePtr &anf, const KernelGraph &graph,
+                              const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_LOG(INFO) << "Create tensor for output[" << anf->DebugString() << "]";
   auto item_with_index = AnfAlgo::VisitKernelWithReturnType(anf, 0);
@@ -120,7 +120,7 @@ BaseRef CreatTensorForOutput(const AnfNodePtr &anf, const KernelGraph &graph,
     MS_EXCEPTION_IF_NULL(cnode);
     VectorRef ret;
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      auto out = CreatTensorForOutput(cnode->input(i), graph, input_tensors);
+      auto out = CreateTensorForOutput(cnode->input(i), graph, input_tensors);
       ret.push_back(out);
     }
     return ret;
@@ -131,25 +131,6 @@ BaseRef CreatTensorForOutput(const AnfNodePtr &anf, const KernelGraph &graph,
     return VectorRef();
   }
   return CreateOneTensor(item_with_index.first, item_with_index.second, graph, input_tensors);
-}
-
-BaseRef CreatTupleForOutput(const AnfNodePtr &anf, const KernelGraph &graph,
-                            const std::vector<tensor::TensorPtr> &input_tensors) {
-  MS_EXCEPTION_IF_NULL(anf);
-  if (!AnfAlgo::IsRealKernel(anf)) {
-    MS_LOG(EXCEPTION) << "Anf[" << anf->DebugString() << "] should be a executable kernel";
-  }
-  if (anf->isa<ValueNode>()) {
-    return CreateOneTensor(anf, 0, graph, input_tensors);
-  }
-  VectorRef ret;
-  if (anf->isa<CNode>() && AnfAlgo::GetCNodeName(anf) != prim::kPrimMakeTuple->name()) {
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(anf); ++i) {
-      auto out = CreateOneTensor(anf, i, graph, input_tensors);
-      ret.emplace_back(out);
-    }
-  }
-  return ret;
 }
 
 ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) {
@@ -880,20 +861,11 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
                                  const std::vector<tensor::TensorPtr> &input_tensors) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
-  if (!kernel_graph->child_graph_order().empty()) {
-    // use the last child graph output as the root graph output
-    UpdateOutputs(kernel_graph->child_graph_order().back(), outputs, input_tensors);
-    return;
-  }
   auto anf_outputs = kernel_graph->outputs();
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Update output[" << item->DebugString() << "]";
-    if (AnfAlgo::IsTupleOutput(item) && AnfAlgo::IsRealKernel(item)) {
-      outputs->emplace_back(CreatTupleForOutput(item, *kernel_graph, input_tensors));
-      continue;
-    }
-    outputs->emplace_back(CreatTensorForOutput(item, *kernel_graph, input_tensors));
+    outputs->emplace_back(CreateTensorForOutput(item, *kernel_graph, input_tensors));
   }
 }
 

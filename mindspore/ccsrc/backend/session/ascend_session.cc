@@ -289,6 +289,17 @@ static void RecurseToUpdateCallRealInput(NotNull<KernelGraphPtr> graph,
   // this action should from bottom to top
   graph->UpdateCallRealInput();
 }
+
+void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
+  auto return_node = root_graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  if (return_node->size() <= kReturnDataIndex) {
+    return;
+  }
+  auto make_tuple = root_graph->NewCNode(
+    {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
+  root_graph->set_output(make_tuple);
+}
 }  // namespace
 
 GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
@@ -305,22 +316,39 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   BackendOptimization(all_graphs);
-  // split switch
-  SplitGraphs(NOT_NULL(root_graph));
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
+    InsertMakeTupleForOutput(NOT_NULL(root_graph));
     root_graph->set_executable(false);
     InitRuntimeResource();
     return root_graph->graph_id();
   }
+  // create parameter for multiple branch
+  std::set<KernelGraphPtr> memo;
+  CreateMultiBranchOutput(NOT_NULL(root_graph), NOT_NULL(&memo));
+  memo.clear();
   // insert goto labels and label_sets
   LinkChildGraphs(NOT_NULL(root_graph));
   // resource initialize
   InitRuntimeResource();
-  // recurse compile child root_graph
-  std::set<KernelGraphPtr> memo;
-  RecurseCompileGraph(NOT_NULL(root_graph), NOT_NULL(&memo));
+
+  IrFusionPass(NOT_NULL(root_graph), NOT_NULL(&memo));
+  memo.clear();
+
+  SelectKernel(NOT_NULL(root_graph));
+  memo.clear();
+
+  HardwareOptimize(NOT_NULL(root_graph), NOT_NULL(&memo));
+  memo.clear();
+
+  AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
+  memo.clear();
+
+  UpdateRefOutputMap(NOT_NULL(root_graph), NOT_NULL(&memo));
+  memo.clear();
+  // add make_tuple to the output graph
+  InsertMakeTupleForOutput(NOT_NULL(root_graph));
   // root root_graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(NOT_NULL(root_graph));
   // adjust kernel
@@ -1677,7 +1705,7 @@ void AscendSession::SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<Pri
   bool split_flag = false;
   auto apply_list = GetCNodes(TopoSort(graph->get_return()));
   // update the root graph child graph order
-  AscendControlParser::UpdateChildGraphOrder(graph);
+  graph->UpdateChildGraphOrder();
   // get child list from current graph
   std::vector<std::vector<CNodePtr>> child_graph_lists = GetChildList(apply_list, cut_prims);
   if (child_graph_lists.size() > 1) {
@@ -1709,7 +1737,7 @@ void AscendSession::SplitGraph(NotNull<KernelGraphPtr> graph, const std::set<Pri
     }
     split_flag = true;
   }
-  AscendControlParser::UpdateChildGraphOrder(graph);
+  graph->UpdateChildGraphOrder();
   UpdateRealInput(graph, split_flag, memo);
   MS_LOG(INFO) << "Split graph[" << graph->graph_id() << "] end";
 }
@@ -1743,6 +1771,217 @@ void AscendSession::RecurseCompileGraph(NotNull<KernelGraphPtr> graph, const Not
     for (auto &item : child_ref_map) {
       if (graph->IsInRefOutputMap(item.first)) {
         MS_LOG(EXCEPTION) << "The ref pair is already in final graph!";
+      }
+      graph->AddRefCorrespondPairs(item.first, item.second);
+    }
+  }
+}
+
+void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(graph.get()) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  graph->UpdateChildGraphOrder();
+  for (auto &child_graph : graph->child_graph_order()) {
+    CreateMultiBranchOutput(NOT_NULL(child_graph), memo);
+  }
+
+  std::map<AnfNodePtr, AnfNodePtr> need_replace_list;
+  auto node_list = GetCNodes(TopoSort(graph->get_return()));
+  for (auto &node : node_list) {
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
+      // create a parameter to store the output of multiple branch and set the parameter as the condition graph's output
+      // auto multi_output_param = graph->NewParameter();
+      auto origin_inputs = graph->inputs();
+      auto output_param = CreateNewParameterFromCNode(node, true, graph.get().get());
+      MS_EXCEPTION_IF_NULL(graph->MutableInputs());
+      graph->MutableInputs()->operator=(origin_inputs);
+      graph->AddChildGraphResult(output_param);
+
+      std::vector<AnfNodePtr> depend_inputs = {
+        graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name()))), output_param, node};
+      auto depend = graph->NewCNode(depend_inputs);
+      need_replace_list.emplace(node, depend);
+      MS_LOG(INFO) << "Create parameter " << output_param->DebugString() << " for call node " << node->DebugString()
+                   << ", depend node is " << depend->DebugString();
+      // insert assign in order to transfer child graph output to parameter
+      auto child_graphs = AnfAlgo::GetCallNodeKernelGraph(node);
+      for (auto &child_graph : child_graphs) {
+        MS_EXCEPTION_IF_NULL(child_graph);
+        if (child_graph->get_output_null()) {
+          continue;
+        }
+        auto graph_output = child_graph->output();
+        AscendControlParser::InsertMultipleAssignToGraph(NOT_NULL(child_graph), nullptr, NOT_NULL(graph_output),
+                                                         NOT_NULL(output_param));
+      }
+    }
+  }
+  // searching for nodes' input to replace call by depend(parameter, call)
+  for (auto &node : node_list) {
+    for (size_t i = 0; i < node->size(); ++i) {
+      auto input = node->input(i);
+      auto iter = need_replace_list.find(input);
+      if (iter != need_replace_list.end()) {
+        node->set_input(i, iter->second);
+      }
+    }
+  }
+}
+
+void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  opt::AscendBackendIRFusionOptimization(graph);
+  opt::AscendBackendFuseBasicOpt(graph, true);
+  opt::AscendBackendGraphKernelOpt(graph, true);
+  graph->SetExecOrderByDefault();
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs) {
+    if (save_graphs_path.empty()) {
+      save_graphs_path = ".";
+    }
+    std::string file_path =
+      save_graphs_path + "/" + "select_kernel_before" + "_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_path, graph.get());
+  }
+
+  for (auto &child_graph : graph->child_graph_order()) {
+    IrFusionPass(NOT_NULL(child_graph), memo);
+  }
+}
+
+void AscendSession::SelectKernel(NotNull<KernelGraphPtr> root_graph) {
+  MS_LOG(INFO) << "Start select kernel.";
+  size_t raise_precision_count = 0;
+  size_t reduce_precision_count = 0;
+
+  std::set<KernelGraphPtr> memo;
+  (void)RecurseSelectKernelInfo(root_graph, NOT_NULL(&memo), &raise_precision_count, &reduce_precision_count);
+  memo.clear();
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->execution_mode() == kGraphMode) {
+    if (raise_precision_count > 0) {
+      MS_LOG(WARNING) << "There has " << raise_precision_count
+                      << " node/nodes used raise precision to selected the kernel!";
+    }
+    if (reduce_precision_count > 0) {
+      MS_LOG(WARNING) << "There has " << raise_precision_count
+                      << " node/nodes used reduce precision to selected the kernel!";
+    }
+  }
+  MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
+                                            NotNull<std::set<KernelGraphPtr> *> const memo,
+                                            size_t *const raise_precision_count,
+                                            size_t *const reduce_precision_count) const {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+  MS_LOG(INFO) << "Start to select kernel info in graph: " << graph->graph_id();
+
+  for (const auto &cnode : graph->execution_order()) {
+    if (AnfAlgo::IsCondControlKernel(cnode)) {
+      std::vector<KernelGraphPtr> child_graphs;
+      if (AnfAlgo::HasNodeAttr(kAttrChildGraph, cnode)) {
+        child_graphs = AnfAlgo::GetNodeAttr<std::vector<KernelGraphPtr>>(cnode, kAttrChildGraph);
+      }
+      for (auto &child_graph : child_graphs) {
+        RecurseSelectKernelInfo(NOT_NULL(child_graph), memo, raise_precision_count, reduce_precision_count);
+      }
+    }
+
+    auto status = device::ascend::SelectKernelInfo(cnode);
+    if (status == device::ascend::kStatusRaisePrecision) {
+      (*raise_precision_count)++;
+    } else if (status == device::ascend::kStatusReducePrecision) {
+      (*reduce_precision_count)++;
+    }
+    MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();
+  }
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs) {
+    if (save_graphs_path.empty()) {
+      save_graphs_path = ".";
+    }
+    std::string file_path =
+      save_graphs_path + "/" + "select_kernel_after" + "_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_path, graph.get());
+  }
+  MS_LOG(INFO) << "Finish selecting kernel info in graph: " << graph->graph_id();
+}
+
+void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
+                                     NotNull<std::set<KernelGraphPtr> *> const memo) const {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  MS_LOG(INFO) << "Start to do HardwareOptimize in graph: " << graph->graph_id();
+  // convert kernel Graph to model
+  predictmodel::StepConvertGraph(graph.get());
+
+  HardwareOptimize(graph.get());
+  for (auto &child_graph : graph->child_graph_order()) {
+    HardwareOptimize(NOT_NULL(child_graph), memo);
+  }
+  MS_LOG(INFO) << "Finish doing HardwareOptimize in graph: " << graph->graph_id();
+}
+
+void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
+                                       NotNull<std::set<KernelGraphPtr> *> const memo) const {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  MS_LOG(INFO) << "Start to assign static memory for parameter in graph: " << graph->graph_id();
+  // assign static memory for parameters
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->AssignStaticMemoryInput(graph.get().get());
+  runtime_instance->AssignStaticMemoryValueNode(graph.get().get());
+  for (auto &child_graph : graph->child_graph_order()) {
+    AssignStaticMemory(NOT_NULL(child_graph), memo);
+  }
+  MS_LOG(INFO) << "Finish assigning static memory for parameter in graph: " << graph->graph_id();
+}
+
+void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
+                                       NotNull<std::set<KernelGraphPtr> *> const memo) const {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  for (auto &child_graph : graph->child_graph_order()) {
+    UpdateRefOutputMap(NOT_NULL(child_graph), memo);
+    // copy ref map to final graph
+    auto child_ref_map = child_graph->GetRefMap();
+    for (auto &item : child_ref_map) {
+      if (graph->IsInRefOutputMap(item.first)) {
+        MS_LOG(WARNING) << "The ref pair <" << item.first.first->DebugString() << ", " << item.first.second
+                        << "> is already in " << graph->ToString();
+        continue;
       }
       graph->AddRefCorrespondPairs(item.first, item.second);
     }

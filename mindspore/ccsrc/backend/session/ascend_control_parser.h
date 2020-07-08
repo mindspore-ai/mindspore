@@ -20,6 +20,8 @@
 #include <map>
 #include <vector>
 #include <tuple>
+#include <utility>
+#include <functional>
 #include "backend/session/kernel_graph.h"
 #include "utils/base_ref.h"
 #include "utils/contract.h"
@@ -29,16 +31,23 @@ namespace mindspore {
 namespace session {
 class AscendControlParser {
  public:
-  static void ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map);
   static void LinkGraph(NotNull<KernelGraphPtr> kg);
 
   static void InsertDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> attch_node);
   static void InsertControlDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> first_node,
                                          NotNull<AnfNodePtr> second_node);
   static void ExecutorValidate(NotNull<KernelGraphPtr> root_graph);
-  static void UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg);
+  static void InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> from_graph, const AnfNodePtr &jump_node,
+                                          NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
 
  private:
+  class ReferenceCounter;
+
+  static void EraseParameter(NotNull<KernelGraphPtr> root_graph, const std::set<KernelGraphPtr> &graph_list);
+  static void EraseLabel(NotNull<KernelGraphPtr> root_graph);
+  static void ChildGraphDataAssign(NotNull<KernelGraphPtr> kg,
+                                   const NotNull<std::vector<std::pair<AnfNodePtr, AnfNodePtr>> *> link_list,
+                                   const NotNull<std::set<KernelGraphPtr> *> memo);
   static NotNull<CNodePtr> GetStartLabel(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
                                          const CNodePtr &last_label);
   static NotNull<CNodePtr> ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
@@ -53,17 +62,29 @@ class AscendControlParser {
 
   static void LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
                               const CNodePtr &last_label);
-  static KernelGraphPtr ParsePartial(NotNull<AnfNodePtr> node);
 
-  static void InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> from_graph, NotNull<KernelGraphPtr> to_graph,
-                                          NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
   static AnfNodePtr InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
+  static std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> ParseCallNode(NotNull<CNodePtr> call_node);
+  static std::tuple<KernelGraphPtr, std::vector<AnfNodePtr>> ParsePartial(NotNull<AnfNodePtr> node);
 
   // root graph order
   static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
                               NotNull<KernelGraphPtr> graph);
   static std::vector<CNodePtr> RecurseGraph(NotNull<KernelGraphPtr> graph,
                                             const NotNull<std::set<KernelGraphPtr> *> memo);
+};
+class AscendControlParser::ReferenceCounter {
+ public:
+  explicit ReferenceCounter(std::function<bool(int32_t, int32_t)> func) : predicate_(func), count_() {}
+  void AddReadCount(const AnfNodePtr &key, int32_t num);
+  void AddWriteCount(const AnfNodePtr &key, int32_t num);
+  void EraseElem(const AnfNodePtr &key);
+  bool HasValidElem() const;
+  std::tuple<AnfNodePtr, int32_t, int32_t> GetOneValidElem() const;
+
+ private:
+  std::function<bool(int32_t, int32_t)> predicate_;
+  std::map<AnfNodePtr, std::pair<int32_t, int32_t>> count_;
 };
 }  // namespace session
 }  // namespace mindspore
