@@ -55,7 +55,7 @@ class ReduceLogSumExp(Cell):
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = P.ReduceLogSumExp(keep_dims=True)
+        >>> op = nn.ReduceLogSumExp(keep_dims=True)
         >>> output = op(input_x, 1)
     """
 

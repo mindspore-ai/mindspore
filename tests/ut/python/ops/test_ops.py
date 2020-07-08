@@ -530,15 +530,13 @@ class InplaceSubNet(nn.Cell):
 
 
 class NormalNet(nn.Cell):
-    def __init__(self, shape=None, mean=0.0, stddev=1.0, seed=0):
+    def __init__(self, shape=None, seed=0):
         super(NormalNet, self).__init__()
-        self.normal = P.Normal(seed=seed)
         self.shape = shape
-        self.mean = Tensor(mean, mstype.float32)
-        self.stddev = Tensor(stddev, mstype.float32)
+        self.seed = seed
 
-    def construct(self):
-        out = self.normal(self.shape, self.mean, self.stddev)
+    def construct(self, mean, stddev):
+        out = C.normal(self.shape, mean, stddev, self.seed)
         return out
 
 
@@ -812,6 +810,10 @@ test_case_math_ops = [
                        (64, 2, 1024),
                        (1, 1, 1)],
         'desc_inputs': [[64, 128, 1024]],
+        'skip': ['backward']}),
+    ('Normal', {
+        'block': NormalNet((3, 2, 4), 0),
+        'desc_inputs': [Tensor(0.0, mstype.float32), Tensor(1.0, mstype.float32)],
         'skip': ['backward']}),
     ('RandomChoiceWithMask', {
         'block': P.RandomChoiceWithMask(256),
@@ -1100,10 +1102,6 @@ test_case_math_ops = [
         'block': P.HistogramFixedWidth(5),
         'desc_inputs': [Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mstype.float16), Tensor([0.0, 5.0], mstype.float16)],
         'desc_bprop': [],
-        'skip': ['backward']}),
-    ('Normal', {
-        'block': NormalNet((3, 2, 4), 0.0, 1.0, 0),
-        'desc_inputs': [],
         'skip': ['backward']}),
     ('Mod', {
         'block': P.Mod(),

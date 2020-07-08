@@ -15,6 +15,7 @@
 """Normal Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater_equal_zero
 from ...common import dtype as mstype
@@ -60,6 +61,7 @@ class Normal(Distribution):
         else:
             self._mean_value = mean
             self._sd_value = sd
+        self.seed = seed
 
         #ops needed for the class
         self.exp = P.Exp()
@@ -70,7 +72,6 @@ class Normal(Distribution):
         self.sqrt = P.Sqrt()
         self.realdiv = P.RealDiv()
         self.expm1 = P.Expm1() if get_context('device_target') == 'Ascend' else self._expm1_by_step
-        self.normal = P.Normal(seed=seed)
         self.shape = P.Shape()
         self.zeroslike = P.ZerosLike()
         self.const = P.ScalarToArray()
@@ -163,7 +164,7 @@ class Normal(Distribution):
             sample_shape = shape + batch_shape
             mean_zero = self.const(0.0)
             sd_one = self.const(1.0)
-            sample_norm = self.normal(sample_shape, mean_zero, sd_one)
+            sample_norm = C.normal(sample_shape, mean_zero, sd_one, self.seed)
             sample = self.add(mean, self.mul(sample_norm, sd))
             return sample
         return None
