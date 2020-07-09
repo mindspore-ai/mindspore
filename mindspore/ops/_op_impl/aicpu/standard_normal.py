@@ -16,18 +16,17 @@
 """RandomNormal op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-normal_op_info = AiCPURegOp("Normal") \
+normal_op_info = AiCPURegOp("StandardNormal") \
     .fusion_type("OPAQUE") \
     .input(0, "shape", "required") \
-    .input(1, "mean", "required") \
-    .input(2, "stddev", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
+    .attr("seed2", "int") \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW) \
     .get_op_info()
 
 @op_info_register(normal_op_info)
-def _normal_aicpu():
+def _standard_normal_aicpu():
     """RandomNormal AiCPU register"""
     return

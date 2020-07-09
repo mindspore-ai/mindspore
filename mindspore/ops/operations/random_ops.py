@@ -22,23 +22,16 @@ from ..primitive import PrimitiveWithInfer, prim_attr_register
 from .._utils import get_broadcast_shape
 
 
-class Normal(PrimitiveWithInfer):
+class StandardNormal(PrimitiveWithInfer):
     r"""
-    Generates random numbers according to the Normal (or Gaussian) random number distribution.
-    It is defined as:
-
-    .. math::
-        \text{f}(x;μ,σ) = \frac{1}{σ\sqrt{2π}}\exp(-\frac{1}{2}(\frac{x-μ}{σ})^2),
+    Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
     Args:
-        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
+        seed (int): Random seed. Default: 0.
+        seed2 (int): Random seed2. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **mean** (Tensor) - The mean μ distribution parameter, which specifies the location of the peak.
-          With float32 data type.
-        - **stddev** (Tensor) - The deviation σ distribution parameter. With float32 data type.
 
     Outputs:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and stddev.
@@ -46,31 +39,26 @@ class Normal(PrimitiveWithInfer):
 
     Examples:
         >>> shape = (4, 16)
-        >>> mean = Tensor(1.0, mstype.float32)
-        >>> stddev = Tensor(1.0, mstype.float32)
-        >>> normal = P.Normal(seed=2)
-        >>> output = normal(shape, mean, stddev)
+        >>> stdnormal = P.StandardNormal(seed=2)
+        >>> output = stdnormal(shape)
     """
 
     @prim_attr_register
-    def __init__(self, seed=0):
-        """Init Normal"""
-        self.init_prim_io_names(inputs=['shape', 'mean', 'stddev'], outputs=['output'])
+    def __init__(self, seed=0, seed2=0):
+        """Init StandardNormal"""
+        self.init_prim_io_names(inputs=['shape'], outputs=['output'])
         validator.check_value_type('seed', seed, [int], self.name)
+        validator.check_value_type('seed2', seed2, [int], self.name)
 
-    def __infer__(self, shape, mean, stddev):
+    def __infer__(self, shape):
         shape_v = shape["value"]
         if shape_v is None:
             raise ValueError(f"For {self.name}, shape must be const.")
         validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
-        validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
-        validator.check_tensor_type_same({"stddev": stddev["dtype"]}, [mstype.float32], self.name)
-        broadcast_shape = get_broadcast_shape(mean['shape'], stddev['shape'], self.name)
-        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
         out = {
-            'shape': broadcast_shape,
+            'shape': shape_v,
             'dtype': mstype.float32,
             'value': None}
         return out
