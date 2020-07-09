@@ -31,12 +31,10 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-namespace {
-using PatternListType = std::initializer_list<BaseRef>;
 const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberTypeInt8, 2},    {kNumberTypeUInt8, 3},
                                            {kNumberTypeInt16, 4},   {kNumberTypeInt32, 5},   {kNumberTypeInt64, 6},
                                            {kNumberTypeFloat16, 7}, {kNumberTypeFloat32, 8}, {kNumberTypeFloat64, 9}};
-
+namespace {
 const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();
   if (function->isa<Primitive>() && function->cast<PrimitivePtr>()->has_signature()) {
