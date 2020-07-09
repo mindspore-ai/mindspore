@@ -187,8 +187,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   GetSummaryNodes(graph.get());
   // Remove NoOp from execution graph
   opt::RemoveNopNode(graph.get());
-  // Alloc memory, including static memory and dynamic memory
-  AllocateMemory(graph.get());
+  // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = MakeManager({graph});
   context_->AddManager(manager);
@@ -196,6 +195,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
+  // Alloc memory, including static memory and dynamic memory
+  AllocateMemory(graph.get());
   return graph_id;
 }
 
