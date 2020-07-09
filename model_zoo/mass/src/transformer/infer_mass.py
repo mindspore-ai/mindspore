@@ -17,13 +17,16 @@ import time
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
+from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from mindspore import context
 
 from src.dataset import load_dataset
 from .transformer_for_infer import TransformerInferModel
+from .transformer_for_train import TransformerTraining
 from ..utils.load_weights import load_infer_weights
 
 context.set_context(
@@ -155,4 +158,130 @@ def infer(config):
                                 sink_mode=config.dataset_sink_mode,
                                 shuffle=False) if config.test_dataset else None
     prediction = transformer_infer(config, eval_dataset)
+    return prediction
+
+
+class TransformerInferPPLCell(nn.Cell):
+    """
+    Encapsulation class of transformer network infer for PPL.
+
+    Args:
+        config(TransformerConfig): Config.
+
+    Returns:
+        Tuple[Tensor, Tensor], predicted log prob and label lengths.
+    """
+    def __init__(self, config):
+        super(TransformerInferPPLCell, self).__init__()
+        self.transformer = TransformerTraining(config, is_training=False, use_one_hot_embeddings=False)
+        self.batch_size = config.batch_size
+        self.vocab_size = config.vocab_size
+        self.one_hot = P.OneHot()
+        self.on_value = Tensor(float(1), mstype.float32)
+        self.off_value = Tensor(float(0), mstype.float32)
+        self.reduce_sum = P.ReduceSum()
+        self.reshape = P.Reshape()
+        self.cast = P.Cast()
+        self.flat_shape = (config.batch_size * config.seq_length,)
+        self.batch_shape = (config.batch_size, config.seq_length)
+        self.last_idx = (-1,)
+
+    def construct(self,
+                  source_ids,
+                  source_mask,
+                  target_ids,
+                  target_mask,
+                  label_ids,
+                  label_mask):
+        """Defines the computation performed."""
+
+        predicted_log_probs = self.transformer(source_ids, source_mask, target_ids, target_mask)
+        label_ids = self.reshape(label_ids, self.flat_shape)
+        label_mask = self.cast(label_mask, mstype.float32)
+        one_hot_labels = self.one_hot(label_ids, self.vocab_size, self.on_value, self.off_value)
+
+        label_log_probs = self.reduce_sum(predicted_log_probs * one_hot_labels, self.last_idx)
+        label_log_probs = self.reshape(label_log_probs, self.batch_shape)
+        log_probs = label_log_probs * label_mask
+        lengths = self.reduce_sum(label_mask, self.last_idx)
+
+        return log_probs, lengths
+
+
+def transformer_infer_ppl(config, dataset):
+    """
+    Run infer with Transformer for PPL.
+
+    Args:
+        config (TransformerConfig): Config.
+        dataset (Dataset): Dataset.
+
+    Returns:
+        List[Dict], prediction, each example has 4 keys, "source",
+        "target", "log_prob" and "length".
+    """
+    tfm_infer = TransformerInferPPLCell(config=config)
+    tfm_infer.init_parameters_data()
+
+    parameter_dict = load_checkpoint(config.existed_ckpt)
+    load_param_into_net(tfm_infer, parameter_dict)
+
+    model = Model(tfm_infer)
+
+    log_probs = []
+    lengths = []
+    source_sentences = []
+    target_sentences = []
+    for batch in dataset.create_dict_iterator():
+        source_sentences.append(batch["source_eos_ids"])
+        target_sentences.append(batch["target_eos_ids"])
+
+        source_ids = Tensor(batch["source_eos_ids"], mstype.int32)
+        source_mask = Tensor(batch["source_eos_mask"], mstype.int32)
+        target_ids = Tensor(batch["target_sos_ids"], mstype.int32)
+        target_mask = Tensor(batch["target_sos_mask"], mstype.int32)
+        label_ids = Tensor(batch["target_eos_ids"], mstype.int32)
+        label_mask = Tensor(batch["target_eos_mask"], mstype.int32)
+
+        start_time = time.time()
+        log_prob, length = model.predict(source_ids, source_mask, target_ids, target_mask, label_ids, label_mask)
+        print(f" | Batch size: {config.batch_size}, "
+              f"Time cost: {time.time() - start_time}.")
+
+        log_probs.append(log_prob.asnumpy())
+        lengths.append(length.asnumpy())
+
+    output = []
+    for inputs, ref, log_prob, length in zip(source_sentences,
+                                             target_sentences,
+                                             log_probs,
+                                             lengths):
+        for i in range(config.batch_size):
+            example = {
+                "source": inputs[i].tolist(),
+                "target": ref[i].tolist(),
+                "log_prob": log_prob[i].tolist(),
+                "length": length[i]
+            }
+            output.append(example)
+
+    return output
+
+
+def infer_ppl(config):
+    """
+    Transformer infer PPL api.
+
+    Args:
+        config (TransformerConfig): Config.
+
+    Returns:
+        list, result with
+    """
+    eval_dataset = load_dataset(data_files=config.test_dataset,
+                                batch_size=config.batch_size,
+                                epoch_count=1,
+                                sink_mode=config.dataset_sink_mode,
+                                shuffle=False) if config.test_dataset else None
+    prediction = transformer_infer_ppl(config, eval_dataset)
     return prediction

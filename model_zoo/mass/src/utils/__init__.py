@@ -20,6 +20,7 @@ from .loss_monitor import LossCallBack
 from .byte_pair_encoding import bpe_encode
 from .initializer import zero_weight, one_weight, normal_weight, weight_variable
 from .rouge_score import rouge
+from .eval_score import get_score
 
 __all__ = [
     "Dictionary",
@@ -31,5 +32,6 @@ __all__ = [
     "one_weight",
     "zero_weight",
     "normal_weight",
-    "weight_variable"
+    "weight_variable",
+    "get_score"
 ]
