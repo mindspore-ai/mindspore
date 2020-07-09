@@ -321,6 +321,13 @@ AnfNodePtr MixedPrecisionCastHelper(AnfNodePtr source_node, AbstractBasePtr node
     }
     target_node = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(dict_key_nodes),
                                         func_graph->NewCNode(dict_value_nodes)});
+  } else if (node_type->isa<AbstractKeywordArg>()) {
+    auto x = node_type->cast<AbstractKeywordArgPtr>();
+    std::string kwarg_key = x->get_key();
+    AnfNodePtr kwarg_value_node =
+      func_graph->NewCNode({NewValueNode(prim::kPrimExtractKeywordArg), NewValueNode(kwarg_key), source_node});
+    AnfNodePtr node = MixedPrecisionCastHelper(kwarg_value_node, x->get_arg(), target_type, func_graph);
+    target_node = func_graph->NewCNode({NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(kwarg_key), node});
   }
   return target_node;
 }
