@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 import mindspore.dataset as de
 from mindspore import log as logger
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -173,7 +174,6 @@ def test_numpy_slices_distributed_sampler():
 
 
 def test_numpy_slices_sequential_sampler():
-
     logger.info("Test numpy_slices_dataset with SequentialSampler and repeat.")
 
     np_data = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
@@ -181,6 +181,33 @@ def test_numpy_slices_sequential_sampler():
 
     for i, data in enumerate(ds):
         assert np.equal(data[0], np_data[i % 8]).all()
+
+
+def test_numpy_slices_invalid_column_names_type():
+    logger.info("Test incorrect column_names input")
+    np_data = [1, 2, 3]
+
+    with pytest.raises(TypeError) as err:
+        de.NumpySlicesDataset(np_data, column_names=[1], shuffle=False)
+    assert "Argument column_names[0] with value 1 is not of type (<class 'str'>,)." in str(err.value)
+
+
+def test_numpy_slices_invalid_column_names_string():
+    logger.info("Test incorrect column_names input")
+    np_data = [1, 2, 3]
+
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, column_names=[""], shuffle=False)
+    assert "column_names[0] should not be empty" in str(err.value)
+
+
+def test_numpy_slices_invalid_empty_column_names():
+    logger.info("Test incorrect column_names input")
+    np_data = [1, 2, 3]
+
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, column_names=[], shuffle=False)
+    assert "column_names should not be empty" in str(err.value)
 
 
 if __name__ == "__main__":
@@ -197,3 +224,6 @@ if __name__ == "__main__":
     test_numpy_slices_num_samplers()
     test_numpy_slices_distributed_sampler()
     test_numpy_slices_sequential_sampler()
+    test_numpy_slices_invalid_column_names_type()
+    test_numpy_slices_invalid_column_names_string()
+    test_numpy_slices_invalid_empty_column_names()
