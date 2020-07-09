@@ -70,6 +70,22 @@ Alexey Shevlyakov, avakh, baihuawei, BowenK, buxue, caifubi, caojian05, Cathy Wo
 
 Contributions of any kind are welcome!
 
+# Release 0.3.1-alpha
+
+## Major Features and Improvements
+
+### Ascend 910 Training and Inference Framework
+* Frontend and User Interface
+    * Independent model init interface.
+* Data processing, augmentation, and save format
+    * Support sample padding for minddataset.
+
+## Bugfixes
+* Python API
+    * Fix bugs in the lars optimizer([!1894](https://gitee.com/mindspore/mindspore/pulls/1894))
+* Data processing
+    * Fix accuracy problem of RandomCropDecodeResize ([!2340](https://gitee.com/mindspore/mindspore/pulls/2340))
+
 # Release 0.3.0-alpha
 
 ## Major Features and Improvements
