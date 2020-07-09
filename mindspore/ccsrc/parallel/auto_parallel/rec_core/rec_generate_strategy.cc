@@ -168,12 +168,11 @@ std::vector<std::vector<int32_t>> PrepareGatherV2(const std::vector<std::shared_
                                                   const size_t iter_ops, std::vector<int32_t> s) {
   std::vector<std::vector<int32_t>> strategies;
 
-  int32_t axis = 0;
   auto axis_input = GetValue<int>(ops[iter_ops]->input_value().at(2));
   if (axis_input < 0) {
     axis_input += SizeToInt(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
   }
-  axis = axis_input;
+  int32_t axis = axis_input;
   if (axis >= SizeToInt(s.size())) {
     MS_LOG(EXCEPTION) << "Failure: GatherV2' axis out of range.";
   }

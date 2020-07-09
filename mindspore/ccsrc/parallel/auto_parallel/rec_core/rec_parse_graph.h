@@ -22,12 +22,19 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
 #include "parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 namespace parallel {
+static const std::set<OperatorType> ElementWiseOpType = {
+  OperatorType::kRecReLU,      OperatorType::kRecLog,      OperatorType::kRecExp,         OperatorType::kRecAdd,
+  OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,  OperatorType::kRecSub,         OperatorType::kRecMul,
+  OperatorType::kRecDiv,       OperatorType::kRecSqueeze,  OperatorType::kRecReduce,      OperatorType::kRecCast,
+  OperatorType::kRecReshape,   OperatorType::kRecGatherV2, OperatorType::kRecArgWithValue};
+
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
   {CONV2D, OperatorType::kRecConvolution},
