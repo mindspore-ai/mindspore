@@ -36,14 +36,17 @@ SET(DE_UT_SRCS
         project_op_test.cc
         queue_test.cc
         random_crop_op_test.cc
+        random_crop_with_bbox_op_test.cc
         random_crop_decode_resize_op_test.cc
         random_crop_and_resize_op_test.cc
+        random_crop_and_resize_with_bbox_op_test.cc
         random_color_adjust_op_test.cc
         random_horizontal_flip_op_test.cc
         random_horizontal_flip_with_bbox_test.cc
         random_resize_op_test.cc
         random_rotation_op_test.cc
         random_vertical_flip_op_test.cc
+        random_vertical_flip_with_bbox_op_test.cc
         rename_op_test.cc
         repeat_op_test.cc
         skip_op_test.cc
