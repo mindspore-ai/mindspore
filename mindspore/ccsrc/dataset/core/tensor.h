@@ -277,6 +277,10 @@ class Tensor {
   // @return
   const TensorShape &shape() const { return shape_; }
 
+  /// Check if tensor has data
+  /// \return bool - true if tensor is empty
+  bool HasData() const;
+
   // Reshape the tensor. The given shape should have the same number of elements in the Tensor
   // @param shape
   virtual Status Reshape(const TensorShape &shape);
