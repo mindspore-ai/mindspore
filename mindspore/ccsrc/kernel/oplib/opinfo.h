@@ -103,13 +103,13 @@ class OpInfo {
     partial_flag_ = opinfo.partial_flag_;
     dynamic_format_ = opinfo.dynamic_format_;
     op_pattern_ = opinfo.op_pattern();
-    for (auto attr : opinfo.attrs_ptr()) {
+    for (const auto &attr : opinfo.attrs_ptr()) {
       attrs_ptr_.push_back(std::make_shared<OpAttr>(*attr));
     }
-    for (auto input : opinfo.inputs_ptr()) {
+    for (const auto &input : opinfo.inputs_ptr()) {
       inputs_ptr_.push_back(std::make_shared<OpIOInfo>(*input));
     }
-    for (auto output : opinfo.outputs_ptr()) {
+    for (const auto &output : opinfo.outputs_ptr()) {
       outputs_ptr_.push_back(std::make_shared<OpIOInfo>(*output));
     }
     ref_infos_ = opinfo.ref_infos();

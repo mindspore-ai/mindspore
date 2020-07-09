@@ -323,7 +323,7 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())
-    .def("reg_op", &OpLib::RegOp, "Register op info.");
+    .def_static("reg_op", &OpLib::RegOp, "Register op info.");
 #ifdef ENABLE_GPU_COLLECTIVE
   (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::InitCollective,
               "Init gpu collective communication mode.");
