@@ -760,10 +760,18 @@ Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount,
     correct_ind.push_back(i);
     // adjust BBox corners by bringing into new CropBox if beyond
     // Also reseting/adjusting for boxes to lie within CropBox instead of Image - subtract CropBox Xmin/YMin
-    bb_Xmin = bb_Xmin - (std::min(static_cast<float>(0.0), (bb_Xmin - CB_Xmin)) + CB_Xmin);
-    bb_Xmax = bb_Xmax - (std::max(static_cast<float>(0.0), (bb_Xmax - CB_Xmax)) + CB_Xmin);
-    bb_Ymin = bb_Ymin - (std::min(static_cast<float>(0.0), (bb_Ymin - CB_Ymin)) + CB_Ymin);
-    bb_Ymax = bb_Ymax - (std::max(static_cast<float>(0.0), (bb_Ymax - CB_Ymax)) + CB_Ymin);
+
+    bb_Xmin = bb_Xmin - std::min(static_cast<float>(0.0), (bb_Xmin - CB_Xmin)) - CB_Xmin;
+    bb_Xmax = bb_Xmax - std::max(static_cast<float>(0.0), (bb_Xmax - CB_Xmax)) - CB_Xmin;
+    bb_Ymin = bb_Ymin - std::min(static_cast<float>(0.0), (bb_Ymin - CB_Ymin)) - CB_Ymin;
+    bb_Ymax = bb_Ymax - std::max(static_cast<float>(0.0), (bb_Ymax - CB_Ymax)) - CB_Ymin;
+
+    // bound check for float values
+    bb_Xmin = std::max(bb_Xmin, static_cast<float>(0));
+    bb_Ymin = std::max(bb_Ymin, static_cast<float>(0));
+    bb_Xmax = std::min(bb_Xmax, static_cast<float>(CB_Xmax - CB_Xmin));  // find max value relative to new image
+    bb_Ymax = std::min(bb_Ymax, static_cast<float>(CB_Ymax - CB_Ymin));
+
     // reset min values and calculate width/height from Box corners
     RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 0}, bb_Xmin));
     RETURN_IF_NOT_OK((*bboxList)->SetItemAt({i, 1}, bb_Ymin));
