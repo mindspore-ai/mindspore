@@ -102,6 +102,17 @@ inline void IntMulWithOverflowCheck(int a, int b, int *c) {
   *c = out;
 }
 
+inline void LongMulWithOverflowCheck(int64_t a, int64_t b, int64_t *c) {
+  int64_t out = a * b;
+  if (a != 0) {
+    bool ok = ((out / a) != b);
+    if (ok) {
+      MS_LOG(EXCEPTION) << "Mul: a(" << a << ") * b(" << b << ") result is overflow";
+    }
+  }
+  *c = out;
+}
+
 inline size_t SizetMulWithOverflowCheck(size_t a, size_t b) {
   size_t out = a * b;
   if (a != 0) {
