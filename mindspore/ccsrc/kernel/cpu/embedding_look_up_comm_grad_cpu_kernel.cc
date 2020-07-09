@@ -17,7 +17,6 @@
 #include "kernel/cpu/embedding_look_up_comm_grad_cpu_kernel.h"
 #include "device/cpu/cpu_device_address.h"
 #include "device/cpu/mpi/mpi_adapter.h"
-#include "ir/primitive.h"
 
 namespace mindspore {
 namespace kernel {

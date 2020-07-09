@@ -27,7 +27,6 @@
 #include "utils/any.h"
 #include "utils/misc.h"
 #include "utils/convert_utils.h"
-#include "ir/primitive.h"
 
 namespace mindspore {
 namespace abstract {

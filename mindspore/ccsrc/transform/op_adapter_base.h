@@ -29,7 +29,6 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "transform/types.h"
-
 #ifdef ENABLE_GE
 #ifdef OPEN_SOURCE
 #include "graph/types.h"

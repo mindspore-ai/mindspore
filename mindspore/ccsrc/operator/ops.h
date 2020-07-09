@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include "ir/anf.h"
-#include "ir/primitive_base.h"
+#include "ir/primitive.h"
 
 namespace mindspore {
 // namespace to support primitive operators

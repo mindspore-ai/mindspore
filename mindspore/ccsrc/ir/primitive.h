@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,45 +23,129 @@
 #include <string>
 #include <tuple>
 
+#include "ir/dtype/type.h"
 #include "pipeline/static_analysis/abstract_value.h"
-#include "utils/misc.h"
-#include "utils/log_adapter.h"
-#include "ir/primitive_base.h"
-#include "ir/signature.h"
 #include "parallel/ops_info/operator_info.h"
-
+#include "utils/base_ref_extends.h"
 namespace mindspore {
-class PrimitivePy : public Primitive {
- public:
-  PrimitivePy(const py::str &name, const py::object &python_obj)
-      : Primitive(name, false), python_obj_(python_obj), signatures_() {}
-  ~PrimitivePy() override = default;
-  MS_DECLARE_PARENT(PrimitivePy, Primitive);
-  py::function GetBpropFunction();
-  py::function GetComputeFunction();
-
-  void set_signatures(
-    std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>>
-      signatures);
-
-  const std::vector<Signature> &signatures() const { return signatures_; }
-
-  void AddPyAttr(const py::str &name, const py::object &obj);
-
-  py::dict GetAttrDict();
-  void set_hook(const py::function &hook) { hook_ = hook; }
-  py::function hook() const { return hook_; }
-
-  const bool parse_info_ = true;
-  const py::object &GetPyObj() const { return python_obj_; }
-  bool is_tuple_input_ = false;
-
- private:
-  py::object python_obj_;
-  py::function hook_;
-  std::vector<Signature> signatures_;
+// Supported meta type
+enum PrimType {
+  kPrimTypeUnknown = 0,
+  kPrimTypeBegin = kTypeUnknown,
+  kPrimTypeBuiltIn,        // Built-in primitive operator
+  kPrimTypePyInferShape,   // Primitive operator defined by custom
+  kPrimTypePyInferTensor,  // Primitive operator defined by custom
+  kPrimTypeUserCustom
 };
 
-using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
+class Primitive : public Named {
+ public:
+  explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn)
+      : Named(name),
+        is_base_(is_base),
+        has_signature_(false),
+        prim_type_(prim_type),
+        record_evaluate_add_attr_(false) {}
+
+  Primitive(const Primitive &prim)
+      : Named(prim),
+        attrs_(prim.attrs_),
+        instance_name_(prim.instance_name_),
+        is_base_(prim.is_base_),
+        has_signature_(prim.has_signature_),
+        prim_type_(prim.prim_type_),
+        record_evaluate_add_attr_(false) {}
+
+  MS_DECLARE_PARENT(Primitive, Named);
+
+  abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
+  std::string ToString() const override { return name(); }
+  void BeginRecordAddAttr() {
+    evaluate_added_attrs_.clear();
+    record_evaluate_add_attr_ = true;
+  }
+  void EndRecordAddAttr() { record_evaluate_add_attr_ = false; }
+  Primitive &AddAttr(const std::string &name, const ValuePtr &attr) {
+    attrs_[name] = attr;
+    if (record_evaluate_add_attr_) {
+      evaluate_added_attrs_[name] = attr;
+    }
+    return *this;
+  }
+
+  Primitive &SetAttrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+    for (auto &attr : attrs) {
+      attrs_[attr.first] = attr.second;
+    }
+    return *this;
+  }
+
+  void set_attr(const std::string &attrName, const ValuePtr &attr) { attrs_[attrName] = attr; }
+  void EraseAttr(const std::string &attrName) { (void)attrs_.erase(attrName); }
+
+  ValuePtr GetAttr(const std::string &attrName) const {
+    auto iter = attrs_.find(attrName);
+    return iter == attrs_.cend() ? nullptr : iter->second;
+  }
+
+  const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
+  const std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
+
+  // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
+  bool HasAttr() const { return !attrs_.empty(); }
+  bool HasAttr(const std::string &attrName) const {
+    auto iter = attrs_.find(attrName);
+    return !(iter == attrs_.cend());
+  }
+  void set_prim_type(const PrimType t) { prim_type_ = t; }
+  void set_instance_name(const std::string s) { instance_name_ = s; }
+  bool HasPyEvaluator() const { return prim_type_ == kPrimTypePyInferShape || prim_type_ == kPrimTypeUserCustom; }
+  bool HasPyInferTensor() const { return prim_type_ == kPrimTypePyInferTensor; }
+  bool IsCustomPrim() const { return prim_type_ == kPrimTypeUserCustom; }
+
+  PrimType prim_type() const { return prim_type_; }
+  std::string instance_name() const { return instance_name_; }
+  std::string GetAttrsText() const;
+  bool operator==(const Value &other) const override;
+  bool operator==(const Primitive &other) const;
+  ~Primitive() override = default;
+
+  void set_has_signature(bool has_signature) { has_signature_ = has_signature; }
+  bool has_signature() const { return has_signature_; }
+  bool is_base() const { return is_base_; }
+  virtual BaseRef RunHookFunction(const VectorRef &args) const { MS_LOG(EXCEPTION) << "call a empty function!"; }
+  virtual void CopyHookFunction(const PrimitivePtr &primitive) { MS_LOG(EXCEPTION) << "call a empty function!"; }
+
+ protected:
+  std::unordered_map<std::string, ValuePtr> attrs_;
+  std::unordered_map<std::string, ValuePtr> evaluate_added_attrs_;
+
+ private:
+  std::string instance_name_;
+  bool is_base_;
+  bool has_signature_;
+  PrimType prim_type_;
+  bool record_evaluate_add_attr_;
+};
+
+inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {
+  os << *p;
+  return os;
+}
+
+struct PrimitiveEqual {
+  bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
+    MS_EXCEPTION_IF_NULL(t1);
+    MS_EXCEPTION_IF_NULL(t2);
+    return t1->name() == t2->name();
+  }
+};
+
+struct PrimitiveHasher {
+  std::size_t operator()(PrimitivePtr const &prim) const {
+    MS_EXCEPTION_IF_NULL(prim);
+    return prim->Hash();
+  }
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_PRIMITIVE_H_

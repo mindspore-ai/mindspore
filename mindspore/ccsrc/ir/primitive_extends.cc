@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ir/primitive_base.h"
+#include "ir/primitive.h"
 #include "pipeline/static_analysis/abstract_function.h"
 
 namespace mindspore {

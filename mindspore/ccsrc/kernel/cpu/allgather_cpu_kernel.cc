@@ -16,7 +16,6 @@
 #include "kernel/cpu/allgather_cpu_kernel.h"
 #include "device/cpu/cpu_device_address.h"
 #include "device/cpu/mpi/mpi_adapter.h"
-#include "ir/primitive.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
-#include "ir/primitive.h"
+#include "ir/primitive_py.h"
 #include "ir/meta_func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
@@ -232,10 +232,7 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
   std::vector<AnfNodePtr> outputs;
 
   auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut", py::object());
-  if (!prim->is_base()) {
-    PrimitivePyPtr prim_py = dyn_cast<PrimitivePy>(prim);
-    bprop_cut->set_hook(prim_py->hook());
-  }
+  bprop_cut->CopyHookFunction(prim);
 
   auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
   if (cell_id != "") {

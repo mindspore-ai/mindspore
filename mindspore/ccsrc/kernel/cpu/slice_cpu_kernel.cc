@@ -15,7 +15,6 @@
  */
 #include "kernel/cpu/slice_cpu_kernel.h"
 #include "device/cpu/cpu_device_address.h"
-#include "ir/primitive.h"
 
 namespace mindspore {
 namespace kernel {

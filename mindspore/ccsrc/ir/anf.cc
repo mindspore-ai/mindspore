@@ -24,7 +24,7 @@
 #include <unordered_map>
 
 #include "ir/func_graph.h"
-#include "ir/primitive_base.h"
+#include "ir/primitive.h"
 #include "utils/context/ms_context.h"
 #include "operator/ops.h"
 

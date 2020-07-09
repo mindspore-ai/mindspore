@@ -15,108 +15,57 @@
  */
 
 #include "ir/primitive.h"
-#include <mutex>
-#include <utility>
-#include "ir/signature.h"
-#include "operator/ops.h"
-#include "./common.h"
-#include "pipeline/parse/python_adapter.h"
-#include "pipeline/parse/data_converter.h"
-#include "pybind11/pytypes.h"
-#include "utils/convert_utils_base.h"
-#include "utils/primitive_utils.h"
 
-#include "pybind_api/api_register.h"
-#include "pybind_api/export_flags.h"
+#include <utility>
 
 namespace mindspore {
-static ValuePtr PyArgToValue(const py::object &arg) {
-  if (py::isinstance<SignatureEnumKind>(arg) &&
-      py::cast<SignatureEnumKind>(arg) == SignatureEnumKind::kKindEmptyDefaultValue) {
-    return nullptr;
-  }
-  return parse::data_converter::PyDataToValue(arg);
-}
-
-void PrimitivePy::set_signatures(
-  std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>> signatures) {
-  signatures_.clear();
-  for (auto &signature : signatures) {
-    auto [name, rw, kind, arg_default, dtype] = signature;
-    auto default_value = PyArgToValue(arg_default);
-    signatures_.emplace_back(name, rw, kind, default_value, dtype);
-  }
-  set_has_signature(true);
-}
-
-py::function PrimitivePy::GetBpropFunction() {
-  static const char *const get_bprop_func_name = "get_bprop";
-  if (py::hasattr(python_obj_, get_bprop_func_name)) {
-    py::function fn = python_obj_.attr(get_bprop_func_name)().cast<py::function>();
-    return fn;
+bool Primitive::operator==(const Value &other) const {
+  if (other.isa<Primitive>()) {
+    auto other_prim = static_cast<const Primitive &>(other);
+    return *this == other_prim;
   } else {
-    auto fn = GetBpropFunctionByObj(python_obj_);
-    return fn;
+    return false;
   }
 }
 
-py::function PrimitivePy::GetComputeFunction() {
-  static const char *const compute_func_name = "vm_impl";
-
-  if (py::hasattr(python_obj_, compute_func_name)) {
-    MS_LOG(INFO) << name() << " compute_func_name";
-    py::function fn = python_obj_.attr(compute_func_name).cast<py::function>();
-    return fn;
+bool Primitive::operator==(const Primitive &other) const {
+  if (name() != other.name()) {
+    return false;
   }
-
-  static const std::string vm_module = "mindspore.ops.vm_impl_registry";
-  static const std::string get_vm_impl_fn = "get_vm_impl_fn";
-  MS_LOG(INFO) << name() << ": get_vm_impl_fn";
-  py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
-  py::function vm_fn = get_fn(python_obj_);
-
-  if (py::isinstance<py::none>(vm_fn)) {
-    MS_LOG(WARNING) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
-    vm_fn = mindspore::GetComputeFunction(Primitive::name());
+  if (attrs_.size() != other.attrs_.size()) {
+    return false;
   }
-  return vm_fn;
+  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const std::pair<std::string, ValuePtr> &item) -> bool {
+    if (item.second == nullptr) {
+      return false;
+    }
+    auto iter = other.attrs_.find(item.first);
+    if (iter == other.attrs_.end()) {
+      return false;
+    }
+    return *item.second == *iter->second;
+  });
+  return all;
 }
 
-void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
-  std::string attr_name = name;
-  ValuePtr converted_ret = nullptr;
-  if (py::isinstance<py::module>(obj)) {
-    MS_LOG(EXCEPTION) << "AddPyAttr failed, obj should not be py::module";
+std::string Primitive::GetAttrsText() const {
+  if (attrs_.empty()) {
+    return "";
   }
-  bool converted = parse::ConvertData(obj, &converted_ret);
-  if (!converted) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
-  }
-  (void)this->AddAttr(attr_name, converted_ret);
-}
 
-py::dict PrimitivePy::GetAttrDict() {
-  py::dict attr_dict;
+  std::ostringstream oss;
+  oss << "[";
+  bool is_first = true;
   for (auto &attr : attrs_) {
-    attr_dict[py::str(attr.first)] = ValuePtrToPyData(attr.second);
+    if (is_first) {
+      is_first = false;
+    } else {
+      oss << ", ";
+    }
+    oss << attr.first << "=" << attr.second->DumpText();
   }
-  return attr_dict;
-}
+  oss << "]";
 
-REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
-                         (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
-                           .value("unknown", PrimType::kPrimTypeUnknown)
-                           .value("builtin", PrimType::kPrimTypeBuiltIn)
-                           .value("py_infer_shape", PrimType::kPrimTypePyInferShape)
-                           .value("user_custom", PrimType::kPrimTypeUserCustom);
-                         (void)py::class_<PrimitivePy, std::shared_ptr<PrimitivePy>>(*m, "Primitive_")
-                           .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePy::parse_info_)
-                           .def(py::init<py::str &, py::object>())
-                           .def("add_attr", &PrimitivePy::AddPyAttr, "add primitive attr")
-                           .def("get_attr_dict", &PrimitivePy::GetAttrDict, "get primitive attr")
-                           .def("set_prim_type", &PrimitivePy::set_prim_type, "Set primitive type.")
-                           .def("set_signatures", &PrimitivePy::set_signatures, "Set primitive inputs signature.")
-                           .def("register_hook", &PrimitivePy::set_hook, "Set primitive hook function.")
-                           .def("set_instance_name", &PrimitivePy::set_instance_name, "Set primitive instance name.");
-                       }));
+  return oss.str();
+}
 }  // namespace mindspore
