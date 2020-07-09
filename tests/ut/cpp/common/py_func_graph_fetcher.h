@@ -22,7 +22,6 @@
 #include "ir/primitive.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
-#include "ir/func_graph_cloner.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/parse.h"
 #include "./common.h"
@@ -48,10 +47,9 @@ class PyFuncGraphFetcher {
       py::function fn = mindspore::parse::python_adapter::CallPyFn(model_path_.c_str(), func_name.c_str(), args...);
       mindspore::FuncGraphPtr func_graph = mindspore::parse::ParsePythonCode(fn);
       if (doResolve_) {
-        std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, true);
+        std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, false);
         mindspore::parse::python_adapter::set_use_signature_in_resolve(false);
         mindspore::parse::ResolveAll(manager);
-        func_graph = BasicClone(func_graph);
       }
       return func_graph;
     } catch (py::error_already_set& e) {
@@ -73,9 +71,8 @@ class PyFuncGraphFetcher {
       py::function fn = mindspore::parse::python_adapter::GetPyFn(path.c_str(), func_name.c_str());
       mindspore::FuncGraphPtr func_graph = mindspore::parse::ParsePythonCode(fn);
       if (doResolve_) {
-        std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, true);
+        std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, false);
         mindspore::parse::ResolveAll(manager);
-        func_graph = BasicClone(func_graph);
       }
       return func_graph;
     } catch (py::error_already_set& e) {
