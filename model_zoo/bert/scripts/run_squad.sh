@@ -16,31 +16,28 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
-echo "for example: bash run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
+echo "bash scripts/run_squad.sh"
+echo "for example: bash scripts/run_squad.sh"
+echo "assessment_method include: [Accuracy]"
 echo "=============================================================================================================="
 
-DEVICE_ID=$1
-EPOCH_SIZE=$2
-DATA_DIR=$3
-SCHEMA_DIR=$4
-
-mkdir -p ms_log 
-PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
+mkdir -p ms_log
 CUR_DIR=`pwd`
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
-python ${PROJECT_DIR}/../run_pretrain.py  \
-    --distribute="false" \
-    --epoch_size=$EPOCH_SIZE \
-    --device_id=$DEVICE_ID \
-    --enable_save_ckpt="true" \
-    --enable_lossscale="true" \
-    --do_shuffle="true" \
-    --enable_data_sink="true" \
-    --data_sink_steps=1 \
-    --load_checkpoint_path="" \
-    --save_checkpoint_steps=10000 \
-    --save_checkpoint_num=1 \
-    --data_dir=$DATA_DIR \
-    --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+python ${PROJECT_DIR}/../run_squad.py  \
+    --device_target="Ascend" \
+    --do_train="true" \
+    --do_eval="false" \
+    --device_id=0 \
+    --epoch_num=1 \
+    --num_class=2 \
+    --vocab_file_path="" \
+    --eval_json_path="" \
+    --save_finetune_checkpoint_path="" \
+    --load_pretrain_checkpoint_path="" \
+    --load_finetune_checkpoint_path="" \
+    --train_data_file_path="" \
+    --eval_data_file_path="" \
+    --schema_file_path="" > log.txt 2>&1 &
