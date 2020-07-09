@@ -223,6 +223,8 @@ constexpr auto kAttrNumSplit = "num_split";
 constexpr auto kAttrOutputNum = "output_num";
 constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";
+constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
+constexpr auto kAttrOffset = "offset";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
