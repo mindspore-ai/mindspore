@@ -42,6 +42,7 @@ SET(DE_UT_SRCS
         random_horizontal_flip_op_test.cc
         random_horizontal_flip_with_bbox_test.cc
         random_resize_op_test.cc
+        random_resize_with_bbox_op_test.cc
         random_rotation_op_test.cc
         random_vertical_flip_op_test.cc
         rename_op_test.cc
@@ -50,6 +51,7 @@ SET(DE_UT_SRCS
         rescale_op_test.cc
         resize_bilinear_op_test.cc
         resize_op_test.cc
+        resize_with_bbox_op_test.cc
 	schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
