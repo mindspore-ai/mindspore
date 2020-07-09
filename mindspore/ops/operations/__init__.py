@@ -62,7 +62,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      DropoutDoMask, DropoutGrad, Dropout,
                      DropoutGenMask, Flatten, FusedBatchNorm, BNTrainingReduce, BNTrainingUpdate,
                      Gelu, Elu,
-                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss,
+                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCLossV2,
                      LogSoftmax,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ConfusionMulGrad,
