@@ -931,6 +931,11 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
   auto FindEqu = [graph, outputs](const AnfNodePtr &out) -> AnfNodePtr {
     auto backend_anf = graph->GetBackendAnfByFrontAnf(out);
     if (backend_anf != nullptr) {
+      auto context_ptr = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context_ptr);
+      if (context_ptr->execution_mode() == kPynativeMode) {
+        return backend_anf;
+      }
       auto front_real_kernel = AnfAlgo::VisitKernel(out, 0);
       auto backend_real_kernel = AnfAlgo::VisitKernel(backend_anf, 0);
       MS_EXCEPTION_IF_NULL(out);
