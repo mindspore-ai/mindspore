@@ -16,13 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_IR_SIGNATURE_H_
 #define MINDSPORE_CCSRC_IR_SIGNATURE_H_
+
 #include <string>
 #include <vector>
-
-#include "pybind11/operators.h"
 #include "ir/value.h"
-
-namespace py = pybind11;
 
 namespace mindspore {
 // Input signature, support type
@@ -62,8 +59,10 @@ struct Signature {
   ValuePtr default_value;  // nullptr for no default value
   SignatureEnumDType dtype;
   Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind,
-            const py::object &arg_default, const SignatureEnumDType &arg_dtype);
-  Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind);
+            const ValuePtr &arg_default, const SignatureEnumDType &arg_dtype)
+      : name(arg_name), rw(rw_tag), kind(arg_kind), default_value(arg_default), dtype(arg_dtype) {}
+  Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind)
+      : Signature(arg_name, rw_tag, arg_kind, nullptr, SignatureEnumDType::kDTypeEmptyDefaultValue) {}
 };
 }  // namespace mindspore
 

@@ -30,17 +30,21 @@
 #include "pybind_api/export_flags.h"
 
 namespace mindspore {
+static ValuePtr PyArgToValue(const py::object &arg) {
+  if (py::isinstance<SignatureEnumKind>(arg) &&
+      py::cast<SignatureEnumKind>(arg) == SignatureEnumKind::kKindEmptyDefaultValue) {
+    return nullptr;
+  }
+  return parse::data_converter::PyDataToValue(arg);
+}
+
 void PrimitivePy::set_signatures(
   std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>> signatures) {
   signatures_.clear();
   for (auto &signature : signatures) {
-    std::string name;
-    SignatureEnumRW rw;
-    SignatureEnumKind kind;
-    py::object default_value;
-    SignatureEnumDType dtype;
-    std::tie(name, rw, kind, default_value, dtype) = signature;
-    signatures_.emplace_back(Signature(name, rw, kind, default_value, dtype));
+    auto [name, rw, kind, arg_default, dtype] = signature;
+    auto default_value = PyArgToValue(arg_default);
+    signatures_.emplace_back(name, rw, kind, default_value, dtype);
   }
   set_has_signature(true);
 }
