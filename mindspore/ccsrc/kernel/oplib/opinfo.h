@@ -103,6 +103,7 @@ class OpInfo {
     partial_flag_ = opinfo.partial_flag_;
     dynamic_format_ = opinfo.dynamic_format_;
     op_pattern_ = opinfo.op_pattern();
+    processor_ = opinfo.processor_;
     for (const auto &attr : opinfo.attrs_ptr()) {
       attrs_ptr_.push_back(std::make_shared<OpAttr>(*attr));
     }
@@ -121,6 +122,7 @@ class OpInfo {
   std::string fusion_type() const { return fusion_type_; }
   std::string kernel_name() const { return kernel_name_; }
   OpPattern op_pattern() const { return op_pattern_; }
+  std::string processor() const { return processor_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr() const { return outputs_ptr_; }
@@ -136,6 +138,7 @@ class OpInfo {
   void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   void set_partial_flag(const bool partial_flag) { partial_flag_ = partial_flag; }
   void set_op_pattern(const OpPattern op_pattern) { op_pattern_ = op_pattern; }
+  void set_processor(const std::string &processor) { processor_ = processor; }
   void add_attrs_ptr(const std::shared_ptr<OpAttr> &attr) { attrs_ptr_.push_back(attr); }
   void add_inputs_ptr(const std::shared_ptr<OpIOInfo> &input) { inputs_ptr_.push_back(input); }
   void add_outputs_ptr(const std::shared_ptr<OpIOInfo> &output) { outputs_ptr_.push_back(output); }
@@ -144,6 +147,10 @@ class OpInfo {
   void add_ref_pair(size_t out_index, size_t in_index) { (void)ref_infos_.emplace(out_index, in_index); }
   void ClearInputs() { (void)inputs_ptr_.clear(); }
   void ClearOutputs() { (void)outputs_ptr_.clear(); }
+  bool equals_to(const std::shared_ptr<OpInfo> &other_info) const {
+    return this->op_name_ == other_info->op_name_ && this->imply_type_ == other_info->imply_type_ &&
+           this->processor_ == other_info->processor_;
+  }
 
  private:
   std::string op_name_;
@@ -157,6 +164,7 @@ class OpInfo {
   bool partial_flag_ = false;
   bool dynamic_format_ = false;
   OpPattern op_pattern_ = kCommonPattern;
+  std::string processor_;
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr_;

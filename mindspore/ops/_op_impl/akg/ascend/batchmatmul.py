@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,21 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ============================================================================
 
-"""Mul op"""
-from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
+"""BatchMatMul op"""
+from mindspore.ops.op_info_register import op_info_register, AkgAscendRegOp, DataType as DT
 
-mul_op_info = AkgGpuRegOp("Mul") \
+op_info = AkgAscendRegOp("BatchMatMul") \
     .fusion_type("OPAQUE") \
-    .input(0, "x") \
-    .input(1, "y") \
+    .input(0, "x1") \
+    .input(1, "x2") \
     .output(0, "output") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .attr("transpose_a", "optional", "bool") \
+    .attr("transpose_b", "optional", "bool") \
+    .dtype_format(DT.F16_FracNZ, DT.F16_FracNZ, DT.F16_FracNZ) \
     .get_op_info()
 
 
-@op_info_register(mul_op_info)
-def _mul_akg():
-    """Mul AutoDiff register"""
+@op_info_register(op_info)
+def _batchmatmul_akg():
+    """BatchMatMul AKG register"""
     return

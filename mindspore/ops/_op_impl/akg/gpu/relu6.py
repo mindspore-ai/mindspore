@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """ReLU6 op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-relu_op_info = AkgRegOp("ReLU6") \
+relu_op_info = AkgGpuRegOp("ReLU6") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .output(0, "output") \

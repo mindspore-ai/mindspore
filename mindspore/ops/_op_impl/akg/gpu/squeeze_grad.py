@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """SqueezeGrad op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-squeeze_grad_op_info = AkgRegOp("SqueezeGrad") \
+squeeze_grad_op_info = AkgGpuRegOp("SqueezeGrad") \
     .fusion_type("OPAQUE") \
     .input(0, "y_grad") \
     .output(0, "output") \
