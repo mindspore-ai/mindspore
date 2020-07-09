@@ -15,30 +15,14 @@
  */
 
 #include "ir/signature.h"
-
 #include "pybind11/operators.h"
 #include "pybind_api/api_register.h"
 #include "pipeline/parse/data_converter.h"
 
+namespace py = pybind11;
+
 namespace mindspore {
-Signature::Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind,
-                     const py::object &arg_default, const SignatureEnumDType &arg_dtype)
-    : name(arg_name), rw(rw_tag), kind(arg_kind), dtype(arg_dtype) {
-  if (py::isinstance<SignatureEnumKind>(arg_default) &&
-      py::cast<SignatureEnumKind>(arg_default) == SignatureEnumKind::kKindEmptyDefaultValue) {
-    default_value = nullptr;
-  } else {
-    default_value = parse::data_converter::PyDataToValue(arg_default);
-  }
-}
-
-Signature::Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind)
-    : name(arg_name),
-      rw(rw_tag),
-      kind(arg_kind),
-      default_value(nullptr),
-      dtype(SignatureEnumDType::kDTypeEmptyDefaultValue) {}
-
+// Bind SignatureEnumRW as a python class.
 REGISTER_PYBIND_DEFINE(SignatureEnumRW, ([](const py::module *m) {
                          (void)py::enum_<SignatureEnumRW>(*m, "signature_rw", py::arithmetic())
                            .value("RW_READ", SignatureEnumRW::kRWRead)
