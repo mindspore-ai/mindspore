@@ -1152,7 +1152,6 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
 
   // get varibale name of 'x' in statement 'for x in xs'
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
-  auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(target_node, "id"));
 
   // create statement 'len(xs)'
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
@@ -1174,13 +1173,11 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   body_block->AddPrevBlock(header_block);
   // create 'x = xs[i]'
   CNodePtr target_var = body_block->func_graph()->NewCNode({op_getitem, iter_node, loop_var});
-  target_var->debug_info()->set_name(name_id);
-  body_block->WriteVariable(name_id, target_var);
+  WriteAssignVars(body_block, target_node, target_var);
   // create 'i = i + 1'
   CNodePtr loop_var_inc =
     body_block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarAdd), loop_var, NewValueNode(1)});
   body_block->WriteVariable(loop_var->name(), loop_var_inc);
-  loop_var_inc->debug_info()->set_name(name_id);
 
   // link the variable name with the target
   auto it_info = std::make_shared<TraceIterator>(loop_var_inc->debug_info());
