@@ -1106,7 +1106,7 @@ StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGra
 
   uint32_t pre_stream_id = UINT32_MAX;
   uint32_t next_stream_id = UINT32_MAX;
-  int32_t start = SizeToInt(index);
+  int32_t start = SizeToInt(index) - 1;
   for (int32_t i = start; i >= 0; i--) {
     auto cnode = exe_orders[IntToSize(i)];
     auto name = AnfAlgo::GetCNodeName(cnode);
