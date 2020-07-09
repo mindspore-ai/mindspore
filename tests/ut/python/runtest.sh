@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 CURRPATH=$(cd $(dirname $0); pwd)
 IGNORE_EXEC="--ignore=$CURRPATH/exec"
 PROJECT_PATH=$(cd ${CURRPATH}/../../..; pwd)

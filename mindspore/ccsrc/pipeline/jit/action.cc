@@ -314,6 +314,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
   auto context_ptr = MsContext::GetInstance();
+  std::string backend = MsContext::GetInstance()->backend_policy();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (CompileGraphs::ContainMixedTarget(func_graph)) {
     bc_ptr->set_is_multi_graph_sink(false);
@@ -321,13 +322,13 @@ bool TaskEmitAction(const ResourcePtr &res) {
     context_ptr->set_loop_sink_flag(false);
   } else if (context_ptr->execution_mode() != kPynativeMode) {
     std::string device_target = context_ptr->device_target();
-    if (device_target == kAscendDevice) {
+    if (device_target == kAscendDevice && backend != kMsVm) {
       bc_ptr->set_is_multi_graph_sink(true);
       context_ptr->set_is_multi_graph_sink(true);
     }
   }
 
-  if (IsCtrlSink()) {
+  if (IsCtrlSink() && backend == kMsConvert) {
     res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
     return true;
   }
@@ -344,8 +345,8 @@ bool ExecuteAction(const ResourcePtr &res) {
   if (res->results().count(kOutput) == 0) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
-
-  if (IsCtrlSink()) {
+  std::string backend = MsContext::GetInstance()->backend_policy();
+  if (IsCtrlSink() && backend == kMsConvert) {
     if (!res->results()[kOutput].is<GraphId>()) {
       MS_LOG(EXCEPTION) << "Execute args error";
     }

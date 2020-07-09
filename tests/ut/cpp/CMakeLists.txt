@@ -58,6 +58,7 @@ add_subdirectory(serving)
 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/core/base/*.cc"
+        "../../../mindspore/core/gvar/*.cc"
         "../../../mindspore/core/abstract/*.cc"
         "../../../mindspore/core/ir/*.cc"
         "../../../mindspore/core/utils/*.cc"

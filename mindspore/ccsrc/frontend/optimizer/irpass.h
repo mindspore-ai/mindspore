@@ -55,6 +55,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr env_get_item_eliminate_;
   SubstitutionPtr new_env_get_item_;
   SubstitutionPtr incorporate_env_getitem_;
+  SubstitutionPtr incorporate_env_getitem_bypass_recursive_;
   SubstitutionPtr incorporate_env_getitem_switch_;
 
   // Ref eliminate
@@ -80,6 +81,7 @@ class OptimizeIRPassLib {
 
   // inline
   SubstitutionPtr inline_;
+  SubstitutionPtr inline_without_move_;
   SubstitutionPtr replace_applicator_;
   SubstitutionPtr specialize_transform_;
 
@@ -192,6 +194,16 @@ inline bool IsCNodeDup(const AnfNodePtr &node) {
 
   auto inp0 = node->cast<CNodePtr>()->input(0);
   return (inp0 != nullptr) && inp0->isa<CNode>();
+}
+
+// check if the cnode is a switch cnode
+inline bool IsCNodeSwitch(const AnfNodePtr &node) {
+  if (node != nullptr) {
+    if (node->isa<CNode>()) {
+      return IsPrimitiveCNode(node, prim::kPrimSwitch);
+    }
+  }
+  return false;
 }
 }  // namespace irpass
 }  // namespace opt

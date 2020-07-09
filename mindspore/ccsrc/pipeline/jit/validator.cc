@@ -34,6 +34,7 @@ using mindspore::abstract::AbstractError;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractRef;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractSparseTensor;
@@ -83,7 +84,8 @@ void ValidateAbstract(const AnfNodePtr &node) {
       // only send string in external
       if (!IsValueNode<StringImm>(node)) {
         // Validate a type.
-        MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString();
+        MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString()
+                          << " for node=" << node->DebugString();
       }
     }
     return;
@@ -96,7 +98,7 @@ void ValidateAbstract(const AnfNodePtr &node) {
 
   if (ptrBase->isa<AbstractType>() || ptrBase->isa<AbstractFunction>() || ptrBase->isa<AbstractTuple>() ||
       ptrBase->isa<AbstractList>() || ptrBase->isa<AbstractTensor>() || ptrBase->isa<AbstractRowTensor>() ||
-      ptrBase->isa<AbstractSparseTensor>() || ptrBase->isa<abstract::AbstractRefKey>()) {
+      ptrBase->isa<AbstractSparseTensor>() || ptrBase->isa<abstract::AbstractRefKey>() || ptrBase->isa<AbstractRef>()) {
     return;
   }
 

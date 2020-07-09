@@ -412,6 +412,16 @@ class TraceCombileLikeGraphs : public TraceInfo {
     return std::make_shared<TraceCombileLikeGraphs>(*shared_from_base<TraceCombileLikeGraphs>());
   }
 };
+
+class TraceSegmentTransform : public TraceInfo {
+ public:
+  explicit TraceSegmentTransform(const DebugInfoPtr &info) : TraceInfo(info, "segment_transform", "") {}
+  MS_DECLARE_PARENT(TraceGetEnv, TraceInfo);
+  ~TraceSegmentTransform() override = default;
+  TraceInfoPtr clone() override {
+    return std::make_shared<TraceSegmentTransform>(*shared_from_base<TraceSegmentTransform>());
+  }
+};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_TRACE_INFO_H_

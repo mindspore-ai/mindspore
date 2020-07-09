@@ -26,6 +26,30 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+namespace internal {
+class GetRefValueTransform {
+ public:
+  GetRefValueTransform() {}
+  ~GetRefValueTransform() = default;
+
+  AnfNodePtr operator()(const AnfNodePtr &node) {
+    CNodePtr cnode = node->cast<CNodePtr>();
+    auto inputs = cnode->inputs();
+    auto fg = GetValueNode(inputs[0])->cast<FuncGraphPtr>();
+    if (fg->recursive()) {
+      MS_LOG(DEBUG) << "Get refvalue by pass recursive:" << fg->ToString();
+      return node;
+    }
+    auto new_fg = TransformableClone(fg, std::make_shared<TraceTransform>("GetRefValue"));
+    auto output = new_fg->output();
+    new_fg->set_output(new_fg->NewCNode({NewValueNode(prim::kPrimGetRefValue), output}));
+    inputs[0] = NewValueNode(new_fg);
+    auto ret_node = cnode->func_graph()->NewCNode(inputs);
+    return ret_node;
+  }
+};
+}  // namespace internal
+
 // {prim::kPrimMakeRef, X, Y, Z} -> Y
 class MakeRefEliminater : public OptimizerCaller {
  public:
@@ -48,13 +72,23 @@ class GetRefParamEliminater : public OptimizerCaller {
 
 // {prim::kPrimGetRefKey, {prim::kPrimMakeRef, X, Y, Z}} -> X
 // {prim::kPrimGetRefValue, {prim::kPrimMakeRef, X, Y, Z}} -> Y
+// {prim::kPrimGetRefValue, {prim::switch, cond, t, f}} -> {prim::switch, cond, t, f}
 class GetMakeRefEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> x, y, z;
     MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefKey, PPrimitive(prim::kPrimMakeRef, x, y, z)), x);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimGetRefValue, PPrimitive(prim::kPrimMakeRef, x, y, z)), y);
-
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimGetRefValue, x), x, x.CheckFunc(IsCNodeSwitch, node));
+    internal::GetRefValueTransform trans;
+    auto GetRefLambda = [&trans, &x, &node]() -> AnfNodePtr {
+      auto rep = trans(x.GetNode(node));
+      if (rep != nullptr) {
+        return rep;
+      }
+      return nullptr;
+    };
+    MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimGetRefValue, x), GetRefLambda, x.CheckFunc(IsCNodeGraph, node));
     return nullptr;
   }
 };

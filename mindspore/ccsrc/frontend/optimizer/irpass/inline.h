@@ -93,10 +93,22 @@ bool IsCore(const FuncGraphPtr &fg, AnfNodePtr) { return fg->has_flag("core"); }
 
 bool NoCriterion(FuncGraphPtr, AnfNodePtr) { return true; }
 
+bool IsDirectParentCall(FuncGraphPtr fg, AnfNodePtr node) {
+  bool unique_use = IsUniqueUse(fg, nullptr);
+  bool is_recursive = fg->recursive();
+  if (fg->parent() != nullptr && is_recursive) {
+    if (fg->parent() == node->func_graph() && unique_use) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // {G, Xs}
 class InlinerBase : public AnfVisitor {
  public:
-  explicit InlinerBase(std::vector<std::pair<CriterionFuncType, bool>> criterions) : criterions_(criterions) {}
+  explicit InlinerBase(std::vector<std::pair<CriterionFuncType, bool>> criterions, bool use_move = true)
+      : use_move_(use_move), criterions_(criterions) {}
   ~InlinerBase() override = default;
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     if (!node->isa<CNode>()) {
@@ -113,6 +125,7 @@ class InlinerBase : public AnfVisitor {
     if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub()) {
       return nullptr;
     }
+
     // Do not inline GraphKernel to Cell.
     if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
       // If the GraphKernel only contains a return node, we make it inlined.
@@ -142,8 +155,12 @@ class InlinerBase : public AnfVisitor {
 
     std::vector<AnfNodePtr> params;
     (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(params));
-
-    if (IsUniqueUse(fg, nullptr)) {
+    // compare size to avoid the case that the function has default value after grad.
+    // for which after renormalize, the function default value will be an input
+    if (fg->parameters().size() != params.size()) {
+      return nullptr;
+    }
+    if (use_move_ && IsUniqueUse(fg, nullptr)) {
       auto mng = fg->manager();
       MS_EXCEPTION_IF_NULL(mng);
       ReplaceParams(mng, params, fg);
@@ -183,20 +200,35 @@ class InlinerBase : public AnfVisitor {
 
  private:
   bool is_checked_{false}, is_recursive_{false};
+  bool use_move_;
   std::vector<std::pair<CriterionFuncType, bool>> criterions_;
 };
 
 class Inliner : public InlinerBase {
  public:
-  Inliner()
-      : InlinerBase({
-          {IsUniqueUse, true},
-          {IsTrivial, false},
-          {IsInside, false},
-          {IsCore, false},
-          {NoCriterion, true},
-        }) {}
+  explicit Inliner(bool use_move = true)
+      : InlinerBase(
+          {
+            {IsUniqueUse, true},
+            {IsTrivial, false},
+            {IsInside, false},
+            {IsCore, false},
+            {IsDirectParentCall, false},
+            {NoCriterion, true},
+          },
+          use_move) {}
   ~Inliner() override = default;
+};
+
+class DirectInliner : public InlinerBase {
+ public:
+  explicit DirectInliner(bool use_move = true)
+      : InlinerBase(
+          {
+            {IsDirectParentCall, false},
+          },
+          use_move) {}
+  ~DirectInliner() override = default;
 };
 }  // namespace irpass
 }  // namespace opt

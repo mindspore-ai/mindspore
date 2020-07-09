@@ -87,10 +87,12 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   env_get_item_eliminate_ =
     MakeSubstitution(std::make_shared<EnvGetItemEliminater>(), "env_get_item_eliminate", prim::kPrimEnvGetItem);
   new_env_get_item_ = MakeSubstitution(std::make_shared<NewEnvGetItem>(), "new_env_get_item", prim::kPrimEnvGetItem);
-  incorporate_env_getitem_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(), "incorporate_env_get_item", prim::kPrimEnvGetItem);
+  incorporate_env_getitem_bypass_recursive_ =
+    MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(true), "incorporate_env_get_item", prim::kPrimEnvGetItem);
   incorporate_env_getitem_switch_ = MakeSubstitution(std::make_shared<IncorporateEnvGetitemSwitch>(),
                                                      "incorporate_env_getitem_switch", prim::kPrimEnvGetItem);
+  incorporate_env_getitem_ =
+    MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(), "incorporate_env_get_item", prim::kPrimEnvGetItem);
 
   // Ref eliminate
   make_ref_eliminate_ =
@@ -122,6 +124,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // inline
   inline_ = MakeSubstitution(std::make_shared<Inliner>(), "inline", IsCNodeGraph);
+  inline_without_move_ = MakeSubstitution(std::make_shared<DirectInliner>(false), "inline", IsCNodeGraph);
   replace_applicator_ =
     MakeSubstitution(std::make_shared<ReplaceApplicator>(), "replace_applicator", IsValueNode<FuncGraph>);
   specialize_transform_ =

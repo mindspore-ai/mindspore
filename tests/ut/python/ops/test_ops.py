@@ -34,7 +34,6 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
-
 class InputBackward(nn.Cell):
     def __init__(self, network):
         super(InputBackward, self).__init__()

@@ -28,6 +28,10 @@ using HashCache = std::unordered_map<std::size_t, std::vector<AnfNodePtr>>;
 using HashValue = std::unordered_map<AnfNodePtr, std::size_t>;
 
 void TryToDoReplace(FuncGraphManager *manager, const AnfNodePtr &node, HashCache *hash_cache, HashValue *hash_value);
+size_t HashOfGraph(const FuncGraphPtr &fg);
+bool IsCNodeGraph(const AnfNodePtr &node);
+bool MergeDuplicateGraphs(const FuncGraphManagerPtr manager);
+
 }  // namespace pipeline
 }  // namespace mindspore
 

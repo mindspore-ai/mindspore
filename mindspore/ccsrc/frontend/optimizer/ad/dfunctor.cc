@@ -189,6 +189,11 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   if (!morph->isa<CNode>()) {
     return nullptr;
   }
+  // for free variable, which may be handled in MapValueObject, just return it
+  auto node_adjoint_found = anfnode_to_adjoin_.find(morph);
+  if (node_adjoint_found != anfnode_to_adjoin_.end()) {
+    return node_adjoint_found->second;
+  }
   ScopeGuard scope_guard(morph->scope());
   auto cnode_morph = morph->cast<CNodePtr>();
 
@@ -502,7 +507,7 @@ void DFunctor::MapFvObject() {
     if (parent_adjoint != nullptr) {
       adjoint = std::make_shared<Adjoint>(node, parent_adjoint->k(), tape_);
     } else {
-      if (is_top_ || node->isa<Parameter>() || !IsInScope(node)) {
+      if (is_top_ || node->isa<Parameter>()) {
         // Out of ad scope, add adjoint for free variables.
         adjoint = std::make_shared<Adjoint>(node, node, tape_);
         UpdateAdjoint(adjoint);

@@ -452,6 +452,10 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   }
   auto other_tensor = dyn_cast<AbstractTensor>(other);
   if (other_tensor == nullptr) {
+    auto ref_tensor = dyn_cast<AbstractRef>(other);
+    if (ref_tensor != nullptr) {
+      return this->Join(ref_tensor->ref());
+    }
     MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
   }
   if (*this == *other) {

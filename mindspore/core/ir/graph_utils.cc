@@ -48,7 +48,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
       continue;
     }
     if (rank.find(node) != rank.end() && rank[node] != todo.size()) {
-      MS_LOG(EXCEPTION) << "Graph exists cycle, node " << node->DebugString();
+      MS_LOG(EXCEPTION) << "Graph exists cycle, node " << node->DebugString(2);
     }
     rank[node] = todo.size();
     bool cont = false;
