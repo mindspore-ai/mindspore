@@ -453,6 +453,7 @@ void ProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &
     GetOpNodeTypeAndAttrs(func_graph, op, node_proto);
     node_proto->set_name(std::to_string(apply_idx));
     node_proto->set_scope(node->scope()->name());
+    node_proto->set_full_name(node->fullname_with_scope());
 
     // process OP inputs
     for (size_t i = 1; i < inputs.size(); ++i) {
