@@ -21,7 +21,6 @@
 #include <string>
 
 #include "session/anf_runtime_algorithm.h"
-#include "common/utils.h"
 #include "utils/utils.h"
 #include "operator/ops.h"
 #include "pre_activate/common/helper.h"
@@ -51,7 +50,7 @@ CNodePtr GenerateSquareSumV1(const FuncGraphPtr &graph, const CNodePtr &square, 
   square_sumv1->set_scope(sum->scope());
   AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv1);
   AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv1);
-  auto names = MakeValue<std::vector<std::string>>({prim::kPrimSquare->name(), prim::kPrimReduceSum->name()});
+  auto names = MakeValue<std::vector<std::string>>({square->fullname_with_scope(), sum->fullname_with_scope()});
   AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, names, square_sumv1);
   return square_sumv1;
 }
@@ -74,7 +73,7 @@ CNodePtr GenerateSquareSumV2(const FuncGraphPtr &graph, const CNodePtr &square, 
   square_sumv2->set_scope(sum->scope());
   AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv2);
   AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv2);
-  auto names = MakeValue<std::vector<std::string>>({prim::kPrimSquare->name(), prim::kPrimReduceSum->name()});
+  auto names = MakeValue<std::vector<std::string>>({square->fullname_with_scope(), sum->fullname_with_scope()});
   AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, names, square_sumv2);
   return square_sumv2;
 }

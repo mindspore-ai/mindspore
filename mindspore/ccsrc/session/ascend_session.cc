@@ -337,6 +337,7 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   GenerateTaskInfo(root_graph);
   // load task into device
   LoadTask(root_graph);
+  DumpAllGraphs(all_graphs);
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();
   return graph_id;
@@ -418,7 +419,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   }
   // sync the inital const tensor to device
   SyncInitialTenosrToDevice();
-  ExportChildGraphs(graph_id);
+  DumpAllGraphs({graph});
   MS_LOG(INFO) << "End";
 }
 
@@ -762,7 +763,7 @@ void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::ExportChildGraphs(const GraphId graph_id) {
+void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -774,21 +775,11 @@ void AscendSession::ExportChildGraphs(const GraphId graph_id) {
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
-  if (graph_id == final_graph_id_) {
-    const auto &graph_order = GetGraphOrder(final_graph_id_);
-    const auto &graph_type = GetGraphOrderType(final_graph_id_);
-    for (size_t i = 0; i < graph_order.size(); i++) {
-      if (graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START) {
-        continue;
-      }
-      const auto child_graph = GetGraph(graph_order[i]);
-      MS_LOG(DEBUG) << "Start export child graph " << graph_order[i];
-      MS_EXCEPTION_IF_NULL(child_graph);
-      std::string file_path = save_graphs_path + "/graph_build_" + std::to_string(child_graph->graph_id()) + ".ir";
-      DumpIR(file_path, child_graph, true);
-      DumpIRProto(child_graph, "vm_build_" + std::to_string(child_graph->graph_id()));
-      MS_LOG(DEBUG) << "End export child graph " << graph_order[i];
-    }
+  for (auto &graph : all_graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    std::string file_path = save_graphs_path + "/graph_build_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_path, graph, true);
+    DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
   }
 #endif
 }

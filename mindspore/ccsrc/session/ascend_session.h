@@ -85,7 +85,7 @@ class AscendSession : public SessionBasic {
   void LoadTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void ExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void ExportChildGraphs(const GraphId graph_id);
+  void DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs);
   void LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
