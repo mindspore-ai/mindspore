@@ -18,7 +18,6 @@
 
 #include <unistd.h>
 #include <map>
-#include "pybind11/pybind11.h"
 #include "debug/trace.h"
 
 // namespace to support utils module definition
@@ -219,16 +218,10 @@ void LogWriter::operator^(const LogStream &stream) const {
   trace::TraceGraphEval();
   trace::GetEvalStackInfo(oss);
 
-  if (exception_type_ == IndexError) {
-    throw pybind11::index_error(oss.str());
+  if (exception_handler_ != nullptr) {
+    exception_handler_(exception_type_, oss.str());
   }
-  if (exception_type_ == ValueError) {
-    throw pybind11::value_error(oss.str());
-  }
-  if (exception_type_ == TypeError) {
-    throw pybind11::type_error(oss.str());
-  }
-  pybind11::pybind11_fail(oss.str());
+  throw std::runtime_error(oss.str());
 }
 
 static std::string GetEnv(const std::string &envvar) {
