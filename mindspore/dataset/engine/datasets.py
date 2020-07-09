@@ -44,7 +44,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_split, check_bucket_batch_by_length, check_cluedataset
+    check_split, check_bucket_batch_by_length, check_cluedataset, check_positive_int32
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -939,6 +939,7 @@ class Dataset:
             raise TypeError("apply_func must return a dataset.")
         return dataset
 
+    @check_positive_int32
     def device_que(self, prefetch_size=None):
         """
         Return a transferredDataset that transfer data through device.
@@ -956,6 +957,7 @@ class Dataset:
         """
         return self.to_device()
 
+    @check_positive_int32
     def to_device(self, num_batch=None):
         """
         Transfer data through CPU, GPU or Ascend devices.
@@ -973,7 +975,7 @@ class Dataset:
         Raises:
             TypeError: If device_type is empty.
             ValueError: If device_type is not 'Ascend', 'GPU' or 'CPU'.
-            ValueError: If num_batch is None or 0 or larger than int_max.
+            ValueError: If num_batch is negative or larger than int_max.
             RuntimeError: If dataset is unknown.
             RuntimeError: If distribution file path is given but failed to read.
         """

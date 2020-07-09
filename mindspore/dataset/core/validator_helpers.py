@@ -95,7 +95,7 @@ def check_uint32(value, arg_name=""):
 
 def check_pos_int32(value, arg_name=""):
     type_check(value, (int,), arg_name)
-    check_value(value, [POS_INT_MIN, INT32_MAX])
+    check_value(value, [POS_INT_MIN, INT32_MAX], arg_name)
 
 
 def check_uint64(value, arg_name=""):
@@ -143,6 +143,8 @@ def check_columns(columns, name):
 
         col_names = ["{0}[{1}]".format(name, i) for i in range(len(columns))]
         type_check_list(columns, (str,), col_names)
+        if len(set(columns)) != len(columns):
+            raise ValueError("Every column name should not be same with others in column_names.")
 
 
 def parse_user_args(method, *args, **kwargs):
