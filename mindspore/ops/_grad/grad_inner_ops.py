@@ -15,6 +15,7 @@
 
 """array_ops"""
 
+from .. import operations as P
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -24,6 +25,7 @@ from .grad_base import bprop_getters
 @bprop_getters.register(inner.StridedSliceAICPU)
 def get_bprop_strided_slice_aicpu(self):
     """Generate bprop for StridedSlice"""
+    shape_op = P.Shape()
     input_grad = G.StridedSliceGradAICPU(self.begin_mask,
                                          self.end_mask,
                                          self.ellipsis_mask,
