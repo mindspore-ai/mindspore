@@ -69,7 +69,7 @@ class SequentialCell(Cell):
     Alternatively, an ordered dict of cells can also be passed in.
 
     Args:
-        args (list, optional): List of subclass of Cell.
+        args (list, OrderedDict): List of subclass of Cell.
 
     Raises:
         TypeError: If arg is not of type list or OrderedDict.
