@@ -22,14 +22,16 @@ run_ascend()
     exit 1
     fi
 
-    if [ ! -d $5 ]
+    if [ ! -d $5 ] && [ ! -f $5 ]
     then
-        echo "error: DATASET_PATH=$5 is not a directory"
+        echo "error: DATASET_PATH=$5 is not a directory or file"
     exit 1
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+    export MINDSPORE_HCCL_CONFIG_PATH=$4
+    export RANK_TABLE_FILE=$4
     if [ -d "../train" ];
     then
         rm -rf ../train
@@ -38,8 +40,7 @@ run_ascend()
     cd ../train || exit
     python ${BASEPATH}/../src/launch.py \
             --nproc_per_node=$2 \
-            --visible_devices=$4 \
-            --server_id=$3 \
+            --visible_devices=$3 \
             --training_script=${BASEPATH}/../train.py \
             --dataset_path=$5 \
             --pre_trained=$6 \
@@ -80,7 +81,7 @@ run_gpu()
 if [ $# -gt 6 ] || [ $# -lt 4 ]
 then
     echo "Usage:\n \
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
+          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [MINDSPORE_HCCL_CONFIG_PATH] [DATASET_PATH] [CKPT_PATH]\n \
           GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
           "
 exit 1
