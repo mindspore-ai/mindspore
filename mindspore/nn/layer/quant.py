@@ -920,7 +920,7 @@ class HSwishQuant(_QuantActivation):
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
-        if isinstance(activation, nn.HSwish):
+        if issubclass(activation, nn.HSwish):
             self.act = activation()
         else:
             raise ValueError("Activation should be `nn.HSwish`")
@@ -989,7 +989,7 @@ class HSigmoidQuant(_QuantActivation):
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
-        if isinstance(activation, nn.HSwish):
+        if issubclass(activation, nn.HSwish):
             self.act = activation()
         else:
             raise ValueError("Activation should be `nn.HSigmoid`")
