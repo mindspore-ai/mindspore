@@ -237,12 +237,14 @@ class PrimitiveWithInfer(Primitive):
         """
         Infer output shape based on input shape.
 
-        Args:
-            inputs (tuple(int)): dimensions of input tensors.
-            outputs (tuple(int)): dimensions of output tensors.
-
         Note:
             The shape of scalar is an empty tuple.
+
+        Args:
+            args (tuple(int)): shapes of input tensors.
+
+        Return:
+            `tuple(int)`, shapes of output tensors.
         """
         return None
 
@@ -251,8 +253,10 @@ class PrimitiveWithInfer(Primitive):
         Infer output dtype based on input dtype.
 
         Args:
-            inputs (mstype): data type of inputs.
-            outputs (mstype): data type of outputs.
+            args (:class:`mindspore.dtype`): data type of inputs.
+
+        Return:
+            :class:`mindspore.dtype`, data type of outputs.
         """
         return None
 
@@ -261,8 +265,10 @@ class PrimitiveWithInfer(Primitive):
         Infer output value based on input value at compile time.
 
         Args:
-            inputs (any): value of inputs.
-            outputs (any): value of outputs.
+            args (Any): value of inputs.
+
+        Return:
+            Value of outputs. Return `None` for, cat not infer the value at compile time.
         """
         return None
 

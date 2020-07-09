@@ -328,6 +328,9 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
       x = cnode->input(1);
       count += 1;
     }
+    if (x->isa<Parameter>()) {
+      fake_quant_table[weight_name] = std::make_pair(nullptr, "input");
+    }
     // get the fakequant parameter minq's name
     if (!is_quant_cnode(x)) {
       continue;

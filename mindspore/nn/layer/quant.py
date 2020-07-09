@@ -1169,9 +1169,9 @@ class QuantBlock(Cell):
         return x
 
     def extend_repr(self):
-        str_info = f'quant={self.quant}, core_op={type(self.core_op)}'
+        str_info = f'quant={self.quant}, core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
         if self.has_bias:
-            str_info = str_info + f', bias={self.bias}'
+            str_info = str_info + f', bias=shape[{self.bias.shape}]'
         if self.has_act:
             str_info = str_info + f', activation={self.activation}'
         str_info = str_info + f', dequant={self.dequant}'
