@@ -1002,6 +1002,7 @@ CNodePtr Parser::GenerateIteratorInFor(const FunctionBlockPtr &block, const py::
   AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
   return block->func_graph()->NewCNode({op_iter, iter_anf_node});
 }
+
 CNodePtr Parser::GenerateCondInFor(const ParameterPtr &iter_param, const FunctionBlockPtr &header_block,
                                    const AnfNodePtr &op_hasnext) {
   MS_EXCEPTION_IF_NULL(header_block);
@@ -1018,12 +1019,57 @@ FunctionBlockPtr Parser::GenerateBlockInFor(const TraceInfoPtr &trace_info) {
 // A for loop will generate 3 functions :the test, the body, and the continuation
 // for x in xs:
 //    body
-// it  compiled to be following statement
+// it is compiled to be following statement
+// if len(xs) < max_loop_cnt:
+//    ParseForIter()  // use iter to implement for loop, which always unroll loop
+// else:
+//    ParseForLoop()  // use loop var to implement for loop, which always sink loop
+FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast For, create an if else statement";
+  MS_EXCEPTION_IF_NULL(block);
+  // create statement 'len(xs) < prim::MAX_FOR_LOOP_COUNT'
+  AnfNodePtr op_len = block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
+  py::object iter_obj = python_adapter::GetPyObjAttr(node, NAMED_PRIMITIVE_ITER);
+  AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
+  CNodePtr len_iter = block->func_graph()->NewCNode({op_len, iter_node});
+  CNodePtr bool_node = block->func_graph()->NewCNode(
+    {NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(prim::MAX_FOR_LOOP_COUNT)});
+
+  // create statement 'if len(xs) < prim::MAX_FOR_LOOP_COUNT then ParseForIter else ParseForLoop'
+  TraceManager::DebugTrace(std::make_shared<TraceIfStmtTrueBranch>(block->func_graph()->debug_info()));
+  FunctionBlockPtr true_block = MakeFunctionBlock(*this);
+  TraceManager::EndTrace();
+
+  TraceManager::DebugTrace(std::make_shared<TraceIfStmtFalseBranch>(block->func_graph()->debug_info()));
+  FunctionBlockPtr false_block = MakeFunctionBlock(*this);
+  TraceManager::EndTrace();
+
+  MakeConditionBlocks(block, true_block, false_block);
+
+  TraceManager::DebugTrace(std::make_shared<TraceIfStmtAfterBranch>(block->func_graph()->debug_info()));
+  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
+  TraceManager::EndTrace();
+
+  FunctionBlockPtr true_end = ParseForIter(true_block, node);
+  true_end->Jump(after_block, nullptr);
+
+  FunctionBlockPtr false_end = ParseForLoop(false_block, node);
+  false_end->Jump(after_block, nullptr);
+
+  block->ConditionalJump(bool_node, true_block, false_block);
+  after_block->Mature();
+  return after_block;
+}
+
+// A for loop will generate 3 functions :the test, the body, and the continuation
+// for x in xs:
+//    body
+// it is compiled to be following statement
 // it = iter(xs)
 // while hastnext(it)
 //    x, it = next(it)
 //    body
-FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::object &node) {
+FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For";
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
@@ -1088,6 +1134,91 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   // No 'break', no end_block.
   return after_block;
 }
+
+// A for loop will generate 3 functions :the test, the body, and the continuation
+// for x in xs:
+//    body
+// it is compiled to be following statement
+// i = 0
+// while i < len(xs)
+//    x = xs[i]
+//    i = i + 1
+//    body
+FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast For by loop variable";
+  MS_EXCEPTION_IF_NULL(block);
+  AnfNodePtr op_len = block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
+  AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
+
+  // get varibale name of 'x' in statement 'for x in xs'
+  py::object target_node = python_adapter::GetPyObjAttr(node, "target");
+  auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(target_node, "id"));
+
+  // create statement 'len(xs)'
+  py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
+  AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
+  MS_EXCEPTION_IF_NULL(iter_node);
+  CNodePtr len_iter = block->func_graph()->NewCNode({op_len, iter_node});
+
+  FunctionBlockPtr header_block =
+    GenerateBlockInFor(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(header_block);
+  // create loop variable 'i'
+  ParameterPtr loop_var = header_block->func_graph()->add_parameter();
+  // create loop condition 'i < len(xs)'
+  CNodePtr cond_node = header_block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarLt), loop_var, len_iter});
+
+  // generate the body of the for statement
+  FunctionBlockPtr body_block = GenerateBlockInFor(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(body_block);
+  body_block->AddPrevBlock(header_block);
+  // create 'x = xs[i]'
+  CNodePtr target_var = body_block->func_graph()->NewCNode({op_getitem, iter_node, loop_var});
+  target_var->debug_info()->set_name(name_id);
+  body_block->WriteVariable(name_id, target_var);
+  // create 'i = i + 1'
+  CNodePtr loop_var_inc =
+    body_block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarAdd), loop_var, NewValueNode(1)});
+  body_block->WriteVariable(loop_var->name(), loop_var_inc);
+  loop_var_inc->debug_info()->set_name(name_id);
+
+  // link the variable name with the target
+  auto it_info = std::make_shared<TraceIterator>(loop_var_inc->debug_info());
+  loop_var->debug_info()->set_trace_info(it_info);
+  len_iter->debug_info()->set_trace_info(it_info);
+
+  TraceManager::DebugTrace(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
+  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
+  MS_EXCEPTION_IF_NULL(after_block);
+  TraceManager::EndTrace();
+  after_block->AddPrevBlock(header_block);
+
+  block->Jump(header_block, NewValueNode(0));
+  body_block->Mature();
+
+  header_block->ConditionalJump(cond_node, body_block, after_block, false);
+
+  // Parse loop body statements with loop context.
+  LoopContext loop_context{&loops_, header_block, loop_var_inc};
+  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
+  FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
+  if (after_body_block->func_graph()->get_return() == nullptr) {
+    after_body_block->Jump(header_block, loop_var_inc);
+  }
+
+  header_block->Mature();
+  after_block->Mature();
+  auto &end_block = loop_context.EndBlock();
+  if (end_block) {
+    // end_block exists if we encounter 'break' in loop body.
+    after_block->Jump(end_block, nullptr);
+    end_block->Mature();
+    return end_block;
+  }
+  // No 'break', no end_block.
+  return after_block;
+}
+
 AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast IfExp";
   MS_EXCEPTION_IF_NULL(block);

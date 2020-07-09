@@ -621,11 +621,8 @@ void Pipeline::Run() {
           draw::Draw(base_name + ".dot", graph);
           // generate IR file in human readable format
           DumpIR(base_name + ".ir", graph);
-
           // generate IR file in a heavily commented format, which can also be reloaded
-          if (action.first != "parse") {
-            ExportIR(base_name + ".dat", std::to_string(i), graph);
-          }
+          ExportIR(base_name + ".dat", std::to_string(i), graph);
         }
 #ifdef MS_DEBUG
         // Dump graph cnode list

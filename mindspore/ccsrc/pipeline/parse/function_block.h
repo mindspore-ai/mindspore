@@ -59,7 +59,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   CNodePtr ForceToWhileCond(const AnfNodePtr &cond);
   void Jump(const FunctionBlockPtr &block, AnfNodePtr node);
   AnfNodePtr SearchReplaceNode(const std::string &var, const ParameterPtr &phi);
-  void ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &trueBlock, const FunctionBlockPtr &falseBlock);
+  void ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &trueBlock, const FunctionBlockPtr &falseBlock,
+                       bool unroll_loop = true);
   // record the assign statement of self.xx weight parameter ,which will use state_setitem op
   void SetStateAssgin(const AnfNodePtr &target, const std::string &readid);
   void AddAutoDepend(const AnfNodePtr &target);

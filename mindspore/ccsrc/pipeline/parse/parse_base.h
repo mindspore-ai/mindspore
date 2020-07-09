@@ -87,6 +87,7 @@ const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 const char PYTHON_MOD_GET_DEFAULT_INPUT[] = "get_default_input";
 
 // define the common name
+const char NAMED_PRIMITIVE_LEN[] = "len";
 const char NAMED_PRIMITIVE_ITER[] = "iter";
 const char NAMED_PRIMITIVE_NEXT[] = "next";
 const char NAMED_PRIMITIVE_GETITEM[] = "getitem";

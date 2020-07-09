@@ -95,7 +95,7 @@ AbstractBasePtr InferImplDot(const AnalysisEnginePtr &, const PrimitivePtr &prim
   return std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(param));
 }
 
-AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
+AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &prim,
                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: condition, true branch, false branch
   if (args_spec_list.size() != 3) {
@@ -107,6 +107,11 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
   auto tb = args_spec_list[1];
   auto fb = args_spec_list[2];
   MS_EXCEPTION_IF_NULL(cond);
+
+  auto unroll_flag = prim->GetAttr(prim::SWITCH_UNROLL_FLAG);
+  if (unroll_flag != nullptr && GetValue<int>(unroll_flag) == 0) {
+    return tb->Join(fb);
+  }
 
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);

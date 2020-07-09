@@ -294,13 +294,18 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, AnfNodePtr node) 
 // Perform a conditional jump using switch operation.
 // The first CNode select graph with condition, and than execute this graph
 void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &true_block,
-                                    const FunctionBlockPtr &false_block) {
+                                    const FunctionBlockPtr &false_block, bool unroll_loop) {
   if (func_graph()->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
   }
+  // Here we need set an attribute to primtive 'switch', so we create a new variable instead of global 'kPrimSwitch'
+  auto prim_switch = std::make_shared<Primitive>(prim::kPrimSwitch->name());
+  if (!unroll_loop) {
+    prim_switch->AddAttr(prim::SWITCH_UNROLL_FLAG, MakeValue(0));
+  }
   CNodePtr switch_app =
-    func_graph()->NewCNode({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
+    func_graph()->NewCNode({NewValueNode(prim_switch), condNode, NewValueNode(true_block->func_graph()),
                             NewValueNode(false_block->func_graph())});
   CNodePtr switch_app_new = func_graph()->NewCNode({switch_app});
   func_graph()->set_output(switch_app_new);

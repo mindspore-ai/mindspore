@@ -294,6 +294,12 @@ extern const PrimitivePtr kPrimIndexedSlicesGetIndices;
 extern const PrimitivePtr kPrimIndexedSlicesGetDenseShape;
 extern const PrimitivePtr kPrimIsIndexedSlices;
 
+// attribute 'unroll_flag' of primitive 'switch', when 'unroll_flag' is '0', 'switch' will not unroll
+const char SWITCH_UNROLL_FLAG[] = "unroll_flag";
+// max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
+//  will be sunk(i.e. not unrolled)
+const int MAX_FOR_LOOP_COUNT = 200;
+
 class DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)

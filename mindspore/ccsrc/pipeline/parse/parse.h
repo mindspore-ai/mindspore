@@ -106,6 +106,8 @@ class Parser {
   FunctionBlockPtr ParseWhile(const FunctionBlockPtr &block, const py::object &node);
   // process a for statement
   FunctionBlockPtr ParseFor(const FunctionBlockPtr &block, const py::object &node);
+  FunctionBlockPtr ParseForIter(const FunctionBlockPtr &block, const py::object &node);
+  FunctionBlockPtr ParseForLoop(const FunctionBlockPtr &block, const py::object &node);
   // process a function def statement
   FunctionBlockPtr ParseFunctionDef(const FunctionBlockPtr &block, const py::object &node);
   // process a augment assign
