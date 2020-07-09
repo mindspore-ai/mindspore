@@ -42,7 +42,8 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opFuntions) {
   TensorRow input, output;
   std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
 
-  std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("今天天气太好了我们一起去外面玩吧");
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateScalar<std::string>("今天天气太好了我们一起去外面玩吧", &input_tensor);
   input.push_back(input_tensor);
   Status s = op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
@@ -66,7 +67,8 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opAdd) {
   std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
 
   op->AddWord("男默女泪");
-  std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("男默女泪");
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateScalar<std::string>("男默女泪", &input_tensor);
   input.push_back(input_tensor);
   Status s = op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
@@ -84,7 +86,8 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opEmpty) {
   std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
 
   op->AddWord("男默女泪");
-  std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("");
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateScalar<std::string>("", &input_tensor);
   input.push_back(input_tensor);
   Status s = op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());

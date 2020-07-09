@@ -39,8 +39,7 @@ Status CaseFoldOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
     nfkc_case_fold->normalizeUTF8(0, icu::StringPiece((*iter).data(), (*iter).size()), sink, nullptr, error);
     CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "normalizeUTF8 failed.");
   }
-  *output = std::make_shared<Tensor>(std::move(strs), input->shape());
-  return Status::OK();
+  return Tensor::CreateFromVector(strs, input->shape(), output);
 }
 }  // namespace dataset
 }  // namespace mindspore

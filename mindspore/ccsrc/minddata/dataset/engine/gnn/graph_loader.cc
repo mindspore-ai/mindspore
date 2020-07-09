@@ -125,7 +125,7 @@ Status GraphLoader::LoadNode(const std::vector<uint8_t> &col_blob, const mindrec
     (*feature_map)[node_type].insert(ind);
     if ((*default_feature)[ind] == nullptr) {
       std::shared_ptr<Tensor> zero_tensor;
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&zero_tensor, TensorImpl::kFlexible, tensor->shape(), tensor->type()));
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(tensor->shape(), tensor->type(), &zero_tensor));
       RETURN_IF_NOT_OK(zero_tensor->Zero());
       (*default_feature)[ind] = std::make_shared<Feature>(ind, zero_tensor);
     }
@@ -151,7 +151,7 @@ Status GraphLoader::LoadEdge(const std::vector<uint8_t> &col_blob, const mindrec
     (*feature_map)[edge_type].insert(ind);
     if ((*default_feature)[ind] == nullptr) {
       std::shared_ptr<Tensor> zero_tensor;
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&zero_tensor, TensorImpl::kFlexible, tensor->shape(), tensor->type()));
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(tensor->shape(), tensor->type(), &zero_tensor));
       RETURN_IF_NOT_OK(zero_tensor->Zero());
       (*default_feature)[ind] = std::make_shared<Feature>(ind, zero_tensor);
     }
@@ -170,9 +170,9 @@ Status GraphLoader::LoadFeatureTensor(const std::string &key, const std::vector<
     key, col_blob, col_jsn, &data, &data_ptr, &n_bytes, &col_type, &col_type_size, &column_shape);
   CHECK_FAIL_RETURN_UNEXPECTED(rs == mindrecord::SUCCESS, "fail to load column" + key);
   if (data == nullptr) data = reinterpret_cast<const unsigned char *>(&data_ptr[0]);
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, TensorImpl::kFlexible,
-                                        std::move(TensorShape({static_cast<dsize_t>(n_bytes / col_type_size)})),
-                                        std::move(DataType(mindrecord::ColumnDataTypeNameNormalized[col_type])), data));
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(std::move(TensorShape({static_cast<dsize_t>(n_bytes / col_type_size)})),
+                                            std::move(DataType(mindrecord::ColumnDataTypeNameNormalized[col_type])),
+                                            data, tensor));
   return Status::OK();
 }
 

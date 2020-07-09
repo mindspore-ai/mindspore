@@ -35,17 +35,17 @@ class MindDataTestTruncatePairOp : public UT::Common {
 
 TEST_F(MindDataTestTruncatePairOp, Basics) {
   std::shared_ptr<Tensor> t1;
-  Tensor::CreateTensor(&t1, std::vector<uint32_t>({1, 2, 3}));
+  Tensor::CreateFromVector(std::vector<uint32_t>({1, 2, 3}), &t1);
   std::shared_ptr<Tensor> t2;
-  Tensor::CreateTensor(&t2, std::vector<uint32_t>({4, 5}));
+  Tensor::CreateFromVector(std::vector<uint32_t>({4, 5}), &t2);
   TensorRow in({t1, t2});
   std::shared_ptr<TruncateSequencePairOp> op = std::make_shared<TruncateSequencePairOp>(4);
   TensorRow out;
   ASSERT_TRUE(op->Compute(in, &out).IsOk());
   std::shared_ptr<Tensor> out1;
-  Tensor::CreateTensor(&out1, std::vector<uint32_t>({1, 2}));
+  Tensor::CreateFromVector(std::vector<uint32_t>({1, 2}), &out1);
   std::shared_ptr<Tensor> out2;
-  Tensor::CreateTensor(&out2, std::vector<uint32_t>({4, 5}));
+  Tensor::CreateFromVector(std::vector<uint32_t>({4, 5}), &out2);
   ASSERT_EQ(*out1, *out[0]);
   ASSERT_EQ(*out2, *out[1]);
 }

@@ -129,7 +129,7 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
                     "Generator should return a tuple of numpy arrays.");
     }
     std::shared_ptr<Tensor> tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, ret_py_ele.cast<py::array>()));
+    RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
     if ((!column_types_.empty()) && (column_types_[i] != DataType::DE_UNKNOWN) &&
         (column_types_[i] != tensor->type())) {
       return Status(StatusCode::kPyFuncException, __LINE__, __FILE__, "Generator type check failed.");

@@ -29,23 +29,20 @@ class MindDataTestFillOp : public UT::Common {
 
 TEST_F(MindDataTestFillOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-TestOp.";
-  uint64_t labels[3] = {1, 1, 2};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input =
-    std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(labels));
+  std::vector<uint64_t> labels = {1, 1, 2};
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
 
-  TensorShape fill_shape({});
-  std::shared_ptr<Tensor> fill_tensor = std::make_shared<Tensor>(fill_shape, DataType(DataType::DE_UINT64));
-  fill_tensor->SetItemAt<uint64_t>({}, 4);
+  std::shared_ptr<Tensor> fill_tensor;
+  Tensor::CreateScalar<uint64_t>(4, &fill_tensor);
 
   std::shared_ptr<Tensor> output;
   std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
   Status s = op->Compute(input, &output);
 
-  uint64_t out[3] = {4, 4, 4};
-
-  std::shared_ptr<Tensor> expected =
-    std::make_shared<Tensor>(TensorShape{3}, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(out));
+  std::vector<uint64_t> out = {4, 4, 4};
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateFromVector(out, &expected);
 
   EXPECT_TRUE(s.IsOk());
   ASSERT_TRUE(output->shape() == expected->shape());
@@ -59,23 +56,20 @@ TEST_F(MindDataTestFillOp, TestOp) {
 
 TEST_F(MindDataTestFillOp, TestCasting) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-TestCasting.";
-  uint64_t labels[3] = {0, 1, 2};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input =
-    std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(labels));
+  std::vector<uint64_t> labels = {0, 1, 2};
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
 
-  TensorShape fill_shape({});
-  std::shared_ptr<Tensor> fill_tensor = std::make_shared<Tensor>(fill_shape, DataType(DataType::DE_FLOAT32));
-  fill_tensor->SetItemAt<float>({}, 2.0);
+  std::shared_ptr<Tensor> fill_tensor;
+  Tensor::CreateScalar<float>(2.0, &fill_tensor);
 
   std::shared_ptr<Tensor> output;
   std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
   Status s = op->Compute(input, &output);
 
-  uint64_t out[3] = {2, 2, 2};
-
-  std::shared_ptr<Tensor> expected =
-    std::make_shared<Tensor>(TensorShape{3}, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(out));
+  std::vector<uint64_t> out = {2, 2, 2};
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateFromVector(out, &expected);
 
   ASSERT_TRUE(output->shape() == expected->shape());
   ASSERT_TRUE(output->type() == expected->type());
@@ -90,15 +84,15 @@ TEST_F(MindDataTestFillOp, TestCasting) {
 
 TEST_F(MindDataTestFillOp, ScalarFill) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-ScalarFill.";
-  uint64_t labels[3] = {0, 1, 2};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input =
-    std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(labels));
+  std::vector<uint64_t> labels = {0, 1, 2};
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
 
   TensorShape fill_shape({2});
-  uint64_t fill_labels[3] = {0, 1};
-  std::shared_ptr<Tensor> fill_tensor =
-    std::make_shared<Tensor>(fill_shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(fill_labels));
+  std::vector<uint64_t> fill_labels = {0, 1};
+  std::shared_ptr<Tensor> fill_tensor;
+  Tensor::CreateFromVector(fill_labels, &fill_tensor);
+
   std::shared_ptr<Tensor> output;
   std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
   Status s = op->Compute(input, &output);
@@ -112,12 +106,11 @@ TEST_F(MindDataTestFillOp, ScalarFill) {
 TEST_F(MindDataTestFillOp, StringFill) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-StringFill.";
   std::vector<std::string> strings = {"xyzzy", "plugh", "abracadabra"};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>(strings, shape);
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(strings, &input);
 
-  TensorShape fill_shape({});
-  std::string fill_string = "hello";
-  std::shared_ptr<Tensor> fill_tensor = std::make_shared<Tensor>(fill_string);
+  std::shared_ptr<Tensor> fill_tensor;
+  Tensor::CreateScalar<std::string>("hello", &fill_tensor);
 
   std::shared_ptr<Tensor> output;
 
@@ -125,8 +118,8 @@ TEST_F(MindDataTestFillOp, StringFill) {
   Status s = op->Compute(input, &output);
 
   std::vector<std::string> expected_strings = {"hello", "hello", "hello"};
-  TensorShape expected_shape({3});
-  std::shared_ptr<Tensor> expected = std::make_shared<Tensor>(expected_strings, expected_shape);
+  std::shared_ptr<Tensor> expected;
+  Tensor::CreateFromVector(expected_strings, &expected);
 
   EXPECT_TRUE(s.IsOk());
   ASSERT_TRUE(output->shape() == expected->shape());
@@ -142,12 +135,11 @@ TEST_F(MindDataTestFillOp, StringFill) {
 TEST_F(MindDataTestFillOp, NumericToString) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-NumericToString.";
   std::vector<std::string> strings = {"xyzzy", "plugh", "abracadabra"};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input = std::make_shared<Tensor>(strings, shape);
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(strings, &input);
 
-  TensorShape fill_shape({});
-  std::shared_ptr<Tensor> fill_tensor = std::make_shared<Tensor>(fill_shape, DataType(DataType::DE_FLOAT32));
-  fill_tensor->SetItemAt<float>({}, 2.0);
+  std::shared_ptr<Tensor> fill_tensor;
+  Tensor::CreateScalar<float>(2.0, &fill_tensor);
 
   std::shared_ptr<Tensor> output;
 
@@ -162,14 +154,12 @@ TEST_F(MindDataTestFillOp, NumericToString) {
 
 TEST_F(MindDataTestFillOp, StringToNumeric) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-StringToNumeric.";
-  uint64_t labels[3] = {0, 1, 2};
-  TensorShape shape({3});
-  std::shared_ptr<Tensor> input =
-    std::make_shared<Tensor>(shape, DataType(DataType::DE_UINT64), reinterpret_cast<unsigned char *>(labels));
+  std::vector<uint64_t> labels = {0, 1, 2};
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(labels, &input);
 
-  TensorShape fill_shape({});
-  std::string fill_string = "hello";
-  std::shared_ptr<Tensor> fill_tensor = std::make_shared<Tensor>(fill_string);
+  std::shared_ptr<Tensor> fill_tensor;
+  Tensor::CreateScalar<std::string>("hello", &fill_tensor);
 
   std::shared_ptr<Tensor> output;
 

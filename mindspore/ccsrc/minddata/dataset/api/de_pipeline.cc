@@ -511,8 +511,9 @@ Status DEPipeline::FetchDataFromTensorRow(const TensorRow &row,
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_STRING) {
-      auto buffer = tensor->GetStringsBuffer();
-      std::string ss(reinterpret_cast<const char *>(buffer));  // assume scalar string tensor
+      std::string_view sv;
+      RETURN_IF_NOT_OK(tensor->GetItemAt(&sv, {0}));  // assume scalar string tensor
+      std::string ss(sv);
       (*row_raw_data)[column_name] = std::move(ss);
       continue;
     } else {
@@ -1678,13 +1679,13 @@ Status DEPipeline::ParsePadInfo(py::handle value, PadInfo *pad_info) {
       if (py::isinstance<py::str>(tp[1])) {
         std::string pad_val_string = tp[1].is_none() ? "" : ToString(tp[1]);
         CHECK_FAIL_RETURN_UNEXPECTED(
-          Tensor::CreateTensor(&pad_val, std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar()),
+          Tensor::CreateFromVector(std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar(), &pad_val),
           "Cannot create pad_value Tensor");
       } else {
         float pad_val_float = tp[1].is_none() ? 0 : ToFloat(tp[1]);
-        CHECK_FAIL_RETURN_UNEXPECTED(Tensor::CreateTensor(&pad_val, TensorImpl::kFlexible, TensorShape::CreateScalar(),
-                                                          DataType(DataType::DE_FLOAT32)),
-                                     "Cannot create pad_value Tensor");
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          Tensor::CreateEmpty(TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32), &pad_val),
+          "Cannot create pad_value Tensor");
         pad_val->SetItemAt<float>({}, pad_val_float);
       }
       (void)pad_info->insert({ToString(p.first), {shape, pad_val}});

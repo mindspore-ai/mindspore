@@ -36,7 +36,7 @@ TEST_F(MindDataTestChannelSwap, TestOp) {
   int size_buffer = s[0] * s[1] * s[2];
 
   std::unique_ptr<uchar[]> output_buffer(new uchar[size_buffer]);
-  std::shared_ptr<Tensor> output_tensor(new Tensor(s, DataType(DataType::DE_UINT8)));
+  std::shared_ptr<Tensor> output_tensor;
 
   // Decoding
   std::unique_ptr<HwcToChwOp> op(new HwcToChwOp());

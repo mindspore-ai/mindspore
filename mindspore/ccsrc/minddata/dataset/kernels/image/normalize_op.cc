@@ -24,20 +24,14 @@
 namespace mindspore {
 namespace dataset {
 NormalizeOp::NormalizeOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b) {
-  int size[] = {3};
-  cv::Mat mean_cv(1, size, CV_32F);
-  mean_cv.at<float>(0) = mean_r;
-  mean_cv.at<float>(1) = mean_g;
-  mean_cv.at<float>(2) = mean_b;
-  mean_ = std::make_shared<CVTensor>(mean_cv);
-  mean_->Squeeze();
-
-  cv::Mat std_cv(1, size, CV_32F);
-  std_cv.at<float>(0) = std_r;
-  std_cv.at<float>(1) = std_g;
-  std_cv.at<float>(2) = std_b;
-  std_ = std::make_shared<CVTensor>(std_cv);
-  std_->Squeeze();
+  Status s = Tensor::CreateFromVector<float>({mean_r, mean_g, mean_b}, &mean_);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "Could not create mean tensor.";
+  }
+  s = Tensor::CreateFromVector<float>({std_r, std_g, std_b}, &std_);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "Could not create std tensor.";
+  }
 }
 
 Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -47,9 +41,7 @@ Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
 }
 
 void NormalizeOp::Print(std::ostream &out) const {
-  out << "NormalizeOp, mean: " << mean_->mat().at<float>(0) << ", " << mean_->mat().at<float>(1) << ", "
-      << mean_->mat().at<float>(2) << "std: " << std_->mat().at<float>(0) << ", " << std_->mat().at<float>(1) << ", "
-      << std_->mat().at<float>(2) << std::endl;
+  out << "NormalizeOp, mean: " << mean_ << std::endl << "std: " << std_ << std::endl;
 }
 }  // namespace dataset
 }  // namespace mindspore

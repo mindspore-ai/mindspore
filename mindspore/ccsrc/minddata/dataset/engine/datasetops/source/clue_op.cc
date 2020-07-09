@@ -127,7 +127,7 @@ Status ClueOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTable>
   (*tensor_table)->push_back(std::move(tRow));
 
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {line}, TensorShape::CreateScalar()));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
   (**tensor_table)[row][0] = std::move(tensor);
   return Status::OK();
 }
@@ -144,26 +144,19 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
   std::string final_str = key_chain.back();
   switch (cursor.type()) {
     case nlohmann::detail::value_t::string:
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(t, {cursor.get<std::string>()}, TensorShape::CreateScalar()));
+      RETURN_IF_NOT_OK(Tensor::CreateScalar(cursor.get<std::string>(), t));
       break;
-
     case nlohmann::detail::value_t::number_integer:
-      RETURN_IF_NOT_OK(
-        Tensor::CreateTensor(t, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_INT32)));
-      (*t)->SetItemAt<int32_t>({0}, cursor.get<int32_t>());
+      RETURN_IF_NOT_OK(Tensor::CreateScalar(cursor.get<int32_t>(), t));
       break;
     case nlohmann::detail::value_t::number_unsigned:
-      RETURN_IF_NOT_OK(
-        Tensor::CreateTensor(t, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_INT32)));
-      (*t)->SetItemAt<int32_t>({0}, cursor.get<uint32_t>());
+      RETURN_IF_NOT_OK(Tensor::CreateScalar(cursor.get<uint32_t>(), t));
       break;
     case nlohmann::detail::value_t::number_float:
-      RETURN_IF_NOT_OK(
-        Tensor::CreateTensor(t, TensorImpl::kFlexible, TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32)));
-      (*t)->SetItemAt<int32_t>({0}, cursor.get<float>());
+      RETURN_IF_NOT_OK(Tensor::CreateScalar(cursor.get<float>(), t));
       break;
     case nlohmann::detail::value_t::array:
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(t, {cursor.get<std::vector<std::string>>()}, TensorShape::CreateScalar()));
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(cursor.get<std::vector<std::string>>(), t));
       break;
     default:
       break;

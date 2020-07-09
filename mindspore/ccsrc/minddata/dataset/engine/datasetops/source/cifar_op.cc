@@ -190,15 +190,12 @@ Status CifarOp::LoadTensorRow(uint64_t index, TensorRow *trow) {
   std::shared_ptr<Tensor> label;
   std::shared_ptr<Tensor> fine_label;
   std::shared_ptr<Tensor> ori_image = cifar_image_label_pairs_[index].first;
-  std::shared_ptr<Tensor> copy_image =
-    std::make_shared<Tensor>(ori_image->shape(), ori_image->type(), ori_image->GetBuffer());
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
-                                        data_schema_->column(1).type(),
-                                        reinterpret_cast<unsigned char *>(&cifar_image_label_pairs_[index].second[0])));
+  std::shared_ptr<Tensor> copy_image;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(ori_image, &copy_image));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[0], &label));
+
   if (cifar_image_label_pairs_[index].second.size() > 1) {
-    RETURN_IF_NOT_OK(Tensor::CreateTensor(
-      &fine_label, data_schema_->column(2).tensorImpl(), data_schema_->column(2).shape(),
-      data_schema_->column(2).type(), reinterpret_cast<unsigned char *>(&cifar_image_label_pairs_[index].second[1])));
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[1], &fine_label));
     (*trow) = TensorRow(index, {copy_image, std::move(label), std::move(fine_label)});
   } else {
     (*trow) = TensorRow(index, {copy_image, std::move(label)});
@@ -359,9 +356,8 @@ Status CifarOp::ParseCifarData() {
       }
 
       std::shared_ptr<Tensor> image_tensor;
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&image_tensor, data_schema_->column(0).tensorImpl(),
-                                            TensorShape({kCifarImageHeight, kCifarImageWidth, kCifarImageChannel}),
-                                            data_schema_->column(0).type()));
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({kCifarImageHeight, kCifarImageWidth, kCifarImageChannel}),
+                                           data_schema_->column(0).type(), &image_tensor));
       auto itr = image_tensor->begin<uint8_t>();
       uint32_t total_pix = kCifarImageHeight * kCifarImageWidth;
       for (int pix = 0; pix < total_pix; ++pix) {

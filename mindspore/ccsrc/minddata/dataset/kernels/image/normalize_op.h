@@ -39,8 +39,8 @@ class NormalizeOp : public TensorOp {
   std::string Name() const override { return kNormalizeOp; }
 
  private:
-  std::shared_ptr<CVTensor> mean_;
-  std::shared_ptr<CVTensor> std_;
+  std::shared_ptr<Tensor> mean_;
+  std::shared_ptr<Tensor> std_;
 };
 }  // namespace dataset
 }  // namespace mindspore

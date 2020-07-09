@@ -40,7 +40,7 @@ namespace dataset {
 template <typename T>
 class Queue;
 
-using MnistLabelPair = std::pair<std::shared_ptr<Tensor>, int32_t>;
+using MnistLabelPair = std::pair<std::shared_ptr<Tensor>, uint32_t>;
 
 class MnistOp : public ParallelOp, public RandomAccessOp {
  public:

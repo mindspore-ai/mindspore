@@ -72,6 +72,7 @@ Status DeviceQueueOp::CheckExceptions(const std::unique_ptr<DataBuffer> &buffer)
     buffer->GetRow(0, &row);
     for (const auto &item : row) {
       CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Cannot send tensor of string type to device.");
+      CHECK_FAIL_RETURN_UNEXPECTED(item->HasData(), "Cannot send tensor with no data.");
     }
   }
   return Status::OK();

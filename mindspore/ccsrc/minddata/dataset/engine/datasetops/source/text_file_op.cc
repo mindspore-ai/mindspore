@@ -146,7 +146,7 @@ Status TextFileOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTa
   (*tensor_table)->push_back(std::move(tRow));
 
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {line}, TensorShape::CreateScalar()));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
   (**tensor_table)[row][0] = std::move(tensor);
   return Status::OK();
 }

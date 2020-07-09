@@ -93,7 +93,6 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromDatasetFuntions) {
     rc = di.FetchNextTensorRow(&tensor_list);
   }
   ASSERT_TRUE(rc.IsOk());
-
 }
 
 TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromFileFuntions) {
@@ -166,9 +165,10 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceTokenizerFuntions) {
     rc = di.FetchNextTensorRow(&tensor_list);
   }
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<SentencePieceTokenizerOp> op(new SentencePieceTokenizerOp(spm,
-    SPieceTokenizerLoadType::kModel, SPieceTokenizerOutType::kString));
-  std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("I saw a girl with a telescope.");
+  std::unique_ptr<SentencePieceTokenizerOp> op(
+    new SentencePieceTokenizerOp(spm, SPieceTokenizerLoadType::kModel, SPieceTokenizerOutType::kString));
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateScalar<std::string>("I saw a girl with a telescope.", &input_tensor);
   Status s = op->Compute(input_tensor, &output_tensor);
 
   std::vector<std::string> expect;

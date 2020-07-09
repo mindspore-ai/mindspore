@@ -381,15 +381,15 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     auto num_elements = n_bytes / column_data_type_size;
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {s}, TensorShape::CreateScalar()));
+      RETURN_IF_NOT_OK(Tensor::CreateScalar(s, &tensor));
     } else if (column.hasShape()) {
       auto new_shape = TensorShape(column.shape());
       RETURN_IF_NOT_OK(column.MaterializeTensorShape(static_cast<int32_t>(num_elements), &new_shape));
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, column.tensorImpl(), new_shape, type, data));
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, type, data, &tensor));
     } else {
       std::vector<dsize_t> shapeDetails = {static_cast<dsize_t>(num_elements)};
       auto new_shape = TensorShape(shapeDetails);
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, column.tensorImpl(), new_shape, type, data));
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, type, data, &tensor));
     }
     tensor_row->push_back(std::move(tensor));
   }

@@ -30,8 +30,7 @@ using namespace mindspore::dataset;
 
 Status CreateINT64Tensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements, unsigned char *data = nullptr) {
   TensorShape shape(std::vector<int64_t>(1, num_elements));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, TensorImpl::kFlexible, shape, DataType(DataType::DE_INT64), data));
-  (*sample_ids)->AllocateBuffer((*sample_ids)->SizeInBytes());  // allocate memory in case user forgets!
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(shape, DataType(DataType::DE_INT64), data, sample_ids));
 
   return Status::OK();
 }
@@ -54,8 +53,7 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
                         {0, 17, 4, 10, 14, 8, 15}, {13, 9, 16, 3, 2, 19, 12}, {1, 11, 6, 18, 7, 5, 0}};
   for (int i = 0; i < 6; i++) {
     std::shared_ptr<Tensor> t;
-    Tensor::CreateTensor(&t, TensorImpl::kFlexible, TensorShape({7}),
-                         DataType(DataType::DE_INT64), (unsigned char *)(res[i]));
+    Tensor::CreateFromMemory(TensorShape({7}), DataType(DataType::DE_INT64), (unsigned char *)(res[i]), &t);
     row.push_back(t);
   }
   MockStorageOp mock(20);

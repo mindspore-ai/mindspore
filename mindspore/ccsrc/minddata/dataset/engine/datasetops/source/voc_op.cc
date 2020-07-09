@@ -375,7 +375,7 @@ Status VOCOp::LaunchThreadsAndInitOp() {
 }
 
 Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, path));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
@@ -412,18 +412,10 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
       bbox_num++;
     }
   }
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&bbox, data_schema_->column(1).tensorImpl(), TensorShape({bbox_num, 4}),
-                                        data_schema_->column(1).type(),
-                                        reinterpret_cast<unsigned char *>(&bbox_data[0])));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(2).tensorImpl(), TensorShape({bbox_num, 1}),
-                                        data_schema_->column(2).type(),
-                                        reinterpret_cast<unsigned char *>(&label_data[0])));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&difficult, data_schema_->column(3).tensorImpl(), TensorShape({bbox_num, 1}),
-                                        data_schema_->column(3).type(),
-                                        reinterpret_cast<unsigned char *>(&difficult_data[0])));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&truncate, data_schema_->column(4).tensorImpl(), TensorShape({bbox_num, 1}),
-                                        data_schema_->column(4).type(),
-                                        reinterpret_cast<unsigned char *>(&truncate_data[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(bbox_data, TensorShape({bbox_num, 4}), &bbox));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(label_data, TensorShape({bbox_num, 1}), &label));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(difficult_data, TensorShape({bbox_num, 1}), &difficult));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(truncate_data, TensorShape({bbox_num, 1}), &truncate));
   (*row) = TensorRow({std::move(bbox), std::move(label), std::move(difficult), std::move(truncate)});
   return Status::OK();
 }

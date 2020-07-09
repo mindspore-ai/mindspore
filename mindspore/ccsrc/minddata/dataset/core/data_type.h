@@ -285,6 +285,11 @@ inline DataType DataType::FromCType<std::string_view>() {
 }
 
 template <>
+inline DataType DataType::FromCType<std::string>() {
+  return DataType(DataType::DE_STRING);
+}
+
+template <>
 inline bool DataType::IsLooselyCompatible<bool>() const {
   return type_ == DataType::DE_BOOL;
 }

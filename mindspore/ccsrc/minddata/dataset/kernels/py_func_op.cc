@@ -49,7 +49,7 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
       if (py::isinstance<py::array>(ret_py_obj)) {
         // In case of a n-1 mapping, the return value will be a numpy array
         std::shared_ptr<Tensor> out;
-        RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, ret_py_obj.cast<py::array>()));
+        RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_obj.cast<py::array>(), &out));
         output->push_back(out);
       } else if (py::isinstance<py::tuple>(ret_py_obj)) {
         // In case of a n-m mapping, the return value will be a tuple of numpy arrays
@@ -61,7 +61,7 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
             goto ShapeMisMatch;
           }
           std::shared_ptr<Tensor> out;
-          RETURN_IF_NOT_OK(Tensor::CreateTensor(&out, ret_py_ele.cast<py::array>()));
+          RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &out));
           output->push_back(out);
         }
       } else {

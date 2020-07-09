@@ -33,12 +33,7 @@ Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr
   // if the data row has fewer items than width, the corresponding result row will be empty
   if (out_shape.Size() == 0) {
     MS_LOG(WARNING) << "The data row has fewer items than width, the result will be empty.";
-    if (input->type().value() == DataType::DE_STRING) {
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(output, std::vector<std::string>{}, TensorShape({0})));
-    } else {
-      RETURN_IF_NOT_OK(Tensor::CreateTensor(output, TensorImpl::kFlexible, TensorShape({0}), input->type()));
-    }
-    return Status::OK();
+    return Tensor::CreateEmpty(TensorShape({0}), input->type(), output);
   }
 
   axis = Tensor::HandleNeg(axis, input->shape().Size());

@@ -226,7 +226,8 @@ void CacheMergeOp::TensorRowRequest::WakeUpAny(TensorRow &&row) {
   if (GetState() == State::kEmpty) {
     // We will do a deep copy
     for (auto &ts : row) {
-      auto out_ts = std::make_shared<Tensor>(ts->shape(), ts->type(), ts->GetBuffer(), ts->SizeInBytes());
+      std::shared_ptr<Tensor> out_ts;
+      Tensor::CreateFromTensor(ts, &out_ts);
       cleaner_copy_.push_back(out_ts);
     }
     cleaner_copy_.setId(row.getId());

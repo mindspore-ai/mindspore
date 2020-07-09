@@ -163,8 +163,11 @@ void BBoxOpCommon::CompareActualAndExpected(const std::string &op_name) {
     // after comparison is done remove temporary file
     EXPECT_TRUE(remove(actual_path.c_str()) == 0);
     // compare using ==operator by Tensor
+    std::shared_ptr<CVTensor> expect_img_t, actual_img_t;
+    CVTensor::CreateFromMat(expect_img, &expect_img_t);
+    CVTensor::CreateFromMat(actual_img, &actual_img_t);
     if (actual_img.data) {
-      EXPECT_EQ(CVTensor(expect_img) == CVTensor(actual_img), true);
+      EXPECT_EQ(*expect_img_t == *actual_img_t, true);
     } else {
       MS_LOG(ERROR) << "Not pass verification! Image data is null.";
       EXPECT_EQ(0, 1);
@@ -223,7 +226,7 @@ bool BBoxOpCommon::LoadAnnotationFile(const std::string &path, std::shared_ptr<T
     object = object->NextSiblingElement("object");  // Read next BBox if exists
   }
   std::shared_ptr<Tensor> ret_value;
-  Status s = Tensor::CreateTensor(&ret_value, return_value_list, TensorShape({bbox_count, bbox_val_count}));
+  Status s = Tensor::CreateFromVector(return_value_list, TensorShape({bbox_count, bbox_val_count}), &ret_value);
   EXPECT_TRUE(s.IsOk());
   (*target_BBox) = ret_value;  // load bbox from file into return
   return true;

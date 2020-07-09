@@ -201,10 +201,8 @@ Status ImageFolderOp::WorkerEntry(int32_t worker_id) {
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
 Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, TensorRow *trow) {
   std::shared_ptr<Tensor> image, label;
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
-                                        data_schema_->column(1).type(),
-                                        reinterpret_cast<unsigned char *>(&pairPtr->second)));
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, folder_path_ + (pairPtr->first)));
+  RETURN_IF_NOT_OK(Tensor::CreateScalar(pairPtr->second, &label));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(folder_path_ + (pairPtr->first), &image));
 
   if (decode_ == true) {
     Status rc = Decode(image, &image);

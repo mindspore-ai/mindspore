@@ -35,44 +35,40 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
   TensorShape pad_data_shape({1});
 
   // prepare input tensor
-  float_t orig1[4] = {1, 1, 1, 1};
+  std::vector<float> orig1 = {1, 1, 1, 1};
   TensorShape input_shape1({2, 2});
   std::vector<TensorShape> input_shape1_vector = {input_shape1};
-  std::shared_ptr<Tensor> input1 =
-    std::make_shared<Tensor>(input_shape1, DataType(DataType::DE_FLOAT32), reinterpret_cast<unsigned char *>(orig1));
+  std::shared_ptr<Tensor> input1;
+  Tensor::CreateFromVector(orig1, input_shape1, &input1);
 
   // pad_shape
   TensorShape pad_shape1[3] = {TensorShape({3, 3}), TensorShape({2, 4}), TensorShape({4, 2})};
 
   // value to pad
-  float_t pad_data1[3][1] = {0, 3.5, 3.5};
+  std::vector<std::vector<float>> pad_data1 = {{0}, {3.5}, {3.5}};
 
   std::shared_ptr<Tensor> expected1[3];
 
   // expected tensor output for testunit 1
-  float_t out1[9] = {1, 1, 0, 1, 1, 0, 0, 0, 0};
-
-  expected1[0] =
-    std::make_shared<Tensor>(pad_shape1[0], DataType(DataType::DE_FLOAT32), reinterpret_cast<unsigned char *>(out1));
+  std::vector<float> out1 = {1, 1, 0, 1, 1, 0, 0, 0, 0};
+  Tensor::CreateFromVector(out1, pad_shape1[0], &(expected1[0]));
 
   // expected tensor output for testunit 2
-  float_t out2[8] = {1, 1, 3.5, 3.5, 1, 1, 3.5, 3.5};
-
-  expected1[1] =
-    std::make_shared<Tensor>(pad_shape1[1], DataType(DataType::DE_FLOAT32), reinterpret_cast<unsigned char *>(out2));
+  std::vector<float> out2 = {1, 1, 3.5, 3.5, 1, 1, 3.5, 3.5};
+  Tensor::CreateFromVector(out2, pad_shape1[1], &(expected1[1]));
 
   // expected tensor output for testunit 3
-  float_t out3[8] = {1, 1, 1, 1, 3.5, 3.5, 3.5, 3.5};
-
-  expected1[2] =
-    std::make_shared<Tensor>(pad_shape1[2], DataType(DataType::DE_FLOAT32), reinterpret_cast<unsigned char *>(out3));
+  std::vector<float> out3 = {1, 1, 1, 1, 3.5, 3.5, 3.5, 3.5};
+  Tensor::CreateFromVector(out3, pad_shape1[2], &(expected1[2]));
 
   // run the PadEndOp
   for (auto i = 0; i < 3; i++) {
     std::shared_ptr<Tensor> output;
     std::vector<TensorShape> output_shape = {TensorShape({})};
-    std::shared_ptr<Tensor> pad_value1 = std::make_shared<Tensor>(pad_data_shape, DataType(DataType::DE_FLOAT32),
-                                                                  reinterpret_cast<unsigned char *>(pad_data1[i]));
+
+    std::shared_ptr<Tensor> pad_value1;
+    Tensor::CreateFromVector(pad_data1[i], pad_data_shape, &pad_value1);
+
     std::unique_ptr<PadEndOp> op(new PadEndOp(pad_shape1[i], pad_value1));
     Status s = op->Compute(input1, &output);
 
@@ -96,7 +92,7 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
   TensorShape input_shape2({2});
   std::vector<TensorShape> input_shape2_vector = {input_shape2};
   std::shared_ptr<Tensor> input2;
-  Tensor::CreateTensor(&input2, orig2, input_shape2);
+  Tensor::CreateFromVector(orig2, input_shape2, &input2);
 
   // pad_shape
   TensorShape pad_shape2[3] = {TensorShape({5}), TensorShape({2}), TensorShape({10})};
@@ -112,7 +108,7 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
 
   for (auto i = 0; i < 3; i++) {
     // pad value
-    Tensor::CreateTensor(&pad_value2[i], pad_data2[i], pad_data_shape);
+    Tensor::CreateFromVector(pad_data2[i], pad_data_shape, &pad_value2[i]);
 
     std::shared_ptr<Tensor> output;
     std::vector<TensorShape> output_shape = {TensorShape({})};
@@ -121,7 +117,7 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
 
     Status s = op->Compute(input2, &output);
 
-    Tensor::CreateTensor(&expected2[i], outstring[i], pad_shape2[i]);
+    Tensor::CreateFromVector(outstring[i], pad_shape2[i], &expected2[i]);
 
     EXPECT_TRUE(s.IsOk());
     ASSERT_TRUE(output->shape() == expected2[i]->shape());

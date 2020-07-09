@@ -16,7 +16,6 @@
 Testing Mask op in DE
 """
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
@@ -55,9 +54,7 @@ def test_basics_str():
 
 
 def test_exceptions():
-    with pytest.raises(RuntimeError) as info:
-        compare(in1=[1, 2, 3, 4], in2=[5, 6, 7, 8], length=1, out1=[1, 2], out2=[5])
-    assert "Indices are empty, generated tensor would be empty" in str(info.value)
+    compare(in1=[1, 2, 3, 4], in2=[5, 6, 7, 8], length=1, out1=[1], out2=[])
 
 
 if __name__ == "__main__":

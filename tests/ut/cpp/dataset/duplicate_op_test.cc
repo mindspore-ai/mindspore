@@ -32,9 +32,9 @@ class MindDataTestDuplicateOp : public UT::Common {
 
 TEST_F(MindDataTestDuplicateOp, Basics) {
   std::shared_ptr<Tensor> t;
-  Tensor::CreateTensor(&t, std::vector<uint32_t>({1, 2, 3, 4, 5, 6}));
+  Tensor::CreateFromVector(std::vector<uint32_t>({1, 2, 3, 4, 5, 6}), &t);
   std::shared_ptr<Tensor> v;
-  Tensor::CreateTensor(&v, std::vector<uint32_t>({3}), TensorShape::CreateScalar());
+  Tensor::CreateFromVector(std::vector<uint32_t>({3}), TensorShape::CreateScalar(), &v);
   std::shared_ptr<DuplicateOp> op = std::make_shared<DuplicateOp>();
   TensorRow in;
   in.push_back(t);
