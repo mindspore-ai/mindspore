@@ -138,6 +138,7 @@ void ReduceMultiSparseGradient(const std::vector<std::shared_ptr<SparseGradient>
                                size_t outer_dim);
 void TwoLevelReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *tmp_grad,
                                   SparseGradient *unique_grad, size_t first_dim, size_t outer_dim);
+std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode);
 }  // namespace kernel
 }  // namespace mindspore
 
