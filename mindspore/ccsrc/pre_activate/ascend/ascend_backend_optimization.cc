@@ -94,6 +94,7 @@
 #include "pre_activate/ascend/ir_fission/split_fission.h"
 #include "pre_activate/ascend/format_type/modify_ops_attrs.h"
 #include "pre_activate/ascend/format_type/remove_no_use_reshape_op.h"
+#include "pre_activate/ascend/ir_fusion/add_input_to_output.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -259,6 +260,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   }
   ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForHcclOp>());
+  ir_fusion_pm->AddPass(std::make_shared<AddInputToOutput>());
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
