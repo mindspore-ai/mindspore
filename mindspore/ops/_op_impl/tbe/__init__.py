@@ -284,3 +284,4 @@ from .scatter_div import _scatter_div_tbe
 from .mod import _mod_tbe
 from .max_pool_grad_grad import _max_pool_grad_grad_tbe
 from .max_pool_grad_grad_with_argmax import _max_pool_grad_grad_with_argmax_tbe
+from .tensor_move import _tensor_move_tbe
