@@ -87,6 +87,10 @@ class SessionBasic {
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
+  CNodePtr CreateSwitchInput(const AnfNodePtr &node_input, KernelGraph *graph);
+  CNodePtr HandleSwitchInputs(const AnfNodePtr &anf_node, KernelGraph *graph);
+  std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
+
   // set parameters of final graph
   virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
   // set output of final graph

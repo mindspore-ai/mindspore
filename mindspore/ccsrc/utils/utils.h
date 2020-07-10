@@ -257,6 +257,7 @@ constexpr auto kAnfPartialFuncGraphIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
 constexpr auto kTupleGetItemInputSize = 3;
+constexpr auto kSwitchInputSize = 4;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;
