@@ -164,6 +164,18 @@ constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
+constexpr auto kApplyAdagradV2OpName = "ApplyAdagradV2";
+constexpr auto kSparseApplyAdagradV2OpName = "SparseApplyAdagradV2";
+constexpr auto kSparseApplyFtrlOpName = "SparseApplyFtrl";
+constexpr auto kSparseApplyFtrlV2OpName = "SparseApplyFtrlV2";
+constexpr auto kApplyKerasMomentumOpName = "ApplyKerasMomentum";
+constexpr auto kSparseApplyProximalAdagradOpName = "SparseApplyProximalAdagrad";
+constexpr auto kSparseApplyRMSPropOpName = "SparseApplyRMSProp";
+constexpr auto kSparseApplyAdadeltaOpName = "SparseApplyAdadelta";
+constexpr auto kApplyAdamWithAmsgradOpName = "ApplyAdamWithAmsgrad";
+constexpr auto kTensorMoveOpName = "TensorMove";
+constexpr auto kTensorScatterUpdateOpName = "TensorScatterUpdate";
+constexpr auto kScatterNdUpdateOpName = "ScatterNdUpdate";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -224,6 +236,9 @@ constexpr auto kAttrOutputNum = "output_num";
 constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
+constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
+constexpr auto kAttrOffset = "offset";
+constexpr auto kAttrUseLocking = "use_locking";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
