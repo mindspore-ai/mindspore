@@ -91,6 +91,7 @@ def test_enumerate_tuple_parameter():
                 index_sum += i
                 ret += (j,)
             return index_sum, ret
+
     x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
     net = Net()
     net(x, x, x)
@@ -127,9 +128,11 @@ def test_enumerate_tuple_parameter_1():
                 index_sum += i[0]
                 ret += (i[1],)
             return index_sum, ret
+
     x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
     net = Net()
     net(x, x, x)
+
 
 def test_enumerate_tuple_const_2():
     class Net(nn.Cell):
@@ -162,20 +165,37 @@ def test_enumerate_tuple_parameter_2():
                 index_sum += i[0]
                 ret += (i[1],)
             return index_sum, ret
+
     x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
     net = Net()
     net(x, x, x)
 
 
-def test_enumerate_parameter_type_error():
+def test_enumerate_first_input_type_error():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
 
         def construct(self, x):
             return enumerate(x)
+
     x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
     net = Net()
     with pytest.raises(TypeError) as ex:
         net(x)
-    assert  "For 'enumerate', the input parameter should be tuple or list" in str(ex.value)
+    assert "For 'enumerate', the 'first input'" in str(ex.value)
+
+
+def test_enumerate_start_type_error():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x):
+            return enumerate(x, start=1.2)
+
+    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
+    net = Net()
+    with pytest.raises(ValueError) as ex:
+        net((x, x))
+    assert "For 'enumerate', the 'start'" in str(ex.value)

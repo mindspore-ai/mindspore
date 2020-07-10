@@ -108,7 +108,8 @@ def enumerate_(x, start=0):
     """Enumerate list or tuple."""
     x_type = F.typeof(x)
     ret = ()
-    if check_is_tuple_or_list(x_type, "enumerate"):
+    op_name = "enumerate"
+    if check_is_tuple_or_list(x_type, op_name, "first input") and check_is_const_int(start, op_name, "start"):
         ret = zip(range(start, start + len(x)), x)
     return ret
 
@@ -123,11 +124,22 @@ def while_cond(x):
 
 
 @constexpr
-def check_is_tuple_or_list(x, op_name):
+def check_is_tuple_or_list(x, op_name, arg_name):
     """check whether x is list or tuple."""
     if isinstance(x, (mstype.list_type, mstype.tuple_type)):
         return True
-    raise TypeError(f"For '{op_name}', the input parameter should be tuple or list, but got {x}.")
+    raise TypeError(f"For '{op_name}', the '{arg_name}' should be tuple or list, but got {x}.")
+
+
+@constexpr
+def check_is_const_int(x, op_name, arg_name):
+    """check whether x is const int."""
+    if x is None:
+        raise ValueError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got not const.")
+    if not isinstance(x, int):
+        raise ValueError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got {x}.")
+    return True
+
 
 @constexpr
 def check_is_tensor_bool_cond(shp):
