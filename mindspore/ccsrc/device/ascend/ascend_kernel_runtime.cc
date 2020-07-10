@@ -322,7 +322,8 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
         (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                              [](size_t inner_item) { return SizeToInt(inner_item); });
       }
-      auto ret = ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, j, debugger);
+      auto ret =
+        ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, j, debugger, false);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost: flag:" << trans_flag << ", tensor_name:" << tensor_name
                       << ", host_format:" << format << ".!";
@@ -356,7 +357,8 @@ void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) 
       (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                            [](size_t inner_item) { return SizeToInt(inner_item); });
     }
-    auto ret = ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, 0, debugger);
+    auto ret =
+      ascend_addr->LoadMemToHost(trans_flag, tensor_name, exec_order, format, int_shapes, type, 0, debugger, true);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost Failed: flag:" << trans_flag << ", path:" << tensor_name
                     << ", host_format:" << format << ".!";

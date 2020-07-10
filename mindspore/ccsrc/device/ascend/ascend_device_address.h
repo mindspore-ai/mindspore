@@ -46,7 +46,8 @@ class AscendDeviceAddress : public DeviceAddress {
 #endif
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(bool dump_mode, const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                     const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger) const;
+                     const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
+                     bool keep_prev) const;
 #endif
 
  private:

@@ -313,4 +313,10 @@ message TensorProto {
 
   // If the tensor content transferring is finished.
   optional bool finished = 6;
+
+  // The iteration of the tensor. Supported: "prev" or leave empty.
+  optional string iter = 7;
+
+  // If the tensor name should be truncated.
+  optional bool truncate = 8;
 }

@@ -72,9 +72,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // suspend the execution after a debug_op
   void PostDebugOp();
 
-  DebugServices *get_debug_services();
+  DebugServices *debug_services() const;
 
-  bool debugger_enabled();
+  bool debugger_enabled() const;
 
  private:
   // private constructor for singleton
@@ -92,7 +92,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void CheckDatasetGraph();
 
   // serialize graph and get proto
-  GraphProto GetGraphProto();
+  GraphProto GetGraphProto() const;
 
   // send graph and enter command wait loop
   void SendGraphAndSuspend(const GraphProto &graph_proto);
@@ -102,16 +102,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // break if RunCMD
   void CommandLoop();
 
-  // process reply and command type
-  DebuggerCommand GetCommand(const EventReply &reply);
-
-  // parse other data out of EventReply
-  ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply);
-  WatchCondition GetWatchcondition(const EventReply &reply);
-  int32_t GetWatchpointID(const EventReply &reply);
-  bool GetWatchpointDelete(const EventReply &reply);
-  ProtoVector<TensorProto> GetTensors(const EventReply &reply);
-
   // set what nodes and conditions to watch
   void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id);
 
@@ -119,14 +109,14 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void RemoveWatchpoint(const int32_t id);
 
   // load tensor for view command
-  std::list<TensorProto> LoadTensors(const ProtoVector<TensorProto> &tensors);
+  std::list<TensorProto> LoadTensors(const ProtoVector<TensorProto> &tensors) const;
 
   // terminate training process
   void Exit();
 
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
-  std::list<WatchpointHit> CheckWatchpoints();
+  std::list<WatchpointHit> CheckWatchpoints() const;
 
   // send watchpoints that hit and enter command wait loop
   void SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points);
@@ -154,6 +144,19 @@ ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph);
 
 // for getting proto DataType from Type of Tensor
 DataType GetDebuggerNumberDataType(const TypePtr &type);
+
+// process reply and command type
+DebuggerCommand GetCommand(const EventReply &reply);
+
+// parse other data out of EventReply
+ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply);
+WatchCondition GetWatchcondition(const EventReply &reply);
+int32_t GetWatchpointID(const EventReply &reply);
+bool GetWatchpointDelete(const EventReply &reply);
+ProtoVector<TensorProto> GetTensors(const EventReply &reply);
+
+// get the full name of a tensor, which is the name used in TensorLoader
+std::string GetTensorFullName(const TensorProto &tensor);
 
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_H_

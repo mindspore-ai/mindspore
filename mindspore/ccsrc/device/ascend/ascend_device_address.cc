@@ -370,10 +370,10 @@ bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &file
 #ifdef ENABLE_DEBUGGER
 bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tensor_name, int execution_order,
                                         const std::string &host_fmt, const std::vector<int> &host_shape,
-                                        TypeId host_type, size_t slot, Debugger *debugger) const {
+                                        TypeId host_type, size_t slot, Debugger *debugger, bool keep_prev) const {
   bool ret = false;
 
-  DebugServices *debug_services = debugger->get_debug_services();
+  DebugServices *debug_services = debugger->debug_services();
   TensorLoader *tensor_loader = debug_services->get_tensor_loader();
 
   if (trans_flag) {
@@ -390,7 +390,7 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
     tensor_data->SetExecutionOrder(execution_order);
     tensor_data->SetTensor(out_tensor);
     tensor_data->SetSlot(slot);
-    ret = tensor_loader->LoadNewTensor(tensor_data);
+    ret = tensor_loader->LoadNewTensor(tensor_data, keep_prev);
   } else {
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(type_id_, host_shape);
     size_t host_size = out_tensor->data().nbytes();
@@ -401,7 +401,7 @@ bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tens
     tensor_data->SetExecutionOrder(execution_order);
     tensor_data->SetTensor(out_tensor);
     tensor_data->SetSlot(slot);
-    ret = tensor_loader->LoadNewTensor(tensor_data);
+    ret = tensor_loader->LoadNewTensor(tensor_data, keep_prev);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "SyncDeviceToHost: rtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
     }
