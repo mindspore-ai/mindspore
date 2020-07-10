@@ -38,8 +38,8 @@
 
 namespace mindspore {
 namespace session {
-static std::shared_ptr<std::map<ParamValuePtr, ParameterPtr>> python_paras_;
-void ClearPythonParasMap() { python_paras_ = nullptr; }
+static std::shared_ptr<std::map<ParamValuePtr, ParameterPtr>> python_paras;
+void ClearPythonParasMap() { python_paras = nullptr; }
 namespace {
 const int kSummaryGetItem = 2;
 
@@ -387,17 +387,17 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   MS_EXCEPTION_IF_NULL(graph_inputs);
   ParameterPtr new_parameter = nullptr;
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
-  if (python_paras_ == nullptr) {
-    python_paras_ = std::make_shared<std::map<ParamValuePtr, ParameterPtr>>();
+  if (python_paras == nullptr) {
+    python_paras = std::make_shared<std::map<ParamValuePtr, ParameterPtr>>();
   }
-  auto iter = python_paras_->find(param_value);
-  if (iter != python_paras_->end()) {
+  auto iter = python_paras->find(param_value);
+  if (iter != python_paras->end()) {
     new_parameter = iter->second;
   } else {
     TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
     if (param_value != nullptr) {
-      (*python_paras_)[param_value] = new_parameter;
+      (*python_paras)[param_value] = new_parameter;
     }
     TraceManager::EndTrace();
   }
@@ -469,7 +469,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
         cnode_inputs.emplace_back(new_value_node);
       }
       continue;
-    } else if (anf->isa<Parameter>() && AnfAlgo::GetOutputTensorNum(anf) == 1) {
+    } else if (anf->isa<Parameter>()) {
       auto new_parameter = CreateNewParameterFromParameter(anf, valid_input, graph);
       cnode_inputs.push_back(new_parameter);
       if (GetGraphIdByNode(anf) == kInvalidGraphId) {
@@ -481,15 +481,13 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
     } else if (optimize_depend && input_idx == kDependAttachNodeIndex) {
       cnode_inputs.push_back(origin_inputs[kRealInputIndexInDepend]);
       continue;
-    } else if (anf->isa<AnfNode>()) {
+    } else {
       *from_other_graph = true;
       // the input node is a cnode from other graph
       auto parameter_from_cnode = CreateNewParameterFromCNode(anf, valid_input, graph);
       cnode_inputs.push_back(parameter_from_cnode);
       (*other_graph_cnode)[anf] = parameter_from_cnode;
-      continue;
     }
-    MS_LOG(EXCEPTION) << "Unexpected input[" << anf->DebugString() << "]";
   }
   TraceManager::DebugTrace(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNode(cnode_inputs);
@@ -660,17 +658,17 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
 
   auto param_value = GetParamDefaultValue(anf);
   ParameterPtr new_parameter = nullptr;
-  if (python_paras_ == nullptr) {
-    python_paras_ = std::make_shared<std::map<ParamValuePtr, ParameterPtr>>();
+  if (python_paras == nullptr) {
+    python_paras = std::make_shared<std::map<ParamValuePtr, ParameterPtr>>();
   }
-  auto iter = python_paras_->find(param_value);
-  if (iter != python_paras_->end()) {
+  auto iter = python_paras->find(param_value);
+  if (iter != python_paras->end()) {
     new_parameter = iter->second;
   } else {
     TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
     if (param_value != nullptr) {
-      (*python_paras_)[param_value] = new_parameter;
+      (*python_paras)[param_value] = new_parameter;
     }
     TraceManager::EndTrace();
   }
