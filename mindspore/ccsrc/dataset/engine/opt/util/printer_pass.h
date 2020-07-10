@@ -35,17 +35,19 @@ class PrinterPass : public NodePass {
 
   Status RunOnNode(std::shared_ptr<RenameOp> node, bool *modified) override;
 
-  Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
-
   Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
 
   Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
 
-  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
-
   Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
 
   Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) override;
+
+#ifdef ENABLE_PYTHON
+  Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
+
+  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
+#endif
 
   Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
 

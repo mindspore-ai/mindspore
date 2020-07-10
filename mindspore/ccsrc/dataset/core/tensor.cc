@@ -28,10 +28,12 @@
 #include "dataset/core/constants.h"
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/global_context.h"
+#ifdef ENABLE_PYTHON
 #include "dataset/core/pybind_support.h"
+namespace py = pybind11;
+#endif
 #include "dataset/core/tensor_shape.h"
 
-namespace py = pybind11;
 namespace mindspore {
 namespace dataset {
 // Helper macros for printing tensor elements
@@ -155,6 +157,7 @@ Tensor::Tensor(const std::vector<std::string> &strings, const TensorShape &shape
   MS_ASSERT(num_bytes == 0);
   if (shape.known()) Tensor::Reshape(shape);
 }
+
 Tensor::Tensor(const dataengine::BytesList &bytes_list, const TensorShape &shape)
     : Tensor(TensorShape({static_cast<dsize_t>(bytes_list.value_size())}), DataType(DataType::DE_STRING)) {
   // total bytes needed = offset array + strings
@@ -194,6 +197,7 @@ Tensor::Tensor(const dataengine::BytesList &bytes_list, const TensorShape &shape
   MS_ASSERT(num_bytes == 0);
   if (shape.known()) Tensor::Reshape(shape);
 }
+
 Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl, const TensorShape &shape,
                             DataType type, const unsigned char *data) {
   if (!shape.known()) {
@@ -223,6 +227,7 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, TensorImpl tensor_impl
   return Status::OK();  // returns base-class shared_ptr
 }
 
+#ifdef ENABLE_PYTHON
 Status Tensor::CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::array arr) {
   std::vector<dsize_t> shape;
   for (dsize_t i = 0; i < arr.ndim(); i++) {
@@ -297,6 +302,7 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
 
   return Status::OK();  // returns base-class shared_ptr
 }
+#endif
 
 Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, const std::vector<std::string> &strings,
                             const TensorShape &shape) {
@@ -698,21 +704,24 @@ std::vector<dsize_t> Tensor::Strides() {
   return strides;
 }
 
-Status Tensor::GetBufferInfo(Tensor &t, py::buffer_info *out) {
-  CHECK_FAIL_RETURN_UNEXPECTED(t.type().IsNumeric(), "Cannot use GetBufferInfo on tensor of strings.");
+#ifdef ENABLE_PYTHON
+Status Tensor::GetBufferInfo(Tensor *t, py::buffer_info *out) {
+  RETURN_UNEXPECTED_IF_NULL(t);
+  CHECK_FAIL_RETURN_UNEXPECTED(t->type().IsNumeric(), "Cannot use GetBufferInfo on tensor of strings.");
 
-  std::string format_desc = t.type().GetPybindFormat();
+  std::string format_desc = t->type().GetPybindFormat();
   if (format_desc.empty()) {
     RETURN_STATUS_UNEXPECTED("Cannot convert DE type tp pybind format");
   }
-  *out = py::buffer_info(t.GetMutableBuffer(),   /* Pointer to buffer */
-                         t.type().SizeInBytes(), /* Size of one scalar */
-                         format_desc,            /* Python struct-style format descriptor */
-                         t.Rank(),               /* Number of dimensions */
-                         t.shape().AsVector(),   /* Buffer dimensions */
-                         t.Strides());
+  *out = py::buffer_info(t->GetMutableBuffer(),   /* Pointer to buffer */
+                         t->type().SizeInBytes(), /* Size of one scalar */
+                         format_desc,             /* Python struct-style format descriptor */
+                         t->Rank(),               /* Number of dimensions */
+                         t->shape().AsVector(),   /* Buffer dimensions */
+                         t->Strides());
   return Status::OK();
 }
+#endif
 
 template <typename T>
 Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {
@@ -752,6 +761,8 @@ Status Tensor::GetItemAt(std::string_view *o, const std::vector<dsize_t> &index)
   o->swap(sv);
   return Status::OK();
 }
+
+#ifdef ENABLE_PYTHON
 // return data as numpy, should return status
 Status Tensor::GetDataAsNumpy(py::array *data) {
   RETURN_UNEXPECTED_IF_NULL(data_);
@@ -815,6 +826,7 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   data_allocator_->deallocate(reinterpret_cast<uchar *>(tmp_data));
   return Status::OK();
 }
+#endif
 
 void Tensor::Squeeze() { shape_ = shape_.Squeeze(); }
 

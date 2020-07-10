@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace py = pybind11;
 
 class NgramOp : public TensorOp {
  public:

@@ -32,6 +32,12 @@ enum class DatasetType { kUnknown, kArrow, kTf };
 // Possible flavours of Tensor implementations
 enum class TensorImpl { kNone, kFlexible, kCv, kNP };
 
+// Possible values for Border types
+enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };
+
+// Possible interpolation modes
+enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3 };
+
 // convenience functions for 32bit int bitmask
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 

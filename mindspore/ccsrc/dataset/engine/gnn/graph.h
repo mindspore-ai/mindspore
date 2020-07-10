@@ -140,8 +140,10 @@ class Graph {
   // @return Status - The error code return
   Status GetMetaInfo(MetaInfo *meta_info);
 
+#ifdef ENABLE_PYTHON
   // Return meta information to python layer
   Status GraphInfo(py::dict *out);
+#endif
 
   Status Init();
 

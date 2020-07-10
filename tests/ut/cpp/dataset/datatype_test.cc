@@ -23,8 +23,6 @@
 
 using namespace mindspore::dataset;
 
-namespace py = pybind11;
-
 class MindDataTestDatatype : public UT::Common {
  public:
     MindDataTestDatatype() = default;

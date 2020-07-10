@@ -25,7 +25,7 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-E]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-E] [-l on|off]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -56,6 +56,7 @@ usage()
   echo "    -s Enable serving module, default off"
   echo "    -B Enable debugger, default off"
   echo "    -E Enable IBVERBS for parameter server, default off"
+  echo "    -l Compile with python dependency, default on"
 }
 
 # check value of input is 'on' or 'off'
@@ -98,9 +99,10 @@ checkopts()
   ENABLE_SERVING="off"
   ENABLE_DEBUGGER="off"
   ENABLE_IBVERBS="off"
+  ENABLE_PYTHON="on"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:I:LRP:Q:D:zM:V:K:sB:E' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:sB:E' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -150,6 +152,10 @@ checkopts()
       p)
         check_on_off $OPTARG p
         ENABLE_PROFILE="$OPTARG"
+        ;;
+      l)
+        check_on_off $OPTARG l
+        ENABLE_PYTHON="$OPTARG"
         ;;
       i)
         INC_BUILD="on"
@@ -316,6 +322,7 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_E2E=ON"
     fi
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR}"
+    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_PYTHON=${ENABLE_PYTHON}"
     if [[ "X$ENABLE_MPI" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_MPI=ON"
     fi

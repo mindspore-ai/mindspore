@@ -387,6 +387,7 @@ Status Graph::GetMetaInfo(MetaInfo *meta_info) {
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status Graph::GraphInfo(py::dict *out) {
   MetaInfo meta_info;
   RETURN_IF_NOT_OK(GetMetaInfo(&meta_info));
@@ -398,6 +399,7 @@ Status Graph::GraphInfo(py::dict *out) {
   (*out)["edge_feature_type"] = py::cast(meta_info.edge_feature_type);
   return Status::OK();
 }
+#endif
 
 Status Graph::LoadNodeAndEdge() {
   GraphLoader gl(dataset_file_, num_workers_);

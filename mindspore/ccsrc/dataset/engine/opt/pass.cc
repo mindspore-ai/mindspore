@@ -21,13 +21,15 @@
 #include "dataset/engine/datasetops/map_op.h"
 #include "dataset/engine/datasetops/project_op.h"
 #include "dataset/engine/datasetops/rename_op.h"
-#include "dataset/engine/datasetops/filter_op.h"
 #include "dataset/engine/datasetops/repeat_op.h"
 #include "dataset/engine/datasetops/skip_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
-#include "dataset/engine/datasetops/source/generator_op.h"
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
+#ifdef ENABLE_PYTHON
+#include "dataset/engine/datasetops/filter_op.h"
+#include "dataset/engine/datasetops/source/generator_op.h"
+#endif
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/take_op.h"
 #include "dataset/engine/datasetops/zip_op.h"
@@ -111,22 +113,12 @@ Status NodePass::RunOnNode(std::shared_ptr<RenameOp> node, bool *modified) {
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
-Status NodePass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
-}
-
 Status NodePass::RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
 Status NodePass::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
-}
-
-Status NodePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
@@ -140,6 +132,18 @@ Status NodePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
+
+#ifdef ENABLE_PYTHON
+Status NodePass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+#endif
 
 Status NodePass::RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
   // Fallback to base class visitor by default

@@ -297,7 +297,7 @@ void bindTensor(py::module *m) {
     }))
     .def_buffer([](Tensor &tensor) {
       py::buffer_info info;
-      THROW_IF_ERROR(Tensor::GetBufferInfo(tensor, &info));
+      THROW_IF_ERROR(Tensor::GetBufferInfo(&tensor, &info));
       return info;
     })
     .def("__str__", &Tensor::ToString)
@@ -311,7 +311,7 @@ void bindTensor(py::module *m) {
         return res;
       }
       py::buffer_info info;
-      THROW_IF_ERROR(Tensor::GetBufferInfo(tensor, &info));
+      THROW_IF_ERROR(Tensor::GetBufferInfo(&tensor, &info));
       return py::array(pybind11::dtype(info), info.shape, info.strides, info.ptr, t);
     });
 

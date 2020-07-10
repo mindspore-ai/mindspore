@@ -24,13 +24,16 @@
 
 #include <opencv2/core/mat.hpp>
 
+#ifdef ENABLE_PYTHON
 #include "pybind11/pybind11.h"
+namespace py = pybind11;
+#endif
 
 #include "dataset/core/constants.h"
+#include "dataset/util/status.h"
 #include "dataset/core/global_context.h"
 #include "dataset/util/allocator.h"
 
-namespace py = pybind11;
 namespace mindspore {
 namespace dataset {
 // Class that represents a shape of a Tensor. A shape can be:
@@ -43,7 +46,8 @@ namespace dataset {
 //        -# one or more dim is unknown --> not empty vector --> <d1, d2, d2, d3, ...> where di is unknown\n
 //           Example: <3,?> (the 1st dim is unknown)\n
 //              <2,?,?,?> (all dims but the 0th dim are unknown)
-//  TensorShape supports any dim > 0 and < 2^31-1
+
+/// \brief  TensorShape supports any dim > 0 and < 2^31-1
 class TensorShape {
  public:
   static constexpr dsize_t kDimUnknown = -1;  // constant for an unknown dimension
@@ -51,57 +55,59 @@ class TensorShape {
   // Force the compiler to not create a no-arg constructor
   TensorShape() = delete;
 
-  // Create a Shape from an initialization list (e.g., TensorShape s = {2,2}).
-  // If one of the dims is set to DIM_UNKNOWN, the shape will flagged as unKnown
-  // @param list
+  /// \brief Create a Shape from an initialization list (e.g., TensorShape s = {2,2}).
+  ///     If one of the dims is set to DIM_UNKNOWN, the shape will flagged as unKnown
+  /// \param[in] list
   explicit TensorShape(const std::initializer_list<dsize_t> &list);
 
-  // Create a Shape from a vector (e.g., TensorShape s = std::vector<dsize_t>({2,2}) ).
-  // If one of the dims is set to DIM_UNKNOWN, the shape will flagged as unKnown
-  // @param list
+  /// \brief Create a Shape from a vector (e.g., TensorShape s = std::vector<dsize_t>({2,2}) ).
+  ///     If one of the dims is set to DIM_UNKNOWN, the shape will flagged as unKnown
+  /// \param[in] list
   explicit TensorShape(const std::vector<dsize_t> &list);
 
-  // Copy constructor
-  // @param shape
+  /// \brief Copy constructor
+  /// \param[in] shape
   TensorShape(const TensorShape &shape);
 
-  // construct a TensorShape via a python list
-  // @param py::list l - a list object from python
+#ifdef ENABLE_PYTHON
+  /// \brief construct a TensorShape via a python list
+  /// \param[in] py::list l - a list object from python
   explicit TensorShape(py::list l);
+#endif
 
   ~TensorShape() = default;
 
-  // Create a scalar Shape (i.e., empty shape with mKnown = true)
-  // @return TensorShape
+  /// \brief Create a scalar Shape (i.e., empty shape with mKnown = true)
+  /// \return TensorShape
   static TensorShape CreateScalar() { return TensorShape({}); }
 
-  // Create a shape with an unknown rank.
-  // @return TensorShape
+  /// \brief Create a shape with an unknown rank.
+  /// \return TensorShape
   static TensorShape CreateUnknownRankShape();
 
-  // Create a shape with a known rank .
-  // @return TensorShape
+  /// \brief Create a shape with a known rank .
+  /// \return TensorShape
   static TensorShape CreateUnknownShapeWithRank(dsize_t rank);
 
-  // Insert a new dim into a copy of the current shape.
-  // @param dim to be added
-  // @param axis the index where dim should be added
-  // @return New modified shape
+  /// \brief Insert a new dim into a copy of the current shape.
+  /// \param[in] dim to be added
+  /// \param[in] axis the index where dim should be added
+  /// \return New modified shape
   TensorShape InsertDim(dsize_t axis, dsize_t dim) const;
 
-  // Insert new dim at index 0. For example,  <2,4> --> PrependDim(4) --> <4,2,4>
-  // @param dim
-  // @return
+  /// \brief Insert new dim at index 0. For example,  <2,4> --> PrependDim(4) --> <4,2,4>
+  /// \param[in] dim
+  /// \return
   TensorShape PrependDim(dsize_t dim) const;
 
-  // Insert a new dim at the end of the shape. For example,  <2,4> --> AppendDim(4) --> <2,4,4>
-  // @param dim
-  // @return
+  /// \brief Insert a new dim at the end of the shape. For example,  <2,4> --> AppendDim(4) --> <2,4,4>
+  /// \param[in] dim
+  /// \return
   TensorShape AppendDim(dsize_t dim) const;
 
-  // Create a shape based on OpenCV shape and type
-  // @param cv_size
-  // @param type int that represent the type in OpenCV, example CV_8U, CV_64S
+  /// \brief Create a shape based on OpenCV shape and type
+  /// \param[in] cv_size
+  /// \param[in] type int that represent the type in OpenCV, example CV_8U, CV_64S
   TensorShape(cv::MatSize cv_size, uint32_t type);
 
   dsize_t Size() const { return raw_shape_.size(); }
@@ -123,47 +129,50 @@ class TensorShape {
     return raw_shape_[index];
   }
 
-  // Return the Shape as a vector
-  // @return
+  /// \brief Return the Shape as a vector
+  /// \return
   std::vector<dsize_t> AsVector() const;
 
-  // Returns the class info as a string
-  // @return
+  /// \brief Returns the class info as a string
+  /// \return
   std::string ToString() const {
     std::stringstream ss;
     ss << *this;
     return ss.str();
   }
 
-  // Actual print function used by operator<<
-  // @param out output string stream
+  /// \brief Actual print function used by operator<<
+  /// \param out output string stream
   void Print(std::ostream &out) const;
 
-  // << Stream output operator overload
-  // @notes This allows you to print the info using stream operators
-  // @param out - reference to the output stream being overloaded
-  // @param rO - reference to the TensorShape to display
-  // @return - the output stream must be returned
+  /// \brief << Stream output operator overload
+  ///     This allows you to print the info using stream operators
+  /// \param[in] out - reference to the output stream being overloaded
+  /// \param[in] rO - reference to the TensorShape to display
+  /// \return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const TensorShape &so) {
     so.Print(out);
     return out;
   }
 
+#ifdef ENABLE_PYTHON
   py::list AsPyList();
+#endif
 
-  // Checks if the given index is a valid index for this tensor.
-  // For example: Tensor<3,4> Index<1,1> is valid. But Index<4,1> or <1> are not.
-  // @param index
-  // @return bool
+  /// \brief Checks if the given index is a valid index for this tensor.
+  ///     For example: Tensor<3,4> Index<1,1> is valid. But Index<4,1> or <1> are not.
+  /// \param[in] index
+  /// \return bool
   bool IsValidIndex(const std::vector<dsize_t> &index) const;
 
   TensorShape Squeeze() const;
 
   std::vector<dsize_t> Strides() const;
 
-  // Returns the location of the item assuming row major memory layout.
-  // @param index
-  // @return
+  /// \brief Returns the location of the item assuming row major memory layout.
+  /// \param[in] index
+  /// \param[out] flat_index
+  /// \return
   Status ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const;
 
  private:
@@ -174,11 +183,11 @@ class TensorShape {
   // Vector to keep the strides of the shape. The size is rank+1
   std::vector<dsize_t, IntAlloc> strides_;
 
-  // Internal utility function to iterate over a list, check if the dim is valid and then insert it into the shape.
-  // @tparam T list
-  // @param list Iterable list
-  // @return true if the shape is valid and no overflow would be generated when counting the number of elements.
-  //         False otherwise.
+  /// \brief Internal utility function to iterate over a list,
+  ///     check if the dim is valid and then insert it into the shape.
+  /// \param[in] list Iterable list
+  /// \return true if the shape is valid and no overflow would be generated when counting the number of elements.
+  ///     False otherwise.
   template <typename T>
   void AddListToShape(const T &list);
 };

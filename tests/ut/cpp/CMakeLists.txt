@@ -32,7 +32,15 @@ if(ENABLE_MINDDATA)
 endif()
 # fetch ut test files
 if(ENABLE_MINDDATA)
-    file(GLOB_RECURSE UT_SRCS ./*.cc)
+    file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./*.cc)
+    if(NOT ENABLE_PYTHON)
+        set(PYTHON_RELATED_SRCS
+            dataset/filter_op_test.cc
+            dataset/voc_op_test.cc
+            dataset/manifest_op_test.cc
+        )
+        list(REMOVE_ITEM UT_SRCS ${PYTHON_RELATED_SRCS})
+    endif()
 else()
     file(GLOB_RECURSE TEMP_UT_SRCS ./*.cc)
     foreach(OBJ ${TEMP_UT_SRCS})

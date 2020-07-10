@@ -729,7 +729,6 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() == 3 && num_channels == 1 && output_cv->Rank() == 2) output_cv->ExpandDim(2);
     *output = std::static_pointer_cast<Tensor>(output_cv);
-
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Unexpected error in pad");

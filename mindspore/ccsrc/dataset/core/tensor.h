@@ -26,20 +26,27 @@
 #undef HAVE_STDDEF_H
 #undef HAVE_STDLIB_H
 #endif
+
+#ifdef ENABLE_PYTHON
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#endif
+
 #include "dataset/core/constants.h"
 #include "dataset/core/data_type.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/allocator.h"
 #include "dataset/util/status.h"
 #include "proto/example.pb.h"
 
+#ifdef ENABLE_PYTHON
 namespace py = pybind11;
+#endif
 namespace mindspore {
 namespace dataset {
 class Tensor;
+template <typename T>
+class Allocator;
 
 using CharAllocPtr = std::unique_ptr<Allocator<unsigned char>>;
 using TensorAllocPtr = std::shared_ptr<Allocator<Tensor>>;  // An allocator shared_ptr for Tensors
@@ -114,16 +121,17 @@ class Tensor {
   static Status CreateTensor(std::shared_ptr<Tensor> *, TensorImpl tensor_impl, const TensorShape &shape, DataType type,
                              const unsigned char *data = nullptr);
 
-  /// Create a copy of the input tensor
-  /// \param out [out] output tensor to be generated
-  /// \param in [in] orginal tensor to be copied
-  /// \return Status
+  // Create a copy of the input tensor
+  // @param out [out] output tensor to be generated
+  // @param in [in] orginal tensor to be copied
+  // @return Status
   static Status CreateTensor(std::shared_ptr<Tensor> *out, const std::shared_ptr<Tensor> &in) {
     const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
     *out = std::allocate_shared<Tensor>(*alloc, in->shape(), in->type(), in->GetBuffer(), in->SizeInBytes());
     return Status::OK();
   }
 
+#ifdef ENABLE_PYTHON
   // A static factory method to create a Tensor from a given py::array.
   // @param ptr output argument to hold the created Tensor
   // @param arr py::array
@@ -132,6 +140,7 @@ class Tensor {
 
   // Helper function to create a tensor from Numpy of strings
   static Status CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::array arr);
+#endif
 
   // A static factory method to create a Tensor from a given list of strings.
   // @param ptr output argument to hold the created Tensor
@@ -170,6 +179,7 @@ class Tensor {
   static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const T &item) {
     return CreateTensor<T>(ptr, {item}, TensorShape::CreateScalar());
   }
+
   // Create tensor from protobuf bytelist with uint8 or int8 types
   static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const dataengine::BytesList &bytes_list,
                              const TensorShape &shape, const DataType &type, dsize_t pad_size);
@@ -346,12 +356,12 @@ class Tensor {
 
   virtual void Squeeze();
 
-  /// Calculates the strides of the Tensor
-  /// Ex: Tensor of shape <4,2,2> and type DE_UINT8 (1 byte)
-  /// The strides will be {6,2,1}.
-  /// Ex: Tensor of shape <4,2,2> and type DE_UINT32 (4 byte)
-  /// The strides will be {24,8,4}.
-  /// @return vector of integers
+  // Calculates the strides of the Tensor
+  // Ex: Tensor of shape <4,2,2> and type DE_UINT8 (1 byte)
+  // The strides will be {6,2,1}.
+  // Ex: Tensor of shape <4,2,2> and type DE_UINT32 (4 byte)
+  // The strides will be {24,8,4}.
+  // @return vector of integers
   std::vector<dsize_t> Strides();
 
   std::string ToString() {
@@ -376,6 +386,7 @@ class Tensor {
   // Slice string tensors
   Status SliceString(std::shared_ptr<Tensor> *out, const std::vector<dsize_t> &indices);
 
+#ifdef ENABLE_PYTHON
   // Constructs numpy array from input tensor
   // @param data this data is the location of python data
   // @return Status code
@@ -383,7 +394,8 @@ class Tensor {
 
   Status GetDataAsNumpyStrings(py::array *data);
 
-  static Status GetBufferInfo(Tensor &t, py::buffer_info *out);
+  static Status GetBufferInfo(Tensor *t, py::buffer_info *out);
+#endif
 
   // Concatenate based on given tensor, can fill in current tensor with a smaller one, unlike InsertTensor
   Status Concatenate(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &input);
@@ -570,7 +582,7 @@ class Tensor {
 
   // Return a TensorIterator that points to the start of the Tensor.
   // It's the user responsibility to use the correct type that matches the Tensor type
-  // @tparam T The type of values in the Tensor
+  // @param T The type of values in the Tensor
   // @return TensorIterator
   template <typename T>
   TensorIterator<T> begin() {

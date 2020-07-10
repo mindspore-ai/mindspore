@@ -33,17 +33,19 @@ class ProjectOp;
 
 class RenameOp;
 
-class FilterOp;
-
 class SkipOp;
 
 class ShuffleOp;
 
-class GeneratorOp;
-
 class MindRecordOp;
 
 class TFReaderOp;
+
+#ifdef ENABLE_PYTHON
+class FilterOp;
+
+class GeneratorOp;
+#endif
 
 class TakeOp;
 
@@ -122,17 +124,19 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<RenameOp> node, bool *modified);
 
-  virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
-
   virtual Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified);
 
-  virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
-
   virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified);
+
+#ifdef ENABLE_PYTHON
+  virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
+#endif
 
   virtual Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified);
 

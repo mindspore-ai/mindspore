@@ -18,7 +18,6 @@
 #include "dataset/kernels/image/image_utils.h"
 #include "dataset/util/status.h"
 #include "dataset/core/cv_tensor.h"
-#include "dataset/core/pybind_support.h"
 
 namespace mindspore {
 namespace dataset {

@@ -35,10 +35,6 @@
 
 namespace mindspore {
 namespace dataset {
-enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3 };
-
-enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };
-
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
 struct JpegErrorManagerCustom {

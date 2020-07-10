@@ -19,14 +19,16 @@
 #include <opencv2/core/hal/interface.h>
 
 #include <string>
-
+#ifdef ENABLE_PYTHON
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
-
-#include "dataset/core/constants.h"
 #include "dataset/core/pybind_support.h"
-
 namespace py = pybind11;
+#else
+#include "Eigen/Core"
+using float16 = Eigen::half;
+#endif
+#include "dataset/core/constants.h"
 namespace mindspore {
 namespace dataset {
 
@@ -59,6 +61,7 @@ class DataType {
     const uint8_t cvType_;                      // OpenCv matching type
   };
 
+#ifdef ENABLE_PYTHON
   static inline const TypeInfo kTypeInfo[] = {
     // name, sizeInBytes, pybindTypem formatDescriptor, openCV
     {"unknown", 0, "object", "", kCVInvalidType},                                        // DE_UNKNOWN
@@ -76,19 +79,38 @@ class DataType {
     {"float64", 8, "double", py::format_descriptor<double>::format(), CV_64F},           // DE_FLOAT64
     {"string", 0, "bytes", "S", kCVInvalidType}                                          // DE_STRING
   };
+#else
+  static inline const TypeInfo kTypeInfo[] = {
+    // name, sizeInBytes, pybindTypem formatDescriptor, openCV
+    {"unknown", 0, "object", "", kCVInvalidType},  // DE_UNKNOWN
+    {"bool", 1, "bool", "", CV_8U},                // DE_BOOL
+    {"int8", 1, "int8", "", CV_8S},                // DE_INT8
+    {"uint8", 1, "uint8", "", CV_8U},              // DE_UINT8
+    {"int16", 2, "int16", "", CV_16S},             // DE_INT16
+    {"uint16", 2, "uint16", "", CV_16U},           // DE_UINT16
+    {"int32", 4, "int32", "", CV_32S},             // DE_INT32
+    {"uint32", 4, "uint32", "", kCVInvalidType},   // DE_UINT32
+    {"int64", 8, "int64", "", kCVInvalidType},     // DE_INT64
+    {"uint64", 8, "uint64", "", kCVInvalidType},   // DE_UINT64
+    {"float16", 2, "float16", "", CV_16F},         // DE_FLOAT16
+    {"float32", 4, "float32", "", CV_32F},         // DE_FLOAT32
+    {"float64", 8, "double", "", CV_64F},          // DE_FLOAT64
+    {"string", 0, "bytes", "", kCVInvalidType}     // DE_STRING
+  };
+#endif
 
   // No arg constructor to create an unknown shape
   DataType() : type_(DE_UNKNOWN) {}
 
   // Create a type from a given string
-  // @param type_str
+  /// \param type_str
   explicit DataType(const std::string &type_str);
 
   // Default destructor
   ~DataType() = default;
 
   // Create a type from a given enum
-  // @param d
+  /// \param d
   constexpr explicit DataType(Type d) : type_(d) {}
 
   constexpr bool operator==(const DataType a) const { return type_ == a.type_; }
@@ -100,49 +122,49 @@ class DataType {
   constexpr bool operator!=(const Type a) const { return type_ != a; }
 
   // Disable this usage `if(d)` where d is of type DataType
-  // @return
+  /// \return
   operator bool() = delete;
 
   // To be used in Switch/case
-  // @return
+  /// \return
   operator Type() const { return type_; }
 
   // The number of bytes needed to store one value of this type
-  // @return
+  /// \return
   uint8_t SizeInBytes() const;
 
   // Convert from DataType to OpenCV type
-  // @return
+  /// \return
   uint8_t AsCVType() const;
 
   // Convert from OpenCV type to DataType
-  // @param cv_type
-  // @return
+  /// \param cv_type
+  /// \return
   static DataType FromCVType(int cv_type);
 
   // Returns a string representation of the type
-  // @return
+  /// \return
   std::string ToString() const;
 
   // returns true if the template type is the same as the Tensor type_
-  // @tparam T
-  // @return true or false
+  /// \tparam T
+  /// \return true or false
   template <typename T>
   bool IsCompatible() const {
     return type_ == FromCType<T>();
   }
 
   // returns true if the template type is the same as the Tensor type_
-  // @tparam T
-  // @return true or false
+  /// \tparam T
+  /// \return true or false
   template <typename T>
   bool IsLooselyCompatible() const;
 
   // << Stream output operator overload
-  // @notes This allows you to print the info using stream operators
-  // @param out - reference to the output stream being overloaded
-  // @param rO - reference to the DataType to display
-  // @return - the output stream must be returned
+  /// \notes This allows you to print the info using stream operators
+  /// \param out - reference to the output stream being overloaded
+  /// \param rO - reference to the DataType to display
+  /// \return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const DataType &so) {
     out << so.ToString();
     return out;
@@ -151,22 +173,24 @@ class DataType {
   template <typename T>
   static DataType FromCType();
 
+#ifdef ENABLE_PYTHON
   // Convert from DataType to Pybind type
-  // @return
+  /// \return
   py::dtype AsNumpyType() const;
 
   // Convert from NP type to DataType
-  // @param type
-  // @return
+  /// \param type
+  /// \return
   static DataType FromNpType(const py::dtype &type);
 
   // Convert from NP array to DataType
-  // @param py array
-  // @return
+  /// \param py array
+  /// \return
   static DataType FromNpArray(const py::array &arr);
+#endif
 
   // Get the buffer string format of the current type. Used in pybind buffer protocol.
-  // @return
+  /// \return
   std::string GetPybindFormat() const;
 
   bool IsSignedInt() const {
