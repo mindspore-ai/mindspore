@@ -199,7 +199,6 @@ bool IsSubGraph(const AnfNodePtr &node) {
     }
 
     AnfNodePtr fn = inputs[0];
-    MS_EXCEPTION_IF_NULL(fn);
     if (!IsValueNode<Primitive>(fn)) {
       return false;
     }
@@ -239,7 +238,6 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
     }
 
     AnfNodePtr fn = inputs[0];
-    MS_EXCEPTION_IF_NULL(fn);
     if (IsValueNode<FuncGraph>(fn)) {
       auto fg = GetValueNode<FuncGraphPtr>(fn);
       if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {

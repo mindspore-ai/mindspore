@@ -503,7 +503,8 @@ void FinalVM::InstSwitchLayer(const VectorRef &args) {
     idx_value += size;
   }
   if (idx_value < 0 || idx_value >= size) {
-    MS_LOG(EXCEPTION) << __FUNCTION__ << " given index " << idx_value << " out of range.";
+    MS_LOG(EXCEPTION) << __FUNCTION__ << " given index " << idx_value << " out of range. Please make sure the value "
+                      << "of index in [" << -size << ", " << size << "), and the type is int32.";
   }
   Push(branches[idx_value]);
   MS_LOG(DEBUG) << "End";
