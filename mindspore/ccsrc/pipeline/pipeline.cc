@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/data_converter.h"
 #include "optimizer/ad/dfunctor.h"
@@ -695,10 +695,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
       if (!param_ptr->has_default()) {
         MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
       }
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_ptr->default_param());
-      py::object obj = param_value->value();
-      py::object p_value = py::cast<py::object>(parse::python_adapter::GetPyObjAttr(obj, "default_input"));
-      (*arg_list).push_back(p_value);
+      arg_list->push_back(param_ptr->default_param()->value());
     }
   }
 }

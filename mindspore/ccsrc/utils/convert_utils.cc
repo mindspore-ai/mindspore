@@ -30,7 +30,7 @@
 #include "pipeline/parse/parse_base.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "utils/base_ref_extends.h"
 
 namespace mindspore {
@@ -449,8 +449,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       if (!param->has_default()) {
         MS_LOG(EXCEPTION) << "Can not determine value of Parameter " << index << " (" << param->name() << ")";
       }
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param->default_param());
-      *ret_val = param_value->value().attr("data");
+      auto tensor = param->default_param()->value();
+      *ret_val = py::cast(tensor);
     }
     return true;
   }

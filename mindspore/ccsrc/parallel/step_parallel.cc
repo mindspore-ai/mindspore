@@ -28,7 +28,7 @@
 #include <utility>
 
 #include "ir/tensor.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "operator/ops.h"
 #include "optimizer/optimizer.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
@@ -1298,9 +1298,7 @@ bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_nod
     return false;
   }
 
-  auto param_value = std::dynamic_pointer_cast<ParamValuePy>(cloned_parameter->default_param());
-  py::object clone_info = parse::python_adapter::GetPyObjAttr(param_value->value(), CLONE_INFO);
-  bool cloned = py::cast<bool>(parse::python_adapter::GetPyObjAttr(clone_info, CLONED));
+  bool cloned = cloned_parameter->default_param()->cloned();
   if (!cloned) {
     return false;
   }
@@ -1321,9 +1319,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
     }
 
     // get the cloned index
-    auto param_value = std::dynamic_pointer_cast<ParamValuePy>(cloned_parameter->default_param());
-    py::object cloned_info = parse::python_adapter::GetPyObjAttr(param_value->value(), CLONE_INFO);
-    int32_t cloned_index = py::cast<int32_t>(parse::python_adapter::GetPyObjAttr(cloned_info, CLONED_INDEX));
+    int32_t cloned_index = cloned_parameter->default_param()->cloned_index();
 
     // find the be cloned parameter
     bool found_be_cloned_parameter = false;
@@ -1337,21 +1333,17 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
         continue;
       }
 
-      auto param_value_cloned = std::dynamic_pointer_cast<ParamValuePy>(be_cloned_parameter->default_param());
-      py::object be_cloned_info = parse::python_adapter::GetPyObjAttr(param_value_cloned->value(), CLONE_INFO);
-      if (!py::cast<bool>(parse::python_adapter::GetPyObjAttr(be_cloned_info, BE_CLONED))) {
+      const auto &param_value_cloned = be_cloned_parameter->default_param();
+      if (!param_value_cloned->be_cloned()) {
         continue;
       }
 
       // get the be cloned index
-      py::list be_cloned_index = parse::python_adapter::GetPyObjAttr(be_cloned_info, BE_CLONED_INDEX);
-      for (auto &index : be_cloned_index) {
-        if (cloned_index == py::cast<int32_t>(index)) {
-          found_be_cloned_parameter = true;
-          cloned_from_parameter = be_cloned_parameter;
-          cloned_from_node = be_cloned_parameter_node;
-          break;
-        }
+      auto &be_cloned_index = param_value_cloned->be_cloned_index();
+      if (std::find(be_cloned_index.begin(), be_cloned_index.end(), cloned_index) != be_cloned_index.end()) {
+        found_be_cloned_parameter = true;
+        cloned_from_parameter = be_cloned_parameter;
+        cloned_from_node = be_cloned_parameter_node;
       }
     }
 
@@ -2090,9 +2082,9 @@ std::string NodeParameterName(const CNodePtr &node) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(input_parameter->default_param());
-        if (py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), REQUIRES_GRAD))) {
-          return py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), PARAM_NAME));
+        const auto &param_value = input_parameter->default_param();
+        if (param_value->requires_grad()) {
+          return param_value->name();
         }
       }
     }

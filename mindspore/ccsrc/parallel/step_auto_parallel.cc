@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "ir/anf.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "ir/tensor.h"
 #include "optimizer/opt.h"
 #include "optimizer/optimizer.h"
@@ -123,9 +123,8 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(input_parameter->default_param());
-        bool require_grad = py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "requires_grad"));
-        is_parameter.push_back(require_grad);
+        bool requires_grad = input_parameter->default_param()->requires_grad();
+        is_parameter.push_back(requires_grad);
       } else {
         is_parameter.push_back(false);
       }
@@ -799,9 +798,8 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       auto casted_target_parameter = target_parameter->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(casted_target_parameter);
       if (casted_target_parameter->has_default()) {
-        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(casted_target_parameter->default_param());
-        bool require_grad = py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "requires_grad"));
-        is_parameter.push_back(require_grad);
+        bool requires_grad = casted_target_parameter->default_param()->requires_grad();
+        is_parameter.push_back(requires_grad);
       } else {
         is_parameter.push_back(false);
       }

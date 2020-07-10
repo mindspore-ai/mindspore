@@ -19,7 +19,7 @@
 #include <algorithm>
 
 #include "ir/manager.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "operator/ops.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -71,9 +71,8 @@ void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, 
   new_param->set_abstract(old_param->abstract());
   new_param->set_name(old_param->name());
   if (old_param->has_default()) {
-    auto param_value = std::dynamic_pointer_cast<ParamValuePy>(old_param->default_param());
-    auto param_value_new = std::make_shared<ParamValuePy>(param_value->value());
-    new_param->set_default_param(param_value_new);
+    // Default parameter can be shared since it is readonly.
+    new_param->set_default_param(old_param->default_param());
   }
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_param->set_scope(scope);
@@ -253,9 +252,8 @@ void Cloner::CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) {
   if (node->isa<Parameter>()) {
     ParameterPtr old_param = dyn_cast<Parameter>(node);
     if (old_param->has_default()) {
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(old_param->default_param());
-      auto param_value_new = std::make_shared<ParamValuePy>(param_value->value());
-      param->set_default_param(param_value_new);
+      // Default parameter can be shared since it is readonly.
+      param->set_default_param(old_param->default_param());
     }
     param->set_name(old_param->name());
   }

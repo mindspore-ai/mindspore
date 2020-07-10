@@ -24,7 +24,7 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "parallel/costmodel_context.h"
 #include "parallel/context.h"
 #include "pipeline/pass.h"
@@ -228,14 +228,12 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
-      AbstractBasePtr ptr = abstract::FromValue(parse::data_converter::PyDataToValue(param_value->value()), true);
-      auto sparse_grad =
-        py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), "sparse_grad"));
-      ptr->set_sparse_grad(sparse_grad);
-      auto has_indexed_slices_grad =
-        py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "has_indexed_slices_grad"));
-      ptr->set_has_indexed_slices_grad(has_indexed_slices_grad);
+      const auto &param_value = param_node->default_param();
+      ValuePtr value = param_value->value();
+      constexpr bool broaden = true;
+      AbstractBasePtr ptr = abstract::FromValue(value, broaden);
+      ptr->set_sparse_grad(param_value->sparse_grad());
+      ptr->set_has_indexed_slices_grad(param_value->has_indexed_slices_grad());
 
       parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
       args_spec.push_back(ptr);

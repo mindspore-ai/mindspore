@@ -19,7 +19,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "pipeline/parse/python_adapter.h"
 
 namespace mindspore {
@@ -38,8 +38,7 @@ bool ParameterRequireGrad(const AnfNodePtr &node_ptr) {
   if (!para_ptr->has_default()) {
     return false;
   }
-  auto param_value = std::dynamic_pointer_cast<ParamValuePy>(para_ptr->default_param());
-  return py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), "requires_grad"));
+  return para_ptr->default_param()->requires_grad();
 }
 }  // namespace parallel
 }  // namespace mindspore

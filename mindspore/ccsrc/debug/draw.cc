@@ -25,7 +25,7 @@
 
 #include "pybind11/pybind11.h"
 #include "ir/meta_func_graph.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "ir/primitive.h"
 #include "utils/graph_utils.h"
 #include "utils/utils.h"
@@ -321,18 +321,9 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
     buffer_ << parameter->ToString();
     auto param = parameter->cast<ParameterPtr>();
     if (param->has_default()) {
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param->default_param());
-      auto py_p = param_value->value();
-      if (py::hasattr(py_p, "default_input")) {
-        py_p = py_p.attr("default_input");
-        std::vector<int> shape;
-        if (py::hasattr(py_p, PYTHON_TENSOR_FLAG)) {
-          auto m_tensor = py_p.cast<std::shared_ptr<tensor::Tensor>>();
-          shape = m_tensor->shape();
-        } else if (py::hasattr(py_p, PYTHON_META_TENSOR_FLAG)) {
-          auto m_tensor = py_p.cast<std::shared_ptr<tensor::MetaTensor>>();
-          shape = m_tensor->shape();
-        }
+      auto tensor = param->default_param()->value();
+      if (tensor) {
+        auto &shape = tensor->shape();
         std::ostringstream shape_str;
         std::copy(shape.begin(), shape.end(), std::ostream_iterator<int>(shape_str, ","));
         buffer_ << "[" << shape_str.str() << "]";

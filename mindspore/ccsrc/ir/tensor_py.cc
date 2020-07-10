@@ -213,9 +213,28 @@ static std::vector<int> GetShapeFromTuple(const py::tuple &tuple) {
 }
 
 REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
+                         // Define python MetaTensor class.
+                         (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
+                           .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
+                           .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
+                           .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
+                           .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.")
+                           .def(py::pickle(
+                             [](const MetaTensor &t) {  // __getstate__
+                               /* Return a tuple that fully encodes the state of the object */
+                               return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
+                             },
+                             [](const py::tuple &t) {  // __setstate__
+                               if (t.size() != 2) {
+                                 throw std::runtime_error("Invalid state!");
+                               }
+                               /* Create a new C++ instance */
+                               MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<std::vector<int>>());
+                               return tensor;
+                             }));
                          // Define python Tensor class.
                          // dtype should define before Tensor, because Tensor init depend dtype
-                         (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor")
+                         (void)py::class_<Tensor, MetaTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
                            .def(py::init([](const Tensor &tensor) { return std::make_shared<Tensor>(tensor); }),
                                 py::arg("input"))
                            .def(py::init([](const Tensor &tensor, const TypePtr &type_ptr) {
@@ -252,6 +271,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
                            .def_readonly(PYTHON_TENSOR_FLAG, &Tensor::parse_info_)
+                           .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
                            .def_property_readonly("dtype", &Tensor::Dtype, R"mydelimiter(
                              Get the tensor's data type.
 
@@ -365,26 +385,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                /* Create a new C++ instance */
                                return TensorPy::MakeTensor(t[0].cast<py::array>());
                              }));
-                         // Define python MetaTensor class.
-                         (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
-                           .def(py::init<TypePtr, const std::vector<int>>(), py::arg("dtype"), py::arg("shape"))
-                           .def_readonly(PYTHON_META_TENSOR_FLAG, &MetaTensor::parse_info_)
-                           .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
-                           .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.")
-                           .def(py::pickle(
-                             [](const MetaTensor &t) {  // __getstate__
-                               /* Return a tuple that fully encodes the state of the object */
-                               return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
-                             },
-                             [](const py::tuple &t) {  // __setstate__
-                               if (t.size() != 2) {
-                                 throw std::runtime_error("Invalid state!");
-                               }
-                               /* Create a new C++ instance */
-                               MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<std::vector<int>>());
-                               return tensor;
-                             }));
                        }));
-
 }  // namespace tensor
 }  // namespace mindspore
