@@ -5,9 +5,9 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 - Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
-- Download the CLUE/SQuAD v1.1 dataset for fine-tuning and evaluation.
+- Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc.
 >  Notes:
-   If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
+   If you are running a fine-tuning or evaluation task, prepare a checkpoint from pre-train.
 
 ## Running the Example
 ### Pre-Training
@@ -24,31 +24,15 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
     sh scripts/run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH
     ```  
 
-### Fine-Tuning
-- Set options in `finetune_config.py`. Make sure the 'data_file', 'schema_file' and 'pre_training_file' are set to your own path. Set the 'pre_training_ckpt' to a saved checkpoint file generated after pre-training.
+### Fine-Tuning and Evaluation
+- Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`. 
 
-- Run `finetune.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+- Set task related hyperparameters in scripts/run_XXX.sh. 
 
-    ```bash
-    python finetune.py
-    ```
-
-### Evaluation
-- Set options in `evaluation_config.py`. Make sure the 'data_file', 'schema_file' and 'finetune_ckpt' are set to your own path.
-
-- NER: Run `evaluation.py` for evaluation of BERT-base and BERT-NEZHA model.
+- Run `bash scripts/run_XXX.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
     ```bash
-    python evaluation.py
-    ```
-- SQuAD v1.1: Run `squadeval.py` and  `SQuAD_postprocess.py` for evaluation of BERT-base and BERT-NEZHA model.
-
-    ```bash
-    python squadeval.py
-    ```
-
-    ```bash
-    python SQuAD_postprocess.py
+    bash scripts/run_XXX.sh
     ```
 
 ## Usage
@@ -88,26 +72,56 @@ config.py:
     scale_window                    steps for once updatation of loss scale: N, default is 1000   
     optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
-finetune_config.py:
-    task                            task type: SeqLabeling | Regression | Classification | COLA | SQUAD
-    num_labels                      number of labels to do classification
-    data_file                       dataset file to load: PATH, default is "/your/path/train.tfrecord"
-    schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"
-    epoch_num                       repeat counts of training: N, default is 5
-    ckpt_prefix                     prefix used to save checkpoint files: PREFIX, default is "bert"
-    ckpt_dir                        path to save checkpoint files: PATH, default is None
-    pre_training_ckpt               checkpoint file to load: PATH, default is "/your/path/pre_training.ckpt"
-    use_crf                         whether to use crf for evaluation. use_crf takes effect only when task type is NER, default is False
-    optimizer                       optimizer used in fine-tune network: AdamWeigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
+scripts/run_ner.sh:
+    device_target                   targeted device to run task: Ascend | GPU
+    do_train                        whether to run training on training set: true | false
+    do_eval                         whether to run eval on dev set: true | false
+    assessment_method               assessment method to do evaluation: f1 | clue_benchmark
+    use_crf                         whether to use crf to calculate loss: true | false
+    device_id                       device id to run task
+    epoch_num                       total number of training epochs to perform
+    num_class                       number of classes to do labeling
+    vocab_file_path                 the vocabulary file that the BERT model was trained on
+    label2id_file_path              label to id json file
+    save_finetune_checkpoint_path   path to save generated finetuning checkpoint
+    load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
+    load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
+    train_data_file_path            ner tfrecord for training. E.g., train.tfrecord
+    eval_data_file_path             ner tfrecord for predictions if f1 is used to evaluate result, ner json for predictions if clue_benchmark is used to evaluate result
+    schema_file_path                path to datafile schema file
 
-evaluation_config.py:
-    task                            task type: SeqLabeling | Regression | Classification | COLA
-    num_labels                      number of labels to do classsification
-    data_file                       dataset file to load: PATH, default is "/your/path/evaluation.tfrecord"
-    schema_file                     dataset schema file to load: PATH, default is "/your/path/schema.json"
-    finetune_ckpt                   checkpoint file to load: PATH, default is "/your/path/your.ckpt"
-    use_crf                         whether to use crf for evaluation. use_crf takes effect only when task type is NER, default is False
-    clue_benchmark                  whether to use clue benchmark. clue_benchmark takes effect only when task type is NER, default is False
+scripts/run_squad.sh:
+    device_target                   targeted device to run task: Ascend | GPU
+    do_train                        whether to run training on training set: true | false
+    do_eval                         whether to run eval on dev set: true | false
+    device_id                       device id to run task
+    epoch_num                       total number of training epochs to perform
+    num_class                       number of classes to classify, usually 2 for squad task
+    vocab_file_path                 the vocabulary file that the BERT model was trained on
+    eval_json_path                  path to squad dev json file
+    save_finetune_checkpoint_path   path to save generated finetuning checkpoint
+    load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
+    load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
+    train_data_file_path            squad tfrecord for training. E.g., train1.1.tfrecord
+    eval_data_file_path             squad tfrecord for predictions. E.g., dev1.1.tfrecord
+    schema_file_path                path to datafile schema file
+
+scripts/run_classifier.sh
+    device_target                   targeted device to run task: Ascend | GPU
+    do_train                        whether to run training on training set: true | false
+    do_eval                         whether to run eval on dev set: true | false
+    assessment_method               assessment method to do evaluation: accuracy | f1 | mcc | spearman_correlation
+    device_id                       device id to run task
+    epoch_num                       total number of training epochs to perform
+    num_class                       number of classes to do labeling
+    save_finetune_checkpoint_path   path to save generated finetuning checkpoint
+    load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
+    load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
+    train_data_file_path            tfrecord for training. E.g., train.tfrecord
+    eval_data_file_path             tfrecord for predictions. E.g., dev.tfrecord
+    schema_file_path                path to datafile schema file
+
+
 ```
 
 ### Parameters:
@@ -115,7 +129,7 @@ evaluation_config.py:
 Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
     batch_size                      batch size of input dataset: N, default is 16
     seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, default is 21136
+    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 21136
     hidden_size                     size of bert encoder layers: N, default is 768
     num_hidden_layers               number of hidden layers: N, default is 12
     num_attention_heads             number of attention heads: N, default is 12

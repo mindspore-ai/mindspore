@@ -24,8 +24,7 @@ echo "==========================================================================
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
-
-export MINDSPORE_HCCL_CONFIG_PATH=$5
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export RANK_TABLE_FILE=$5
 export RANK_SIZE=$1
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
@@ -54,7 +53,7 @@ do
     export GLOG_log_dir=${CUR_DIR}/ms_log
     export GLOG_logtostderr=0
     env > env.log
-    taskset -c $cmdopt python ../run_pretrain.py  \
+    taskset -c $cmdopt python ${PROJECT_DIR}/../run_pretrain.py  \
     --distribute="true" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \

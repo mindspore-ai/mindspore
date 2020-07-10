@@ -58,3 +58,77 @@ def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", e
     logger.info("data size: {}".format(ds.get_dataset_size()))
     logger.info("repeatcount: {}".format(ds.get_repeat_count()))
     return ds, new_repeat_count
+
+
+def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy",
+                       data_file_path=None, schema_file_path=None):
+    """create finetune or evaluation dataset"""
+    type_cast_op = C.TypeCast(mstype.int32)
+    ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
+                            columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"])
+    if assessment_method == "Spearman_correlation":
+        type_cast_op_float = C.TypeCast(mstype.float32)
+        ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
+    else:
+        ds = ds.map(input_columns="label_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
+    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.repeat(repeat_count)
+    # apply shuffle operation
+    buffer_size = 960
+    ds = ds.shuffle(buffer_size=buffer_size)
+    # apply batch operations
+    ds = ds.batch(batch_size, drop_remainder=True)
+    return ds
+
+
+def create_classification_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy",
+                                  data_file_path=None, schema_file_path=None):
+    """create finetune or evaluation dataset"""
+    type_cast_op = C.TypeCast(mstype.int32)
+    ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
+                            columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"])
+    if assessment_method == "Spearman_correlation":
+        type_cast_op_float = C.TypeCast(mstype.float32)
+        ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
+    else:
+        ds = ds.map(input_columns="label_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
+    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.repeat(repeat_count)
+    # apply shuffle operation
+    buffer_size = 960
+    ds = ds.shuffle(buffer_size=buffer_size)
+    # apply batch operations
+    ds = ds.batch(batch_size, drop_remainder=True)
+    return ds
+
+
+def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, schema_file_path=None, is_training=True):
+    """create finetune or evaluation dataset"""
+    type_cast_op = C.TypeCast(mstype.int32)
+    if is_training:
+        ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
+                                columns_list=["input_ids", "input_mask", "segment_ids",
+                                              "start_positions", "end_positions",
+                                              "unique_ids", "is_impossible"])
+        ds = ds.map(input_columns="start_positions", operations=type_cast_op)
+        ds = ds.map(input_columns="end_positions", operations=type_cast_op)
+    else:
+        ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
+                                columns_list=["input_ids", "input_mask", "segment_ids", "unique_ids"])
+        ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+        ds = ds.map(input_columns="input_mask", operations=type_cast_op)
+        ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
+    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
+    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.repeat(repeat_count)
+    # apply shuffle operation
+    buffer_size = 960
+    ds = ds.shuffle(buffer_size=buffer_size)
+    # apply batch operations
+    ds = ds.batch(batch_size, drop_remainder=True)
+    return ds
