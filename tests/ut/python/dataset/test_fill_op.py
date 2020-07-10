@@ -82,9 +82,9 @@ def test_fillop_error_handling():
     data = data.map(input_columns=["col"], operations=fill_op)
 
     with pytest.raises(RuntimeError) as error_info:
-        for data_row in data:
-            print(data_row)
-    assert "Types do not match" in repr(error_info.value)
+        for _ in data:
+            pass
+    assert "Types do not match" in str(error_info.value)
 
 
 if __name__ == "__main__":

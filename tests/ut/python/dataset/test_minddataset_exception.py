@@ -189,7 +189,7 @@ def test_minddataset_invalidate_num_shards():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 0).' in repr(error_info)
+    assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info)
 
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -203,7 +203,7 @@ def test_minddataset_invalidate_shard_id():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 0).' in repr(error_info)
+    assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info)
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
 
@@ -217,14 +217,14 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 1).' in repr(error_info)
+    assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info)
 
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 5)
         num_iter = 0
         for _ in data_set.create_dict_iterator():
             num_iter += 1
-    assert 'Input shard_id is not within the required interval of (0 to 1).' in repr(error_info)
+    assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info)
 
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))

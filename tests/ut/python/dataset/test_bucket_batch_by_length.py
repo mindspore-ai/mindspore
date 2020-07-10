@@ -45,6 +45,7 @@ def test_bucket_batch_invalid_input():
     bucket_boundaries = [1, 2, 3]
     empty_bucket_boundaries = []
     invalid_bucket_boundaries = ["1", "2", "3"]
+    zero_start_bucket_boundaries = [0, 2, 3]
     negative_bucket_boundaries = [1, 2, -3]
     decreasing_bucket_boundaries = [3, 2, 1]
     non_increasing_bucket_boundaries = [1, 2, 2]
@@ -70,8 +71,12 @@ def test_bucket_batch_invalid_input():
     assert "bucket_boundaries should be a list of int" in str(info.value)
 
     with pytest.raises(ValueError) as info:
+        _ = dataset.bucket_batch_by_length(column_names, zero_start_bucket_boundaries, bucket_batch_sizes)
+    assert "bucket_boundaries must only contain positive numbers." in str(info.value)
+
+    with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, negative_bucket_boundaries, bucket_batch_sizes)
-    assert "bucket_boundaries cannot contain any negative numbers" in str(info.value)
+    assert "bucket_boundaries must only contain positive numbers." in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, decreasing_bucket_boundaries, bucket_batch_sizes)
