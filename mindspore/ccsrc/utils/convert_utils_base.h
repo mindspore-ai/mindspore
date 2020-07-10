@@ -91,15 +91,26 @@ inline unsigned int UlongToUint(size_t u) {
   return static_cast<unsigned int>(u);
 }
 
-inline void IntMulWithOverflowCheck(int a, int b, int *c) {
+inline int IntMulWithOverflowCheck(int a, int b) {
   int out = a * b;
   if (a != 0) {
-    bool ok = ((out / a) != b);
-    if (ok) {
+    bool overflow = ((out / a) != b);
+    if (overflow) {
       MS_LOG(EXCEPTION) << "Mul: a(" << a << ") * b(" << b << ") result is overflow";
     }
   }
-  *c = out;
+  return out;
+}
+
+inline int64_t LongMulWithOverflowCheck(int64_t a, int64_t b) {
+  int64_t out = a * b;
+  if (a != 0) {
+    bool overflow = ((out / a) != b);
+    if (overflow) {
+      MS_LOG(EXCEPTION) << "Mul: a(" << a << ") * b(" << b << ") result is overflow";
+    }
+  }
+  return out;
 }
 
 inline size_t SizetMulWithOverflowCheck(size_t a, size_t b) {
