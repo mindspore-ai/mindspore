@@ -126,10 +126,12 @@ class SummaryCollector(Callback):
         >>>
         >>> # Only collect metric, custom lineage data and record data that collected by the summary operator,
         >>> # others are not collected
-        >>> specified = {'collect_metric':True, 'custom_lineage_data': {'version': 'resnet50_v1'}}
+        >>> specified = {'collect_metric': True}
         >>> summary_collector = SummaryCollector('./summary_dir',
         >>>                                      collect_specified_data=specified,
-        >>>                                      keep_default_action=False)
+        >>>                                      keep_default_action=False,
+        >>>                                      custom_lineage_data={'version': 'resnet50_v1'}
+        >>>                                      )
         >>> model.train(epoch, dataset, callbacks=summary_collector)
     """
 
