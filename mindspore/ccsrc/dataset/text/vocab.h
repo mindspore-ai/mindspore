@@ -61,12 +61,7 @@ class Vocab {
   // @param const WordType word - word to look up
   // @param WordIdType default_id - word id to return to user when its not in the vocab
   // @return WordIdType, word_id
-  WordIdType Lookup(const WordType &word, WordIdType default_id) const;
-
-  // reverse lookup, lookup the word based on its id
-  // @param WordIdType id - word id to lookup to
-  // @return WordType the word
-  WordType Lookup(WordIdType id);
+  WordIdType Lookup(const WordType &word) const;
 
   // constructor, shouldn't be called directly, can't be private due to std::make_unique()
   // @param std::unordered_map<WordType, WordIdType> map - sanitized word2id map
@@ -80,6 +75,8 @@ class Vocab {
 
   // destructor
   ~Vocab() = default;
+
+  static const WordIdType kNoTokenExists;
 
  private:
   std::unordered_map<WordType, WordIdType> word2id_;

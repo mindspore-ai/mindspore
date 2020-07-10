@@ -26,7 +26,7 @@ SIMPLE_VOCAB_FILE = "../data/dataset/testVocab/simple_vocab_list.txt"
 
 def test_from_list_tutorial():
     vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", "<unk>"], True)
-    lookup = text.Lookup(vocab)
+    lookup = text.Lookup(vocab, "<unk>")
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
     data = data.map(input_columns=["text"], operations=lookup)
     ind = 0
@@ -50,7 +50,7 @@ def test_from_file_tutorial():
 
 def test_from_dict_tutorial():
     vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
-    lookup = text.Lookup(vocab, 6)  # default value is -1
+    lookup = text.Lookup(vocab, "<unk>")  # any unknown token will be mapped to the id of <unk>
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
     data = data.map(input_columns=["text"], operations=lookup)
     res = [3, 6, 2, 4, 5, 6]
@@ -65,28 +65,39 @@ def test_from_list():
         for word in texts.split(" "):
             yield (np.array(word, dtype='S'),)
 
-    def test_config(lookup_str, vocab_input, special_tokens, special_first):
+    def test_config(lookup_str, vocab_input, special_tokens, special_first, unknown_token):
         try:
             vocab = text.Vocab.from_list(vocab_input, special_tokens, special_first)
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
-            data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
+            data = data.map(input_columns=["text"], operations=text.Lookup(vocab, unknown_token))
             res = []
             for d in data.create_dict_iterator():
                 res.append(d["text"].item())
             return res
         except ValueError as e:
             return str(e)
+        except RuntimeError as e:
+            return str(e)
+        except TypeError as e:
+            return str(e)
 
     # test normal operations
-    assert test_config("w1 w2 w3 s1 s2", ["w1", "w2", "w3"], ["s1", "s2"], True) == [2, 3, 4, 0, 1]
-    assert test_config("w1 w2 w3 s1 s2", ["w1", "w2", "w3"], ["s1", "s2"], False) == [0, 1, 2, 3, 4]
-    assert test_config("w3 w2 w1", ["w1", "w2", "w3"], None, True) == [2, 1, 0]
-    assert test_config("w3 w2 w1", ["w1", "w2", "w3"], None, False) == [2, 1, 0]
+    assert test_config("w1 w2 w3 s1 s2 ephemeral", ["w1", "w2", "w3"], ["s1", "s2"], True, "s2") == [2, 3, 4, 0, 1, 1]
+    assert test_config("w1 w2 w3 s1 s2", ["w1", "w2", "w3"], ["s1", "s2"], False, "s2") == [0, 1, 2, 3, 4]
+    assert test_config("w3 w2 w1", ["w1", "w2", "w3"], None, True, "w1") == [2, 1, 0]
+    assert test_config("w3 w2 w1", ["w1", "w2", "w3"], None, False, "w1") == [2, 1, 0]
+    # test unknown token lookup
+    assert test_config("w1 un1 w3 un2", ["w1", "w2", "w3"], ["<pad>", "<unk>"], True, "<unk>") == [2, 1, 4, 1]
+    assert test_config("w1 un1 w3 un2", ["w1", "w2", "w3"], ["<pad>", "<unk>"], False, "<unk>") == [0, 4, 2, 4]
 
     # test exceptions
-    assert "word_list contains duplicate" in test_config("w1", ["w1", "w1"], [], True)
-    assert "special_tokens contains duplicate" in test_config("w1", ["w1", "w2"], ["s1", "s1"], True)
-    assert "special_tokens and word_list contain duplicate" in test_config("w1", ["w1", "w2"], ["s1", "w1"], True)
+    assert "doesn't exist in vocab." in test_config("un1", ["w1"], [], False, "unk")
+    assert "doesn't exist in vocab and no unknown token is specified." in test_config("un1", ["w1"], [], False, None)
+    assert "doesn't exist in vocab" in test_config("un1", ["w1"], [], False, None)
+    assert "word_list contains duplicate" in test_config("w1", ["w1", "w1"], [], True, "w1")
+    assert "special_tokens contains duplicate" in test_config("w1", ["w1", "w2"], ["s1", "s1"], True, "w1")
+    assert "special_tokens and word_list contain duplicate" in test_config("w1", ["w1", "w2"], ["s1", "w1"], True, "w1")
+    assert "is not of type" in test_config("w1", ["w1", "w2"], ["s1"], True, 123)
 
 
 def test_from_file():
@@ -99,7 +110,7 @@ def test_from_file():
             vocab = text.Vocab.from_file(SIMPLE_VOCAB_FILE, vocab_size=vocab_size, special_tokens=special_tokens,
                                          special_first=special_first)
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
-            data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
+            data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "s2"))
             res = []
             for d in data.create_dict_iterator():
                 res.append(d["text"].item())

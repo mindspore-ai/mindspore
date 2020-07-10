@@ -34,7 +34,7 @@ def test_on_tokenized_line():
             jieba_op.add_word(word)
     data = data.map(input_columns=["text"], operations=jieba_op)
     vocab = text.Vocab.from_file(VOCAB_FILE, ",", special_tokens=["<pad>", "<unk>"])
-    lookup = text.Lookup(vocab)
+    lookup = text.Lookup(vocab, "<unk>")
     data = data.map(input_columns=["text"], operations=lookup)
     res = np.array([[10, 1, 11, 1, 12, 1, 15, 1, 13, 1, 14],
                     [11, 1, 12, 1, 10, 1, 14, 1, 13, 1, 15]], dtype=np.int32)

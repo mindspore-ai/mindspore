@@ -24,9 +24,9 @@ namespace mindspore {
 namespace dataset {
 Vocab::Vocab(std::unordered_map<WordType, WordIdType> word2id) { word2id_ = std::move(word2id); }
 
-WordIdType Vocab::Lookup(const WordType &word, WordIdType default_id) const {
+WordIdType Vocab::Lookup(const WordType &word) const {
   auto itr = word2id_.find(word);
-  return itr == word2id_.end() ? default_id : itr->second;
+  return itr == word2id_.end() ? kNoTokenExists : itr->second;
 }
 
 Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
@@ -100,5 +100,8 @@ void Vocab::append_word(const std::string &word) {
     word2id_[word] = word2id_.size();
   }
 }
+
+const WordIdType Vocab::kNoTokenExists = -1;
+
 }  // namespace dataset
 }  // namespace mindspore

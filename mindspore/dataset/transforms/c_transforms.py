@@ -197,7 +197,7 @@ class PadEnd(cde.PadEndOp):
 
 class Concatenate(cde.ConcatenateOp):
     """
-    Tensor operation to prepend and append to a tensor.
+    Tensor operation that concatenates all columns into a single tensor.
 
     Args:
         axis (int, optional): axis to concatenate the tensors along (Default=0).
