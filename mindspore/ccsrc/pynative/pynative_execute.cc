@@ -184,6 +184,9 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
         auto arg = py::cast<tensor::TensorPtr>(py_args[index]);
         TypeId arg_type_id = arg->data_type();
         auto type_priority = prim::type_map.find(arg_type_id);
+        if (type_priority == prim::type_map.end()) {
+          continue;
+        }
         if (type_priority->second > priority) {
           max_type = type_priority->first;
           priority = type_priority->second;
@@ -204,36 +207,14 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
 }
 
 std::string TypeIdToMsTypeStr(const TypeId &type_id) {
-  switch (type_id) {
-    case kNumberTypeFloat16:
-      return "float16";
-    case kNumberTypeFloat32:
-      return "float32";
-    case kNumberTypeFloat64:
-      return "float64";
-    case kNumberTypeInt8:
-      return "int8";
-    case kNumberTypeInt16:
-      return "int16";
-    case kNumberTypeInt32:
-      return "int32";
-    case kNumberTypeInt64:
-      return "int64";
-    case kNumberTypeUInt8:
-      return "uint8";
-    case kNumberTypeUInt16:
-      return "uint16";
-    case kNumberTypeUInt32:
-      return "uint32";
-    case kNumberTypeUInt64:
-      return "uint64";
-    case kNumberTypeBool:
-      return "bool_";
-    default:
-      MS_LOG(EXCEPTION) << "For implicit type conversion, not support the type: " << TypeIdToType(type_id);
+  auto type_name = type_name_map.find(type_id);
+  if (type_name == type_name_map.end()) {
+    MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
   }
+  return type_name->second;
 }
-py::object DoAutoCast(const py::object arg, const TypeId &type_id) {
+
+py::object DoAutoCast(const py::object &arg, const TypeId &type_id) {
   py::tuple args(3);
   std::string module_name = "mindspore.ops.functional";
   std::string op_name = "cast";
@@ -283,11 +264,8 @@ py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::list &args, py::tu
         continue;
       }
       if (signature[i].rw == SignatureEnumRW::kRWWrite) {
-        MS_LOG(EXCEPTION) << "In op '" << prim->name() << "', \n"
-                          << "the type of writable argument is '" << TypeIdToMsTypeStr(arg->data_type()) << "', "
-                          << "but the largest type in the same SignatureEumDtype is '" << TypeIdToMsTypeStr(it->second)
-                          << "'. The writable arg type is not equal to the largest type, "
-                          << "so can not cast automatically.";
+        prim::RaiseExceptionForConvertRefDtype(prim->name(), TypeIdToMsTypeStr(arg->data_type()),
+                                               TypeIdToMsTypeStr(it->second));
       }
     }
     py::object cast_output = DoAutoCast(py_args[i], it->second);

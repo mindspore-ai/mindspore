@@ -58,6 +58,9 @@ using RWSignaturePtr = std::shared_ptr<DoSignatureMetaFuncGraph>;
 
 extern const std::map<TypeId, size_t> type_map;
 
+void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::string &ref_type,
+                                      const std::string &target_type);
+
 AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
                          const AbstractBasePtrList &args_spec_list, const AnfNodePtrList &old_node_inputs);
 }  // namespace prim

@@ -223,11 +223,7 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
         if (it_name_map == type_name_map.end()) {
           continue;
         }
-        MS_LOG(EXCEPTION) << "In op '" << func_name << "', \n"
-                          << "the type of writable argument is '" << it_map->second << "', "
-                          << "but the largest type in the same SignatureEumDtype is '" << it_name_map->second
-                          << "'. The writable arg type is not equal to the largest type, "
-                          << "so can not cast automatically.";
+        RaiseExceptionForConvertRefDtype(func_name, it_map->second, it_name_map->second);
       }
       continue;
     }
@@ -310,6 +306,15 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
   func_graph->set_output(new_cnode);
   func_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   return func_graph;
+}
+
+void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::string &ref_type,
+                                      const std::string &target_type) {
+  MS_LOG(EXCEPTION) << "In op '" << func_name << "', \n"
+                    << "the type of writable argument is '" << ref_type << "', "
+                    << "but the largest type in the same SignatureEumDtype is '" << target_type
+                    << "'. The writable arg type is not equal to the largest type, "
+                    << "so can not cast automatically.";
 }
 }  // namespace prim
 }  // namespace mindspore
