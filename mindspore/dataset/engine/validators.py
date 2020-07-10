@@ -25,7 +25,7 @@ from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_num_parallel_workers, \
-    check_columns, check_positive
+    check_columns, check_positive, check_pos_int32
 
 from . import datasets
 from . import samplers
@@ -587,6 +587,25 @@ def check_take(method):
         type_check(count, (int,), "count")
         if (count <= 0 and count != -1) or count > INT32_MAX:
             raise ValueError("count should be either -1 or positive integer.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_positive_int32(method):
+    """check whether the input argument is positive and int, only works for functions with one input."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [count], param_dict = parse_user_args(method, *args, **kwargs)
+        para_name = None
+        for key in list(param_dict.keys()):
+            if key not in ['self', 'cls']:
+                para_name = key
+        # Need to get default value of param
+        if count is not None:
+            check_pos_int32(count, para_name)
 
         return method(self, *args, **kwargs)
 
