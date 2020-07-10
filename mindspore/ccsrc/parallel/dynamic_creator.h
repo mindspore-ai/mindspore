@@ -132,6 +132,7 @@ REGISTER(SqueezeInfo);
 REGISTER(SigmoidCrossEntropyWithLogitsInfo);
 REGISTER(SquareInfo);
 REGISTER(GatherV2PInfo);
+REGISTER(EmbeddingLookupInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

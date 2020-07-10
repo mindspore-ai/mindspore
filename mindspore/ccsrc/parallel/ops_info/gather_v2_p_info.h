@@ -65,16 +65,13 @@ class GatherV2PInfo : public OperatorInfo {
   Status InferGroup();
 
   int32_t axis_;
-  std::string target_;
+  std::string target_ = DEVICE;
   std::string replace_op_name_ = GATHERV2;
   int32_t bias_;
   int32_t index_offset_;
   int32_t slice_size_;
   Shape out_dev_matrix_shape_;
   Group group_;
-  bool reduce_scatter_flag_ = false;
-  int32_t split_num_ = 1;
-  bool host_reduce_scatter_ = false;
   bool manual_split_ = false;
   std::vector<int32_t> param_split_shapes_;
   std::vector<int32_t> index_offsets_;
@@ -89,6 +86,14 @@ class SparseGatherV2Info : public GatherV2PInfo {
 
  private:
   std::string replace_op_name_ = SPARSE_GATHERV2;
+};
+
+class EmbeddingLookupInfo : public GatherV2PInfo {
+ public:
+  EmbeddingLookupInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                      const PrimitiveAttrs &attrs)
+      : GatherV2PInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~EmbeddingLookupInfo() override = default;
 };
 }  // namespace parallel
 }  // namespace mindspore
