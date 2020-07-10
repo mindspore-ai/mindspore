@@ -26,15 +26,11 @@
 #include <vector>
 #include <algorithm>
 
-#include "pybind11/pybind11.h"
-
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/signature.h"
 #include "pipeline/static_analysis/abstract_value.h"
-
-namespace py = pybind11;
 
 namespace mindspore {
 // namespace to support intermediate representation definition

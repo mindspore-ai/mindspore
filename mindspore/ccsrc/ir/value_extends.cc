@@ -20,7 +20,6 @@
 #include <cmath>
 #include <cfloat>
 
-#include "pybind_api/api_register.h"
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
@@ -83,9 +82,4 @@ abstract::AbstractBasePtr ValueDictionary::ToAbstract() {
     [](const std::pair<std::string, ValuePtr> &item) { return std::make_pair(item.first, item.second->ToAbstract()); });
   return std::make_shared<abstract::AbstractDictionary>(kv);
 }
-
-REGISTER_PYBIND_DEFINE(
-  RefKey, ([](const py::module *m) {
-    (void)py::class_<RefKey, std::shared_ptr<RefKey>>(*m, "RefKey").def(py::init<std::string>(), py::arg("tag"));
-  }));
 }  // namespace mindspore
