@@ -1016,6 +1016,9 @@ class InvertPermutation(PrimitiveWithInfer):
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
         if mstype.issubclass_(x['dtype'], mstype.tensor):
             raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
+        for shp in x_shp:
+            if shp != []:
+                raise ValueError(f'For \'{self.name}\' the rank of input must be 1.')
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
         z = [x_value[i] for i in range(len(x_value))]
