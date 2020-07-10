@@ -26,10 +26,9 @@ from .datasets import *
 from .iterators import *
 from .serializer_deserializer import serialize, deserialize, show, compare
 from .samplers import *
-from ..core.configuration import config, ConfigurationManager
+from ..core import config
 
-__all__ = ["config", "ConfigurationManager", "zip",
-           "ImageFolderDatasetV2", "MnistDataset",
+__all__ = ["config", "zip", "ImageFolderDatasetV2", "MnistDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
            "VOCDataset", "CocoDataset", "TextFileDataset", "Schema", "DistributedSampler",
