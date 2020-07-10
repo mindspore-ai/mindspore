@@ -59,7 +59,7 @@ def test_bucket_batch_invalid_input():
 
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(invalid_column_names, bucket_boundaries, bucket_batch_sizes)
-    assert "column_names should be a list of str" in str(info.value)
+    assert "Argument column_names[0] with value 1 is not of type (<class 'str'>,)." in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, empty_bucket_boundaries, bucket_batch_sizes)

@@ -380,12 +380,7 @@ def check_bucket_batch_by_length(method):
         type_check_list([pad_to_bucket_boundary, drop_remainder], (bool,), nbool_param_list)
 
         # check column_names: must be list of string.
-        if not column_names:
-            raise ValueError("column_names cannot be empty")
-
-        all_string = all(isinstance(item, str) for item in column_names)
-        if not all_string:
-            raise TypeError("column_names should be a list of str.")
+        check_columns(column_names, "column_names")
 
         if element_length_function is None and len(column_names) != 1:
             raise ValueError("If element_length_function is not specified, exactly one column name should be passed.")
