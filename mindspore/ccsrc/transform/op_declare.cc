@@ -610,7 +610,8 @@ OUTPUT_MAP(ROIAlign) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(ROIAlign) = {{"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int>())},
                       {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int>())},
                       {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
-                      {"sample_num", ATTR_DESC(sample_num, AnyTraits<int>())}};
+                      {"sample_num", ATTR_DESC(sample_num, AnyTraits<int>())},
+                      {"roi_end_mode", ATTR_DESC(roi_end_mode, AnyTraits<int>())}};
 
 // ROIAlignGrad
 INPUT_MAP(ROIAlignGrad) = {{1, INPUT_DESC(ydiff)}, {2, INPUT_DESC(rois)}};
