@@ -808,11 +808,11 @@ ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 
-// MatMul
-INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
-ATTR_MAP(MatMul) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
-                    {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
-OUTPUT_MAP(MatMul) = {{0, OUTPUT_DESC(y)}};
+// MatMulV2
+INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
+                      {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
+OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
 
 // Merge
 INPUT_MAP(Merge) = EMPTY_INPUT_MAP;
