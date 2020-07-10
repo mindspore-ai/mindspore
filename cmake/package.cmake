@@ -210,7 +210,6 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/parallel
         ${CMAKE_SOURCE_DIR}/mindspore/mindrecord
         ${CMAKE_SOURCE_DIR}/mindspore/train
-        ${CMAKE_SOURCE_DIR}/mindspore/model_zoo
         ${CMAKE_SOURCE_DIR}/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication

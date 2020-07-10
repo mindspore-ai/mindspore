@@ -17,8 +17,8 @@ import numpy as np
 
 import mindspore as ms
 from mindspore.common.tensor import Tensor
-from mindspore.model_zoo.resnet import resnet50
 from mindspore.ops import Primitive
+from tests.ut.python.model.resnet import resnet50
 
 scala_add = Primitive('scalar_add')
 

@@ -27,10 +27,10 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.model_zoo.resnet import resnet50
 import mindspore.nn as nn
 import mindspore.dataset as ds
 
+from tests.st.networks.models.resnet50.src.resnet import resnet50
 from tests.st.networks.models.resnet50.src.dataset import create_dataset
 from tests.st.networks.models.resnet50.src.lr_generator import get_learning_rate
 from tests.st.networks.models.resnet50.src.config import config

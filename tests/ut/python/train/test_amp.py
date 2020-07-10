@@ -22,10 +22,10 @@ from mindspore import amp
 from mindspore import nn
 from mindspore.train import Model, ParallelMode
 from mindspore.common import dtype as mstype
-from mindspore.model_zoo.resnet import resnet50
 from ....dataset_mock import MindData
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication.management import init
+from tests.ut.python.model.resnet import resnet50
 
 def setup_module(module):
     _ = module
