@@ -25,7 +25,6 @@ from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
     INT32_MAX, check_value
 
-
 def check_unique_list_of_words(words, arg_name):
     """Check that words is a list and each element is a str without any duplication"""
 
@@ -116,11 +115,22 @@ def check_from_dict(method):
 
 
 def check_jieba_init(method):
-    """Wrapper method to check the parameters of jieba add word."""
+    """Wrapper method to check the parameters of jieba init."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        parse_user_args(method, *args, **kwargs)
+        [hmm_path, mp_path, _, with_offsets], _ = parse_user_args(method, *args, **kwargs)
+
+        if hmm_path is None:
+            raise ValueError("The dict of HMMSegment in cppjieba is not provided.")
+        if not isinstance(hmm_path, str):
+            raise TypeError("Wrong input type for hmm_path, should be string.")
+        if mp_path is None:
+            raise ValueError("The dict of MPSegment in cppjieba is not provided.")
+        if not isinstance(mp_path, str):
+            raise TypeError("Wrong input type for mp_path, should be string.")
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -147,6 +157,128 @@ def check_jieba_add_dict(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         parse_user_args(method, *args, **kwargs)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_with_offsets(method):
+    """Wrapper method to check if with_offsets is the only one parameter."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [with_offsets], _ = parse_user_args(method, *args, **kwargs)
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_unicode_script_tokenizer(method):
+    """Wrapper method to check the parameter of UnicodeScriptTokenizer."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [keep_whitespace, with_offsets], _ = parse_user_args(method, *args, **kwargs)
+        if not isinstance(keep_whitespace, bool):
+            raise TypeError("Wrong input type for keep_whitespace, should be boolean.")
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_wordpiece_tokenizer(method):
+    """Wrapper method to check the parameter of WordpieceTokenizer."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets], _ =\
+            parse_user_args(method, *args, **kwargs)
+        if vocab is None:
+            raise ValueError("vocab is not provided.")
+        if not isinstance(vocab, cde.Vocab):
+            raise TypeError("Wrong input type for vocab, should be Vocab object.")
+        if not isinstance(suffix_indicator, str):
+            raise TypeError("Wrong input type for suffix_indicator, should be string.")
+        if not isinstance(unknown_token, str):
+            raise TypeError("Wrong input type for unknown_token, should be string.")
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
+        check_uint32(max_bytes_per_token)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_regex_tokenizer(method):
+    """Wrapper method to check the parameter of RegexTokenizer."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [delim_pattern, keep_delim_pattern, with_offsets], _ = parse_user_args(method, *args, **kwargs)
+        if delim_pattern is None:
+            raise ValueError("delim_pattern is not provided.")
+        if not isinstance(delim_pattern, str):
+            raise TypeError("Wrong input type for delim_pattern, should be string.")
+        if not isinstance(keep_delim_pattern, str):
+            raise TypeError("Wrong input type for keep_delim_pattern, should be string.")
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_basic_tokenizer(method):
+    """Wrapper method to check the parameter of RegexTokenizer."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [lower_case, keep_whitespace, _, preserve_unused, with_offsets], _ =\
+            parse_user_args(method, *args, **kwargs)
+        if not isinstance(lower_case, bool):
+            raise TypeError("Wrong input type for lower_case, should be boolean.")
+        if not isinstance(keep_whitespace, bool):
+            raise TypeError("Wrong input type for keep_whitespace, should be boolean.")
+        if not isinstance(preserve_unused, bool):
+            raise TypeError("Wrong input type for preserve_unused_token, should be boolean.")
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_bert_tokenizer(method):
+    """Wrapper method to check the parameter of BertTokenizer."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [vocab, suffix_indicator, max_bytes_per_token, unknown_token, lower_case, keep_whitespace, _,
+         preserve_unused_token, with_offsets], _ = parse_user_args(method, *args, **kwargs)
+        if vocab is None:
+            raise ValueError("vacab is not provided.")
+        if not isinstance(vocab, cde.Vocab):
+            raise TypeError("Wrong input type for vocab, should be Vocab object.")
+        if not isinstance(suffix_indicator, str):
+            raise TypeError("Wrong input type for suffix_indicator, should be string.")
+        if not isinstance(max_bytes_per_token, int):
+            raise TypeError("Wrong input type for max_bytes_per_token, should be int.")
+        check_uint32(max_bytes_per_token)
+
+        if not isinstance(unknown_token, str):
+            raise TypeError("Wrong input type for unknown_token, should be string.")
+        if not isinstance(lower_case, bool):
+            raise TypeError("Wrong input type for lower_case, should be boolean.")
+        if not isinstance(keep_whitespace, bool):
+            raise TypeError("Wrong input type for keep_whitespace, should be boolean.")
+        if not isinstance(preserve_unused_token, bool):
+            raise TypeError("Wrong input type for preserve_unused_token, should be boolean.")
+        if not isinstance(with_offsets, bool):
+            raise TypeError("Wrong input type for with_offsets, should be boolean.")
         return method(self, *args, **kwargs)
 
     return new_method

@@ -27,26 +27,46 @@ using cppjieba::RuneStrArray;
 namespace mindspore {
 namespace dataset {
 
-Status UnicodeCharTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
-  if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
+const bool UnicodeCharTokenizerOp::kDefWithOffsets = false;
+
+Status UnicodeCharTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
   }
   std::string_view str;
-  RETURN_IF_NOT_OK(input->GetItemAt(&str, {}));
+  RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
 
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("Decode utf8 string failed.");
   }
+  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
   std::vector<std::string> splits(runes.size());
+  std::vector<uint32_t> offsets_start, offsets_limit;
   for (size_t i = 0; i < runes.size(); i++) {
+    offsets_start.push_back(runes[i].offset);
+    offsets_limit.push_back(runes[i].offset + runes[i].len);
     splits[i] = str.substr(runes[i].offset, runes[i].len);
   }
   if (splits.empty()) {
     splits.emplace_back("");
+    offsets_start.push_back(0);
+    offsets_limit.push_back(0);
   }
-  *output = std::make_shared<Tensor>(splits, TensorShape({(dsize_t)splits.size()}));
+  token_tensor = std::make_shared<Tensor>(splits, TensorShape({(dsize_t)splits.size()}));
+  output->push_back(token_tensor);
+  if (with_offsets_) {
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_start_tensor, TensorImpl::kFlexible,
+                                          TensorShape({(dsize_t)offsets_start.size()}), DataType(DataType::DE_UINT32),
+                                          reinterpret_cast<unsigned char *>(&offsets_start[0])));
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(&offsets_limit_tensor, TensorImpl::kFlexible,
+                                          TensorShape({(dsize_t)offsets_limit.size()}), DataType(DataType::DE_UINT32),
+                                          reinterpret_cast<unsigned char *>(&offsets_limit[0])));
+    output->push_back(offsets_start_tensor);
+    output->push_back(offsets_limit_tensor);
+  }
   return Status::OK();
 }
 }  // namespace dataset

@@ -26,13 +26,18 @@ namespace dataset {
 
 class UnicodeCharTokenizerOp : public TensorOp {
  public:
-  UnicodeCharTokenizerOp() {}
+  static const bool kDefWithOffsets;
+
+  explicit UnicodeCharTokenizerOp(const bool &with_offsets = kDefWithOffsets) : with_offsets_(with_offsets) {}
 
   ~UnicodeCharTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
+
+ private:
+  bool with_offsets_;
 };
 
 }  // namespace dataset

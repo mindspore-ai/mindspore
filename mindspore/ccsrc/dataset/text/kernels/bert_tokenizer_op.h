@@ -32,18 +32,19 @@ class BertTokenizerOp : public TensorOp {
                            const std::string &suffix_indicator = WordpieceTokenizerOp::kDefSuffixIndicator,
                            const int &max_bytes_per_token = WordpieceTokenizerOp::kDefMaxBytesPerToken,
                            const std::string &unknown_token = WordpieceTokenizerOp::kDefUnknownToken,
-                           bool lower_case = BasicTokenizerOp::kDefLowerCase,
-                           bool keep_whitespace = BasicTokenizerOp::kDefKeepWhitespace,
-                           NormalizeForm normalization_form = BasicTokenizerOp::kDefNormalizationForm,
-                           bool preserve_unused_token = BasicTokenizerOp::kDefPreserveUnusedToken)
-      : wordpiece_tokenizer_(vocab, suffix_indicator, max_bytes_per_token, unknown_token),
-        basic_tokenizer_(lower_case, keep_whitespace, normalization_form, preserve_unused_token) {}
+                           const bool &lower_case = BasicTokenizerOp::kDefLowerCase,
+                           const bool &keep_whitespace = BasicTokenizerOp::kDefKeepWhitespace,
+                           const NormalizeForm &normalization_form = BasicTokenizerOp::kDefNormalizationForm,
+                           const bool &preserve_unused_token = BasicTokenizerOp::kDefPreserveUnusedToken,
+                           const bool &with_offsets = WordpieceTokenizerOp::kDefWithOffsets)
+      : wordpiece_tokenizer_(vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets),
+        basic_tokenizer_(lower_case, keep_whitespace, normalization_form, preserve_unused_token, with_offsets) {}
 
   ~BertTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "BertTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
  private:
   WordpieceTokenizerOp wordpiece_tokenizer_;

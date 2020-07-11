@@ -32,25 +32,31 @@ namespace dataset {
 
 class RegexTokenizerOp : public TensorOp {
  public:
-  RegexTokenizerOp(const std::string &delim_pattern, const std::string &keep_delim_pattern)
+  static const bool kDefWithOffsets;
+
+  RegexTokenizerOp(const std::string &delim_pattern, const std::string &keep_delim_pattern,
+                   const bool &with_offsets = kDefWithOffsets)
       : delim_pattern_(icu::UnicodeString::fromUTF8(delim_pattern)),
         keep_delim_pattern_(icu::UnicodeString::fromUTF8(keep_delim_pattern)),
+        with_offsets_(with_offsets),
         keep_delim_(!keep_delim_pattern.empty()) {}
 
   ~RegexTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "RegexTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
  protected:
-  Status GetUnicodeSubstr(const icu::UnicodeString &input, int start, int len, std::string *out_utf8,
+  Status GetUnicodeSubstr(const icu::UnicodeString &input, const int &start, const int &len, std::string *out_utf8,
                           icu::UnicodeString *out_unicode = nullptr) const;
-  Status GetRegexTokens(const std::string &text, std::vector<std::string> *out_tokens) const;
+  Status GetRegexTokens(const std::string &text, std::vector<std::string> *out_tokens,
+                        std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) const;
 
  private:
   const icu::UnicodeString delim_pattern_;
   const icu::UnicodeString keep_delim_pattern_;
+  bool with_offsets_;
   const bool keep_delim_;
 };
 }  // namespace dataset

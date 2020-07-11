@@ -27,17 +27,21 @@ namespace dataset {
 class UnicodeScriptTokenizerOp : public TensorOp {
  public:
   static const bool kDefKeepWhitespace;
+  static const bool kDefWithOffsets;
 
-  explicit UnicodeScriptTokenizerOp(bool keep_whitespace = kDefKeepWhitespace) : keep_whitespace_(keep_whitespace) {}
+  explicit UnicodeScriptTokenizerOp(const bool &keep_whitespace = kDefKeepWhitespace,
+                                    const bool &with_offsets = kDefWithOffsets)
+      : keep_whitespace_(keep_whitespace), with_offsets_(with_offsets) {}
 
   ~UnicodeScriptTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "UnicodeScriptTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
  private:
   bool keep_whitespace_;  // If or not keep whitespace tokens
+  bool with_offsets_;
 };
 }  // namespace dataset
 }  // namespace mindspore

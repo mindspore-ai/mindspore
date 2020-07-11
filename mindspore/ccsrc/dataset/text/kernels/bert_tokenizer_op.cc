@@ -16,9 +16,9 @@
 #include "dataset/text/kernels/bert_tokenizer_op.h"
 namespace mindspore {
 namespace dataset {
-Status BertTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  IO_CHECK(input, output);
-  std::shared_ptr<Tensor> basic_tensor;
+Status BertTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
+  TensorRow basic_tensor;
   RETURN_IF_NOT_OK(basic_tokenizer_.Compute(input, &basic_tensor));
   RETURN_IF_NOT_OK(wordpiece_tokenizer_.Compute(basic_tensor, output));
   return Status::OK();

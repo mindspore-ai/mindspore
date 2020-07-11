@@ -39,21 +39,22 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opFuntions) {
   std::string dataset_path = datasets_root_path_ + "/jiebadict";
   std::string hmm_path = dataset_path + "/hmm_model.utf8";
   std::string mp_path = dataset_path + "/jieba.dict.utf8";
-  std::shared_ptr<Tensor> output_tensor;
+  TensorRow input, output;
   std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
 
   std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("今天天气太好了我们一起去外面玩吧");
-  Status s = op->Compute(input_tensor, &output_tensor);
+  input.push_back(input_tensor);
+  Status s = op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
-  EXPECT_EQ(output_tensor->Rank(), 1);
-  EXPECT_EQ(output_tensor->Size(), 7);
-  CheckEqual(output_tensor, {0}, "今天天气");
-  CheckEqual(output_tensor, {1}, "太好了");
-  CheckEqual(output_tensor, {2}, "我们");
-  CheckEqual(output_tensor, {3}, "一起");
-  CheckEqual(output_tensor, {4}, "去");
-  CheckEqual(output_tensor, {5}, "外面");
-  CheckEqual(output_tensor, {6}, "玩吧");
+  EXPECT_EQ(output[0]->Rank(), 1);
+  EXPECT_EQ(output[0]->Size(), 7);
+  CheckEqual(output[0], {0}, "今天天气");
+  CheckEqual(output[0], {1}, "太好了");
+  CheckEqual(output[0], {2}, "我们");
+  CheckEqual(output[0], {3}, "一起");
+  CheckEqual(output[0], {4}, "去");
+  CheckEqual(output[0], {5}, "外面");
+  CheckEqual(output[0], {6}, "玩吧");
 }
 
 TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opAdd) {
@@ -61,16 +62,17 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opAdd) {
   std::string dataset_path = datasets_root_path_ + "/jiebadict";
   std::string hmm_path = dataset_path + "/hmm_model.utf8";
   std::string mp_path = dataset_path + "/jieba.dict.utf8";
-  std::shared_ptr<Tensor> output_tensor;
+  TensorRow input, output;
   std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
 
   op->AddWord("男默女泪");
   std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("男默女泪");
-  Status s = op->Compute(input_tensor, &output_tensor);
+  input.push_back(input_tensor);
+  Status s = op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
-  EXPECT_EQ(output_tensor->Rank(), 1);
-  EXPECT_EQ(output_tensor->Size(), 1);
-  CheckEqual(output_tensor, {0}, "男默女泪");
+  EXPECT_EQ(output[0]->Rank(), 1);
+  EXPECT_EQ(output[0]->Size(), 1);
+  CheckEqual(output[0], {0}, "男默女泪");
 }
 
 TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opEmpty) {
@@ -78,14 +80,15 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opEmpty) {
   std::string dataset_path = datasets_root_path_ + "/jiebadict";
   std::string hmm_path = dataset_path + "/hmm_model.utf8";
   std::string mp_path = dataset_path + "/jieba.dict.utf8";
-  std::shared_ptr<Tensor> output_tensor;
+  TensorRow input, output;
   std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
 
   op->AddWord("男默女泪");
   std::shared_ptr<Tensor> input_tensor = std::make_shared<Tensor>("");
-  Status s = op->Compute(input_tensor, &output_tensor);
+  input.push_back(input_tensor);
+  Status s = op->Compute(input, &output);
   EXPECT_TRUE(s.IsOk());
-  EXPECT_EQ(output_tensor->Rank(), 1);
-  EXPECT_EQ(output_tensor->Size(), 1);
-  CheckEqual(output_tensor, {0}, "");
+  EXPECT_EQ(output[0]->Rank(), 1);
+  EXPECT_EQ(output[0]->Size(), 1);
+  CheckEqual(output[0], {0}, "");
 }

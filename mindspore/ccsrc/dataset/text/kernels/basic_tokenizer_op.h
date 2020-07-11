@@ -36,15 +36,18 @@ class BasicTokenizerOp : public TensorOp {
   static const bool kDefKeepWhitespace;
   static const NormalizeForm kDefNormalizationForm;
   static const bool kDefPreserveUnusedToken;
-  explicit BasicTokenizerOp(bool lower_case = kDefLowerCase, bool keep_whitespace = kDefKeepWhitespace,
-                            NormalizeForm normalization_form = kDefNormalizationForm,
-                            bool preserve_unused_token = kDefPreserveUnusedToken);
+  static const bool kDefWithOffsets;
+
+  explicit BasicTokenizerOp(const bool &lower_case = kDefLowerCase, const bool &keep_whitespace = kDefKeepWhitespace,
+                            const NormalizeForm &normalization_form = kDefNormalizationForm,
+                            const bool &preserve_unused_token = kDefPreserveUnusedToken,
+                            const bool &with_offsets = kDefWithOffsets);
 
   ~BasicTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "BasicTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
  protected:
   Status CaseFoldWithoutUnusedWords(const std::string_view &text, const std::unordered_set<std::string> &unused_words,
@@ -55,6 +58,7 @@ class BasicTokenizerOp : public TensorOp {
   static const char kCommonPattern[];
   static const char kUnusedPattern[];
   static const std::unordered_set<std::string> kUnusedWords;
+  bool with_offsets_;
   bool lower_case_;
   bool keep_whitespace_;
   NormalizeForm normalization_form_;

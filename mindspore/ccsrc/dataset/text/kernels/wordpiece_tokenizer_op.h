@@ -37,27 +37,31 @@ class WordpieceTokenizerOp : public TensorOp {
   static const char kDefSuffixIndicator[];
   static const int kDefMaxBytesPerToken;
   static const char kDefUnknownToken[];
+  static const bool kDefWithOffsets;
   WordpieceTokenizerOp(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator = kDefSuffixIndicator,
                        const int &max_bytes_per_token = kDefMaxBytesPerToken,
-                       const std::string &unknown_token = kDefUnknownToken);
+                       const std::string &unknown_token = kDefUnknownToken, const bool &with_offsets = kDefWithOffsets);
 
   ~WordpieceTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override { out << "WordpieceTokenizerOp"; }
 
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+  Status Compute(const TensorRow &input, TensorRow *output) override;
 
  protected:
-  Status AddSubword(const std::string &input_token, const int start, const int end,
+  Status AddSubword(const std::string &input_token, const int &start, const int &end,
                     std::vector<std::string> *out_token) const;
-  Status FoundNoToken(const std::string &input_token, std::vector<std::string> *out_tokens) const;
+  Status FoundNoToken(const std::string &input_token, const uint32_t &basic_start, std::vector<std::string> *out_tokens,
+                      std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) const;
   Status LookupWord(const std::string &input_token, const RuneStrArray &runes, const int start, bool *out_found,
                     int *out_end) const;
-  Status GetTokens(const std::string &input_token, std::vector<std::string> *out_tokens) const;
+  Status GetTokens(const std::string &input_token, const uint32_t &basic_start, std::vector<std::string> *out_tokens,
+                   std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) const;
 
  private:
   const std::shared_ptr<Vocab> vocab_;
   const std::string suffix_indicator_;
+  const bool with_offsets_;
   const int max_bytes_per_token_;
   const std::string unknown_token_;
 };
