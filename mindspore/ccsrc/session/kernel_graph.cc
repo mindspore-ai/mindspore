@@ -748,6 +748,10 @@ bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
 
 void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node) {
   MS_EXCEPTION_IF_NULL(inputs_);
+  {
+    std::queue<AnfNodePtr> seed_nodes;
+    UpdateNodeEdgeList(&seed_nodes);
+  }
   auto it = node_output_edges_.find(old_anf_node);
   if (it != node_output_edges_.end()) {
     const auto &outputs = it->second;
@@ -778,8 +782,10 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
     // update front to backend map
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
   }
-  // if change the ir of graph, regenerate execution order of graph
-  SetExecOrderByDefault();
+  {
+    std::queue<AnfNodePtr> seed_nodes;
+    UpdateNodeEdgeList(&seed_nodes);
+  }
   // update graph inputs in child graph
   auto it_real_inputs = std::find_if(real_inputs_.begin(), real_inputs_.end(),
                                      [&old_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
