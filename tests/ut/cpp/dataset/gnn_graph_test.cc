@@ -49,9 +49,10 @@ TEST_F(MindDataTestGNNGraph, TestGraphLoader) {
   EdgeTypeMap e_type_map;
   NodeFeatureMap n_feature_map;
   EdgeFeatureMap e_feature_map;
-  DefaultFeatureMap default_feature_map;
+  DefaultNodeFeatureMap default_node_feature_map;
+  DefaultEdgeFeatureMap default_edge_feature_map;
   EXPECT_TRUE(gl.GetNodesAndEdges(&n_id_map, &e_id_map, &n_type_map, &e_type_map, &n_feature_map, &e_feature_map,
-                                  &default_feature_map)
+                                  &default_node_feature_map, &default_edge_feature_map)
                 .IsOk());
   EXPECT_EQ(n_id_map.size(), 20);
   EXPECT_EQ(e_id_map.size(), 40);
@@ -118,6 +119,17 @@ TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   edge_list.resize(edges->Size());
   std::transform(edges->begin<EdgeIdType>(), edges->end<EdgeIdType>(), edge_list.begin(),
                  [](const EdgeIdType edge) { return edge; });
+
+  TensorRow edge_features;
+  s = graph.GetEdgeFeature(edges, meta_info.edge_feature_type, &edge_features);
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(edge_features[0]->ToString() ==
+              "Tensor (shape: <40>, Type: int32)\n"
+              "[0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0]");
+  EXPECT_TRUE(edge_features[1]->ToString() ==
+              "Tensor (shape: <40>, Type: float32)\n"
+              "[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.5,2.6,2."
+              "7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4]");
 
   std::shared_ptr<Tensor> nodes;
   s = graph.GetNodesFromEdges(edge_list, &nodes);

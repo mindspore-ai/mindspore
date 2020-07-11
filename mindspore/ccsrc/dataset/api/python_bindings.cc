@@ -833,6 +833,12 @@ void bindGraphData(py::module *m) {
            THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
            return out.getRow();
          })
+    .def("get_edge_feature",
+         [](gnn::Graph &g, std::shared_ptr<Tensor> edge_list, std::vector<gnn::FeatureType> feature_types) {
+           TensorRow out;
+           THROW_IF_ERROR(g.GetEdgeFeature(edge_list, feature_types, &out));
+           return out.getRow();
+         })
     .def("graph_info",
          [](gnn::Graph &g) {
            py::dict out;

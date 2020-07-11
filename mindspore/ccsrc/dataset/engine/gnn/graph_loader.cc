@@ -41,7 +41,8 @@ GraphLoader::GraphLoader(std::string mr_filepath, int32_t num_workers)
 
 Status GraphLoader::GetNodesAndEdges(NodeIdMap *n_id_map, EdgeIdMap *e_id_map, NodeTypeMap *n_type_map,
                                      EdgeTypeMap *e_type_map, NodeFeatureMap *n_feature_map,
-                                     EdgeFeatureMap *e_feature_map, DefaultFeatureMap *default_feature_map) {
+                                     EdgeFeatureMap *e_feature_map, DefaultNodeFeatureMap *default_node_feature_map,
+                                     DefaultEdgeFeatureMap *default_edge_feature_map) {
   for (std::deque<std::shared_ptr<Node>> &dq : n_deques_) {
     while (dq.empty() == false) {
       std::shared_ptr<Node> node_ptr = dq.front();
@@ -70,7 +71,7 @@ Status GraphLoader::GetNodesAndEdges(NodeIdMap *n_id_map, EdgeIdMap *e_id_map, N
   for (auto &itr : *n_type_map) itr.second.shrink_to_fit();
   for (auto &itr : *e_type_map) itr.second.shrink_to_fit();
 
-  MergeFeatureMaps(n_feature_map, e_feature_map, default_feature_map);
+  MergeFeatureMaps(n_feature_map, e_feature_map, default_node_feature_map, default_edge_feature_map);
   return Status::OK();
 }
 
@@ -81,7 +82,8 @@ Status GraphLoader::InitAndLoad() {
   e_deques_.resize(num_workers_);
   n_feature_maps_.resize(num_workers_);
   e_feature_maps_.resize(num_workers_);
-  default_feature_maps_.resize(num_workers_);
+  default_node_feature_maps_.resize(num_workers_);
+  default_edge_feature_maps_.resize(num_workers_);
   TaskGroup vg;
 
   shard_reader_ = std::make_unique<ShardReader>();
@@ -109,7 +111,7 @@ Status GraphLoader::InitAndLoad() {
 
 Status GraphLoader::LoadNode(const std::vector<uint8_t> &col_blob, const mindrecord::json &col_jsn,
                              std::shared_ptr<Node> *node, NodeFeatureMap *feature_map,
-                             DefaultFeatureMap *default_feature) {
+                             DefaultNodeFeatureMap *default_feature) {
   NodeIdType node_id = col_jsn["first_id"];
   NodeType node_type = static_cast<NodeType>(col_jsn["type"]);
   (*node) = std::make_shared<LocalNode>(node_id, node_type);
@@ -133,7 +135,7 @@ Status GraphLoader::LoadNode(const std::vector<uint8_t> &col_blob, const mindrec
 
 Status GraphLoader::LoadEdge(const std::vector<uint8_t> &col_blob, const mindrecord::json &col_jsn,
                              std::shared_ptr<Edge> *edge, EdgeFeatureMap *feature_map,
-                             DefaultFeatureMap *default_feature) {
+                             DefaultEdgeFeatureMap *default_feature) {
   EdgeIdType edge_id = col_jsn["first_id"];
   EdgeType edge_type = static_cast<EdgeType>(col_jsn["type"]);
   NodeIdType src_id = col_jsn["second_id"], dst_id = col_jsn["third_id"];
@@ -214,13 +216,13 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
       std::string attr = col_jsn["attribute"];
       if (attr == "n") {
         std::shared_ptr<Node> node_ptr;
-        RETURN_IF_NOT_OK(
-          LoadNode(col_blob, col_jsn, &node_ptr, &(n_feature_maps_[worker_id]), &default_feature_maps_[worker_id]));
+        RETURN_IF_NOT_OK(LoadNode(col_blob, col_jsn, &node_ptr, &(n_feature_maps_[worker_id]),
+                                  &default_node_feature_maps_[worker_id]));
         n_deques_[worker_id].emplace_back(node_ptr);
       } else if (attr == "e") {
         std::shared_ptr<Edge> edge_ptr;
-        RETURN_IF_NOT_OK(
-          LoadEdge(col_blob, col_jsn, &edge_ptr, &(e_feature_maps_[worker_id]), &default_feature_maps_[worker_id]));
+        RETURN_IF_NOT_OK(LoadEdge(col_blob, col_jsn, &edge_ptr, &(e_feature_maps_[worker_id]),
+                                  &default_edge_feature_maps_[worker_id]));
         e_deques_[worker_id].emplace_back(edge_ptr);
       } else {
         MS_LOG(WARNING) << "attribute:" << attr << " is neither edge nor node.";
@@ -233,7 +235,8 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
 }
 
 void GraphLoader::MergeFeatureMaps(NodeFeatureMap *n_feature_map, EdgeFeatureMap *e_feature_map,
-                                   DefaultFeatureMap *default_feature_map) {
+                                   DefaultNodeFeatureMap *default_node_feature_map,
+                                   DefaultEdgeFeatureMap *default_edge_feature_map) {
   for (int wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
     for (auto &m : n_feature_maps_[wkr_id]) {
       for (auto &n : m.second) (*n_feature_map)[m.first].insert(n);
@@ -241,8 +244,11 @@ void GraphLoader::MergeFeatureMaps(NodeFeatureMap *n_feature_map, EdgeFeatureMap
     for (auto &m : e_feature_maps_[wkr_id]) {
       for (auto &n : m.second) (*e_feature_map)[m.first].insert(n);
     }
-    for (auto &m : default_feature_maps_[wkr_id]) {
-      (*default_feature_map)[m.first] = m.second;
+    for (auto &m : default_node_feature_maps_[wkr_id]) {
+      (*default_node_feature_map)[m.first] = m.second;
+    }
+    for (auto &m : default_edge_feature_maps_[wkr_id]) {
+      (*default_edge_feature_map)[m.first] = m.second;
     }
   }
   n_feature_maps_.clear();
