@@ -768,6 +768,10 @@ test_case_math_ops = [
         'block': P.Asinh(),
         'desc_inputs': [[3, 4, 5]],
         'desc_bprop': [[3, 4, 5]]}),
+    ('Tan', {
+        'block': P.Tan(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
     ('Reciprocal', {
         'block': P.Reciprocal(),
         'desc_inputs': [[2, 3, 3, 5]],
@@ -848,6 +852,14 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('FloorMod', {
         'block': P.FloorMod(),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('TruncateDiv', {
+        'block': P.TruncateDiv(),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
+    ('TruncateMod', {
+        'block': P.TruncateMod(),
         'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
         'desc_bprop': [[2, 3, 4, 5]]}),
     ('identity', {

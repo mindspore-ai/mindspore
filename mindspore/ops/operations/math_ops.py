@@ -1744,6 +1744,65 @@ class FloorDiv(_MathBinaryOp):
     """
 
 
+class TruncateDiv(_MathBinaryOp):
+    """
+    Divide the first input tensor by the second input tensor element-wise for integer types, negative numbers will
+    round fractional quantities towards zero.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Examples:
+        >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> truncate_div = P.TruncateDiv()
+        >>> truncate_div(input_x, input_y)
+        [0, 1, 0]
+    """
+
+
+class TruncateMod(_MathBinaryOp):
+    """
+    Returns element-wise remainder of division.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar only could be a constant.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **input_y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting,
+        and the data type is the one with high precision or high digits among the two inputs.
+
+    Examples:
+        >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> truncate_mod = P.TruncateMod()
+        >>> truncate_mod(input_x, input_y)
+        [2, 1, -1]
+    """
+
+
 class Mod(_MathBinaryOp):
     """
     Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
@@ -2861,6 +2920,34 @@ class Round(PrimitiveWithInfer):
     def __init__(self):
         """init Round"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.name)
+        return x_type
+
+
+class Tan(PrimitiveWithInfer):
+    """
+    Computes tan of `input_x` element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> tan = P.Tan()
+        >>> input_x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
+        >>> output = tan(input_x)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Tan"""
 
     def infer_shape(self, x_shape):
         return x_shape

@@ -132,6 +132,8 @@ from .sparse_apply_ftrl_d import _sparse_apply_ftrl_d
 from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose_d import _transpose_d_tbe
+from .truncate_div import _truncate_div_tbe
+from .truncate_mod import _truncate_mod_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
 from .unsorted_segment_prod import _unsorted_segment_prod_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe
@@ -222,6 +224,7 @@ from .binary_cross_entropy import _binary_cross_entropy_tbe
 from .binary_cross_entropy_grad import _binary_cross_entropy_grad_tbe
 from .sin import _sin_tbe
 from .cos import _cos_tbe
+from .tan import _tan_tbe
 from .cum_sum import _cum_sum_tbe
 from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
