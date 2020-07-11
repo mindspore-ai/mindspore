@@ -398,7 +398,7 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
 }
 
 void KernelRuntime::AssignCommunicationNodeMem(int flag, const AnfNodePtr &node) {
-  AssignCommunicationNodeInputMem(node);
+  AssignCommunicationNodeInputMem(flag, node);
   AssignCommunicationNodeOutputMem(flag, node);
 }
 
@@ -428,6 +428,11 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr 
     total_size += mem_size;
     align_size_list.emplace_back(mem_size);
   }
+
+  if (flag == kReuseDynamicMem) {
+    // reuse communication op's all outputs' memory
+    flag = kReuseDynamicCommMem;
+  }
   uint8_t *output_ptr = mem_manager_->MallocOutputMem(node, 0, flag, total_size);
   for (size_t j = 0; j < align_size_list.size(); ++j) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, j);
@@ -456,7 +461,7 @@ DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node,
   return address;
 }
 
-void KernelRuntime::AssignCommunicationNodeInputMem(const AnfNodePtr &node) {
+void KernelRuntime::AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(node);
@@ -477,7 +482,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(const AnfNodePtr &node) {
     total_size += mem_size;
     addr_size.emplace_back(address.get(), mem_size);
   }
-  uint8_t *input_ptr = mem_manager_->MallocOutputMem(node, 0, kDynamicMem, total_size);
+  uint8_t *input_ptr = mem_manager_->MallocOutputMem(node, 0, flag, total_size);
   for (const auto &iter : addr_size) {
     MS_EXCEPTION_IF_NULL(iter.first);
     iter.first->set_ptr(input_ptr);

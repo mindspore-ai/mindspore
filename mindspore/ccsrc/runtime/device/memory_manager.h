@@ -25,6 +25,7 @@ namespace device {
 const int kStaticMem = 0;
 const int kDynamicMem = 1;
 const int kReuseDynamicMem = 2;
+const int kReuseDynamicCommMem = 3;
 const int kGetAllOuts = -1;
 const uint64_t kMemAlignSize = 512;
 using MemReuseUtilPtr = mindspore::memreuse::MemReuseUtilPtr;

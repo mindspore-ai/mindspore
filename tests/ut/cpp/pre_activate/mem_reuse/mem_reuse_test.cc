@@ -225,7 +225,6 @@ TEST_F(TestMemReuseWithPy, KernelRef) {
   ASSERT_EQ(kernel_ref_count_ptr->size_, 512);
   KernelDefPtr kernel_def_ptr = std::make_shared<KernelDef>();
   ASSERT_NE(kernel_def_ptr, nullptr);
-  ASSERT_EQ(kernel_def_ptr->dirty, false);
   MembufPtr membuf_ptr = std::make_shared<Membuf>();
   ASSERT_NE(membuf_ptr, nullptr);
 }
