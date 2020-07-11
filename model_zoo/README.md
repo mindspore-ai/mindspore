@@ -322,6 +322,14 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Checkpoint for inference   | 2.4G (.ckpt file)                                              |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/Transformer |
 
+#### Disclaimers
+
+Mindspore only provides scripts that downloads and preprocesses public datasets. We do not own these datasets and are not responsible for their quality or maintenance. Please make sure you have permission to use the dataset under the dataset’s license. 
+
+To dataset owners: we will remove or update all public content upon request if you don’t want your dataset included on Mindspore, or wish to update it in any way. Please contact us through a Github/Gitee issue. Your understanding and contribution to this community is greatly appreciated.
+
+MindSpore is Apache 2.0 licensed. Please see the LICENSE file.
+
 #### License
 
 [Apache License 2.0](https://github.com/mindspore-ai/mindspore/blob/master/LICENSE)
