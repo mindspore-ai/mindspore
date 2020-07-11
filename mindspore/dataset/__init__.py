@@ -21,7 +21,7 @@ can also create samplers with this module to sample data.
 from .core import config
 from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, NumpySlicesDataset, \
     GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CocoDataset, CelebADataset,\
-    TextFileDataset, CLUEDataset, Schema, Shuffle, zip, RandomDataset
+    TextFileDataset, CLUEDataset, CSVDataset, Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
     WeightedRandomSampler, Sampler
 from .engine.cache_client import DatasetCache
@@ -31,5 +31,5 @@ from .engine.graphdata import GraphData
 __all__ = ["config", "ImageFolderDatasetV2", "MnistDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset", "NumpySlicesDataset", "VOCDataset",
-           "CocoDataset", "TextFileDataset", "CLUEDataset", "Schema", "DistributedSampler", "PKSampler",
+           "CocoDataset", "TextFileDataset", "CLUEDataset", "CSVDataset", "Schema", "DistributedSampler", "PKSampler",
            "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler", "zip", "GraphData"]

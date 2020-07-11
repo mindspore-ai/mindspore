@@ -73,6 +73,7 @@ enum OpName {
   kClue,
   kEpochCtrl,
   kSentencePieceVocab,
+  kCsv
 };
 
 // The C++ binder class that we expose to the python script.
@@ -200,6 +201,8 @@ class DEPipeline {
                                         std::shared_ptr<DatasetOp> *bottom);
 
   Status ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
+
+  Status ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
  private:
   // Execution tree that links the dataset operators.

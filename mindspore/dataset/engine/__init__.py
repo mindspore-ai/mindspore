@@ -29,7 +29,7 @@ from .samplers import *
 from ..core import config
 
 __all__ = ["config", "zip", "ImageFolderDatasetV2", "MnistDataset",
-           "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset",
+           "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset", "CSVDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
            "VOCDataset", "CocoDataset", "TextFileDataset", "Schema", "DistributedSampler",
            "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler"]

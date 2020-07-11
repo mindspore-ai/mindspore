@@ -31,6 +31,7 @@
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
+#include "minddata/dataset/engine/datasetops/source/csv_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
@@ -88,6 +89,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {
   {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
   {kClue, &DEPipeline::ParseClueOp},
   {kEpochCtrl, &DEPipeline::ParseEpochCtrlOp},
+  {kCsv, &DEPipeline::ParseCsvOp},
   {kSentencePieceVocab, &DEPipeline::ParseBuildSentencePieceVocabOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
@@ -1834,6 +1836,86 @@ Status DEPipeline::AddCacheOp(std::shared_ptr<CacheClient> cache_client, int num
   // input_op
   //
   *cache_op = new_cache_op;
+
+  return Status::OK();
+}
+
+Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
+                              std::shared_ptr<DatasetOp> *bottom) {
+  std::vector<std::string> files_list;
+  std::shared_ptr<CsvOp::Builder> builder = std::make_shared<CsvOp::Builder>();
+  if (!args["dataset_files"].is_none()) {
+    files_list = ToStringVector(args["dataset_files"]);
+    (void)builder->SetCsvFilesList(files_list);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Error: dataset_files is missing");
+  }
+
+  // Optional arguments
+  bool shuffle_required = false;
+  int64_t num_devices = 0;
+  std::vector<std::string> col_names;
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "shuffle_files") {
+        (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "shuffle_global") {
+        shuffle_required = ToBool(value);
+      } else if (key == "num_samples") {
+        (void)builder->SetNumSamples(ToInt(value));
+      } else if (key == "num_shards") {
+        num_devices = ToInt(value);
+        (void)builder->SetNumDevices(num_devices);
+      } else if (key == "shard_id") {
+        (void)builder->SetDeviceId(ToInt(value));
+      } else if (key == "field_delim") {
+        (void)builder->SetFieldDelim(ToString(value)[0]);
+      } else if (key == "column_defaults") {
+        py::list py_object_list = py::reinterpret_borrow<py::list>(value);
+        std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_list;
+        for (auto l : py_object_list) {
+          std::string type_s = (std::string)py::str(l.get_type().attr("__name__"));
+          if (type_s == "int") {
+            column_default_list.push_back(std::make_shared<CsvOp::Record<int>>(CsvOp::INT, ToInt(l)));
+          } else if (type_s == "float") {
+            column_default_list.push_back(std::make_shared<CsvOp::Record<float>>(CsvOp::FLOAT, ToFloat(l)));
+          } else if (type_s == "str") {
+            column_default_list.push_back(std::make_shared<CsvOp::Record<std::string>>(CsvOp::STRING, ToString(l)));
+          } else {
+            RETURN_STATUS_UNEXPECTED("Record type is not allowed");
+          }
+        }
+        (void)builder->SetColumDefault(column_default_list);
+      } else if (key == "column_names") {
+        col_names = ToStringVector(value);
+        (void)builder->SetColumName(col_names);
+      }
+    }
+  }
+
+  std::shared_ptr<CsvOp> csv_op;
+  RETURN_IF_NOT_OK(builder->Build(&csv_op));
+  RETURN_IF_NOT_OK(tree_->AssociateNode(csv_op));
+  *top = csv_op;
+
+  if (shuffle_required) {
+    std::shared_ptr<DatasetOp> shuffle_op = nullptr;
+    int64_t shuffle_size = 0;
+    int64_t num_rows = 0;
+
+    // First, get the number of rows in the dataset and then compute the shuffle size
+    RETURN_IF_NOT_OK(CsvOp::CountAllFileRows(files_list, col_names.empty(), &num_rows));
+    RETURN_IF_NOT_OK(ComputeShuffleSize(files_list.size(), num_devices, num_rows, 0, &shuffle_size));
+
+    // Add the shuffle op over top of this op and return the subtree (top/bottom) to caller
+    RETURN_IF_NOT_OK(AddShuffleOp(shuffle_size, csv_op, &shuffle_op));
+    *top = shuffle_op;
+    *bottom = csv_op;
+  }
 
   return Status::OK();
 }

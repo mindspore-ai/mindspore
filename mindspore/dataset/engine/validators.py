@@ -787,6 +787,49 @@ def check_cluedataset(method):
     return new_method
 
 
+def check_csvdataset(method):
+    """A wrapper that wrap a parameter checker to the original Dataset(CSVDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+
+        # check dataset_files; required argument
+        dataset_files = param_dict.get('dataset_files')
+        type_check(dataset_files, (str, list), "dataset files")
+
+        # check field_delim
+        field_delim = param_dict.get('field_delim')
+        type_check(field_delim, (str,), 'field delim')
+        if field_delim in ['"', '\r', '\n'] or len(field_delim) > 1:
+            raise ValueError("field_delim is not legal.")
+
+        # check column_defaults
+        column_defaults = param_dict.get('column_defaults')
+        if column_defaults is not None:
+            if not isinstance(column_defaults, list):
+                raise TypeError("column_defaults should be type of list.")
+            for item in column_defaults:
+                if not isinstance(item, (str, int, float)):
+                    raise TypeError("column type is not legal.")
+
+        # check column_names: must be list of string.
+        column_names = param_dict.get("column_names")
+        if column_names is not None:
+            all_string = all(isinstance(item, str) for item in column_names)
+            if not all_string:
+                raise TypeError("column_names should be a list of str.")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_textfiledataset(method):
     """A wrapper that wraps a parameter checker to the original Dataset(TextFileDataset)."""
 

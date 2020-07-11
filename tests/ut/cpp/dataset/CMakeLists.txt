@@ -77,6 +77,7 @@ SET(DE_UT_SRCS
         celeba_op_test.cc
         take_op_test.cc
         clue_op_test.cc
+        csv_op_test.cc
         text_file_op_test.cc
         filter_op_test.cc
         concat_op_test.cc

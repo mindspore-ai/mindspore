@@ -12,6 +12,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     celeba_op.cc
     text_file_op.cc
     clue_op.cc
+    csv_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
