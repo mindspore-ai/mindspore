@@ -975,10 +975,14 @@ class Dataset:
         Raises:
             TypeError: If device_type is empty.
             ValueError: If device_type is not 'Ascend', 'GPU' or 'CPU'.
-            ValueError: If num_batch is negative or larger than int_max.
+            ValueError: If num_batch is not positive or larger than int_max.
+            ValueError: If dataset size is None or 0.
             RuntimeError: If dataset is unknown.
             RuntimeError: If distribution file path is given but failed to read.
         """
+        if self.get_dataset_size() is None or 0:
+            raise ValueError("dataset size is None or 0.")
+
         if num_batch is None:
             num_batch = self.get_dataset_size()
             repeat_count = self.get_repeat_count()
@@ -997,8 +1001,8 @@ class Dataset:
         if device_type not in ('Ascend', 'GPU', 'CPU'):
             raise ValueError("Only support CPU, Ascend, GPU")
 
-        if num_batch is None or num_batch == 0:
-            raise ValueError("num_batch is None or 0.")
+        if num_batch == 0:
+            raise ValueError("num_batch is 0.")
 
         def get_distribution(output_dataset):
             dev_id = 0
