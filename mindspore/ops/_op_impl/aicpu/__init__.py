@@ -44,3 +44,7 @@ from .laplace import _laplace_aicpu
 from .strided_slice import _strided_slice_aicpu
 from .strided_slice_grad import _strided_slice_grad_aicpu
 from .end_of_sequence import _end_of_sequence_aicpu
+from .fused_sparse_adam import _fused_sparse_adam_aicpu
+from .fused_sparse_lazy_adam import _fused_sparse_lazy_adam_aicpu
+from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
+from .fused_sparse_proximal_adagrad import _fused_sparse_proximal_adagrad_aicpu
