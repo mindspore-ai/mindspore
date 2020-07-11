@@ -74,8 +74,11 @@ class Sampler {
   // @return - The error code return
   virtual Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) = 0;
 
+// This function only called by python layer. Not needed by Android.
+#ifdef ENABLE_PYTHON
   // return all ids in one epoch as a numpy array, then call reset
   Status GetAllIdsThenReset(py::array *data);
+#endif
 
   // for next epoch of sampleIds
   // @return - The error code return
@@ -155,5 +158,4 @@ class Sampler {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SAMPLER_H_

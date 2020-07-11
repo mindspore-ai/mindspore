@@ -23,7 +23,9 @@
 
 #include "dataset/core/constants.h"
 #include "dataset/core/data_type.h"
+#ifdef ENABLE_PYTHON
 #include "dataset/core/pybind_support.h"
+#endif
 #include "dataset/core/tensor.h"
 #include "dataset/core/tensor_shape.h"
 #include "dataset/kernels/data/type_cast_op.h"

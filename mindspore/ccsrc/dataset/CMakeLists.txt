@@ -39,6 +39,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/device/ascend/platform)
 include_directories(${CMAKE_BINARY_DIR}) # for protobuf generated .h
 
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/mindrecord/include)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/dataset/include)
 ######################################################################
 
 ####################### Flags ########################################
@@ -67,7 +68,10 @@ add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(text core)
 add_dependencies(text-kernels core)
-add_dependencies(APItoPython core)
+add_dependencies(cpp-API core)
+if (ENABLE_PYTHON)
+    add_dependencies(APItoPython core)
+endif()
 if (ENABLE_TDTQUE)
     add_dependencies(engine-tdt core)
 endif ()
@@ -78,7 +82,7 @@ set(submodules
     $<TARGET_OBJECTS:kernels>
     $<TARGET_OBJECTS:kernels-image>
     $<TARGET_OBJECTS:kernels-data>
-    $<TARGET_OBJECTS:APItoPython>
+    $<TARGET_OBJECTS:cpp-API>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
     $<TARGET_OBJECTS:engine-gnn>
@@ -89,6 +93,12 @@ set(submodules
     $<TARGET_OBJECTS:text>
     $<TARGET_OBJECTS:text-kernels>
     )
+
+if (ENABLE_PYTHON)
+    set(submodules
+        ${submodules}
+        $<TARGET_OBJECTS:APItoPython>)
+endif()
 
 if (ENABLE_TDTQUE)
     add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-tdt>)

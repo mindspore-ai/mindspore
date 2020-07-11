@@ -19,7 +19,9 @@
 #include <iomanip>
 
 #include "common/utils.h"
+#ifdef ENABLE_PYTHON
 #include "dataset/core/pybind_support.h"
+#endif
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/opt/pass.h"
@@ -38,9 +40,14 @@ BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false), builder_pa
 
 Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
+#ifdef ENABLE_PYTHON
   *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
                                    builder_num_workers_, builder_cols_to_map_, builder_batch_size_func_,
                                    builder_batch_map_func_, builder_pad_map_);
+#else
+  *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
+                                   builder_num_workers_, builder_cols_to_map_, builder_pad_map_);
+#endif
   return Status::OK();
 }
 
@@ -52,6 +59,7 @@ Status BatchOp::Builder::SanityCheck() {
   return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
 }
 
+#ifdef ENABLE_PYTHON
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
                  const std::vector<std::string> &cols_to_map, py::function batch_size_func, py::function batch_map_func,
                  PadInfo pad_map)
@@ -65,6 +73,18 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       pad_info_(pad_map) {
   worker_queues_.Init(num_workers, op_queue_size);
 }
+#else
+BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
+                 const std::vector<std::string> &cols_to_map, PadInfo pad_map)
+    : ParallelOp(num_workers, op_queue_size),
+      start_batch_size_(batch_size),
+      drop_(drop),
+      pad_(pad),
+      pyfunc_column_names_(cols_to_map),
+      pad_info_(pad_map) {
+  worker_queues_.Init(num_workers, op_queue_size);
+}
+#endif
 
 Status BatchOp::operator()() {
   Status rc = LaunchThreadsAndInitOp();
@@ -206,7 +226,9 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
                                   std::unique_ptr<DataBuffer> *db) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
-  if (!pyfunc_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));               // pass it through pyfunc
+#ifdef ENABLE_PYTHON
+  if (!pyfunc_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
+#endif
   if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));  // do padding if needed
   (*db) = std::make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
   std::unique_ptr<TensorQTable> dest_table = std::make_unique<TensorQTable>();
@@ -229,6 +251,7 @@ Status BatchOp::EoeReceived(int32_t) {
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
   TensorBatchTable input_table;
   input_table.reserve(pyfunc_column_names_.size());
@@ -259,16 +282,22 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   }
   return Status::OK();
 }
+#endif
 
 Status BatchOp::GetBatchSize(int32_t *batch_size, CBatchInfo info) {
+#ifdef ENABLE_PYTHON
   if (batch_size_func_ != nullptr) {
     RETURN_IF_NOT_OK(InvokeBatchSizeFunc(batch_size, info));
   } else {
     (*batch_size) = start_batch_size_;
   }
+#else
+  (*batch_size) = start_batch_size_;
+#endif
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
   {
     // Acquire Python GIL
@@ -336,6 +365,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
   }
   return Status(StatusCode::kOK);
 }
+#endif
 
 Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map) {

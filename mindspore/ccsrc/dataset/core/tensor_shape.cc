@@ -77,6 +77,7 @@ TensorShape::TensorShape(const TensorShape &shape)
   known_ = shape.known_;  // override with the input shape in case of unknown-rank tensor shape.
 }
 
+#ifdef ENABLE_PYTHON
 TensorShape::TensorShape(py::list l)
     : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
   std::vector<dsize_t> list_c;
@@ -89,6 +90,7 @@ TensorShape::TensorShape(py::list l)
   }
   AddListToShape(list_c);
 }
+#endif
 
 TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type)
     : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
@@ -197,6 +199,7 @@ TensorShape TensorShape::AppendDim(dsize_t dim) const {
   return TensorShape(vec);
 }
 
+#ifdef ENABLE_PYTHON
 py::list TensorShape::AsPyList() {
   py::list list;
   for (auto i : raw_shape_) {
@@ -204,6 +207,7 @@ py::list TensorShape::AsPyList() {
   }
   return list;
 }
+#endif
 
 TensorShape TensorShape::Squeeze() const {
   std::vector<dsize_t> new_shape;

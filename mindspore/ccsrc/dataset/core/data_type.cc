@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 #include "dataset/core/data_type.h"
+#ifdef ENABLE_PYTHON
+#include "dataset/core/pybind_support.h"
+#endif
 
 #include "utils/log_adapter.h"
-
-#include "dataset/core/pybind_support.h"
 
 namespace mindspore {
 namespace dataset {
@@ -29,12 +30,14 @@ uint8_t DataType::SizeInBytes() const {
     return 0;
 }
 
+#ifdef ENABLE_PYTHON
 py::dtype DataType::AsNumpyType() const {
   if (type_ < DataType::NUM_OF_TYPES)
     return py::dtype(kTypeInfo[type_].pybindType_);
   else
     return py::dtype("unknown");
 }
+#endif
 
 uint8_t DataType::AsCVType() const {
   uint8_t res = kCVInvalidType;
@@ -112,6 +115,7 @@ std::string DataType::ToString() const {
     return "unknown";
 }
 
+#ifdef ENABLE_PYTHON
 DataType DataType::FromNpArray(const py::array &arr) {
   if (py::isinstance<py::array_t<bool>>(arr)) {
     return DataType(DataType::DE_BOOL);
@@ -156,6 +160,7 @@ std::string DataType::GetPybindFormat() const {
   }
   return res;
 }
+#endif
 
 }  // namespace dataset
 }  // namespace mindspore

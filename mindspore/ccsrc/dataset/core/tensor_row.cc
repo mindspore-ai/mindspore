@@ -18,7 +18,6 @@
 
 #include "dataset/core/tensor_row.h"
 
-namespace py = pybind11;
 namespace mindspore {
 namespace dataset {
 

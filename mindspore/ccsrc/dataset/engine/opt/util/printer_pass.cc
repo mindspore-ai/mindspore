@@ -50,12 +50,6 @@ Status PrinterPass::RunOnNode(std::shared_ptr<RenameOp> node, bool *modified) {
   return Status::OK();
 }
 
-Status PrinterPass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
-  *modified = false;
-  std::cout << "Visiting FilterOp" << '\n';
-  return Status::OK();
-}
-
 Status PrinterPass::RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
   *modified = false;
   std::cout << "Visiting SkipOp" << '\n';
@@ -67,11 +61,6 @@ Status PrinterPass::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
   return Status::OK();
 }
 
-Status PrinterPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
-  *modified = false;
-  std::cout << "Visiting GeneratorOp" << '\n';
-  return Status::OK();
-}
 Status PrinterPass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   *modified = false;
   std::cout << "Visiting MindRecordOp" << '\n';
@@ -83,6 +72,20 @@ Status PrinterPass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) 
   std::cout << "Visiting TFReaderOp" << '\n';
   return Status::OK();
 }
+
+#ifdef ENABLE_PYTHON
+Status PrinterPass::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
+  *modified = false;
+  std::cout << "Visiting FilterOp" << '\n';
+  return Status::OK();
+}
+
+Status PrinterPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+  *modified = false;
+  std::cout << "Visiting GeneratorOp" << '\n';
+  return Status::OK();
+}
+#endif
 
 Status PrinterPass::RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
   *modified = false;

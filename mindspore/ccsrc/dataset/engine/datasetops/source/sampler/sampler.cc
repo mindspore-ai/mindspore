@@ -89,6 +89,7 @@ void Sampler::Print(std::ostream &out, bool show_all) const {
   }
 }
 
+#ifdef ENABLE_PYTHON
 Status Sampler::GetAllIdsThenReset(py::array *data) {
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> sample_ids;
@@ -120,6 +121,7 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
   RETURN_IF_NOT_OK(ResetSampler());
   return Status::OK();
 }
+#endif
 
 Status Sampler::SetNumSamples(int64_t num_samples) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "num_samples is negative");
