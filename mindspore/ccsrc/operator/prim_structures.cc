@@ -582,7 +582,7 @@ AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr 
   int result = 1;
   for (size_t i = 0; i < shpx_data.size(); i++) {
     int value = GetValue<int>(shpx_data[i]);
-    IntMulWithOverflowCheck(result, value, &result);
+    result = IntMulWithOverflowCheck(result, value);
   }
 
   auto result_v = MakeValue(result);
