@@ -530,6 +530,27 @@ def check_bounding_box_augment_cpp(method):
     return new_method
 
 
+def check_auto_contrast(method):
+    """Wrapper method to check the parameters of AutoContrast ops (python and cpp)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [cutoff, ignore], _ = parse_user_args(method, *args, **kwargs)
+        type_check(cutoff, (int, float), "cutoff")
+        check_value(cutoff, [0, 100], "cutoff")
+        if ignore is not None:
+            type_check(ignore, (list, tuple, int), "ignore")
+        if isinstance(ignore, int):
+            check_value(ignore, [0, 255], "ignore")
+        if isinstance(ignore, (list, tuple)):
+            for item in ignore:
+                type_check(item, (int,), "item")
+                check_value(item, [0, 255], "ignore")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_uniform_augment_py(method):
     """Wrapper method to check the parameters of python UniformAugment op."""
 

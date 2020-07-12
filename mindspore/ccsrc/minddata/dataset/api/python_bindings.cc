@@ -48,6 +48,7 @@
 #include "minddata/dataset/kernels/data/slice_op.h"
 #include "minddata/dataset/kernels/data/to_float16_op.h"
 #include "minddata/dataset/kernels/data/type_cast_op.h"
+#include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
 #include "minddata/dataset/kernels/image/center_crop_op.h"
 #include "minddata/dataset/kernels/image/cut_out_op.h"
@@ -361,6 +362,11 @@ void bindTensor(py::module *m) {
 void bindTensorOps1(py::module *m) {
   (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp")
     .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
+
+  (void)py::class_<AutoContrastOp, TensorOp, std::shared_ptr<AutoContrastOp>>(
+    *m, "AutoContrastOp", "Tensor operation to apply autocontrast on an image.")
+    .def(py::init<float, std::vector<uint32_t>>(), py::arg("cutoff") = AutoContrastOp::kCutOff,
+         py::arg("ignore") = AutoContrastOp::kIgnore);
 
   (void)py::class_<NormalizeOp, TensorOp, std::shared_ptr<NormalizeOp>>(
     *m, "NormalizeOp", "Tensor operation to normalize an image. Takes mean and std.")

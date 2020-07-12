@@ -175,6 +175,14 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 // @param output: Adjusted image of same shape and type.
 Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
 
+// Returns image with contrast maximized.
+// @param input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and any OpenCv compatible type, see CVTensor.
+// @param cutoff: Cutoff percentage of how many pixels are to be removed (high pixels change to 255 and low change to 0)
+//                from the high and low ends of the histogram.
+// @param ignore: Pixel values to be ignored in the algorithm.
+Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
+                    const std::vector<uint32_t> &ignore);
+
 // Returns image with adjusted saturation.
 // @param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
 // @param alpha: Alpha value to adjust saturation by. Should be a positive number.
