@@ -181,6 +181,9 @@ class Tensor(Tensor_):
     def __imod__(self, other):
         return self.__mod__(other)
 
+    def __pow__(self, other):
+        return tensor_operator_registry.get('__pow__')(self, other)
+
     def __floordiv__(self, other):
         return tensor_operator_registry.get('__floordiv__')(self, other)
 

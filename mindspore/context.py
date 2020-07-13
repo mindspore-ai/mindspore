@@ -176,7 +176,10 @@ class _Context:
             self._context_switches.push(True, None)
         else:
             if self.enable_debug_runtime:
-                self.set_backend_policy("ge")
+                if self.device_target == "CPU":
+                    self.set_backend_policy("vm")
+                else:
+                    self.set_backend_policy("ge")
             self._context_switches.push(False, None)
 
     def set_backend_policy(self, policy):
