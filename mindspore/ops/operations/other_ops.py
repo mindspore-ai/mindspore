@@ -488,3 +488,54 @@ class PopulationCount(PrimitiveWithInfer):
         args = {"x": x_dtype}
         validator.check_tensor_type_same(args, (mstype.int16, mstype.uint16,), self.name)
         return mstype.tensor_type(mstype.uint8)
+
+class Push(PrimitiveWithInfer):
+    """
+    Pushing the inputs of the corresponding optimizer to parameter server.
+
+    Args:
+        optim_type (string): The optimizer type. Default: 'ApplyMomentum'.
+        only_shape_indices (list): The indices of input of which only shape
+                                   will be pushed to parameter server. Default: None.
+
+    Inputs:
+        - **optim_inputs** (tuple) - The inputs for this kind of optimizer.
+        - **optim_input_shapes** (tuple) - The shapes of the inputs.
+
+    Outputs:
+        Tensor, the key of the weight which needs to be updated.
+    """
+
+    @prim_attr_register
+    def __init__(self, optim_type='ApplyMomentum', only_shape_indices=None):
+        """init Push"""
+        self.init_prim_io_names(inputs=['optim_inputs', 'optim_input_shapes'], outputs=['key'])
+
+    def infer_shape(self, inputs, shapes):
+        return [1]
+
+    def infer_dtype(self, inputs, shapes):
+        return mstype.uint64
+
+class Pull(PrimitiveWithInfer):
+    """
+    Pulling weight from parameter server.
+
+    Inputs:
+        - **key** (Tensor) - The key of the weight.
+        - **weight** (Tensor) - The weight to be updated.
+
+    Outputs:
+        None.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Pull"""
+        self.init_prim_io_names(inputs=['key', 'weight'], outputs=['output'])
+
+    def infer_shape(self, key_shape, weight_shape):
+        return [1]
+
+    def infer_dtype(self, key_dtype, weight_dtype):
+        return mstype.float32

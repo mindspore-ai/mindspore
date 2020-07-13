@@ -173,6 +173,10 @@ constexpr auto kSparseApplyProximalAdagradOpName = "SparseApplyProximalAdagrad";
 constexpr auto kSparseApplyRMSPropOpName = "SparseApplyRMSProp";
 constexpr auto kSparseApplyAdadeltaOpName = "SparseApplyAdadelta";
 constexpr auto kApplyAdamWithAmsgradOpName = "ApplyAdamWithAmsgrad";
+constexpr auto kPushOpName = "Push";
+constexpr auto kPullOpName = "Pull";
+constexpr auto kEmbeddingLookupOpName = "EmbeddingLookup";
+constexpr auto kEmbeddingLookupProxyOpName = "EmbeddingLookupProxy";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -234,6 +238,8 @@ constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";
 constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
 constexpr auto kAttrOffset = "offset";
+constexpr auto kAttrPsKey = "ps_key";
+constexpr auto kAttrOptimizerType = "optim_type";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -286,12 +292,24 @@ const std::set<std::string> kOpFormatList = {
   kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 const std::set<std::string> kOptOperatorSet = {
-  kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,
-  kApplyAdagradOpName,   kApplyAdagradDAName,         kApplyAdamOpName,
-  kApplyAdaMaxOpName,    kApplyAddSignOpName,         kApplyCenteredRMSPOpName,
-  kApplyFtrlOpName,      kApplyFtrlV2OpName,          kApplyGradientDescentOpName,
-  kApplyPowerSignOpName, kApplyProximalAdagradOpName, kApplyProximalGradientDescentOpName,
+  kMomentumOpName,
+  kApplyMomentumOpName,
+  kApplyAdadeltaOpName,
+  kApplyAdagradOpName,
+  kApplyAdagradDAName,
+  kApplyAdamOpName,
+  kApplyAdaMaxOpName,
+  kApplyAddSignOpName,
+  kApplyCenteredRMSPOpName,
+  kApplyFtrlOpName,
+  kApplyFtrlV2OpName,
+  kApplyGradientDescentOpName,
+  kApplyPowerSignOpName,
+  kApplyProximalAdagradOpName,
+  kApplyProximalGradientDescentOpName,
   kApplyRMSPropOpName,
+  kPushOpName,
+  kPullOpName,
 };
 
 const std::set<std::string> kHWSpecialFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
