@@ -294,8 +294,7 @@ TEST_F(TestStepParallel, CreatOpInstance) {
   ASSERT_TRUE(allreduce_ptr);
   if (nullptr != allreduce_ptr) {
     MS_LOG(INFO) << "Get PrimitivePyPtr: " << allreduce_ptr->name();
-    auto func = allreduce_ptr->GetComputeFunction();
-    if (py::isinstance<py::none>(func)) {
+    if (!allreduce_ptr->HasComputeFunction()) {
       MS_LOG(EXCEPTION) << "" << allreduce_ptr->name() << "'s compute function is not implemented";
     }
 

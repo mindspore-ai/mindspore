@@ -307,7 +307,7 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
     kernel_info->SetFeatureMapFlag(true);
   }
-  if (AnfAlgo::IsRealCNodeKernel(cnode)) {
+  if (AnfAlgo::IsRealKernel(cnode)) {
     AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);
     AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
   }
