@@ -119,7 +119,10 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
     std::string initial_data = initialize_proto.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data_buf);
-    memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+    auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    }
 
     auto param_value = std::make_shared<ParamValue>();
     MS_EXCEPTION_IF_NULL(param_value);
@@ -249,7 +252,11 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+  }
+
   auto new_value_node = NewValueNode(MakeValue(tensor_info));
   MS_EXCEPTION_IF_NULL(new_value_node);
   auto tensor_abstract = tensor_info->ToAbstract();
@@ -336,7 +343,6 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &ref_attr_name
       MS_LOG(ERROR) << "parse ValueNode value don't support input of ref_attr_name";
       return false;
   }
-  return true;
 }
 
 bool MSANFModelParser::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto) {

@@ -541,6 +541,9 @@ class PConstant : public PBase<PConstant<T> > {
         data_out[i] *= data_2[0];
       }
     } else {
+      if (in_data_2_size < out_data_size) {
+        MS_EXCEPTION(ValueError) << "in_data_2_size is smaller than out_data_size.";
+      }
       for (int i = 0; i < out_data_size; i++) {
         data_out[i] *= data_2[i];
       }
@@ -595,33 +598,41 @@ class PConstant : public PBase<PConstant<T> > {
       return nullptr;
     }
 
-    void *data_out;
+    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
+    size_t mem_size = GetTypeByte(tensor_3_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
+    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
 
+    int ret = 0;
+    void *data_out = nullptr;
     if ((tensor_3_type_ptr->type_id() == TypeId::kNumberTypeFloat32) ||
         (tensor_3_type_ptr->type_id() == TypeId::kNumberTypeFloat)) {
       Multiply<float>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
                       tensor_ptr_2->DataSize(), &data_out, data_out_size);
+      ret = memcpy_s(data, mem_size, data_out, mem_size);
+      delete[] reinterpret_cast<float *>(data_out);
     } else {
       if (tensor_3_type_ptr->type_id() == TypeId::kNumberTypeFloat64) {
         Multiply<double>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
                          tensor_ptr_2->DataSize(), &data_out, data_out_size);
+        ret = memcpy_s(data, mem_size, data_out, mem_size);
+        delete[] reinterpret_cast<double *>(data_out);
       } else {
         if ((tensor_3_type_ptr->type_id() == TypeId::kNumberTypeInt32) ||
             (tensor_3_type_ptr->type_id() == TypeId::kNumberTypeInt)) {
           Multiply<int>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
                         tensor_ptr_2->DataSize(), &data_out, data_out_size);
+          ret = memcpy_s(data, mem_size, data_out, mem_size);
+          delete[] reinterpret_cast<int *>(data_out);
         } else {
           // Un-support data types
           return nullptr;
         }
       }
     }
-
-    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
-    size_t mem_size = GetTypeByte(tensor_3_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-    memcpy(data, data_out, mem_size);
-
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret << ", source size " << mem_size << "dest size"
+                        << new_tensor_ptr->DataSize();
+    }
     auto new_vnode = NewValueNode(new_tensor_ptr);
     new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
     return new_vnode;

@@ -99,14 +99,14 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
       fv_adjoint = anfnode_to_adjoin_indirect_fv_.find(fv);
     }
   }
-  auto key = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
-  fv_adjoint->second->RegisterKUser(key, 1);
+  auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
+  fv_adjoint->second->RegisterKUser(node, 1);
   auto default_val = tape_->NewCNode({NewValueNode(prim::GetPythonOps("zeros_like")), fv_adjoint->second->k()});
   fv_adjoint->second->RegisterKUser(default_val, 1);
-  auto dfv = tape_->NewCNode({NewValueNode(prim::kPrimEnvGetItem), din, key, default_val});
+  auto dfv = tape_->NewCNode({NewValueNode(prim::kPrimEnvGetItem), din, node, default_val});
   MS_LOG(DEBUG) << "BackPropagateFv find adjoint in anfnode_to_adjoin_ or anfnode_to_adjoin_indirect_fv_ fv "
                 << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
-  MS_LOG(DEBUG) << "BackPropagateFv get item from " << din->ToString() << " key " << key->ToString() << ".";
+  MS_LOG(DEBUG) << "BackPropagateFv get item from " << din->ToString() << " key " << node->ToString() << ".";
   fv_adjoint->second->AccumulateDout(dfv);
 }
 
@@ -279,13 +279,13 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
     if (fv_adjoint == anfnode_to_adjoin_.end()) {
       MS_LOG(EXCEPTION) << "AttachFvDoutToTape fv adjoint does not exist " << fv->ToString() << ".";
     }
-    auto key = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
-    fv_adjoint->second->RegisterKUser(key, 1);
+    auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
+    fv_adjoint->second->RegisterKUser(node, 1);
     auto sens = fv_adjoint->second->dout();
     new_grad_fv = tape_->NewCNode({
       NewValueNode(prim::kPrimEnvSetItem),
       new_grad_fv,
-      key,
+      node,
       sens,
     });
     fv_adjoint->second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), 3);
@@ -301,13 +301,13 @@ AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
   for (auto &fv_adjoint : anfnode_to_adjoin_indirect_fv_) {
     MS_LOG(DEBUG) << "AttachIndirectFvDoutToTape backprop indirect fv " << fv_adjoint.first->ToString() << " "
                   << primal_graph_->ToString() << ".";
-    auto key = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint.second->k()});
-    fv_adjoint.second->RegisterKUser(key, 1);
+    auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint.second->k()});
+    fv_adjoint.second->RegisterKUser(node, 1);
     auto sens = fv_adjoint.second->dout();
     new_grad_fv = tape_->NewCNode({
       NewValueNode(prim::kPrimEnvSetItem),
       new_grad_fv,
-      key,
+      node,
       sens,
     });
     fv_adjoint.second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), 3);

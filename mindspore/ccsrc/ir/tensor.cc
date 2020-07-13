@@ -125,6 +125,7 @@ template <typename T>
 class TensorDataImpl : public TensorData {
  public:
   explicit TensorDataImpl(const std::vector<int> &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
+  ~TensorDataImpl() = default;
 
   TensorDataImpl(const std::vector<int> &shape, void *data, size_t data_len)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)) {}
@@ -288,7 +289,7 @@ class TensorDataImpl : public TensorData {
 };
 
 template <typename... Args>
-TensorDataPtr MakeTensorData(TypeId data_type, const std::vector<int> &shape, Args... args) {
+TensorDataPtr MakeTensorData(TypeId data_type, const std::vector<int> &shape, const Args... args) {
   switch (data_type) {
     case kNumberTypeBool:
     case kNumberTypeUInt8:
