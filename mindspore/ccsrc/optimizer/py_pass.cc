@@ -54,6 +54,7 @@ void ResolveFuncGraph_(const FuncGraphPtr &fg) {
   auto manager = Manage(fg, false);
   parse::python_adapter::set_use_signature_in_resolve(false);
   parse::ResolveAll(manager);
+  parse::python_adapter::set_use_signature_in_resolve(true);
 }
 
 bool Match(const AnfNodePtr &pattern, const AnfNodePtr &node, const NodeEquivPtr &equiv_ptr) {

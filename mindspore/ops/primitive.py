@@ -146,7 +146,7 @@ class Primitive(Primitive_):
         Check whether or not certain inputs should go into backend. Subclass in need should override this method.
 
         Args:
-            Same as arguments of current Primitive
+            *args(Primitive args): Same as arguments of current Primitive.
 
         Returns:
             A tuple of two elements, first element indicates whether or not we should filter out current arguments;
