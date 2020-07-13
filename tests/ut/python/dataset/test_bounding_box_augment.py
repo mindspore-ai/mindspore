@@ -84,8 +84,8 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
     dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
 
-    # Ratio is set to 1 to apply rotation on all bounding boxes.
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomCrop(50), 0.5)
+    # Ratio is set to 0.9 to apply RandomCrop of size (50, 50) on 90% of the bounding boxes.
+    test_op = c_vision.BoundingBoxAugment(c_vision.RandomCrop(50), 0.9)
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],

@@ -53,6 +53,7 @@ class BoundingBoxAugmentOp : public TensorOp {
  private:
   float ratio_;
   std::mt19937 rnd_;
+  std::uniform_real_distribution<float> uniform_;
   std::shared_ptr<TensorOp> transform_;
 };
 }  // namespace dataset
