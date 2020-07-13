@@ -146,37 +146,35 @@ MethodMap &GetMethodMap() {
      }},
     {kObjectTypeTensorType,
      {
-       {"__add__", std::string("add")},                    // C.add
-       {"__sub__", std::string("sub")},                    // C.sub
-       {"__mul__", std::string("mul")},                    // C.mul
-       {"__truediv__", std::string("truediv")},            // C.truediv
-       {"__floordiv__", std::string("floordiv")},          // C.floordiv
-       {"__mod__", std::string("mod")},                    // C.mod
-       {"__pow__", std::string("pow_")},                   // C.pow
-       {"__floor__", std::string("array_floor")},          // C.array_floor
-       {"__trunc__", std::string("array_trunc")},          // C.array_trunc
-       {"__pos__", std::string("array_uadd")},             // C.array_uadd
-       {"__neg__", std::string("array_usub")},             // C.array_usub
-       {"__eq__", std::string("eq")},                      // C.eq
-       {"__ne__", std::string("ne")},                      // C.ne
-       {"__lt__", std::string("lt")},                      // C.lt
-       {"__gt__", std::string("gt")},                      // C.gt
-       {"__le__", std::string("le")},                      // C.le
-       {"__ge__", std::string("ge")},                      // C.ge
-       {"__matmul__", prim::kPrimDot},                     // P.dot,
-       {"__len__", prim::kPrimArrayLen},                   // P.array_len,
-       {"__getitem__", prim::kPrimArrayGetItem},           // P.array_getitem,
-       {"__setitem__", prim::kPrimArraySetItem},           // P.array_setitem,
-       {"__ms_iter__", std::string("array_iter")},         // C.array_iter
-       {"__ms_to_array__", prim::kPrimIdentity},           // P.identity,
-       {"item", prim::kPrimArrayToScalar},                 // P.array_to_scalar,
-       {"transpose", std::string("transpose")},            // P.transpose
-       {"__bool__", std::string("tensor_bool")},           // C.tensor_bool
-       {"is_indexed_slices", prim::kPrimIsIndexedSlices},  // F.is_indexed_slices
+       {"__add__", std::string("add")},             // C.add
+       {"__sub__", std::string("sub")},             // C.sub
+       {"__mul__", std::string("mul")},             // C.mul
+       {"__truediv__", std::string("truediv")},     // C.truediv
+       {"__floordiv__", std::string("floordiv")},   // C.floordiv
+       {"__mod__", std::string("mod")},             // C.mod
+       {"__pow__", std::string("pow_")},            // C.pow
+       {"__floor__", std::string("array_floor")},   // C.array_floor
+       {"__trunc__", std::string("array_trunc")},   // C.array_trunc
+       {"__pos__", std::string("array_uadd")},      // C.array_uadd
+       {"__neg__", std::string("array_usub")},      // C.array_usub
+       {"__eq__", std::string("eq")},               // C.eq
+       {"__ne__", std::string("ne")},               // C.ne
+       {"__lt__", std::string("lt")},               // C.lt
+       {"__gt__", std::string("gt")},               // C.gt
+       {"__le__", std::string("le")},               // C.le
+       {"__ge__", std::string("ge")},               // C.ge
+       {"__matmul__", prim::kPrimDot},              // P.dot,
+       {"__len__", prim::kPrimArrayLen},            // P.array_len,
+       {"__getitem__", prim::kPrimArrayGetItem},    // P.array_getitem,
+       {"__setitem__", prim::kPrimArraySetItem},    // P.array_setitem,
+       {"__ms_iter__", std::string("array_iter")},  // C.array_iter
+       {"__ms_to_array__", prim::kPrimIdentity},    // P.identity,
+       {"item", prim::kPrimArrayToScalar},          // P.array_to_scalar,
+       {"transpose", std::string("transpose")},     // P.transpose
+       {"__bool__", std::string("tensor_bool")},    // C.tensor_bool
      }},
     {kObjectTypeIndexedSlicesType,
      {
-       {"is_indexed_slices", prim::kPrimIsIndexedSlices},       // F.is_indexed_slices
        {"values", prim::kPrimIndexedSlicesGetValues},           // F.indexed_slices_get_values
        {"indices", prim::kPrimIndexedSlicesGetIndices},         // F.indexed_slices_get_indices
        {"dense_shape", prim::kPrimIndexedSlicesGetDenseShape},  // F.indexed_slices_get_dense_shape

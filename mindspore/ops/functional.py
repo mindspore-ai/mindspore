@@ -158,7 +158,6 @@ make_indexed_slices = Primitive('MakeIndexedSlices')
 indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
 indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
 indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
-is_indexed_slices = Primitive('IsIndexedSlices')
 
 
 tensor_operator_registry.register('__add__', tensor_add)

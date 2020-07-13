@@ -126,7 +126,11 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   }
 
   MS_EXCEPTION_IF_NULL(ret_base);
-  MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " eval end, evaluated abstract: " << ret_base->ToString();
+  MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " eval end, evaluated abstract: " << ret_base->ToString()
+                << ", is stub: " << fg->stub();
+  if (fg->stub()) {
+    return std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
+  }
   return std::make_shared<EvalResult>(ret_base, nullptr);
 }
 

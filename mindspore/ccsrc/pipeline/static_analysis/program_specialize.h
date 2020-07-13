@@ -118,8 +118,9 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   // Build a specialized node from given argvals;
   AnfNodePtr BuildSpecializedNode(const AnfNodePtr &node, const AbstractBasePtr &abs,
                                   const AbstractBasePtrList &argvals);
-  AnfNodePtr BuildSpecializedNodeInner(const AbstractBasePtr &abs, const AbstractFunctionPtr &func,
-                                       const AbstractBasePtrList &args, SpecializeStatusCode *errcode);
+  AnfNodePtr BuildSpecializedNodeInner(const AnfNodePtr &node, const AbstractBasePtr &abs,
+                                       const AbstractFunctionPtr &func, const AbstractBasePtrList &args,
+                                       SpecializeStatusCode *errcode);
 
   // Find the unique argument values which can be used to specialize a primitive or graph function.
   SpecializeStatusCode FindUniqueArgvals(const AbstractFunctionPtr &fn, const EvaluatorPtr &eval,

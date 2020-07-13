@@ -93,8 +93,8 @@ class FTRL(Optimizer):
     <https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf>`_ for engineering document.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
-        `sparse_grad` of `Parameter` being set. The sparse feature is under continuous development. The sparse
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
+        The sparse feature is under continuous development. The sparse
         behavior is currently performed on the CPU.
 
     Args:
