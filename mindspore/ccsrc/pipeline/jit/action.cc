@@ -351,7 +351,7 @@ bool ExecuteAction(const ResourcePtr &res) {
     }
     auto graph_id = res->results()[kOutput].cast<GraphId>();
     std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
-    std::shared_ptr<compile::MsBackend> msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr);
+    compile::MsBackend *msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr).get();
     MS_EXCEPTION_IF_NULL(msbc_ptr);
     compile::VmEvalFuncPtr run =
       std::make_shared<compile::VmEvalFunc>([msbc_ptr, graph_id](const VectorRef &args) -> BaseRef {

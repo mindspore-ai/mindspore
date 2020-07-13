@@ -220,6 +220,7 @@ REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                            .def("add_attr", &PrimitivePy::AddPyAttr, "add primitive attr")
                            .def("get_attr_dict", &PrimitivePy::GetAttrDict, "get primitive attr")
                            .def("set_prim_type", &PrimitivePy::set_prim_type, "Set primitive type.")
+                           .def("set_is_const_value", &PrimitivePy::set_is_const_value, "Set primitive is const value.")
                            .def("set_signatures", &PrimitivePy::set_signatures, "Set primitive inputs signature.")
                            .def("register_hook", &PrimitivePy::set_hook, "Set primitive hook function.")
                            .def("set_instance_name", &PrimitivePy::set_instance_name, "Set primitive instance name.");
