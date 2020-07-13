@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "dataset/engine/datasetops/cache_merge_op.h"
 
 #include <algorithm>
 #include <functional>
@@ -20,7 +21,6 @@
 #include "dataset/core/config_manager.h"
 #include "dataset/core/constants.h"
 #include "dataset/core/global_context.h"
-#include "dataset/engine/datasetops/cache_merge_op.h"
 #include "dataset/engine/opt/pass.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/util/task_manager.h"
@@ -50,7 +50,8 @@ Status CacheMergeOp::operator()() {
   // A queue of row id to let cleaner send cache miss rows to the cache server
   // We don't want a small queue as this will block the parallel op workers.
   // A row id is 8 byte integer. So bigger size doesn't consume a lot of memory.
-  io_que_ = std::make_unique<Queue<row_id_type>>(512);
+  static const int32_t queue_sz = 512;
+  io_que_ = std::make_unique<Queue<row_id_type>>(queue_sz);
   RETURN_IF_NOT_OK(io_que_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_workers_, std::bind(&CacheMergeOp::WorkerEntry, this, std::placeholders::_1)));
@@ -151,7 +152,7 @@ Status CacheMergeOp::Cleaner() {
     }
     TensorRow row;
     RETURN_IF_NOT_OK(rq->Release(&row));
-    CHECK_FAIL_RETURN_UNEXPECTED(!row.empty(), "Programming error");
+    CHECK_FAIL_RETURN_UNEXPECTED(!row.empty(), "Programming error.");
     Status rc = cache_client_->WriteRow(row);
     // Bad rc should not bring down the pipeline
     if (rc.IsError()) {

@@ -48,8 +48,6 @@ class CacheBase : public ParallelOp {
   /// \brief Destructor
   ~CacheBase();
 
-  constexpr static int eoe_row_id = -1;
-
   /// \brief Overrides base class reset method.  When an operator does a reset, it cleans up any state
   /// info from it's previous execution and then initializes itself so that it can be executed
   /// again.
@@ -80,6 +78,7 @@ class CacheBase : public ParallelOp {
   virtual bool AllowCacheMiss() = 0;
 
  protected:
+  constexpr static int32_t eoe_row_id = -1;
   std::shared_ptr<CacheClient> cache_client_;
   WaitPost epoch_sync_;
   int32_t rows_per_buffer_;
@@ -100,6 +99,7 @@ class CacheBase : public ParallelOp {
   Status UpdateColumnMapFromCache();
 
  private:
+  constexpr static int32_t connector_capacity_ = 1024;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
 };
 }  // namespace dataset
