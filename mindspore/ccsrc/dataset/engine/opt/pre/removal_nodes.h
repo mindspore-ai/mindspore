@@ -19,12 +19,10 @@
 
 #include <memory>
 #include "dataset/engine/opt/pass.h"
+#include "dataset/engine/opt/pre/removal_pass.h"
 
 namespace mindspore {
 namespace dataset {
-
-class RemovalPass;
-
 /// \class RemovalNodes removal_nodes.h
 /// \brief This is a NodePass who's job is to identify which nodes should be removed.
 ///     It works in conjunction with the removal_pass.
@@ -45,6 +43,9 @@ class RemovalNodes : public NodePass {
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The error code return
   Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+
+  /// \brief Destructor
+  ~RemovalNodes() = default;
 
   /// \brief Perform ShuffleOp removal check
   /// \param[in] node The node being visited
