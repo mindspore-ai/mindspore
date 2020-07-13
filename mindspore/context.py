@@ -176,10 +176,7 @@ class _Context:
             self._context_switches.push(True, None)
         else:
             if self.enable_debug_runtime:
-                if self.device_target == "CPU":
-                    self.set_backend_policy("vm")
-                else:
-                    self.set_backend_policy("ge")
+                self.set_backend_policy("ge")
             self._context_switches.push(False, None)
 
     def set_backend_policy(self, policy):
@@ -221,6 +218,8 @@ class _Context:
         success = self._context_handle.set_device_target(target)
         if not success:
             raise ValueError("Target device name is invalid!!!")
+        if self.enable_debug_runtime and self.device_target == "CPU":
+            self.set_backend_policy("vm")
 
     @property
     def device_id(self):

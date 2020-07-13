@@ -29,8 +29,7 @@ from .....mindspore_test_framework.utils.bprop_util import bprop
 
 
 def setup_module(module):
-    context.set_context(device_target="CPU")
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 def teardown_module(module):
     context.set_context(device_target="Ascend")
