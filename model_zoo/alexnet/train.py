@@ -20,7 +20,7 @@ python train.py --data_path /YourDataPath
 
 import argparse
 from src.config import alexnet_cfg as cfg
-from src.dataset import create_dataset_mnist
+from src.dataset import create_dataset_cifar10
 from src.generator_lr import get_lr
 from src.alexnet import AlexNet
 import mindspore.nn as nn
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
-    ds_train = create_dataset_mnist(args.data_path, cfg.batch_size, cfg.epoch_size)
+    ds_train = create_dataset_cifar10(args.data_path, cfg.batch_size, cfg.epoch_size)
     network = AlexNet(cfg.num_classes)
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
     lr = Tensor(get_lr(0, cfg.learning_rate, cfg.epoch_size, ds_train.get_dataset_size()))
