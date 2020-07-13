@@ -104,19 +104,20 @@ def weight2int(data, scale, zero_point):
         raise ValueError("`scale` and `zero_point` should have the same shape.")
     if scale.shape[0] < 0:
         raise ValueError("`scale` and `zero_point` shape should greater than zero.")
-
-    if scale.shape[0] == data.shape[0]:
-        # `Conv2d` or `Dense` op weight
-        shape_list = [-1] + [1] * len(data.shape[1:])
-        scale = scale.reshape(shape_list)
-        zero_point = zero_point.reshape(shape_list)
-    elif scale.shape[0] == data.shape[1]:
-        # `DepthwiseConv2d` op weight
-        shape_list = [1, -1] + [1] * len(data.shape[2:])
-        scale = scale.reshape(shape_list)
-        zero_point = zero_point.reshape(shape_list)
-    else:
-        raise ValueError("Unsupported weight shape({})".format(data.shape))
+    if len(scale.shape) > 1:
+        # for perchannel
+        if scale.shape[0] == data.shape[0]:
+            # `Conv2d` or `Dense` op weight
+            shape_list = [-1] + [1] * len(data.shape[1:])
+            scale = scale.reshape(shape_list)
+            zero_point = zero_point.reshape(shape_list)
+        elif scale.shape[0] == data.shape[1]:
+            # `DepthwiseConv2d` op weight
+            shape_list = [1, -1] + [1] * len(data.shape[2:])
+            scale = scale.reshape(shape_list)
+            zero_point = zero_point.reshape(shape_list)
+        else:
+            raise ValueError("Unsupported weight shape({})".format(data.shape))
 
     return np.round((data / scale) + zero_point)
 

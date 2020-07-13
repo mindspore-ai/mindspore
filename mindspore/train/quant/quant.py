@@ -318,9 +318,12 @@ class ExportToQuantInferNetwork:
         info = self.quant_info_table.get(w_minq_name, None)
         if info:
             fack_quant_a_in_op, minq_name = info
-            maxq = self.all_parameters[minq_name[:-4] + "maxq"]
-            minq = self.all_parameters[minq_name]
-            scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
+            if minq_name == 'input':
+                scale_a_in, zp_a_in = self.input_scale, self.input_zero_point
+            else:
+                maxq = self.all_parameters[minq_name[:-4] + "maxq"]
+                minq = self.all_parameters[minq_name]
+                scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
         else:
             logger.warning(f"Do not find `fake_quant` from input with `fake_quant.minq` {w_minq_name}")
             return None
