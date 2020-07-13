@@ -648,57 +648,8 @@ void FinalVM::SyncData(const py::object &arg) {
 
 BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
   MS_LOG(DEBUG) << "input for operation:";
-  auto prim_py = dyn_cast<PrimitivePy>(prim);
-  std::size_t args_size = args.size();
-  auto py_args = py::tuple(args_size);
-  size_t i = 0;
-  for (auto &arg : args) {
-    py_args[i] = BaseRefToPyData(arg);
-    MS_LOG(DEBUG) << "arg: " << i << ":";
-    i++;
-  }
-  // Hook operator for execute cell custom bprop function
-  py::object obj;
-  bool is_bprop = prim->HasAttr("bprop");
-  if (is_bprop) {
-    SyncData(py_args);
-    py::function fn_bprop = prim_py->hook();
-    obj = fn_bprop(*py_args);
-    return obj;
-  }
-  // Sync gradient data from device to host
-  SyncData(py_args[2]);
-  bool is_cell = prim->HasAttr("cell_hook");
-  if (is_cell) {
-    // Hook operator for execute cell hook function
-    std::string cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
-    if (_hook_grad.find(cell_id) != _hook_grad.end()) {
-      std::size_t hook_args_size = 3;
-      auto hook_args = py::tuple(hook_args_size);
-      hook_args[0] = cell_id;
-      hook_args[1] = py::make_tuple(_hook_grad[cell_id]);
-      hook_args[2] = py::make_tuple(py_args[2]);
-      py::function fn_hook = prim_py->hook();
-      obj = fn_hook(*hook_args);
-      if (py::isinstance<py::none>(obj)) {
-        obj = py_args[2];
-      }
-      _hook_grad.erase(cell_id);
-    } else {
-      _hook_grad[cell_id] = py_args[2];
-      obj = py_args[2];
-    }
-  } else {
-    // Hook operator for execute variable hook function
-    py::function fn_hook = prim_py->hook();
-    obj = fn_hook(py::make_tuple(py_args[2]));
-    if (py::isinstance<py::none>(obj)) {
-      obj = py_args[2];
-    }
-  }
-  obj = py::make_tuple(obj);
-  return obj;
+  MS_EXCEPTION_IF_NULL(prim);
+  return prim->RunHookFunction(args);
 }
-
 }  // namespace compile
 }  // namespace mindspore

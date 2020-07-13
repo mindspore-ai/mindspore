@@ -181,15 +181,6 @@ const AnfNodePtr InsertCast::Process(const FuncGraphPtr &func_graph, const AnfNo
 
   if (AnfAlgo::IsGraphKernel(node)) {
     return ProcessGraphKernelOp(func_graph, node);
-  } else {
-    // insert cast for single op.
-    AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-    // process input
-    CNodePtr cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto new_node = InsertCastForInput(func_graph, cnode);
-    // process output
-    return InsertCastForOutput(func_graph, new_node, std::vector<bool>(AnfAlgo::GetOutputTensorNum(new_node), true));
   }
   // insert cast for single op.
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);

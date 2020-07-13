@@ -15,7 +15,6 @@
  */
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_fusion.h"
 #include "pre_activate/common/helper.h"
-
 namespace mindspore {
 namespace opt {
 AnfNodePtr AdamApplyOneFusion::CreateAdamApplyOneNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {

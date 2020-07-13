@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "ir/primitive.h"
+#include "ir/primitive_py.h"
 #include "utils/graph_utils.h"
 #include "common/utils.h"
 

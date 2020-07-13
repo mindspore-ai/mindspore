@@ -26,7 +26,7 @@
 #include <unordered_set>
 
 #include "pybind11/pybind11.h"
-#include "ir/primitive.h"
+#include "ir/primitive_py.h"
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {

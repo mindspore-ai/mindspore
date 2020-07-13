@@ -161,7 +161,6 @@ class FinalVM {
     {Instruction::kPrim, [this](const VectorRef &args) { InstPushPrim(args); }},
     {Instruction::kSwitchReturn, [this](const VectorRef &args) { InstSwitchReturn(args); }},
     {Instruction::kSwitchLayer, [this](const VectorRef &args) { InstSwitchLayer(args); }}};
-  std::map<std::string, py::object> _hook_grad;
 };
 
 using FinalVMPtr = std::shared_ptr<FinalVM>;

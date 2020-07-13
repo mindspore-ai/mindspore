@@ -29,7 +29,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "ir/primitive_base.h"
+#include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "debug/label.h"
