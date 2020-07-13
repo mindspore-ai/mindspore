@@ -49,7 +49,7 @@ class MemReuseUtil {
     }
     MS_LOG(INFO) << "Total Dynamic Memory Size:  " << total_dy_size_;
     MS_LOG(INFO) << "Total WorkSpace Memory Size: " << total_workspace_size_;
-    MS_LOG(INFO) << "Total Reused WorkSpafce Memory Size: " << total_reuseworkspace_size_;
+    MS_LOG(INFO) << "Total Reused WorkSpace Memory Size: " << total_reuseworkspace_size_;
   }
 
   void SetAllInfo(const KernelGraph *graph);
