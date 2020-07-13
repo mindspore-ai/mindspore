@@ -78,7 +78,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
-                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
+                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop, Push, Pull)
 from .thor_ops import *
 
 __all__ = [
@@ -333,7 +333,9 @@ __all__ = [
     "Mod",
     "PopulationCount",
     "ParallelConcat",
-    "EmbeddingLookup"
+    "EmbeddingLookup",
+    "Push",
+    "Pull"
 ]
 
 __all__.sort()

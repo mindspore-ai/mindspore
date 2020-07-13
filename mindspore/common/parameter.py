@@ -65,6 +65,7 @@ class Parameter:
         self.has_indexed_slices_grad = has_indexed_slices_grad
         self._is_init = False
         self._sliced = False
+        self.is_param_ps = False
         if context.get_context("mode") == context.PYNATIVE_MODE:
             self.init_data()
 
@@ -74,6 +75,9 @@ class Parameter:
 
     def __parameter__(self):
         """For parse check."""
+
+    def set_param_ps(self):
+        self.is_param_ps = True
 
     @property
     def name(self):

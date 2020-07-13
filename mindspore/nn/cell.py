@@ -831,6 +831,20 @@ class Cell:
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self.enable_hook = True
 
+    def set_param_ps(self, recurse=True):
+        """
+        Set whether the trainable parameter is updated by parameter server.
+
+        Note:
+            This only works when running task in parameter server mode.
+
+        Args:
+            recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
+        """
+        params = self.trainable_params(recurse)
+        for param in params:
+            param.set_param_ps()
+
 class GraphKernel(Cell):
     """
     Base class for GraphKernel.
