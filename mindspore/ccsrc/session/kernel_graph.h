@@ -36,7 +36,7 @@ namespace session {
 using AnfWithOutIndex = std::pair<AnfNodePtr, size_t>;
 class KernelGraph : public FuncGraph {
  public:
-  KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), null_output_(false) {
+  KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), null_output_(false), current_epoch_(0) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
@@ -154,6 +154,8 @@ class KernelGraph : public FuncGraph {
   AnfNodePtr GetFrontNodeByInternalOutput(const AnfNodePtr &node) const;
   void AddFinalOutputKernel(const AnfNodePtr &node);
   bool IsFinalOutputKernel(const AnfNodePtr &node) const;
+  uint32_t current_epoch() const { return current_epoch_; }
+  void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
 
  private:
   // remove value node form graph
@@ -216,6 +218,7 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> internal_outputs_to_front_map_;
   std::set<AnfNodePtr> final_output_kernels_;
+  uint32_t current_epoch_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

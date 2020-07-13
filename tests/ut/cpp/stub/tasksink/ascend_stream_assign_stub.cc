@@ -15,7 +15,6 @@
  */
 #include "device/ascend/ascend_stream_assign.h"
 #include "device/ascend/ascend_label_assign.h"
-#include "device/ascend/tasksink/task_generator.h"
 #include "device/kernel_adjust.h"
 
 namespace mindspore {
@@ -31,13 +30,6 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
 void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) { return; }
 
 void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) { return; }
-
-namespace tasksink {
-bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *const task_info_list,
-                             uint32_t graph_id) {
-  return true;
-}
-}  // namespace tasksink
 }  // namespace ascend
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
 bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return true; }

@@ -23,6 +23,7 @@
 #include "common/utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "common/trans.h"
+#include "utils/context/ms_context.h"
 
 using ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;
@@ -118,8 +119,9 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
   }
 
   stream_id_ = stream_id;
-  std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr = std::make_shared<MemcpyAsyncTaskInfo>(
-    stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE);
+  std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr =
+    std::make_shared<MemcpyAsyncTaskInfo>(kernel_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
+                                          inputs[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }

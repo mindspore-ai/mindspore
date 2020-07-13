@@ -34,6 +34,7 @@
 #include "device/ascend/kernel_select_ascend.h"
 #include "runtime/base.h"
 #include "device/ascend/ascend_stream_assign.h"
+
 namespace mindspore {
 namespace device {
 using device::ascend::ProfilingUtils;
@@ -117,6 +118,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   std::vector<AnfNodePtr> *mute_inputs = kernel_graph_ptr->MutableInputs();
   MS_EXCEPTION_IF_NULL(mute_inputs);
   mute_inputs->push_back(switch_loop_input[kLoopCountParamName]);
+  mute_inputs->push_back(switch_loop_input[kEpochParamName]);
   mute_inputs->push_back(switch_loop_input[kIterLoopParamName]);
   mute_inputs->push_back(switch_loop_input[kZeroParamName]);
   mute_inputs->push_back(switch_loop_input[kOneParamName]);
@@ -316,6 +318,13 @@ void KernelAdjust::CreateSwitchOpParameters(const std::shared_ptr<session::Kerne
   one->set_abstract(paremeter_abstract_ptr);
   ParameterPtr one_new = kernel_graph_ptr->NewParameter(one);
   (*switch_loop_input)[kOneParamName] = one_new;
+
+  ParameterPtr epoch = std::make_shared<Parameter>(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(epoch);
+  epoch->set_name(kEpochParamName);
+  epoch->set_abstract(paremeter_abstract_ptr);
+  ParameterPtr epoch_new = kernel_graph_ptr->NewParameter(epoch);
+  (*switch_loop_input)[kEpochParamName] = epoch_new;
 }
 
 kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBuilder(
@@ -510,6 +519,14 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   *val = 0;
   inputs->push_back(loop_count_tensor);
 
+  // Epoch in device
+  tensor::TensorPtr epoch_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(epoch_tensor);
+  val = static_cast<int32_t *>(epoch_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(val);
+  *val = 0;
+  inputs->push_back(epoch_tensor);
+
   tensor::TensorPtr iter_loop_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(iter_loop_tensor);
   val = static_cast<int32_t *>(iter_loop_tensor->data_c());
@@ -531,6 +548,7 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   MS_EXCEPTION_IF_NULL(val);
   *val = 1;
   inputs->push_back(one_tensor);
+
   MS_LOG(INFO) << "---------------- LoadSwitchInputs End--";
 }
 

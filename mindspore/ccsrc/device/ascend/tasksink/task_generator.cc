@@ -127,6 +127,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   AddressPtrList kernel_outputs;
   auto kernel_mod = AnfAlgo::GetKernelMod(anf_node_ptr);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  kernel_mod->set_kernel_name(anf_node_ptr->fullname_with_scope());
   if (AnfAlgo::GetCNodeName(anf_node_ptr) != kAtomicAddrCleanOpName) {
     for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node_ptr); ++i) {
       auto real_input_index = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);

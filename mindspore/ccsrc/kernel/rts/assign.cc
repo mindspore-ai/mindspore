@@ -58,8 +58,9 @@ std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &in
   }
   stream_id_ = stream_id;
 
-  std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr = std::make_shared<MemcpyAsyncTaskInfo>(
-    stream_id, inputs[0]->addr, inputs[0]->size, inputs[1]->addr, inputs[1]->size, RT_MEMCPY_DEVICE_TO_DEVICE);
+  std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr =
+    std::make_shared<MemcpyAsyncTaskInfo>(kernel_name_, stream_id, inputs[0]->addr, inputs[0]->size, inputs[1]->addr,
+                                          inputs[1]->size, RT_MEMCPY_DEVICE_TO_DEVICE, false);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }

@@ -26,6 +26,7 @@
 #include "kernel/aicpu/aicpu_kernel_build.h"
 #include "utils/convert_utils.h"
 #include "kernel/aicpu/aicpu_util.h"
+#include "utils/context/ms_context.h"
 
 using AicpuTaskInfoPtr = std::shared_ptr<ge::model_runner::AicpuTaskInfo>;
 
@@ -144,8 +145,9 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   if (node_name_ == kTopK) {
     node_name_ = kTopKV2;
   }
+
   AicpuTaskInfoPtr task_info_ptr = make_shared<ge::model_runner::AicpuTaskInfo>(
-    stream_id, node_so_, node_name_, node_def_str_, input_data_addrs, output_data_addrs);
+    kernel_name_, stream_id, node_so_, node_name_, node_def_str_, input_data_addrs, output_data_addrs, NeedDump());
 
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask end";
   return {task_info_ptr};

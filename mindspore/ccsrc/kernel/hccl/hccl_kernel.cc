@@ -18,6 +18,7 @@
 #include "device/ascend/tasksink/runtime_utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
+#include "utils/context/ms_context.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<ge::model_runner::HcclTaskInfo>;
 using ge::model_runner::HcclTaskInfo;
@@ -146,10 +147,12 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
                << ", root_id=" << root_id_ << ", op_type=" << static_cast<int>(op_type_)
                << ", data_type=" << static_cast<int>(data_type);
 
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   HcclTaskInfoPtr task_info_ptr = std::make_shared<HcclTaskInfo>(
-    stream_id, hccl_type, input_data_addr, output_data_addr, workspace_address, workspace_num, 0, private_def, nullptr,
-    hccl_count_, root_id_, op_type_, data_type, group_, RuntimeUtils::HcomBindModel, RuntimeUtils::HcomUnbindModel,
-    RuntimeUtils::HcomDistribute);
+    kernel_name_, stream_id, hccl_type, input_data_addr, output_data_addr, workspace_address, workspace_num, 0,
+    private_def, nullptr, hccl_count_, root_id_, op_type_, data_type, group_, RuntimeUtils::HcomBindModel,
+    RuntimeUtils::HcomUnbindModel, RuntimeUtils::HcomDistribute, NeedDump());
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }

@@ -17,7 +17,7 @@
 #include "kernel/tbe/tbe_kernel_mod.h"
 #include <algorithm>
 #include "runtime/rt.h"
-#include "nlohmann/json.hpp"
+#include "utils/context/ms_context.h"
 #include "graphengine/inc/framework/ge_runtime/task_info.h"
 
 namespace mindspore {
@@ -99,9 +99,9 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 
   MS_LOG(INFO) << "block_dim is:" << block_dim_;
 
-  TbeTaskInfoPtr task_info_ptr =
-    make_shared<ge::model_runner::TbeTaskInfo>(stream_id, stub_func, block_dim_, args, 0, sm_desc, nullptr, 0,
-                                               meta_data, input_data_addrs, output_data_addrs, workspace_addrs);
+  TbeTaskInfoPtr task_info_ptr = make_shared<ge::model_runner::TbeTaskInfo>(
+    kernel_name_, stream_id, stub_func, block_dim_, args, 0, sm_desc, nullptr, 0, meta_data, input_data_addrs,
+    output_data_addrs, workspace_addrs, NeedDump());
   return {task_info_ptr};
 }
 

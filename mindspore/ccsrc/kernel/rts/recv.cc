@@ -60,7 +60,7 @@ std::vector<TaskInfoPtr> RecvKernel::GenTask(const std::vector<AddressPtr> &, co
                                              const std::vector<AddressPtr> &, uint32_t stream_id) {
   MS_LOG(INFO) << "RecvKernel GenTask event_id_:" << event_id_ << ", stream_id_:" << stream_id;
   stream_id_ = stream_id;
-  EventWaitTaskInfoPtr task_info_ptr = std::make_shared<EventWaitTaskInfo>(stream_id, event_id_);
+  EventWaitTaskInfoPtr task_info_ptr = std::make_shared<EventWaitTaskInfo>(kernel_name_, stream_id, event_id_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }

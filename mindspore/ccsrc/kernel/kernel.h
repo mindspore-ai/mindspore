@@ -129,6 +129,10 @@ class KernelMod {
   virtual std::vector<size_t> GenParameters() { return {}; }
 
   virtual ~KernelMod() = default;
+  void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }
+
+ protected:
+  std::string kernel_name_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 }  // namespace kernel

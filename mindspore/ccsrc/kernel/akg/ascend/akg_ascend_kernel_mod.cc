@@ -26,6 +26,7 @@
 #include "runtime/rt.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -123,8 +124,8 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
   MS_LOG(DEBUG) << "The block_dim is:" << block_dim;
 
   TbeTaskInfoPtr task_info_ptr = make_shared<ge::model_runner::TbeTaskInfo>(
-    stream_id, stub_func, block_dim, args, args_size, sm_desc, binary, binary_size, meta_data, input_data_addrs,
-    output_data_addrs, workspace_addrs);
+    kernel_name_, stream_id, stub_func, block_dim, args, args_size, sm_desc, binary, binary_size, meta_data,
+    input_data_addrs, output_data_addrs, workspace_addrs, NeedDump());
   return {task_info_ptr};
 }
 }  // namespace kernel
