@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 from .config import alexnet_cfg as cfg
 
 
-def create_dataset_mnist(data_path, batch_size=32, repeat_size=1, status="train"):
+def create_dataset_cifar10(data_path, batch_size=32, repeat_size=1, status="train"):
     """
     create dataset for train or test
     """
