@@ -27,7 +27,7 @@
 #include <utility>
 #include <cfloat>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/dtype/number.h"
 

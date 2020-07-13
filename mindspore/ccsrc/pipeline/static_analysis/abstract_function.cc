@@ -18,7 +18,6 @@
 
 #include <vector>
 
-#include "pipeline/static_analysis/analysis_context.h"
 #include "pipeline/static_analysis/static_analysis.h"
 
 namespace mindspore {

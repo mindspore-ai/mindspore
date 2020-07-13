@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #ifdef ENABLE_GE
 #include "transform/convert.h"
 #endif

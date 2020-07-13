@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 #include <algorithm>
 
 #include "utils/symbolic.h"
-#include "pipeline/static_analysis/static_analysis.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 
 namespace mindspore {
 namespace abstract {

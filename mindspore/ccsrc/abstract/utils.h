@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_UTILS_H_
-#define PIPELINE_STATIC_ANALYSIS_UTILS_H_
+#ifndef MINDSPORE_CCSRC_ABSTRACT_UTILS_H_
+#define MINDSPORE_CCSRC_ABSTRACT_UTILS_H_
 
 #include <vector>
 #include <utility>
 #include <memory>
 #include <string>
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "utils/any.h"
 #include "utils/misc.h"
 #include "utils/convert_utils.h"
@@ -53,4 +53,4 @@ int GetPositiveAxis(int axis_value, size_t increment);
 ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x, const AbstractTensorPtr &tensor_y);
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // PIPELINE_STATIC_ANALYSIS_UTILS_H_
+#endif  // MINDSPORE_CCSRC_ABSTRACT_UTILS_H_

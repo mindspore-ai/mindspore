@@ -19,7 +19,7 @@
 
 #include <unordered_map>
 #include <vector>
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/manager.h"
 
 namespace mindspore {

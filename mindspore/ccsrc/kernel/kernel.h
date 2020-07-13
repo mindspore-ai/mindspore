@@ -23,7 +23,7 @@
 #include "ir/dtype.h"
 #include "utils/utils.h"
 #include "ir/tensor.h"
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

@@ -24,9 +24,10 @@
 #include <tuple>
 
 #include "ir/dtype/type.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "parallel/ops_info/operator_info.h"
 #include "utils/base_ref_extends.h"
+
 namespace mindspore {
 // Supported meta type
 enum PrimType {

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_PARAM_VALIDATOR_H_
-#define PIPELINE_STATIC_ANALYSIS_PARAM_VALIDATOR_H_
+#ifndef MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
+#define MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include "pipeline/static_analysis/abstract_value.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/abstract_value.h"
+#include "abstract/utils.h"
 #include "utils/any.h"
 #include "ir/primitive.h"
 
@@ -97,4 +97,4 @@ void CheckArgsSpec(const AbstractBasePtrList &args_list) {
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // PIPELINE_STATIC_ANALYSIS_PARAM_VALIDATOR_H_
+#endif  // MINDSPORE_CCSRC_ABSTRACT_PARAM_VALIDATOR_H_

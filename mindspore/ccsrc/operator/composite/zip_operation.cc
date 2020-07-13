@@ -19,9 +19,9 @@
 #include "operator/composite/zip_operation.h"
 #include <algorithm>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "ir/anf.h"
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 #include "operator/cc_implementations.h"
 #include "optimizer/opt.h"
 #include "pybind_api/api_register.h"

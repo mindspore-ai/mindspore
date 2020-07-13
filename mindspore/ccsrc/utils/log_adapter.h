@@ -100,6 +100,7 @@ enum MsLogLevel : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 
 enum SubModuleId : int {
   SM_UNKNOWN = 0,  // unknown submodule
+  SM_BASE,         // base
   SM_ANALYZER,     // static analyzer
   SM_COMMON,       // common
   SM_DEBUG,        // debug
@@ -119,6 +120,7 @@ enum SubModuleId : int {
   SM_SESSION,      // session
   SM_UTILS,        // utils
   SM_VM,           // VM
+  SM_ABSTRACT,     // abstract
   NUM_SUBMODUES    // number of submodules
 };
 

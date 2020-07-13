@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_ANALYSIS_CONTEXT_H_
-#define PIPELINE_STATIC_ANALYSIS_ANALYSIS_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_ABSTRACT_ANALYSIS_CONTEXT_H_
+#define MINDSPORE_CCSRC_ABSTRACT_ANALYSIS_CONTEXT_H_
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "ir/meta_func_graph.h"
 
 namespace mindspore {
@@ -85,4 +85,4 @@ struct ContextEqual {
 extern const AnalysisContextPtr kDummyAnalysisContext;
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // PIPELINE_STATIC_ANALYSIS_ANALYSIS_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_ABSTRACT_ANALYSIS_CONTEXT_H_

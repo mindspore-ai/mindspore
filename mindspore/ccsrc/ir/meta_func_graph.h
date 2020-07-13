@@ -30,7 +30,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/signature.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition

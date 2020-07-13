@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 #include "nlohmann/json.hpp"
-#include "ir/base.h"
+#include "base/base.h"
 #include "kernel/oplib/opinfo.h"
 // Note: This file is mainly used to adapt the ME front-end operator description and
 //       the TBE back-end operator implementation difference

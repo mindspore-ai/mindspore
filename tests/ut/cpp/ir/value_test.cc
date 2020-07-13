@@ -21,7 +21,7 @@
 
 #include "common/common_test.h"
 #include "ir/value.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

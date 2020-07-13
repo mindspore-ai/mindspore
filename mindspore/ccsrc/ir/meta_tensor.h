@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/dtype.h"
 #include "utils/convert_utils.h"
 #include "utils/hashing.h"

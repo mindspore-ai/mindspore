@@ -29,7 +29,7 @@
 #include "operator/ops.h"
 #include "operator/composite/do_signature.h"
 #include "operator/prim_to_function.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 #include "utils/symbolic.h"
 #include "./common.h"
 #include "pipeline/resource.h"
@@ -38,7 +38,7 @@
 #include "utils/convert_utils.h"
 #include "utils/context/ms_context.h"
 #include "pipeline/parse/data_converter.h"
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/param_validator.h"
 #include "common/utils.h"
 
 namespace mindspore {

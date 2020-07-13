@@ -29,7 +29,7 @@
 #include "transform/graph_builder.h"
 #include "transform/graph_runner.h"
 #include "debug/draw.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace pipeline {

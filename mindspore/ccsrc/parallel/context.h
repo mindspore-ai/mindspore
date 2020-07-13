@@ -29,7 +29,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "debug/info.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace parallel {

@@ -20,7 +20,7 @@
 #include "ir/primitive.h"
 #include "utils/utils.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "pre_activate/common/helper.h"
 
 namespace mindspore {

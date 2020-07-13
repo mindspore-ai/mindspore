@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <set>
 
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 #include "pipeline/static_analysis/prim.h"
 #include "operator/ops.h"
 #include "utils/symbolic.h"

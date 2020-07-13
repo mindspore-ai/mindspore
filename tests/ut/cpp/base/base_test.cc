@@ -17,7 +17,7 @@
 
 #include "common/common_test.h"
 #include "utils/any.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/anf.h"
 #include "utils/log_adapter.h"
 

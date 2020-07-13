@@ -24,10 +24,10 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "pipeline/static_analysis/abstract_function.h"
-#include "pipeline/static_analysis/dshape.h"
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/dshape.h"
+#include "abstract/param_validator.h"
 #include "operator/cc_implementations.h"
 #include "optimizer/opt.h"
 #include "utils/context/ms_context.h"

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/param_validator.h"
 
 #include <string>
 #include <sstream>
 #include <memory>
 #include "utils/symbolic.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 
 namespace mindspore {
 namespace abstract {

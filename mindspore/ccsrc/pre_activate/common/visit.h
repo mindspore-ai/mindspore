@@ -26,7 +26,7 @@
 #include <string>
 #include <memory>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "utils/base_ref.h"
 
 // namespace to support utils definition

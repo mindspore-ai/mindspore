@@ -127,7 +127,7 @@ endif()
 ## make sub objects
 set(SUB_COMP 
     transform pre_activate parallel pipeline device kernel common debug gvar ir onnx operator optimizer predict
-    pybind_api pynative session utils vm
+    pybind_api pynative session utils vm base abstract
 )
 
 foreach (_comp ${SUB_COMP})

@@ -24,7 +24,7 @@
 #include "ir/tensor.h"
 #include "ir/param_value.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "proto/onnx.pb.h"
 #include "utils/log_adapter.h"
 

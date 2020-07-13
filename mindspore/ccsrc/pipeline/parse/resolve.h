@@ -23,7 +23,7 @@
 #include "ir/manager.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/parse/parse_base.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "utils/log_adapter.h"
 
 // forward declaration of ResourceBase

@@ -25,7 +25,7 @@
 #include <sstream>
 #include <utility>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/scalar.h"

@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 
 #include "pipeline/static_analysis/static_analysis.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 #include "pipeline/static_analysis/prim.h"
 #include "pipeline/parse/parse.h"
 #include "pipeline/parse/resolve.h"

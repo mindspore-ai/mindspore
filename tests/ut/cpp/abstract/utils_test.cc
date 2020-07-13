@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 
 #include "common/common_test.h"
 #include "pipeline/static_analysis/static_analysis.h"

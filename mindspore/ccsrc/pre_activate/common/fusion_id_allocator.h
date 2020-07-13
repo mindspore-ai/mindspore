@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_FUSION_ID_ALLOCATOR_H_
 
 #include <memory>
-#include "ir/base.h"
+#include "base/base.h"
 
 namespace mindspore {
 namespace opt {

@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "common/utils.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "parallel/auto_parallel/costmodel.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
 #include "parallel/device_manager.h"

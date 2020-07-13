@@ -16,8 +16,8 @@
 
 #include "pipeline/static_analysis/prim.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/utils.h"
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/utils.h"
+#include "abstract/param_validator.h"
 
 namespace mindspore {
 namespace abstract {

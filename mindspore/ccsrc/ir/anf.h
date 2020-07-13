@@ -26,7 +26,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "debug/info.h"
 #include "ir/scope.h"
 

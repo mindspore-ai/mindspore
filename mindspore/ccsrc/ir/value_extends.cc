@@ -20,7 +20,7 @@
 #include <cmath>
 #include <cfloat>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 using ContextPtr = abstract::AnalysisContextPtr;

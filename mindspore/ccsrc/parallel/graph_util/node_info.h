@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
 
 #include <string>
-#include "ir/base.h"
+#include "base/base.h"
 
 namespace mindspore {
 namespace parallel {

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_ABSTRACT_VALUE_H_
-#define PIPELINE_STATIC_ANALYSIS_ABSTRACT_VALUE_H_
+#ifndef MINDSPORE_CCSRC_ABSTRACT_ABSTRACT_VALUE_H_
+#define MINDSPORE_CCSRC_ABSTRACT_ABSTRACT_VALUE_H_
 
 #include <utility>
 #include <vector>
@@ -27,11 +27,11 @@
 
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 
 namespace mindspore {
 namespace abstract {
@@ -623,4 +623,4 @@ class AbstractIndexedSlices : public AbstractUndetermined {
 };
 }  // namespace abstract
 }  // namespace mindspore
-#endif  // PIPELINE_STATIC_ANALYSIS_ABSTRACT_VALUE_H_
+#endif  // MINDSPORE_CCSRC_ABSTRACT_ABSTRACT_VALUE_H_

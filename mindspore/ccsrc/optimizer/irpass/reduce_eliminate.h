@@ -25,7 +25,7 @@
 #include "optimizer/optimizer.h"
 #include "ir/visitor.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 
 namespace mindspore {
 namespace opt {

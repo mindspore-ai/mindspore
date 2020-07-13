@@ -24,7 +24,7 @@
 #include "operator/ops.h"
 #include "utils/any.h"
 #include "ir/manager.h"
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 
 namespace mindspore {
 /* namespace to support opt */

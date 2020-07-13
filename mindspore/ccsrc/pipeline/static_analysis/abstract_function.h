@@ -22,8 +22,8 @@
 #include <memory>
 #include <string>
 
-#include "pipeline/static_analysis/abstract_value.h"
-#include "pipeline/static_analysis/analysis_context.h"
+#include "abstract/abstract_value.h"
+#include "abstract/analysis_context.h"
 #include "ir/meta_func_graph.h"
 
 namespace mindspore {

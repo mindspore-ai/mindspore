@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/param_validator.h"
 #include "pipeline/static_analysis/prim.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 #include "utils/symbolic.h"
 
 namespace mindspore {

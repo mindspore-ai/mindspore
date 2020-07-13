@@ -22,7 +22,7 @@
 #include <sstream>
 #include <string>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace tensor {
