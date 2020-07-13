@@ -62,10 +62,12 @@ class CPUKernelRegistrar {
   static const CPUKernelRegistrar g_cpu_kernel_##COUNT##_reg(#OPNAME, ATTR,                \
                                                              []() { return std::make_shared<OPCLASS>(); });
 
-#define MS_REG_CPU_KERNEL_T(OPNAME, ATTR, OPCLASS, T)                                         \
+#define MS_REG_CPU_KERNEL_T(OPNAME, ATTR, OPCLASS, T) MS_REG_CPU_KERNEL_T_(__COUNTER__, OPNAME, ATTR, OPCLASS, T)
+#define MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T) _MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T)
+#define _MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T)                                \
   static_assert(std::is_base_of<CPUKernel, OPCLASS<T>>::value, " must be base of CPUKernel"); \
-  static const CPUKernelRegistrar g_cpu_kernel_##OPNAME##_##T##_reg(#OPNAME, ATTR,            \
-                                                                    []() { return std::make_shared<OPCLASS<T>>(); });
+  static const CPUKernelRegistrar g_cpu_kernel_##COUNT##_##OPNAME##_##T##_reg(                \
+    #OPNAME, ATTR, []() { return std::make_shared<OPCLASS<T>>(); });
 
 #define MS_REG_CPU_KERNEL_T_S(OPNAME, ATTR, OPCLASS, T, S)                                       \
   static_assert(std::is_base_of<CPUKernel, OPCLASS<T, S>>::value, " must be base of CPUKernel"); \
