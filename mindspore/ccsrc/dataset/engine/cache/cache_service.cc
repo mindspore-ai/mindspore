@@ -105,7 +105,7 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
     RETURN_IF_NOT_OK(cp_->Insert(all_data, &key));
     Status rc = map_->DoInsert(*row_id_generated, key);
     if (rc == Status(StatusCode::kDuplicateKey)) {
-      MS_LOG(DEBUG) << "Ignoring duplicate key";
+      MS_LOG(DEBUG) << "Ignoring duplicate key.";
     } else {
       RETURN_IF_NOT_OK(rc);
     }

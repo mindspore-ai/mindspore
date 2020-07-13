@@ -53,7 +53,7 @@ CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t row
       cache_client_(cache_client),
       rows_per_buffer_(rows_per_buf),
       // We can cause deadlock if this internal Connector size is too small.
-      keys_miss_(num_workers_, 1, 1024) {
+      keys_miss_(num_workers_, 1, connector_capacity_) {
   io_block_queues_.Init(num_workers, op_connector_size);
 }
 // Common function to fetch samples from the sampler and send them using the io_block_queues to
