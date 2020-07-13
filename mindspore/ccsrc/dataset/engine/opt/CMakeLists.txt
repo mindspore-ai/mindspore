@@ -7,5 +7,6 @@ add_library(engine-opt OBJECT
           pre/cache_transform_pass.cc
           pre/removal_nodes.cc
           pre/removal_pass.cc
+          optional/tensor_op_fusion_pass.cc
           util/printer_pass.cc
         )

@@ -181,6 +181,13 @@ class MapOp : public ParallelOp {
   // @return Name of the current Op
   std::string Name() const override { return "MapOp"; }
 
+  // List of tensor ops getter/setter
+  // @Return the vector of tensor ops by non-const reference
+
+  auto &TFuncs() { return tfuncs_; }
+
+  const auto &TFuncs() const { return tfuncs_; }
+
  private:
   // Local queues where worker threads can pop from.
   // Popping directly from the Connector can block if the previous designated threads haven't pop.
@@ -188,7 +195,7 @@ class MapOp : public ParallelOp {
   QueueList<std::unique_ptr<DataBuffer>> local_queues_;
 
   // Static variables to be ready by worker threads, no modification and readonly
-  const std::vector<std::shared_ptr<TensorOp>> tfuncs_;
+  std::vector<std::shared_ptr<TensorOp>> tfuncs_;
 
   // Variable to store the column name that the tensorOps are consuming
   std::vector<std::string> in_columns_;

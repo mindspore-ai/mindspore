@@ -55,6 +55,8 @@ class ConcatenateOp : public TensorOp {
   /// Number of inputs the tensor operation accepts
   uint32_t NumInput() override { return 0; }
 
+  std::string Name() const override { return kConcatenateOp; }
+
  private:
   int8_t axis_;
   std::shared_ptr<Tensor> prepend_;

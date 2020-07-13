@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -39,6 +40,8 @@ class DecodeOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "DecodeOp"; }
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+
+  std::string Name() const override { return kDecodeOp; }
 
  private:
   bool is_rgb_format_ = true;

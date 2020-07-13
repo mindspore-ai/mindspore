@@ -127,7 +127,7 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   std::shared_ptr<Tensor> out, fill_output;
 
   if (input_type != DataType::DE_STRING && fill_type != DataType::DE_STRING && input_type != fill_type) {
-    std::unique_ptr<TypeCastOp> op(new TypeCastOp(input_type));
+    auto op = std::make_unique<TypeCastOp>(input_type);
     RETURN_IF_NOT_OK(op->Compute(fill_value, &fill_output));
   } else {
     fill_output = fill_value;

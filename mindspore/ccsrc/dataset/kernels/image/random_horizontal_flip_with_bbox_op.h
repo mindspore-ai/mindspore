@@ -19,6 +19,7 @@
 #include <memory>
 #include <random>
 #include <cstdlib>
+#include <string>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -47,6 +48,8 @@ class RandomHorizontalFlipWithBBoxOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "RandomHorizontalFlipWithBBoxOp"; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kRandomHorizontalFlipWithBBoxOp; }
 
  private:
   std::mt19937 rnd_;

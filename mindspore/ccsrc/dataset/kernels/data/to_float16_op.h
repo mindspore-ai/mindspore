@@ -42,6 +42,8 @@ class ToFloat16Op : public TensorOp {
   void Print(std::ostream &out) const override { out << "ToFloat16Op"; }
 
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+
+  std::string Name() const override { return kToFloat16Op; }
 };
 }  // namespace dataset
 }  // namespace mindspore

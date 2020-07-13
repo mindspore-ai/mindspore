@@ -17,6 +17,7 @@
 #define DATASET_KERNELS_IMAGE_RANDOM_CROP_AND_RESIZE_WITH_BBOX_OP_H_
 
 #include "dataset/kernels/image/random_crop_and_resize_op.h"
+#include <string>
 
 namespace mindspore {
 namespace dataset {
@@ -39,6 +40,8 @@ class RandomCropAndResizeWithBBoxOp : public RandomCropAndResizeOp {
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kRandomCropAndResizeWithBBoxOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

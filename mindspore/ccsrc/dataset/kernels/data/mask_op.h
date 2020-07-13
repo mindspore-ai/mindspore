@@ -43,6 +43,8 @@ class MaskOp : public TensorOp {
 
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
+  std::string Name() const override { return kMaskOp; }
+
  private:
   RelationalOp op_;
   std::shared_ptr<Tensor> value_;

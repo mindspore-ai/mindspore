@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <random>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/image/resize_op.h"
@@ -45,6 +46,8 @@ class RandomResizeWithBBoxOp : public ResizeWithBBoxOp {
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kRandomResizeWithBBoxOp; }
 
  private:
   std::mt19937 random_generator_;

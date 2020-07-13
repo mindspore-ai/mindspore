@@ -13,34 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef DATASET_TENSOR_OP_FUSION_PASS_H_
+#define DATASET_TENSOR_OP_FUSION_PASS_H_
 
-#ifndef DATASET_KERNELS_DATA_FILL_OP_H_
-#define DATASET_KERNELS_DATA_FILL_OP_H_
-
-#include <string>
-#include <vector>
 #include <memory>
-
-#include "dataset/core/tensor.h"
-#include "dataset/kernels/tensor_op.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
-class FillOp : public TensorOp {
- public:
-  explicit FillOp(std::shared_ptr<Tensor> value) : fill_value_(value) {}
 
-  ~FillOp() override = default;
-  void Print(std::ostream &out) const override { out << "FillOp"; }
-
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
-
-  std::string Name() const override { return kFillOp; }
-
- private:
-  std::shared_ptr<Tensor> fill_value_;
+/// \class TensorOpFusionPass tensor_op_fusion_pass.h
+/// \brief And optional optimization pass identifying and fusing
+///     tensor ops within MapOp
+class TensorOpFusionPass : public NodePass {
+  /// \brief Identifies and fuses tensor ops within MapOp
+  /// \param[in] node The node being visited
+  /// \param[inout] *modified indicates whether the node has been visited
+  /// \return Status The error code return
+  Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_FILL_OP_H
+#endif  // DATASET_TENSOR_OP_FUSION_PASS_H_

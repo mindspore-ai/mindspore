@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
+
 // Forward declare
 class ExecutionTree;
 

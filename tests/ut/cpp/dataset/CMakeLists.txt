@@ -55,7 +55,7 @@ SET(DE_UT_SRCS
         resize_bilinear_op_test.cc
         resize_op_test.cc
         resize_with_bbox_op_test.cc
-	schema_test.cc
+	    schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
@@ -91,6 +91,7 @@ SET(DE_UT_SRCS
         cyclic_array_test.cc
         perf_data_test.cc
         c_api_test.cc
+		tensor_op_fusion_pass_test.cc
         )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

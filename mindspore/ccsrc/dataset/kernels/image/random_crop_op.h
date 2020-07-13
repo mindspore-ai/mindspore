@@ -19,6 +19,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -44,6 +45,10 @@ class RandomCropOp : public TensorOp {
                int32_t pad_bottom = kDefPadBottom, int32_t pad_left = kDefPadLeft, int32_t pad_right = kDefPadRight,
                BorderType border_types = kDefBorderType, bool pad_if_needed = kDefPadIfNeeded,
                uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
+
+  RandomCropOp(const RandomCropOp &rhs) = default;
+
+  RandomCropOp(RandomCropOp &&rhs) = default;
 
   ~RandomCropOp() override = default;
 
@@ -71,6 +76,8 @@ class RandomCropOp : public TensorOp {
   void GenRandomXY(int *x, int *y, const int32_t &padded_image_w, const int32_t &padded_image_h);
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
+  std::string Name() const override { return kRandomCropOp; }
 
  protected:
   int32_t crop_height_ = 0;

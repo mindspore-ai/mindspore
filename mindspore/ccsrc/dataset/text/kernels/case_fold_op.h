@@ -16,6 +16,7 @@
 #ifndef DATASET_TEXT_KERNELS_CASE_FOLD_OP_H_
 #define DATASET_TEXT_KERNELS_CASE_FOLD_OP_H_
 #include <memory>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -33,6 +34,8 @@ class CaseFoldOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "CaseFoldOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  std::string Name() const override { return kCaseFoldOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

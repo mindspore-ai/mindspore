@@ -16,6 +16,7 @@
 #ifndef DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
 #define DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
 
+#include <string>
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/image/image_utils.h"
 #include "dataset/kernels/tensor_op.h"
@@ -36,6 +37,8 @@ class ResizeWithBBoxOp : public ResizeOp {
   void Print(std::ostream &out) const override { out << "ResizeWithBBoxOp: " << size1_ << " " << size2_; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kResizeWithBBoxOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

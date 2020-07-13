@@ -71,6 +71,8 @@ class SliceOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+  std::string Name() const override { return kSliceOp; }
+
  private:
   // only on of the following will be valid
   // given indices to slice the Tensor. Empty vector if invalid.

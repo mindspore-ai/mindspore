@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -31,6 +32,8 @@ class HwcToChwOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
+  std::string Name() const override { return kHwcToChwOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

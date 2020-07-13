@@ -16,6 +16,7 @@
 #ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
 #define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
 #include <memory>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -35,6 +36,8 @@ class UnicodeCharTokenizerOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kUnicodeCharTokenizerOp; }
 
  private:
   bool with_offsets_;

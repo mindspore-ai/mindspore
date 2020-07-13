@@ -46,6 +46,8 @@ class BertTokenizerOp : public TensorOp {
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
+  std::string Name() const override { return kBertTokenizerOp; }
+
  private:
   WordpieceTokenizerOp wordpiece_tokenizer_;
   BasicTokenizerOp basic_tokenizer_;

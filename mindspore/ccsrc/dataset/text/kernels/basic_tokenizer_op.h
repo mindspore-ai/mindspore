@@ -54,6 +54,8 @@ class BasicTokenizerOp : public TensorOp {
                                     std::string *outupt);
   Status CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
+  std::string Name() const override { return kBasicTokenizerOp; }
+
  private:
   static const char kCommonPattern[];
   static const char kUnusedPattern[];

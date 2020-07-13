@@ -46,6 +46,8 @@ class UniformAugOp : public TensorOp {
   // @return Status - The error code return
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
+  std::string Name() const override { return kUniformAugOp; }
+
  private:
   int32_t num_ops_;
   std::vector<std::shared_ptr<TensorOp>> tensor_op_list_;

@@ -87,6 +87,8 @@ class ExecutionTree {
     // @return Shared pointer to the current operator
     std::shared_ptr<DatasetOp> get() { return nodes_[ind_]; }
 
+    bool operator==(const Iterator &rhs) { return nodes_[ind_] == rhs.nodes_[rhs.ind_]; }
+
     bool operator!=(const Iterator &rhs) { return nodes_[ind_] != rhs.nodes_[rhs.ind_]; }
 
     int32_t NumNodes() { return nodes_.size(); }
@@ -214,6 +216,21 @@ class ExecutionTree {
   // Getter for profiling manager, no ownership
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
 
+  // Set optional optimization if tree has not been prepared yet
+  Status SetOptimize(bool value) {
+    if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding) {
+      std::string optimize = (optimize_ == true) ? "true" : "false";
+      std::string msg = "Tree has already been prepared with OPTIMIZE set to " + optimize;
+      RETURN_STATUS_UNEXPECTED(msg);
+    } else {
+      optimize_ = value;
+      return Status::OK();
+    }
+  }
+
+  // Optional optimizations status
+  bool OptimizationEnabled() const { return optimize_; }
+
  private:
   // A helper functions for doing the recursive printing
   // @param dataset_op - The dataset op to print
@@ -230,7 +247,10 @@ class ExecutionTree {
   TreeState tree_state_;                                 // Tracking the current tree state
   std::unique_ptr<Monitor> perf_monitor_;                // Performance Monitor
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
+  bool optimize_;                                        // Flag to enable optional optimizations
 };
+
+inline bool operator==(const ExecutionTree::Iterator &lhs, const ExecutionTree::Iterator &rhs) { return lhs == rhs; }
 }  // namespace dataset
 }  // namespace mindspore
 

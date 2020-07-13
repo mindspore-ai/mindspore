@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <random>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -46,6 +47,8 @@ class RandomHorizontalFlipOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "RandomHorizontalFlipOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  std::string Name() const override { return kRandomHorizontalFlipOp; }
 
  private:
   std::mt19937 rnd_;

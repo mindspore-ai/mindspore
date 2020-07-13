@@ -38,6 +38,8 @@ class PadEndOp : public TensorOp {
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
+  std::string Name() const override { return kPadEndOp; }
+
  private:
   TensorShape output_shape_;
   std::shared_ptr<Tensor> pad_val_;

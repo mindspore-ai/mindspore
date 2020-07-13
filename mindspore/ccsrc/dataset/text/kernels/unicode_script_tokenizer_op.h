@@ -16,6 +16,7 @@
 #ifndef DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_
 #define DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_
 #include <memory>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -38,6 +39,8 @@ class UnicodeScriptTokenizerOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "UnicodeScriptTokenizerOp"; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kUnicodeScriptTokenizerOp; }
 
  private:
   bool keep_whitespace_;  // If or not keep whitespace tokens

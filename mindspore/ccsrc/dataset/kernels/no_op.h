@@ -17,6 +17,7 @@
 #define DATASET_KERNELS_NO_OP_H_
 
 #include <memory>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -31,6 +32,8 @@ class NoOp : public TensorOp {
   }
 
   void Print(std::ostream &out) const override { out << "NoOp"; };
+
+  std::string Name() const override { return kNoOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

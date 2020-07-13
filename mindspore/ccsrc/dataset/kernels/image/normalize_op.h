@@ -17,6 +17,7 @@
 #define DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
 
 #include <memory>
+#include <string>
 
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/tensor.h"
@@ -34,6 +35,8 @@ class NormalizeOp : public TensorOp {
   void Print(std::ostream &out) const override;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  std::string Name() const override { return kNormalizeOp; }
 
  private:
   std::shared_ptr<CVTensor> mean_;

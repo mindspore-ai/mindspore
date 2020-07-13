@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -37,6 +38,8 @@ class __attribute__((visibility("hidden"))) PyFuncOp : public TensorOp {
 
   // Compute function for n-n mapping.
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kPyFuncOp; }
 
  private:
   py::function py_func_ptr_;

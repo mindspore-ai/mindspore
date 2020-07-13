@@ -37,6 +37,8 @@ class OneHotOp : public TensorOp {
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
+  std::string Name() const override { return kOneHotOp; }
+
  private:
   int num_classes_;
 };
