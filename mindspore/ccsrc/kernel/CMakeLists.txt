@@ -29,7 +29,10 @@ if (ENABLE_CPU)
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/push_kernel.cc" 
                                   "cpu/ps/pull_kernel.cc"
                                   "cpu/ps/embedding_look_up_ps_kernel.cc"
-                                  "cpu/ps/embedding_look_up_proxy_kernel.cc")
+                                  "cpu/ps/embedding_look_up_proxy_kernel.cc"
+                                  "cpu/ps/apply_momentum_ps_kernel.cc"
+                                  "cpu/ps/sparse_apply_adam_ps_kernel.cc"
+                                  "cpu/ps/sparse_apply_ftrl_ps_kernel.cc")
 
     if (NOT ENABLE_MPI)
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/allgather_cpu_kernel.cc")
