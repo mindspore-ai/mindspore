@@ -18,14 +18,15 @@
 #define MINDSPORE_GPU_PROFILING_H
 #include <cuda.h>
 #include <cupti.h>
-#include <cstdio>
-#include <unordered_map>
-#include <string>
-#include <vector>
-#include <mutex>
-#include <memory>
 #include <algorithm>
+#include <cstdio>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace mindspore {
 namespace profiler {
@@ -109,6 +110,18 @@ struct BaseTime {
 
 const float kTimeUnit = 1000;
 
+class ProfilingOp {
+ public:
+  ProfilingOp() = default;
+  virtual ~ProfilingOp() = default;
+  virtual void SaveProfilingData() = 0;
+  virtual void Init() = 0;
+  std::string Name() const { return op_name_; }
+
+ protected:
+  std::string op_name_;
+};
+
 class GPUProfiler {
  public:
   static std::shared_ptr<GPUProfiler> GetInstance();
@@ -130,6 +143,8 @@ class GPUProfiler {
   void OpDataProducerBegin(const std::string op_name, void *stream);
   void OpDataProducerEnd();
   void ProcessEvents();
+  void RegisterProfilingOp(std::shared_ptr<ProfilingOp> node);
+  std::string ProfileDataPath() const { return profile_data_path_; }
 
  private:
   GPUProfiler() = default;
@@ -153,6 +168,7 @@ class GPUProfiler {
   std::string op_name_;
   void *stream_;
   void SaveProfileData();
+  void SaveExtraProfileData();
   std::mutex event_mutex_;
 
   std::vector<CUpti_ActivityKind> activities_enable_;
@@ -172,6 +188,7 @@ class GPUProfiler {
   uint64_t op_host_time_stop_;
   uint64_t op_cupti_time_start_;
   std::string profile_data_path_;
+  std::map<std::string, std::shared_ptr<ProfilingOp>> profiling_op_;
 };
 }  // namespace gpu
 }  // namespace profiler

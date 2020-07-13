@@ -168,7 +168,8 @@ class DeviceQueueOp : public PipelineOp {
 
 #ifdef ENABLE_GPUQUE
   Status SendDataToGPU();
-  Status RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row, uint32_t handle);
+  Status RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row, uint32_t handle,
+                          bool profiling, int32_t *push_time);
   Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row);
   void ReleaseData(void *addr);
 

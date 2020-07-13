@@ -17,8 +17,10 @@
 #ifndef MINDSPORE_GET_NEXT_KERNEL_H
 #define MINDSPORE_GET_NEXT_KERNEL_H
 
+#include <memory>
 #include <string>
 #include <vector>
+#include "backend/kernel_compiler/gpu/data/dataset_profiling.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 
@@ -44,6 +46,8 @@ class DatasetIteratorKernel : public GpuKernel {
   std::string queue_name_;
   unsigned int handle_;
   size_t total_bytes_;
+  bool profiling_enable_;
+  std::shared_ptr<GetNextProfiling> profiling_op_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

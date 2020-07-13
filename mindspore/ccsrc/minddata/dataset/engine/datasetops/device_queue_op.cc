@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/engine/datasetops/device_queue_op.h"
+
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
-#include "minddata/dataset/engine/opt/pass.h"
-#include "minddata/dataset/engine/perf/profiling.h"
-#include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
+#include "minddata/dataset/engine/perf/device_queue_tracing.h"
+#include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
 
@@ -197,6 +198,19 @@ Status DeviceQueueOp::SendDataToGPU() {
   bool is_open = false;
   uint32_t handle = INVALID_HANDLE;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1);
+  double batch_start_time, end_time;
+  int32_t batch_cost, push_cost;
+  int32_t connector_size = 0;
+  int32_t connector_capacity;
+  std::shared_ptr<DeviceQueueTracing> profiling_node;
+  bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
+  if (isProfilingEnable) {
+    std::shared_ptr<Tracing> node;
+    RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
+    profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
+    batch_start_time = ProfilingTime::GetCurMilliSecond();
+    connector_capacity = ChildOpConnectorCapacity();
+  }
 
   std::unique_ptr<DataBuffer> current_buffer;
   RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
@@ -220,20 +234,44 @@ Status DeviceQueueOp::SendDataToGPU() {
           }
           is_open = true;
         }
-        RETURN_IF_NOT_OK(RetryPushGPUData(data_size, curr_row, handle));
+        RETURN_IF_NOT_OK(RetryPushGPUData(data_size, curr_row, handle, isProfilingEnable, &push_cost));
         total_batch++;
+        if (isProfilingEnable) {
+          end_time = ProfilingTime::GetCurMilliSecond();
+          // record push data time
+          profiling_node->Record(TIME, TDT_PUSH_TIME, total_batch, push_cost);
+          batch_cost = (int32_t)(end_time - batch_start_time);
+          // record batch time
+          profiling_node->Record(TIME, BATCH_TIME, total_batch, batch_cost);
+          // record pipeline time
+          profiling_node->Record(TIME, PIPELINE_TIME, total_batch, batch_cost - push_cost);
+          batch_start_time = end_time;
+          // record connector depth
+          profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, total_batch, connector_size);
+        }
       }
-      if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed())
+      if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
+        if (isProfilingEnable) {
+          connector_size = ChildOpConnectorSize();
+          connector_capacity = ChildOpConnectorCapacity();
+        }
         RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
-      else
+      } else {
         is_break_loop = true;
+      }
     }
-    if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed())
+    if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
+      if (isProfilingEnable) {
+        connector_size = ChildOpConnectorSize();
+        connector_capacity = ChildOpConnectorCapacity();
+      }
       RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
-    else
+    } else {
       is_break_loop = true;
+    }
   }
 
+  tree_->SetFinished();
   MS_LOG(INFO) << "Device queue total batch is " << total_batch << ".";
 
   GpuBufferMgr::GetInstance().Close(handle);
@@ -241,9 +279,10 @@ Status DeviceQueueOp::SendDataToGPU() {
   return Status::OK();
 }
 
-Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row,
-                                       uint32_t handle) {
+Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row, uint32_t handle,
+                                       bool profiling, int32_t *push_time) {
   std::vector<device::DataItemGpu> items;
+  double start_time;
   for (int i = 0; i < data_size.size(); i++) {
     device::DataItemGpu data_item;
     data_item.data_len_ = data_size[i];
@@ -253,7 +292,14 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
 
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     RETURN_IF_NOT_OK(MallocForGPUData(&items, curr_row));
+    if (profiling) {
+      start_time = ProfilingTime::GetCurMilliSecond();
+    }
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
+    if (profiling) {
+      double end_time = ProfilingTime::GetCurMilliSecond();
+      *push_time = (int32_t)(end_time - start_time);
+    }
     if (ret) {
       for (int i = 0; i < items.size(); i++) {
         ReleaseData(items[i].data_ptr_);
