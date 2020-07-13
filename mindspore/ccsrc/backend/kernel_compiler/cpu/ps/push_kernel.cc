@@ -34,5 +34,13 @@ MS_REG_CPU_KERNEL_T(Push,
 MS_REG_CPU_KERNEL_T(
   Push, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
   PushKernel, float);
+
+MS_REG_CPU_KERNEL_T(Push,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddOutputAttr(kNumberTypeUInt64),
+                    PushKernel, float);
 }  // namespace kernel
 }  // namespace mindspore

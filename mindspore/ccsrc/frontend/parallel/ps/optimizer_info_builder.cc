@@ -48,20 +48,25 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
                                                      size_t worker_num) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   weight_addr->addr = weight->data();
-  weight_addr->size = weight->size();
+  weight_addr->size = weight->size() * sizeof(float);
   void *data_ptr = values.data();
+  void *copy_data_ptr = new float[values.size()];
+  auto ret = memcpy_s(copy_data_ptr, values.size() * sizeof(float), data_ptr, values.size() * sizeof(float));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
   AddressPtr accumulate = std::make_shared<kernel::Address>();
   accumulate->addr = new float[weight->size()];
-  accumulate->size = weight->size();
+  accumulate->size = weight->size() * sizeof(float);
   AddressPtr learning_rate = std::make_shared<kernel::Address>();
-  learning_rate->addr = data_ptr;
-  learning_rate->size = lens[0];
+  learning_rate->addr = copy_data_ptr;
+  learning_rate->size = lens[0] * sizeof(float);
   AddressPtr gradient = std::make_shared<kernel::Address>();
   gradient->addr = reinterpret_cast<float *>(learning_rate->addr) + lens[0];
-  gradient->size = lens[1];
+  gradient->size = lens[1] * sizeof(float);
   AddressPtr momentum = std::make_shared<kernel::Address>();
   momentum->addr = reinterpret_cast<float *>(gradient->addr) + lens[1];
-  momentum->size = lens[2];
+  momentum->size = lens[2] * sizeof(float);
 
   return new MomentumOptimInfo(weight_addr, accumulate, learning_rate, gradient, momentum);
 }
@@ -131,10 +136,10 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   if (ret3 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret3 << ")";
   }
-  indices->size = lens[7] * sizeof(float);
+  indices->size = lens[7] * sizeof(int);
 
   return new SparseAdamOptimInfo(weight_addr, m, v, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
-                                 grad, indices, total_grad_size, total_indice_size);
+                                 grad, indices);
 }
 
 OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
@@ -175,9 +180,9 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   if (ret2 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
   }
-  indices->size = lens[1] * sizeof(float);
+  indices->size = lens[1] * sizeof(int);
 
-  return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices, total_grad_size, total_indice_size);
+  return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices);
 }
 }  // namespace ps
 }  // namespace parallel

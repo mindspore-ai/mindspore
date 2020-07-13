@@ -64,7 +64,7 @@ void SparseApplyFtrlPSKernel::ReInit(const std::shared_ptr<std::vector<std::shar
 
 void SparseApplyFtrlPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
   const auto &indices_addr = inputs[4];
-  indices_size_ = indices_addr->size;
+  indices_size_ = indices_addr->size / sizeof(int);
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float);
   workspace_size_list_[1] = indices_size_ * sizeof(int);
 }

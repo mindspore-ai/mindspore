@@ -48,7 +48,7 @@ class Worker {
   void AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count);
   void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const std::vector<int> &sizes);
   void InitPSParamAndOptim(const std::string &param_name, void *param_data, size_t param_size);
-  void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &lookup_ids,
+  void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
 
  private:
@@ -98,7 +98,8 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
   ::ps::SArray<T> total_buffer(total_size, 0);
   size_t offset = 0;
   for (size_t i = 0; i < sizes.size(); i++) {
-    memcpy(total_buffer.data() + offset / sizeof(T), addrs[i], sizes[i] * sizeof(T));
+    memcpy_s(total_buffer.data() + offset / sizeof(T), sizes[i] * sizeof(T), reinterpret_cast<void *>(addrs[i]),
+             sizes[i] * sizeof(T));
     offset += sizes[i] * sizeof(T);
   }
   kv_worker_->PushData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes));
@@ -108,13 +109,13 @@ template <typename T>
 void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
   ::ps::SArray<T> variables(size / sizeof(T), 0);
   kv_worker_->Wait(kv_worker_->ZPull({key}, &variables));
-  memcpy(dev_addr, variables.data(), size);
+  memcpy_s(dev_addr, size, variables.data(), size);
 }
 
 template <typename T>
-void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &lookup_ids,
+void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                                     const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd) {
-  kv_worker_->EmbeddingLookup(keys, lookup_ids, lens, &lookup_result, cmd);
+  kv_worker_->EmbeddingLookup(keys, lookup_ids, lens, lookup_result, cmd);
 }
 
 template <typename T>

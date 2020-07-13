@@ -40,6 +40,11 @@
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#include "frontend/parallel/ps/parameter_server.h"
+#include "frontend/parallel/ps/scheduler.h"
+#include "frontend/parallel/ps/worker.h"
+#endif
 
 namespace mindspore {
 namespace pipeline {
@@ -374,6 +379,25 @@ bool ExecuteAction(const ResourcePtr &res) {
   return true;
 }
 
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+bool StartPSWorkerAction(const ResourcePtr &res) {
+  parallel::ps::Worker<float>::GetInstance().Run();
+  return true;
+}
+
+bool StartPSServerAction(const ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  auto &ps = parallel::ps::ParameterServer<float>::GetInstance();
+  ps.Run(func_graph);
+  return true;
+}
+
+bool StartPSSchedulerAction(const ResourcePtr &res) {
+  parallel::ps::Scheduler::GetInstance().Run();
+  return true;
+}
+#endif
+
 // The parallel primitive related valuenode might be partitioned so that its value changes by device,
 // that will result in a syncronization error due to different executing order.
 // Here we temporarily avoid the problem by skipping valuenode merging used by parallel related primitive,
@@ -481,7 +505,11 @@ std::vector<ActionItem> VmPipeline() {
   actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
-
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  if (parallel::ps::Util::IsRoleOfWorker()) {
+    actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+  }
+#endif
   // compile the ANF graph
   actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
 
@@ -490,5 +518,21 @@ std::vector<ActionItem> VmPipeline() {
 
   return actions;
 }
+
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+std::vector<ActionItem> PServerPipeline() {
+  auto actions = CommonPipeline();
+  actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  actions.emplace_back(std::make_pair("validate", ValidateAction));
+  actions.emplace_back(std::make_pair("pserver", StartPSServerAction));
+  return actions;
+}
+
+std::vector<ActionItem> PSchedulerPipeline() {
+  std::vector<ActionItem> actions;
+  actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
+  return actions;
+}
+#endif
 }  // namespace pipeline
 }  // namespace mindspore

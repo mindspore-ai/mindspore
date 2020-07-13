@@ -41,6 +41,11 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
 
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#include "frontend/parallel/ps/common.h"
+#include "frontend/parallel/ps/util.h"
+#endif
+
 #if (ENABLE_GE || ENABLE_D)
 #include "pipeline/jit/pipeline_ge.h"
 #include "transform/graph_ir/convert.h"
@@ -420,6 +425,26 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   use_vm = ChangeExportGeirUseVmFlag(use_vm, phase_s);
 
   std::string backend = MsContext::GetInstance()->backend_policy();
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
+    mindspore::parallel::ps::Util::SetInternalEnvVar();
+  }
+  if (parallel::ps::Util::IsRoleOfPServer()) {
+    resource->results()[kBackend] = compile::CreateBackend();
+    p_actions = PServerPipeline();
+  } else if (parallel::ps::Util::IsRoleOfScheduler()) {
+    p_actions = PSchedulerPipeline();
+  } else if (use_vm && backend != "ge") {
+    // Create backend and session
+    auto backend_ptr = compile::CreateBackend();
+    // Connect session to debugger
+    backend_ptr->SetDebugger();
+    resource->results()[kBackend] = backend_ptr;
+    p_actions = VmPipeline();
+  } else {
+    p_actions = GePipeline();
+  }
+#else
   if (use_vm && backend != "ge") {
     // Create backend and session
     auto backend_ptr = compile::CreateBackend();
@@ -430,6 +455,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   } else {
     p_actions = GePipeline();
   }
+#endif
 
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
 

@@ -46,7 +46,7 @@ class EmbeddingLookUpCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- private:
+ protected:
   void LookUpTable(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
                    float **output_addr);
   void CheckParam(const CNodePtr &kernel_node);

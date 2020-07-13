@@ -123,3 +123,7 @@ endif()
 if(ENABLE_DEBUGGER)
     add_compile_definitions(ENABLE_DEBUGGER)
 endif()
+
+if(ENABLE_TESTCASES)
+    add_compile_definitions(ENABLE_TESTCASES)
+endif()
