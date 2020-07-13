@@ -721,5 +721,35 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
   page_in_handle.close();
   return SUCCESS;
 }
+
+MSRStatus ShardHeader::initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
+                                  const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
+                                  uint64_t &schema_id) {
+  if (nullptr == header_ptr) {
+    MS_LOG(ERROR) << "ShardHeader pointer is NULL.";
+    return FAILED;
+  }
+  auto schema_ptr = Schema::Build("mindrecord", schema);
+  if (nullptr == schema_ptr) {
+    MS_LOG(ERROR) << "Got unexpected error when building mindrecord schema.";
+    return FAILED;
+  }
+  schema_id = (*header_ptr)->AddSchema(schema_ptr);
+  // create index
+  std::vector<std::pair<uint64_t, std::string>> id_index_fields;
+  if (!index_fields.empty()) {
+    for (auto &el : index_fields) {
+      id_index_fields.emplace_back(schema_id, el);
+    }
+    if (SUCCESS != (*header_ptr)->AddIndexFields(id_index_fields)) {
+      MS_LOG(ERROR) << "Got unexpected error when adding mindrecord index.";
+      return FAILED;
+    }
+  }
+
+  auto build_schema_ptr = (*header_ptr)->GetSchemas()[0];
+  blob_fields = build_schema_ptr->GetBlobFields();
+  return SUCCESS;
+}
 }  // namespace mindrecord
 }  // namespace mindspore

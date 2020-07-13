@@ -108,6 +108,13 @@ class ShardWriter {
                          std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign = true,
                          bool parallel_writer = false);
 
+  MSRStatus MergeBlobData(const std::vector<string> &blob_fields,
+                          const std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> &row_bin_data,
+                          std::shared_ptr<std::vector<uint8_t>> *output);
+
+  static MSRStatus initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
+                              const std::vector<std::string> &file_names);
+
  private:
   /// \brief write shard header data to disk
   MSRStatus WriteShardHeader();

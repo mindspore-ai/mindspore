@@ -38,13 +38,13 @@ from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
-from .iterators import DictIterator, TupleIterator, DummyIterator
+from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_positive_int32
+    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_positive_int32, check_save
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -1043,6 +1043,34 @@ class Dataset:
             raise RuntimeError("Distribution file failed to read")
 
         return TransferDataset(self, queue_name, device_id, device_type, num_batch)
+
+    @check_save
+    def save(self, file_name, num_files=1, file_type='mindrecord'):
+        """
+        Save the dynamic data processed by dataset pipeline as common dataset format, support: mindrecord.
+
+        Note:
+            1. To save the samples in order, should set dataset's shuffle false and num_files 1.
+            2. Before call the function, do not use batch, repeat operator or data augmentation operators
+               with random attribute in map operator.
+            3. Mindreocrd do not support np.uint64, multi-dimensional np.uint8(drop dimension) and
+               multi-dimensional string.
+
+        Args:
+            file_name (str): Path to dataset file.
+            num_files (int, optional): Number of dataset files.(default=1).
+            file_type (str, optional): dataset format.(default='mindrecord')
+
+        """
+
+        if num_files == 1:
+            file_names = [file_name]
+        else:
+            suffix = len(str(num_files - 1))
+            file_names = ["{}{}".format(file_name, str(x).rjust(suffix, '0'))
+                          for x in range(num_files)]
+
+        return SaveOp(self).save(file_names, file_type)
 
     def create_tuple_iterator(self, columns=None):
         """

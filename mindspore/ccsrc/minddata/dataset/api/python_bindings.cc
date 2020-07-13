@@ -184,7 +184,11 @@ void bindDEPipeline(py::module *m) {
     .def("GetDatasetSize", &DEPipeline::GetDatasetSize)
     .def("GetBatchSize", &DEPipeline::GetBatchSize)
     .def("GetNumClasses", &DEPipeline::GetNumClasses)
-    .def("GetRepeatCount", &DEPipeline::GetRepeatCount);
+    .def("GetRepeatCount", &DEPipeline::GetRepeatCount)
+    .def("SaveDataset", [](DEPipeline &de, const std::vector<std::string> &file_names, const std::string &file_type) {
+      THROW_IF_ERROR(de.SaveDataset(file_names, file_type));
+      return true;
+    });
 }
 void bindDatasetOps(py::module *m) {
   (void)py::class_<TFReaderOp, DatasetOp, std::shared_ptr<TFReaderOp>>(*m, "TFReaderOp")
