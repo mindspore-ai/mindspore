@@ -46,6 +46,10 @@ namespace transform {
   template <>                       \
   const std::unordered_map<int, DynInputDesc> OpAdapter<T>::dyn_input_map_;
 
+#define DECLARE_OP_USE_DYN_SUBGRAPH(T) \
+  template <>                          \
+  const std::unordered_map<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
+
 #define DECLARE_OP_USE_DYN_OUTPUT(T) \
   template <>                        \
   const std::unordered_map<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
@@ -235,6 +239,10 @@ DECLARE_OP_USE_OUTPUT(RealDiv)
 DECLARE_OP_ADAPTER(Cast)
 DECLARE_OP_USE_INPUT_ATTR(Cast)
 DECLARE_OP_USE_OUTPUT(Cast)
+DECLARE_OP_ADAPTER(Case)
+DECLARE_OP_USE_DYN_INPUT(Case)
+DECLARE_OP_USE_DYN_SUBGRAPH(Case)
+DECLARE_OP_USE_DYN_OUTPUT(Case)
 DECLARE_OP_ADAPTER(Reciprocal)
 DECLARE_OP_USE_OUTPUT(Reciprocal)
 DECLARE_OP_ADAPTER(Neg)

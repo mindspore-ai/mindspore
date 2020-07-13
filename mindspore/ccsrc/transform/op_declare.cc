@@ -64,6 +64,22 @@ namespace transform {
     }                     \
   }
 
+#define DYN_SUBGRAPH_MAP(T) \
+  template <>               \
+  const std::unordered_map<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_
+#define DYN_SUBGRAPH_DESC(name) \
+  {                             \
+#name, \
+    [](const OperatorPtr op, unsigned int num) { \
+        auto p = std::static_pointer_cast<OpType>(op); \
+        (void)p->create_dynamic_subgraph_##name(num); \
+    }, \
+    [](const OperatorPtr op, unsigned int index, const DfGraphPtr graph) { \
+        auto p = std::static_pointer_cast<OpType>(op); \
+        (void)p->set_dynamic_subgraph_builder_##name(index, [graph](){return *graph;}); \
+    }                        \
+  }
+
 #define ATTR_MAP(T) \
   template <>       \
   const std::unordered_map<std::string, AttrDesc> OpAdapter<T>::attr_map_
@@ -847,6 +863,13 @@ INPUT_MAP(Cast) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 ATTR_MAP(Cast) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
+
+// Case
+INPUT_MAP(Case) = {{1, INPUT_DESC(branch_index)}};
+DYN_INPUT_MAP(Case) = {{2, DYN_INPUT_DESC(input)}};
+ATTR_MAP(Case) = EMPTY_ATTR_MAP;
+DYN_OUTPUT_MAP(Case) = {{0, DYN_OUTPUT_DESC(output)}};
+DYN_SUBGRAPH_MAP(Case) = {{0, DYN_SUBGRAPH_DESC(branches)}};
 
 // Reciprocal
 INPUT_MAP(Reciprocal) = {{1, INPUT_DESC(x)}};

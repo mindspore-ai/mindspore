@@ -88,6 +88,8 @@ using DynInputOpFunc = std::function<void(OperatorPtr, unsigned int, OperatorPtr
 using DynInputHandleFunc = std::function<void(OperatorPtr, unsigned int, OutHandler)>;
 using UpdateOutputDescFunc = std::function<void(OperatorPtr, GeTensorDesc)>;
 using CreateDynOutputOpFunc = std::function<void(OperatorPtr, unsigned int)>;
+using CreateDynSubGraphFunc = std::function<void(OperatorPtr, unsigned int)>;
+using DynSubGraphFunc = std::function<void(OperatorPtr, unsigned int, DfGraphPtr)>;
 
 struct AttrDesc {
   std::string name;
@@ -108,6 +110,12 @@ struct DynInputDesc {
   DynInputHandleFunc set_handle;
 };
 
+struct DynSubGraphDesc {
+  std::string name;
+  CreateDynSubGraphFunc create_dyn_subgraph;
+  DynSubGraphFunc set_subgraph;
+};
+
 struct OutputDesc {
   std::string name;
   UpdateOutputDescFunc update_out_desc;
@@ -123,6 +131,7 @@ class BaseOpAdapter {
   virtual ~BaseOpAdapter() {}
   virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
   virtual OperatorPtr generate(const std::string &type) { return std::make_shared<ge::Operator>(type); }
+  virtual int setSubgraph(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OutHandler &handle) = 0;
   virtual int setInput(const OperatorPtr &op, int index,
@@ -146,6 +155,7 @@ class BaseOpAdapter {
   virtual const std::unordered_map<unsigned int, AttrDesc> &getInputAttrMap() = 0;
   virtual const std::unordered_map<int, DynInputDesc> &getDynInputMap() = 0;
   virtual const std::unordered_map<int, OutputDesc> &getOutputMap() = 0;
+  virtual const std::unordered_map<int, DynSubGraphDesc> &getDynSubgraphMap() = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }

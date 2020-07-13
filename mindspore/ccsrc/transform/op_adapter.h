@@ -164,6 +164,25 @@ class OpAdapter : public BaseOpAdapter {
   const std::unordered_map<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
   const std::unordered_map<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
   const std::unordered_map<int, OutputDesc> &getOutputMap() override { return output_map_; }
+  const std::unordered_map<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
+
+  Status SetOpSubgraphFunc(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) {
+    MS_EXCEPTION_IF_NULL(op);
+    auto it = dyn_subgraph_map_.find(index);
+    if (it != dyn_subgraph_map_.end()) {
+      auto size = branches->size();
+      it->second.create_dyn_subgraph(op, static_cast<unsigned int>(size));
+      for (size_t i = 0; i < size; i++) {
+        it->second.set_subgraph(op, static_cast<unsigned int>(i), std::make_shared<DfGraph>((*branches)[i]));
+      }
+      return SUCCESS;
+    }
+    return NOT_FOUND;
+  }
+
+  int setSubgraph(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) override {
+    return static_cast<int>(SetOpSubgraphFunc(op, index, branches));
+  }
 
   Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) {
     MS_EXCEPTION_IF_NULL(op);
@@ -855,6 +874,7 @@ class OpAdapter : public BaseOpAdapter {
   static const std::unordered_map<int, DynInputDesc> dyn_input_map_;
   static const std::unordered_map<int, OutputDesc> output_map_;
   static const std::unordered_map<int, DynOutputDesc> dyn_output_map_;
+  static const std::unordered_map<int, DynSubGraphDesc> dyn_subgraph_map_;
   static const std::unordered_map<std::string, AttrDesc> attr_map_;
   static const std::unordered_map<std::string, int> enum_map_;
   // convert input from anf graph to Attr in Operators
@@ -873,6 +893,8 @@ template <typename T>
 const std::unordered_map<int, OutputDesc> OpAdapter<T>::output_map_;
 template <typename T>
 const std::unordered_map<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
+template <typename T>
+const std::unordered_map<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
 template <typename T>
 const std::unordered_map<std::string, AttrDesc> OpAdapter<T>::attr_map_;
 template <typename T>
