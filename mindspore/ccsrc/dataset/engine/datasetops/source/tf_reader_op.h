@@ -246,6 +246,11 @@ class TFReaderOp : public ParallelOp {
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return dataset_files_list_; }
 
+  /// \Brief If a cache has been added into the ascendant tree over this tf reader, then the cache will be executing
+  ///     a sampler for fetching the data.  As such, any options in the tf reader need to be reset to its defaults so
+  ///     that this tf reader will produce the full set of data into the cache.
+  void MakeSimpleProducer();
+
   // During tree prepare phase, operators may have specific post-operations to perform depending on
   // their role.
   // @notes Derived versions of this function should always call it's superclass version first

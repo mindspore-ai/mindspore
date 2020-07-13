@@ -200,24 +200,6 @@ class ExecutionTree {
   // @return Status - The error code return
   Status PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op);
 
-  /// Adds an operator to the eoe operator stack during prepare phase.
-  /// \param op - The dataset op to work add to eoe stack
-  /// \return Status - The error code return
-  void AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op);
-
-  /// Pops an operator from the eoe operator stack during prepare phase.
-  /// \return shared_ptr to the popped operator
-  std::shared_ptr<DatasetOp> PopFromEOEOpStack();
-
-  /// Adds a sampler to the sampler stack during prepare phase.
-  /// \param samplerop - The dataset op to work add to eoe stack
-  /// \return Status - The error code return
-  void AddToSamplerStack(std::shared_ptr<Sampler> sampler);
-
-  /// Pops an operator from the sampler stack during prepare phase.
-  /// \return shared_ptr to the popped operator
-  std::shared_ptr<Sampler> PopFromSamplerStack();
-
   // Return the pointer to the TaskGroup
   // @return raw pointer to the TaskGroup
   TaskGroup *AllTasks() const { return tg_.get(); }
@@ -248,8 +230,6 @@ class ExecutionTree {
   TreeState tree_state_;                                 // Tracking the current tree state
   std::unique_ptr<Monitor> perf_monitor_;                // Performance Monitor
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
-  std::stack<std::shared_ptr<DatasetOp>> eoe_stack_;     // A stack used during prepare phase
-  std::stack<std::shared_ptr<Sampler>> sampler_stack_;   // A stack used during prepare phase
 };
 }  // namespace dataset
 }  // namespace mindspore

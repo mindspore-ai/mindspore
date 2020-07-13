@@ -77,26 +77,6 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-// Base-class override for executing specific RepeatOp configurations. This code will be called
-// during the execution tree prepare phase when it is visiting this operator.
-Status RepeatOp::PrepareNodePostAction() {
-  // Run any common code from super class first before adding our own specific logic
-  RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  std::shared_ptr<DatasetOp> leaf_op = tree_->PopFromEOEOpStack();
-  while (leaf_op != nullptr) {
-    // Track the leaf operators that are under this repeat op.
-    eoe_ops_.push_back(leaf_op);
-    leaf_op = tree_->PopFromEOEOpStack();
-  }
-  // Push ourselves to the stack in case one of our ascendants is repeat too.
-  tree_->AddToEOEOpStack(shared_from_this());
-  return Status::OK();
-}
-
-// Base-class override for setting specific RepeatOp configurations. This code will be called
-// during the execution tree prepare phase BEFORE traversing down to child operators.
-uint32_t RepeatOp::PrepareFlags() const { return ExecutionTree::kDePrepRepeat; }
-
 // This function returns the buffer that is at the top of our output connector. The caller is
 // typically our parent node, when the parent is asking us to provide the next buffer of data.
 // Since RepeatOp is an inlined op, getting a buffer from us will simply bounce you to get
@@ -130,7 +110,8 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 // Base-class override for handling cases when an eoe is received.
 Status RepeatOp::EoeReceived(int32_t worker_id) {
   repeat_count_++;
-  MS_LOG(DEBUG) << "Repeat operator end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
+  MS_LOG(DEBUG) << "Repeat operator (" << operator_id_
+                << ") end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
   bool repeated = BitTest(op_ctrl_flags_, kDeOpRepeated);
   bool last_repeat = BitTest(op_ctrl_flags_, kDeOpLastRepeat);
   // If we've reached the requested repeat count, then flag the eoe nodes
@@ -149,8 +130,12 @@ Status RepeatOp::EoeReceived(int32_t worker_id) {
     return Status::OK();
   }
 
-  //  base-class ResetSubtree
-  return (DatasetOp::ResetSubtree());
+  // Invoke a reset against the eoe nodes only.
+  for (auto &eoe_op : eoe_ops_) {
+    RETURN_IF_NOT_OK(eoe_op->Reset());
+  }
+
+  return Status::OK();
 }
 
 // Class functor operator () override.
@@ -178,6 +163,18 @@ int32_t RepeatOp::num_consumers() const {
   }
 }
 
+// Drive reset actions if needed
+Status RepeatOp::Reset() {
+  // If there's nested repeats, an ascendant repeat may have ourself listed as an eoe op.
+  // In that case, we now have to bounce the reset down to our own eoe ops.
+  MS_LOG(DEBUG) << "Repeat operator (" << operator_id_ << ") reset.";
+  for (auto &eoe_op : eoe_ops_) {
+    RETURN_IF_NOT_OK(eoe_op->Reset());
+  }
+  state_ = OpState::kDeOpRunning;
+  return Status::OK();
+}
+
 int32_t RepeatOp::num_producers() const {
   if (child_.empty() || child_[0] == nullptr) {
     MS_LOG(DEBUG) << "Repeat operator, pointer to child node is null. Returning 0.";
@@ -185,6 +182,12 @@ int32_t RepeatOp::num_producers() const {
   } else {
     return child_[0]->num_producers();
   }
+}
+
+// Pre-Visitor accept method for NodePass
+Status RepeatOp::PreAccept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call the pre-visitation
+  return p->PreRunOnNode(shared_from_base<RepeatOp>(), modified);
 }
 
 // Visitor accept method for NodePass

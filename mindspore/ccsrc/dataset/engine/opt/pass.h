@@ -47,6 +47,10 @@ class FilterOp;
 class GeneratorOp;
 #endif
 
+class RandomDataOp;
+
+class RepeatOp;
+
 class TakeOp;
 
 class ZipOp;
@@ -54,6 +58,24 @@ class ZipOp;
 class DeviceQueueOp;
 
 class ImageFolderOp;
+
+class CacheOp;
+
+class MnistOp;
+
+class ManifestOp;
+
+class CifarOp;
+
+class VOCOp;
+
+class CocoOp;
+
+class CelebAOp;
+
+class CacheMergeOp;
+
+class CacheLookupOp;
 
 // The base class Pass is the basic unit of tree transformation.
 // The actual implementation of the passes will be derived from here.
@@ -138,13 +160,41 @@ class NodePass : public Pass {
   virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
 #endif
 
+  virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified);
+
   virtual Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<ZipOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified);
 
+  virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+
   virtual Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<MnistOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CifarOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CocoOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
 
  private:
   // Helper function to perform DFS visit

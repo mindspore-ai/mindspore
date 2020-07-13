@@ -39,7 +39,7 @@ def check_unique_list_of_words(words, arg_name):
 
 
 def check_lookup(method):
-    """A wrapper that wrap a parameter checker to the original function."""
+    """A wrapper that wraps a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -56,7 +56,7 @@ def check_lookup(method):
 
 
 def check_from_file(method):
-    """A wrapper that wrap a parameter checker to the original function."""
+    """A wrapper that wraps a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -74,7 +74,7 @@ def check_from_file(method):
 
 
 def check_from_list(method):
-    """A wrapper that wrap a parameter checker to the original function."""
+    """A wrapper that wraps a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -97,7 +97,7 @@ def check_from_list(method):
 
 
 def check_from_dict(method):
-    """A wrapper that wrap a parameter checker to the original function."""
+    """A wrapper that wraps a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -285,7 +285,7 @@ def check_bert_tokenizer(method):
 
 
 def check_from_dataset(method):
-    """A wrapper that wrap a parameter checker to the original function."""
+    """A wrapper that wraps a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -328,7 +328,7 @@ def check_from_dataset(method):
 
 
 def check_ngram(method):
-    """A wrapper that wrap a parameter checker to the original function."""
+    """A wrapper that wraps a parameter checker to the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

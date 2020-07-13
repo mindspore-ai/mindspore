@@ -203,12 +203,6 @@ class RandomDataOp : public ParallelOp {
   // @return Name of the current Op
   std::string Name() const override { return "RandomDataOp"; }
 
-  // During tree prepare phase, operators may have specific post-operations to perform depending on
-  // their role.
-  // @notes Derived versions of this function should always call it's superclass version first
-  // before providing their own implementations.
-  Status PrepareNodePostAction() override;
-
  private:
   /**
    * The entry point code for when workers are launched
@@ -265,6 +259,12 @@ class RandomDataOp : public ParallelOp {
     std::unique_lock<std::mutex> lock(buffer_id_mutex_);
     return ++buffer_id_;
   }
+
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
 
   // Private function for computing the assignment of the column name map.
   // @return - Status

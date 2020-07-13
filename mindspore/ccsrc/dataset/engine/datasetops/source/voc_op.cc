@@ -25,6 +25,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 using tinyxml2::XMLDocument;
 using tinyxml2::XMLElement;
@@ -448,6 +449,11 @@ Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_t
   }
 
   return Status::OK();
+}
+// Visitor accept method for NodePass
+Status VOCOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(shared_from_base<VOCOp>(), modified);
 }
 
 Status VOCOp::ComputeColMap() {

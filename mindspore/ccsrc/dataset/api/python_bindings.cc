@@ -35,6 +35,7 @@
 #include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/engine/cache/cache_client.h"
 #include "dataset/engine/gnn/graph.h"
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/kernels/data/concatenate_op.h"
@@ -768,6 +769,11 @@ void bindInfoObjects(py::module *m) {
     .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
 }
 
+void bindCacheClient(py::module *m) {
+  (void)py::class_<CacheClient, std::shared_ptr<CacheClient>>(*m, "CacheClient")
+    .def(py::init<uint32_t, uint64_t, bool>());
+}
+
 void bindVocabObjects(py::module *m) {
   (void)py::class_<Vocab, std::shared_ptr<Vocab>>(*m, "Vocab")
     .def(py::init<>())
@@ -939,6 +945,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindSamplerOps(&m);
   bindDatasetOps(&m);
   bindInfoObjects(&m);
+  bindCacheClient(&m);
   bindVocabObjects(&m);
   bindGraphData(&m);
   bindDependIcuTokenizerOps(&m);

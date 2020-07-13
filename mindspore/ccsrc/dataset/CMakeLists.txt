@@ -47,6 +47,8 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/dataset/include)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
+ms_build_flatbuffers("engine/cache/de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engine_files ${CMAKE_BINARY_DIR})
+
 ################## Include sub-modules ###############################
 add_subdirectory(util)
 add_subdirectory(core)
@@ -55,7 +57,7 @@ add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(text)
 ######################################################################
-add_dependencies(core utils)
+add_dependencies(utils core)
 add_dependencies(kernels-image core)
 add_dependencies(kernels-data core)
 add_dependencies(kernels core)
@@ -89,6 +91,8 @@ set(submodules
     $<TARGET_OBJECTS:engine-perf>
     $<TARGET_OBJECTS:engine-datasetops>
     $<TARGET_OBJECTS:engine-opt>
+    $<TARGET_OBJECTS:engine-cache-client>
+    $<TARGET_OBJECTS:engine-cache-server>
     $<TARGET_OBJECTS:engine>
     $<TARGET_OBJECTS:text>
     $<TARGET_OBJECTS:text-kernels>
@@ -105,6 +109,8 @@ if (ENABLE_TDTQUE)
 else ()
     add_library(_c_dataengine SHARED ${submodules})
 endif ()
+
+add_dependencies(_c_dataengine generated_engine_files)
 
 set_target_properties(_c_dataengine PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"

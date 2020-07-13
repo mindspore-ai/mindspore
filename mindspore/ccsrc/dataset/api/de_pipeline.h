@@ -35,6 +35,8 @@ namespace mindspore {
 namespace dataset {
 using DsOpPtr = std::shared_ptr<DatasetOp>;
 
+class CacheClient;
+
 // enum for the dataset operator names
 enum OpName {
   kShuffle,
@@ -180,6 +182,16 @@ class DEPipeline {
   std::unique_ptr<DatasetIterator> iterator_;
 
   static Status ParsePadInfo(py::handle value, PadInfo *pad_info);
+
+  /// \brief Helper function to inject a cache operator over top of the current operation being built.
+  /// \param[in] cache_client The client to use for caching
+  /// \param[in] num_workers The number of workers to use in the cache op
+  /// \param[in] input_op The operator to build the cache on top of
+  /// \param[out] cache_op The top node of the created subtree (subtree contains two nodes). In this case it will be
+  ///     the cache operator
+  /// \return Status return code
+  Status AddCacheOp(std::shared_ptr<CacheClient> cache_client, int num_workers, std::shared_ptr<DatasetOp> input_op,
+                    std::shared_ptr<DatasetOp> *cache_op);
 
   /// \brief Helper function to inject a shuffle operator over top of the current operation being built.
   /// \param[in] shuffle_size The size to use in the shuffle buffer

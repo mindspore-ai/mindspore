@@ -61,46 +61,39 @@ void ConcatOp::Print(std::ostream &out, bool show_all) const {
 Status ConcatOp::operator()() {
   // The children_num_ parameter needs to be put here
   children_num_ = static_cast<int32_t>(child_.size());
-
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> buf;
-  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
-
   int eof_count = 0;
-  while (eof_count != children_num_) {
+  while (eof_count == 0) {
     for (int i = 0; i < children_num_; i++) {
-      // 1. Throw the eof buffer when meet it
-      if (buf->eof() || buf->eoe()) {
-        RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
+      // 1. Read the first buffer
+      RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
+      if (buf->eof()) {
+        eof_count++;
+        continue;
       }
       // 2. Do verification as for column name, column data type and rank of column data
-      RETURN_IF_NOT_OK(Verify(i, buf));
-
+      if (!buf->eoe()) {
+        RETURN_IF_NOT_OK(Verify(i, buf));
+      }
       // 3. Put the data into output_connector
       while (!buf->eoe() && !buf->eof()) {
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
         RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
       }
-
-      // 4. Throw the eoe buffer when meet it
-      if (buf->eoe() && (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat))) {
-        RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
-      }
-      // 5. Add eoe buffer after get buffer from all child
-      if (i == (children_num_ - 1)) {
-        auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
-      }
-      if (buf->eof()) {
-        eof_count++;
-      }
+    }
+    // 4. Add eoe buffer after get buffer from all child
+    if (eof_count == 0) {
+      auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
     }
   }
-  // 6. Add eof buffer in the end manually
+  CHECK_FAIL_RETURN_UNEXPECTED(eof_count == children_num_,
+                               "Something went wrong, eof count does not match the number of children.");
+  // 5. Add eof buffer in the end manually
   MS_LOG(DEBUG) << "Add the eof buffer manualy in the end.";
   auto eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
-
   return Status::OK();
 }
 
@@ -123,12 +116,6 @@ Status ConcatOp::Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf) {
       }
     }
   }
-  return Status::OK();
-}
-
-Status ConcatOp::PrepareNodePostAction() {
-  RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  tree_->AddToEOEOpStack(shared_from_this());
   return Status::OK();
 }
 

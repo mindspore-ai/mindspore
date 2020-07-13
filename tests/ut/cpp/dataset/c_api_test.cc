@@ -738,7 +738,7 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   EXPECT_TRUE(ds != nullptr);
 
   // Create a Project operation on ds
-  std::vector<std::string> column_project = {"label"};
+  std::vector<std::string> column_project = {"image"};
   ds = ds->Project(column_project);
   EXPECT_TRUE(ds != nullptr);
 

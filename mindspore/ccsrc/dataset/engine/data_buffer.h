@@ -29,11 +29,9 @@
 
 namespace mindspore {
 namespace dataset {
-// The DataBuffer class is a base class that will represent the data for n values based
-// on a unique row id for each row of data.
-// There can be different types of DataBuffers to abstract over how the data is stored
-// in memory and acquired from storage.
-// Each buffer holds a range of consecutive row id's.
+/// \brief The DataBuffer class is a container of tensor data and is the unit of transmission between
+///     connectors of dataset operators.  Inside the buffer, tensors are organized into a table-like format
+///     where n TensorRows may consist of m tensors (columns).
 class DataBuffer {
  public:
   // Buffer flags
@@ -47,23 +45,19 @@ class DataBuffer {
   // Description: This is the main constructor that is used for making a buffer
   DataBuffer(int32_t id, BufferFlags flags);
 
-  // Destructor
-  virtual ~DataBuffer();
+  /// \brief default destructor
+  ~DataBuffer() = default;
 
-  // Name: print()
-  // Description: A function that prints info about the DataBuffer (base class version)
-  virtual void Print(std::ostream &out,     // In: The output stream to print to
-                     bool show_all) const;  // In: T/F if it should show everything
+  /// \brief A method for debug printing of the buffer
+  /// \param[inout] out The stream to write to
+  /// \param[in] show_all A boolean to toggle between details and summary printing
+  void Print(std::ostream &out, bool show_all) const;
 
   // Provide stream operator for displaying it
   friend std::ostream &operator<<(std::ostream &out, const DataBuffer &cb) {
     cb.Print(out, false);
     return out;
   }
-
-  // Name: load()
-  // Description: populates the DataBuffer with data based on it's id
-  virtual Status Load();
 
   // Convenience getter functions for flag checking
   bool eof() const { return (static_cast<uint32_t>(buffer_flags_) & static_cast<uint32_t>(kDeBFlagEOF)); }

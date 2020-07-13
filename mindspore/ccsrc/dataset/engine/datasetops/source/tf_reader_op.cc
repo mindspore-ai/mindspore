@@ -1019,31 +1019,28 @@ Status TFReaderOp::ComputeColMap() {
   return Status::OK();
 }
 
+// Brief If a cache has been added into the ascendant tree over this tf reader, then the cache will be executing
+// a sampler for fetching the data.  As such, any options in the tf reader need to be reset to its defaults so
+// that this tf reader will produce the full set of data into the cache.
+void TFReaderOp::MakeSimpleProducer() {
+  device_id_ = 0;
+  num_devices_ = 1;
+  total_rows_ = 0;
+  shuffle_files_ = false;
+  equal_rows_per_shard_ = false;
+}
+
 // During tree prepare phase, operators may have specific post-operations to perform depending on
 // their role.
 Status TFReaderOp::PrepareNodePostAction() {
   // Run common code from super class before adding TFReaderOp specific handling
   RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
 
-  // Specific handling for this op, we need to do cache op work so assign the sampler to the cache
-  // TF is a special case because it can support file-based sharding/shuffling, or, if there
-  // is a cache, then it can also do row-based sampler using the sampler on the cache.
-  // Thus, pass true for random access op flag when saving the sampler.  This is a special case,
-  // since usually a non-mappable dataset would pass false here.
-  RETURN_IF_NOT_OK(DatasetOp::SaveSamplerForCache(true));
-
   // Now that the sampler has been saved for the cache, we need to adjust the TFReaderOp to turn it into
   // a simpler producer of all data (no shuffling or sharding or anything)
-  if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepCache)) {
-    device_id_ = 0;
-    num_devices_ = 1;
-    total_rows_ = 0;
-    shuffle_files_ = false;
-    equal_rows_per_shard_ = false;
-    sampler_.reset();  // Normally SaveSampler code did this for us, but we passed in true above (See comment)
-  } else {
+  if (!BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepCache)) {
     // This sanity check had been delayed until now in the prepare loop.
-    // If we are not in a cache path, then we can validate the the file-based sharding config.
+    // If we are not in a cache path, then we can validate the file-based sharding config.
     // If we are in a cache path, there is no file-based sharding so the check is not correct in that
     // situation.
     if (!equal_rows_per_shard_ && dataset_files_list_.size() < static_cast<uint32_t>(num_devices_)) {

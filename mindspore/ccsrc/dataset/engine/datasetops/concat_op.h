@@ -75,12 +75,6 @@ class ConcatOp : public PipelineOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // During tree prepare phase, operators may have specific post-operations to perform depending on
-  // their role.
-  // @notes Derived versions of this function should always call it's superclass version first
-  // before providing their own implementations.
-  Status PrepareNodePostAction() override;
-
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "ConcatOp"; }

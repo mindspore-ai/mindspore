@@ -21,6 +21,8 @@
 #include "dataset/util/task_manager.h"
 #include "dataset/engine/opt/pass.h"
 #include "dataset/engine/opt/pre/removal_pass.h"
+#include "dataset/engine/opt/pre/cache_transform_pass.h"
+#include "dataset/engine/opt/post/repeat_pass.h"
 #include "dataset/engine/perf/profiling.h"
 #include "dataset/engine/perf/monitor.h"
 
@@ -215,18 +217,33 @@ Status ExecutionTree::PrepareTreePreAction() {
   bool modified = false;
   std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
-  MS_LOG(INFO) << "Running pre pass";
-  pre_actions.push_back(std::make_unique<RemovalPass>(RemovalPass()));
+  MS_LOG(INFO) << "Running pre pass loops.";
+  pre_actions.push_back(std::make_unique<RemovalPass>());
+  pre_actions.push_back(std::make_unique<CacheTransformPass>());
   // Apply pre action passes
   for (auto &pass : pre_actions) {
     RETURN_IF_NOT_OK(pass->Run(this, &modified));
   }
+  MS_LOG(INFO) << "Pre passes complete.";
   return Status::OK();
 }
 
 Status ExecutionTree::PrepareTreePostAction() {
   // The tree is ready to be prepared.
   tree_state_ = kDeTStatePrepare;
+
+  bool modified = false;
+  std::vector<std::unique_ptr<Pass>> post_actions;
+  // Construct pre actions
+  MS_LOG(INFO) << "Running post pass loops.";
+  post_actions.push_back(std::make_unique<RepeatPass>());
+
+  // Apply post action passes
+  for (auto &pass : post_actions) {
+    RETURN_IF_NOT_OK(pass->Run(this, &modified));
+  }
+  MS_LOG(INFO) << "Post passes complete.";
+
   return Status::OK();
 }
 
@@ -279,32 +296,6 @@ Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) 
   BitClear(&prepare_flags_, op_prep_flags);
 
   return Status::OK();
-}
-
-// Adds an operator to the eoe operator stack during prepare phase.
-void ExecutionTree::AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op) { eoe_stack_.push(dataset_op); }
-
-// Pops an operator from the eoe operator stack during prepare phase.
-std::shared_ptr<DatasetOp> ExecutionTree::PopFromEOEOpStack() {
-  std::shared_ptr<DatasetOp> top_op = nullptr;
-  if (!eoe_stack_.empty()) {
-    top_op = eoe_stack_.top();
-    eoe_stack_.pop();
-  }
-  return top_op;
-}
-
-// Adds a sampler to the sampler stack during prepare phase.
-void ExecutionTree::AddToSamplerStack(std::shared_ptr<Sampler> sampler) { sampler_stack_.push(sampler); }
-
-// Pops an operator from the sampler stack during prepare phase.
-std::shared_ptr<Sampler> ExecutionTree::PopFromSamplerStack() {
-  std::shared_ptr<Sampler> top_sampler = nullptr;
-  if (!sampler_stack_.empty()) {
-    top_sampler = sampler_stack_.top();
-    sampler_stack_.pop();
-  }
-  return top_sampler;
 }
 }  // namespace dataset
 }  // namespace mindspore

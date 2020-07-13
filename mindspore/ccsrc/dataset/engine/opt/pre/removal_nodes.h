@@ -34,6 +34,18 @@ class RemovalNodes : public NodePass {
   /// \param[in] removal_pass Raw pointer back to controlling tree pass
   explicit RemovalNodes(RemovalPass *removal_pass);
 
+  /// \brief Identifies the subtree below this node as a cached descendant tree.
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+
+  /// \brief Resets the tracking of the cache within the tree
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+
   /// \brief Perform ShuffleOp removal check
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all

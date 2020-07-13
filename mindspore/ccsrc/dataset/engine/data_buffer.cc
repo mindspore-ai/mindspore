@@ -24,10 +24,8 @@ namespace dataset {
 // Description: This is the main constructor that is used for making a buffer
 DataBuffer::DataBuffer(int32_t id, BufferFlags flags) : buffer_id_(id), tensor_table_(nullptr), buffer_flags_(flags) {}
 
-// Name: print()
-// Description: A function that prints info about the DataBuffer (base class version)
-void DataBuffer::Print(std::ostream &out,      // In: The output stream to print to
-                       bool show_all) const {  // In: T/F if it should show everything
+// A method for debug printing of the buffer
+void DataBuffer::Print(std::ostream &out, bool show_all) const {
   out << "bufferId: " << buffer_id_ << "\nflags: " << std::hex << buffer_flags_ << std::dec << "\n";
 
   // If the column counts are set then it means that data has been set into
@@ -44,11 +42,6 @@ void DataBuffer::Print(std::ostream &out,      // In: The output stream to print
       }
     }
   }
-}
-
-Status DataBuffer::Load() {
-  std::string err_msg = "Base class load called, but it does not have an implementation!";
-  RETURN_STATUS_UNEXPECTED(err_msg);
 }
 
 // Remove me!! Callers should fetch rows via pop
@@ -92,8 +85,5 @@ Status DataBuffer::SliceOff(int64_t number_of_rows) {
 
   return Status::OK();
 }
-
-// Destructor
-DataBuffer::~DataBuffer() {}
 }  // namespace dataset
 }  // namespace mindspore

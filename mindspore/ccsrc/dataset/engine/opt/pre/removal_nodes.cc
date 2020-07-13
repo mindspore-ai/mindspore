@@ -24,12 +24,28 @@ namespace dataset {
 
 RemovalNodes::RemovalNodes(RemovalPass *removal_pass) : removal_pass_(removal_pass), is_caching_(false) {}
 
+// Identifies the subtree below this node as a cached descendant tree.
+Status RemovalNodes::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+  *modified = false;
+  MS_LOG(INFO) << "Removal pass: CacheOp found, identified descendant tree.";
+  is_caching_ = true;
+  return Status::OK();
+}
+
+// Resets the tracking of the cache within the tree
+Status RemovalNodes::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+  *modified = false;
+  MS_LOG(INFO) << "Removal pass: cache descendant tree complete.";
+  is_caching_ = false;
+  return Status::OK();
+}
+
 // Perform ShuffleOp removal check.
 Status RemovalNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
   *modified = false;
   // If we are in a cache descendant tree, then this shuffle op needs to be removed
   if (is_caching_) {
-    MS_LOG(DEBUG) << "ShuffleOp identified for removal (CacheOp is in ascendant tree)";
+    MS_LOG(INFO) << "ShuffleOp identified for removal (CacheOp is in ascendant tree)";
     if (removal_pass_) {
       removal_pass_->AddToRemovalList(std::static_pointer_cast<DatasetOp>(node));
     } else {

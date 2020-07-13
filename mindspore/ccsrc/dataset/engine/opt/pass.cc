@@ -16,6 +16,9 @@
 
 #include "dataset/engine/opt/pass.h"
 #include "dataset/engine/datasetops/batch_op.h"
+#include "dataset/engine/datasetops/cache_op.h"
+#include "dataset/engine/datasetops/cache_merge_op.h"
+#include "dataset/engine/datasetops/cache_lookup_op.h"
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/device_queue_op.h"
 #include "dataset/engine/datasetops/map_op.h"
@@ -24,8 +27,15 @@
 #include "dataset/engine/datasetops/repeat_op.h"
 #include "dataset/engine/datasetops/skip_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
+#include "dataset/engine/datasetops/source/celeba_op.h"
+#include "dataset/engine/datasetops/source/cifar_op.h"
+#include "dataset/engine/datasetops/source/coco_op.h"
+#include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
+#include "dataset/engine/datasetops/source/mnist_op.h"
+#include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
+#include "dataset/engine/datasetops/source/voc_op.h"
 #ifdef ENABLE_PYTHON
 #include "dataset/engine/datasetops/filter_op.h"
 #include "dataset/engine/datasetops/source/generator_op.h"
@@ -145,6 +155,11 @@ Status NodePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
 }
 #endif
 
+Status NodePass::RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
 Status NodePass::RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
@@ -163,6 +178,71 @@ Status NodePass::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) 
 Status NodePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

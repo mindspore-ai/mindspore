@@ -127,12 +127,6 @@ Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<D
   return Status::OK();
 }
 
-Status TakeOp::PrepareNodePostAction() {
-  RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
-  tree_->AddToEOEOpStack(shared_from_this());
-  return Status::OK();
-}
-
 // Visitor accept method for NodePass
 Status TakeOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
