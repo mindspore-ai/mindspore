@@ -298,7 +298,7 @@ extern const PrimitivePtr kPrimIsIndexedSlices;
 const char SWITCH_UNROLL_FLAG[] = "unroll_flag";
 // max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 //  will be sunk(i.e. not unrolled)
-const int MAX_FOR_LOOP_COUNT = 200;
+const int MAX_FOR_LOOP_COUNT = 600;
 
 class DoSignaturePrimitive : public Primitive {
  public:
