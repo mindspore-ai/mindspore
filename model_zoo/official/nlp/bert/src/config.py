@@ -24,6 +24,7 @@ cfg = edict({
     'scale_factor': 2,
     'scale_window': 1000,
     'optimizer': 'Lamb',
+    'enable_global_norm': False,
     'AdamWeightDecay': edict({
         'learning_rate': 3e-5,
         'end_learning_rate': 0.0,
@@ -115,6 +116,5 @@ if cfg.bert_network == 'large':
         input_mask_from_dataset=True,
         token_type_ids_from_dataset=True,
         dtype=mstype.float32,
-        compute_type=mstype.float16,
-        enable_fused_layernorm=True
+        compute_type=mstype.float16
     )

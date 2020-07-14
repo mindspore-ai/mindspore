@@ -178,12 +178,14 @@ def run_pretrain():
 
         if args_opt.accumulation_steps <= 1:
             net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
-                                                               scale_update_cell=update_cell)
+                                                               scale_update_cell=update_cell,
+                                                               enable_global_norm=cfg.enable_global_norm)
         else:
             accumulation_steps = args_opt.accumulation_steps
             net_with_grads = BertTrainAccumulateStepsWithLossScaleCell(net_with_loss, optimizer=optimizer,
                                                                        scale_update_cell=update_cell,
-                                                                       accumulation_steps=accumulation_steps)
+                                                                       accumulation_steps=accumulation_steps,
+                                                                       enable_global_norm=cfg.enable_global_norm)
     else:
         net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
 
