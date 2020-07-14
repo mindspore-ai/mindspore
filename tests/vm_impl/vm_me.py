@@ -169,16 +169,32 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
         raise ValueError(f"The \'stride\' should be an int number or "
                          f"a tuple of two or four int numbers, but got {stride}")
 
+    if isinstance(pad, int):
+        pad_top = pad
+        pad_bottom = pad
+        pad_left = pad
+        pad_right = pad
+    elif isinstance(pad, tuple) and len(pad) == 2:
+        pad_top = pad[0]
+        pad_bottom = pad[0]
+        pad_left = pad[1]
+        pad_right = pad[1]
+    elif isinstance(pad, tuple) and len(pad) == 4:
+        pad_top, pad_bottom, pad_left, pad_right = pad
+    else:
+        raise ValueError(f"The \'pad\' should be an int number or "
+                         f"a tuple of two or four int numbers, but got {pad}")
+
     batch_num, channel, height, width = input_shape
-    out_h = (height + 2 * pad - filter_h) // stride_h + 1
-    out_w = (width + 2 * pad - filter_w) // stride_w + 1
+    out_h = (height + pad_top + pad_bottom - filter_h) // stride_h + 1
+    out_w = (width + pad_left + pad_right - filter_w) // stride_w + 1
     col = col.reshape(batch_num, out_h, out_w, channel, filter_h, filter_w) \
         .transpose(0, 3, 4, 5, 1, 2)
 
     img = np.zeros((batch_num,
                     channel,
-                    height + 2 * pad + stride_h - 1,
-                    width + 2 * pad + stride_w - 1)) \
+                    height + pad_top + pad_bottom + stride_h - 1,
+                    width + pad_left + pad_right + stride_w - 1)) \
         .astype(col.dtype)
     for y in range(filter_h):
         y_max = y + stride_h * out_h
@@ -186,7 +202,7 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
             x_max = x + stride_h * out_w
             img[:, :, y:y_max:stride_h, x:x_max:stride_h] += col[:, :, y, x, :, :]
 
-    return img[:, :, pad:height + pad, pad:width + pad]
+    return img[:, :, pad_top:height + pad_bottom, pad_left:width + pad_right]
 
 
 def convolve(x, w, b=None, pad_mode="valid"):
@@ -243,10 +259,21 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
     dilation_h = dilation[0]
     dilation_w = dilation[1]
 
+    if isinstance(pad, int):
+        pad_top = pad
+        pad_bottom = pad
+        pad_left = pad
+        pad_right = pad
+    elif isinstance(pad, tuple) and len(pad) == 4:
+        pad_top, pad_bottom, pad_left, pad_right = pad
+    else:
+        raise ValueError(f"The \'pad\' should be an int number or "
+                         f"a tuple of two or four int numbers, but got {pad}")
+
     batch_num, _, x_h, x_w = x.shape
     filter_num, _, filter_h, filter_w = weight.shape
-    out_h = 1 + int((x_h + 2 * pad - filter_h - (filter_h - 1) * (dilation_h - 1)) / stride_h)
-    out_w = 1 + int((x_w + 2 * pad - filter_w - (filter_w - 1) * (dilation_w - 1)) / stride_w)
+    out_h = 1 + int((x_h + pad_top + pad_bottom - filter_h - (filter_h - 1) * (dilation_h - 1)) / stride_h)
+    out_w = 1 + int((x_w + pad_left + pad_right - filter_w - (filter_w - 1) * (dilation_w - 1)) / stride_w)
     col = im2col(x, filter_h, filter_w, stride, pad, dilation)
     col_w = np.reshape(weight, (filter_num, -1)).T
     out = np.dot(col, col_w)
@@ -348,11 +375,22 @@ def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):
         raise ValueError(f"The \'dilation\' should be an int number or "
                          f"a tuple of two or four int numbers, but got {dilation}")
 
-    batch_num, channel, height, width = img.shape
-    out_h = (height + 2 * pad - filter_h - (filter_h - 1) * (dilation_h - 1)) // stride_h + 1
-    out_w = (width + 2 * pad - filter_w - (filter_w - 1) * (dilation_w - 1)) // stride_w + 1
+    if isinstance(pad, int):
+        pad_top = pad
+        pad_bottom = pad
+        pad_left = pad
+        pad_right = pad
+    elif isinstance(pad, tuple) and len(pad) == 4:
+        pad_top, pad_bottom, pad_left, pad_right = pad
+    else:
+        raise ValueError(f"The \'pad\' should be an int number or "
+                         f"a tuple of two or four int numbers, but got {pad}")
 
-    img = np.pad(img, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant')
+    batch_num, channel, height, width = img.shape
+    out_h = (height + pad_top + pad_bottom - filter_h - (filter_h - 1) * (dilation_h - 1)) // stride_h + 1
+    out_w = (width + pad_left + pad_right - filter_w - (filter_w - 1) * (dilation_w - 1)) // stride_w + 1
+
+    img = np.pad(img, [(0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)], 'constant')
     col = np.zeros((batch_num, channel, filter_h, filter_w, out_h, out_w)).astype(img.dtype)
 
     for y in range(filter_h):

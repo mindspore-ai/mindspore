@@ -780,7 +780,9 @@ class Conv2D(PrimitiveWithInfer):
         mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (int): The pad value to fill. Default: 0.
+        pad (Union(int, tuple[int])): The pad value to fill. Default: 0. If `pad` is one integer, the padding of
+                    top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
+                    of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding.
         stride (Union(int, tuple[int])): The stride to apply conv filter. Default: 1.
         dilation (Union(int, tuple[int])): Specify the space to use between kernel elements. Default: 1.
         group (int): Split input into groups. Default: 1.
@@ -820,11 +822,19 @@ class Conv2D(PrimitiveWithInfer):
         self.add_prim_attr('stride', self.stride)
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
-        validator.check_value_type('pad', pad, (int,), self.name)
+        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        if isinstance(pad, int):
+            pad = (pad,) * 4
+        else:
+            validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
+        self.padding = pad
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
-        self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
+
+        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
         if self.pad_mode == 'pad':
-            validator.check_integer('pad', self.pad, 0, Rel.GE, self.name)
+            for item in pad:
+                validator.check_integer('pad item', item, 0, Rel.GE, self.name)
 
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
@@ -862,11 +872,11 @@ class Conv2D(PrimitiveWithInfer):
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
-            pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
+            pad_top, pad_bottom, pad_left, pad_right = self.padding
 
-            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
+            h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
                 / stride_h
-            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
+            w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
                 / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
@@ -1277,7 +1287,9 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         out_channel (int): The dimensionality of the output space.
         kernel_size (Union[int, tuple[int]]): The size of the convolution window.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (int): The pad value to fill. Default: 0.
+        pad (Union[int, tuple[int]]): The pad value to fill. Default: 0. If `pad` is one integer, the padding of
+                    top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
+                    of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding.
         mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         stride (Union[int. tuple[int]]): The stride to apply conv filter. Default: 1.
@@ -1314,9 +1326,21 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         self.add_prim_attr('stride', self.stride)
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
-        validator.check_value_type('pad', pad, (int,), self.name)
+
+        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        if isinstance(pad, int):
+            pad = (pad,) * 4
+            self.pad = pad
+        else:
+            validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
+
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
-        self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
+        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
+        if self.pad_mode == 'pad':
+            for item in pad:
+                validator.check_integer('pad item', item, 0, Rel.GE, self.name)
+
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
@@ -1358,7 +1382,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
             pad_right = pad_needed_w - pad_left
             pad_list = (pad_top, pad_bottom, pad_left, pad_right)
         elif self.pad_mode == 'PAD':
-            pad_list = (self.pad,) * 4
+            pad_list = self.pad
         self.add_prim_attr('pad_list', pad_list)
         out = {
             'value': None,
