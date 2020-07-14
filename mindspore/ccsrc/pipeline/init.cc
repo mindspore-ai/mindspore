@@ -38,7 +38,6 @@
 #endif
 namespace py = pybind11;
 
-using FuncGraph = mindspore::FuncGraph;
 using EnvInstance = mindspore::EnvInstance;
 using ExecutorPy = mindspore::pipeline::ExecutorPy;
 using Pipeline = mindspore::pipeline::Pipeline;
@@ -53,10 +52,6 @@ using CostModelContext = mindspore::parallel::CostModelContext;
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
   m.doc() = "MindSpore c plugin";
-
-  (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
-    .def_readonly(mindspore::PYTHON_METAFUNCGRAPH_FLAG, &mindspore::MetaFuncGraph::parse_info_)
-    .def(py::init<std::string &>());
 
   auto fns = mindspore::PybindDefineRegister::AllFuncs();
   for (auto &item : fns) {
@@ -85,8 +80,6 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.");
-  // Class Graph interface
-  (void)py::class_<FuncGraph, mindspore::FuncGraphPtr>(m, "FuncGraph").def(py::init());
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_")
     .def_readonly(mindspore::PYTHON_ENVINSTANCE_FLAG, &mindspore::EnvInstance::parse_info_)

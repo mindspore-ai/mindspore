@@ -435,7 +435,7 @@ bool ResolveActionPyStub(const ResourcePtr &res) {
 }
 
 bool OptActionPyStub(const ResourcePtr &res) {
-  ActionPyStub(res, opt::python_pass::Phase::RESOLVE);
+  ActionPyStub(res, opt::python_pass::Phase::OPT);
   return true;
 }
 
