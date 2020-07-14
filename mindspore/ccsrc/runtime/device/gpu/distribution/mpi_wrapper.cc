@@ -15,9 +15,9 @@
  */
 
 #include "runtime/device/gpu/distribution/mpi_wrapper.h"
-
 #include <cuda_runtime_api.h>
 #include <string>
+#include <vector>
 #include "runtime/device/gpu/distribution/nccl_wrapper.h"
 
 namespace mindspore {
@@ -40,17 +40,82 @@ MPIWrapper &MPIWrapper::instance() {
 
 int MPIWrapper::local_rank_id() const { return local_rank_id_; }
 
+bool MPIWrapper::CreateCommGroup(const std::string &group_name, const std::vector<unsigned int> &group_ranks) {
+  std::vector<int> ranks(group_ranks.begin(), group_ranks.end());
+  MPI_Group mpi_group;
+  CHECK_RET(MPI_Group_incl(world_group_, ranks.size(), ranks.data(), &mpi_group), MPI_SUCCESS,
+            "Failed to produce a new group from MPI_COMM_WORLD group for " + group_name);
+  SetGroupNameToMPIGroup(group_name, mpi_group);
+
+  MPI_Comm mpi_group_comm;
+  CHECK_RET(MPI_Comm_create(MPI_COMM_WORLD, mpi_group, &mpi_group_comm), MPI_SUCCESS,
+            "Failed to create MPI communicator.");
+  if (mpi_group_comm == MPI_COMM_NULL) {
+    return false;
+  }
+
+  ncclUniqueId group_unique_id;
+  if (rank_id_ == ranks[0]) {
+    group_unique_id = NCCLWrapper::instance().nccl_unique_id();
+  }
+  MPI_Bcast(&group_unique_id, sizeof(ncclUniqueId), MPI_BYTE, ranks[0], mpi_group_comm);
+
+  int group_rank[1];
+  int global_rank[1] = {rank_id_};
+  CHECK_RET(MPI_Group_translate_ranks(world_group_, 1, global_rank, mpi_group, group_rank), MPI_SUCCESS,
+            "Failed to translate global rank to group rank.");
+  if (group_rank[0] == MPI_UNDEFINED) {
+    return false;
+  }
+
+  ncclComm_t nccl_group_comm;
+  NCCLWrapper::instance().InitNCCLComm(&nccl_group_comm, ranks.size(), group_unique_id, group_rank[0]);
+  NCCLWrapper::instance().SetGroupNameToNCCLComm(group_name, nccl_group_comm);
+  return true;
+}
+
+int MPIWrapper::GetRankIDByGroup(const std::string &group_name) {
+  CHECK_RET(group_name_to_mpi_group_map_.count(group_name), 1, "Failed to get MPI group by group name " + group_name);
+  MPI_Group mpi_group = group_name_to_mpi_group_map_[group_name];
+  int rank;
+  CHECK_RET(MPI_Group_rank(mpi_group, &rank), MPI_SUCCESS, "Failed to get rank id by group name." + group_name);
+  return rank;
+}
+
+int MPIWrapper::GetGroupSize(const std::string &group_name) {
+  CHECK_RET(group_name_to_mpi_group_map_.count(group_name), 1, "Failed to get MPI group by group name" + group_name);
+  MPI_Group mpi_group = group_name_to_mpi_group_map_[group_name];
+  int size;
+  CHECK_RET(MPI_Group_size(mpi_group, &size), MPI_SUCCESS, "Failed to get group size by group name." + group_name);
+  return size;
+}
+
+bool MPIWrapper::DestroyGroup(const std::string &group_name) {
+  auto group_iter = group_name_to_mpi_group_map_.find(group_name);
+  if (group_iter == group_name_to_mpi_group_map_.end()) {
+    return false;
+  }
+  group_name_to_mpi_group_map_.erase(group_name);
+  MPI_Group mpi_group = group_iter->second;
+  CHECK_RET(MPI_Group_free(&mpi_group), MPI_SUCCESS, "Failed to free MPI group for " + group_name);
+  NCCLWrapper::instance().DestroyGroup(group_name);
+  return true;
+}
+
 void MPIWrapper::Init() {
   int initialized;
   CHECK_RET(MPI_Initialized(&initialized), MPI_SUCCESS, "Failed to check mpi initialization status.");
-
   if (initialized == 0) {
     MPI_Init(nullptr, nullptr);
   }
+
   CHECK_RET(MPI_Comm_rank(MPI_COMM_WORLD, &rank_id_), MPI_SUCCESS, "Failed to init mpi rank id.");
   CHECK_RET(MPI_Comm_size(MPI_COMM_WORLD, &rank_size_), MPI_SUCCESS, "Failed to init mpi rank size.");
   NCCLWrapper::instance().set_rank(rank_id_, rank_size_);
-  AssignLocalRankId();
+  AssignLocalRankID();
+
+  CHECK_RET(MPI_Comm_group(MPI_COMM_WORLD, &world_group_), MPI_SUCCESS, "Failed to get group of MPI_COMM_WORLD");
+  SetGroupNameToMPIGroup(NCCL_WORLD_GROUP, world_group_);
 
   ncclUniqueId unique_id;
   if (rank_id_ == 0) {
@@ -62,7 +127,7 @@ void MPIWrapper::Init() {
   return;
 }
 
-void MPIWrapper::AssignLocalRankId() {
+void MPIWrapper::AssignLocalRankID() {
   char host_name[MAX_HOSTNAME_LEN] = {0};
   CHECK_RET(gethostname(host_name, MAX_HOSTNAME_LEN), 0, "Getting host name failed.");
   size_t host_hash = std::hash<std::string>()(host_name);
@@ -81,6 +146,10 @@ void MPIWrapper::AssignLocalRankId() {
     }
   }
   return;
+}
+
+void MPIWrapper::SetGroupNameToMPIGroup(const std::string &group_name, const MPI_Group mpi_group) {
+  group_name_to_mpi_group_map_[group_name] = mpi_group;
 }
 }  // namespace gpu
 }  // namespace device

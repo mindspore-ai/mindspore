@@ -40,21 +40,51 @@ void NCCLWrapper::set_rank(int rank_id, int rank_size) {
 void NCCLWrapper::InitNCCLComm() {
   CHECK_RET(ncclCommInitRank(&comm_, rank_size_, unique_id_, rank_id_), ncclSuccess,
             "Failed to init nccl communicator.");
+  group_to_comm_map_[NCCL_WORLD_GROUP] = comm_;
+}
+
+void NCCLWrapper::InitNCCLComm(ncclComm_t *comm, int rank_size, ncclUniqueId unique_id, int rank) {
+  CHECK_RET(ncclCommInitRank(comm, rank_size, unique_id, rank), ncclSuccess, "Failed to init nccl communicator.");
 }
 
 ncclResult_t NCCLWrapper::AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
-                                    ncclRedOp_t reduce_type, cudaStream_t stream) {
-  return ncclAllReduce(input_addr, output_addr, count, data_type, reduce_type, comm_, stream);
+                                    ncclRedOp_t reduce_type, cudaStream_t stream, const std::string &group_name) {
+  CHECK_RET(group_to_comm_map_.count(group_name), 1,
+            "Failed to find NCCL communicator for AllReduce by the group name " + group_name);
+  ncclComm_t group_comm = group_to_comm_map_[group_name];
+  return ncclAllReduce(input_addr, output_addr, count, data_type, reduce_type, group_comm, stream);
 }
 
 ncclResult_t NCCLWrapper::AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
-                                    cudaStream_t stream) {
-  return ncclAllGather(input_addr, output_addr, count, data_type, comm_, stream);
+                                    cudaStream_t stream, const std::string &group_name) {
+  CHECK_RET(group_to_comm_map_.count(group_name), 1,
+            "Failed to find NCCL communicator for AllGather by the group name " + group_name);
+  ncclComm_t group_comm = group_to_comm_map_[group_name];
+  return ncclAllGather(input_addr, output_addr, count, data_type, group_comm, stream);
 }
 
 ncclResult_t NCCLWrapper::ReduceScatter(const void *input_addr, void *output_addr, size_t count,
-                                        ncclDataType_t data_type, ncclRedOp_t reduce_type, cudaStream_t stream) {
-  return ncclReduceScatter(input_addr, output_addr, count, data_type, reduce_type, comm_, stream);
+                                        ncclDataType_t data_type, ncclRedOp_t reduce_type, cudaStream_t stream,
+                                        const std::string &group_name) {
+  CHECK_RET(group_to_comm_map_.count(group_name), 1,
+            "Failed to find NCCL communicator for ReduceScatter by the group name " + group_name);
+  ncclComm_t group_comm = group_to_comm_map_[group_name];
+  return ncclReduceScatter(input_addr, output_addr, count, data_type, reduce_type, group_comm, stream);
+}
+
+void NCCLWrapper::SetGroupNameToNCCLComm(const std::string &group_name, const ncclComm_t comm) {
+  group_to_comm_map_[group_name] = comm;
+}
+
+void NCCLWrapper::DestroyGroup(const std::string &group_name) {
+  auto group_iter = group_to_comm_map_.find(group_name);
+  if (group_iter == group_to_comm_map_.end()) {
+    return;
+  }
+  group_to_comm_map_.erase(group_iter);
+  ncclComm_t group_comm = group_iter->second;
+  CHECK_RET(ncclCommDestroy(group_comm), ncclSuccess, "Failed to destroy NCCL communicator for " + group_name);
+  return;
 }
 }  // namespace gpu
 }  // namespace device

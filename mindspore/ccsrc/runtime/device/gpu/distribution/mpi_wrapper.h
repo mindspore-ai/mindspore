@@ -22,6 +22,9 @@
 #include <unistd.h>
 #include <mpi.h>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 #include "runtime/device/gpu/distribution/collective_common.h"
 
 namespace mindspore {
@@ -33,16 +36,23 @@ class MPIWrapper {
   MPIWrapper &operator=(const MPIWrapper &) = delete;
   static MPIWrapper &instance();
   int local_rank_id() const;
+  bool CreateCommGroup(const std::string &group_name, const std::vector<unsigned int> &ranks);
+  int GetRankIDByGroup(const std::string &group_name);
+  int GetGroupSize(const std::string &group_name);
+  bool DestroyGroup(const std::string &group_name);
 
  private:
   MPIWrapper();
   ~MPIWrapper();
   void Init();
-  void AssignLocalRankId();
+  void AssignLocalRankID();
+  void SetGroupNameToMPIGroup(const std::string &group_name, const MPI_Group mpi_group);
 
   int rank_id_;
   int rank_size_;
   int local_rank_id_;
+  MPI_Group world_group_;
+  std::map<std::string, MPI_Group> group_name_to_mpi_group_map_;
 };
 }  // namespace gpu
 }  // namespace device
