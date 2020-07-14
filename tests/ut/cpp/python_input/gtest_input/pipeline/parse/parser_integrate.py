@@ -22,9 +22,9 @@ from mindspore.common import dtype
 from mindspore.common.api import ms_function, _executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.model_zoo.resnet import resnet50
 from mindspore.ops import functional as F
 from mindspore.train.model import Model
+from tests.ut.python.model.resnet import resnet50
 
 
 def test_high_order_function(a):
