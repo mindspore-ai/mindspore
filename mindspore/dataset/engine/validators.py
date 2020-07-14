@@ -25,7 +25,7 @@ from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_num_parallel_workers, \
-    check_columns, check_positive, check_pos_int32
+    check_columns, check_pos_int32
 
 from . import datasets
 from . import samplers
@@ -319,10 +319,9 @@ def check_generatordataset(method):
             # These two parameters appear together.
             raise ValueError("num_shards and shard_id need to be passed in together")
         if num_shards is not None:
-            type_check(num_shards, (int,), "num_shards")
-            check_positive(num_shards, "num_shards")
+            check_pos_int32(num_shards, "num_shards")
             if shard_id >= num_shards:
-                raise ValueError("shard_id should be less than num_shards")
+                raise ValueError("shard_id should be less than num_shards.")
 
         sampler = param_dict.get("sampler")
         if sampler is not None:
@@ -417,7 +416,7 @@ def check_bucket_batch_by_length(method):
 
         all_non_negative = all(item > 0 for item in bucket_boundaries)
         if not all_non_negative:
-            raise ValueError("bucket_boundaries cannot contain any negative numbers.")
+            raise ValueError("bucket_boundaries must only contain positive numbers.")
 
         for i in range(len(bucket_boundaries) - 1):
             if not bucket_boundaries[i + 1] > bucket_boundaries[i]:
@@ -1044,7 +1043,8 @@ def check_numpyslicesdataset(method):
 
         data = param_dict.get("data")
         column_names = param_dict.get("column_names")
-
+        if not data:
+            raise ValueError("Argument data cannot be empty")
         type_check(data, (list, tuple, dict, np.ndarray), "data")
         if isinstance(data, tuple):
             type_check(data[0], (list, np.ndarray), "data[0]")

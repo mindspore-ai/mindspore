@@ -16,6 +16,7 @@
 Testing UniformAugment in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
@@ -164,14 +165,13 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
                      C.RandomRotation(degrees=45),
                      F.Invert()]
 
-    try:
+    with pytest.raises(TypeError) as e:
         _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
 
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument tensor_op_5 with value" \
-               " <mindspore.dataset.transforms.vision.py_transforms.Invert" in str(e)
-        assert "is not of type (<class 'mindspore._c_dataengine.TensorOp'>,)" in str(e)
+    logger.info("Got an exception in DE: {}".format(str(e)))
+    assert "Argument tensor_op_5 with value" \
+           " <mindspore.dataset.transforms.vision.py_transforms.Invert" in str(e.value)
+    assert "is not of type (<class 'mindspore._c_dataengine.TensorOp'>,)" in str(e.value)
 
 
 def test_cpp_uniform_augment_exception_large_numops(num_ops=6):

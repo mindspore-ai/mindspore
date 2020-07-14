@@ -62,7 +62,8 @@ def check_from_file(method):
     def new_method(self, *args, **kwargs):
         [file_path, delimiter, vocab_size, special_tokens, special_first], _ = parse_user_args(method, *args,
                                                                                                **kwargs)
-        check_unique_list_of_words(special_tokens, "special_tokens")
+        if special_tokens is not None:
+            check_unique_list_of_words(special_tokens, "special_tokens")
         type_check_list([file_path, delimiter], (str,), ["file_path", "delimiter"])
         if vocab_size is not None:
             check_value(vocab_size, (-1, INT32_MAX), "vocab_size")
