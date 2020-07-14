@@ -137,7 +137,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
 }
 
 GpuKernel *GpuKernelFactory::Create(const std::string &kernel_name, const CNodePtr &apply_kernel) {
-  auto kernel_info = apply_kernel->kernel_info();
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(kernel_build_Info);

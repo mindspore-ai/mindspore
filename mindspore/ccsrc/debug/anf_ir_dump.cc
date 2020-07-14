@@ -128,7 +128,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     return;
   }
   auto kernel_info = node->kernel_info();
-  if (kernel_info == nullptr || kernel_info->select_kernel_build_info() == nullptr) {
+  if (kernel_info == nullptr || !kernel_info->has_build_info()) {
     return;
   }
 
@@ -179,7 +179,7 @@ void DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, OrderedMa
     // print parameters' type and shape
     PrintNodeOutputType(buffer, p);
     auto kernel_info = p->kernel_info();
-    if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
+    if (kernel_info != nullptr && kernel_info->has_build_info()) {
       buffer << "  :  ";
       auto type = AnfAlgo::GetOutputDeviceDataType(p, 0);
       auto format = AnfAlgo::GetOutputFormat(p, 0);

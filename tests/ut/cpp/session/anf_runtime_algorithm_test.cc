@@ -255,7 +255,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32, kNumberTypeFloat32}, {shape, shape}, add.get());
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsDeviceType({kFloat32->type_id(), kFloat16->type_id()});
@@ -274,7 +274,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputFormat) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetInputsDeviceType({kFloat32->type_id(), kFloat16->type_id()});
@@ -293,7 +293,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputFormat) {
   auto pre_add = kernel_graph->NewCNode(pre_node_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   pre_add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = pre_add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(pre_add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsDeviceType({kFloat32->type_id()});
@@ -373,7 +373,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(tuple_abstract);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsFormat({kOpFormat_NCHW, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_FRAC_NZ});
@@ -404,7 +404,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetInputsFormat({kOpFormat_NCHW, kOpFormat_NCHW, kOpFormat_NHWC});
@@ -457,7 +457,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceDataTypeTest) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsDeviceType({kFloat32->type_id()});
@@ -474,7 +474,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceDataTypeTest) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetInputsDeviceType({kFloat32->type_id(), kFloat16->type_id()});
@@ -492,7 +492,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputDeviceDataType) {
   auto pre_add = kernel_graph->NewCNode(pre_add_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   pre_add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = pre_add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(pre_add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsDeviceType({kFloat32->type_id()});
@@ -513,7 +513,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputAddr) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   int *addr = nullptr;
   auto device_address = std::make_shared<AscendDeviceAddress>(addr, 1);
@@ -528,7 +528,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputAddr) {
   auto pre_add = kernel_graph->NewCNode(pre_add_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   pre_add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = pre_add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(pre_add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   int *addr = nullptr;
   auto device_address = std::make_shared<AscendDeviceAddress>(addr, 1);
@@ -561,7 +561,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetWorkspaceAddr) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   int *addr = nullptr;
   auto device_address = std::make_shared<AscendDeviceAddress>(addr, 1);
@@ -643,7 +643,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetKernelType) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetKernelType(AKG_KERNEL);
@@ -659,7 +659,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetProcessor) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetProcessor(kernel::AICORE);
@@ -675,7 +675,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetFusionType) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetFusionType(kernel::CONVLUTION);
@@ -703,7 +703,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetKernelMod) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   d_kernel_info->set_kernel_mod(nullptr);
   EXPECT_EQ(AnfAlgo::GetKernelMod(add), nullptr);
@@ -779,7 +779,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetStreamId) {
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
-  auto d_kernel_info = add->kernel_info();
+  auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   d_kernel_info->set_stream_id(0);
   EXPECT_EQ(AnfAlgo::GetStreamId(add), 0);

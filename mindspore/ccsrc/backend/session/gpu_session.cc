@@ -121,7 +121,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
       auto pk_node = input_node->cast<ParameterPtr>();
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
-      auto tensor_address = tensor->device_address();
+      auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
       bool need_sync = false;
       if (ms_context->enable_pynative_infer()) {
         if (tensor_address == nullptr || tensor_address != device_address) {

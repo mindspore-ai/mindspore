@@ -326,7 +326,7 @@ Tensor::Tensor(const Tensor &tensor)
       data_(tensor.data_),
       dirty_(tensor.dirty_),
       id_(tensor.id_),
-      device_address_(tensor.device_address_) {}
+      device_sync_(tensor.device_sync_) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -334,7 +334,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
       dirty_(tensor.dirty_),
       id_(tensor.id_),
-      device_address_(tensor.device_address_) {}
+      device_sync_(tensor.device_sync_) {}
 
 Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
@@ -379,10 +379,10 @@ bool Tensor::ValueEqual(const Tensor &tensor) const {
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     MetaTensor::operator=(tensor);
-    dirty_ = tensor.is_dirty();
-    device_address_ = tensor.device_address();
+    dirty_ = tensor.dirty_;
+    device_sync_ = tensor.device_sync_;
     data_ = tensor.data_;
-    id_ = tensor.id();
+    id_ = tensor.id_;
   }
   return *this;
 }
@@ -425,8 +425,8 @@ std::string Tensor::ToStringRepr() const {
 }
 
 void Tensor::data_sync() const {
-  if (device_address_ != nullptr) {
-    if (!device_address_->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
+  if (device_sync_ != nullptr) {
+    if (!device_sync_->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
       MS_LOG(EXCEPTION) << "SyncDeviceToHost when asnumpy.";
     }
   }

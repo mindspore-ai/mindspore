@@ -63,7 +63,7 @@ const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr
 kernel::KernelBuildInfoPtr GetKernelBuildInfo(const CNodePtr &cast, const string &format, TypeId input_type,
                                               TypeId output_type) {
   MS_EXCEPTION_IF_NULL(cast);
-  auto kernel_info = cast->kernel_info();
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(cast->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto cast_build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(cast_build_info);

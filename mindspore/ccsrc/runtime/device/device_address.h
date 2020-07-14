@@ -21,8 +21,7 @@
 #include <vector>
 #include <memory>
 #include "ir/dtype.h"
-
-using std::string;
+#include "ir/device_sync.h"
 
 namespace mindspore {
 namespace device {
@@ -51,15 +50,12 @@ namespace device {
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
 enum class DeviceAddressType { kUnknown, kAscend, kCPU, kGPU };
 
-class DeviceAddress {
+class DeviceAddress : public mindspore::DeviceSync {
  public:
   explicit DeviceAddress(void *ptr, size_t size) : ptr_(ptr), size_(size) {}
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : ptr_(ptr), size_(size), format_(format), type_id_(type_id) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
-  virtual bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const = 0;
-  virtual bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type,
-                                const void *host_ptr) const = 0;
   const void *GetPtr() const { return ptr_; }
   size_t GetSize() const { return size_; }
   std::string format() const { return format_; }

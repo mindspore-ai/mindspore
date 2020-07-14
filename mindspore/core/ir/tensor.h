@@ -23,15 +23,13 @@
 #include <numeric>
 
 #include "Eigen/Core"
-#include "runtime/device/device_address.h"
+#include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
 #include "include/ms_tensor.h"
 #include "utils/log_adapter.h"
 
 using float16 = Eigen::half;
 
-using mindspore::device::DeviceAddress;
-using DeviceAddressPtr = std::shared_ptr<mindspore::device::DeviceAddress>;
 // brief mindspore namespace.
 //
 // mindspore namespace is the top level namespace of MindSpore project.
@@ -222,8 +220,8 @@ class Tensor : public MetaTensor {
   bool is_dirty() const { return dirty_; }
   void set_dirty(const bool dirty) { dirty_ = dirty; }
 
-  DeviceAddressPtr device_address() const { return device_address_; }
-  void set_device_address(const DeviceAddressPtr &device_address) { device_address_ = device_address; }
+  DeviceSyncPtr device_address() const { return device_sync_; }
+  void set_device_address(const DeviceSyncPtr &device_sync) { device_sync_ = device_sync; }
 
   std::string id() const { return id_; }
 
@@ -234,7 +232,7 @@ class Tensor : public MetaTensor {
   TensorDataPtr data_{nullptr};
   bool dirty_{true};
   std::string id_{""};
-  DeviceAddressPtr device_address_{nullptr};
+  DeviceSyncPtr device_sync_{nullptr};
 };
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;

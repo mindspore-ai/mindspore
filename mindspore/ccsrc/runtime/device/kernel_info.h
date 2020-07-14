@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include "ir/kernel_info_dev.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -27,7 +28,7 @@ namespace mindspore {
 const uint32_t kInvalidGraphId = UINT32_MAX;
 const uint32_t kInvalidDistincLabel = UINT32_MAX;
 namespace device {
-class KernelInfo {
+class KernelInfo : public KernelInfoDevice {
  public:
   KernelInfo() {
     kernel_mod_ = nullptr;
@@ -41,6 +42,7 @@ class KernelInfo {
   }
   virtual ~KernelInfo() = default;
 
+  bool has_build_info() const override { return select_kernel_build_info() != nullptr; }
   const kernel::KernelBuildInfo *select_kernel_build_info() const;
   kernel::KernelBuildInfoPtr GetMutableSelectKernelBuildInfo() const;
   void set_select_kernel_build_info(const kernel::KernelBuildInfoPtr &select_kernel_build_info) {

@@ -362,8 +362,7 @@ void CheckFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNod
       continue;
     }
     for (auto &node_user : iter->second) {
-      if (node_user.first->kernel_info() == nullptr ||
-          node_user.first->kernel_info()->select_kernel_build_info() == nullptr) {
+      if (node_user.first->kernel_info() == nullptr || !node_user.first->kernel_info()->has_build_info()) {
         // maybe not a real kernel.
         continue;
       }
