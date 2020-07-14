@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""LogicalOr op"""
-from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
+"""__init__"""
 
-logicalor_op_info = AkgGpuRegOp("LogicalOr") \
-    .fusion_type("OPAQUE") \
-    .input(0, "x") \
-    .input(1, "y") \
-    .output(0, "output") \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
-    .get_op_info()
-
-
-@op_info_register(logicalor_op_info)
-def _logical_or_akg():
-    """LogicalOr register"""
-    return
+from .add import _add_akg
+from .batchmatmul import _batchmatmul_akg
+from .cast import _cast_akg
+from .expand_dims import _expand_dims_akg
+from .greater import _greater_akg
+from .inplace_assign import _inplace_assign_akg
+from .maximum import _maximum_akg
+from .minimum import _minimum_akg
+from .mul import _mul_akg
+from .real_div import _real_div_akg
+from .rsqrt import _rsqrt_akg
+from .select import _select_akg
+from .sqrt import _sqrt_akg
+from .sub import _sub_akg

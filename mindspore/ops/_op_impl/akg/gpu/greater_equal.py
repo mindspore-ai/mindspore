@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """GreaterEqual op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-greater_equal_op_info = AkgRegOp("GreaterEqual") \
+greater_equal_op_info = AkgGpuRegOp("GreaterEqual") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .input(1, "y") \

@@ -44,6 +44,7 @@ class OpLib {
   static bool DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,
                                 size_t index);
   static void DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info);
+  static void DecodeAKGSpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info);
   static bool DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply_type, const OpIOType io_type,
                                 const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format);
   static bool GetRefInfo(const std::shared_ptr<OpInfo> &op_info);

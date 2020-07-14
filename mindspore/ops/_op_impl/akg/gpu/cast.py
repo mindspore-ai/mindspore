@@ -13,15 +13,16 @@
 # limitations under the License.
 
 """Cast op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-cast_op_info = AkgRegOp("Cast") \
+cast_op_info = AkgGpuRegOp("Cast") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .output(0, "output") \
     .attr("dst_type", "required", "str") \
     .dtype_format(DataType.F16_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I32_Default, DataType.F32_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.F32_Default) \
     .get_op_info()

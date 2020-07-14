@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """Sub op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-sub_op_info = AkgRegOp("Sub") \
+sub_op_info = AkgGpuRegOp("Sub") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .input(1, "y") \
@@ -24,6 +24,7 @@ sub_op_info = AkgRegOp("Sub") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
+
 
 @op_info_register(sub_op_info)
 def _sub_akg():

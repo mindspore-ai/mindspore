@@ -45,9 +45,10 @@ constexpr auto kAttr = "attr";
 constexpr auto kIputs = "inputs";
 constexpr auto kOutputs = "outputs";
 constexpr auto kAiCPU = "AiCPU";
+constexpr auto kAiCore = "AiCore";
+constexpr auto kCUDA = "CUDA";
 constexpr auto kTbe = "TBE";
-constexpr auto kAkg = "akg";
-constexpr auto kAutodiff = "AutoDiff";
+constexpr auto kAkg = "AKG";
 constexpr auto kName = "name";
 constexpr auto kParamType = "param_type";
 constexpr auto kDtype = "dtype";
@@ -58,6 +59,7 @@ constexpr auto kIndex = "index";
 constexpr auto kFormat = "format";
 constexpr auto kNeedCompile = "need_compile";
 constexpr auto kShape = "shape";
+constexpr auto kProcessor = "processor";
 std::vector<std::shared_ptr<OpInfo>> OpLib::op_info_;
 
 static std::string ImplTypeToStr(OpImplyType impl_type) {
@@ -81,7 +83,7 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
     if (imply_type_string == kTbe) {
       OpImplyType imply_type = kTBE;
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
-    } else if (imply_type_string == kAutodiff) {
+    } else if (imply_type_string == kAkg) {
       OpImplyType imply_type = kAKG;
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
     } else if (imply_type_string == kAiCPU) {
@@ -123,6 +125,11 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
       op_info->set_op_pattern(find_iter->second);
     }
   }
+}
+
+void OpLib::DecodeAKGSpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
+  MS_EXCEPTION_IF_NULL(op_info);
+  op_info->set_processor(obj.at(kProcessor));
 }
 
 bool OpLib::RegOpFromLocalInfo() {
@@ -179,6 +186,8 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
   op_info->set_fusion_type(obj.at(kFusionType));
   if (imply_type == kTBE) {
     DecodeTBESpecificInfo(obj, op_info);
+  } else if (imply_type == kAKG) {
+    DecodeAKGSpecificInfo(obj, op_info);
   }
   auto attrs = obj.at(kAttr);
   for (const auto &attr : attrs) {
@@ -330,7 +339,12 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   for (const auto &op_info : op_info_) {
     MS_EXCEPTION_IF_NULL(op_info);
     if (op_info->op_name() == op_name && op_info->imply_type() == imply_type) {
-      return op_info;
+      auto akg_processor_match = [&]() {
+        return is_gpu ? op_info->processor() == kCUDA : op_info->processor() == kAiCore;
+      };
+      if (imply_type != kAKG || akg_processor_match()) {
+        return op_info;
+      }
     }
   }
   MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
@@ -363,19 +377,14 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
 }
 
 bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
-  bool has_register = false;
   MS_EXCEPTION_IF_NULL(op_info);
   for (const auto &exist_op_info : op_info_) {
     MS_EXCEPTION_IF_NULL(exist_op_info);
-    if (exist_op_info->op_name() == op_info->op_name() && exist_op_info->imply_type() == op_info->imply_type() &&
-        exist_op_info->impl_path() == op_info->impl_path()) {
-      MS_LOG(INFO) << "Op has already exist, please use other name, op name: " << op_info->op_name()
-                   << " op type: " << ImplTypeToStr(op_info->imply_type());
-      has_register = true;
-      break;
+    if (exist_op_info->equals_to(op_info)) {
+      return true;
     }
   }
-  return has_register;
+  return false;
 }
 }  // namespace kernel
 }  // namespace mindspore

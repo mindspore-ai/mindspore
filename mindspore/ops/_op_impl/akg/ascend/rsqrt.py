@@ -11,20 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ============================================================================
 
-"""LogicalOr op"""
-from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
+"""Rsqrt op"""
+from mindspore.ops.op_info_register import op_info_register, AkgAscendRegOp, DataType as DT
 
-logicalor_op_info = AkgGpuRegOp("LogicalOr") \
-    .fusion_type("OPAQUE") \
+op_info = AkgAscendRegOp("Rsqrt") \
+    .fusion_type("ELEMWISE") \
     .input(0, "x") \
-    .input(1, "y") \
     .output(0, "output") \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DT.F16_Default, DT.F16_Default) \
+    .dtype_format(DT.F32_Default, DT.F32_Default) \
+    .dtype_format(DT.I32_Default, DT.I32_Default) \
+    .dtype_format(DT.F16_5HD, DT.F16_5HD) \
+    .dtype_format(DT.F32_5HD, DT.F32_5HD) \
+    .dtype_format(DT.I32_5HD, DT.I32_5HD) \
     .get_op_info()
 
 
-@op_info_register(logicalor_op_info)
-def _logical_or_akg():
-    """LogicalOr register"""
+@op_info_register(op_info)
+def _rsqrt_akg():
+    """Rsqrt Akg register"""
     return
