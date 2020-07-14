@@ -126,8 +126,8 @@ bool DataDumper::KernelNeedDump(const CNodePtr &kernel) const {
     return false;
   }
   MS_EXCEPTION_IF_NULL(kernel);
-  const auto &kernel_set = DataDumpParser::GetInstance().kernel_set();
-  return kernel_set.find(kernel->fullname_with_scope()) != kernel_set.end();
+  // dump all kernel if mode is set 0 in data_dump.json
+  return DataDumpParser::GetInstance().NeedDump(kernel->fullname_with_scope());
 }
 
 void DataDumper::UnloadDumpInfo() {
