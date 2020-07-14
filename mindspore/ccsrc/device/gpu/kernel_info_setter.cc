@@ -88,10 +88,11 @@ std::string SupportedTypeList(const CNodePtr &kernel_node) {
       supported_akg_type_list = supported_akg_type_list + mindspore::kernel::TypeId2String(type);
     }
     supported_type_lists = supported_type_lists + supported_akg_type_list + "], out[";
+    supported_akg_type_list.clear();
     for (auto type : supported_akg_type_out) {
       supported_akg_type_list = supported_akg_type_list + mindspore::kernel::TypeId2String(type);
     }
-    supported_type_lists += "]; ";
+    supported_type_lists = supported_type_lists + supported_akg_type_list + "]; ";
   }
   return supported_type_lists;
 }
