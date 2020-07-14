@@ -358,7 +358,6 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
       new_tensor->set_device_address(tensor->device_address());
       new_tensor->set_dirty(tensor->is_dirty());
       result[i] = new_tensor;
-      }
     }
     *status = PYNATIVE_SUCCESS;
     MS_LOG(INFO) << "RunOpInVM end";
