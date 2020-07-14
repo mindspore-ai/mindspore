@@ -1031,3 +1031,13 @@ def test_grad_if_defer_inline():
     inp = Tensor(np.ones([128, 96]).astype(np.float32))
     grads = C.grad_all(network)(inp)
     assert grads == (Tensor(np.full([128, 96], 0.6, dtype=np.float32)),)
+
+
+def test_dict_const():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.res = {'1': 10}
+        def construct(self):
+            return self.res
+    Net()()

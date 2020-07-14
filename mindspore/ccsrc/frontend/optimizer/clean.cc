@@ -43,26 +43,28 @@ static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
     return nullptr;
   }
 
-  AbstractBasePtr res = t;
   if (t->isa<AbstractClass>()) {
     auto abs_class = dyn_cast<AbstractClass>(t);
     AbstractBasePtrList baselist;
     auto attributes = abs_class->attributes();
     (void)std::transform(attributes.begin(), attributes.end(), std::back_inserter(baselist),
                          [](const AbstractAttribute &item) { return item.second; });
-    res = std::make_shared<AbstractTuple>(baselist);
-  } else if (t->isa<AbstractDictionary>()) {
+    return std::make_shared<AbstractTuple>(baselist);
+  }
+  if (t->isa<AbstractDictionary>()) {
     auto abs_dict = dyn_cast<AbstractDictionary>(t);
     AbstractBasePtrList baselist;
     auto elements = abs_dict->elements();
     (void)std::transform(elements.begin(), elements.end(), std::back_inserter(baselist),
                          [](const AbstractAttribute &item) { return item.second; });
-    res = std::make_shared<AbstractTuple>(baselist);
-  } else if (t->isa<AbstractList>()) {
-    auto abs_dict = dyn_cast<AbstractList>(t);
-    res = std::make_shared<AbstractTuple>(abs_dict->elements());
+    return std::make_shared<AbstractTuple>(baselist);
   }
-  return res;
+  if (t->isa<AbstractList>()) {
+    auto abs_list = dyn_cast<AbstractList>(t);
+    return std::make_shared<AbstractTuple>(abs_list->elements());
+  }
+
+  return nullptr;
 }
 
 AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
@@ -376,7 +378,12 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
 
   for (auto &node : manager->all_nodes()) {
     auto ret = Reabs(node->abstract());
-    node->set_abstract(ret);
+    if (ret) {
+      MS_LOG(DEBUG) << "Replace " << node->DebugString() << "'s abstract " << node->abstract()->ToString() << " with "
+                    << ret->ToString();
+      node->set_abstract(ret);
+      changed = true;
+    }
   }
   return changed;
 }
