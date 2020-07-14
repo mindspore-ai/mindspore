@@ -17,16 +17,14 @@
 #ifndef MINDSPORE_CCSRC_IR_PATTERN_MATCHER_H_
 #define MINDSPORE_CCSRC_IR_PATTERN_MATCHER_H_
 
-#include <memory>
-#include <functional>
 #include <tuple>
 #include <vector>
 
 #include "ir/anf.h"
 #include "operator/ops.h"
-#include "optimizer/optimizer.h"
 
 namespace mindspore {
+
 ///
 ///  Base class for all recognizable patterns.
 ///  We implement an Expression Template approach using static polymorphism based on
@@ -62,7 +60,7 @@ class PIsEqual {
   bool operator()(const T &lhs, const T &rhs) const { return lhs == rhs; }
 };
 
-template <typename T = AnfNodePtr>
+template <typename T>
 class PatternNode : public PBase<PatternNode<T> > {
  public:
   T GetNode(const AnfNodePtr &node) const {
@@ -92,13 +90,12 @@ class PatternNode : public PBase<PatternNode<T> > {
 template <typename T, typename T2>
 class PBinOperation : public PBase<PBinOperation<T, T2> > {
  public:
-  PBinOperation(const PrimitivePtr &prim, const T &x, const T2 &y, bool is_commutative = false)
-      : prim_(prim), x_(x), y_(y), is_commutative_(is_commutative) {}
+  PBinOperation(const PrimitivePtr &prim, const T &x, const T2 &y) : prim_(prim), x_(x), y_(y) {}
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
     AnfNodePtr lhs = x_.GetNode(node->func_graph());
     AnfNodePtr rhs = y_.GetNode(node->func_graph());
-    AnfNodePtrList list = {NewValueNode(prim_), lhs, rhs};
+    AnfNodePtrList list = {prim_->cast<AnfNodePtr>(), lhs, rhs};
     return NewCNode(list, node->func_graph());
   }
 
@@ -109,14 +106,6 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
       if (inputs.size() == 3) {
         // Binary Prim assumes only two inputs
         if (!x_.TryCapture_(inputs[1]) || !y_.TryCapture_(inputs[2])) {
-          // If the operation is commutative, then check with inversed operands
-          if (is_commutative_) {
-            Reset();
-            if (!x_.TryCapture_(inputs[2]) || !y_.TryCapture_(inputs[1])) {
-              return false;
-            }
-            return true;
-          }
           return false;
         }
         return true;
@@ -124,6 +113,7 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
     }
     return false;
   }
+
   void Reset() const {
     x_.Reset();
     y_.Reset();
@@ -133,7 +123,6 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
   const PrimitivePtr prim_;
   typename T::Internal x_;
   typename T2::Internal y_;
-  bool is_commutative_{false};
 };
 
 ///
@@ -225,6 +214,7 @@ class PCNode : public PBase<PCNode<TArgs...> > {
 
     return false;
   }
+
   void Reset() const {
     tuple_utils::PTupleResetCapture reset;
     tuple_utils::apply_func_tuple(&reset, args_);
@@ -265,12 +255,6 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     return false;
   }
 
-  // If set to true, TryCapture will try to capture the nodes in iversed nodes as well (only for two input case)
-  const PPrimitive<TArgs...> &Commutative(const bool &is_commutative = true) const {
-    is_commutative_ = is_commutative;
-    return *this;
-  }
-
   void Reset() const {
     tuple_utils::PTupleResetCapture reset;
     tuple_utils::apply_func_tuple(&reset, args_);
@@ -279,435 +263,46 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
  private:
   const PrimitivePtr prim_;
   std::tuple<typename TArgs::Internal...> args_;
-  mutable bool is_commutative_{false};
-};
-
-///
-/// PConstant class can capture a value node of a specified value (check_value_)
-/// or a non-specified one (any_value = true).
-/// It can be configured to capture a scalar constant as well (is_scalar_ = true)
-///
-template <typename T = AnfNodePtr>
-class PConstant : public PBase<PConstant<T> > {
- public:
-  explicit PConstant(const AnfNodePtr &as_node, const bool any_value = true, const int check_value = 0,
-                     const bool is_scalar = false)
-      : as_node_(as_node),
-        captured_node_(as_node),
-        any_value_(any_value),
-        check_value_(check_value),
-        is_scalar_(is_scalar) {}
-
-  // Sets as_node_ as the node received as argument to produce a same-shape node with GetNode
-  const PConstant<T> &WithShapeAs(const AnfNodePtr &node) const {
-    as_node_ = node;
-    changed_shape_ = true;
-    return *this;
-  }
-
-  /// Sets captured_node_ as the node captured by the Pattern received as argument
-  /// to produce a new node with its contents when calling GetNode.
-  const PConstant<T> &WithValueOf(const PatternNode<T> &pnode) const {
-    if (!any_value_) {
-      MS_EXCEPTION(ValueError) << "Must use a PConstant with `any_value = true` to use the value of another node.";
-    }
-    captured_node_ = pnode.GetNode(captured_node_);
-    changed_shape_ = true;
-    return *this;
-  }
-
-  /// Create a new Value Node filled up with check_value.
-  /// This function must be used immediately before GetNode to avoid replacing the expected result.
-  const PConstant<T> &NewValue() const {
-    auto value_node_ = MakeValue(check_value_);
-    captured_node_ = NewValueNode(value_node_);
-    is_new_value_node_ = true;
-    return *this;
-  }
-
-  AnfNodePtr GetNode(const AnfNodePtr &node) const {
-    // If a NewValueNode was requested (using NewValue function) then return that created node.
-    if (is_new_value_node_) {
-      return captured_node_;
-    }
-    /// Return a NewTensorFilledWithData if the node was initialized to have a specific value
-    /// even if it wasn't captured. Usually for zero constants (x - x => zero).
-    /// If the shape was changed, use the new shape.
-    if (changed_shape_ || !captured_) {
-      if (!any_value_) {
-        return NewTensorFilledWithData(as_node_, check_value_);
-      }
-      return NewTensorFilledWithData(as_node_, captured_node_);
-    }
-    return captured_node_;
-  }
-
-  bool TryCapture_(const AnfNodePtr &node) const {
-    if (IsValueNode<Value>(node)) {
-      // If any_value_ is set don't check for the node's value. Just capture it.
-      if (any_value_) {
-        captured_node_ = node;
-        captured_ = true;
-        return true;
-      }
-
-      auto value = node->cast<ValueNodePtr>()->value();
-      if ((is_scalar_ && IsTensorScalarConstant(value)) || (!is_scalar_ && IsTensorConstant(value))) {
-        captured_node_ = node;
-        captured_ = true;
-        return true;
-      }
-
-      auto value_node_ = MakeValue(check_value_);
-      if (*GetValueNode(node) == *value_node_) {
-        captured_node_ = node;
-        captured_ = true;
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void Reset() const {
-    captured_ = false;
-    changed_shape_ = false;
-    is_new_value_node_ = false;
-  }
-
-  // Support function used for checking if all values of a Tensor are equal to `check_value_`
-  // Supported data types: double, float/float32, int/int32
-  bool IsTensorConstant(const ValuePtr &value) const {
-    if (!value->isa<tensor::Tensor>()) {
-      return false;
-    }
-    auto tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    TypeId tensor_type = tensor_ptr->Dtype()->type_id();
-    if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat)) {
-      float *data2 = reinterpret_cast<float *>(tensor_ptr->data_c());
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (fabs(data2[i] - check_value_) > FLT_EPSILON) {
-          return false;
-        }
-      }
-      return true;
-    } else if (tensor_type == TypeId::kNumberTypeFloat64) {
-      double *data2 = reinterpret_cast<double *>(tensor_ptr->data_c());
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (fabs(data2[i] - check_value_) > DBL_EPSILON) {
-          return false;
-        }
-      }
-      return true;
-    } else if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
-      int *data2 = reinterpret_cast<int *>(tensor_ptr->data_c());
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] != check_value_) {
-          return false;
-        }
-      }
-      return true;
-    }
-    // Input Data Type is not supported
-    return false;
-  }
-
-  bool IsTensorScalarConstant(const ValuePtr &value) const {
-    if (!value->isa<tensor::Tensor>()) {
-      return false;
-    }
-    auto tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    if ((tensor_ptr->DataSize() > 1) || (tensor_ptr->DataDim() > 0)) {
-      return false;
-    }
-    return IsTensorConstant(value);
-  }
-
-  void *GetPointerToTensorData(const AnfNodePtr &node, bool writable = false) const {
-    if (!node->isa<ValueNode>()) {
-      return nullptr;
-    }
-
-    auto value = node->cast<ValueNodePtr>()->value();
-
-    if (!value->isa<tensor::Tensor>()) {
-      return nullptr;
-    }
-
-    tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    return tensor_ptr->data_c();
-  }
-
-  // Make a new tensor (when possible) with the same shape as of `node`
-  // If x is nullptr then fill new tensor will "0"
-  // If x is a tensor with empty shape then fill new tensor with the single value of x
-  // If x is a tensor with same shape as `node` then return x as result
-  AnfNodePtr NewTensorFilledWithData(const AnfNodePtr &node, const AnfNodePtr &x = nullptr) const {
-    if ((node->abstract() == nullptr) || !node->abstract()->isa<abstract::AbstractTensor>()) {
-      return nullptr;
-    }
-
-    auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
-    TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-    std::vector<int> tensor_shape = tensor_abstract->shape()->shape();
-
-    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-
-    if (x == nullptr) {
-      std::memset(data, 0, mem_size);
-      auto new_vnode = NewValueNode(new_tensor_ptr);
-      new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
-      return new_vnode;
-    }
-    // x is not nullptr
-    if (x->isa<CNode>()) {
-      if ((x->abstract() == nullptr) || !x->abstract()->isa<abstract::AbstractTensor>()) {
-        return nullptr;
-      }
-      auto x_abstract = x->abstract()->cast<abstract::AbstractTensorPtr>();
-      std::vector<int> x_shape = x_abstract->shape()->shape();
-
-      if (x_shape != tensor_shape) {
-        return nullptr;
-      }
-      return x;
-    }
-
-    if (!x->isa<ValueNode>()) {
-      return nullptr;
-    }
-    auto x_value = x->cast<ValueNodePtr>()->value();
-    if (!x_value->isa<tensor::Tensor>()) {
-      return nullptr;
-    }
-
-    auto x_tensor_ptr = dyn_cast<tensor::Tensor>(x_value);
-
-    if ((x_tensor_ptr->DataSize() > 1) && (x_tensor_ptr->DataSize() != new_tensor_ptr->DataSize())) {
-      return nullptr;
-    }
-    char *source_data = reinterpret_cast<char *>(GetPointerToTensorData(x));
-    if (x_tensor_ptr->DataSize() == 1) {
-      for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
-        memcpy(data + i * GetTypeByte(tensor_type_ptr), source_data, GetTypeByte(tensor_type_ptr));
-      }
-    } else {
-      memcpy(data, source_data, mem_size);
-    }
-    auto new_vnode = NewValueNode(new_tensor_ptr);
-    new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
-    return new_vnode;
-  }
-
-  AnfNodePtr NewTensorFilledWithData(const AnfNodePtr &node, const int &value) const {
-    if ((node->abstract() == nullptr) || !node->abstract()->isa<abstract::AbstractTensor>()) {
-      return nullptr;
-    }
-
-    auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
-    TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-    std::vector<int> tensor_shape = tensor_abstract->shape()->shape();
-
-    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-
-    std::memset(data, value, mem_size);
-    auto new_vnode = NewValueNode(new_tensor_ptr);
-    new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
-    return new_vnode;
-  }
-
-  // Support function to multiply two constant tensors: partially support broadcasting shapes
-  template <typename TM>
-  void Multiply(void *in_data_1, int in_data_1_size, void *in_data_2, int in_data_2_size, void **out_data,
-                int out_data_size) const {
-    TM *data_1 = reinterpret_cast<TM *>(in_data_1);
-    TM *data_2 = reinterpret_cast<TM *>(in_data_2);
-    TM *data_out = new TM[out_data_size];
-
-    if (in_data_1_size == 1) {
-      for (int i = 0; i < out_data_size; i++) {
-        data_out[i] = data_1[0];
-      }
-    } else {
-      for (int i = 0; i < out_data_size; i++) {
-        data_out[i] = data_1[i];
-      }
-    }
-    if (in_data_2_size == 1) {
-      for (int i = 0; i < out_data_size; i++) {
-        data_out[i] *= data_2[0];
-      }
-    } else {
-      if (in_data_2_size < out_data_size) {
-        MS_EXCEPTION(ValueError) << "in_data_2_size is smaller than out_data_size.";
-      }
-      for (int i = 0; i < out_data_size; i++) {
-        data_out[i] *= data_2[i];
-      }
-    }
-    *out_data = reinterpret_cast<void *>(data_out);
-    return;
-  }
-
-  AnfNodePtr MulByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) const {
-    AnfNodePtr vnode_1 = this->GetNode(captured_node_);
-    AnfNodePtr vnode_2 = vpnode_2.GetNode(captured_node_);
-    return MulConstantTensors(vnode_1, vnode_2, node_3);
-  }
-
-  AnfNodePtr MulConstantTensors(const AnfNodePtr &vnode_1, const AnfNodePtr &vnode_2, const AnfNodePtr &node_3) const {
-    if (!vnode_1->isa<ValueNode>() || !vnode_2->isa<ValueNode>() || (vnode_1->abstract() == nullptr) ||
-        (vnode_2->abstract() == nullptr) || (node_3->abstract() == nullptr)) {
-      return nullptr;
-    }
-
-    auto value_1 = GetValueNode(vnode_1);
-    auto value_2 = GetValueNode(vnode_2);
-
-    if (!value_1->isa<tensor::Tensor>() || !value_2->isa<tensor::Tensor>()) {
-      return nullptr;
-    }
-
-    auto tensor_ptr_1 = dyn_cast<tensor::Tensor>(value_1);
-    auto tensor_ptr_2 = dyn_cast<tensor::Tensor>(value_2);
-
-    auto tensor_1_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
-    auto tensor_2_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
-    auto tensor_3_abstract = node_3->abstract()->cast<abstract::AbstractTensorPtr>();
-
-    TypePtr tensor_1_type_ptr = tensor_1_abstract->element()->BuildType();
-    TypePtr tensor_2_type_ptr = tensor_2_abstract->element()->BuildType();
-    TypePtr tensor_3_type_ptr = tensor_3_abstract->element()->BuildType();
-
-    if ((tensor_1_type_ptr->type_id() != tensor_3_type_ptr->type_id()) ||
-        (tensor_2_type_ptr->type_id() != tensor_3_type_ptr->type_id())) {
-      return nullptr;
-    }
-
-    std::vector<int> tensor_out_shape = tensor_3_abstract->shape()->shape();
-
-    int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
-
-    if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
-      return nullptr;
-    }
-    if ((tensor_ptr_2->DataSize() > 1) && (tensor_ptr_2->DataSize() != data_out_size)) {
-      return nullptr;
-    }
-
-    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
-    size_t mem_size = GetTypeByte(tensor_3_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-
-    int ret = 0;
-    void *data_out = nullptr;
-    if ((tensor_3_type_ptr->type_id() == TypeId::kNumberTypeFloat32) ||
-        (tensor_3_type_ptr->type_id() == TypeId::kNumberTypeFloat)) {
-      Multiply<float>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
-                      tensor_ptr_2->DataSize(), &data_out, data_out_size);
-      ret = memcpy_s(data, mem_size, data_out, mem_size);
-      delete[] reinterpret_cast<float *>(data_out);
-    } else {
-      if (tensor_3_type_ptr->type_id() == TypeId::kNumberTypeFloat64) {
-        Multiply<double>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
-                         tensor_ptr_2->DataSize(), &data_out, data_out_size);
-        ret = memcpy_s(data, mem_size, data_out, mem_size);
-        delete[] reinterpret_cast<double *>(data_out);
-      } else {
-        if ((tensor_3_type_ptr->type_id() == TypeId::kNumberTypeInt32) ||
-            (tensor_3_type_ptr->type_id() == TypeId::kNumberTypeInt)) {
-          Multiply<int>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
-                        tensor_ptr_2->DataSize(), &data_out, data_out_size);
-          ret = memcpy_s(data, mem_size, data_out, mem_size);
-          delete[] reinterpret_cast<int *>(data_out);
-        } else {
-          // Un-support data types
-          return nullptr;
-        }
-      }
-    }
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret << ", source size " << mem_size << "dest size"
-                        << new_tensor_ptr->DataSize();
-    }
-    auto new_vnode = NewValueNode(new_tensor_ptr);
-    new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
-    return new_vnode;
-  }
-
-  using Internal = const PConstant<T> &;
-
- protected:
-  mutable AnfNodePtr as_node_;
-  mutable AnfNodePtr captured_node_;
-  bool any_value_{true};
-  int check_value_{0};
-  bool is_scalar_{false};
-  mutable bool is_new_value_node_{false};
-  mutable bool captured_{false};
-  mutable bool changed_shape_{false};
 };
 
 // Macro for binary operation functions
-#define BIN_OPERATION_PATTERN(Operator, MSPrimitive, Commutative)                   \
-  template <typename T, typename T2>                                                \
-  inline PBinOperation<T, T2> Operator(const PBase<T> &x, const PBase<T2> &y) {     \
-    return PBinOperation(MSPrimitive, x.get_object(), y.get_object(), Commutative); \
+#define BIN_OPERATION_PATTERN(Operator, MSPrimitive)                            \
+  template <typename T, typename T2>                                            \
+  inline PBinOperation<T, T2> Operator(const PBase<T> &x, const PBase<T2> &y) { \
+    return PBinOperation(MSPrimitive, x.get_object(), y.get_object());          \
   }
 
 // Arithmetic operations
-BIN_OPERATION_PATTERN(operator+, prim::kPrimTensorAdd, true);
-BIN_OPERATION_PATTERN(operator*, prim::kPrimMul, true);
+BIN_OPERATION_PATTERN(operator+, prim::kPrimTensorAdd);
+BIN_OPERATION_PATTERN(operator*, prim::kPrimMul);
 
 // Macros for match and replace
 #define MATCH_REPLACE(OrigNode, CaptureNode, ReplaceWith) \
   if ((CaptureNode).TryCapture(OrigNode)) {               \
-    auto rep = (ReplaceWith).GetNode(OrigNode);           \
-    if (rep != nullptr) {                                 \
-      return rep;                                         \
-    }                                                     \
+    return (ReplaceWith).GetNode(OrigNode);               \
   }
 
 #define MATCH_REPLACE_IF(OrigNode, CaptureNode, ReplaceWith, Condition) \
   if ((CaptureNode).TryCapture(OrigNode) && (Condition)) {              \
-    auto rep = (ReplaceWith).GetNode(OrigNode);                         \
-    if (rep != nullptr) {                                               \
-      return rep;                                                       \
-    }                                                                   \
+    return (ReplaceWith).GetNode(OrigNode);                             \
   }
 
 #define MATCH_REPLACE_IF_ELSE(OrigNode, CaptureNode, ReplaceWith, Condition, ElseNode) \
   if ((CaptureNode).TryCapture(OrigNode)) {                                            \
     if ((Condition)) {                                                                 \
-      auto rep = (ReplaceWith).GetNode(OrigNode);                                      \
-      if (rep != nullptr) {                                                            \
-        return (ReplaceWith).GetNode(OrigNode);                                        \
-      }                                                                                \
-    } else {                                                                           \
-      auto rep = (ElseNode).GetNode(OrigNode);                                         \
-      if (rep != nullptr) {                                                            \
-        return (ElseNode).GetNode(OrigNode);                                           \
-      }                                                                                \
+      return (ReplaceWith).GetNode(OrigNode);                                          \
     }                                                                                  \
+    return (ElseNode).GetNode(OrigNode);                                               \
   }
 
 #define MATCH_REPLACE_LAMBDA(OrigNode, CaptureNode, Lambda) \
   if ((CaptureNode).TryCapture(OrigNode)) {                 \
-    auto rep = (Lambda)();                                  \
-    if (rep != nullptr) {                                   \
-      return rep;                                           \
-    }                                                       \
+    return (Lambda)();                                      \
   }
 
 #define MATCH_REPLACE_LAMBDA_IF(OrigNode, CaptureNode, Lambda, Condition) \
   if ((CaptureNode).TryCapture(OrigNode) && (Condition)) {                \
-    auto rep = (Lambda)();                                                \
-    if (rep != nullptr) {                                                 \
-      return rep;                                                         \
-    }                                                                     \
+    return (Lambda)();                                                    \
   }
 
 }  // namespace mindspore
