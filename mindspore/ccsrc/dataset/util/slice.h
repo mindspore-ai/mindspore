@@ -31,6 +31,10 @@ class ReadableSlice {
  public:
   ReadableSlice() : ptr_(nullptr), sz_(0) {}
   ReadableSlice(const void *ptr, size_t sz) : ptr_(ptr), sz_(sz) {}
+
+  /// \brief Destructor
+  ~ReadableSlice() = default;
+
   ReadableSlice(const ReadableSlice &src, off64_t offset, size_t len) {
     ptr_ = static_cast<const char *>(src.GetPointer()) + offset;
     sz_ = len;
@@ -89,6 +93,8 @@ class WritableSlice : public ReadableSlice {
   WritableSlice(const WritableSlice &src, off64_t offset, size_t len);
   WritableSlice(const WritableSlice &src, off64_t offset);
   WritableSlice(const WritableSlice &lhs) : ReadableSlice(lhs) { mutable_data_ = lhs.mutable_data_; }
+  /// \brief Destructor
+  ~WritableSlice() = default;
   WritableSlice &operator=(const WritableSlice &lhs) {
     if (this != &lhs) {
       mutable_data_ = lhs.mutable_data_;

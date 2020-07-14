@@ -34,6 +34,9 @@ class RemovalPass : public TreePass {
   /// \brief Constructor
   RemovalPass();
 
+  /// \brief Destructor
+  ~RemovalPass() = default;
+
   /// \brief Runs a removal_nodes pass first to find out which nodes to remove, then removes them.
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.

@@ -26,12 +26,11 @@
 #include "dataset/engine/perf/perf_data.h"
 #include "dataset/engine/perf/cyclic_array.h"
 #include "dataset/engine/datasetops/dataset_op.h"
+#include "dataset/engine/execution_tree.h"
 
 using json = nlohmann::json;
 namespace mindspore {
 namespace dataset {
-class ExecutionTree;
-
 // Connector throughput samples the output connector size of each op in the pipeline.
 // For the description of the data structure see perf_buffer.h
 // It support JSON serialization for external usage.
@@ -52,6 +51,10 @@ class ConnectorThroughput : public Sampling {
     timestamps_.AddSample(std::vector<TimePoint>(1));
     out_buffer_count_table_.AddSample(std::vector<int64_t>(n_nodes_));
   }
+
+  /// \brief Destructor
+  ~ConnectorThroughput() = default;
+
   // Driver function for connector size sampling.
   // This function samples the connector size of every nodes within the ExecutionTree
   Status Sample() override;
