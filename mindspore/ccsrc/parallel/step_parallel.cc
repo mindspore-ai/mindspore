@@ -536,7 +536,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
   }
   std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
   auto prim = GetValueNode<PrimitivePtr>(node->input(0));
-  if (prim->name() == GATHERV2 || prim->name() == SPARSE_GATHERV2) {
+  if (prim->name() == EMBEDDING_LOOKUP) {
     replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
   }
   if (!params.empty()) {

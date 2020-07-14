@@ -105,3 +105,49 @@ class Embedding(Cell):
                 self.embedding_table,
                 self.dtype)
         return s
+
+class EmbeddingLookup(Cell):
+    r"""
+    Returns a slice of input tensor based on the specified indices.
+
+    Note:
+        When 'target' is set to 'CPU', this module will use
+        P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU') which
+        specified 'offset = 0' to lookup table.
+        when 'target' is set to 'DEVICE', this module will use P.GatherV2() which
+        specified 'axis = 0' to lookup table.
+
+    Args:
+        target (str): Specify the target where the op is executed. Default: 'CPU'.
+
+    Inputs:
+        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The Tensor slice, instead of the entire Tensor.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Values can be out of range of `input_params`,
+          and the exceeding part will be filled with 0 in the output.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
+        >>> out = nn.EmbeddingLookup()(input_params, input_indices)
+        [[[10, 11], [8 ,9]], [[14, 15], [12, 13]]]
+    """
+    def __init__(self, target='CPU'):
+        super(EmbeddingLookup, self).__init__()
+        self.target = target
+        if target not in ('CPU', 'DEVICE'):
+            raise ValueError('Attr \'target\' of \'EmbeddingLookup\' Op passed '
+                             + str(target) + ', should be one of values in \'CPU\', \'DEVICE\'.')
+        self.gatherv2 = P.GatherV2()
+        self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+
+    def construct(self, params, indices):
+        if self.target == "CPU":
+            out = self.embeddinglookup(params, ids, 0)
+        else:
+            out = self.gatherv2(param, ids, 0)
+        return out

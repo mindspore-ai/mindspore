@@ -41,12 +41,12 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict)
 
 class Net(nn.Cell):
-    def __init__(self, shape, offset):
+    def __init__(self, shape, offset, strategy1=None, strategy2=None, target="Device"):
         super().__init__()
         self.index = Tensor(np.ones(shape), dtype=ms.int32)
         self.offset = offset
-        self.elu = P.EmbeddingLookup()
-        self.mm = P.BatchMatMul()
+        self.elu = P.EmbeddingLookup().set_strategy(strategy1).add_prim_attr("primitive_target", target)
+        self.mm = P.BatchMatMul().set_strategy(strategy2)
 
     def construct(self, x, y):
         out = self.elu(x, self.index, self.offset)
@@ -96,4 +96,32 @@ def test_embeddinglookup_reducescatter_true_grad():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    _executor.compile(net, x, y)
+
+
+def test_embeddinglookup_semi_auto1():
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    shape = [64, 32]
+    offset = 0
+    strategy1 = ((8, 1), (1, 1))
+    strategy2 = ((4, 1, 2), (4, 2, 1))
+    net = GradWrap(NetWithLoss(Net(shape, offset, strategy1, strategy2, "CPU")))
+
+    net.set_auto_parallel()
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    _executor.compile(net, x, y)
+
+
+def test_embeddinglookup_semi_auto2():
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    shape = [64, 32]
+    offset = 0
+    strategy1 = ((1, 8), (1, 1))
+    strategy2 = ((4, 1, 2), (4, 2, 1))
+    net = GradWrap(NetWithLoss(Net(shape, offset, strategy1, strategy2, "CPU")))
+
+    net.set_auto_parallel()
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y)

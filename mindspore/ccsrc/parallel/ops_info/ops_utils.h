@@ -132,6 +132,7 @@ constexpr char REDISTRIBUTION_OP[] = "redistribution_op";
 constexpr char DARA_PARALLEL[] = "data_parallel";
 constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
+constexpr char DEVICE[] = "Device";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
