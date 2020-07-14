@@ -25,7 +25,7 @@
 #include <cfloat>
 
 #include "pybind11/pybind11.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "pipeline/parse/parse.h"
 #include "pipeline/parse/parse_base.h"
 #include "ir/value.h"

@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "debug/trace_info.h"
 
 namespace mindspore {

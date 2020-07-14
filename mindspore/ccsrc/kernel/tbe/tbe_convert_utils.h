@@ -19,7 +19,7 @@
 
 #include <string>
 #include "kernel/kernel.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/dtype/type.h"
 
 namespace mindspore {

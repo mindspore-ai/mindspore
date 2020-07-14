@@ -34,7 +34,7 @@
 #include "utils/log_adapter.h"
 #include "ir/anf.h"
 #include "ir/primitive_py.h"
-#include "pipeline/static_analysis/analysis_context.h"
+#include "abstract/analysis_context.h"
 #include "pipeline/static_analysis/abstract_function.h"
 #include "pipeline/parse/parse.h"
 

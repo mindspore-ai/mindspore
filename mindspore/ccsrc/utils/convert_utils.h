@@ -28,7 +28,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/any.h"
 #include "utils/base_ref.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/anf.h"
 
 namespace py = pybind11;

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef PIPELINE_STATIC_ANALYSIS_DSHAPE_H_
-#define PIPELINE_STATIC_ANALYSIS_DSHAPE_H_
+#ifndef MINDSPORE_CCSRC_ABSTRACT_DSHAPE_H_
+#define MINDSPORE_CCSRC_ABSTRACT_DSHAPE_H_
 
 #include <vector>
 #include <string>
@@ -27,7 +27,7 @@
 #include <memory>
 
 #include "utils/log_adapter.h"
-#include "ir/base.h"
+#include "base/base.h"
 
 namespace mindspore {
 namespace abstract {
@@ -132,4 +132,4 @@ using ListShapePtr = std::shared_ptr<ListShape>;
 }  // namespace abstract
 }  // namespace mindspore
 
-#endif  // PIPELINE_STATIC_ANALYSIS_DSHAPE_H_
+#endif  // MINDSPORE_CCSRC_ABSTRACT_DSHAPE_H_

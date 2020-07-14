@@ -29,7 +29,7 @@
 #include <typeinfo>
 
 #include "device/device_address.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace tensor {

@@ -18,7 +18,7 @@
 #include <string>
 
 #include "pybind_api/api_register.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 // Define python 'RefKey' class.

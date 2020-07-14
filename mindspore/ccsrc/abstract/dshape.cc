@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 
 #include <exception>
 #include <iostream>

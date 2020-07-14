@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ir/base.h"
+#include "base/base.h"
 #include <atomic>
 #include <mutex>
 #include <unordered_map>

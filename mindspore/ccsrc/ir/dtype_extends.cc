@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 TypePtr TypeAnything::DeepCopy() const { return kAnyType; }

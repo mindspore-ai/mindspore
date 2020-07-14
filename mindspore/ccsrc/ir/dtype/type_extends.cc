@@ -15,7 +15,7 @@
  */
 
 #include "ir/dtype/type.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 abstract::AbstractBasePtr Type::ToAbstract() {

@@ -23,8 +23,8 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 
-#include "pipeline/static_analysis/dshape.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/abstract_value.h"
 #include "pipeline/static_analysis/abstract_function.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/parse/parse.h"

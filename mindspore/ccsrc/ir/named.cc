@@ -15,7 +15,7 @@
  */
 
 #include "ir/named.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 bool Named::operator==(const Value &other) const {

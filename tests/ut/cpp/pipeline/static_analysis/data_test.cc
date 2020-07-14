@@ -20,7 +20,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "pipeline/static_analysis/prim.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 
 namespace mindspore {
 namespace abstract {

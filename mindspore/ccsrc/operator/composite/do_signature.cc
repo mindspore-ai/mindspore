@@ -18,10 +18,10 @@
 #include <algorithm>
 #include <utility>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "ir/anf.h"
-#include "pipeline/static_analysis/dshape.h"
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/dshape.h"
+#include "abstract/param_validator.h"
 #include "operator/cc_implementations.h"
 #include "optimizer/opt.h"
 #include "utils/symbolic.h"

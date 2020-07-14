@@ -157,6 +157,7 @@ static std::string ExceptionTypeToString(ExceptionType type) {
 static const char *GetSubModuleName(SubModuleId module_id) {
   static const char *sub_module_names[NUM_SUBMODUES] = {
     "UNKNOWN",    // SM_UNKNOWN
+    "BASE",       // SM_BASE
     "ANALYZER",   // SM_ANALYZER
     "COMMON",     // SM_COMMON
     "DEBUG",      // SM_DEBUG
@@ -176,6 +177,7 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "SESSION",    // SM_SESSION
     "UTILS",      // SM_UTILS
     "VM"          // SM_VM
+    "ABSTRACT"    // SM_ABSTRACT
   };
 
   return sub_module_names[module_id % NUM_SUBMODUES];

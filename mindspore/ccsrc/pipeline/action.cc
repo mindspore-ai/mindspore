@@ -30,7 +30,7 @@
 #include "pipeline/pass.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "pipeline/static_analysis/static_analysis.h"
 #include "pipeline/static_analysis/program_specialize.h"
 #include "pipeline/resource.h"

@@ -25,7 +25,7 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/dtype.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/primitive.h"
 #include "device/device_address.h"
 #include "kernel/kernel.h"

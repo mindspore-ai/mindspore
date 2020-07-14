@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/param_validator.h"
 #include "optimizer/opt.h"
 #include "pybind_api/api_register.h"
 

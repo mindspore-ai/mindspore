@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 #include "ir/func_graph_cloner.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 #include "debug/trace.h"
 
 namespace mindspore {

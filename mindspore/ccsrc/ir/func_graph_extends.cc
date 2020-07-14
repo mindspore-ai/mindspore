@@ -24,7 +24,7 @@
 #include "ir/func_graph_cloner.h"
 #include "operator/ops.h"
 #include "utils/ordered_set.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "pipeline/static_analysis/static_analysis.h"
 #include "pipeline/static_analysis/abstract_function.h"
 

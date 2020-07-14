@@ -34,7 +34,7 @@
 #include <utility>
 
 #include "pre_activate/common/visit.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "utils/log_adapter.h"
 #include "utils/base_ref.h"
 

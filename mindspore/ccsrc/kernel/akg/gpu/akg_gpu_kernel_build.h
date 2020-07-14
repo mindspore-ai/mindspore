@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_KERNEL_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
 #include "kernel/kernel.h"
-#include "ir/base.h"
+#include "base/base.h"
 
 namespace mindspore {
 namespace kernel {

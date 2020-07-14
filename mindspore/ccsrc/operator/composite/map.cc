@@ -22,9 +22,9 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "pipeline/static_analysis/abstract_function.h"
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 #include "pybind_api/api_register.h"
 #include "debug/trace.h"
 #include "operator/ops.h"

@@ -18,7 +18,7 @@
 
 #include "common/common_test.h"
 
-#include "pipeline/static_analysis/dshape.h"
+#include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

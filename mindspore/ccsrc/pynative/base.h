@@ -27,7 +27,7 @@
 
 #include "pybind11/pybind11.h"
 #include "ir/primitive_py.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace pynative {

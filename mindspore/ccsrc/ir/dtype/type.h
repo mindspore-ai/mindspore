@@ -32,7 +32,7 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/named.h"
 #include "ir/dtype/type_id.h"
 

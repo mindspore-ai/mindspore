@@ -20,9 +20,9 @@
 #include "ir/dtype.h"
 #include "common/utils.h"
 #include "operator/ops.h"
-#include "pipeline/static_analysis/param_validator.h"
+#include "abstract/param_validator.h"
 #include "pipeline/static_analysis/prim.h"
-#include "pipeline/static_analysis/utils.h"
+#include "abstract/utils.h"
 #include "utils/context/ms_context.h"
 #include "utils/symbolic.h"
 
