@@ -24,6 +24,7 @@
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/queue.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_job.h"
 
 namespace mindspore {
 namespace dataset {
@@ -107,13 +108,6 @@ class MapOp : public ParallelOp {
       return *this;
     }
 
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetPerformanceMode(bool perf_mode) {
-      build_perf_mode_ = perf_mode;
-      return *this;
-    }
-
     // The builder "build" method creates the final object.
     // @param ptr The shared_ptr to the new MapOp object
     // @return Status
@@ -125,7 +119,6 @@ class MapOp : public ParallelOp {
     std::vector<std::shared_ptr<TensorOp>> build_tensor_funcs_;
     int32_t build_num_workers_;
     int32_t build_op_connector_size_;
-    bool build_perf_mode_;  // Default true.
 
     // Check if the required parameters are set by the builder.
     // @return Status The error code return
@@ -140,8 +133,7 @@ class MapOp : public ParallelOp {
   // @param num_workers The number of worker threads.
   // @param op_connector_size The size of each queue in the connector.
   MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-        std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size,
-        bool perf_mode);
+        std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size);
 
   // Destructor
   ~MapOp() = default;
@@ -164,6 +156,8 @@ class MapOp : public ParallelOp {
   // Class functor operator () override.
   // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
   // provide the master loop that drives the logic for performing the work
+  // This main thread creates local queues, pulls databuffers from the previous
+  // op's Connector and distributes them to the local queues. Workers pull from the local queues.
   // @return Status The error code return
   Status operator()() override;
 
@@ -189,12 +183,24 @@ class MapOp : public ParallelOp {
   const auto &TFuncs() const { return tfuncs_; }
 
  private:
-  // Local queues where worker threads can pop from.
-  // Popping directly from the Connector can block if the previous designated threads haven't pop.
-  // Setting the size of these queues to 0 is essentially the same as pulling directly from Connector.
-  QueueList<std::unique_ptr<DataBuffer>> local_queues_;
+  // A unit of job for map worker thread.
+  // MapWorkerJob holds a list of MapJob where each MapJob can be a CpuMapJob, GpuMapJob or DvppMapJob.
+  struct MapWorkerJob {
+    std::vector<std::shared_ptr<MapJob>> jobs;
+    std::unique_ptr<DataBuffer> databuffer;
+  };
 
-  // Static variables to be ready by worker threads, no modification and readonly
+  // A helper function to create jobs for workers.
+  Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job);
+
+  // A helper function that fetch worker map job from local queues and extract the data and map job list
+  Status FetchNextWork(uint32_t worker_id, std::unique_ptr<DataBuffer> *db,
+                       std::vector<std::shared_ptr<MapJob>> *job_list);
+
+  // Local queues where worker threads get a job from
+  QueueList<std::unique_ptr<MapWorkerJob>> local_queues_;
+
+  //  Tensorops to be read and applied by worker threads
   std::vector<std::shared_ptr<TensorOp>> tfuncs_;
 
   // Variable to store the column name that the tensorOps are consuming
@@ -209,13 +215,6 @@ class MapOp : public ParallelOp {
   // Indices of the columns to process.
   std::vector<size_t> to_process_indices_;
 
-  // Performance mode is when the main thread creates local queues, pulls databuffers from the previous
-  // op's Connector and distributes them to the local queues. Workers pull from the local queues.
-  // If this flag is false, each worker pulls directly from the Connector. This use less resources
-  // (thread and memory), but when the computation cost is heavy (e.g. DecodeOp) and fluctuating, it can
-  // cause additional blocking because pop calls to Connector from the threads are synchronized to enforce the order.
-  bool perf_mode_;
-
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
   // applying a list of TensorOps to each of the data, process the results and then
@@ -224,25 +223,12 @@ class MapOp : public ParallelOp {
   // @return Status The error code return
   Status WorkerEntry(int32_t worker_id) override;  //  In: workerId assigned by tree_
 
-  // Private helper function for getting the next buffer
-  // When PerformanceMode is enabled, workers pop from the local queue.
-  // Otherwise, workers pop from the first child output Connector.
-  // @param p_buffer - the buffer to return
-  // @return Status return code
-  Status FetchNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id) {
-    if (perf_mode_) {
-      RETURN_IF_NOT_OK(local_queues_[worker_id]->PopFront(p_buffer));
-    } else {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(p_buffer, worker_id));
-    }
-    return Status::OK();
-  }
-
   // Private function for worker thread to perform TensorOp's compute function and get the result.
   // @param in_buffer A raw pointer to the DataBuffer. A raw pointer is fine because this function doesn't manage memory
   //     and is not shared with other threads.
   // @param[out] new_tensor_table A new Tensor Table to be populated in this function.
-  Status WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_table);
+  Status WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_table,
+                       const std::vector<std::shared_ptr<MapJob>> &job_list);
 
   // Private function that create the final column name to index mapping and
   // get indices of the columns this mapop does not use.

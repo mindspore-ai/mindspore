@@ -1,4 +1,5 @@
 add_subdirectory(source)
+add_subdirectory(map_op)
 
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
@@ -9,7 +10,6 @@ set(DATASET_ENGINE_DATASETOPS_SRC_FILES
     pipeline_op.cc
     batch_op.cc
     device_queue_op.cc
-    map_op.cc
     project_op.cc
     rename_op.cc
     repeat_op.cc
@@ -37,4 +37,3 @@ if (ENABLE_PYTHON)
 endif()
 
 add_library(engine-datasetops OBJECT ${DATASET_ENGINE_DATASETOPS_SRC_FILES})
-

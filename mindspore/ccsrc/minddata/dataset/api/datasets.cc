@@ -27,7 +27,7 @@
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
-#include "minddata/dataset/engine/datasetops/map_op.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
@@ -537,9 +537,6 @@ std::vector<std::shared_ptr<DatasetOp>> MapDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
-  // Currently default is true, and this is not exposed to user.
-  bool perf_mode = true;
-
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
 
   // Build tensorOp from tensorOperation vector
@@ -550,8 +547,7 @@ std::vector<std::shared_ptr<DatasetOp>> MapDataset::Build() {
 
   // This parameter will be removed with next rebase
   std::vector<std::string> col_orders;
-  auto map_op =
-    std::make_shared<MapOp>(input_columns_, output_columns_, tensor_ops, num_workers_, connector_que_size_, perf_mode);
+  auto map_op = std::make_shared<MapOp>(input_columns_, output_columns_, tensor_ops, num_workers_, connector_que_size_);
   if (!project_columns_.empty()) {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
     node_ops.push_back(project_op);
