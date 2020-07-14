@@ -81,8 +81,6 @@ struct type_caster<float16> : public npy_scalar_caster<float16> {
 }  // namespace detail
 }  // namespace pybind11
 
-using mindspore::device::DeviceAddress;
-using DeviceAddressPtr = std::shared_ptr<mindspore::device::DeviceAddress>;
 // brief mindspore namespace.
 //
 // mindspore namespace is the top level namespace of Mindsporeession project.

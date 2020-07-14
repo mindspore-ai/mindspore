@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 
-#include "runtime/device/device_address.h"
 #include "pybind_api/api_register.h"
 #include "pybind_api/export_flags.h"
 #include "abstract/abstract_value.h"

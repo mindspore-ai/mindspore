@@ -23,8 +23,8 @@ namespace {
 bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
-  auto main_kernel_info = main->kernel_info();
-  auto node_kernel_info = node->kernel_info();
+  auto main_kernel_info = dynamic_cast<device::KernelInfo *>(main->kernel_info());
+  auto node_kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   if (main_kernel_info == nullptr && node_kernel_info == nullptr) {
     return true;
   }

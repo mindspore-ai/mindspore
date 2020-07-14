@@ -27,8 +27,9 @@
 #include <utility>
 
 #include "base/base.h"
-#include "debug/info.h"
+#include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
+#include "debug/info.h"
 
 // A MindSpore ANF IR defined here.
 // with BNF followed:
@@ -70,12 +71,6 @@ class BaseRef;
 
 class Var;
 using VarPtr = std::shared_ptr<Var>;
-
-namespace device {
-class KernelInfo;
-}  // namespace device
-using KernelInfoDevice = device::KernelInfo;
-using KernelInfoDevicePtr = std::shared_ptr<KernelInfoDevice>;
 
 class AnfVisitor;
 

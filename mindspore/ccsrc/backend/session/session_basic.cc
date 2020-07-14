@@ -230,13 +230,14 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   // set the kernel info of parameter
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(input_tensor);
-  if (input_tensor->device_address().get() == nullptr) {
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+  if (device_address == nullptr) {
     kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
     TypeId param_init_data_type = AnfAlgo::IsParameterWeight(param) ? kTypeUnknown : input_tensor->data_type();
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{param_init_data_type});
   } else {
-    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{input_tensor->device_address()->format()});
-    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{input_tensor->device_address()->type_id()});
+    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
+    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter
@@ -319,7 +320,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
   if (ref_real_node->isa<CNode>() && node_graph->IsInternalOutput(ref_real_node) &&
       node_graph->IsFinalOutputKernel(ref_real_node)) {
     auto kernel_info = ref_real_node->kernel_info();
-    if (kernel_info == nullptr || kernel_info->select_kernel_build_info() == nullptr) {
+    if (kernel_info == nullptr || !kernel_info->has_build_info()) {
       MS_LOG(INFO) << "No kernel info";
       return;
     }
@@ -330,9 +331,9 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
     }
     auto format = AnfAlgo::GetOutputFormat(ref_real_node, ref_real_node_index);
     auto type = AnfAlgo::GetOutputDeviceDataType(ref_real_node, ref_real_node_index);
-    parameter->set_kernel_info(std::make_shared<device::KernelInfo>());
-    auto d_kernel_info = parameter->kernel_info();
+    auto d_kernel_info = std::make_shared<device::KernelInfo>();
     MS_EXCEPTION_IF_NULL(d_kernel_info);
+    parameter->set_kernel_info(d_kernel_info);
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetOutputsDeviceType({type});
     builder.SetOutputsFormat({format});

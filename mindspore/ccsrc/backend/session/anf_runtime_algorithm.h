@@ -38,6 +38,8 @@ namespace mindspore {
 namespace session {
 using AnfVisitFuncion = std::function<Any(const AnfNodePtr &node, int index)>;
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+using DeviceAddress = device::DeviceAddress;
+using DeviceAddressPtr = device::DeviceAddressPtr;
 class AnfRuntimeAlgorithm {
  public:
   // get input_anf_node's real kernel by recurse

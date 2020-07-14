@@ -214,8 +214,10 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       MS_EXCEPTION_IF_NULL(input_tensors[input_index]);
-      if (input_tensors[input_index]->device_address().get() != nullptr) {
-        AnfAlgo::SetOutputAddr(input_tensors[input_index]->device_address(), index, item.get());
+      auto output_address =
+        std::dynamic_pointer_cast<device::DeviceAddress>(input_tensors[input_index]->device_address());
+      if (output_address != nullptr) {
+        AnfAlgo::SetOutputAddr(output_address, index, item.get());
         continue;
       }
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);

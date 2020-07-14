@@ -42,7 +42,7 @@ TEST_F(KernelGraphTest, NewValueNode) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   add_value->set_abstract(x_abstract);
   add_value->set_kernel_info(std::make_shared<KernelInfo>());
-  auto mutable_kernel_info = add_value->kernel_info();
+  auto mutable_kernel_info = dynamic_cast<device::KernelInfo *>(add_value->kernel_info());
   MS_EXCEPTION_IF_NULL(mutable_kernel_info);
   std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
   builder->SetOutputsFormat({kOpFormat_FRAC_Z});
