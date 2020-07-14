@@ -51,7 +51,7 @@ TEST_F(MindDataTestRenameOp, TestRenameOpDefault) {
   auto my_tree = std::make_shared<ExecutionTree>();
   // Creating TFReaderOp
 
-  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1/train-0000-of-0001.data";
+  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   rc = TFReaderOp::Builder()
       .SetDatasetFilesList({dataset_path})

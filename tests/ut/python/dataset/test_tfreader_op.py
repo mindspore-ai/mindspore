@@ -12,21 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+Test TFRecordDataset Ops
+"""
 import numpy as np
 import pytest
-from util import save_and_check
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 from mindspore import log as logger
+from util import save_and_check_dict
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
 SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
+DATA_FILES2 = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data",
+               "../data/dataset/test_tf_file_3_images2/train-0000-of-0002.data",
+               "../data/dataset/test_tf_file_3_images2/train-0000-of-0003.data",
+               "../data/dataset/test_tf_file_3_images2/train-0000-of-0004.data"]
+SCHEMA_FILE2 = "../data/dataset/test_tf_file_3_images2/datasetSchema.json"
 GENERATE_GOLDEN = False
 
 
-def test_case_tf_shape():
+def test_tfrecord_shape():
+    logger.info("test_tfrecord_shape")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaRank0.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     ds1 = ds1.batch(2)
@@ -36,7 +45,8 @@ def test_case_tf_shape():
     assert len(output_shape[-1]) == 1
 
 
-def test_case_tf_read_all_dataset():
+def test_tfrecord_read_all_dataset():
+    logger.info("test_tfrecord_read_all_dataset")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaNoRow.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     assert ds1.get_dataset_size() == 12
@@ -46,7 +56,8 @@ def test_case_tf_read_all_dataset():
     assert count == 12
 
 
-def test_case_num_samples():
+def test_tfrecord_num_samples():
+    logger.info("test_tfrecord_num_samples")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file, num_samples=8)
     assert ds1.get_dataset_size() == 8
@@ -56,7 +67,8 @@ def test_case_num_samples():
     assert count == 8
 
 
-def test_case_num_samples2():
+def test_tfrecord_num_samples2():
+    logger.info("test_tfrecord_num_samples2")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     assert ds1.get_dataset_size() == 7
@@ -66,42 +78,41 @@ def test_case_num_samples2():
     assert count == 7
 
 
-def test_case_tf_shape_2():
+def test_tfrecord_shape2():
+    logger.info("test_tfrecord_shape2")
     ds1 = ds.TFRecordDataset(FILES, SCHEMA_FILE)
     ds1 = ds1.batch(2)
     output_shape = ds1.output_shapes()
     assert len(output_shape[-1]) == 2
 
 
-def test_case_tf_file():
-    logger.info("reading data from: {}".format(FILES[0]))
-    parameters = {"params": {}}
+def test_tfrecord_files_basic():
+    logger.info("test_tfrecord_files_basic")
 
     data = ds.TFRecordDataset(FILES, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
-    filename = "tfreader_result.npz"
-    save_and_check(data, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    filename = "tfrecord_files_basic.npz"
+    save_and_check_dict(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_case_tf_file_no_schema():
-    logger.info("reading data from: {}".format(FILES[0]))
-    parameters = {"params": {}}
+def test_tfrecord_no_schema():
+    logger.info("test_tfrecord_no_schema")
 
     data = ds.TFRecordDataset(FILES, shuffle=ds.Shuffle.FILES)
-    filename = "tf_file_no_schema.npz"
-    save_and_check(data, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    filename = "tfrecord_no_schema.npz"
+    save_and_check_dict(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_case_tf_file_pad():
-    logger.info("reading data from: {}".format(FILES[0]))
-    parameters = {"params": {}}
+def test_tfrecord_pad():
+    logger.info("test_tfrecord_pad")
 
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaPadBytes10.json"
     data = ds.TFRecordDataset(FILES, schema_file, shuffle=ds.Shuffle.FILES)
-    filename = "tf_file_padBytes10.npz"
-    save_and_check(data, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    filename = "tfrecord_pad_bytes10.npz"
+    save_and_check_dict(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_tf_files():
+def test_tfrecord_read_files():
+    logger.info("test_tfrecord_read_files")
     pattern = DATASET_ROOT + "/test.data"
     data = ds.TFRecordDataset(pattern, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
     assert sum([1 for _ in data]) == 12
@@ -123,7 +134,19 @@ def test_tf_files():
     assert sum([1 for _ in data]) == 24
 
 
-def test_tf_record_schema():
+def test_tfrecord_multi_files():
+    logger.info("test_tfrecord_multi_files")
+    data1 = ds.TFRecordDataset(DATA_FILES2, SCHEMA_FILE2, shuffle=False)
+    data1 = data1.repeat(1)
+    num_iter = 0
+    for _ in data1.create_dict_iterator():
+        num_iter += 1
+
+    assert num_iter == 12
+
+
+def test_tfrecord_schema():
+    logger.info("test_tfrecord_schema")
     schema = ds.Schema()
     schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
     schema.add_column('col_2d', de_type=mstype.int64, shape=[2, 2])
@@ -142,7 +165,8 @@ def test_tf_record_schema():
             assert np.array_equal(t1, t2)
 
 
-def test_tf_record_shuffle():
+def test_tfrecord_shuffle():
+    logger.info("test_tfrecord_shuffle")
     ds.config.set_seed(1)
     data1 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.GLOBAL)
     data2 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
@@ -153,7 +177,8 @@ def test_tf_record_shuffle():
             assert np.array_equal(t1, t2)
 
 
-def test_tf_record_shard():
+def test_tfrecord_shard():
+    logger.info("test_tfrecord_shard")
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
                 "../data/dataset/tf_file_dataset/test3.data", "../data/dataset/tf_file_dataset/test4.data"]
 
@@ -181,7 +206,8 @@ def test_tf_record_shard():
     assert set(worker2_res) == set(worker1_res)
 
 
-def test_tf_shard_equal_rows():
+def test_tfrecord_shard_equal_rows():
+    logger.info("test_tfrecord_shard_equal_rows")
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
                 "../data/dataset/tf_file_dataset/test3.data", "../data/dataset/tf_file_dataset/test4.data"]
 
@@ -209,7 +235,8 @@ def test_tf_shard_equal_rows():
     assert len(worker4_res) == 40
 
 
-def test_case_tf_file_no_schema_columns_list():
+def test_tfrecord_no_schema_columns_list():
+    logger.info("test_tfrecord_no_schema_columns_list")
     data = ds.TFRecordDataset(FILES, shuffle=False, columns_list=["col_sint16"])
     row = data.create_dict_iterator().get_next()
     assert row["col_sint16"] == [-32768]
@@ -219,7 +246,8 @@ def test_case_tf_file_no_schema_columns_list():
     assert "col_sint32" in str(info.value)
 
 
-def test_tf_record_schema_columns_list():
+def test_tfrecord_schema_columns_list():
+    logger.info("test_tfrecord_schema_columns_list")
     schema = ds.Schema()
     schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
     schema.add_column('col_2d', de_type=mstype.int64, shape=[2, 2])
@@ -238,7 +266,8 @@ def test_tf_record_schema_columns_list():
     assert "col_sint32" in str(info.value)
 
 
-def test_case_invalid_files():
+def test_tfrecord_invalid_files():
+    logger.info("test_tfrecord_invalid_files")
     valid_file = "../data/dataset/testTFTestAllTypes/test.data"
     invalid_file = "../data/dataset/testTFTestAllTypes/invalidFile.txt"
     files = [invalid_file, valid_file, SCHEMA_FILE]
@@ -266,19 +295,20 @@ def test_case_invalid_files():
 
 
 if __name__ == '__main__':
-    test_case_tf_shape()
-    test_case_tf_read_all_dataset()
-    test_case_num_samples()
-    test_case_num_samples2()
-    test_case_tf_shape_2()
-    test_case_tf_file()
-    test_case_tf_file_no_schema()
-    test_case_tf_file_pad()
-    test_tf_files()
-    test_tf_record_schema()
-    test_tf_record_shuffle()
-    test_tf_record_shard()
-    test_tf_shard_equal_rows()
-    test_case_tf_file_no_schema_columns_list()
-    test_tf_record_schema_columns_list()
-    test_case_invalid_files()
+    test_tfrecord_shape()
+    test_tfrecord_read_all_dataset()
+    test_tfrecord_num_samples()
+    test_tfrecord_num_samples2()
+    test_tfrecord_shape2()
+    test_tfrecord_files_basic()
+    test_tfrecord_no_schema()
+    test_tfrecord_pad()
+    test_tfrecord_read_files()
+    test_tfrecord_multi_files()
+    test_tfrecord_schema()
+    test_tfrecord_shuffle()
+    test_tfrecord_shard()
+    test_tfrecord_shard_equal_rows()
+    test_tfrecord_no_schema_columns_list()
+    test_tfrecord_schema_columns_list()
+    test_tfrecord_invalid_files()
