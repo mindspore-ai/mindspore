@@ -1563,7 +1563,7 @@ class BatchDataset(DatasetOp):
             Number, number of batches.
         """
         child_size = self.children[0].get_dataset_size()
-        if child_size is not None:
+        if child_size is not None and isinstance(self.batch_size, int):
             if self.drop_remainder:
                 return math.floor(child_size / self.batch_size)
             return math.ceil(child_size / self.batch_size)
@@ -3913,7 +3913,6 @@ class RandomDataset(SourceDataset):
             return self.num_shards > 1
 
         return self.sampler.is_sharded()
-
 
 
 class Schema:

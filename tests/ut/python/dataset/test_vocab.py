@@ -60,6 +60,15 @@ def test_from_dict_tutorial():
         ind += 1
 
 
+def test_from_dict_exception():
+    try:
+        vocab = text.Vocab.from_dict({"home": -1, "behind": 0})
+        if not vocab:
+            raise ValueError("Vocab is None")
+    except ValueError as e:
+        assert "is not within the required interval" in str(e)
+
+
 def test_from_list():
     def gen(texts):
         for word in texts.split(" "):
@@ -74,13 +83,11 @@ def test_from_list():
             for d in data.create_dict_iterator():
                 res.append(d["text"].item())
             return res
-        except ValueError as e:
-            return str(e)
-        except RuntimeError as e:
-            return str(e)
-        except TypeError as e:
+        except (ValueError, RuntimeError, TypeError) as e:
             return str(e)
 
+    # test basic default config, special_token=None, unknown_token=None
+    assert test_config("w1 w2 w3", ["w1", "w2", "w3"], None, True, None) == [0, 1, 2]
     # test normal operations
     assert test_config("w1 w2 w3 s1 s2 ephemeral", ["w1", "w2", "w3"], ["s1", "s2"], True, "s2") == [2, 3, 4, 0, 1, 1]
     assert test_config("w1 w2 w3 s1 s2", ["w1", "w2", "w3"], ["s1", "s2"], False, "s2") == [0, 1, 2, 3, 4]
@@ -129,6 +136,7 @@ def test_from_file():
 
 
 if __name__ == '__main__':
+    test_from_dict_exception()
     test_from_list_tutorial()
     test_from_file_tutorial()
     test_from_dict_tutorial()
