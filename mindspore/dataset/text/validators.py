@@ -23,7 +23,8 @@ import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_uint32, \
-    INT32_MAX, check_value
+    INT32_MAX, check_value, check_positive
+
 
 def check_unique_list_of_words(words, arg_name):
     """Check that words is a list and each element is a str without any duplication"""
@@ -109,7 +110,7 @@ def check_from_dict(method):
         for word, word_id in word_dict.items():
             type_check(word, (str,), "word")
             type_check(word_id, (int,), "word_id")
-            check_value(word_id, (-1, INT32_MAX), "word_id")
+            check_value(word_id, (0, INT32_MAX), "word_id")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -196,7 +197,7 @@ def check_wordpiece_tokenizer(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets], _ =\
+        [vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets], _ = \
             parse_user_args(method, *args, **kwargs)
         if vocab is None:
             raise ValueError("vocab is not provided.")
@@ -238,7 +239,7 @@ def check_basic_tokenizer(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [lower_case, keep_whitespace, _, preserve_unused, with_offsets], _ =\
+        [lower_case, keep_whitespace, _, preserve_unused, with_offsets], _ = \
             parse_user_args(method, *args, **kwargs)
         if not isinstance(lower_case, bool):
             raise TypeError("Wrong input type for lower_case, should be boolean.")
@@ -317,7 +318,7 @@ def check_from_dataset(method):
         type_check(top_k, (int, type(None)), "top_k")
 
         if isinstance(top_k, int):
-            check_value(top_k, (0, INT32_MAX), "top_k")
+            check_positive(top_k, "top_k")
         type_check(special_first, (bool,), "special_first")
 
         if special_tokens is not None:
@@ -343,7 +344,7 @@ def check_ngram(method):
 
         for i, gram in enumerate(n):
             type_check(gram, (int,), "gram[{0}]".format(i))
-            check_value(gram, (0, INT32_MAX), "gram_{}".format(i))
+            check_positive(gram, "gram_{}".format(i))
 
         if not (isinstance(left_pad, tuple) and len(left_pad) == 2 and isinstance(left_pad[0], str) and isinstance(
                 left_pad[1], int)):
