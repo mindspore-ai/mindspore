@@ -218,14 +218,14 @@ class SummaryRecord:
             if name in {item['tag'] for item in self._data_pool[plugin]}:
                 entry = repr(f'{name}/{plugin}')
                 logger.warning(f'{entry} has duplicate values. Only the newest one will be recorded.')
-            self._data_pool[plugin].append(dict(tag=name, mode=self._mode, value=np_value))
+            self._data_pool[plugin].append(dict(tag=name, value=np_value))
 
         elif plugin in ('train_lineage', 'eval_lineage', 'dataset_graph', 'custom_lineage_data'):
             _check_lineage_value(plugin, value)
-            self._data_pool[plugin].append(dict(mode=self._mode, value=value.SerializeToString()))
+            self._data_pool[plugin].append(dict(value=value.SerializeToString()))
         elif plugin == 'graph':
             package_graph_event(value)
-            self._data_pool[plugin].append(dict(mode=self._mode, value=value))
+            self._data_pool[plugin].append(dict(value=value))
         else:
             raise ValueError(f'No such plugin of {repr(plugin)}')
 

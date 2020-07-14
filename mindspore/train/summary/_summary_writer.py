@@ -15,6 +15,7 @@
 """Writes events to disk in a logdir."""
 import os
 import stat
+from shutil import disk_usage
 
 from ..._c_expression import EventWriter_
 from ._summary_adapter import package_init_event
@@ -42,9 +43,11 @@ class BaseWriter:
         self.init_writer()
         return self._writer
 
-    def write(self, plugin, mode, data):
+    def write(self, plugin, data):
         """Write data to file."""
-        raise NotImplementedError()
+        if self.writer and disk_usage(self._filepath).free < len(data) * 32:
+            raise RuntimeError('The disk space may be soon exhausted.')
+        self.writer.Write(data)
 
     def flush(self):
         """Flush the writer."""
@@ -64,16 +67,16 @@ class SummaryWriter(BaseWriter):
         """Write some metadata etc."""
         self.writer.Write(package_init_event().SerializeToString())
 
-    def write(self, plugin, mode, data):
+    def write(self, plugin, data):
         """Write data to file."""
         if plugin in ('summary', 'graph'):
-            self.writer.Write(data)
+            super().write(plugin, data)
 
 
 class LineageWriter(BaseWriter):
     """LineageWriter for write lineage."""
 
-    def write(self, plugin, mode, data):
+    def write(self, plugin, data):
         """Write data to file."""
         if plugin in ('dataset_graph', 'train_lineage', 'eval_lineage', 'custom_lineage_data'):
-            self.writer.Write(data)
+            super().write(plugin, data)
