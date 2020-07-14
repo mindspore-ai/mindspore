@@ -12,24 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+Test Repeat Op
+"""
 import numpy as np
-from util import save_and_check
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
+from util import save_and_check_dict
 
 DATA_DIR_TF = ["../data/dataset/testTFTestAllTypes/test.data"]
 SCHEMA_DIR_TF = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
-COLUMNS_TF = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
-              "col_sint16", "col_sint32", "col_sint64"]
-GENERATE_GOLDEN = False
-
-IMG_DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
-IMG_SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 DATA_DIR_TF2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR_TF2 = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+GENERATE_GOLDEN = False
 
 
 def test_tf_repeat_01():
@@ -39,14 +38,13 @@ def test_tf_repeat_01():
     logger.info("Test Simple Repeat")
     # define parameters
     repeat_count = 2
-    parameters = {"params": {'repeat_count': repeat_count}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
     data1 = data1.repeat(repeat_count)
 
     filename = "repeat_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_tf_repeat_02():
@@ -99,14 +97,13 @@ def test_tf_repeat_04():
     logger.info("Test Simple Repeat Column List")
     # define parameters
     repeat_count = 2
-    parameters = {"params": {'repeat_count': repeat_count}}
     columns_list = ["col_sint64", "col_sint32"]
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, columns_list=columns_list, shuffle=False)
     data1 = data1.repeat(repeat_count)
 
     filename = "repeat_list_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def generator():
@@ -115,6 +112,7 @@ def generator():
 
 
 def test_nested_repeat1():
+    logger.info("test_nested_repeat1")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
     data = data.repeat(3)
@@ -126,6 +124,7 @@ def test_nested_repeat1():
 
 
 def test_nested_repeat2():
+    logger.info("test_nested_repeat2")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(1)
     data = data.repeat(1)
@@ -137,6 +136,7 @@ def test_nested_repeat2():
 
 
 def test_nested_repeat3():
+    logger.info("test_nested_repeat3")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(1)
     data = data.repeat(2)
@@ -148,6 +148,7 @@ def test_nested_repeat3():
 
 
 def test_nested_repeat4():
+    logger.info("test_nested_repeat4")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
     data = data.repeat(1)
@@ -159,6 +160,7 @@ def test_nested_repeat4():
 
 
 def test_nested_repeat5():
+    logger.info("test_nested_repeat5")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.batch(3)
     data = data.repeat(2)
@@ -171,6 +173,7 @@ def test_nested_repeat5():
 
 
 def test_nested_repeat6():
+    logger.info("test_nested_repeat6")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
     data = data.batch(3)
@@ -183,6 +186,7 @@ def test_nested_repeat6():
 
 
 def test_nested_repeat7():
+    logger.info("test_nested_repeat7")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
     data = data.repeat(3)
@@ -195,6 +199,7 @@ def test_nested_repeat7():
 
 
 def test_nested_repeat8():
+    logger.info("test_nested_repeat8")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.batch(2, drop_remainder=False)
     data = data.repeat(2)
@@ -210,6 +215,7 @@ def test_nested_repeat8():
 
 
 def test_nested_repeat9():
+    logger.info("test_nested_repeat9")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat()
     data = data.repeat(3)
@@ -221,6 +227,7 @@ def test_nested_repeat9():
 
 
 def test_nested_repeat10():
+    logger.info("test_nested_repeat10")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(3)
     data = data.repeat()
@@ -232,6 +239,7 @@ def test_nested_repeat10():
 
 
 def test_nested_repeat11():
+    logger.info("test_nested_repeat11")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
     data = data.repeat(3)
