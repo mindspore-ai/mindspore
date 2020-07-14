@@ -513,7 +513,7 @@ def _set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
-        enable_parallel_optimizer (bool): Enable using optimizer segmentation or noe. Default: False.
+        enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
