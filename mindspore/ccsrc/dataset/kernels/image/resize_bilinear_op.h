@@ -51,6 +51,8 @@ class ResizeBilinearOp : public ResizeOp {
   // Name: Print()
   // Description: A function that prints info about the node
   void Print(std::ostream &out) const override;
+
+  std::string Name() const override { return kResizeBilinearOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

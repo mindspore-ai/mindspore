@@ -42,6 +42,8 @@ class RegexReplaceOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+  std::string Name() const override { return kRegexReplaceOp; }
+
  protected:
   Status RegexReplace(icu::RegexMatcher *const matcher, const std::string_view &text, std::string *out) const;
 

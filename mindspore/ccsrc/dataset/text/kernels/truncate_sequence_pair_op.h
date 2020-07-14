@@ -40,6 +40,8 @@ class TruncateSequencePairOp : public TensorOp {
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
+  std::string Name() const override { return kTruncateSequencePairOp; }
+
  private:
   dsize_t max_length_;
 };

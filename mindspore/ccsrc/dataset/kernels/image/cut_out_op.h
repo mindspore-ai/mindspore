@@ -61,6 +61,8 @@ class CutOutOp : public TensorOp {
   // @return Status - The error code return
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+  std::string Name() const override { return kCutOutOp; }
+
  private:
   std::mt19937 rnd_;
   int32_t box_height_;

@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/image/image_utils.h"
@@ -43,12 +44,18 @@ class ResizeOp : public TensorOp {
   explicit ResizeOp(int32_t size1, int32_t size2 = kDefWidth, InterpolationMode mInterpolation = kDefInterpolation)
       : size1_(size1), size2_(size2), interpolation_(mInterpolation) {}
 
+  ResizeOp(const ResizeOp &rhs) = default;
+
+  ResizeOp(ResizeOp &&rhs) = default;
+
   ~ResizeOp() override = default;
 
   void Print(std::ostream &out) const override { out << "ResizeOp: " << size1_ << " " << size2_; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
+  std::string Name() const override { return kResizeOp; }
 
  protected:
   int32_t size1_;

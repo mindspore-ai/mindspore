@@ -57,6 +57,8 @@ class RandomColorAdjustOp : public TensorOp {
   // @return Status - The error code return.
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
+  std::string Name() const override { return kRandomColorAdjustOp; }
+
  private:
   std::mt19937 rnd_;
   float bright_factor_start_;

@@ -42,6 +42,8 @@ class TypeCastOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "TypeCastOp"; }
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
+  std::string Name() const override { return kTypeCastOp; }
+
  private:
   DataType type_;
 };

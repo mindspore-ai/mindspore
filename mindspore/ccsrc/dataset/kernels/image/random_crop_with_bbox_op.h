@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "dataset/kernels/image/random_crop_op.h"
 
@@ -41,6 +42,8 @@ class RandomCropWithBBoxOp : public RandomCropOp {
   }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kRandomCropWithBBoxOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore

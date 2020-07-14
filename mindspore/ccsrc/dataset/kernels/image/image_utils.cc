@@ -311,7 +311,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   TensorShape ts = TensorShape({crop_h, crop_w, kOutNumComponents});
   auto output_tensor = std::make_shared<Tensor>(ts, DataType(DataType::DE_UINT8));
   const int buffer_size = output_tensor->SizeInBytes();
-  JSAMPLE *buffer = static_cast<JSAMPLE *>(reinterpret_cast<uchar *>(&(*output_tensor->begin<uint8_t>())));
+  JSAMPLE *buffer = reinterpret_cast<JSAMPLE *>(&(*output_tensor->begin<uint8_t>()));
   const int max_scanlines_to_read = skipped_scanlines + crop_h;
   // stride refers to output tensor, which has 3 components at most
   const int stride = crop_w * kOutNumComponents;

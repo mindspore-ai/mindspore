@@ -57,6 +57,8 @@ class JiebaTokenizerOp : public TensorOp {
   // @tag [Default ""] the tag of the word to be added.
   Status AddWord(const std::string &word, int freq = 0);
 
+  std::string Name() const override { return kJiebaTokenizerOp; }
+
  protected:
   std::string hmm_model_path_;
   std::string mp_dict_path_;

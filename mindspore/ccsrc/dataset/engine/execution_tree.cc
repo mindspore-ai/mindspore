@@ -23,6 +23,7 @@
 #include "dataset/engine/opt/pre/removal_pass.h"
 #include "dataset/engine/opt/pre/cache_transform_pass.h"
 #include "dataset/engine/opt/post/repeat_pass.h"
+#include "mindspore/ccsrc/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "dataset/engine/perf/profiling.h"
 #include "dataset/engine/perf/monitor.h"
 
@@ -35,6 +36,7 @@ ExecutionTree::ExecutionTree() : id_count_(0) {
   prepare_flags_ = kDePrepNone;
   perf_monitor_ = std::make_unique<Monitor>(this);
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
+  optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
 }
 
 // Destructor
@@ -202,8 +204,10 @@ Status ExecutionTree::Prepare() {
   // Pre optimization compulsory transformation
   RETURN_IF_NOT_OK(this->PrepareTreePreAction());
 
-  // Optimization transformation
-  RETURN_IF_NOT_OK(this->Optimize());
+  // If optional optimizations are enabled
+  if (optimize_) {
+    RETURN_IF_NOT_OK(this->Optimize());
+  }
 
   // Post optimization compulsory transformation
   RETURN_IF_NOT_OK(this->PrepareTreePostAction());
@@ -248,9 +252,16 @@ Status ExecutionTree::PrepareTreePostAction() {
 }
 
 Status ExecutionTree::Optimize() {
-  //  auto pp = new PrinterPass();
-  //  bool modified = false;
-  //  pp->Run(this, &modified);
+  // Vector of optimizations, currently only 1, add more as necessary
+  std::vector<std::unique_ptr<NodePass>> optimizations;
+  optimizations.push_back(std::make_unique<TensorOpFusionPass>());
+  // vector of flags for each optimization
+  std::vector<bool> modified(optimizations.size(), false);
+  for (auto i = 0; i < optimizations.size(); i++) {
+    auto m = false;
+    optimizations[i]->Run(this, &m);
+    modified[i] = m;
+  }
   return Status::OK();
 }
 

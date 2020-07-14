@@ -58,6 +58,8 @@ class WordpieceTokenizerOp : public TensorOp {
   Status GetTokens(const std::string &input_token, const uint32_t &basic_start, std::vector<std::string> *out_tokens,
                    std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) const;
 
+  std::string Name() const override { return kWordpieceTokenizerOp; }
+
  private:
   const std::shared_ptr<Vocab> vocab_;
   const std::string suffix_indicator_;

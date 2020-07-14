@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -37,6 +38,8 @@ class RescaleOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+
+  std::string Name() const override { return kRescaleOp; }
 
  private:
   float rescale_;

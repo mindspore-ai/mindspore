@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <random>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/image/resize_op.h"
@@ -44,6 +45,8 @@ class RandomResizeOp : public ResizeOp {
   }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  std::string Name() const override { return kRandomResizeOp; }
 
  private:
   std::mt19937 random_generator_;

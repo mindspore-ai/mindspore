@@ -85,6 +85,66 @@
 
 namespace mindspore {
 namespace dataset {
+
+// image
+constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
+constexpr char kDecodeOp[] = "DecodeOp";
+constexpr char kCenterCropOp[] = "CenterCropOp";
+constexpr char kCutOutOp[] = "CutOutOp";
+constexpr char kHwcToChwOp[] = "HwcToChwOp";
+constexpr char kNormalizeOp[] = "NormalizeOp";
+constexpr char kPadOp[] = "PadOp";
+constexpr char kRandomColorAdjustOp[] = "RandomColorAdjustOp";
+constexpr char kRandomCropAndResizeOp[] = "RandomCropAndResizeOp";
+constexpr char kRandomCropAndResizeWithBBoxOp[] = "RandomCropAndResizeWithBBoxOp";
+constexpr char kRandomCropDecodeResizeOp[] = "RandomCropDecodeResizeOp";
+constexpr char kRandomCropOp[] = "RandomCropOp";
+constexpr char kRandomCropWithBBoxOp[] = "RandomCropWithBBoxOp";
+constexpr char kRandomHorizontalFlipWithBBoxOp[] = "RandomHorizontalFlipWithBBoxOp";
+constexpr char kRandomHorizontalFlipOp[] = "RandomHorizontalFlipOp";
+constexpr char kRandomResizeOp[] = "RandomResizeOp";
+constexpr char kRandomResizeWithBBoxOp[] = "RandomResizeWithBBoxOp";
+constexpr char kRandomRotationOp[] = "RandomRotationOp";
+constexpr char kRandomVerticalFlipOp[] = "RandomVerticalFlipOp";
+constexpr char kRandomVerticalFlipWithBBoxOp[] = "RandomVerticalFlipWithBBoxOp";
+constexpr char kRescaleOp[] = "RescaleOp";
+constexpr char kResizeBilinearOp[] = "ResizeBilinearOp";
+constexpr char kResizeOp[] = "ResizeOp";
+constexpr char kResizeWithBBoxOp[] = "ResizeWithBBoxOp";
+constexpr char kUniformAugOp[] = "UniformAugOp";
+
+// text
+constexpr char kBasicTokenizerOp[] = "BasicTokenizerOp";
+constexpr char kBertTokenizerOp[] = "BertTokenizerOp";
+constexpr char kCaseFoldOp[] = "CaseFoldOp";
+constexpr char kJiebaTokenizerOp[] = "JiebaTokenizerOp";
+constexpr char kLookupOp[] = "LookupOp";
+constexpr char kNgramOp[] = "NgramOp";
+constexpr char kNormalizeUTF8Op[] = "NormalizeUTF8Op";
+constexpr char kRegexReplaceOp[] = "RegexReplaceOp";
+constexpr char kRegexTokenizerOp[] = "RegexTokenizerOp";
+constexpr char kToNumberOp[] = "ToNumberOp";
+constexpr char kTruncateSequencePairOp[] = "TruncateSequencePairOp";
+constexpr char kUnicodeCharTokenizerOp[] = "UnicodeCharTokenizerOp";
+constexpr char kUnicodeScriptTokenizerOp[] = "UnicodeScriptTokenizerOp";
+constexpr char kWhitespaceTokenizerOp[] = "WhitespaceTokenizerOp";
+constexpr char kWordpieceTokenizerOp[] = "WordpieceTokenizerOp";
+
+// data
+constexpr char kConcatenateOp[] = "kConcatenateOp";
+constexpr char kDuplicateOp[] = "DuplicateOp";
+constexpr char kFillOp[] = "FillOp";
+constexpr char kMaskOp[] = "MaskOp";
+constexpr char kOneHotOp[] = "OneHotOp";
+constexpr char kPadEndOp[] = "PadEndOp";
+constexpr char kSliceOp[] = "SliceOp";
+constexpr char kToFloat16Op[] = "ToFloat16Op";
+constexpr char kTypeCastOp[] = "TypeCastOp";
+
+// other
+constexpr char kPyFuncOp[] = "PyFuncOp";
+constexpr char kNoOp[] = "NoOp";
+
 // A class that does a computation on  a Tensor
 class TensorOp {
  public:
@@ -143,6 +203,8 @@ class TensorOp {
   // @param outputs out: vector of the types of the output tensors to be filled.
   // @return Status
   virtual Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs);
+
+  virtual std::string Name() const = 0;
 };
 }  // namespace dataset
 }  // namespace mindspore

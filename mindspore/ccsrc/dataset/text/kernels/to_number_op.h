@@ -57,6 +57,8 @@ class ToNumberOp : public TensorOp {
   // @param std::ostream &out
   void Print(std::ostream &out) const override;
 
+  std::string Name() const override { return kToNumberOp; }
+
  private:
   template <typename T>
   Status ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);

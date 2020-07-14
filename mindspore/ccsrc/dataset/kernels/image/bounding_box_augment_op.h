@@ -20,6 +20,7 @@
 #include <memory>
 #include <random>
 #include <cstdlib>
+#include <string>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -49,6 +50,8 @@ class BoundingBoxAugmentOp : public TensorOp {
   void Print(std::ostream &out) const override { out << "BoundingBoxAugmentOp"; }
 
   Status Compute(const TensorRow &input, TensorRow *output) override;
+
+  std::string Name() const override { return kBoundingBoxAugmentOp; }
 
  private:
   float ratio_;

@@ -53,6 +53,8 @@ class RegexTokenizerOp : public TensorOp {
   Status GetRegexTokens(const std::string &text, std::vector<std::string> *out_tokens,
                         std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) const;
 
+  std::string Name() const override { return kRegexTokenizerOp; }
+
  private:
   const icu::UnicodeString delim_pattern_;
   const icu::UnicodeString keep_delim_pattern_;

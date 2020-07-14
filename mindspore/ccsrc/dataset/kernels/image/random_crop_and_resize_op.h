@@ -19,6 +19,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include <string>
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/image/image_utils.h"
@@ -41,6 +42,12 @@ class RandomCropAndResizeOp : public TensorOp {
                         float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb, float aspect_ub = kDefAspectUb,
                         InterpolationMode interpolation = kDefInterpolation, int32_t max_iter = kDefMaxIter);
 
+  RandomCropAndResizeOp() = default;
+
+  RandomCropAndResizeOp(const RandomCropAndResizeOp &rhs) = default;
+
+  RandomCropAndResizeOp(RandomCropAndResizeOp &&rhs) = default;
+
   ~RandomCropAndResizeOp() override = default;
 
   void Print(std::ostream &out) const override {
@@ -51,6 +58,8 @@ class RandomCropAndResizeOp : public TensorOp {
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
   Status GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width);
+
+  std::string Name() const override { return kRandomCropAndResizeOp; }
 
  protected:
   int32_t target_height_;

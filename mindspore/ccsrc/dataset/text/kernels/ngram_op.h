@@ -58,6 +58,8 @@ class NgramOp : public TensorOp {
   // @param std::ostream &out
   void Print(std::ostream &out) const override;
 
+  std::string Name() const override { return kNgramOp; }
+
  private:
   std::vector<int32_t> ngrams_;  // list of n grams
   int32_t l_len_;                // left padding length

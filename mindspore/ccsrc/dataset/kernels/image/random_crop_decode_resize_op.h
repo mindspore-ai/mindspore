@@ -35,6 +35,8 @@ class RandomCropDecodeResizeOp : public RandomCropAndResizeOp {
                            float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb, float aspect_ub = kDefAspectUb,
                            InterpolationMode interpolation = kDefInterpolation, int32_t max_iter = kDefMaxIter);
 
+  explicit RandomCropDecodeResizeOp(const RandomCropAndResizeOp &rhs) : RandomCropAndResizeOp(rhs) {}
+
   ~RandomCropDecodeResizeOp() override = default;
 
   void Print(std::ostream &out) const override {
@@ -43,6 +45,8 @@ class RandomCropDecodeResizeOp : public RandomCropAndResizeOp {
   }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  std::string Name() const override { return kRandomCropDecodeResizeOp; }
 };
 }  // namespace dataset
 }  // namespace mindspore
