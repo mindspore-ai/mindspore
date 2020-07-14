@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "pipeline/static_analysis/evaluator.h"
-#include "pipeline/static_analysis/prim.h"
+#include "pipeline/jit/static_analysis/evaluator.h"
+#include "pipeline/jit/static_analysis/prim.h"
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"

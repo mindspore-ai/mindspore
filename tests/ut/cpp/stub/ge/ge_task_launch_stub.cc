@@ -15,7 +15,7 @@
  */
 #include <vector>
 #include "framework/ge_runtime/model_runner.h"
-#include "device/ascend/tasksink/runtime_utils.h"
+#include "runtime/device/ascend/tasksink/runtime_utils.h"
 
 namespace ge {
 namespace model_runner {

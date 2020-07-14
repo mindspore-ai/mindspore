@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "device/ascend/tasksink/task_generator.h"
+#include "runtime/device/ascend/tasksink/task_generator.h"
 
 namespace mindspore {
 namespace device {

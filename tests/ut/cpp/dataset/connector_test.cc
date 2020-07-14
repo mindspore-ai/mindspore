@@ -23,8 +23,8 @@
 
 
 #include "common/common.h"
-#include "dataset/engine/connector.h"
-#include "dataset/util/task_manager.h"
+#include "minddata/dataset/engine/connector.h"
+#include "minddata/dataset/util/task_manager.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

@@ -15,13 +15,13 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "device/kernel_info.h"
+#include "runtime/device/kernel_info.h"
 #include "debug/anf_ir_dump.h"
-#include "session/anf_runtime_algorithm.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 #define private public
 #define protected public
-#include "pre_activate/ascend/ir_fusion/layer_norm_beta_gamma_backprop_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/layer_norm_beta_gamma_backprop_fusion.h"
 #undef private
 #undef protected
 

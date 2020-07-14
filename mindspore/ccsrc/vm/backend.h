@@ -26,7 +26,7 @@
 #include "ir/anf.h"
 #include "vm/segment_runner.h"
 #include "vm/vm.h"
-#include "session/session_basic.h"
+#include "backend/session/session_basic.h"
 
 namespace mindspore {
 namespace compile {

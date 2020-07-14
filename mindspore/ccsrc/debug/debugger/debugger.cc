@@ -19,8 +19,8 @@
 #include <vector>
 #include <algorithm>
 #include "debug/debugger/debugger.h"
-#include "pipeline/pipeline.h"
-#include "session/anf_runtime_algorithm.h"
+#include "pipeline/jit/pipeline.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;

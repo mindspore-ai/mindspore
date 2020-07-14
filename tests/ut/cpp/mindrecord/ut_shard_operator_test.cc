@@ -24,11 +24,11 @@
 #include "common/utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "mindrecord/include/shard_category.h"
-#include "mindrecord/include/shard_pk_sample.h"
-#include "mindrecord/include/shard_reader.h"
-#include "mindrecord/include/shard_sample.h"
-#include "mindrecord/include/shard_shuffle.h"
+#include "minddata/mindrecord/include/shard_category.h"
+#include "minddata/mindrecord/include/shard_pk_sample.h"
+#include "minddata/mindrecord/include/shard_reader.h"
+#include "minddata/mindrecord/include/shard_sample.h"
+#include "minddata/mindrecord/include/shard_shuffle.h"
 #include "ut_common.h"
 
 using mindspore::LogStream;

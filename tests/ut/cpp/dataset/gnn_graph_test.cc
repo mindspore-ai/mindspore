@@ -20,9 +20,9 @@
 
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/util/status.h"
-#include "dataset/engine/gnn/node.h"
-#include "dataset/engine/gnn/graph_loader.h"
+#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/engine/gnn/node.h"
+#include "minddata/dataset/engine/gnn/graph_loader.h"
 
 using namespace mindspore::dataset;
 using namespace mindspore::dataset::gnn;

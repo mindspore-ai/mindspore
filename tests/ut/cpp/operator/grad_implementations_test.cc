@@ -20,7 +20,7 @@
 #include "ir/value.h"
 #include "ir/manager.h"
 #include "common/common_test.h"
-#include "optimizer/ad/dfunctor.h"
+#include "frontend/optimizer/ad/dfunctor.h"
 #include "debug/draw.h"
 #include "common/py_func_graph_fetcher.h"
 

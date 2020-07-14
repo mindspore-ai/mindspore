@@ -20,7 +20,7 @@
 #include <unordered_map>
 
 #include "common/common_test.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "utils/any.h"
 #include "utils/misc.h"
 

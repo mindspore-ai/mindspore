@@ -18,10 +18,10 @@
 #include "common/common_test.h"
 #include "ir/anf.h"
 #include "ir/value.h"
-#include "operator/composite/composite.h"
-#include "operator/ops.h"
-#include "pipeline/static_analysis/prim.h"
-#include "pipeline/static_analysis/abstract_function.h"
+#include "frontend/operator/composite/composite.h"
+#include "frontend/operator/ops.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/static_analysis/abstract_function.h"
 #include "debug/trace.h"
 
 namespace mindspore {

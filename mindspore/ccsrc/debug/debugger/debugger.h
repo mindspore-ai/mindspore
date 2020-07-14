@@ -19,7 +19,7 @@
 #include <list>
 #include <memory>
 #include <string>
-#include "session/kernel_graph.h"
+#include "backend/session/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
 

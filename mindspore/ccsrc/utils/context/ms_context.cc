@@ -27,7 +27,7 @@
 #include "tdt/data_common.h"
 #endif
 #ifdef ENABLE_GE
-#include "transform/df_graph_manager.h"
+#include "transform/graph_ir/df_graph_manager.h"
 #endif
 #include "ir/tensor.h"
 #include "common/utils.h"

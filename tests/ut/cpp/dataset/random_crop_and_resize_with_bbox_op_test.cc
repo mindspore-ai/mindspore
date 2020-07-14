@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "common/bboxop_common.h"
-#include "dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
 #include "utils/log_adapter.h"
 
-#include "dataset/core/config_manager.h"
-#include "dataset/core/global_context.h"
+#include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/core/global_context.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;

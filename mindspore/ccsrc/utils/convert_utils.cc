@@ -26,8 +26,8 @@
 
 #include "pybind11/pybind11.h"
 #include "abstract/abstract_value.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/parse_base.h"
+#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/parse_base.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
 #include "ir/param_value.h"

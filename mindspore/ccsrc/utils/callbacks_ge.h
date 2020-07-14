@@ -20,8 +20,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "transform/types.h"
-#include "transform/util.h"
+#include "transform/graph_ir/types.h"
+#include "transform/graph_ir/util.h"
 #include "ir/tensor.h"
 
 namespace mindspore {

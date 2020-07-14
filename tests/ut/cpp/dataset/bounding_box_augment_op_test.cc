@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "common/bboxop_common.h"
-#include "dataset/kernels/image/bounding_box_augment_op.h"
-#include "dataset/kernels/image/random_rotation_op.h"
+#include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
+#include "minddata/dataset/kernels/image/random_rotation_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

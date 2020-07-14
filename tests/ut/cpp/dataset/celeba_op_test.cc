@@ -19,11 +19,11 @@
 #include <string>
 
 #include "common/common.h"
-#include "dataset/core/client.h"
-#include "dataset/core/global_context.h"
-#include "dataset/engine/datasetops/source/celeba_op.h"
-#include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
-#include "dataset/util/status.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/engine/datasetops/source/celeba_op.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
+#include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "securec.h"

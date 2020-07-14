@@ -19,7 +19,7 @@
 
 #define private public
 #define protected public
-#include "pre_activate/ascend/ir_fusion/add_input_to_output.h"
+#include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
 #undef private
 #undef protected
 

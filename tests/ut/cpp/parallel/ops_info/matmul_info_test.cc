@@ -18,11 +18,11 @@
 #include <list>
 #include <vector>
 #include "common/common_test.h"
-#include "parallel/strategy.h"
-#include "parallel/ops_info/matmul_info.h"
-#include "parallel/device_manager.h"
-#include "parallel/step_parallel.h"
-#include "parallel/auto_parallel/graph_costmodel.h"
+#include "frontend/parallel/strategy.h"
+#include "frontend/parallel/ops_info/matmul_info.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {

@@ -24,12 +24,12 @@
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/include/datasets.h"
-#include "dataset/include/status.h"
-#include "dataset/include/transforms.h"
-#include "dataset/include/iterator.h"
-#include "dataset/core/constants.h"
-#include "dataset/include/samplers.h"
+#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/status.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/iterator.h"
+#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/samplers.h"
 
 using namespace mindspore::dataset::api;
 using mindspore::MsLogLevel::ERROR;

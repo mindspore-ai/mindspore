@@ -29,7 +29,7 @@
 #include "ir/primitive.h"
 #include "utils/graph_utils.h"
 #include "utils/utils.h"
-#include "operator/composite/composite.h"
+#include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 
 namespace py = pybind11;

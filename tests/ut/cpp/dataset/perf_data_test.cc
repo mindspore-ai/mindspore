@@ -17,8 +17,8 @@
 #include "common/cvop_common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/engine/perf/cyclic_array.h"
-#include "dataset/engine/perf/perf_data.h"
+#include "minddata/dataset/engine/perf/cyclic_array.h"
+#include "minddata/dataset/engine/perf/perf_data.h"
 
 using namespace mindspore::dataset;
 

@@ -19,12 +19,12 @@
 
 
 #include "common/common.h"
-#include "dataset/core/client.h"
-#include "dataset/core/tensor.h"
-#include "dataset/engine/datasetops/source/image_folder_op.h"
-#include "dataset/kernels/image/decode_op.h"
-#include "dataset/kernels/image/resize_op.h"
-#include "dataset/kernels/tensor_op.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/resize_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

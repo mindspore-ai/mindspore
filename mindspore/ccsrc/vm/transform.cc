@@ -28,7 +28,7 @@
 
 #include "abstract/abstract_value.h"
 #ifdef ENABLE_GE
-#include "transform/convert.h"
+#include "transform/graph_ir/convert.h"
 #endif
 #include "utils/graph_utils.h"
 #include "utils/context/ms_context.h"

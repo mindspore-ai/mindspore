@@ -18,8 +18,8 @@
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "pipeline/static_analysis/prim.h"
-#include "operator/ops.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "frontend/operator/ops.h"
 #include "abstract/utils.h"
 
 namespace mindspore {

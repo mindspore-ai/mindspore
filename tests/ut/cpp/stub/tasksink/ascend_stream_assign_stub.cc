@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "device/ascend/ascend_stream_assign.h"
-#include "device/ascend/ascend_label_assign.h"
-#include "device/kernel_adjust.h"
+#include "runtime/device/ascend/ascend_stream_assign.h"
+#include "runtime/device/ascend/ascend_label_assign.h"
+#include "runtime/device/kernel_adjust.h"
 
 namespace mindspore {
 namespace device {

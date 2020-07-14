@@ -25,11 +25,11 @@
 #include "ir/manager.h"
 #include "ir/value.h"
 #include "ir/visitor.h"
-#include "operator/ops.h"
-#include "optimizer/irpass.h"
-#include "pipeline/resource.h"
+#include "frontend/operator/ops.h"
+#include "frontend/optimizer/irpass.h"
+#include "pipeline/jit/resource.h"
 #include "debug/draw.h"
-#include "pipeline/parse/data_converter.h"
+#include "pipeline/jit/parse/data_converter.h"
 
 namespace mindspore {
 namespace opt {

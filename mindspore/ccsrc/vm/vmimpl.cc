@@ -27,7 +27,7 @@
 #include <set>
 
 #include "ir/tensor.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/primitive_py.h"

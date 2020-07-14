@@ -28,17 +28,17 @@
 #include "ir/meta_func_graph.h"
 #include "ir/param_value.h"
 #include "ir/tensor_py.h"
-#include "pipeline/parse/python_adapter.h"
-#include "pipeline/parse/resolve.h"
-#include "operator/composite/composite.h"
-#include "operator/composite/map.h"
+#include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/parse/resolve.h"
+#include "frontend/operator/composite/composite.h"
+#include "frontend/operator/composite/map.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "utils/utils.h"
 #include "debug/trace.h"
 #include "debug/label.h"
 #include "utils/context/ms_context.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 
 using mindspore::tensor::TensorPy;
 

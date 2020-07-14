@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/util/treap.h"
+#include "minddata/dataset/util/treap.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

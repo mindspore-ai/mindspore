@@ -31,8 +31,8 @@
 #include "debug/label.h"
 #include "utils/log_adapter.h"
 #include "common/utils.h"
-#include "pipeline/parse/function_block.h"
-#include "pipeline/parse/python_adapter.h"
+#include "pipeline/jit/parse/function_block.h"
+#include "pipeline/jit/parse/python_adapter.h"
 
 namespace mindspore {
 namespace {
