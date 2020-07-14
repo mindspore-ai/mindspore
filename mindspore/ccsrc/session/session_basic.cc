@@ -175,8 +175,8 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   if (inputs_params == nullptr) {
     return 0;
   }
-  if (inputs_params->empty()) {
-    MS_LOG(EXCEPTION) << "Illegal empty inputs_params";
+  if (inputs_params->size() < 2) {
+    MS_LOG(EXCEPTION) << "Illegal inputs_params size";
   }
   auto tensor = (*inputs_params)[0];
   MS_EXCEPTION_IF_NULL(tensor);
