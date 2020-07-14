@@ -22,13 +22,13 @@
 #include "ir/anf.h"
 #include "ir/visitor.h"
 #include "ir/func_graph_cloner.h"
-#include "optimizer/opt.h"
-#include "optimizer/irpass.h"
-#include "optimizer/irpass/arithmetic_simplify.h"
+#include "frontend/optimizer/opt.h"
+#include "frontend/optimizer/irpass.h"
+#include "frontend/optimizer/irpass/arithmetic_simplify.h"
 
 #include "debug/draw.h"
-#include "operator/ops.h"
-#include "optimizer/cse.h"
+#include "frontend/operator/ops.h"
+#include "frontend/optimizer/cse.h"
 
 namespace mindspore {
 namespace opt {

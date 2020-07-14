@@ -16,11 +16,11 @@
 #include "common/common.h"
 #include "gtest/gtest.h"
 
-#include "dataset/core/constants.h"
-#include "dataset/core/tensor.h"
-#include "dataset/engine/data_buffer.h"
-#include "dataset/engine/datasetops/source/sampler/sampler.h"
-#include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
+#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/engine/data_buffer.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "utils/log_adapter.h"
 
 #include <vector>

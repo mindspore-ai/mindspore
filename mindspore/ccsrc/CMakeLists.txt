@@ -1,4 +1,5 @@
 ## common setting
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
@@ -35,20 +36,20 @@ if(ENABLE_GPU)
     include_directories(${CUDNN_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS})
 
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "device/gpu/*.cc"
-            "device/gpu/*.cu"
-            "kernel/gpu/*.cu"
-            "kernel/akg/gpu/*.cc"
-            "kernel/akg/akg_kernel_build.cc"
-            "kernel/akg/akg_kernel_attrs_process.cc"
+            "runtime/device/gpu/*.cc"
+            "runtime/device/gpu/*.cu"
+            "backend/kernel_compiler/gpu/*.cu"
+            "backend/kernel_compiler/akg/gpu/*.cc"
+            "backend/kernel_compiler/akg/akg_kernel_build.cc"
+            "backend/kernel_compiler/akg/akg_kernel_attrs_process.cc"
             )
 
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
-    list(REMOVE_ITEM GPU_SRC_LIST "device/gpu/blocking_queue.cc" "device/gpu/gpu_buffer_mgr.cc")
-    list(REMOVE_ITEM GPU_SRC_LIST "device/gpu/mpi/mpi_initializer.cc"
-                                  "device/gpu/distribution/collective_wrapper.cc"
-                                  "device/gpu/distribution/mpi_wrapper.cc"
-                                  "device/gpu/distribution/nccl_wrapper.cc"
+    list(REMOVE_ITEM GPU_SRC_LIST "runtime/device/gpu/blocking_queue.cc" "runtime/device/gpu/gpu_buffer_mgr.cc")
+    list(REMOVE_ITEM GPU_SRC_LIST "runtime/device/gpu/mpi/mpi_initializer.cc"
+                                  "runtime/device/gpu/distribution/collective_wrapper.cc"
+                                  "runtime/device/gpu/distribution/mpi_wrapper.cc"
+                                  "runtime/device/gpu/distribution/nccl_wrapper.cc"
                                   )
 
     set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -101,15 +102,15 @@ if (ENABLE_DUMP_PROTO)
 endif ()
 
 if (ENABLE_D)
-    include_directories("${CMAKE_BINARY_DIR}/kernel/aicpu")
+    include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
     include_directories("${CMAKE_BINARY_DIR}/predict/generator/ir")
-    file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "kernel/aicpu/proto/*.proto")
+    file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "backend/kernel_compiler/aicpu/proto/*.proto")
     ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
     
     file(GLOB_RECURSE PROTO_INNER RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "predict/proto/*.proto")
     ms_protobuf_generate(PREDICT_PROTOSRCS PREDICT_PROTOHDRS ${PROTO_INNER})
 
-    file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "device/ascend/dump/proto/*.proto")
+    file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "runtime/device/ascend/dump/proto/*.proto")
     ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
 
     list(APPEND MINDSPORE_PROTO_LIST ${PROTOSRCS})
@@ -125,18 +126,32 @@ if (MINDSPORE_PROTO_LIST)
 endif()
 
 ## make sub objects
-set(SUB_COMP 
-    transform pre_activate parallel pipeline device kernel common debug gvar ir onnx operator optimizer predict
-    pybind_api pynative session utils vm base abstract
+set(SUB_COMP
+        transform/graph_ir
+        transform/onnx
+        backend/optimizer
+        backend/kernel_compiler
+        backend/session
+        runtime/device
+        frontend/optimizer
+        frontend/parallel
+        frontend/operator
+        pipeline/jit
+        pipeline/pynative
+        common debug gvar predict pybind_api utils vm base abstract
 )
 
 foreach (_comp ${SUB_COMP})
     add_subdirectory(${_comp})
-    if (TARGET _mindspore_${_comp}_obj)
-        list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${_comp}_obj>)
-        add_dependencies(_mindspore_${_comp}_obj proto_input flat_input)
+    string(REPLACE "/" "_" sub ${_comp})
+    if (TARGET _mindspore_${sub}_obj)
+        list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${sub}_obj>)
+        add_dependencies(_mindspore_${sub}_obj proto_input flat_input)
     endif ()
 endforeach ()
+add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/ir ir)
+list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_ir_obj>)
+add_dependencies(_mindspore_ir_obj proto_input flat_input)
 
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
@@ -207,8 +222,8 @@ endif()
 
 # set c_expression building
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set_property(SOURCE "pipeline/init.cc" PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)
-pybind11_add_module(_c_expression "pipeline/init.cc")
+set_property(SOURCE "pipeline/jit/init.cc" PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)
+pybind11_add_module(_c_expression "pipeline/jit/init.cc")
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -265,8 +280,8 @@ if (ENABLE_CPU)
 endif ()
 
 if (ENABLE_MINDDATA)
-    add_subdirectory(mindrecord)
-    add_subdirectory(dataset)
+    add_subdirectory(minddata/mindrecord)
+    add_subdirectory(minddata/dataset)
 endif ()
 
 # build inference
@@ -275,7 +290,7 @@ set(LOAD_ONNX_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_model_parser.cc
         )
 add_library(inference SHARED
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/backend/session/session.cc
         ${LOAD_ONNX_SRC}
         )
 target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}

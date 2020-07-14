@@ -24,9 +24,9 @@
 #include "common/utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "mindrecord/include/shard_reader.h"
-#include "mindrecord/include/shard_writer.h"
-#include "mindrecord/include/shard_index_generator.h"
+#include "minddata/mindrecord/include/shard_reader.h"
+#include "minddata/mindrecord/include/shard_writer.h"
+#include "minddata/mindrecord/include/shard_index_generator.h"
 #include "securec.h"
 #include "ut_common.h"
 

@@ -15,10 +15,10 @@
  */
 
 #include <common/common_test.h>
-#include "parallel/tensor_layout/tensor_layout.h"
-#include "parallel/tensor_layout/tensor_info.h"
-#include "parallel/auto_parallel/operator_costmodel.h"
-#include "parallel/device_manager.h"
+#include "frontend/parallel/tensor_layout/tensor_layout.h"
+#include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/auto_parallel/operator_costmodel.h"
+#include "frontend/parallel/device_manager.h"
 
 namespace mindspore {
 namespace parallel {

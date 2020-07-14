@@ -23,7 +23,7 @@
 #include "vm/vmimpl.h"
 #include "vm/backend.h"
 #include "vm/transform.h"
-#include "pipeline/parse/data_converter.h"
+#include "pipeline/jit/parse/data_converter.h"
 #include "utils/base_ref_extends.h"
 
 namespace mindspore {

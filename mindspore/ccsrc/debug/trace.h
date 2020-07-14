@@ -27,7 +27,7 @@
 #include "debug/info.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "pipeline/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/any.h"
 
 namespace mindspore {

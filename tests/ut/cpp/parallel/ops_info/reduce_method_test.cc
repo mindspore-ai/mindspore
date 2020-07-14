@@ -18,11 +18,11 @@
 #include <list>
 #include <vector>
 #include "common/common_test.h"
-#include "parallel/strategy.h"
-#include "parallel/ops_info/reduce_method_info.h"
+#include "frontend/parallel/strategy.h"
+#include "frontend/parallel/ops_info/reduce_method_info.h"
 #include "common/py_func_graph_fetcher.h"
-#include "parallel/device_manager.h"
-#include "parallel/step_parallel.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace parallel {

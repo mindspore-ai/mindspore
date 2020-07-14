@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/core/tensor.h"
-#include "dataset/kernels/data/duplicate_op.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/kernels/data/duplicate_op.h"
 
 using namespace mindspore::dataset;
 

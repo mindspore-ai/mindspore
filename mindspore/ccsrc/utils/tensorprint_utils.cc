@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include "ir/tensor.h"
-#include "device/convert_tensor_utils.h"
+#include "runtime/device/convert_tensor_utils.h"
 #include "./securec.h"
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"

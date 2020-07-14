@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "pipeline/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/symbolic.h"
 
 using std::cout;

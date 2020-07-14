@@ -17,7 +17,7 @@
 #include <list>
 #include <vector>
 #include "common/common_test.h"
-#include "parallel/strategy.h"
+#include "frontend/parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {

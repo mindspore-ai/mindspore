@@ -18,9 +18,9 @@
 #include "pybind11/pybind11.h"
 #include "utils/callbacks.h"
 #include "common/common_test.h"
-#include "pipeline/pipeline.h"
-#include "pipeline/parse/python_adapter.h"
-#include "transform/df_graph_manager.h"
+#include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/parse/python_adapter.h"
+#include "transform/graph_ir/df_graph_manager.h"
 #include "debug/draw.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"

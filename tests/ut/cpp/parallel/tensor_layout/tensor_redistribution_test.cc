@@ -17,7 +17,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "parallel/tensor_layout/tensor_redistribution.h"
+#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
 namespace parallel {

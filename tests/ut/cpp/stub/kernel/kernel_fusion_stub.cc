@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/kernel_fusion.h"
-#include "kernel/tbe/tbe_kernel_mod.h"
+#include "backend/kernel_compiler/kernel_fusion.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
 #include "common/utils.h"
 
 namespace mindspore {

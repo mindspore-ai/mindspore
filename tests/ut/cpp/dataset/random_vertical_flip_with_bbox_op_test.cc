@@ -15,7 +15,7 @@
  */
 
 #include "common/bboxop_common.h"
-#include "dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

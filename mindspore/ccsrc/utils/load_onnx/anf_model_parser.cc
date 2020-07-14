@@ -23,7 +23,7 @@
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/tensor.h"
 #include "ir/param_value.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "abstract/abstract_value.h"
 #include "proto/onnx.pb.h"
 #include "utils/log_adapter.h"

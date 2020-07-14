@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "ir/value.h"
 #include "ir/primitive_py.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "./common.h"
 
 namespace mindspore {

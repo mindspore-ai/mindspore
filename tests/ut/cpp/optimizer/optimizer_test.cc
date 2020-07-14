@@ -20,10 +20,10 @@
 #include "common/py_func_graph_fetcher.h"
 
 #include "ir/anf.h"
-#include "operator/ops.h"
-#include "optimizer/cse.h"
-#include "optimizer/optimizer.h"
-#include "optimizer/irpass.h"
+#include "frontend/operator/ops.h"
+#include "frontend/optimizer/cse.h"
+#include "frontend/optimizer/optimizer.h"
+#include "frontend/optimizer/irpass.h"
 #include "debug/draw.h"
 
 namespace mindspore {

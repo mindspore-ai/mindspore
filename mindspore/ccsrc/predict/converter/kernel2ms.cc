@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "ir/anf.h"
 #include "predict/converter/lite_model/op_attr_packer.h"
-#include "mindspore/ccsrc/operator/ops.h"
+#include "mindspore/ccsrc/frontend/operator/ops.h"
 
 namespace mindspore {
 namespace executor {

@@ -1,1 +1,0 @@
-../../../utils/log_adapter.h

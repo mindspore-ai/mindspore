@@ -21,7 +21,7 @@
 
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "mindrecord/include/shard_page.h"
+#include "minddata/mindrecord/include/shard_page.h"
 #include "ut_common.h"
 
 using json = nlohmann::json;

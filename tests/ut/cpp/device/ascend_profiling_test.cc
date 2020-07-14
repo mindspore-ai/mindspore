@@ -18,12 +18,12 @@
 
 #include "./prof_reporter.h"
 #include "common/common_test.h"
-#include "device/ascend/profiling/profiling_manager.h"
+#include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "./common.h"
 #define private public
-#include "device/ascend/profiling/plugin_impl.h"
+#include "runtime/device/ascend/profiling/plugin_impl.h"
 #undef private
-#include "device/ascend/profiling/profiling_engine_impl.h"
+#include "runtime/device/ascend/profiling/profiling_engine_impl.h"
 
 namespace mindspore {
 namespace device {

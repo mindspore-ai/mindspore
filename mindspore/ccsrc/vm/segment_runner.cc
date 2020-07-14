@@ -31,7 +31,7 @@
 #include "utils/utils.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 
 namespace mindspore {
 const char kMsConvert[] = "ms";

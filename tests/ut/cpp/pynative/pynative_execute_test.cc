@@ -16,10 +16,10 @@
 #include <iostream>
 #include <memory>
 #include "common/common_test.h"
-#include "pipeline/parse/python_adapter.h"
-#include "pipeline/parse/data_converter.h"
-#include "operator/ops.h"
-#include "pynative/pynative_execute.h"
+#include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/parse/data_converter.h"
+#include "frontend/operator/ops.h"
+#include "pipeline/pynative/pynative_execute.h"
 #include "utils/context/ms_context.h"
 #include "utils/utils.h"
 

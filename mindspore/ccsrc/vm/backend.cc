@@ -23,7 +23,7 @@
 #include "utils/callbacks.h"
 #include "utils/graph_utils.h"
 #include "utils/base_ref_extends.h"
-#include "session/session_factory.h"
+#include "backend/session/session_factory.h"
 #include "common/utils.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"

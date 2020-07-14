@@ -17,12 +17,12 @@
 #include <string>
 #include "common/common.h"
 #include "common/cvop_common.h"
-#include "dataset/kernels/data/type_cast_op.h"
-#include "dataset/core/client.h"
-#include "dataset/core/cv_tensor.h"
-#include "dataset/core/data_type.h"
-#include "dataset/core/tensor.h"
-#include "dataset/core/pybind_support.h"
+#include "minddata/dataset/kernels/data/type_cast_op.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/pybind_support.h"
 #include "gtest/gtest.h"
 #include "securec.h"
 

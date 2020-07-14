@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/kernels/image/random_resize_op.h"
+#include "minddata/dataset/kernels/image/random_resize_op.h"
 #include "common/common.h"
 #include "common/cvop_common.h"
 #include "utils/log_adapter.h"

@@ -16,8 +16,8 @@
 
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/util/task_manager.h"
-#include "dataset/util/queue.h"
+#include "minddata/dataset/util/task_manager.h"
+#include "minddata/dataset/util/queue.h"
 #include <atomic>
 #include <chrono>
 #include <random>

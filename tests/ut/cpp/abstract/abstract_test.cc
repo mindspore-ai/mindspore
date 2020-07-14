@@ -18,13 +18,13 @@
 
 #include "common/common_test.h"
 
-#include "pipeline/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 #include "abstract/utils.h"
-#include "pipeline/static_analysis/prim.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/resolve.h"
-#include "pipeline/parse/data_converter.h"
-#include "operator/ops.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/parse/data_converter.h"
+#include "frontend/operator/ops.h"
 
 namespace mindspore {
 namespace abstract {

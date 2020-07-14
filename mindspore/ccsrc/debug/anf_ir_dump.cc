@@ -24,9 +24,9 @@
 
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
-#include "device/kernel_info.h"
+#include "runtime/device/kernel_info.h"
 #include "utils/graph_utils.h"
-#include "session/anf_runtime_algorithm.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {

@@ -15,7 +15,7 @@
  */
 
 #include "utils/primitive_utils.h"
-#include "pipeline/parse/python_adapter.h"
+#include "pipeline/jit/parse/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "common/utils.h"
 

@@ -16,11 +16,11 @@
 
 #include "common/common_test.h"
 #include "ir/param_value.h"
-#include "operator/ops.h"
-#include "session/kernel_graph.h"
-#include "session/anf_runtime_algorithm.h"
-#include "mindspore/ccsrc/device/kernel_info.h"
-#include "mindspore/ccsrc/device/ascend/ascend_device_address.h"
+#include "frontend/operator/ops.h"
+#include "backend/session/kernel_graph.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "mindspore/ccsrc/runtime/device/kernel_info.h"
+#include "mindspore/ccsrc/runtime/device/ascend/ascend_device_address.h"
 #include "utils/utils.h"
 
 namespace mindspore {

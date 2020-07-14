@@ -29,10 +29,10 @@
 
 #include "ir/meta_func_graph.h"
 #include "utils/graph_utils.h"
-#include "operator/composite/composite.h"
+#include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_utils.h"
-#include "pipeline/static_analysis/evaluator.h"
+#include "pipeline/jit/static_analysis/evaluator.h"
 
 namespace mindspore {
 // namespace to support debug trace infomation

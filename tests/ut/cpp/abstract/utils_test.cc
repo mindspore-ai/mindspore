@@ -16,7 +16,7 @@
 #include "abstract/utils.h"
 
 #include "common/common_test.h"
-#include "pipeline/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 
 namespace mindspore {
 namespace abstract {

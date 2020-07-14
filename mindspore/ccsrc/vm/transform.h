@@ -28,7 +28,7 @@
 
 #include "vm/vm.h"
 #include "ir/anf.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "vm/segment_runner.h"
 #include "vm/backend.h"
 

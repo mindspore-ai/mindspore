@@ -16,13 +16,13 @@
 
 #include <memory>
 #include <string>
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/kernels/image/random_crop_and_resize_op.h"
-#include "dataset/kernels/image/decode_op.h"
-#include "dataset/engine/datasetops/source/image_folder_op.h"
-#include "dataset/engine/execution_tree.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
+#include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/engine/execution_tree.h"
 
 
 using namespace mindspore::dataset;

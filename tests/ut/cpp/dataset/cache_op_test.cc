@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 #include <string>
-#include "dataset/core/client.h"
-#include "dataset/engine/cache/cache_client.h"
-#include "dataset/engine/execution_tree.h"
-#include "dataset/engine/datasetops/cache_op.h"
-#include "dataset/engine/datasetops/cache_lookup_op.h"
-#include "dataset/engine/datasetops/cache_merge_op.h"
-#include "dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/cache/cache_client.h"
+#include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/datasetops/cache_op.h"
+#include "minddata/dataset/engine/datasetops/cache_lookup_op.h"
+#include "minddata/dataset/engine/datasetops/cache_merge_op.h"
+#include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "dataset/util/storage_container.h"  // lint !e322
-#include "dataset/engine/datasetops/source/random_data_op.h"
-#include "dataset/engine/data_schema.h"
+#include "minddata/dataset/util/storage_container.h"  // lint !e322
+#include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/engine/data_schema.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;

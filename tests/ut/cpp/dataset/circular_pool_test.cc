@@ -15,9 +15,9 @@
  */
 #include <string>
 #include <random>
-#include "dataset/util/task_manager.h"
-#include "dataset/util/circular_pool.h"
-#include "dataset/util/services.h"
+#include "minddata/dataset/util/task_manager.h"
+#include "minddata/dataset/util/circular_pool.h"
+#include "minddata/dataset/util/services.h"
 #include "common/common.h"
 #include "common/utils.h"
 #include "utils/log_adapter.h"

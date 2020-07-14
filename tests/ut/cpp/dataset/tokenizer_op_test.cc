@@ -18,14 +18,14 @@
 #include <string_view>
 
 #include "common/common.h"
-#include "dataset/text/kernels/basic_tokenizer_op.h"
-#include "dataset/text/kernels/case_fold_op.h"
-#include "dataset/text/kernels/normalize_utf8_op.h"
-#include "dataset/text/kernels/regex_replace_op.h"
-#include "dataset/text/kernels/regex_tokenizer_op.h"
-#include "dataset/text/kernels/unicode_char_tokenizer_op.h"
-#include "dataset/text/kernels/unicode_script_tokenizer_op.h"
-#include "dataset/text/kernels/whitespace_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/basic_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/case_fold_op.h"
+#include "minddata/dataset/text/kernels/normalize_utf8_op.h"
+#include "minddata/dataset/text/kernels/regex_replace_op.h"
+#include "minddata/dataset/text/kernels/regex_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/unicode_script_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 
