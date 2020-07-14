@@ -99,6 +99,11 @@ uint8_t *MemoryManager::MallocStaticMem(size_t size, bool communication_mem) {
   } else {
     align_size = GetCommonAlignSize(size);
   }
+
+  MS_LOG(INFO) << "Malloc Memory for Static: total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
+               << "] static[" << total_static_size_ << "])"
+               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
+
   if (static_mem_offset_ < align_size) {
     MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
                       << "] static[" << total_static_size_ << "])"
@@ -126,6 +131,11 @@ uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
   } else {
     align_size = GetCommonAlignSize(size);
   }
+
+  MS_LOG(INFO) << "Malloc Memory for Dynamic: total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
+               << "] static[" << total_static_size_ << "])"
+               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
+
   uint64_t offset = dynamic_mem_offset_;
   auto new_offset = dynamic_mem_offset_ + align_size;
   if (new_offset > static_mem_offset_) {

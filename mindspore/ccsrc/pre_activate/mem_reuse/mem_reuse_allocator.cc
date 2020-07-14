@@ -17,6 +17,9 @@
 #include "pre_activate/mem_reuse/mem_reuse_allocator.h"
 #include "pre_activate/mem_reuse/mem_reuse.h"
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
+#ifdef ENABLE_D
+#include "device/ascend/ascend_stream_assign.h"
+#endif
 
 namespace mindspore {
 namespace memreuse {
@@ -34,6 +37,9 @@ void BestFitMemReuse::InitMemReuseInfo(const MemReuseUtil *mem_reuse_util_ptr) {
     wk->size_ = AlignMemorySize(wk->size_);
     wk->ref_count_ = 1;
   }
+#ifdef ENABLE_D
+  stream_groups_ = device::ascend::AscendStreamAssign::GetInstance().get_stream_group();
+#endif
 }
 
 void BestFitMemReuse::InitKernelDependence() {
@@ -63,21 +69,58 @@ void BestFitMemReuse::InitKernelDependence() {
   }
 }
 
-bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const KernelDefPtr &kernel_prev) {
+bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr &mem_buf) {
   // determine whether the kernel_curr can reuse kernel_prev's output tensor membuf
   MS_EXCEPTION_IF_NULL(kernel_curr);
+  MS_EXCEPTION_IF_NULL(mem_buf);
+  auto kernel_prev = mem_buf->used_kernel_;
   MS_EXCEPTION_IF_NULL(kernel_prev);
   auto curr_stream_id = kernel_curr->stream_id();
   auto prev_stream_id = kernel_prev->stream_id();
   if (curr_stream_id == prev_stream_id) {
+    mem_buf->type_ = IN_STREAM_REUSE;
     return true;
   }
+
+  bool reuse_between_streams = true;
+  for (auto &stream_group : stream_groups_) {
+    size_t cur_index = UINT32_MAX;
+    size_t prev_index = UINT32_MAX;
+    for (size_t index = 0; index < stream_group.size(); index++) {
+      if (curr_stream_id == stream_group[index]) {
+        cur_index = index;
+        continue;
+      }
+      if (prev_stream_id == stream_group[index]) {
+        prev_index = index;
+        continue;
+      }
+    }
+    if ((prev_index != UINT32_MAX) && (cur_index == UINT32_MAX || (prev_index > cur_index))) {
+      // previous stream and current stream are not in the same group can't be reused
+      // previous stream is behind current stream can't be reused
+      reuse_between_streams = false;
+      break;
+    }
+  }
+
+  if (reuse_between_streams) {
+    mem_buf->type_ = BETWEEN_STREAMS_REUSE;
+    return true;
+  }
+
   auto iter = kernel_front_map_.find(kernel_curr);
   if (iter == kernel_front_map_.end()) {
     MS_LOG(EXCEPTION) << kernel_curr->scope_full_name() << " is not init.";
   }
   auto kernel_curr_front = iter->second;
-  return kernel_curr_front.count(kernel_prev);
+  auto depend_count = kernel_curr_front.count(kernel_prev);
+  if (depend_count) {
+    mem_buf->type_ = KERNEL_DEPENDENCE_REUSE;
+    return true;
+  }
+
+  return false;
 }
 
 void BestFitMemReuse::AssignNodeOutputOffset() {
@@ -135,7 +178,7 @@ std::map<size_t, size_t> BestFitMemReuse::GetReusableMembufMap(size_t tensor_siz
     auto membuf = membuf_ptr_list_[i];
     auto index = i;
     bool is_membuf_ok = membuf->status_ == kUnused && membuf->size_ >= tensor_size;
-    if (is_membuf_ok && IsUsable(current_kernel_, membuf->used_kernel_)) {
+    if (is_membuf_ok && IsUsable(current_kernel_, membuf)) {
       (void)size_map.insert(std::make_pair(membuf->size_, index));
       break;
     }
@@ -163,8 +206,8 @@ void BestFitMemReuse::SplitMembuf(const KernelRefCount *tensor_desc, size_t memb
   auto bias = membuf->size_ - tensor_desc->size_;
   membuf->size_ = tensor_desc->size_;
   // to check if spilt membuf can be merge
-  auto new_membuf =
-    std::make_shared<Membuf>(kUnused, bias, membuf->offset_ + membuf->size_, kInvalidIndex, current_kernel_);
+  auto new_membuf = std::make_shared<Membuf>(kUnused, bias, membuf->offset_ + membuf->size_, kInvalidIndex,
+                                             membuf->type_, current_kernel_);
   (void)membuf_ptr_list_.insert(membuf_ptr_list_.begin() + SizeToInt(membuf_index + 1), new_membuf);
 }
 
@@ -176,7 +219,7 @@ void BestFitMemReuse::AddNewMembufPtr(KernelRefCount *tensor_desc, int flag) {
   }
   auto membuf_size = tensor_desc->size_;
   auto real_index = GetRealIndex(IntToSize(tensor_desc->index_), flag);
-  auto membuf = std::make_shared<Membuf>(kReused, membuf_size, membuf_offset, real_index, current_kernel_);
+  auto membuf = std::make_shared<Membuf>(kReused, membuf_size, membuf_offset, real_index, NEW, current_kernel_);
   membuf_ptr_list_.push_back(membuf);
   tensor_desc->offset_ = membuf_offset;
 }
@@ -242,7 +285,7 @@ void BestFitMemReuse::ReleaseMembuf(size_t tensor_index, int flag) {
     auto membuf_next = (*next_iter);
     MS_EXCEPTION_IF_NULL(membuf_next);
     if (membuf_next->status_ == kUnused) {
-      bool is_merge = IsUsable(current_kernel_, membuf_next->used_kernel_);
+      bool is_merge = IsUsable(current_kernel_, membuf_next);
       if (is_merge) {
         membuf->size_ += membuf_next->size_;
         (void)membuf_ptr_list_.erase(next_iter);
@@ -254,7 +297,7 @@ void BestFitMemReuse::ReleaseMembuf(size_t tensor_index, int flag) {
     auto membuf_prev = (*prev_iter);
     MS_EXCEPTION_IF_NULL(membuf_prev);
     if (membuf_prev->status_ == kUnused) {
-      bool is_merge = IsUsable(current_kernel_, membuf_prev->used_kernel_);
+      bool is_merge = IsUsable(current_kernel_, membuf_prev);
       if (is_merge) {
         membuf->size_ += membuf_prev->size_;
         membuf->offset_ = membuf_prev->offset_;
