@@ -135,9 +135,9 @@ def check_is_tuple_or_list(x, op_name, arg_name):
 def check_is_const_int(x, op_name, arg_name):
     """check whether x is const int."""
     if x is None:
-        raise ValueError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got not const.")
+        raise TypeError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got not const.")
     if not isinstance(x, int):
-        raise ValueError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got {x}.")
+        raise TypeError(f"For '{op_name}', the '{arg_name}' should be a const int number, but got {x}.")
     return True
 
 
