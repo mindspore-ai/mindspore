@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <vector>
 #include "runtime/device/gpu/distribution/mpi_wrapper.h"
 #include "runtime/device/gpu/distribution/nccl_wrapper.h"
 
@@ -35,6 +36,22 @@ extern "C" EXPORT_WRAPPER void InitMPI() { MPIWrapper::instance(); }
 extern "C" EXPORT_WRAPPER int local_rank_id() { return MPIWrapper::instance().local_rank_id(); }
 
 extern "C" EXPORT_WRAPPER void InitNCCLComm() { NCCLWrapper::instance().InitNCCLComm(); }
+
+extern "C" EXPORT_WRAPPER bool CreateCommGroup(const std::string &group_name, const std::vector<unsigned int> &ranks) {
+  return MPIWrapper::instance().CreateCommGroup(group_name, ranks);
+}
+
+extern "C" EXPORT_WRAPPER int GetRankIDByGroup(const std::string &group_name) {
+  return MPIWrapper::instance().GetRankIDByGroup(group_name);
+}
+
+extern "C" EXPORT_WRAPPER int GetGroupSize(const std::string &group_name) {
+  return MPIWrapper::instance().GetGroupSize(group_name);
+}
+
+extern "C" EXPORT_WRAPPER bool DestroyGroup(const std::string &group_name) {
+  return MPIWrapper::instance().DestroyGroup(group_name);
+}
 
 extern "C" EXPORT_WRAPPER ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count,
                                                  ncclDataType_t data_type, ncclRedOp_t reduce_type,

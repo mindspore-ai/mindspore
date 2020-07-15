@@ -23,16 +23,17 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-#define MAX_HOSTNAME_LEN 1024
-#define CHECK_RET(expression, result, message)                                                                        \
-  {                                                                                                                   \
-    auto ret = (expression);                                                                                          \
-    if (ret != result) {                                                                                              \
-      std::ostringstream oss;                                                                                         \
-      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << " | GPU collective Error " << message \
-          << " | Error Number " << ret;                                                                               \
-      pybind11::pybind11_fail(oss.str());                                                                             \
-    }                                                                                                                 \
+constexpr int MAX_HOSTNAME_LEN = 1024;
+constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
+#define CHECK_RET(expression, result, message)                                                                         \
+  {                                                                                                                    \
+    auto ret = (expression);                                                                                           \
+    if (ret != result) {                                                                                               \
+      std::ostringstream oss;                                                                                          \
+      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << " | GPU collective Error: " << message \
+          << " | Error Number " << ret;                                                                                \
+      pybind11::pybind11_fail(oss.str());                                                                              \
+    }                                                                                                                  \
   }
 }  // namespace gpu
 }  // namespace device

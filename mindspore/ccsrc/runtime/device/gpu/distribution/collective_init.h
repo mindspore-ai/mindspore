@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_INIT_H_
 
 #include <dlfcn.h>
+#include <vector>
+#include <string>
 
 namespace mindspore {
 namespace device {
@@ -25,6 +27,10 @@ namespace gpu {
 using InitMPI = void (*)();
 using InitNCCLComm = void (*)();
 using GetLocalRankId = int (*)();
+using CreateCommGroupFunc = bool (*)(const std::string &, const std::vector<unsigned int> &);
+using GetRankIDByGroupFunc = int (*)(const std::string &);
+using GetGroupSizeFunc = int (*)(const std::string &);
+using DestroyGroupFunc = bool (*)(const std::string &);
 
 class CollectiveInitializer {
  public:

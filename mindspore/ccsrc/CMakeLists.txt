@@ -57,6 +57,7 @@ if(ENABLE_GPU)
     set_property(SOURCE ${GPU_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
     cuda_add_library(gpu_cuda_lib STATIC ${GPU_SRC_LIST})
     set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
+    add_compile_definitions(ENABLE_GPU)
 endif ()
 
 ## make flatuffer files
