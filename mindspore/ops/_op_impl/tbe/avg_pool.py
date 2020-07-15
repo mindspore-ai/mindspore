@@ -28,8 +28,9 @@ avg_pool_op_info = TBERegOp("AvgPool") \
     .attr("padding", "required", "str", "all") \
     .attr("data_format", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
+    .input(1, "filter", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_5HD) \
     .get_op_info()
 
 
