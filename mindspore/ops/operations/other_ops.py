@@ -60,7 +60,9 @@ class Assign(PrimitiveWithInfer):
         return variable
 
     def infer_dtype(self, variable, value):
-        # Add a type validation later when we don't have to assign a value to RefKey.
+        if variable != mstype.type_refkey:
+            validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
+        validator.check_scalar_or_tensor_type_same({"value": value}, mstype.number_type, self.name)
         return variable
 
 
