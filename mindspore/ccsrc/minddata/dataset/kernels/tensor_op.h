@@ -92,6 +92,7 @@ constexpr char kDecodeOp[] = "DecodeOp";
 constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kCutOutOp[] = "CutOutOp";
 constexpr char kHwcToChwOp[] = "HwcToChwOp";
+constexpr char kInvertOp[] = "InvertOp";
 constexpr char kNormalizeOp[] = "NormalizeOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kRandomColorAdjustOp[] = "RandomColorAdjustOp";
