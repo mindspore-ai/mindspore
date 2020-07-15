@@ -47,7 +47,7 @@ from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, check_range, \
     check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, check_bounding_box_augment_cpp, \
-    FLOAT_MAX_INTEGER
+    check_random_select_subpolicy_op, FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -712,3 +712,9 @@ class UniformAugment(cde.UniformAugOp):
         self.operations = operations
         self.num_ops = num_ops
         super().__init__(operations, num_ops)
+
+
+class RandomSelectSubpolicy(cde.RandomSelectSubpolicyOp):
+    @check_random_select_subpolicy_op
+    def __init__(self, policy):
+        super().__init__(policy)

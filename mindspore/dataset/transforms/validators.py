@@ -18,7 +18,8 @@ from functools import wraps
 import numpy as np
 
 from mindspore._c_expression import typing
-from ..core.validator_helpers import parse_user_args, type_check, check_pos_int64, check_value, check_positive
+from ..core.validator_helpers import parse_user_args, type_check, check_pos_int64, check_value, check_positive, \
+    check_tensor_op
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -177,6 +178,25 @@ def check_concat_type(method):
             if len(append.shape) != 1:
                 raise ValueError("can only append 1D arrays.")
 
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_random_transform_ops(method):
+    """Wrapper method to check the parameters of RandomChoice, RandomApply and Compose."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        arg_list, _ = parse_user_args(method, *args, **kwargs)
+        type_check(arg_list[0], (list,), "op_list")
+        if not arg_list[0]:
+            raise ValueError("op_list can not be empty.")
+        for ind, op in enumerate(arg_list[0]):
+            check_tensor_op(op, "op_list[{0}]".format(ind))
+        if len(arg_list) == 2:  # random apply takes an additional arg
+            type_check(arg_list[1], (float, int), "prob")
+            check_value(arg_list[1], (0, 1), "prob")
         return method(self, *args, **kwargs)
 
     return new_method

@@ -16,6 +16,7 @@
 #include <exception>
 
 #include "minddata/dataset/api/de_pipeline.h"
+#include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
@@ -35,9 +36,9 @@
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
-#include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/gnn/graph.h"
 #include "minddata/dataset/engine/jagged_connector.h"
+#include "minddata/dataset/kernels/compose_op.h"
 #include "minddata/dataset/kernels/data/concatenate_op.h"
 #include "minddata/dataset/kernels/data/duplicate_op.h"
 #include "minddata/dataset/kernels/data/fill_op.h"
@@ -61,11 +62,12 @@
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
+#include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_resize_op.h"
 #include "minddata/dataset/kernels/image/random_resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
+#include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/rescale_op.h"
@@ -74,6 +76,9 @@
 #include "minddata/dataset/kernels/image/resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 #include "minddata/dataset/kernels/no_op.h"
+#include "minddata/dataset/kernels/py_func_op.h"
+#include "minddata/dataset/kernels/random_apply_op.h"
+#include "minddata/dataset/kernels/random_choice_op.h"
 #include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/lookup_op.h"
 #include "minddata/dataset/text/kernels/ngram_op.h"
@@ -88,6 +93,7 @@
 #include "minddata/mindrecord/include/shard_sample.h"
 #include "minddata/mindrecord/include/shard_sequential_sample.h"
 #include "mindspore/ccsrc/minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
+
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
@@ -112,6 +118,24 @@ namespace dataset {
     Status rc = std::move(s);                                  \
     if (rc.IsError()) throw std::runtime_error(rc.ToString()); \
   } while (false)
+
+Status PyListToTensorOps(const py::list &py_ops, std::vector<std::shared_ptr<TensorOp>> *ops) {
+  RETURN_UNEXPECTED_IF_NULL(ops);
+  for (auto op : py_ops) {
+    if (py::isinstance<TensorOp>(op)) {
+      ops->emplace_back(op.cast<std::shared_ptr<TensorOp>>());
+    } else if (py::isinstance<py::function>(op)) {
+      ops->emplace_back(std::make_shared<PyFuncOp>(op.cast<py::function>()));
+    } else {
+      RETURN_STATUS_UNEXPECTED("element is neither a TensorOp nor a pyfunc.");
+    }
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops->empty(), "TensorOp list is empty.");
+  for (auto const &op : *ops) {
+    RETURN_UNEXPECTED_IF_NULL(op);
+  }
+  return Status::OK();
+}
 
 void bindDEPipeline(py::module *m) {
   (void)py::class_<DEPipeline>(*m, "DEPipeline")
@@ -623,7 +647,7 @@ void bindTokenizerOps(py::module *m) {
       WordIdType default_id = vocab->Lookup(word);
       if (default_id == Vocab::kNoTokenExists) {
         THROW_IF_ERROR(
-          Status(StatusCode::kUnexpectedError, "default unknown token:" + word + " doesn't exist in vocab."));
+          Status(StatusCode::kUnexpectedError, "default unknown token: " + word + " doesn't exist in vocab."));
       }
       return std::make_shared<LookupOp>(vocab, default_id);
     }));
@@ -868,6 +892,58 @@ void bindGraphData(py::module *m) {
     });
 }
 
+void bindRandomTransformTensorOps(py::module *m) {
+  (void)py::class_<ComposeOp, TensorOp, std::shared_ptr<ComposeOp>>(*m, "ComposeOp")
+    .def(py::init([](const py::list &ops) {
+      std::vector<std::shared_ptr<TensorOp>> t_ops;
+      THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
+      return std::make_shared<ComposeOp>(t_ops);
+    }));
+  (void)py::class_<RandomChoiceOp, TensorOp, std::shared_ptr<RandomChoiceOp>>(*m, "RandomChoiceOp")
+    .def(py::init([](const py::list &ops) {
+      std::vector<std::shared_ptr<TensorOp>> t_ops;
+      THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
+      return std::make_shared<RandomChoiceOp>(t_ops);
+    }));
+  (void)py::class_<RandomApplyOp, TensorOp, std::shared_ptr<RandomApplyOp>>(*m, "RandomApplyOp")
+    .def(py::init([](double prob, const py::list &ops) {
+      std::vector<std::shared_ptr<TensorOp>> t_ops;
+      THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
+      if (prob < 0 || prob > 1) {
+        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "prob needs to be within [0,1]."));
+      }
+      return std::make_shared<RandomApplyOp>(prob, t_ops);
+    }));
+  (void)py::class_<RandomSelectSubpolicyOp, TensorOp, std::shared_ptr<RandomSelectSubpolicyOp>>(
+    *m, "RandomSelectSubpolicyOp")
+    .def(py::init([](const py::list &py_policy) {
+      std::vector<Subpolicy> cpp_policy;
+      for (auto &py_sub : py_policy) {
+        cpp_policy.push_back({});
+        for (auto handle : py_sub.cast<py::list>()) {
+          py::tuple tp = handle.cast<py::tuple>();
+          if (tp.is_none() || tp.size() != 2) {
+            THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "Each tuple in subpolicy should be (op, prob)."));
+          }
+          std::shared_ptr<TensorOp> t_op;
+          if (py::isinstance<TensorOp>(tp[0])) {
+            t_op = (tp[0]).cast<std::shared_ptr<TensorOp>>();
+          } else if (py::isinstance<py::function>(tp[0])) {
+            t_op = std::make_shared<PyFuncOp>((tp[0]).cast<py::function>());
+          } else {
+            THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "op is neither a tensorOp nor a pyfunc."));
+          }
+          double prob = (tp[1]).cast<py::float_>();
+          if (prob < 0 || prob > 1) {
+            THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "prob needs to be with [0,1]."));
+          }
+          cpp_policy.back().emplace_back(std::make_pair(t_op, prob));
+        }
+      }
+      return std::make_shared<RandomSelectSubpolicyOp>(cpp_policy);
+    }));
+}
+
 // This is where we externalize the C logic as python modules
 PYBIND11_MODULE(_c_dataengine, m) {
   m.doc() = "pybind11 for _c_dataengine";
@@ -949,6 +1025,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindVocabObjects(&m);
   bindGraphData(&m);
   bindDependIcuTokenizerOps(&m);
+  bindRandomTransformTensorOps(&m);
 }
 }  // namespace dataset
 }  // namespace mindspore

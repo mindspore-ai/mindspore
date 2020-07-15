@@ -19,6 +19,8 @@ import inspect
 from multiprocessing import cpu_count
 import os
 import numpy as np
+
+import mindspore._c_dataengine as cde
 from ..engine import samplers
 
 # POS_INT_MIN is used to limit values from starting from 0
@@ -358,3 +360,9 @@ def check_gnn_list_or_ndarray(param, param_name):
         if not param.dtype == np.int32:
             raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                 param_name, param.dtype))
+
+
+def check_tensor_op(param, param_name):
+    """check whether param is a tensor op or a callable python function"""
+    if not isinstance(param, cde.TensorOp) and not callable(param):
+        raise TypeError("{0} is not a c_transform op (TensorOp) nor a callable pyfunc.".format(param_name))
