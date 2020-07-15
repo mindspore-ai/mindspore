@@ -612,10 +612,34 @@ EvalResultPtr AnfNodeConfig::GetEvaluatedValue() {
   return engine_.lock()->GetEvaluatedValue(self);
 }
 
+abstract::AbstractBasePtr MakeAbstractClosure(const FuncGraphPtr &func_graph,
+                                              const abstract::AnalysisContextPtr &context) {
+  AnalysisContextPtr temp_context = context;
+  if (temp_context == nullptr) {
+    temp_context = abstract::AnalysisContext::DummyContext();
+  }
+  return std::make_shared<abstract::FuncGraphAbstractClosure>(func_graph, temp_context);
+}
+
+abstract::AbstractBasePtr MakeAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, const AnfNodePtr &anf_node) {
+  abstract::MetaFuncGraphAbstractClosurePtr meta_func_graph_fn;
+  if (anf_node == nullptr) {
+    meta_func_graph_fn = std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph);
+  } else {
+    meta_func_graph_fn = std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph, anf_node->scope());
+  }
+  return meta_func_graph_fn;
+}
+
+abstract::AbstractBasePtr MakeAbstractClosure(const PrimitivePtr &primitive, const AnfNodePtr &anf_node) {
+  auto prim_func = std::make_shared<abstract::PrimitiveAbstractClosure>(primitive, anf_node);
+  return prim_func;
+}
+
 AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &context, const AnfNodeConfigPtr &conf) {
   if (value->isa<FuncGraph>()) {
     auto func_graph = value->cast<FuncGraphPtr>();
-    return func_graph->MakeAbstractClosure(context);
+    return MakeAbstractClosure(func_graph, context);
   }
   AnfNodePtr anf_node = nullptr;
   if (conf != nullptr) {
@@ -623,11 +647,11 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   }
   if (value->isa<MetaFuncGraph>()) {
     auto meta_func_graph = value->cast<MetaFuncGraphPtr>();
-    return meta_func_graph->MakeAbstractClosure(anf_node);
+    return MakeAbstractClosure(meta_func_graph, anf_node);
   }
   if (value->isa<Primitive>()) {
     auto prim = value->cast<PrimitivePtr>();
-    return prim->ToPrimAbstract(anf_node);
+    return MakeAbstractClosure(prim, anf_node);
   }
   return value->ToAbstract();
 }

@@ -22,7 +22,7 @@
 #include <unordered_map>
 
 #include "ir/visitor.h"
-#include "pipeline/jit/static_analysis/static_analysis.h"
+#include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "debug/label.h"

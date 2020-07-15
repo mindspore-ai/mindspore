@@ -25,9 +25,6 @@
 #include "frontend/operator/ops.h"
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
-#include "pipeline/jit/static_analysis/static_analysis.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
-
 #include "debug/anf_ir_dump.h"
 #include "debug/trace.h"
 #include "debug/draw.h"
@@ -58,14 +55,6 @@ AbstractFunctionPtr FuncGraph::abstract() {
   }
 
   return std::make_shared<VirtualAbstractClosure>(args_spec_list, output()->abstract());
-}
-
-abstract::AbstractBasePtr FuncGraph::MakeAbstractClosure(const abstract::AnalysisContextPtr &context) {
-  AnalysisContextPtr temp_context = context;
-  if (temp_context == nullptr) {
-    temp_context = abstract::AnalysisContext::DummyContext();
-  }
-  return std::make_shared<abstract::FuncGraphAbstractClosure>(shared_from_base<FuncGraph>(), temp_context);
 }
 
 void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {

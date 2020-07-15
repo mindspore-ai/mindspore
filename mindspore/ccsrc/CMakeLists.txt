@@ -138,7 +138,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug gvar predict pybind_api utils vm base abstract
+        common debug gvar predict pybind_api utils vm
 )
 
 foreach (_comp ${SUB_COMP})
@@ -149,9 +149,13 @@ foreach (_comp ${SUB_COMP})
         add_dependencies(_mindspore_${sub}_obj proto_input flat_input)
     endif ()
 endforeach ()
+add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/base base)
+list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_base_obj>)
+add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/abstract abstract)
+list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_abstract_obj>)
 add_subdirectory(${CMAKE_SOURCE_DIR}/mindspore/core/ir ir)
 list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_ir_obj>)
-add_dependencies(_mindspore_ir_obj proto_input flat_input)
+add_dependencies(_mindspore_base_obj _mindspore_ir_obj _mindspore_abstract_obj proto_input flat_input)
 
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
