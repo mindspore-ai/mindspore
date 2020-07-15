@@ -611,6 +611,12 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     ScopePtr scope = node->scope();
     MS_EXCEPTION_IF_NULL(scope);
     replace_node->set_scope(scope);
+    PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
+    if (prim->name() == EMBEDDING_LOOKUP) {
+      auto attrs = prim->attrs();
+      attrs[TARGET] = MakeValue(CPU);
+      (void)prim->SetAttrs(attrs);
+    }
     if (index == replace_op.size() - 1) {
       (void)replace_node->set_operator_info(node->operator_info());
     }
