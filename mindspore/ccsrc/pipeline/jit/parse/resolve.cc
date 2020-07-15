@@ -168,15 +168,15 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
   return true;
 }
 
-bool IsAllGraphInValueSequence(const std::vector<ValuePtr> &value_vec) {
+bool IsAllFuncInValueSequence(const std::vector<ValuePtr> &value_vec) {
   for (auto &elem : value_vec) {
     if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
       const auto &vec = GetValue<std::vector<ValuePtr>>(elem);
-      auto is_graph = IsAllGraphInValueSequence(vec);
+      auto is_graph = IsAllFuncInValueSequence(vec);
       if (!is_graph) {
         return false;
       }
-    } else if (!elem->isa<FuncGraph>()) {
+    } else if (!elem->isa<FuncGraph>() && !elem->isa<Primitive>()) {
       return false;
     }
   }
@@ -196,6 +196,8 @@ AnfNodePtr TransformToMakeTupleNodes(const FuncGraphManagerPtr &manager, const F
       FuncGraphPtr new_fg = elem->cast<FuncGraphPtr>();
       manager->AddFuncGraph(new_fg);
       node = NewValueNode(new_fg);
+    } else if (elem->isa<Primitive>()) {
+      node = NewValueNode(elem);
     } else {
       MS_LOG(EXCEPTION) << "TransformToMakeTupleNodes error, expect funcgraph, got " << elem->ToString();
     }
@@ -205,19 +207,21 @@ AnfNodePtr TransformToMakeTupleNodes(const FuncGraphManagerPtr &manager, const F
   return cnode;
 }
 
-// transform the ValueTuple or ValueList of graph node to make tuple of const graph node
-bool TransformVectorGraphValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
-                                   const ValueNodePtr &value_node, AnfNodePtr *const transformed) {
+// transform the ValueTuple or ValueList of graph/primitve node to make tuple of const graph/primitve node
+bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
+                                  const ValueNodePtr &value_node, AnfNodePtr *const transformed) {
   MS_EXCEPTION_IF_NULL(value_node);
   const auto &value_vec = GetValue<std::vector<ValuePtr>>(value_node->value());
-  if (!IsAllGraphInValueSequence(value_vec)) {
+  if (!IsAllFuncInValueSequence(value_vec)) {
     return false;
   }
 
-  // The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
+  // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
   // So if has graph in list, try to replace the node with make tuple of graph value node.
   // we do this because the graphmanger won't investigate the graph inside valuetuple,
-  // change the vector of graph to be make_tuple of graph value node
+  // change the vector of graph to be make_tuple of graph value node.
+  // (2) the primitve valuetuple or valuelist may encounter to abstract error, make it all
+  // independent nodes.
   auto node_tuple_graphs = TransformToMakeTupleNodes(manager, func_graph, value_vec);
   // replace the ret ptr to be make tuple of graph value node
   *transformed = node_tuple_graphs;
@@ -251,8 +255,8 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
 
   // if the constant node is constant of vector of graph ,add graph to manager
   if (IsValueNode<ValueTuple>(resolved_node) || IsValueNode<ValueList>(resolved_node)) {
-    (void)TransformVectorGraphValueNode(manager, node->func_graph(), resolved_node->cast<ValueNodePtr>(),
-                                        &resolved_node);
+    (void)TransformVectorFuncValueNode(manager, node->func_graph(), resolved_node->cast<ValueNodePtr>(),
+                                       &resolved_node);
   }
 
   TraceManager::EndTrace();
