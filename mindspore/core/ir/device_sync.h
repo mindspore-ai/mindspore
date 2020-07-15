@@ -32,6 +32,7 @@ class DeviceSync {
   virtual bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const = 0;
   virtual bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type,
                                 const void *host_ptr) const = 0;
+  virtual void *GetMutablePtr() const = 0;
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore
