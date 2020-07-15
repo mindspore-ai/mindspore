@@ -22,7 +22,7 @@
 
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
 #include "debug/anf_ir_dump.h"

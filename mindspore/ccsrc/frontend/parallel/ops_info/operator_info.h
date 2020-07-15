@@ -163,6 +163,9 @@ class OperatorInfo {
   const std::string &type() const { return type_; }
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
 
+  // Key for user data.
+  constexpr static char key[] = "OpInfo";
+
  protected:
   // needed by rec_parser
   std::string type_;

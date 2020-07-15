@@ -37,7 +37,7 @@ py::dict GetParameterLayout(const FuncGraphPtr &graph) {
 
   for (auto para : graph_params) {
     std::string name = std::static_pointer_cast<Parameter>(para)->name();
-    std::shared_ptr<parallel::TensorLayout> tensor_layout = std::static_pointer_cast<Parameter>(para)->tensor_layout();
+    auto tensor_layout = para->GetUserData<parallel::TensorLayout>();
     if (tensor_layout == nullptr) {
       MS_LOG(INFO) << "GetParameterLayout nullptr name = " << name;
     } else {
@@ -70,7 +70,7 @@ py::dict GetCNodeStrategy(const FuncGraphPtr &graph) {
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      auto distributed_operation_info = cnode->operator_info();
+      auto distributed_operation_info = cnode->GetUserData<OperatorInfo>();
       if (distributed_operation_info != nullptr) {
         auto strategyPtr = distributed_operation_info->strategy();
         if (strategyPtr != nullptr) {

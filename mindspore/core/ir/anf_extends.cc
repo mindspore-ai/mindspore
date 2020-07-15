@@ -23,8 +23,7 @@
 
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
-#include "frontend/operator/ops.h"
-#include "frontend/parallel/ops_info/ops_utils.h"
+#include "base/core_ops.h"
 #include "debug/label.h"
 
 namespace mindspore {
@@ -35,18 +34,6 @@ BaseShapePtr AnfNode::Shape() const { return (abstract_ == nullptr) ? nullptr : 
 
 std::string AnfNode::ToString() const {
   return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->shared_from_base<AnfNode>()->debug_info());
-}
-
-OperatorInfoPtr CNode::set_operator_info(const OperatorInfoPtr &operator_info) {
-  if (operator_info_ != nullptr) {
-    MS_LOG(WARNING) << "The CNode: " << ToString() << " has already been set OperatorInfo: " << operator_info_->name()
-                    << ", using the new one: " << operator_info->name();
-    auto old_ptr = operator_info_;
-    operator_info_ = operator_info;
-    return old_ptr;
-  }
-  operator_info_ = operator_info;
-  return nullptr;
 }
 
 std::string CNode::fullname_with_scope() {

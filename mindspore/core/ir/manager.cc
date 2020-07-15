@@ -26,7 +26,7 @@
 #include "ir/func_graph.h"
 #include "utils/profile.h"
 #include "utils/convert_utils_base.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 

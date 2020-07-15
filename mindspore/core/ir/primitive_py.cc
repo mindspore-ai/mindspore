@@ -18,7 +18,6 @@
 #include <mutex>
 #include <utility>
 #include "ir/signature.h"
-#include "frontend/operator/ops.h"
 #include "./common.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/data_converter.h"

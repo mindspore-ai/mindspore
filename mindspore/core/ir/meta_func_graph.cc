@@ -17,10 +17,8 @@
  */
 
 #include "ir/meta_func_graph.h"
-#include "pipeline/jit/static_analysis/static_analysis.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "base/core_ops.h"
 #include "utils/context/ms_context.h"
-#include "frontend/operator/ops.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {

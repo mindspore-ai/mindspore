@@ -525,8 +525,8 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   std::vector<Shapes> shape = {inputs_shape, outputs_shape};
   OperatorInfoPtr matmul_info = OperatorInstance(prim, attrs, shape);
   matmul_info->Init(strategyPtr);
-  node->set_operator_info(matmul_info);
-  OperatorInfoPtr distribute_operator_pre = node->operator_info();
+  node->SetUserData<OperatorInfo>(matmul_info);
+  OperatorInfoPtr distribute_operator_pre = node->GetUserData<OperatorInfo>();
   TensorLayout tensorlayout_e;
   std::vector<int32_t> array = {64, 64};
   TensorLayout tensorlayout = GetTensorInLayout(node1, prim, distribute_operator_pre);

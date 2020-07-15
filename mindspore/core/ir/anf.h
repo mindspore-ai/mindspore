@@ -27,6 +27,7 @@
 #include <utility>
 
 #include "base/base.h"
+#include "base/user_data.h"
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
 #include "debug/info.h"
@@ -41,12 +42,6 @@
 // ANode: Atomic  Node
 // CNode: Complex Node
 namespace mindspore {
-namespace parallel {
-class TensorLayout;
-class OperatorInfo;
-}  // namespace parallel
-using OperatorInfoPtr = std::shared_ptr<parallel::OperatorInfo>;
-
 namespace abstract {
 class BaseShape;
 class AbstractBase;
@@ -157,6 +152,31 @@ class AnfNode : public Base {
   }
   size_t seen_{0};
 
+  template <typename T>
+  void SetUserData(const std::string &key, const std::shared_ptr<T> &value) {
+    user_data_.set<T>(key, value);
+  }
+
+  template <typename T>
+  void SetUserData(const std::shared_ptr<T> &value) {
+    user_data_.set<T>(T::key, value);
+  }
+
+  template <typename T>
+  std::shared_ptr<T> GetUserData(const std::string &key) const {
+    return user_data_.get<T>(key);
+  }
+
+  template <typename T>
+  std::shared_ptr<T> GetUserData() const {
+    return user_data_.get<T>(T::key);
+  }
+
+  bool HasUserData(const std::string &key) const { return user_data_.has(key); }
+
+  template <typename T>
+  bool HasUserData() const { return user_data_.has(T::key); }
+
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
   // Otherwise, func_graph_ and AnfNode will make a reference cycle.
@@ -170,6 +190,7 @@ class AnfNode : public Base {
   std::hash<const AnfNode *> hash_;
   ScopePtr scope_;
   KernelInfoDevicePtr kernel_info_;
+  UserData user_data_;
 };
 
 // CNode represents the complex node with a set of arguments.
@@ -212,9 +233,6 @@ class CNode : public AnfNode {
   std::string DebugString(int recursive_level = 1) const override;
   std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
 
-  OperatorInfoPtr set_operator_info(const OperatorInfoPtr &operator_info);
-  OperatorInfoPtr operator_info() { return operator_info_; }
-
   void set_in_forward_flag(bool flag) { in_forward_flag_ = flag; }
   bool in_forward_flag() const { return in_forward_flag_; }
 
@@ -224,7 +242,6 @@ class CNode : public AnfNode {
   std::vector<AnfNodePtr> inputs_;
   VarPtr func_graph_as_var_;
   bool stop_gradient_;
-  OperatorInfoPtr operator_info_ = nullptr;
   bool in_forward_flag_ = false;
 };
 
@@ -244,7 +261,7 @@ class ANode : public AnfNode {
 class Parameter : public ANode {
  public:
   explicit Parameter(const FuncGraphPtr &func_graph)
-      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), tensor_layout_(nullptr) {}
+      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr) {}
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
 
@@ -261,11 +278,6 @@ class Parameter : public ANode {
   }
   ParamValuePtr default_param() const { return default_param_; }
 
-  std::shared_ptr<parallel::TensorLayout> tensor_layout() const { return tensor_layout_; }
-  void set_tensor_layout(const std::shared_ptr<parallel::TensorLayout> &tensor_layout) {
-    tensor_layout_ = tensor_layout;
-  }
-
   bool operator==(const AnfNode &other) const override {
     if (!other.isa<Parameter>()) {
       return false;
@@ -281,7 +293,6 @@ class Parameter : public ANode {
   std::string name_;
   bool has_default_;
   ParamValuePtr default_param_;
-  std::shared_ptr<parallel::TensorLayout> tensor_layout_;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 
