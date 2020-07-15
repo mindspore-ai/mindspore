@@ -38,13 +38,13 @@ class TestGetNextInfo : public UT::Common {
 };
 
 void TestGetNextInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 8; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(8);
   int32_t local_dev = 0;
   // create a new g_device_manager
@@ -65,16 +65,16 @@ void TestGetNextInfo::SetUp() {
 }
 
 TEST_F(TestGetNextInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{}, {}};
+  Strategys inputs = {{}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   get_next->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = get_next->dev_matrix_shape();
-  std::vector<int32_t> expect = {8, 1};
+  Shape dev_matrix_shape = get_next->dev_matrix_shape();
+  Shape expect = {8, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestGetNextInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{}, {}};
+  Strategys str = {{}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   get_next->Init(strategy);
@@ -90,7 +90,7 @@ TEST_F(TestGetNextInfo, InferSliceShape1) {
 }
 
 TEST_F(TestGetNextInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{}, {}};
+  Strategys str = {{}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
   get_next->Init(strategy);
   std::vector<TensorInfo> outputs = get_next->outputs_tensor_info();
@@ -106,14 +106,14 @@ TEST_F(TestGetNextInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestGetNextInfo, CheckStrategy1) {
-  std::vector<Dimensions> inputs = {};
+  Strategys inputs = {};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = get_next->Init(strategy);
   ASSERT_EQ(ret, SUCCESS);
 }
 
 TEST_F(TestGetNextInfo, CheckStrategy2) {
-  std::vector<Dimensions> inputs = {{8, 1}, {8}};
+  Strategys inputs = {{8, 1}, {8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = get_next->Init(strategy);
   ASSERT_EQ(ret, FAILED);

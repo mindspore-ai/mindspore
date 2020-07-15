@@ -28,10 +28,10 @@
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace parallel {
-using DeviceArrangement = std::vector<int32_t>;
-using TensorMap = std::vector<int32_t>;
-using TensorShape = std::vector<int32_t>;
-using RedistributionOperatorMap = std::unordered_map<uint32_t, int32_t>;
+using DeviceArrangement = Shape;
+using TensorMap = Shape;
+using TensorShape = Shape;
+using RedistributionOperatorMap = std::unordered_map<uint32_t, int64_t>;
 using OperatorR = std::pair<OperatorName, Args>;
 using OperatorC = std::pair<OperatorR, Shape>;
 using OperatorList = std::vector<OperatorC>;

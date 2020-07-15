@@ -41,7 +41,7 @@ class StridedSliceInfo : public OperatorInfo {
   Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int32_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
-  std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
 
  protected:
   Status GetAttrs() override;

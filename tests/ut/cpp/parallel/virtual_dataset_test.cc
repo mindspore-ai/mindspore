@@ -37,13 +37,13 @@ class TestVirtualDatasetInfo : public UT::Common {
 };
 
 void TestVirtualDatasetInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 130; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(16);
   stage_map.push_back(114);
 
@@ -62,27 +62,27 @@ void TestVirtualDatasetInfo::SetUp() {
 }
 
 TEST_F(TestVirtualDatasetInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{16, 1}, {16, 1}, {16, 1}};
+  Strategys inputs = {{16, 1}, {16, 1}, {16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   virtual_dataset->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = virtual_dataset->dev_matrix_shape();
+  Shape dev_matrix_shape = virtual_dataset->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {16};
+  Shape expect = {16};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestVirtualDatasetInfo, InferDevMatrixShape2) {
-  std::vector<Dimensions> inputs = {{8, 1}, {8, 1}, {8, 1}};
+  Strategys inputs = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   virtual_dataset->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = virtual_dataset->dev_matrix_shape();
+  Shape dev_matrix_shape = virtual_dataset->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {8, 2};
+  Shape expect = {8, 2};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestVirtualDatasetInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{8, 1}, {8, 1}, {8, 1}};
+  Strategys str = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   virtual_dataset->Init(strategy);
@@ -127,7 +127,7 @@ TEST_F(TestVirtualDatasetInfo, InferSliceShape1) {
 }
 
 TEST_F(TestVirtualDatasetInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{8, 1}, {8, 1}, {8, 1}};
+  Strategys str = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   virtual_dataset->Init(strategy);
@@ -148,7 +148,7 @@ TEST_F(TestVirtualDatasetInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestVirtualDatasetInfo, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{8, 1}, {8, 1}, {8, 1}};
+  Strategys inputs = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   virtual_dataset->Init(strategy);
@@ -159,7 +159,7 @@ TEST_F(TestVirtualDatasetInfo, GetForwardOp1) {
 }
 
 TEST_F(TestVirtualDatasetInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{8, 1}, {8, 1}, {8, 1}};
+  Strategys inputs = {{8, 1}, {8, 1}, {8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   virtual_dataset->Init(strategy);

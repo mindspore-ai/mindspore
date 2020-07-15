@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <numeric>
+#include <algorithm>
 
 namespace mindspore {
 namespace parallel {
@@ -42,8 +43,8 @@ OperatorVector ConstructOperator::SkipRedisReshapeOP(Shape shape) {
 }
 
 Status ConstructOperator::ReshapeOP(Shape shape) {
-  int32_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
-  int32_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int>());
+  int64_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  int64_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int64_t>());
   if (prod != prod_expect) {
     ValuePtr ptr = MakeValue(shape);
     MS_EXCEPTION_IF_NULL(ptr);
@@ -68,12 +69,21 @@ Operator CreateStridedSliceOp(int32_t value, const Shape &begin, const Shape &en
   Attr attr_shrink_axis_mask = std::make_pair(SHRINK_AXIS_MASK, attr_value);
   OperatorAttrs attrs = {attr_begin_mask, attr_end_mask, attr_ellipsis_mask, attr_new_axis_mask, attr_shrink_axis_mask};
 
-  ValuePtr param_begin_value = MakeValue(begin);
+  std::vector<int32_t> begin_int;
+  (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_int),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  ValuePtr param_begin_value = MakeValue(begin_int);
   Param param_begin = std::make_pair(std::make_pair(BEGIN, param_begin_value), 2);
-  ValuePtr param_end_value = MakeValue(end);
+  std::vector<int32_t> end_int;
+  (void)std::transform(end.begin(), end.end(), std::back_inserter(end_int),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  ValuePtr param_end_value = MakeValue(end_int);
   Param param_end = std::make_pair(std::make_pair(END, param_end_value), 3);
 
-  ValuePtr param_strides_value = MakeValue(strides);
+  std::vector<int32_t> strides_int;
+  (void)std::transform(strides.begin(), strides.end(), std::back_inserter(strides_int),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  ValuePtr param_strides_value = MakeValue(strides_int);
   Param param_strides = std::make_pair(std::make_pair(STRIDES, param_strides_value), 4);
   OperatorParams params = {param_begin, param_end, param_strides};
   OperatorArgs op_args = std::make_pair(attrs, params);
@@ -86,16 +96,16 @@ Status ConstructOperator::StridedSliceOP(Args args) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
   }
-  int32_t split_count = args[0];
+  int64_t split_count = args[0];
   if (split_count <= 0) {
     MS_LOG(ERROR) << "split_count should not be less than 0!";
     return Status::FAILED;
   }
-  int32_t split_dim = args[1];
-  int32_t dev_dim = args[2];
+  int64_t split_dim = args[1];
+  int64_t dev_dim = args[2];
   std::vector<Group> group_list;
 
-  if (CreateGroupByDim(dev_size_ - IntToSize(dev_dim) - 1, &group_list) != SUCCESS) {
+  if (CreateGroupByDim(dev_size_ - LongToSize(dev_dim) - 1, &group_list) != SUCCESS) {
     MS_LOG(ERROR) << "stride slice op: create group failed";
     return FAILED;
   } else if (group_list.empty()) {  // this group only has one device, don't need do StridedSlice
@@ -114,7 +124,7 @@ Status ConstructOperator::StridedSliceOP(Args args) {
   Shape strides(size, 1);
   size_t index = 0;
   for (auto num : tensor_shape_) {
-    if (index != IntToSize(split_dim)) {
+    if (index != LongToSize(split_dim)) {
       begin[index] = 0;
       end[index] = num;
     } else {
@@ -123,9 +133,9 @@ Status ConstructOperator::StridedSliceOP(Args args) {
                       << "! when construct StridedSlice operator";
         return Status::INVALID_ARGUMENT;
       }
-      int32_t count = num / split_count;
-      begin[index] = SizeToInt(rank) * count;
-      end[index] = (SizeToInt(rank) + 1) * count;
+      int64_t count = num / split_count;
+      begin[index] = SizeToLong(rank) * count;
+      end[index] = (SizeToLong(rank) + 1) * count;
     }
     index++;
   }
@@ -135,7 +145,7 @@ Status ConstructOperator::StridedSliceOP(Args args) {
   return Status::SUCCESS;
 }
 
-Status ConstructOperator::AllGatherOP(int32_t dev_dim) {
+Status ConstructOperator::AllGatherOP(int64_t dev_dim) {
   if ((IntToSize(dev_dim) >= dev_size_) || (dev_dim < 0)) {
     MS_LOG(ERROR) << "Invalid device dimension " << dev_dim << " when construct AllGather operator!";
     return Status::INVALID_ARGUMENT;
@@ -160,7 +170,7 @@ Status ConstructOperator::AllGatherOP(int32_t dev_dim) {
   return Status::SUCCESS;
 }
 
-Status ConstructOperator::ConcatOP(int32_t concat_dim) {
+Status ConstructOperator::ConcatOP(int64_t concat_dim) {
   if (IntToSize(concat_dim) >= tensor_shape_.size()) {
     MS_LOG(ERROR) << "Invalid tensor dimension " << concat_dim << " when construct Concat operator!";
     return Status::INVALID_ARGUMENT;
@@ -174,7 +184,7 @@ Status ConstructOperator::ConcatOP(int32_t concat_dim) {
   return Status::SUCCESS;
 }
 
-Status ConstructOperator::SplitOP(int32_t split_count) {
+Status ConstructOperator::SplitOP(int64_t split_count) {
   if (split_count <= 0) {
     MS_LOG(ERROR) << "Invalid split count when construct Split operator!";
     return Status::FAILED;
@@ -196,30 +206,30 @@ Status ConstructOperator::AlltoAllOP(Args args) {
     MS_LOG(ERROR) << "args size should not be less than 4!";
     return Status::FAILED;
   }
-  int32_t split_count = args[0];
-  int32_t split_dim = args[1];
-  int32_t concat_dim = args[2];
-  int32_t dev_dim = args[3];
+  int64_t split_count = args[0];
+  int64_t split_dim = args[1];
+  int64_t concat_dim = args[2];
+  int64_t dev_dim = args[3];
   if (split_count <= 0) {
     MS_LOG(ERROR) << "Invalid split count when construct AlltoAll operator!";
     return Status::FAILED;
   }
-  if (tensor_shape_[IntToSize(split_dim)] % split_count != 0) {
+  if (tensor_shape_[LongToSize(split_dim)] % split_count != 0) {
     MS_LOG(ERROR) << "Tensor can not be split into " << split_count << " slices in the dimension " << split_dim
                   << "when construct AlltoAll operator!";
     return Status::INVALID_ARGUMENT;
   }
-  if (IntToSize(concat_dim) >= tensor_shape_.size()) {
+  if (LongToSize(concat_dim) >= tensor_shape_.size()) {
     MS_LOG(ERROR) << "Invalid split count " << split_count << " when construct AlltoAll operator!";
     return Status::INVALID_ARGUMENT;
   }
-  if ((IntToSize(dev_dim) >= dev_size_) || (dev_dim < 0)) {
+  if ((LongToSize(dev_dim) >= dev_size_) || (dev_dim < 0)) {
     MS_LOG(ERROR) << "Invalid device dimension " << dev_dim << " when construct AlltoAll operator!";
     return Status::INVALID_ARGUMENT;
   }
 
   std::vector<Group> group_list;
-  if (CreateGroupByDim(dev_size_ - IntToSize(dev_dim) - 1, &group_list) != SUCCESS) {
+  if (CreateGroupByDim(dev_size_ - LongToSize(dev_dim) - 1, &group_list) != SUCCESS) {
     MS_LOG(ERROR) << "AlltoAll op: create group failed";
     return FAILED;
   } else if (group_list.empty()) {  // this group only has one device, don't need do alltoall

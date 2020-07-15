@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/device_matrix.h"
 
 namespace mindspore {
 namespace parallel {
@@ -31,16 +32,16 @@ class Array {
   Array() = default;
   virtual ~Array() = default;
   std::string ToString() const;
-  virtual Status Init(const std::vector<int32_t> &array);
+  virtual Status Init(const Shape &array);
   bool IsvalidArray() const;
-  std::vector<int32_t> array() const { return array_; }
+  Shape array() const { return array_; }
   size_t GetDimSize() const { return array_.size(); }
-  int32_t GetDimByIdx(uint32_t idx) const;
-  int32_t GetDimByReverseIdx(uint32_t idx) const;
+  int64_t GetDimByIdx(size_t idx) const;
+  int64_t GetDimByReverseIdx(size_t idx) const;
   bool operator==(const Array &a1) const;
 
  protected:
-  std::vector<int32_t> array_;
+  Shape array_;
 };
 }  // namespace parallel
 }  // namespace mindspore
