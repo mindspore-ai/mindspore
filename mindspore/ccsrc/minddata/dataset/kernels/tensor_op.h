@@ -136,6 +136,7 @@ constexpr char kRandomChoiceOp[] = "RandomChoiceOp";
 constexpr char kRandomApplyOp[] = "RandomApplyOp";
 constexpr char kComposeOp[] = "ComposeOp";
 constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
+constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 
 // data
 constexpr char kConcatenateOp[] = "kConcatenateOp";

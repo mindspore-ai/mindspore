@@ -37,6 +37,16 @@ Status InjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildVocabOp
   }
 }
 
+// Performs finder work for BuildSentencePieceVocabOp that has special rules about epoch control injection
+Status InjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified) {
+  if (injection_pass_) {
+    injection_pass_->epoch_ctrl_bypass_ = true;
+    return Status::OK();
+  } else {
+    RETURN_STATUS_UNEXPECTED("Missing outer injection pass object from inside InjectionFinder!");
+  }
+}
+
 // Temporary code to prevent the injection of epoch control when cache op is present
 // Remove this code in cache op phase 2
 Status InjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {

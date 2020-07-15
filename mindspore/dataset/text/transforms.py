@@ -50,7 +50,7 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 
-from .utils import JiebaMode, NormalizeForm, to_str
+from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer,\
     check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate,\
@@ -324,6 +324,36 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
                          self.unknown_token, self.with_offsets)
 
+DE_C_INTER_SENTENCEPIECE_LOADTYPE = {
+    SPieceTokenizerLoadType.FILE: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KFILE,
+    SPieceTokenizerLoadType.MODEL: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KMODEL
+}
+
+DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
+    SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
+    SPieceTokenizerOutType.INT: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KINT
+}
+
+class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
+    """
+    Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+
+    Args:
+        mode(str or SentencePieceVocab): If the input parameter is a file, then it is of type string,
+            if the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
+        out_type(str or int): The type of output.
+    """
+
+    def __init__(self, mode, out_type):
+        self.out_type = out_type
+        if isinstance(mode, str):
+            model_path, model_filename = os.path.split(mode)
+            super().__init__(model_path, model_filename,
+                             DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.FILE],
+                             DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
+        elif isinstance(mode, cde.SentencePieceVocab):
+            super().__init__(mode, DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.MODEL],
+                             DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
 
 if platform.system().lower() != 'windows':
     class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):

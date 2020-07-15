@@ -71,7 +71,8 @@ enum OpName {
   kTextFile,
   kBuildVocab,
   kClue,
-  kEpochCtrl
+  kEpochCtrl,
+  kSentencePieceVocab,
 };
 
 // The C++ binder class that we expose to the python script.
@@ -195,6 +196,8 @@ class DEPipeline {
   Status ParseBuildVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status StopSend();
+  Status ParseBuildSentencePieceVocabOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
+                                        std::shared_ptr<DatasetOp> *bottom);
 
   Status ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 

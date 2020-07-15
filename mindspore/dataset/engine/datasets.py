@@ -46,6 +46,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
+from ..text.utils import DE_C_INTER_SENTENCEPIECE_MODE
 
 try:
     context = import_module("mindspore.context")
@@ -908,6 +909,11 @@ class Dataset:
 
     def build_vocab(self, vocab, columns, freq_range, top_k, special_tokens, special_first):
         return BuildVocabDataset(self, vocab, columns, freq_range, top_k, special_tokens, special_first)
+
+    def build_sentencepiece_vocab(self, vocab, col_names, vocab_size,
+                                  character_coverage, model_type, params):
+        return BuildSentencePieceVocabDataset(self, vocab, col_names, vocab_size, character_coverage,
+                                              model_type, params)
 
     def apply(self, apply_func):
         """
@@ -5153,4 +5159,59 @@ class BuildVocabDataset(DatasetOp):
         new_op.special_tokens = copy.deepcopy(self.special_tokens)
         new_op.special_first = copy.deepcopy(self.special_first)
 
+        return new_op
+
+class BuildSentencePieceVocabDataset(DatasetOp):
+    """
+    Build a SentencePieceVocab from a dataset.
+    This function is not meant to be called directly by user. To build vocab, please use the function
+    text.SentencePieceVocab.from_dataset()
+
+    Args:
+        vocab(SentencePieceVocab): text.SentencePieceVocab object.
+        col_names(list): The list of the col name.
+        vocab_size(int): Vocabulary size, the type of uint32_t.
+        charater_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for languages
+            with rich character set like Japanse or Chinese and 1.0 for other languages with small character set.
+        model_type(SentencePieceModel): Model type.Choose from unigram (default), bpe, char, or word.
+            The input sentence must be pretokenized when using word type.
+        params(dict): A dictionary with no incoming parameters.
+    """
+
+    def __init__(self, input_dataset, vocab, col_names, vocab_size, character_coverage, model_type, params):
+        super().__init__()
+        self.vocab = vocab
+        self.col_names = col_names
+        self.vocab_size = vocab_size
+        self.children.append(input_dataset)
+        self.character_coverage = character_coverage
+        self.model_type = DE_C_INTER_SENTENCEPIECE_MODE[model_type]
+        self.params = params
+        input_dataset.parent.append(self)
+
+    def get_args(self):
+        args = super().get_args()
+        args["vocab"] = self.vocab
+        args["col_names"] = self.col_names
+        args["vocab_size"] = self.vocab_size
+        args["character_coverage"] = self.character_coverage
+        args["model_type"] = self.model_type
+        args["params"] = self.params
+        return args
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        cls = self.__class__
+        new_op = cls.__new__(cls)
+        memodict[id(self)] = new_op
+        new_op.children = copy.deepcopy(self.children, memodict)
+        new_op.col_names = copy.deepcopy(self.col_names, memodict)
+        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
+        new_op.vocab_size = copy.deepcopy(self.vocab_size, memodict)
+        new_op.parent = copy.deepcopy(self.parent, memodict)
+        new_op.character_coverage = copy.deepcopy(self.character_coverage, memodict)
+        new_op.params = copy.deepcopy(self.params, memodict)
+        new_op.vocab = self.vocab
+        new_op.model_type = copy.deepcopy(self.model_type)
         return new_op

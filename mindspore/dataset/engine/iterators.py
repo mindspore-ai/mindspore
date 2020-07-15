@@ -181,6 +181,8 @@ class Iterator:
             op_type = OpName.TEXTFILE
         elif isinstance(dataset, de.BuildVocabDataset):
             op_type = OpName.BUILDVOCAB
+        elif isinstance(dataset, de.BuildSentencePieceVocabDataset):
+            op_type = OpName.SENTENCEPIECEVOCAB
         elif isinstance(dataset, de.CLUEDataset):
             op_type = OpName.CLUE
         else:
