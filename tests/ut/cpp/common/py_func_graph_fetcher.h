@@ -72,6 +72,7 @@ class PyFuncGraphFetcher {
       mindspore::FuncGraphPtr func_graph = mindspore::parse::ParsePythonCode(fn);
       if (doResolve_) {
         std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, false);
+        mindspore::parse::python_adapter::set_use_signature_in_resolve(false);
         mindspore::parse::ResolveAll(manager);
       }
       return func_graph;

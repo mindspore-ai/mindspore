@@ -77,6 +77,17 @@ std::string CNode::DebugString(int recursive_level) const {
   return buffer.str();
 }
 
+std::string Parameter::DebugString(int recursive_level) const {
+  std::ostringstream buffer;
+  if (recursive_level > 0) {
+    if (func_graph() != nullptr) {
+      buffer << func_graph()->ToString() << ":";
+    }
+  }
+  buffer << ToString();
+  return buffer.str();
+}
+
 std::string ValueNode::ToString() const {
   MS_EXCEPTION_IF_NULL(value_);
   if (value_->isa<FuncGraph>()) {

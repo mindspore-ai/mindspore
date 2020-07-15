@@ -417,6 +417,15 @@ std::shared_ptr<std::list<FuncGraphPtr>> FuncGraph::recursive_graphs() {
   return mng->recursive_graphs(shared_from_base<FuncGraph>());
 }
 
+void FuncGraph::ClearAllManagerInfo() {
+  ClearNodes();
+  ClearValueNodes();
+  ClearFuncGraphCNodesIndex();
+  ClearFreeVariables();
+  ClearFuncGraphsUsed();
+  ClearJFuncGraphs();
+}
+
 AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {
   auto itr = this->parameter_default_value_.find(name);
   if (itr == parameter_default_value_.end()) {

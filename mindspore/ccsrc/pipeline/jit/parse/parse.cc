@@ -1436,6 +1436,15 @@ FunctionBlockPtr Parser::ParsePass(const FunctionBlockPtr &block, const py::obje
   return block;
 }
 
+AnfNodePtr FindPhis(const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis, const AnfNodePtr &node) {
+  const auto &inp = node->cast<ParameterPtr>();
+  const auto &iter = removable_phis.find(inp);
+  if (iter == removable_phis.end()) {
+    return node;
+  }
+  return FindPhis(removable_phis, iter->second);
+}
+
 void Parser::RemoveUnnecessaryPhis() {
   // merge all removable phis to one map;
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis;
@@ -1443,28 +1452,39 @@ void Parser::RemoveUnnecessaryPhis() {
     MS_EXCEPTION_IF_NULL(block);
     removable_phis.insert(block->removable_phis().begin(), block->removable_phis().end());
   }
-
   if (removable_phis.size() == 0) {
     return;
   }
-  for (auto &node : DeepUsedGraphSearch(func_graph_->get_return())) {
-    if (node->isa<CNode>()) {
-      const auto &cnode = node->cast<CNodePtr>();
-      auto &inputs = cnode->inputs();
-      for (std::size_t i = 0; i < inputs.size(); i++) {
-        if (inputs[i]->isa<Parameter>()) {
-          const auto &inp = inputs[i]->cast<ParameterPtr>();
-          const auto &iter = removable_phis.find(inp);
-          if (iter == removable_phis.end()) {
-            continue;
-          }
-          auto &argNode = iter->second;
-          MS_LOG(DEBUG) << "graph " << cnode->func_graph()->ToString() << " replace phi " << inp->ToString() << " in "
-                        << cnode->DebugString() << " with " << argNode->DebugString();
-          cnode->set_input(i, argNode);
-        }
-      }
+
+  auto fg_name = func_graph_->ToString();
+  auto mng = Manage(func_graph_, false);
+  // replace the nodes
+  for (auto iter : removable_phis) {
+    auto new_node = FindPhis(removable_phis, iter.first);
+    MS_LOG(DEBUG) << "phi " << iter.first->DebugString() << " to " << new_node->DebugString();
+    mng->Replace(iter.first, new_node);
+  }
+  // remove the parameter
+  for (FunctionBlockPtr &block : func_block_list_) {
+    MS_EXCEPTION_IF_NULL(block);
+    auto &local_removable_phis = block->removable_phis();
+    if (local_removable_phis.size() == 0) {
+      continue;
     }
+    auto func_graph = block->func_graph();
+    auto &parameters = func_graph->parameters();
+    std::vector<AnfNodePtr> new_parameters(parameters.size());
+    auto it = std::copy_if(
+      parameters.begin(), parameters.end(), new_parameters.begin(), [&local_removable_phis](AnfNodePtr param) {
+        return local_removable_phis.find(param->cast<ParameterPtr>()) == local_removable_phis.end();
+      });
+
+    // shrink container to new size
+    new_parameters.resize(std::distance(new_parameters.begin(), it));
+    func_graph->set_parameters(new_parameters);
+  }
+  for (auto fg : mng->func_graphs()) {
+    fg->ClearAllManagerInfo();
   }
 }
 

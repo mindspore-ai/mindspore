@@ -520,12 +520,7 @@ void FuncGraphManager::MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target) {
   target->CopyFuncGraphsUsed(source);
   target->CopyJFuncGraphs(source);
   signals_->InvalidateComputer();
-  source->ClearNodes();
-  source->ClearValueNodes();
-  source->ClearFuncGraphCNodesIndex();
-  source->ClearFreeVariables();
-  source->ClearFuncGraphsUsed();
-  source->ClearJFuncGraphs();
+  source->ClearAllManagerInfo();
 }
 
 FuncGraphTransaction FuncGraphManager::Transact() {
