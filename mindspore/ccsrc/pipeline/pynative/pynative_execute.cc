@@ -280,8 +280,8 @@ void PynativeInfer(const PrimitivePyPtr &prim, const py::list &py_args, OpExecIn
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < size; i++) {
     ValuePtr input_value = PyAttrValue(py_args[i]);
-    args_spec_list.emplace_back(abstract::FromValueInside(
-      input_value, !py::hasattr(prim->GetPyObj(), "const_value") && input_value->isa<tensor::Tensor>()));
+    args_spec_list.emplace_back(
+      abstract::FromValueInside(input_value, !prim->ObjHasAttr("const_value") && input_value->isa<tensor::Tensor>()));
   }
   AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   op_exec_info->abstract = infer_res;
@@ -296,8 +296,7 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args &args, py::list *const out_args)
   MS_EXCEPTION_IF_NULL(op_exec_info);
   op_exec_info->op_name = py::cast<std::string>(args[PY_NAME]);
   auto prim = py::cast<PrimitivePyPtr>(args[PY_PRIM]);
-  auto pyobj = prim->GetPyObj();
-  if (pyobj == nullptr) {
+  if (!prim->HasPyObj()) {
     MS_LOG(EXCEPTION) << "pyobj is empty";
   }
 
@@ -708,7 +707,7 @@ py::tuple RunOpInner(const py::args &args) {
       value_ret[0] = output["value"];
       return value_ret;
     }
-    if (py::hasattr(op_exec_info->py_primitive->GetPyObj(), "const_value")) {
+    if (op_exec_info->py_primitive->ObjHasAttr("const_value")) {
       py::tuple value_ret(1);
       value_ret[0] = "";
       return value_ret;

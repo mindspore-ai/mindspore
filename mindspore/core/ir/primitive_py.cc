@@ -196,6 +196,21 @@ bool PrimitivePy::HasComputeFunction() const {
   return true;
 }
 
+PrimitivePtr PrimitivePy::Clone() {
+  auto clone_fn = python_obj_.attr("_clone");
+  py::object new_obj = clone_fn();
+  auto cloned_prim = new_obj.cast<PrimitivePyPtr>();
+  return cloned_prim;
+}
+
+py::dict PrimitivePy::RunInfer(const py::tuple &args) {
+  if (!HasPyObj()) {
+    MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
+  }
+  auto infer_fuc = python_obj_.attr("__infer__");
+  return infer_fuc(*args);
+}
+
 REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                          (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
                            .value("unknown", PrimType::kPrimTypeUnknown)

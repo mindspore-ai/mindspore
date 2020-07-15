@@ -654,17 +654,7 @@ static PrimitivePtr BuildPrimtiveValueWithAttributes(const PrimitivePtr &prim, c
     }
   }
   if (!is_attr_same) {
-    if (prim->isa<PrimitivePy>()) {
-      PrimitivePyPtr prim_py = prim->cast<PrimitivePyPtr>();
-      auto clone_fn = prim_py->GetPyObj().attr("_clone");
-      py::object new_obj = clone_fn();
-      auto cloned_prim = new_obj.cast<PrimitivePyPtr>();
-      for (auto &item : *attrs) {
-        cloned_prim->AddAttr(item.first, item.second);
-      }
-      return cloned_prim;
-    }
-    auto cloned_prim = std::make_shared<Primitive>(*prim);
+    auto cloned_prim = prim->Clone();
     for (auto &item : *attrs) {
       cloned_prim->AddAttr(item.first, item.second);
     }
