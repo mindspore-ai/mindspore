@@ -134,3 +134,11 @@ def test_dtype():
     with pytest.raises(NotImplementedError):
         x = 1.5
         dtype.get_py_obj_dtype(type(type(x)))
+
+
+def test_type_equal():
+    t1 = (dtype.int32, dtype.int32)
+    valid_types = [dtype.float16, dtype.float32]
+    assert t1 not in valid_types
+    assert dtype.int32 not in valid_types
+    assert dtype.float32 in valid_types
