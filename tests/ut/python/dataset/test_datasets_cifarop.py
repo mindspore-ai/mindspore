@@ -87,6 +87,13 @@ def test_cifar10_basic():
     """
     logger.info("Test Cifar10Dataset Op")
 
+    # case 0: test loading the whole dataset
+    data0 = ds.Cifar10Dataset(DATA_DIR_10)
+    num_iter0 = 0
+    for _ in data0.create_dict_iterator():
+        num_iter0 += 1
+    assert num_iter0 == 10000
+
     # case 1: test num_samples
     data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=100)
     num_iter1 = 0
