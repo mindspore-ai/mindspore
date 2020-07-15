@@ -297,8 +297,7 @@ def check_from_dataset(method):
         if columns is not None:
             if not isinstance(columns, list):
                 columns = [columns]
-                col_names = ["col_{0}".format(i) for i in range(len(columns))]
-                type_check_list(columns, (str,), col_names)
+                type_check_list(columns, (str,), "col")
 
         if freq_range is not None:
             type_check(freq_range, (tuple,), "freq_range")

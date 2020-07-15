@@ -686,8 +686,7 @@ def check_concat(method):
         [ds], _ = parse_user_args(method, *args, **kwargs)
         type_check(ds, (list, datasets.Dataset), "datasets")
         if isinstance(ds, list):
-            dataset_names = ["dataset[{0}]".format(i) for i in range(len(ds)) if isinstance(ds, list)]
-            type_check_list(ds, (datasets.Dataset,), dataset_names)
+            type_check_list(ds, (datasets.Dataset,), "dataset")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -751,8 +750,7 @@ def check_add_column(method):
 
         if shape is not None:
             type_check(shape, (list,), "shape")
-            shape_names = ["shape[{0}]".format(i) for i in range(len(shape))]
-            type_check_list(shape, (int,), shape_names)
+            type_check_list(shape, (int,), "shape")
 
         return method(self, *args, **kwargs)
 

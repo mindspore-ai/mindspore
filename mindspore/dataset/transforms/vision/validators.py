@@ -78,6 +78,8 @@ def check_fill_value(fill_value):
 def check_padding(padding):
     """Parsing the padding arguments and check if it is legal."""
     type_check(padding, (tuple, list, numbers.Number), "padding")
+    if isinstance(padding, numbers.Number):
+        check_value(padding, (0, INT32_MAX), "padding")
     if isinstance(padding, (tuple, list)):
         if len(padding) not in (2, 4):
             raise ValueError("The size of the padding list or tuple should be 2 or 4.")
@@ -163,10 +165,13 @@ def check_random_resize_crop(method):
         check_crop_size(size)
 
         if scale is not None:
+            type_check(scale, (tuple,), "scale")
+            type_check_list(scale, (float, int), "scale")
             check_range(scale, [0, FLOAT_MAX_INTEGER])
         if ratio is not None:
+            type_check(ratio, (tuple,), "ratio")
+            type_check_list(ratio, (float, int), "ratio")
             check_range(ratio, [0, FLOAT_MAX_INTEGER])
-            check_positive(ratio[0], "ratio[0]")
         if interpolation is not None:
             type_check(interpolation, (Inter,), "interpolation")
         if max_attempts is not None:
@@ -450,8 +455,7 @@ def check_random_affine(method):
 
         if translate is not None:
             if type_check(translate, (list, tuple), "translate"):
-                translate_names = ["translate_{0}".format(i) for i in range(len(translate))]
-                type_check_list(translate, (int, float), translate_names)
+                type_check_list(translate, (int, float), "translate")
             if len(translate) != 2:
                 raise TypeError("translate should be a list or tuple of length 2.")
             for i, t in enumerate(translate):
@@ -508,8 +512,7 @@ def check_uniform_augment_cpp(method):
 
         if num_ops > len(operations):
             raise ValueError("num_ops is greater than operations list size")
-        tensor_ops = ["tensor_op_{0}".format(i) for i in range(len(operations))]
-        type_check_list(operations, (TensorOp,), tensor_ops)
+        type_check_list(operations, (TensorOp,), "tensor_ops")
 
         return method(self, *args, **kwargs)
 
