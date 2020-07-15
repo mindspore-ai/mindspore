@@ -300,7 +300,11 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
     MS_LOG(INFO) << "No corresponding internal output for output node";
     return;
   }
-  auto real_kernel = AnfAlgo::VisitKernel(ref_node, 0);
+  size_t output_idx = 0;
+  if (AnfAlgo::CheckPrimitiveType(out_node, prim::kPrimTupleGetItem)) {
+    output_idx = AnfAlgo::GetTupleGetItemOutIndex(out_node->cast<CNodePtr>());
+  }
+  auto real_kernel = AnfAlgo::VisitKernel(ref_node, output_idx);
   auto ref_real_node = real_kernel.first;
   auto ref_real_node_index = real_kernel.second;
   if (ref_real_node->isa<CNode>() && node_graph->IsInternalOutput(ref_real_node) &&
@@ -325,6 +329,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
     builder.SetOutputsFormat({format});
     d_kernel_info->set_select_kernel_build_info(builder.Build());
     AnfAlgo::SetOutputAddr(address, 0, parameter.get());
+    AnfAlgo::SetOutputInferTypeAndShape({type}, {AnfAlgo::GetOutputInferShape(parameter, 0)}, parameter.get());
   }
 }
 
