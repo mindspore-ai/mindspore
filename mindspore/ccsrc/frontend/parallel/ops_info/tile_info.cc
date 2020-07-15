@@ -54,7 +54,7 @@ Status TileInfo::GetAttrs() {
   for (auto &element : elements) {
     MS_EXCEPTION_IF_NULL(element);
     if (element->isa<Int32Imm>()) {
-      int32_t axis = element->cast<Int32ImmPtr>()->value();
+      int64_t axis = static_cast<int64_t>(element->cast<Int32ImmPtr>()->value());
       full_multiples_.push_back(axis);
     } else {
       MS_LOG(ERROR) << name_ << ": The value of axis must be int32.";
@@ -185,7 +185,7 @@ void TileInfo::UpdateMultiples(const CNodePtr &cnode) {
   (void)manager->Replace(cnode->input(2), val);
 }
 
-std::shared_ptr<std::vector<std::vector<int32_t>>> TileInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategys> TileInfo::GenerateBatchStrategies() {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }

@@ -159,7 +159,7 @@ std::string ShapeToString(const Shape &shape) {
   return str + "]";
 }
 
-std::string ListToString(const std::vector<int32_t> &list) {
+std::string ListToString(const RankList &list) {
   std::string str = "[";
   for (auto &element : list) {
     str += std::to_string(element) + ", ";

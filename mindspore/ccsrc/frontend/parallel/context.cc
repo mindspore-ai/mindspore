@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-static std::map<std::string, std::vector<int>> param_shapes;
+static std::map<std::string, Shape> param_shapes;
 
 std::vector<std::string> PARALLEL_MODE_LIST = {STAND_ALONE, DATA_PARALLEL, HYBRID_PARALLEL, SEMI_AUTO_PARALLEL,
                                                AUTO_PARALLEL};
@@ -173,7 +173,7 @@ void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph,
     MS_LOG(WARNING) << "Can not found the shape for parameter " << param_node->name();
     return;
   }
-  std::vector<int> shape = iter->second;
+  Shape shape = iter->second;
   std::shared_ptr<abstract::BaseShape> base_shape = std::make_shared<abstract::Shape>(shape);
   ptr->set_shape(base_shape);
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
@@ -189,7 +189,7 @@ void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, cons
     return;
   }
 
-  std::vector<int> shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
+  Shape shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
   auto ret = param_shapes.try_emplace(param_node->name(), shape);
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "The shape for parameter name " << param_node->name() << " is existed";

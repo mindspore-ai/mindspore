@@ -50,7 +50,7 @@ class GatherV2Info : public OperatorInfo {
 
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

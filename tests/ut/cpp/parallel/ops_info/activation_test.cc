@@ -40,13 +40,13 @@ class TestActivation : public UT::Common {
 };
 
 void TestActivation::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -101,7 +101,7 @@ TEST_F(TestActivation, test_softmax_strategies) {
     ASSERT_NE(sp, nullptr);
     Cost cost = *(swc->cost_list[0]);
 
-    std::vector<Dimensions> stra = sp->GetInputDim();
+    Strategys stra = sp->GetInputDim();
     ASSERT_GT(stra.size(), 0);
     Dimensions input0_stra = stra[0];
     ASSERT_GT(input0_stra.size(), 2);

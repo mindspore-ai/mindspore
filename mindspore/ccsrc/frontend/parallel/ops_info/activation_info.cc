@@ -130,7 +130,7 @@ Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  std::vector<Dimensions> stra = strategy->GetInputDim();
+  Strategys stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   for (auto &element : axis_) {
@@ -176,12 +176,12 @@ Status Softmax::GetAttrs() {
       }
       std::vector<ValuePtr> value_vector = value_tuple->value();
       (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
-                           [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int>(value)); });
+                           [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int64_t>(value)); });
       if (axis_.empty()) {
         MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
         return FAILED;
       }
-      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ShapeToString(axis_);
+      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
     } else {
       MS_LOG(ERROR) << name_ << " : The value of axis is not int or tuple int.";
       return FAILED;
@@ -258,7 +258,7 @@ Status Softmax::GenerateStrategies(int32_t stage_id) {
 }
 
 Status ActivationBase::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   dev_matrix_shape_ = input_strategy;
@@ -296,11 +296,11 @@ Status ActivationBase::InferForwardCommunication() {
 }
 
 Status ActivationBase::InferTensorMap() {
-  std::vector<int32_t> tensor_map_index;
+  Shape tensor_map_index;
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int32_t)(size - i - 1));
+    tensor_map_index.push_back((int64_t)(size - i - 1));
   }
 
   inputs_tensor_map_.push_back(tensor_map_index);
@@ -425,7 +425,7 @@ Status ExpandDimsInfo::InferTensorMap() {
 
   // for example: if the dimension of input is 3, and the axis is 2,
   // then the input_tensor_map is [2, 1, 0], the output_tensor_map is [2, 1, -1, 0]
-  std::vector<int32_t> input_tensor_map, output_tensor_map;
+  Shape input_tensor_map, output_tensor_map;
   size_t size = inputs_shape_[0].size();
   for (size_t i = 0; i < size; ++i) {
     input_tensor_map.push_back(SizeToInt(size - i - 1));
@@ -607,7 +607,7 @@ Status SqueezeInfo::InferReplaceOps(const StrategyPtr &strategy) {
 Status SqueezeInfo::InferTensorMap() {
   // for example: if the shape of input is [32, 32, 1], and the axis is (2, ),
   // then the input_tensor_map is [2, 1, 0], the output_tensor_map is [2, 1]
-  std::vector<int32_t> input_tensor_map, output_tensor_map;
+  Shape input_tensor_map, output_tensor_map;
   if (inputs_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;

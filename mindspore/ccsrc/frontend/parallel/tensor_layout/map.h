@@ -34,9 +34,9 @@ class Map : public Array {
  public:
   Map() = default;
   ~Map() override = default;
-  Status Init(const std::vector<int32_t> &array) override;
-  int32_t GetMaxItem() const;
-  int32_t GetIndexByValue(int32_t value) const;
+  Status Init(const Shape &array) override;
+  int64_t GetMaxItem() const;
+  int32_t GetIndexByValue(int64_t value) const;
   std::shared_ptr<Map> ExpandMapByNone(const Arrangement &expand_num_list) const;
   std::shared_ptr<Map> ExpandMapByDecreaseNumber(const Arrangement &expand_num_list) const;
   std::shared_ptr<std::vector<Arrangement>> ReMapVector(const std::vector<Arrangement> &input_vector) const;

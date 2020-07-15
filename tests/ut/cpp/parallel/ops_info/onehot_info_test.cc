@@ -38,13 +38,13 @@ class TestOneHotInfo : public UT::Common {
 };
 
 void TestOneHotInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 10; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(8);
   stage_map.push_back(2);
 
@@ -64,43 +64,43 @@ void TestOneHotInfo::SetUp() {
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{8, 1}, {}, {}};
+  Strategys inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy);
   ASSERT_EQ(status, SUCCESS);
-  std::vector<int32_t> dev_matrix_shape = onehot_info->dev_matrix_shape();
+  Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {8, 1};
+  Shape expect = {8, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
-  std::vector<Dimensions> inputs = {{4, 1}, {}, {}};
+  Strategys inputs = {{4, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy);
   ASSERT_EQ(status, SUCCESS);
-  std::vector<int32_t> dev_matrix_shape = onehot_info->dev_matrix_shape();
+  Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 1};
+  Shape expect = {2, 4, 1};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape3) {
-  std::vector<Dimensions> inputs = {{4, 2}, {}, {}};
+  Strategys inputs = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy);
   ASSERT_EQ(status, FAILED);
-  std::vector<int32_t> dev_matrix_shape = onehot_info->dev_matrix_shape();
+  Shape dev_matrix_shape = onehot_info->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {4, 2};
+  Shape expect = {4, 2};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestOneHotInfo, InferTensorMap2) {
-  std::vector<Dimensions> str = {{8, 1}, {}, {}};
+  Strategys str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy);
@@ -122,7 +122,7 @@ TEST_F(TestOneHotInfo, InferTensorMap2) {
 }
 
 TEST_F(TestOneHotInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{8, 1}, {}, {}};
+  Strategys str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy);
@@ -144,7 +144,7 @@ TEST_F(TestOneHotInfo, InferSliceShape1) {
 }
 
 TEST_F(TestOneHotInfo, InferSliceShape2) {
-  std::vector<Dimensions> str = {{4, 2}, {}, {}};
+  Strategys str = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy);
@@ -166,7 +166,7 @@ TEST_F(TestOneHotInfo, InferSliceShape2) {
 }
 
 TEST_F(TestOneHotInfo, InferSliceShape3) {
-  std::vector<Dimensions> str = {{2, 2}, {}, {}};
+  Strategys str = {{2, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy);
@@ -188,7 +188,7 @@ TEST_F(TestOneHotInfo, InferSliceShape3) {
 }
 
 TEST_F(TestOneHotInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{8, 1}, {}, {}};
+  Strategys inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy);
@@ -199,7 +199,7 @@ TEST_F(TestOneHotInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestOneHotInfo, CheckStrategy1) {
-  std::vector<Dimensions> inputs = {{16}, {}, {}};
+  Strategys inputs = {{16}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = onehot_info->Init(strategy);

@@ -38,13 +38,13 @@ class TestGeluInfo : public UT::Common {
 };
 
 void TestGeluInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 130; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(128);
   stage_map.push_back(2);
 
@@ -63,18 +63,18 @@ void TestGeluInfo::SetUp() {
 }
 
 TEST_F(TestGeluInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
+  Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   gelu->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = gelu->dev_matrix_shape();
+  Shape dev_matrix_shape = gelu->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 1, 16};
+  Shape expect = {2, 4, 1, 16};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestGeluInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 4, 1, 16}};
+  Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   gelu->Init(strategy);
@@ -95,7 +95,7 @@ TEST_F(TestGeluInfo, InferSliceShape1) {
 }
 
 TEST_F(TestGeluInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{2, 4, 1, 16}};
+  Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   gelu->Init(strategy);
@@ -116,7 +116,7 @@ TEST_F(TestGeluInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestGeluInfo, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
+  Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   gelu->Init(strategy);
@@ -127,7 +127,7 @@ TEST_F(TestGeluInfo, GetForwardOp1) {
 }
 
 TEST_F(TestGeluInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
+  Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   gelu->Init(strategy);
@@ -140,7 +140,7 @@ TEST_F(TestGeluInfo, GetMirrorOPs1) {
 
 TEST_F(TestGeluInfo, CheckStrategy1) {
   // Success: {{2,4,1,16}}
-  std::vector<Dimensions> inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = gelu->Init(strategy);
@@ -149,7 +149,7 @@ TEST_F(TestGeluInfo, CheckStrategy1) {
 
 TEST_F(TestGeluInfo, CheckStrategy2) {
   // Success: {{2,4,1,16}}
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = gelu->Init(strategy);
@@ -158,7 +158,7 @@ TEST_F(TestGeluInfo, CheckStrategy2) {
 
 TEST_F(TestGeluInfo, CheckStrategy3) {
   // Success: {{2,4,1,16}}
-  std::vector<Dimensions> inputs = {{2, 4, 1, 16}};
+  Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = gelu->Init(strategy);

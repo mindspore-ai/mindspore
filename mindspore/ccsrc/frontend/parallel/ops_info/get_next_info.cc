@@ -118,7 +118,7 @@ Status GetNextInfo::Init(const StrategyPtr &strategy) {
 }
 
 Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
-  std::vector<Dimensions> stras = strategy->GetInputDim();
+  Strategys stras = strategy->GetInputDim();
   for (Dimensions stra : stras) {
     if (stra.size() != 0) {
       if (is_auto_parallel_) {
@@ -254,7 +254,7 @@ Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 
 Status GetNextInfo::GenerateStrategies(int32_t stage_id) {
   is_auto_parallel_ = true;
-  std::vector<Dimensions> stra;
+  Strategys stra;
   StrategyPtr sp = std::make_shared<Strategy>(stage_id, stra);
   if (SetCostUnderStrategy(sp) == SUCCESS) {
     MS_LOG(INFO) << name_ << " : Successfully generated strategy.";

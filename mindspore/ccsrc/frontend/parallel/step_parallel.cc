@@ -1019,14 +1019,16 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
   }
   if (var->size() > 0) {
     std::vector<ValuePtr> elements = var->value();
-    std::vector<Dimensions> strategy;
+    Strategys strategy;
     for (uint32_t index = 0; index < elements.size(); ++index) {
       Dimensions dim;
       if (elements[index]->isa<ValueSequeue>()) {
         ValueTuplePtr value_tuple = elements[index]->cast<ValueTuplePtr>();
         std::vector<ValuePtr> value_vector = value_tuple->value();
-        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
-                             [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int>(value)); });
+        (void)std::transform(
+          value_vector.begin(), value_vector.end(), std::back_inserter(dim), [](const ValuePtr &value) {
+            return GetValue<int64_t>(value);
+          });
         strategy.push_back(dim);
       } else {
         MS_LOG(EXCEPTION) << "Failure:Strategy's format is wrong! Need ValueSequeue";
@@ -1075,12 +1077,14 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     for (auto &shape : tuple_shape) {
       auto each_shape = dyn_cast<abstract::Shape>(shape);
       MS_EXCEPTION_IF_NULL(each_shape);
-      shapes.push_back(each_shape->shape());
+      Shape new_shape = each_shape->shape();
+      shapes.push_back(new_shape);
     }
   } else {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
-    shapes.push_back(shape_ptr->shape());
+    Shape new_shape = shape_ptr->shape();
+    shapes.push_back(new_shape);
   }
   return shapes;
 }
@@ -1412,7 +1416,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       if (shape_list[0][i].empty()) {
         MS_LOG(EXCEPTION) << "shape_list[ " << i << " ].size() is zero";
       }
-      std::vector<int32_t> input_strategy = {dev_num};
+      Dimensions input_strategy = {dev_num};
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
         input_strategy.push_back(1);
       }
@@ -1476,7 +1480,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       if (!StrategyFound(attrs) && !load_strategy_from_ckpt) {
         MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                      << " is empty, using batch parallel";
-        std::shared_ptr<std::vector<Dimensions>> strategy_v_ptr = operator_->GenerateBatchStrategies();
+        std::shared_ptr<Strategys> strategy_v_ptr = operator_->GenerateBatchStrategies();
         if (strategy_v_ptr == nullptr) {
           MS_LOG(EXCEPTION) << "Failure:Generate batch parallel strategy failed";
         }

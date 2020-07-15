@@ -43,7 +43,7 @@ Status ReduceMethod::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status ReduceMethod::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   dev_matrix_shape_ = input_strategy;
@@ -119,11 +119,12 @@ Status ReduceMethod::GetAttrs() {
 }
 
 Status ReduceMethod::InferTensorMap() {
-  std::vector<int32_t> tensor_map_index, dim_list, output_tensor_map;
+  Shape tensor_map_index, output_tensor_map;
+  std::vector<int32_t> dim_list;
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int32_t)(size - 1 - i));
+    tensor_map_index.push_back((int64_t)(size - 1 - i));
   }
   dim_list = reduce_dim();
   for (size_t i = 0; i < size; ++i) {
@@ -462,7 +463,7 @@ Status ArgMaxWithValueInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<int32_t> dim_list = reduce_dim();
   MS_ASSERT(dim_list.size() == 1);
 
-  std::vector<Dimensions> stra = strategy->GetInputDim();
+  Strategys stra = strategy->GetInputDim();
   MS_ASSERT(stra.size() == 1);
   Shape input_strategy = stra.at(0);
   MS_ASSERT(dim_list.at(0) < input_strategy.size());

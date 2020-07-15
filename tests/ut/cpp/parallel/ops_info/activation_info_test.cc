@@ -38,13 +38,13 @@ class TestActivationInfo : public UT::Common {
 };
 
 void TestActivationInfo::SetUp() {
-  std::vector<int32_t> dev_list;
+  RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::vector<int32_t> stage_map;
+  RankList stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -64,18 +64,18 @@ void TestActivationInfo::SetUp() {
 }
 
 TEST_F(TestActivationInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}};
+  Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   activation->Init(strategy);
-  std::vector<int32_t> dev_matrix_shape = activation->dev_matrix_shape();
+  Shape dev_matrix_shape = activation->dev_matrix_shape();
 
-  std::vector<int32_t> expect = {2, 4, 8, 16};
+  Shape expect = {2, 4, 8, 16};
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
 TEST_F(TestActivationInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}};
+  Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   activation->Init(strategy);
@@ -96,7 +96,7 @@ TEST_F(TestActivationInfo, InferSliceShape1) {
 }
 
 TEST_F(TestActivationInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{2, 4, 8, 16}};
+  Strategys str = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   activation->Init(strategy);
@@ -117,7 +117,7 @@ TEST_F(TestActivationInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestActivationInfo, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}};
+  Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   activation->Init(strategy);
@@ -128,7 +128,7 @@ TEST_F(TestActivationInfo, GetForwardOp1) {
 }
 
 TEST_F(TestActivationInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{1, 4, 8, 16}};
+  Strategys inputs = {{1, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   activation->Init(strategy);
@@ -148,7 +148,7 @@ TEST_F(TestActivationInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestActivationInfo, GetMirrorOPs2) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}};
+  Strategys inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   activation->Init(strategy);
@@ -161,7 +161,7 @@ TEST_F(TestActivationInfo, GetMirrorOPs2) {
 
 TEST_F(TestActivationInfo, CheckStrategy1) {
   // Success: {{2,4,8,16}}
-  std::vector<Dimensions> inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = activation->Init(strategy);
@@ -170,7 +170,7 @@ TEST_F(TestActivationInfo, CheckStrategy1) {
 
 TEST_F(TestActivationInfo, CheckStrategy2) {
   // Success: {{2,4,8,16}}
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = activation->Init(strategy);

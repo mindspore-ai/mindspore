@@ -109,7 +109,7 @@ Status GatherV2Info::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status GatherV2Info::InferDevMatrixShape() {
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  Strategys stra = strategy_->GetInputDim();
   dev_matrix_shape_ = stra.at(0);
   return SUCCESS;
 }
@@ -129,8 +129,8 @@ Status GatherV2Info::InferTensorMap() {
                   << outputs_shape_.size();
     return FAILED;
   }
-  std::vector<int32_t> tensor_map_in;
-  std::vector<int32_t> tensor_map_out;
+  Shape tensor_map_in;
+  Shape tensor_map_out;
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
@@ -149,7 +149,7 @@ Status GatherV2Info::InferTensorMap() {
     return FAILED;
   }
 
-  std::vector<int32_t> tensor_map_in_index;
+  Shape tensor_map_in_index;
   if (index_size_ >= 1) {
     tensor_map_in_index.push_back(SizeToInt(size - axis_ - 1));
   }
@@ -323,7 +323,7 @@ Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-std::shared_ptr<std::vector<std::vector<int32_t>>> GatherV2Info::GenerateBatchStrategies() {
+std::shared_ptr<Strategys> GatherV2Info::GenerateBatchStrategies() {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(EXCEPTION) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                       << inputs_shape_.size();
@@ -343,8 +343,8 @@ std::shared_ptr<std::vector<std::vector<int32_t>>> GatherV2Info::GenerateBatchSt
   for (size_t i = 1; i < inputs_shape_[0].size(); i++) {
     strategy.push_back(1);
   }
-  std::vector<Dimensions> strategy_v = {strategy};
-  return std::make_shared<std::vector<std::vector<int32_t>>>(strategy_v);
+  Strategys strategy_v = {strategy};
+  return std::make_shared<Strategys>(strategy_v);
 }
 }  // namespace parallel
 }  // namespace mindspore
