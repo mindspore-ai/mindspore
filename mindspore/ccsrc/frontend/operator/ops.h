@@ -292,7 +292,12 @@ extern const PrimitivePtr kPrimMakeIndexedSlices;
 extern const PrimitivePtr kPrimIndexedSlicesGetValues;
 extern const PrimitivePtr kPrimIndexedSlicesGetIndices;
 extern const PrimitivePtr kPrimIndexedSlicesGetDenseShape;
-extern const PrimitivePtr kPrimIsIndexedSlices;
+
+// SparseTensor
+extern const PrimitivePtr kPrimMakeSparseTensor;
+extern const PrimitivePtr kPrimSparseTensorGetValues;
+extern const PrimitivePtr kPrimSparseTensorGetIndices;
+extern const PrimitivePtr kPrimSparseTensorGetDenseShape;
 
 // attribute 'unroll_flag' of primitive 'switch', when 'unroll_flag' is '0', 'switch' will not unroll
 const char SWITCH_UNROLL_FLAG[] = "unroll_flag";

@@ -43,6 +43,7 @@
 #include "frontend/optimizer/irpass/transpose_eliminate.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/indexed_slices_eliminate.h"
+#include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
 
 namespace mindspore {
 namespace opt {
@@ -159,6 +160,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   indexed_slices_eliminate_ = MakeSubstitution(
     std::make_shared<IndexedSlicesEliminater>(), "indexed_slices_eliminate",
     {prim::kPrimIndexedSlicesGetIndices, prim::kPrimIndexedSlicesGetValues, prim::kPrimIndexedSlicesGetDenseShape});
+
+  // SparseTensor Eliminate
+  sparse_tensor_eliminate_ = MakeSubstitution(
+    std::make_shared<SparseTensorEliminater>(), "sparse_tensor_eliminate",
+    {prim::kPrimSparseTensorGetIndices, prim::kPrimSparseTensorGetValues, prim::kPrimSparseTensorGetDenseShape});
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

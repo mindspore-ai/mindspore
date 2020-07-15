@@ -1163,3 +1163,38 @@ def test_indexed_slices(tag):
         return z
 
     return fns[tag]
+
+
+def test_sparse_tensor(tag):
+    """ test_add_zero """
+    fns = FnDict()
+    make_sparse_tensor = Primitive('MakeSparseTensor')
+    sparse_tensor_get_values = Primitive('SparseTensorGetValues')
+    sparse_tensor_get_indices = Primitive('SparseTensorGetIndices')
+    sparse_tensor_get_dense_shape = Primitive('SparseTensorGetDenseShape')
+
+    @fns
+    def before_get_indices(x, y, z):
+        return sparse_tensor_get_indices(make_sparse_tensor(x, y, z))
+
+    @fns
+    def after_get_indices(x, y, z):
+        return x
+
+    @fns
+    def before_get_values(x, y, z):
+        return sparse_tensor_get_values(make_sparse_tensor(x, y, z))
+
+    @fns
+    def after_get_values(x, y, z):
+        return y
+
+    @fns
+    def before_get_dense_shape(x, y, z):
+        return sparse_tensor_get_dense_shape(make_sparse_tensor(x, y, z))
+
+    @fns
+    def after_get_dense_shape(x, y, z):
+        return z
+
+    return fns[tag]

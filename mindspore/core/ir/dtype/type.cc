@@ -117,6 +117,8 @@ const char *ObjectIdLabel(const TypeId &v) {
       return "kObjectTypeTensorType";
     case kObjectTypeIndexedSlicesType:
       return "kObjectTypeIndexedSlicesType";
+    case kObjectTypeSparseTensorType:
+      return "kObjectTypeSparseTensorType";
     case kObjectTypeUndeterminedType:
       return "kObjectTypeUndeterminedType";
     case kObjectTypeDictionary:

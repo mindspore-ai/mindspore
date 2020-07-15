@@ -1093,5 +1093,64 @@ std::string AbstractIndexedSlices::ToString() const {
          << ", dense_shape: " << dense_shape_->ToString();
   return buffer.str();
 }
+
+// SparseTensor
+TypePtr AbstractSparseTensor::BuildType() const {
+  MS_EXCEPTION_IF_NULL(element());
+  TypePtr element_type = element()->BuildType();
+  return std::make_shared<SparseTensorType>(element_type);
+}
+
+AbstractBasePtr AbstractSparseTensor::Clone() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto clone = std::make_shared<AbstractSparseTensor>(element()->Clone());
+  ShapePtr shp = shape();
+  clone->set_shape(shp->Clone());
+  clone->set_value(GetValueTrack());
+  clone->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  clone->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  clone->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return clone;
+}
+
+AbstractBasePtr AbstractSparseTensor::Broaden() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
+  auto shp = shape();
+  broaden->set_shape(shp->Clone());
+  broaden->set_value(kAnyValue);
+  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return broaden;
+}
+
+AbstractBasePtr AbstractSparseTensor::BroadenWithShape() const {
+  MS_EXCEPTION_IF_NULL(element());
+  auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
+  auto shp = shape()->Clone();
+  shp->Broaden();
+  broaden->set_shape(shp);
+  broaden->set_value(kAnyValue);
+  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  return broaden;
+}
+
+std::string AbstractSparseTensor::ToString() const {
+  std::ostringstream buffer;
+  BaseShapePtr shape_track = GetShapeTrack();
+  MS_EXCEPTION_IF_NULL(shape_track);
+  MS_EXCEPTION_IF_NULL(element());
+  auto value_track = GetValueTrack();
+  MS_EXCEPTION_IF_NULL(value_track);
+  buffer << type_name() << "("
+         << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
+         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
+         << ", indices: " << indices_->ToString() << ", values" << values_->ToString()
+         << ", dense_shape: " << dense_shape_->ToString();
+  return buffer.str();
+}
 }  // namespace abstract
 }  // namespace mindspore

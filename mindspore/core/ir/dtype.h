@@ -177,6 +177,29 @@ class IndexedSlicesType : public Object {
 };
 using IndexedSlicesTypePtr = std::shared_ptr<IndexedSlicesType>;
 
+class SparseTensorType : public Object {
+ public:
+  SparseTensorType() : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType) {}
+  explicit SparseTensorType(const TypePtr &ele)
+      : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+  ~SparseTensorType() override = default;
+  MS_DECLARE_PARENT(SparseTensorType, Object)
+
+  TypeId generic_type_id() const override { return kObjectTypeSparseTensorType; }
+  const TypePtr element() const { return element_type_; }
+  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
+
+  TypePtr DeepCopy() const override;
+  std::string ToString() const override;
+  std::string ToReprString() const override;
+  std::string DumpText() const override;
+  bool operator==(const Type &other) const override;
+
+ private:
+  TypePtr element_type_;
+};
+using SparseTensorTypePtr = std::shared_ptr<SparseTensorType>;
+
 class Function : public Object {
  public:
   Function();
