@@ -61,6 +61,9 @@ class DatasetLenet():
     def get_repeat_count(self):
         return 1
 
+    def create_tuple_iterator(self):
+        return self
+
 
 class Net(nn.Cell):
     def __init__(self):

@@ -30,6 +30,8 @@ namespace dataset {
 ///     to the eoe-producing (typically leaf) nodes underneath it.
 class RepeatPass : public NodePass {
  public:
+  using eoe_op_stack = std::stack<std::shared_ptr<DatasetOp>>;
+
   /// \brief Constructor
   RepeatPass();
 
@@ -38,6 +40,12 @@ class RepeatPass : public NodePass {
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The error code return
   Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
+
+  /// \brief Identifies the subtree below this node as being in a repeated path of the tree.
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override;
 
   /// \brief Identifies the subtree below this node as being in a cache merge path
   /// \param[in] node The node being visited
@@ -50,6 +58,12 @@ class RepeatPass : public NodePass {
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The error code return
   Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
+
+  /// \brief Hooks up any identified eoe nodes under this repeat.
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override;
 
   /// \brief CacheOp removes previous leaf ops and replaces them with itself
   /// \param[in] node The node being visited
@@ -86,11 +100,11 @@ class RepeatPass : public NodePass {
   /// \return shared_ptr to the popped operator
   std::shared_ptr<DatasetOp> PopFromEOEOpStack();
 
-  bool is_repeated_;                                  // T/F if we are processing under a repeat
-  bool is_merge_;                                     // T/F if we are processing under a cache merge op
-  int32_t nested_repeats_;                            // A counter for nested repeats
-  std::stack<std::shared_ptr<DatasetOp>> eoe_stack_;  // A save area for leaf/eoe ops
-  std::shared_ptr<DatasetOp> cache_lookup_;           // A save area for a cache lookup op
+  bool is_repeated_;                                         // T/F if we are processing under a repeat
+  bool is_merge_;                                            // T/F if we are processing under a cache merge op
+  int32_t nested_repeats_;                                   // A counter for nested repeats
+  std::stack<std::unique_ptr<eoe_op_stack>> eoe_op_stacks_;  // A save area for leaf/eoe ops (with nesting)
+  std::shared_ptr<DatasetOp> cache_lookup_;                  // A save area for a cache lookup op
 };
 }  // namespace dataset
 }  // namespace mindspore

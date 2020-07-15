@@ -274,6 +274,9 @@ class DatasetLenet():
     def get_repeat_count(self):
         return 1
 
+    def create_tuple_iterator(self):
+        return self
+
 
 def test_train_32k_8p(batch_size=32, num_classes=32768):
     dev_num = 8

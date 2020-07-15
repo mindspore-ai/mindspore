@@ -91,8 +91,9 @@ SET(DE_UT_SRCS
         cyclic_array_test.cc
         perf_data_test.cc
         c_api_test.cc
-		tensor_op_fusion_pass_test.cc
+        tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc
+        epoch_ctrl_op_test.cc
         )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

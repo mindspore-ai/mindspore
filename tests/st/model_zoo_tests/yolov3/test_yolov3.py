@@ -113,7 +113,7 @@ def test_yolov3():
         loss_scale = float(loss_scale)
 
         # When create MindDataset, using the fitst mindrecord file, such as yolo.mindrecord0.
-        dataset = create_yolo_dataset(mindrecord_file, repeat_num=epoch_size,
+        dataset = create_yolo_dataset(mindrecord_file, repeat_num=1,
                                       batch_size=batch_size, device_num=device_num, rank=rank)
         dataset_size = dataset.get_dataset_size()
         print("Create dataset done!")
@@ -146,12 +146,12 @@ def test_yolov3():
         assert loss_value[2] < expect_loss_value[2]
 
         epoch_mseconds = np.array(time_monitor_callback.epoch_mseconds_list)[2]
-        expect_epoch_mseconds = 950
+        expect_epoch_mseconds = 2000
         print("epoch mseconds: {}".format(epoch_mseconds))
         assert epoch_mseconds <= expect_epoch_mseconds
 
         per_step_mseconds = np.array(time_monitor_callback.per_step_mseconds_list)[2]
-        expect_per_step_mseconds = 110
+        expect_per_step_mseconds = 220
         print("per step mseconds: {}".format(per_step_mseconds))
         assert per_step_mseconds <= expect_per_step_mseconds
         print("yolov3 test case passed.")

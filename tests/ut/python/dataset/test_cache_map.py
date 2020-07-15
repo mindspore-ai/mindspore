@@ -104,9 +104,11 @@ def test_cache_map_basic3():
     decode_op = c_vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    print("ds1.dataset_size is ", ds1.get_dataset_size())
 
     num_iter = 0
     for _ in ds1.create_dict_iterator():
+        print("get data from dataset")
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -152,6 +154,10 @@ def test_cache_map_failure1():
 
 if __name__ == '__main__':
     test_cache_map_basic1()
+    print("test_cache_map_basic1 success.")
     test_cache_map_basic2()
+    print("test_cache_map_basic2 success.")
     test_cache_map_basic3()
+    print("test_cache_map_basic3 success.")
     test_cache_map_failure1()
+    print("test_cache_map_failure1 success.")

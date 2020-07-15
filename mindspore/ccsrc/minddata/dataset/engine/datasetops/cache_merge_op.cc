@@ -96,7 +96,7 @@ Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
       RETURN_IF_NOT_OK(cache_hit_stream->GetNextBuffer(&db_ptr, worker_id));
     }
   }
-  RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db_ptr)));
+  RETURN_IF_NOT_OK(EofReceived(worker_id));
   return Status::OK();
 }
 Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
@@ -297,6 +297,20 @@ Status CacheMergeOp::EoeReceived(int32_t worker_id) {
     return DatasetOp::EoeReceived(worker_id);
   }
   return Status::OK();
+}
+
+// Base-class override for handling cases when an eof is received.
+Status CacheMergeOp::EofReceived(int32_t worker_id) {
+  // If we are not in a repeated path, then the merge op gets a eof by itself, without first
+  // getting an eoe.  However, the logic demands that all epochs close with an eoe first before eof.
+  // Thus, generate an eoe first, before flowing up the eof in the non-repeated case. Base class
+  // provides that for us.
+  if (!BitTest(op_ctrl_flags_, kDeOpRepeated)) {
+    MS_LOG(DEBUG) << "Cache merge sending eoe";
+    RETURN_IF_NOT_OK(DatasetOp::EoeReceived(worker_id));
+  }
+  MS_LOG(DEBUG) << "Cache merge sending eof";
+  return DatasetOp::EofReceived(worker_id);
 }
 }  // namespace dataset
 }  // namespace mindspore

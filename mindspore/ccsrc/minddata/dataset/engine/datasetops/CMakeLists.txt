@@ -18,6 +18,7 @@ set(DATASET_ENGINE_DATASETOPS_SRC_FILES
     shuffle_op.cc
     zip_op.cc
     concat_op.cc
+    epoch_ctrl_op.cc
     cache_base_op.cc
     cache_lookup_op.cc
     cache_op.cc

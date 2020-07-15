@@ -76,6 +76,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status eerror code returned
   Status Remove();
 
+  // Removes child operator in this operator.
+  Status RemoveChildren();
+
   /// \brief Getter function to get a shared pointer to our child
   /// \param[in] child_index An operator can have n children. Indicates which child to return.
   /// \return The shared pointer to the child.  If there are no children, it returns null regardless of the given index
@@ -85,6 +88,12 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   ///     If there are no parents, it returns null regardless of the given index
   /// \param[in] parent_index An operator can have n parents. Indicates which parent to return.
   void Parent(DatasetOp **parent, int32_t parent_index) const;
+
+  // Getter function to get all of our children.
+  std::vector<std::shared_ptr<DatasetOp>> children() const;
+
+  // Getter function to get all of our parents.
+  std::vector<DatasetOp *> parents() const;
 
   // Inserts a operator as the parent current op.
   // Inserted op will become the sole parent of the current op.

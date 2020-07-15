@@ -77,6 +77,10 @@ class CacheMergeOp;
 
 class CacheLookupOp;
 
+class EpochCtrlOp;
+
+class BuildVocabOp;
+
 // The base class Pass is the basic unit of tree transformation.
 // The actual implementation of the passes will be derived from here.
 class Pass : public std::enable_shared_from_this<Pass> {
@@ -190,11 +194,17 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
 
+  virtual Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
+
   virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
+
+  virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified);
 
  private:
   // Helper function to perform DFS visit

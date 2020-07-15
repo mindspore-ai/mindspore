@@ -25,6 +25,8 @@
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/bucket_batch_by_length_op.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
+#include "minddata/dataset/engine/datasetops/device_queue_op.h"
+#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/datasetops/filter_op.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
@@ -84,7 +86,8 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {
   {kRandomData, &DEPipeline::ParseRandomDataOp},
   {kTextFile, &DEPipeline::ParseTextFileOp},
   {kBuildVocab, &DEPipeline::ParseBuildVocabOp},
-  {kClue, &DEPipeline::ParseClueOp}};
+  {kClue, &DEPipeline::ParseClueOp},
+  {kEpochCtrl, &DEPipeline::ParseEpochCtrlOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -166,8 +169,8 @@ Status DEPipeline::AddChildToParentNode(const DsOpPtr &child_op, const DsOpPtr &
 Status DEPipeline::AssignRootNode(const DsOpPtr &dataset_op) { return (tree_->AssignRoot(dataset_op)); }
 
 // Function to launch the tree execution.
-Status DEPipeline::LaunchTreeExec() {
-  RETURN_IF_NOT_OK(tree_->Prepare());
+Status DEPipeline::LaunchTreeExec(const int32_t num_epochs) {
+  RETURN_IF_NOT_OK(tree_->Prepare(num_epochs));
   RETURN_IF_NOT_OK(tree_->Launch());
   iterator_ = std::make_unique<DatasetIterator>(tree_);
   if (iterator_ == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create an Iterator.");
@@ -251,6 +254,16 @@ int DEPipeline::GetBatchSize() const { return batch_size_; }
 int DEPipeline::GetRepeatCount() const { return repeat_num_; }
 
 float ToFloat(const py::handle &handle) { return py::reinterpret_borrow<py::float_>(handle); }
+
+Status DEPipeline::StopSend() {
+  // tree_.root() must be DeviceQueueOp
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_->root().get());
+  if (op == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "StopSend only supported by DeviceQueueOp");
+  }
+  op->StopSend();
+  return Status::OK();
+}
 
 int ToInt(const py::handle &handle) { return py::reinterpret_borrow<py::int_>(handle); }
 
@@ -804,6 +817,18 @@ Status DEPipeline::ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> 
   return Status::OK();
 }
 
+Status DEPipeline::ParseEpochCtrlOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
+                                    std::shared_ptr<DatasetOp> *bottom) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<EpochCtrlOp> op;
+  RETURN_IF_NOT_OK(EpochCtrlOp::Builder(ToInt(args["count"])).Build(&op));
+  *top = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                                     std::shared_ptr<DatasetOp> *bottom) {
   std::shared_ptr<GeneratorOp::Builder> builder = std::make_shared<GeneratorOp::Builder>();
@@ -973,8 +998,8 @@ Status DEPipeline::ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<Data
         (void)builder->SetDeviceType(ToString(value));
       } else if (key == "device_id") {
         (void)builder->SetDeviceId(ToInt(value));
-      } else if (key == "num_batch") {
-        (void)builder->SetNumBatch(ToInt(value));
+      } else if (key == "send_epoch_end") {
+        (void)builder->SetSendEpochEnd(ToBool(value));
       }
     }
   }

@@ -797,6 +797,9 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
     (void)InitBackend();
   }
 #endif
+  if (iter_num == -1) {
+    iter_num = INT32_MAX;
+  }
   if (name == kMsConvert || name == kMsVm) {
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
   }

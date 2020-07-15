@@ -83,7 +83,7 @@ if __name__ == '__main__':
                                           mirror_mean=True)
         init()
 
-    dataset = vgg_create_dataset(args_opt.data_path, cfg.epoch_size)
+    dataset = vgg_create_dataset(args_opt.data_path, 1)
     batch_num = dataset.get_dataset_size()
 
     net = vgg16(num_classes=cfg.num_classes)

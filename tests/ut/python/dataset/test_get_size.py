@@ -41,18 +41,18 @@ def test_case1():
     assert data.get_batch_size() == 2
     assert data.get_repeat_count() == 1
     data = data.repeat(10)
-    assert data.get_dataset_size() == 6
+    assert data.get_dataset_size() == 60
     assert data.get_batch_size() == 2
     assert data.get_repeat_count() == 10
     data = data.project(["new_column"])
-    assert data.get_dataset_size() == 6
+    assert data.get_dataset_size() == 60
     assert data.get_batch_size() == 2
     assert data.get_repeat_count() == 10
 
     data2 = ds.TFRecordDataset(FILES, SCHEMA_FILE).batch(2).repeat(10)
 
     data1 = data.zip(data2)
-    assert data1.get_dataset_size() == 6
+    assert data1.get_dataset_size() == 60
 
 
 def test_case2():
@@ -65,14 +65,14 @@ def test_case2():
     data = data.rename("col_sint64", "new_column")
     assert data.get_dataset_size() == 3
     data = data.repeat(10)
-    assert data.get_dataset_size() == 3
+    assert data.get_dataset_size() == 30
     data = data.project(["new_column"])
-    assert data.get_dataset_size() == 3
+    assert data.get_dataset_size() == 30
 
     data2 = ds.TFRecordDataset(FILES, num_samples=6).batch(2).repeat(10)
 
     data1 = data.zip(data2)
-    assert data1.get_dataset_size() == 3
+    assert data1.get_dataset_size() == 30
 
 
 def test_case3():
@@ -94,11 +94,11 @@ def test_case4():
     data2 = data2.shuffle(100)
     assert data2.get_dataset_size() == 6
     data2 = data2.repeat(3)
-    assert data2.get_dataset_size() == 6
+    assert data2.get_dataset_size() == 18
 
     data3 = ds.zip((data1, data2))
 
-    assert data3.get_dataset_size() == 6
+    assert data3.get_dataset_size() == 18
 
 
 def test_case5():

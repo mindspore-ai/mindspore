@@ -91,7 +91,7 @@ def main():
         loss_scale = float(args_opt.loss_scale)
 
         # When create MindDataset, using the fitst mindrecord file, such as ssd.mindrecord0.
-        dataset = create_ssd_dataset(mindrecord_file, repeat_num=args_opt.epoch_size,
+        dataset = create_ssd_dataset(mindrecord_file, repeat_num=1,
                                      batch_size=args_opt.batch_size, device_num=device_num, rank=rank)
 
         dataset_size = dataset.get_dataset_size()

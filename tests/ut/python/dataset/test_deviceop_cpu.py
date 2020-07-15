@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import time
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
@@ -35,6 +37,8 @@ def test_case_0():
 
     data = data.device_que()
     data.send()
+    time.sleep(0.1)
+    data.stop_send()
 
 
 def test_case_1():
@@ -58,6 +62,8 @@ def test_case_1():
 
     data = data.device_que()
     data.send()
+    time.sleep(0.1)
+    data.stop_send()
 
 
 def test_case_2():
@@ -84,6 +90,8 @@ def test_case_2():
     data = data.device_que()
     assert data.get_repeat_count() == 2
     data.send()
+    time.sleep(0.1)
+    data.stop_send()
 
 
 def test_case_3():
@@ -109,13 +117,17 @@ def test_case_3():
 
     data = data.device_que()
     data.send()
+    time.sleep(0.1)
+    data.stop_send()
 
 
 def test_case_tf_file():
     data = ds.TFRecordDataset(TF_FILES, TF_SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
 
-    data = data.to_device(num_batch=10)
+    data = data.to_device()
     data.send()
+    time.sleep(0.1)
+    data.stop_send()
 
 
 if __name__ == '__main__':

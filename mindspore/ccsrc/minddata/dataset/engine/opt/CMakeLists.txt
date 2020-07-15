@@ -5,6 +5,7 @@ add_library(engine-opt OBJECT
           post/repeat_pass.cc
           pre/cache_pass.cc
           pre/cache_transform_pass.cc
+          pre/injection_pass.cc
           pre/removal_nodes.cc
           pre/removal_pass.cc
           optional/tensor_op_fusion_pass.cc

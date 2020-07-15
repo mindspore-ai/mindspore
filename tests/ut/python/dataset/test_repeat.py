@@ -251,6 +251,49 @@ def test_nested_repeat11():
 
     assert sum([1 for _ in data]) == 2 * 3 * 4 * 5 * 3
 
+def test_repeat_count1():
+    data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
+    data1_size = data1.get_dataset_size()
+    logger.info("dataset size is {}".format(data1_size))
+    batch_size = 2
+    repeat_count = 4
+    resize_height, resize_width = 32, 32
+    decode_op = vision.Decode()
+    resize_op = vision.Resize((resize_height, resize_width), interpolation=ds.transforms.vision.Inter.LINEAR)
+    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.repeat(repeat_count)
+    data1 = data1.batch(batch_size, drop_remainder=False)
+    dataset_size = data1.get_dataset_size()
+    logger.info("dataset repeat then batch's size is {}".format(dataset_size))
+    num1_iter = 0
+    for _ in data1.create_dict_iterator():
+        num1_iter += 1
+
+    assert data1_size == 3
+    assert dataset_size == num1_iter == 6
+
+def test_repeat_count2():
+    data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
+    data1_size = data1.get_dataset_size()
+    logger.info("dataset size is {}".format(data1_size))
+    batch_size = 2
+    repeat_count = 4
+    resize_height, resize_width = 32, 32
+    decode_op = vision.Decode()
+    resize_op = vision.Resize((resize_height, resize_width), interpolation=ds.transforms.vision.Inter.LINEAR)
+    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.batch(batch_size, drop_remainder=False)
+    data1 = data1.repeat(repeat_count)
+    dataset_size = data1.get_dataset_size()
+    logger.info("dataset batch then repeat's size is {}".format(dataset_size))
+    num1_iter = 0
+    for _ in data1.create_dict_iterator():
+        num1_iter += 1
+
+    assert data1_size == 3
+    assert dataset_size == num1_iter == 8
 
 if __name__ == "__main__":
     test_tf_repeat_01()
@@ -268,3 +311,5 @@ if __name__ == "__main__":
     test_nested_repeat9()
     test_nested_repeat10()
     test_nested_repeat11()
+    test_repeat_count1()
+    test_repeat_count2()

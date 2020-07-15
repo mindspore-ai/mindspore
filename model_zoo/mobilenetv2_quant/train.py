@@ -86,7 +86,7 @@ if __name__ == '__main__':
                              do_train=True,
                              config=config,
                              device_target=args_opt.device_target,
-                             repeat_num=epoch_size,
+                             repeat_num=1,
                              batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()
     # load pre trained ckpt

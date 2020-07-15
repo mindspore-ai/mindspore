@@ -58,6 +58,9 @@ class Dataset():
     def get_repeat_count(self):
         return 1
 
+    def create_tuple_iterator(self):
+        return self
+
 
 class GatherV2(_Loss):
     def __init__(self, index_dim, strategy, index_size=16):

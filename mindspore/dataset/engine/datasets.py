@@ -44,7 +44,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_positive_int32, check_save
+    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -946,14 +946,14 @@ class Dataset:
             raise TypeError("apply_func must return a dataset.")
         return dataset
 
-    @check_positive_int32
-    def device_que(self, prefetch_size=None):
+    def device_que(self, prefetch_size=None, send_epoch_end=True):
         """
         Return a transferredDataset that transfer data through device.
 
         Args:
             prefetch_size (int, optional): prefetch number of records ahead of the
                 user's request (default=None).
+            send_epoch_end (bool, optional): whether send end of sequence to device or not.(default=True)
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -962,15 +962,14 @@ class Dataset:
         Return:
             TransferDataset, dataset for transferring.
         """
-        return self.to_device()
+        return self.to_device(send_epoch_end=send_epoch_end)
 
-    @check_positive_int32
-    def to_device(self, num_batch=None):
+    def to_device(self, send_epoch_end=True):
         """
         Transfer data through CPU, GPU or Ascend devices.
 
         Args:
-            num_batch (int, optional): limit the number of batch to be sent to device (default=None).
+            send_epoch_end (bool, optional): whether send end of sequence to device or not.(default=True)
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -982,19 +981,9 @@ class Dataset:
         Raises:
             TypeError: If device_type is empty.
             ValueError: If device_type is not 'Ascend', 'GPU' or 'CPU'.
-            ValueError: If num_batch is not positive or larger than int_max.
-            ValueError: If dataset size is None or 0.
             RuntimeError: If dataset is unknown.
             RuntimeError: If distribution file path is given but failed to read.
         """
-        if self.get_dataset_size() is None or 0:
-            raise ValueError("dataset size is None or 0.")
-
-        if num_batch is None:
-            num_batch = self.get_dataset_size()
-            repeat_count = self.get_repeat_count()
-            num_batch = num_batch * repeat_count
-
         queue_name = str(uuid.uuid1())
 
         if context:
@@ -1007,9 +996,6 @@ class Dataset:
 
         if device_type not in ('Ascend', 'GPU', 'CPU'):
             raise ValueError("Only support CPU, Ascend, GPU")
-
-        if num_batch == 0:
-            raise ValueError("num_batch is 0.")
 
         def get_distribution(output_dataset):
             dev_id = 0
@@ -1032,7 +1018,7 @@ class Dataset:
 
         distribution_path, device_id = get_distribution(self)
         if distribution_path == "":
-            return TransferDataset(self, queue_name, device_id, device_type, num_batch)
+            return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end)
         try:
             with open(distribution_path, 'r') as distribution_f:
                 dist = json.load(distribution_f)
@@ -1042,7 +1028,7 @@ class Dataset:
         except Exception:
             raise RuntimeError("Distribution file failed to read")
 
-        return TransferDataset(self, queue_name, device_id, device_type, num_batch)
+        return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end)
 
     @check_save
     def save(self, file_name, num_files=1, file_type='mindrecord'):
@@ -1072,7 +1058,7 @@ class Dataset:
 
         return SaveOp(self).save(file_names, file_type)
 
-    def create_tuple_iterator(self, columns=None):
+    def create_tuple_iterator(self, columns=None, num_epochs=-1):
         """
         Create an Iterator over the dataset. The data retrieved will be a list of ndarray of data.
 
@@ -1098,9 +1084,9 @@ class Dataset:
         """
         if self._noop_mode():
             return DummyIterator(self, 'tuple')
-        return TupleIterator(self, columns)
+        return TupleIterator(self, columns, num_epochs)
 
-    def create_dict_iterator(self):
+    def create_dict_iterator(self, num_epochs=-1):
         """
         Create an Iterator over the dataset.
 
@@ -1123,7 +1109,7 @@ class Dataset:
         """
         if self._noop_mode():
             return DummyIterator(self, 'dict')
-        return DictIterator(self)
+        return DictIterator(self, num_epochs)
 
     def __iter__(self):
         """Create an Iterator over the dataset."""
@@ -1149,7 +1135,7 @@ class Dataset:
         self._batch_size = device_iter.get_batch_size()
         self._num_classes = device_iter.num_classes()
         self._repeat_count = device_iter.get_repeat_count()
-        device_iter.release()
+        device_iter.stop()
 
     def output_shapes(self):
         """
@@ -2085,7 +2071,7 @@ class RepeatDataset(DatasetOp):
         """
         child_size = self.children[0].get_dataset_size()
         if child_size is not None:
-            return child_size
+            return child_size * self.count
         return None
 
     def get_repeat_count(self):
@@ -2096,7 +2082,6 @@ class RepeatDataset(DatasetOp):
             Number, the count of repeat.
         """
         return self.count
-
 
 class SkipDataset(DatasetOp):
     """
@@ -2317,10 +2302,10 @@ class TransferDataset(DatasetOp):
         queue_name (str): Name of device queue.
         device_id (int): Id of device.
         device_type (str): Type of device, including "CPU", "GPU", and "Ascend".
-        num_batch (int): limit the number of batch to be sent to device (default=None).
+        send_epoch_end (bool, optional): Whether send end of sequence to device or not.(default=True)
     """
 
-    def __init__(self, input_dataset, queue_name, device_id, device_type, num_batch=None):
+    def __init__(self, input_dataset, queue_name, device_id, device_type, send_epoch_end=True):
         super().__init__()
         self.children.append(input_dataset)
         input_dataset.parent.append(self)
@@ -2328,7 +2313,7 @@ class TransferDataset(DatasetOp):
         self._input_indexs = input_dataset.input_indexs
         self._device_type = device_type
         self._device_id = device_id
-        self.__num_batch = num_batch
+        self._send_epoch_end = send_epoch_end
         self.iterator = None
 
     def get_args(self):
@@ -2336,13 +2321,13 @@ class TransferDataset(DatasetOp):
         args["queue_name"] = self.queue_name
         args["device_type"] = self._device_type
         args["device_id"] = self._device_id
-        args["num_batch"] = self.__num_batch
+        args["send_epoch_end"] = self._send_epoch_end
         return args
 
-    def create_dict_iterator(self):
+    def create_dict_iterator(self, num_epochs=-1):
         raise RuntimeError("TransferDataset is not iterable")
 
-    def create_tuple_iterator(self, columns=None):
+    def create_tuple_iterator(self, columns=None, num_epochs=-1):
         raise RuntimeError("TransferDataset is not iterable")
 
     def __iter__(self):
@@ -2354,12 +2339,14 @@ class TransferDataset(DatasetOp):
     def output_types(self):
         raise RuntimeError("TransferDataset does not support output_types")
 
-    def send(self):
+    def send(self, num_epochs=-1):
         # need to keep iterator alive so the executionTree is not destroyed
         if self._noop_mode():
             return
-        self.iterator = TupleIterator(self)
+        self.iterator = TupleIterator(self, num_epochs=-1)
 
+    def stop_send(self):
+        self.iterator.depipeline.StopSend()
 
 class RangeDataset(MappableDataset):
     """

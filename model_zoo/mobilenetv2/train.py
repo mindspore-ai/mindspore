@@ -180,7 +180,7 @@ if __name__ == '__main__':
                                  do_train=True,
                                  config=config_gpu,
                                  platform=args_opt.platform,
-                                 repeat_num=epoch_size,
+                                 repeat_num=1,
                                  batch_size=config_gpu.batch_size)
         step_size = dataset.get_dataset_size()
         # resume
@@ -239,7 +239,7 @@ if __name__ == '__main__':
                                  do_train=True,
                                  config=config_ascend,
                                  platform=args_opt.platform,
-                                 repeat_num=epoch_size,
+                                 repeat_num=1,
                                  batch_size=config_ascend.batch_size)
         step_size = dataset.get_dataset_size()
         if args_opt.pre_trained:

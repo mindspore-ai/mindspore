@@ -105,7 +105,7 @@ if __name__ == '__main__':
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
     if args_opt.do_train:
         dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
-                                 repeat_num=epoch_size, batch_size=config.batch_size)
+                                 batch_size=config.batch_size)
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)

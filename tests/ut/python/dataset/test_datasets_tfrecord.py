@@ -238,7 +238,7 @@ def test_tfrecord_shard_equal_rows():
 def test_tfrecord_no_schema_columns_list():
     logger.info("test_tfrecord_no_schema_columns_list")
     data = ds.TFRecordDataset(FILES, shuffle=False, columns_list=["col_sint16"])
-    row = data.create_dict_iterator().get_next()
+    row = data.create_dict_iterator().__next__()
     assert row["col_sint16"] == [-32768]
 
     with pytest.raises(KeyError) as info:
@@ -258,7 +258,7 @@ def test_tfrecord_schema_columns_list():
     schema.add_column('col_sint32', de_type=mstype.int64, shape=[1])
     schema.add_column('col_sint64', de_type=mstype.int64, shape=[1])
     data = ds.TFRecordDataset(FILES, schema=schema, shuffle=False, columns_list=["col_sint16"])
-    row = data.create_dict_iterator().get_next()
+    row = data.create_dict_iterator().__next__()
     assert row["col_sint16"] == [-32768]
 
     with pytest.raises(KeyError) as info:
