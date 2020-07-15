@@ -1962,6 +1962,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.is_ascend = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, var_shape, mean_gradient_shape, mean_square_shape, moment_shape, grad_shape,
                     learning_rate_shape, decay_shape, momentum_shape, epsilon_shape):
@@ -1969,6 +1970,8 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        if self.is_ascend:
+            return var_shape, mean_gradient_shape, mean_square_shape, moment_shape
         return var_shape
 
     def infer_dtype(self, var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype, grad_dtype,
@@ -1982,6 +1985,8 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         validator.check_type_same(args_rho, valid_types, self.name)
         args_lr = {"learning_rate": learning_rate_dtype, "rho": rho_dtype}
         validator.check_scalar_or_tensor_type_same(args_lr, valid_types, self.name, allow_mix=True)
+        if self.is_ascend:
+            return var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype
         return var_dtype
 
 
