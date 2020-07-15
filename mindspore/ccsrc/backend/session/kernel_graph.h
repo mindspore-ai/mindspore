@@ -156,6 +156,12 @@ class KernelGraph : public FuncGraph {
   bool IsFinalOutputKernel(const AnfNodePtr &node) const;
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
+  void UpdateChildGraphOrder();
+  const std::vector<AnfNodePtr> &child_graph_result() const { return child_graph_result_; }
+  void AddChildGraphResult(const AnfNodePtr &parameter) { child_graph_result_.push_back(parameter); }
+  void set_child_graph_result(const std::vector<AnfNodePtr> &child_graph_result) {
+    child_graph_result_ = child_graph_result;
+  }
 
  private:
   // remove value node form graph
@@ -173,6 +179,7 @@ class KernelGraph : public FuncGraph {
   void UpdateControlDependRelations(const std::vector<AnfNodePtr> &depends);
 
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
+  std::vector<AnfNodePtr> child_graph_result_;
   std::vector<CNodePtr> execution_order_;
   uint32_t graph_id_;
   uint32_t stream_distinction_label_;

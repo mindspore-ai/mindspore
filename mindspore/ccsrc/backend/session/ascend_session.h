@@ -151,6 +151,15 @@ class AscendSession : public SessionBasic {
   // sync intial tensors' data to device
   void SyncInitialTenosrToDevice();
   void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
+  // create parameter to receive data from multiple branch output
+  void CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
+  void SelectKernel(NotNull<KernelGraphPtr> root_graph);
+  void RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> const memo,
+                               size_t *const raise_precision_count, size_t *const reduce_precision_count) const;
+  void IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
+  void HardwareOptimize(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
+  void AssignStaticMemory(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
+  void UpdateRefOutputMap(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
 
   // member variables
   // key is final_graph_id,value is child graph execute order of final graph

@@ -42,9 +42,12 @@ using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
 class AnfRuntimeAlgorithm {
  public:
+  // get real input node of tuple_get_item
+  static AnfNodePtr GetTupleGetItemRealInput(const CNodePtr &tuple_get_item);
+  static size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
   // get input_anf_node's real kernel by recurse
   static KernelWithIndex VisitKernel(const AnfNodePtr &input_anf_node, size_t output_index);
-  static KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &input_anf_node, size_t output_index,
+  static KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &input_anf_node, int output_index,
                                                    bool visit_nop_node = false,
                                                    const std::vector<PrimitivePtr> &return_types = {
                                                      prim::kPrimMakeTuple});
@@ -205,6 +208,7 @@ class AnfRuntimeAlgorithm {
   static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
   static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
+  static bool IsCondControlKernel(const CNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

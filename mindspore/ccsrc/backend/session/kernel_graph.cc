@@ -616,8 +616,8 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     if (AnfAlgo::HasNodeAttr(kControlDependMode, cnode)) {
       depend_mode = AnfAlgo::GetNodeAttr<int>(cnode, kControlDependMode);
     }
-    MS_LOG(INFO) << "Prior node[" << prior_node->DebugString() << "], depend node[" << depend_node->DebugString()
-                 << "], depend_mode :" << depend_mode << ".";
+    MS_LOG(DEBUG) << "Prior node[" << prior_node->DebugString() << "], depend node[" << depend_node->DebugString()
+                  << "], depend_mode :" << depend_mode << ".";
     if (prior_node->isa<Parameter>() && depend_mode == 1) {
       prior_nodes = GetOutputNodes(prior_node);
     }
@@ -647,7 +647,8 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
         }
         MS_EXCEPTION_IF_NULL(first_node);
         MS_EXCEPTION_IF_NULL(second_node);
-        MS_LOG(INFO) << "Add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();
+        MS_LOG(DEBUG) << "Add first node:" << first_node->DebugString()
+                      << ",second node:" << second_node->DebugString();
         AddDependEdge(second_node, first_node, 1);
       }
     }
@@ -989,6 +990,30 @@ bool KernelGraph::IsFinalOutputKernel(const AnfNodePtr &node) const {
     return true;
   }
   return false;
+}
+
+void KernelGraph::UpdateChildGraphOrder() {
+  MS_LOG(INFO) << "Update " << ToString() << " child graph order.";
+  SetExecOrderByDefault();
+  auto call_nodes = FindNodeByPrimitive(std::make_shared<Primitive>(prim::kPrimCall->name()));
+  std::vector<KernelGraphPtr> child_graph_order;
+  for (auto &call_node : call_nodes) {
+    MS_EXCEPTION_IF_NULL(call_node);
+    auto call_child_graphs = AnfAlgo::GetCallNodeKernelGraph(call_node->cast<CNodePtr>());
+    for (const auto &child_graph : call_child_graphs) {
+      MS_EXCEPTION_IF_NULL(child_graph);
+      if (child_graph != parent_graph_) {
+        auto shared_this = std::dynamic_pointer_cast<KernelGraph>(shared_from_this());
+        MS_EXCEPTION_IF_NULL(shared_this);
+        child_graph->set_parent_graph(shared_this);
+      }
+      child_graph_order.push_back(child_graph);
+    }
+  }
+  for (size_t i = 0; i < child_graph_order.size(); ++i) {
+    MS_LOG(INFO) << "Child graph[" << i << "][id:" << child_graph_order[i]->graph_id() << "]";
+  }
+  child_graph_order_ = child_graph_order;
 }
 
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
