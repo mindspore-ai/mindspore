@@ -19,7 +19,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore._checkparam import ParamValidator as validator, Rel
 from mindspore._checkparam import Validator
-from mindspore._checkparam import check_bool, twice, check_int_positive, check_int_non_negative
+from mindspore._checkparam import check_bool, twice, check_int_positive
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -48,7 +48,16 @@ class _Conv(Cell):
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
-        self.padding = check_int_non_negative(padding)
+        if isinstance(padding, int):
+            Validator.check_integer('padding', padding, 0, Rel.GE, self.cls_name)
+            self.padding = padding
+        elif isinstance(padding, tuple):
+            for pad in padding:
+                Validator.check_integer('padding item', pad, 0, Rel.GE, self.cls_name)
+            self.padding = padding
+        else:
+            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+
         self.dilation = dilation
         self.group = check_int_positive(group)
         self.has_bias = has_bias
@@ -142,7 +151,10 @@ class Conv2d(_Conv):
             - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
               Tensor borders. `padding` should be greater than or equal to 0.
 
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
+                    the padding of top, bottom, left and right is same, equal to padding. If `padding` is tuple with
+                    four integer, the padding of top, bottom, left and right equal to padding[0], padding[1],
+                    padding[2], padding[3] with corresponding. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value should
@@ -437,7 +449,10 @@ class Conv2dTranspose(_Conv):
             - same: Adopted the way of completion.
 
             - valid: Adopted the way of discarding.
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
+                    the padding of top, bottom, left and right is same, equal to padding. If `padding` is tuple with
+                    four integer, the padding of top, bottom, left and right equal to padding[0], padding[1],
+                    padding[2], padding[3] with corresponding. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value should
@@ -482,6 +497,9 @@ class Conv2dTranspose(_Conv):
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         dilation = twice(dilation)
+        Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
+        if isinstance(padding, tuple):
+            Validator.check_integer('padding size', len(padding), 4, Rel.EQ, self.cls_name)
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
@@ -521,12 +539,16 @@ class Conv2dTranspose(_Conv):
                                                       dilation=dilation,
                                                       group=group)
         self.bias_add = P.BiasAdd()
+        if isinstance(self.padding, int):
+            self.padding_top, self.padding_bottom, self.padding_left, self.padding_right = (self.padding,) * 4
+        else:
+            self.padding_top, self.padding_bottom, self.padding_left, self.padding_right = self.padding
 
     def set_strategy(self, strategy):
         self.conv2d_transpose.set_strategy(strategy)
         return self
 
-    def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size):
+    def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size, padding):
         """Calculate the width and height of output."""
         length = 0
         filter_size = filter_size + (filter_size - 1) * (dilation_size - 1)
@@ -538,14 +560,16 @@ class Conv2dTranspose(_Conv):
         elif self.is_same:
             length = input_length * stride_size
         elif self.is_pad:
-            length = input_length * stride_size - 2 * self.padding + filter_size - stride_size
+            length = input_length * stride_size - padding + filter_size - stride_size
 
         return length
 
     def construct(self, x):
         n, _, h, w = self.shape(x)
-        h_out = self._deconv_output_length(h, self.kernel_size[0], self.stride[0], self.dilation[0])
-        w_out = self._deconv_output_length(w, self.kernel_size[1], self.stride[1], self.dilation[1])
+        h_out = self._deconv_output_length(h, self.kernel_size[0], self.stride[0], self.dilation[0],
+                                           self.padding_top + self.padding_bottom)
+        w_out = self._deconv_output_length(w, self.kernel_size[1], self.stride[1], self.dilation[1],
+                                           self.padding_left + self.padding_right)
         if self.has_bias:
             return self.bias_add(self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out)),
                                  self.bias)

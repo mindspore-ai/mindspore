@@ -1330,7 +1330,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
-            self.pad = pad
+            self.padding = pad
         else:
             validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
 
@@ -1382,7 +1382,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
             pad_right = pad_needed_w - pad_left
             pad_list = (pad_top, pad_bottom, pad_left, pad_right)
         elif self.pad_mode == 'PAD':
-            pad_list = self.pad
+            pad_list = self.padding
         self.add_prim_attr('pad_list', pad_list)
         out = {
             'value': None,
