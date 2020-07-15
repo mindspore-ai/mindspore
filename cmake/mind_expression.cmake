@@ -15,7 +15,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
 
-if (ENABLE_DEBUGGER)
+if (ENABLE_DEBUGGER OR ENABLE_SERVING)
     # build dependencies of gRPC
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/absl.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/c-ares.cmake)

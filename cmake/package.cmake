@@ -257,3 +257,17 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
         COMPONENT mindspore
     )
 endif ()
+
+if (ENABLE_SERVING)
+    install(
+        TARGETS ms_serving
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+
+    install(
+        TARGETS inference
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif ()
