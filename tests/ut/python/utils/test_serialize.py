@@ -34,7 +34,7 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint, load
     _exec_save_checkpoint, export, _save_graph
 from ..ut_filter import non_graph_engine
 
-context.set_context(mode=context.GRAPH_MODE, print_file_path="print.pb")
+context.set_context(mode=context.GRAPH_MODE, print_file_path="print/print.pb")
 
 
 class Net(nn.Cell):
@@ -374,10 +374,13 @@ def test_print():
 
 
 def teardown_module():
-    files = ['parameters.ckpt', 'new_ckpt.ckpt', 'empty.ckpt', 'print.pb']
+    files = ['parameters.ckpt', 'new_ckpt.ckpt', 'empty.ckpt']
     for item in files:
         file_name = './' + item
         if not os.path.exists(file_name):
             continue
         os.chmod(file_name, stat.S_IWRITE)
         os.remove(file_name)
+    import shutil
+    if os.path.exists('./print'):
+        shutil.rmtree('./print')

@@ -36,6 +36,8 @@ from mindspore._checkparam import Rel
 from mindspore.nn import Optimizer
 from mindspore.nn import TrainOneStepCell, WithLossCell
 
+context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
+
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
 transpose = P.Transpose()
@@ -44,7 +46,6 @@ reshape = P.Reshape()
 size_op = P.Size()
 invert_permutation = P.InvertPermutation()
 logical_and = P.LogicalAnd()
-context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
 
 @constexpr
 def _generate_shape_index(out_shape, indices_shape, axis):
@@ -103,10 +104,15 @@ def get_bprop_sparse_gather_v2(self):
 
 adam_opt_for_map = C.MultitypeFuncGraph("adam_opt_for_map")
 @adam_opt_for_map.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                           "Tensor", "Tensor", "Tensor", "Undetermined", "Bool")
-def _update_run_op_for_map(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, gradient, decay_flag):
-    if gradient.is_indexed_slices():
-        return gradient.values()
+                           "Tensor", "Tensor", "Tensor", "IndexedSlices", "Bool")
+def _update_run_op_for_map_indexed_slices(beta1, beta2, eps, lr, weight_decay_tensor, param,
+                                          m, v, gradient, decay_flag):
+    return gradient.values()
+
+@adam_opt_for_map.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                           "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+def _update_run_op_for_map_tensor(beta1, beta2, eps, lr, weight_decay_tensor, param,
+                                  m, v, gradient, decay_flag):
     op_mul = P.Mul()
     op_square = P.Square()
     op_sqrt = P.Sqrt()
@@ -182,7 +188,7 @@ def test_indexed_slices_make_indexed_slices():
             self.dense_shape = (3, 4)
         def construct(self, indices, values):
             ret = (IndexedSlices(indices, values, self.dense_shape),)
-            return ret[0].is_indexed_slices()
+            return ret[0]
     indices = Tensor([[0, 0], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)
     MakeIndexedSlices()(indices, values)
@@ -209,7 +215,7 @@ def test_indexed_slices_sparse_gatherv2_grad_all():
             self.network = network
         def construct(self, x, y):
             grad = grad_all(self.network)(x, y)
-            return grad, grad[0].is_indexed_slices(), grad[1].is_indexed_slices()
+            return grad, grad[0], grad[1]
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
@@ -233,33 +239,18 @@ def test_indexed_slices_sparse_gatherv2_grad_with_pram():
             weights = self.weights
             grad = grad_by_list(self.network, weights)(x)
             x = grad[0]
-            return x.is_indexed_slices(), x.values(), x.indices(), x.dense_shape()
+            return x, x.values(), x.indices(), x.dense_shape()
     class SparseGatherV2(nn.Cell):
         def __init__(self):
             super(SparseGatherV2, self).__init__()
             self.sparse_gatherv2 = MySparseGatherV2()
             self.axis = 0
-            self.params = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.int32)),
-                                    name="params", has_indexed_slices_grad=True)
+            self.params = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.int32)), name="params")
         def construct(self, indices):
             return self.sparse_gatherv2(self.params, indices, self.axis)
     indices = Tensor(np.array([0, 1]).astype(np.int32))
     network = GradWrap(SparseGatherV2())
     network(indices)
-
-
-def test_indexed_slices_is_indexed_slices():
-    class MakeIndexedSlices(nn.Cell):
-        def __init__(self):
-            super(MakeIndexedSlices, self).__init__()
-            self.dense_shape = (3, 4)
-        def construct(self, indices, values):
-            indexed_slices = IndexedSlices(indices, values, self.dense_shape)
-            ret = indexed_slices.is_indexed_slices()
-            return ret
-    indices = Tensor([[0, 0], [1, 2]])
-    values = Tensor([1, 2], dtype=ms.float32)
-    MakeIndexedSlices()(indices, values)
 
 
 def test_indexed_slices_env_get():
@@ -271,7 +262,7 @@ def test_indexed_slices_env_get():
     class NetWithSparseGatherV2(nn.Cell):
         def __init__(self):
             super(NetWithSparseGatherV2, self).__init__()
-            self.w1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="w1", has_indexed_slices_grad=True)
+            self.w1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="w1")
             self.w2 = Parameter(Tensor(np.ones([2, 1, 2]).astype(np.float32)), name="w2")
             self.gatherv2 = MySparseGatherV2()
             self.axis = 0

@@ -228,6 +228,7 @@ def test_biasadd_3d():
     error = np.ones(shape=[3, 4, 8]) * 1.0e-6
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     net = BiasAdd()
+    net.set_grad()
     result = net(x, b)
     diff = result.asnumpy() - expect
     assert np.all(diff < error)

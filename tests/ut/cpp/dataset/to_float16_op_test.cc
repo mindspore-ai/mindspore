@@ -15,9 +15,9 @@
  */
 #include "common/common.h"
 #include "common/cvop_common.h"
-#include "dataset/kernels/image/random_rotation_op.h"
-#include "dataset/core/cv_tensor.h"
-#include "dataset/kernels/data/to_float16_op.h"
+#include "minddata/dataset/kernels/image/random_rotation_op.h"
+#include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/kernels/data/to_float16_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

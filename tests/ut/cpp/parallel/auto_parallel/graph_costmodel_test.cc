@@ -15,9 +15,9 @@
  */
 
 #include "common/common_test.h"
-#include "parallel/device_manager.h"
-#include "parallel/auto_parallel/graph_costmodel.h"
-#include "parallel/ops_info/matmul_info.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "frontend/parallel/ops_info/matmul_info.h"
 
 namespace mindspore {
 namespace parallel {

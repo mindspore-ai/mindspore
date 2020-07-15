@@ -23,9 +23,10 @@ import mindspore.dataset.text as text
 def test_demo_basic_from_dataset():
     """ this is a tutorial on how from_dataset should be used in a normal use case"""
     data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
-    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None, special_tokens=["<pad>", "<unk>"],
+    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
+                                    special_tokens=["<pad>", "<unk>"],
                                     special_first=True)
-    data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
+    data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "<unk>"))
     res = []
     for d in data.create_dict_iterator():
         res.append(d["text"].item())
@@ -38,7 +39,7 @@ def test_demo_basic_from_dataset_with_tokenizer():
     data = data.map(input_columns=["text"], operations=text.UnicodeCharTokenizer())
     vocab = text.Vocab.from_dataset(data, None, freq_range=None, top_k=None, special_tokens=["<pad>", "<unk>"],
                                     special_first=True)
-    data = data.map(input_columns=["text"], operations=text.Lookup(vocab))
+    data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "<unk>"))
     res = []
     for d in data.create_dict_iterator():
         res.append(list(d["text"]))
@@ -59,7 +60,7 @@ def test_from_dataset():
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
         vocab = text.Vocab.from_dataset(corpus_dataset, None, freq_range, top_k, special_tokens=["<pad>", "<unk>"],
                                         special_first=True)
-        corpus_dataset = corpus_dataset.map(input_columns="text", operations=text.Lookup(vocab))
+        corpus_dataset = corpus_dataset.map(input_columns="text", operations=text.Lookup(vocab, "<unk>"))
         res = []
         for d in corpus_dataset.create_dict_iterator():
             res.append(list(d["text"]))
@@ -107,7 +108,7 @@ def test_from_dataset_special_token():
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
         vocab = text.Vocab.from_dataset(corpus_dataset, None, None, top_k, special_tokens, special_first)
         data = ds.GeneratorDataset(gen_input(texts), column_names=["text"])
-        data = data.map(input_columns="text", operations=text.Lookup(vocab))
+        data = data.map(input_columns="text", operations=text.Lookup(vocab, "<unk>"))
         res = []
         for d in data.create_dict_iterator():
             res.append(d["text"].item())
@@ -127,15 +128,16 @@ def test_from_dataset_exceptions():
             data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
             vocab = text.Vocab.from_dataset(data, columns, freq_range, top_k)
             assert isinstance(vocab.text.Vocab)
-        except ValueError as e:
+        except (TypeError, ValueError) as e:
             assert s in str(e), str(e)
 
-    test_config("text", (), 1, "freq_range needs to be either None or a tuple of 2 integers")
-    test_config("text", (2, 3), 1.2345, "top_k needs to be a positive integer")
-    test_config(23, (2, 3), 1.2345, "columns need to be a list of strings")
-    test_config("text", (100, 1), 12, "frequency range [a,b] should be 0 <= a <= b")
-    test_config("text", (2, 3), 0, "top_k needs to be a positive integer")
-    test_config([123], (2, 3), 0, "columns need to be a list of strings")
+    test_config("text", (), 1, "freq_range needs to be a tuple of 2 integers or an int and a None.")
+    test_config("text", (2, 3), 1.2345,
+                "Argument top_k with value 1.2345 is not of type (<class 'int'>, <class 'NoneType'>)")
+    test_config(23, (2, 3), 1.2345, "Argument col_0 with value 23 is not of type (<class 'str'>,)")
+    test_config("text", (100, 1), 12, "frequency range [a,b] should be 0 <= a <= b (a,b are inclusive)")
+    test_config("text", (2, 3), 0, "top_k must be greater than 0")
+    test_config([123], (2, 3), -1, "top_k must be greater than 0")
 
 
 if __name__ == '__main__':

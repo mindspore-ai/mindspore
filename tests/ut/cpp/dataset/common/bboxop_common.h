@@ -17,7 +17,7 @@
 #define TESTS_DATASET_UT_CORE_COMMON_DE_UT_BBOXOP_COMMON_H_
 
 #include "cvop_common.h"
-#include "dataset/util/path.h"
+#include "minddata/dataset/util/path.h"
 
 namespace UT {
 namespace CVOP {

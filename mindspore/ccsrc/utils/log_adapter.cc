@@ -18,7 +18,6 @@
 
 #include <unistd.h>
 #include <map>
-#include "pybind11/pybind11.h"
 #include "debug/trace.h"
 
 // namespace to support utils module definition
@@ -158,6 +157,7 @@ static std::string ExceptionTypeToString(ExceptionType type) {
 static const char *GetSubModuleName(SubModuleId module_id) {
   static const char *sub_module_names[NUM_SUBMODUES] = {
     "UNKNOWN",    // SM_UNKNOWN
+    "BASE",       // SM_BASE
     "ANALYZER",   // SM_ANALYZER
     "COMMON",     // SM_COMMON
     "DEBUG",      // SM_DEBUG
@@ -176,7 +176,8 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "PYNATIVE",   // SM_PYNATIVE
     "SESSION",    // SM_SESSION
     "UTILS",      // SM_UTILS
-    "VM"          // SM_VM
+    "VM",         // SM_VM
+    "ABSTRACT"    // SM_ABSTRACT
   };
 
   return sub_module_names[module_id % NUM_SUBMODUES];
@@ -219,16 +220,10 @@ void LogWriter::operator^(const LogStream &stream) const {
   trace::TraceGraphEval();
   trace::GetEvalStackInfo(oss);
 
-  if (exception_type_ == IndexError) {
-    throw pybind11::index_error(oss.str());
+  if (exception_handler_ != nullptr) {
+    exception_handler_(exception_type_, oss.str());
   }
-  if (exception_type_ == ValueError) {
-    throw pybind11::value_error(oss.str());
-  }
-  if (exception_type_ == TypeError) {
-    throw pybind11::type_error(oss.str());
-  }
-  pybind11::pybind11_fail(oss.str());
+  throw std::runtime_error(oss.str());
 }
 
 static std::string GetEnv(const std::string &envvar) {

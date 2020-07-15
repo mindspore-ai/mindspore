@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
-#include "ir/dtype/type_id.h"
+#include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))

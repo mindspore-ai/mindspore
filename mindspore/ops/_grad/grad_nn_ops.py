@@ -760,6 +760,19 @@ def get_bprop_ctc_loss(self):
     return bprop
 
 
+@bprop_getters.register(P.CTCLossV2)
+def get_bprop_ctc_loss_v2(self):
+    """Grad definition for `CTCLossV2` operation"""
+    expand = P.ExpandDims()
+
+    def bprop(inputs, labels, input_lengths, labels_lengths, out, dout):
+        grad_loss = out[1]
+        grad = grad_loss * expand(dout[0], -1)
+        return grad, zeros_like(labels), zeros_like(input_lengths), zeros_like(labels_lengths)
+
+    return bprop
+
+
 @bprop_getters.register(P.BasicLSTMCell)
 def get_bprop_basic_lstm_cell(self):
     """Grad definition for `BasicLSTMCell` operation."""

@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <vector>
-#include "session/session_basic.h"
+#include "backend/session/session_basic.h"
 #include "predict/converter/kernel2ms.h"
 
 namespace mindspore {

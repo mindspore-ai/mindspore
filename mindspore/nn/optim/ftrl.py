@@ -22,6 +22,7 @@ from mindspore._checkparam import Rel
 from .optimizer import Optimizer, _apply_decay, _grad_scale
 
 _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
+_ftrl_push_pull_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
 @_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple", "Tensor",
@@ -41,6 +42,26 @@ def _tensor_run_opt(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gra
     success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
     return success
 
+@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple",
+                              "Tensor", "Tensor")
+def _tensor_run_push_pull_opt_with_sparse(push, pull, learning_rate, l1, l2, lr_power, linear, gradient,
+                                          weight, moment):
+    success = True
+    op_shape = P.Shape()
+    shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(gradient[1]), op_shape(gradient[0]))
+    success = F.depend(success, pull(push((gradient[1], gradient[0]), shapes), weight))
+    return success
+
+
+@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor",
+                              "Tensor", "Tensor")
+def _tensor_run_push_pull_opt_with_one_number(push, pull, learning_rate, l1, l2, lr_power, linear, gradient,
+                                              weight, moment):
+    success = True
+    op_shape = P.Shape()
+    success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
+                                          (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
+    return success
 
 def _check_param(initial_accum, lr_power, l1, l2, use_locking, weight_decay=0.0, prim_name=None):
     """Check param."""
@@ -72,8 +93,8 @@ class FTRL(Optimizer):
     <https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf>`_ for engineering document.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
-        `sparse_grad` of `Parameter` being set. The sparse feature is under continuous development. The sparse
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
+        The sparse feature is under continuous development. The sparse
         behavior is currently performed on the CPU.
 
     Args:
@@ -129,5 +150,39 @@ class FTRL(Optimizer):
 
         grads = self.scale_grad(grads)
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, lr, self.l1, self.l2, self.lr_power),
+                            linear, grads, params, moments)
+        return success
+
+class PSFTRL(Optimizer):
+    def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,
+                 use_locking=False, loss_scale=1.0, weight_decay=0.0):
+        super(PSFTRL, self).__init__(learning_rate, params, loss_scale=loss_scale)
+        if self.is_group:
+            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
+        _check_param(initial_accum, lr_power, l1, l2, use_locking, weight_decay, self.cls_name)
+        self.moments = self.parameters.clone(prefix="moments", init=initial_accum)
+        self.linear = self.parameters.clone(prefix="linear", init='zeros')
+        self.l1 = l1
+        self.l2 = l2
+        self.lr_power = lr_power
+        self.weight_decay = weight_decay
+        self.decay_tf = tuple((lambda: True)() for x in self.parameters)
+
+        self.hyper_map = C.HyperMap()
+        self.push = P.Push("Ftrl", [0, 1, 2])
+        self.push.add_prim_attr("primitive_target", "CPU")
+        self.pull = P.Pull()
+        self.pull.add_prim_attr("primitive_target", "CPU")
+
+    def construct(self, grads):
+        params = self.parameters
+        moments = self.moments
+        linear = self.linear
+        lr = self.learning_rate
+        if self.weight_decay > 0.0:
+            grads = self.hyper_map(F.partial(_apply_decay, self.weight_decay), self.decay_tf, params, grads)
+
+        grads = self.scale_grad(grads)
+        success = self.map_(F.partial(_ftrl_push_pull_opt, self.push, self.pull, lr, self.l1, self.l2, self.lr_power),
                             linear, grads, params, moments)
         return success

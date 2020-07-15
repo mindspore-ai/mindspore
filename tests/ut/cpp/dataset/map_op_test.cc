@@ -17,13 +17,14 @@
 #include <memory>
 #include <vector>
 
+
 #include "common/common.h"
-#include "dataset/core/client.h"
-#include "dataset/core/tensor.h"
-#include "dataset/engine/datasetops/source/image_folder_op.h"
-#include "dataset/kernels/image/decode_op.h"
-#include "dataset/kernels/image/resize_op.h"
-#include "dataset/kernels/tensor_op.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/resize_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -35,93 +36,99 @@ namespace dataset {
 namespace test {
 class NoOp : public TensorOp {
  public:
-    NoOp() {};
+  NoOp(){};
 
-    ~NoOp() {};
+  ~NoOp(){};
 
-    Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override {
-      *output = std::move(input);
-      return Status::OK();
-    };
+  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override {
+    *output = std::move(input);
+    return Status::OK();
+  };
 
-    void Print(std::ostream &out) const override { out << "NoOp"; };
+  void Print(std::ostream &out) const override { out << "NoOp"; };
+
+  std::string Name() const override { return kNoOp; }
 };
 
 class ThreeToOneOp : public TensorOp {
  public:
-    ThreeToOneOp() {};
+  ThreeToOneOp(){};
 
-    ~ThreeToOneOp() {};
+  ~ThreeToOneOp(){};
 
-    uint32_t NumInput() override { return 3; }
-    // Compute function that holds the actual implementation of the operation.
-    Status Compute(const TensorRow &input, TensorRow *output) override {
-      output->push_back(input[0]);
-      return Status::OK();
-    };
+  uint32_t NumInput() override { return 3; }
+  // Compute function that holds the actual implementation of the operation.
+  Status Compute(const TensorRow &input, TensorRow *output) override {
+    output->push_back(input[0]);
+    return Status::OK();
+  };
 
-    void Print(std::ostream &out) const override { out << "ThreeToOneOp"; };
+  void Print(std::ostream &out) const override { out << "ThreeToOneOp"; };
+
+  std::string Name() const override { return "ThreeToOneOp"; }
 };
 
 class OneToThreeOp : public TensorOp {
  public:
-    OneToThreeOp() {};
+  OneToThreeOp(){};
 
-    ~OneToThreeOp() {};
+  ~OneToThreeOp(){};
 
   uint32_t NumOutput() override { return 3; }
 
-    // Compute function that holds the actual implementation of the operation.
-    // Simply pushing the same shared pointer of the first element of input vector three times.
-    Status Compute(const TensorRow &input, TensorRow *output) override {
-      output->push_back(input[0]);
-      output->push_back(input[0]);
-      output->push_back(input[0]);
-      return Status::OK();
-    };
+  // Compute function that holds the actual implementation of the operation.
+  // Simply pushing the same shared pointer of the first element of input vector three times.
+  Status Compute(const TensorRow &input, TensorRow *output) override {
+    output->push_back(input[0]);
+    output->push_back(input[0]);
+    output->push_back(input[0]);
+    return Status::OK();
+  };
 
-    void Print(std::ostream &out) const override { out << "OneToThreeOp"; };
+  void Print(std::ostream &out) const override { out << "OneToThreeOp"; };
+
+  std::string Name() const override { return "OneToThreeOp"; };
 };
 }  // namespace test
 }  // namespace dataset
 }  // namespace mindspore
 
-
 class MindDataTestMapOp : public UT::DatasetOpTesting {
  public:
-    void SetUp() override {
-      DatasetOpTesting::SetUp();
-      dataset_path_ = datasets_root_path_ + "" + "/testDataset2/testDataset2.data";
-      schema_path_ = datasets_root_path_ + "" + "/testDataset2/datasetSchema.json";
+  void SetUp() override {
+    DatasetOpTesting::SetUp();
+    dataset_path_ = datasets_root_path_ + "" + "/testDataset2/testDataset2.data";
+    schema_path_ = datasets_root_path_ + "" + "/testDataset2/datasetSchema.json";
 
-      GlobalInit();
+    GlobalInit();
 
-      // Start with an empty execution tree
-      my_tree_ = std::make_shared<ExecutionTree>();
-    }
+    // Start with an empty execution tree
+    my_tree_ = std::make_shared<ExecutionTree>();
+  }
 
-    std::shared_ptr<TFReaderOp> CreateTFReaderOp() {
-      std::shared_ptr<TFReaderOp> my_tfreader_op;
-      TFReaderOp::Builder builder;
-      builder.SetDatasetFilesList({dataset_path_})
-          .SetColumnsToLoad({"image", "label", "A", "B"})
-          .SetRowsPerBuffer(2)
-          .SetWorkerConnectorSize(2)
-          .SetNumWorkers(2);
+  std::shared_ptr<TFReaderOp> CreateTFReaderOp() {
+    std::shared_ptr<TFReaderOp> my_tfreader_op;
+    TFReaderOp::Builder builder;
+    builder.SetDatasetFilesList({dataset_path_})
+      .SetColumnsToLoad({"image", "label", "A", "B"})
+      .SetRowsPerBuffer(2)
+      .SetWorkerConnectorSize(2)
+      .SetNumWorkers(2);
 
-      std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-      schema->LoadSchemaFile(schema_path_, {});
-      builder.SetDataSchema(std::move(schema));
+    std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+    schema->LoadSchemaFile(schema_path_, {});
+    builder.SetDataSchema(std::move(schema));
 
-      Status rc = builder.Build(&my_tfreader_op);
-      EXPECT_TRUE(rc.IsOk());
-      return my_tfreader_op;
-    }
+    Status rc = builder.Build(&my_tfreader_op);
+    EXPECT_TRUE(rc.IsOk());
+    return my_tfreader_op;
+  }
 
-    std::shared_ptr<ExecutionTree> my_tree_;
+  std::shared_ptr<ExecutionTree> my_tree_;
+
  private:
-    std::string dataset_path_;
-    std::string schema_path_;
+  std::string dataset_path_;
+  std::string schema_path_;
 };
 
 std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int64_t conns, std::string path,
@@ -148,10 +155,7 @@ TEST_F(MindDataTestMapOp, TestAsMap) {
   my_func_list.push_back(my_no_op);
   std::shared_ptr<MapOp> my_map_op;
   MapOp::Builder builder;
-  builder.SetInColNames({"image"})
-      .SetOutColNames({"X"})
-      .SetTensorFuncs(std::move(my_func_list))
-      .SetNumWorkers(1);
+  builder.SetInColNames({"image"}).SetOutColNames({"X"}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(1);
   rc = builder.Build(&my_map_op);
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
@@ -200,9 +204,9 @@ TEST_F(MindDataTestMapOp, Test3to1) {
   std::shared_ptr<MapOp> my_map_op;
   MapOp::Builder builder;
   builder.SetInColNames({"image", "A", "B"})
-      .SetOutColNames({"X"})
-      .SetTensorFuncs(std::move(my_func_list))
-      .SetNumWorkers(1);
+    .SetOutColNames({"X"})
+    .SetTensorFuncs(std::move(my_func_list))
+    .SetNumWorkers(1);
   rc = builder.Build(&my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
@@ -252,10 +256,9 @@ TEST_F(MindDataTestMapOp, Test1to3) {
   std::shared_ptr<MapOp> my_map_op;
   MapOp::Builder builder;
   builder.SetInColNames({"image"})
-      .SetOutColNames({"X", "Y", "Z"})
-      .SetTensorFuncs(std::move(my_func_list))
-      .SetNumWorkers(1);
-
+    .SetOutColNames({"X", "Y", "Z"})
+    .SetTensorFuncs(std::move(my_func_list))
+    .SetNumWorkers(1);
 
   // ProjectOp
   std::vector<std::string> columns_to_project = {"X", "Y", "Z", "label", "A", "B"};
@@ -296,19 +299,18 @@ TEST_F(MindDataTestMapOp, Test1to3) {
 
   // Getting the next row as vector (by position).
   TensorRow tensor_list;
-  rc =di.FetchNextTensorRow(&tensor_list);
+  rc = di.FetchNextTensorRow(&tensor_list);
   EXPECT_TRUE(rc.IsOk());
 
   // Based on the schema file, create the golden result to compare with.
   std::vector<DataType::Type> golden_types({DataType::Type::DE_UINT8, DataType::Type::DE_UINT8,
                                             DataType::Type::DE_UINT8, DataType::Type::DE_INT64,
-                                            DataType::Type::DE_FLOAT32, DataType::Type::DE_INT64}
-  );
+                                            DataType::Type::DE_FLOAT32, DataType::Type::DE_INT64});
 
   std::vector<uint64_t> golden_ranks({3, 3, 3, 1, 4, 1});
 
   std::vector<TensorShape> golden_shapes({TensorShape({3, 4, 2}), TensorShape({3, 4, 2}), TensorShape({3, 4, 2}),
-        TensorShape({7}), TensorShape({1, 13, 14, 12}), TensorShape({9})} );
+                                          TensorShape({7}), TensorShape({1, 13, 14, 12}), TensorShape({9})});
 
   while (!tensor_list.empty()) {
     for (uint32_t i = 0; i < tensor_list.size(); i++) {
@@ -343,9 +345,9 @@ TEST_F(MindDataTestMapOp, TestMultiTensorOp) {
   std::shared_ptr<MapOp> my_map_op;
   MapOp::Builder builder;
   builder.SetInColNames({"image", "A", "B"})
-      .SetOutColNames({"X", "Y", "Z"})
-      .SetTensorFuncs(std::move(my_func_list))
-      .SetNumWorkers(1);
+    .SetOutColNames({"X", "Y", "Z"})
+    .SetTensorFuncs(std::move(my_func_list))
+    .SetNumWorkers(1);
   rc = builder.Build(&my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
@@ -405,10 +407,7 @@ TEST_F(MindDataTestMapOp, TestTFReaderRepeatMap) {
 
   std::shared_ptr<MapOp> my_map_op;
   MapOp::Builder builder;
-  builder.SetInColNames({"label"})
-    .SetOutColNames({})
-    .SetTensorFuncs(std::move(my_func_list))
-    .SetNumWorkers(5);
+  builder.SetInColNames({"label"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(5);
   rc = builder.Build(&my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
@@ -440,7 +439,6 @@ TEST_F(MindDataTestMapOp, TestTFReaderRepeatMap) {
     MS_LOG(INFO) << "row_count: " << row_count << ".";
     rc = di.FetchNextTensorRow(&tensor_list);
     EXPECT_TRUE(rc.IsOk());
-
   }
   ASSERT_EQ(row_count, 10 * num_repeats);
 }
@@ -467,10 +465,7 @@ TEST_F(MindDataTestMapOp, TestTFReaderMapRepeat) {
 
   std::shared_ptr<MapOp> my_map_op;
   MapOp::Builder builder;
-  builder.SetInColNames({"label"})
-    .SetOutColNames({})
-    .SetTensorFuncs(std::move(my_func_list))
-    .SetNumWorkers(50);
+  builder.SetInColNames({"label"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(50);
   rc = builder.Build(&my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_op);
@@ -536,25 +531,18 @@ TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
 
   std::shared_ptr<MapOp> my_map_decode_op;
   MapOp::Builder builder;
-  builder.SetInColNames({"image"})
-    .SetOutColNames({})
-    .SetTensorFuncs(std::move(my_func_list))
-    .SetNumWorkers(4);
+  builder.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(4);
   rc = builder.Build(&my_map_decode_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_decode_op);
   EXPECT_TRUE(rc.IsOk());
-
 
   auto resize_op = std::make_shared<ResizeOp>(300, 300);
   std::vector<std::shared_ptr<TensorOp>> my_func_list2;
   my_func_list2.push_back(resize_op);
   std::shared_ptr<MapOp> my_map_resize_op;
   MapOp::Builder builder2;
-  builder2.SetInColNames({"image"})
-    .SetOutColNames({})
-    .SetTensorFuncs(std::move(my_func_list2))
-    .SetNumWorkers(5);
+  builder2.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list2)).SetNumWorkers(5);
   rc = builder2.Build(&my_map_resize_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->AssociateNode(my_map_resize_op);
@@ -610,10 +598,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
 
   std::shared_ptr<MapOp> map_decode_map;
   MapOp::Builder map_decode_builder;
-  map_decode_builder.SetInColNames({"image"})
-    .SetOutColNames({})
-    .SetTensorFuncs(func_list)
-    .SetNumWorkers(4);
+  map_decode_builder.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(func_list).SetNumWorkers(4);
   rc = map_decode_builder.Build(&map_decode_map);
   EXPECT_TRUE(rc.IsOk());
 
@@ -622,10 +607,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   func_list2.push_back(resize_op);
   std::shared_ptr<MapOp> map_resize_op;
   MapOp::Builder map_resize_builder;
-  map_resize_builder.SetInColNames({"image"})
-    .SetOutColNames({})
-    .SetTensorFuncs(func_list2)
-    .SetNumWorkers(5);
+  map_resize_builder.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(func_list2).SetNumWorkers(5);
   rc = map_resize_builder.Build(&map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -704,7 +686,6 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   EXPECT_EQ(result, result2);
 }
 
-
 TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   Status rc;
   MS_LOG(INFO) << "Doing ImageFolder_Decode_Repeat_Resize_NoInputColumns.";
@@ -722,10 +703,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
 
   std::shared_ptr<MapOp> map_decode_map;
   MapOp::Builder map_decode_builder;
-  map_decode_builder.SetInColNames({})
-    .SetOutColNames({})
-    .SetTensorFuncs(func_list)
-    .SetNumWorkers(4);
+  map_decode_builder.SetInColNames({}).SetOutColNames({}).SetTensorFuncs(func_list).SetNumWorkers(4);
   rc = map_decode_builder.Build(&map_decode_map);
   EXPECT_TRUE(rc.IsOk());
 
@@ -761,3 +739,5 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   }
   EXPECT_TRUE(i == 88);
 }
+
+

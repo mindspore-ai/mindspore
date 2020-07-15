@@ -37,7 +37,7 @@ def test_voc_detection():
     for item in data1.create_dict_iterator():
         assert item["image"].shape[0] == IMAGE_SHAPE[num]
         for bbox in item["annotation"]:
-            count[bbox[0]] += 1
+            count[int(bbox[6])] += 1
         num += 1
     assert num == 9
     assert count == [3, 2, 1, 2, 4, 3]
@@ -55,8 +55,8 @@ def test_voc_class_index():
     count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator():
         for bbox in item["annotation"]:
-            assert (bbox[0] == 0 or bbox[0] == 1 or bbox[0] == 5)
-            count[bbox[0]] += 1
+            assert (int(bbox[6]) == 0 or int(bbox[6]) == 1 or int(bbox[6]) == 5)
+            count[int(bbox[6])] += 1
         num += 1
     assert num == 6
     assert count == [3, 2, 0, 0, 0, 3]
@@ -73,8 +73,9 @@ def test_voc_get_class_indexing():
     count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator():
         for bbox in item["annotation"]:
-            assert (bbox[0] == 0 or bbox[0] == 1 or bbox[0] == 2 or bbox[0] == 3 or bbox[0] == 4 or bbox[0] == 5)
-            count[bbox[0]] += 1
+            assert (int(bbox[6]) == 0 or int(bbox[6]) == 1 or int(bbox[6]) == 2 or int(bbox[6]) == 3
+                    or int(bbox[6]) == 4 or int(bbox[6]) == 5)
+            count[int(bbox[6])] += 1
         num += 1
     assert num == 9
     assert count == [3, 2, 1, 2, 4, 3]

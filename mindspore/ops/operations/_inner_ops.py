@@ -394,76 +394,6 @@ class AscendDequant(PrimitiveWithInfer):
         return mstype.float16
 
 
-class EmbeddingLookup(PrimitiveWithInfer):
-    """
-    Returns a slice of input tensor based on the specified indices.
-
-    This Primitive has the similar functionality as GatherV2 operating on `axis = 0`, but has three more inputs:
-    `offset`, `reduce_scatter_flag` and `split_num`. This primitive runs on the host instead of devices.
-
-    Inputs:
-        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The Tensor slice, instead of the entire Tensor.
-        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. Values can be out of range of `input_params`,
-          and the exceeding part will be filled with 0 in the output.
-        - **offset** (int) - Specifies the offset value of this `input_params` slice. Thus the real indices
-          are equal to `input_indices` minus `offset`.
-        - **reduce_scatter_flag** (bool) - Specifies whether perform reduce_scatter on host or not.
-          Only constant value is allowed.
-        - **split_num** (int) - Specifies the number of partitions of the reduce_scatter produces. This variable
-          is used only if `reduce_scatter_flag` is True. Only constant value is allowed.
-
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
-
-    Examples:
-        >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
-        >>> offset = 4
-        >>> reduce_scatter_flag = False
-        >>> split_num = 1
-        >>> out = P.EmbeddingLookup()(input_params, input_indices, offset, reduce_scatter_flag, split_num)
-        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
-    """
-    @prim_attr_register
-    def __init__(self):
-        """init index_select"""
-        self.__setattr_flag__ = True
-        self.init_prim_io_names(inputs=['params', 'indices', 'offset', 'reduce_scatter_flag', 'split_num'],
-                                outputs=['output'])
-        self.add_prim_attr('primitive_target', 'CPU')
-
-    def __infer__(self, params, indices, offset, reduce_scatter_flag=False, split_num=2):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
-        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
-        validator.check_subclass("split_num", split_num['dtype'], mstype.int_, self.name)
-        if split_num['value'] < 1:
-            raise ValueError("The parameter 'split_num' must be positive, but got %d." % split_num)
-        params_shp = params['shape']
-        out_shape = indices['shape'] + params_shp[1:]
-        if reduce_scatter_flag is None:
-            raise ValueError("The value of 'reduce_scatter_flag' is None.")
-        reduce_scatter_flag_value = reduce_scatter_flag['value']
-        if split_num is None:
-            raise ValueError("The value of 'split_num_value' is None.")
-        split_num_value = split_num['value']
-        if reduce_scatter_flag_value is True:
-            # Partition the tensor along the dimension 0. The shape size of dimension 0 should be divisible by
-            # (split_num * 8)
-            if out_shape[0] % (split_num_value * 8) != 0:
-                raise ValueError("The dimension 0 of the shape: %d, is not divisible by: %d." %
-                                 (out_shape[0], (split_num_value * 8)))
-            # After 'Concat' on host, the shape size of dimension 0 is: out_shape[0] // 8
-            out_shape[0] = out_shape[0] // 8
-        out = {'shape': out_shape,
-               'dtype': params['dtype'],
-               'value': None}
-        return out
-
-
 class SparseApplyFtrlNoReturn(PrimitiveWithInfer):
     """
     Update relevant entries according to the FTRL-proximal scheme.
@@ -747,7 +677,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
         Tensor, data type same as input `x`. The shape should be x.shape[:-2] + [min(x.shape[-2:])].
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
         >>> matrix_diag_part = P.MatrixDiagPart()
         >>> result = matrix_diag_part(x, assist)
@@ -789,11 +719,11 @@ class MatrixSetDiag(PrimitiveWithInfer):
         Tensor, data type same as input `x`. The shape same as `x`.
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = P.MatrixSetDiag()
         >>> result = matrix_set_diag(x, diagonal)
-        [[[-1, 0], [0, 2]], [-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+        [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
 
     """
 
@@ -812,10 +742,10 @@ class MatrixSetDiag(PrimitiveWithInfer):
         validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
 
         if x_shape[-2] < x_shape[-1]:
-            validator.check("x shape excluding the last dimension", x_shape[:-1], "diagnoal shape",
-                            diagonal_shape, Rel.EQ, self.name)
+            validator.check("diagnoal shape", diagonal_shape, "x shape excluding the last dimension",
+                            x_shape[:-1], Rel.EQ, self.name)
         else:
-            validator.check("x shape excluding the second to last dimension", x_shape[:-2]+x_shape[-1:],
-                            "diagonal shape", diagonal_shape, Rel.EQ, self.name)
+            validator.check("diagonal shape", diagonal_shape, "x shape excluding the second last dimension",
+                            x_shape[:-2] + x_shape[-1:], Rel.EQ, self.name)
 
         return assist_shape

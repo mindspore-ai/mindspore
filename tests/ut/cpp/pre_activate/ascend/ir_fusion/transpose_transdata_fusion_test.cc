@@ -16,14 +16,14 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "device/kernel_info.h"
-#include "session/anf_runtime_algorithm.h"
-#include "kernel/oplib/oplib.h"
+#include "runtime/device/kernel_info.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/context/ms_context.h"
 #define private public
 #define protected public
-#include "pre_activate/ascend/format_type/insert_trans_op.h"
-#include "pre_activate/ascend/ir_fusion/transpose_transdata_fusion.h"
+#include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "backend/optimizer/ascend/ir_fusion/transpose_transdata_fusion.h"
 #undef private
 #undef protected
 

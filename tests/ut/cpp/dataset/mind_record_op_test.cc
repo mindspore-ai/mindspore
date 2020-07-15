@@ -16,14 +16,14 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "common/utils.h"
 #include "gtest/gtest.h"
-#include "mindrecord/include/shard_category.h"
-#include "mindrecord/include/shard_error.h"
-#include "mindrecord/include/shard_sample.h"
-#include "mindrecord/include/shard_shuffle.h"
+#include "minddata/mindrecord/include/shard_category.h"
+#include "minddata/mindrecord/include/shard_error.h"
+#include "minddata/mindrecord/include/shard_sample.h"
+#include "minddata/mindrecord/include/shard_shuffle.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;

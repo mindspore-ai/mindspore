@@ -15,7 +15,7 @@
  */
 #include <fstream>
 #include <memory>
-#include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
+#include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

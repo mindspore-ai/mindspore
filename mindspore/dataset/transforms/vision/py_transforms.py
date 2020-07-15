@@ -28,6 +28,7 @@ import numpy as np
 from PIL import Image
 
 from . import py_transforms_util as util
+from .c_transforms import parse_padding
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_transforms_list, check_random_apply, check_ten_crop, check_num_channels, check_pad, \
@@ -295,6 +296,10 @@ class RandomCrop:
 
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
+        if padding is None:
+            padding = (0, 0, 0, 0)
+        else:
+            padding = parse_padding(padding)
         self.size = size
         self.padding = padding
         self.pad_if_needed = pad_if_needed
@@ -753,6 +758,8 @@ class TenCrop:
 
     @check_ten_crop
     def __init__(self, size, use_vertical_flip=False):
+        if isinstance(size, int):
+            size = (size, size)
         self.size = size
         self.use_vertical_flip = use_vertical_flip
 
@@ -877,6 +884,8 @@ class Pad:
 
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
+        parse_padding(padding)
+
         self.padding = padding
         self.fill_value = fill_value
         self.padding_mode = DE_PY_BORDER_TYPE[padding_mode]
@@ -1129,56 +1138,23 @@ class RandomAffine:
     def __init__(self, degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0):
         # Parameter checking
         # rotation
-        if isinstance(degrees, numbers.Number):
-            if degrees < 0:
-                raise ValueError("If degrees is a single number, it must be positive.")
-            self.degrees = (-degrees, degrees)
-        elif isinstance(degrees, (tuple, list)) and len(degrees) == 2:
-            self.degrees = degrees
-        else:
-            raise TypeError("If degrees is a list or tuple, it must be of length 2.")
-
-        # translation
-        if translate is not None:
-            if isinstance(translate, (tuple, list)) and len(translate) == 2:
-                for t in translate:
-                    if t < 0.0 or t > 1.0:
-                        raise ValueError("translation values should be between 0 and 1")
-            else:
-                raise TypeError("translate should be a list or tuple of length 2.")
-        self.translate = translate
-
-        # scale
-        if scale is not None:
-            if isinstance(scale, (tuple, list)) and len(scale) == 2:
-                for s in scale:
-                    if s <= 0:
-                        raise ValueError("scale values should be positive")
-            else:
-                raise TypeError("scale should be a list or tuple of length 2.")
-        self.scale_ranges = scale
-
-        # shear
         if shear is not None:
             if isinstance(shear, numbers.Number):
-                if shear < 0:
-                    raise ValueError("If shear is a single number, it must be positive.")
-                self.shear = (-1 * shear, shear)
-            elif isinstance(shear, (tuple, list)) and (len(shear) == 2 or len(shear) == 4):
-                # X-Axis shear with [min, max]
-                if len(shear) == 2:
-                    self.shear = [shear[0], shear[1], 0., 0.]
-                elif len(shear) == 4:
-                    self.shear = [s for s in shear]
+                shear = (-1 * shear, shear)
             else:
-                raise TypeError("shear should be a list or tuple and it must be of length 2 or 4.")
-        else:
-            self.shear = shear
+                if len(shear) == 2:
+                    shear = [shear[0], shear[1], 0., 0.]
+                elif len(shear) == 4:
+                    shear = [s for s in shear]
 
-        # resample
+        if isinstance(degrees, numbers.Number):
+            degrees = (-degrees, degrees)
+
+        self.degrees = degrees
+        self.translate = translate
+        self.scale_ranges = scale
+        self.shear = shear
         self.resample = DE_PY_INTER_MODE[resample]
-
-        # fill_value
         self.fill_value = fill_value
 
     def __call__(self, img):

@@ -51,6 +51,7 @@ class Assign(PrimitiveWithInfer):
         ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
         ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
@@ -59,7 +60,9 @@ class Assign(PrimitiveWithInfer):
         return variable
 
     def infer_dtype(self, variable, value):
-        # Add a type validation later when we don't have to assign a value to RefKey.
+        if variable != mstype.type_refkey:
+            validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
+        validator.check_scalar_or_tensor_type_same({"value": value}, mstype.number_type, self.name)
         return variable
 
 
@@ -324,6 +327,7 @@ class Partial(Primitive):
         partial_func = functools.partial(func, *args[1:])
         return partial_func
 
+
 class Depend(Primitive):
     """
     Depend is used for process side-effect operations.
@@ -457,3 +461,83 @@ class ConfusionMatrix(PrimitiveWithInfer):
         args = {"labels": labels, "predictions": predictions}
         validator.check_tensor_type_same(args, (mstype.number_type), self.name)
         return labels
+
+
+class PopulationCount(PrimitiveWithInfer):
+    r"""
+    Calculate population count.
+
+    Inputs:
+        - **input** (Tensor) -  The data type should be int16 or uint16.
+
+    Outputs:
+        Tensor, with shape same as the input.
+
+    Examples:
+        >>> population_count = P.PopulationCount()
+        >>> x_input = Tensor([0, 1, 3], mindspore.int16)
+        >>> population_count(x_input)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        args = {"x": x_dtype}
+        validator.check_tensor_type_same(args, (mstype.int16, mstype.uint16,), self.name)
+        return mstype.tensor_type(mstype.uint8)
+
+class Push(PrimitiveWithInfer):
+    """
+    Pushing the inputs of the corresponding optimizer to parameter server.
+
+    Args:
+        optim_type (string): The optimizer type. Default: 'ApplyMomentum'.
+        only_shape_indices (list): The indices of input of which only shape
+                                   will be pushed to parameter server. Default: None.
+
+    Inputs:
+        - **optim_inputs** (tuple) - The inputs for this kind of optimizer.
+        - **optim_input_shapes** (tuple) - The shapes of the inputs.
+
+    Outputs:
+        Tensor, the key of the weight which needs to be updated.
+    """
+
+    @prim_attr_register
+    def __init__(self, optim_type='ApplyMomentum', only_shape_indices=None):
+        """init Push"""
+        self.init_prim_io_names(inputs=['optim_inputs', 'optim_input_shapes'], outputs=['key'])
+
+    def infer_shape(self, inputs, shapes):
+        return [1]
+
+    def infer_dtype(self, inputs, shapes):
+        return mstype.uint64
+
+class Pull(PrimitiveWithInfer):
+    """
+    Pulling weight from parameter server.
+
+    Inputs:
+        - **key** (Tensor) - The key of the weight.
+        - **weight** (Tensor) - The weight to be updated.
+
+    Outputs:
+        None.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Pull"""
+        self.init_prim_io_names(inputs=['key', 'weight'], outputs=['output'])
+
+    def infer_shape(self, key_shape, weight_shape):
+        return [1]
+
+    def infer_dtype(self, key_dtype, weight_dtype):
+        return mstype.float32

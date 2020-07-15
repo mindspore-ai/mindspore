@@ -22,14 +22,12 @@
 #include <vector>
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/tensor.h"
-#include "ir/tensor_py.h"
-#include "ir/param_value_py.h"
-#include "operator/ops.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "ir/param_value.h"
+#include "frontend/operator/ops.h"
+#include "abstract/abstract_value.h"
 #include "proto/onnx.pb.h"
 #include "utils/log_adapter.h"
 
-using mindspore::tensor::TensorPy;
 using std::string;
 
 namespace mindspore {
@@ -121,13 +119,15 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
     std::string initial_data = initialize_proto.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data_buf);
-    memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+    auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    }
 
-    py::array array_data = TensorPy::AsNumpy(*tensor_info);
-    ParamValuePyPtr para_value_ptr = std::make_shared<ParamValuePy>();
-    MS_EXCEPTION_IF_NULL(para_value_ptr);
-    para_value_ptr->set_value(array_data);
-    node->set_default_param(para_value_ptr);
+    auto param_value = std::make_shared<ParamValue>();
+    MS_EXCEPTION_IF_NULL(param_value);
+    param_value->set_value(tensor_info);
+    node->set_default_param(param_value);
   }
   anfnode_build_map_[value_proto.name()] = node;
   return true;
@@ -252,7 +252,11 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+  }
+
   auto new_value_node = NewValueNode(MakeValue(tensor_info));
   MS_EXCEPTION_IF_NULL(new_value_node);
   auto tensor_abstract = tensor_info->ToAbstract();
@@ -339,7 +343,6 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &ref_attr_name
       MS_LOG(ERROR) << "parse ValueNode value don't support input of ref_attr_name";
       return false;
   }
-  return true;
 }
 
 bool MSANFModelParser::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto) {

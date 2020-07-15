@@ -26,7 +26,7 @@
 #include "ir/anf.h"
 #include "vm/segment_runner.h"
 #include "vm/vm.h"
-#include "session/session_basic.h"
+#include "backend/session/session_basic.h"
 
 namespace mindspore {
 namespace compile {
@@ -46,6 +46,7 @@ class Backend {
   virtual void SimulateRun(FinalVMPtr, FuncGraphPtr) {}
   virtual SwitchCondStatus SetSimuCond(const BaseRef &, bool) { return kCondOk; }
   virtual bool GetCond(const BaseRef &c, bool *value);
+  virtual bool GetIndex(const BaseRef &c, int *value);
   virtual void SetSwitchGraph() {}
   virtual void SetSwitchActive(const BaseRef &, bool) {}
   virtual void RecallGraphInput(const FuncGraphPtr &, const VectorRef &, const BaseRef &) {}

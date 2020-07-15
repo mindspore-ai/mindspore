@@ -18,12 +18,13 @@ datasets in special format, including mindrecord, tfrecord, manifest. Users
 can also create samplers with this module to sample data.
 """
 
-from .core.configuration import config
+from .core import config
 from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, NumpySlicesDataset, \
     GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CocoDataset, CelebADataset,\
     TextFileDataset, CLUEDataset, Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
     WeightedRandomSampler, Sampler
+from .engine.cache_client import DatasetCache
 from .engine.serializer_deserializer import serialize, deserialize, show
 from .engine.graphdata import GraphData
 

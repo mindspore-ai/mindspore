@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import dtype as mstype
@@ -23,8 +24,6 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops._grad.grad_base import bprop_getters
-from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.check_gradient import (
     ms_function, check_jacobian, Tensor, NNGradChecker,
@@ -156,14 +155,14 @@ def test_if_always_true():
 @non_graph_engine
 def test_f():
     """ test_f """
-    res = mainf(3, 2)
+    res = mainf(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32))
     assert res == (2, 3)
 
 
 @non_graph_engine
 def test_grad_add_mul():
     """ test_grad_add_mul """
-    res = grad_add_mul(3, 2)
+    res = grad_add_mul(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32))
     assert res == (2, 7)
 
 
@@ -262,17 +261,19 @@ def test_if_tensor():
     assert res == Tensor(np.ones([1]).astype(np.int32) * 4)
 
 
-@ms_function
 def rec(x):
     """ rec """
     if x > 0:
         return rec(x - 1)
     return x
 
+@ms_function
+def grad_rec(input_x):
+    return C.grad(rec)(input_x)
 
 def test_grad_rec():
     """ test_grad_rec """
-    res = C.grad(rec)(10)
+    res = grad_rec(3)
     assert res == 1
 
 
@@ -282,7 +283,6 @@ def test_me_rec():
     assert res == 0
 
 
-@ms_function
 def t2_while(x, y):
     out = y - x
     i = 0
@@ -298,8 +298,10 @@ def test_while2():
 
 
 def test_grad_while2():
-    res = C.grad(t2_while)(2, 3)
-    assert res == 3
+    @ms_function
+    def df_t2_while(input_x, input_y):
+        return C.grad(t2_while)(input_x, input_y)
+    assert df_t2_while(2, 3) == 3
 
 
 def if_test(a, b):
@@ -316,7 +318,7 @@ def grad_if(x, y):
 
 def test_grad_if():
     """ test_grad_if """
-    assert grad_if(5, 4) == (3, 0)
+    assert grad_if(Tensor(5, dtype=ms.int32), Tensor(4, dtype=ms.int32)) == (3, 0)
 
 
 # While loop is not unrolled in forward and backward graphs.
@@ -421,7 +423,7 @@ def grad_while(x):
 
 def test_grad_while():
     """ test_grad_while """
-    assert grad_while(5) == (60,)
+    assert grad_while(Tensor(5, dtype=ms.int32)) == (60,)
 
 
 @ms_function
@@ -438,8 +440,10 @@ def test_factorial():
 
 
 def test_grad_factorial():
-    res = C.grad(factorial)(3)
-    assert res == 11
+    @ms_function
+    def df_factorial(x):
+        return C.grad(factorial)(x)
+    assert df_factorial(3) == 11
 
 
 @ms_function
@@ -513,7 +517,7 @@ def _for(x):
         ret = ret * i
     return ret
 
-
+@ms_function
 def grad_for(x):
     """ grad_for """
     return C.grad_all(_for)(x)
@@ -786,7 +790,10 @@ def multi_outputs(x, y):
 
 
 def test_grad_multi_outputs():
-    assert C.grad_all_with_sens(multi_outputs)(2, 3, (1, 1)) == (4, 4)
+    @ms_function
+    def df_multi_outputs(x, y):
+        return C.grad_all_with_sens(multi_outputs)(x, y, (1, 1))
+    assert df_multi_outputs(2, 3) == (4, 4)
 
 
 @ms_function
@@ -813,7 +820,7 @@ def grad_refactor_simple_1(x, y):
 
 
 def test_grad_refactor_simple_1():
-    assert C.grad_all(grad_refactor_simple_1)(2, 1) == (4, 2)
+    assert C.grad_all(grad_refactor_simple_1)(Tensor(2, dtype=ms.int32), Tensor(1, dtype=ms.int32)) == (4, 2)
 
 
 def grad_refactor_simple_2(x, y, z):
@@ -822,7 +829,10 @@ def grad_refactor_simple_2(x, y, z):
 
 
 def test_grad_refactor_simple_2():
-    assert C.grad_all(grad_refactor_simple_2)(2, 3, 0) == (7, 4, 7)
+    x = Tensor(2, dtype=ms.int32)
+    y = Tensor(3, dtype=ms.int32)
+    z = Tensor(0, dtype=ms.int32)
+    assert C.grad_all(grad_refactor_simple_2)(x, y, z) == (7, 4, 7)
 
 
 def grad_refactor_1(a, b):
@@ -835,7 +845,7 @@ def grad_refactor_1(a, b):
 
 
 def test_grad_refactor_1():
-    assert C.grad_all(grad_refactor_1)(2, 3) == (3, 2)
+    assert C.grad_all(grad_refactor_1)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (3, 2)
 
 
 def grad_refactor_2(a, b):
@@ -848,7 +858,7 @@ def grad_refactor_2(a, b):
 
 
 def test_grad_refactor_2():
-    assert C.grad_all(grad_refactor_2)(2, 3) == (27, 54)
+    assert C.grad_all(grad_refactor_2)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (27, 54)
 
 
 def grad_refactor_3(a):
@@ -859,7 +869,10 @@ def grad_refactor_3(a):
 
 
 def test_grad_refactor_3():
-    assert C.grad_all(grad_refactor_3)(3) == (3,)
+    @ms_function
+    def df_refactor_3(x):
+        return C.grad_all(grad_refactor_3)(x)
+    assert df_refactor_3(3) == (3,)
 
 
 def grad_refactor_4(a):
@@ -870,7 +883,7 @@ def grad_refactor_4(a):
 
 
 def test_grad_refactor_4():
-    assert C.grad_all(grad_refactor_4)(4) == (3,)
+    assert C.grad_all(grad_refactor_4)(Tensor(4, dtype=ms.int32)) == (3,)
 
 
 def grad_refactor_5(a):
@@ -881,7 +894,10 @@ def grad_refactor_5(a):
 
 
 def test_grad_refactor_5():
-    assert C.grad_all(grad_refactor_5)(1) == (1,)
+    @ms_function
+    def df_refactor_5(x):
+        return C.grad_all(grad_refactor_5)(x)
+    assert df_refactor_5(1) == (1,)
 
 
 def grad_refactor_6(a, b):
@@ -892,7 +908,7 @@ def grad_refactor_6(a, b):
 
 
 def test_grad_refactor_6():
-    assert C.grad_all(grad_refactor_6)(3, 2) == (3, 1)
+    assert C.grad_all(grad_refactor_6)(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32)) == (3, 1)
 
 
 def grad_refactor_while(x):
@@ -904,7 +920,10 @@ def grad_refactor_while(x):
 
 
 def test_grad_refactor_9():
-    assert C.grad_all(grad_refactor_while)(3) == (6,)
+    @ms_function
+    def df_refactor_while(input_x):
+        return C.grad_all(grad_refactor_while)(input_x)
+    assert df_refactor_while(3) == (6,)
 
 
 def grad_refactor__while_1(x):
@@ -919,7 +938,7 @@ def grad_refactor__while_1(x):
 
 def test_grad_refactor_10():
     """ test_grad_while """
-    assert C.grad_all(grad_refactor__while_1)(5) == (60,)
+    assert C.grad_all(grad_refactor__while_1)(Tensor(5, dtype=ms.int32)) == (60,)
 
 
 def test_grad_refactor_11():
@@ -985,7 +1004,10 @@ def grad_refactor_14(a, b):
 
 
 def test_grad_refactor_14():
-    assert C.grad_all(grad_refactor_14)(2, 3) == (3, 9)
+    @ms_function
+    def df_refactor_14(x, y):
+        return C.grad_all(grad_refactor_14)(x, y)
+    assert df_refactor_14(2, 3) == (3, 9)
 
 
 # pylint: disable=using-constant-test
@@ -1011,109 +1033,11 @@ def test_grad_if_defer_inline():
     assert grads == (Tensor(np.full([128, 96], 0.6, dtype=np.float32)),)
 
 
-def test_bprop_with_wrong_output_num():
-    context.set_context(check_bprop=True)
-    class BpropWithWrongOutputNum(PrimitiveWithInfer):
-        @prim_attr_register
+def test_dict_const():
+    class Net(nn.Cell):
         def __init__(self):
-            super(BpropWithWrongOutputNum, self).__init__('BpropWithWrongOutputNum')
-
-        def __call__(self, x, y):
-            return x
-
-        def infer_shape(self, x_shape, yshape):
-            return x_shape
-
-        def infer_dtype(self, x_type, y_type):
-            return x_type
-
-    @bprop_getters.register(BpropWithWrongOutputNum)
-    def get_bprop_with_wrong_output_num(self):
-        """Generate bprop for BpropWithWrongOutputNum"""
-
-        def bprop(x, y, out, dout):
-            return (dout,)
-
-        return bprop
-
-    class BpropWithWrongOutputNumCell(nn.Cell):
-        def __init__(self):
-            super(BpropWithWrongOutputNumCell, self).__init__()
-
-        def construct(self, x, y):
-            return BpropWithWrongOutputNum()(x, y)
-
-    with pytest.raises(TypeError):
-        C.grad_all(BpropWithWrongOutputNumCell())(1, 2)
-
-def test_bprop_with_wrong_output_type():
-    context.set_context(check_bprop=True)
-    class BpropWithWrongOutputType(PrimitiveWithInfer):
-        @prim_attr_register
-        def __init__(self):
-            super(BpropWithWrongOutputType, self).__init__('BpropWithWrongOutputType')
-
-        def __call__(self, x):
-            return x
-
-        def infer_shape(self, x_shape):
-            return x_shape
-
-        def infer_dtype(self, x_type):
-            return x_type
-
-    @bprop_getters.register(BpropWithWrongOutputType)
-    def get_bprop_with_wrong_output_type(self):
-        """Generate bprop for BpropWithWrongOutputType"""
-
-        def bprop(x, out, dout):
-            return (1,)
-
-        return bprop
-
-    class BpropWithWrongOutputTypeCell(nn.Cell):
-        def __init__(self):
-            super(BpropWithWrongOutputTypeCell, self).__init__()
-
-        def construct(self, x):
-            return BpropWithWrongOutputType()(x)
-
-    with pytest.raises(TypeError):
-        C.grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
-
-
-def test_bprop_with_wrong_output_shape():
-    context.set_context(check_bprop=True)
-    class BpropWithWrongOutputShape(PrimitiveWithInfer):
-        @prim_attr_register
-        def __init__(self):
-            super(BpropWithWrongOutputShape, self).__init__('BpropWithWrongOutputShape')
-
-        def __call__(self, x):
-            return x
-
-        def infer_shape(self, x_shape):
-            return x_shape
-
-        def infer_dtype(self, x_type):
-            return x_type
-
-    @bprop_getters.register(BpropWithWrongOutputShape)
-    def get_bprop_with_wrong_output_shape(self):
-        """Generate bprop for BpropWithWrongOutputShape"""
-        ones = Tensor(np.ones([2,]).astype(np.int32))
-
-        def bprop(x, out, dout):
-            return (ones,)
-
-        return bprop
-
-    class BpropWithWrongOutputShapeCell(nn.Cell):
-        def __init__(self):
-            super(BpropWithWrongOutputShapeCell, self).__init__()
-
-        def construct(self, x):
-            return BpropWithWrongOutputShape()(x)
-
-    with pytest.raises(TypeError):
-        C.grad_all(BpropWithWrongOutputShapeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
+            super(Net, self).__init__()
+            self.res = {'1': 10}
+        def construct(self):
+            return self.res
+    Net()()

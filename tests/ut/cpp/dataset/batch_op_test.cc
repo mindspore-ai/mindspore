@@ -16,14 +16,14 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "common/utils.h"
 #include "gtest/gtest.h"
-#include "dataset/core/global_context.h"
+#include "minddata/dataset/core/global_context.h"
 #include "utils/log_adapter.h"
 #include "securec.h"
-#include "dataset/util/status.h"
+#include "minddata/dataset/util/status.h"
 
 namespace common = mindspore::common;
 namespace de = mindspore::dataset;

@@ -15,12 +15,12 @@
  */
 
 #include "common/common_test.h"
-#include "parallel/device_manager.h"
-#include "parallel/auto_parallel/graph_costmodel.h"
-#include "parallel/ops_info/matmul_info.h"
-#include "parallel/ops_info/activation_info.h"
-#include "parallel/ops_info/tmp_identity_info.h"
-#include "parallel/auto_parallel/dp_algo_costmodel.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "frontend/parallel/ops_info/matmul_info.h"
+#include "frontend/parallel/ops_info/activation_info.h"
+#include "frontend/parallel/ops_info/tmp_identity_info.h"
+#include "frontend/parallel/auto_parallel/dp_algo_costmodel.h"
 
 namespace mindspore {
 namespace parallel {

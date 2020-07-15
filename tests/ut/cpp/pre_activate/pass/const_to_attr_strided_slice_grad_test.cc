@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
-#include "session/anf_runtime_algorithm.h"
-#include "pre_activate/common/optimizer.h"
-#include "pre_activate/common/pass_manager.h"
-#include "pre_activate/pass/const_to_attr_strided_slice_grad.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/pass/const_to_attr_strided_slice_grad.h"
 #include "utils/utils.h"
 #include "common/utils.h"
 

@@ -17,7 +17,9 @@
 from abc import abstractmethod
 import copy
 import weakref
+import numpy as np
 
+from mindspore.common.tensor import Tensor
 from mindspore._c_dataengine import DEPipeline
 from mindspore._c_dataengine import OpName
 
@@ -287,3 +289,32 @@ class TupleIterator(Iterator):
         """
 
         return [t.as_array() for t in self.depipeline.GetNextAsList()]
+
+
+class DummyIterator():
+    """
+    A DummyIterator only work when env MS_ROLE="MS_PSERVER" or MS_ROLE="MS_SCHED"
+    """
+    def __init__(self, dataset, mode):
+        self.mode = mode
+        self.shapes = dataset.output_shapes()
+        self.types = dataset.output_types()
+        self.fetched_first = False
+
+    def __get_tensor(self):
+        tensor_row = []
+        for np_shape, np_type in zip(self.shapes, self.types):
+            input_np = np.zeros(np_shape, np_type)
+            tensor = Tensor(input_np)
+            tensor_row.append(tensor)
+        return tensor_row
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.mode == "tuple":
+            if not self.fetched_first:
+                self.fetched_first = True
+                return self.__get_tensor()
+        raise StopIteration()

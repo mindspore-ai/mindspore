@@ -89,7 +89,11 @@ def test_scalar_cast_grad():
         output = F.scalar_cast(x, input_t)
         return output
 
-    gfn = C.grad(fx_cast)(input_x)
+    @ms_function
+    def grad_fx_cast(input_x):
+        return C.grad(fx_cast)(input_x)
+
+    gfn = grad_fx_cast(input_x)
     expect_dx = 1
     assert gfn == expect_dx
 
@@ -133,25 +137,6 @@ def test_transpose_grad():
     assert np.all(gout[0].asnumpy() == expect)
 
 
-@non_graph_engine
-def test_squeeze_grad():
-    """ test_squeeze_grad """
-    input_tensor = Tensor(np.ones(shape=[3, 2, 1]))
-    squeeze = P.Squeeze(2)
-
-    def fn(x):
-        output = squeeze(x)
-        return output
-
-    out = fn(input_tensor)
-    gfn = grad_all_with_sens(fn)
-    sens = Tensor(np.ones_like(out.asnumpy()))
-    args = [input_tensor, sens]
-    gout = gfn(*args)
-    expect = np.ones([3, 2, 1])
-    assert np.all(gout[0].asnumpy() == expect)
-
-
 def test_select_grad():
     """ test_select_grad """
     select = P.Select()
@@ -174,6 +159,25 @@ def test_select_grad():
     assert np.all(gout[0].asnumpy() == expect_cond)
     assert np.all(gout[1].asnumpy() == expect_x)
     assert np.all(gout[2].asnumpy() == expect_y)
+
+
+@non_graph_engine
+def test_squeeze_grad():
+    """ test_squeeze_grad """
+    input_tensor = Tensor(np.ones(shape=[3, 2, 1]))
+    squeeze = P.Squeeze(2)
+
+    def fn(x):
+        output = squeeze(x)
+        return output
+
+    out = fn(input_tensor)
+    gfn = grad_all_with_sens(fn)
+    sens = Tensor(np.ones_like(out.asnumpy()))
+    args = [input_tensor, sens]
+    gout = gfn(*args)
+    expect = np.ones([3, 2, 1])
+    assert np.all(gout[0].asnumpy() == expect)
 
 
 def test_SubGrad():

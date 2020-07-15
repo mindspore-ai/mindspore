@@ -20,7 +20,7 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 
 import argparse
 from src.config import alexnet_cfg as cfg
-from src.dataset import create_dataset_mnist
+from src.dataset import create_dataset_cifar10
 from src.alexnet import AlexNet
 import mindspore.nn as nn
 from mindspore import context
@@ -50,8 +50,8 @@ if __name__ == "__main__":
     print("============== Starting Testing ==============")
     param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
-    ds_eval = create_dataset_mnist(args.data_path,
-                                   cfg.batch_size,
-                                   status="test")
+    ds_eval = create_dataset_cifar10(args.data_path,
+                                     cfg.batch_size,
+                                     status="test")
     acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
     print("============== {} ==============".format(acc))

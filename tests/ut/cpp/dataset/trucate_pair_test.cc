@@ -15,12 +15,12 @@
  */
 #include <memory>
 #include <string>
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/core/tensor.h"
-#include "mindspore/ccsrc/dataset/text/kernels/truncate_sequence_pair_op.h"
+#include "minddata/dataset/core/tensor.h"
+#include "mindspore/ccsrc/minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 
 using namespace mindspore::dataset;
 

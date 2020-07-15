@@ -20,16 +20,16 @@
 
 #include "transform/transform_base_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse.h"
 #include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
-#include "pipeline/static_analysis/prim.h"
-#include "operator/ops.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "frontend/operator/ops.h"
 #include "common/common_test.h"
 
 #define private public
-#include "transform/types.h"
-#include "transform/convert.h"
+#include "transform/graph_ir/types.h"
+#include "transform/graph_ir/convert.h"
 #include "securec/include/securec.h"
 #include "utils/utils.h"
 using std::cout;

@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """HSigmoid op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-hsigmoid_op_info = AkgRegOp("HSigmoid") \
+hsigmoid_op_info = AkgGpuRegOp("HSigmoid") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .output(0, "output") \

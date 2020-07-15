@@ -20,7 +20,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "ir/base.h"
+#include "base/base.h"
 
 namespace mindspore {
 

@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """SimpleMeanGrad op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-mean_grad_op_info = AkgRegOp("SimpleMeanGrad") \
+mean_grad_op_info = AkgGpuRegOp("SimpleMeanGrad") \
     .fusion_type("OPAQUE") \
     .input(0, "HEAD") \
     .output(0, "output") \

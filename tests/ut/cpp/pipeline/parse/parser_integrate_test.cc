@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "utils/log_adapter.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse.h"
 #include "debug/draw.h"
 
 namespace mindspore {

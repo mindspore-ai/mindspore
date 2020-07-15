@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/kernel.h"
+#include "backend/kernel_compiler/kernel.h"
 
 namespace mindspore {
 namespace kernel {

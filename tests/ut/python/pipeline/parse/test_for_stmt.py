@@ -17,6 +17,9 @@ from dataclasses import dataclass
 import numpy as np
 
 from mindspore import Tensor, Model, context
+from mindspore.ops import operations as P
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 from mindspore.nn import Cell
 from mindspore.nn import ReLU
 from ...ut_filter import non_graph_engine
@@ -66,3 +69,58 @@ def function_access_base(number):
 def test_access_0040():
     """ test_access_0040 """
     function_access_base(2)
+
+
+class OpSeqNet(Cell):
+    def __init__(self, loop_count=1):
+        super().__init__()
+        self.loop_count = loop_count
+        self.op_seq = (P.Sqrt(), P.Reciprocal(), P.Square())
+
+    def construct(self, x):
+        t = x
+        for op in self.op_seq:
+            t = op(t)
+        return t
+
+
+def test_op_seq_test():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = OpSeqNet()
+    input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
+    input_me = Tensor(input_np)
+    net(input_me)
+
+
+_grad_fusion = C.MultitypeFuncGraph("grad_fushion")
+
+
+@_grad_fusion.register("Tensor", "Function")
+def tensor_grad_scale(x, op):
+    return op(x)
+
+
+class AllReduceTest(Cell):
+    def __init__(self, loop_count=1):
+        super().__init__()
+        self.op_list = ()
+        self.fushion_flag = [0, 1, 1, 0, 1, 0]
+        for i in self.fushion_flag:
+            op = P.AllReduce().add_prim_attr('fusion', i)
+            self.op_list = self.op_list + (op,)
+        self.hyper_map = C.HyperMap()
+
+    def construct(self, x):
+        ret = ()
+        for _ in self.fushion_flag:
+            ret = ret + (x,)
+        fushion_res = self.hyper_map(F.partial(_grad_fusion), ret, self.op_list)
+        return fushion_res
+
+
+def test_allreduce_fushio_test():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = AllReduceTest()
+    input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
+    input_me = Tensor(input_np)
+    net(input_me)

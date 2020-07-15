@@ -21,17 +21,17 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include "dataset/core/client.h"
-#include "dataset/core/constants.h"
-#include "dataset/engine/datasetops/map_op.h"
-#include "dataset/engine/datasetops/zip_op.h"
-#include "dataset/core/tensor.h"
-#include "dataset/core/config_manager.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/engine/datasetops/map_op.h"
+#include "minddata/dataset/engine/datasetops/zip_op.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/config_manager.h"
 #include "common/common.h"
 #include "common/utils.h"
-#include "dataset/engine/data_buffer.h"
+#include "minddata/dataset/engine/data_buffer.h"
 #include "gtest/gtest.h"
-#include "dataset/core/global_context.h"
+#include "minddata/dataset/core/global_context.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;
@@ -58,7 +58,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
   auto my_tree = std::make_shared<ExecutionTree>();
   // Creating TFReaderOp
 
-  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1/train-0000-of-0001.data";
+  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   rc = TFReaderOp::Builder()
@@ -142,7 +142,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   MS_LOG(INFO) << "UT test TestZipRepeat.";
   auto my_tree = std::make_shared<ExecutionTree>();
 
-  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images_1/train-0000-of-0001.data";
+  std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   rc = TFReaderOp::Builder()

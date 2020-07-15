@@ -1,0 +1,81 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+namespace mindspore.dataset;
+
+/// Type of a Tensor
+enum TensorType : byte {
+    DE_UNKNOWN = 0,
+    DE_BOOL = 1,
+    DE_INT8 = 2,
+    DE_UINT8 = 3,
+    DE_INT16 = 4,
+    DE_UINT16 = 5,
+    DE_INT32 = 6,
+    DE_UINT32 = 7,
+    DE_INT64 = 8,
+    DE_UINT64 = 9,
+    DE_FLOAT16 = 10,
+    DE_FLOAT32 = 11,
+    DE_FLOAT64 = 12,
+    DE_STRING = 13
+}
+
+/// The meta information of a Tensor
+/// \note Only the type and shape are considered meta information. Tensor data is excluded.
+table TensorMetaMsg {
+    dims:[int64] (required);
+    type:TensorType;
+}
+
+/// This is the first buffer that is sent to a Cache server when a TensorRow is serialized.
+/// \param row_id is the row id of the TensorRow.
+/// \param column The meta information of each Tensor in the row
+/// \param size of this serialized buffer
+/// \param size of each tensor data buffer that follows
+table TensorRowHeaderMsg {
+    row_id:int64;
+    column:[TensorMetaMsg] (required);
+    size_of_this:int64;
+    data_sz:[int64] (required);
+}
+
+root_type TensorRowHeaderMsg;
+
+/// A row of row id's
+table TensorRowIds {
+    row_id:[int64] (required);
+}
+
+/// Statistics returned from each cache service
+/// \note It must match CacheService::ServiceStat
+table ServiceStatMsg {
+    num_mem_cached:int64;
+    num_disk_cached:int64;
+    min_row_id:int64;
+    max_row_id:int64;
+    state:int8;
+}
+
+/// Column description of each column in a schema
+table ColumnNameMsg {
+    name:string;
+    id:int32;
+}
+
+/// Serialized form of a schema
+table SchemaMsg {
+    column:[ColumnNameMsg];
+}

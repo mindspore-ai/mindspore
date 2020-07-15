@@ -17,10 +17,7 @@ from typing import Union
 
 import numpy as np
 
-NINF = -1.0 * 1e9
-
-
-def ngram_ppl(prob: Union[np.ndarray, list], log_softmax=False, index: float = np.e):
+def ngram_ppl(prob: Union[np.ndarray, list], length: int, log_softmax=False, index: float = np.e):
     """
     Calculate Perplexity(PPL) score under N-gram language model.
 
@@ -39,7 +36,8 @@ def ngram_ppl(prob: Union[np.ndarray, list], log_softmax=False, index: float = n
     Returns:
         float, ppl score.
     """
-    eps = 1e-8
+    if not length:
+        return np.inf
     if not isinstance(prob, (np.ndarray, list)):
         raise TypeError("`prob` must be type of list or np.ndarray.")
     if not isinstance(prob, np.ndarray):
@@ -47,18 +45,17 @@ def ngram_ppl(prob: Union[np.ndarray, list], log_softmax=False, index: float = n
     if prob.shape[0] == 0:
         raise ValueError("`prob` length must greater than 0.")
 
-    p = 1.0
-    sen_len = 0
-    for t in range(prob.shape[0]):
-        s = prob[t]
-        if s <= NINF:
-            break
-        if log_softmax:
-            s = np.power(index, s)
-        p *= (1 / (s + eps))
-        sen_len += 1
+    print(f'length:{length}, log_prob:{prob}')
 
-    if sen_len == 0:
-        return np.inf
+    if log_softmax:
+        prob = np.sum(prob) / length
+        ppl = 1. / np.power(index, prob)
+        print(f'avg log prob:{prob}')
+    else:
+        p = 1.
+        for i in range(prob.shape[0]):
+            p *= (1. / prob[i])
+        ppl = pow(p, 1 / length)
 
-    return pow(p, 1 / sen_len)
+    print(f'ppl val:{ppl}')
+    return ppl

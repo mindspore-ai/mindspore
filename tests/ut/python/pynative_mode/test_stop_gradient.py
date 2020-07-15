@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple
@@ -81,14 +82,22 @@ def stop_test4(x, y):
     return e
 
 
+@ms_function
 def grad_stop_test(x, y):
     """ grad_stop_test """
     return C.grad_all(stop_test2)(x, y)
 
 
+@ms_function
 def grad_stop_test1(x, y):
     """ grad_stop_test1 """
     return C.grad_all(stop_test3)(x, y)
+
+
+@ms_function
+def grad_stop_test5(x, y):
+    """ grad_stop_test5 """
+    return C.grad_all(stop_test5)(x, y)
 
 
 def test_stop():
@@ -103,7 +112,7 @@ def test_stop1():
 
 def test_stop5():
     """ test_stop1 """
-    print("test_stop5:", C.grad_all(stop_test5)(2, 3))
+    print("test_stop5:", grad_stop_test5(2, 3))
 
 
 class GradWrap(nn.Cell):
@@ -247,7 +256,7 @@ def test_stop_gradient_4():
     def stop_test(x):
         return stop_gradient(x)
 
-    assert C.grad_all(stop_test)(1) == (0,)
+    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (0,)
 
 
 def test_stop_gradient_5():
@@ -257,7 +266,7 @@ def test_stop_gradient_5():
         ret = x + y
         return ret
 
-    assert C.grad_all(stop_test)(1) == (1,)
+    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
 
 
 def test_stop_gradient_6():
@@ -266,7 +275,7 @@ def test_stop_gradient_6():
         ret = stop_gradient(ret)
         return ret
 
-    assert C.grad_all(stop_test)(1, 3) == (0, 0)
+    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (0, 0)
 
 
 class PrimWithMultiOutputs(PrimitiveWithInfer):

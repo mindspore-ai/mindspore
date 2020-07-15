@@ -20,11 +20,11 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "transform/util.h"
+#include "transform/graph_ir/util.h"
 #include "ir/tensor.h"
 
 #include "common/common_test.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse.h"
 #include "./common.h"
 
 #include "graph/tensor.h"

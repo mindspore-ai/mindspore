@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 import mindspore.dataset as ds
 
+
 # generates 1 column [0], [0, 1], ..., [0, ..., n-1]
 def generate_sequential(n):
     for i in range(n):
@@ -44,6 +45,7 @@ def test_bucket_batch_invalid_input():
     bucket_boundaries = [1, 2, 3]
     empty_bucket_boundaries = []
     invalid_bucket_boundaries = ["1", "2", "3"]
+    zero_start_bucket_boundaries = [0, 2, 3]
     negative_bucket_boundaries = [1, 2, -3]
     decreasing_bucket_boundaries = [3, 2, 1]
     non_increasing_bucket_boundaries = [1, 2, 2]
@@ -58,7 +60,7 @@ def test_bucket_batch_invalid_input():
 
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(invalid_column_names, bucket_boundaries, bucket_batch_sizes)
-    assert "column_names should be a list of str" in str(info.value)
+    assert "Argument column_names[0] with value 1 is not of type (<class 'str'>,)." in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, empty_bucket_boundaries, bucket_batch_sizes)
@@ -69,8 +71,12 @@ def test_bucket_batch_invalid_input():
     assert "bucket_boundaries should be a list of int" in str(info.value)
 
     with pytest.raises(ValueError) as info:
+        _ = dataset.bucket_batch_by_length(column_names, zero_start_bucket_boundaries, bucket_batch_sizes)
+    assert "bucket_boundaries must only contain positive numbers." in str(info.value)
+
+    with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, negative_bucket_boundaries, bucket_batch_sizes)
-    assert "bucket_boundaries cannot contain any negative numbers" in str(info.value)
+    assert "bucket_boundaries must only contain positive numbers." in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, decreasing_bucket_boundaries, bucket_batch_sizes)
@@ -99,12 +105,12 @@ def test_bucket_batch_invalid_input():
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes,
                                            None, None, invalid_type_pad_to_bucket_boundary)
-    assert "Wrong input type for pad_to_bucket_boundary, should be <class 'bool'>" in str(info.value)
+    assert "Argument pad_to_bucket_boundary with value \"\" is not of type (<class \'bool\'>,)." in str(info.value)
 
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes,
                                            None, None, False, invalid_type_drop_remainder)
-    assert "Wrong input type for drop_remainder, should be <class 'bool'>" in str(info.value)
+    assert "Argument drop_remainder with value \"\" is not of type (<class 'bool'>,)." in str(info.value)
 
 
 def test_bucket_batch_multi_bucket_no_padding():
@@ -271,7 +277,6 @@ def test_bucket_batch_default_pad():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0],
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0],
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]]
-
 
     output = []
     for data in dataset.create_dict_iterator():

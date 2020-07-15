@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore import context
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 def weight_init_ones(shape):

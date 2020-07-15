@@ -26,29 +26,16 @@ from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox,
 GENERATE_GOLDEN = False
 
 DATA_DIR = "../data/dataset/testVOC2012_2"
+DATA_DIR_2 = ["../data/dataset/testCOCO/train/",
+              "../data/dataset/testCOCO/annotations/train.json"]  # DATA_DIR, ANNOTATION_DIR
 
 
-def fix_annotate(bboxes):
+def test_resize_with_bbox_op_voc_c(plot_vis=False):
     """
-    Fix annotations to format followed by mindspore.
-    :param bboxes: in [label, x_min, y_min, w, h, truncate, difficult] format
-    :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
+    Prints images and bboxes side by side with and without ResizeWithBBox Op applied
+    testing with VOC dataset
     """
-    for (i, box) in enumerate(bboxes):
-        if box.size == 7:
-            bboxes[i] = np.roll(box, -1)
-        else:
-            print("ERROR: Invalid Bounding Box size provided")
-            break
-    return bboxes
-
-
-def test_resize_with_bbox_op_c(plot_vis=False):
-    """
-    Prints images and bboxes side by side with and without ResizeWithBBox Op applied,
-    tests with MD5 check, expected to pass
-    """
-    logger.info("test_resize_with_bbox_op_c")
+    logger.info("test_resize_with_bbox_op_voc_c")
 
     # Load dataset
     dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
@@ -57,21 +44,15 @@ def test_resize_with_bbox_op_c(plot_vis=False):
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
-    test_op = c_vision.ResizeWithBBox(200)
+    test_op = c_vision.ResizeWithBBox(100)
 
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
                             operations=[test_op])
 
-    filename = "resize_with_bbox_op_01_c_result.npz"
+    filename = "resize_with_bbox_op_01_c_voc_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
 
     unaugSamp, augSamp = [], []
@@ -82,6 +63,43 @@ def test_resize_with_bbox_op_c(plot_vis=False):
 
     if plot_vis:
         visualize_with_bounding_boxes(unaugSamp, augSamp)
+
+
+def test_resize_with_bbox_op_coco_c(plot_vis=False):
+    """
+    Prints images and bboxes side by side with and without ResizeWithBBox Op applied,
+    tests with MD5 check, expected to pass
+    Testing with COCO dataset
+    """
+    logger.info("test_resize_with_bbox_op_coco_c")
+
+    # Load dataset
+    dataCOCO1 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    dataCOCO2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    test_op = c_vision.ResizeWithBBox(200)
+
+    # map to apply ops
+
+    dataCOCO2 = dataCOCO2.map(input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              columns_order=["image", "bbox"],
+                              operations=[test_op])
+
+    filename = "resize_with_bbox_op_01_c_coco_result.npz"
+    save_and_check_md5(dataCOCO2, filename, generate_golden=GENERATE_GOLDEN)
+
+    unaugSamp, augSamp = [], []
+
+    for unAug, Aug in zip(dataCOCO1.create_dict_iterator(), dataCOCO2.create_dict_iterator()):
+        unaugSamp.append(unAug)
+        augSamp.append(Aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaugSamp, augSamp, annot_name="bbox")
 
 
 def test_resize_with_bbox_op_edge_c(plot_vis=False):
@@ -99,13 +117,6 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
 
     test_op = c_vision.ResizeWithBBox(500)
 
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
@@ -113,7 +124,6 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
-    # Test Op added to list of Operations here
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
@@ -140,7 +150,7 @@ def test_resize_with_bbox_op_invalid_c():
         # invalid interpolation value
         c_vision.ResizeWithBBox(400, interpolation="invalid")
 
-    except ValueError as err:
+    except TypeError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
         assert "interpolation" in str(err)
 
@@ -163,7 +173,8 @@ def test_resize_with_bbox_op_bad_c():
 
 
 if __name__ == "__main__":
-    test_resize_with_bbox_op_c(plot_vis=False)
+    test_resize_with_bbox_op_voc_c(plot_vis=False)
+    test_resize_with_bbox_op_coco_c(plot_vis=False)
     test_resize_with_bbox_op_edge_c(plot_vis=False)
     test_resize_with_bbox_op_invalid_c()
     test_resize_with_bbox_op_bad_c()

@@ -17,6 +17,7 @@
 from functools import partial
 import numpy as np
 
+from mindspore import nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -41,8 +42,7 @@ __all__ = [
     'Conv2dBatchNormQuant',
     'Conv2dQuant',
     'DenseQuant',
-    'ReLUQuant',
-    'ReLU6Quant',
+    'ActQuant',
     'HSwishQuant',
     'HSigmoidQuant',
     'TensorAddQuant',
@@ -375,9 +375,10 @@ class FakeQuantWithMinMax(Cell):
 
     def extend_repr(self):
         s = 'num_bits={}, symmetric={}, narrow_range={}, ema={}({}), per_channel={}({}, {}), ' \
-            'quant_delay={}, min_init={}, max_init={}'.format(
-                self.num_bits, self.symmetric, self.narrow_range, self.ema, self.ema_decay, self.per_channel,
-                self.channel_axis, self.num_channels, self.quant_delay, self.min_init, self.max_init)
+            'quant_delay={}, min_init={}, max_init={}'.format(self.num_bits, self.symmetric, self.narrow_range,
+                                                              self.ema, self.ema_decay, self.per_channel,
+                                                              self.channel_axis, self.num_channels, self.quant_delay,
+                                                              self.min_init, self.max_init)
         return s
 
     def construct(self, x):
@@ -540,10 +541,12 @@ class Conv2dBatchNormQuant(Cell):
     def extend_repr(self):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(
-                self.in_channels, self.out_channels, self.kernel_size, self.stride,
-                self.pad_mode, self.padding, self.dilation, self.group,
-                self.fake, self.freeze_bn, self.momentum, self.quant_delay)
+            'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
+                                                                        self.kernel_size, self.stride,
+                                                                        self.pad_mode, self.padding, self.dilation,
+                                                                        self.group,
+                                                                        self.fake, self.freeze_bn, self.momentum,
+                                                                        self.quant_delay)
         return s
 
     def construct(self, x):
@@ -685,10 +688,9 @@ class Conv2dQuant(Cell):
     def extend_repr(self):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'has_bias={}, quant_delay={}'.format(
-                self.in_channels, self.out_channels, self.kernel_size, self.stride,
-                self.pad_mode, self.padding, self.dilation, self.group,
-                self.has_bias, self.quant_delay)
+            'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                                                 self.pad_mode, self.padding, self.dilation, self.group,
+                                                 self.has_bias, self.quant_delay)
         return s
 
 
@@ -799,76 +801,23 @@ class DenseQuant(Cell):
 
 class _QuantActivation(Cell):
     r"""
-    Base class for Quant activation function. Add Fake Quant OP after activation OP.
+    Base class for quantization aware training activation function. Add Fake Quant OP after activation OP.
     """
 
     def get_origin(self):
         raise NotImplementedError
 
 
-class ReLUQuant(_QuantActivation):
+class ActQuant(_QuantActivation):
     r"""
-    ReLUQuant activation function. Add Fake Quant OP after Relu OP.
+    Quantization aware training activation function.
 
-    For a more Detailed overview of ReLU op.
-
-    Args:
-        ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
-        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
-        quant_delay (int): Quantization delay parameters according by global step. Default: 0.
-
-    Inputs:
-        - **x** (Tensor) - The input of ReLUQuant.
-
-    Outputs:
-        Tensor, with the same type and shape as the `x`.
-
-    Examples:
-        >>> relu_quant = nn.ReLUQuant()
-        >>> input_x = Tensor(np.array([[1, 2, 0], [-1, -2, 1]]), mindspore.float32)
-        >>> result = relu_quant(input_x)
-    """
-
-    def __init__(self,
-                 ema_decay=0.999,
-                 per_channel=False,
-                 num_bits=8,
-                 symmetric=False,
-                 narrow_range=False,
-                 quant_delay=0):
-        super(ReLUQuant, self).__init__()
-        self.fake_quant_act = FakeQuantWithMinMax(min_init=0,
-                                                  max_init=6,
-                                                  ema=True,
-                                                  ema_decay=ema_decay,
-                                                  per_channel=per_channel,
-                                                  num_bits=num_bits,
-                                                  symmetric=symmetric,
-                                                  narrow_range=narrow_range,
-                                                  quant_delay=quant_delay)
-        self.relu = P.ReLU()
-
-    def construct(self, x):
-        x = self.relu(x)
-        x = self.fake_quant_act(x)
-        return x
-
-    def get_origin(self):
-        return self.relu
-
-
-class ReLU6Quant(_QuantActivation):
-    r"""
-    ReLU6Quant activation function.
-
-    Add Fake Quant OP after Relu6. Not Recommand to used these cell for Fake Quant Op
+    Add Fake Quant OP after activation. Not Recommand to used these cell for Fake Quant Op
     Will climp the max range of the activation and the relu6 do the same operation.
     For a more Detailed overview of ReLU6 op.
 
     Args:
+        activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
@@ -883,19 +832,20 @@ class ReLU6Quant(_QuantActivation):
         Tensor, with the same type and shape as the `x`.
 
     Examples:
-        >>> relu6_quant = nn.ReLU6Quant(4, 1)
+        >>> act_quant = nn.ActQuant(4, 1)
         >>> input_x = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = relu6_quant(input_x)
+        >>> result = act_quant(input_x)
     """
 
     def __init__(self,
+                 activation,
                  ema_decay=0.999,
                  per_channel=False,
                  num_bits=8,
                  symmetric=False,
                  narrow_range=False,
                  quant_delay=0):
-        super(ReLU6Quant, self).__init__()
+        super(ActQuant, self).__init__()
         self.fake_quant_act = FakeQuantWithMinMax(min_init=0,
                                                   max_init=6,
                                                   ema=True,
@@ -905,15 +855,15 @@ class ReLU6Quant(_QuantActivation):
                                                   symmetric=symmetric,
                                                   narrow_range=narrow_range,
                                                   quant_delay=quant_delay)
-        self.relu6 = P.ReLU6()
+        self.act = activation()
 
     def construct(self, x):
-        x = self.relu6(x)
+        x = self.act(x)
         x = self.fake_quant_act(x)
         return x
 
     def get_origin(self):
-        return self.relu6
+        return self.act
 
 
 class HSwishQuant(_QuantActivation):
@@ -923,6 +873,7 @@ class HSwishQuant(_QuantActivation):
     For a more Detailed overview of HSwish op.
 
     Args:
+        activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
@@ -943,6 +894,7 @@ class HSwishQuant(_QuantActivation):
     """
 
     def __init__(self,
+                 activation,
                  ema_decay=0.999,
                  per_channel=False,
                  num_bits=8,
@@ -968,7 +920,10 @@ class HSwishQuant(_QuantActivation):
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
-        self.act = P.HSwish()
+        if issubclass(activation, nn.HSwish):
+            self.act = activation()
+        else:
+            raise ValueError("Activation should be `nn.HSwish`")
 
     def construct(self, x):
         x = self.fake_quant_act_before(x)
@@ -987,6 +942,7 @@ class HSigmoidQuant(_QuantActivation):
     For a more Detailed overview of HSigmoid op.
 
     Args:
+        activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
@@ -1007,6 +963,7 @@ class HSigmoidQuant(_QuantActivation):
     """
 
     def __init__(self,
+                 activation,
                  ema_decay=0.999,
                  per_channel=False,
                  num_bits=8,
@@ -1032,7 +989,10 @@ class HSigmoidQuant(_QuantActivation):
                                                         symmetric=symmetric,
                                                         narrow_range=narrow_range,
                                                         quant_delay=quant_delay)
-        self.act = P.HSigmoid()
+        if issubclass(activation, nn.HSwish):
+            self.act = activation()
+        else:
+            raise ValueError("Activation should be `nn.HSigmoid`")
 
     def construct(self, x):
         x = self.fake_quant_act_before(x)
@@ -1209,9 +1169,9 @@ class QuantBlock(Cell):
         return x
 
     def extend_repr(self):
-        str_info = f'quant={self.quant}, core_op={type(self.core_op)}'
+        str_info = f'quant={self.quant}, core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
         if self.has_bias:
-            str_info = str_info + f', bias={self.bias}'
+            str_info = str_info + f', bias=shape[{self.bias.shape}]'
         if self.has_act:
             str_info = str_info + f', activation={self.activation}'
         str_info = str_info + f', dequant={self.dequant}'

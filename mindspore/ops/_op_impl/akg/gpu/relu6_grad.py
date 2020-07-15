@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """ReLU6Grad op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-relu_grad_op_info = AkgRegOp("ReLU6Grad") \
+relu_grad_op_info = AkgGpuRegOp("ReLU6Grad") \
     .fusion_type("OPAQUE") \
     .input(0, "y_grad") \
     .input(1, "x") \

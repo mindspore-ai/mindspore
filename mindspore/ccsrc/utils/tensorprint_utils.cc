@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include "ir/tensor.h"
-#include "device/convert_tensor_utils.h"
+#include "runtime/device/convert_tensor_utils.h"
 #include "./securec.h"
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"
@@ -256,6 +256,7 @@ bool SaveDataItem2File(const std::vector<tdt::DataItem> &items, const std::strin
     if (!print.SerializeToOstream(output)) {
       MS_LOG(ERROR) << "Save print file:" << print_file_path << " fail.";
       ret_end_thread = true;
+      break;
     }
     print.Clear();
   }

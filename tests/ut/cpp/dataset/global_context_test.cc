@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/core/global_context.h"
+#include "minddata/dataset/core/global_context.h"
 #include "common/common.h"
 #include "utils/log_adapter.h"
 

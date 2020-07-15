@@ -288,12 +288,13 @@ def config_get_set_num_parallel_workers(num_parallel_workers_new):
     return num_parallel_workers_original
 
 
-def visualize_with_bounding_boxes(orig, aug, plot_rows=3):
+def visualize_with_bounding_boxes(orig, aug, annot_name="annotation", plot_rows=3):
     """
     Take a list of un-augmented and augmented images with "annotation" bounding boxes
     Plot images to compare test correct BBox augment functionality
     :param orig: list of original images and bboxes (without aug)
     :param aug: list of augmented images and bboxes
+    :param annot_name: the dict key for bboxes in data, e.g "bbox" (COCO) / "annotation" (VOC)
     :param plot_rows: number of rows on plot (rows = samples on one plot)
     :return: None
     """
@@ -301,9 +302,10 @@ def visualize_with_bounding_boxes(orig, aug, plot_rows=3):
     def add_bounding_boxes(ax, bboxes):
         for bbox in bboxes:
             rect = patches.Rectangle((bbox[0], bbox[1]),
-                                     bbox[2], bbox[3],
-                                     linewidth=1, edgecolor='r', facecolor='none')
+                                     bbox[2]*0.997, bbox[3]*0.997,
+                                     linewidth=1.80, edgecolor='r', facecolor='none')
             # Add the patch to the Axes
+            # Params to Rectangle slightly modified to prevent drawing overflow
             ax.add_patch(rect)
 
     # Quick check to confirm correct input parameters
@@ -312,14 +314,15 @@ def visualize_with_bounding_boxes(orig, aug, plot_rows=3):
     if len(orig) != len(aug) or not orig:
         return
 
-    batch_size = int(len(orig)/plot_rows)  # creates batches of images to plot together
+    batch_size = int(len(orig) / plot_rows)  # creates batches of images to plot together
     split_point = batch_size * plot_rows
 
     orig, aug = np.array(orig), np.array(aug)
 
     if len(orig) > plot_rows:
         # Create batches of required size and add remainder to last batch
-        orig = np.split(orig[:split_point], batch_size) + ([orig[split_point:]] if (split_point < orig.shape[0]) else [])  # check to avoid empty arrays being added
+        orig = np.split(orig[:split_point], batch_size) + (
+            [orig[split_point:]] if (split_point < orig.shape[0]) else [])  # check to avoid empty arrays being added
         aug = np.split(aug[:split_point], batch_size) + ([aug[split_point:]] if (split_point < aug.shape[0]) else [])
     else:
         orig = [orig]
@@ -334,18 +337,19 @@ def visualize_with_bounding_boxes(orig, aug, plot_rows=3):
 
         for x, (dataA, dataB) in enumerate(zip(allData[0], allData[1])):
             cur_ix = base_ix + x
-            (axA, axB) = (axs[x, 0], axs[x, 1]) if (curPlot > 1) else (axs[0], axs[1])  # select plotting axes based on number of image rows on plot - else case when 1 row
+            # select plotting axes based on number of image rows on plot - else case when 1 row
+            (axA, axB) = (axs[x, 0], axs[x, 1]) if (curPlot > 1) else (axs[0], axs[1])
 
             axA.imshow(dataA["image"])
-            add_bounding_boxes(axA, dataA["annotation"])
+            add_bounding_boxes(axA, dataA[annot_name])
             axA.title.set_text("Original" + str(cur_ix+1))
 
             axB.imshow(dataB["image"])
-            add_bounding_boxes(axB, dataB["annotation"])
+            add_bounding_boxes(axB, dataB[annot_name])
             axB.title.set_text("Augmented" + str(cur_ix+1))
 
-            logger.info("Original **\n{} : {}".format(str(cur_ix+1), dataA["annotation"]))
-            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix+1), dataB["annotation"]))
+            logger.info("Original **\n{} : {}".format(str(cur_ix+1), dataA[annot_name]))
+            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix+1), dataB[annot_name]))
 
         plt.show()
 
@@ -381,19 +385,19 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
         width = img.shape[1]
         if invalid_bbox_type_ == InvalidBBoxType.WidthOverflow:
             # use box that overflows on width
-            return img, np.array([[0, 0, width + 1, height, 0, 0, 0]]).astype(np.uint32)
+            return img, np.array([[0, 0, width + 1, height, 0, 0, 0]]).astype(np.float32)
 
         if invalid_bbox_type_ == InvalidBBoxType.HeightOverflow:
             # use box that overflows on height
-            return img, np.array([[0, 0, width, height + 1, 0, 0, 0]]).astype(np.uint32)
+            return img, np.array([[0, 0, width, height + 1, 0, 0, 0]]).astype(np.float32)
 
         if invalid_bbox_type_ == InvalidBBoxType.NegativeXY:
             # use box with negative xy
-            return img, np.array([[-10, -10, width, height, 0, 0, 0]]).astype(np.uint32)
+            return img, np.array([[-10, -10, width, height, 0, 0, 0]]).astype(np.float32)
 
         if invalid_bbox_type_ == InvalidBBoxType.WrongShape:
             # use box that has incorrect shape
-            return img, np.array([[0, 0, width - 1]]).astype(np.uint32)
+            return img, np.array([[0, 0, width - 1]]).astype(np.float32)
         return img, bboxes
 
     try:

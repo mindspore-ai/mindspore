@@ -18,9 +18,9 @@
 #include <numeric>
 #include <utility>
 #include "common/utils.h"
-#include "session/anf_runtime_algorithm.h"
-#include "kernel/kernel.h"
-#include "device/convert_tensor_utils.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/kernel_compiler/kernel.h"
+#include "runtime/device/convert_tensor_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"

@@ -601,51 +601,6 @@ class SparseGatherV2(GatherV2):
         >>> out = P.SparseGatherV2()(input_params, input_indices, axis)
     """
 
-class EmbeddingLookup(PrimitiveWithInfer):
-    """
-    Returns a slice of input tensor based on the specified indices and axis. This Primitive has the similar
-    functionality as GatherV2, but has one more inputs: `offset`.
-    This primitive runs on the acipu devices.
-
-    Inputs:
-        - **params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The Tensor slice, instead of the entire Tensor.
-        - **indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. Values can be out of range of `params`,
-          and the exceeding part will be filled with 0 in the output.
-          The indices to do lookup operation whose data type should be mindspore.int32 or mindspore.int64.
-        - **offset** (int) - Specifies the offset value of this `params` slice. Thus the real indices
-          are equal to `indices` minus `offset`.
-
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
-
-    Examples:
-        >>> params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
-        >>> indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
-        >>> offset = 4
-        >>> out = P.EmbeddingLookup()(params, indices, offset)
-        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
-    """
-    @prim_attr_register
-    def __init__(self):
-        """init index_select"""
-        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
-                                outputs=['output'])
-
-    def __infer__(self, params, indices, offset):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        valid_types = (mstype.int32, mstype.int64)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, valid_types, self.name)
-        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
-        params_shp = params['shape']
-        out_shape = indices['shape'] + params_shp[1:]
-        out = {'shape': out_shape,
-               'dtype': params['dtype'],
-               'value': None}
-        return out
-
 
 class Split(PrimitiveWithInfer):
     """
@@ -688,8 +643,10 @@ class Split(PrimitiveWithInfer):
         validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT, self.name)
         validator.check_integer("output_num", self.output_num, 0, Rel.GT, self.name)
         output_valid_check = x_shape[self.axis] % self.output_num
-        validator.check_integer("the dimension which to split divides output_num", output_valid_check, 0, Rel.EQ,
-                                self.name)
+        if output_valid_check != 0:
+            raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
+                             f" output_num {self.output_num}")
+
         x_shape[self.axis] = int(x_shape[self.axis] / self.output_num)
         out_shapes = []
         out_dtypes = []
@@ -1031,7 +988,7 @@ class InvertPermutation(PrimitiveWithInfer):
         values can not be negative.
 
     Inputs:
-        - **input_x** (Union(tuple[int]) - The input tuple is constructed by multiple
+        - **input_x** (Union(tuple[int], list[int]) - The input is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
           Only constant value is allowed.
@@ -1059,6 +1016,12 @@ class InvertPermutation(PrimitiveWithInfer):
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
         if mstype.issubclass_(x['dtype'], mstype.tensor):
             raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
+        for shp in x_shp:
+            if shp != []:
+                x_rank = len(np.array(x_value, np.int64).shape)
+                raise ValueError(f'For \'{self.name}\' the rank of input must be 1, but got {x_rank}.')
+        for i, value in enumerate(x_value):
+            validator.check_value_type("input[%d]" % i, value, [int], self.name)
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
 
@@ -1457,6 +1420,58 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         return out
 
 
+class UnsortedSegmentProd(PrimitiveWithInfer):
+    """
+    Computes the product along segments of a tensor.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+          With float16, float32 or int32 data type.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`. Data type must be int32.
+        - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`,
+          should be greater than 0.
+
+    Outputs:
+        Tensor, Set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
+        >>> segment_ids = Tensor(np.array([0, 1, 0]).astype(np.int32))
+        >>> num_segments = 2
+        >>> unsorted_segment_prod = P.UnsortedSegmentProd()
+        >>> unsorted_segment_prod(input_x, segment_ids, num_segments)
+        [[4., 4., 3.], [4., 5., 6.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init UnsortedSegmentProd"""
+        self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
+
+    def __infer__(self, x, segment_ids, num_segments):
+        x_type = x['dtype']
+        x_shape = x['shape']
+        segment_ids_shape = segment_ids['shape']
+        validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
+        validator.check_value_type("x_shape", x_shape, [list], self.name)
+        valid_type = [mstype.float16, mstype.float32, mstype.int32]
+        validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
+        validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
+        validator.check_integer("rank of segment_ids_shape", len(segment_ids_shape), 1, Rel.EQ, self.name)
+        validator.check(f'first shape of input_x', x_shape[0],
+                        'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
+        num_segments_v = num_segments['value']
+        validator.check_value_type('num_segments', num_segments_v, [int], self.name)
+        validator.check_integer("num_segments", num_segments_v, 0, Rel.GT, self.name)
+        segment_ids_shape_len = len(segment_ids_shape)
+        out_shape = [num_segments_v]
+        out_shape += x_shape[segment_ids_shape_len:]
+        out = {'shape': out_shape,
+               'dtype': mstype.tensor_type(x_type.element_type()),
+               'value': None}
+        return out
+
+
 class Concat(PrimitiveWithInfer):
     r"""
     Concat tensor in specified axis.
@@ -1502,6 +1517,60 @@ class Concat(PrimitiveWithInfer):
         self.add_prim_attr('inputNums', len(x_shp))
         ret_shp = x_shp[0].copy()
         ret_shp[axis] = all_shp
+        out = {'shape': ret_shp,
+               'dtype': x_type[0],
+               'value': None}
+        return out
+
+
+class ParallelConcat(PrimitiveWithInfer):
+    r"""
+    Concat tensor in the first dimension.
+
+    Concat input tensors along with the first dimension.
+
+    Note:
+        The input tensors are all required to have size 1 in the first dimension.
+
+    Inputs:
+        - **values** (tuple, list) - Tuple or list of input tensors. The data type and shape of these
+          tensors must be same.
+
+    Outputs:
+        Tensor, data type same as `values`.
+
+    Examples:
+        >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
+        >>> data2 = Tensor(np.array([[2, 1]]).astype(np.int32))
+        >>> op = P.ParallelConcat()
+        >>> output = op((data1, data2))
+        [[0, 1], [2, 1]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init ParallelConcat"""
+
+    def __infer__(self, values):
+        x_shp = values['shape']
+        x_type = values['dtype']
+
+        validator.check_integer(f'x_shp length', len(x_shp), 1, Rel.GE, self.name)
+
+        args = {f"x_type[{i}]": elem for i, elem in enumerate(x_type)}
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
+
+        first_elem = x_shp[0]
+        for i, elem in enumerate(x_shp[1:]):
+            j = i + 1
+            validator.check_integer(f'x_shp[{j}][0]', elem[0], 1, Rel.EQ, self.name)
+            validator.check(f"x_shp[0] shape", first_elem, f"x_shp[{j}] shape", elem, Rel.EQ, self.name)
+
+        ret_shp = x_shp[0].copy()
+        ret_shp[0] = len(x_shp)
+        self.add_prim_attr('shape', ret_shp)
+        self.add_prim_attr('N', len(x_shp))
+
         out = {'shape': ret_shp,
                'dtype': x_type[0],
                'value': None}
@@ -3176,3 +3245,50 @@ class TransShape(PrimitiveWithInfer):
         return {'shape': shp,
                 'dtype': dtype,
                 'value': None}
+
+
+class EmbeddingLookup(PrimitiveWithInfer):
+    """
+    Returns a slice of input tensor based on the specified indices.
+
+    This Primitive has the similar functionality as GatherV2 operating on `axis = 0`, but has one more inputs:
+    `offset`.
+
+    Inputs:
+        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The Tensor slice, instead of the entire Tensor.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Values can be out of range of `input_params`,
+          and the exceeding part will be filled with 0 in the output.
+        - **offset** (int) - Specifies the offset value of this `input_params` slice. Thus the real indices
+          are equal to `input_indices` minus `offset`.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
+        >>> offset = 4
+        >>> out = P.EmbeddingLookup()(input_params, input_indices, offset)
+        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init index_select"""
+        self.__setattr_flag__ = True
+        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
+                                outputs=['output'])
+
+    def __infer__(self, params, indices, offset):
+        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
+        params_shp = params['shape']
+        if len(params_shp) != 2:
+            raise ValueError("The dimension of 'params' in EmbeddingLookup must be 2, but got %d." % len(params_shp))
+        out_shape = indices['shape'] + params_shp[1:]
+        out = {'shape': out_shape,
+               'dtype': params['dtype'],
+               'value': None}
+        return out

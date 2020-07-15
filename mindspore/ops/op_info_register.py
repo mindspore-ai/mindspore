@@ -215,10 +215,10 @@ class RegOp:
 class AkgRegOp(RegOp):
     """Class for Akg op info register."""
 
-    def __init__(self, op_name):
+    def __init__(self, op_name, processor):
         super(AkgRegOp, self).__init__(op_name)
-        self.imply_type = "AutoDiff"
-        self.processor = "cuda"
+        self.imply_type = "AKG"
+        self.processor = processor
 
     def input(self, index=None, name=None, **kwargs):
         """
@@ -268,6 +268,16 @@ class AkgRegOp(RegOp):
         attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.attr_.append(attr_dict)
         return self
+
+
+class AkgGpuRegOp(AkgRegOp):
+    def __init__(self, op_name):
+        super(AkgGpuRegOp, self).__init__(op_name, "CUDA")
+
+
+class AkgAscendRegOp(AkgRegOp):
+    def __init__(self, op_name):
+        super(AkgAscendRegOp, self).__init__(op_name, "AiCore")
 
 
 class AiCPURegOp(RegOp):

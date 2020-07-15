@@ -227,6 +227,9 @@ message NodeProto {
   
   // other fields for debug
   optional uint64 output_i = 7;
+
+  // The full_name_with_scope of CNode
+  optional string full_name = 8;
 }
 
 // Models

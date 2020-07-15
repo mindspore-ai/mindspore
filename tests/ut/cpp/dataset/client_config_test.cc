@@ -20,11 +20,11 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "gtest/gtest.h"
-#include "dataset/core/global_context.h"
-#include "dataset/util/status.h"
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

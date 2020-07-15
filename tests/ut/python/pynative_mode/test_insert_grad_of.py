@@ -46,6 +46,7 @@ def test_InsertGradientOf_1():
         c = x * y
         return c
 
+    @ms_function
     def f(x, y):
         return C.grad_all(stop_test)(x, y)
 
@@ -80,6 +81,7 @@ def test_InsertGradientOf_2():
     def f(x, y):
         return clip_test(x, y)
 
+    @ms_function
     def fd(x, y):
         return C.grad_all(clip_test)(x, y)
 

@@ -117,8 +117,8 @@ class CropAndResize(PrimitiveWithInfer):
         validator.check("crop_height", crop_size_value[0], "minimum", 0, Rel.GT, self.name)
         validator.check("crop_width", crop_size_value[1], "minimum", 0, Rel.GT, self.name)
         # check crop_size element type
-        validator.check("crop_height dtype", crop_size_dtype[0], mstype.int32, self.name)
-        validator.check("crop_width dtype", crop_size_dtype[1], mstype.int32, self.name)
+        validator.check("crop_height dtype", crop_size_dtype[0], "expected", mstype.int32, Rel.EQ, self.name)
+        validator.check("crop_width dtype", crop_size_dtype[1], "expected", mstype.int32, Rel.EQ, self.name)
 
         num_boxes = boxes_shape[0]
         crop_height = crop_size_value[0]

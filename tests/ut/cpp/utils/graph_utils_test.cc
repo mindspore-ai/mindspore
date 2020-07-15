@@ -24,8 +24,8 @@
 #include "ir/anf.h"
 #include "utils/graph_utils.h"
 
-#include "pipeline/parse/parse_base.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/parse/parse.h"
 
 namespace mindspore {
 

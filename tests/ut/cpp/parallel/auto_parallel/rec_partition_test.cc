@@ -15,9 +15,9 @@
  */
 
 #include "common/common_test.h"
-#include "parallel/auto_parallel/rec_core/rec_tensor.h"
-#include "parallel/auto_parallel/rec_core/rec_graph.h"
-#include "parallel/auto_parallel/rec_core/rec_partition.h"
+#include "frontend/parallel/auto_parallel/rec_core/rec_tensor.h"
+#include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
+#include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
 #include <memory>
 #include "ir/value.h"
 

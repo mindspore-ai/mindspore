@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pre_activate/ascend/ir_fission/batch_norm_grad_infer_fission.h"
+#include "backend/optimizer/ascend/ir_fission/batch_norm_grad_infer_fission.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 

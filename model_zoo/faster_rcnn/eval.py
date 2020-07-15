@@ -40,7 +40,7 @@ parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoi
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
 args_opt = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=args_opt.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
 def FasterRcnn_eval(dataset_path, ckpt_path, ann_file):
     """FasterRcnn evaluation."""

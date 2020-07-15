@@ -52,12 +52,12 @@ def process_one_example_p(tokenizer, text, max_seq_len=128):
     feature = (input_ids, input_mask, segment_ids)
     return feature
 
-def label_generation(text, probs):
+def label_generation(text="", probs=None, label2id_file=""):
     """generate label"""
     data = [text]
     probs = [probs]
     result = []
-    label2id = json.loads(open("./label2id.json").read())
+    label2id = json.loads(open(label2id_file).read())
     id2label = [k for k, v in label2id.items()]
 
     for index, prob in enumerate(probs):

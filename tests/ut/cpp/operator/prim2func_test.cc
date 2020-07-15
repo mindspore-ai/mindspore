@@ -21,7 +21,7 @@
 
 #include "ir/anf.h"
 #include "ir/dtype.h"
-#include "operator/prim_to_function.h"
+#include "frontend/operator/prim_to_function.h"
 
 namespace mindspore {
 namespace prim {
