@@ -44,7 +44,7 @@ if(ENABLE_GPU)
             "backend/kernel_compiler/akg/akg_kernel_attrs_process.cc"
             )
 
-    list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
+    list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
     list(REMOVE_ITEM GPU_SRC_LIST "runtime/device/gpu/blocking_queue.cc" "runtime/device/gpu/gpu_buffer_mgr.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "runtime/device/gpu/mpi/mpi_initializer.cc"
                                   "runtime/device/gpu/distribution/collective_wrapper.cc"
