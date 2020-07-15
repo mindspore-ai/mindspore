@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "debug/anf_ir_utils.h"
 #include "backend/session/gpu_session.h"
 #include "runtime/device/gpu/kernel_info_setter.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
@@ -163,6 +164,10 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+  // Prepare ms context info for dump .pb graph
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
   // Optimize
   Optimize(graph);
   // Select kernel build info
@@ -171,8 +176,16 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   predictmodel::StepConvertGraph(graph);
   // Start gpu kernel runtime
   StartKernelRT();
+  // Dump .pb graph before hardware optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "before_hwopt_" + std::to_string(graph_id));
+  }
   // HardwareOptimize
   HardwareOptimize(graph);
+  // Dump .pb graph after hardware optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "after_hwopt_" + std::to_string(graph_id));
+  }
   // Assign CUDA streams
   AssignStream(graph);
   // Hide NoOp from execution graph
