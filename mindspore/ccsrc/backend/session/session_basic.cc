@@ -482,7 +482,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
         cnode_inputs.emplace_back(new_value_node);
       }
       continue;
-    } else if (anf->isa<Parameter>()) {
+    } else if (anf->isa<Parameter>() && AnfAlgo::GetOutputTensorNum(anf) == 1) {
       auto new_parameter = CreateNewParameterFromParameter(anf, valid_input, graph);
       cnode_inputs.push_back(new_parameter);
       if (GetGraphIdByNode(anf) == kInvalidGraphId) {
