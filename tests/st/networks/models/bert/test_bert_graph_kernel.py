@@ -126,10 +126,6 @@ class ModelCallback(Callback):
         print("epoch: {}, outputs are: {}".format(cb_params.cur_epoch_num, str(cb_params.net_outputs)))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_bert_tdt():
     """test bert tdt"""
     np.random.seed(0)

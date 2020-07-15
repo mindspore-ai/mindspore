@@ -154,10 +154,6 @@ class TimeMonitor(Callback):
         self.epoch_mseconds_list.append(epoch_mseconds)
         self.per_step_mseconds_list.append(epoch_mseconds / self.data_size)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_bert_percision():
     """test bert percision"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
