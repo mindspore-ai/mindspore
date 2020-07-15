@@ -37,22 +37,6 @@ class DebugServices {
 
   ~DebugServices();
 
-  void add_watchpoint(unsigned int id, unsigned int watch_condition,
-                      const std::vector<std::tuple<std::string, bool>> &check_node_list);
-
-  void remove_watchpoint(unsigned int id);
-
-  void check_watchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<char *> *data_ptr,
-                         std::vector<unsigned int> *data_size, std::vector<int> *condition,
-                         std::vector<unsigned int> *wacthpoint_id);
-
-  void read_nodes_tensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
-                          std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
-                          std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape);
-
-  TensorLoader *get_tensor_loader() const;
-
- private:
   typedef struct condition_no_param {
     bool enabled = false;
   } condition_no_param_t;
@@ -84,6 +68,26 @@ class DebugServices {
     std::vector<std::tuple<std::string, bool>> check_node_list;
   } watchpoint_t;
 
+  void AddWatchpoint(unsigned int id, unsigned int watch_condition,
+                     const std::vector<std::tuple<std::string, bool>> &check_node_list);
+
+  void RemoveWatchpoint(unsigned int id);
+
+  void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<char *> *data_ptr,
+                        std::vector<unsigned int> *data_size, std::vector<int> *condition,
+                        std::vector<unsigned int> *wacthpoint_id);
+
+  void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
+                        std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
+                        std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape);
+
+  bool IsWatchPoint(std::string kernel_name, std::unordered_map<unsigned int, watchpoint_t> watchpoint_table);
+
+  TensorLoader *tensor_loader() const;
+
+  std::unordered_map<unsigned int, watchpoint_t> GetWatchpointTable();
+
+ private:
   std::mutex lock_;
 
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;

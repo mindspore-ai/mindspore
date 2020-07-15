@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <mutex>
 #include <tuple>
 #include <string>
 #include <utility>
@@ -28,9 +29,10 @@ class TensorLoader {
  public:
   TensorLoader() : iter_num(-1) {}
 
-  ~TensorLoader() {}
+  ~TensorLoader() { EmptyTensor(); }
 
   bool LoadNewTensor(std::shared_ptr<TensorData> tensor, bool keep_prev) {
+    std::lock_guard<std::mutex> lg(lock_);
     if (keep_prev) {
       // add prev step tensor into current step map with ":prev" suffix
       auto handle = prev_tensor_list_map.extract(tensor->GetName());
@@ -61,11 +63,11 @@ class TensorLoader {
     }
   }
 
-  bool EmptyTensor() {
+  void EmptyTensor() {
+    std::lock_guard<std::mutex> lg(lock_);
     prev_tensor_list_map.clear();
     tensor_list_map.swap(prev_tensor_list_map);
     tensor_list.clear();
-    return true;
   }
 
   void EmptyPrevTensor() { prev_tensor_list_map.clear(); }
@@ -77,6 +79,7 @@ class TensorLoader {
   std::map<std::string, std::shared_ptr<TensorData>> tensor_list_map;
   std::map<std::string, std::shared_ptr<TensorData>> prev_tensor_list_map;
   uint32_t iter_num;
+  std::mutex lock_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_LOAD_H_

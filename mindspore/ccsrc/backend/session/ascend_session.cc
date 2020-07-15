@@ -331,6 +331,11 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(root_graph.get()));
   // build kernel
   BuildKernel(root_graph);
+#ifdef ENABLE_DEBUGGER
+  if (debugger_) {
+    debugger_->PreExecute(root_graph);
+  }
+#endif
   // alloc mem
   MemoryAlloc(root_graph.get());
   // task generate
@@ -407,6 +412,11 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   BuildKernel(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef ENABLE_DEBUGGER
+  if (debugger_) {
+    debugger_->PreExecute(graph);
+  }
+#endif
   if (ms_context->precompile_only()) {
     MS_LOG(INFO) << "Precompile only, stop in build kernel step";
   } else {
@@ -475,12 +485,6 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   LoadInputData(kernel_graph, inputs);
   // convert inputs to model
   predictmodel::StepConvertWeight(inputs);
-#ifdef ENABLE_DEBUGGER
-  // debugger pre-execution processing
-  if (debugger_) {
-    debugger_->PreExecute(kernel_graph);
-  }
-#endif
   {
     py::gil_scoped_release release;
     // run task on device
@@ -791,7 +795,8 @@ void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   DebugServices *debug_services = debugger_->debug_services();
-  TensorLoader *tensor_loader = debug_services->get_tensor_loader();
+  TensorLoader *tensor_loader = debug_services->tensor_loader();
+  // TensorData will be freed up here
   tensor_loader->EmptyTensor();
   uint32_t iter_num = tensor_loader->GetIterNum();
   tensor_loader->set_iter_num(++iter_num);
