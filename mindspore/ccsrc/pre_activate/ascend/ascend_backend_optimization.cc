@@ -23,6 +23,7 @@
 #include "pre_activate/ascend/ir_fission/batch_norm_grad_split.h"
 #include "pre_activate/ascend/ir_fission/batch_norm_bert_fission.h"
 #include "pre_activate/ascend/ir_fission/single_batch_norm_fission.h"
+#include "pre_activate/ascend/ir_fission/tensor_scatter_update_fission.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
 #include "pre_activate/pass/communication_op_fusion.h"
@@ -149,6 +150,7 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
 }
 }  // namespace
@@ -290,6 +292,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

@@ -40,7 +40,7 @@ def get_ddk_version():
             with open(backup_ddk_info_file, "r") as fp:
                 ddk_version = json.load(fp)["VERSION"]
         else:
-            ddk_version = "1.60.T17.B830"
+            ddk_version = "Ascend910"
     return ddk_version
 
 

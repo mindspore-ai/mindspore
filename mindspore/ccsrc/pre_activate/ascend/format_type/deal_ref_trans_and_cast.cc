@@ -94,7 +94,7 @@ AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodeP
   origin_pair = FindRefOriginNode(input_node);
   MS_EXCEPTION_IF_NULL(origin_pair.first);
   if (!origin_pair.first->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "ref op origin node is not parameter";
+    MS_LOG(WARNING) << "ref op origin node is not parameter";
   }
   MS_LOG(DEBUG) << "DealRefTransAndCast the node input index " << input_index << ", find origin op is "
                 << origin_pair.first->DebugString() << ", index is " << origin_pair.second;
