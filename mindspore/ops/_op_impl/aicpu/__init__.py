@@ -34,7 +34,7 @@ from .random_categorical import _random_categorical_aicpu
 from .cast import _cast_aicpu
 from .mirror_pad import _mirror_pad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
-from .normal import _normal_aicpu
+from .standard_normal import _standard_normal_aicpu
 from .gamma import _gamma_aicpu
 from .poisson import _poisson_aicpu
 from .uniform_int import _uniform_int_aicpu
