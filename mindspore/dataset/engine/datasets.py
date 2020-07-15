@@ -38,7 +38,7 @@ from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
-from .iterators import DictIterator, TupleIterator
+from .iterators import DictIterator, TupleIterator, DummyIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
@@ -146,6 +146,12 @@ class Dataset:
         self._num_classes = None
         self._repeat_count = None
         self._sync = False
+        self.ms_role = os.getenv("MS_ROLE")
+
+    def _noop_mode(self):
+        if self.ms_role in ("MS_PSERVER", "MS_SCHED"):
+            return True
+        return False
 
     def __add__(self, datasets):
         return self.concat(datasets)
@@ -1062,6 +1068,8 @@ class Dataset:
             >>>     # convert the returned tuple to a list and print
             >>>     print(list(item))
         """
+        if self._noop_mode():
+            return DummyIterator(self, 'tuple')
         return TupleIterator(self, columns)
 
     def create_dict_iterator(self):
@@ -1085,6 +1093,8 @@ class Dataset:
             >>>     print(item["column1"])
 
         """
+        if self._noop_mode():
+            return DummyIterator(self, 'dict')
         return DictIterator(self)
 
     def __iter__(self):
@@ -2318,6 +2328,8 @@ class TransferDataset(DatasetOp):
 
     def send(self):
         # need to keep iterator alive so the executionTree is not destroyed
+        if self._noop_mode():
+            return
         self.iterator = TupleIterator(self)
 
 

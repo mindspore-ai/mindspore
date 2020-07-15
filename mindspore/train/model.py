@@ -15,6 +15,7 @@
 """Model."""
 from collections.abc import Iterable
 
+import os
 import numpy as np
 
 from mindspore import log as logger
@@ -350,6 +351,9 @@ class Model:
         cb_params.train_dataset = train_dataset
         cb_params.list_callback = self._transform_callbacks(callbacks)
         cb_params.train_dataset_element = None
+        ms_role = os.getenv("MS_ROLE")
+        if ms_role in ("MS_PSERVER", "MS_SCHED"):
+            epoch = 1
 
         # build callback list
         with _CallbackManager(callbacks) as list_callback:
