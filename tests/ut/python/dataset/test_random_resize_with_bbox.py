@@ -48,9 +48,9 @@ def test_random_resize_with_bbox_op_voc_c(plot_vis=False):
     test_op = c_vision.RandomResizeWithBBox(100)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[test_op])
 
     filename = "random_resize_with_bbox_op_01_c_voc_result.npz"
@@ -129,15 +129,15 @@ def test_random_resize_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.RandomResizeWithBBox(500)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
-    dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
-                            output_columns=["image", "annotation"],
-                            columns_order=["image", "annotation"],
+    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+                            output_columns=["image", "bbox"],
+                            columns_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 

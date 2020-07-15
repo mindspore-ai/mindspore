@@ -34,7 +34,10 @@ namespace mindspore {
 namespace dataset {
 const char kColumnImage[] = "image";
 const char kColumnTarget[] = "target";
-const char kColumnAnnotation[] = "annotation";
+const char kColumnBbox[] = "bbox";
+const char kColumnLabel[] = "label";
+const char kColumnDifficult[] = "difficult";
+const char kColumnTruncate[] = "truncate";
 const char kJPEGImagesFolder[] = "/JPEGImages/";
 const char kSegmentationClassFolder[] = "/SegmentationClass/";
 const char kAnnotationsFolder[] = "/Annotations/";
@@ -70,7 +73,13 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
     RETURN_IF_NOT_OK(builder_schema_->AddColumn(
       ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
     RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnAnnotation), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+      ColDescriptor(std::string(kColumnBbox), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnLabel), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnDifficult), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   }
   *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_task_mode_, builder_dir_, builder_labels_to_read_,
                                  builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
@@ -190,14 +199,16 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Ten
     RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
     (*trow) = TensorRow(row_id, {std::move(image), std::move(target)});
   } else if (task_type_ == TaskType::Detection) {
-    std::shared_ptr<Tensor> image, annotation;
+    std::shared_ptr<Tensor> image;
+    TensorRow annotation;
     const std::string kImageFile =
       folder_path_ + std::string(kJPEGImagesFolder) + image_id + std::string(kImageExtension);
     const std::string kAnnotationFile =
       folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
-    RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, data_schema_->column(1), &annotation));
-    (*trow) = TensorRow(row_id, {std::move(image), std::move(annotation)});
+    RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, &annotation));
+    trow->push_back(std::move(image));
+    trow->insert(trow->end(), annotation.begin(), annotation.end());
   }
   return Status::OK();
 }
@@ -271,7 +282,7 @@ Status VOCOp::ParseAnnotationIds() {
     const std::string kAnnotationName =
       folder_path_ + std::string(kAnnotationsFolder) + id + std::string(kAnnotationExtension);
     RETURN_IF_NOT_OK(ParseAnnotationBbox(kAnnotationName));
-    if (label_map_.find(kAnnotationName) != label_map_.end()) {
+    if (annotation_map_.find(kAnnotationName) != annotation_map_.end()) {
       new_image_ids.push_back(id);
     }
   }
@@ -293,7 +304,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   if (!Path(path).Exists()) {
     RETURN_STATUS_UNEXPECTED("File is not found : " + path);
   }
-  Bbox bbox;
+  Annotation annotation;
   XMLDocument doc;
   XMLError e = doc.LoadFile(common::SafeCStr(path));
   if (e != XMLError::XML_SUCCESS) {
@@ -332,13 +343,13 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     }
     if (label_name != "" && (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) && xmin > 0 &&
         ymin > 0 && xmax > xmin && ymax > ymin) {
-      std::vector<float> bbox_list = {xmin, ymin, xmax - xmin, ymax - ymin, truncated, difficult};
-      bbox.emplace_back(std::make_pair(label_name, bbox_list));
+      std::vector<float> bbox_list = {xmin, ymin, xmax - xmin, ymax - ymin, difficult, truncated};
+      annotation.emplace_back(std::make_pair(label_name, bbox_list));
       label_index_[label_name] = 0;
     }
     object = object->NextSiblingElement("object");
   }
-  if (bbox.size() > 0) label_map_[path] = bbox;
+  if (annotation.size() > 0) annotation_map_[path] = annotation;
   return Status::OK();
 }
 
@@ -374,31 +385,46 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
   return Status::OK();
 }
 
-Status VOCOp::ReadAnnotationToTensor(const std::string &path, const ColDescriptor &col,
-                                     std::shared_ptr<Tensor> *tensor) {
-  Bbox bbox_info = label_map_[path];
-  std::vector<float> bbox_row;
-  dsize_t bbox_column_num = 0, bbox_num = 0;
-  for (auto box : bbox_info) {
-    if (label_index_.find(box.first) != label_index_.end()) {
-      std::vector<float> bbox;
-      bbox.insert(bbox.end(), box.second.begin(), box.second.end());
-      if (class_index_.find(box.first) != class_index_.end()) {
-        bbox.push_back(static_cast<float>(class_index_[box.first]));
+// When task is Detection, user can get bbox data with four columns:
+// column ["bbox"] with datatype=float32
+// column ["label"] with datatype=uint32
+// column ["difficult"] with datatype=uint32
+// column ["truncate"] with datatype=uint32
+Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
+  Annotation annotation = annotation_map_[path];
+  std::shared_ptr<Tensor> bbox, label, difficult, truncate;
+  std::vector<float> bbox_data;
+  std::vector<uint32_t> label_data, difficult_data, truncate_data;
+  dsize_t bbox_num = 0;
+  for (auto item : annotation) {
+    if (label_index_.find(item.first) != label_index_.end()) {
+      if (class_index_.find(item.first) != class_index_.end()) {
+        label_data.push_back(static_cast<uint32_t>(class_index_[item.first]));
       } else {
-        bbox.push_back(static_cast<float>(label_index_[box.first]));
+        label_data.push_back(static_cast<uint32_t>(label_index_[item.first]));
       }
-      bbox_row.insert(bbox_row.end(), bbox.begin(), bbox.end());
-      if (bbox_column_num == 0) {
-        bbox_column_num = static_cast<dsize_t>(bbox.size());
-      }
+      CHECK_FAIL_RETURN_UNEXPECTED(item.second.size() == 6, "annotation only support 6 parameters.");
+
+      std::vector<float> tmp_bbox = {(item.second)[0], (item.second)[1], (item.second)[2], (item.second)[3]};
+      bbox_data.insert(bbox_data.end(), tmp_bbox.begin(), tmp_bbox.end());
+      difficult_data.push_back(static_cast<uint32_t>((item.second)[4]));
+      truncate_data.push_back(static_cast<uint32_t>((item.second)[5]));
       bbox_num++;
     }
   }
-
-  std::vector<dsize_t> bbox_dim = {bbox_num, bbox_column_num};
-  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, col.tensorImpl(), TensorShape(bbox_dim), col.type(),
-                                        reinterpret_cast<unsigned char *>(&bbox_row[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&bbox, data_schema_->column(1).tensorImpl(), TensorShape({bbox_num, 4}),
+                                        data_schema_->column(1).type(),
+                                        reinterpret_cast<unsigned char *>(&bbox_data[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(2).tensorImpl(), TensorShape({bbox_num, 1}),
+                                        data_schema_->column(2).type(),
+                                        reinterpret_cast<unsigned char *>(&label_data[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&difficult, data_schema_->column(3).tensorImpl(), TensorShape({bbox_num, 1}),
+                                        data_schema_->column(3).type(),
+                                        reinterpret_cast<unsigned char *>(&difficult_data[0])));
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&truncate, data_schema_->column(4).tensorImpl(), TensorShape({bbox_num, 1}),
+                                        data_schema_->column(4).type(),
+                                        reinterpret_cast<unsigned char *>(&truncate_data[0])));
+  (*row) = TensorRow({std::move(bbox), std::move(label), std::move(difficult), std::move(truncate)});
   return Status::OK();
 }
 

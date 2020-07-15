@@ -17,6 +17,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 
 DATA_DIR = "../data/dataset/testCOCO/train/"
+DATA_DIR_2 = "../data/dataset/testCOCO/train"
 ANNOTATION_FILE = "../data/dataset/testCOCO/annotations/train.json"
 KEYPOINT_FILE = "../data/dataset/testCOCO/annotations/key_point.json"
 PANOPTIC_FILE = "../data/dataset/testCOCO/annotations/panoptic.json"
@@ -202,6 +203,17 @@ def test_coco_case_2():
         num_iter += 1
     assert num_iter == 24
 
+def test_coco_case_3():
+    data1 = ds.CocoDataset(DATA_DIR_2, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
+    resize_op = vision.Resize((224, 224))
+
+    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.repeat(4)
+    num_iter = 0
+    for _ in data1.__iter__():
+        num_iter += 1
+    assert num_iter == 24
+
 def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset("path_not_exist/", annotation_file=ANNOTATION_FILE, task="Detection")
@@ -271,4 +283,5 @@ if __name__ == '__main__':
     test_coco_case_0()
     test_coco_case_1()
     test_coco_case_2()
+    test_coco_case_3()
     test_coco_case_exception()
