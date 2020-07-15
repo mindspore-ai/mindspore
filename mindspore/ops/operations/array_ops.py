@@ -1018,7 +1018,8 @@ class InvertPermutation(PrimitiveWithInfer):
             raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
         for shp in x_shp:
             if shp != []:
-                raise ValueError(f'For \'{self.name}\' the rank of input must be 1.')
+                x_rank = len(np.array(x_value, np.int64).shape)
+                raise ValueError(f'For \'{self.name}\' the rank of input must be 1, but got {x_rank}.')
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
         z = [x_value[i] for i in range(len(x_value))]
