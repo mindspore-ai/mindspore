@@ -19,8 +19,8 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.tensor import Tensor
-from mindspore.ops import composite as C
+from mindspore.common.tensor import Tensor, IndexedSlices
+from mindspore.ops import composite as C, operations as P
 from mindspore.ops.operations.comm_ops import AllReduce, _MirrorOperator
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore._checkparam import Validator as validator
@@ -65,7 +65,7 @@ def get_bprop_gather_v2(self):
     """Generate bprop for GatherV2"""
 
     def bprop(x, indices, axis, out, dout):
-        return (indices, dout, x), axis, out
+        return IndexedSlices(indices, dout, x), axis, out
 
     return bprop
 
@@ -78,7 +78,7 @@ def test_bprop_with_sparse_feature_allreduce():
             if shape is None:
                 shape = [8, 8]
             self.all_reduce = AllReduce()
-            self.gatherv2 = VirtualGatherV2()
+            self.gatherv2 = P.GatherV2()
             self.index = Tensor(np.ones(shape), dtype=ms.int32)
             self.axis = axis
 
@@ -102,7 +102,7 @@ def test_bprop_with_sparse_feature_mirror():
             if shape is None:
                 shape = [8, 8]
             self.mirror = _MirrorOperator(group=HCCL_WORLD_COMM_GROUP)
-            self.gatherv2 = VirtualGatherV2()
+            self.gatherv2 = P.GatherV2()
             self.index = Tensor(np.ones(shape), dtype=ms.int32)
             self.axis = axis
 
