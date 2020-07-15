@@ -44,7 +44,6 @@ class MetaFuncGraph : public FuncGraphBase {
   ~MetaFuncGraph() override = default;
 
   MS_DECLARE_PARENT(MetaFuncGraph, FuncGraphBase);
-  abstract::AbstractBasePtr MakeAbstractClosure(const AnfNodePtr &anf_node);
   // Return normalized versions of the arguments.
   // By default, this returns args unchanged.
   virtual abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_spec_list) const {

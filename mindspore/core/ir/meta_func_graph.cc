@@ -17,22 +17,9 @@
  */
 
 #include "ir/meta_func_graph.h"
-#include "pipeline/jit/static_analysis/static_analysis.h"
-#include "pipeline/jit/static_analysis/abstract_function.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
-abstract::AbstractBasePtr MetaFuncGraph::MakeAbstractClosure(const AnfNodePtr &anf_node) {
-  abstract::MetaFuncGraphAbstractClosurePtr meta_func_graph_fn;
-  if (anf_node == nullptr) {
-    meta_func_graph_fn = std::make_shared<abstract::MetaFuncGraphAbstractClosure>(shared_from_base<MetaFuncGraph>());
-  } else {
-    meta_func_graph_fn =
-      std::make_shared<abstract::MetaFuncGraphAbstractClosure>(shared_from_base<MetaFuncGraph>(), anf_node->scope());
-  }
-  return meta_func_graph_fn;
-}
-
 FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list) {
   TypePtrList types;
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),

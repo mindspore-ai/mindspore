@@ -52,8 +52,8 @@ else()
 endif()
 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "../../../mindspore/ccsrc/base/*.cc"
-        "../../../mindspore/ccsrc/abstract/*.cc"
+        "../../../mindspore/core/base/*.cc"
+        "../../../mindspore/core/abstract/*.cc"
         "../../../mindspore/core/ir/*.cc"
         "../../../mindspore/ccsrc/common/*.cc"
         "../../../mindspore/ccsrc/utils/*.cc"
