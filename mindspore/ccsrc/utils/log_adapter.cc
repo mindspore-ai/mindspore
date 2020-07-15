@@ -176,7 +176,7 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "PYNATIVE",   // SM_PYNATIVE
     "SESSION",    // SM_SESSION
     "UTILS",      // SM_UTILS
-    "VM"          // SM_VM
+    "VM",         // SM_VM
     "ABSTRACT"    // SM_ABSTRACT
   };
 
