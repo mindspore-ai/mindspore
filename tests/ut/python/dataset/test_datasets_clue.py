@@ -356,9 +356,13 @@ def test_clue_to_device():
 
 if __name__ == "__main__":
     test_clue()
+    test_clue_num_shards()
+    test_clue_num_samples()
+    test_textline_dataset_get_datasetsize()
     test_clue_afqmc()
     test_clue_cmnli()
     test_clue_csl()
     test_clue_iflytek()
     test_clue_tnews()
     test_clue_wsc()
+    test_clue_to_device()

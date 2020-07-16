@@ -26,7 +26,7 @@ def generator_1d():
         yield (np.array([i]),)
 
 
-def test_case_0():
+def test_generator_0():
     """
     Test 1D Generator
     """
@@ -48,7 +48,7 @@ def generator_md():
         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
 
 
-def test_case_1():
+def test_generator_1():
     """
     Test MD Generator
     """
@@ -70,7 +70,7 @@ def generator_mc(maxid=64):
         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
 
 
-def test_case_2():
+def test_generator_2():
     """
     Test multi column generator
     """
@@ -88,7 +88,7 @@ def test_case_2():
         i = i + 1
 
 
-def test_case_3():
+def test_generator_3():
     """
     Test 1D Generator + repeat(4)
     """
@@ -108,7 +108,7 @@ def test_case_3():
             i = 0
 
 
-def test_case_4():
+def test_generator_4():
     """
     Test fixed size 1D Generator + batch
     """
@@ -146,7 +146,7 @@ def type_tester(t):
         i = i + 4
 
 
-def test_case_5():
+def test_generator_5():
     """
     Test 1D Generator on different data type
     """
@@ -173,7 +173,7 @@ def type_tester_with_type_check(t, c):
         i = i + 4
 
 
-def test_case_6():
+def test_generator_6():
     """
     Test 1D Generator on different data type with type check
     """
@@ -208,7 +208,7 @@ def type_tester_with_type_check_2c(t, c):
         i = i + 4
 
 
-def test_case_7():
+def test_generator_7():
     """
     Test 2 column Generator on different data type with type check
     """
@@ -223,7 +223,7 @@ def test_case_7():
         type_tester_with_type_check_2c(np_types[i], [None, de_types[i]])
 
 
-def test_case_8():
+def test_generator_8():
     """
     Test multi column generator with few mapops
     """
@@ -249,7 +249,7 @@ def test_case_8():
         i = i + 1
 
 
-def test_case_9():
+def test_generator_9():
     """
     Test map column order when len(input_columns) == len(output_columns).
     """
@@ -280,7 +280,7 @@ def test_case_9():
         i = i + 1
 
 
-def test_case_10():
+def test_generator_10():
     """
     Test map column order when len(input_columns) != len(output_columns).
     """
@@ -303,7 +303,7 @@ def test_case_10():
         i = i + 1
 
 
-def test_case_11():
+def test_generator_11():
     """
     Test map column order when len(input_columns) != len(output_columns).
     """
@@ -327,7 +327,7 @@ def test_case_11():
         i = i + 1
 
 
-def test_case_12():
+def test_generator_12():
     """
     Test map column order when input_columns and output_columns are None.
     """
@@ -361,7 +361,7 @@ def test_case_12():
         i = i + 1
 
 
-def test_case_13():
+def test_generator_13():
     """
     Test map column order when input_columns is None.
     """
@@ -391,7 +391,7 @@ def test_case_13():
         i = i + 1
 
 
-def test_case_14():
+def test_generator_14():
     """
     Test 1D Generator MP + CPP sampler
     """
@@ -408,7 +408,7 @@ def test_case_14():
             i = 0
 
 
-def test_case_15():
+def test_generator_15():
     """
     Test 1D Generator MP + Python sampler
     """
@@ -426,7 +426,7 @@ def test_case_15():
             i = 0
 
 
-def test_case_16():
+def test_generator_16():
     """
     Test multi column generator Mp + CPP sampler
     """
@@ -445,7 +445,7 @@ def test_case_16():
         i = i + 1
 
 
-def test_case_17():
+def test_generator_17():
     """
     Test multi column generator Mp + Python sampler
     """
@@ -465,7 +465,7 @@ def test_case_17():
         i = i + 1
 
 
-def test_case_error_1():
+def test_generator_error_1():
     def generator_np():
         for i in range(64):
             yield (np.array([{i}]),)
@@ -477,7 +477,7 @@ def test_case_error_1():
     assert "Invalid data type" in str(info.value)
 
 
-def test_case_error_2():
+def test_generator_error_2():
     def generator_np():
         for i in range(64):
             yield ({i},)
@@ -489,7 +489,7 @@ def test_case_error_2():
     assert "Generator should return a tuple of numpy arrays" in str(info.value)
 
 
-def test_case_error_3():
+def test_generator_error_3():
     with pytest.raises(ValueError) as info:
         # apply dataset operations
         data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
@@ -501,7 +501,7 @@ def test_case_error_3():
     assert "When (len(input_columns) != len(output_columns)), columns_order must be specified." in str(info.value)
 
 
-def test_case_error_4():
+def test_generator_error_4():
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
         data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
@@ -513,7 +513,7 @@ def test_case_error_4():
     assert "Unexpected error. Result of a tensorOp doesn't match output column names" in str(info.value)
 
 
-def test_sequential_sampler():
+def test_generator_sequential_sampler():
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler())
     i = 0
@@ -523,14 +523,14 @@ def test_sequential_sampler():
         i = i + 1
 
 
-def test_random_sampler():
+def test_generator_random_sampler():
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], shuffle=True)
     for _ in ds1.create_dict_iterator():  # each data is a dictionary
         pass
 
 
-def test_distributed_sampler():
+def test_generator_distributed_sampler():
     source = [(np.array([x]),) for x in range(64)]
     for sid in range(8):
         ds1 = ds.GeneratorDataset(source, ["data"], shuffle=False, num_shards=8, shard_id=sid)
@@ -541,7 +541,7 @@ def test_distributed_sampler():
             i = i + 8
 
 
-def test_num_samples():
+def test_generator_num_samples():
     source = [(np.array([x]),) for x in range(64)]
     num_samples = 32
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(num_samples=num_samples))
@@ -564,7 +564,7 @@ def test_num_samples():
     assert count == num_samples
 
 
-def test_num_samples_underflow():
+def test_generator_num_samples_underflow():
     source = [(np.array([x]),) for x in range(64)]
     num_samples = 256
     ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(64)], num_samples=num_samples)
@@ -600,7 +600,7 @@ def type_tester_with_type_check_2c_schema(t, c):
         i = i + 4
 
 
-def test_schema():
+def test_generator_schema():
     """
     Test 2 column Generator on different data type with type check with schema input
     """
@@ -615,9 +615,9 @@ def test_schema():
         type_tester_with_type_check_2c_schema(np_types[i], [de_types[i], de_types[i]])
 
 
-def manual_test_keyborad_interrupt():
+def manual_test_generator_keyboard_interrupt():
     """
-    Test keyborad_interrupt
+    Test keyboard_interrupt
     """
     logger.info("Test 1D Generator MP : 0 - 63")
 
@@ -635,31 +635,31 @@ def manual_test_keyborad_interrupt():
 
 
 if __name__ == "__main__":
-    test_case_0()
-    test_case_1()
-    test_case_2()
-    test_case_3()
-    test_case_4()
-    test_case_5()
-    test_case_6()
-    test_case_7()
-    test_case_8()
-    test_case_9()
-    test_case_10()
-    test_case_11()
-    test_case_12()
-    test_case_13()
-    test_case_14()
-    test_case_15()
-    test_case_16()
-    test_case_17()
-    test_case_error_1()
-    test_case_error_2()
-    test_case_error_3()
-    test_case_error_4()
-    test_sequential_sampler()
-    test_distributed_sampler()
-    test_random_sampler()
-    test_num_samples()
-    test_num_samples_underflow()
-    test_schema()
+    test_generator_0()
+    test_generator_1()
+    test_generator_2()
+    test_generator_3()
+    test_generator_4()
+    test_generator_5()
+    test_generator_6()
+    test_generator_7()
+    test_generator_8()
+    test_generator_9()
+    test_generator_10()
+    test_generator_11()
+    test_generator_12()
+    test_generator_13()
+    test_generator_14()
+    test_generator_15()
+    test_generator_16()
+    test_generator_17()
+    test_generator_error_1()
+    test_generator_error_2()
+    test_generator_error_3()
+    test_generator_error_4()
+    test_generator_sequential_sampler()
+    test_generator_distributed_sampler()
+    test_generator_random_sampler()
+    test_generator_num_samples()
+    test_generator_num_samples_underflow()
+    test_generator_schema()
