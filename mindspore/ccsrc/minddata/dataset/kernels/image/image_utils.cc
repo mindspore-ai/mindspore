@@ -956,5 +956,24 @@ Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size
   return Status::OK();
 }
 
+Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, int *img_height) {
+  struct jpeg_decompress_struct cinfo {};
+  struct JpegErrorManagerCustom jerr {};
+  cinfo.err = jpeg_std_error(&jerr.pub);
+  jerr.pub.error_exit = JpegErrorExitCustom;
+  try {
+    jpeg_create_decompress(&cinfo);
+    JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
+    (void)jpeg_read_header(&cinfo, TRUE);
+    jpeg_calc_output_dimensions(&cinfo);
+  } catch (std::runtime_error &e) {
+    jpeg_destroy_decompress(&cinfo);
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
+  *img_height = cinfo.output_height;
+  *img_width = cinfo.output_width;
+  jpeg_destroy_decompress(&cinfo);
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

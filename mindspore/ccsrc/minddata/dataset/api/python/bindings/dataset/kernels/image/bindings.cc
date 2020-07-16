@@ -50,6 +50,8 @@
 #include "minddata/dataset/kernels/image/resize_bilinear_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/image/resize_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_random_crop_resize_jpeg_op.h"
+#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 
 namespace mindspore {
@@ -362,6 +364,24 @@ PYBIND_REGISTER(RandomSelectSubpolicyOp, 1, ([](const py::module *m) {
                       return std::make_shared<RandomSelectSubpolicyOp>(cpp_policy);
                     }));
                 }));
+PYBIND_REGISTER(SoftDvppDecodeResizeJpegOp, 1, ([](const py::module *m) {
+                  (void)py::class_<SoftDvppDecodeResizeJpegOp, TensorOp, std::shared_ptr<SoftDvppDecodeResizeJpegOp>>(
+                    *m, "SoftDvppDecodeResizeJpegOp", "TensorOp to use soft dvpp decode and resize jpeg image.")
+                    .def(py::init<int32_t, int32_t>(), py::arg("targetHeight"), py::arg("targetWidth"));
+                }));
+PYBIND_REGISTER(
+  SoftDvppDecodeRandomCropResizeJpegOp, 1, ([](const py::module *m) {
+    (void)
+      py::class_<SoftDvppDecodeRandomCropResizeJpegOp, TensorOp, std::shared_ptr<SoftDvppDecodeRandomCropResizeJpegOp>>(
+        *m, "SoftDvppDecodeRandomCropResizeJpegOp",
+        "TensorOp to use soft dvpp decode, random crop and resize jepg image.")
+        .def(py::init<int32_t, int32_t, float, float, float, float, int32_t>(), py::arg("targetHeight"),
+             py::arg("targetWidth"), py::arg("scaleLb") = RandomCropDecodeResizeOp::kDefScaleLb,
+             py::arg("scaleUb") = RandomCropDecodeResizeOp::kDefScaleUb,
+             py::arg("aspectLb") = RandomCropDecodeResizeOp::kDefAspectLb,
+             py::arg("aspectUb") = RandomCropDecodeResizeOp::kDefAspectUb,
+             py::arg("maxIter") = RandomCropDecodeResizeOp::kDefMaxIter);
+  }));
 
 }  // namespace dataset
 }  // namespace mindspore

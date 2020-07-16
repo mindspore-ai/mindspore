@@ -62,6 +62,7 @@ add_subdirectory(text)
 add_dependencies(utils core)
 add_dependencies(kernels-image core)
 add_dependencies(kernels-data core)
+add_dependencies(kernels-soft-dvpp-image core soft-dvpp-utils)
 add_dependencies(kernels core)
 add_dependencies(engine-datasetops-source core)
 add_dependencies(engine-datasetops-source-sampler core)
@@ -88,6 +89,8 @@ set(submodules
     $<TARGET_OBJECTS:kernels-image>
     $<TARGET_OBJECTS:kernels-data>
     $<TARGET_OBJECTS:cpp-API>
+    $<TARGET_OBJECTS:kernels-soft-dvpp-image>
+    $<TARGET_OBJECTS:soft-dvpp-utils>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
     $<TARGET_OBJECTS:engine-datasetops-mapop>
@@ -141,7 +144,7 @@ else()
         target_link_libraries(_c_dataengine PRIVATE -ldl mindspore::protobuf ${SECUREC_LIBRARY})
     endif()
 endif()
-target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
+target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core mindspore::opencv_imgcodecs
         mindspore::opencv_imgproc mindspore::tinyxml2 mindspore::sentencepiece mindspore::sentencepiece_train ${ICU_LIB})
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue

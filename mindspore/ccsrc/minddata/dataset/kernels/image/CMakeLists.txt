@@ -1,5 +1,6 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
+add_subdirectory(soft_dvpp)
 add_library(kernels-image OBJECT
     affine_op.cc
     auto_contrast_op.cc
@@ -38,3 +39,4 @@ add_library(kernels-image OBJECT
     resize_with_bbox_op.cc
     random_resize_with_bbox_op.cc
     )
+add_dependencies(kernels-image kernels-soft-dvpp-image)

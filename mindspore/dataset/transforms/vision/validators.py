@@ -175,30 +175,35 @@ def check_resize(method):
     return new_method
 
 
+def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts):
+    """Wrapper method to check the parameters of RandomCropDecodeResize and SoftDvppDecodeRandomCropResizeJpeg."""
+
+    check_crop_size(size)
+    if scale is not None:
+        type_check(scale, (tuple,), "scale")
+        type_check_list(scale, (float, int), "scale")
+        check_range(scale, [0, FLOAT_MAX_INTEGER])
+        if scale[0] > scale[1]:
+            raise ValueError("scale should be in (min,max) format. Got (max,min).")
+    if ratio is not None:
+        type_check(ratio, (tuple,), "ratio")
+        type_check_list(ratio, (float, int), "ratio")
+        check_range(ratio, [0, FLOAT_MAX_INTEGER])
+        if ratio[0] > ratio[1]:
+            raise ValueError("ratio should be in (min,max) format. Got (max,min).")
+    if max_attempts is not None:
+        check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
+
+
 def check_random_resize_crop(method):
     """A wrapper that wraps a parameter checker to the original function(random resize crop operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [size, scale, ratio, interpolation, max_attempts], _ = parse_user_args(method, *args, **kwargs)
-        check_crop_size(size)
-
-        if scale is not None:
-            type_check(scale, (tuple,), "scale")
-            type_check_list(scale, (float, int), "scale")
-            check_range(scale, [0, FLOAT_MAX_INTEGER])
-            if scale[0] > scale[1]:
-                raise ValueError("scale should be in (min,max) format. Got (max,min).")
-        if ratio is not None:
-            type_check(ratio, (tuple,), "ratio")
-            type_check_list(ratio, (float, int), "ratio")
-            check_range(ratio, [0, FLOAT_MAX_INTEGER])
-            if ratio[0] > ratio[1]:
-                raise ValueError("ratio should be in (min,max) format. Got (max,min).")
         if interpolation is not None:
             type_check(interpolation, (Inter,), "interpolation")
-        if max_attempts is not None:
-            check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
+        check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
 
         return method(self, *args, **kwargs)
 
@@ -657,4 +662,16 @@ def check_random_select_subpolicy_op(method):
 
         return method(self, *args, **kwargs)
 
+    return new_method
+
+
+def check_soft_dvpp_decode_random_crop_resize_jpeg(method):
+    """Wrapper method to check the parameters of SoftDvppDecodeRandomCropResizeJpeg."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [size, scale, ratio, max_attempts], _ = parse_user_args(method, *args, **kwargs)
+        check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
+
+        return method(self, *args, **kwargs)
     return new_method
