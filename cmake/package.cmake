@@ -213,7 +213,6 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/parallel
         ${CMAKE_SOURCE_DIR}/mindspore/mindrecord
         ${CMAKE_SOURCE_DIR}/mindspore/train
-        ${CMAKE_SOURCE_DIR}/mindspore/model_zoo
         ${CMAKE_SOURCE_DIR}/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/ops
         ${CMAKE_SOURCE_DIR}/mindspore/communication
@@ -258,6 +257,20 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
     install(
         DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/dataset
         DESTINATION ${INSTALL_PY_DIR}
+        COMPONENT mindspore
+    )
+endif ()
+
+if (ENABLE_SERVING)
+    install(
+        TARGETS ms_serving
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+
+    install(
+        TARGETS inference
+        DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
 endif ()

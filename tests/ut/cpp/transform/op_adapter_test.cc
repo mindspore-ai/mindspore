@@ -19,9 +19,9 @@
 
 #include "common/common_test.h"
 
-#include "transform/op_declare.h"
+#include "transform/graph_ir/op_declare.h"
 
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "./common.h"
 
 using std::cout;

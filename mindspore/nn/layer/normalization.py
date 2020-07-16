@@ -84,13 +84,14 @@ class _BatchNorm(Cell):
         self.dtype = P.DType()
         self.reshape = P.Reshape()
         self.is_ascend = context.get_context("device_target") == "Ascend"
+        self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
         self.momentum = 1.0 - momentum
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
         else:
             self.is_ge_backend = False
 
-        if self.is_ge_backend or self.is_ascend:
+        if self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
             self.bn_train = P.BatchNorm(is_training=True,
                                         epsilon=self.eps)
         else:
@@ -152,7 +153,7 @@ class _BatchNorm(Cell):
             if self.is_ge_backend and self.is_global:
                 axes, re_shape = _shape_infer(F.shape(x), self.num_features)
                 y = self._global_sync(x, axes, re_shape)
-            elif self.is_ge_backend or self.is_ascend:
+            elif self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
                 if self.is_global:
                     axes, re_shape = _shape_infer(F.shape(x), self.num_features)
                     y = self._global_sync(x, axes, re_shape)
@@ -587,7 +588,7 @@ class GroupNorm(Cell):
         """calculate groupnorm output"""
         batch, channel, height, width = self.shape(x)
         _channel_check(channel, self.num_channels)
-        x = self.reshape(x, (batch, self.num_groups, channel*height*width/self.num_groups))
+        x = self.reshape(x, (batch, self.num_groups, -1))
         mean = self.reduce_mean(x, 2)
         var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups - 1)
         std = self.sqrt(var + self.eps)

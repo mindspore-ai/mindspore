@@ -14,6 +14,7 @@
 # ============================================================================
 """Dataset help for minddata dataset"""
 import math
+import os
 
 from mindspore._checkparam import check_bool
 from .. import context
@@ -60,7 +61,11 @@ class DatasetHelper:
                 if context.get_context("device_target") == "Ascend":
                     iterclass = _DatasetIterMSLoopSink
                 elif context.get_context("device_target") == "GPU":
-                    iterclass = _DatasetIterMS
+                    ms_role = os.getenv("MS_ROLE")
+                    if ms_role in ("MS_PSERVER", "MS_SCHED"):
+                        iterclass = _DatasetIterPSLite
+                    else:
+                        iterclass = _DatasetIterMS
                 elif context.get_context("device_target") == "CPU":
                     raise RuntimeError("Currently dataset sink mode is not supported when the device target is CPU.")
         else:
@@ -131,6 +136,9 @@ class _DatasetIterMSLoopSink(_DatasetIter):
     def __init__(self, dataset):
         super(_DatasetIterMSLoopSink, self).__init__(dataset)
         self.loop_count = self.get_loop_count(dataset)
+        ms_role = os.getenv("MS_ROLE")
+        if ms_role in ("MS_PSERVER", "MS_SCHED"):
+            self.loop_count = 1
         # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, and not using full_batch,
         # use a complete tensor to compile, and slice tensor to run. The batch dimension of tensors for
         # compile is device_number times the batch dimension of tensors for run. Now only support LoopSink.
@@ -152,6 +160,18 @@ class _DatasetIterMS(_DatasetIter):
         self.loop_size = 1
         queue_name = dataset.__ME_INITED__
         self.op = GetNextSingleOp(self.dataset_types, self.dataset_shapes, queue_name)
+
+
+class _DatasetIterPSLite(_DatasetIter):
+    """Iter for context (device_target=GPU) on MS_PSERVER or MS_SCHED"""
+    def __init__(self, dataset):
+        super(_DatasetIterPSLite, self).__init__(dataset)
+        self.loop_count = 1
+        self.loop_size = 1
+        self.op = None
+        def op():
+            return _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num=1)
+        self.op = op
 
 
 class _DatasetIterGE(_DatasetIter):

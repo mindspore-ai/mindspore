@@ -24,9 +24,9 @@
 
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
-#include "device/kernel_info.h"
+#include "runtime/device/kernel_info.h"
 #include "utils/graph_utils.h"
-#include "session/anf_runtime_algorithm.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {
@@ -128,7 +128,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     return;
   }
   auto kernel_info = node->kernel_info();
-  if (kernel_info == nullptr || kernel_info->select_kernel_build_info() == nullptr) {
+  if (kernel_info == nullptr || !kernel_info->has_build_info()) {
     return;
   }
 
@@ -179,7 +179,7 @@ void DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, OrderedMa
     // print parameters' type and shape
     PrintNodeOutputType(buffer, p);
     auto kernel_info = p->kernel_info();
-    if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
+    if (kernel_info != nullptr && kernel_info->has_build_info()) {
       buffer << "  :  ";
       auto type = AnfAlgo::GetOutputDeviceDataType(p, 0);
       auto format = AnfAlgo::GetOutputFormat(p, 0);

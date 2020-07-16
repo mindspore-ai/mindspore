@@ -15,9 +15,9 @@
  */
 #include <list>
 #include "common/common_test.h"
-#include "parallel/device.h"
-#include "parallel/device_manager.h"
-#include "parallel/group_manager.h"
+#include "frontend/parallel/device.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/group_manager.h"
 
 namespace mindspore {
 namespace parallel {

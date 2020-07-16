@@ -15,7 +15,7 @@
  */
 #include "vm/vm.h"
 #include "common/common_test.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "vm/backend.h"
 
 namespace mindspore {

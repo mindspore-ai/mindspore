@@ -38,6 +38,14 @@ static inline std::string GetEnv(const std::string &envvar) {
 
   return std::string(value);
 }
+
+static inline int SetEnv(const char *envname, const char *envvar, int overwrite = 1) {
+#if defined(_WIN32)
+  return 0;
+#else
+  return ::setenv(envname, envvar, overwrite);
+#endif
+}
 }  // namespace common
 }  // namespace mindspore
 

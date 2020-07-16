@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore import context
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Proposal(nn.Cell):

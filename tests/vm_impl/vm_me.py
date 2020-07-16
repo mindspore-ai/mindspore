@@ -441,7 +441,7 @@ def max_pool_grad(x, dout, pool_h, pool_w, stride):
     """Grad of max pooling."""
     dout = dout.transpose(0, 2, 3, 1)
     pool_size = pool_h * pool_w
-    dmax = np.zeros((dout.size, pool_size))
+    dmax = np.zeros((dout.size, pool_size), dout.dtype)
     col = im2col(x, pool_h, pool_w, stride)
     col = col.reshape(-1, pool_h * pool_w)
     arg_max = np.argmax(col, axis=1)
@@ -456,7 +456,7 @@ def max_pool_grad_with_argmax(x, dout, arg_max, pool_h, pool_w, stride):
     """Grad of max pooling with argmax."""
     dout = dout.transpose(0, 2, 3, 1)
     pool_size = pool_h * pool_w
-    dmax = np.zeros((dout.size, pool_size))
+    dmax = np.zeros((dout.size, pool_size), dout.dtype)
     dmax[np.arange(arg_max.size), arg_max.flatten()] = dout.flatten()
     dmax = dmax.reshape(dout.shape + (pool_size,))
     dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)

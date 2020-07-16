@@ -16,16 +16,16 @@
 #include <iostream>
 #include <memory>
 
-#include "pipeline/static_analysis/prim.h"
+#include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/static_analysis/helper.h"
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
 #include "ir/tensor.h"
-#include "operator/ops.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/data_converter.h"
-#include "pipeline/resource.h"
+#include "frontend/operator/ops.h"
+#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/resource.h"
 #include "debug/draw.h"
 #include "utils/log_adapter.h"
 

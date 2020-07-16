@@ -15,7 +15,6 @@
 """launch train script"""
 import os
 import sys
-import json
 import subprocess
 import shutil
 from argparse import ArgumentParser
@@ -42,8 +41,6 @@ def parse_args():
                              "each process can be bound to a single D.")
     parser.add_argument("--visible_devices", type=str, default="0,1,2,3,4,5,6,7",
                         help="will use the visible devices sequentially")
-    parser.add_argument("--server_id", type=str, default="",
-                        help="server ip")
     parser.add_argument("--training_script", type=str,
                         help="The full path to the single D training "
                              "program/script to be launched in parallel, "
@@ -63,66 +60,6 @@ def main():
     assert os.path.isfile(args.training_script)
     assert len(visible_devices) >= args.nproc_per_node
     print('visible_devices:{}'.format(visible_devices))
-    if not args.server_id:
-        print('pleaser input server ip!!!')
-        exit(0)
-    print('server_id:{}'.format(args.server_id))
-
-    # construct hccn_table
-    hccn_configs = open('/etc/hccn.conf', 'r').readlines()
-    device_ips = {}
-    for hccn_item in hccn_configs:
-        hccn_item = hccn_item.strip()
-        if hccn_item.startswith('address_'):
-            device_id, device_ip = hccn_item.split('=')
-            device_id = device_id.split('_')[1]
-            device_ips[device_id] = device_ip
-            print('device_id:{}, device_ip:{}'.format(device_id, device_ip))
-    hccn_table = {}
-    hccn_table['board_id'] = '0x0000'
-    hccn_table['chip_info'] = '910'
-    hccn_table['deploy_mode'] = 'lab'
-    hccn_table['group_count'] = '1'
-    hccn_table['group_list'] = []
-    instance_list = []
-    usable_dev = ''
-    for instance_id in range(args.nproc_per_node):
-        instance = {}
-        instance['devices'] = []
-        device_id = visible_devices[instance_id]
-        device_ip = device_ips[device_id]
-        usable_dev += str(device_id)
-        instance['devices'].append({
-            'device_id': device_id,
-            'device_ip': device_ip,
-        })
-        instance['rank_id'] = str(instance_id)
-        instance['server_id'] = args.server_id
-        instance_list.append(instance)
-    hccn_table['group_list'].append({
-        'device_num': str(args.nproc_per_node),
-        'server_num': '1',
-        'group_name': '',
-        'instance_count': str(args.nproc_per_node),
-        'instance_list': instance_list,
-    })
-    hccn_table['para_plane_nic_location'] = 'device'
-    hccn_table['para_plane_nic_name'] = []
-    for instance_id in range(args.nproc_per_node):
-        eth_id = visible_devices[instance_id]
-        hccn_table['para_plane_nic_name'].append('eth{}'.format(eth_id))
-    hccn_table['para_plane_nic_num'] = str(args.nproc_per_node)
-    hccn_table['status'] = 'completed'
-
-    # save hccn_table to file
-    table_path = os.getcwd()
-    if not os.path.exists(table_path):
-        os.mkdir(table_path)
-    table_fn = os.path.join(table_path,
-                            'rank_table_{}p_{}_{}.json'.format(args.nproc_per_node, usable_dev, args.server_id))
-    with open(table_fn, 'w') as table_fp:
-        json.dump(hccn_table, table_fp, indent=4)
-    sys.stdout.flush()
 
     # spawn the processes
     processes = []
@@ -137,9 +74,6 @@ def main():
         device_dir = os.path.join(cur_path, 'device{}'.format(rank_id))
         env['RANK_ID'] = str(rank_id)
         env['DEVICE_ID'] = str(device_id)
-        if args.nproc_per_node > 1:
-            env['MINDSPORE_HCCL_CONFIG_PATH'] = table_fn
-            env['RANK_TABLE_FILE'] = table_fn
         if os.path.exists(device_dir):
             shutil.rmtree(device_dir)
         os.mkdir(device_dir)

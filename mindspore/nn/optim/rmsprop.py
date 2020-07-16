@@ -171,7 +171,7 @@ class RMSProp(Optimizer):
             self.opt = P.ApplyRMSProp(use_locking)
 
         self.momentum = momentum
-        self.ms = self.parameters.clone(prefix="mean_square", init='zeros')
+        self.ms = self.parameters.clone(prefix="mean_square", init='ones')
         self.moment = self.parameters.clone(prefix="moment", init='zeros')
         self.hyper_map = C.HyperMap()
         self.epsilon = epsilon

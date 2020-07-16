@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import sys
+import pytest
 import numpy as np
+import pandas as pd
 import mindspore.dataset as de
 from mindspore import log as logger
 import mindspore.dataset.transforms.vision.c_transforms as vision
-import pandas as pd
 
 
 def test_numpy_slices_list_1():
@@ -172,8 +174,26 @@ def test_numpy_slices_distributed_sampler():
     assert sum([1 for _ in ds]) == 2
 
 
-def test_numpy_slices_sequential_sampler():
+def test_numpy_slices_distributed_shard_limit():
+    logger.info("Test Slicing a 1D list.")
 
+    np_data = [1, 2, 3]
+    num = sys.maxsize
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, num_shards=num, shard_id=0, shuffle=False)
+    assert "Input num_shards is not within the required interval of (1 to 2147483647)." in str(err.value)
+
+
+def test_numpy_slices_distributed_zero_shard():
+    logger.info("Test Slicing a 1D list.")
+
+    np_data = [1, 2, 3]
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, num_shards=0, shard_id=0, shuffle=False)
+    assert "Input num_shards is not within the required interval of (1 to 2147483647)." in str(err.value)
+
+
+def test_numpy_slices_sequential_sampler():
     logger.info("Test numpy_slices_dataset with SequentialSampler and repeat.")
 
     np_data = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
@@ -181,6 +201,42 @@ def test_numpy_slices_sequential_sampler():
 
     for i, data in enumerate(ds):
         assert np.equal(data[0], np_data[i % 8]).all()
+
+
+def test_numpy_slices_invalid_column_names_type():
+    logger.info("Test incorrect column_names input")
+    np_data = [1, 2, 3]
+
+    with pytest.raises(TypeError) as err:
+        de.NumpySlicesDataset(np_data, column_names=[1], shuffle=False)
+    assert "Argument column_names[0] with value 1 is not of type (<class 'str'>,)." in str(err.value)
+
+
+def test_numpy_slices_invalid_column_names_string():
+    logger.info("Test incorrect column_names input")
+    np_data = [1, 2, 3]
+
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, column_names=[""], shuffle=False)
+    assert "column_names[0] should not be empty" in str(err.value)
+
+
+def test_numpy_slices_invalid_empty_column_names():
+    logger.info("Test incorrect column_names input")
+    np_data = [1, 2, 3]
+
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, column_names=[], shuffle=False)
+    assert "column_names should not be empty" in str(err.value)
+
+
+def test_numpy_slices_invalid_empty_data_column():
+    logger.info("Test incorrect column_names input")
+    np_data = []
+
+    with pytest.raises(ValueError) as err:
+        de.NumpySlicesDataset(np_data, shuffle=False)
+    assert "Argument data cannot be empty" in str(err.value)
 
 
 if __name__ == "__main__":
@@ -196,4 +252,10 @@ if __name__ == "__main__":
     test_numpy_slices_csv_dict()
     test_numpy_slices_num_samplers()
     test_numpy_slices_distributed_sampler()
+    test_numpy_slices_distributed_shard_limit()
+    test_numpy_slices_distributed_zero_shard()
     test_numpy_slices_sequential_sampler()
+    test_numpy_slices_invalid_column_names_type()
+    test_numpy_slices_invalid_column_names_string()
+    test_numpy_slices_invalid_empty_column_names()
+    test_numpy_slices_invalid_empty_data_column()

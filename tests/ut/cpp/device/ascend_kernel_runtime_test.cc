@@ -18,7 +18,7 @@
 
 #include "common/common_test.h"
 
-#include "device/kernel_runtime.h"
+#include "runtime/device/kernel_runtime.h"
 #include "./common.h"
 
 namespace mindspore {

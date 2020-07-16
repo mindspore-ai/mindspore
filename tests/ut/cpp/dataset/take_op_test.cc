@@ -19,7 +19,7 @@
 
 #include "common/common.h"
 #include "common/utils.h"
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 

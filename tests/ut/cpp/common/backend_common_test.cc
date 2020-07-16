@@ -20,11 +20,11 @@
 #include <memory>
 
 #include "utils/log_adapter.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "debug/anf_ir_dump.h"
-#include "session/ascend_session.h"
-#include "pipeline/resource.h"
-#include "pipeline/action.h"
+#include "backend/session/ascend_session.h"
+#include "pipeline/jit/resource.h"
+#include "pipeline/jit/action.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 

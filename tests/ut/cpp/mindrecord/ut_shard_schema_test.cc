@@ -29,9 +29,9 @@
 
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "mindrecord/include/shard_page.h"
-#include "mindrecord/include/shard_schema.h"
-#include "mindrecord/include/shard_statistics.h"
+#include "minddata/mindrecord/include/shard_page.h"
+#include "minddata/mindrecord/include/shard_schema.h"
+#include "minddata/mindrecord/include/shard_statistics.h"
 #include "securec.h"
 #include "ut_common.h"
 

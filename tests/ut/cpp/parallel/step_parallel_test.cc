@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "parallel/step_parallel.h"
-#include "parallel/graph_util/generate_graph.h"
+#include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "common/py_func_graph_fetcher.h"
 #include "debug/draw.h"
-#include "operator/ops.h"
-#include "pipeline/static_analysis/static_analysis.h"
+#include "frontend/operator/ops.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 
 namespace mindspore {
 namespace parallel {

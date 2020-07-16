@@ -72,9 +72,9 @@ sh run_process_data.sh [SRC_PATH] [DATASET_NAME]
 >> Launch
 ```
 #Generate dataset in mindrecord format for cora
-sh run_process_data.sh cora
+./run_process_data.sh ./data cora
 #Generate dataset in mindrecord format for citeseer
-sh run_process_data.sh citeseer
+./run_process_data.sh ./data citeseer
 ```
 
 # Features

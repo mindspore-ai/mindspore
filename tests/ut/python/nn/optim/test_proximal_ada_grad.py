@@ -17,12 +17,13 @@
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter
+from mindspore import Tensor, Parameter, context
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import ProximalAdagrad
 from mindspore.ops import operations as P
 
+context.set_context(enable_sparse=True)
 
 class Net(nn.Cell):
     def __init__(self):
@@ -40,8 +41,7 @@ class NetWithSparseGatherV2(nn.Cell):
     """ NetWithSparseGatherV2 definition """
     def __init__(self):
         super(NetWithSparseGatherV2, self).__init__()
-        self.weight1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="weight1",
-                                 sparse_grad="sparse_key_w1")
+        self.weight1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="weight1")
         self.weight2 = Parameter(Tensor(np.ones([2, 1, 2]).astype(np.float32)), name="weight2")
         self.axis = 0
         self.gather = P.SparseGatherV2()

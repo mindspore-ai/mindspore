@@ -15,9 +15,9 @@
 """
 Testing Ngram in mindspore.dataset
 """
+import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
-import numpy as np
 
 
 def test_multiple_ngrams():
@@ -61,7 +61,7 @@ def test_simple_ngram():
             yield (np.array(line.split(" "), dtype='S'),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
-    dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=None))
+    dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=" "))
 
     i = 0
     for data in dataset.create_dict_iterator():
@@ -72,43 +72,36 @@ def test_simple_ngram():
 def test_corner_cases():
     """ testing various corner cases and exceptions"""
 
-    def test_config(input_line, output_line, n, l_pad=None, r_pad=None, sep=None):
+    def test_config(input_line, n, l_pad=("", 0), r_pad=("", 0), sep=" "):
         def gen(texts):
             yield (np.array(texts.split(" "), dtype='S'),)
 
-        dataset = ds.GeneratorDataset(gen(input_line), column_names=["text"])
-        dataset = dataset.map(input_columns=["text"], operations=text.Ngram(n, l_pad, r_pad, separator=sep))
-        for data in dataset.create_dict_iterator():
-            assert [d.decode("utf8") for d in data["text"]] == output_line, output_line
+        try:
+            dataset = ds.GeneratorDataset(gen(input_line), column_names=["text"])
+            dataset = dataset.map(input_columns=["text"], operations=text.Ngram(n, l_pad, r_pad, separator=sep))
+            for data in dataset.create_dict_iterator():
+                return [d.decode("utf8") for d in data["text"]]
+        except (ValueError, TypeError) as e:
+            return str(e)
 
     # test tensor length smaller than n
-    test_config("Lone Star", ["Lone Star", "", "", ""], [2, 3, 4, 5])
+    assert test_config("Lone Star", [2, 3, 4, 5]) == ["Lone Star", "", "", ""]
     # test empty separator
-    test_config("Beautiful British Columbia", ['BeautifulBritish', 'BritishColumbia'], 2, sep="")
+    assert test_config("Beautiful British Columbia", 2, sep="") == ['BeautifulBritish', 'BritishColumbia']
     # test separator with longer length
-    test_config("Beautiful British Columbia", ['Beautiful^-^British^-^Columbia'], 3, sep="^-^")
+    assert test_config("Beautiful British Columbia", 3, sep="^-^") == ['Beautiful^-^British^-^Columbia']
     # test left pad != right pad
-    test_config("Lone Star", ['The Lone Star State'], 4, ("The", 1), ("State", 1))
+    assert test_config("Lone Star", 4, ("The", 1), ("State", 1)) == ['The Lone Star State']
     # test invalid n
-    try:
-        test_config("Yours to Discover", "", [0, [1]])
-    except Exception as e:
-        assert "ngram needs to be a positive number" in str(e)
-    # test empty n
-    try:
-        test_config("Yours to Discover", "", [])
-    except Exception as e:
-        assert "n needs to be a non-empty list" in str(e)
+    assert "gram[1] with value [1] is not of type (<class 'int'>,)" in test_config("Yours to Discover", [1, [1]])
+    assert "n needs to be a non-empty list" in test_config("Yours to Discover", [])
     # test invalid pad
-    try:
-        test_config("Yours to Discover", "", [1], ("str", -1))
-    except Exception as e:
-        assert "padding width need to be positive numbers" in str(e)
-    # test invalid pad
-    try:
-        test_config("Yours to Discover", "", [1], ("str", "rts"))
-    except Exception as e:
-        assert "pad needs to be a tuple of (str, int)" in str(e)
+    assert "padding width need to be positive numbers" in test_config("Yours to Discover", [1], ("str", -1))
+    assert "pad needs to be a tuple of (str, int)" in test_config("Yours to Discover", [1], ("str", "rts"))
+    # test 0 as in valid input
+    assert "gram_0 must be greater than 0" in test_config("Yours to Discover", 0)
+    assert "gram_0 must be greater than 0" in test_config("Yours to Discover", [0])
+    assert "gram_1 must be greater than 0" in test_config("Yours to Discover", [1, 0])
 
 
 if __name__ == '__main__':

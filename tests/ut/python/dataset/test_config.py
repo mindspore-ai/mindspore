@@ -245,17 +245,17 @@ def test_deterministic_run_distribution():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    random_crop_op = c_vision.RandomHorizontalFlip(0.1)
+    random_horizontal_flip_op = c_vision.RandomHorizontalFlip(0.1)
     decode_op = c_vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_crop_op)
+    data1 = data1.map(input_columns=["image"], operations=random_horizontal_flip_op)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(input_columns=["image"], operations=decode_op)
     # If seed is set up on constructor, so the two ops output deterministic sequence
-    random_crop_op2 = c_vision.RandomHorizontalFlip(0.1)
-    data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
+    random_horizontal_flip_op2 = c_vision.RandomHorizontalFlip(0.1)
+    data2 = data2.map(input_columns=["image"], operations=random_horizontal_flip_op2)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         np.testing.assert_equal(item1["image"], item2["image"])

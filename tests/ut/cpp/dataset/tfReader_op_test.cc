@@ -17,8 +17,8 @@
 #include <memory>
 #include <vector>
 
-#include "dataset/core/client.h"
-#include "dataset/engine/data_schema.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/data_schema.h"
 #include "common/common.h"
 #include "common/utils.h"
 #include "gtest/gtest.h"

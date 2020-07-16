@@ -18,9 +18,9 @@
 
 #include "common/common_test.h"
 #include "utils/log_adapter.h"
-#include "pipeline/resource.h"
+#include "pipeline/jit/resource.h"
 #include "ir/primitive.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 
 namespace mindspore {
 namespace pipeline {

@@ -26,7 +26,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #include "utils/any.h"
 
 namespace mindspore {

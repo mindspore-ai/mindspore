@@ -16,7 +16,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "optimizer/ad/grad.h"
+#include "frontend/optimizer/ad/grad.h"
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
@@ -24,10 +24,10 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/log_adapter.h"
 #include "utils/graph_utils.h"
-#include "pipeline/resource.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/resource.h"
+#include "pipeline/jit/parse/parse.h"
 #include "debug/draw.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 
 namespace mindspore {
 namespace ad {

@@ -22,8 +22,8 @@
 #include "ir/primitive.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
-#include "pipeline/parse/parse_base.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/parse/parse.h"
 #include "./common.h"
 
 namespace UT {

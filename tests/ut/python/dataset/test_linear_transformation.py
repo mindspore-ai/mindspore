@@ -73,6 +73,7 @@ def test_linear_transformation_op(plot=False):
     if plot:
         visualize_list(image, image_transformed)
 
+
 def test_linear_transformation_md5():
     """
     Test LinearTransformation op: valid params (transformation_matrix, mean_vector)
@@ -102,6 +103,7 @@ def test_linear_transformation_md5():
     filename = "linear_transformation_01_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
+
 def test_linear_transformation_exception_01():
     """
     Test LinearTransformation op: transformation_matrix is not provided
@@ -126,9 +128,10 @@ def test_linear_transformation_exception_01():
         ]
         transform = py_vision.ComposeOp(transforms)
         data1 = data1.map(input_columns=["image"], operations=transform())
-    except ValueError as e:
+    except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "not provided" in str(e)
+        assert "Argument transformation_matrix with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
+
 
 def test_linear_transformation_exception_02():
     """
@@ -154,9 +157,10 @@ def test_linear_transformation_exception_02():
         ]
         transform = py_vision.ComposeOp(transforms)
         data1 = data1.map(input_columns=["image"], operations=transform())
-    except ValueError as e:
+    except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "not provided" in str(e)
+        assert "Argument mean_vector with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
+
 
 def test_linear_transformation_exception_03():
     """
@@ -187,6 +191,7 @@ def test_linear_transformation_exception_03():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "square matrix" in str(e)
 
+
 def test_linear_transformation_exception_04():
     """
     Test LinearTransformation op: mean_vector does not match dimension of transformation_matrix
@@ -199,7 +204,7 @@ def test_linear_transformation_exception_04():
     weight = 50
     dim = 3 * height * weight
     transformation_matrix = np.ones([dim, dim])
-    mean_vector = np.zeros(dim-1)
+    mean_vector = np.zeros(dim - 1)
 
     # Generate dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -215,6 +220,7 @@ def test_linear_transformation_exception_04():
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should match" in str(e)
+
 
 if __name__ == '__main__':
     test_linear_transformation_op(plot=True)

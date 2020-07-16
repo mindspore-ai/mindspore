@@ -97,7 +97,7 @@ def test_random_sharpness_md5():
     # define map operations
     transforms = [
         F.Decode(),
-        F.RandomSharpness((0.5, 1.5)),
+        F.RandomSharpness((0.1, 1.9)),
         F.ToTensor()
     ]
     transform = F.ComposeOp(transforms)

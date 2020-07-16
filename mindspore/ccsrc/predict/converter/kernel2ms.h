@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include "session/kernel_graph.h"
+#include "backend/session/kernel_graph.h"
 #include "predict/converter/executor_tensor.h"
 #include "predict/schema/inner/ms_generated.h"
 #include "predict/converter/attr_utils/convert_util.h"

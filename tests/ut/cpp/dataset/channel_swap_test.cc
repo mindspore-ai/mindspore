@@ -15,8 +15,8 @@
  */
 #include "common/common.h"
 #include "common/cvop_common.h"
-#include "dataset/kernels/image/hwc_to_chw_op.h"
-#include "dataset/core/data_type.h"
+#include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
+#include "minddata/dataset/core/data_type.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

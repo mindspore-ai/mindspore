@@ -29,10 +29,10 @@
 
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "mindrecord/include/shard_error.h"
-#include "mindrecord/include/shard_index_generator.h"
-#include "mindrecord/include/shard_index.h"
-#include "mindrecord/include/shard_statistics.h"
+#include "minddata/mindrecord/include/shard_error.h"
+#include "minddata/mindrecord/include/shard_index_generator.h"
+#include "minddata/mindrecord/include/shard_index.h"
+#include "minddata/mindrecord/include/shard_statistics.h"
 #include "securec.h"
 #include "ut_common.h"
 

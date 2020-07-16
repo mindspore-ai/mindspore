@@ -16,7 +16,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "parallel/tensor_layout/shape_util.h"
+#include "frontend/parallel/tensor_layout/shape_util.h"
 
 namespace mindspore {
 namespace parallel {

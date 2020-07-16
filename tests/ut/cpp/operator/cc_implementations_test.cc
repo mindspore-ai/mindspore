@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "common/common_test.h"
-#include "operator/cc_implementations.h"
+#include "frontend/operator/cc_implementations.h"
 
 namespace mindspore {
 namespace prim {

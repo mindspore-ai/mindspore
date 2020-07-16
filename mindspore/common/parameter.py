@@ -17,11 +17,11 @@
 import numbers
 from copy import copy
 from mindspore import context
+from .._c_expression import ParamValue
 from . import dtype as mstype
 from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
-from ..parallel._utils import _set_clone_info, _CloneInfo
 from ..parallel._tensor import _get_slice_index
 
 __all__ = ['Parameter', 'ParameterTuple']
@@ -51,34 +51,33 @@ class Parameter:
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
             broadcast and gradients communication would not be applied on parameters. Default: False.
-        sparse_grad (str): Set if the parameter's gradient is sparse. Default: empty.
-        has_indexed_slices (bool): Set if the parameter's gradient is indexed_slices. Default: false.
     """
-    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False,
-                 sparse_grad="", has_indexed_slices_grad=False):
+    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False):
+        self._value = ParamValue()
         self.set_parameter_data(default_input)
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
-        self.sparse_grad = sparse_grad
-        self.has_indexed_slices_grad = has_indexed_slices_grad
         self._is_init = False
         self._sliced = False
-        self.clone_info = _CloneInfo()
+        self.is_param_ps = False
         if context.get_context("mode") == context.PYNATIVE_MODE:
             self.init_data()
 
     def __repr__(self):
         format_str = 'Parameter (name={name})'
-        return format_str.format(name=self._name)
+        return format_str.format(name=self._value.name)
 
     def __parameter__(self):
         """For parse check."""
 
+    def set_param_ps(self):
+        self.is_param_ps = True
+
     @property
     def name(self):
         """Get the name of the parameter."""
-        return self._name
+        return self._value.name
 
     @name.setter
     def name(self, name_):
@@ -100,7 +99,7 @@ class Parameter:
                                  format(name_, PARAMETER_NAME_PREFIX_MAX_LEN))
         else:
             raise ValueError("The type of the name should be `str` or `None`.")
-        self._name = name_
+        self._value.name = name_
 
     @property
     def sliced(self):
@@ -140,7 +139,9 @@ class Parameter:
         """
         _check_str_by_regular(prefix)
         x = copy(self)
-        x.name = prefix + '.' + x.name
+        # pylint: disable=protected-access
+        x._value = self._value.clone()
+        x._value.name = prefix + '.' + self._value.name
         x.is_init = False
         if init != 'same':
             shape = self.default_input.shape
@@ -152,57 +153,41 @@ class Parameter:
                     x.init_data()
             else:
                 x.default_input = initializer(init, shape=shape, dtype=dtype)
-
-        x.clone_info = copy(self.clone_info)
-        _set_clone_info(self.clone_info, x.clone_info)
         return x
 
     @property
     def layerwise_parallel(self):
-        return self._layerwise_parallel
+        return self._value.layerwise_parallel
 
     @layerwise_parallel.setter
     def layerwise_parallel(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`layerwise_parallel` parameter must be bool type")
-        self._layerwise_parallel = value
+        self._value.layerwise_parallel = value
 
     @property
     def requires_grad(self):
         """Return whether the parameter requires gradient."""
-        return self._requires_grad
+        return self._value.requires_grad
 
     @requires_grad.setter
     def requires_grad(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`requires_grad` parameter must be bool type")
-        self._requires_grad = value
-
-    @property
-    def sparse_grad(self):
-        """Return whether the parameter's gradient is sparse."""
-        return self._sparse_grad
-
-    @sparse_grad.setter
-    def sparse_grad(self, value=""):
-        if not isinstance(value, str):
-            raise TypeError("`sparse_grad` parameter must be str type")
-        self._sparse_grad = value
-
-    @property
-    def has_indexed_slices_grad(self):
-        """Return whether the parameter's gradient is indexed_slices."""
-        return self._has_indexed_slices_grad
-
-    @has_indexed_slices_grad.setter
-    def has_indexed_slices_grad(self, value=False):
-        if not isinstance(value, bool):
-            raise TypeError("`has_indexed_slices_grad` parameter must be bool type")
-        self._has_indexed_slices_grad = value
+        self._value.requires_grad = value
 
     @property
     def data(self):
         return self.default_input
+
+    @property
+    def default_input(self):
+        return self._data
+
+    @default_input.setter
+    def default_input(self, data):
+        self._data = data
+        self._value.data = data
 
     def __add__(self, other):
         return self.default_input + other
@@ -223,11 +208,12 @@ class Parameter:
 
     def set_parameter_data(self, data):
         """Set `default_input` of current `Parameter`."""
+        self.init_mode = None
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor):
             # make a copy of Tensor to init the parameter
-            data = Tensor(data.asnumpy().copy())
+            data = Tensor(data.asnumpy())
             data.init_flag = False
         elif isinstance(data, Initializer):
             self.init_mode = data
@@ -242,7 +228,6 @@ class Parameter:
 
         self.default_input = data
 
-
     def init_data(self, layout=None, set_sliced=False):
         """
         Init data of the parameter.
@@ -256,7 +241,7 @@ class Parameter:
             set_sliced (bool): True if should set parameter sliced after init the data of initializer.
                 Default: False.
         """
-        if not isinstance(self.default_input, MetaTensor):
+        if self.init_mode is None:
             return
         if layout is not None:
             if not isinstance(layout, list):

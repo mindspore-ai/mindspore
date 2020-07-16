@@ -21,7 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <iterator>
-#include "parallel/tensor_layout/shape_util.h"
+#include "frontend/parallel/tensor_layout/shape_util.h"
 #include "common/common_test.h"
 
 using std::pow;

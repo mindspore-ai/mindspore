@@ -24,33 +24,15 @@ from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox,
 
 GENERATE_GOLDEN = False
 
+# updated VOC dataset with correct annotations
 DATA_DIR = "../data/dataset/testVOC2012_2"
-
-
-def fix_annotate(bboxes):
-    """
-    Fix annotations to format followed by mindspore.
-    :param bboxes: in [label, x_min, y_min, w, h, truncate, difficult] format
-    :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
-    """
-    for bbox in bboxes:
-        if bbox.size == 7:
-            tmp = bbox[0]
-            bbox[0] = bbox[1]
-            bbox[1] = bbox[2]
-            bbox[2] = bbox[3]
-            bbox[3] = bbox[4]
-            bbox[4] = tmp
-        else:
-            print("ERROR: Invalid Bounding Box size provided")
-            break
-    return bboxes
+DATA_DIR_2 = ["../data/dataset/testCOCO/train/",
+              "../data/dataset/testCOCO/annotations/train.json"]  # DATA_DIR, ANNOTATION_DIR
 
 
 def test_random_horizontal_flip_with_bbox_op_c(plot_vis=False):
     """
-    Prints images side by side with and without Aug applied + bboxes to
-    compare and test
+    Prints images and bboxes side by side with and without RandomHorizontalFlipWithBBox Op applied
     """
     logger.info("test_random_horizontal_flip_with_bbox_op_c")
 
@@ -63,14 +45,6 @@ def test_random_horizontal_flip_with_bbox_op_c(plot_vis=False):
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
-    # maps to fix annotations to minddata standard
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
@@ -86,7 +60,37 @@ def test_random_horizontal_flip_with_bbox_op_c(plot_vis=False):
         visualize_with_bounding_boxes(unaugSamp, augSamp)
 
 
-def test_random_horizontal_bbox_with_bbox_valid_rand_c(plot_vis=False):
+def test_random_horizontal_flip_with_bbox_op_coco_c(plot_vis=False):
+    """
+    Prints images and bboxes side by side with and without RandomHorizontalFlipWithBBox Op applied,
+    Testing with COCO dataset
+    """
+    logger.info("test_random_horizontal_flip_with_bbox_op_coco_c")
+
+    dataCoco1 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    dataCoco2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
+
+    dataCoco2 = dataCoco2.map(input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              columns_order=["image", "bbox"],
+                              operations=[test_op])
+
+    unaugSamp, augSamp = [], []
+
+    for unAug, Aug in zip(dataCoco1.create_dict_iterator(), dataCoco2.create_dict_iterator()):
+        unaugSamp.append(unAug)
+        augSamp.append(Aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaugSamp, augSamp, "bbox")
+
+
+def test_random_horizontal_flip_with_bbox_valid_rand_c(plot_vis=False):
     """
     Uses a valid non-default input, expect to pass
     Prints images side by side with and without Aug applied + bboxes to
@@ -106,13 +110,6 @@ def test_random_horizontal_bbox_with_bbox_valid_rand_c(plot_vis=False):
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(0.6)
 
-    # maps to fix annotations to minddata standard
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
@@ -148,25 +145,18 @@ def test_random_horizontal_flip_with_bbox_valid_edge_c(plot_vis=False):
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
-    # maps to fix annotations to minddata standard
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
     # map to apply ops
     # Add column for "annotation"
     dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
                             operations=lambda img, bbox:
-                            (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.uint32)))
+                            (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)))
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
                             operations=lambda img, bbox:
-                            (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.uint32)))
+                            (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)))
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
@@ -193,9 +183,6 @@ def test_random_horizontal_flip_with_bbox_invalid_prob_c():
     try:
         # Note: Valid range of prob should be [0.0, 1.0]
         test_op = c_vision.RandomHorizontalFlipWithBBox(1.5)
-        dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                                output_columns=["annotation"],
-                                operations=fix_annotate)
         # map to apply ops
         dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                                 output_columns=["image", "annotation"],
@@ -203,7 +190,7 @@ def test_random_horizontal_flip_with_bbox_invalid_prob_c():
                                 operations=[test_op])  # Add column for "annotation"
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input is not" in str(error)
+        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(error)
 
 
 def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
@@ -227,7 +214,8 @@ def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
 if __name__ == "__main__":
     # set to false to not show plots
     test_random_horizontal_flip_with_bbox_op_c(plot_vis=False)
-    test_random_horizontal_bbox_with_bbox_valid_rand_c(plot_vis=False)
+    test_random_horizontal_flip_with_bbox_op_coco_c(plot_vis=False)
+    test_random_horizontal_flip_with_bbox_valid_rand_c(plot_vis=False)
     test_random_horizontal_flip_with_bbox_valid_edge_c(plot_vis=False)
     test_random_horizontal_flip_with_bbox_invalid_prob_c()
     test_random_horizontal_flip_with_bbox_invalid_bounds_c()

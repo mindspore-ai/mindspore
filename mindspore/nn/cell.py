@@ -16,6 +16,7 @@
 import time
 import gc
 from collections import OrderedDict
+import numpy
 from mindspore import log as logger
 from .. import context
 from ..common import dtype as mstype
@@ -211,6 +212,9 @@ class Cell:
         if context.get_context("mode") == context.GRAPH_MODE:
             out = self.compile_and_run(*inputs)
             return out
+        for item in inputs:
+            if isinstance(item, numpy.ndarray):
+                raise TypeError("cell inputs should not be numpy array.")
         self.init_parameters_data()
         orign_grad = []
         if self.requires_grad is True:
@@ -826,6 +830,20 @@ class Cell:
         """
         self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self.enable_hook = True
+
+    def set_param_ps(self, recurse=True):
+        """
+        Set whether the trainable parameter is updated by parameter server.
+
+        Note:
+            This only works when running task in parameter server mode.
+
+        Args:
+            recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
+        """
+        params = self.trainable_params(recurse)
+        for param in params:
+            param.set_param_ps()
 
 class GraphKernel(Cell):
     """

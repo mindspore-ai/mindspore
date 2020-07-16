@@ -19,9 +19,9 @@
 #include "common/py_func_graph_fetcher.h"
 
 #include "utils/log_adapter.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse.h"
 #include "debug/draw.h"
-#include "optimizer/clean.h"
+#include "frontend/optimizer/clean.h"
 
 namespace mindspore {
 namespace opt {

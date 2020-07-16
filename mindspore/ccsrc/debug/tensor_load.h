@@ -19,17 +19,28 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <mutex>
 #include <tuple>
 #include <string>
+#include <utility>
 #include "debug/tensor_data.h"
 namespace mindspore {
 class TensorLoader {
  public:
   TensorLoader() : iter_num(-1) {}
 
-  ~TensorLoader() {}
+  ~TensorLoader() { EmptyTensor(); }
 
-  bool LoadNewTensor(std::shared_ptr<TensorData> tensor) {
+  bool LoadNewTensor(std::shared_ptr<TensorData> tensor, bool keep_prev) {
+    std::lock_guard<std::mutex> lg(lock_);
+    if (keep_prev) {
+      // add prev step tensor into current step map with ":prev" suffix
+      auto handle = prev_tensor_list_map.extract(tensor->GetName());
+      if (!handle.empty()) {
+        handle.key() = tensor->GetName() + ":prev";
+        tensor_list_map.insert(std::move(handle));
+      }
+    }
     tensor_list.push_back(tensor);
     tensor_list_map.insert({tensor->GetName(), tensor});
     return true;
@@ -52,18 +63,23 @@ class TensorLoader {
     }
   }
 
-  bool EmptyTensor() {
-    tensor_list_map.clear();
+  void EmptyTensor() {
+    std::lock_guard<std::mutex> lg(lock_);
+    prev_tensor_list_map.clear();
+    tensor_list_map.swap(prev_tensor_list_map);
     tensor_list.clear();
-    return true;
   }
+
+  void EmptyPrevTensor() { prev_tensor_list_map.clear(); }
 
   void set_iter_num(uint32_t iter_num) { this->iter_num = iter_num; }
 
  private:
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::string, std::shared_ptr<TensorData>> tensor_list_map;
+  std::map<std::string, std::shared_ptr<TensorData>> prev_tensor_list_map;
   uint32_t iter_num;
+  std::mutex lock_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_LOAD_H_

@@ -16,8 +16,8 @@
 #include <iostream>
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "pipeline/pipeline.h"
-#include "pipeline/resource.h"
+#include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/resource.h"
 
 namespace mindspore {
   extern void InitSubModulesLogLevel();

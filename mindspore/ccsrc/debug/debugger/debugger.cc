@@ -19,8 +19,8 @@
 #include <vector>
 #include <algorithm>
 #include "debug/debugger/debugger.h"
-#include "pipeline/pipeline.h"
-#include "session/anf_runtime_algorithm.h"
+#include "pipeline/jit/pipeline.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -43,7 +43,8 @@ Debugger::Debugger()
       device_id_(0),
       num_step_(0),
       debugger_enabled_(false),
-      is_dataset_graph_(false) {}
+      is_dataset_graph_(false),
+      partial_memory_(false) {}
 
 void Debugger::Init(const uint32_t device_id) {
   // access lock for public method
@@ -57,6 +58,7 @@ void Debugger::EnableDebugger() {
   // reset some of the class members
   num_step_ = 0;
   debugger_enabled_ = false;
+  partial_memory_ = false;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
 
@@ -72,7 +74,8 @@ void Debugger::EnableDebugger() {
     MS_LOG(WARNING) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
     return;
   }
-  // configure host
+
+  // configure grpc host
   const char *env_host_str = std::getenv("MS_DEBUGGER_HOST");
   std::string host;
   if (env_host_str != nullptr) {
@@ -82,7 +85,7 @@ void Debugger::EnableDebugger() {
     MS_LOG(WARNING) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
     host = "localhost";
   }
-  // configure port
+  // configure grpc port
   const char *env_port_str = std::getenv("MS_DEBUGGER_PORT");
   std::string port;
   if (env_port_str != nullptr) {
@@ -91,6 +94,27 @@ void Debugger::EnableDebugger() {
   } else {
     MS_LOG(WARNING) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
     port = "50051";
+  }
+
+  // configure partial memory reuse
+  const char *env_partial_mem_str = std::getenv("MS_DEBUGGER_PARTIAL_MEM");
+  if (env_partial_mem_str != nullptr) {
+    MS_LOG(INFO) << "Getenv MS_DEBUGGER_PARTIAL_MEM: " << env_partial_mem_str;
+    if (std::strcmp(env_partial_mem_str, "1") == 0) {
+      partial_memory_ = true;
+    }
+  }
+  // switch memory reuse on or off
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  context_ptr->set_enable_mem_reuse(partial_memory_);
+  // print some message about memory reuse to user
+  if (partial_memory_) {
+    MS_LOG(WARNING) << "Partial Memory Reuse is enabled. Note: 1. Please only set watchpoints before running the first "
+                       "step. 2. Tensor values are only available for nodes that are watched by any watchpoint.";
+  } else {
+    MS_LOG(WARNING) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
+                       "usage for large models.";
   }
 
   // initialize grpc client
@@ -106,6 +130,7 @@ void Debugger::Reset() {
   num_step_ = 0;
   debugger_enabled_ = false;
   is_dataset_graph_ = false;
+  partial_memory_ = false;
   graph_ptr_ = nullptr;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
@@ -178,7 +203,7 @@ void Debugger::CheckDatasetGraph() {
   is_dataset_graph_ = false;
 }
 
-GraphProto Debugger::GetGraphProto() {
+GraphProto Debugger::GetGraphProto() const {
   // convert kernel graph to debugger modelproto
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr_);
   return model.graph();
@@ -261,12 +286,9 @@ void Debugger::CommandLoop() {
             MS_LOG(INFO) << "node name: " << node.node_name();
             MS_LOG(INFO) << "node type: " << node.node_type();
           }
-          WatchCondition recieved_condition = GetWatchcondition(reply);
-          MS_LOG(INFO) << "condition: " << recieved_condition.condition();
-          int32_t id = GetWatchpointID(reply);
-          MS_LOG(INFO) << "id: " << id;
-          bool delete_ = GetWatchpointDelete(reply);
-          MS_LOG(INFO) << "delete: " << delete_;
+          MS_LOG(INFO) << "condition: " << GetWatchcondition(reply).condition();
+          MS_LOG(INFO) << "id: " << GetWatchpointID(reply);
+          MS_LOG(INFO) << "delete: " << GetWatchpointDelete(reply);
         }
         MS_LOG(INFO) << "Setting watchpoint";
         if (GetWatchpointDelete(reply)) {
@@ -284,15 +306,20 @@ void Debugger::CommandLoop() {
             MS_LOG(INFO) << "tensor node name: " << tensor.node_name();
             MS_LOG(INFO) << "tensor slot: " << tensor.slot();
             MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor.finished() << std::noboolalpha;
+            MS_LOG(INFO) << "tensor iter: " << tensor.iter();
+            MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor.truncate() << std::noboolalpha;
           }
         }
         MS_LOG(INFO) << "Sending tensors";
         std::list<TensorProto> tensors = LoadTensors(GetTensors(reply));
         {
+          // print view cmd reply
           for (auto tensor : tensors) {
             MS_LOG(INFO) << "tensor node name: " << tensor.node_name();
             MS_LOG(INFO) << "tensor slot: " << tensor.slot();
             MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor.finished() << std::noboolalpha;
+            MS_LOG(INFO) << "tensor iter: " << tensor.iter();
+            MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor.truncate() << std::noboolalpha;
             MS_LOG(INFO) << "tensor dims: ";
             for (auto dim : tensor.dims()) {
               MS_LOG(INFO) << dim << ",";
@@ -309,7 +336,115 @@ void Debugger::CommandLoop() {
   }
 }
 
-DebuggerCommand Debugger::GetCommand(const EventReply &reply) {
+void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id) {
+  std::vector<std::tuple<std::string, bool>> check_node_list;
+  std::transform(nodes.begin(), nodes.end(), std::back_inserter(check_node_list),
+                 [](WatchNode node) -> std::tuple<std::string, bool> {
+                   return make_tuple(node.node_name(), node.node_type() == "scope");
+                 });
+  debug_services_->AddWatchpoint(id, condition.condition(), check_node_list);
+}
+
+void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->RemoveWatchpoint(id); }
+
+std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &tensors) const {
+  std::vector<std::string> name;
+  std::vector<std::string> ret_name;
+  std::vector<char *> data_ptr;
+  std::vector<unsigned int> data_size;
+  std::vector<TypePtr> dtype;
+  std::vector<std::vector<int>> shape;
+
+  std::transform(tensors.begin(), tensors.end(), std::back_inserter(name), GetTensorFullName);
+
+  // ret_name will contain tensor names that are found in TensorLoader
+  // items in ret_name will be in the same order with tensors if found
+  debug_services_->ReadNodesTensors(name, &ret_name, &data_ptr, &data_size, &dtype, &shape);
+
+  std::list<TensorProto> tensor_list;
+  unsigned int result_index = 0;
+  for (auto tensor : tensors) {
+    TensorProto tensor_item;
+    tensor_item.set_node_name(tensor.node_name());
+    tensor_item.set_slot(tensor.slot());
+    tensor_item.set_iter(tensor.iter());
+    tensor_item.set_truncate(tensor.truncate());
+    tensor_item.clear_tensor_content();
+    tensor_item.clear_data_type();
+    tensor_item.clear_dims();
+    // always set finished to true before big tensor splitting is supported
+    tensor_item.set_finished(true);
+
+    // return empty tensor if didn't find the requested tensor
+    if (result_index >= ret_name.size() || ret_name[result_index] != GetTensorFullName(tensor)) {
+      tensor_list.push_back(tensor_item);
+      continue;
+    }
+
+    tensor_item.set_tensor_content(data_ptr[result_index], data_size[result_index]);
+    tensor_item.set_data_type(GetDebuggerNumberDataType(dtype[result_index]));
+    for (auto &elem : shape[result_index]) {
+      tensor_item.add_dims(elem);
+    }
+
+    // add tensor to result list and increment result_index to check next item in ret_name
+    tensor_list.push_back(tensor_item);
+    result_index++;
+  }
+  return tensor_list;
+}
+
+void Debugger::Exit() {
+  // clear resource before exit
+  pipeline::ClearResAtexit();
+  std::exit(EXIT_FAILURE);
+}
+
+std::list<WatchpointHit> Debugger::CheckWatchpoints() const {
+  std::vector<std::string> name;
+  std::vector<std::string> slot;
+  std::vector<char *> data_ptr;
+  std::vector<unsigned int> data_size;
+  std::vector<int> condition;
+  std::vector<unsigned int> watchpoint_id;
+
+  debug_services_->CheckWatchpoints(&name, &slot, &data_ptr, &data_size, &condition, &watchpoint_id);
+  std::list<WatchpointHit> hits;
+  for (unsigned int i = 0; i < name.size(); i++) {
+    WatchpointHit hit;
+    hit.set_id(watchpoint_id[i]);
+
+    // here TensorProto act as a tensor indicator, not sending tensor content
+    TensorProto *tensor_item = hit.mutable_tensor();
+    tensor_item->set_node_name(name[i]);
+    tensor_item->set_slot(slot[i]);
+    tensor_item->set_finished(true);
+
+    WatchCondition *condition_item = hit.mutable_watch_condition();
+    condition_item->set_condition(debugger::WatchCondition_Condition(condition[i]));
+
+    hits.push_back(hit);
+  }
+  return hits;
+}
+
+void Debugger::SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points) {
+  // send info about watchpoint
+  if (!points.empty()) {
+    EventReply reply = grpc_client_->SendWatchpointHits(points);
+    if (reply.status() != reply.OK) {
+      MS_LOG(ERROR) << "Error: SendWatchpointHits failed";
+    }
+  }
+  // enter command loop
+  CommandLoop();
+}
+
+DebugServices *Debugger::debug_services() const { return debug_services_.get(); }
+
+bool Debugger::debugger_enabled() const { return debugger_enabled_; }
+
+DebuggerCommand GetCommand(const EventReply &reply) {
   DebuggerCommand cmd = DebuggerCommand::kUnknownCMD;
   switch (reply.cmd_case()) {
     case debugger::EventReply::CmdCase::kExit:
@@ -331,7 +466,7 @@ DebuggerCommand Debugger::GetCommand(const EventReply &reply) {
   return cmd;
 }
 
-ProtoVector<WatchNode> Debugger::GetWatchnodes(const EventReply &reply) {
+ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply) {
   if (!reply.has_set_cmd()) {
     MS_LOG(ERROR) << "Error: Not SetCMD, can not get WatchNodes. Returning default value: ProtoVector<WatchNode>().";
     return ProtoVector<WatchNode>();
@@ -339,7 +474,7 @@ ProtoVector<WatchNode> Debugger::GetWatchnodes(const EventReply &reply) {
   return reply.set_cmd().watch_nodes();
 }
 
-WatchCondition Debugger::GetWatchcondition(const EventReply &reply) {
+WatchCondition GetWatchcondition(const EventReply &reply) {
   if (!reply.has_set_cmd() || !reply.set_cmd().has_watch_condition()) {
     MS_LOG(ERROR) << "Error: Can not get WatchCondition from command. Returning default value: WatchCondition().";
     return WatchCondition();
@@ -347,7 +482,7 @@ WatchCondition Debugger::GetWatchcondition(const EventReply &reply) {
   return reply.set_cmd().watch_condition();
 }
 
-int32_t Debugger::GetWatchpointID(const EventReply &reply) {
+int32_t GetWatchpointID(const EventReply &reply) {
   if (!reply.has_set_cmd()) {
     MS_LOG(ERROR) << "Error: Not SetCMD, can not get Watchpoint ID. Returning default value: 0.";
     return 0;
@@ -355,7 +490,7 @@ int32_t Debugger::GetWatchpointID(const EventReply &reply) {
   return reply.set_cmd().id();
 }
 
-bool Debugger::GetWatchpointDelete(const EventReply &reply) {
+bool GetWatchpointDelete(const EventReply &reply) {
   if (!reply.has_set_cmd()) {
     MS_LOG(ERROR) << "Error: Not SetCMD, can not get Watchpoint delete flag. Returning default value: false.";
     return false;
@@ -363,7 +498,7 @@ bool Debugger::GetWatchpointDelete(const EventReply &reply) {
   return reply.set_cmd().delete_();
 }
 
-ProtoVector<TensorProto> Debugger::GetTensors(const EventReply &reply) {
+ProtoVector<TensorProto> GetTensors(const EventReply &reply) {
   if (!reply.has_view_cmd()) {
     MS_LOG(ERROR) << "Error: Not ViewCMD, can not get Tensors. Returning default value: ProtoVector<TensorProto>().";
     return ProtoVector<TensorProto>();
@@ -371,118 +506,17 @@ ProtoVector<TensorProto> Debugger::GetTensors(const EventReply &reply) {
   return reply.view_cmd().tensors();
 }
 
-void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id) {
-  std::vector<std::tuple<std::string, bool>> check_node_list;
-  std::transform(nodes.begin(), nodes.end(), std::back_inserter(check_node_list),
-                 [](WatchNode node) -> std::tuple<std::string, bool> {
-                   return make_tuple(node.node_name(), node.node_type() == "scope");
-                 });
-
-  debug_services_->add_watchpoint(id, condition.condition(), check_node_list);
-}
-
-void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->remove_watchpoint(id); }
-
-std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &tensors) {
-  std::vector<std::string> name;
-  std::vector<std::string> ret_name;
-  std::vector<char *> data_ptr;
-  std::vector<unsigned int> data_size;
-  std::vector<TypePtr> dtype;
-  std::vector<std::vector<int>> shape;
-
-  std::transform(tensors.begin(), tensors.end(), std::back_inserter(name),
-                 [](TensorProto tensor) -> std::string { return tensor.node_name() + ":" + tensor.slot(); });
-
-  debug_services_->read_nodes_tensors(name, &ret_name, &data_ptr, &data_size, &dtype, &shape);
-
-  std::list<TensorProto> tensor_list;
-  unsigned int result_index = 0;
-  TensorProto tensor_item;
-
-  for (auto tensor : tensors) {
-    tensor_item.set_node_name(tensor.node_name());
-    tensor_item.set_slot(tensor.slot());
-    tensor_item.set_finished(true);
-
-    // return empty tensor if didn't find the requested tensor
-    if (result_index >= ret_name.size() || ret_name[result_index] != tensor.node_name() + ":" + tensor.slot()) {
-      tensor_list.push_back(tensor_item);
-      continue;
-    }
-
-    tensor_item.set_tensor_content(data_ptr[result_index], data_size[result_index]);
-    tensor_item.set_data_type(GetDebuggerNumberDataType(dtype[result_index]));
-    tensor_item.clear_dims();
-    for (auto &elem : shape[result_index]) {
-      tensor_item.add_dims(elem);
-    }
-
-    tensor_list.push_back(tensor_item);
-
-    result_index++;
+std::string GetTensorFullName(const TensorProto &tensor) {
+  string node_name = tensor.node_name();
+  if (tensor.truncate()) {
+    // scopes in node name are seperated by '/'
+    // use the name without scope if truncate is true
+    std::size_t found = node_name.find_last_of("/");
+    node_name = node_name.substr(found + 1);
   }
-
-  return tensor_list;
+  return node_name + ":" + tensor.slot() + (tensor.iter() == "" ? "" : ":" + tensor.iter());
 }
 
-void Debugger::Exit() {
-  // clear resource before exit
-  pipeline::ClearResAtexit();
-  std::exit(EXIT_FAILURE);
-}
-
-std::list<WatchpointHit> Debugger::CheckWatchpoints() {
-  std::vector<std::string> name;
-  std::vector<std::string> slot;
-  std::vector<char *> data_ptr;
-  std::vector<unsigned int> data_size;
-  std::vector<int> condition;
-  std::vector<unsigned int> watchpoint_id;
-
-  debug_services_->check_watchpoints(&name, &slot, &data_ptr, &data_size, &condition, &watchpoint_id);
-
-  std::list<WatchpointHit> points;
-
-  for (unsigned int i = 0; i < name.size(); i++) {
-    TensorProto *tensor_item;
-    tensor_item = new TensorProto();
-    tensor_item->set_node_name(name[i]);
-    tensor_item->set_slot(slot[i]);
-    tensor_item->set_tensor_content(data_ptr[i], data_size[i]);
-
-    // finished in TensorProto will always be true before we implement big tensor splitting
-    tensor_item->set_finished(true);
-
-    WatchCondition *condition_item;
-    condition_item = new WatchCondition();
-    condition_item->set_condition(debugger::WatchCondition_Condition(condition[i]));
-
-    WatchpointHit point;
-    point.set_allocated_tensor(tensor_item);
-    point.set_allocated_watch_condition(condition_item);
-    point.set_id(watchpoint_id[i]);
-
-    points.push_back(point);
-  }
-
-  return points;
-}
-
-void Debugger::SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points) {
-  // send info about watchpoint
-  if (!points.empty()) {
-    EventReply reply = grpc_client_->SendWatchpointHits(points);
-    if (reply.status() != reply.OK) {
-      MS_LOG(ERROR) << "Error: SendWatchpointHits failed";
-    }
-  }
-  // enter command loop
-  CommandLoop();
-}
-
-DebugServices *Debugger::get_debug_services() { return debug_services_.get(); }
-
-bool Debugger::debugger_enabled() { return debugger_enabled_; }
+bool Debugger::partial_memory() { return partial_memory_; }
 
 }  // namespace mindspore

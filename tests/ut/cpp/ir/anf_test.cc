@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 
 #include "ir/anf.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "./common.h"
 
 namespace mindspore {

@@ -23,7 +23,7 @@
 #include "vm/vmimpl.h"
 #include "vm/backend.h"
 #include "vm/transform.h"
-#include "pipeline/parse/data_converter.h"
+#include "pipeline/jit/parse/data_converter.h"
 #include "utils/base_ref_extends.h"
 
 namespace mindspore {
@@ -480,6 +480,36 @@ void FinalVM::InstSwitch(const VectorRef &args) {
   MS_LOG(DEBUG) << "End";
 }
 
+void FinalVM::InstSwitchLayer(const VectorRef &args) {
+  MS_LOG(DEBUG) << "Start";
+  const size_t args_size = 2;
+  if (args.size() != args_size) {
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is " << args.size()
+                  << ".";
+    return;
+  }
+
+  int idx = utils::cast<int>(args[0]);
+  VectorRef branches = utils::cast<VectorRef>(Ref(utils::cast<int>(args[1])));
+  int size = static_cast<int>(branches.size());
+
+  BaseRef index = Ref(idx);
+  int idx_value = 0;
+  if (!backend_->GetIndex(index, &idx_value)) {
+    MS_LOG(EXCEPTION) << "Not supported type to be casted to int.";
+  }
+  if (idx_value < 0) {
+    // Add support negative index range [-size, -1].
+    idx_value += size;
+  }
+  if (idx_value < 0 || idx_value >= size) {
+    MS_LOG(EXCEPTION) << __FUNCTION__ << " given index " << idx_value << " out of range. Please make sure the value "
+                      << "of index in [" << -size << ", " << size << "), and the type is int32.";
+  }
+  Push(branches[idx_value]);
+  MS_LOG(DEBUG) << "End";
+}
+
 void FinalVM::InstTuple(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   VectorRef tuple;
@@ -618,57 +648,8 @@ void FinalVM::SyncData(const py::object &arg) {
 
 BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
   MS_LOG(DEBUG) << "input for operation:";
-  auto prim_py = dyn_cast<PrimitivePy>(prim);
-  std::size_t args_size = args.size();
-  auto py_args = py::tuple(args_size);
-  size_t i = 0;
-  for (auto &arg : args) {
-    py_args[i] = BaseRefToPyData(arg);
-    MS_LOG(DEBUG) << "arg: " << i << ":";
-    i++;
-  }
-  // Hook operator for execute cell custom bprop function
-  py::object obj;
-  bool is_bprop = prim->HasAttr("bprop");
-  if (is_bprop) {
-    SyncData(py_args);
-    py::function fn_bprop = prim_py->hook();
-    obj = fn_bprop(*py_args);
-    return obj;
-  }
-  // Sync gradient data from device to host
-  SyncData(py_args[2]);
-  bool is_cell = prim->HasAttr("cell_hook");
-  if (is_cell) {
-    // Hook operator for execute cell hook function
-    std::string cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
-    if (_hook_grad.find(cell_id) != _hook_grad.end()) {
-      std::size_t hook_args_size = 3;
-      auto hook_args = py::tuple(hook_args_size);
-      hook_args[0] = cell_id;
-      hook_args[1] = py::make_tuple(_hook_grad[cell_id]);
-      hook_args[2] = py::make_tuple(py_args[2]);
-      py::function fn_hook = prim_py->hook();
-      obj = fn_hook(*hook_args);
-      if (py::isinstance<py::none>(obj)) {
-        obj = py_args[2];
-      }
-      _hook_grad.erase(cell_id);
-    } else {
-      _hook_grad[cell_id] = py_args[2];
-      obj = py_args[2];
-    }
-  } else {
-    // Hook operator for execute variable hook function
-    py::function fn_hook = prim_py->hook();
-    obj = fn_hook(py::make_tuple(py_args[2]));
-    if (py::isinstance<py::none>(obj)) {
-      obj = py_args[2];
-    }
-  }
-  obj = py::make_tuple(obj);
-  return obj;
+  MS_EXCEPTION_IF_NULL(prim);
+  return prim->RunHookFunction(args);
 }
-
 }  // namespace compile
 }  // namespace mindspore

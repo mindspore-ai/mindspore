@@ -32,7 +32,7 @@ using uint64 = uint64_t;
 using float16 = Eigen::half;
 class MSANFModelParser {
  public:
-  MSANFModelParser() = default;
+  MSANFModelParser() : producer_name_(""), model_version_(0), ir_version_(0) {}
   ~MSANFModelParser() = default;
 
   FuncGraphPtr Parse(const onnx::ModelProto &model_proto);

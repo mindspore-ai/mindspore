@@ -15,11 +15,11 @@
  */
 
 #include "common/common_test.h"
-#include "ir/param_value_py.h"
-#include "operator/ops.h"
-#include "session/kernel_graph.h"
-#include "session/anf_runtime_algorithm.h"
-#include "mindspore/ccsrc/device/kernel_info.h"
+#include "ir/param_value.h"
+#include "frontend/operator/ops.h"
+#include "backend/session/kernel_graph.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "mindspore/ccsrc/runtime/device/kernel_info.h"
 #include "utils/utils.h"
 
 namespace mindspore {
@@ -42,7 +42,7 @@ TEST_F(KernelGraphTest, NewValueNode) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   add_value->set_abstract(x_abstract);
   add_value->set_kernel_info(std::make_shared<KernelInfo>());
-  auto mutable_kernel_info = add_value->kernel_info();
+  auto mutable_kernel_info = dynamic_cast<device::KernelInfo *>(add_value->kernel_info());
   MS_EXCEPTION_IF_NULL(mutable_kernel_info);
   std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
   builder->SetOutputsFormat({kOpFormat_FRAC_Z});
@@ -82,8 +82,7 @@ TEST_F(KernelGraphTest, NewParameter) {
   // test weight parameter node as input
   auto weight_parameter_node = anf_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(weight_parameter_node);
-  py::object obj;
-  auto param_value_new = std::make_shared<ParamValuePy>(obj);
+  auto param_value_new = std::make_shared<ParamValue>();
   weight_parameter_node->set_default_param(param_value_new);
   weight_parameter_node->set_abstract(x_abstract);
   auto new_weight_parameter_node = kernel_graph->NewParameter(weight_parameter_node);

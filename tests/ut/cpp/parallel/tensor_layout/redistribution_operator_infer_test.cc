@@ -16,8 +16,8 @@
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "parallel/tensor_layout/redistribution_operator_infer.h"
-#include "parallel/device_manager.h"
+#include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
+#include "frontend/parallel/device_manager.h"
 #include "util_layout_gen_test.h"
 
 namespace mindspore {

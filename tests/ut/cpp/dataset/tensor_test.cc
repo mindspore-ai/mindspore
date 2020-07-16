@@ -15,13 +15,13 @@
  */
 #include <memory>
 #include <string>
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/core/tensor.h"
-#include "dataset/core/cv_tensor.h"
-#include "dataset/core/data_type.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/core/data_type.h"
 
 using namespace mindspore::dataset;
 
@@ -432,3 +432,17 @@ TEST_F(MindDataTestTensorDE, TensorConcatenate) {
   s = t1->Concatenate({5}, t2);
   EXPECT_FALSE(s.IsOk());
 }
+
+TEST_F(MindDataTestTensorDE, TensorEmpty) {
+  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
+  ASSERT_TRUE(t->HasData());
+}
+
+TEST_F(MindDataTestTensorDE, TensorEmptyInvalidate) {
+  std::vector<uint32_t> values1 = {1, 2, 3, 0, 0, 0};
+  std::shared_ptr<Tensor> t;
+  Tensor::CreateTensor(&t, values1);
+  t->Invalidate();
+  ASSERT_TRUE(t->HasData());
+}
+

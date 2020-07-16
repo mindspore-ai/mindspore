@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
 import mindspore.ops.operations as P
@@ -154,22 +155,47 @@ def test_hook():
     print(loss_output.asnumpy().shape)
 
 
+bprop_debug = False
+
 class MulAdd(nn.Cell):
     def __init__(self):
         super(MulAdd, self).__init__()
 
     def construct(self, x, y):
-        return 2 * x + y
+        return 2 * x * x + y * y
 
     def bprop(self, x, y, out, dout):
-        assert (x == 1)
-        assert (y == 2)
-        assert (out == 4)
-        assert (dout == 1)
-        return 3 * dout, 2 * y
+        global bprop_debug
+        bprop_debug = True
+        return dout, 2 * y
 
 
 def test_custom_bprop():
     mul_add = MulAdd()
     mul_add.bprop_debug = True
-    assert C.grad_all(mul_add)(1, 2) == (3, 4)
+    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
+    C.grad_all(mul_add)(x, y)
+    assert bprop_debug
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+
+    def construct(self, x, y):
+        return 2 * x * x + y * y
+
+def test_grad_all():
+    net = Net()
+    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
+    res = C.grad_all(net)(x, y)
+    print(res)
+
+def test_check_input():
+    net = Net()
+    x = np.array([1, 2, 3])
+    y = np.array([2, 3, 4])
+    with pytest.raises(TypeError):
+        net(x, y)

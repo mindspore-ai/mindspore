@@ -26,32 +26,18 @@ from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox,
 GENERATE_GOLDEN = False
 
 DATA_DIR = "../data/dataset/testVOC2012_2"
+DATA_DIR_2 = ["../data/dataset/testCOCO/train/",
+              "../data/dataset/testCOCO/annotations/train.json"]  # DATA_DIR, ANNOTATION_DIR
 
 
-def fix_annotate(bboxes):
+def test_random_resize_with_bbox_op_voc_c(plot_vis=False):
     """
-    Fix annotations to format followed by mindspore.
-    :param bboxes: in [label, x_min, y_min, w, h, truncate, difficult] format
-    :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
+    Prints images and bboxes side by side with and without RandomResizeWithBBox Op applied
+    testing with VOC dataset
     """
-    for (i, box) in enumerate(bboxes):
-        if box.size == 7:
-            bboxes[i] = np.roll(box, -1)
-        else:
-            print("ERROR: Invalid Bounding Box size provided")
-            break
-    return bboxes
-
-
-def test_random_resize_with_bbox_op_rand_c(plot_vis=False):
-    """
-    Prints images and bboxes side by side with and without RandomResizeWithBBox Op applied,
-    tests with MD5 check, expected to pass
-    """
-    logger.info("test_random_resize_with_bbox_rand_c")
-    original_seed = config_get_set_seed(1)
+    logger.info("test_random_resize_with_bbox_op_voc_c")
+    original_seed = config_get_set_seed(123)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
     # Load dataset
     dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
                              decode=True, shuffle=False)
@@ -59,21 +45,15 @@ def test_random_resize_with_bbox_op_rand_c(plot_vis=False):
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
-    test_op = c_vision.RandomResizeWithBBox(200)
+    test_op = c_vision.RandomResizeWithBBox(100)
 
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
                             columns_order=["image", "annotation"],
                             operations=[test_op])
 
-    filename = "random_resize_with_bbox_op_01_c_result.npz"
+    filename = "random_resize_with_bbox_op_01_c_voc_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
 
     unaugSamp, augSamp = [], []
@@ -84,6 +64,49 @@ def test_random_resize_with_bbox_op_rand_c(plot_vis=False):
 
     if plot_vis:
         visualize_with_bounding_boxes(unaugSamp, augSamp)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_random_resize_with_bbox_op_rand_coco_c(plot_vis=False):
+    """
+    Prints images and bboxes side by side with and without RandomResizeWithBBox Op applied,
+    tests with MD5 check, expected to pass
+    testing with COCO dataset
+    """
+    logger.info("test_random_resize_with_bbox_op_rand_coco_c")
+    original_seed = config_get_set_seed(231)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # Load dataset
+    dataCoco1 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    dataCoco2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    test_op = c_vision.RandomResizeWithBBox(200)
+
+    # map to apply ops
+
+    dataCoco2 = dataCoco2.map(input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              columns_order=["image", "bbox"],
+                              operations=[test_op])
+
+    filename = "random_resize_with_bbox_op_01_c_coco_result.npz"
+    save_and_check_md5(dataCoco2, filename, generate_golden=GENERATE_GOLDEN)
+
+    unaugSamp, augSamp = [], []
+
+    for unAug, Aug in zip(dataCoco1.create_dict_iterator(), dataCoco2.create_dict_iterator()):
+        unaugSamp.append(unAug)
+        augSamp.append(Aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaugSamp, augSamp, annot_name="bbox")
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -104,13 +127,6 @@ def test_random_resize_with_bbox_op_edge_c(plot_vis=False):
                              decode=True, shuffle=False)
 
     test_op = c_vision.RandomResizeWithBBox(500)
-
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
 
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
@@ -147,7 +163,7 @@ def test_random_resize_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not" in str(err)
+        assert "Input is not within the required interval of (1 to 16777216)." in str(err)
 
     try:
         # one of the size values is zero
@@ -155,7 +171,7 @@ def test_random_resize_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not" in str(err)
+        assert "Input size at dim 0 is not within the required interval of (1 to 2147483647)." in str(err)
 
     try:
         # negative value for resize
@@ -163,7 +179,7 @@ def test_random_resize_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not" in str(err)
+        assert "Input is not within the required interval of (1 to 16777216)." in str(err)
 
     try:
         # invalid input shape
@@ -192,7 +208,8 @@ def test_random_resize_with_bbox_op_bad_c():
 
 
 if __name__ == "__main__":
-    test_random_resize_with_bbox_op_rand_c(plot_vis=False)
+    test_random_resize_with_bbox_op_voc_c(plot_vis=False)
+    test_random_resize_with_bbox_op_rand_coco_c(plot_vis=False)
     test_random_resize_with_bbox_op_edge_c(plot_vis=False)
     test_random_resize_with_bbox_op_invalid_c()
     test_random_resize_with_bbox_op_bad_c()

@@ -16,7 +16,7 @@
 #include "common/common.h"
 #include "common/cvop_common.h"
 #include <random>
-#include "dataset/kernels/image/random_crop_and_resize_op.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

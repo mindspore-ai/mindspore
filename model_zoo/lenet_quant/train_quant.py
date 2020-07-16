@@ -23,13 +23,14 @@ import argparse
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.quant import quant
 from src.dataset import create_dataset
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion
+from src.loss_monitor import LossMonitor
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",

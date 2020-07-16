@@ -59,8 +59,8 @@ class ProximalAdagrad(Optimizer):
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network and the
-        `sparse_grad` of `Parameter` being set as True. The sparse feature is under continuous development. The sparse
+        The sparse strategy is applied while the SparseGatherV2 operator being used for forward network.
+        The sparse feature is under continuous development. The sparse
         behavior is currently performed on the CPU.
 
     Args:
@@ -71,7 +71,7 @@ class ProximalAdagrad(Optimizer):
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
         use_locking (bool): If True use locks for update operation. Default: False.
-        loss_scale (float): Value for the loss scale. It should be equal to or greater than 1.0. Default: 1.0.
+        loss_scale (float): Value for the loss scale. It should be greater than 0.0. Default: 1.0.
         wegith_decay (float): Weight decay value to multiply weight, must be zero or positive value. Default: 0.0.
 
     Inputs:

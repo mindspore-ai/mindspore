@@ -60,6 +60,9 @@ int AnfConverter::ValidateFileStr(const std::string &modelFile, std::string file
 bool AnfConverter::ReadOnnxFromBinary(const std::string &modelFile, google::protobuf::Message *onnx_model) {
   std::unique_ptr<char> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
   int fd = open(onnx_file.get(), O_RDONLY);
+  if (fd < 0) {
+    MS_LOG(EXCEPTION) << "failed to open file";
+  }
   google::protobuf::io::FileInputStream input(fd);
   google::protobuf::io::CodedInputStream code_input(&input);
   code_input.SetTotalBytesLimit(INT_MAX, 536870912);
@@ -85,7 +88,7 @@ std::shared_ptr<FuncGraph> AnfConverter::RunAnfConverter(const std::string &file
     MS_LOG(ERROR) << "Trans data not support input format!";
   } else {
     modelFile = flagItem.substr(pos + 1);
-    std::cout << "input protobuf file path is: " << flagItem.substr(pos + 1) << std::endl;
+    std::cout << "input protobuf file path is: " << modelFile << std::endl;
   }
 
   if (ValidateFileStr(modelFile, ".pb") != 0) {

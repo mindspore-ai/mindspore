@@ -13,15 +13,16 @@
 # limitations under the License.
 
 """LogicalOr op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-logicalor_op_info = AkgRegOp("LogicalOr") \
+logicalor_op_info = AkgGpuRegOp("LogicalOr") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .input(1, "y") \
     .output(0, "output") \
     .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
     .get_op_info()
+
 
 @op_info_register(logicalor_op_info)
 def _logical_or_akg():

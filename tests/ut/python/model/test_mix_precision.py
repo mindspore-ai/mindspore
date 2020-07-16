@@ -219,3 +219,31 @@ def test_dict_cast():
     y = Tensor(np.array([4, 5.5, 6.5]), mstype.float32)
     net = FirstNet()
     net(x, y)
+
+
+def test_kwarg_cast():
+    class FirstNet(nn.Cell):
+        def __init__(self):
+            super(FirstNet, self).__init__()
+            self.net = SecondNet().add_flags_recursive(fp16=True)
+            self.add = P.TensorAdd()
+
+        def construct(self, tensor_a, tensor_b):
+            tensor_c = self.add(tensor_a, tensor_b)
+            dictionary = {"key": tensor_a}
+            result = self.net(key1=tensor_c, key2=dictionary)
+            return result
+
+    class SecondNet(nn.Cell):
+        def __init__(self):
+            super(SecondNet, self).__init__()
+            self.add = P.TensorAdd()
+
+        def construct(self, key1=1, key2=2):
+            tensor_d = self.add(key1, key2["key"])
+            return tensor_d
+
+    x = Tensor(np.array([1, 2.5, 3.5]), mstype.float32)
+    y = Tensor(np.array([4, 5.5, 6.5]), mstype.float32)
+    net = FirstNet()
+    net(x, y)

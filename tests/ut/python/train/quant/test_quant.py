@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
 from mindspore.train.quant import quant as qat
-from mobilenetv2_combined import MobileNetV2
+from model_zoo.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -42,7 +42,7 @@ class LeNet5(nn.Cell):
     def __init__(self, num_class=10):
         super(LeNet5, self).__init__()
         self.num_class = num_class
-        self.conv1 = nn.Conv2dBnAct(1, 6, kernel_size=5, has_bn=True, activation='relu6', pad_mode="valid")
+        self.conv1 = nn.Conv2dBnAct(1, 6, kernel_size=5, has_bn=True, activation='relu', pad_mode="valid")
         self.conv2 = nn.Conv2dBnAct(6, 16, kernel_size=5, activation='relu', pad_mode="valid")
         self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
         self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
@@ -67,20 +67,19 @@ def test_qat_lenet():
     img = Tensor(np.ones((32, 1, 32, 32)).astype(np.float32))
     net = LeNet5()
     net = qat.convert_quant_network(
-        net, freeze_bn=10000, num_bits=8)
+        net, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
     for param in net.get_parameters():
         param.init_data()
-    qat.export_geir(net, img, file_name="quant.pb")
+    qat.export(net, img, file_name="quant.pb")
 
 
 @pytest.mark.skip(reason="no `te.lang.cce` in ut env")
 def test_qat_mobile():
-    net = MobileNetV2()
+    network = mobilenetV2(num_classes=1000)
     img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
-    net = qat.convert_quant_network(
-        net, quant_delay=0, bn_fold=True, freeze_bn=10000, num_bits=8)
+    network = qat.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # should load the checkpoint. mock here
-    for param in net.get_parameters():
+    for param in network.get_parameters():
         param.init_data()
-    qat.export_geir(net, img, file_name="quant.pb")
+    qat.export(network, img, file_name="quant.pb")

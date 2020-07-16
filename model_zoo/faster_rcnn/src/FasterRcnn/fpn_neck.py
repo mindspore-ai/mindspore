@@ -22,7 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 def bias_init_zeros(shape):
     """Bias init method."""

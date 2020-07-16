@@ -23,13 +23,13 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 
-#include "pipeline/static_analysis/dshape.h"
-#include "pipeline/static_analysis/abstract_value.h"
-#include "pipeline/static_analysis/abstract_function.h"
-#include "pipeline/parse/python_adapter.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/parse_base.h"
-#include "pipeline/parse/resolve.h"
+#include "abstract/dshape.h"
+#include "abstract/abstract_value.h"
+#include "pipeline/jit/static_analysis/abstract_function.h"
+#include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace py = pybind11;
 #endif  // MINDSPORE_CCSRC_COMMON_H_

@@ -15,10 +15,10 @@
  */
 #include "common/common.h"
 #include "utils/log_adapter.h"
-#include "dataset/util/services.h"
-#include "dataset/util/intrp_service.h"
-#include "dataset/util/task_manager.h"
-#include "dataset/util/queue.h"
+#include "minddata/dataset/util/services.h"
+#include "minddata/dataset/util/intrp_service.h"
+#include "minddata/dataset/util/task_manager.h"
+#include "minddata/dataset/util/queue.h"
 
 using namespace mindspore::dataset;
 using mindspore::MsLogLevel::INFO;

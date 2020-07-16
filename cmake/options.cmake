@@ -19,6 +19,7 @@ option(ENABLE_MPI "enable mpi" OFF)
 option(ENABLE_AKG "enable akg" OFF)
 option(ENABLE_DEBUGGER "enable debugger" OFF)
 option(ENABLE_IBVERBS "enable IBVERBS for parameter server" OFF)
+option(ENABLE_PYTHON "Enable python" ON)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (WIN32)
@@ -113,6 +114,10 @@ endif()
 
 if(ENABLE_DUMP_E2E)
     add_compile_definitions(ENABLE_DUMP_E2E)
+endif()
+
+if(ENABLE_DATA_DUMP)
+    add_compile_definitions(ENABLE_DATA_DUMP)
 endif()
 
 if(ENABLE_DEBUGGER)

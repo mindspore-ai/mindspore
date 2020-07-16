@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include <string>
-#include "dataset/util/circular_pool.h"
-#include "dataset/core/client.h"
-#include "dataset/engine/execution_tree.h"
-#include "dataset/engine/datasetops/shuffle_op.h"
-#include "dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/util/circular_pool.h"
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/datasetops/shuffle_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

@@ -19,7 +19,7 @@
 #include "common/cvop_common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
-#include "dataset/engine/perf/cyclic_array.h"
+#include "minddata/dataset/engine/perf/cyclic_array.h"
 #include <chrono>
 
 using namespace mindspore::dataset;

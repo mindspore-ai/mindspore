@@ -18,7 +18,7 @@ export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
 
-options=`getopt -u -o ht:n:i:j:c:o:v: -l help,task:,device_num:,device_id:,hccl_json:,config:,output:,vocab: -- "$@"`
+options=`getopt -u -o ht:n:i:j:c:o:v:m: -l help,task:,device_num:,device_id:,hccl_json:,config:,output:,vocab:,metric: -- "$@"`
 eval set -- "$options"
 echo $options
 
@@ -35,6 +35,7 @@ echo_help()
   echo "        -c --config              set the configuration file"
   echo "        -o --output              set the output file of inference"
   echo "        -v --vocab               set the vocabulary"
+  echo "        -m --metric              set the metric"
 }
 
 set_hccl_json()
@@ -43,8 +44,8 @@ set_hccl_json()
   do
     if [[ "$1" == "-j" || "$1"  == "--hccl_json" ]]
     then
-      export MINDSPORE_HCCL_CONFIG_PATH=$2 #/data/wsc/hccl_2p_01.json
-      export RANK_TABLE_FILE=$2 #/data/wsc/hccl_2p_01.json
+      export MINDSPORE_HCCL_CONFIG_PATH=$2
+      export RANK_TABLE_FILE=$2
       break
     fi
     shift
@@ -119,6 +120,11 @@ do
     vocab=$2
     shift 2
     ;;
+  -m|--metric)
+    echo "metric";
+    metric=$2
+    shift 2
+    ;;
   --)
     shift
     break
@@ -163,7 +169,7 @@ do
     python train.py --config ${configurations##*/} >>log.log 2>&1 &
   elif [ "$task" == "infer" ]
   then
-    python eval.py --config ${configurations##*/} --output ${output} --vocab ${vocab##*/} >>log_infer.log 2>&1 &
+    python eval.py --config ${configurations##*/} --output ${output} --vocab ${vocab##*/} --metric ${metric} >>log_infer.log 2>&1 &
   fi
   cd ../
 done

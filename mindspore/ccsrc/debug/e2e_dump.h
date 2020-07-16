@@ -59,10 +59,6 @@ class Dump {
   uint32_t cur_iter_;
   std::vector<std::string> dump_kernels_;
 
-  static bool GetRealPath(const std::string &inpath, std::string *outpath);
-
-  static bool CreateNotExistDirs(const std::string &path);
-
  private:
   bool ParseDumpConfig(const std::string &dump_config_file);
   bool IsConfigExist(const nlohmann::json &dumpSettings);

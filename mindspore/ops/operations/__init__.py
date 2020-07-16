@@ -27,11 +27,11 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
                         SameTypeShape, ScatterAdd, ScatterSub, ScatterMul, ScatterDiv, ScatterMax, ScatterMin,
                         ScatterUpdate, ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
-                        Shape, Size, Slice, Split, TransShape, EmbeddingLookup,
+                        Shape, Size, Slice, Split, TransShape, ParallelConcat,
                         Squeeze, StridedSlice, Tile, TensorScatterUpdate,
-                        Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
+                        Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
-                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence)
+                        SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice,
@@ -62,7 +62,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      DropoutDoMask, DropoutGrad, Dropout,
                      DropoutGenMask, Flatten, FusedBatchNorm, BNTrainingReduce, BNTrainingUpdate,
                      Gelu, Elu,
-                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss,
+                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCLossV2,
                      LogSoftmax,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ConfusionMulGrad,
@@ -77,10 +77,10 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
-from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
-                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop)
 from . import _quant_ops
 from ._quant_ops import *
+from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, PopulationCount,
+                        CheckValid, MakeRefKey, Partial, Depend, CheckBprop, Push, Pull)
 from .thor_ops import *
 
 __all__ = [
@@ -260,6 +260,7 @@ __all__ = [
     'DepthwiseConv2dNative',
     'UnsortedSegmentSum',
     'UnsortedSegmentMin',
+    'UnsortedSegmentProd',
     "AllGather",
     "AllReduce",
     "ReduceScatter",
@@ -341,7 +342,12 @@ __all__ = [
     "InTopK",
     "CropAndResize",
     "LRN",
-    "Mod"
+    "Mod",
+    "PopulationCount",
+    "ParallelConcat",
+    "EmbeddingLookup",
+    "Push",
+    "Pull"
 ]
 
 __all__.sort()

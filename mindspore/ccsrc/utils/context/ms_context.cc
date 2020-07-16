@@ -27,9 +27,10 @@
 #include "tdt/data_common.h"
 #endif
 #ifdef ENABLE_GE
-#include "transform/df_graph_manager.h"
+#include "transform/graph_ir/df_graph_manager.h"
 #endif
 #include "ir/tensor.h"
+#include "common/utils.h"
 
 namespace mindspore {
 #ifdef ENABLE_GE
@@ -89,7 +90,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   max_device_memory_ = kDefaultMaxDeviceMemory;
   print_file_path_ = "";
   enable_graph_kernel_ = false;
-  enable_sparse_flag_ = false;
+  enable_sparse_ = false;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -165,6 +166,11 @@ bool MsContext::OpenTsd() {
   if (tsd_ref_) {
     MS_LOG(DEBUG) << "TDT Dataset client is already opened.";
     tsd_ref_++;
+    return true;
+  }
+
+  auto role = common::GetEnv("MS_ROLE");
+  if (strcmp(role.c_str(), "MS_SCHED") == 0 || strcmp(role.c_str(), "MS_PSERVER") == 0) {
     return true;
   }
 

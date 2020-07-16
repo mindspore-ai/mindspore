@@ -16,13 +16,13 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "device/kernel_info.h"
-#include "pre_activate/pass/convert_const_input_to_attr.h"
+#include "runtime/device/kernel_info.h"
+#include "backend/optimizer/pass/convert_const_input_to_attr.h"
 #include "debug/anf_ir_dump.h"
-#include "session/anf_runtime_algorithm.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #define private public
 #define protected public
-#include "pre_activate/ascend/ir_fission/topk_split.h"
+#include "backend/optimizer/ascend/ir_fission/topk_split.h"
 #undef private
 #undef protected
 

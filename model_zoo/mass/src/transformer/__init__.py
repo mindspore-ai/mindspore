@@ -19,10 +19,11 @@ from .decoder import TransformerDecoder
 from .beam_search import BeamSearchDecoder
 from .transformer_for_train import TransformerTraining, LabelSmoothedCrossEntropyCriterion, \
     TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
-from .infer_mass import infer
+from .infer_mass import infer, infer_ppl
 
 __all__ = [
     "infer",
+    "infer_ppl",
     "TransformerTraining",
     "LabelSmoothedCrossEntropyCriterion",
     "TransformerTrainOneStepWithLossScaleCell",

@@ -78,3 +78,9 @@ def test_tensor_imul():
     y = Tensor(np.ones([3, 3, 3, 3]).astype(np.float32))
     x *= y
     assert x.asnumpy()[0][0][0][0] == 1.0
+
+
+def test_tensor_pow():
+    x = Tensor(np.ones([3, 3, 3, 3]).astype(np.float32) * 2)
+    y = x ** 3
+    assert y.asnumpy()[0][0][0][0] == 8.0

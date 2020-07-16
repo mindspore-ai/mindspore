@@ -15,10 +15,10 @@
  */
 
 #include "common/common_test.h"
-#include "operator/ops.h"
-#include "session/ascend_session.h"
-#include "session/kernel_graph.h"
-#include "session/anf_runtime_algorithm.h"
+#include "frontend/operator/ops.h"
+#include "backend/session/ascend_session.h"
+#include "backend/session/kernel_graph.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 
 namespace mindspore {
