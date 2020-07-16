@@ -29,6 +29,7 @@ class ShardWriter:
 
     The class would write MindRecord File series.
     """
+
     def __init__(self):
         self._writer = ms.ShardWriter()
         self._header = None
@@ -161,7 +162,7 @@ class ShardWriter:
             if row_blob:
                 blob_data.append(list(row_blob))
             # filter raw data according to schema
-            row_raw = {field: item[field]
+            row_raw = {field: self._convert_np_types(item[field])
                        for field in self._header.schema.keys() - self._header.blob_fields if field in item}
             if row_raw:
                 raw_data.append(row_raw)
@@ -171,6 +172,12 @@ class ShardWriter:
             logger.error("Failed to write dataset.")
             raise MRMWriteDatasetError
         return ret
+
+    def _convert_np_types(self, val):
+        """convert numpy type to python primitive type"""
+        if isinstance(val, (np.int32, np.int64, np.float32, np.float64)):
+            return val.item()
+        return val
 
     def _merge_blob(self, blob_data):
         """
