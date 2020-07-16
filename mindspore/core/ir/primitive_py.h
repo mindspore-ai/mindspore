@@ -41,7 +41,6 @@ class PrimitivePy : public Primitive {
   ~PrimitivePy() override = default;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);
   py::function GetBpropFunction();
-  py::function GetComputeFunction();
 
   void set_signatures(
     std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>>
@@ -57,11 +56,15 @@ class PrimitivePy : public Primitive {
   void set_hook(const py::function &hook) { hook_ = hook; }
   py::function hook() const { return hook_; }
   BaseRef RunHookFunction(const VectorRef &args) const override;
+  BaseRef RunComputeFunction(const VectorRef &args) const override;
+  py::object RunPyComputeFunction(const py::tuple &py_args) const;
+  bool HasComputeFunction() const;
   const bool parse_info_ = true;
   const py::object &GetPyObj() const { return python_obj_; }
   bool is_tuple_input_ = false;
 
  private:
+  py::function GetComputeFunction() const;
   py::object python_obj_;
   py::function hook_;
   std::vector<Signature> signatures_;

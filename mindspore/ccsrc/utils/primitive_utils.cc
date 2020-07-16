@@ -15,6 +15,9 @@
  */
 
 #include "utils/primitive_utils.h"
+
+#include <memory>
+
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "common/utils.h"
@@ -42,5 +45,26 @@ py::function GetComputeFunction(std::string name) {
   }
   py::object fn = mod.attr(common::SafeCStr(name));
   return fn;
+}
+
+py::tuple ConvertDatatoPyTuple(const VectorRef &args) {
+  auto py_args = py::tuple(args.size());
+  size_t i = 0;
+  for (auto &arg : args) {
+    py_args[i] = BaseRefToPyData(arg);
+    MS_LOG(DEBUG) << "arg:" << i << ":" << arg.ToString();
+    i++;
+  }
+  return py_args;
+}
+
+BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args) {
+  auto func = GetComputeFunction(prim->name());
+  if (py::isinstance<py::none>(func)) {
+    MS_LOG(EXCEPTION) << prim->name() << " 's compute function run failed, please check whether it is not implemented";
+  }
+  auto py_args = ConvertDatatoPyTuple(args);
+  py::object obj = func(*py_args);
+  return std::make_shared<PyObjectRef>(obj);
 }
 }  // namespace mindspore

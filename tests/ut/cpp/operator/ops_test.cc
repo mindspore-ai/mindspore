@@ -454,8 +454,7 @@ TEST_F(TestOps, GetConv2DPrimPyTest) {
   ASSERT_TRUE(conv2d_ptr);
   if (nullptr != conv2d_ptr) {
     MS_LOG(INFO) << "Get PrimitivePyPtr: " << conv2d_ptr->name();
-    auto func = conv2d_ptr->GetComputeFunction();
-    if (py::isinstance<py::none>(func)) {
+    if(!conv2d_ptr->HasComputeFunction()){
       MS_LOG(EXCEPTION) << "" << conv2d_ptr->name() << "'s compute function is not implemented";
     }
 

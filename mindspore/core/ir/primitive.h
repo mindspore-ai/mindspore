@@ -83,6 +83,7 @@ class Primitive : public Named {
 
   void set_attr(const std::string &attrName, const ValuePtr &attr) { attrs_[attrName] = attr; }
   void EraseAttr(const std::string &attrName) { (void)attrs_.erase(attrName); }
+  virtual BaseRef RunComputeFunction(const VectorRef &args) const { return nullptr; }
 
   ValuePtr GetAttr(const std::string &attrName) const {
     auto iter = attrs_.find(attrName);

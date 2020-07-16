@@ -440,25 +440,13 @@ VectorRef VM::RunGraph(const FuncGraphPtr &g, const VectorRef &args) {
 }
 
 BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
-  PrimitivePyPtr operation = dyn_cast<PrimitivePy>(prim);
-
   MS_LOG(DEBUG) << "operation start " << prim->name();
-  auto func = operation != nullptr ? operation->GetComputeFunction() : GetComputeFunction(prim->name());
-  if (py::isinstance<py::none>(func)) {
-    MS_LOG(EXCEPTION) << prim->name() << " 's compute function is not implemented";
+  MS_EXCEPTION_IF_NULL(prim);
+  auto result = prim->RunComputeFunction(args);
+  if (result.is_null()) {
+    return RunComputeFunction(prim, args);
   }
-
-  py::tuple py_args = py::tuple(args.size());
-  MS_LOG(DEBUG) << "input for operation:";
-  size_t i = 0;
-  for (auto &arg : args) {
-    py_args[i] = BaseRefToPyData(arg);
-    MS_LOG(DEBUG) << "arg: " << i << ":";
-    i++;
-  }
-  py::object obj = func(*py_args);
-  MS_LOG(DEBUG) << "result:" << py::str(obj);
-  return obj;
+  return result;
 }
 
 }  // namespace compile

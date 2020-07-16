@@ -363,19 +363,21 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
     MS_LOG(INFO) << "RunOpInVM end";
     return std::move(result);
   }
-  auto func = op_exec_info->py_primitive->GetComputeFunction();
-  if (py::isinstance<py::none>(func)) {
-    MS_LOG(ERROR) << "VM failed to get func";
+  auto primitive = op_exec_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto result = primitive->RunPyComputeFunction(op_exec_info->op_inputs);
+  if (py::isinstance<py::none>(result)) {
+    MS_LOG(ERROR) << "VM got the result none, please check whether it is failed to get func";
     *status = PYNATIVE_OP_NOT_IMPLEMENTED_ERR;
     py::tuple err_ret(0);
     return std::move(err_ret);
   }
 
   // execute op
-  py::tuple result = py::make_tuple(func(*op_exec_info->op_inputs));
+  py::tuple tuple_result = py::make_tuple(result);
   *status = PYNATIVE_SUCCESS;
   MS_LOG(INFO) << "RunOpInVM end";
-  return std::move(result);
+  return std::move(tuple_result);
 }
 
 bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_index, const PrimitivePtr &op_prim,
