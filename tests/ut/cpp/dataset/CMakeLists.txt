@@ -11,6 +11,7 @@ SET(DE_UT_SRCS
         interrupt_test.cc
         image_folder_op_test.cc
         buddy_test.cc
+        bounding_box_augment_op_test.cc
         arena_test.cc
         btree_test.cc
         center_crop_op_test.cc
@@ -35,20 +36,26 @@ SET(DE_UT_SRCS
         project_op_test.cc
         queue_test.cc
         random_crop_op_test.cc
+        random_crop_with_bbox_op_test.cc
         random_crop_decode_resize_op_test.cc
         random_crop_and_resize_op_test.cc
+        random_crop_and_resize_with_bbox_op_test.cc
         random_color_adjust_op_test.cc
         random_horizontal_flip_op_test.cc
+        random_horizontal_flip_with_bbox_test.cc
         random_resize_op_test.cc
+        random_resize_with_bbox_op_test.cc
         random_rotation_op_test.cc
         random_vertical_flip_op_test.cc
+        random_vertical_flip_with_bbox_op_test.cc
         rename_op_test.cc
         repeat_op_test.cc
         skip_op_test.cc
         rescale_op_test.cc
         resize_bilinear_op_test.cc
         resize_op_test.cc
-	schema_test.cc
+        resize_with_bbox_op_test.cc
+	    schema_test.cc
         shuffle_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
@@ -83,6 +90,8 @@ SET(DE_UT_SRCS
         concatenate_op_test.cc
         cyclic_array_test.cc
         perf_data_test.cc
+        c_api_test.cc
+		tensor_op_fusion_pass_test.cc
         )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

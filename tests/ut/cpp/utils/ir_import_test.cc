@@ -19,10 +19,10 @@
 
 #include "utils/log_adapter.h"
 #include "debug/anf_ir_utils.h"
-#include "pipeline/parse/parse.h"
+#include "pipeline/jit/parse/parse.h"
 #include "ir/manager.h"
-#include "pipeline/static_analysis/prim.h"
-#include "operator/ops.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "frontend/operator/ops.h"
 
 namespace mindspore {
 class TestIrImporter : public UT::Common {

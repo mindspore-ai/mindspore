@@ -33,8 +33,10 @@ from ...ops.operations import _inner_ops as inner
 from ...train import serialization
 from . import quant_utils
 
-_ACTIVATION_MAP = {nn.ReLU: quant.ReLUQuant,
-                   nn.ReLU6: quant.ReLU6Quant,
+_ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
+                   nn.ReLU6: quant.ActQuant,
+                   nn.LeakyReLU: quant.ActQuant,
+                   nn.Sigmoid: quant.ActQuant,
                    nn.HSigmoid: quant.HSigmoidQuant,
                    nn.HSwish: quant.HSwishQuant}
 
@@ -112,7 +114,6 @@ class ConvertToQuantNetwork:
     def run(self):
         self.network.update_cell_prefix()
         network = self._convert_subcells2quant(self.network)
-        network = _AddFakeQuantInput(network)
         self.network.update_cell_type("quant")
         return network
 
@@ -257,9 +258,9 @@ class ConvertToQuantNetwork:
     def _convert_activation(self, activation):
         act_class = activation.__class__
         if act_class not in _ACTIVATION_MAP:
-            raise ValueError(
-                "Unsupported activation in auto quant: ", act_class)
-        return _ACTIVATION_MAP[act_class](num_bits=self.act_bits,
+            raise ValueError("Unsupported activation in auto quant: ", act_class)
+        return _ACTIVATION_MAP[act_class](activation=act_class,
+                                          num_bits=self.act_bits,
                                           quant_delay=self.act_qdelay,
                                           per_channel=self.act_channel,
                                           symmetric=self.act_symmetric,
@@ -273,16 +274,20 @@ class ExportToQuantInferNetwork:
     Args:
         network (Cell): MindSpore network API `convert_quant_network`.
         inputs (Tensor): Input tensors of the `quantization aware training network`.
+        mean (int): Input data mean. Default: 127.5.
+        std_dev (int, float): Input data variance. Default: 127.5.
 
     Returns:
         Cell, GEIR backend Infer network.
     """
     __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
 
-    def __init__(self,
-                 network,
-                 *inputs):
+    def __init__(self, network, mean, std_dev, *inputs):
         network = validator.check_isinstance('network', network, (nn.Cell,))
+        # quantize for inputs: q = f / scale + zero_point
+        # dequantize for outputs: f = (q - zero_point) * scale
+        self.input_scale = round(mean)
+        self.input_zero_point = 1 / std_dev
         self.data_type = mstype.int8
         self.network = copy.deepcopy(network)
         self.all_parameters = {p.name: p for p in self.network.get_parameters()}
@@ -313,11 +318,14 @@ class ExportToQuantInferNetwork:
         info = self.quant_info_table.get(w_minq_name, None)
         if info:
             fack_quant_a_in_op, minq_name = info
-            maxq = self.all_parameters[minq_name[:-4] + "maxq"]
-            minq = self.all_parameters[minq_name]
-            scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
+            if minq_name == 'input':
+                scale_a_in, zp_a_in = self.input_scale, self.input_zero_point
+            else:
+                maxq = self.all_parameters[minq_name[:-4] + "maxq"]
+                minq = self.all_parameters[minq_name]
+                scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
         else:
-            logger.warning(f"Do not find `fake_quant` from input with `fack_quant.minq` {w_minq_name}")
+            logger.warning(f"Do not find `fake_quant` from input with `fake_quant.minq` {w_minq_name}")
             return None
 
         # Build the `Quant` `Dequant` op.
@@ -325,7 +333,7 @@ class ExportToQuantInferNetwork:
         quant_op = inner.AscendQuant(float(scale_a_in), float(zp_a_in))
         sqrt_mode = False
         scale_deq = scale_a_out * scale_w
-        if scale_deq < 2 ** -14:
+        if (scale_deq < 2 ** -14).all():
             scale_deq = np.sqrt(scale_deq)
             sqrt_mode = True
         dequant_op = inner.AscendDequant(sqrt_mode)
@@ -393,7 +401,7 @@ class ExportToQuantInferNetwork:
         return network
 
 
-def export(network, *inputs, file_name, file_format='GEIR'):
+def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='GEIR'):
     """
     Exports MindSpore quantization predict model to deploy with GEIR.
 
@@ -401,16 +409,27 @@ def export(network, *inputs, file_name, file_format='GEIR'):
         network (Cell): MindSpore network produced by `convert_quant_network`.
         inputs (Tensor): Inputs of the `quantization aware training network`.
         file_name (str): File name of model to export.
+        mean (int): Input data mean. Default: 127.5.
+        std_dev (int, float): Input data variance. Default: 127.5.
         file_format (str): MindSpore currently supports 'GEIR' format for exported quantization aware model.
             - GEIR: Graph Engine Intermediate Representation. An Intermediate representation format of Ascend model.
     """
+    supported_device = ["Ascend"]
     supported_formats = ['GEIR']
+
+    mean = validator.check_type("mean", mean, (int, float))
+    std_dev = validator.check_type("std_dev", std_dev, (int, float))
+
+    if context.get_context('device_target') not in supported_device:
+        raise KeyError("Unsupported {} device target.".format(context.get_context('device_target')))
 
     if file_format not in supported_formats:
         raise ValueError('Illegal file format {}.'.format(file_format))
 
+    network.set_train(False)
+
     if file_format == 'GEIR':
-        exporter = ExportToQuantInferNetwork(network, *inputs)
+        exporter = ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
         deploy_net = exporter.run()
         serialization.export(deploy_net, *inputs, file_name=file_name, file_format=file_format)
 

@@ -27,7 +27,7 @@ roi_align_op_info = TBERegOp("ROIAlign") \
     .attr("pooled_height", "required", "int", "all") \
     .attr("pooled_width", "required", "int", "all") \
     .attr("sample_num", "optional", "int", "all", "2") \
-    .attr("roi_end_mode", "optional", "0,1", "1") \
+    .attr("roi_end_mode", "optional", "int", "0,1", "1") \
     .input(0, "features", False, "required", "all") \
     .input(1, "rois", False, "required", "all") \
     .input(2, "rois_n", False, "optional", "all") \

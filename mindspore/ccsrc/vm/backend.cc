@@ -23,7 +23,7 @@
 #include "utils/callbacks.h"
 #include "utils/graph_utils.h"
 #include "utils/base_ref_extends.h"
-#include "session/session_factory.h"
+#include "backend/session/session_factory.h"
 #include "common/utils.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
@@ -32,6 +32,7 @@
 namespace mindspore {
 namespace compile {
 bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
+bool Backend::GetIndex(const BaseRef &c, int *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 LinConvertResult MsBackend::GetMultiGraphRun(const FuncGraphPtr &g) {
   // multi_graph merge to one, big graph have paramters in begin and only have one output

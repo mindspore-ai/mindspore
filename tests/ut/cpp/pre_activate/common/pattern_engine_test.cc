@@ -20,8 +20,8 @@
 #include <algorithm>
 
 #include "common/common_test.h"
-#include "pre_activate/common/pattern_engine.h"
-#include "pre_activate/common/visit.h"
+#include "backend/optimizer/common/pattern_engine.h"
+#include "backend/optimizer/common/visit.h"
 #include "utils/base_ref.h"
 #include "ir/anf.h"
 

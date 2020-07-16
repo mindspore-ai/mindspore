@@ -15,10 +15,10 @@
  */
 
 #include <sstream>
-#include "dataset/util/btree.h"
-#include "dataset/util/auto_index.h"
-#include "dataset/util/system_pool.h"
-#include "dataset/util/task_manager.h"
+#include "minddata/dataset/util/btree.h"
+#include "minddata/dataset/util/auto_index.h"
+#include "minddata/dataset/util/system_pool.h"
+#include "minddata/dataset/util/task_manager.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

@@ -649,6 +649,15 @@ def test_strided_slice_const():
     assert (ret.asnumpy() == np.array([], np.float32).reshape([0, 1, 7, 8, 9, 3, 1])).all()
 
 
+class ParallelConcatNet(nn.Cell):
+    def __init__(self):
+        super(ParallelConcatNet, self).__init__()
+        self.parallel_concat = P.ParallelConcat()
+
+    def construct(self, x1, x2):
+        return self.parallel_concat((x1, x2))
+
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -1391,6 +1400,11 @@ test_case_nn_ops = [
         'desc_const': [4],
         'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([1, 2, 3]).astype(np.int32))],
         'desc_bprop': [[4, 2, 1, 3]]}),
+    ('UnsortedSegmentProd', {
+        'block': P.UnsortedSegmentProd(),
+        'desc_const': [4],
+        'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([0, 1, 0]).astype(np.int32))],
+        'desc_bprop': [[4, 2, 1, 3]]}),
     ('DropoutGenMask', {
         'block': P.DropoutGenMask(),
         'desc_const': [(2, 2), Tensor(0.5, mstype.float32)],
@@ -1948,6 +1962,12 @@ test_case_array_ops = [
         'desc_inputs': [[1, 3, 24, 24]],
         'desc_bprop': [[1, 12, 24, 24]],
     }),
+    ('ParallelConcat', {
+        'block': ParallelConcatNet(),
+        'desc_inputs': [Tensor([[1, 2]], mstype.float32),
+                        Tensor([[5, 6]], mstype.float32)],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_other_ops = [
@@ -2216,7 +2236,10 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
         'skip': ['backward']}),
-
+    ('PopulationCount', {
+        'block': P.PopulationCount(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int16))],
+        'skip': ['backward']}),
 ]
 
 test_case_quant_ops = [

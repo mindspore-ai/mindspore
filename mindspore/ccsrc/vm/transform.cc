@@ -26,9 +26,9 @@
 #include <string>
 #include <vector>
 
-#include "pipeline/static_analysis/abstract_value.h"
+#include "abstract/abstract_value.h"
 #ifdef ENABLE_GE
-#include "transform/convert.h"
+#include "transform/graph_ir/convert.h"
 #endif
 #include "utils/graph_utils.h"
 #include "utils/context/ms_context.h"
@@ -46,8 +46,9 @@ using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiv
 std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
                                            prim::kPrimMakeTuple, prim::kPrimBpropCut};
 const std::vector<PrimitivePtr> &GetMsNonlinearOps() {
-  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
-                                                             prim::kPrimBpropCut};
+  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn,   prim::kPrimPartial,
+                                                             prim::kPrimSwitch,   prim::kPrimMakeTuple,
+                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
   return ms_nonlinear_ops;
 }
 
@@ -187,6 +188,29 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
   std::reverse(result.begin(), result.end());
   return result;
 }
+
+bool IsSubGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto &inputs = cnode->inputs();
+    if (inputs.empty()) {
+      MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
+    }
+
+    AnfNodePtr fn = inputs[0];
+    if (!IsValueNode<Primitive>(fn)) {
+      return false;
+    }
+    auto node_prim = GetValueNode<PrimitivePtr>(fn);
+    if (node_prim->name() == prim::kPrimPartial->name()) {
+      return true;
+    }
+  } else if (IsValueNode<FuncGraph>(node)) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 CompileGraph::CompileGraph(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list)
@@ -214,7 +238,6 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
     }
 
     AnfNodePtr fn = inputs[0];
-    MS_EXCEPTION_IF_NULL(fn);
     if (IsValueNode<FuncGraph>(fn)) {
       auto fg = GetValueNode<FuncGraphPtr>(fn);
       if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
@@ -235,6 +258,15 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
           MS_EXCEPTION_IF_NULL(ms_context);
           ms_context->set_enable_pynative_hook(true);
         }
+
+        if (backend_->name() == kMsConvert && prim->name() == prim::kPrimMakeTuple->name()) {
+          if (inputs.size() < 2) {
+            return false;
+          }
+          auto ret = IsSubGraph(inputs[1]);
+          return ret;
+        }
+
         return true;
       }
     }
@@ -466,6 +498,8 @@ int CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node)
     } else if (IsPrimitive(fn, prim::kPrimSwitch)) {
       AddSwitch(node);
       AddSinkSwitch(node);
+    } else if (IsPrimitive(fn, prim::kPrimSwitchLayer)) {
+      AddSwitchLayer(node);
     } else if (IsPrimitive(fn, prim::kPrimMakeTuple)) {
       AddMakeTuple(node);
     } else {
@@ -620,6 +654,17 @@ void CompileGraph::AddSwitch(const CNodePtr &node) {
   args.emplace_back(Ref(inputs[2]));
   args.emplace_back(Ref(inputs[3]));
   AddInst(Instruction::kSwitch, args);
+}
+
+void CompileGraph::AddSwitchLayer(const CNodePtr &node) {
+  auto inputs = node->inputs();
+  if (inputs.size() != 3) {
+    MS_LOG(EXCEPTION) << "Switch layer must have index and branches.";
+  }
+  VectorRef args;
+  args.emplace_back(Ref(inputs[1]));
+  args.emplace_back(Ref(inputs[2]));
+  AddInst(Instruction::kSwitchLayer, args);
 }
 
 void CompileGraph::AddReturn(const CNodePtr &node) {

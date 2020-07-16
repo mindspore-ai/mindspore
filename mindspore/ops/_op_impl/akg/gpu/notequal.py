@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """NotEqual op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-notequal_op_info = AkgRegOp("NotEqual") \
+notequal_op_info = AkgGpuRegOp("NotEqual") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .input(1, "y") \

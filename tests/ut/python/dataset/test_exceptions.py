@@ -28,9 +28,9 @@ def test_exception_01():
     """
     logger.info("test_exception_01")
     data = ds.TFRecordDataset(DATA_DIR, columns_list=["image"])
-    with pytest.raises(ValueError) as info:
-        data = data.map(input_columns=["image"], operations=vision.Resize(100, 100))
-    assert "Invalid interpolation mode." in str(info.value)
+    with pytest.raises(TypeError) as info:
+        data.map(input_columns=["image"], operations=vision.Resize(100, 100))
+    assert "Argument interpolation with value 100 is not of type (<enum 'Inter'>,)" in str(info.value)
 
 
 def test_exception_02():
@@ -40,8 +40,8 @@ def test_exception_02():
     logger.info("test_exception_02")
     num_samples = -1
     with pytest.raises(ValueError) as info:
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
-    assert "num_samples cannot be less than 0" in str(info.value)
+        ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
+    assert 'Input num_samples is not within the required interval of (0 to 2147483647).' in str(info.value)
 
     num_samples = 1
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)

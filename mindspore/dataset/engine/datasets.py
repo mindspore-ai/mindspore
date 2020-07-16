@@ -38,13 +38,13 @@ from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
-from .iterators import DictIterator, TupleIterator
+from .iterators import DictIterator, TupleIterator, DummyIterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_split, check_bucket_batch_by_length, check_cluedataset
+    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_positive_int32
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -146,6 +146,12 @@ class Dataset:
         self._num_classes = None
         self._repeat_count = None
         self._sync = False
+        self.ms_role = os.getenv("MS_ROLE")
+
+    def _noop_mode(self):
+        if self.ms_role in ("MS_PSERVER", "MS_SCHED"):
+            return True
+        return False
 
     def __add__(self, datasets):
         return self.concat(datasets)
@@ -386,7 +392,7 @@ class Dataset:
 
     @check_map
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
-            num_parallel_workers=None, python_multiprocessing=False):
+            num_parallel_workers=None, python_multiprocessing=False, cache=None):
         """
         Apply each operation in operations to this dataset.
 
@@ -427,6 +433,7 @@ class Dataset:
                 parallel (default=None, the value from the config will be used).
             python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
                 option could be beneficial if the python operation is computational heavy (default=False).
+            cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
 
         Returns:
             MapDataset, dataset after mapping operation.
@@ -541,7 +548,7 @@ class Dataset:
             >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
         """
         return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers,
-                          python_multiprocessing)
+                          python_multiprocessing, cache)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=1):
@@ -939,6 +946,7 @@ class Dataset:
             raise TypeError("apply_func must return a dataset.")
         return dataset
 
+    @check_positive_int32
     def device_que(self, prefetch_size=None):
         """
         Return a transferredDataset that transfer data through device.
@@ -956,6 +964,7 @@ class Dataset:
         """
         return self.to_device()
 
+    @check_positive_int32
     def to_device(self, num_batch=None):
         """
         Transfer data through CPU, GPU or Ascend devices.
@@ -973,10 +982,14 @@ class Dataset:
         Raises:
             TypeError: If device_type is empty.
             ValueError: If device_type is not 'Ascend', 'GPU' or 'CPU'.
-            ValueError: If num_batch is None or 0 or larger than int_max.
+            ValueError: If num_batch is not positive or larger than int_max.
+            ValueError: If dataset size is None or 0.
             RuntimeError: If dataset is unknown.
             RuntimeError: If distribution file path is given but failed to read.
         """
+        if self.get_dataset_size() is None or 0:
+            raise ValueError("dataset size is None or 0.")
+
         if num_batch is None:
             num_batch = self.get_dataset_size()
             repeat_count = self.get_repeat_count()
@@ -995,8 +1008,8 @@ class Dataset:
         if device_type not in ('Ascend', 'GPU', 'CPU'):
             raise ValueError("Only support CPU, Ascend, GPU")
 
-        if num_batch is None or num_batch == 0:
-            raise ValueError("num_batch is None or 0.")
+        if num_batch == 0:
+            raise ValueError("num_batch is 0.")
 
         def get_distribution(output_dataset):
             dev_id = 0
@@ -1055,6 +1068,8 @@ class Dataset:
             >>>     # convert the returned tuple to a list and print
             >>>     print(list(item))
         """
+        if self._noop_mode():
+            return DummyIterator(self, 'tuple')
         return TupleIterator(self, columns)
 
     def create_dict_iterator(self):
@@ -1078,6 +1093,8 @@ class Dataset:
             >>>     print(item["column1"])
 
         """
+        if self._noop_mode():
+            return DummyIterator(self, 'dict')
         return DictIterator(self)
 
     def __iter__(self):
@@ -1556,7 +1573,7 @@ class BatchDataset(DatasetOp):
             Number, number of batches.
         """
         child_size = self.children[0].get_dataset_size()
-        if child_size is not None:
+        if child_size is not None and isinstance(self.batch_size, int):
             if self.drop_remainder:
                 return math.floor(child_size / self.batch_size)
             return math.ceil(child_size / self.batch_size)
@@ -1862,13 +1879,14 @@ class MapDataset(DatasetOp):
             in parallel (default=None).
         python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
             option could be beneficial if the python operation is computational heavy (default=False).
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
 
         Raises:
             ValueError: If len(input_columns) != len(output_columns) and columns_order is not specified.
     """
 
     def __init__(self, input_dataset, input_columns=None, operations=None, output_columns=None, columns_order=None,
-                 num_parallel_workers=None, python_multiprocessing=False):
+                 num_parallel_workers=None, python_multiprocessing=False, cache=None):
         super().__init__(num_parallel_workers)
         self.children.append(input_dataset)
         if input_columns is not None and not isinstance(input_columns, list):
@@ -1880,6 +1898,7 @@ class MapDataset(DatasetOp):
         if output_columns is not None and not isinstance(output_columns, list):
             output_columns = [output_columns]
         self.output_columns = output_columns
+        self.cache = cache
         self.columns_order = columns_order
 
         if self.input_columns and self.output_columns \
@@ -1898,6 +1917,7 @@ class MapDataset(DatasetOp):
         args["operations"] = self.operations
         args["output_columns"] = self.output_columns
         args["columns_order"] = self.columns_order
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -1923,6 +1943,7 @@ class MapDataset(DatasetOp):
         new_op.parent = copy.deepcopy(self.parent, memodict)
         new_op.input_indexs = copy.deepcopy(self._input_indexs, memodict)
         new_op.python_multiprocessing = copy.deepcopy(self.python_multiprocessing, memodict)
+        new_op.cache = copy.deepcopy(self.cache, memodict)
         new_op.operations = self.operations
         return new_op
 
@@ -2307,6 +2328,8 @@ class TransferDataset(DatasetOp):
 
     def send(self):
         # need to keep iterator alive so the executionTree is not destroyed
+        if self._noop_mode():
+            return
         self.iterator = TupleIterator(self)
 
 
@@ -2340,7 +2363,7 @@ class RangeDataset(MappableDataset):
         return False
 
 
-def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
+def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id, non_mappable=False):
     """
     Create sampler based on user input.
 
@@ -2350,7 +2373,11 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         shuffle (bool): Shuffle.
         num_shards (int): Number of shard for sharding.
         shard_id (int): Shard ID.
+        non_mappable (bool, optional): Indicate if caller is non-mappable dataset for special handling (default=False).
     """
+    if non_mappable is True and all(arg is None for arg in [num_samples, shuffle, num_shards, shard_id, input_sampler]):
+        return None
+
     if input_sampler is not None:
         # If the user provided a sampler, then it doesn't matter what the other args are because
         # we are being asked specifically to use the given sampler.
@@ -2363,7 +2390,7 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         if (isinstance(input_sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
                                        samplers.RandomSampler, samplers.SubsetRandomSampler,
                                        samplers.WeightedRandomSampler, samplers.Sampler)) and
-                (num_shards is not None or shard_id is not None or shuffle is not None or num_samples is not None)):
+                (any(arg is not None for arg in [num_shards, shard_id, shuffle, num_samples]))):
             raise ValueError(
                 'Conflicting arguments during sampler assignments. num_samples: {}, num_shards: {},'
                 ' shard_id: {}, shuffle: {})'.format(num_samples, num_shards, shard_id, shuffle))
@@ -2452,6 +2479,7 @@ class ImageFolderDatasetV2(MappableDataset):
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -2476,7 +2504,7 @@ class ImageFolderDatasetV2(MappableDataset):
     @check_imagefolderdatasetv2
     def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, extensions=None, class_indexing=None,
-                 decode=False, num_shards=None, shard_id=None):
+                 decode=False, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
@@ -2488,6 +2516,7 @@ class ImageFolderDatasetV2(MappableDataset):
         self.decode = decode
         self.num_shards = num_shards
         self.shard_id = shard_id
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -2500,6 +2529,7 @@ class ImageFolderDatasetV2(MappableDataset):
         args["decode"] = self.decode
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
     def get_dataset_size(self):
@@ -3245,6 +3275,7 @@ class TFRecordDataset(SourceDataset):
             argument should be specified only when num_shards is also specified.
         shard_equal_rows (bool): Get equal rows for all shards(default=False). If shard_equal_rows is false, number
             of rows of each shard may be not equal.
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.common.dtype as mstype
@@ -3262,7 +3293,7 @@ class TFRecordDataset(SourceDataset):
 
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
-                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False):
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None):
         super().__init__(num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
@@ -3274,6 +3305,7 @@ class TFRecordDataset(SourceDataset):
         self.schema = schema
         self.columns_list = columns_list
         self.num_samples = num_samples
+        self.cache = cache
         if schema_obj is not None and num_samples is None:
             self.num_samples = schema_obj.num_rows
 
@@ -3289,6 +3321,14 @@ class TFRecordDataset(SourceDataset):
         else:
             self.shuffle_level = shuffle
             self.shuffle_files = True
+
+        # The TF record dataset does not directly support a sampler.  It has provided sampling arguments
+        # (shuffle, num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in
+        # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
+        sampler_shuffle = self.shuffle_files
+        sampler = None
+        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
+                                       non_mappable=True)
         self.shard_equal_rows = shard_equal_rows
 
     def get_args(self):
@@ -3312,6 +3352,8 @@ class TFRecordDataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         args["shard_equal_rows"] = self.shard_equal_rows
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
+        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self, estimate=False):
@@ -3797,43 +3839,61 @@ class RandomDataset(SourceDataset):
     A source dataset that generates random data.
 
     Args:
-        num_samples (int): number of samples to generate.
+        total_rows (int): number of rows for the dataset to generate (default=None, number of rows is random)
         schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the random dataset generates a random schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
+        num_samples (int): number of samples to draw from the total. (default=None, which means all rows)
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
+        cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used)
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset should be divided
+            into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
     """
 
-    def __init__(self, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None):
+    @check_random_dataset
+    def __init__(self, total_rows=None, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
+                 cache=None, shuffle=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         schema_obj = None
         if (schema is not None) and (not isinstance(schema, Schema)):
             schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
         self.schema = schema
         self.columns_list = columns_list
-        if schema_obj is not None and num_samples is None:
-            self.num_samples = schema_obj.num_rows
-        elif num_samples is None:
-            self.num_samples = 0
+        sampler = None
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id, non_mappable=True)
+        self.num_samples = num_samples
+        self.cache = cache
+        if schema_obj is not None and total_rows is None:
+            self.total_rows = schema_obj.num_rows
+        elif total_rows is None:
+            self.total_rows = 0
         else:
-            self.num_samples = num_samples
+            self.total_rows = total_rows
+        self.num_shards = num_shards
+        self.shard_id = shard_id
+        self.shuffle_level = shuffle
 
     def get_args(self):
         args = super().get_args()
         if self.schema is not None:
             if isinstance(self.schema, Schema):
                 self.schema.datasetType = 'Random'
-                if self.num_samples is not None:
-                    self.schema.num_rows = self.num_samples
+                if self.total_rows is not None:
+                    self.schema.num_rows = self.total_rows
                 args["schema_json_string"] = self.schema.to_json()
             else:
                 args["schema_file_path"] = self.schema
         args["schema"] = self.schema
-        if self.columns_list is not None:
-            args["columns_list"] = self.columns_list
-        if self.num_samples is not None:
-            args["num_samples"] = self.num_samples
+        args["columns_list"] = self.columns_list
+        args["num_samples"] = self.num_samples
+        args["total_rows"] = self.total_rows
+        args["cache"] = self.cache.cache_client if self.cache is not None else None
+        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self):
@@ -3843,18 +3903,28 @@ class RandomDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
+
+        num_rows = CifarOp.get_num_rows(self.dataset_dir, True)
+
+        rows_per_shard = get_num_rows(num_rows, self.num_shards)
         rows_from_sampler = self._get_sampler_dataset_size()
 
         if rows_from_sampler is None:
-            return self.num_samples
+            return rows_per_shard
 
-        return min(rows_from_sampler, self.num_samples)
+        return min(rows_from_sampler, rows_per_shard)
 
     def is_shuffled(self):
-        return True
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
 
     def is_sharded(self):
-        return False
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
 
 
 class Schema:

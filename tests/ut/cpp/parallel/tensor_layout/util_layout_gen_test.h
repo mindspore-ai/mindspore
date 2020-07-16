@@ -20,7 +20,7 @@
 #include <tuple>
 #include <vector>
 
-#include "parallel/tensor_layout/tensor_layout.h"
+#include "frontend/parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {
 namespace parallel {

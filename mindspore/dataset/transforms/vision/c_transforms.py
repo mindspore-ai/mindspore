@@ -40,12 +40,14 @@ Examples:
         >>> dataset = dataset.map(input_columns="image", operations=transforms_list)
         >>> dataset = dataset.map(input_columns="label", operations=onehot_op)
 """
+import numbers
 import mindspore._c_dataengine as cde
 
 from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
-    check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, check_bounding_box_augment_cpp
+    check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, check_range, \
+    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, check_bounding_box_augment_cpp, \
+    FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -55,6 +57,18 @@ DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
                     Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
                     Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
                     Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
+
+
+def parse_padding(padding):
+    if isinstance(padding, numbers.Number):
+        padding = [padding] * 4
+    if len(padding) == 2:
+        left = right = padding[0]
+        top = bottom = padding[1]
+        padding = (left, top, right, bottom,)
+    if isinstance(padding, list):
+        padding = tuple(padding)
+    return padding
 
 
 class Decode(cde.DecodeOp):
@@ -136,16 +150,22 @@ class RandomCrop(cde.RandomCropOp):
 
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
+        if isinstance(size, int):
+            size = (size, size)
+        if padding is None:
+            padding = (0, 0, 0, 0)
+        else:
+            padding = parse_padding(padding)
+        if isinstance(fill_value, int):  # temporary fix
+            fill_value = tuple([fill_value] * 3)
+        border_type = DE_C_BORDER_TYPE[padding_mode]
+
         self.size = size
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
         self.padding_mode = padding_mode.value
-        if padding is None:
-            padding = (0, 0, 0, 0)
-        if isinstance(fill_value, int):  # temporary fix
-            fill_value = tuple([fill_value] * 3)
-        border_type = DE_C_BORDER_TYPE[padding_mode]
+
         super().__init__(*size, *padding, border_type, pad_if_needed, *fill_value)
 
 
@@ -184,16 +204,23 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
 
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
+        if isinstance(size, int):
+            size = (size, size)
+        if padding is None:
+            padding = (0, 0, 0, 0)
+        else:
+            padding = parse_padding(padding)
+
+        if isinstance(fill_value, int):  # temporary fix
+            fill_value = tuple([fill_value] * 3)
+        border_type = DE_C_BORDER_TYPE[padding_mode]
+
         self.size = size
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
         self.padding_mode = padding_mode.value
-        if padding is None:
-            padding = (0, 0, 0, 0)
-        if isinstance(fill_value, int):  # temporary fix
-            fill_value = tuple([fill_value] * 3)
-        border_type = DE_C_BORDER_TYPE[padding_mode]
+
         super().__init__(*size, *padding, border_type, pad_if_needed, *fill_value)
 
 
@@ -292,6 +319,8 @@ class Resize(cde.ResizeOp):
 
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
+        if isinstance(size, int):
+            size = (size, size)
         self.size = size
         self.interpolation = interpolation
         interpoltn = DE_C_INTER_MODE[interpolation]
@@ -359,6 +388,8 @@ class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
+        if isinstance(size, int):
+            size = (size, size)
         self.size = size
         self.scale = scale
         self.ratio = ratio
@@ -396,6 +427,8 @@ class RandomResizedCrop(cde.RandomCropAndResizeOp):
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
+        if isinstance(size, int):
+            size = (size, size)
         self.size = size
         self.scale = scale
         self.ratio = ratio
@@ -417,6 +450,8 @@ class CenterCrop(cde.CenterCropOp):
 
     @check_crop
     def __init__(self, size):
+        if isinstance(size, int):
+            size = (size, size)
         self.size = size
         super().__init__(*size)
 
@@ -442,11 +477,25 @@ class RandomColorAdjust(cde.RandomColorAdjustOp):
 
     @check_random_color_adjust
     def __init__(self, brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
+        brightness = self.expand_values(brightness)
+        contrast = self.expand_values(contrast)
+        saturation = self.expand_values(saturation)
+        hue = self.expand_values(hue, center=0, bound=(-0.5, 0.5), non_negative=False)
+
         self.brightness = brightness
         self.contrast = contrast
         self.saturation = saturation
         self.hue = hue
+
         super().__init__(*brightness, *contrast, *saturation, *hue)
+
+    def expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
+        if isinstance(value, numbers.Number):
+            value = [center - value, center + value]
+            if non_negative:
+                value[0] = max(0, value[0])
+            check_range(value, bound)
+        return (value[0], value[1])
 
 
 class RandomRotation(cde.RandomRotationOp):
@@ -485,6 +534,8 @@ class RandomRotation(cde.RandomRotationOp):
         self.expand = expand
         self.center = center
         self.fill_value = fill_value
+        if isinstance(degrees, numbers.Number):
+            degrees = (-degrees, degrees)
         if center is None:
             center = (-1, -1)
         if isinstance(fill_value, int):  # temporary fix
@@ -584,6 +635,8 @@ class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
+        if isinstance(size, int):
+            size = (size, size)
         self.size = size
         self.scale = scale
         self.ratio = ratio
@@ -623,12 +676,14 @@ class Pad(cde.PadOp):
 
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
-        self.padding = padding
-        self.fill_value = fill_value
-        self.padding_mode = padding_mode
+        padding = parse_padding(padding)
         if isinstance(fill_value, int):  # temporary fix
             fill_value = tuple([fill_value] * 3)
         padding_mode = DE_C_BORDER_TYPE[padding_mode]
+
+        self.padding = padding
+        self.fill_value = fill_value
+        self.padding_mode = padding_mode
         super().__init__(*padding, padding_mode, *fill_value)
 
 

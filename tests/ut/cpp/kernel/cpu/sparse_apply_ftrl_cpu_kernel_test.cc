@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #define private public
 #define protected public
-#include "kernel/cpu/sparse_apply_ftrl_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/sparse_apply_ftrl_cpu_kernel.h"
 #undef private
 #undef protected
 
@@ -56,9 +56,12 @@ class SparseApplyFtrlCpuKernelTest : public UT::Common {
     inputs_.push_back(CreateKernelAddress(indices.data()));
   }
 
-  void CreateWorkspaceAddress(std::vector<float> &new_grad, std::vector<int> &new_indices) {
+  void CreateWorkspaceAddress(std::vector<float> &new_grad, std::vector<int> &new_indices, std::vector<float> &tmp_grad,
+                              std::vector<int> &tmp_indices) {
     workspace_.push_back(CreateKernelAddress(new_grad.data()));
     workspace_.push_back(CreateKernelAddress(new_indices.data()));
+    workspace_.push_back(CreateKernelAddress(tmp_grad.data()));
+    workspace_.push_back(CreateKernelAddress(tmp_indices.data()));
   }
 
   std::vector<float> var_;
@@ -86,7 +89,9 @@ TEST_F(SparseApplyFtrlCpuKernelTest, dense_test) {
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
   std::vector<int> new_indices(3);
-  CreateWorkspaceAddress(new_grad, new_indices);
+  std::vector<float> tmp_grad(3 * 3 * 3);
+  std::vector<int> tmp_indices(3);
+  CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices);
   sparse_ftrl_->Launch(inputs_, workspace_, outputs_);
   for (size_t i = 0; i < 3 * 3 * 3; ++i) {
     EXPECT_TRUE(std::fabs(var_[i] - 0.291479) < 1e-6);
@@ -110,7 +115,9 @@ TEST_F(SparseApplyFtrlCpuKernelTest, sparse_test1) {
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
   std::vector<int> new_indices(3);
-  CreateWorkspaceAddress(new_grad, new_indices);
+  std::vector<float> tmp_grad(3 * 3 * 3);
+  std::vector<int> tmp_indices(3);
+  CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices);
   sparse_ftrl_->Launch(inputs_, workspace_, outputs_);
   for (size_t i = 0; i < 3 * 3; ++i) {
     EXPECT_TRUE(std::fabs(var_[i] - 0.291479) < 1e-6);
@@ -138,7 +145,9 @@ TEST_F(SparseApplyFtrlCpuKernelTest, sparse_test2) {
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
   std::vector<int> new_indices(3);
-  CreateWorkspaceAddress(new_grad, new_indices);
+  std::vector<float> tmp_grad(3 * 3 * 3);
+  std::vector<int> tmp_indices(3);
+  CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices);
   sparse_ftrl_->Launch(inputs_, workspace_, outputs_);
   for (size_t i = 0; i < 3 * 3; ++i) {
     EXPECT_EQ(var_[i], 1.0);

@@ -17,13 +17,13 @@
 #include <memory>
 #include <vector>
 
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "common/utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "dataset/engine/datasetops/source/text_file_op.h"
-#include "dataset/util/status.h"
+#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
+#include "minddata/dataset/util/status.h"
 
 namespace common = mindspore::common;
 

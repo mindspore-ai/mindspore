@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Communication management API"""
+import os
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
@@ -28,6 +29,7 @@ __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
 
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 DEFAULT_BACKEND = Backend("hccl")
+MS_ROLE = os.getenv("MS_ROLE")
 
 
 def _get_group(group):
@@ -58,6 +60,8 @@ def init(backend_name="hccl"):
         TypeError: If backend name is not a string.
         RuntimeError: If backend is invalid or distributed init fails.
     """
+    if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+        return
     if not isinstance(backend_name, str):
         raise TypeError("Backend name must be a string, but got {}".format(type(backend_name)))
 

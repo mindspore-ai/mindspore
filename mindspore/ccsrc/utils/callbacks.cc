@@ -20,8 +20,8 @@
 #include <memory>
 #include <vector>
 #include "pybind11/pybind11.h"
-#include "pipeline/parse/data_converter.h"
-#include "pipeline/parse/python_adapter.h"
+#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/parse/python_adapter.h"
 #include "utils/visible.h"
 
 namespace mindspore {

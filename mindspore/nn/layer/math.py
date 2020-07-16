@@ -55,7 +55,7 @@ class ReduceLogSumExp(Cell):
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = P.ReduceLogSumExp(keep_dims=True)
+        >>> op = nn.ReduceLogSumExp(keep_dims=True)
         >>> output = op(input_x, 1)
     """
 
@@ -132,23 +132,19 @@ class Range(Cell):
 
 class LinSpace(Cell):
     r"""
-    Generates values in an interval. And return the corresponding interpolation accroding to assist.
+    Generates values in an interval.
 
     Args:
-        - **start** (Union[int, float]) - The start of interval, With shape of 0-D.
-        - **stop** (Union[int, float]) - The end of interval, With shape of 0-D.
-        - **num** (int) - ticks number in the interval, the ticks include start and stop value.
-          With shape of 0-D.
+        start (Union[int, float]): The start of interval. With shape of 0-D.
+        stop (Union[int, float]): The end of interval. With shape of 0-D.
+        num (int): ticks number in the interval, the ticks include start and stop value. With shape of 0-D.
 
     Outputs:
         Tensor, With type same as `start`. The shape is 1-D with length of `num`.
 
     Examples:
-        >>> linspace = nn.LinSpace()
-        >>> start = Tensor(1, mindspore.float32)
-        >>> stop = Tensor(10, mindspore.float32)
-        >>> num = Tensor(5, mindspore.int32)
-        >>> output = linspace(start, stop, num)
+        >>> linspace = nn.LinSpace(1, 10, 5)
+        >>> output = linspace()
         [1, 3.25, 5.5, 7.75, 10]
     """
 

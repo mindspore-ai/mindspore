@@ -22,7 +22,7 @@ import sys
 from mindspore import log as logger
 from . import datasets as de
 from ..transforms.vision.utils import Inter, Border
-from ..core.configuration import config
+from ..core import config
 
 def serialize(dataset, json_filepath=None):
     """
@@ -173,7 +173,9 @@ def traverse(node):
     #    num_samples, shard_id, num_shards, shuffle
     # These arguments get moved into the sampler itself, so they are no longer needed to
     # be set at the dataset level.
-    if 'sampler' in node_args.keys():
+    # TF Record is a special case because it uses both the dataset and sampler arguments
+    # which is not decided until later during tree preparation phase.
+    if node_repr['op_type'] != 'TFRecordDataset' and 'sampler' in node_args.keys():
         if 'num_samples' in node_repr.keys():
             node_repr['num_samples'] = None
         if 'shuffle' in node_repr.keys():

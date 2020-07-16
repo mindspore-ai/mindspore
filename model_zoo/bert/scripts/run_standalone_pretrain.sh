@@ -26,10 +26,11 @@ DATA_DIR=$3
 SCHEMA_DIR=$4
 
 mkdir -p ms_log 
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
-python run_pretrain.py  \
+python ${PROJECT_DIR}/../run_pretrain.py  \
     --distribute="false" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \

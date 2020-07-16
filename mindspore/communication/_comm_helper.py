@@ -14,7 +14,7 @@
 # ============================================================================
 """comm_helper"""
 
-
+import os
 from ._hccl_management import load_lib as hccl_load_lib
 
 _HCCL_AVAILABLE = False
@@ -44,7 +44,7 @@ else:
 
 HCCL_WORLD_COMM_GROUP = "hccl_world_group"
 NCCL_WORLD_COMM_GROUP = "nccl_world_group"
-
+MS_ROLE = os.getenv("MS_ROLE")
 
 class Backend:
     """
@@ -152,6 +152,9 @@ def _get_rank_helper(group, backend):
         Integer. The local rank id of the calling process.
     """
     rank_id = None
+    if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+        rank_id = 0
+        return rank_id
     if backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             rank_id = hccl.get_rank_id()
@@ -211,6 +214,9 @@ def _get_size_helper(group, backend):
         Integer. The rank size of specified group.
     """
     size = None
+    if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+        size = 1
+        return size
     if backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             size = hccl.get_rank_size()

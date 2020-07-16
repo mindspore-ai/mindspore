@@ -15,20 +15,20 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "session/ascend_session.h"
-#include "session/anf_runtime_algorithm.h"
-#include "pipeline/resource.h"
-#include "operator/ops.h"
+#include "backend/session/ascend_session.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "pipeline/jit/resource.h"
+#include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/utils.h"
-#include "kernel/kernel_build_info.h"
-#include "pre_activate/common/optimizer.h"
+#include "backend/kernel_compiler/kernel_build_info.h"
+#include "backend/optimizer/common/optimizer.h"
 
 #define private public
 #define protected public
-#include "pre_activate/ascend/ir_fission/bn_split.h"
+#include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #undef private
 #undef protected
 

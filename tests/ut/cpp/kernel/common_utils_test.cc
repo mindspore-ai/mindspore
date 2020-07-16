@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "common/common_test.h"
-#include "kernel/common_utils.h"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace kernel {

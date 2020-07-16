@@ -61,6 +61,10 @@ def test_pad_end_exceptions():
         pad_compare([3, 4, 5], ["2"], 1, [])
     assert "a value in the list is not an integer." in str(info.value)
 
+    with pytest.raises(TypeError) as info:
+        pad_compare([1, 2], 3, -1, [1, 2, -1])
+    assert "Argument pad_end with value 3 is not of type (<class 'list'>,)" in str(info.value)
+
 
 if __name__ == "__main__":
     test_pad_end_basics()

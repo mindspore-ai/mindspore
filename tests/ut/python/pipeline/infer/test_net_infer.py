@@ -45,6 +45,7 @@ def test_net_infer():
 
 
 def test_assign_in_while():
+    context.set_context(device_target="Ascend")
     context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
         def __init__(self, input_shape):

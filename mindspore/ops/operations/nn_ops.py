@@ -234,7 +234,7 @@ class Softsign(PrimitiveWithInfer):
         \text{output} = \frac{\text{input_x}}{1 + \abs{\text{input_x}}},
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor whose data type should be float.
+        - **input_x** (Tensor) - The input tensor whose data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -255,7 +255,7 @@ class Softsign(PrimitiveWithInfer):
         return input_x
 
     def infer_dtype(self, input_x):
-        validator.check_tensor_type_same({'input_x': input_x}, mstype.float_type, self.name)
+        validator.check_tensor_type_same({'input_x': input_x}, [mstype.float16, mstype.float32], self.name)
         return input_x
 
 
@@ -1014,6 +1014,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, w_dtype):
         args = {'x': x_dtype, 'w': w_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        if x_dtype.element_type() == mstype.int8:
+            return mstype.tensor_type(mstype.int32)
         return x_dtype
 
 
@@ -1930,7 +1932,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.001
-        >>> result = apply_rms(input_x, mean_square, moment, grad, learning_rate, decay, momentum, epsilon)
+        >>> result = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
         (-2.9977674, 0.80999994, 1.9987665)
     """
 
@@ -2772,6 +2774,7 @@ class ROIAlign(PrimitiveWithInfer):
             feature map coordinates. Suppose the height of a RoI is `ori_h` in the raw image and `fea_h` in the
             input feature map, the `spatial_scale` should be `fea_h / ori_h`.
         sample_num (int): Number of sampling points. Default: 2.
+        roi_end_mode (int): Number must be 0 or 1. Default: 1.
 
     Inputs:
         - **features** (Tensor) - The input features, whose shape should be `(N, C, H, W)`.
@@ -2788,22 +2791,25 @@ class ROIAlign(PrimitiveWithInfer):
     Examples:
         >>> input_tensor = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)
         >>> rois = Tensor(np.array([[0, 0.2, 0.3, 0.2, 0.3]]), mindspore.float32)
-        >>> roi_align = P.ROIAlign(1, 1, 0.5, 2)
+        >>> roi_align = P.ROIAlign(2, 2, 0.5, 2)
         >>> output_tensor = roi_align(input_tensor, rois)
         >>> assert output_tensor == Tensor(np.array([[[[2.15]]]]), mindspore.float32)
     """
 
     @prim_attr_register
-    def __init__(self, pooled_height, pooled_width, spatial_scale, sample_num=2):
+    def __init__(self, pooled_height, pooled_width, spatial_scale, sample_num=2, roi_end_mode=1):
         """init ROIAlign"""
         validator.check_value_type("pooled_height", pooled_height, [int], self.name)
         validator.check_value_type("pooled_width", pooled_width, [int], self.name)
         validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
         validator.check_value_type("sample_num", sample_num, [int], self.name)
+        validator.check_value_type("roi_end_mode", roi_end_mode, [int], self.name)
+        validator.check_int_range("roi_end_mode", roi_end_mode, 0, 1, Rel.INC_BOTH, self.name)
         self.pooled_height = pooled_height
         self.pooled_width = pooled_width
         self.spatial_scale = spatial_scale
         self.sample_num = sample_num
+        self.roi_end_mode = roi_end_mode
 
     def infer_shape(self, inputs_shape, rois_shape):
         return [rois_shape[0], inputs_shape[1], self.pooled_height, self.pooled_width]
@@ -4803,19 +4809,19 @@ class CTCLoss(PrimitiveWithInfer):
         preprocess_collapse_repeated (bool): If True, repeated labels are collapsed prior to the CTC calculation.
                                              Default: False.
         ctc_merge_repeated (bool): If False, during CTC calculation, repeated non-blank labels will not be merged
-                                   and are interpreted as individual labels. This is a simplfied version if CTC.
+                                   and are interpreted as individual labels. This is a simplfied version of CTC.
                                    Default: True.
         ignore_longer_outputs_than_inputs (bool): If True, sequences with longer outputs than inputs will be ignored.
                                                   Default: False.
 
     Inputs:
         - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
-          :math:`(max_time, batch_size, num_class)`. `num_class` should be `num_labels + 1` classes, `num_labels`
-          indicates the number of actual labels. Blank labels are reserved.
+          :math:`(max_time, batch_size, num_classes)`. `num_classes` should be `num_labels + 1` classes, `num_labels`
+          indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
         - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
           stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
         - **labels_values** (Tensor) - A `1-D` input tensor. The values associated with the given batch and time. The
-          type must be int32. `labels_values[i]` must in the range of `[0, num_class)`.
+          type must be int32. `labels_values[i]` must in the range of `[0, num_classes)`.
         - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
           The type must be int32. Each value in the tensor should not greater than `max_time`.
 
@@ -4849,6 +4855,7 @@ class CTCLoss(PrimitiveWithInfer):
     def infer_shape(self, inputs, labels_indices, labels_values, sequence_length):
         validator.check_integer("inputs rank", len(inputs), 3, Rel.EQ, self.name)
         validator.check_integer("labels_indices rank", len(labels_indices), 2, Rel.EQ, self.name)
+        validator.check_integer("labels_indices dim one", labels_indices[1], 2, Rel.EQ, self.name)
         validator.check_integer("labels_values rank", len(labels_values), 1, Rel.EQ, self.name)
         validator.check_integer("sequence_length rank", len(sequence_length), 1, Rel.EQ, self.name)
         validator.check('labels_indices size', labels_indices[0], 'labels_values size',
@@ -5027,8 +5034,7 @@ class LRN(PrimitiveWithInfer):
         bias (float): An offset (usually positive to avoid dividing by 0).
         alpha (float): A scale factor, usually positive.
         beta (float): An exponent.
-        norm_region (str): Specify normalization region. Options: "ACROSS_CHANNELS", "WITHIN_CHANNEL".
-                           Default: "ACROSS_CHANNELS".
+        norm_region (str): Specify normalization region. Options: "ACROSS_CHANNELS". Default: "ACROSS_CHANNELS".
 
     Inputs:
         - **x** (Tensor) - A 4D Tensor with float16 or float32 data type.
@@ -5050,10 +5056,66 @@ class LRN(PrimitiveWithInfer):
         validator.check_value_type("alpha", alpha, [float], self.name)
         validator.check_value_type("beta", beta, [float], self.name)
         validator.check_value_type("norm_region", norm_region, [str], self.name)
+        validator.check_string('norm_region', norm_region, ['ACROSS_CHANNELS'], self.name)
+        validator.check_integer("depth_radius", depth_radius, 0, Rel.GE, self.name)
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32,), self.name)
         return x_dtype
 
     def infer_shape(self, x_shape):
+        validator.check_integer("x_shape", len(x_shape), 4, Rel.EQ, self.name)
         return x_shape
+
+class CTCLossV2(PrimitiveWithInfer):
+    r"""
+    Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
+    Note:
+        - Cudnn Uses label value of for the `blank`
+
+    Inputs:
+        - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
+          :math:`(max_time, batch_size, num_class)`. `num_class` should be `num_labels + 1` classes, `num_labels`
+          indicates the number of actual labels. Blank labels are reserved.
+        - **labels** (Tensor) - The labels Tensor should be a `1-D` tensor whose shape is
+          :math:`(\sigma{label_lengths})`
+          or `2-D` tensor whose shape is
+          :math:`(max_time, max{label_lengths})`
+          The type must be int32.
+        - **input_lengths** (Tensor) - A `1-D` input tensor whose shape is
+          :math:`(batch_size,)`. The values should be batch. The type must be int32.
+        - **label_lengths** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
+          The type must be int32. Each value in the tensor should not greater than `max_time`.
+
+    Outputs:
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. Has the same
+          type with `inputs`.
+        - **gradient** (Tensor) - The gradient of `loss`. Has the same type and shape with `inputs`.
+
+    Examples:
+        >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
+        >>> labels = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+        >>> input_lengths = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> label_lengths = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> ctc_loss = P.CTCLossV2()
+        >>> output = ctc_loss(inputs, labels, input_lengths, label_lengths)
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_dtype(self, input_dtype, labels_dtype, input_lengths_dtype, label_lengths_dtype):
+        validator.check_tensor_type_same({"input": input_dtype}, (mstype.float32,), self.name)
+        validator.check_tensor_type_same({"labels": labels_dtype}, (mstype.int32,), self.name)
+        validator.check_tensor_type_same({"input_lengths": input_lengths_dtype}, (mstype.int32,), self.name)
+        validator.check_tensor_type_same({"target_lengths": label_lengths_dtype}, (mstype.int32,), self.name)
+        return mstype.float32, mstype.float32
+
+    def infer_shape(self, input_shape, labels_shape, input_lengths_shape, label_lengths_shape):
+        validator.check_integer("input shape", len(input_shape), 3, Rel.EQ, self.name)
+        validator.check_number_range("labels shape", len(labels_shape), 1, 2, Rel.INC_BOTH, self.name)
+        validator.check_integer("input lengths shape", len(input_lengths_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("label lengths shape", len(label_lengths_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("input[1]", input_shape[1], input_lengths_shape[0], Rel.EQ, self.name)
+        validator.check_integer("input[1]", input_shape[1], label_lengths_shape[0], Rel.EQ, self.name)
+        return (input_shape[1],), input_shape

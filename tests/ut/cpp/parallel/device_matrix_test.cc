@@ -16,7 +16,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "parallel/device_matrix.h"
+#include "frontend/parallel/device_matrix.h"
 
 namespace mindspore {
 namespace parallel {

@@ -13,7 +13,6 @@ add_library(protobuf::libprotobuf ALIAS protobuf::protobuf)
 add_executable(protobuf::libprotoc ALIAS protobuf::protoc)
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-set(_REFLECTION gRPC::grpc++_reflection)
 if(CMAKE_CROSSCOMPILING)
     find_program(_PROTOBUF_PROTOC protoc)
 else()
@@ -22,10 +21,19 @@ endif()
 
 # Find gRPC installation
 # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+if (EXISTS ${grpc_ROOT}/lib64)
+    set(gRPC_DIR "${grpc_ROOT}/lib64/cmake/grpc")
+else()
+    set(gRPC_DIR "${grpc_ROOT}/lib/cmake/grpc")
+endif()
+message("serving using grpc_DIR : " ${gPRC_DIR})
+
 find_package(gRPC CONFIG REQUIRED)
 message(STATUS "Using gRPC ${gRPC_VERSION}")
 
 set(_GRPC_GRPCPP gRPC::grpc++)
+set(_REFLECTION gRPC::grpc++_reflection)
+
 if(CMAKE_CROSSCOMPILING)
     find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
 else()

@@ -20,7 +20,7 @@
 #include <utility>
 #include <string>
 #include <unordered_map>
-#include "session/anf_runtime_algorithm.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "predict/schema/inner/ms_generated.h"
 
 static constexpr size_t kNIndex = 0;

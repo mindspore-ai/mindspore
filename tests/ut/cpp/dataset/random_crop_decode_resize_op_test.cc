@@ -16,10 +16,10 @@
 #include <fstream>
 #include "common/common.h"
 #include "common/cvop_common.h"
-#include "dataset/kernels/image/decode_op.h"
-#include "dataset/kernels/image/random_crop_and_resize_op.h"
-#include "dataset/kernels/image/random_crop_decode_resize_op.h"
-#include "dataset/core/config_manager.h"
+#include "minddata/dataset/kernels/image/decode_op.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
+#include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
+#include "minddata/dataset/core/config_manager.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -54,7 +54,7 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   auto decode_and_crop = static_cast<RandomCropAndResizeOp>(crop_and_decode_copy);
   EXPECT_TRUE(crop_and_decode.OneToOne());
   GlobalContext::config_manager()->set_seed(42);
-  for (int k = 0; k < 100; k++) {
+  for (int k = 0; k < 10; k++) {
     (void)crop_and_decode.Compute(raw_input_tensor_, &crop_and_decode_output);
     (void)decode_and_crop.Compute(input_tensor_, &decode_and_crop_output);
     cv::Mat output1 = CVTensor::AsCVTensor(crop_and_decode_output)->mat().clone();
@@ -104,10 +104,10 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
   int mse_sum, m1, m2, count;
   double mse;
 
-  for (int k = 0; k < 100; ++k) {
+  for (int k = 0; k < 10; ++k) {
     mse_sum = 0;
     count = 0;
-    for (auto i = 0; i < 100; i++) {
+    for (auto i = 0; i < 10; i++) {
       scale = rd_scale(rd);
       aspect = rd_aspect(rd);
       crop_width = std::round(std::sqrt(h * w * scale / aspect));

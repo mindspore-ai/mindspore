@@ -18,7 +18,7 @@
 #include "common/py_func_graph_fetcher.h"
 #define private public
 #define protected public
-#include "pre_activate/ascend/ir_fission/addn_fission.h"
+#include "backend/optimizer/ascend/ir_fission/addn_fission.h"
 #undef private
 #undef protected
 

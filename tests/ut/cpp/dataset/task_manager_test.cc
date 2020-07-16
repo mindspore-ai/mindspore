@@ -16,7 +16,7 @@
 
 #include "common/common.h"
 #include "gtest/gtest.h"
-#include "dataset/util/task_manager.h"
+#include "minddata/dataset/util/task_manager.h"
 
 using namespace mindspore::dataset;
 

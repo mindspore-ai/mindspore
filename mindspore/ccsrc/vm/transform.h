@@ -28,7 +28,7 @@
 
 #include "vm/vm.h"
 #include "ir/anf.h"
-#include "operator/ops.h"
+#include "frontend/operator/ops.h"
 #include "vm/segment_runner.h"
 #include "vm/backend.h"
 
@@ -90,6 +90,7 @@ class CompileGraph {
   void AddPartial(const CNodePtr &node);
   void AddMakeTuple(const CNodePtr &node);
   void AddSwitch(const CNodePtr &node);
+  void AddSwitchLayer(const CNodePtr &node);
   void AddReturn(const CNodePtr &node);
   void AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim);
   void AddInput(const AnfNodePtr &node);

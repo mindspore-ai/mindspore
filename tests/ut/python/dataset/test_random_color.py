@@ -97,7 +97,7 @@ def test_random_color_md5():
     data = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms = F.ComposeOp([F.Decode(),
-                              F.RandomColor((0.5, 1.5)),
+                              F.RandomColor((0.1, 1.9)),
                               F.ToTensor()])
 
     data = data.map(input_columns="image", operations=transforms())

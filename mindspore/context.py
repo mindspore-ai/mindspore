@@ -17,6 +17,7 @@ The context of mindspore, used to configure the current execution environment,
 including execution mode, execution backend and other feature switches.
 """
 import os
+import time
 import threading
 from collections import namedtuple
 from types import FunctionType
@@ -55,10 +56,18 @@ def _make_directory(path):
             os.makedirs(path)
             real_path = path
         except PermissionError as e:
-            logger.error(
-                f"No write permission on the directory `{path}, error = {e}")
+            logger.error(f"No write permission on the directory `{path}, error = {e}")
             raise ValueError(f"No write permission on the directory `{path}`.")
     return real_path
+
+
+def _get_print_file_name(file_name):
+    """Add timestamp suffix to file name. Rename the file name:  file_name + "." + time(seconds)."""
+    time_second = str(int(time.time()))
+    file_name = file_name + "." + time_second
+    if os.path.exists(file_name):
+        ValueError("This file {} already exists.".format(file_name))
+    return file_name
 
 
 class _ThreadLocalInfo(threading.local):
@@ -209,6 +218,8 @@ class _Context:
         success = self._context_handle.set_device_target(target)
         if not success:
             raise ValueError("Target device name is invalid!!!")
+        if self.enable_debug_runtime and self.device_target == "CPU":
+            self.set_backend_policy("vm")
 
     @property
     def device_id(self):
@@ -356,14 +367,6 @@ class _Context:
         self._context_handle.set_check_bprop_flag(check_bprop_flag)
 
     @property
-    def enable_sparse(self):
-        return self._context_handle.get_enable_sparse_flag()
-
-    @enable_sparse.setter
-    def enable_sparse(self, enable_sparse_flag):
-        self._context_handle.set_enable_sparse_flag(enable_sparse_flag)
-
-    @property
     def max_device_memory(self):
         return self._context_handle.get_max_device_memory()
 
@@ -381,9 +384,28 @@ class _Context:
         return None
 
     @print_file_path.setter
-    def print_file_path(self, file):
-        self._context_handle.set_print_file_path(file)
+    def print_file_path(self, file_path):
+        """Add timestamp suffix to file name. Sets print file path."""
+        print_file_path = os.path.realpath(file_path)
+        if os.path.isdir(print_file_path):
+            raise IOError("Print_file_path should be file path, but got {}.".format(file_path))
 
+        if os.path.exists(print_file_path):
+            _path, _file_name = os.path.split(print_file_path)
+            path = _make_directory(_path)
+            file_name = _get_print_file_name(_file_name)
+            full_file_name = os.path.join(path, file_name)
+        else:
+            full_file_name = print_file_path
+        self._context_handle.set_print_file_path(full_file_name)
+
+    @property
+    def enable_sparse(self):
+        return self._context_handle.get_enable_sparse()
+
+    @enable_sparse.setter
+    def enable_sparse(self, enable_sparse):
+        self._context_handle.set_enable_sparse(enable_sparse)
 
 def check_input_format(x):
     import re
@@ -575,8 +597,9 @@ def set_context(**kwargs):
         max_device_memory (str): Sets the maximum memory available for device, currently only supported on GPU.
             The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of print data to save. If this parameter is set, print data is saved to
-            a file by default, and turn off printing to the screen.
-        enable_sparse (bool): Whether to enable sparse feature. Default: False.
+            a file by default, and turn off printing to the screen. If the file already exists, add a timestamp
+            suffix to the file.
+        enable_sparse (bool): Whether to enable sparsity feature. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.

@@ -12,16 +12,7 @@ diff -Npur ps-lite-master/include/dmlc/base.h ps-lite-master-new/include/dmlc/ba
  /*!
 diff -Npur ps-lite-master/include/dmlc/logging.h ps-lite-master-new/include/dmlc/logging.h
 --- ps-lite-master/include/dmlc/logging.h	2020-02-29 13:59:55.000000000 +0800
-+++ ps-lite-master-new/include/dmlc/logging.h	2020-07-01 11:58:00.015919207 +0800
-@@ -13,7 +13,7 @@
- #include <string>
- #include <vector>
- #include <memory>
--#include "./base.h"
-+//#include "./base.h"
- 
- #if DMLC_LOG_STACK_TRACE
- #include <cxxabi.h>
++++ ps-lite-master-new/include/dmlc/logging.h	2020-07-08 21:35:33.334584767 +0800
 @@ -52,7 +52,7 @@ struct Error : public std::runtime_error
  
  namespace dmlc {

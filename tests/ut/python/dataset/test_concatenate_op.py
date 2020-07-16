@@ -108,7 +108,7 @@ def test_concatenate_op_type_mismatch():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "Tensor types do not match" in repr(error_info.value)
+    assert "Tensor types do not match" in str(error_info.value)
 
 
 def test_concatenate_op_type_mismatch2():
@@ -123,7 +123,7 @@ def test_concatenate_op_type_mismatch2():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "Tensor types do not match" in repr(error_info.value)
+    assert "Tensor types do not match" in str(error_info.value)
 
 
 def test_concatenate_op_incorrect_dim():
@@ -138,13 +138,13 @@ def test_concatenate_op_incorrect_dim():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "Only 1D tensors supported" in repr(error_info.value)
+    assert "Only 1D tensors supported" in str(error_info.value)
 
 
 def test_concatenate_op_wrong_axis():
     with pytest.raises(ValueError) as error_info:
         data_trans.Concatenate(2)
-    assert "only 1D concatenation supported." in repr(error_info.value)
+    assert "only 1D concatenation supported." in str(error_info.value)
 
 
 def test_concatenate_op_negative_axis():
@@ -163,18 +163,11 @@ def test_concatenate_op_negative_axis():
 
 
 def test_concatenate_op_incorrect_input_dim():
-    def gen():
-        yield (np.array(["ss", "ad"], dtype='S'),)
-
     prepend_tensor = np.array([["ss", "ad"], ["ss", "ad"]], dtype='S')
-    data = ds.GeneratorDataset(gen, column_names=["col"])
-    concatenate_op = data_trans.Concatenate(0, prepend_tensor)
 
-    data = data.map(input_columns=["col"], operations=concatenate_op)
-    with pytest.raises(RuntimeError) as error_info:
-        for _ in data:
-            pass
-    assert "Only 1D tensors supported" in repr(error_info.value)
+    with pytest.raises(ValueError) as error_info:
+        data_trans.Concatenate(0, prepend_tensor)
+    assert "can only prepend 1D arrays." in str(error_info.value)
 
 
 if __name__ == "__main__":

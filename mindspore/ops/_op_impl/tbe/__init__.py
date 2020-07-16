@@ -133,6 +133,7 @@ from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .transpose_d import _transpose_d_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
+from .unsorted_segment_prod import _unsorted_segment_prod_tbe
 from .logsoftmax_grad import _logsoftmax_grad_tbe
 from .logsoftmax import _logsoftmax_tbe
 from .select import _select_tbe
@@ -285,3 +286,5 @@ from .mod import _mod_tbe
 from .max_pool_grad_grad import _max_pool_grad_grad_tbe
 from .max_pool_grad_grad_with_argmax import _max_pool_grad_grad_with_argmax_tbe
 from .tensor_move import _tensor_move_tbe
+from .population_count import _population_count_tbe
+from .parallel_concat import _parallel_concat_tbe

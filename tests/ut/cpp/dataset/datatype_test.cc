@@ -15,15 +15,13 @@
  */
 #include <string>
 #include "./securec.h"
-#include "dataset/core/data_type.h"
+#include "minddata/dataset/core/data_type.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include <opencv2/opencv.hpp>
-#include "dataset/core/constants.h"
+#include "minddata/dataset/core/constants.h"
 
 using namespace mindspore::dataset;
-
-namespace py = pybind11;
 
 class MindDataTestDatatype : public UT::Common {
  public:

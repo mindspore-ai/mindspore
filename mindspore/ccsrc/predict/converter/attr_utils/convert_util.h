@@ -25,7 +25,7 @@
 #include <string>
 #include <fstream>
 #include "ir/tensor.h"
-#include "session/anf_runtime_algorithm.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "predict/schema/inner/ms_generated.h"
 
 using TensorPtr = mindspore::tensor::TensorPtr;

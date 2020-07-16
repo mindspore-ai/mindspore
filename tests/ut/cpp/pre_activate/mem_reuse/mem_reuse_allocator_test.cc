@@ -17,9 +17,9 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "operator/ops.h"
-#include "pre_activate/mem_reuse/mem_reuse.h"
-#include "pre_activate/mem_reuse/mem_reuse_allocator.h"
+#include "frontend/operator/ops.h"
+#include "backend/optimizer/mem_reuse/mem_reuse.h"
+#include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"

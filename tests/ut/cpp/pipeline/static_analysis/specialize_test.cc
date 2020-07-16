@@ -20,8 +20,8 @@
 #include "common/py_func_graph_fetcher.h"
 
 #include "ir/manager.h"
-#include "pipeline/static_analysis/prim.h"
-#include "pipeline/static_analysis/program_specialize.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/static_analysis/program_specialize.h"
 #include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
 #include "utils/graph_utils.h"

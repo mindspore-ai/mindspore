@@ -18,10 +18,10 @@
 #include <list>
 #include <vector>
 #include "common/common_test.h"
-#include "parallel/strategy.h"
-#include "parallel/ops_info/onehot_info.h"
-#include "parallel/device_manager.h"
-#include "parallel/tensor_layout/tensor_redistribution.h"
+#include "frontend/parallel/strategy.h"
+#include "frontend/parallel/ops_info/onehot_info.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
 namespace parallel {

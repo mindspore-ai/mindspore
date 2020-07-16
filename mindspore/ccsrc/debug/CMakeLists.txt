@@ -19,6 +19,15 @@ if (ENABLE_DEBUGGER)
         )
 endif (ENABLE_DEBUGGER)
 
+if (ENABLE_D)
+    list(APPEND _DEBUG_SRC_LIST
+        "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
+        )
+    if (ENABLE_DATA_DUMP)
+        list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/data_dump_parser.cc")
+    endif(ENABLE_DATA_DUMP)
+endif()
+
 if (ENABLE_DUMP_E2E)
     list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/e2e_dump.cc")
 endif (ENABLE_DUMP_E2E)

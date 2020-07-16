@@ -246,3 +246,21 @@ def test_tensor_auto_cast():
         bnet(t_fp32)
     with pytest.raises(TypeError):
         bnet(t_fp64)
+def test_bool_tensor_and_float():
+    context.set_context(mode=context.GRAPH_MODE)
+    t_bool = Tensor(np.ones([2, 1, 2, 2]).astype(np.bool), mstype.bool_)
+    t_int32 = Tensor(np.ones([2, 1, 2, 2]), mstype.int32)
+    t_fp16 = Tensor(np.ones([2, 1, 2, 2]), mstype.float16)
+    t_fp32 = Tensor(np.ones([2, 1, 2, 2]), mstype.float32)
+    net = TensorFPAutoCast()
+    out = net(t_bool)
+    assert out.dtype == mstype.float32
+    net = TensorIntAutoCast()
+    out = net(t_bool)
+    assert out.dtype == mstype.int32
+    out = net(t_fp16)
+    assert out.dtype == mstype.float16
+    out = net(t_fp32)
+    assert out.dtype == mstype.float32
+    out = net(t_int32)
+    assert out.dtype == mstype.int32

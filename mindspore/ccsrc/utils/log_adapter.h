@@ -22,6 +22,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
+#include <functional>
 #include "./overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
@@ -99,6 +100,7 @@ enum MsLogLevel : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 
 enum SubModuleId : int {
   SM_UNKNOWN = 0,  // unknown submodule
+  SM_BASE,         // base
   SM_ANALYZER,     // static analyzer
   SM_COMMON,       // common
   SM_DEBUG,        // debug
@@ -118,6 +120,7 @@ enum SubModuleId : int {
   SM_SESSION,      // session
   SM_UTILS,        // utils
   SM_VM,           // VM
+  SM_ABSTRACT,     // abstract
   NUM_SUBMODUES    // number of submodules
 };
 
@@ -133,6 +136,8 @@ extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
 
 class LogWriter {
  public:
+  using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
+
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
             ExceptionType excp_type = NoExceptionType)
       : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
@@ -141,6 +146,8 @@ class LogWriter {
   void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
   void operator^(const LogStream &stream) const __attribute__((noreturn, visibility("default")));
 
+  static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
+
  private:
   void OutputLog(const std::ostringstream &msg) const;
 
@@ -148,6 +155,8 @@ class LogWriter {
   MsLogLevel log_level_;
   SubModuleId submodule_;
   ExceptionType exception_type_;
+
+  inline static ExceptionHandler exception_handler_ = nullptr;
 };
 
 #define MSLOG_IF(level, condition, excp_type)                                                                       \

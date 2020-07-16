@@ -17,7 +17,7 @@
 import platform
 from .aicpu import *
 if "Windows" not in platform.system():
-    from .akg.gpu import *
+    from .akg import *
     from .tbe import *
 
 __all__ = []

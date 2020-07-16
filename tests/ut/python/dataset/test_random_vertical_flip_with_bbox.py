@@ -25,50 +25,26 @@ from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox,
 
 GENERATE_GOLDEN = False
 
-# updated VOC dataset with correct annotations
-DATA_DIR = "../data/dataset/testVOC2012_2"
-
-
-def fix_annotate(bboxes):
-    """
-    Fix annotations to format followed by mindspore.
-    :param bboxes: in [label, x_min, y_min, w, h, truncate, difficult] format
-    :return: annotation in [x_min, y_min, w, h, label, truncate, difficult] format
-    """
-    for bbox in bboxes:
-        if bbox.size == 7:
-            tmp = bbox[0]
-            bbox[0] = bbox[1]
-            bbox[1] = bbox[2]
-            bbox[2] = bbox[3]
-            bbox[3] = bbox[4]
-            bbox[4] = tmp
-        else:
-            print("ERROR: Invalid Bounding Box size provided")
-            break
-    return bboxes
+# Updated VOC dataset with correct annotations - DATA_DIR
+DATA_DIR_VOC = "../data/dataset/testVOC2012_2"
+# COCO dataset - DATA_DIR, ANNOTATION_DIR
+DATA_DIR_COCO = ["../data/dataset/testCOCO/train/", "../data/dataset/testCOCO/annotations/train.json"]
 
 
 def test_random_vertical_flip_with_bbox_op_c(plot_vis=False):
     """
-     Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied
+    Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied
     """
     logger.info("test_random_vertical_flip_with_bbox_op_c")
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
     test_op = c_vision.RandomVerticalFlipWithBBox(1)
 
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
@@ -84,31 +60,56 @@ def test_random_vertical_flip_with_bbox_op_c(plot_vis=False):
     if plot_vis:
         visualize_with_bounding_boxes(unaugSamp, augSamp)
 
+def test_random_vertical_flip_with_bbox_op_coco_c(plot_vis=False):
+    """
+    Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied,
+    Testing with Coco dataset
+    """
+    logger.info("test_random_vertical_flip_with_bbox_op_coco_c")
+    # load dataset
+    dataCoco1 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    dataCoco2 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
+                               decode=True, shuffle=False)
+
+    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+
+    dataCoco2 = dataCoco2.map(input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              columns_order=["image", "bbox"],
+                              operations=[test_op])
+
+    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+
+    unaugSamp, augSamp = [], []
+
+    for unAug, Aug in zip(dataCoco1.create_dict_iterator(), dataCoco2.create_dict_iterator()):
+        unaugSamp.append(unAug)
+        augSamp.append(Aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaugSamp, augSamp, "bbox")
+
 
 def test_random_vertical_flip_with_bbox_op_rand_c(plot_vis=False):
     """
-     Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied,
-     tests with MD5 check, expected to pass
+    Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied,
+    tests with MD5 check, expected to pass
     """
     logger.info("test_random_vertical_flip_with_bbox_op_rand_c")
     original_seed = config_get_set_seed(29847)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
     test_op = c_vision.RandomVerticalFlipWithBBox(0.8)
 
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                             output_columns=["image", "annotation"],
@@ -134,24 +135,17 @@ def test_random_vertical_flip_with_bbox_op_rand_c(plot_vis=False):
 
 def test_random_vertical_flip_with_bbox_op_edge_c(plot_vis=False):
     """
-     Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied,
+    Prints images and bboxes side by side with and without RandomVerticalFlipWithBBox Op applied,
     applied on dynamically generated edge case, expected to pass
     """
     logger.info("test_random_vertical_flip_with_bbox_op_edge_c")
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
     test_op = c_vision.RandomVerticalFlipWithBBox(1)
-
-    dataVoc1 = dataVoc1.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
-    dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                            output_columns=["annotation"],
-                            operations=fix_annotate)
 
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(input_columns=["image", "annotation"],
@@ -177,17 +171,15 @@ def test_random_vertical_flip_with_bbox_op_edge_c(plot_vis=False):
 
 def test_random_vertical_flip_with_bbox_op_invalid_c():
     """
-     Test RandomVerticalFlipWithBBox Op on invalid constructor parameters, expected to raise ValueError
+    Test RandomVerticalFlipWithBBox Op on invalid constructor parameters, expected to raise ValueError
     """
     logger.info("test_random_vertical_flip_with_bbox_op_invalid_c")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
                              decode=True, shuffle=False)
 
     try:
         test_op = c_vision.RandomVerticalFlipWithBBox(2)
-        dataVoc2 = dataVoc2.map(input_columns=["annotation"],
-                                output_columns=["annotation"],
-                                operations=fix_annotate)
+
         # map to apply ops
         dataVoc2 = dataVoc2.map(input_columns=["image", "annotation"],
                                 output_columns=["image", "annotation"],
@@ -199,7 +191,7 @@ def test_random_vertical_flip_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not" in str(err)
+        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(err)
 
 
 def test_random_vertical_flip_with_bbox_op_bad_c():
@@ -209,18 +201,19 @@ def test_random_vertical_flip_with_bbox_op_bad_c():
     logger.info("test_random_vertical_flip_with_bbox_op_bad_c")
     test_op = c_vision.RandomVerticalFlipWithBBox(1)
 
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 
 if __name__ == "__main__":
     test_random_vertical_flip_with_bbox_op_c(plot_vis=True)
+    test_random_vertical_flip_with_bbox_op_coco_c(plot_vis=True)
     test_random_vertical_flip_with_bbox_op_rand_c(plot_vis=True)
     test_random_vertical_flip_with_bbox_op_edge_c(plot_vis=True)
     test_random_vertical_flip_with_bbox_op_invalid_c()

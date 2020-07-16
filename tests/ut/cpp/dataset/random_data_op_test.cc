@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "dataset/core/client.h"
+#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include <memory>
 #include <vector>
 #include <iostream>
-#include "dataset/core/tensor_shape.h"
-#include "dataset/engine/datasetops/source/random_data_op.h"
-#include "dataset/engine/data_schema.h"
+#include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/engine/data_schema.h"
 
 using namespace mindspore::dataset;
 using mindspore::MsLogLevel::INFO;

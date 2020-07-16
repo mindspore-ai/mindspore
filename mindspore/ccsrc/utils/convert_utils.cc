@@ -25,12 +25,12 @@
 #include <cfloat>
 
 #include "pybind11/pybind11.h"
-#include "pipeline/static_analysis/abstract_value.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/parse_base.h"
+#include "abstract/abstract_value.h"
+#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/parse_base.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "ir/param_value_py.h"
+#include "ir/param_value.h"
 #include "utils/base_ref_extends.h"
 
 namespace mindspore {
@@ -228,6 +228,20 @@ bool ValueToBool(const ValuePtr &v, bool *value) {
     return false;
   }
   return true;
+}
+
+bool BaseRefToInt(const ValuePtr &v, int *value) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    (void)tensor->data_sync();
+    int *tensor_data = static_cast<int *>(tensor->data_c());
+    auto vb = tensor_data[0];
+    *value = vb;
+    return true;
+  }
+  MS_LOG(ERROR) << "Index must be tensor type.";
+  return false;
 }
 
 bool BaseRefToBool(const BaseRef &v, bool *value) {
@@ -435,8 +449,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       if (!param->has_default()) {
         MS_LOG(EXCEPTION) << "Can not determine value of Parameter " << index << " (" << param->name() << ")";
       }
-      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param->default_param());
-      *ret_val = param_value->value().attr("data");
+      auto tensor = param->default_param()->value();
+      *ret_val = py::cast(tensor);
     }
     return true;
   }

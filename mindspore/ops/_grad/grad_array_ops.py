@@ -191,13 +191,12 @@ def get_bprop_tile(self):
     return bprop
 
 
-@bprop_getters.register(inner.EmbeddingLookup)
+@bprop_getters.register(P.EmbeddingLookup)
 def get_bprop_embedding_lookup(self):
     """Generate bprop for EmbeddingLookup"""
     sub_op = P.Sub()
     reshape_op = P.Reshape()
-    host_reshape = P.Reshape().add_prim_attr('primitive_target', 'CPU')
-    def bprop_sparse(x, indices, offset, reduce_scatter_flag, split_num, out, dout):
+    def bprop_sparse(x, indices, offset, out, dout):
         x_shp = shape_op(x)
         new_indices = sub_op(indices, offset)
         # Reshape the 'new_indices'
@@ -205,17 +204,9 @@ def get_bprop_embedding_lookup(self):
         new_indices = reshape_op(new_indices, new_indices_shape_changed)
         x_shp_tail = x_shp[1:]
         actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
-        if reduce_scatter_flag is True:
-            # On host
-            elu_grad = G.EmbeddingLookupCommGrad()
-            actual_dout = elu_grad(dout, split_num)
-            # Reshape the 'actual_dout' on host
-            actual_dout = host_reshape(actual_dout, actual_dout_shape_changed)
-        else:
-            # Reshape the 'actual_dout' on device
-            actual_dout = reshape_op(dout, actual_dout_shape_changed)
-        return (new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset), \
-               zeros_like(reduce_scatter_flag), zeros_like(split_num)
+        # Reshape the 'actual_dout' on device
+        actual_dout = reshape_op(dout, actual_dout_shape_changed)
+        return (new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
     return bprop_sparse
 
 
@@ -248,19 +239,37 @@ def get_bprop_transpose(self):
     return bprop
 
 
+@constexpr
+def _concat_grad_uniform(input_shapes, input_nums):
+    """Helper function for bprop of Concat"""
+    is_uniform = True
+    for i in range(1, input_nums):
+        if input_shapes[i-1] != input_shapes[i]:
+            is_uniform = False
+            break
+    return is_uniform
+
 @bprop_getters.register(P.Concat)
 def get_bprop_concat(self):
     """Generate bprop for Concat"""
     axis = self.axis
+    is_ascend = context.get_context('device_target') == "Ascend"
 
     def bprop(x, out, dout):
         dx = ()
         out_offset = G.ConcatOffset(F.tuple_len(x), axis)(x)
-        for i in range(F.tuple_len(x)):
-            slice_out = P.Slice()(dout, out_offset[i], shape_op(x[i]))
-            dx = dx + (slice_out,)
+        input_nums = F.tuple_len(x)
+        input_shapes = ()
+        for i in range(input_nums):
+            input_shapes = input_shapes + (shape_op(x[i]),)
+        is_uniform = _concat_grad_uniform(input_shapes, input_nums)
+        if is_uniform and is_ascend:
+            dx = P.Split(axis, input_nums)(dout)
+        else:
+            for i in range(input_nums):
+                slice_out = P.Slice()(dout, out_offset[i], input_shapes[i])
+                dx = dx + (slice_out,)
         return (dx,)
-
     return bprop
 
 
@@ -641,6 +650,36 @@ def get_bprop_unsorted_segment_min(self):
                                                     zero_clipped_indices, is_positive)
         zeros = zeros_like(gathered_grads)
         return select(is_selected, gathered_grads, zeros), zeros_like(segment_ids), zeros_like(num_segments)
+    return bprop
+
+
+@bprop_getters.register(P.UnsortedSegmentProd)
+def get_bprop_unsorted_segment_prod(self):
+    """Generate bprop for UnsortedSegmentProd"""
+    equal = P.Equal()
+    cast = P.Cast()
+    select = P.Select()
+    gather = P.GatherV2()
+    greater = P.Greater()
+    ones_like = P.OnesLike()
+    maximum = P.Maximum()
+    unsorted_segment_prod = P.UnsortedSegmentProd()
+
+    def bprop(x, segment_ids, num_segments, out, dout):
+        is_zero = equal(x, 0)
+        num_zero = unsorted_segment_sum(cast(is_zero, mstype.int32), segment_ids, num_segments)
+        grad = select(greater(num_zero, 1), zeros_like(dout), dout)
+        non_zero_data = select(is_zero, ones_like(x), x)
+        non_zero_prod = unsorted_segment_prod(non_zero_data, segment_ids, num_segments)
+        zero_clipped_indices = maximum(segment_ids, zeros_like(segment_ids))
+        gathered_prod = gather(out, zero_clipped_indices, 0)
+        gathered_non_zero_prod = gather(non_zero_prod, zero_clipped_indices, 0)
+        prod_divided_by_x = gathered_prod / x
+        partial_derivative = select(is_zero, gathered_non_zero_prod, prod_divided_by_x)
+        gathered_grad, _, _ = _GatherDropNegatives(grad, segment_ids, zero_clipped_indices)
+        dx = gathered_grad * partial_derivative
+        return dx, zeros_like(segment_ids), zeros_like(num_segments)
+
     return bprop
 
 

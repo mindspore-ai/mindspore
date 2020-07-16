@@ -26,33 +26,16 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore.train.callback import Callback, ModelCheckpoint, CheckpointConfig, TimeMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecayDynamicLR
 from mindspore import log as logger
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from src.dataset import create_bert_dataset
 from src.config import cfg, bert_net_cfg
+from src.utils import LossCallBack
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
-class LossCallBack(Callback):
-    """
-    Monitor the loss in training.
-    If the loss in NAN or INF terminating training.
-    Note:
-        if per_print_times is 0 do not print loss.
-    Args:
-        per_print_times (int): Print loss every times. Default: 1.
-    """
-    def __init__(self, per_print_times=1):
-        super(LossCallBack, self).__init__()
-        if not isinstance(per_print_times, int) or per_print_times < 0:
-            raise ValueError("print_step must be int and >= 0")
-        self._per_print_times = per_print_times
-    def step_end(self, run_context):
-        cb_params = run_context.original_args()
-        print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                           str(cb_params.net_outputs)))
 
 def run_pretrain():
     """pre-train bert_clue"""

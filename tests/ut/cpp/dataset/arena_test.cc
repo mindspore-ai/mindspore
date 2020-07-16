@@ -15,7 +15,7 @@
  */
 
 #include <string>
-#include "dataset/util/arena.h"
+#include "minddata/dataset/util/arena.h"
 #include "common/common.h"
 #include "utils/log_adapter.h"
 

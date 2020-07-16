@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "dataset/kernels/data/one_hot_op.h"
+#include "minddata/dataset/kernels/data/one_hot_op.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

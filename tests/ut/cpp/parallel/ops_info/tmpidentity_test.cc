@@ -15,10 +15,10 @@
  */
 
 #include "common/common_test.h"
-#include "parallel/strategy.h"
-#include "parallel/device_manager.h"
-#include "parallel/ops_info/operator_info.h"
-#include "parallel/ops_info/tmp_identity_info.h"
+#include "frontend/parallel/strategy.h"
+#include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/ops_info/tmp_identity_info.h"
 
 namespace mindspore {
 namespace parallel {

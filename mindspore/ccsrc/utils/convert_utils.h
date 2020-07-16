@@ -28,7 +28,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/any.h"
 #include "utils/base_ref.h"
-#include "ir/base.h"
+#include "base/base.h"
 #include "ir/anf.h"
 
 namespace py = pybind11;
@@ -42,6 +42,7 @@ using TensorPtr = std::shared_ptr<Tensor>;
 py::object AnyToPyData(const Any &value);
 py::object BaseRefToPyData(const BaseRef &value);
 bool BaseRefToBool(const BaseRef &in, bool *out);
+bool BaseRefToInt(const ValuePtr &v, int *value);
 bool ValueToBool(const ValuePtr &in, bool *out);
 py::object ValuePtrToPyData(const ValuePtr &value);
 

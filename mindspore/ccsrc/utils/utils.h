@@ -176,6 +176,10 @@ constexpr auto kApplyAdamWithAmsgradOpName = "ApplyAdamWithAmsgrad";
 constexpr auto kTensorMoveOpName = "TensorMove";
 constexpr auto kTensorScatterUpdateOpName = "TensorScatterUpdate";
 constexpr auto kScatterNdUpdateOpName = "ScatterNdUpdate";
+constexpr auto kPushOpName = "Push";
+constexpr auto kPullOpName = "Pull";
+constexpr auto kEmbeddingLookupOpName = "EmbeddingLookup";
+constexpr auto kEmbeddingLookupProxyOpName = "EmbeddingLookupProxy";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -236,9 +240,12 @@ constexpr auto kAttrOutputNum = "output_num";
 constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
+constexpr auto kAttrUseLocking = "use_locking";
 constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
 constexpr auto kAttrOffset = "offset";
-constexpr auto kAttrUseLocking = "use_locking";
+constexpr auto kAttrPsKey = "ps_key";
+constexpr auto kAttrOptimizerType = "optim_type";
+constexpr auto kAttrChildGraph = "child_graph";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -262,6 +269,7 @@ constexpr auto kAnfPartialFuncGraphIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
 constexpr auto kTupleGetItemInputSize = 3;
+constexpr auto kSwitchInputSize = 4;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;
@@ -290,12 +298,24 @@ const std::set<std::string> kOpFormatList = {
   kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 const std::set<std::string> kOptOperatorSet = {
-  kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,
-  kApplyAdagradOpName,   kApplyAdagradDAName,         kApplyAdamOpName,
-  kApplyAdaMaxOpName,    kApplyAddSignOpName,         kApplyCenteredRMSPOpName,
-  kApplyFtrlOpName,      kApplyFtrlV2OpName,          kApplyGradientDescentOpName,
-  kApplyPowerSignOpName, kApplyProximalAdagradOpName, kApplyProximalGradientDescentOpName,
+  kMomentumOpName,
+  kApplyMomentumOpName,
+  kApplyAdadeltaOpName,
+  kApplyAdagradOpName,
+  kApplyAdagradDAName,
+  kApplyAdamOpName,
+  kApplyAdaMaxOpName,
+  kApplyAddSignOpName,
+  kApplyCenteredRMSPOpName,
+  kApplyFtrlOpName,
+  kApplyFtrlV2OpName,
+  kApplyGradientDescentOpName,
+  kApplyPowerSignOpName,
+  kApplyProximalAdagradOpName,
+  kApplyProximalGradientDescentOpName,
   kApplyRMSPropOpName,
+  kPushOpName,
+  kPullOpName,
 };
 
 const std::set<std::string> kHWSpecialFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,

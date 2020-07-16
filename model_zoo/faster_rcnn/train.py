@@ -52,7 +52,7 @@ parser.add_argument("--device_num", type=int, default=1, help="Use device nums, 
 parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default is 0.")
 args_opt = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=args_opt.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:

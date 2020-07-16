@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """Tile op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-tile_op_info = AkgRegOp("Tile") \
+tile_op_info = AkgGpuRegOp("Tile") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .output(0, "output") \

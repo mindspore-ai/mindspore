@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """Mul op"""
-from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-mul_op_info = AkgRegOp("Mul") \
+mul_op_info = AkgGpuRegOp("Mul") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .input(1, "y") \

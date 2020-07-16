@@ -15,17 +15,17 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "session/anf_runtime_algorithm.h"
-#include "operator/ops.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/utils.h"
-#include "kernel/kernel_build_info.h"
-#include "pre_activate/common/optimizer.h"
+#include "backend/kernel_compiler/kernel_build_info.h"
+#include "backend/optimizer/common/optimizer.h"
 
 #define private public
 #define protected public
-#include "pre_activate/ascend/format_type/merge_cast_to_op.h"
+#include "backend/optimizer/ascend/format_type/merge_cast_to_op.h"
 #undef private
 #undef protected
 
