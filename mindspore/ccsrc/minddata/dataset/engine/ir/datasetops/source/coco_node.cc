@@ -111,7 +111,8 @@ std::vector<std::shared_ptr<DatasetOp>> CocoNode::Build() {
   std::shared_ptr<CocoOp> op =
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, rows_per_buffer_,
                              connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   node_ops.push_back(op);
 

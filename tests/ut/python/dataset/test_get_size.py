@@ -74,9 +74,11 @@ def test_case2():
 
 
 def test_case3():
-    data1 = ds.TFRecordDataset(FILES, SCHEMA_FILE).batch(2).repeat(10)
-    data2 = ds.TFRecordDataset(FILES, SCHEMA_FILE).batch(2).repeat(5)
-    data3 = ds.TFRecordDataset(FILES, SCHEMA_FILE).batch(2)
+    data1 = ds.TFRecordDataset(FILES, SCHEMA_FILE, columns_list=["col_sint64"]).batch(2).repeat(10).rename(
+        ["col_sint64"], ["a1"])
+    data2 = ds.TFRecordDataset(FILES, SCHEMA_FILE, columns_list=["col_sint64"]).batch(2).repeat(5).rename(
+        ["col_sint64"], ["a2"])
+    data3 = ds.TFRecordDataset(FILES, SCHEMA_FILE, columns_list=["col_sint64"]).batch(2).rename(["col_sint64"], ["a3"])
 
     data4 = ds.zip((data1, data2, data3))
 
@@ -84,8 +86,9 @@ def test_case3():
 
 
 def test_case4():
-    data1 = ds.TFRecordDataset(FILES, SCHEMA_FILE).batch(2).repeat(10)
-    data2 = ds.TFRecordDataset(FILES)
+    data1 = ds.TFRecordDataset(FILES, SCHEMA_FILE, columns_list=["col_sint64"]).batch(2).repeat(10).rename(
+        ["col_sint64"], ["a1"])
+    data2 = ds.TFRecordDataset(FILES, columns_list=["col_sint64"]).rename(["col_sint64"], ["a2"])
     assert data2.get_dataset_size() == 12
     data2 = data2.batch(2)
     assert data2.get_dataset_size() == 6

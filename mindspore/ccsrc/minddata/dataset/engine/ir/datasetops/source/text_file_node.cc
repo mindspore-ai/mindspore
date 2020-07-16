@@ -78,7 +78,8 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileNode::Build() {
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
     connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->Build()));
-  RETURN_EMPTY_IF_ERROR(text_file_op->Init());
+  build_status = text_file_op->Init();  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -86,14 +87,17 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileNode::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_EMPTY_IF_ERROR(TextFileOp::CountAllFileRows(sorted_dataset_files, &num_rows));
+    build_status = TextFileOp::CountAllFileRows(sorted_dataset_files, &num_rows);
+    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
     // Add the shuffle op after this op
-    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                       rows_per_buffer_, &shuffle_op));
+    build_status = AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                rows_per_buffer_, &shuffle_op);
+    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
     node_ops.push_back(shuffle_op);
   }
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   // Add TextFileOp
   node_ops.push_back(text_file_op);

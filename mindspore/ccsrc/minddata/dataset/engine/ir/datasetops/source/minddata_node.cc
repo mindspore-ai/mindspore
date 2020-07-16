@@ -138,7 +138,8 @@ std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
   std::vector<std::shared_ptr<ShardOperator>> operators_;
-  RETURN_EMPTY_IF_ERROR(BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_));
+  build_status = BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_);
+  RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
   std::shared_ptr<MindRecordOp> mindrecord_op;
   // If pass a string to MindData(), it will be treated as a pattern to search for matched files,
@@ -154,7 +155,8 @@ std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
                                                    padded_sample_, sample_bytes_);
   }
 
-  RETURN_EMPTY_IF_ERROR(mindrecord_op->Init());
+  build_status = mindrecord_op->Init();  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
   node_ops.push_back(mindrecord_op);
 
   return node_ops;

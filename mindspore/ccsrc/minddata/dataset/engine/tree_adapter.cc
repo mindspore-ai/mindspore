@@ -97,6 +97,8 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 Status TreeAdapter::BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
   // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops = ir->Build();
+  RETURN_IF_NOT_OK(ir->BuildStatus());  // remove me after changing return val of Build()
+
   CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build node.");
 
   (*op) = ops.front();  // return the first op to be added as child by the caller of this function
@@ -141,6 +143,8 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_ep
   RETURN_IF_NOT_OK(BuildExecutionTree(root_ir, &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
+  if (pre_pass_override_) tree_->SetPrePassOverride(pre_pass_override_);
+
   // Note: We will gradually move the pre pass, optimizer pass, and post pass
   //       on ExecutionTree to perform on IR tree.
   // Prepare the tree
@@ -149,6 +153,11 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_ep
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
 
+  // Profiling parameters init
+  cur_batch_num_ = 0;
+  cur_connector_size_ = 0;
+  cur_connector_capacity_ = 0;
+
   return Status::OK();
 }
 
@@ -156,21 +165,55 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();  // make sure row is empty
+
+  bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
+
   // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
   if (cur_db_ == nullptr) {
     RETURN_IF_NOT_OK(tree_->Launch());
+    // Profiling
+    std::shared_ptr<Tracing> node;
+    Status s = tree_->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
+    if (s.IsOk()) {
+      tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
+    }
+    if (tracing_ != nullptr) {
+      cur_connector_size_ = tree_->root()->ConnectorSize();
+      cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
+    }
     RETURN_IF_NOT_OK(tree_->root()->GetNextBuffer(&cur_db_));  // first buf can't be eof or empty buf with none flag
-    RETURN_OK_IF_TRUE(cur_db_->eoe());                         // return empty tensor if 1st buf is a ctrl buf (no rows)
+    if (cur_db_->eoe()) {                                      // return empty tensor if 1st buf is a ctrl buf (no rows)
+      MS_LOG(INFO) << "End of data iteration.";
+      if (isProfilingEnable) {
+        tree_->SetEpochEnd();
+      }
+      return Status::OK();
+    }
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(!cur_db_->eof(), "EOF has already been reached.");
 
   if (cur_db_->NumRows() == 0) {  // a new row is fetched if cur buf is empty or a ctrl buf
     RETURN_IF_NOT_OK(tree_->root()->GetNextBuffer(&cur_db_));
-    RETURN_OK_IF_TRUE(cur_db_->eoe() || cur_db_->eof());  // return empty if this new buffer is a ctrl flag
+    if (cur_db_->eoe()) {  // return empty if this new buffer is a ctrl flag
+      MS_LOG(INFO) << "End of data iteration.";
+      if (isProfilingEnable) {
+        tree_->SetEpochEnd();
+      }
+      return Status::OK();
+    }
+    if (cur_db_->eof()) {
+      tree_->SetFinished();
+      std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
+      RETURN_STATUS_UNEXPECTED(err);
+    }
   }
-
   RETURN_IF_NOT_OK(cur_db_->PopRow(row));
+  // Record profiling info
+  if (tracing_ != nullptr) {
+    cur_batch_num_++;
+    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_);
+  }
   return Status::OK();
 }
 

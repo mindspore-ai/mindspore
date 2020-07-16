@@ -32,15 +32,37 @@ Status PythonIteratorConsumer::GetNextAsList(py::list *out) {
   }
   return Status::OK();
 }
+
 Status PythonIteratorConsumer::GetNextAsDict(py::dict *out) {
-  std::unordered_map<std::string, TensorPtr> row;
+  std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
+  Status s;
   {
     py::gil_scoped_release gil_release;
-    RETURN_IF_NOT_OK(GetNextAsMap(&row));
+    s = GetNextAsOrderedPair(&vec);
   }
-  for (auto el : row) {
-    (*out)[common::SafeCStr(el.first)] = el.second;
+  RETURN_IF_NOT_OK(s);
+  // Generate Python dict, python dict maintains its insertion order
+  for (const auto &pair : vec) {
+    (*out)[common::SafeCStr(pair.first)] = pair.second;
   }
   return Status::OK();
+}
+
+Status PythonBuildVocabConsumer::Start() {
+  py::gil_scoped_release gil_release;
+  return BuildVocabConsumer::Start();
+}
+
+Status PythonSaveToDisk::Save() {
+  py::gil_scoped_release gil_release;
+  return SaveToDisk::Save();
+}
+
+PythonSaveToDisk::PythonSaveToDisk(const std::string &datasetPath, int32_t numFiles, const std::string &datasetType)
+    : SaveToDisk(datasetPath, numFiles, datasetType) {}
+
+Status PythonTreeGetters::GetRow(TensorRow *r) {
+  py::gil_scoped_release gil_release;
+  return TreeGetters::GetRow(r);
 }
 }  // namespace mindspore::dataset

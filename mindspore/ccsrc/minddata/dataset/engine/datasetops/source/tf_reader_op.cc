@@ -1067,6 +1067,19 @@ Status TFReaderOp::PrepareNodePostAction() {
   return Status::OK();
 }
 
+// Get the file list of the specific shard ID
+Status TFReaderOp::GetShardFileList(std::vector<std::string> *shard_filenames) {
+  if (!shard_filenames->empty()) {
+    RETURN_STATUS_UNEXPECTED("The initial file list must be empty.\n");
+  }
+  for (int index = 0; index < dataset_files_list_.size(); index++) {
+    if (index % num_devices_ == device_id_) {
+      shard_filenames->push_back(dataset_files_list_.at(index));
+    }
+  }
+  return Status::OK();
+}
+
 // Get Dataset size
 Status TFReaderOp::GetDatasetSize(int64_t *dataset_size) {
   if (dataset_size_ > 0) {
@@ -1080,7 +1093,9 @@ Status TFReaderOp::GetDatasetSize(int64_t *dataset_size) {
       RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
       num_rows = num_rows_per_shard_;
     } else {
-      RETURN_IF_NOT_OK(CountTotalRows(&num_rows, dataset_files_list_));
+      std::vector<std::string> shard_file_list;
+      RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
+      RETURN_IF_NOT_OK(CountTotalRows(&num_rows, shard_file_list));
     }
   }
   sample_size = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();

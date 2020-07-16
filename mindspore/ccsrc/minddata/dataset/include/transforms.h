@@ -70,6 +70,7 @@ namespace transforms {
 class ComposeOperation;
 class DuplicateOperation;
 class OneHotOperation;
+class PreBuiltOperation;
 class RandomApplyOperation;
 class RandomChoiceOperation;
 class TypeCastOperation;
@@ -164,6 +165,20 @@ class OneHotOperation : public TensorOperation {
   float num_classes_;
 };
 
+class PreBuiltOperation : public TensorOperation {
+ public:
+  explicit PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op);
+
+  ~PreBuiltOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::shared_ptr<TensorOp> op_;
+};
+
 class RandomApplyOperation : public TensorOperation {
  public:
   explicit RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob);
@@ -192,7 +207,6 @@ class RandomChoiceOperation : public TensorOperation {
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
 };
-
 class TypeCastOperation : public TensorOperation {
  public:
   explicit TypeCastOperation(std::string data_type);

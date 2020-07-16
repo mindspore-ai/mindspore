@@ -22,7 +22,14 @@ namespace mindspore::dataset {
 void RuntimeContext::AssignConsumer(std::shared_ptr<TreeConsumer> tree_consumer) {
   tree_consumer_ = std::move(tree_consumer);
 }
-Status NativeRuntimeContext::Terminate() { return TerminateImpl(); }
+Status NativeRuntimeContext::Terminate() {
+  MS_LOG(INFO) << "Terminating a NativeRuntime";
+  if (tree_consumer_ != nullptr) {
+    return TerminateImpl();
+  }
+  MS_LOG(WARNING) << "TreeConsumer was not initialized";
+  return Status::OK();
+}
 
 Status NativeRuntimeContext::TerminateImpl() {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_consumer_ != nullptr, " Tree Consumer is not initialized");

@@ -25,6 +25,7 @@
 
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
+#include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
 
 namespace mindspore {
 namespace dataset {
@@ -60,6 +61,9 @@ class TreeAdapter {
   // Set optional optimization pass
   void SetOptimize(bool value) { optimize_ = value; }
 
+  // function to override override the pre-pass
+  void SetPrePassOverride(std::function<OptPass(OptPass)> pre_pass_override) { pre_pass_override_ = pre_pass_override; }
+
   // Optional optimizations status
   bool OptimizationEnabled() const { return optimize_; }
 
@@ -82,9 +86,14 @@ class TreeAdapter {
 
   std::unique_ptr<DataBuffer> cur_db_;
   std::unordered_map<std::string, int32_t> column_name_map_;
-  std::unique_ptr<ExecutionTree> tree_;
+  std::unique_ptr<ExecutionTree> tree_;  // current connector capacity of root op, used for profiling
   int32_t num_epochs_;
-  bool optimize_;  // Flag to enable optional optimization pass
+  bool optimize_;                                      // Flag to enable optional optimization pass
+  std::shared_ptr<DatasetIteratorTracing> tracing_;    // trace profiling data
+  int32_t cur_batch_num_;                              // current batch number, used for profiling
+  int32_t cur_connector_size_;                         // current connector size of root op, used for profiling
+  int32_t cur_connector_capacity_;                     // current connector capacity of root op, used for profiling
+  std::function<OptPass(OptPass)> pre_pass_override_;  // function ptr that overrides pre pass, called in PrePrepare()
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -33,7 +33,7 @@ class BucketBatchByLengthNode : public DatasetNode {
   /// \brief Constructor
   BucketBatchByLengthNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &column_names,
                           const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
-                          std::function<TensorRow(TensorRow)> element_length_function = nullptr,
+                          std::shared_ptr<TensorOp> element_length_function = nullptr,
                           const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
                           bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 
@@ -52,7 +52,7 @@ class BucketBatchByLengthNode : public DatasetNode {
   std::vector<std::string> column_names_;
   std::vector<int32_t> bucket_boundaries_;
   std::vector<int32_t> bucket_batch_sizes_;
-  std::function<TensorRow(TensorRow)> element_length_function_;
+  std::shared_ptr<TensorOp> element_length_function_;
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_info_;
   bool pad_to_bucket_boundary_;
   bool drop_remainder_;

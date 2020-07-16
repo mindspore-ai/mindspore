@@ -191,6 +191,23 @@ std::shared_ptr<SamplerRT> PKSamplerObj::Build() {
 }
 
 #ifndef ENABLE_ANDROID
+// PreBuiltOperation
+PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler)
+    : sp_(std::move(sampler)), sp_minddataset_(nullptr) {}
+
+PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator> sampler)
+    : sp_(nullptr), sp_minddataset_(std::move(sampler)) {}
+#endif
+
+bool PreBuiltSamplerObj::ValidateParams() { return true; }
+
+std::shared_ptr<SamplerRT> PreBuiltSamplerObj::Build() { return sp_; }
+
+#ifndef ENABLE_ANDROID
+std::shared_ptr<mindrecord::ShardOperator> PreBuiltSamplerObj::BuildForMindDataset() { return sp_minddataset_; }
+#endif
+
+#ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object
   std::shared_ptr<mindrecord::ShardOperator> mind_sampler;

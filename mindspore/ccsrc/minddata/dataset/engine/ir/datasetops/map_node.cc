@@ -64,7 +64,8 @@ std::vector<std::shared_ptr<DatasetOp>> MapNode::Build() {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
     node_ops.push_back(project_op);
   }
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   node_ops.push_back(map_op);
   return node_ops;

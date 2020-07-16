@@ -44,9 +44,9 @@ Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
 }
 
 // Constructor of the ConcatOp.
-ConcatOp::ConcatOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler,
-                   std::vector<std::pair<int, int>> children_flag_and_nums,
-                   std::vector<std::pair<int, int>> children_start_end_index)
+ConcatOp::ConcatOp(int32_t op_connector_size, const std::shared_ptr<SamplerRT> &sampler,
+                   const std::vector<std::pair<int, int>> &children_flag_and_nums,
+                   const std::vector<std::pair<int, int>> &children_start_end_index)
     : PipelineOp(op_connector_size),
       children_num_(0),
       sampler_(sampler),

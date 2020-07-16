@@ -29,7 +29,7 @@ namespace dataset {
 class FilterNode : public DatasetNode {
  public:
   /// \brief Constructor
-  FilterNode(std::shared_ptr<DatasetNode> child, std::function<TensorRow(TensorRow)> predicate,
+  FilterNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<TensorOp> predicate,
              std::vector<std::string> input_columns = {});
 
   /// \brief Destructor
@@ -44,7 +44,7 @@ class FilterNode : public DatasetNode {
   Status ValidateParams() override;
 
  private:
-  std::function<TensorRow(TensorRow)> predicate_;
+  std::shared_ptr<TensorOp> predicate_;
   std::vector<std::string> input_columns_;
 };
 

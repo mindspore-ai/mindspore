@@ -222,6 +222,13 @@ Status OneHotOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
 
+// PreBuiltOperation
+PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(tensor_op) {}
+
+Status PreBuiltOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> PreBuiltOperation::Build() { return op_; }
+
 // RandomApplyOperation
 RandomApplyOperation::RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob)
     : transforms_(transforms), prob_(prob) {}

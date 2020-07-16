@@ -17,7 +17,6 @@
 
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/api/python/de_pipeline.h"
 
 #include "mindspore/ccsrc/minddata/dataset/kernels/data/compose_op.h"
 #include "mindspore/ccsrc/minddata/dataset/kernels/data/no_op.h"

@@ -432,7 +432,7 @@ def check_from_dataset_sentencepiece(method):
         [_, col_names, vocab_size, character_coverage, model_type, params], _ = parse_user_args(method, *args, **kwargs)
 
         if col_names is not None:
-            type_check(col_names, (list,), "col_names")
+            type_check_list(col_names, (str,), "col_names")
 
         if vocab_size is not None:
             check_uint32(vocab_size, "vocab_size")

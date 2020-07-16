@@ -71,6 +71,15 @@ namespace dataset {
     return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, _e); \
   } while (false)
 
+#define RETURN_SECOND_IF_ERROR(_s, _r) \
+  do {                                 \
+    Status __rc = (_s);                \
+    if (__rc.IsError()) {              \
+      MS_LOG(ERROR) << __rc;           \
+      return _r;                       \
+    }                                  \
+  } while (false)
+
 enum class StatusCode : char {
   kOK = 0,
   kOutOfMemory = 1,

@@ -138,7 +138,9 @@ Status Task::Join(WaitFlag blocking) {
         while (thrd_.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
           // We can't tell which conditional_variable this thread is waiting on. So we may need
           // to interrupt everything one more time.
-          MS_LOG(INFO) << "Some threads not responding. Interrupt again";
+          std::stringstream ss;
+          ss << get_id();
+          MS_LOG(ERROR) << MyName() << " Thread ID " << ss.str() << " is not responding. Interrupt again";
           interrupt_svc->InterruptAll();
         }
       } else {

@@ -521,7 +521,7 @@ def test_chained_sampler_04():
     # Verify dataset size
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 24
+    assert data1_size == 6
 
     # Verify number of iterations
     num_iter = 0

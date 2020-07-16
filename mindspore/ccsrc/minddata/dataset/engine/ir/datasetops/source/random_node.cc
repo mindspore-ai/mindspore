@@ -98,7 +98,8 @@ std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
   std::shared_ptr<RandomDataOp> op;
   op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
                                       std::move(data_schema), std::move(sampler_->Build()));
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   node_ops.push_back(op);
 

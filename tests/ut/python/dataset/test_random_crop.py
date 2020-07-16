@@ -258,7 +258,7 @@ def test_random_crop_04_c():
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
     try:
-        data.create_dict_iterator(num_epochs=1).get_next()
+        data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size is greater than the image dim" in str(e)
@@ -281,7 +281,7 @@ def test_random_crop_04_py():
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
     try:
-        data.create_dict_iterator(num_epochs=1).get_next()
+        data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size" in str(e)
@@ -501,7 +501,7 @@ def test_random_crop_09():
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
     try:
-        data.create_dict_iterator(num_epochs=1).get_next()
+        data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should be PIL image" in str(e)

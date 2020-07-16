@@ -39,10 +39,10 @@ using mindspore::device::GpuBufferMgr;
 
 namespace mindspore {
 namespace dataset {
-
 using DATA_INFO = std::vector<std::pair<DataType, TensorShape>>;
 using DATA_INFO_QUEUE = Queue<DATA_INFO>;
 const int kDataInfoQueueCapacity = 128;
+
 class DeviceQueueOp : public PipelineOp {
  public:
   static const uint32_t INVALID_HANDLE = 0xffffffffUL;
@@ -184,7 +184,6 @@ class DeviceQueueOp : public PipelineOp {
 #ifdef ENABLE_TDTQUE
   Status SendDataToAscend();
   bool ascend_keep_waiting_;
-
 #endif
 
 #ifdef ENABLE_GPUQUE

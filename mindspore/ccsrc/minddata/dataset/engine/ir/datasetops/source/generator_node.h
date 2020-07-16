@@ -35,6 +35,9 @@ class GeneratorNode : public DatasetNode {
   GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
                 const std::vector<DataType> &column_types);
 
+  /// \brief Constructor
+  GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema);
+
   /// \brief Destructor
   ~GeneratorNode() = default;
 
@@ -46,10 +49,15 @@ class GeneratorNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Get the shard id of node, is always 0 because generator_node doesn't support sharding
+  /// \return Status Status::OK() if get shard id successfully
+  Status GetShardId(int32_t *shard_id) override;
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;
   std::vector<DataType> column_types_;
+  std::shared_ptr<SchemaObj> schema_;
 };
 
 }  // namespace dataset

@@ -34,6 +34,10 @@ class GetterPass : public TreePass {
   enum GetterType { kDatasetSize = 1, kOutputShapeAndType = 2 };
   /// \brief Constructor
   explicit GetterPass(GetterType tp) : pass_(tp) {}
+
+  /// \brief default copy Constructor
+  explicit GetterPass(const GetterPass &) = default;
+
   /// \brief Destructor
   ~GetterPass() = default;
 
@@ -51,11 +55,10 @@ class GetterPass : public TreePass {
 
     Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
     Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override { return Status::OK(); }
     Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
     Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
     Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<ProjectOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<RenameOp> node, bool *modified) override;
     // whether this is Run or PreRun does not matter here, however, Only Accept() is defined in ConcatOp
     Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) override;
 
@@ -67,7 +70,7 @@ class GetterPass : public TreePass {
     std::list<std::shared_ptr<DatasetOp>> nodes_to_clear_callback_;
     std::list<std::shared_ptr<DatasetOp>> nodes_to_remove_;
   };
-  // outter class needs only to own the inner class object since it automatically has access to its private variables
+  // outer class needs only to own the inner class object since it automatically has access to its private variables
   GetterNodes pass_;
 };
 }  // namespace dataset

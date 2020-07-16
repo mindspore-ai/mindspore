@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
@@ -29,7 +30,10 @@ namespace dataset {
 class ConcatNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets);
+  explicit ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets,
+                      const std::shared_ptr<SamplerObj> &sampler = nullptr,
+                      const std::vector<std::pair<int, int>> &children_flag_and_nums = {},
+                      const std::vector<std::pair<int, int>> &children_start_end_index = {});
 
   /// \brief Destructor
   ~ConcatNode() = default;
@@ -41,6 +45,11 @@ class ConcatNode : public DatasetNode {
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
+
+ private:
+  std::shared_ptr<SamplerObj> sampler_;
+  std::vector<std::pair<int, int>> children_flag_and_nums_;
+  std::vector<std::pair<int, int>> children_start_end_index_;
 };
 
 }  // namespace dataset

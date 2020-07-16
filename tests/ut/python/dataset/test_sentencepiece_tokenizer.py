@@ -110,7 +110,7 @@ def test_from_file_to_int():
 
 def test_build_from_dataset():
     data = ds.TextFileDataset(VOCAB_FILE, shuffle=False)
-    vocab = text.SentencePieceVocab.from_dataset(data, [""], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+    vocab = text.SentencePieceVocab.from_dataset(data, ["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
@@ -151,7 +151,7 @@ def concat_test(dataset):
 
 def test_with_zip_concat():
     data = ds.TextFileDataset(VOCAB_FILE, shuffle=False)
-    vocab = text.SentencePieceVocab.from_dataset(data, [""], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+    vocab = text.SentencePieceVocab.from_dataset(data, ["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer, num_parallel_workers=2)

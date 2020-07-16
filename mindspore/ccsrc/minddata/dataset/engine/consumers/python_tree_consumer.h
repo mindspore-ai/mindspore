@@ -44,5 +44,21 @@ class PythonIteratorConsumer : public IteratorConsumer {
   /// \return Status error code
   Status GetNextAsDict(py::dict *out);
 };
+
+class PythonBuildVocabConsumer : public BuildVocabConsumer {
+ public:
+  Status Start() override;
+};
+
+class PythonSaveToDisk : public SaveToDisk {
+ public:
+  PythonSaveToDisk(const std::string &datasetPath, int32_t numFiles, const std::string &datasetType);
+  Status Save() override;
+};
+
+class PythonTreeGetters : public TreeGetters {
+ public:
+  Status GetRow(TensorRow *r) override;
+};
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PYTHON_TREE_CONSUMER_H_

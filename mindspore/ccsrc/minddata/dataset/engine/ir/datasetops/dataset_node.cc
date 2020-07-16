@@ -240,6 +240,7 @@ DatasetNode::DatasetNode() {
   rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
+  build_status = Status::OK();  // remove me after changing return val of Build()
 }
 
 // In DFS tree traversal, each node is visited twice. Accept is called on the first visit.
@@ -253,6 +254,14 @@ Status DatasetNode::Accept(NodePass *p, bool *modified) {
 Status DatasetNode::AcceptAfter(NodePass *p, bool *modified) {
   // This method will only be called if its derived class does not implement one.
   return p->VisitAfter(shared_from_this(), modified);
+}
+Status DatasetNode::GetShardId(int32_t *shard_id) {
+  if (!Children().empty()) {
+    // Get shard id from the child node
+    return Children()[0]->GetShardId(shard_id);
+  } else {
+    RETURN_STATUS_SYNTAX_ERROR("Get Shard Id failed at source node");
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore

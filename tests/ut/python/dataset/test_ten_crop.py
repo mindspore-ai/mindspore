@@ -175,7 +175,7 @@ def test_ten_crop_wrong_img_error_msg():
     data = data.map(operations=transform, input_columns=["image"])
 
     with pytest.raises(RuntimeError) as info:
-        data.create_tuple_iterator(num_epochs=1).get_next()
+        data.create_tuple_iterator(num_epochs=1).__next__()
     error_msg = "TypeError: __call__() takes 2 positional arguments but 11 were given"
 
     # error msg comes from ToTensor()

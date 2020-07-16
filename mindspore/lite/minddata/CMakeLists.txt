@@ -146,6 +146,7 @@ if (BUILD_MINDDATA STREQUAL "full")
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_CACHE_SRC_FILES
         "${MINDDATA_DIR}/engine/ir/cache/dataset_cache_impl.cc"
+        "${MINDDATA_DIR}/engine/ir/cache/pre_built_dataset_cache.cc"
         )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES

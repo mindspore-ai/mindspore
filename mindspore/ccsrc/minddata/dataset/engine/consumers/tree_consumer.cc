@@ -23,6 +23,7 @@
 #include <vector>
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/tree_adapter.h"
+#include "minddata/dataset/engine/opt/pre/getter_pass.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/mindrecord/include/shard_header.h"
@@ -35,7 +36,7 @@ namespace mindspore::dataset {
 TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
 
 Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d)); }
-Status TreeConsumer::Terminate() { return tree_adapter_->AllTasks()->DoServiceStop(); }
+Status TreeConsumer::Terminate() { return tree_adapter_->AllTasks()->ServiceStop(); }
 
 // IteratorConsumer
 Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
@@ -73,6 +74,38 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
   return Status::OK();
 }
 
+Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec) {
+  CHECK_FAIL_RETURN_UNEXPECTED(vec != nullptr && vec->empty(), "vec is null or non-empty.");
+
+  TensorRow curr_row;
+
+  RETURN_IF_NOT_OK(tree_adapter_->GetNext(&curr_row));
+  RETURN_OK_IF_TRUE(curr_row.empty());
+
+  size_t num_cols = curr_row.size();  // num_cols is non-empty.
+  // order the column names according to their ids
+  if (column_order_.empty()) {
+    const int32_t invalid_col_id = -1;
+    column_order_.resize(num_cols, {std::string(), invalid_col_id});
+    for (const auto &itr : tree_adapter_->GetColumnNameMap()) {
+      int32_t ind = itr.second;
+      CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds.");
+      column_order_[ind] = std::make_pair(itr.first, ind);
+    }
+    // error check, make sure the ids in col_name_id_map are continuous and starts from 0
+    for (const auto &col : column_order_) {
+      CHECK_FAIL_RETURN_UNEXPECTED(col.second != invalid_col_id, "column ids are not continuous.");
+    }
+  }
+
+  vec->reserve(num_cols);
+
+  std::transform(column_order_.begin(), column_order_.end(), std::back_inserter(*vec),
+                 [curr_row](const auto &col) { return std::make_pair(col.first, curr_row[col.second]); });
+
+  return Status::OK();
+}
+
 // ToDevice
 Status ToDevice::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), num_epochs_); }
 
@@ -81,7 +114,6 @@ Status ToDevice::Send() {
   RETURN_IF_NOT_OK(tree_adapter_->Launch());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  RETURN_IF_NOT_OK(root->GetNextBuffer(&db));
   return Status::OK();
 }
 
@@ -101,7 +133,34 @@ Status ToDevice::Stop() {
   DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DeviceQueueOp");
   op->StopSend();
+
   return Status::OK();
+}
+
+Status ToDevice::GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes) {
+  // tree_.root() must be DeviceQueueOp
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "GetDataInfo only supported by DeviceQueueOp");
+  DATA_INFO data_info;
+  RETURN_IF_NOT_OK(op->GetDataInfo(&data_info));
+  for (auto el : data_info) {
+    types->push_back(el.first);
+    shapes->push_back(el.second);
+  }
+  return Status::OK();
+}
+
+Status ToDevice::Terminate() {
+#ifdef ENABLE_TDTQUE
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DeviceQueueOp");
+  op->StopWaiting();
+#endif
+  return TreeConsumer::Terminate();
 }
 
 #ifndef ENABLE_ANDROID
@@ -282,50 +341,50 @@ Status SaveToDisk::FetchDataFromTensorRow(const TensorRow &row,
     if (column_type == DataType::DE_INT8) {
       std::unique_ptr<int32_t> data;
       std::unique_ptr<int8_t> dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_INT16) {
       std::unique_ptr<int32_t> data;
       std::unique_ptr<int16_t> dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_UINT16) {
       std::unique_ptr<int32_t> data;
       std::unique_ptr<uint16_t> dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_UINT8) {
       std::unique_ptr<uint8_t> data, dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_INT32) {
       std::unique_ptr<int32_t> data, dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_UINT32) {
       std::unique_ptr<int64_t> data;
       std::unique_ptr<uint32_t> dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_INT64) {
       std::unique_ptr<int64_t> data, dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_FLOAT32) {
       std::unique_ptr<float> data, dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_FLOAT64) {
       std::unique_ptr<double> data, dummy;
-      s = TransfromTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
+      s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
       RETURN_IF_NOT_OK(s);
       if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
     } else if (column_type == DataType::DE_STRING) {
@@ -346,7 +405,7 @@ Status SaveToDisk::FetchDataFromTensorRow(const TensorRow &row,
 }
 
 template <typename T, typename S>
-Status SaveToDisk::TransfromTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
+Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
                                    std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
                                    std::unique_ptr<S> *s, bool need_convert) {
   if (nullptr == src) {
@@ -379,47 +438,32 @@ Status SaveToDisk::TransfromTensor(const unsigned char *src, const TensorShape &
 }
 #endif
 
-TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), row_flag_(false) {
-  tree_adapter_ = std::make_unique<TreeAdapter>();
-}
+TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false) { tree_adapter_ = std::make_unique<TreeAdapter>(); }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
-  if (init_flag_) {
-    return Status::OK();
-  }
-  Status s = tree_adapter_->Compile(std::move(d), 1);
-  if (!s.IsError()) {
-    init_flag_ = true;
-  }
-  return s;
-}
-
-bool TreeGetters::isInitialized() { return init_flag_; }
-
-Status TreeGetters::GetRow(TensorRow *row) {
-  if (row_flag_ == false) {
-    RETURN_IF_NOT_OK(tree_adapter_->GetNext(row));
-    row_flag_ = true;
-  }
+  root_ = std::move(d);
   return Status::OK();
 }
 
+Status TreeGetters::GetRow(TensorRow *row) { return tree_adapter_->GetNext(row); }
+
 Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
   if (dataset_size_ == -1) {
+    RETURN_IF_NOT_OK(InternalInit(static_cast<int8_t>(GetterPass::kDatasetSize)));
     std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-    CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+    RETURN_UNEXPECTED_IF_NULL(root);
     RETURN_IF_NOT_OK(root->GetDatasetSize(dataset_size));
-    dataset_size_ = *dataset_size;
-    if (*dataset_size == -1) {
-      RETURN_IF_NOT_OK(GetRow(&row_));
-      int64_t num_rows = 0;
-      TensorRow row = row_;
-      while (row.size() != 0) {
-        num_rows++;
-        RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
+    if (*dataset_size == -1) {  // run through the tree and get everything
+      TensorRow row;
+      RETURN_IF_NOT_OK(GetRow(&row));
+      int64_t row_cnt = 0;
+      while (!row.empty()) {
+        ++row_cnt;
+        RETURN_IF_NOT_OK(GetRow(&row));
       }
-      dataset_size_ = num_rows;
+      *dataset_size = row_cnt;
     }
+    dataset_size_ = *dataset_size;  // save the previous result
   }
 
   *dataset_size = dataset_size_;
@@ -427,68 +471,88 @@ Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
 }
 
 Status TreeGetters::GetOutputTypes(std::vector<DataType> *types) {
-  RETURN_IF_NOT_OK(GetRow(&row_));
-  for (auto ts : row_) {
-    DataType dt = ts->type();
-    types->push_back(dt);
-  }
+  RETURN_IF_NOT_OK(InternalInit(static_cast<int8_t>(GetterPass::kOutputShapeAndType)));
+  if (first_row_.empty()) RETURN_IF_NOT_OK(GetRow(&first_row_));
+
+  std::transform(first_row_.begin(), first_row_.end(), std::back_inserter(*types),
+                 [](const TensorPtr &t) { return t->type(); });
   return Status::OK();
 }
 
 Status TreeGetters::GetOutputShapes(std::vector<TensorShape> *shapes) {
-  RETURN_IF_NOT_OK(GetRow(&row_));
-  for (auto ts : row_) {
-    TensorShape t = ts->shape();
-    shapes->push_back(t);
-  }
+  RETURN_IF_NOT_OK(InternalInit(static_cast<int8_t>(GetterPass::kOutputShapeAndType)));
+  if (first_row_.empty()) RETURN_IF_NOT_OK(GetRow(&first_row_));
+
+  std::transform(first_row_.begin(), first_row_.end(), std::back_inserter(*shapes),
+                 [](const TensorPtr &t) { return t->shape(); });
   return Status::OK();
 }
 
 Status TreeGetters::GetBatchSize(int64_t *batch_size) {
+  RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  RETURN_UNEXPECTED_IF_NULL(root);
   *batch_size = root->GetTreeBatchSize();
   CHECK_FAIL_RETURN_UNEXPECTED(*batch_size != -1, "Error in finding the batch size.");
   return Status::OK();
 }
 
 Status TreeGetters::GetRepeatCount(int64_t *repeat_count) {
+  RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  RETURN_UNEXPECTED_IF_NULL(root);
   *repeat_count = root->GetTreeRepeatCount();
   return Status::OK();
 }
 
 Status TreeGetters::GetNumClasses(int64_t *num_classes) {
+  RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  RETURN_UNEXPECTED_IF_NULL(root);
   RETURN_IF_NOT_OK(root->GetNumClasses(num_classes));
   return Status::OK();
 }
 
 Status TreeGetters::GetColumnNames(std::vector<std::string> *output) {
+  RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  RETURN_UNEXPECTED_IF_NULL(root);
   std::unordered_map<std::string, int32_t> column_name_id_map = root->column_name_id_map();
-  if (column_name_id_map.empty()) RETURN_STATUS_UNEXPECTED("GetColumnNames: column_name_id map was empty.");
-  std::vector<std::pair<std::string, int32_t>> column_name_id_vector(column_name_id_map.begin(),
-                                                                     column_name_id_map.end());
-  std::sort(column_name_id_vector.begin(), column_name_id_vector.end(),
+  CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map.empty(), "GetColumnNames: column_name_id map is empty.");
+  std::vector<std::pair<std::string, int32_t>> col_name_id_vec(column_name_id_map.begin(), column_name_id_map.end());
+  std::sort(col_name_id_vec.begin(), col_name_id_vec.end(),
             [](const std::pair<std::string, int32_t> &a, const std::pair<std::string, int32_t> &b) {
               return a.second < b.second;
             });
-  for (auto item : column_name_id_vector) {
-    (*output).push_back(item.first);
-  }
+  std::transform(col_name_id_vec.begin(), col_name_id_vec.end(), std::back_inserter(*output),
+                 [](const std::pair<std::string, int32_t> &p) { return p.first; });
   return Status::OK();
 }
 
 Status TreeGetters::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  RETURN_IF_NOT_OK(InternalInit());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  RETURN_UNEXPECTED_IF_NULL(root);
   RETURN_IF_NOT_OK(root->GetClassIndexing(output_class_indexing));
   return Status::OK();
 }
 
+Status TreeGetters::InternalInit(int8_t type) {
+  if (init_flag_) return Status::OK();
+  tree_adapter_->SetPrePassOverride([&type](OptPass pre) {
+    pre.push_back(std::make_unique<GetterPass>(static_cast<GetterPass::GetterType>(type)));
+    return pre;
+  });
+  Status s = tree_adapter_->Compile(std::move(root_), 1);
+  if (!s.IsError()) init_flag_ = true;
+  return s;
+}
+Status TreeGetters::InternalInit() {
+  if (init_flag_) return Status::OK();
+  Status s = tree_adapter_->Compile(std::move(root_), 1);
+  if (!s.IsError()) init_flag_ = true;
+  return s;
+}
 Status BuildVocabConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), 1); }
 
 Status BuildVocabConsumer::Start() {

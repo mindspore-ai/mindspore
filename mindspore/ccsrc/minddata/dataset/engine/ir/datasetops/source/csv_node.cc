@@ -108,18 +108,23 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
     std::make_shared<CsvOp>(sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_,
                             rows_per_buffer_, num_samples_, worker_connector_size_, connector_que_size_, shuffle_files,
                             num_shards_, shard_id_, std::move(sampler_->Build()));
-  RETURN_EMPTY_IF_ERROR(csv_op->Init());
+
+  build_status = csv_op->Init();  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
+
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_EMPTY_IF_ERROR(CsvOp::CountAllFileRows(sorted_dataset_files, column_names_.empty(), &num_rows));
+    build_status = CsvOp::CountAllFileRows(sorted_dataset_files, column_names_.empty(), &num_rows);
+    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
     // Add the shuffle op after this op
-    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                       rows_per_buffer_, &shuffle_op));
+    build_status = AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                rows_per_buffer_, &shuffle_op);
+    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
     node_ops.push_back(shuffle_op);
   }
