@@ -36,8 +36,12 @@ REGISTER_PYBIND_DEFINE(
     (void)m_sub.def("str_to_type", &StringToType, "string to typeptr");
     (void)py::class_<Type, std::shared_ptr<Type>>(m_sub, "Type")
       .def_readonly(PYTHON_DTYPE_FLAG, &mindspore::Type::parse_info_)
-      .def("__eq__",
-           [](const TypePtr &t1, const TypePtr &t2) {
+     .def("__eq__",
+           [](const TypePtr &t1, const py::object &other) {
+             if (!py::isinstance<Type>(other)) {
+               return false;
+             }
+             auto t2 = py::cast<TypePtr>(other);
              if (t1 != nullptr && t2 != nullptr) {
                return *t1 == *t2;
              }
