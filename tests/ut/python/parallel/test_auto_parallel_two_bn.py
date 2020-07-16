@@ -40,7 +40,7 @@ class NetWithLoss(nn.Cell):
 class Blockcell(nn.Cell):
     def __init__(self):
         super(Blockcell, self).__init__()
-        self.bn = nn.BatchNorm2d(64, momentum=0.9)
+        self.bn = nn.BatchNorm1d(64, momentum=0.9)
 
     def construct(self, x):
         out = self.bn(x)
