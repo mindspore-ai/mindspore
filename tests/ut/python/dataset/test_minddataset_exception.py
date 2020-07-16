@@ -228,3 +228,24 @@ def test_minddataset_shard_id_bigger_than_num_shard():
 
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
+
+def test_cv_minddataset_partition_num_samples_equals_0():
+    """tutorial for cv minddataset."""
+    create_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+
+    def partitions(num_shards):
+        for partition_id in range(num_shards):
+            data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
+                                      num_shards=num_shards,
+                                      shard_id=partition_id, num_samples=0)
+            num_iter = 0
+            for _ in data_set.create_dict_iterator():
+                num_iter += 1
+    with pytest.raises(Exception) as error_info:
+        partitions(5)
+    assert 'num_samples should be a positive integer value, but got num_samples=0' in str(error_info)
+
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))

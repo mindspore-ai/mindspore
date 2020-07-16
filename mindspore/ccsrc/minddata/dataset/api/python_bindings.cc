@@ -784,7 +784,7 @@ void bindSamplerOps(py::module *m) {
 
   (void)py::class_<mindrecord::ShardDistributedSample, mindrecord::ShardSample,
                    std::shared_ptr<mindrecord::ShardDistributedSample>>(*m, "MindrecordDistributedSampler")
-    .def(py::init<int64_t, int64_t, bool, uint32_t>());
+    .def(py::init<int64_t, int64_t, bool, uint32_t, int64_t>());
 
   (void)py::class_<mindrecord::ShardShuffle, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardShuffle>>(
     *m, "MindrecordRandomSampler")

@@ -238,6 +238,72 @@ def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
     assert partitions(5) == 2
     assert partitions(9) == 2
 
+def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
+    """tutorial for cv minddataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+
+    def partitions(num_shards):
+        for partition_id in range(num_shards):
+            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                                      num_shards=num_shards,
+                                      shard_id=partition_id, num_samples=1)
+            num_iter = 0
+            for item in data_set.create_dict_iterator():
+                logger.info("-------------- partition : {} ------------------------".format(partition_id))
+                logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
+                logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
+                num_iter += 1
+        return num_iter
+
+    assert partitions(4) == 1
+    assert partitions(5) == 1
+    assert partitions(9) == 1
+
+def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
+    """tutorial for cv minddataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+
+    def partitions(num_shards):
+        for partition_id in range(num_shards):
+            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                                      num_shards=num_shards,
+                                      shard_id=partition_id, num_samples=2)
+            num_iter = 0
+            for item in data_set.create_dict_iterator():
+                logger.info("-------------- partition : {} ------------------------".format(partition_id))
+                logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
+                logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
+                num_iter += 1
+        return num_iter
+
+    assert partitions(4) == 2
+    assert partitions(5) == 2
+    assert partitions(9) == 2
+
+def test_cv_minddataset_partition_num_samples_2(add_and_remove_cv_file):
+    """tutorial for cv minddataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+
+    def partitions(num_shards):
+        for partition_id in range(num_shards):
+            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                                      num_shards=num_shards,
+                                      shard_id=partition_id, num_samples=3)
+            num_iter = 0
+            for item in data_set.create_dict_iterator():
+                logger.info("-------------- partition : {} ------------------------".format(partition_id))
+                logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
+                logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
+                num_iter += 1
+        return num_iter
+
+    assert partitions(4) == 3
+    assert partitions(5) == 2
+    assert partitions(9) == 2
+
 
 def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
