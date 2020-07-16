@@ -100,6 +100,7 @@ class Primitive : public Named {
     return !(iter == attrs_.cend());
   }
   void set_prim_type(const PrimType t) { prim_type_ = t; }
+  virtual PrimitivePtr Clone() { return std::make_shared<Primitive>(*this); }
   void set_instance_name(const std::string s) { instance_name_ = s; }
   bool HasPyEvaluator() const { return prim_type_ == kPrimTypePyInferShape || prim_type_ == kPrimTypeUserCustom; }
   bool HasPyInferTensor() const { return prim_type_ == kPrimTypePyInferTensor; }
