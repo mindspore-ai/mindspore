@@ -28,4 +28,4 @@ def test_cast():
     type_dst = ms.float32
     cast = P.Cast()
     result = cast(input_x, type_dst)
-    assert result.dtype() == type_dst
+    assert result.dtype == type_dst
