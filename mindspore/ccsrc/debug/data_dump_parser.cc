@@ -35,7 +35,7 @@ void DataDumpParser::ResetParam() {
 bool DataDumpParser::DumpEnabled() const {
   auto enable_dump = std::getenv(kEnableDataDump);
   if (!enable_dump) {
-    MS_LOG(WARNING) << "[DataDump] enable dump is null. Please export ENABLE_DATA_DUMP";
+    MS_LOG(INFO) << "[DataDump] enable dump is null. Please export ENABLE_DATA_DUMP";
     return false;
   }
 

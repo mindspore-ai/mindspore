@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_DATADUMP_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_DATADUMP_H_
-#ifdef ENABLE_DATA_DUMP
 #include <tuple>
 #include <map>
 #include <memory>
@@ -65,5 +64,4 @@ class DataDumper {
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEVICE_ASCEND_DUMP_DATADUMP_H_
