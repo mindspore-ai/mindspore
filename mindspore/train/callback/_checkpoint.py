@@ -15,7 +15,6 @@
 """Checkpoint related classes and functions."""
 
 import os
-import shutil
 import stat
 import time
 
@@ -86,6 +85,7 @@ class CheckpointConfig:
             Can't be used with keep_checkpoint_max at the same time.
         integrated_save (bool): Whether to intergrated save in automatic model parallel scene. Default: True.
             Integrated save function is only supported in automatic parallel scene, not supported in manual parallel.
+        async_save (bool): Whether asynchronous execute save checkpoint into file. Default: False
 
     Raises:
         ValueError: If the input_param is None or 0.
@@ -100,7 +100,8 @@ class CheckpointConfig:
                  save_checkpoint_seconds=0,
                  keep_checkpoint_max=5,
                  keep_checkpoint_per_n_minutes=0,
-                 integrated_save=True):
+                 integrated_save=True,
+                 async_save=False):
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
@@ -129,6 +130,7 @@ class CheckpointConfig:
                 self._keep_checkpoint_max = 1
 
         self._integrated_save = check_bool(integrated_save)
+        self._async_save = check_bool(async_save)
 
     @property
     def save_checkpoint_steps(self):
@@ -154,6 +156,11 @@ class CheckpointConfig:
     def integrated_save(self):
         """Get the value of _integrated_save."""
         return self._integrated_save
+
+    @property
+    def async_save(self):
+        """Get the value of _async_save."""
+        return self._async_save
 
     def get_checkpoint_policy(self):
         """Get the policy of checkpoint."""
@@ -282,8 +289,6 @@ class ModelCheckpoint(Callback):
             global _save_dir
             _save_dir = self._directory
             cur_file = os.path.join(self._directory, cur_ckpoint_file)
-            tmp_ckpt_file_name_for_cur_process = str(os.getpid()) + "-" + 'parameters.ckpt'
-            gen_file = os.path.join(_save_dir, tmp_ckpt_file_name_for_cur_process)
             self._last_time_for_keep = time.time()
             self._last_triggered_step = cb_params.cur_step_num
 
@@ -291,10 +296,9 @@ class ModelCheckpoint(Callback):
                 set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
 
-            _exec_save_checkpoint(cb_params.train_network, gen_file, self._config.integrated_save)
+            _exec_save_checkpoint(cb_params.train_network, cur_file, self._config.integrated_save,
+                                  self._config.async_save)
 
-            if os.path.exists(gen_file):
-                shutil.move(gen_file, cur_file)
             self._latest_ckpt_file_name = cur_file
 
     @property
