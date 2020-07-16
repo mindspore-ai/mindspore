@@ -14,7 +14,7 @@
 # ==============================================================================
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check
+from util import save_and_check_dict
 
 # Note: Number of rows in test.data dataset:  12
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
@@ -29,8 +29,6 @@ def test_batch_01():
     # define parameters
     batch_size = 2
     drop_remainder = True
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -38,7 +36,7 @@ def test_batch_01():
 
     assert sum([1 for _ in data1]) == 6
     filename = "batch_01_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_02():
@@ -49,8 +47,6 @@ def test_batch_02():
     # define parameters
     batch_size = 5
     drop_remainder = True
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -58,7 +54,7 @@ def test_batch_02():
 
     assert sum([1 for _ in data1]) == 2
     filename = "batch_02_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_03():
@@ -69,8 +65,6 @@ def test_batch_03():
     # define parameters
     batch_size = 3
     drop_remainder = False
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -78,7 +72,7 @@ def test_batch_03():
 
     assert sum([1 for _ in data1]) == 4
     filename = "batch_03_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_04():
@@ -89,8 +83,6 @@ def test_batch_04():
     # define parameters
     batch_size = 7
     drop_remainder = False
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -98,7 +90,7 @@ def test_batch_04():
 
     assert sum([1 for _ in data1]) == 2
     filename = "batch_04_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_05():
@@ -108,7 +100,6 @@ def test_batch_05():
     logger.info("test_batch_05")
     # define parameters
     batch_size = 1
-    parameters = {"params": {'batch_size': batch_size}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -116,7 +107,7 @@ def test_batch_05():
 
     assert sum([1 for _ in data1]) == 12
     filename = "batch_05_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_06():
@@ -127,8 +118,6 @@ def test_batch_06():
     # define parameters
     batch_size = 12
     drop_remainder = False
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -136,7 +125,7 @@ def test_batch_06():
 
     assert sum([1 for _ in data1]) == 1
     filename = "batch_06_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_07():
@@ -148,9 +137,6 @@ def test_batch_07():
     batch_size = 4
     drop_remainder = False
     num_parallel_workers = 2
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder,
-                             'num_parallel_workers': num_parallel_workers}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -159,7 +145,7 @@ def test_batch_07():
 
     assert sum([1 for _ in data1]) == 3
     filename = "batch_07_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_08():
@@ -170,8 +156,6 @@ def test_batch_08():
     # define parameters
     batch_size = 6
     num_parallel_workers = 1
-    parameters = {"params": {'batch_size': batch_size,
-                             'num_parallel_workers': num_parallel_workers}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -179,7 +163,7 @@ def test_batch_08():
 
     assert sum([1 for _ in data1]) == 2
     filename = "batch_08_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_09():
@@ -190,8 +174,6 @@ def test_batch_09():
     # define parameters
     batch_size = 13
     drop_remainder = False
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -199,7 +181,7 @@ def test_batch_09():
 
     assert sum([1 for _ in data1]) == 1
     filename = "batch_09_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_10():
@@ -210,8 +192,6 @@ def test_batch_10():
     # define parameters
     batch_size = 99
     drop_remainder = True
-    parameters = {"params": {'batch_size': batch_size,
-                             'drop_remainder': drop_remainder}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -219,7 +199,7 @@ def test_batch_10():
 
     assert sum([1 for _ in data1]) == 0
     filename = "batch_10_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_11():
@@ -229,7 +209,6 @@ def test_batch_11():
     logger.info("test_batch_11")
     # define parameters
     batch_size = 1
-    parameters = {"params": {'batch_size': batch_size}}
 
     # apply dataset operations
     # Use schema file with 1 row
@@ -239,7 +218,7 @@ def test_batch_11():
 
     assert sum([1 for _ in data1]) == 1
     filename = "batch_11_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_12():
@@ -249,7 +228,6 @@ def test_batch_12():
     logger.info("test_batch_12")
     # define parameters
     batch_size = True
-    parameters = {"params": {'batch_size': batch_size}}
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
@@ -257,7 +235,7 @@ def test_batch_12():
 
     assert sum([1 for _ in data1]) == 12
     filename = "batch_12_result.npz"
-    save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_batch_exception_01():

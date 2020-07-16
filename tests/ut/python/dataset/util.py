@@ -24,9 +24,6 @@ import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
 
-# These are the column names defined in the testTFTestAllTypes dataset
-COLUMNS = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
-           "col_sint16", "col_sint32", "col_sint64"]
 # These are list of plot title in different visualize modes
 PLOT_TITLE_DICT = {
     1: ["Original image", "Transformed image"],
@@ -80,39 +77,6 @@ def _save_json(filename, parameters, result_dict):
 
     out_dict = {**parameters, **{"columns": result_dict}}
     fout.write(jsbeautifier.beautify(json.dumps(out_dict), options))
-
-
-def save_and_check(data, parameters, filename, generate_golden=False):
-    """
-    Save the dataset dictionary and compare (as numpy array) with golden file.
-    Use create_dict_iterator to access the dataset.
-    Note: save_and_check() is deprecated; use save_and_check_dict().
-    """
-    num_iter = 0
-    result_dict = {}
-    for column_name in COLUMNS:
-        result_dict[column_name] = []
-
-    for item in data.create_dict_iterator():  # each data is a dictionary
-        for data_key in list(item.keys()):
-            if data_key not in result_dict:
-                result_dict[data_key] = []
-            result_dict[data_key].append(item[data_key].tolist())
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-
-    cur_dir = os.path.dirname(os.path.realpath(__file__))
-    golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
-    if generate_golden:
-        # Save as the golden result
-        _save_golden(cur_dir, golden_ref_dir, result_dict)
-
-    _compare_to_golden(golden_ref_dir, result_dict)
-
-    if SAVE_JSON:
-        # Save result to a json file for inspection
-        _save_json(filename, parameters, result_dict)
 
 
 def save_and_check_dict(data, filename, generate_golden=False):
@@ -203,6 +167,29 @@ def save_and_check_tuple(data, parameters, filename, generate_golden=False):
         _save_json(filename, parameters, result_dict)
 
 
+def config_get_set_seed(seed_new):
+    """
+    Get and return the original configuration seed value.
+    Set the new configuration seed value.
+    """
+    seed_original = ds.config.get_seed()
+    ds.config.set_seed(seed_new)
+    logger.info("seed: original = {}  new = {} ".format(seed_original, seed_new))
+    return seed_original
+
+
+def config_get_set_num_parallel_workers(num_parallel_workers_new):
+    """
+    Get and return the original configuration num_parallel_workers value.
+    Set the new configuration num_parallel_workers value.
+    """
+    num_parallel_workers_original = ds.config.get_num_parallel_workers()
+    ds.config.set_num_parallel_workers(num_parallel_workers_new)
+    logger.info("num_parallel_workers: original = {}  new = {} ".format(num_parallel_workers_original,
+                                                                        num_parallel_workers_new))
+    return num_parallel_workers_original
+
+
 def diff_mse(in1, in2):
     mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
     return mse * 100
@@ -263,29 +250,6 @@ def visualize_image(image_original, image_de, mse=None, image_lib=None):
         plt.title("Diff image,\n mse : {}".format(mse))
 
     plt.show()
-
-
-def config_get_set_seed(seed_new):
-    """
-    Get and return the original configuration seed value.
-    Set the new configuration seed value.
-    """
-    seed_original = ds.config.get_seed()
-    ds.config.set_seed(seed_new)
-    logger.info("seed: original = {}  new = {} ".format(seed_original, seed_new))
-    return seed_original
-
-
-def config_get_set_num_parallel_workers(num_parallel_workers_new):
-    """
-    Get and return the original configuration num_parallel_workers value.
-    Set the new configuration num_parallel_workers value.
-    """
-    num_parallel_workers_original = ds.config.get_num_parallel_workers()
-    ds.config.set_num_parallel_workers(num_parallel_workers_new)
-    logger.info("num_parallel_workers: original = {}  new = {} ".format(num_parallel_workers_original,
-                                                                        num_parallel_workers_new))
-    return num_parallel_workers_original
 
 
 def visualize_with_bounding_boxes(orig, aug, annot_name="annotation", plot_rows=3):
