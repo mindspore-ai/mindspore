@@ -451,19 +451,20 @@ def export(net, *inputs, file_name, file_format='GEIR'):
     # export model
     net.init_parameters_data()
     if file_format == 'GEIR':
-        _executor.compile(net, *inputs, phase='export')
+        phase_name = 'export.geir'
+        _executor.compile(net, *inputs, phase=phase_name)
         _executor.export(net, file_name, file_format)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
         # NOTICE: the pahse name `export_onnx` is used for judging whether is exporting onnx in the compile pipeline,
         #         do not change it to other values.
-        phase_name = 'export_onnx'
+        phase_name = 'export.onnx'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id)
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
     elif file_format == 'BINARY':  # file_format is 'BINARY'
-        phase_name = 'export_binary'
+        phase_name = 'export.binary'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id, 'binary_ir')
         with open(file_name, 'wb') as f:
