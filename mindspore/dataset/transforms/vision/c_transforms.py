@@ -319,8 +319,6 @@ class Resize(cde.ResizeOp):
 
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
-        if isinstance(size, int):
-            size = (size, size)
         self.size = size
         self.interpolation = interpolation
         interpoltn = DE_C_INTER_MODE[interpolation]
