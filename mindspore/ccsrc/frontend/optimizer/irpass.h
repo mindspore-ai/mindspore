@@ -21,7 +21,7 @@
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/opt.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 
 namespace mindspore {
 namespace opt {

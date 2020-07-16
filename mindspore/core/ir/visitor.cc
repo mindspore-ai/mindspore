@@ -18,24 +18,24 @@
 #include "ir/visitor.h"
 
 namespace mindspore {
-void AnfVisitor::Visit(const AnfNodePtr &node) { node->accept(this); }
+void AnfIrVisitor::Visit(const AnfNodePtr &node) { node->accept(this); }
 
-void AnfVisitor::Visit(const CNodePtr &cnode) {
+void AnfIrVisitor::Visit(const CNodePtr &cnode) {
   for (auto &input : cnode->inputs()) {
     Visit(input);
   }
 }
 
-void AnfVisitor::Visit(const ValueNodePtr &vnode) {
+void AnfIrVisitor::Visit(const ValueNodePtr &vnode) {
   if (IsValueNode<FuncGraph>(vnode)) {
     auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
     Visit(func_graph->output());
   }
 }
 
-void AnfVisitor::Visit(const ParameterPtr &) {}
+void AnfIrVisitor::Visit(const ParameterPtr &) {}
 
-VisitFuncType AnfVisitor::Match(const PrimitivePtr &prim, const std::vector<opt::PredicateFuncType> &funcs) {
+VisitFuncType AnfIrVisitor::Match(const PrimitivePtr &prim, const std::vector<PredicateFuncType> &funcs) {
   auto fn = [prim, funcs, this](const AnfNodePtr &node) {
     if (!IsPrimitiveCNode(node, prim)) {
       return;

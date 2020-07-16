@@ -36,7 +36,7 @@
 
 namespace mindspore {
 namespace {
-class DeepFirstSearcher : public AnfVisitor {
+class DeepFirstSearcher : public AnfIrVisitor {
  public:
   explicit DeepFirstSearcher(const IncludeFunc &include, const FilterFunc &filter = nullptr)
       : include_(include), filter_(filter) {}
@@ -67,7 +67,7 @@ class DeepFirstSearcher : public AnfVisitor {
       res_.push_back(node);
     }
     if (incl == FOLLOW) {
-      AnfVisitor::Visit(node);
+      AnfIrVisitor::Visit(node);
     }
   }
 

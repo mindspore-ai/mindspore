@@ -17,7 +17,7 @@
 #include "frontend/optimizer/irpass/cast_eliminate.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
-#include "ir/visitor.h"
+#include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/parse/data_converter.h"

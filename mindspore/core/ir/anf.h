@@ -67,7 +67,7 @@ class BaseRef;
 class Var;
 using VarPtr = std::shared_ptr<Var>;
 
-class AnfVisitor;
+class AnfIrVisitor;
 
 class ParamValue;
 using ParamValuePtr = std::shared_ptr<ParamValue>;
@@ -100,7 +100,7 @@ class AnfNode : public Base {
   ~AnfNode() override = default;
   MS_DECLARE_PARENT(AnfNode, Base);
 
-  virtual void accept(AnfVisitor *) {}
+  virtual void accept(AnfIrVisitor *) {}
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }
 
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
@@ -214,7 +214,7 @@ class CNode : public AnfNode {
   ~CNode() override = default;
   MS_DECLARE_PARENT(CNode, AnfNode);
 
-  void accept(AnfVisitor *v) override;
+  void accept(AnfIrVisitor *v) override;
   // check whether this cnode has some primitive value as the first input.
   bool IsApply(const PrimitivePtr &) const;
 
@@ -265,7 +265,7 @@ class Parameter : public ANode {
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
 
-  void accept(AnfVisitor *v) override;
+  void accept(AnfIrVisitor *v) override;
   std::string DebugString(int recursive_level = 1) const override;
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
@@ -332,7 +332,7 @@ class ValueNode : public ANode {
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
 
-  void accept(AnfVisitor *v) override;
+  void accept(AnfIrVisitor *v) override;
   const ValuePtr &value() const { return value_; }
   std::string fullname_with_scope() override;
 
