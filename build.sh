@@ -24,7 +24,7 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-Q on|off] [-S on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
+  echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K] [-B on|off] [-E] [-l on|off]"
   echo ""
   echo "Options:"
@@ -48,7 +48,6 @@ usage()
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -Q Enable dump memory, default off"
   echo "    -D Enable dumping of function graph ir, default on"
-  echo "    -S Enable async data dump, default off"
   echo "    -z Compile dataset & mindrecord, default on"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
@@ -89,7 +88,6 @@ checkopts()
   ENABLE_TIMELINE="off"
   ENABLE_DUMP2PROTO="on"
   ENABLE_DUMPE2E="off"
-  ENABLE_DATA_DUMP="off"
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
   ENABLE_MPI="off"
@@ -104,7 +102,7 @@ checkopts()
   ENABLE_PYTHON="on"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:S:D:zM:V:K:sB:E' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:sB:E' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -220,11 +218,6 @@ checkopts()
         ENABLE_DUMPE2E="$OPTARG"
         echo "enable dump end to end"
         ;;
-      S)
-        check_on_off $OPTARG S
-        ENABLE_DATA_DUMP="$OPTARG"
-        echo "enable data dump"
-        ;;
       D)
         check_on_off $OPTARG D
         ENABLE_DUMP_IR="$OPTARG"
@@ -327,9 +320,6 @@ build_mindspore()
     fi
     if [[ "X$ENABLE_DUMPE2E" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_E2E=ON"
-    fi
-    if [[ "X$ENABLE_DATA_DUMP" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DATA_DUMP=ON"
     fi
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR}"
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_PYTHON=${ENABLE_PYTHON}"

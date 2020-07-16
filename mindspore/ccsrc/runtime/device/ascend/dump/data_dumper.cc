@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_DATA_DUMP
 #include "runtime/device/ascend/dump/data_dumper.h"
 
 #include <map>
@@ -280,4 +279,3 @@ void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Ta
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif
