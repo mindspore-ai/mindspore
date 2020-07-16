@@ -31,16 +31,12 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
 
   MATCH_REPLACE(node, x + zero_, x);                                                           // Add by zero
   MATCH_REPLACE(node, x + zero_scalar_, x);                                                    // Add by zero
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimScalarAdd, zero_scalar_, x), x);                   // Scalar Add by zero
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimScalarAdd, x, zero_scalar_), x);                   // Scalar Add by zero
+  MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarAdd, x, zero_scalar_, true), x);          // Scalar Add by zero
   MATCH_REPLACE_IF(node, x * one_, any_const.WithValueOf(x), !one_.CheckFunc(IsParam, node));  // Multiply by one
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimScalarMul, one_scalar_, x), x);                    // Scalar Mul by one
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimScalarMul, x, one_scalar_), x);                    // Scalar Mul by one
+  MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, one_scalar_, true), x);           // Scalar Mul by one
 
   // Scalar Mul by zero
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimScalarMul, zero_scalar_, x), zero_scalar_.NewValue());
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimScalarMul, x, zero_scalar_), zero_scalar_.NewValue());
-
+  MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, zero_scalar_, true), zero_scalar_.NewValue());
   // Prim Eliminate (identity)
   MATCH_REPLACE(node, PPrimitive(prim::kPrimIdentity, x), x);
 
@@ -60,8 +56,8 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     return nullptr;
   }
 
-  // OptUpdateZeroTensor
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimMomentum, PPrimitive(prim::kPrimZerosLike, x), y, z, xs),
+  // OptUpdateZeroTensor: {kPrimMomentum, {kPrimZerosLike, x}, y, z, xs} -> {kPrimMakeTuple, z, y}
+  MATCH_REPLACE(node, PPrimitive(prim::kPrimMomentum, PPrimitive(prim::kPrimZerosLike, x), y, z).MinExtraNodes(0),
                 PPrimitive(prim::kPrimMakeTuple, z, y));
 
   // PowerOneEliminate
