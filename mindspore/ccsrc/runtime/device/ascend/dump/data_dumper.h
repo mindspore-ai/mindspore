@@ -42,6 +42,7 @@ class DataDumper {
       : load_flag_(false),
         dev_load_mem_(nullptr),
         dev_unload_mem_(nullptr),
+        graph_id_(UINT32_MAX),
         kernel_graph_(kernel_graph),
         runtime_info_map_(runtime_info_map) {}
   ~DataDumper();
@@ -58,6 +59,7 @@ class DataDumper {
   bool load_flag_;
   void *dev_load_mem_;
   void *dev_unload_mem_;
+  uint32_t graph_id_;
   std::vector<std::string> dump_kernel_names_;
   const session::KernelGraph *kernel_graph_;
   std::map<std::string, std::shared_ptr<RuntimeInfo>> runtime_info_map_;
