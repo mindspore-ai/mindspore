@@ -152,6 +152,8 @@ class Optimizer(Cell):
             self.weight_decay = weight_decay * loss_scale
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
             self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
+        ps_filter = lambda x: x.is_param_ps
+        self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
         self.reciprocal_scale = 1.0 / loss_scale
         self.exec_weight_decay = any(self.decay_flags)
         self.param_length = len(self.parameters)
