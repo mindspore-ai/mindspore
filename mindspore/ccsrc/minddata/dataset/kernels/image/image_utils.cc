@@ -585,6 +585,109 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
   return Status::OK();
 }
 
+Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
+                    const std::vector<uint32_t> &ignore) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+    }
+    if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
+      RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
+    }
+    // Reshape to extend dimension if rank is 2 for algorithm to work. then reshape output to be of rank 2 like input
+    if (input_cv->Rank() == 2) {
+      RETURN_IF_NOT_OK(input_cv->ExpandDim(2));
+    }
+    // Get number of channels and image matrix
+    std::size_t num_of_channels = input_cv->shape()[2];
+    if (num_of_channels != 1 && num_of_channels != 3) {
+      RETURN_STATUS_UNEXPECTED("Number of channels is not 1 or 3.");
+    }
+    cv::Mat image = input_cv->mat();
+    // Separate the image to channels
+    std::vector<cv::Mat> planes(num_of_channels);
+    cv::split(image, planes);
+    cv::Mat b_hist, g_hist, r_hist;
+    // Establish the number of bins and set variables for histogram
+    int32_t hist_size = 256;
+    int32_t channels = 0;
+    float range[] = {0, 256};
+    const float *hist_range[] = {range};
+    bool uniform = true, accumulate = false;
+    // Set up lookup table for LUT(Look up table algorithm)
+    std::vector<int32_t> table;
+    std::vector<cv::Mat> image_result;
+    for (std::size_t layer = 0; layer < planes.size(); layer++) {
+      // Reset lookup table
+      table = std::vector<int32_t>{};
+      // Calculate Histogram for channel
+      cv::Mat hist;
+      cv::calcHist(&planes[layer], 1, &channels, cv::Mat(), hist, 1, &hist_size, hist_range, uniform, accumulate);
+      hist.convertTo(hist, CV_32SC1);
+      std::vector<int32_t> hist_vec;
+      hist.col(0).copyTo(hist_vec);
+      // Ignore values in ignore
+      for (const auto &item : ignore) hist_vec[item] = 0;
+      int32_t n = std::accumulate(hist_vec.begin(), hist_vec.end(), 0);
+      // Find pixel values that are in the low cutoff and high cutoff.
+      int32_t cut = static_cast<int32_t>((cutoff / 100.0) * n);
+      if (cut != 0) {
+        for (int32_t lo = 0; lo < 256 && cut > 0; lo++) {
+          if (cut > hist_vec[lo]) {
+            cut -= hist_vec[lo];
+            hist_vec[lo] = 0;
+          } else {
+            hist_vec[lo] -= cut;
+            cut = 0;
+          }
+        }
+        cut = static_cast<int32_t>((cutoff / 100.0) * n);
+        for (int32_t hi = 255; hi >= 0 && cut > 0; hi--) {
+          if (cut > hist_vec[hi]) {
+            cut -= hist_vec[hi];
+            hist_vec[hi] = 0;
+          } else {
+            hist_vec[hi] -= cut;
+            cut = 0;
+          }
+        }
+      }
+      int32_t lo = 0;
+      int32_t hi = 255;
+      for (; lo < 256 && !hist_vec[lo]; lo++) {
+      }
+      for (; hi >= 0 && !hist_vec[hi]; hi--) {
+      }
+      if (hi <= lo) {
+        for (int32_t i = 0; i < 256; i++) {
+          table.push_back(i);
+        }
+      } else {
+        float scale = 255.0 / (hi - lo);
+        float offset = -1 * lo * scale;
+        for (int32_t i = 0; i < 256; i++) {
+          int32_t ix = static_cast<int32_t>(i * scale + offset);
+          ix = std::max(ix, 0);
+          ix = std::min(ix, 255);
+          table.push_back(ix);
+        }
+      }
+      cv::Mat result_layer;
+      cv::LUT(planes[layer], table, result_layer);
+      image_result.push_back(result_layer);
+    }
+    cv::Mat result;
+    cv::merge(image_result, result);
+    std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(result);
+    if (input_cv->Rank() == 2) output_cv->Squeeze();
+    (*output) = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Error in auto contrast");
+  }
+  return Status::OK();
+}
+
 Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);

@@ -47,7 +47,7 @@ from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, check_range, \
     check_resize, check_rescale, check_pad, check_cutout, check_uniform_augment_cpp, check_bounding_box_augment_cpp, \
-    check_random_select_subpolicy_op, FLOAT_MAX_INTEGER
+    check_random_select_subpolicy_op, check_auto_contrast, FLOAT_MAX_INTEGER
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -69,6 +69,24 @@ def parse_padding(padding):
     if isinstance(padding, list):
         padding = tuple(padding)
     return padding
+
+
+class AutoContrast(cde.AutoContrastOp):
+    """
+    Apply auto contrast on input image.
+
+    Args:
+        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
+        ignore (int or sequence, optional): Pixel values to ignore (default=None).
+    """
+
+    @check_auto_contrast
+    def __init__(self, cutoff=0.0, ignore=None):
+        if ignore is None:
+            ignore = []
+        if isinstance(ignore, int):
+            ignore = [ignore]
+        super().__init__(cutoff, ignore)
 
 
 class Invert(cde.InvertOp):
