@@ -81,6 +81,8 @@ void SparseApplyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) 
   MS_EXCEPTION_IF_NULL(kernel_node);
   workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
   workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float));
 }
 
@@ -142,11 +144,21 @@ bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   auto indices = reinterpret_cast<int *>(inputs[10]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
   auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
-  auto m_t = reinterpret_cast<float *>(workspace[2]->addr);
+  auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
+  auto workspace_indices = reinterpret_cast<int *>(workspace[3]->addr);
+  auto m_t = reinterpret_cast<float *>(workspace[4]->addr);
 
   SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
-  ReduceSparseGradient(SparseGradient({grad, indices, indices_size_}), &unique_sparse_grad, var_first_dim_size_,
-                       var_outer_dim_size_);
+  SparseGradient workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
+  SparseGradient input_sparse_grad({grad, indices, indices_size_});
+  ReduceSparseGradientParam param;
+  param.input_grad_ = &input_sparse_grad;
+  param.workspace_grad_ = &workspace_sparse_grad;
+  param.output_grad_ = &unique_sparse_grad;
+  param.max_index_ = var_first_dim_size_;
+  param.value_stride_ = var_outer_dim_size_;
+  BucketReduceSparseGradient(param);
+
   size_t total_dim_size = var_first_dim_size_ * var_outer_dim_size_;
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
 

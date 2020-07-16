@@ -25,7 +25,7 @@ class CommonUtilTest : public UT::Common {
   CommonUtilTest() = default;
 };
 
-TEST_F(CommonUtilTest, DeduplicateIndexedSlicesTest1) {
+TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
   // The indices is a vector and the grad is a tensor with shape (6, 2)
   /* 0
    * 0
@@ -46,20 +46,39 @@ TEST_F(CommonUtilTest, DeduplicateIndexedSlicesTest1) {
   for (int i = 0; i < 6 * 2; i++) {
     grad.push_back(i);
   }
-  std::vector<int> unique_indices(3);
-  std::vector<float> summed_grad(6);
-  SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 0});
-  ReduceSparseGradient(SparseGradient({grad.data(), indices.data(), 6}), &unique_grad, 6, 2);
+  std::vector<int> unique_indices(6);
+  std::vector<float> summed_grad(12);
+  std::vector<int> tmp_indices(6);
+  std::vector<float> tmp_grad(12);
+
+  SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 6});
+  SparseGradient workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
+  SparseGradient input_grad({grad.data(), indices.data(), 6});
+
+  ReduceSparseGradientParam param;
+  param.input_grad_ = &input_grad;
+  param.workspace_grad_ = &workspace_grad;
+  param.output_grad_ = &unique_grad;
+  param.max_index_ = 6;
+  param.value_stride_ = 2;
+  BucketReduceSparseGradient(param);
+
   EXPECT_EQ(unique_grad.indices_size_, 3);
-  EXPECT_EQ(unique_indices, std::vector<int>({0, 1, 3}));
+  std::vector<int> expect_indices({0, 1, 3});
+  for (size_t i = 0; i < unique_grad.indices_size_; ++i) {
+    EXPECT_EQ(unique_grad.indices_[i], expect_indices[i]);
+  }
   /* 10 13
    * 10 12
    * 10 11
    */
-  EXPECT_EQ(summed_grad, std::vector<float>({10, 13, 10, 12, 10, 11}));
+  std::vector<int> expect_value({10, 13, 10, 12, 10, 11});
+  for (size_t i = 0; i < unique_grad.indices_size_ * 2; ++i) {
+    EXPECT_EQ(unique_grad.value_[i], expect_value[i]);
+  }
 }
 
-TEST_F(CommonUtilTest, DeduplicateIndexedSlicesTest2) {
+TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
   // The indices is a vector and the grad is a tensor with shape (6, 2)
   /* 0
    * 0
@@ -80,16 +99,36 @@ TEST_F(CommonUtilTest, DeduplicateIndexedSlicesTest2) {
   for (int i = 0; i < 6 * 2; i++) {
     grad.push_back(i);
   }
-  std::vector<int> unique_indices(2);
-  std::vector<float> summed_grad(4);
-  SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 0});
-  ReduceSparseGradient(SparseGradient({grad.data(), indices.data(), 6}), &unique_grad, 6, 2);
+  std::vector<int> unique_indices(6);
+  std::vector<float> summed_grad(12);
+  std::vector<int> tmp_indices(6);
+  std::vector<float> tmp_grad(12);
+  SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 6});
+  SparseGradient workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
+  SparseGradient input_grad({grad.data(), indices.data(), 6});
+
+  ReduceSparseGradientParam param;
+  param.input_grad_ = &input_grad;
+  param.workspace_grad_ = &workspace_grad;
+  param.output_grad_ = &unique_grad;
+  param.max_index_ = 6;
+  param.value_stride_ = 2;
+  BucketReduceSparseGradient(param);
+
   EXPECT_EQ(unique_grad.indices_size_, 2);
-  EXPECT_EQ(unique_indices, std::vector<int>({0, 1}));
+
+  std::vector<int> expect_indices({0, 1});
+  for (size_t i = 0; i < unique_grad.indices_size_; ++i) {
+    EXPECT_EQ(unique_grad.indices_[i], expect_indices[i]);
+  }
+
   /* 10 13
    * 10 12
    */
-  EXPECT_EQ(summed_grad, std::vector<float>({10, 13, 10, 12}));
+  std::vector<int> expect_value({10, 13, 10, 12});
+  for (size_t i = 0; i < unique_grad.indices_size_ * 2; ++i) {
+    EXPECT_EQ(unique_grad.value_[i], expect_value[i]);
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
