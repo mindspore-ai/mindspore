@@ -200,7 +200,7 @@ def test_cifar10_shardings(print_res=False):
             logger.info("labels of dataset: {}".format(res))
         return res
 
-    # 60000 rows in total. CIFAR reads everything in memory which would make each test case very slow
+    # 10000 rows in total. CIFAR reads everything in memory which would make each test case very slow
     # therefore, only 2 test cases for now.
     assert sharding_config(10000, 9999, 7, False, 1) == [9]
     assert sharding_config(10000, 0, 4, False, 3) == [0, 0, 0]
