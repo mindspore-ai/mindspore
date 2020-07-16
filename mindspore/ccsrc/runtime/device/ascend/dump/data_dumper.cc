@@ -107,9 +107,9 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   MS_EXCEPTION_IF_NULL(currnet_epoch_tensor->device_address());
   MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor->device_address());
 
-  void *current_step = current_step_tensor->device_address()->ptr_;
-  void *current_epoch = currnet_epoch_tensor->device_address()->ptr_;
-  void *steps_per_epoch = steps_per_epoch_tensor->device_address()->ptr_;
+  void *current_step = current_step_tensor->device_address()->GetMutablePtr();
+  void *current_epoch = currnet_epoch_tensor->device_address()->GetMutablePtr();
+  void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
 
   if (current_epoch != nullptr && current_step != nullptr && steps_per_epoch != nullptr) {
     dump_info->set_step_id_addr(reinterpret_cast<uint64_t>(current_epoch));
