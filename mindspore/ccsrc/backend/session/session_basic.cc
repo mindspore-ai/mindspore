@@ -35,6 +35,11 @@
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#include "frontend/parallel/ps/worker.h"
+#include "frontend/parallel/ps/common.h"
+#include "frontend/parallel/ps/util.h"
+#endif
 
 namespace mindspore {
 namespace session {
@@ -1097,5 +1102,92 @@ KernelGraphPtr SessionBasic::NewKernelGraph() {
   graphs_[graph_sum_++] = graph;
   return graph;
 }
+
+AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) {
+  MS_EXCEPTION_IF_NULL(push_node);
+  for (auto &node : node_list) {
+    if (node != nullptr && node->isa<CNode>()) {
+      for (auto input : node->cast<CNodePtr>()->inputs()) {
+        if (push_node == AnfAlgo::VisitKernel(input, 0).first) {
+          if (AnfAlgo::GetCNodeName(node) != kPullOpName) {
+            MS_LOG(EXCEPTION) << "The edge between Push and Pull node is invalid.";
+          }
+          return node;
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
+  if (!parallel::ps::Util::IsRoleOfWorker()) {
+    MS_LOG(INFO) << "Not parameter server mode.";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph->get_return());
+  for (auto &node : node_list) {
+    if (node != nullptr && node->isa<CNode>()) {
+      // Assign key for forward kernel EmbeddingLookup.
+      // The key will be assigned to embedding table ande Push kernel as well.
+      if (AnfAlgo::GetCNodeName(node) == kEmbeddingLookupOpName) {
+        size_t embedding_table_idx = 0;
+        auto embedding_table = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), embedding_table_idx);
+        size_t key = parallel::ps::Worker<float>::GetInstance().SetParamKey(embedding_table->fullname_with_scope());
+        AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), node);
+      } else if (AnfAlgo::GetCNodeName(node) == kPushOpName) {
+        auto pull_node = FindPullNode(node, node_list);
+        if (!pull_node) {
+          MS_LOG(EXCEPTION) << "Assigning parameter key failed: can't find Pull node of the Push node.";
+        }
+
+        // Second input of Pull node is the trainable parameter.
+        size_t parameter_index = 1;
+        auto parameter_node = AnfAlgo::GetInputNode(pull_node->cast<CNodePtr>(), parameter_index);
+        size_t key = parallel::ps::Worker<float>::GetInstance().SetParamKey(parameter_node->fullname_with_scope());
+        AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), node);
+        AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), pull_node);
+
+        std::string optimizer_name = AnfAlgo::GetNodeAttr<std::string>(node, kAttrOptimizerType);
+        parallel::ps::Worker<float>::GetInstance().SetKeyOptimId(key, optimizer_name);
+      }
+    }
+  }
+}
+
+void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
+                                       const std::vector<tensor::TensorPtr> &inputs_const) {
+  if (!parallel::ps::Util::IsRoleOfWorker()) {
+    return;
+  }
+  std::vector<tensor::TensorPtr> inputs(inputs_const);
+  size_t input_ctrl_size = 1;
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->input_ctrl_tensors()) {
+    input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
+  }
+  auto input_nodes = kernel_graph->inputs();
+  if ((inputs.size() + input_ctrl_size) - 1 != input_nodes.size()) {
+    MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
+                      << ", input_ctrl_size:" << input_ctrl_size;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto input_node = input_nodes[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
+      auto pk_node = input_node->cast<ParameterPtr>();
+      mindspore::parallel::ps::Worker<float>::GetInstance().InitPSParamAndOptim(
+        pk_node->fullname_with_scope(), tensor->data_c(), LongToSize(tensor->data().nbytes()));
+    }
+  }
+  ps_init_ = true;
+}
+#endif
 }  // namespace session
 }  // namespace mindspore

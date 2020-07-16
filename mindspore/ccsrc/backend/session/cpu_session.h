@@ -37,6 +37,7 @@ class CPUSession : public SessionBasic {
 
  protected:
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) override;
+  void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
 
  private:
   void SetKernelInfo(const KernelGraph *kernel_graph);

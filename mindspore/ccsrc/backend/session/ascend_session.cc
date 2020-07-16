@@ -353,6 +353,10 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   RootGraphExecutorValidate(NOT_NULL(root_graph));
   // adjust kernel
   AdjustKernel(root_graph);
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  // Assign parameter keys.
+  AssignParamKey(root_graph);
+#endif
   // assign stream
   AssignStream(NOT_NULL(root_graph));
   // insert profiling point
@@ -511,6 +515,12 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   }
   // load input data from user input
   LoadInputData(kernel_graph, inputs);
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  // Initialize parameter server
+  if (!ps_init_) {
+    InitPSParamAndOptim(kernel_graph, inputs);
+  }
+#endif
   // convert inputs to model
   predictmodel::StepConvertWeight(inputs);
   {

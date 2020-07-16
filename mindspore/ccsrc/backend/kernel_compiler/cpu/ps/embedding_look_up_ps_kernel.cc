@@ -50,7 +50,7 @@ void EmbeddingLookUpPSKernel::InitKernel(
   split_num_ = pserver_num_;
 
   // input shape should be sharded after computing offset_;
-  Shard(input_shape_, axis_);
+  Shard(&input_shape_, axis_);
 
   size_t output_size =
     std::accumulate(output_shape_.begin(), output_shape_.end(), sizeof(float), std::multiplies<size_t>());

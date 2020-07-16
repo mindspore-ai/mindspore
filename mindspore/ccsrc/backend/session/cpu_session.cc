@@ -25,8 +25,14 @@
 #include "predict/predict.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
+#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/pass/replace_node_by_proxy.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
+#endif
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+#include "frontend/parallel/ps/util.h"
 #endif
 
 namespace mindspore {
@@ -49,12 +55,29 @@ ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, 
   return new_parameter;
 }
 
+void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  std::string pass_name = "replace_node_by_proxy";
+  pass_name.append(std::to_string(graph_sum_));
+  pm->AddPass(std::make_shared<opt::ReplaceNodeByProxy>(pass_name));
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
 GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  AssignParamKey(graph);
+  if (parallel::ps::Util::IsRoleOfWorker()) {
+    Optimize(graph);
+  }
+#endif
   predictmodel::StepConvertGraph(graph);
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
@@ -66,6 +89,12 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  // Initialize parameter server
+  if (!ps_init_) {
+    InitPSParamAndOptim(kernel_graph, inputs);
+  }
+#endif
   MS_LOG(INFO) << "Bind input output address";
   std::vector<tensor::TensorPtr> need_sync_outputs;
   runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs, &need_sync_outputs);

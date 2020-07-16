@@ -53,15 +53,15 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   size_t output_size = outputs[0]->size;
 
   size_t size = input_size / sizeof(float);
-  ::ps::SArray<float> lookup_ids(size, 0);
+  ::ps::SArray<int> lookup_ids(size, 0);
   ::ps::SArray<int> lengths{size};
-  ::ps::SArray<float> lookup_result;
+  ::ps::SArray<float> lookup_result(output_size / sizeof(float), 0);
 
   auto ret = memcpy_s(lookup_ids.data(), input_size, indices_addr, input_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
   }
-  parallel::ps::Worker<float>::GetInstance().DoPSEmbeddingLookup({key_}, lookup_ids, lengths, lookup_result,
+  parallel::ps::Worker<float>::GetInstance().DoPSEmbeddingLookup({key_}, lookup_ids, lengths, &lookup_result,
                                                                  parallel::ps::kEmbeddingLookupCmd);
 
   auto ret2 = memcpy_s(output_addr, output_size, lookup_result.data(), output_size);

@@ -51,7 +51,7 @@ using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 
 class SessionBasic {
  public:
-  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
+  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0), ps_init_(false) {
 #ifdef ENABLE_DEBUGGER
     debugger_ = nullptr;
 #endif
@@ -104,6 +104,8 @@ class SessionBasic {
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   virtual void SetActive(GraphId, GraphId) {}
   virtual void GetSummaryNodes(KernelGraph *graph);
+  void AssignParamKey(const KernelGraphPtr &kernel_graph);
+  void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
 
 #ifdef ENABLE_DEBUGGER
   // set debugger
@@ -140,6 +142,7 @@ class SessionBasic {
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter);
+  AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
@@ -148,6 +151,7 @@ class SessionBasic {
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
   uint32_t device_id_;
+  bool ps_init_;
 #ifdef ENABLE_DEBUGGER
   std::shared_ptr<Debugger> debugger_;
 #endif
