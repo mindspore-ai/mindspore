@@ -11,15 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ============================================================================
+
 """ test_training """
+
 import os
 
 from mindspore import Model, context
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
-from src.datasets import create_dataset
+from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
 from src.config import WideDeepConfig
 
@@ -39,7 +42,7 @@ def get_WideDeep_net(config):
 
 class ModelBuilder():
     """
-    ModelBuilder
+    Wide and deep model builder
     """
     def __init__(self):
         pass
@@ -60,41 +63,39 @@ class ModelBuilder():
         return get_WideDeep_net(config)
 
 
-def test_train_eval(config):
+def test_eval(config):
     """
-    test_train_eval
+    test evaluate
     """
     data_path = config.data_path
     batch_size = config.batch_size
-    epochs = config.epochs
-    ds_train = create_dataset(data_path, train_mode=True, epochs=1, batch_size=batch_size)
-    ds_eval = create_dataset(data_path, train_mode=False, epochs=1, batch_size=batch_size)
-    print("ds_train.size: {}".format(ds_train.get_dataset_size()))
+    if config.dataset_type == "tfrecord":
+        dataset_type = DataType.TFRECORD
+    elif config.dataset_type == "mindrecord":
+        dataset_type = DataType.MINDRECORD
+    else:
+        dataset_type = DataType.H5
+    ds_eval = create_dataset(data_path, train_mode=False, epochs=1,
+                             batch_size=batch_size, data_type=dataset_type)
     print("ds_eval.size: {}".format(ds_eval.get_dataset_size()))
 
     net_builder = ModelBuilder()
-
     train_net, eval_net = net_builder.get_net(config)
-    train_net.set_train()
-    auc_metric = AUCMetric()
 
+    param_dict = load_checkpoint(config.ckpt_path)
+    load_param_into_net(eval_net, param_dict)
+
+    auc_metric = AUCMetric()
     model = Model(train_net, eval_network=eval_net, metrics={"auc": auc_metric})
 
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
-    callback = LossCallBack(config=config)
-    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
-    ckpoint_cb = ModelCheckpoint(prefix='widedeep_train', directory=config.ckpt_path, config=ckptconfig)
-
-    out = model.eval(ds_eval)
-    print("=====" * 5 + "model.eval() initialized: {}".format(out))
-    model.train(epochs, ds_train,
-                callbacks=[TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb])
+    model.eval(ds_eval, callbacks=eval_callback)
 
 
 if __name__ == "__main__":
-    wide_deep_config = WideDeepConfig()
-    wide_deep_config.argparse_init()
+    widedeep_config = WideDeepConfig()
+    widedeep_config.argparse_init()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target)
-    test_train_eval(wide_deep_config)
+    context.set_context(mode=context.GRAPH_MODE, device_target=widedeep_config.device_target)
+    test_eval(widedeep_config)

@@ -1,0 +1,21 @@
+{
+  "rank_size": 32,
+  "cluster": {
+    "xx.xx.xx.xx": {
+      "user": "",
+      "passwd": ""
+    },
+    "xx.xx.xx.xx": {
+      "user": "",
+      "passwd": ""
+    },
+    "xx.xx.xx.xx": {
+      "user": "",
+      "passwd": ""
+    },
+    "xx.xx.xx.xx": {
+      "user": "",
+      "passwd": ""
+    }
+  }
+}

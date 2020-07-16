@@ -51,7 +51,7 @@ class LossCallBack(Callback):
         wide_loss, deep_loss = cb_params.net_outputs[0].asnumpy(), cb_params.net_outputs[1].asnumpy()
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
         cur_num = cb_params.cur_step_num
-        print("===loss===", cb_params.cur_epoch_num, cur_step_in_epoch, wide_loss, deep_loss)
+        print("===loss===", cb_params.cur_epoch_num, cur_step_in_epoch, wide_loss, deep_loss, flush=True)
 
         # raise ValueError
         if self._per_print_times != 0 and cur_num % self._per_print_times == 0 and self.config is not None:
@@ -76,7 +76,7 @@ class EvalCallBack(Callback):
     Args:
         print_per_step (int): Print loss every times. Default: 1.
     """
-    def __init__(self, model, eval_dataset, auc_metric, config, print_per_step=1):
+    def __init__(self, model, eval_dataset, auc_metric, config, print_per_step=1, host_device_mix=False):
         super(EvalCallBack, self).__init__()
         if not isinstance(print_per_step, int) or print_per_step < 0:
             raise ValueError("print_per_step must be int and >= 0.")
@@ -87,6 +87,7 @@ class EvalCallBack(Callback):
         self.aucMetric.clear()
         self.eval_file_name = config.eval_file_name
         self.eval_values = []
+        self.host_device_mix = host_device_mix
 
     def epoch_end(self, run_context):
         """
@@ -98,7 +99,7 @@ class EvalCallBack(Callback):
             context.set_auto_parallel_context(strategy_ckpt_save_file="",
                                               strategy_ckpt_load_file="./strategy_train.ckpt")
         start_time = time.time()
-        out = self.model.eval(self.eval_dataset)
+        out = self.model.eval(self.eval_dataset, dataset_sink_mode=(not self.host_device_mix))
         end_time = time.time()
         eval_time = int(end_time - start_time)
 

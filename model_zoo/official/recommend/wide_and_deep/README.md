@@ -16,7 +16,7 @@ Arguments:
    * `--data_path`: Dataset storage path (Default: ./criteo_data/).
    
 ## Dataset
-The Criteo datasets are used for model training and evaluation.
+The common used benchmark datasets are used for model training and evaluation.
 
 ## Running Code
 
@@ -63,6 +63,7 @@ Arguments:
   * `--ckpt_path`：The location of the checkpoint file.
   * `--eval_file_name` : Eval output file.
   * `--loss_file_name` :  Loss output file.
+  * `--dataset_type` :  tfrecord/mindrecord/hd5.
 
 To train the model in one device, command as follows:
 ```
@@ -84,6 +85,7 @@ Arguments:
   * `--ckpt_path`：The location of the checkpoint file.
   * `--eval_file_name` : Eval output file.
   * `--loss_file_name` :  Loss output file.
+  * `--dataset_type` :  tfrecord/mindrecord/hd5.
 
 To train the model in distributed, command as follows:
 ```
@@ -93,6 +95,19 @@ bash run_multinpu_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE
 ```
 # configure environment path before training
 bash run_auto_parallel_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE 
+```
+
+To train the model in clusters, command as follows:'''
+```
+# deploy wide&deep script in clusters
+# CLUSTER_CONFIG is a json file, the sample is in script/.
+# EXECUTE_PATH is the scripts path after the deploy.
+bash deploy_cluster.sh CLUSTER_CONFIG_PATH EXECUTE_PATH
+
+# enter EXECUTE_PATH, and execute start_cluster.sh as follows.
+# MODE: "host_device_mix"
+bash start_cluster.sh CLUSTER_CONFIG_PATH EPOCH_SIZE VOCAB_SIZE EMB_DIM
+                      DATASET ENV_SH RANK_TABLE_FILE MODE
 ```
 
 To evaluate the model, command as follows:

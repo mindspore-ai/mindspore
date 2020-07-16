@@ -17,7 +17,7 @@ from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack
-from src.datasets import create_dataset
+from src.datasets import create_dataset, DataType
 from src.config import WideDeepConfig
 
 
@@ -63,7 +63,14 @@ def test_train(configure):
     data_path = configure.data_path
     batch_size = configure.batch_size
     epochs = configure.epochs
-    ds_train = create_dataset(data_path, train_mode=True, epochs=1, batch_size=batch_size)
+    if configure.dataset_type == "tfrecord":
+        dataset_type = DataType.TFRECORD
+    elif configure.dataset_type == "mindrecord":
+        dataset_type = DataType.MINDRECORD
+    else:
+        dataset_type = DataType.H5
+    ds_train = create_dataset(data_path, train_mode=True, epochs=1,
+                              batch_size=batch_size, data_type=dataset_type)
     print("ds_train.size: {}".format(ds_train.get_dataset_size()))
 
     net_builder = ModelBuilder()
