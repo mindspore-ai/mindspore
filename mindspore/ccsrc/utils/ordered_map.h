@@ -88,7 +88,9 @@ class OrderedMap {
   }
 
   void clear() {
-    map_data_.clear();
+    if (!map_data_.empty()) {
+      map_data_.clear();
+    }
     sequential_data_.clear();
   }
 

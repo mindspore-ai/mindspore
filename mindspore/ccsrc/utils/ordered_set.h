@@ -127,7 +127,9 @@ class OrderedSet {
 
   // Clear the elements
   void clear() {
-    mapped_data_.clear();
+    if (!mapped_data_.empty()) {
+      mapped_data_.clear();
+    }
     ordered_data_.clear();
   }
 
