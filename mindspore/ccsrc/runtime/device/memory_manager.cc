@@ -57,6 +57,9 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, in
     }
     if (flag == kStaticMem) {
       ptr = MallocStaticMem(size, communication_mem);
+    } else if (flag == kReuseDynamicCommMem) {
+      MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
+      ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }

@@ -146,7 +146,7 @@ TEST_F(TestMemReuseAllocator, mem_reuse_allocator_split_membuf) {
 
 TEST_F(TestMemReuseAllocator, mem_reuse_allocator_align) {
   auto best_fit_mem_reuse = std::make_shared<BestFitMemReuse>();
-  auto size = best_fit_mem_reuse->AlignMemorySize(510);
+  auto size = best_fit_mem_reuse->AlignCommonMemorySize(510);
   ASSERT_EQ(size, 1024);
 }
 }  // namespace memreuse

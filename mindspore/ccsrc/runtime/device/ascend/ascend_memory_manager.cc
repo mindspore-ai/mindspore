@@ -95,6 +95,12 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
   } else {
     align_size = GetCommonAlignSize(size);
   }
+
+  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
+  MS_LOG(INFO) << "Malloc Memory: Static, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
+               << "] memory pool[" << device_mem_pool_offset << "])"
+               << " malloc [" << align_size << "]";
+
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
     uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
@@ -111,12 +117,17 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   } else {
     align_size = GetCommonAlignSize(size);
   }
+
+  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
+  MS_LOG(INFO) << "Malloc Memory: Dynamic, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
+               << "] memory pool[" << device_mem_pool_offset << "])"
+               << " malloc [" << align_size << "]";
+
   if (dynamic_mem_offset_ < align_size) {
     MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
                       << "]) malloc [" << align_size << "] failed!";
   }
   auto new_offset = dynamic_mem_offset_ - align_size;
-  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
   if (new_offset <= device_mem_pool_offset) {
     MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
                       << "] memory pool[" << device_mem_pool_offset << "])"

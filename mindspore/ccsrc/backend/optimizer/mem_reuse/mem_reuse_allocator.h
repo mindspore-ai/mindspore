@@ -75,6 +75,14 @@ class BestFitMemReuse {
    */
   void AssignNodeOutputOffset();
   /**
+   * Assign output tensor memory offset of common kernel
+   */
+  void AssignCommonNodeOutputOffset();
+  /**
+   * Assign output tensor memory offset of communication kernel
+   */
+  void AssignCommunicationNodeOutputOffset();
+  /**
    * Update input tensor's status of current kernel, and the status of membuf used by current kernel
    */
   void UpdateNodeInputAndMembuf();
@@ -110,8 +118,10 @@ class BestFitMemReuse {
   void AddNewMembufPtr(KernelRefCount *tensor_desc, int flag);
   // Merge unused membuf
   void ReleaseMembuf(size_t tensor_index, int flag);
-  // Memory address alignment 512
-  size_t AlignMemorySize(size_t size) const;
+  // Memory address alignment for common memory
+  size_t AlignCommonMemorySize(size_t size) const;
+  // Memory address alignment for communication used memory
+  size_t AlignCommunicationMemorySize(size_t size) const;
   int GetRealIndex(size_t index, int flag = kDynamicMem) const;
   size_t GetTensorIndex(int index) const;
   size_t GetWorkspaceIndex(int index) const;
@@ -153,6 +163,10 @@ class BestFitMemReuse {
   // kernel_front_map_, key: the kernel_def, value: kernels before this kernel_def
   std::map<KernelDefPtr, std::set<KernelDefPtr>> kernel_front_map_;
   std::vector<std::vector<uint32_t>> stream_groups_;
+  size_t total_refoutput_size{0};
+  size_t total_comm_reuse_size{0};
+  size_t total_comm_output_reuse_size{0};
+  size_t total_comm_not_reuse_size{0};
 };
 }  // namespace memreuse
 }  // namespace mindspore

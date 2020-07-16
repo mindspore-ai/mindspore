@@ -170,12 +170,14 @@ void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_li
   ofs << "all_tensor_refs:\n";
   ofs << "index:"
       << "\tsize:"
-      << "\trefcount:\n";
+      << "\trefcount:"
+      << "\ttype:\n";
   for (auto &ref : total_refs_list) {
     ofs << "%" << ref->index_ << "T"
         << "\t"
         << "#" << ref->size_ << "S"
         << "\t" << ref->ref_count_ << "C"
+        << "\t" << ref->type_ << "t"
         << "\n";
   }
   ofs << "kernel_def exc_order:\n";
@@ -241,7 +243,7 @@ bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph
 void MemReuseChecker::ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx) {
   auto scope_name = def->scope_full_name();
   std::string split_name = GetSplitName(scope_name);
-  ofs << "$" << def_idx << "\t" << split_name << "\t";
+  ofs << "$" << def_idx << "\t" << split_name << "\t" << static_cast<int>(def->type_) << "\t";
   ofs << "inputs[";
   for (auto &in : def->inputs_) {
     for (auto &in_ref : in.second) {
