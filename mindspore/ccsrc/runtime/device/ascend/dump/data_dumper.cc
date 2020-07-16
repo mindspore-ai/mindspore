@@ -71,6 +71,8 @@ void DataDumper::LoadDumpInfo() {
   }
   RtLoadDumpData(dump_info, &dev_load_mem_);
   load_flag_ = true;
+  // graph id may changed in Unload
+  graph_id_ = kernel_graph_->graph_id();
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo end";
 }
 
@@ -135,11 +137,10 @@ void DataDumper::UnloadDumpInfo() {
     MS_LOG(WARNING) << "Load not success, no need to unload";
     return;
   }
-  MS_EXCEPTION_IF_NULL(kernel_graph_);
-  MS_LOG(INFO) << "[DataDump] UnloadDumpInfo start. graphId:" << kernel_graph_->graph_id();
+  MS_LOG(INFO) << "[DataDump] UnloadDumpInfo start. graphId:" << graph_id_;
 
   aicpu::dump::OpMappingInfo op_mapping_info;
-  op_mapping_info.set_model_id(kernel_graph_->graph_id());
+  op_mapping_info.set_model_id(graph_id_);
   op_mapping_info.set_flag(kAicpuUnloadFlag);
 
   for (const auto &kernel_name : dump_kernel_names_) {
