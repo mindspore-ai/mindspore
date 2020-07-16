@@ -54,6 +54,7 @@
 #include "minddata/dataset/kernels/image/decode_op.h"
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/invert_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
@@ -365,6 +366,10 @@ void bindTensorOps1(py::module *m) {
     *m, "NormalizeOp", "Tensor operation to normalize an image. Takes mean and std.")
     .def(py::init<float, float, float, float, float, float>(), py::arg("meanR"), py::arg("meanG"), py::arg("meanB"),
          py::arg("stdR"), py::arg("stdG"), py::arg("stdB"));
+
+  (void)py::class_<InvertOp, TensorOp, std::shared_ptr<InvertOp>>(*m, "InvertOp",
+                                                                  "Tensor operation to apply invert on RGB images.")
+    .def(py::init<>());
 
   (void)py::class_<RescaleOp, TensorOp, std::shared_ptr<RescaleOp>>(
     *m, "RescaleOp", "Tensor operation to rescale an image. Takes scale and shift.")

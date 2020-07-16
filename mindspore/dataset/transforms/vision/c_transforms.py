@@ -71,6 +71,13 @@ def parse_padding(padding):
     return padding
 
 
+class Invert(cde.InvertOp):
+    """
+    Apply invert on input image in RGB mode.
+    does not have input arguments.
+    """
+
+
 class Decode(cde.DecodeOp):
     """
     Decode the input image in RGB mode.
