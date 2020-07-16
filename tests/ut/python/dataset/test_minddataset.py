@@ -591,49 +591,6 @@ def test_cv_minddataset_issue_888(add_and_remove_cv_file):
     assert num_iter == 18
 
 
-def test_cv_minddataset_blockreader_tutorial(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
-    columns_list = ["data", "label"]
-    num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, block_reader=True)
-    assert data_set.get_dataset_size() == 10
-    repeat_num = 2
-    data_set = data_set.repeat(repeat_num)
-    num_iter = 0
-    for item in data_set.create_dict_iterator():
-        logger.info(
-            "-------------- block reader repeat tow {} -----------------".format(num_iter))
-        logger.info(
-            "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        logger.info(
-            "-------------- item[data]: {} -----------------------------".format(item["data"]))
-        num_iter += 1
-    assert num_iter == 20
-
-
-def test_cv_minddataset_blockreader_some_field_not_in_index_tutorial(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
-    columns_list = ["id", "data", "label"]
-    num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, shuffle=False,
-                              block_reader=True)
-    assert data_set.get_dataset_size() == 10
-    repeat_num = 2
-    data_set = data_set.repeat(repeat_num)
-    num_iter = 0
-    for item in data_set.create_dict_iterator():
-        logger.info(
-            "-------------- block reader repeat tow {} -----------------".format(num_iter))
-        logger.info(
-            "-------------- item[id]: {} ----------------------------".format(item["id"]))
-        logger.info(
-            "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        logger.info(
-            "-------------- item[data]: {} -----------------------------".format(item["data"]))
-        num_iter += 1
-    assert num_iter == 20
-
-
 def test_cv_minddataset_reader_file_list(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]

@@ -273,7 +273,6 @@ def check_minddataset(method):
 
         nreq_param_int = ['num_samples', 'num_parallel_workers', 'seed', 'num_shards', 'shard_id', 'num_padded']
         nreq_param_list = ['columns_list']
-        nreq_param_bool = ['block_reader']
         nreq_param_dict = ['padded_sample']
 
         dataset_file = param_dict.get('dataset_file')
@@ -287,7 +286,6 @@ def check_minddataset(method):
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_list, param_dict, list)
-        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         validate_dataset_param_value(nreq_param_dict, param_dict, dict)
 
         check_sampler_shuffle_shard_options(param_dict)
