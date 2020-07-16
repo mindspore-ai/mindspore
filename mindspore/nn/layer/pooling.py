@@ -283,6 +283,7 @@ class AvgPool1d(_PoolNd):
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.slice = P.Slice()
         self.expand = P.ExpandDims()
+        self.squeeze = P.Squeeze(2)
 
     def construct(self, x):
         _shape_check(self.shape(x))
@@ -295,4 +296,5 @@ class AvgPool1d(_PoolNd):
         else:
             x = self.expand(x, 2)
             x = self.avg_pool(x)
+            x = self.squeeze(x)
         return x
