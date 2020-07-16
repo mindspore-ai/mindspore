@@ -409,7 +409,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
     {string(kNameAtan2), ADPT_DESC(Atan2)},
     {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
-    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSPropD)},
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
     {string(kNameRange), ADPT_DESC(RangeD)},

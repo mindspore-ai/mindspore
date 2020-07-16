@@ -13,15 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-"""ApplyCenteredRMSProp op"""
+"""ApplyCenteredRMSPropD op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 apply_centered_rms_prop_op_info = TBERegOp("ApplyCenteredRMSProp") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("apply_centered_rms_prop.so") \
+    .binfile_name("apply_centered_rms_prop_d.so") \
     .compute_cost(10) \
-    .kernel_name("apply_centered_rms_prop") \
+    .kernel_name("apply_centered_rms_prop_d") \
     .partial_flag(True) \
     .input(0, "var", False, "required", "all") \
     .input(1, "mg", False, "required", "all") \
@@ -33,34 +33,45 @@ apply_centered_rms_prop_op_info = TBERegOp("ApplyCenteredRMSProp") \
     .input(7, "epsilon", False, "required", "all") \
     .input(8, "grad", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
+    .output(1, "mg", False, "required", "all") \
+    .output(2, "ms", False, "required", "all") \
+    .output(3, "mom", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_5HD, DataType.F16_5HD) \
+                  DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
+                  DataType.F16_5HD) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_FracZ, DataType.F16_FracZ) \
+                  DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ,
+                  DataType.F16_FracZ) \
     .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0) \
+                  DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0,
+                  DataType.F16_C1HWNCoC0) \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default) \
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_5HD, DataType.F32_5HD) \
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD) \
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_FracZ, DataType.F32_FracZ) \
+                  DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ,
+                  DataType.F32_FracZ) \
     .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0) \
+                  DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0,
+                  DataType.F32_C1HWNCoC0) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default) \
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default) \
     .get_op_info()
 
 
 @op_info_register(apply_centered_rms_prop_op_info)
 def _apply_centered_rms_prop_tbe():
-    """ApplyCenteredRMSProp TBE register"""
+    """ApplyCenteredRMSPropD TBE register"""
     return
