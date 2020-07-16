@@ -68,6 +68,7 @@ static std::shared_ptr<session::SessionBasic> session = nullptr;
 PynativeExecutorPtr PynativeExecutor::executor_ = nullptr;
 std::mutex PynativeExecutor::instance_lock_;
 ResourcePtr PynativeExecutor::resource_;
+int PynativeExecutor::graph_id_ = 0;
 
 template <typename... Args>
 void PynativeExecutorTry(PynativeExecutor *const executor, void (PynativeExecutor::*method)(Args...), Args &&... args) {
@@ -616,7 +617,8 @@ py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecIn
 
 ValuePtr PynativeExecutor::GetForwardValue(const OpExecInfoPtr &op_exec_info) {
   auto id = GetOpId(op_exec_info);
-  auto op = id;
+  int graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int>();
+  auto op = std::to_string(graph_id) + id;
   op.append(std::to_string(op_id_map_[id]));
   auto iter = op_forward_map_.find(op);
   if (iter != op_forward_map_.end()) {
@@ -709,7 +711,8 @@ void PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const py::ob
 
 void PynativeExecutor::SaveOpForwardValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value) {
   auto id = GetOpId(op_exec_info);
-  auto op = id;
+  int graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int>();
+  auto op = std::to_string(graph_id) + id;
   op.append(std::to_string(op_id_map_[id]));
   auto iter = op_forward_map_.find(op);
   if (iter != op_forward_map_.end()) {
@@ -942,6 +945,7 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
   if (top_g_ == nullptr) {
     top_g_ = curr_g_ = g;
     resource_ = std::make_shared<pipeline::Resource>();
+    resource_->results()[pipeline::kPynativeGraphId] = graph_id_++;
     cell_resource_map_[cell_id] = resource_;
     df_builder_ = std::make_shared<FuncGraph>();
     MS_LOG(DEBUG) << "First new graph" << top_g_.get();

@@ -41,6 +41,7 @@ namespace py = pybind11;
 const char kBackend[] = "backend";
 const char kStepParallelGraph[] = "step_parallel";
 const char kOutput[] = "output";
+const char kPynativeGraphId[] = "graph_id";
 
 class InferenceResource;
 
