@@ -30,6 +30,7 @@ class CudaCommon {
   inline int blocks_num(const int total_threads) const {
     return std::min(((total_threads - 1) / threads_per_block_) + 1, max_blocks_);
   }
+  size_t share_memory_size() const { return max_share_memory_; }
 
   static CudaCommon &GetInstance() {
     static CudaCommon instance;
@@ -44,6 +45,7 @@ class CudaCommon {
     threads_per_block_ = prop.maxThreadsPerBlock;
     max_blocks_ = prop.multiProcessorCount;
     major_sm_ = prop.major;
+    max_share_memory_ = prop.sharedMemPerBlock;
   }
   ~CudaCommon() = default;
   CudaCommon(const CudaCommon &) = delete;
@@ -52,10 +54,12 @@ class CudaCommon {
   int max_blocks_;
   int threads_per_block_;
   int major_sm_;
+  size_t max_share_memory_;
 };
 #define GET_BLOCKS(total_threads) mindspore::device::gpu::CudaCommon::GetInstance().blocks_num(total_threads)
 #define GET_THREADS mindspore::device::gpu::CudaCommon::GetInstance().threads_num()
 #define GET_MAJOR_SM mindspore::device::gpu::CudaCommon::GetInstance().major_sm()
+#define SHARED_MEM_PER_BLOCK mindspore::device::gpu::CudaCommon::GetInstance().share_memory_size()
 #define MINIUM_SM 6
 #define RECOMMEND_SM 7
 }  // namespace gpu
