@@ -91,19 +91,9 @@ class SessionBasic {
   CNodePtr HandleSwitchInputs(const AnfNodePtr &anf_node, KernelGraph *graph);
   std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
 
-  // set parameters of final graph
-  virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
-  // set output of final graph
-  virtual void SetFinalGraphOutput(const BaseRef &) {}
-  // insert switch and set the relative active ops
-  virtual void SwitchCompile(GraphId, GraphId, GraphId, const AnfNodePtr &) {}
-  // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
-  virtual void SetChildGraphInput(GraphId, const VectorRef &) {}
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
-  virtual void SetActive(GraphId, GraphId) {}
-  virtual void GetSummaryNodes(KernelGraph *graph);
   void AssignParamKey(const KernelGraphPtr &kernel_graph);
   void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const { return true; }
@@ -117,6 +107,7 @@ class SessionBasic {
 #endif
 
  protected:
+  virtual void SetSummaryNodes(KernelGraph *graph);
   // Get graph by graph id ,if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,

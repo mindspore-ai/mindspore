@@ -211,7 +211,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
   // Get summary nodes.
-  GetSummaryNodes(graph.get());
+  SetSummaryNodes(graph.get());
   // Remove NoOp from execution graph
   opt::RemoveNopNode(graph.get());
   // Set graph manager.

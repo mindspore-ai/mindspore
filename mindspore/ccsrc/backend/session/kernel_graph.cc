@@ -822,27 +822,6 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
     std::queue<AnfNodePtr> seed_nodes;
     UpdateNodeEdgeList(&seed_nodes);
   }
-  // update graph inputs in child graph
-  auto it_real_inputs = std::find_if(real_inputs_.begin(), real_inputs_.end(),
-                                     [&old_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
-                                       return n.first == old_anf_node.get();
-                                     });
-  if (it_real_inputs != real_inputs_.end()) {
-    // erase old parameter in map
-    auto old_args = it_real_inputs->second;
-    real_inputs_.erase(it_real_inputs);
-    // insert new parameter to map
-    auto iter = std::find_if(real_inputs_.begin(), real_inputs_.end(),
-                             [&new_anf_node](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool {
-                               return n.first == new_anf_node.get();
-                             });
-    if (iter != real_inputs_.end()) {
-      MS_LOG(WARNING) << new_anf_node->DebugString() << " Already exist in real inputs, will be rewrited.";
-      iter->second = old_args;
-    } else {
-      real_inputs_.emplace_back(new_anf_node, old_args);
-    }
-  }
 }
 
 void KernelGraph::UpdateExecuteKernelStreamLabel() {
@@ -875,56 +854,6 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primi
     }
   }
   return result;
-}
-
-void KernelGraph::SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg) {
-  MS_EXCEPTION_IF_NULL(parameter);
-  MS_EXCEPTION_IF_NULL(arg);
-  MS_LOG(INFO) << "Parameter: " << parameter->DebugString() << ", real input : " << arg->DebugString();
-  MS_EXCEPTION_IF_NULL(parameter);
-  MS_EXCEPTION_IF_NULL(arg);
-  auto iter = std::find_if(
-    real_inputs_.begin(), real_inputs_.end(),
-    [&parameter](const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &n) -> bool { return n.first == parameter; });
-  if (iter != real_inputs_.end()) {
-    auto &args = iter->second;
-    args.push_back(arg);
-  } else {
-    real_inputs_.emplace_back(parameter, std::vector<AnfNodePtr>(1, arg));
-  }
-}
-
-void KernelGraph::AddUnreuseArgs(const AnfNodePtr &arg, const std::shared_ptr<KernelGraph> &from_graph) {
-  unreuse_args_[arg] = from_graph;
-}
-
-void KernelGraph::UpdateCallRealInput() {
-  MS_LOG(INFO) << "Update graph id: " << graph_id_;
-  std::vector<std::pair<AnfNodePtr, std::vector<AnfNodePtr>>> real_inputs_map;
-  for (auto &it : real_inputs_) {
-    auto parameter = it.first;
-    MS_EXCEPTION_IF_NULL(parameter);
-    auto real_inputs = it.second;
-    std::vector<AnfNodePtr> new_real_inputs;
-    for (auto &real_input : real_inputs) {
-      // if real input is a call node ,find the child graph output act as the new real input
-      auto tmp_real_input = GetCallRealOutputs(real_input);
-      std::copy(tmp_real_input.begin(), tmp_real_input.end(), std::back_inserter(new_real_inputs));
-      // replace the call in unreuse_args_
-      auto unreuse_arg_it = unreuse_args_.find(real_input);
-      if (unreuse_arg_it != unreuse_args_.end()) {
-        auto old_graph = unreuse_arg_it->second;
-        for (auto new_real_input : new_real_inputs) {
-          // if call reference graph output is parameter, it will be allowed to reuse
-          if (!new_real_input->isa<Parameter>()) {
-            unreuse_args_[new_real_input] = old_graph;
-          }
-        }
-      }
-    }
-    real_inputs_map.emplace_back(parameter, new_real_inputs);
-  }
-  real_inputs_ = real_inputs_map;
 }
 
 void KernelGraph::PrintGraphExecuteOrder() const {

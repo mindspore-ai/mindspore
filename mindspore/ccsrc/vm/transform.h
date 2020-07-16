@@ -54,12 +54,10 @@ class CompileGraph {
   ~CompileGraph() = default;
 
   InstSet Run(const FuncGraphPtr &func_graph);
-  InstSet GenMultiGraphsSinkInst(const FuncGraphPtr &graph);
   bool IsCut(const AnfNodePtr &node);
   void Push(const AnfNodePtr &node);
   void Tie(const AnfNodePtr &n1, const AnfNodePtr &n2) { slots_[n2] = slots_[n1]; }
   void Ret(int nargs);
-  void GenMultiGraphsRun(const FuncGraphPtr &graph);
   int Ref(const AnfNodePtr &node);
   VectorRef SplitNodes(const FuncGraphPtr &func_graph);
 
@@ -84,7 +82,6 @@ class CompileGraph {
   int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
   int InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
   int AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
-  void AddSinkSwitch(const CNodePtr &node);
   void AddPadStack(int param_height);
   void AddTailCall(const AnfNodePtr &fn, size_t size);
   void AddPartial(const CNodePtr &node);
