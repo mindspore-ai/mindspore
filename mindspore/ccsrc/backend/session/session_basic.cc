@@ -451,9 +451,13 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
   }
   auto origin_inputs = cnode->inputs();
   bool optimize_depend = false;
+  bool optimize_control_depend = false;
   if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && origin_inputs.size() == 3 &&
       origin_inputs[kRealInputIndexInDepend]->isa<ValueNode>()) {
     optimize_depend = true;
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimControlDepend) && origin_inputs.size() == 3) {
+    optimize_control_depend = true;
   }
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
@@ -485,6 +489,8 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
     } else if (optimize_depend && input_idx == kDependAttachNodeIndex) {
       cnode_inputs.push_back(origin_inputs[kRealInputIndexInDepend]);
       continue;
+    } else if (optimize_control_depend) {
+      cnode_inputs.push_back(NewValueNode(MakeValue(input_idx)));
     } else {
       *from_other_graph = true;
       // the input node is a cnode from other graph

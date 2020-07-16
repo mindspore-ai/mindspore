@@ -69,7 +69,91 @@ bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {
   return false;
 }
 
-void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref) {
+bool ExtractNodes(const FuncGraphPtr &graph, const AnfNodePtr &prior_node, const AnfNodePtr &behind_node,
+                  std::vector<AnfNodePtr> *prior_nodes, std::vector<AnfNodePtr> *depend_nodes) {
+  MS_EXCEPTION_IF_NULL(prior_node);
+  MS_EXCEPTION_IF_NULL(behind_node);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &node_users = manager->node_users();
+  if (prior_node->isa<Parameter>()) {
+    for (auto &user : node_users[prior_node]) {
+      auto cnode = user.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (!IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
+        prior_nodes->emplace_back(cnode);
+      }
+    }
+  } else if (!IsPrimitiveCNode(prior_node, prim::kPrimControlDepend)) {
+    prior_nodes->emplace_back(prior_node);
+  } else {
+    return false;
+  }
+  if (behind_node->isa<Parameter>()) {
+    for (auto &user : node_users[behind_node]) {
+      auto cnode = user.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (!IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
+        depend_nodes->emplace_back(cnode);
+      }
+    }
+  } else if (!IsPrimitiveCNode(behind_node, prim::kPrimControlDepend)) {
+    depend_nodes->emplace_back(behind_node);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+void AddControlEdge(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                    std::map<AnfNodePtr, std::vector<AnfNodePtr>> *control_edges,
+                    std::map<AnfNodePtr, size_t> *nodes_ref) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto input_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(input_cnode);
+  auto prior_node = input_cnode->input(kControlDependPriorIndex);
+  auto depend_node = input_cnode->input(kControlDependBehindIndex);
+  MS_EXCEPTION_IF_NULL(prior_node);
+  MS_EXCEPTION_IF_NULL(depend_node);
+  PrimitivePtr prim_ptr = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+  MS_EXCEPTION_IF_NULL(prim_ptr);
+  ValuePtr mode_ptr = prim_ptr->GetAttr("depend_mode");
+  int depend_mode = 0;
+  if (mode_ptr != nullptr) {
+    depend_mode = GetValue<int>(mode_ptr);
+  }
+  if ((prior_node->isa<Parameter>() || depend_node->isa<Parameter>()) && depend_mode == 0) {
+    return;
+  }
+  std::vector<AnfNodePtr> prior_nodes;
+  std::vector<AnfNodePtr> behind_nodes;
+  if (!ExtractNodes(graph, prior_node, depend_node, &prior_nodes, &behind_nodes)) {
+    return;
+  }
+  for (auto &first_node : prior_nodes) {
+    for (auto &second_node : behind_nodes) {
+      MS_EXCEPTION_IF_NULL(first_node);
+      MS_EXCEPTION_IF_NULL(second_node);
+      auto iter = control_edges->find(second_node);
+      if (iter == control_edges->end()) {
+        (void)control_edges->insert(
+          std::pair<AnfNodePtr, std::vector<AnfNodePtr>>(second_node, std::vector<AnfNodePtr>{first_node}));
+      } else {
+        iter->second.emplace_back(first_node);
+      }
+      auto ref_iter = nodes_ref->find(first_node);
+      if (ref_iter != nodes_ref->end()) {
+        ref_iter->second++;
+      } else {
+        (void)nodes_ref->insert(std::pair<AnfNodePtr, size_t>(first_node, 1));
+      }
+    }
+  }
+}
+
+void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref,
+                      std::map<AnfNodePtr, std::vector<AnfNodePtr>> *control_edges) {
   std::queue<AnfNodePtr> queue;
   queue.push(graph->get_return());
   std::set<AnfNodePtr> visited;
@@ -83,6 +167,9 @@ void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *n
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (auto &input : cnode->inputs()) {
+      if (IsPrimitiveCNode(input, prim::kPrimControlDepend)) {
+        AddControlEdge(graph, input, control_edges, nodes_ref);
+      }
       auto iter = nodes_ref->find(input);
       if (iter != nodes_ref->end()) {
         iter->second++;
@@ -142,7 +229,8 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
   std::stack<AnfNodePtr> to_visit;
   std::stack<AnfNodePtr> next_to_visit;
   std::map<AnfNodePtr, size_t> nodes_ref;
-  CalcNodeRefCount(graph, &nodes_ref);
+  std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
+  CalcNodeRefCount(graph, &nodes_ref, &control_edges);
   std::string handle_target = default_target;
   std::string next_target = "";
   to_visit.push(graph->get_return());
@@ -162,6 +250,10 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
     MS_EXCEPTION_IF_NULL(cnode);
     auto node_inputs = cnode->inputs();
     std::reverse(node_inputs.begin(), node_inputs.end());
+    auto ctrl_inputs = control_edges.find(node);
+    if (ctrl_inputs != control_edges.end()) {
+      node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
+    }
     for (auto &input : node_inputs) {
       auto iter = nodes_ref.find(input);
       if (iter != nodes_ref.end()) {
