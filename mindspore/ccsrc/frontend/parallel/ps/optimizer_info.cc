@@ -57,6 +57,8 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
 }
 
+void DenseOptimInfo::Reset() { memset_s(gradient()->addr, gradient()->size, 0x00, gradient()->size); }
+
 void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   // Append grad data to the end
   float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);

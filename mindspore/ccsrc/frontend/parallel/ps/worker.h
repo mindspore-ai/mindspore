@@ -155,9 +155,9 @@ void Worker<T>::InitPSOptimInputShapes(const size_t key) {
       }
     }
   }
-  MS_LOG(ERROR) << "keys:" << keys;
-  MS_LOG(ERROR) << "shape_len:" << shape_len;
-  MS_LOG(ERROR) << "all_shape:" << all_shape;
+  MS_LOG(INFO) << "keys:" << keys;
+  MS_LOG(INFO) << "shape_len:" << shape_len;
+  MS_LOG(INFO) << "all_shape:" << all_shape;
   if (!init_keys_[key]) {
     init_keys_[key] = true;
   }
@@ -191,7 +191,7 @@ size_t Worker<T>::GetParamKey(const std::string &param_name) {
   size_t key = kInvalidKey;
   if (param_to_key_.find(param_name) != param_to_key_.end()) {
     key = param_to_key_[param_name];
-    MS_LOG(ERROR) << "Get key of parameter " << param_name << " key is " << key;
+    MS_LOG(INFO) << "Get key of parameter " << param_name << " key is " << key;
   }
   return key;
 }
@@ -251,6 +251,10 @@ void Worker<T>::InitPSParamAndOptim(const std::string &param_name, void *param_d
 
 template <typename T>
 void Worker<T>::AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count) {
+  bool has_init = IsKeyInit(key);
+  if (has_init) {
+    return;
+  }
   kv_worker_->AddEmbeddingTable(key, row_count);
 }
 

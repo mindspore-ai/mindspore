@@ -58,6 +58,7 @@ class DenseOptimInfo : public OptimizerInfo {
   ~DenseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
+  void Reset() override;
 };
 
 class SparseOptimInfo : public OptimizerInfo {

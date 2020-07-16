@@ -113,6 +113,8 @@ def check_parameter_available(func):
         Wrapper. If not available, raise Error.
     """
     def wrapper(*args, **kargs):
+        if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+            return func(*args, **kargs)
         group = None
         if "group" in kargs.keys():
             group = kargs.get("group")

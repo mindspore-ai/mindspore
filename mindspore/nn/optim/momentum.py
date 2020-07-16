@@ -32,7 +32,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, 
     if ps_parameter:
         op_shape = P.Shape()
         _ps_pull = P.Pull()
-        _ps_push = P.Push("Momentum", [])
+        _ps_push = P.Push("ApplyMomentum", [])
         shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
         success = F.depend(success, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
     else:

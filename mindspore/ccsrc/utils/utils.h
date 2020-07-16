@@ -318,7 +318,6 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyProximalAdagradOpName,
   kApplyProximalGradientDescentOpName,
   kApplyRMSPropOpName,
-  kPushOpName,
   kPullOpName,
 };
 

@@ -58,6 +58,7 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
   AddressPtr accumulate = std::make_shared<kernel::Address>();
   accumulate->addr = new float[weight->size()];
   accumulate->size = weight->size() * sizeof(float);
+  memset_s(accumulate->addr, accumulate->size, 0x00, accumulate->size);
   AddressPtr learning_rate = std::make_shared<kernel::Address>();
   learning_rate->addr = copy_data_ptr;
   learning_rate->size = lens[0] * sizeof(float);
