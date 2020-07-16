@@ -17,6 +17,7 @@
 #define DATASET_API_DE_PIPELINE_H_
 
 #include <iostream>
+#include <map>
 #include <memory>
 #include <stack>
 #include <string>
@@ -33,6 +34,7 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace dataset {
+using json = nlohmann::json;
 using DsOpPtr = std::shared_ptr<DatasetOp>;
 
 class CacheClient;
@@ -100,6 +102,8 @@ class DEPipeline {
 
   Status GetOutputTypes(py::list *output);
 
+  Status SaveDataset(const std::vector<std::string> &file_names, const std::string &file_type);
+
   int GetDatasetSize() const;
 
   int GetBatchSize() const;
@@ -109,6 +113,18 @@ class DEPipeline {
   Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
 
   Status ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *top, std::shared_ptr<DatasetOp> *bottom);
+
+  template <typename T, typename S>
+  Status TransfromTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
+                         std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
+                         std::unique_ptr<S> *s, bool need_convert = false);
+
+  Status FetchMetaFromTensorRow(const std::unordered_map<std::string, int32_t> &column_name_id_map,
+                                const TensorRow &row, json *schema, std::vector<std::string> *index_fields);
+
+  Status FetchDataFromTensorRow(const TensorRow &row,
+                                const std::unordered_map<std::string, int32_t> &column_name_id_map, json *row_raw_data,
+                                std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data);
 
   Status BuildMindrecordSamplerChain(const py::handle &handle,
                                      std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators,

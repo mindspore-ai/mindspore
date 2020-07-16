@@ -57,6 +57,8 @@ class ShardIndexGenerator {
   /// \brief create databases for indexes
   MSRStatus WriteToDatabase();
 
+  static MSRStatus finalize(const std::vector<std::string> file_names);
+
  private:
   static int Callback(void *not_used, int argc, char **argv, char **az_col_name);
 
