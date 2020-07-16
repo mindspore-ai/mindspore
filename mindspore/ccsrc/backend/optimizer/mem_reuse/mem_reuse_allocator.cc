@@ -90,7 +90,7 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
   auto curr_stream_id = kernel_curr->stream_id();
   auto prev_stream_id = kernel_prev->stream_id();
   if (curr_stream_id == prev_stream_id) {
-    mem_buf->type_ = IN_STREAM_REUSE;
+    mem_buf->type_ = kInStreamReuse;
     return true;
   }
 
@@ -117,7 +117,7 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
   }
 
   if (reuse_between_streams) {
-    mem_buf->type_ = BETWEEN_STREAMS_REUSE;
+    mem_buf->type_ = kBetweenStreamReuse;
     return true;
   }
 
@@ -128,7 +128,7 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
   auto kernel_curr_front = iter->second;
   auto depend_count = kernel_curr_front.count(kernel_prev);
   if (depend_count) {
-    mem_buf->type_ = KERNEL_DEPENDENCE_REUSE;
+    mem_buf->type_ = kKernelDependenceReuse;
     return true;
   }
 
@@ -137,16 +137,19 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
 
 void BestFitMemReuse::AssignCommonNodeOutputOffset() {
   MS_EXCEPTION_IF_NULL(current_kernel_);
-  for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+  for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
     size_t index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
-    if (tensor_desc->type_ == REFNODE_OUTPUT) {
+    if (tensor_desc->type_ == kRefNodeInput) {
+      total_refinput_size += tensor_desc->size_;
+    } else if (tensor_desc->type_ == kRefNodeOutput) {
       total_refoutput_size += tensor_desc->size_;
+      // no need to alloc refnode output's memory
       continue;
-    } else if (tensor_desc->type_ == COMM_NOTREUSE) {
+    } else if (tensor_desc->type_ == kCommNotReuse) {
       total_comm_not_reuse_size += tensor_desc->size_;
-    } else if (tensor_desc->type_ == COMM_REUSE) {
+    } else if (tensor_desc->type_ == kCommReuse) {
       // get align size for communication op's single input
       tensor_desc->size_ = AlignCommunicationMemorySize(tensor_desc->size_);
       total_comm_reuse_size += tensor_desc->size_;
@@ -165,7 +168,7 @@ void BestFitMemReuse::AssignCommonNodeOutputOffset() {
 #endif
     }
     // skip left align border for communication op single input to used
-    if (tensor_desc->type_ == COMM_REUSE) {
+    if (tensor_desc->type_ == kCommReuse) {
       tensor_desc->offset_ += kDefaultMemAlignSize;
     }
   }
@@ -176,17 +179,18 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   size_t output_num = 0;
   // get all output size
   MS_EXCEPTION_IF_NULL(current_kernel_);
-  for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+  for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
     size_t index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
-    if (tensor_desc->type_ == COMM_REUSE) {
+    if (tensor_desc->type_ == kCommReuse) {
       total_comm_reuse_size += tensor_desc->size_;
       total_comm_output_reuse_size += tensor_desc->size_;
       total_kernel_output_size += tensor_desc->size_;
     } else {
       MS_LOG(ERROR) << "All communication op's outputs should be memory reuse, Kernel:"
-                    << current_kernel_->scope_full_name();
+                    << current_kernel_->scope_full_name() << " output index:" << tensor_idx
+                    << " tensor_type:" << tensor_desc->type_;
       continue;
     }
   }
@@ -195,7 +199,7 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   // add left align border for the first output and right align border for the last output to alloc align border memory
   size_t output_index = 0;
   auto output_ref_indexes = current_kernel_->GetOutputRefIndexs();
-  for (auto &tensor_idx : output_ref_indexes) {
+  for (const auto &tensor_idx : output_ref_indexes) {
     size_t index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
@@ -215,7 +219,7 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   if (!reusable_membuf_map.empty()) {
     auto membuf_index = reusable_membuf_map.begin()->second;
     output_index = 0;
-    for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+    for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
       size_t index = GetTensorIndex(tensor_idx);
       auto tensor_desc = tensor_ptr_list_[index];
       MS_EXCEPTION_IF_NULL(tensor_desc);
@@ -229,7 +233,7 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   } else {
     // no membuf can reuse, add new membuf after the membuf_ptr_list
     output_index = 0;
-    for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+    for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
       size_t index = GetTensorIndex(tensor_idx);
       auto tensor_desc = tensor_ptr_list_[index];
       MS_EXCEPTION_IF_NULL(tensor_desc);
@@ -247,7 +251,7 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
 }
 
 void BestFitMemReuse::AssignNodeOutputOffset() {
-  if (current_kernel_->type_ == COMMUNICATION_NODE) {
+  if (current_kernel_->type_ == kCommunicationNode) {
     AssignCommunicationNodeOutputOffset();
   } else {
     AssignCommonNodeOutputOffset();
@@ -330,7 +334,7 @@ void BestFitMemReuse::AddNewMembufPtr(KernelRefCount *tensor_desc, int flag) {
   }
   auto membuf_size = tensor_desc->size_;
   auto real_index = GetRealIndex(IntToSize(tensor_desc->index_), flag);
-  auto membuf = std::make_shared<Membuf>(kReused, membuf_size, membuf_offset, real_index, NEW, current_kernel_);
+  auto membuf = std::make_shared<Membuf>(kReused, membuf_size, membuf_offset, real_index, kNew, current_kernel_);
   membuf_ptr_list_.push_back(membuf);
   tensor_desc->offset_ = membuf_offset;
 }
@@ -352,7 +356,7 @@ void BestFitMemReuse::UpdateNodeInputAndMembuf() {
 }
 
 void BestFitMemReuse::ReleaseNodeUnusedOutput() {
-  for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+  for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
     size_t tensor_index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[tensor_index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
@@ -517,8 +521,9 @@ void BestFitMemReuse::Reuse(const MemReuseUtil *mem_reuse_util_ptr) {
     ++op_num;
 #endif
   }
-  MS_LOG(INFO) << "Special Tensor total size: RefOutput: " << total_refoutput_size
-               << " CommReuse: " << total_comm_reuse_size << " CommOutputReuse: " << total_comm_output_reuse_size
+  MS_LOG(INFO) << "Special Tensor total size: RefInput: " << total_refinput_size
+               << " RefOutput: " << total_refoutput_size << " CommReuse: " << total_comm_reuse_size
+               << " CommOutputReuse: " << total_comm_output_reuse_size
                << " CommNotReuse: " << total_comm_not_reuse_size;
 #ifdef MEM_REUSE_DEBUG
   MemReuseChecker::GetInstance().ExportMembufInfoIR();

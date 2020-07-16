@@ -57,13 +57,22 @@ bool MemReuseUtil::InitDynamicOutputKernelRef() {
         kernel_ref->stream_id_ = curr_stream_id;
         kernel_ref->SetKernelRefCountInfo(index, size, kDynamicRefCount);
         if (is_comm_op) {
-          kernel_ref->type_ = COMM_REUSE;
+          kernel_ref->type_ = kCommReuse;
         } else {
           session::AnfWithOutIndex out_pair(kernel_cnode, output_index);
           if (graph_->IsInRefOutputMap(out_pair)) {
-            kernel_ref->type_ = REFNODE_OUTPUT;
+            kernel_ref->type_ = kRefNodeOutput;
+            auto origin_pair = graph_->GetRefCorrespondOutput(out_pair);
+            MS_EXCEPTION_IF_NULL(origin_pair.first);
+            if (origin_pair.first->isa<CNode>()) {
+              auto cnode = origin_pair.first->cast<CNodePtr>();
+              auto ref_ptr = GetKernelInputRef(cnode, origin_pair.second);
+              if (ref_ptr != nullptr) {
+                kernel_ref->type_ = kRefNodeInput;
+              }
+            }
           } else {
-            kernel_ref->type_ = COMMON;
+            kernel_ref->type_ = kCommon;
           }
         }
         kernel_refs.push_back(kernel_ref);
@@ -175,9 +184,9 @@ void MemReuseUtil::SetInputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr
     if (ref_ptr != nullptr) {
       if (is_comm_op) {
         if (input_tensor_num == 1) {
-          ref_ptr->type_ = COMM_REUSE;
+          ref_ptr->type_ = kCommReuse;
         } else {
-          ref_ptr->type_ = COMM_NOTREUSE;
+          ref_ptr->type_ = kCommNotReuse;
         }
       }
 
@@ -282,9 +291,9 @@ void MemReuseUtil::SetKernelDefMap() {
     kernel_def_ptr->set_input_refs(kernel_def_ptr->inputs_[key]);
     kernel_def_ptr->set_output_refs(kernel_def_ptr->outputs_[key]);
     if (AnfAlgo::IsCommunicationOp(kernel)) {
-      kernel_def_ptr->type_ = COMMUNICATION_NODE;
+      kernel_def_ptr->type_ = kCommunicationNode;
     } else {
-      kernel_def_ptr->type_ = COMMON_NODE;
+      kernel_def_ptr->type_ = kCommonNode;
     }
     kernel_def_ptr_list_.push_back(kernel_def_ptr);
     kernel_map_[key] = kernel_def_ptr;
@@ -365,7 +374,7 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
       KernelRefCountPtr kernel_ref = kernel_output_refs_[node.get()][index];
       kernel_ref->ref_count_ = kMaxRefCount;
       kernel_ref->ref_count_dynamic_use_ = kMaxRefCount;
-      kernel_ref->type_ = SUMMARY;
+      kernel_ref->type_ = kSummary;
       total_summary_size += kernel_ref->size_;
       MS_LOG(INFO) << "Set summary node's ref count, node: " << node->fullname_with_scope() << " index: " << index;
     } else {
@@ -373,10 +382,27 @@ void MemReuseUtil::SetSummaryNodesRefCount() {
     }
   }
 #ifdef MEM_REUSE_DEBUG
-  auto graph = *graph_;
-  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, &graph);
+  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph_);
 #endif
   MS_LOG(INFO) << "Special Tensor total size: SummaryNodes: " << total_summary_size;
+}
+
+void MemReuseUtil::SetRefNodesInputRefCount() {
+  size_t total_size = 0;
+  for (auto iter : kernel_output_refs_) {
+    for (auto &ref_count : iter.second) {
+      MS_EXCEPTION_IF_NULL(ref_count);
+      if (ref_count->type_ == kRefNodeInput) {
+        ref_count->ref_count_ = kMaxRefCount;
+        total_size += ref_count->size_;
+      }
+    }
+  }
+
+  MS_LOG(INFO) << "Special Tensor total size: RefNodeInput: " << total_size;
+#ifdef MEM_REUSE_DEBUG
+  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph_);
+#endif
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
@@ -405,8 +431,7 @@ void MemReuseUtil::SetGraphOutputRefCount() {
     }
   }
 #ifdef MEM_REUSE_DEBUG
-  auto graph = *graph_;
-  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, &graph);
+  MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph_);
 #endif
 }
 
@@ -419,13 +444,14 @@ void MemReuseUtil::ResetDynamicUsedRefCount() {
   }
 }
 
-void MemReuseUtil::SetAllInfo(KernelGraph *graph) {
+void MemReuseUtil::SetAllInfo(const KernelGraph *graph) {
   if (!InitDynamicKernelRef(graph)) {
     MS_LOG(EXCEPTION) << "Init ReuseAssignDynamicMemory Fault";
   }
   SetKernelDefMap();
   SetReuseRefCount();
   SetSummaryNodesRefCount();
+  SetRefNodesInputRefCount();
   SetWorkSpaceList();
 #ifdef MEM_REUSE_DEBUG
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);

@@ -43,10 +43,10 @@ class MemReuseChecker {
   void CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx);
   bool CheckGraphOutputAssigned(const session::KernelGraph *graph);
   void CheckMemReuseIR(const KernelRefCountPtrList &total_refs_list, const KernelDefPtrMaps &kernel_def_ptr_list,
-                       KernelGraph *graph);
-  int64_t CalculOriStatic(KernelGraph *graph) const;
+                       const KernelGraph *graph);
+  int64_t CalculOriStatic(const KernelGraph *graph) const;
   int64_t CalculOriInput(const KernelGraph *graph) const;
-  int64_t CalculOriValue(KernelGraph *graph) const;
+  int64_t CalculOriValue(const KernelGraph *graph) const;
   int64_t CalculOriDy(const KernelGraph *graph) const;
   int64_t CalculOriWk(const KernelGraph *graph) const;
   std::string GetSplitName(const std::string &scope_name) const;

@@ -81,15 +81,15 @@ class KernelRuntime {
   void AssignStaticMemory(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
   void ReuseAssignDynamicMemory(session::KernelGraph *graph);
-  void AssignNodeOutputMem(int flag, const AnfNodePtr &node, int index);
-  void AssignWorkSpaceMem(int flag, const AnfNodePtr &node);
+  void AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index);
+  void AssignWorkSpaceMem(MemType type, const AnfNodePtr &node);
   void AssignReuseWorkSpaceMem(const AnfNodePtr &node);
 
   void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
 
-  void AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr &node);
-  void AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &node);
-  void AssignCommunicationNodeMem(int flag, const AnfNodePtr &node);
+  void AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node);
+  void AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node);
+  void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
 #ifdef ENABLE_DUMP_E2E
   bool SetDumpConf();
 #endif

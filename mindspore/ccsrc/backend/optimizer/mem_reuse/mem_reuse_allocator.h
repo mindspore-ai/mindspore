@@ -40,11 +40,11 @@ static constexpr int kDynamicMem = -1;
 static constexpr int kWorkspaceMem = 1;
 static constexpr size_t kTotalSize = 0;
 enum Status { kUnused, kReused };
-enum MEMTYPE { NEW, IN_STREAM_REUSE, BETWEEN_STREAMS_REUSE, KERNEL_DEPENDENCE_REUSE };
+enum MemType { kNew, kInStreamReuse, kBetweenStreamReuse, kKernelDependenceReuse };
 class Membuf {
  public:
   Membuf() = default;
-  Membuf(Status status, size_t size, size_t offset, int index, MEMTYPE type, const KernelDefPtr &used_kernel)
+  Membuf(Status status, size_t size, size_t offset, int index, MemType type, const KernelDefPtr &used_kernel)
       : status_(status), size_(size), offset_(offset), index_(index), type_(type), used_kernel_(used_kernel) {}
   ~Membuf() = default;
   // Memory block status flags
@@ -53,7 +53,7 @@ class Membuf {
   size_t offset_{0};
   // Store the tensor index stored in this memory block at a certain moment
   int index_{0};
-  MEMTYPE type_{NEW};
+  MemType type_{kNew};
   KernelDefPtr used_kernel_;
 };
 using MembufPtr = std::shared_ptr<Membuf>;
@@ -163,6 +163,7 @@ class BestFitMemReuse {
   // kernel_front_map_, key: the kernel_def, value: kernels before this kernel_def
   std::map<KernelDefPtr, std::set<KernelDefPtr>> kernel_front_map_;
   std::vector<std::vector<uint32_t>> stream_groups_;
+  size_t total_refinput_size{0};
   size_t total_refoutput_size{0};
   size_t total_comm_reuse_size{0};
   size_t total_comm_output_reuse_size{0};

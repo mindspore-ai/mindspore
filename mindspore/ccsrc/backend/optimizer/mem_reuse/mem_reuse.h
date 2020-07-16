@@ -52,7 +52,7 @@ class MemReuseUtil {
     MS_LOG(INFO) << "Total Reused WorkSpafce Memory Size: " << total_reuseworkspace_size_;
   }
 
-  void SetAllInfo(KernelGraph *graph);
+  void SetAllInfo(const KernelGraph *graph);
   bool InitDynamicOutputKernelRef();
   bool InitDynamicWorkspaceKernelRef();
   bool InitDynamicKernelRef(const KernelGraph *graph);
@@ -64,6 +64,7 @@ class MemReuseUtil {
   void SetKernelDefInputs();
   void SetReuseRefCount();
   void SetSummaryNodesRefCount();
+  void SetRefNodesInputRefCount();
   // Set the reference count of graph output specially.
   void SetGraphOutputRefCount();
   // Reset the dynamic used reference count by ref_count_.
