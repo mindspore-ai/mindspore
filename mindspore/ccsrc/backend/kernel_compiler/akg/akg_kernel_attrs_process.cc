@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -75,15 +76,7 @@ void SetAkgAttrsForCast(const AnfNodePtr &anf_node) {
 
   std::string dst_type;
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, 0);
-  if (output_type == kFloat32->type_id()) {
-    dst_type = "float32";
-  } else if (output_type == kFloat16->type_id()) {
-    dst_type = "float16";
-  } else if (output_type == kInt32->type_id()) {
-    dst_type = "int32";
-  } else {
-    MS_LOG(WARNING) << "Unknown cast_to type: " << TypeIdToType(output_type)->ToString();
-  }
+  dst_type = TypeId2String(output_type);
   AnfAlgo::SetNodeAttr("dst_type", MakeValue(dst_type), anf_node);
 }
 
