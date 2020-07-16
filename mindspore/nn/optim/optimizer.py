@@ -28,8 +28,8 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.parallel_utils import ParallelMode
+from mindspore import context
 
 __all__ = ['Optimizer']
 
@@ -157,13 +157,12 @@ class Optimizer(Cell):
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
 
-        use_parallel = auto_parallel_context().get_enable_parallel_optimizer()
+        use_parallel = context.get_auto_parallel_context("enable_parallel_optimizer")
         self.use_parallel = use_parallel
         if use_parallel:
             if self.cls_name not in ["Lamb", "AdamWeightDecayDynamicLR", "AdamWeightDecay"]:
                 raise RuntimeError("Optimizer segmentation does not support optimizer {}".format(self.cls_name))
-            if _get_parallel_mode() not in [ParallelMode.HYBRID_PARALLEL, ParallelMode.DATA_PARALLEL,
-                                            ParallelMode.AUTO_PARALLEL]:
+            if _get_parallel_mode() != ParallelMode.DATA_PARALLEL:
                 raise RuntimeError("Optimizer segmentation does not support parallel mode {}".format
                                    (_get_parallel_mode()))
             self.dev_num = _get_device_num()
@@ -175,6 +174,7 @@ class Optimizer(Cell):
             self.param_names = []
             for param in self.parameters:
                 self.param_names.append(param.name)
+
         else:
             self.optim_filter = (True,) * self.param_length
 

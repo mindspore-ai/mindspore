@@ -22,7 +22,6 @@ from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam, AdamWeightDecay, AdamWeightDecayDynamicLR, Lamb
 from mindspore.ops import operations as P
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore import context
 
 
@@ -54,8 +53,7 @@ class Net(nn.Cell):
 
 def test_AdamWeightDecayDynamicLR():
     """ test_AdamWeightDecayDynamicLR """
-    auto_parallel_context().set_enable_parallel_optimizer(True)
-    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2)
+    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()
@@ -70,8 +68,7 @@ def test_AdamWeightDecayDynamicLR():
 
 def test_AdamWeightDecay():
     """ test_AdamWeightDecayDynamicLR """
-    auto_parallel_context().set_enable_parallel_optimizer(True)
-    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2)
+    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()
@@ -86,8 +83,7 @@ def test_AdamWeightDecay():
 
 def test_lamb_compile():
     """ test_Lamb_compile """
-    auto_parallel_context().set_enable_parallel_optimizer(True)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2)
+    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()
@@ -102,7 +98,7 @@ def test_lamb_compile():
 
 def test_edge_case():
     """ test_edge_case """
-    auto_parallel_context().set_enable_parallel_optimizer(True)
+    context.set_auto_parallel_context(enable_parallel_optimizer=True)
     net = Net()
     with pytest.raises(RuntimeError):
         context.set_auto_parallel_context(parallel_mode="stand_alone")
