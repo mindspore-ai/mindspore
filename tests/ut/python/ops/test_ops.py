@@ -533,10 +533,10 @@ class NormalNet(nn.Cell):
     def __init__(self, shape=None, seed=0):
         super(NormalNet, self).__init__()
         self.shape = shape
-        self.seed = seed
+        self.normal = P.Normal(seed=seed)
 
     def construct(self, mean, stddev):
-        out = C.normal(self.shape, mean, stddev, self.seed)
+        out = self.normal(self.shape, mean, stddev)
         return out
 
 
