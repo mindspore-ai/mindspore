@@ -14,9 +14,11 @@
 
 """__init__"""
 
+from .abs import _abs_akg
 from .add import _add_akg
 from .batchmatmul import _batchmatmul_akg
 from .cast import _cast_akg
+from .exp import _exp_akg
 from .expand_dims import _expand_dims_akg
 from .greater import _greater_akg
 from .inplace_assign import _inplace_assign_akg
