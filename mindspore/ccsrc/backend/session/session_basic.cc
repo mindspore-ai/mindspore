@@ -978,6 +978,16 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
       bool internal_output = true;
       std::string kernel_target = GetCNodeTarget(front_real_kernel.first);
       for (auto user : users) {
+        auto cnode = user.first->cast<CNodePtr>();
+        if (cnode == nullptr) {
+          internal_output = false;
+          break;
+        }
+        auto prim = cnode->input(kAnfPrimitiveIndex);
+        if (prim == nullptr || !prim->isa<ValueNode>()) {
+          internal_output = false;
+          break;
+        }
         if (!AnfAlgo::IsRealKernel(user.first) || kernel_target != GetCNodeTarget(user.first)) {
           internal_output = false;
           break;
