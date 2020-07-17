@@ -479,7 +479,7 @@ AnfNodePtr ConstantDuplicateMul::MulConstantTensors(const AnfNodePtr &vnode_1, c
   auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
   size_t mem_size = GetTypeByte(tensor_3_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
   char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-  memcpy(data, data_out, mem_size);
+  memcpy_s(data, mem_size, data_out, mem_size);
 
   auto new_vnode = NewValueNode(new_tensor_ptr);
   new_vnode->set_abstract(new_tensor_ptr->ToAbstract());
