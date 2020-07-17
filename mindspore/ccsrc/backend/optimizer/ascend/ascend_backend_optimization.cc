@@ -97,6 +97,8 @@
 #include "backend/optimizer/ascend/format_type/remove_no_use_reshape_op.h"
 #include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
 #include "backend/optimizer/ascend/format_type/remove_internal_output.h"
+#include "backend/optimizer/ascend/ir_fission/concat_fission.h"
+#include "backend/optimizer/ascend/ir_fission/pack_fission.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -153,6 +155,8 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<PackFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
 }
 }  // namespace
 
