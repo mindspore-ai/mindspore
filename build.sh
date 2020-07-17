@@ -279,6 +279,9 @@ checkopts()
   done
 }
 checkopts "$@"
+if [[ "X$ENABLE_GPU" = "Xon" ]] && [[ "X$ENABLE_DUMPE2E" = "Xon" ]]; then
+    ENABLE_DEBUGGER="on"
+fi
 echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine

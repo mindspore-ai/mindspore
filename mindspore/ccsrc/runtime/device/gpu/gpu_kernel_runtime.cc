@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "runtime/device/gpu/gpu_kernel_runtime.h"
+#include <algorithm>
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "runtime/device/gpu/cuda_driver.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
@@ -29,6 +29,8 @@
 #include "runtime/device/gpu/gpu_memory_manager.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_memory_copy_manager.h"
+#include "common/trans.h"
+#include "ir/dtype.h"
 
 namespace mindspore {
 namespace device {
@@ -36,6 +38,7 @@ namespace gpu {
 using mindspore::device::memswap::MemSwapInfoSet;
 using mindspore::device::memswap::MemSwapManager;
 using mindspore::device::memswap::SwapKind;
+static const size_t PARAMETER_OUTPUT_INDEX = 0;
 bool GPUKernelRuntime::SyncStream() { return GPUDeviceManager::GetInstance().SyncStream(stream_); }
 
 bool GPUKernelRuntime::Init() {
@@ -43,7 +46,15 @@ bool GPUKernelRuntime::Init() {
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
   }
-  auto ret = InitDevice();
+  bool ret = false;
+#ifdef ENABLE_DUMP_E2E
+  ret = SetDumpConf();
+  if (!ret) {
+    MS_LOG(INFO) << "No dump conf to set!";
+  }
+#endif
+
+  ret = InitDevice();
   if (!ret) {
     MS_LOG(ERROR) << "InitDevice error.";
     return ret;
@@ -62,6 +73,216 @@ bool GPUKernelRuntime::Init() {
   device_init_ = true;
   return ret;
 }
+
+#ifdef ENABLE_DUMP_E2E
+namespace {
+void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path, DumpConfPtr dump_conf,
+                Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(dump_conf);
+  bool trans_flag = dump_conf->trans_flag();
+  const auto &apply_kernels = graph->execution_order();
+  for (const auto &node : apply_kernels) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    std::string kernel_name = node->fullname_with_scope();
+    if (!dump_conf->IsKernelNeedDump(kernel_name)) {
+      continue;
+    }
+    const std::string strsrc = "/";
+    const std::string strdst = "--";
+    std::string::size_type pos = 0;
+    std::string::size_type srclen = strsrc.size();
+    std::string::size_type dstlen = strdst.size();
+    while ((pos = kernel_name.find(strsrc, pos)) != std::string::npos) {
+      kernel_name.replace(pos, srclen, strdst);
+      pos += dstlen;
+    }
+    auto output_size = AnfAlgo::GetOutputTensorNum(node);
+    for (size_t j = 0; j < output_size; ++j) {
+      auto addr = AnfAlgo::GetOutputAddr(node, j);
+      TypeId addr_type_id = addr->type_id();
+      std::string addr_format = addr->format();
+      std::vector<int> int_shapes;
+      if (trans_flag) {
+        int_shapes = trans::GetRuntimePaddingShape(node, j);
+      } else {
+        auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
+        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                             [](size_t inner_item) { return SizeToInt(inner_item); });
+      }
+
+      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+
+      auto format = kOpFormat_DEFAULT;
+      string filepath = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
+
+      DebugServices *debug_services = debugger->debug_services();
+      TensorLoader *tensor_loader = debug_services->tensor_loader();
+      std::string original_kernel_name = node->fullname_with_scope();
+      size_t slot = j;
+      auto ret = tensor_loader->DumpTensorToFile(original_kernel_name, trans_flag, filepath, format, int_shapes, type,
+                                                 addr_type_id, addr_format, slot);
+
+      if (!ret) {
+        std::string error = "DumpTensorToFile Failed: flag:" + std::to_string(trans_flag) + ", path:" + filepath +
+                            ", host_format:" + format + ".!";
+      }
+    }
+  }
+}
+
+void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_path, DumpConfPtr dump_conf,
+                    Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(dump_conf);
+  bool trans_flag = dump_conf->trans_flag();
+  const auto &parameters = graph->inputs();
+  for (auto &item : parameters) {
+    if (!item->isa<Parameter>()) {
+      continue;
+    }
+    std::string parameter_name = item->fullname_with_scope();
+    if (!dump_conf->IsKernelNeedDump(parameter_name)) {
+      continue;
+    }
+    auto addr = AnfAlgo::GetOutputAddr(item, PARAMETER_OUTPUT_INDEX);
+    TypeId addr_type_id = addr->type_id();
+    std::string addr_format = addr->format();
+    std::vector<int> int_shapes;
+    if (trans_flag) {
+      int_shapes = trans::GetRuntimePaddingShape(item, PARAMETER_OUTPUT_INDEX);
+    } else {
+      auto shape = AnfAlgo::GetOutputDeviceShape(item, PARAMETER_OUTPUT_INDEX);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+    }
+
+    auto type = AnfAlgo::GetOutputInferDataType(item, PARAMETER_OUTPUT_INDEX);
+
+    auto format = kOpFormat_DEFAULT;
+    string filepath = dump_path + '/' + parameter_name + '_' + "output_0";
+
+    DebugServices *debug_services = debugger->debug_services();
+    TensorLoader *tensor_loader = debug_services->tensor_loader();
+    std::string original_kernel_name = parameter_name;
+    size_t slot = 0;
+    auto ret = tensor_loader->DumpTensorToFile(original_kernel_name, trans_flag, filepath, format, int_shapes, type,
+                                               addr_type_id, addr_format, slot);
+
+    if (!ret) {
+      std::string error = "DumpTensorToFile Failed: flag:" + std::to_string(trans_flag) + ", path:" + filepath +
+                          ", host_format:" + format + ".!";
+    }
+  }
+}
+}  // namespace
+
+bool GPUKernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Start dump step";
+  DumpConfPtr dump_conf = GetDumpConf();
+  MS_EXCEPTION_IF_NULL(dump_conf);
+  dump_conf->UpdataCurIter();
+  bool dump_flag = dump_conf->dump_enable();
+  if (!dump_flag) {
+    MS_LOG(INFO) << "Dump flag is disable, pass dump step";
+    return true;
+  }
+  uint32_t cur_iter = dump_conf->cur_iter();
+  if (dump_conf->dump_iter() != 0) {
+    if (cur_iter != dump_conf->dump_iter()) {
+      return true;
+    }
+  }
+  MS_LOG(INFO) << "Cur iter is " << cur_iter;
+  std::string net_name = dump_conf->dump_net_name();
+  std::string iterator = std::to_string(cur_iter);
+  std::string dump_path = dump_conf->dump_path();
+  if (dump_path.back() == '/') {
+    dump_path = dump_path + net_name + '/' + iterator;
+  } else {
+    dump_path = dump_path + '/' + net_name + '/' + iterator;
+  }
+
+  // dump output
+  DumpOutput(graph, dump_path, dump_conf, debugger);
+  // dump parameters
+  DumpParameters(graph, dump_path, dump_conf, debugger);
+
+  return true;
+}
+#endif
+
+#ifdef ENABLE_DEBUGGER
+namespace {
+void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
+                    const std::vector<mindspore::kernel::AddressPtr> &kernel_inputs,
+                    const std::vector<mindspore::kernel::AddressPtr> &kernel_workspaces,
+                    const std::vector<mindspore::kernel::AddressPtr> &kernel_outputs, int exec_order, void *stream_ptr,
+                    bool dump_enabled) {
+  if (!(debugger && (debugger->debugger_enabled() || dump_enabled))) {
+    return;
+  }
+  std::string kernel_name = kernel->fullname_with_scope();
+  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+  for (size_t j = 0; j < output_size; ++j) {
+    auto addr = kernel_outputs[j];
+    auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
+    auto format = kOpFormat_DEFAULT;
+    auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+    string tensor_name = kernel_name + ':' + std::to_string(j);
+    std::vector<int> int_shapes;
+    auto shape = AnfAlgo::GetOutputDeviceShape(kernel, j);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                         [](size_t inner_item) { return SizeToInt(inner_item); });
+    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, debugger, false);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost:"
+                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+    }
+  }
+}
+
+void LoadParameters(const session::KernelGraph *graph, Debugger *debugger, bool dump_enabled) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!(debugger && (debugger->debugger_enabled() || dump_enabled))) {
+    return;
+  }
+  const auto &parameters = graph->inputs();
+  // for parameters, set its execution order to be 0;
+  int exec_order = 0;
+  for (auto &item : parameters) {
+    if (!item->isa<Parameter>()) {
+      continue;
+    }
+    std::string parameter_name = item->fullname_with_scope();
+    auto addr = AnfAlgo::GetOutputAddr(item, PARAMETER_OUTPUT_INDEX);
+    auto type = AnfAlgo::GetOutputInferDataType(item, PARAMETER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
+    string tensor_name = parameter_name + ':' + "0";
+    auto gpu_addr = dynamic_cast<const mindspore::device::gpu::GPUDeviceAddress *>(addr);
+    std::vector<int> int_shapes;
+    auto shape = AnfAlgo::GetOutputDeviceShape(item, PARAMETER_OUTPUT_INDEX);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                         [](size_t inner_item) { return SizeToInt(inner_item); });
+    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, debugger, true);
+    if (!ret) {
+      MS_LOG(ERROR) << "LoadMemToHost:"
+                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+    }
+  }
+}
+
+void ClearCurrentData(Debugger *debugger, bool dump_enabled) {
+  if (debugger && (debugger->debugger_enabled() || dump_enabled)) {
+    DebugServices *debug_services = debugger->debug_services();
+    TensorLoader *tensor_loader = debug_services->tensor_loader();
+    tensor_loader->EmptyCurrentTensor();
+  }
+}
+}  // namespace
+#endif
 
 DeviceAddressPtr GPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) {
@@ -147,7 +368,7 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   }
 }
 
-bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
+bool GPUKernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   bool ret = true;
@@ -170,7 +391,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
     mem_reuse_util_ = mem_reuse_iter->second;
     MS_EXCEPTION_IF_NULL(mem_reuse_util_);
 
-    ret = RunOneStep(graph);
+    ret = RunOneStep(graph, debugger);
   } else {
     ret = LaunchKernel(graph);
   }
@@ -182,28 +403,28 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
   return ret;
 }
 
-bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph) {
+bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph, Debugger *debugger) {
   bool ret = true;
   auto graph_id = graph->graph_id();
   if (!is_first_step_map_[graph_id]) {
     // Normally run graph
-    ret = LaunchKernelDynamic(graph);
+    ret = LaunchKernelDynamic(graph, debugger);
   } else {
     // Mock run first step
-    ret = LaunchKernelDynamic(graph, true, false);
+    ret = LaunchKernelDynamic(graph, debugger, true, false);
     if (ret) {
       // Normally run graph
-      ret = LaunchKernelDynamic(graph);
+      ret = LaunchKernelDynamic(graph, debugger);
     } else {
       // Trigger memory swap
-      ret = SearchMemSwapScheme(graph);
+      ret = SearchMemSwapScheme(graph, debugger);
     }
     is_first_step_map_[graph_id] = false;
   }
   return ret;
 }
 
-bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph) {
+bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger) {
   MS_LOG(WARNING) << "Run out of memory and try memory swapping, it may take some time, please wait a moment.";
   bool ret = false;
   ClearKernelOldOutputAndWorkspace(graph);
@@ -217,7 +438,7 @@ bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph) {
     if (!mem_swap_manager_->RetreatSwapInfo()) {
       return false;
     }
-    ret = LaunchKernelDynamic(graph, true, false);
+    ret = LaunchKernelDynamic(graph, debugger, true, false);
     if (!ret) {
       ClearKernelOldOutputAndWorkspace(graph);
     }
@@ -225,14 +446,14 @@ bool GPUKernelRuntime::SearchMemSwapScheme(const session::KernelGraph *graph) {
   mem_swap_manager_->AssignHostMemory();
 
   // Time profiling
-  ret = LaunchKernelDynamic(graph, false, true);
+  ret = LaunchKernelDynamic(graph, debugger, false, true);
   if (!ret) {
     return ret;
   }
-  return RefineMemSwapScheme(graph);
+  return RefineMemSwapScheme(graph, debugger);
 }
 
-bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph) {
+bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger) {
   MS_LOG(WARNING) << "Refine memory swap scheme, it may take some time, please wait a moment.";
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -245,7 +466,7 @@ bool GPUKernelRuntime::RefineMemSwapScheme(const session::KernelGraph *graph) {
       bool ret = false;
       while (!ret) {
         mem_swap_manager_->AdjustSwapInPos(kernel, swap_in_task_idx);
-        ret = LaunchKernelDynamic(graph, true, false);
+        ret = LaunchKernelDynamic(graph, debugger, true, false);
         if (!ret) {
           ClearKernelOldOutputAndWorkspace(graph);
           ClearSwapInfo(true);
@@ -384,14 +605,24 @@ void GPUKernelRuntime::ClearKernelWorkspaceAddress(const session::KernelGraph *g
   }
 }
 
-bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bool mock, bool profiling) {
+bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, Debugger *debugger, bool mock,
+                                           bool profiling) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   // Reset the reference count.
   mem_reuse_util_->ResetDynamicUsedRefCount();
   // The inputs and outputs memory of communication kernel need be continuous, so separate processing.
   AllocCommunicationOpDynamicRes(graph);
+
+#ifdef ENABLE_DEBUGGER
+  bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
+  if (!mock) {
+    // collect weights and bias
+    LoadParameters(graph, debugger, dump_enabled);
+  }
+#endif
   auto &kernels = graph->execution_order();
+  int exec_order = 1;
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -400,6 +631,12 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     AddressPtrList kernel_outputs;
     auto ret = AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs, mock);
     if (!ret) {
+#ifdef ENABLE_DEBUGGER
+      if (!mock) {
+        // invalidate current data collected by the debugger
+        ClearCurrentData(debugger, dump_enabled);
+      }
+#endif
       return false;
     }
     if (!mock) {
@@ -409,9 +646,21 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       } else {
         LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
       }
+#ifdef ENABLE_DEBUGGER
+      // called once per kernel to collect the outputs to the kernel (does a SyncDeviceToHost)
+      LoadKernelData(debugger, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
+                     dump_enabled);
+#endif
     }
+    exec_order = exec_order + 1;
     FreeKernelDynamicRes(kernel);
     if (!UpdateMemorySwapTask(kernel, mock, profiling)) {
+#ifdef ENABLE_DEBUGGER
+      if (!mock) {
+        // invalidate current data collected by the debugger
+        ClearCurrentData(debugger, dump_enabled);
+      }
+#endif
       return false;
     }
   }

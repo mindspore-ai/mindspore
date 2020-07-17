@@ -67,6 +67,20 @@ class GPUSession : public SessionBasic {
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;
 
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
+#ifdef ENABLE_DEBUGGER
+  void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
+  bool DumpDataEnabledIteration() const;
+
+  void PreIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
+  void PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
+  void PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
+  void PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+#endif
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;
 MS_REG_SESSION(kGPUDevice, GPUSession);

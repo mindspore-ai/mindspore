@@ -21,6 +21,7 @@
 #include "debug/debugger/debugger.h"
 #include "pipeline/jit/pipeline.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/kernel_runtime_manager.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -41,17 +42,20 @@ Debugger::Debugger()
     : grpc_client_(nullptr),
       debug_services_(nullptr),
       device_id_(0),
+      device_target_(""),
       num_step_(0),
       debugger_enabled_(false),
       is_dataset_graph_(false),
       partial_memory_(false) {}
 
-void Debugger::Init(const uint32_t device_id) {
+void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // save device_id
   MS_LOG(INFO) << "Debugger got device_id: " << device_id;
   device_id_ = device_id;
+  MS_LOG(INFO) << "Debugger got device_target: " << device_target;
+  device_target_ = device_target;
 }
 
 void Debugger::EnableDebugger() {
@@ -62,6 +66,14 @@ void Debugger::EnableDebugger() {
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
 
+  // see if dump is enabled
+  bool dump_enabled = false;
+  if (device_target_ == kGPUDevice) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    dump_enabled = runtime_instance->DumpDataEnabled();
+  }
+
   // get env variables to configure debugger
   const char *env_enable_str = std::getenv("ENABLE_MS_DEBUGGER");
   if (env_enable_str != nullptr) {
@@ -70,7 +82,8 @@ void Debugger::EnableDebugger() {
       debugger_enabled_ = true;
     }
   }
-  if (!debugger_enabled_) {
+
+  if (!debugger_enabled_ && !dump_enabled) {
     MS_LOG(WARNING) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
     return;
   }
@@ -118,7 +131,10 @@ void Debugger::EnableDebugger() {
   }
 
   // initialize grpc client
-  grpc_client_ = std::make_unique<GrpcClient>(host, port);
+  if (debugger_enabled_) {
+    grpc_client_ = std::make_unique<GrpcClient>(host, port);
+  }
+
   debug_services_ = std::make_unique<DebugServices>();
 }
 
@@ -127,6 +143,7 @@ void Debugger::Reset() {
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // reset components
   device_id_ = 0;
+  device_target_ = "";
   num_step_ = 0;
   debugger_enabled_ = false;
   is_dataset_graph_ = false;

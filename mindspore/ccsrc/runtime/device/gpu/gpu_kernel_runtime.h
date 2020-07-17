@@ -38,7 +38,10 @@ class GPUKernelRuntime : public KernelRuntime {
   bool Init() override;
   void ReleaseDeviceRes() override;
   void AssignMemory(session::KernelGraph *graph) override;
-  bool Run(session::KernelGraph *graph) override;
+  bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
+#ifdef ENABLE_DUMP_E2E
+  bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
+#endif
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -61,10 +64,11 @@ class GPUKernelRuntime : public KernelRuntime {
   void ClearKernelOutputAddress(const session::KernelGraph *graph);
   void ClearKernelWorkspaceAddress(const session::KernelGraph *graph);
   void ClearKernelOldOutputAndWorkspace(const session::KernelGraph *graph);
-  bool RunOneStep(const session::KernelGraph *graph);
-  bool SearchMemSwapScheme(const session::KernelGraph *graph);
-  bool RefineMemSwapScheme(const session::KernelGraph *graph);
-  bool LaunchKernelDynamic(const session::KernelGraph *graph, bool mock = false, bool profiling = false);
+  bool RunOneStep(const session::KernelGraph *graph, Debugger *debugger = nullptr);
+  bool SearchMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger = nullptr);
+  bool RefineMemSwapScheme(const session::KernelGraph *graph, Debugger *debugger = nullptr);
+  bool LaunchKernelDynamic(const session::KernelGraph *graph, Debugger *debugger = nullptr, bool mock = false,
+                           bool profiling = false);
   void LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const AddressPtrList &inputs,
                                      const AddressPtrList &workspace, const AddressPtrList &outputs);
   bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size, bool mock);

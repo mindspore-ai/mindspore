@@ -36,7 +36,7 @@ class CPUKernelRuntime : public KernelRuntime {
   ~CPUKernelRuntime() override = default;
 
   bool Init() override { return true; }
-  bool Run(session::KernelGraph *graph) override;
+  bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void BindInputOutput(const session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                        VectorRef *outputs, std::vector<tensor::TensorPtr> *need_sync_outputs);

@@ -41,7 +41,7 @@ KernelRuntime::~KernelRuntime() {
 #endif
 }
 
-bool KernelRuntime::Run(session::KernelGraph *graph) {
+bool KernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
   bool ret = false;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -72,7 +72,7 @@ bool KernelRuntime::Run(session::KernelGraph *graph) {
 }
 
 // for D to impl
-bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
+bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   if (graph != nullptr) {
     return true;
   }
@@ -188,6 +188,39 @@ void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) {
       AnfAlgo::SetWorkspaceAddr(nullptr, index, cnode.get());
     }
   }
+}
+
+bool KernelRuntime::DumpDataEnabled() {
+  bool ret = false;
+#ifdef ENABLE_DUMP_E2E
+  DumpConfPtr dump_conf = GetDumpConf();
+  MS_EXCEPTION_IF_NULL(dump_conf);
+  bool dump_flag = dump_conf->dump_enable();
+  if (!dump_flag) {
+    return ret;
+  }
+  ret = true;
+#endif
+  return ret;
+}
+
+bool KernelRuntime::DumpDataEnabledIteration() {
+  bool ret = false;
+#ifdef ENABLE_DUMP_E2E
+  if (!DumpDataEnabled()) {
+    return ret;
+  }
+  DumpConfPtr dump_conf = GetDumpConf();
+  MS_EXCEPTION_IF_NULL(dump_conf);
+  uint32_t cur_iter = dump_conf->cur_iter() + 1;
+  if (dump_conf->dump_iter() != 0) {
+    if (cur_iter != dump_conf->dump_iter()) {
+      return ret;
+    }
+  }
+  ret = true;
+#endif
+  return ret;
 }
 
 void KernelRuntime::AssignStaticMemory(session::KernelGraph *graph) {

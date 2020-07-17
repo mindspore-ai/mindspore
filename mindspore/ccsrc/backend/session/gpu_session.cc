@@ -37,6 +37,7 @@
 #include "common/trans.h"
 #include "utils/context/ms_context.h"
 #include "utils/base_ref_extends.h"
+#include "debug/tensor_load.h"
 
 namespace mindspore {
 namespace session {
@@ -164,7 +165,11 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
 void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+#ifdef ENABLE_DEBUGGER
+  if (!runtime_instance->Run(kernel_graph.get(), debugger_.get())) {
+#else
   if (!runtime_instance->Run(kernel_graph.get())) {
+#endif
     MS_LOG(EXCEPTION) << "GPU execute graph failed!";
   }
 }
@@ -229,6 +234,9 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 
 void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
+#ifdef ENABLE_DEBUGGER
+  PreIterationDbg(kernel_graph);
+#endif
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
@@ -245,6 +253,9 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
     // Run graph on GPU
     Execute(kernel_graph);
   }
+#ifdef ENABLE_DEBUGGER
+  PostLoadTensor(kernel_graph);
+#endif
   // Get result from GPU
   UpdateOutputs(kernel_graph, outputs, inputs);
   // Summary
@@ -253,6 +264,9 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   if (context_ptr->enable_gpu_summary()) {
     Summary(kernel_graph.get());
   }
+#ifdef ENABLE_DEBUGGER
+  PostIterationDbg(kernel_graph);
+#endif
 }
 
 void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
@@ -296,6 +310,70 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   RunOpClearMemory(kernel_graph.get());
   return tuple_tensors;
 }
+
+#ifdef ENABLE_DEBUGGER
+void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+#ifdef ENABLE_DUMP_E2E
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  (void)runtime_instance->DumpData(kernel_graph.get(), debugger_.get());
+#endif
+}
+
+bool GPUSession::DumpDataEnabledIteration() const {
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->DumpDataEnabledIteration();
+}
+
+void GPUSession::PreIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  if (debugger_) {
+    debugger_->PreExecute(kernel_graph);
+  }
+  PreLoadTensor(kernel_graph);
+}
+
+void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  bool dump_enabled = DumpDataEnabledIteration();
+  // debug used for dump
+  if (debugger_ && dump_enabled) {
+    Dump(kernel_graph);
+  }
+  if (debugger_) {
+    debugger_->PostExecute();
+  }
+}
+
+void GPUSession::PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  bool dump_enabled = DumpDataEnabledIteration();
+  if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  DebugServices *debug_services = debugger_->debug_services();
+  TensorLoader *tensor_loader = debug_services->tensor_loader();
+  tensor_loader->EmptyTensor();
+  uint32_t iter_num = tensor_loader->GetIterNum();
+  tensor_loader->set_iter_num(++iter_num);
+}
+
+void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  bool dump_enabled = DumpDataEnabledIteration();
+  if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  DebugServices *debug_services = debugger_->debug_services();
+  TensorLoader *tensor_loader = debug_services->tensor_loader();
+  tensor_loader->EmptyPrevTensor();
+}
+#endif
+
 }  // namespace gpu
 }  // namespace session
 }  // namespace mindspore
