@@ -41,6 +41,14 @@ class TensorLayout {
   Status InitFromVector(const std::vector<int32_t> &device_arrangement, const std::vector<int32_t> &tensor_map,
                         const std::vector<int32_t> &tensor_shape);
 
+  bool skip_redistribution() const { return skip_redistribution_; }
+
+  void set_skip_redistribution(bool flag) { skip_redistribution_ = flag; }
+
+  int32_t get_field_size() const { return field_size_; }
+
+  void set_field_size(int32_t field_size) { field_size_ = field_size; }
+
   Arrangement device_arrangement() const { return device_arrangement_; }
 
   Map tensor_map() const { return tensor_map_; }
@@ -92,6 +100,8 @@ class TensorLayout {
   Arrangement device_arrangement_;
   Map tensor_map_;
   Arrangement tensor_shape_;
+  bool skip_redistribution_ = false;
+  int32_t field_size_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

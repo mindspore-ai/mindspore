@@ -384,14 +384,17 @@ def _get_merged_param_data(net, param_name, param_data):
 
     dev_mat = layout[0]
     tensor_map = layout[1]
+    field_size = layout[3]
 
     from mindspore.parallel._cell_wrapper import get_allgather_cell
-    from mindspore.parallel._tensor import _reshape_param_data
+    from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
     # while any dim is not equal to -1, means param is splited and needs to be merged
     for dim in tensor_map:
         if dim != -1:
             allgather_net = get_allgather_cell()
             param_data = allgather_net(param_data)
+            if field_size[0]:
+                return _reshape_param_data_with_weight(param_data, dev_mat, field_size)
             return _reshape_param_data(param_data, dev_mat, tensor_map)
 
     return param_data

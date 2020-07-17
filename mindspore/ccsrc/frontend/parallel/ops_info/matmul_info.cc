@@ -105,6 +105,17 @@ Status MatMulBase::GetAttrs() {
     }
   }
 
+  auto field_size_iter = attrs_.find(FIELD_SIZE);
+  if (field_size_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(field_size_iter->second);
+    if (field_size_iter->second->isa<Int32Imm>()) {
+      field_size_ = field_size_iter->second->cast<Int32ImmPtr>()->value();
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of field_size is not int.";
+      return FAILED;
+    }
+  }
+
   // infer inputs dimension size
   if ((inputs_shape_.size() != MATMUL_INPUTS_SIZE) || (outputs_shape_.size() != MATMUL_OUTPUTS_SIZE)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
@@ -344,6 +355,10 @@ Status MatMulBase::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts
       (mat_b_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[1], inputs_shape_[1]) != SUCCESS) ||
       (output_layout.InitFromVector(output_dev_matrix_shape, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS)) {
     return FAILED;
+  }
+
+  if (field_size_ != 0) {
+    mat_b_layout.set_field_size(field_size_);
   }
 
   inputs_layout->push_back(mat_a_layout);
