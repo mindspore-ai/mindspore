@@ -131,3 +131,26 @@ def test_while_in_while():
     output = while_in_while(c1, c2, c3)
     expect = Tensor([1274], mstype.int32)
     assert output == expect
+
+
+@ms_function
+def while_by_while_in_while(x, y, z):
+    out = c4
+    while x < c2:
+        y = c4 + c4
+        while y < c2:
+            y = y + 1
+        out = out + y
+        z = c4 + c4
+        while z < c2:
+            z = z + 1
+        out = out + z
+        x = x + 1
+    out = out + x
+    return out
+
+
+def test_while_by_while_in_while():
+    output = while_by_while_in_while(c1, c2, c3)
+    expect = Tensor([350], mstype.int32)
+    assert output == expect

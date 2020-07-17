@@ -52,7 +52,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr ReadVariable(const std::string &var_name);
   void AddPrevBlock(const FunctionBlockPtr &block);
   void SetPhiArgument(const ParameterPtr &phi);
-  void CollectRemovablePhi(const ParameterPtr &phi);
+  bool CollectRemovablePhi(const ParameterPtr &phi);
   // A block is matured if all its predecessors is generated
   void Mature();
   CNodePtr ForceToBoolNode(const AnfNodePtr &cond);

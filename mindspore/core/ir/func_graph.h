@@ -229,7 +229,8 @@ class FuncGraph : public FuncGraphBase {
     }
     this->debug_info_ = info;
   }
-
+  // clear all info from manager
+  void ClearAllManagerInfo();
   // get all nodes belonging to this func graph
   const AnfNodeSet &nodes();
   void CopyNodes(const FuncGraphPtr &source);

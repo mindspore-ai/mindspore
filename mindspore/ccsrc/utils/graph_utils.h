@@ -70,6 +70,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = 
                                  const IncludeFunc &include = AlwaysInclude);
 
 std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret);
+std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root);
 class FuncGraphIndex {
  public:
   explicit FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search = DeepScopedGraphSearch,
