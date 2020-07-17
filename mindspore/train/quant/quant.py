@@ -329,14 +329,14 @@ class ExportToQuantInferNetwork:
             return None
 
         # Build the `Quant` `Dequant` op.
-        # AscendQuant only support perlayer version. Need check here.
-        quant_op = inner.AscendQuant(float(scale_a_in), float(zp_a_in))
+        # Quant only support perlayer version. Need check here.
+        quant_op = inner.Quant(float(scale_a_in), float(zp_a_in))
         sqrt_mode = False
         scale_deq = scale_a_out * scale_w
         if (scale_deq < 2 ** -14).all():
             scale_deq = np.sqrt(scale_deq)
             sqrt_mode = True
-        dequant_op = inner.AscendDequant(sqrt_mode)
+        dequant_op = inner.Dequant(sqrt_mode)
 
         # get op
         op_core = cell_core.matmul if isinstance(cell_core, quant.DenseQuant) else cell_core.conv
@@ -411,11 +411,15 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
         file_name (str): File name of model to export.
         mean (int): Input data mean. Default: 127.5.
         std_dev (int, float): Input data variance. Default: 127.5.
-        file_format (str): MindSpore currently supports 'GEIR' format for exported quantization aware model.
-            - GEIR: Graph Engine Intermediate Representation. An Intermediate representation format of Ascend model.
+        file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'BINARY' format for exported
+            quantization aware model. Default: 'GEIR'.
+
+            - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
+              Ascend model.
+            - BINARY: Binary format for model. An intermidiate representation format for models.
     """
     supported_device = ["Ascend"]
-    supported_formats = ['GEIR']
+    supported_formats = ['GEIR', 'BINARY']
 
     mean = validator.check_type("mean", mean, (int, float))
     std_dev = validator.check_type("std_dev", std_dev, (int, float))
@@ -428,10 +432,9 @@ def export(network, *inputs, file_name, mean=127.5, std_dev=127.5, file_format='
 
     network.set_train(False)
 
-    if file_format == 'GEIR':
-        exporter = ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
-        deploy_net = exporter.run()
-        serialization.export(deploy_net, *inputs, file_name=file_name, file_format=file_format)
+    exporter = ExportToQuantInferNetwork(network, mean, std_dev, *inputs)
+    deploy_net = exporter.run()
+    serialization.export(deploy_net, *inputs, file_name=file_name, file_format=file_format)
 
 
 def convert_quant_network(network,

@@ -205,8 +205,8 @@ const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
 const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
-const char kNameAscendQuant[] = "AscendQuant";
-const char kNameAscendDequant[] = "AscendDequant";
+const char kNameAscendQuant[] = "Quant";
+const char kNameAscendDequant[] = "Dequant";
 const char kNameCase[] = "Case";
 
 // -----------------OpAdapter initialization--------------

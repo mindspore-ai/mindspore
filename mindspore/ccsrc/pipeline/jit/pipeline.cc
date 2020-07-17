@@ -383,16 +383,6 @@ void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
   MS_LOG(INFO) << "End save compiled func graph!";
 }
 
-bool ExecutorPy::ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const {
-  std::string phase_prefix = GetPhasePrefix(phase_s);
-
-  if (use_vm && phase_prefix == "export") {
-    MS_LOG(INFO) << "Use ge backend to export geir";
-    use_vm = false;
-  }
-  return use_vm;
-}
-
 void ExecutorPy::GetGeBackendPolicy() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -400,6 +390,40 @@ void ExecutorPy::GetGeBackendPolicy() const {
   if (backend != "ge") {
     MS_LOG(EXCEPTION) << backend << " backend policy is not supported under ge backend!";
   }
+}
+
+bool IsPhaseExportGeir(const std::string &phase_s) {
+  auto phase_to_export = "export.geir";
+  return phase_s.rfind(phase_to_export, 0) != std::string::npos;
+}
+
+std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
+  bool is_geir = IsPhaseExportGeir(phase_s);
+
+  std::string backend = MsContext::GetInstance()->backend_policy();
+
+#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
+  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
+    mindspore::parallel::ps::Util::SetInternalEnvVar();
+  }
+  if (parallel::ps::Util::IsRoleOfPServer()) {
+    resource->results()[kBackend] = compile::CreateBackend();
+    return PServerPipeline();
+  }
+  if (parallel::ps::Util::IsRoleOfScheduler()) {
+    return PSchedulerPipeline();
+  }
+#endif
+
+  if (use_vm && backend != "ge" && !is_geir) {
+    // Create backend and session
+    auto backend_ptr = compile::CreateBackend();
+    // Connect session to debugger
+    backend_ptr->SetDebugger();
+    resource->results()[kBackend] = backend_ptr;
+    return VmPipeline();
+  }
+  return GePipeline();
 }
 
 bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm) {
@@ -420,43 +444,8 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   std::string phase_s = py::cast<std::string>(phase);
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
-  std::vector<ActionItem> p_actions;
 
-  use_vm = ChangeExportGeirUseVmFlag(use_vm, phase_s);
-
-  std::string backend = MsContext::GetInstance()->backend_policy();
-#if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
-  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
-    mindspore::parallel::ps::Util::SetInternalEnvVar();
-  }
-  if (parallel::ps::Util::IsRoleOfPServer()) {
-    resource->results()[kBackend] = compile::CreateBackend();
-    p_actions = PServerPipeline();
-  } else if (parallel::ps::Util::IsRoleOfScheduler()) {
-    p_actions = PSchedulerPipeline();
-  } else if (use_vm && backend != "ge") {
-    // Create backend and session
-    auto backend_ptr = compile::CreateBackend();
-    // Connect session to debugger
-    backend_ptr->SetDebugger();
-    resource->results()[kBackend] = backend_ptr;
-    p_actions = VmPipeline();
-  } else {
-    p_actions = GePipeline();
-  }
-#else
-  if (use_vm && backend != "ge") {
-    // Create backend and session
-    auto backend_ptr = compile::CreateBackend();
-    // Connect session to debugger
-    backend_ptr->SetDebugger();
-    resource->results()[kBackend] = backend_ptr;
-    p_actions = VmPipeline();
-  } else {
-    p_actions = GePipeline();
-  }
-#endif
-
+  auto p_actions = GetPipline(resource, phase_s, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
 
   // get the parameters items and add the value to args_spec
@@ -490,8 +479,8 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
 }
 
 std::vector<ActionItem> ExecutorPy::FilterActions(const std::vector<ActionItem> &actions, const std::string &phase) {
-  // phase does not contain 'export_onnx'
-  if (GetPhasePrefix(phase).find("export_onnx") == std::string::npos) {
+  // filter action after validate when 'export'.
+  if (GetPhasePrefix(phase).rfind("export", 0) == std::string::npos) {
     return actions;
   }
   MS_LOG(INFO) << "Phase is '" << phase << "', filter out actions after stage 'validate'";

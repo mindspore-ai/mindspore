@@ -2180,36 +2180,36 @@ test_case_other_ops = [
 ]
 
 test_case_quant_ops = [
-    ('AscendQuant_1', {
-        'block': inner.AscendQuant(0.5, 0.0, False, "Round"),
+    ('Quant_1', {
+        'block': inner.Quant(0.5, 0.0, False, "Round"),
         'desc_inputs': [Tensor(np.random.rand(1, 2, 4, 4), mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_2', {
-        'block': inner.AscendQuant(80.0, 10.0, True, "Round"),
+    ('Quant_2', {
+        'block': inner.Quant(80.0, 10.0, True, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_3', {
-        'block': inner.AscendQuant(80.0, 0.0, False, "Floor"),
+    ('Quant_3', {
+        'block': inner.Quant(80.0, 0.0, False, "Floor"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_4', {
-        'block': inner.AscendQuant(80.0, 0.0, False, "Ceil"),
+    ('Quant_4', {
+        'block': inner.Quant(80.0, 0.0, False, "Ceil"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_5', {
-        'block': inner.AscendQuant(80.0, 0.0, False, "Trunc"),
+    ('Quant_5', {
+        'block': inner.Quant(80.0, 0.0, False, "Trunc"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_6', {
-        'block': inner.AscendQuant(-80.0, 10.0, False, "Round"),
+    ('Quant_6', {
+        'block': inner.Quant(-80.0, 10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_7', {
-        'block': inner.AscendQuant(80.0, -10.0, False, "Round"),
+    ('Quant_7', {
+        'block': inner.Quant(80.0, -10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float32)],
         'skip': ['backward']}),
-    ('AscendQuant_8', {
-        'block': inner.AscendQuant(80.0, 10.0, False, "Round"),
+    ('Quant_8', {
+        'block': inner.Quant(80.0, 10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float16)],
         'skip': ['backward']}),
 ]

@@ -1107,7 +1107,7 @@ class QuantBlock(Cell):
     r"""
     A quant block of Conv/Dense, activation layer for Ascend deploy.
 
-    Calculate Conv or Dense in Int8, with AscendQuant and AscendDeQuant.
+    Calculate Conv or Dense in Int8, with Quant and DeQuant.
 
     Notes:
         This block is only for deploy, and not trainable.
