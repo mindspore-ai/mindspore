@@ -25,7 +25,6 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <queue>
 #include <deque>
 #include <set>
 
@@ -88,13 +87,14 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
 
 // search the cnodes inside this graph only
 std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret) {
-  std::queue<CNodePtr> todo;
-  todo.push(ret);
+  std::deque<CNodePtr> todo(1024);
+  todo.clear();
+  todo.push_back(ret);
   std::vector<CNodePtr> sorted_nodes;
   auto seen = NewSeenGeneration();
   while (!todo.empty()) {
     CNodePtr top = todo.front();
-    todo.pop();
+    todo.pop_front();
     sorted_nodes.push_back(top);
     auto inputs = top->inputs();
     for (auto &item : inputs) {
@@ -103,7 +103,7 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret) {
       }
 
       if (item->isa<CNode>()) {
-        todo.push(item->cast<CNodePtr>());
+        todo.push_back(item->cast<CNodePtr>());
       }
       item->seen_ = seen;
     }
