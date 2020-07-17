@@ -51,7 +51,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
-                       Reciprocal, CumSum, HistogramFixedWidth,
+                       Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
@@ -107,6 +107,9 @@ __all__ = [
     'Rsqrt',
     'Sqrt',
     'Square',
+    'SquaredDifference',
+    'Xdivy',
+    'Xlogy',
     'Conv2D',
     'Flatten',
     'MaxPoolWithArgmax',

@@ -252,6 +252,21 @@ def get_bprop_div_no_nan(self):
     return bprop
 
 
+@bprop_getters.register(P.Xdivy)
+def get_bprop_xdivy(self):
+    """Grad definition for `Xdivy` operation."""
+    div_op = P.Xdivy()
+
+    def bprop(x, y, out, dout):
+        x_dtype = F.dtype(x)
+        not_zero_x = F.cast(F.not_equal(x, F.cast(0.0, x_dtype)), x_dtype)
+        bc_x = div_op(not_zero_x, y) * dout
+        bc_y = div_op(-x, F.square(y)) * dout
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
 @bprop_getters.register(P.Floor)
 def get_bprop_floor(self):
     """Grad definition for `floor` operation."""
@@ -349,6 +364,36 @@ def get_bprop_square(self):
         temp = mul_func(dout, x)
         dx = mul_func(fill_func(dtype(temp), shape_op(x), 2.0), temp)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.SquaredDifference)
+def get_bprop_squared_difference(self):
+    """Grad definition for `SquaredDifference` operation."""
+    neg = P.Neg()
+
+    def bprop(x, y, out, dout):
+        x_grad = 2 * dout * (x - y)
+        bc_x = x_grad
+        bc_y = neg(x_grad)
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
+@bprop_getters.register(P.Xlogy)
+def get_bprop_xlogy(self):
+    """Grad definition for `Xlogy` operation."""
+    log_op = P.Xlogy()
+    div_op = P.Xdivy()
+
+    def bprop(x, y, out, dout):
+        x_dtype = F.dtype(x)
+        not_zero_x = F.cast(F.not_equal(x, F.cast(0.0, x_dtype)), x_dtype)
+        bc_x = log_op(not_zero_x, y) * dout
+        bc_y = div_op(x, y) * dout
+        return binop_grad_common(x, y, bc_x, bc_y)
 
     return bprop
 
