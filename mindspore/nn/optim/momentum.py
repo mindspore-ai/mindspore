@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """momentum"""
-from mindspore.ops import functional as F, composite as C
+from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops import _selected_ops
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -25,11 +25,18 @@ from .optimizer import Optimizer
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 
-@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
+@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, ps_parameter):
     """Apply momentum optimizer to the weight parameter using Tensor."""
     success = True
-    success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
+    if ps_parameter:
+        op_shape = P.Shape()
+        _ps_pull = P.Pull()
+        _ps_push = P.Push("Momentum", [])
+        shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
+        success = F.depend(success, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
+    else:
+        success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
     return success
 
 
@@ -127,7 +134,9 @@ class Momentum(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum), lr, gradients, params, moments)
+            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum), lr, gradients, params, moments,
+                                     self.ps_parameters)
         else:
-            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
+            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum, lr), gradients, params, moments,
+                                     self.ps_parameters)
         return success
