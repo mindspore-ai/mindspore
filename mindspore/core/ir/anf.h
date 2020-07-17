@@ -50,8 +50,13 @@ using BaseShapePtr = std::shared_ptr<abstract::BaseShape>;
 using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
 using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 
+class Value;
+using ValuePtr = std::shared_ptr<Value>;
+using ValuePtrList = std::vector<ValuePtr>;
+
 class ValueNode;
 using ValueNodePtr = std::shared_ptr<ValueNode>;
+
 class CNode;
 using CNodePtr = std::shared_ptr<CNode>;
 
@@ -225,6 +230,9 @@ class CNode : public AnfNode {
   void set_input(size_t i, const AnfNodePtr &input);
   void set_inputs(const std::vector<AnfNodePtr> &inputs) { inputs_ = inputs; }
 
+  void set_forward(const ValuePtr &forward) { forward_ = forward; }
+  const ValuePtr &forward() const { return forward_; }
+
   bool stop_gradient() const { return stop_gradient_; }
   void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
 
@@ -243,6 +251,7 @@ class CNode : public AnfNode {
   VarPtr func_graph_as_var_;
   bool stop_gradient_;
   bool in_forward_flag_ = false;
+  ValuePtr forward_ = nullptr;
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.
@@ -321,8 +330,6 @@ class Value : public Base {
  protected:
   TypePtr type_{nullptr};
 };
-using ValuePtr = std::shared_ptr<Value>;
-using ValuePtrList = std::vector<ValuePtr>;
 
 // ValueNode is used to hold value. Unlike CNode and Parameter, ValueNode
 // does not belong to any particular function graph.
@@ -333,8 +340,12 @@ class ValueNode : public ANode {
   MS_DECLARE_PARENT(ValueNode, ANode);
 
   void accept(AnfIrVisitor *v) override;
+  void set_value(const ValuePtr &value) { value_ = value; }
   const ValuePtr &value() const { return value_; }
   std::string fullname_with_scope() override;
+
+  void set_has_new_value(bool flag) { has_new_value_ = flag; }
+  bool has_new_value() const { return has_new_value_; }
 
   std::string ToString() const override;
   std::string DebugString(int recursive_level = 1) const override;
@@ -355,6 +366,7 @@ class ValueNode : public ANode {
 
  private:
   ValuePtr value_;
+  bool has_new_value_ = false;
 };
 
 template <typename T>

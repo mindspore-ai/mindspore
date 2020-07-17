@@ -608,14 +608,20 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
   // malloc mem
-  RunOpMemoryAlloc(input_tensors, graph.get());
+  RunOpMemoryAlloc(op_run_info.value, input_tensors, graph.get());
   // load input data to device
   LoadInputData(graph, input_tensors);
   // run op
   RunOpExecTask(graph);
   // get output
   VectorRef outputs;
-  UpdateOutputs(graph, &outputs, input_tensors);
+  if (op_run_info.value != nullptr) {
+    std::vector<tensor::TensorPtr> pre_output_tensors;
+    TensorValueToTensor(op_run_info.value, &pre_output_tensors);
+    std::copy(pre_output_tensors.begin(), pre_output_tensors.end(), std::back_inserter(outputs));
+  } else {
+    UpdateOutputs(graph, &outputs, input_tensors);
+  }
   // trans output to tuple
   auto output_tensors = TransformBaseRefListToTuple(outputs);
   if (!utils::isa<PyObjectRef>(output_tensors) ||
@@ -744,14 +750,15 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,
+void AscendSession::RunOpMemoryAlloc(const ValuePtr &pre_output_value,
+                                     const std::vector<tensor::TensorPtr> &input_tensors,
                                      KernelGraph *kernel_graph) const {
   MS_LOG(INFO) << "Start memory alloc!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   opt::RemoveNopNode(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+  runtime_instance->RunOpAssignMemory(pre_output_value, input_tensors, kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 

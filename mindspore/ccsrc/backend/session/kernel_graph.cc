@@ -95,6 +95,38 @@ bool IsSameLabel(const CNodePtr &left, const CNodePtr &right) {
   }
   return false;
 }
+
+void SyncDeviceInfoToValueNode(const ValueNodePtr &value_node, std::vector<std::string> *device_formats,
+                               std::vector<TypeId> *device_types) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(device_formats);
+  MS_EXCEPTION_IF_NULL(device_types);
+  ValuePtr value = value_node->value();
+  std::vector<tensor::TensorPtr> tensors;
+  TensorValueToTensor(value, &tensors);
+  if (!tensors.empty()) {
+    if (tensors.size() != AnfAlgo::GetOutputTensorNum(value_node)) {
+      MS_LOG(EXCEPTION) << "The size of tensors converted from value [" << tensors.size()
+                        << "] is not equal to output size of value node [" << AnfAlgo::GetOutputTensorNum(value_node)
+                        << "]";
+    }
+    device_formats->clear();
+    device_types->clear();
+    for (const auto &tensor : tensors) {
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto device_sync = tensor->device_address();
+      if (device_sync != nullptr) {
+        auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+        MS_EXCEPTION_IF_NULL(device_address);
+        device_formats->emplace_back(device_address->format());
+        device_types->emplace_back(device_address->type_id());
+        continue;
+      }
+      device_formats->emplace_back(kOpFormat_DEFAULT);
+      device_types->emplace_back(kTypeUnknown);
+    }
+  }
+}
 }  // namespace
 AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) {
   auto value_node = node->cast<ValueNodePtr>();
@@ -347,10 +379,12 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   // set the format of value_node to DEFAULT_FORMAT
   std::vector<TypeId> types;
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+  std::vector<std::string> formats = {kOpFormat_DEFAULT};
   if (node->isa<ValueNode>()) {
     kernel_info->SetFeatureMapFlag(false);
     types.emplace_back(kTypeUnknown);
+    auto value_node = node->cast<ValueNodePtr>();
+    SyncDeviceInfoToValueNode(value_node, &formats, &types);
   }
   if (node->isa<Parameter>()) {
     auto parameter = node->cast<ParameterPtr>();
@@ -360,6 +394,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     types.push_back(is_weight ? kTypeUnknown : AnfAlgo::GetOutputInferDataType(parameter, 0));
   }
   // set parameter initaial device data type
+  kernel_build_info_builder->SetOutputsFormat(formats);
   kernel_build_info_builder->SetOutputsDeviceType(types);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), node.get());
 }

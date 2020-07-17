@@ -205,7 +205,11 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
 AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(value_node);
-  return ToAbstract(value_node->value(), conf->context(), conf);
+  auto out = ToAbstract(value_node->value(), conf->context(), conf);
+  if (value_node->has_new_value()) {
+    out = out->Broaden();
+  }
+  return out;
 }
 
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {

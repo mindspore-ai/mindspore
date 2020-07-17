@@ -88,7 +88,9 @@ class GetitemConstEliminater : public AnfVisitor {
     AnfVisitor::Match(prim::kPrimListGetItem, {IsVNode, IsVNode})(node);
 
     if (is_match_) {
-      return NewValueNode((*tuple_)[id_]);
+      auto out = NewValueNode((*tuple_)[id_]);
+      out->set_has_new_value(has_new_value_);
+      return out;
     }
     return nullptr;
   }
@@ -96,6 +98,7 @@ class GetitemConstEliminater : public AnfVisitor {
   void Visit(const ValueNodePtr &vnode) override {
     if (IsValueNode<ValueTuple>(vnode)) {
       tuple_ = GetValueNode<ValueTuplePtr>(vnode);
+      has_new_value_ = vnode->has_new_value();
     }
     if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
       id_ = IntToSize(GetValue<int>(vnode->value()));
@@ -115,6 +118,7 @@ class GetitemConstEliminater : public AnfVisitor {
   bool is_match_{false};
   size_t id_{0};
   ValueTuplePtr tuple_{nullptr};
+  bool has_new_value_{false};
 };
 
 // setitem((a, b, c, ...), 0, z) => (z, b, c, ...)

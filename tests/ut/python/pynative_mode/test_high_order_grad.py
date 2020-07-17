@@ -19,7 +19,7 @@ from mindspore.ops.composite import grad, grad_all, grad_all_with_sens
 
 
 def setup_module(module):
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, check_bprop=False)
 
 
 def single(x):

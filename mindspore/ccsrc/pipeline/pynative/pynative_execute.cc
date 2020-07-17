@@ -111,7 +111,7 @@ inline ValuePtr PyAttrValue(const py::object &obj) {
   return converted_ret;
 }
 
-std::string GetId(const py::object &obj) {
+static std::string GetId(const py::object &obj) {
   py::object to_process = obj;
   std::string prefix = "";
   if (py::isinstance<py::tuple>(to_process)) {
@@ -139,6 +139,11 @@ std::string GetId(const py::object &obj) {
 
   py::object ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
   return py::cast<std::string>(ret);
+}
+
+static std::string GetOpId(const OpExecInfoPtr &op_exec_info) {
+  auto id = GetId(op_exec_info->py_primitive->GetPyObj());
+  return id;
 }
 
 py::object GetTupleObj(const py::object &obj) {
@@ -317,6 +322,7 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args &args, py::list *const out_args)
   }
   op_exec_info->py_primitive = prim;
   op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
+  op_exec_info->value = PynativeExecutor::GetInstance()->GetForwardValue(op_exec_info);
   if (op_exec_info->op_inputs.size() != op_exec_info->inputs_mask.size()) {
     MS_LOG(ERROR) << "Op:" << op_exec_info->op_name << " inputs size not equal op_mask";
     return nullptr;
@@ -606,7 +612,20 @@ py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecIn
   return result;
 }
 
-AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out) {
+ValuePtr PynativeExecutor::GetForwardValue(const OpExecInfoPtr &op_exec_info) {
+  auto id = GetOpId(op_exec_info);
+  auto op = id;
+  op.append(std::to_string(op_id_map_[id]));
+  auto iter = op_forward_map_.find(op);
+  if (iter != op_forward_map_.end()) {
+    ++op_id_map_[id];
+    MS_LOG(DEBUG) << "Get: " << op_exec_info->op_name << "(" << op << "), " << iter->second;
+    return iter->second;
+  }
+  return nullptr;
+}
+
+CNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const py::args &args, const py::tuple &out) {
   if (!grad_flag_ || graph_info_map_.empty()) {
     return nullptr;
   }
@@ -645,6 +664,34 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const 
   return cnode;
 }
 
+void PynativeExecutor::SaveOpForwardValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value) {
+  auto id = GetOpId(op_exec_info);
+  auto op = id;
+  op.append(std::to_string(op_id_map_[id]));
+  auto iter = op_forward_map_.find(op);
+  if (iter != op_forward_map_.end()) {
+    return;
+  }
+  op_forward_map_[op] = value;
+  ++op_id_map_[id];
+  MS_LOG(DEBUG) << "Save: " << op_exec_info->op_name << "(" << op << "), " << value;
+}
+
+void PynativeExecutor::SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out) {
+  if (!grad_flag_ || op_exec_info->value != nullptr) {
+    return;
+  }
+  py::object out_real = out;
+  if (out.size() == 1) {
+    out_real = out[0];
+  }
+  auto value = PyAttrValue(out_real);
+  if (cnode != nullptr) {
+    cnode->set_forward(value);
+  }
+  SaveOpForwardValue(op_exec_info, value);
+}
+
 AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
   auto &out = graph_info_map_[curr_g_].obj_node_map[GetId(obj)];
   if (out.second.size() == 1 && out.second[0] == -1) {
@@ -657,6 +704,7 @@ AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
     node = curr_g_->NewCNode(tuple_get_item_inputs);
   }
   MS_LOG(DEBUG) << "GetObjNode output" << node->DebugString(6);
+  node->cast<CNodePtr>()->set_forward(PyAttrValue(obj));
   return node;
 }
 
@@ -690,11 +738,12 @@ py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info, const py::args &args) {
     return err_ret;
   }
 
-  auto node = PynativeExecutor::GetInstance()->MakeCNode(op_exec_info, args, result);
-  if (node != nullptr) {
-    node->set_abstract(op_exec_info->abstract);
-    MS_LOG(DEBUG) << "RunOp MakeCnode,new node is: " << node->DebugString();
+  auto cnode = PynativeExecutor::GetInstance()->MakeCNode(op_exec_info, args, result);
+  if (cnode != nullptr) {
+    cnode->set_abstract(op_exec_info->abstract);
+    MS_LOG(DEBUG) << "RunOp MakeCnode,new node is: " << cnode->DebugString();
   }
+  PynativeExecutor::GetInstance()->SaveAllResult(op_exec_info, cnode, result);
   MS_LOG(DEBUG) << "RunOp end";
   return result;
 }
@@ -1072,7 +1121,7 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
 
 void PynativeExecutor::Clear(const std::string &flag) {
   if (!flag.empty()) {
-    MS_LOG(INFO) << "Clear res";
+    MS_LOG(DEBUG) << "Clear res";
     (void)graph_map_.erase(flag);
     (void)cell_graph_map_.erase(flag);
     Clean();
@@ -1084,17 +1133,19 @@ void PynativeExecutor::Clear(const std::string &flag) {
     return;
   }
 
-  MS_LOG(INFO) << "Clear";
+  MS_LOG(DEBUG) << "Clear";
   top_g_ = nullptr;
   curr_g_ = nullptr;
   graph_info_map_.clear();
+  op_id_map_.clear();
   std::stack<FuncGraphPtr>().swap(graph_p_);
 }
 
 void PynativeExecutor::Clean() {
-  MS_LOG(INFO) << "Clean all res";
+  MS_LOG(DEBUG) << "Clean all res";
   Clear();
   grad_flag_ = false;
+  op_forward_map_.clear();
   df_builder_ = nullptr;
   ad::CleanRes();
   pipeline::ReclaimOptimizer();

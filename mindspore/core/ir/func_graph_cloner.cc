@@ -88,6 +88,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   CNodePtr new_node = std::make_shared<CNode>(AnfNodePtrList{}, target);
   auto old_node = node->cast<CNodePtr>();
   new_node->set_abstract(old_node->abstract());
+  new_node->set_forward(old_node->forward());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
   new_node->set_kernel_info(old_node->kernel_info_ptr());
@@ -103,6 +104,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node) {
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
+  new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
   repl_node_[node] = new_const;
   TraceManager::EndTrace();
 }
@@ -115,6 +117,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) 
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
+  new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
   repl_node_[node] = new_const;
   TraceManager::EndTrace();
 }
