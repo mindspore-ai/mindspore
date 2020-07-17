@@ -506,13 +506,13 @@ def check_uniform_augment_cpp(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [operations, num_ops], _ = parse_user_args(method, *args, **kwargs)
+        [transforms, num_ops], _ = parse_user_args(method, *args, **kwargs)
         type_check(num_ops, (int,), "num_ops")
         check_positive(num_ops, "num_ops")
 
-        if num_ops > len(operations):
-            raise ValueError("num_ops is greater than operations list size")
-        type_check_list(operations, (TensorOp,), "tensor_ops")
+        if num_ops > len(transforms):
+            raise ValueError("num_ops is greater than transforms list size")
+        type_check_list(transforms, (TensorOp,), "tensor_ops")
 
         return method(self, *args, **kwargs)
 
