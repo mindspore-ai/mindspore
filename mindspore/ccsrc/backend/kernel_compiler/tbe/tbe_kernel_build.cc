@@ -43,6 +43,7 @@ constexpr auto kJInputs = "inputs";
 constexpr auto kJOutputs = "outputs";
 constexpr auto kJAttrs = "attrs";
 constexpr auto kJKernelName = "kernel_name";
+constexpr auto kJFullName = "full_name";
 constexpr auto kJOpInfo = "op_info";
 constexpr auto kJDtype = "dtype";
 constexpr auto kJtype = "type";
@@ -125,6 +126,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
     op_info_json[kJKernelName] = json_name_;
   }
   (*kernel_json)[kJOpInfo] = op_info_json;
+  (*kernel_json)[kJFullName] = anf_node->fullname_with_scope();
   if (creater_type_ == SINGLE_BUILD) {
     TbeUtils::SaveJsonInfo(json_name_, json_info_);
   }
