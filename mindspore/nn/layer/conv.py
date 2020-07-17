@@ -742,10 +742,10 @@ class Conv1dTranspose(_Conv):
                                            self.padding[0] + self.padding[1])
         w_out = self._deconv_output_length(w, self.kernel_size[1], self.stride[1], self.dilation[1],
                                            self.padding[2] + self.padding[3])
-        if self.has_bias:
-            return self.bias_add(self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out)),
-                                 self.bias)
         output = self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
+        if self.has_bias:
+            output = self.bias_add(output, self.bias)
+
         if len(x_shape) == 3:
             output = self.squeeze(output)
         return output
