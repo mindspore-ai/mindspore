@@ -103,6 +103,35 @@ __global__ void ZeroslikeKernel(T *output, size_t count) {
   return;
 }
 template <typename T>
+__global__ void AbsKernel(T *input, T *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = abs(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void AbsKernel(half *input, half *output, size_t count) {
+  half zero = 0.0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i] < zero ? -input[i] : input[i];
+  }
+  return;
+}
+template <typename T>
+__global__ void FloorKernel(T *input, T *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = floor(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void FloorKernel(half *input, half *output, size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = hfloor(input[i]);
+  }
+  return;
+}
+template <typename T>
 void Exponential(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
   ExponentialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -147,6 +176,16 @@ void Zeroslike(T *output, size_t count, cudaStream_t cuda_stream) {
   ZeroslikeKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(output, count);
   return;
 }
+template <typename T>
+void Abs(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
+  AbsKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Floor(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
+  FloorKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
 
 template void Exponential<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Logarithm<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
@@ -156,6 +195,8 @@ template void Square<float>(float *input, float *output, size_t count, cudaStrea
 template void Sqrt<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Rsqrt<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Zeroslike<float>(float *output, size_t count, cudaStream_t cuda_stream);
+template void Abs<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
+template void Floor<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Exponential<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Logarithm<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Negative<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
@@ -164,3 +205,5 @@ template void Square<half>(half *input, half *output, size_t count, cudaStream_t
 template void Sqrt<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Rsqrt<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Zeroslike<half>(half *output, size_t count, cudaStream_t cuda_stream);
+template void Abs<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
+template void Floor<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
