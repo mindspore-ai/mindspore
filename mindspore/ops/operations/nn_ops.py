@@ -1591,9 +1591,10 @@ class ApplyMomentum(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
         self.is_tbe = context.get_context("device_target") == "Ascend"
+        self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, v_shape, a_shape, l_shape, g_shape, m_shape):
-        if self.is_tbe:
+        if not self.is_ge and self.is_tbe:
             return v_shape, v_shape
         return v_shape
 
@@ -1605,7 +1606,7 @@ class ApplyMomentum(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_type_same({"l_dtype": l_dtype}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"g_dtype": g_dtype}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"m_dtype": m_dtype}, valid_types, self.name)
-        if self.is_tbe:
+        if not self.is_ge and self.is_tbe:
             return g_dtype, g_dtype
         return g_dtype
 
