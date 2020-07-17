@@ -131,6 +131,7 @@ class KernelGraph : public FuncGraph {
   void set_parent_graph(const std::shared_ptr<KernelGraph> &parent_graph) { parent_graph_ = parent_graph; }
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
+  std::vector<CNodePtr> FindNodeByPrimitive(const std::vector<PrimitivePtr> &primitive_list) const;
   // used to dump ir
   std::string ToString() const override;
 

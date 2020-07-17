@@ -361,27 +361,22 @@ void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
   }
 }
 
-std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> AscendControlParser::ParseCallNode(
-  NotNull<CNodePtr> call_node) {
+std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> AscendControlParser::ParseCallSwitchNode(
+  NotNull<CNodePtr> cnode) {
   std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> ret;
-  if (!IsPrimitiveCNode(call_node.get(), prim::kPrimCall)) {
-    MS_LOG(EXCEPTION) << "Node " << call_node->DebugString() << " is not a call node.";
-  }
-  if (call_node->size() <= kCNodeCallArg) {
-    MS_LOG(EXCEPTION) << "Node " << call_node->DebugString() << " has invalid inputs size " << call_node->size();
-  }
-  const std::vector<AnfNodePtr> &call_node_inputs = call_node->inputs();
-  auto call_arg = call_node_inputs[kCNodeCallArg];
-  MS_EXCEPTION_IF_NULL(call_arg);
-  if (IsValueNode<KernelGraph>(call_arg)) {
+
+  if (IsPrimitiveCNode(cnode.get(), prim::kPrimCall)) {
+    if (cnode->size() <= kCNodeCallArg) {
+      MS_LOG(EXCEPTION) << "Call node " << cnode->DebugString() << " has invalid inputs size " << cnode->size();
+    }
+    auto call_arg = cnode->input(kCNodeCallArg);
+    MS_EXCEPTION_IF_NULL(call_arg);
     ret.emplace_back(GetValueNode<KernelGraphPtr>(call_arg),
-                     std::vector<AnfNodePtr>(call_node_inputs.begin() + kCNodeCallArg + 1, call_node_inputs.end()));
-  } else if (IsPrimitiveCNode(call_arg, prim::kPrimSwitch)) {
-    auto switch_cnode = call_arg->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(switch_cnode);
-    const std::vector<AnfNodePtr> &switch_inputs = switch_cnode->inputs();
-    if (switch_inputs.size() <= kCNodeSwitchCond) {
-      MS_LOG(EXCEPTION) << "Node " << switch_cnode->DebugString() << " has invalid inputs size "
+                     std::vector<AnfNodePtr>(cnode->inputs().begin() + kCNodeCallArg + 1, cnode->inputs().end()));
+  } else if (IsPrimitiveCNode(cnode.get(), prim::kPrimSwitch)) {
+    const std::vector<AnfNodePtr> &switch_inputs = cnode->inputs();
+    if (switch_inputs.size() < kCNodeSwitchLength) {
+      MS_LOG(EXCEPTION) << "Switch node " << cnode->DebugString() << " has invalid inputs size "
                         << switch_inputs.size();
     }
     for (auto iter = switch_inputs.begin() + kCNodeSwitchCond + 1; iter != switch_inputs.end(); ++iter) {
@@ -389,7 +384,7 @@ std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> AscendControlPar
       ret.emplace_back(target_graph, args);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Unsupport call node: " << call_node->DebugString(5);
+    MS_LOG(EXCEPTION) << "Unsupport call node: " << cnode->DebugString(5);
   }
   return ret;
 }
@@ -406,11 +401,11 @@ void AscendControlParser::ChildGraphDataAssign(
   const std::vector<CNodePtr> &nodes = kg->execution_order();
 
   for (auto &node : nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimCall)) {
+    if (!(IsPrimitiveCNode(node, prim::kPrimCall) || IsPrimitiveCNode(node, prim::kPrimSwitch))) {
       continue;
     }
 
-    auto child_graph_list = ParseCallNode(NOT_NULL(node));
+    auto child_graph_list = ParseCallSwitchNode(NOT_NULL(node));
     for (auto &[child_graph, args] : child_graph_list) {
       MS_EXCEPTION_IF_NULL(child_graph);
       const std::vector<AnfNodePtr> &params = child_graph->inputs();
@@ -425,7 +420,6 @@ void AscendControlParser::ChildGraphDataAssign(
           link_list->emplace_back(args[i], params[i]);
           continue;
         }
-
         InsertMultipleAssignToGraph(kg, node, NOT_NULL(args[i]), NOT_NULL(params[i]));
       }
     }
@@ -475,30 +469,20 @@ NotNull<CNodePtr> AscendControlParser::ProcessKernelGraph(NotNull<KernelGraphPtr
   for (size_t i = 0; i < nodes.size(); ++i) {
     auto &cnode = nodes[i];
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->size() < kCNodePrim + 1) {
-      MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
-    }
-    AnfNodePtr fn = cnode->input(kAnfPrimitiveIndex);
-    if (!IsPrimitive(fn, prim::kPrimCall) || cnode->size() < kCNodeCallArg + 1) {
-      MS_LOG(DEBUG) << "Continue node " << cnode->DebugString();
+    if (!(AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall) ||
+          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch) ||
+          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer))) {
       continue;
     }
-    AnfNodePtr arg = cnode->input(kFirstDataInputIndex);
-    MS_EXCEPTION_IF_NULL(arg);
-    if (IsValueNode<KernelGraph>(arg)) {
+
+    if (IsPrimitiveCNode(cnode, prim::kPrimCall)) {
       RecurseCall(kg, NOT_NULL(cnode), GetNextRealKernel(nodes, i + 1), memo);
-    } else if (!arg->isa<CNode>()) {
-      MS_LOG(EXCEPTION) << "Unknown type call node " << cnode->DebugString();
-    } else if (IsPrimitiveCNode(arg->cast<CNodePtr>(), prim::kPrimSwitch)) {
-      auto arg_cnode = arg->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(arg_cnode);
-      cnode->set_inputs(arg_cnode->inputs());
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
       RecurseSwitch(kg, NOT_NULL(cnode), GetNextRealKernel(nodes, i + 1), memo);
-    } else if (IsPrimitiveCNode(arg->cast<CNodePtr>(), prim::kPrimSwitchLayer)) {
-      auto arg_cnode = arg->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(arg_cnode);
-      cnode->set_inputs(arg_cnode->inputs());
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
       RecurseSwitchLayer(kg, NOT_NULL(cnode), GetNextRealKernel(nodes, i + 1), memo);
+    } else {
+      MS_LOG(EXCEPTION) << "Unexpected node: " << cnode->DebugString();
     }
   }
   kg->SetExecOrderByDefault();
@@ -699,31 +683,22 @@ void AscendControlParser::InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> fr
       continue;
     }
     const auto &from_graph_exe_order = from_graph->execution_order();
-    std::vector<CNodePtr> real_exe_order(from_graph_exe_order.size());
-    size_t real_exe_order_size = 0;
-    std::copy_if(from_graph_exe_order.begin(), from_graph_exe_order.end(), real_exe_order.begin(),
-                 [&real_exe_order_size](const CNodePtr &node) -> bool {
-                   return (IsPrimitiveCNode(node, prim::kPrimSwitch) || IsPrimitiveCNode(node, prim::kPrimPartial))
-                            ? false
-                            : (++real_exe_order_size, true);
-                 });
-    real_exe_order.resize(real_exe_order_size);
     if (jump_node == nullptr) {
-      if (!real_exe_order.empty()) {
-        InsertControlDependToGraph(from_graph, NOT_NULL(*(real_exe_order.rbegin())), NOT_NULL(assign_node));
+      if (!from_graph_exe_order.empty()) {
+        InsertControlDependToGraph(from_graph, NOT_NULL(*(from_graph_exe_order.rbegin())), NOT_NULL(assign_node));
       } else {
         InsertDependToGraph(from_graph, NOT_NULL(assign_node));
       }
       continue;
     }
 
-    auto jump_node_iter = std::find(real_exe_order.begin(), real_exe_order.end(), jump_node);
-    if (jump_node_iter == real_exe_order.end()) {
+    auto jump_node_iter = std::find(from_graph_exe_order.begin(), from_graph_exe_order.end(), jump_node);
+    if (jump_node_iter == from_graph_exe_order.end()) {
       MS_LOG(EXCEPTION) << "Cannot find jump node " << jump_node->DebugString() << " in graph "
                         << from_graph->ToString();
     }
     // insert assign between jump_node -1 and jump_node
-    if (jump_node_iter != real_exe_order.begin()) {
+    if (jump_node_iter != from_graph_exe_order.begin()) {
       InsertControlDependToGraph(from_graph, NOT_NULL(*(jump_node_iter - 1)), NOT_NULL(assign_node));
     }
     InsertControlDependToGraph(from_graph, NOT_NULL(assign_node), NOT_NULL(jump_node));
@@ -772,6 +747,7 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
   std::vector<CNodePtr> execution_order;
   uint32_t child_order_index = 0;
   for (auto &node : cnodes) {
+    uint32_t child_graph_index = 0;
     execution_order.push_back(node);
     if (node == graph->get_end_goto()) {
       continue;
@@ -779,7 +755,7 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSwitch)) {
       std::vector<uint32_t> label_switch_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
       for (auto iter = label_switch_list.rbegin(); iter != label_switch_list.rend(); ++iter) {
-        if (!CheckLabelIndex(child_order_index, *iter, node, graph)) {
+        if (!CheckLabelIndex(child_graph_index++, *iter, node)) {
           MS_LOG(EXCEPTION) << "Check label index fail";
         }
         if (child_order_index >= graph->child_graph_order().size()) {
@@ -791,8 +767,11 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
       }
     } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
       uint32_t label_index = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
-      if (!CheckLabelIndex(child_order_index, label_index, node, graph)) {
+      if (!CheckLabelIndex(child_graph_index, label_index, node)) {
         MS_LOG(EXCEPTION) << "Check label index fail";
+      }
+      if (child_order_index >= graph->child_graph_order().size()) {
+        MS_LOG(EXCEPTION) << "Index out of range:" << graph->child_graph_order().size();
       }
       auto child_graph = graph->child_graph_order()[child_order_index++];
       auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
@@ -804,15 +783,14 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
   return execution_order;
 }
 
-bool AscendControlParser::CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cur_label,
-                                          NotNull<KernelGraphPtr> graph) {
-  const std::vector<std::shared_ptr<KernelGraph>> &child_graph_order = graph->child_graph_order();
+bool AscendControlParser::CheckLabelIndex(uint32_t index, uint32_t label_index, const CNodePtr &cur_label) {
+  auto child_graphs = AnfAlgo::GetNodeAttr<std::vector<KernelGraphPtr>>(cur_label, kAttrChildGraph);
   // check index and child order size
-  if (child_graph_order.size() <= IntToSize(order_index)) {
-    MS_LOG(EXCEPTION) << "Child graph order is wrong, graph " << graph->ToString() << " child graph size "
-                      << child_graph_order.size() << " goto index " << order_index;
+  if (child_graphs.size() <= IntToSize(index)) {
+    MS_LOG(EXCEPTION) << "Child graph index is wrong, current node " << cur_label->ToString() << " child graph size "
+                      << child_graphs.size() << " goto index " << index;
   }
-  auto child_graph = child_graph_order[order_index];
+  auto child_graph = child_graphs[index];
   MS_EXCEPTION_IF_NULL(child_graph);
 
   // get start_label_set_index of child graph
@@ -822,7 +800,7 @@ bool AscendControlParser::CheckLabelIndex(uint32_t order_index, uint32_t label_i
     MS_EXCEPTION_IF_NULL(cur_label);
     MS_EXCEPTION_IF_NULL(start_label_set);
     MS_LOG(WARNING) << cur_label->DebugString() << " index " << label_index << " but " << start_label_set->DebugString()
-                    << " index " << start_label_set_index << " current child graph order : " << order_index;
+                    << " index " << start_label_set_index;
     return false;
   } else {
     return true;

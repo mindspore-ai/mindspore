@@ -277,11 +277,14 @@ const int kValueNodeTensorMask = 2;
 // define special index in special node
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kFirstDataInputIndex = 1;
-constexpr auto kAnfPartialFuncGraphIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
 constexpr auto kTupleGetItemInputSize = 3;
 constexpr auto kSwitchInputSize = 4;
+constexpr auto kFirstBranchInSwitch = 2;
+constexpr auto kCallKernelGraphIndex = 1;
+constexpr auto kSwitchTrueKernelGraphIndex = 2;
+constexpr auto kSwitchFalseKernelGraphIndex = 3;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;

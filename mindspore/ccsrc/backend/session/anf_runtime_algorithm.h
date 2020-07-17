@@ -201,7 +201,7 @@ class AnfRuntimeAlgorithm {
   static bool IsCommunicationOp(const AnfNodePtr &node);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
-  static std::vector<KernelGraphPtr> GetCallNodeKernelGraph(const CNodePtr &call_node);
+  static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
   static bool IsSwitchCall(const CNodePtr &call_node);
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);

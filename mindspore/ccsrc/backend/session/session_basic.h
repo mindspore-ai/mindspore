@@ -86,11 +86,7 @@ class SessionBasic {
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
-  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
-
-  CNodePtr CreateSwitchInput(const AnfNodePtr &node_input, KernelGraph *graph);
-  CNodePtr HandleSwitchInputs(const AnfNodePtr &anf_node, KernelGraph *graph);
-  std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
+  CNodePtr CreateNewCNode(CNodePtr cnode, KernelGraph *graph);
 
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
@@ -111,6 +107,10 @@ class SessionBasic {
     debugger_->Init(device_id_, ms_context->device_target());
   }
 #endif
+
+ private:
+  CNodePtr CreateSwitchInput(const AnfNodePtr &node_input, KernelGraph *graph);
+  std::vector<AnfNodePtr> CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph);
 
  protected:
   virtual void SetSummaryNodes(KernelGraph *graph);

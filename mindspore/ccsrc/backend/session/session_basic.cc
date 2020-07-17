@@ -547,43 +547,24 @@ CNodePtr SessionBasic::CreateSwitchInput(const AnfNodePtr &node_input, KernelGra
   MS_EXCEPTION_IF_NULL(node_input);
   MS_EXCEPTION_IF_NULL(graph);
   // switch input generalizes partial
-  if (AnfAlgo::CheckPrimitiveType(node_input, prim::kPrimPartial) ||
-      AnfAlgo::CheckPrimitiveType(node_input, prim::kPrimCall)) {
-    return node_input->cast<CNodePtr>();
-  }
-  if (node_input->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "If switch input is " << node_input->DebugString() << ", it mast be partial or call.";
-  }
   std::vector<AnfNodePtr> partial_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))};
-  if (node_input->isa<ValueNode>() && IsValueNode<FuncGraph>(node_input)) {
-    partial_inputs.emplace_back(node_input);
-    auto partial_node = graph->NewCNode(partial_inputs);
-    return partial_node;
+  if (AnfAlgo::CheckPrimitiveType(node_input, prim::kPrimPartial)) {
+    auto partial_node = graph->GetBackendAnfByFrontAnf(node_input);
+    return partial_node->cast<CNodePtr>();
+  } else if (node_input->isa<ValueNode>() && IsValueNode<FuncGraph>(node_input)) {
+    partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
+  } else {
+    KernelGraphPtr kernel_graph = NewKernelGraph();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto parameter = CreateNewParameterFromCNode(graph->GetBackendAnfByFrontAnf(node_input), true, kernel_graph.get());
+    auto primitive = NewValueNode(std::make_shared<Primitive>(prim::kPrimReturn->name()));
+    auto return_node = kernel_graph->NewCNode({primitive, parameter});
+    kernel_graph->set_return(return_node);
+    partial_inputs.emplace_back(std::make_shared<ValueNode>(kernel_graph));
+    partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
   }
-  KernelGraphPtr kernel_graph = NewKernelGraph();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  kernel_graph->set_output(graph->GetBackendAnfByFrontAnf(node_input));
-  partial_inputs.emplace_back(std::make_shared<ValueNode>(kernel_graph));
   auto partial_node = graph->NewCNode(partial_inputs);
   return partial_node;
-}
-
-CNodePtr SessionBasic::HandleSwitchInputs(const AnfNodePtr &anf_node, KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(graph);
-  auto node = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->inputs().size() < kSwitchInputSize) {
-    MS_LOG(EXCEPTION) << "Switch input size less than " << kSwitchInputSize;
-  }
-  auto primitive = NewValueNode(std::make_shared<Primitive>(prim::kPrimSwitch->name()));
-  std::vector<AnfNodePtr> switch_inputs = {primitive, node->input(1)};
-  for (size_t index = 2; index < node->inputs().size(); index++) {
-    auto input = CreateSwitchInput(node->input(index), graph);
-    switch_inputs.emplace_back(input);
-  }
-  auto switch_node = graph->NewCNode(switch_inputs);
-  return switch_node;
 }
 
 std::vector<AnfNodePtr> SessionBasic::CreateSwitchOrPartialNode(const CNodePtr &cnode, KernelGraph *graph) {
@@ -611,14 +592,33 @@ std::vector<AnfNodePtr> SessionBasic::CreateSwitchOrPartialNode(const CNodePtr &
                    });
     return cnode_inputs;
   } else if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimSwitch)) {
-    auto switch_node = HandleSwitchInputs(cnode_input, graph);
+    auto switch_cnode = cnode_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_cnode);
+    std::vector<AnfNodePtr> switch_inputs = {switch_cnode->input(kAnfPrimitiveIndex),
+                                             switch_cnode->input(kFirstDataInputIndex)};
+    for (size_t index = kFirstBranchInSwitch; index < switch_cnode->inputs().size(); index++) {
+      auto node = switch_cnode->input(index);
+      // there is real input in call, should put it to true and false branch in switch
+      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+        auto partial_node = node->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(partial_node);
+        std::vector<AnfNodePtr> partial_inputs = partial_node->inputs();
+        partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
+        auto new_partial = graph->NewCNode(partial_inputs);
+        switch_inputs.emplace_back(new_partial);
+      }
+    }
+    if (switch_inputs.size() < kSwitchInputSize) {
+      MS_LOG(EXCEPTION) << "Switch inputs size: " << switch_inputs.size() << "less than " << kSwitchInputSize;
+    }
+    auto switch_node = graph->NewCNode(switch_inputs);
     cnode_inputs.emplace_back(switch_node);
     return cnode_inputs;
   }
   MS_LOG(EXCEPTION) << "CNode input[0] must be partial or switch.";
 }
 
-CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph) {
+CNodePtr SessionBasic::CreateNewCNode(CNodePtr cnode, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> cnode_inputs;
@@ -642,7 +642,22 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
       }
     }
   } else if (attr_input->isa<CNode>()) {
-    cnode_inputs = CreateSwitchOrPartialNode(cnode, graph);
+    auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
+    if (cnode->inputs().size() < 2 && AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimSwitch)) {
+      auto switch_cnode = cnode_input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(switch_cnode);
+      cnode_inputs = switch_cnode->inputs();
+    } else {
+      cnode_inputs = CreateSwitchOrPartialNode(cnode, graph);
+    }
+  } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
+    cnode_inputs = {graph->GetBackendAnfByFrontAnf(cnode->input(kAnfPrimitiveIndex)),
+                    graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex))};
+    for (size_t index = kFirstBranchInSwitch; index < cnode->inputs().size(); index++) {
+      auto node_input = cnode->input(index);
+      auto switch_input = CreateSwitchInput(node_input, graph);
+      cnode_inputs.emplace_back(switch_input);
+    }
   } else {
     // get primitive of old node
     auto prim = AnfAlgo::GetCNodePrimitive(cnode);
@@ -651,21 +666,33 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
     cnode_inputs = {graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(*prim)))};
   }
 
-  for (size_t input_idx = 1; input_idx < cnode->inputs().size(); input_idx++) {
-    auto anf = cnode->input(input_idx);
-    MS_EXCEPTION_IF_NULL(anf);
-    // anf has been created before
-    if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
-      cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
-      continue;
-    } else if (IsValueNode<None>(anf)) {
-      continue;
+  if (!AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
+    for (size_t input_idx = kFirstDataInputIndex; input_idx < cnode->inputs().size(); input_idx++) {
+      auto anf = cnode->input(input_idx);
+      MS_EXCEPTION_IF_NULL(anf);
+      // anf has been created before
+      if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
+        cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+        continue;
+      } else if (IsValueNode<None>(anf)) {
+        continue;
+      }
+      MS_LOG(EXCEPTION) << "Unexpected input[" << anf->DebugString() << "]";
     }
-    MS_LOG(EXCEPTION) << "Unexpected input[" << anf->DebugString() << "]";
   }
   TraceManager::DebugTrace(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNode(cnode_inputs);
   TraceManager::EndTrace();
+
+  // if the cnode is call switch, remove call
+  if (new_cnode->inputs().size() > 1) {
+    auto first_input = new_cnode->input(kFirstDataInputIndex);
+    if (AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimCall) &&
+        AnfAlgo::CheckPrimitiveType(first_input, prim::kPrimSwitch)) {
+      new_cnode = first_input->cast<CNodePtr>();
+    }
+  }
+
   return new_cnode;
 }
 
