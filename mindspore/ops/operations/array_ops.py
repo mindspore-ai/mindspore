@@ -47,8 +47,8 @@ class _ScatterOp(PrimitiveWithInfer):
         ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
         ('updates', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
     )
-    @staticmethod
-    def _check_scatter_shape(x_shape, indices_shape, updates_shape, prim_name):
+
+    def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
         if updates_shape and updates_shape != indices_shape + x_shape[1:]:
             raise ValueError(f"For '{prim_name}', the shape of updates should be [] or "
                              f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
@@ -61,7 +61,7 @@ class _ScatterOp(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, updates_shape):
-        _ScatterOp._check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
+        self._check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
@@ -69,6 +69,19 @@ class _ScatterOp(PrimitiveWithInfer):
         args = {"x": x_dtype, "updates": updates_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x_dtype
+
+
+class _ScatterNdOp(_ScatterOp):
+    """
+    Define _ScatterNd operators
+    """
+    def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
+        validator.check('the dimension of x', len(x_shape),
+                        'the dimension of indices', indices_shape[-1], Rel.GE)
+        if indices_shape[:-1] + x_shape[indices_shape[-1]:] != updates_shape:
+            raise ValueError(f"For '{prim_name}', the shape of updates should be [] or updates_shape = "
+                             f"indices_shape[:-1] + x_shape[indices_shape[-1]:], but got x_shape: {x_shape}, "
+                             f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
 
 
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):
@@ -1759,6 +1772,75 @@ class Slice(PrimitiveWithInfer):
                 'value': None}
 
 
+class ReverseV2(PrimitiveWithInfer):
+    """
+    Reverse specific dimensions of a tensor.
+
+    Args:
+        axis (Union[tuple(int), list(int)): The indices of the dimensions to reverse.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor.
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
+        >>> op = P.ReverseV2(axis=[1])
+        >>> output = op(input_x)
+        [[4, 3, 2, 1], [8, 7, 6, 5]]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis):
+        validator.check_value_type('axis', axis, [list, tuple], self.name)
+        for i, each in enumerate(axis):
+            validator.check_value_type(f'axis[{i}]', each, [int], self.name)
+        self.axis = axis
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        dim = len(x_shape)
+        for i, each in enumerate(self.axis):
+            validator.check_int_range(f'axis[{i}]', each, -dim, dim, Rel.INC_LEFT, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, (mstype.bool_,) + mstype.number_type, self.name)
+        return x_dtype
+
+
+class Rint(PrimitiveWithInfer):
+    """
+    Return element-wise integer closest to x.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor, which must be one of the following types:
+          float16, float32.
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1.6, -0.1, 1.5, 2.0]), mindspore.float32)
+        >>> op = P.Rint()
+        >>> output = op(input_x)
+        [-2., 0., 2., 2.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
 class Select(PrimitiveWithInfer):
     r"""
 
@@ -2404,7 +2486,7 @@ class ScatterUpdate(_ScatterOp):
         return x_dtype
 
 
-class ScatterNdUpdate(PrimitiveWithInfer):
+class ScatterNdUpdate(_ScatterNdOp):
     """
     Update tensor value by using input indices and value.
 
@@ -2429,24 +2511,13 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
     """
-    __mindspore_signature__ = (
-        ('x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
-    )
+
 
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Init ScatterNdUpdate"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
-
-    def infer_shape(self, x_shape, indices_shape, value_shape):
-        validator.check('the dimension of x', len(x_shape),
-                        'the dimension of indices', indices_shape[-1], Rel.GE)
-        if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
-            raise ValueError("For 'ScatterNdUpdate', input value are not match with input indices.")
-        return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
         validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
@@ -2633,6 +2704,101 @@ class ScatterDiv(_ScatterOp):
         >>> output = scatter_div(input_x, indices, updates)
         [[3.0, 3.0, 3.0], [1.0, 1.0, 1.0]]
     """
+
+
+class ScatterNdAdd(_ScatterNdOp):
+    """
+    Applies sparse addition to individual values or slices in a Tensor.
+
+    Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> scatter_nd_add = P.ScatterNdAdd()
+        >>> output = scatter_nd_add(input_x, indices, updates)
+        [1, 10, 9, 4, 12, 6, 7, 17]
+    """
+
+
+class ScatterNdSub(_ScatterNdOp):
+    """
+    Applies sparse subtraction to individual values or slices in a Tensor.
+
+    Using given values to update tensor value through the sub operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> scatter_nd_sub = P.ScatterNdSub()
+        >>> output = scatter_nd_sub(input_x, indices, updates)
+        [1, -6, -3, 4, -2, 6, 7, -1]
+    """
+
+
+class ScatterNonAliasingAdd(_ScatterNdOp):
+    """
+    Applies sparse addition to input using individual values or slices.
+
+    Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do add operation whose data type should be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+
+    Outputs:
+        Parameter, the updated `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> scatter_non_aliasing_add = P.ScatterNonAliasingAdd()
+        >>> output = scatter_non_aliasing_add(input_x, indices, updates)
+        [1, 10, 9, 4, 12, 6, 7, 17]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Init ScatterNonAliasingAdd"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+
+    def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
+        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        args = {"x": x_dtype, "updates": updates_dtype}
+        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32, mstype.int32], self.name)
+        return x_dtype
 
 
 class SpaceToDepth(PrimitiveWithInfer):

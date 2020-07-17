@@ -81,6 +81,9 @@ from .sub import _sub_tbe
 from .reduce_mean_d import _reduce_mean_d_tbe
 from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
+from .scatter_nd_add import _scatter_nd_add_tbe
+from .scatter_nd_sub import _scatter_nd_sub_tbe
+from .scatter_non_aliasing_add import _scatter_non_aliasing_add_tbe
 from .reduce_mean import _reduce_mean_tbe
 from .tile import _tile_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
@@ -93,6 +96,8 @@ from .bn_training_update_grad import _bn_training_update_grad_tbe
 from .bn_infer import _bn_infer_tbe
 from .bn_infer_grad import _bn_infer_grad_tbe
 from .reciprocal import _reciprocal_tbe
+from .reverse_v2_d import _reverse_v2_d_tbe
+from .rint import _rint_tbe
 from .strided_slice_d import _strided_slice_d_tbe
 from .strided_slice_grad_d import _strided_slice_grad_d_tbe
 from .split_d import _split_d_tbe
