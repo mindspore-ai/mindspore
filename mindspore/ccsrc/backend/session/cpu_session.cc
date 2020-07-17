@@ -16,6 +16,7 @@
 
 #include "backend/session/cpu_session.h"
 #include <algorithm>
+#include <sstream>
 #include "ir/tensor.h"
 #include "ir/anf.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -148,6 +149,48 @@ void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {
   }
 }
 
+namespace {
+void KernelNotSupportException(const AnfNodePtr &kernel_node) {
+  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::stringstream operator_info;
+  operator_info << "Operator[" << kernel_name << "] ";
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
+  if (kernel_info == nullptr) {
+    operator_info << "is not support.";
+    MS_LOG(EXCEPTION) << operator_info.str();
+  }
+  auto kernel_build_Info = kernel_info->select_kernel_build_info();
+  if (kernel_build_Info == nullptr) {
+    operator_info << "is not support.";
+    MS_LOG(EXCEPTION) << operator_info.str();
+  }
+  size_t input_num = kernel_build_Info->GetInputNum();
+  if (input_num > 0) {
+    operator_info << " input(";
+    for (size_t i = 0; i < input_num; ++i) {
+      operator_info << TypeIdLabel(kernel_build_Info->GetInputDeviceType(i));
+      if (i != input_num - 1) {
+        operator_info << ",";
+      }
+    }
+    operator_info << ") ";
+  }
+  size_t output_num = kernel_build_Info->GetOutputNum();
+  if (output_num > 0) {
+    operator_info << "output(";
+    for (size_t i = 0; i < output_num; ++i) {
+      operator_info << TypeIdLabel(kernel_build_Info->GetOutputDeviceType(i));
+      if (i != kernel_build_Info->GetOutputNum() - 1) {
+        operator_info << ",";
+      }
+    }
+    operator_info << ") ";
+  }
+  operator_info << "is not support.";
+  MS_LOG(EXCEPTION) << operator_info.str();
+}
+}  // namespace
+
 void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
@@ -158,7 +201,7 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
     std::shared_ptr<kernel::CPUKernel> cpu_kernel =
       kernel::CPUKernelFactory::GetInstance().Create(kernel_name, kernel_node);
     if (cpu_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "Operator[" << kernel_name << "] is not support.";
+      KernelNotSupportException(kernel_node);
     }
     cpu_kernel->Init(kernel_node);
     AnfAlgo::SetKernelMod(cpu_kernel, kernel_node.get());

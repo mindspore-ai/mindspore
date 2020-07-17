@@ -73,9 +73,18 @@ class KernelMeta {
 };
 
 struct SparseGradient {
-  float *value_;
-  int *indices_;
-  size_t indices_size_;
+  float *value_{nullptr};
+  int *indices_{nullptr};
+  size_t indices_size_{0};
+};
+
+struct ReduceSparseGradientParam {
+  SparseGradient *input_grad_{nullptr};
+  SparseGradient *workspace_grad_{nullptr};
+  SparseGradient *output_grad_{nullptr};
+  size_t max_index_{0};
+  size_t value_stride_{0};
+  bool use_sort_reduce_{false};
 };
 
 struct MultiThreadComputeParams {
@@ -112,10 +121,6 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info);
 std::string GetProcessor(const AnfNodePtr &anf_node);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
 int Sign(float x);
-void DeduplicateIndexedSlices(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
-                              size_t outer_dim);
-void ReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad, size_t first_dim,
-                          size_t outer_dim, bool use_multi_threads = true);
 std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index);
 std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(const std::vector<AnfNodePtr> &node_list,
                                                                             const std::vector<AnfNodePtr> &input_list);
@@ -130,14 +135,7 @@ void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<An
 bool IsWeightBoundary(const AnfNodePtr &node);
 void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params,
                         size_t total_compute_size);
-void RunMultiThreadReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad,
-                                        size_t outer_dim, std::vector<std::pair<int, size_t>> *sorted_indices,
-                                        std::vector<size_t> *slice_positions);
-void ReduceMultiSparseGradient(const std::vector<std::shared_ptr<SparseGradient>> &unique_slice_grads,
-                               SparseGradient *tmp_grad, SparseGradient *unique_grad, size_t first_dim,
-                               size_t outer_dim);
-void TwoLevelReduceSparseGradient(const SparseGradient &origin_sparse_grad, SparseGradient *tmp_grad,
-                                  SparseGradient *unique_grad, size_t first_dim, size_t outer_dim);
+void BucketReduceSparseGradient(const ReduceSparseGradientParam &param);
 std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode);
 }  // namespace kernel
 }  // namespace mindspore
