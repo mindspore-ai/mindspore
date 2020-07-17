@@ -120,6 +120,10 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
     MS_LOG(ERROR) << dump_config_file << " not exist.";
     return {};
   }
+  auto suffix = dump_config_file.substr(dump_config_file.find_last_of('.') + 1);
+  if (suffix != "json") {
+    MS_LOG(EXCEPTION) << "[DataDump] dump config file suffix only support json! But got:." << suffix;
+  }
   return dump_config_file;
 }
 }  // namespace mindspore

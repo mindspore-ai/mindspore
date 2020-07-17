@@ -62,6 +62,7 @@ void DataDumper::LoadDumpInfo() {
     }
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->fullname_with_scope();
     dump_kernel_names_.emplace_back(kernel->fullname_with_scope());
+    DataDumpParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
 
     aicpu::dump::Task task;
     ConstructDumpTask(NOT_NULL(kernel), NOT_NULL(&task));
@@ -84,7 +85,7 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
   auto device_id = context_ptr->device_id();
-  dump_info->set_dump_path(dump_path.value() + "_" + std::to_string(device_id) + "/");
+  dump_info->set_dump_path("/" + dump_path.value() + "_" + std::to_string(device_id) + "/");
   MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path.value();
 
   dump_info->set_model_name(DataDumpParser::GetInstance().net_name() + "_" + std::to_string(kernel_graph_->graph_id()));

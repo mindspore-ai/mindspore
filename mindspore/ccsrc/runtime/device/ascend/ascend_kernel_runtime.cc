@@ -100,6 +100,9 @@ void AscendKernelRuntime::ClearGraphModelMap() {
     iter.second->UnloadDumpInfo();
   }
   graph_data_dumper_.clear();
+  // tell users which dump kernel name not used
+  DataDumpParser::GetInstance().PrintUnusedKernel();
+
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
     auto ret = ModelRunner::Instance().UnloadModel(iter.first);
