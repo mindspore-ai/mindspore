@@ -72,8 +72,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
                                   const DeviceAddressPtrList addr_list, size_t total_size,
                                   std::vector<size_t> size_list);
-  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces,
-                            uint32_t graph_id);
+  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces);
   bool AddMemorySwapTask(const AnfNodePtr &kernel);
   bool UpdateMemorySwapInfo(const session::KernelGraph *graph);
   bool UpdateMemorySwapTask(const AnfNodePtr &kernel);
@@ -82,6 +81,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void ClearSwapQueue();
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
+  MemReuseUtilPtr mem_reuse_util_{nullptr};
   MemSwapManagerPtr mem_swap_manager_{nullptr};
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
