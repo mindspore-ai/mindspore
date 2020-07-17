@@ -16,6 +16,7 @@
 from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.communication.management import GlobalComm, get_group_size
+from mindspore.common.tensor import IndexedSlices
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
@@ -77,7 +78,7 @@ def _tensors_allreduce(degree, mean, allgather, allreduce_filter, grad, allreduc
     return grad
 
 
-@reduce_opt.register("Number", "Bool", "Function", "Bool", "Tuple", "Function")
+@reduce_opt.register("Number", "Bool", "Function", "Bool", "IndexedSlices", "Function")
 def _tensors_allreduce_with_sparse(degree, mean, allgather, allreduce_filter, grad, allreduce):
     """
     Apply allgather on gradient instead of allreduce for sparse feature.
@@ -88,21 +89,21 @@ def _tensors_allreduce_with_sparse(degree, mean, allgather, allreduce_filter, gr
         mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
         allgather (Primitive): The communication operator for sparse gradients.
         allreduce_filter (bool): When it is true, allgather would apply.
-        grad (tuple): The indices, gradient tensor and tensor_shape before operation.
+        grad (IndexedSlices): The gradient before operation.
         allreduce (Primitive): The communication operator for gradients.
 
     Returns:
-        Tuple, include indices, the gradient tensor and tensor_shape after operation.
+        IndexedSlices, the gradient after operation.
     """
     if allreduce_filter:
-        indices = allgather(grad[0])
-        dout = allgather(grad[1])
+        indices = allgather(grad.indices())
+        dout = allgather(grad.values())
         if mean:
-            degree = F.scalar_cast(degree, F.dtype(grad[1]))
+            degree = F.scalar_cast(degree, F.dtype(grad.values()))
             cast_op = P.Cast()
             mul_op = P.Mul()
             dout = mul_op(dout, cast_op(F.scalar_to_array(1.0 / degree), F.dtype(dout)))
-        grad = (indices, dout, grad[2])
+        grad = IndexedSlices(indices, dout, grad.dense_shape())
     return grad
 
 
@@ -123,18 +124,18 @@ def _tensors_get_datatype(grad):
     return F.dtype(grad)
 
 
-@_get_datatype.register("Tuple")
+@_get_datatype.register("IndexedSlices")
 def _tensors_get_datatype_with_sparse(grad):
     """
     Acquire gradient datatype.
 
     Args:
-        grad (Tuple): The gradient tensor before operation.
+        grad (IndexedSlices): The gradient before operation.
 
     Returns:
         mstype, the datatype of gradient.
     """
-    return F.dtype(grad[1])
+    return F.dtype(grad.values())
 
 
 _cast_datatype = C.MultitypeFuncGraph("_cast_datatype")
@@ -155,20 +156,20 @@ def _tensors_cast_datatype(datatype, grad):
     return F.cast(grad, datatype)
 
 
-@_cast_datatype.register("TypeType", "Tuple")
+@_cast_datatype.register("TypeType", "IndexedSlices")
 def _tensors_cast_datatype_with_sparse(datatype, grad):
     """
     Cast gradient to datatype.
 
     Args:
         datatype (mstype): the destination datatype of gradient.
-        grad (Tuple): The gradient tensor before operation.
+        grad (IndexedSlices): The gradient before operation.
 
     Returns:
-        Tuple, the gradient tuple after operation.
+        IndexedSlices, the gradient after operation.
     """
-    dout = F.cast(grad[1], datatype)
-    return (grad[0], dout, grad[2])
+    dout = F.cast(grad.values(), datatype)
+    return IndexedSlices(grad.indices(), dout, grad.dense_shape())
 
 
 class DistributedGradReducer(Cell):

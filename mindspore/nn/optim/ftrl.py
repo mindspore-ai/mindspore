@@ -25,20 +25,22 @@ _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 _ftrl_push_pull_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
-@_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple", "Tensor",
+@_ftrl_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "IndexedSlices", "Tensor",
                     "Tensor", "Bool")
 def _tensor_run_opt_with_sparse(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment,
                                 ps_parameter):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
+    indices = gradient.indices()
+    values = gradient.values()
     if ps_parameter:
         op_shape = P.Shape()
         _ps_pull = P.Pull()
         _ps_push = P.Push("Ftrl", [0, 1, 2])
-        shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(gradient[1]), op_shape(gradient[0]))
-        success = F.depend(success, _ps_pull(_ps_push((gradient[1], gradient[0]), shapes), weight))
+        shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
+        success = F.depend(success, _ps_pull(_ps_push((values, indices), shapes), weight))
     else:
-        success = F.depend(success, spars_opt(weight, moment, linear, gradient[1], gradient[0]))
+        success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
     return success
 
 
@@ -58,14 +60,16 @@ def _tensor_run_opt(opt, spars_opt, learning_rate, l1, l2, lr_power, linear, gra
     return success
 
 
-@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tuple",
+@_ftrl_push_pull_opt.register("Function", "Function", "Tensor", "Number", "Number", "Number", "Tensor", "IndexedSlices",
                               "Tensor", "Tensor")
 def _tensor_run_push_pull_opt_with_sparse(push, pull, learning_rate, l1, l2, lr_power, linear, gradient,
                                           weight, moment):
     success = True
     op_shape = P.Shape()
-    shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(gradient[1]), op_shape(gradient[0]))
-    success = F.depend(success, pull(push((gradient[1], gradient[0]), shapes), weight))
+    values = gradient.values()
+    indices = gradient.indices()
+    shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
+    success = F.depend(success, pull(push((values, indices), shapes), weight))
     return success
 
 

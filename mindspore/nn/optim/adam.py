@@ -108,24 +108,26 @@ def _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, po
     validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
 
 
-@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tuple",
+@_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "IndexedSlices",
                     "Tensor", "Tensor", "Tensor", "Bool")
 def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                          moment1, moment2, ps_parameter):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
+    indices = gradient.indices()
+    values = gradient.values()
     if ps_parameter:
         op_shape = P.Shape()
         _ps_pull = P.Pull()
         _ps_push = P.Push("Adam", [0, 1, 2])
         shapes = (op_shape(params), op_shape(moment1), op_shape(moment2),
                   op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-                  op_shape(beta2), op_shape(eps), op_shape(gradient[1]), op_shape(gradient[0]))
+                  op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
         success = F.depend(success, _ps_pull(_ps_push((beta1_power, beta2_power, lr, beta1, beta2,
-                                                       eps, gradient[1], gradient[0]), shapes), params))
+                                                       eps, values, indices), shapes), params))
     else:
         success = F.depend(success, sparse_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                               eps, gradient[1], gradient[0]))
+                                               eps, values, indices))
     return success
 
 
@@ -149,17 +151,19 @@ def _run_opt_with_one_number(opt, sparse_opt, beta1_power, beta2_power, beta1, b
 
 
 @_adam_push_pull_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                              "Tensor", "Tuple", "Tensor", "Tensor", "Tensor")
+                              "Tensor", "IndexedSlices", "Tensor", "Tensor", "Tensor")
 def _run_push_pull_opt_with_sparse(push, pull, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                                    moment1, moment2):
     """Apply sparse adam optimizer by push and pull to the weight parameter when the gradient is sparse."""
     success = True
     op_shape = P.Shape()
+    values = gradient.values()
+    indices = gradient.indices()
     shapes = (op_shape(params), op_shape(moment1), op_shape(moment2),
               op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
-              op_shape(beta2), op_shape(eps), op_shape(gradient[1]), op_shape(gradient[0]))
+              op_shape(beta2), op_shape(eps), op_shape(values), op_shape(indices))
     success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2,
-                                           eps, gradient[1], gradient[0]), shapes), params))
+                                           eps, values, indices), shapes), params))
     return success
 
 

@@ -22,7 +22,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor
+from mindspore.common.tensor import Tensor, IndexedSlices
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -490,12 +490,14 @@ op_gather = P.GatherV2()
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
 
 
-@_apply_decay.register("Number", "Bool", "Tensor", "Tuple")
+@_apply_decay.register("Number", "Bool", "Tensor", "IndexedSlices")
 def _tensor_apply_decay_with_sparse(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
     if if_apply:
-        weight = op_gather(weight, gradient[0], 0)
-        return gradient[0], op_add((weight * weight_decay, gradient[1])), gradient[2]
+        indices = gradient.indices()
+        values = op_add((op_gather(weight, indices, 0) * weight_decay, gradient.values()))
+        shape = gradient.dense_shape()
+        return IndexedSlices(indices, values, shape)
     return gradient
 
 
@@ -518,9 +520,9 @@ def tensor_grad_scale(scale, grad):
     return grad * scale
 
 
-@_grad_scale.register("Number", "Tuple")
+@_grad_scale.register("Number", "IndexedSlices")
 def tensor_grad_scale_with_sparse(scale, grad):
     """Get grad with scale."""
     if scale == 1.0:
         return grad
-    return grad[0], grad[1] * scale, grad[2]
+    return IndexedSlices(grad.indices(), grad.values() * scale, grad.dense_shape())

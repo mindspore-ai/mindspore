@@ -27,14 +27,14 @@ from .optimizer import Optimizer
 _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
 
-@_lazy_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tuple",
-                         "Tensor", "Tensor", "Tensor")
+@_lazy_adam_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor",
+                         "IndexedSlices", "Tensor", "Tensor", "Tensor")
 def _run_opt_with_sparse(opt, sparse_opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params,
                          moment1, moment2):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     success = F.depend(success, sparse_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                           eps, gradient[1], gradient[0]))
+                                           eps, gradient.values(), gradient.indices()))
     return success
 
 
