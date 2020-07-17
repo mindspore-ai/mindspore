@@ -189,8 +189,10 @@ def type_check_list(args, types, arg_names):
         Exception: when the type is not correct, otherwise nothing.
     """
     type_check(args, (list, tuple,), arg_names)
-    if len(args) != len(arg_names):
+    if len(args) != len(arg_names) and not isinstance(arg_names, str):
         raise ValueError("List of arguments is not the same length as argument_names.")
+    if isinstance(arg_names, str):
+        arg_names = ["{0}[{1}]".format(arg_names, i) for i in range(len(args))]
     for arg, arg_name in zip(args, arg_names):
         type_check(arg, types, arg_name)
 
