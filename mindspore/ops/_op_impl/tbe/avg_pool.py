@@ -29,8 +29,10 @@ avg_pool_op_info = TBERegOp("AvgPool") \
     .attr("data_format", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "optional", "all") \
+    .input(2, "bias", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_Default, DataType.F16_5HD) \
+    .dtype_format(DataType.I8_5HD, DataType.I8_C1HWNCoC0, DataType.I32_Default, DataType.I32_5HD) \
     .get_op_info()
 
 
