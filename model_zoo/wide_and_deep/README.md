@@ -4,6 +4,17 @@ This is an implementation of WideDeep as described in the [Wide & Deep Learning 
 
 WideDeep model jointly trained wide linear models and deep neural network, which combined the benefits of memorization and generalization for recommender systems.
 
+## Requirements
+
+- Install [MindSpore](https://www.mindspore.cn/install/en).
+
+- Download the dataset and convert the dataset to mindrecord, command as follows:
+```
+python src/preprocess_data.py
+```
+Arguments:
+   * `--data_path`: Dataset storage path (Default: ./criteo_data/).
+   
 ## Dataset
 The Criteo datasets are used for model training and evaluation.
 
