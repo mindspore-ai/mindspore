@@ -184,6 +184,7 @@ checkopts()
         elif [[ "X$OPTARG" == "Xd" || "X$OPTARG" == "Xascend" ]]; then
           ENABLE_D="on"
           ENABLE_CPU="on"
+          ENABLE_SERVING="on"
         elif [[ "X$OPTARG" == "Xcpu" ]]; then
           ENABLE_CPU="on"
         else
