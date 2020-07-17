@@ -387,12 +387,17 @@ FuncGraphSetPtr FuncGraphManager::MaybeDropNodes(const std::vector<AnfNodePtr> &
       continue;
     }
     AnfNodeIndexSet &users = node_users_[node];
-
-    std::vector<AnfNodePtr> parameters;
-    if (!users.empty() ||
-        (node->isa<Parameter>() && parameters.end() != std::find(parameters.begin(), parameters.end(), node))) {
+    if (!users.empty()) {
       continue;
     }
+
+    if (node->isa<Parameter>() && node->func_graph() != nullptr) {
+      auto &parameters = node->func_graph()->parameters();
+      if (std::find(parameters.begin(), parameters.end(), node) != parameters.end()) {
+        continue;
+      }
+    }
+
     if (IsValueNode<FuncGraph>(node)) {
       auto fg = GetValueNode<FuncGraphPtr>(node);
       func_graphs_to_check->add(fg);
