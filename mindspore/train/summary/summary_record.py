@@ -75,14 +75,17 @@ class SummaryRecord:
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
-        queue_max_size (int): The capacity of event queue.(reserved). Default: 0.
-        flush_time (int): Frequency to flush the summaries to disk, the unit is second. Default: 120.
+        queue_max_size (int): Deprecated. The capacity of event queue.(reserved). Default: 0.
+        flush_time (int): Deprecated. Frequency to flush the summaries to disk, the unit is second. Default: 120.
         file_prefix (str): The prefix of file. Default: "events".
         file_suffix (str): The suffix of file. Default: "_MS".
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
+        max_file_size (Optional[int]): The maximum size in bytes each file can be written to the disk. \
+            Unlimited by default.
 
     Raises:
-        TypeError: If `queue_max_size` and `flush_time` is not int, or `file_prefix` and `file_suffix` is not str.
+        TypeError: If `max_file_size`, `queue_max_size` or `flush_time` is not int, \
+            or `file_prefix` and `file_suffix` is not str.
         RuntimeError: If the log_dir can not be resolved to a canonicalized absolute pathname.
 
     Examples:
@@ -103,7 +106,8 @@ class SummaryRecord:
                  flush_time=120,
                  file_prefix="events",
                  file_suffix="_MS",
-                 network=None):
+                 network=None,
+                 max_file_size=None):
 
         self._closed, self._event_writer = False, None
         self._mode, self._data_pool = 'train', _dictlist()
@@ -113,10 +117,17 @@ class SummaryRecord:
 
         self.log_path = _make_directory(log_dir)
 
+        if not isinstance(max_file_size, (int, type(None))):
+            raise TypeError("The 'max_file_size' should be int type.")
+
         if not isinstance(queue_max_size, int) or not isinstance(flush_time, int):
             raise TypeError("`queue_max_size` and `flush_time` should be int")
         if not isinstance(file_prefix, str) or not isinstance(file_suffix, str):
             raise TypeError("`file_prefix` and `file_suffix`  should be str.")
+
+        if max_file_size is not None and max_file_size < 0:
+            logger.warning("The 'max_file_size' should be greater than 0.")
+            max_file_size = None
 
         self.queue_max_size = queue_max_size
         if queue_max_size < 0:
@@ -142,6 +153,7 @@ class SummaryRecord:
             raise RuntimeError(ex)
 
         self._event_writer = WriterPool(log_dir,
+                                        max_file_size,
                                         summary=self.full_file_name,
                                         lineage=get_event_file_name('events', '_lineage'))
         atexit.register(self.close)
@@ -152,7 +164,7 @@ class SummaryRecord:
             raise ValueError('SummaryRecord has been closed.')
         return self
 
-    def __exit__(self, extype, exvalue, traceback):
+    def __exit__(self, *err):
         """Exit the context manager."""
         self.close()
 
@@ -229,13 +241,15 @@ class SummaryRecord:
         else:
             raise ValueError(f'No such plugin of {repr(plugin)}')
 
-    def record(self, step, train_network=None):
+    def record(self, step, train_network=None, plugin_filter=None):
         """
         Record the summary.
 
         Args:
             step (int): Represents training step number.
             train_network (Cell): The network that called the callback.
+            plugin_filter (Optional[Callable[[str], bool]]): The filter function, \
+                which is used to filter out plugins from being written by return False.
 
         Returns:
             bool, whether the record process is successful or not.
@@ -266,7 +280,14 @@ class SummaryRecord:
         if self._mode == 'train':
             self._add_summary_tensor_data()
 
-        self._event_writer.write(self._consume_data_pool(step))
+        if not plugin_filter:
+            self._event_writer.write(self._consume_data_pool(step))
+        else:
+            filtered = {}
+            for plugin, datalist in self._consume_data_pool(step).items():
+                if plugin_filter(plugin):
+                    filtered[plugin] = datalist
+            self._event_writer.write(filtered)
         return True
 
     def _add_summary_tensor_data(self):

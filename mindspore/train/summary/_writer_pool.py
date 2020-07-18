@@ -51,10 +51,11 @@ class WriterPool(Process):
         filelist (str): The mapping from short name to long filename.
     """
 
-    def __init__(self, base_dir, **filedict) -> None:
+    def __init__(self, base_dir, max_file_size, **filedict) -> None:
         super().__init__()
         self._base_dir, self._filedict = base_dir, filedict
         self._queue, self._writers_ = Queue(cpu_count() * 2), None
+        self._max_file_size = max_file_size
         self.start()
 
     def run(self):
@@ -88,9 +89,9 @@ class WriterPool(Process):
         for plugin, filename in self._filedict.items():
             filepath = os.path.join(self._base_dir, filename)
             if plugin == 'summary':
-                self._writers_.append(SummaryWriter(filepath))
+                self._writers_.append(SummaryWriter(filepath, self._max_file_size))
             elif plugin == 'lineage':
-                self._writers_.append(LineageWriter(filepath))
+                self._writers_.append(LineageWriter(filepath, self._max_file_size))
         return self._writers_
 
     def _write(self, plugin, data):
@@ -98,9 +99,8 @@ class WriterPool(Process):
         for writer in self._writers[:]:
             try:
                 writer.write(plugin, data)
-            except RuntimeError:
-                logger.warning(f'The disk space may be soon exhausted by this {type(writer).__name__}, '
-                               'so the writer will be closed and not for further writing.')
+            except RuntimeError as e:
+                logger.warning(e.args[0])
                 self._writers.remove(writer)
                 writer.close()
 
