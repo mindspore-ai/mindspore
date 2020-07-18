@@ -149,6 +149,8 @@ class _BatchNorm(Cell):
     def construct(self, x):
         if self.input_dims == '2d':
             _shape_check(self.shape(x))
+        if self.input_dims == '1d':
+            _shape_check_2d(self.shape(x))
         if self.use_batch_statistics is None:
             flag = self.training
         else:
@@ -198,6 +200,12 @@ class _BatchNorm(Cell):
 def _channel_check(channel, num_channel):
     if channel != num_channel:
         raise ValueError("the input channel is not equal with num_channel")
+
+
+@constexpr
+def _shape_check_2d(input_shape):
+    if len(input_shape) != 2:
+        raise ValueError("The input must has 2 dims.")
 
 
 @constexpr
