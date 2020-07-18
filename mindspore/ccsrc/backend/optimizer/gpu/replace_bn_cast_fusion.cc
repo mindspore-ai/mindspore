@@ -30,8 +30,7 @@ const BaseRef ReplaceBNCastFusion::DefinePattern() const {
   VectorRef in_cast = VectorRef({prim::kPrimCast, x_});
   VectorRef fbn2 = VectorRef({prim::kPrimFusedBatchNorm, in_cast, scale_, bias_, mean_, var_});
   VectorRef tupleget = VectorRef({prim::kPrimTupleGetItem, fbn2, index_});
-  VectorRef out_cast = VectorRef({prim::kPrimCast, tupleget});
-  return out_cast;
+  return tupleget;
 }
 
 const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
@@ -40,19 +39,9 @@ const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
 
-  auto tuple = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
-  auto index_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple), 1);
-  MS_EXCEPTION_IF_NULL(index_node);
-  auto value_node = index_node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  int item_idx = GetValue<int>(value_node->value());
-
-  auto fbn2 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple), 0);
+  auto fbn2 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto x_after = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 0);
   auto x_before = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(x_after), 0);
-  if (item_idx != 0) {
-    return nullptr;
-  }
   auto scale = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 1);
   auto bias = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 2);
   auto mean = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(fbn2), 3);
@@ -65,14 +54,32 @@ const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(bias);
   MS_EXCEPTION_IF_NULL(mean);
   MS_EXCEPTION_IF_NULL(var);
-
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->Replace(utils::cast<CNodePtr>(x_after), utils::cast<CNodePtr>(x_before));
-  manager->Replace(utils::cast<CNodePtr>(node), utils::cast<CNodePtr>(tuple));
-
   std::vector<TypeId> outputs_type;
   std::vector<std::vector<size_t>> outputs_shape;
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  auto outlist = GetRealNodeUsedList(graph, fbn2);
+  for (size_t i = 0; i < outlist->size(); i++) {
+    auto index_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(outlist->at(i).first), 1);
+    auto value_node = index_node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    int item_idx = GetValue<int>(value_node->value());
+    if (item_idx == 0) {
+      auto cast = GetRealNodeUsedList(graph, outlist->at(i).first);
+      if (AnfAlgo::GetCNodeName(cast->at(0).first) != "Cast") {
+        return nullptr;
+      }
+      manager->Replace(utils::cast<CNodePtr>(cast->at(0).first), utils::cast<CNodePtr>(outlist->at(i).first));
+      outputs_type.push_back(kNumberTypeFloat16);
+      outputs_shape.push_back(AnfAlgo::GetOutputInferShape(outlist->at(i).first, 0));
+      AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, outlist->at(i).first.get());
+    }
+  }
+
+  manager->Replace(utils::cast<CNodePtr>(x_after), utils::cast<CNodePtr>(x_before));
+  outputs_type.clear();
+  outputs_shape.clear();
   auto output_num = AnfAlgo::GetOutputTensorNum(fbn2);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(fbn2, i));
@@ -80,13 +87,7 @@ const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const A
   }
   outputs_type[0] = kNumberTypeFloat16;
   AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, fbn2.get());
-
-  outputs_type.clear();
-  outputs_shape.clear();
-  outputs_type.push_back(kNumberTypeFloat16);
-  outputs_shape.push_back(AnfAlgo::GetOutputInferShape(tuple, 0));
-  AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, tuple.get());
-  return tuple;
+  return node;
 }
 }  // namespace opt
 }  // namespace mindspore
