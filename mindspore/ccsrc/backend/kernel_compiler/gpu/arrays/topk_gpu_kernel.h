@@ -51,7 +51,6 @@ class TopKGpuKernel : public GpuKernel {
          reinterpret_cast<cudaStream_t>(stream_ptr));
 
     if (sorted_ == false) {
-      std::cout << "================BitonicSortByKey" << std::endl;
       BitonicSortByKey(outer_size_, k_, output_addr, indices, data_buff, index_buff,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
     }
