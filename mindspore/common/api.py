@@ -515,18 +515,16 @@ class _Executor:
             return None
         return self._executor.get_func_graph_proto(exec_id, ir_type)
 
-    def export(self, net, file_name, file_format='GEIR'):
+    def export(self, file_name, graph_id):
         """
         Export graph.
 
         Args:
-            net (Cell): MindSpore network
             file_name (str): File name of model to export
-            file_format (str): MindSpore currently support 'GEIR' and 'ONNX' format for exported model
+            graph_id (str): id of graph to be exported
         """
         from .._c_expression import export_graph
-        phase = 'export' + '.' + self.phase_prefix + '.' + str(net.create_time)
-        export_graph(file_name, file_format, phase)
+        export_graph(file_name, 'GEIR', graph_id)
 
     def fetch_info_for_quant_export(self, exec_id):
         """Get graph proto from pipeline."""
