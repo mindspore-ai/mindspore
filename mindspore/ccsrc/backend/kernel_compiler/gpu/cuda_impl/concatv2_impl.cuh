@@ -19,7 +19,7 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void ConcatKernel(const int size, const int input_num,
+void ConcatKernel(const size_t size, const int input_num,
                   const int all_size_before_axis, const int all_size_axis,
                   int* len_axis, T** inputs, T* output,
                   cudaStream_t cuda_stream);

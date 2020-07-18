@@ -19,6 +19,6 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void SplitKernel(const int size, const int axis_step, const int all_size_before_axis,
+void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
                  const int all_size_axis, const T* input, T** outputs, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPLIT_H_

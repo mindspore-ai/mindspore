@@ -83,7 +83,7 @@ class SplitGpuFwdKernel : public GpuKernel {
         all_size_before_axis_ *= input_shape[i];
       }
     }
-    input_size_list_.push_back(IntToSize(input_size_ * sizeof(T)));
+    input_size_list_.push_back(input_size_ * sizeof(T));
     axis_step_ = input_shape[axis_] / output_num_;
 
     for (int i = 0; i < output_num_; i++) {
@@ -138,7 +138,7 @@ class SplitGpuFwdKernel : public GpuKernel {
   }
   int axis_;
   int output_num_;
-  int input_size_;
+  size_t input_size_;
   int axis_step_;
   int all_size_before_axis_;
   int all_size_axis_;
