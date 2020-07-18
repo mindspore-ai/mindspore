@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode,
-                              const std::vector<size_t> &src_shape, int kernel_size, int stride,
+                              const std::vector<size_t> &src_shape, const std::vector<size_t> &kernel_size, int stride,
                               std::vector<int> *padding_l, std::vector<int> *padding_r) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (src_shape.size() < 2) {
@@ -32,11 +32,13 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
   std::vector<int> weight_height;
   weight_height.emplace_back(src_shape[src_shape.size() - 2]);
   weight_height.emplace_back(src_shape[src_shape.size() - 1]);
-  int rad = kernel_size / 2;
-  int need_pad = kernel_size - 1;
+
   MS_LOG(INFO) << "pad mode " << pad_mode;
   if (pad_mode == PAD_MODE_LOWER_SAME || pad_mode == PAD_MODE_UPPER_SAME) {
-    for (auto wh : weight_height) {
+    for (size_t i = 0; i < weight_height.size(); ++i) {
+      auto wh = weight_height[i];
+      int rad = kernel_size[i] / 2;
+      int need_pad = kernel_size[i] - 1;
       int re = (wh - 1) % stride;
       int pad = std::max(rad - (re / 2), 0);
       padding_r->emplace_back(pad);

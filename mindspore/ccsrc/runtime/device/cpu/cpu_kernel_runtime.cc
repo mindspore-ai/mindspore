@@ -36,23 +36,6 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 const size_t INIT_NODE_REF = 1;
-namespace {
-TypeId GetCPUSupportOutputTypeId(const TypeId type_id) {
-  TypeId support_type_id = type_id;
-  if (type_id == kNumberTypeUInt32) {
-    support_type_id = kNumberTypeInt32;
-  }
-  if (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
-      type_id == kNumberTypeFloat64) {
-    support_type_id = kNumberTypeFloat32;
-  }
-  if (support_type_id != kNumberTypeInt32 && support_type_id != kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "Check output type failed.";
-  }
-  return support_type_id;
-}
-}  // namespace
-
 void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
   AssignValueNodeAddress(kernel_graph);
   AssignInputNodeAddress(kernel_graph);
@@ -157,15 +140,25 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(const CNodePtr &node, s
   auto shape = AnfAlgo::GetOutputInferShape(node, index);
   std::vector<int> temp_shape;
   (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
-  TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
-  type_id = GetCPUSupportOutputTypeId(type_id);
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+  TypeId infer_type_id = AnfAlgo::GetOutputInferDataType(node, index);
+  TypeId device_type_id = AnfAlgo::GetOutputDeviceDataType(node, index);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
   MS_EXCEPTION_IF_NULL(tensor);
   if (bound_addresses->find(address) != bound_addresses->end()) {
     tensor->set_device_address(address);
     need_sync_outputs->emplace_back(tensor);
   } else {
-    address->ptr_ = tensor->data_c();
+    if (infer_type_id != device_type_id) {
+      size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
+      std::vector<int> data_shape = tensor->shape();
+      size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
+      address->ptr_ = resource_manager_.MemMalloc(tensor_size);
+      need_sync_outputs->emplace_back(tensor);
+      tensor->set_device_address(address);
+      need_sync_outputs->emplace_back(tensor);
+    } else {
+      address->ptr_ = tensor->data_c();
+    }
     address->ref_count_ = INIT_NODE_REF;
     (void)bound_addresses->insert(address);
   }
@@ -226,12 +219,13 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
       if (tensor_address != nullptr && tensor_address != address) {
         (void)tensor->data_sync();
       }
-      std::vector<int> data_shape = tensor->shape();
-      size_t tensor_size =
-        std::accumulate(data_shape.begin(), data_shape.end(), sizeof(float), std::multiplies<size_t>());
+
       if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32) {
         address->ptr_ = tensor->data_c();
       } else {
+        std::vector<int> data_shape = tensor->shape();
+        size_t tensor_size =
+          std::accumulate(data_shape.begin(), data_shape.end(), sizeof(float), std::multiplies<size_t>());
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c())) {

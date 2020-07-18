@@ -28,17 +28,18 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
-  std::vector<int> kernel_sizes = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, KSIZE);
+  std::vector<int> origin_kernel_sizes = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, KSIZE);
   std::vector<int> strides = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
-  if (kernel_sizes.size() != 4 || strides.size() != 4) {
-    MS_LOG(EXCEPTION) << "invalid kernel size " << kernel_sizes.size() << " or stride size " << strides.size();
+  if (origin_kernel_sizes.size() != 4 || strides.size() != 4) {
+    MS_LOG(EXCEPTION) << "invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }
   dnnl::memory::dims strides_dims{strides[2], strides[3]};
-  dnnl::memory::dims kernels_dims{kernel_sizes[2], kernel_sizes[3]};
+  dnnl::memory::dims kernels_dims{origin_kernel_sizes[2], origin_kernel_sizes[3]};
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PADDING);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  GetPadding(kernel_node, pad_mode, src_shape, kernel_sizes[3], strides[3], &int_padding_l, &int_padding_r);
+  std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});
+  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, strides[3], &int_padding_l, &int_padding_r);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "pooling get padding failed";
   }

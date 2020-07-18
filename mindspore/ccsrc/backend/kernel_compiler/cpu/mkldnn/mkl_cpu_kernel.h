@@ -33,7 +33,8 @@ class MKLCPUKernel : public CPUKernel {
 
  protected:
   void GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode, const std::vector<size_t> &src_shape,
-                  int kernel_size, int stride, std::vector<int> *padding_l, std::vector<int> *padding_r);
+                  const std::vector<size_t> &kernel_size, int stride, std::vector<int> *padding_l,
+                  std::vector<int> *padding_r);
   void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
   void SetArgumentHandle(int arg_key, void *ptr);
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;

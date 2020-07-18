@@ -141,7 +141,11 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     if (kernel_attr.GetAllSame()) {
       ExpandKernelAttr(kernel_node, &kernel_attr);
     }
-    if (IsInputFormatDtypeMatched(kernel_attr, input_formats, input_types, input_not_cnode_indexes)) {
+    bool ignore_check = false;
+    if (index == kernel_attrs.size() - 1 && input_types.size() == input_not_cnode_indexes.size()) {
+      ignore_check = true;
+    }
+    if (ignore_check || IsInputFormatDtypeMatched(kernel_attr, input_formats, input_types, input_not_cnode_indexes)) {
       size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
       if (kernel_attr.GetOutputSize() != output_num) {
         MS_LOG(DEBUG) << "Output num is not equal!";
