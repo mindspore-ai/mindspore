@@ -83,6 +83,7 @@ class MemReuseUtil {
   void set_mem_base(uint8_t *mem_base) { mem_base_ = mem_base; }
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
+  bool is_all_nop_node() const { return is_all_nop_node_; }
 
  private:
   int util_index_;
