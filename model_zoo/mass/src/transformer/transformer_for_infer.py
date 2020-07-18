@@ -275,8 +275,6 @@ class TransformerInferModel(nn.Cell):
             length_penalty_weight=config.length_penalty_weight,
             max_decode_length=config.max_decode_length)
 
-        self.decoder.add_flags(loop_can_unroll=True)
-
         self.cast = P.Cast()
         self.dtype = config.dtype
         self.cast_compute_type = SaturateCast(dst_type=config.compute_type)

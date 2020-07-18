@@ -276,7 +276,7 @@ class SingleDeepLabV3(nn.Cell):
                          atrous_rates=atrous_rates,
                          output_stride=output_stride,
                          fine_tune_batch_norm=fine_tune_batch_norm)
-        self.aspp.add_flags(loop_can_unroll=True)
+
         atrous_rates_len = 0
         if atrous_rates is not None:
             atrous_rates_len = len(atrous_rates)

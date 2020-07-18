@@ -29,7 +29,6 @@ const char PYTHON_DATACLASS_FIELDS[] = "__dataclass_fields__";
 // flag names
 const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";
 const char GRAPH_FLAG_MIX_PRECISION_FP32[] = "fp32";
-const char GRAPH_FLAG_LOOP_CAN_UNROLL[] = "loop_can_unroll";
 const char GRAPH_FLAG_HAS_EFFECT[] = "has_effect";
 const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[] = "_effect_patial_order";
 const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";

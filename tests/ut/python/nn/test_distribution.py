@@ -259,7 +259,7 @@ class NormalKl(nn.Cell):
     """
     def __init__(self):
         super(NormalKl, self).__init__()
-        self.n = nn.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
+        self.n = nn.Normal(Tensor([3.0]), Tensor([4.0]), dtype=dtype.float32)
 
     def construct(self, x_, y_):
         return self.n('kl_loss', 'Normal', x_, y_)

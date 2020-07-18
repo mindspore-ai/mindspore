@@ -1104,7 +1104,6 @@ class TransformerModel(nn.Cell):
                 beam_width=config.beam_width,
                 length_penalty_weight=config.length_penalty_weight,
                 max_decode_length=config.max_decode_length)
-            self.tfm_decoder.add_flags(loop_can_unroll=True)
 
         self.cast = P.Cast()
         self.dtype = config.dtype
