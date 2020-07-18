@@ -616,5 +616,18 @@ TEST_F(TestOptLib, test_indexed_slices) {
   ASSERT_TRUE(CheckOpt(before_get_values, after_get_values, patterns));
   ASSERT_TRUE(CheckOpt(before_get_dense_shape, after_get_dense_shape, patterns));
 }
+
+TEST_F(TestOptLib, test_sparse_tensor) {
+  FuncGraphPtr before_get_indices = getPyFun.CallAndParseRet("test_sparse_tensor", "before_get_indices");
+  FuncGraphPtr after_get_indices = getPyFun.CallAndParseRet("test_sparse_tensor", "after_get_indices");
+  FuncGraphPtr before_get_values = getPyFun.CallAndParseRet("test_sparse_tensor", "before_get_values");
+  FuncGraphPtr after_get_values = getPyFun.CallAndParseRet("test_sparse_tensor", "after_get_values");
+  FuncGraphPtr before_get_dense_shape = getPyFun.CallAndParseRet("test_sparse_tensor", "before_get_dense_shape");
+  FuncGraphPtr after_get_dense_shape = getPyFun.CallAndParseRet("test_sparse_tensor", "after_get_dense_shape");
+  auto patterns = std::vector<SubstitutionPtr>({irpass.sparse_tensor_eliminate_});
+  ASSERT_TRUE(CheckOpt(before_get_indices, after_get_indices, patterns));
+  ASSERT_TRUE(CheckOpt(before_get_values, after_get_values, patterns));
+  ASSERT_TRUE(CheckOpt(before_get_dense_shape, after_get_dense_shape, patterns));
+}
 }  // namespace opt
 }  // namespace mindspore

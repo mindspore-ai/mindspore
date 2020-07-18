@@ -157,6 +157,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.make_ref_eliminate_,
     irpass.get_ref_param_eliminate_,
     irpass.indexed_slices_eliminate_,
+    irpass.sparse_tensor_eliminate_,
   });
   OptPassGroupMap map({
     {"b_1", b_1},

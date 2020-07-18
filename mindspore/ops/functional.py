@@ -159,6 +159,10 @@ indexed_slices_get_values = Primitive('IndexedSlicesGetValues')
 indexed_slices_get_indices = Primitive('IndexedSlicesGetIndices')
 indexed_slices_get_dense_shape = Primitive('IndexedSlicesGetDenseShape')
 
+make_sparse_tensor = Primitive('MakeSparseTensor')
+sparse_tensor_get_values = Primitive('SparseTensorGetValues')
+sparse_tensor_get_indices = Primitive('SparseTensorGetIndices')
+sparse_tensor_get_dense_shape = Primitive('SparseTensorGetDenseShape')
 
 tensor_operator_registry.register('__add__', tensor_add)
 tensor_operator_registry.register('__sub__', tensor_sub)

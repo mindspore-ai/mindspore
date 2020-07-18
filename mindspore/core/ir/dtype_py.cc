@@ -139,6 +139,8 @@ REGISTER_PYBIND_DEFINE(
         }));
     (void)py::class_<IndexedSlicesType, Type, std::shared_ptr<IndexedSlicesType>>(m_sub, "IndexedSlicesType")
       .def(py::init());
+    (void)py::class_<SparseTensorType, Type, std::shared_ptr<SparseTensorType>>(m_sub, "SparseTensorType")
+      .def(py::init());
     (void)py::class_<UndeterminedType, Type, std::shared_ptr<UndeterminedType>>(m_sub, "UndeterminedType")
       .def(py::init());
     (void)py::class_<Function, Type, std::shared_ptr<Function>>(m_sub, "Function")

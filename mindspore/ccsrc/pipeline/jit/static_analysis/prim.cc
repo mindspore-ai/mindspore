@@ -138,7 +138,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimIndexedSlicesGetValues, {InferImplIndexedSlicesGetValues, true}},
     {prim::kPrimIndexedSlicesGetIndices, {InferImplIndexedSlicesGetIndices, true}},
     {prim::kPrimIndexedSlicesGetDenseShape, {InferImplIndexedSlicesGetDenseShape, true}},
-    {prim::kPrimIsIndexedSlices, {InferImplIsIndexedSlices, true}},
+    // SparseTensor
+    {prim::kPrimMakeSparseTensor, {InferImplMakeSparseTensor, true}},
+    {prim::kPrimSparseTensorGetValues, {InferImplSparseTensorGetValues, true}},
+    {prim::kPrimSparseTensorGetIndices, {InferImplSparseTensorGetIndices, true}},
+    {prim::kPrimSparseTensorGetDenseShape, {InferImplSparseTensorGetDenseShape, true}},
   };
   return prim_eval_implement_map;
 }

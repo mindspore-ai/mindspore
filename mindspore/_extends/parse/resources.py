@@ -17,7 +17,7 @@
 """Resources for ast tree parse."""
 import ast
 import math
-from mindspore import IndexedSlices
+from mindspore import IndexedSlices, SparseTensor
 from mindspore.ops.composite import multitype_ops
 from mindspore.ops import functional as F, composite as C
 from . import standard_method as M
@@ -140,4 +140,5 @@ convert_object_map = {
 
     # user defined
     IndexedSlices:  F.make_indexed_slices,
+    SparseTensor:   F.make_sparse_tensor,
 }

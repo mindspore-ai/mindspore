@@ -207,6 +207,23 @@ TypePtr IndexedSlicesStrToType(const std::string &type_name) {
   return std::make_shared<IndexedSlicesType>(element_type);
 }
 
+TypePtr SparseTensorStrToType(const std::string &type_name) {
+  if (type_name == "SparseTensor") {
+    return std::make_shared<SparseTensorType>();
+  }
+  auto start = type_name.find_first_of('[') + 1;
+  auto end = type_name.find_last_of(']');
+  if (start >= type_name.size()) {
+    return nullptr;
+  }
+  auto element_str = type_name.substr(start, end - start);
+  auto element_type = StringToType(element_str);
+  if (element_type == nullptr) {
+    return nullptr;
+  }
+  return std::make_shared<SparseTensorType>(element_type);
+}
+
 TypePtr UndeterminedStrToType(const std::string &type_name) {
   if (type_name == "Undetermined") {
     return std::make_shared<UndeterminedType>();
@@ -349,6 +366,8 @@ TypePtr StringToType(const std::string &type_name) {
     type = UndeterminedStrToType(type_name);
   } else if (type_name.compare(0, strlen("IndexedSlices"), "IndexedSlices") == 0) {
     type = IndexedSlicesStrToType(type_name);
+  } else if (type_name.compare(0, strlen("SparseTensor"), "SparseTensor") == 0) {
+    type = SparseTensorStrToType(type_name);
   } else if (type_name.compare(0, strlen("List"), "List") == 0) {
     type = ListStrToType(type_name);
   } else if (type_name.compare(0, strlen("Tuple"), "Tuple") == 0) {
@@ -428,6 +447,7 @@ const TypePtr kTypeEnv = std::make_shared<EnvType>();
 const TypePtr kTypeType = std::make_shared<TypeType>();
 const TypePtr kTensorType = std::make_shared<TensorType>();
 const TypePtr kIndexedSlicesType = std::make_shared<IndexedSlicesType>();
+const TypePtr kSparseTensorType = std::make_shared<SparseTensorType>();
 const TypePtr kUndeterminedType = std::make_shared<UndeterminedType>();
 const TypePtr kString = std::make_shared<String>();
 const TypePtr kList = std::make_shared<List>();

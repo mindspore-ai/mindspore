@@ -803,6 +803,18 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
   abstract::AbstractTuplePtr a_tuple = dyn_cast<AbstractTuple>(abs_a);
   abstract::AbstractTuplePtr b_tuple = dyn_cast<AbstractTuple>(abs_b);
   if (a_tuple == nullptr || b_tuple == nullptr) {
+    TypePtrList types;
+    (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
+                         [](const AbstractBasePtr &arg) -> TypePtr {
+                           MS_EXCEPTION_IF_NULL(arg);
+                           return arg->BuildType();
+                         });
+    auto stub = GenerateStubFunc(types);
+    if (stub != nullptr) {
+      MS_LOG(DEBUG) << "GenerateStubFunc for TupleAdd "
+                    << ", function: " << stub->ToString();
+      return stub;
+    }
     MS_LOG(EXCEPTION) << "TupleAdd argument should be tuple,but " << args_spec_list[0]->ToString() << ", "
                       << args_spec_list[1]->ToString();
   }
