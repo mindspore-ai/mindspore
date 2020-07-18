@@ -201,6 +201,10 @@ const char kNameBatchToSpace[] = "BatchToSpace";
 const char kNameAtan2[] = "Atan2";
 const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
+const char kNameBasicLSTMCell[] = "BasicLSTMCell";
+const char kNameBasicLSTMCellInputGrad[] = "BasicLSTMCellInputGrad";
+const char kNameBasicLSTMCellWeightGrad[] = "BasicLSTMCellWeightGrad";
+const char kNameBasicLSTMCellCStateGrad[] = "BasicLSTMCellCStateGrad";
 const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
 const char kNameRange[] = "Range";
@@ -410,6 +414,10 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameAtan2), ADPT_DESC(Atan2)},
     {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
     {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSPropD)},
+    {string(kNameBasicLSTMCell), ADPT_DESC(BasicLSTMCell)},
+    {string(kNameBasicLSTMCellInputGrad), ADPT_DESC(BasicLSTMCellInputGrad)},
+    {string(kNameBasicLSTMCellWeightGrad), ADPT_DESC(BasicLSTMCellWeightGrad)},
+    {string(kNameBasicLSTMCellCStateGrad), ADPT_DESC(BasicLSTMCellCStateGrad)},
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
     {string(kNameRange), ADPT_DESC(RangeD)},
