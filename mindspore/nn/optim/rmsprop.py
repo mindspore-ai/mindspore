@@ -123,8 +123,8 @@ class RMSProp(Optimizer):
                          0. Default: 1e-10.
         use_locking (bool): Enable a lock to protect the update of variable and accumlation tensors. Default: False.
         centered (bool): If True, gradients are normalized by the estimated variance of the gradient. Default: False.
-        loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
-        weight_decay (float): Weight decay (L2 penalty). Should be equal to or greater than 0. Default: 0.0.
+        loss_scale (float): A floating point value for the loss scale. Should be not less than 1.0. Default: 1.0.
+        weight_decay (float): Weight decay (L2 penalty). Should be in range [0.0, 1.0]. Default: 0.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.

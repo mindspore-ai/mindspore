@@ -44,7 +44,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay_tensor (Tensor): Weight decay. Should be equal to or greater than 0.
+        weight_decay_tensor (Tensor): Weight decay. Should be in range [0.0, 1.0].
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -128,7 +128,7 @@ def _update_run_op_graph_kernel(beta1, beta2, eps, lr, weight_decay_tensor,
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay_tensor (Tensor): Weight decay. Should be equal to or greater than 0.
+        weight_decay_tensor (Tensor): Weight decay. Should be in range [0.0, 1.0].
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -229,7 +229,7 @@ class Lamb(Optimizer):
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0. Should be equal to or greater than 0.
+        weight_decay (float): Weight decay (L2 penalty). Default: 0.0. Should be in range [0.0, 1.0].
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
             lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
