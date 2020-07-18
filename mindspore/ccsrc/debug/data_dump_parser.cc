@@ -29,7 +29,7 @@ void DataDumpParser::ResetParam() {
   net_name_.clear();
   dump_mode_ = 0;
   dump_step_ = 0;
-  kernel_set_.clear();
+  kernel_map_.clear();
 }
 
 bool DataDumpParser::DumpEnabled() const {
@@ -60,7 +60,16 @@ std::optional<std::string> DataDumpParser::GetDumpPath() const {
     return {};
   }
   std::string dump_path_str(dump_path);
+  if (!std::all_of(dump_path_str.begin(), dump_path_str.end(), ::isalpha)) {
+    MS_LOG(EXCEPTION) << "[DataDump] dump path only support alphas, but got:" << dump_path_str;
+  }
   return dump_path_str;
+}
+
+std::string GetIfstreamString(const std::ifstream &ifstream) {
+  std::stringstream buffer;
+  buffer << ifstream.rdbuf();
+  return buffer.str();
 }
 
 void DataDumpParser::ParseDumpConfig() {
@@ -84,7 +93,12 @@ void DataDumpParser::ParseDumpConfig() {
   }
 
   nlohmann::json j;
-  json_file >> j;
+  try {
+    json_file >> j;
+  } catch (nlohmann::json::parse_error &e) {
+    MS_LOG(ERROR) << "[DataDump] json contents:" << GetIfstreamString(json_file);
+    MS_LOG(EXCEPTION) << "[DataDump] parse json failed, error:" << e.what();
+  }
   if (j.find("DumpSettings") == j.end()) {
     MS_LOG(EXCEPTION) << "[DataDump] DumpSettings is not exist.";
   }
@@ -111,8 +125,8 @@ bool DataDumpParser::NeedDump(const std::string &op_full_name) const {
   if (dump_mode_ == 0) {
     return true;
   }
-  auto iter = kernel_set_.find(op_full_name);
-  return iter != kernel_set_.end();
+  auto iter = kernel_map_.find(op_full_name);
+  return iter != kernel_map_.end();
 }
 
 bool DataDumpParser::IsConfigExist(const nlohmann::json &dump_settings) const {
@@ -145,8 +159,25 @@ bool DataDumpParser::ParseDumpSetting(const nlohmann::json &dump_settings) {
     auto kernel_str = kernel.dump();
     kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
     MS_LOG(INFO) << "[DataDump] Need dump kernel:" << kernel_str;
-    kernel_set_.insert(kernel_str);
+    kernel_map_.insert({kernel_str, 0});
   }
   return true;
+}
+
+void DataDumpParser::MatchKernel(const std::string &kernel_name) {
+  auto iter = kernel_map_.find(kernel_name);
+  if (iter == kernel_map_.end()) {
+    return;
+  }
+  iter->second = iter->second + 1;
+  MS_LOG(INFO) << "Match dump kernel:" << iter->first << " match times:" << iter->second;
+}
+
+void DataDumpParser::PrintUnusedKernel() {
+  for (const auto &iter : kernel_map_) {
+    if (iter.second == 0) {
+      MS_LOG(WARNING) << "[DataDump] Unused Kernel in json:" << iter.first;
+    }
+  }
 }
 }  // namespace mindspore
