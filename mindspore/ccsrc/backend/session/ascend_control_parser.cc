@@ -695,6 +695,9 @@ void AscendControlParser::InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> fr
   }
   for (size_t i = 0; i < from_outputs.size(); i++) {
     auto assign_node = InsertAssignToGraph(from_graph, NOT_NULL(from_outputs[i]), NOT_NULL(to_outputs[i]));
+    if (assign_node == nullptr) {
+      continue;
+    }
     const auto &from_graph_exe_order = from_graph->execution_order();
     std::vector<CNodePtr> real_exe_order(from_graph_exe_order.size());
     size_t real_exe_order_size = 0;
