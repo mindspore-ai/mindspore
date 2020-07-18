@@ -108,7 +108,7 @@ class BertAttentionRelativePositionKeys(nn.Cell):
         self.trans_shape_position = (1, 2, 0, 3)
         self.trans_shape_relative = (2, 0, 1, 3)
 
-        self.scores_mul = Tensor([1.0 / math.sqrt(float(self.size_per_head))], dtype=dtype)
+        self.scores_mul = 1.0 / math.sqrt(float(self.size_per_head))
 
         self.reshape = P.Reshape()
         self.multiply = P.Mul()
@@ -301,7 +301,7 @@ class BertAttentionRelativePositionValues(nn.Cell):
         self.trans_shape_position = (1, 2, 0, 3)
         self.trans_shape_relative = (2, 0, 1, 3)
 
-        self.scores_mul = Tensor([1.0 / math.sqrt(float(self.size_per_head))], dtype=dtype)
+        self.scores_mul = 1.0 / math.sqrt(float(self.size_per_head))
         self.trans_shape = (0, 2, 1, 3)
 
         self.reshape = P.Reshape()

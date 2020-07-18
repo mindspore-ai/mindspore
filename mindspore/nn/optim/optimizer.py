@@ -141,7 +141,7 @@ class Optimizer(Cell):
         if self.is_group_lr:
             self.learning_rate = ParameterTuple(self.group_lr)
         else:
-            self.learning_rate = Parameter(learning_rate, name="learning_rate")
+            self.learning_rate = Parameter(Tensor(learning_rate, mstype.float32), name="learning_rate")
 
         if self.is_group:
             self.parameters = ParameterTuple(self.group_params)

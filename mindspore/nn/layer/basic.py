@@ -286,7 +286,6 @@ class ClipByNorm(Cell):
         self.select_ = P.Select()
         self.greater_ = P.Greater()
         self.cast = P.Cast()
-        self.zero = Tensor(np.array([0.0]).astype(np.float32))
         self.sqrt = P.Sqrt()
         self.max_op = P.Maximum()
         self.shape = P.Shape()
@@ -300,7 +299,7 @@ class ClipByNorm(Cell):
         """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
         l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
-        cond = self.greater_(l2sum, self.zero)
+        cond = self.greater_(l2sum, 0)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
 
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
@@ -407,11 +406,13 @@ class OneHot(Cell):
         super(OneHot, self).__init__()
         self.onehot = P.OneHot(axis)
         self.depth = depth
-        self.on_value = Tensor(on_value, dtype)
-        self.off_value = Tensor(off_value, dtype)
+        self.dtype = dtype
+        self.on_value = on_value
+        self.off_value = off_value
 
     def construct(self, indices):
-        return self.onehot(indices, self.depth, self.on_value, self.off_value)
+        return self.onehot(indices, self.depth, F.cast(self.on_value, self.dtype), F.cast(self.off_value, self.dtype))
+
 
 
 class Pad(Cell):
