@@ -761,8 +761,8 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
 
   ValuePtr method = cls->GetMethod(item_name);
   if (method->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "Unknown field, data type: " << args_spec_list[0]->BuildType()->ToString()
-                      << ", item value: " << item_v->ToString();
+    MS_EXCEPTION(AttributeError) << "Unknown field, data type: " << args_spec_list[0]->BuildType()->ToString()
+                                 << ", item value: " << item_v->ToString();
   }
 
   // Infer class method

@@ -40,6 +40,7 @@
 #include "debug/trace.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#include "pybind_api/pybind_patch.h"
 
 #if (!_WIN32 && !ENABLE_GE && !ENABLE_TESTCASES)
 #include "frontend/parallel/ps/common.h"
@@ -536,6 +537,9 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::index_error &ex) {
     ReleaseResource(phase);
     throw py::index_error(ex);
+  } catch (const py::attribute_error &ex) {
+    ReleaseResource(phase);
+    throw py::attribute_error(ex);
   } catch (const std::exception &ex) {
     ReleaseResource(phase);
     // re-throw this exception to Python interpreter to handle it

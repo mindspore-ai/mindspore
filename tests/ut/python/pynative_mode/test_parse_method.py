@@ -304,6 +304,29 @@ def test_access():
     """ test_access """
     invoke_dataclass(1, 2)
 
+@dataclass
+class Access2:
+    a: int
+    b: int
+
+    def max(self):
+        if self.a > self.b:
+            return self.c
+        return self.b
+
+
+@ms_function
+def invoke_dataclass2(x, y):
+    """ invoke_dataclass """
+    acs = Access2(x, y)
+    return acs.max()
+
+
+def test_access_attr_error():
+    """ test_access """
+    with pytest.raises(AttributeError):
+        invoke_dataclass2(1, 2)
+
 
 def myfunc(x):
     """ myfunc """
