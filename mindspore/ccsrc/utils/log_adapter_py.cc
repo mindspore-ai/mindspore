@@ -18,6 +18,7 @@
 
 #include <string>
 #include "pybind11/pybind11.h"
+#include "pybind_api/pybind_patch.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -37,6 +38,9 @@ class PyExceptionInitializer {
     }
     if (exception_type == TypeError) {
       throw py::type_error(str);
+    }
+    if (exception_type == AttributeError) {
+      throw py::attribute_error(str);
     }
     py::pybind11_fail(str);
   }
