@@ -270,7 +270,9 @@ class DistributedSampler(BuiltinSampler):
         return c_sampler
 
     def create_for_minddataset(self):
-        c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle, self.seed)
+        num_samples = self.num_samples if self.num_samples is not None else 0
+        c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle,
+                                                     self.seed, num_samples)
         c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
