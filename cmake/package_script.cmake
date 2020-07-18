@@ -1,12 +1,15 @@
 # find exec
 find_package(Python3 3.7 COMPONENTS Interpreter Development)
 if (NOT Python3_FOUND)
-    message("No python3 found.")
-    return ()
+    message(FATAL_ERROR "No python3 found.")
 endif ()
 
 set(PYTHON ${Python3_EXECUTABLE})
 set(PYTHON_VERSION ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR})
+
+if (NOT PYTHON_VERSION MATCHES "3.7")
+    message(FATAL_ERROR "FIND PYTHON VERSION ${PYTHON_VERSION} BUT CAN NOT MATCH PYTHON VERSION 3.7")
+endif ()
 
 find_package(Git)
 if (NOT GIT_FOUND)
