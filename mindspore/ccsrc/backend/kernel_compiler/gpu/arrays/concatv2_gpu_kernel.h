@@ -74,12 +74,12 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     inputs_host_ = std::make_unique<T *[]>(input_num_);
     len_axis_ = std::make_unique<int[]>(input_num_);
     for (int i = 0; i < input_num_; i++) {
-      int input_size = 1;
+      size_t input_size = 1;
       auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
       for (size_t j = 0; j < input_shape.size(); j++) {
-        input_size *= SizeToInt(input_shape[j]);
+        input_size *= input_shape[j];
       }
-      input_size_list_.push_back(IntToSize(input_size * sizeof(T)));
+      input_size_list_.push_back(input_size * sizeof(T));
       len_axis_[i] = SizeToInt(input_shape[axis_]);
     }
     workspace_size_list_.push_back(sizeof(T *) * input_num_);
@@ -97,7 +97,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
         all_size_before_axis_ *= output_shape[i];
       }
     }
-    output_size_list_.push_back(IntToSize(output_size_ * sizeof(T)));
+    output_size_list_.push_back(output_size_ * sizeof(T));
 
     InitSizeLists();
     return true;
@@ -117,7 +117,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
   }
   int axis_;
   int input_num_;
-  int output_size_;
+  size_t output_size_;
   int all_size_before_axis_;
   int all_size_axis_;
   std::unique_ptr<T *[]> inputs_host_;

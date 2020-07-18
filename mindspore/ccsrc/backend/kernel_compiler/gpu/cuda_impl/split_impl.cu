@@ -19,7 +19,7 @@
 #include <cuda_runtime.h>
 #include "backend/kernel_compiler/gpu/cuda_impl/split_impl.cuh"
 template <typename T>
-__global__ void Split(const int size, const int axis_step, const int all_size_before_axis,
+__global__ void Split(const size_t size, const int axis_step, const int all_size_before_axis,
                       const int all_size_axis, const T* input, T** outputs) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     int num = pos % all_size_before_axis / all_size_axis;
@@ -32,19 +32,19 @@ __global__ void Split(const int size, const int axis_step, const int all_size_be
 }
 
 template <typename T>
-void SplitKernel(const int size, const int axis_step, const int all_size_before_axis,
+void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
                  const int all_size_axis, const T* input, T** outputs, cudaStream_t cuda_stream) {
   Split<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, axis_step, all_size_before_axis,
                                                            all_size_axis, input, outputs);
   return;
 }
 
-template void SplitKernel(const int size, const int axis_step, const int all_size_before_axis,
+template void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
                           const int all_size_axis, const float* input, float** outputs,
                           cudaStream_t cuda_stream);
-template void SplitKernel(const int size, const int axis_step, const int all_size_before_axis,
+template void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
                           const int all_size_axis, const int* input, int** outputs,
                           cudaStream_t cuda_stream);
-template void SplitKernel(const int size, const int axis_step, const int all_size_before_axis,
+template void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
                           const int all_size_axis, const half* input, half** outputs,
                           cudaStream_t cuda_stream);

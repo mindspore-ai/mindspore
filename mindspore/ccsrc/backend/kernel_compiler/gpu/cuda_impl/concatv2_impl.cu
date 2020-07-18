@@ -19,7 +19,7 @@
 #include <cuda_runtime.h>
 #include "backend/kernel_compiler/gpu/cuda_impl/concatv2_impl.cuh"
 template <typename T>
-__global__ void Concat(const int size, const int input_num,
+__global__ void Concat(const size_t size, const int input_num,
                        const int all_size_before_axis, const int all_size_axis,
                        int* len_axis, T** inputs, T* output) {
   for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
@@ -45,7 +45,7 @@ __global__ void Concat(const int size, const int input_num,
 }
 
 template <typename T>
-void ConcatKernel(const int size, const int input_num,
+void ConcatKernel(const size_t size, const int input_num,
                   const int all_size_before_axis, const int all_size_axis,
                   int* len_axis, T** inputs, T* output,
                   cudaStream_t cuda_stream) {
@@ -55,15 +55,15 @@ void ConcatKernel(const int size, const int input_num,
   return;
 }
 
-template void ConcatKernel(const int size, const int input_num,
+template void ConcatKernel(const size_t size, const int input_num,
                            const int all_size_before_axis, const int all_size_axis,
                            int* len_axis, float** inputs, float* output,
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const int size, const int input_num,
+template void ConcatKernel(const size_t size, const int input_num,
                            const int all_size_before_axis, const int all_size_axis,
                            int* len_axis, int** inputs, int* output,
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const int size, const int input_num,
+template void ConcatKernel(const size_t size, const int input_num,
                            const int all_size_before_axis, const int all_size_axis,
                            int* len_axis, half** inputs, half* output,
                            cudaStream_t cuda_stream);
