@@ -86,7 +86,8 @@ class OpFinder {
 using OpFinderPtr = std::shared_ptr<OpFinder>;
 
 void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
-                            const AnfNodePtr &trans_data, const std::vector<kernel::Axis> &reshape_type = {});
+                            const AnfNodePtr &trans_data, const std::vector<kernel::Axis> &reshape_type = {},
+                            const TypeId &type_id = kTypeUnknown);
 
 CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,
                         const bool need_padding, const std::string &op_name);
