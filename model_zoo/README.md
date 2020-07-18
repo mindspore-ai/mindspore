@@ -318,7 +318,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework a
 | Loss                       | 2.8                                                            |
 | Params (M)                 | 213.7                                                          |
 | Checkpoint for inference   | 2.4G (.ckpt file)                                              |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/Transformer |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/transformer |
 
 #### License
 

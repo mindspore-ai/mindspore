@@ -25,12 +25,12 @@ from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import Callback
 from mindspore import context
-from model_zoo.Transformer.src.transformer_model import TransformerConfig
-from model_zoo.Transformer.src.transformer_for_train import TransformerNetworkWithLoss, \
-                                      TransformerTrainOneStepWithLossScaleCell
-from model_zoo.Transformer.src.config import cfg
-from model_zoo.Transformer.src.dataset import create_transformer_dataset
-from model_zoo.Transformer.src.lr_schedule import create_dynamic_lr
+from model_zoo.official.nlp.transformer.src.transformer_model import TransformerConfig
+from model_zoo.official.nlp.transformer.src.transformer_for_train import TransformerNetworkWithLoss, \
+                                            TransformerTrainOneStepWithLossScaleCell
+from model_zoo.official.nlp.transformer.src.config import cfg
+from model_zoo.official.nlp.transformer.src.dataset import create_transformer_dataset
+from model_zoo.official.nlp.transformer.src.lr_schedule import create_dynamic_lr
 
 DATA_DIR = ["/home/workspace/mindspore_dataset/transformer/test-mindrecord"]
 
