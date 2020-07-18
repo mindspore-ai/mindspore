@@ -54,8 +54,10 @@ class KernelGraph : public FuncGraph {
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
+  ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
+  ValueNodePtr NewValueNode(const ValuePtr &value);
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr);
-  std::vector<AnfNodePtr> SplitTupleValueNodeToNodeList(const ValueNodePtr &value_node);
+  std::vector<AnfNodePtr> SplitTupleOutputNodeToNodeList(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }
   const std::vector<CNodePtr> &execution_order() const { return execution_order_; }
   void SetExecOrderByDefault();
@@ -166,6 +168,10 @@ class KernelGraph : public FuncGraph {
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
+  void SetKernelInfoForNode(const AnfNodePtr &node) const;
+  std::vector<AnfNodePtr> SplitTupleValueNodeToNodeList(const ValueNodePtr &value_node);
+  std::vector<AnfNodePtr> SplitTupleParameterToNodeList(const ParameterPtr &parameter);
+  AnfNodePtr MakeValueNode(const AnfNodePtr &node);
   void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
                             std::unordered_set<AnfNodePtr> *visited_nodes);
   // update node edge list
