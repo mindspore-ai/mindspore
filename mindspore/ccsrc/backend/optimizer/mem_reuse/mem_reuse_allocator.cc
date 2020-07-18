@@ -194,13 +194,20 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
 
   // add left align border for the first output and right align border for the last output to alloc align border memory
   size_t output_index = 0;
-  for (auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
+  auto output_ref_indexes = current_kernel_->GetOutputRefIndexs();
+  for (auto &tensor_idx : output_ref_indexes) {
     size_t index = GetTensorIndex(tensor_idx);
     auto tensor_desc = tensor_ptr_list_[index];
     MS_EXCEPTION_IF_NULL(tensor_desc);
     if (output_index == 0 || output_index == output_num - 1) {
       tensor_desc->size_ += kDefaultMemAlignSize;
     }
+
+    if ((output_index == 0) && (output_ref_indexes.size() == 1)) {
+      // add right align border for single output
+      tensor_desc->size_ += kDefaultMemAlignSize;
+    }
+
     output_index++;
   }
 
