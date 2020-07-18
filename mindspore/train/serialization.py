@@ -455,8 +455,8 @@ def export(net, *inputs, file_name, file_format='GEIR'):
     net.init_parameters_data()
     if file_format == 'GEIR':
         phase_name = 'export.geir'
-        _executor.compile(net, *inputs, phase=phase_name)
-        _executor.export(net, file_name, file_format)
+        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
+        _executor.export(file_name, graph_id)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
         # NOTICE: the pahse name `export_onnx` is used for judging whether is exporting onnx in the compile pipeline,
         #         do not change it to other values.
