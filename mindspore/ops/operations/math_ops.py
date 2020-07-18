@@ -2931,7 +2931,7 @@ class Round(PrimitiveWithInfer):
 
 class Tan(PrimitiveWithInfer):
     """
-    Computes tan of `input_x` element-wise.
+    Computes tangent of `input_x` element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
