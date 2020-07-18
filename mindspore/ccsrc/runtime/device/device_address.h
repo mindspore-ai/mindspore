@@ -61,7 +61,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
   void set_host_shape(const std::vector<int> &shape) { host_shape_ = shape; }
-  virtual void UpdateCommunicationAddress() {}
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }

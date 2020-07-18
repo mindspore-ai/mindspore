@@ -22,54 +22,51 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
-  if (size == 0) {
-    MS_LOG(EXCEPTION) << "Can not alloc memory size(0) in memory pool !";
+  if (has_malloc_) {
+    MS_LOG(EXCEPTION) << "Memory pool has been allocated memory resource!";
   }
-  if (device_mem_pool_offset_ + size >= graph_dynamic_mem_offset_) {
-    MS_LOG(EXCEPTION) << "Failed to alloc memory pool memory, the current device_mem_pool_offset_ ["
-                      << device_mem_pool_offset_ << "], current graph_dynamic_mem_offset_ " << graph_dynamic_mem_offset_
-                      << "], need memory size [" << size << "]";
+  if (size == 0 || size > free_mem_size_) {
+    MS_LOG(EXCEPTION) << "Failed to alloc memory pool resource, the size is zero or large than free mem size!";
   }
-  *addr = device_mem_pool_base_ + device_mem_pool_offset_;
-  device_mem_pool_offset_ += size;
+  *addr = device_mem_pool_base_;
   if (*addr == nullptr) {
-    MS_LOG(EXCEPTION) << "Alloc device address is nullptr, failed to alloc memory pool memory!";
+    MS_LOG(EXCEPTION) << "Device memory pool base address is nullptr, failed to alloc memory pool resource!";
   }
+  has_malloc_ = true;
+  free_mem_size_ -= size;
   return size;
 }
 
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
+  has_malloc_ = false;
+  free_mem_size_ = total_mem_size_;
   return true;
 }
 
 size_t AscendMemoryPool::AlignMemorySize(size_t size) const {
   if (size == 0) {
-    MS_LOG(EXCEPTION) << "The align memory size is a zero !";
+    return DYNAMIC_MEM_ALIGN_SIZE;
   }
-  return size;
+  return ((size + DYNAMIC_MEM_ALIGN_SIZE + 31) / DYNAMIC_MEM_ALIGN_SIZE) * DYNAMIC_MEM_ALIGN_SIZE;
 }
+
+size_t AscendMemoryPool::mem_alloc_unit_size() const { return free_mem_size_ - DYNAMIC_MEM_ALIGN_SIZE; }
 
 void AscendMemoryPool::set_device_mem_pool_base(uint8_t *device_mem_pool_base) {
   MS_EXCEPTION_IF_NULL(device_mem_pool_base);
   device_mem_pool_base_ = device_mem_pool_base;
 }
 
-void AscendMemoryPool::set_graph_dynamic_mem_offset(uint64_t graph_dynamic_mem_offset) {
-  graph_dynamic_mem_offset_ = graph_dynamic_mem_offset;
+void AscendMemoryPool::set_device_mem_pool_size(uint64_t device_mem_pool_size) {
+  device_mem_pool_size_ = device_mem_pool_size;
+  free_mem_size_ = device_mem_pool_size_;
+  total_mem_size_ = free_mem_size_;
 }
 
-uint64_t AscendMemoryPool::device_mem_pool_offset() const { return device_mem_pool_offset_; }
+size_t AscendMemoryPool::free_mem_size() { return free_mem_size_; }
 
-size_t AscendMemoryPool::free_mem_size() {
-  if (graph_dynamic_mem_offset_ < device_mem_pool_offset_) {
-    MS_LOG(EXCEPTION) << "graph dynamic mem offset [" << graph_dynamic_mem_offset_
-                      << "] less than device mem pool offset [" << device_mem_pool_offset_ << "]!";
-  }
-  return graph_dynamic_mem_offset_ - device_mem_pool_offset_;
-}
-
-size_t AscendMemoryPool::total_mem_size() { return graph_dynamic_mem_offset_ == 0 ? 0 : graph_dynamic_mem_offset_ - 1; }
+size_t AscendMemoryPool::total_mem_size() { return total_mem_size_; }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

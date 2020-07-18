@@ -439,10 +439,6 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr 
     std::string output_format = AnfAlgo::GetOutputFormat(node, j);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, j);
     auto address = CreateDeviceAddress(output_ptr, output_sizes[j], output_format, output_type);
-    MS_EXCEPTION_IF_NULL(address);
-    if (AnfAlgo::IsCommunicationOp(node) && context_ptr->enable_hccl()) {
-      address->UpdateCommunicationAddress();
-    }
     AnfAlgo::SetOutputAddr(address, j, node.get());
     output_ptr += align_size_list[j];
   }
@@ -492,8 +488,6 @@ void KernelRuntime::AssignCommunicationNodeInputMem(int flag, const AnfNodePtr &
 }
 
 void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int index) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (AnfAlgo::IsGetNext(NOT_NULL(node)) && flag == kReuseDynamicMem) {
@@ -525,9 +519,6 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
     auto device_address = CreateDeviceAddress(ptr, output_sizes[i], output_format, output_type);
     MS_EXCEPTION_IF_NULL(device_address);
     device_address->set_host_shape(trans::GetRuntimePaddingShape(node, i));
-    if (AnfAlgo::IsCommunicationOp(node) && context_ptr->enable_hccl()) {
-      device_address->UpdateCommunicationAddress();
-    }
     AnfAlgo::SetOutputAddr(device_address, i, node.get());
   }
 }
